@@ -509,6 +509,8 @@ GEM
       rainbow (>= 2.2.2, < 4.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 1.4.0, < 1.6)
+    rubocop-rspec (1.34.1)
+      rubocop (>= 0.60.0)
     ruby-geometry (0.0.6)
       activesupport
       memoist
@@ -711,6 +713,7 @@ DEPENDENCIES
   rspec-rails
   rtf
   rubocop
+  rubocop-rspec
   ruby-geometry
   ruby-mailchecker
   ruby-ole

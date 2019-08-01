@@ -13,9 +13,9 @@ FactoryBot.define do
     end
 
     author_id { user.id }
-    file_name "ELN_Report"
-    file_description "This is description"
-    img_format "png"
+    file_name { "ELN_Report" }
+    file_description { "This is description" }
+    img_format { "png" }
     configs { {page_break: true, whole_diagram: true} }
     sample_settings { { diagram: true, collection: true,
                         analyses: true, reaction_description: true } }
