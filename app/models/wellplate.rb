@@ -39,7 +39,7 @@ class Wellplate < ActiveRecord::Base
                                         },
                                         using: {trigram: {threshold:  0.0001}}
 
-  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_sample_ids, -> (ids) { joins(:samples).where('samples.id in (?)', ids) }
   scope :by_screen_ids, -> (ids) { joins(:screens).where('screens.id in (?)', ids) }
 

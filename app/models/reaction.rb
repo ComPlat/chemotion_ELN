@@ -41,14 +41,14 @@ class Reaction < ActiveRecord::Base
   }, using: { trigram: { threshold:  0.0001 } }
 
   # scopes for suggestions
-  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
-  scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{query}%") }
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
   scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
   scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
   scope :by_sample_ids,  ->(ids) { joins(:reactions_samples).where('samples.id IN (?)', ids) }
-  scope :by_status,  ->(query) { where('reactions.status ILIKE ?', "%#{query}%") }
+  scope :by_status,  ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
 
   has_many :collections_reactions, dependent: :destroy

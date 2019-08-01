@@ -21,19 +21,19 @@ class Molecule < ActiveRecord::Base
 
   # scope for suggestions
   scope :by_iupac_name, -> (query) {
-    where('iupac_name ILIKE ?', "%#{query}%")
+    where('iupac_name ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
   scope :by_sum_formular, -> (query) {
-    where('sum_formular ILIKE ?', "%#{query}%")
+    where('sum_formular ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
   scope :by_inchistring, -> (query) {
-    where('inchistring ILIKE ?', "%#{query}%")
+    where('inchistring ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
   scope :by_inchikey, -> (query) {
-    where('inchikey ILIKE ?', "%#{query}%")
+    where('inchikey ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
   scope :by_cano_smiles, -> (query) {
-    where('cano_smiles ILIKE ?', "%#{query}%")
+    where('cano_smiles ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
 
   scope :with_reactions, -> {
