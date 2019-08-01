@@ -160,6 +160,10 @@ class User < ActiveRecord::Base
     ).order("ua.from DESC")
   end
 
+  def is_templates_moderator
+    profile&.data&.fetch('is_templates_moderator', false)
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:

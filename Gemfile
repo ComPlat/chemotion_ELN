@@ -127,6 +127,7 @@ gem 'paranoia', '~> 2.0'
 gem 'backup'
 gem 'whenever', require: false
 gem 'rubocop', require: false
+gem 'rubocop-rspec', require: false
 gem 'yaml_db'
 
 gem 'ruby-ole'

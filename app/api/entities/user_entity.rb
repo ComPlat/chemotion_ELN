@@ -10,12 +10,11 @@ module Entities
     expose :type, if: -> (obj, opts) { obj.respond_to? :type}
     expose :reaction_name_prefix, if: -> (obj, opts) { obj.respond_to? :reaction_name_prefix}
     expose :layout, if: -> (obj, opts) { obj.respond_to? :layout}
-    expose :is_templates_moderator, if: -> (obj, opts) { obj.respond_to? :is_templates_moderator}
     expose :email, if: -> (obj, opts) { obj.respond_to? :email}
     expose :confirmed_at, if: -> (obj, opts) { obj.respond_to? :confirmed_at}
     expose :current_sign_in_at, if: -> (obj, opts) { obj.respond_to? :current_sign_in_at}
     expose :locked_at, if: -> (obj, opts) { obj.respond_to? :locked_at}
-    expose :is_templates_moderator, if: -> (obj, opts) { obj.respond_to? :is_templates_moderator}
+    expose :is_templates_moderator, documentation: { type: "Boolean", desc: "ketcherails template administrator" }
 
     def samples_count
       object.counters['samples'].to_i

@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :literature do
-    doi            "doi:10.1006/jmbi.1998.2354"
+    doi            { "doi:10.1006/jmbi.1998.2354" }
     sequence(:title) { |n| "Title #{n}" }
     sequence(:url) { |n| "www.#{n}" }
 
