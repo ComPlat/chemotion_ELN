@@ -87,7 +87,7 @@ module ContainerHelpers
           next
         end
         #NB 2step update because moving store should be delayed job
-        attachment.update_container!(container.id)
+        attachment.update!(attachable: container)
         primary_store = Rails.configuration.storage.primary_store
 
         attachment.update!(storage: primary_store) if att[:is_new]

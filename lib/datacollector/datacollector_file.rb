@@ -45,7 +45,7 @@ class DatacollectorFile < DatacollectorObject
   def add_attach_to_container(device, attach, send_message = false )
     helper = CollectorHelper.new(device, recipient)
     dataset = helper.prepare_dataset(Time.now.strftime('%Y-%m-%d'))
-    attach.update_container!(dataset.id)
+    attach.update!(attachable: dataset)
     attach.update!(storage: Rails.configuration.storage.primary_store)
 
     # add notifications

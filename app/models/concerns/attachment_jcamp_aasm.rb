@@ -119,7 +119,7 @@ module AttachmentJcampProcess
     att.save!
     att.set_edited if ext != 'png' && toEdit
     att.set_image if ext == 'png'
-    att.update_container!(attachable_id)
+    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att.update!(storage: Rails.configuration.storage.primary_store)
     att
   end
