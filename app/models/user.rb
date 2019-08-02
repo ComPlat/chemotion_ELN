@@ -48,7 +48,7 @@ class User < ActiveRecord::Base
 
   scope :by_name, ->(query) {
     where('LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ?',
-          "#{query.downcase}%", "#{query.downcase}%")
+          "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%")
   }
 
   def name_abbreviation_length

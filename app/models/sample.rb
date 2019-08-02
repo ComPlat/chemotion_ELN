@@ -50,9 +50,10 @@ class Sample < ActiveRecord::Base
   pg_search_scope :search_by_sample_external_label, against: :external_label
 
   # scopes for suggestions
-  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
-  scope :by_short_label, ->(query) { where('short_label ILIKE ?',"%#{query}%") }
-  scope :by_external_label, ->(query) { where('external_label ILIKE ?',"%#{query}%") }
+  scope :by_residues_custom_info, ->(info, val) { joins(:residues).where("residues.custom_info -> '#{info}' ILIKE '%#{sanitize_sql_like(val)}%'")}
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_short_label, ->(query) { where('short_label ILIKE ?',"%#{sanitize_sql_like(query)}%") }
+  scope :by_external_label, ->(query) { where('external_label ILIKE ?',"%#{sanitize_sql_like(query)}%") }
   scope :with_reactions, -> {
     joins(:reactions_samples)
   }

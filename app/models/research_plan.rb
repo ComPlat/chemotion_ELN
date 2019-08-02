@@ -9,7 +9,7 @@ class ResearchPlan < ActiveRecord::Base
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, :name, presence: true
 
-  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
 
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans

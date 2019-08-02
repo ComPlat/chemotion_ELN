@@ -17,9 +17,9 @@ class Screen < ActiveRecord::Base
   pg_search_scope :search_by_substring, against: [:name, :conditions, :requirements],
                                         using: {trigram: {threshold:  0.0001}}
 
-  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
-  scope :by_conditions, ->(query) { where('conditions ILIKE ?', "%#{query}%") }
-  scope :by_requirements, ->(query) { where('requirements ILIKE ?', "%#{query}%") }
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_conditions, ->(query) { where('conditions ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_requirements, ->(query) { where('requirements ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_wellplate_ids, ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
 
   has_many :collections_screens, dependent: :destroy
