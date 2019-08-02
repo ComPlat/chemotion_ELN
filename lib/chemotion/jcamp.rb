@@ -94,7 +94,8 @@ module Chemotion
           body = build_body(file, is_regen, params)
           response = HTTParty.post(
             "http://#{url}:#{port}/zip_jcamp_n_img",
-            body: body
+            body: body,
+            timeout: 120
           )
         end
         response
