@@ -127,6 +127,7 @@ class User < ActiveRecord::Base
       result = JSON.parse(File.read(file, encoding:  'bom|utf-8')) if File.exist?(file)
       unless result.nil? || result['ols_terms'].nil?
         data['chmo'] = result['ols_terms']
+        data['is_templates_moderator'] = false
         self.profile.update_columns(data: data)
       end
    end
