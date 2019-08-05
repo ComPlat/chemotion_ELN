@@ -40,13 +40,14 @@ const scanFileNormalizer = (res, store, type) => {
       if (cddInstance) {
         if (cd.hasOwnProperty('b64cdx')) {
           cddInstance.loadB64CDX(cd.b64cdx);
-          cdInfo.b64png = cddInstance.getImgUrl();
+          const b64png = cddInstance.g.instanceHub.chemDraw.documentToPreviewPNG();
+          cdInfo.b64png = `data:image/png;base64,${b64png}`;
           cddInstance.clear();
         }
         if (cd.hasOwnProperty('cdxml')) {
           cddInstance.loadCDXML(cd.cdxml);
-          // cdInfo.b64png = cddInstance.g.instanceHub.chemDraw.documentToPreviewPNG();
-          cdInfo.b64png = cddInstance.getImgUrl();
+          const b64png = cddInstance.g.instanceHub.chemDraw.documentToPreviewPNG();
+          cdInfo.b64png = `data:image/png;base64,${b64png}`;
           cddInstance.clear();
         }
       }

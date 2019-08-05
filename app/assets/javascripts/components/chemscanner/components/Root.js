@@ -38,11 +38,7 @@ class Root extends Component {
 
     return (
       <Grid fluid className="chemscanner-grid">
-        <Row>
-          <Col xs={18} md={12} className="cdjs-row">
-            <div id="chemscanner-cdjs-container" />
-          </Col>
-        </Row>
+        <div id="chemscanner-cdjs-container" />
         <Row style={{ position: 'relative', zIndex: '9' }}>
           <Col xs={18} md={12}>
             <HeaderMenuContainer />

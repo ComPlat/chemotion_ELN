@@ -3,6 +3,12 @@ import PropTypes from 'prop-types';
 
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
+const optimizeHeight = (imgWidth, imgHeight) => {
+  if (imgHeight < 300) return `${imgHeight}px`;
+
+  return imgWidth > imgHeight ? '300px' : '400px';
+};
+
 export default class PreviewFileZoomPan extends React.PureComponent {
   constructor() {
     super();
@@ -31,17 +37,29 @@ export default class PreviewFileZoomPan extends React.PureComponent {
 
     let imgWidth;
     let imgHeight;
+
     if (this.isSvg) {
       imgWidth = Math.floor(imgEl.getBoundingClientRect().width);
       imgHeight = Math.floor(imgEl.getBoundingClientRect().height);
       svgEl.setAttribute('viewBox', `0 0 ${imgWidth} ${imgHeight}`);
-      svgEl.setAttribute('height', '300px');
+
+      // SCALE SVG
+      const height = optimizeHeight(imgWidth, imgHeight);
+      svgEl.setAttribute('height', height);
+
       return;
     }
+
     const dummyImg = this.previewDiv.querySelector('#dummy-img');
     dummyImg.style.display = 'block';
     imgWidth = window.getComputedStyle(dummyImg).getPropertyValue('width');
     imgHeight = window.getComputedStyle(dummyImg).getPropertyValue('height');
+
+    // SCALE Picture
+    const intWidth = parseInt(imgWidth, 10);
+    const intHeight = parseInt(imgHeight, 10);
+    imgHeight = optimizeHeight(intWidth, intHeight);
+
     dummyImg.style.display = 'none';
 
     if (svgWidth > imgWidth) {
