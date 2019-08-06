@@ -107,12 +107,14 @@ export default class ScannedReactions extends React.Component {
                 itemId={rId}
               />
               <SelectBtn itemId={rId} selected={selected} onClick={this.selectItem} />
-              <SvgFileZoomPan svg={renderSvg(reaction.get('svg'))} duration={200} />
-              <ReactionDescription
-                reaction={reaction}
-                toggleResin={this.toggleResin}
-              />
-              <ReactionDetails reaction={reaction} />
+              <div style={{ display: 'inline-flex' }}>
+                <ReactionDescription
+                  reaction={reaction}
+                  toggleResin={this.toggleResin}
+                />
+                <ReactionDetails reaction={reaction} />
+                <SvgFileZoomPan svg={renderSvg(reaction.get('svg'))} duration={200} />
+              </div>
             </ListGroupItem>
           );
         })}
