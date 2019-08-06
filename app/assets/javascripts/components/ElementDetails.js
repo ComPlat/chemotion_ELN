@@ -7,7 +7,7 @@ import DeviceDetails from './DeviceDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
-import ResearchPlanDetails from './ResearchPlanDetails';
+import ResearchPlanDetails from './research_plan/ResearchPlanDetails';
 import ReportContainer from './report/ReportContainer';
 import FormatContainer from './FormatContainer';
 import GraphContainer from './GraphContainer';

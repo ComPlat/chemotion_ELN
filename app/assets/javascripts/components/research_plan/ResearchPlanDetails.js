@@ -3,24 +3,23 @@ import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Row, Col, Tabs, Tab } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { includes, last, findKey, values } from 'lodash';
-import ElementCollectionLabels from './ElementCollectionLabels';
-import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
+import ElementCollectionLabels from '../ElementCollectionLabels';
+import UIStore from '../stores/UIStore';
+import UIActions from '../actions/UIActions';
 
-import ElementActions from './actions/ElementActions';
-import DetailActions from './actions/DetailActions';
-import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher';
-import ResearchPlansLiteratures from './DetailsTabLiteratures';
-import Attachment from './models/Attachment';
-import Utils from './utils/Functions';
-
-import LoadingActions from './actions/LoadingActions';
+import ElementActions from '../actions/ElementActions';
+import DetailActions from '../actions/DetailActions';
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import ResearchPlansLiteratures from '../DetailsTabLiteratures';
+import Attachment from '../models/Attachment';
+import Utils from '../utils/Functions';
+import LoadingActions from '../actions/LoadingActions';
 import ConfirmClose from './common/ConfirmClose';
 
-import ResearchPlanDetailsAttachments from './research_plan/ResearchPlanDetailsAttachments';
-import ResearchPlanDetailsBody from './research_plan/ResearchPlanDetailsBody';
-import ResearchPlanDetailsNameField from './research_plan/ResearchPlanDetailsNameField';
-import ResearchPlanDetailsStatic from './research_plan/ResearchPlanDetailsStatic';
+import ResearchPlanDetailsAttachments from './ResearchPlanDetailsAttachments';
+import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
+import ResearchPlanDetailsName from './ResearchPlanDetailsName';
+import ResearchPlanDetailsStatic from './ResearchPlanDetailsStatic';
 
 
 export default class ResearchPlanDetails extends Component {
@@ -193,7 +192,7 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          <ResearchPlanDetailsNameField value={name}
+          <ResearchPlanDetailsName value={name}
               disabled={research_plan.isMethodDisabled('name')}
               onChange={this.handleNameChange.bind(this)} />
 

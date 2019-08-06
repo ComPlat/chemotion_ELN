@@ -5,7 +5,7 @@ import Dropzone from 'react-dropzone'
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
 
 
-export default class ResearchPlanDetailsImageField extends Component {
+export default class ResearchPlanDetailsFieldImage extends Component {
 
   handleDrop(files) {
     let { field, onChange } = this.props
@@ -48,7 +48,7 @@ export default class ResearchPlanDetailsImageField extends Component {
 
 }
 
-ResearchPlanDetailsImageField.propTypes = {
+ResearchPlanDetailsFieldImage.propTypes = {
   field: PropTypes.object,
   index: PropTypes.number,
   disabled: PropTypes.bool,

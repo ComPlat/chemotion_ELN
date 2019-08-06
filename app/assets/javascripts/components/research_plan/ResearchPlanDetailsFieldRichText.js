@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 import QuillEditor from '../QuillEditor'
 
-export default class ResearchPlanDetailsRichTextField extends Component {
+export default class ResearchPlanDetailsFieldRichText extends Component {
 
   render() {
     let { field, index, disabled, onChange } = this.props
@@ -18,7 +18,7 @@ export default class ResearchPlanDetailsRichTextField extends Component {
 
 }
 
-ResearchPlanDetailsRichTextField.propTypes = {
+ResearchPlanDetailsFieldRichText.propTypes = {
   field: PropTypes.object,
   index: PropTypes.number,
   disabled: PropTypes.bool,

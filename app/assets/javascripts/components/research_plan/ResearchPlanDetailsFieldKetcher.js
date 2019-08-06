@@ -8,7 +8,7 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
 import StructureEditorModal from '../structure_editor/StructureEditorModal'
 import QuillEditor from '../QuillEditor'
 
-export default class ResearchPlanDetailsKetcherField extends Component {
+export default class ResearchPlanDetailsFieldKetcher extends Component {
 
   constructor(props) {
     super(props)
@@ -103,7 +103,7 @@ export default class ResearchPlanDetailsKetcherField extends Component {
   }
 }
 
-ResearchPlanDetailsKetcherField.propTypes = {
+ResearchPlanDetailsFieldKetcher.propTypes = {
   field: PropTypes.object,
   index: PropTypes.number,
   disabled: PropTypes.bool,

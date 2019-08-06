@@ -45,6 +45,28 @@ export default class ResearchPlan extends Element {
         })
         break;
       case 'table':
+        const columns = ['a', 'b'].map(columnName => {
+          return {
+              key: columnName,
+              name: columnName,
+              editable: true,
+              resizable: true,
+              width: 200
+            }
+        })
+
+        this.body.push({
+          id: uuidv4(),
+          type: 'table',
+          value: {
+            columns: columns,
+            rows: [
+              {a: '1', b: ''},
+              {a: '2', b: ''},
+              {a: '3', b: ''}
+            ]
+          }
+        })
         break;
       case 'image':
         this.body.push({
@@ -55,6 +77,7 @@ export default class ResearchPlan extends Element {
             public_name: null,
           }
         })
+        break;
     }
   }
 

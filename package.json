@@ -50,6 +50,8 @@
     "react-barcode": "^1.1.0",
     "react-bootstrap": "~0.32.4",
     "react-cookie": "^0.4.8",
+    "react-data-grid": "^6.1.0",
+    "react-data-grid-addons": "^6.1.0",
     "react-datepicker": "~1.4.1",
     "react-dnd": "^2.6.0",
     "react-dnd-html5-backend": "^2.6.0",

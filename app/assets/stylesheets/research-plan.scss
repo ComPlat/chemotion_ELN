@@ -5,10 +5,6 @@
             margin-top: 5px;
         }
 
-        button {
-            float: right;
-        }
-
         .drag-source {
             float: right;
             margin-top: 5px;
@@ -78,6 +74,10 @@
 
     .ql-hidden {
         display: none;
+    }
+
+    .research-plan-table-toolbar {
+        margin-bottom: 10px;
     }
 }
 
