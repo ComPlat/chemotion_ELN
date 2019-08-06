@@ -123,7 +123,7 @@ class User < ActiveRecord::Base
     if self.type == 'Person'
       profile = self.profile
       data = profile.data || {}
-      file = Rails.public_path.join('ontologies','chmo.default.profile.json')
+      file = Rails.root.join('db','chmo.default.profile.json')
       result = JSON.parse(File.read(file, encoding:  'bom|utf-8')) if File.exist?(file)
       unless result.nil? || result['ols_terms'].nil?
         data['chmo'] = result['ols_terms']

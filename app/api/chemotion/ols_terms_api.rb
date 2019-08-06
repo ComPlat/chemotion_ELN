@@ -18,7 +18,7 @@ module Chemotion
           )
           unless File.exist?(file)
             file = Rails.public_path.join(
-              'ontologies',
+              'ontologies_default',
               "#{params[:name]}#{params[:edited] ? '.default.edited.json' : '.default.json'}"
             )
           end
