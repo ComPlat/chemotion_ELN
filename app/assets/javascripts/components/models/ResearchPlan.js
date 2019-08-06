@@ -52,7 +52,7 @@ export default class ResearchPlan extends Element {
           type: 'image',
           value: {
             file_name: null,
-            file_path: null,
+            public_name: null,
           }
         })
     }
@@ -62,8 +62,6 @@ export default class ResearchPlan extends Element {
     for (var i = 0; i < this.body.length; i++) {
       if (this.body[i].type == 'ketcher') {
         return `/images/research_plans/${this.body[i].value.svg_file}`
-      } else if (this.body[i].type == 'image') {
-
       }
     }
 
