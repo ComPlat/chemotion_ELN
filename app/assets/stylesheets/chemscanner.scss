@@ -12,12 +12,14 @@
     margin-right: auto;
   }
 
-  .cdjs-row {
-    // z-index: -1;
-    width: 90%;
-    height: 500px;
+  #chemscanner-cdjs-container {
     position: absolute;
-    display: none;
+    left:0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    visibility: hidden;
   }
 
   .chemscanner-alert-notification {
@@ -96,7 +98,7 @@
       flex-wrap: wrap;
 
       div {
-        margin: 10px;
+        margin: 0px 10px 10px 10px;
       }
     }
   }
