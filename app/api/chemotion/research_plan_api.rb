@@ -98,17 +98,13 @@ module Chemotion
       desc "Create a research plan"
       params do
         requires :name, type: String, desc: "Research plan name"
-        optional :description, type: Hash, desc: "Research plan description"
-        requires :sdf_file, type: String, desc: "Research plan SDF file"
-        requires :svg_file, type: String, desc: "Research plan SVG file"
+        requires :body, type: Array, desc: "Research plan body"
         optional :collection_id, type: Integer, desc: "Collection ID"
       end
       post do
         attributes = {
           name: params[:name],
-          description: params[:description],
-          sdf_file: params[:sdf_file],
-          svg_file: params[:svg_file]
+          body: params[:body]
         }
 
         research_plan = ResearchPlan.new attributes
