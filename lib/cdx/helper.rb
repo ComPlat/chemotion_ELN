@@ -198,12 +198,16 @@ module Cdx
 
     def begin_pt
       target = root["B"]
-      target ? "04 06 04 00 #{"%02X" % target.to_i} 00 00 00 " : ""
+      target_str = CdxStatic.int_to_cdx_string(target.to_i)
+
+      target ? "04 06 04 00 #{target_str} " : ""
     end
 
     def end_pt
       target = root["E"]
-      target ? "05 06 04 00 #{"%02X" % target.to_i} 00 00 00 " : ""
+      target_str = CdxStatic.int_to_cdx_string(target.to_i)
+
+      target ? "05 06 04 00 #{target_str} " : ""
     end
 
 # **workaround openbabel
@@ -363,7 +367,13 @@ module Cdx
     end
 
     def context
-      target = root.children.children[0].content
+      target = root.children.children[0].content.encode(
+        Encoding::ISO_8859_1,
+        :undef => :replace,
+        :invalid => :replace,
+        :replace => ''
+      )
+
       text_hex = target.chars.map do |char|
         "%02X" % char.ord
       end.join(" ") + " "
@@ -372,11 +382,13 @@ module Cdx
 
     def text_count(target)
       count_hex = "#{"%04X" % (target.length + 12)}"
-      text_count = little_endian(count_hex) + "01 00 00 00 14 00 00 00 f0 00 00 00 "
+      little_endian(count_hex) + "01 00 00 00 14 00 00 00 f0 00 00 00 "
     end
   end
 
   module CdxStatic
+    include Helper
+
     def self.init
        "56 6A 43 44 30 31 30 30 04 03 02 01 00 00 00 00 \
         00 00 00 00 00 00 00 00 00 00 00 00 03 00 0E 00 \
@@ -418,8 +430,14 @@ module Cdx
         00 "
     end
 
-    def self.fragment
-       "03 80 08 00 00 00 04 02 10 00 00 40 98 00 c2 \
+    def self.int_to_cdx_string(int)
+      format('%08x', int).gsub(/(.{2})/, '\1 ').strip.split(' ').reverse.join(' ').upcase
+    end
+
+    def self.fragment(id)
+      id_str = int_to_cdx_string(id)
+
+       "03 80 #{id_str} 04 02 10 00 00 40 98 00 c2 \
         57 76 00 2b 8c ad 00 3d a8 b2 00 "
     end
 
