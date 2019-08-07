@@ -20,6 +20,11 @@ module Cdx
     end
 
     private
+
+    def get_tmp_id
+      @tmp_id += 1
+    end
+
     def translation(input)
       line  = Nokogiri::XML(input)
       if line.root
@@ -30,7 +35,7 @@ module Cdx
         elsif name == "page"
           @str += CdxStatic.page
         elsif name == "fragment"
-          @str += CdxStatic.fragment
+          @str += CdxStatic.fragment(get_tmp_id)
         elsif name == "n"
           bid = backup_id
           @str += CdxNode.new(line.root, id, bid).content
@@ -51,10 +56,8 @@ module Cdx
     end
 
     def root_id(root)
-      if !root["id"]
-        @tmp_id = @tmp_id + 1
-        root["id"] = @tmp_id
-      end
+      root["id"] = get_tmp_id if !root["id"]
+
       hex = "#{"%04X" % root["id"].to_i}"
       self.little_endian(hex) + "00 00 "
     end
