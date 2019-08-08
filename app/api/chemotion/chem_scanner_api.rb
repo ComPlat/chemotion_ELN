@@ -60,7 +60,7 @@ module Chemotion
               reactants_mdl: (r[:reactants] || []).map { |m| m[:mdl] },
               reagents_mdl: (r[:reagents] || []).map { |m| m[:mdl] },
               products_mdl: (r[:products] || []).map { |m| m[:mdl] },
-              reagents_smiles: r[:reagents_smiles] || []
+              reagents_smiles: r[:reagents_smiles].uniq || []
             }
             r[:svg] = SVG::ReactionComposer.cs_reaction_svg_from_mdl(
               info,
