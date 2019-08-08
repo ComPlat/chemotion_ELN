@@ -43,7 +43,10 @@ const mapDispatchToProps = dispatch => ({
     const type = `added${pascalize(smiType)}Smi`;
     const smiArr = smi.split(',');
 
-    const reactionArray = reactions.toJS().map((r) => {
+    let selectedReactions = reactions.filter(r => r.get('selected'));
+    if (selectedReactions.size === 0) selectedReactions = reactions;
+
+    const reactionArray = selectedReactions.toJS().map((r) => {
       r[type] = smiArr;
       return extractReaction(r);
     });
