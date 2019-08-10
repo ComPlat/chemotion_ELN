@@ -112,9 +112,9 @@ export default class ScannedReactions extends React.Component {
                   reaction={reaction}
                   toggleResin={this.toggleResin}
                 />
-                <ReactionDetails reaction={reaction} />
                 <SvgFileZoomPan svg={renderSvg(reaction.get('svg'))} duration={200} />
               </div>
+              <ReactionDetails reaction={reaction} />
             </ListGroupItem>
           );
         })}
