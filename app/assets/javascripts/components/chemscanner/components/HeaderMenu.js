@@ -40,7 +40,7 @@ import {
   generateExcelReactionRow
 } from '../utils';
 
-const SUPPORTED_FILE_TYPES = ['cdx', 'cdxml', 'docx', 'doc', 'zip'];
+const SUPPORTED_FILE_TYPES = ['cdx', 'cdxml', 'doc', 'docx', 'xml', 'zip'];
 
 const allReagents = Object.assign(
   {}, ionicLiquids, catalyst, ligands,
