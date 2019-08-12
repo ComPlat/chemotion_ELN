@@ -13,7 +13,7 @@ import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable'
 export default class ResearchPlanDetailsField extends Component {
 
   render() {
-    let { field, index, disabled, onChange, onDrop, onDelete } = this.props
+    let { field, index, disabled, onChange, onDrop, onDelete, update } = this.props
 
     let label, component
     switch (field.type) {
@@ -39,7 +39,7 @@ export default class ResearchPlanDetailsField extends Component {
         label = 'Table'
         component = <ResearchPlanDetailsFieldTable key={field.id}
                               field={field} index={index} disabled={disabled}
-                              onChange={onChange.bind(this)} />
+                              onChange={onChange.bind(this)} update={update} />
         break;
     }
 
@@ -71,4 +71,5 @@ ResearchPlanDetailsField.propTypes = {
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   onDrop: PropTypes.func,
+  update: PropTypes.bool
 }

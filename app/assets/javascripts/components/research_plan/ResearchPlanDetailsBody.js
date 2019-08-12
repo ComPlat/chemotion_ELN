@@ -9,14 +9,15 @@ import Field from './ResearchPlanDetailsField'
 export default class ResearchPlanDetailsBody extends Component {
 
   render() {
-    let { body, disabled, onChange, onDrop, onAdd, onDelete } = this.props
+    let { body, disabled, onChange, onDrop, onAdd, onDelete, update } = this.props
 
     let fields = body.map((field, index) => {
         return <Field key={field.id}
                       field={field} index={index} disabled={disabled}
                       onChange={onChange.bind(this)}
                       onDrop={onDrop.bind(this)}
-                      onDelete={onDelete.bind(this)} />
+                      onDelete={onDelete.bind(this)}
+                      update={update} />
     })
 
     return (
@@ -43,4 +44,5 @@ ResearchPlanDetailsBody.propTypes = {
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   onDrop: PropTypes.func,
+  update: PropTypes.bool
 }

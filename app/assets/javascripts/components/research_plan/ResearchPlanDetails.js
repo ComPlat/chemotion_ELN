@@ -28,13 +28,21 @@ export default class ResearchPlanDetails extends Component {
     const { research_plan } = props;
     this.state = {
       research_plan,
-      edit: true
+      edit: true,
+      update: false
     };
   }
 
   componentWillReceiveProps(nextProps) {
     const {research_plan} = nextProps;
     this.setState({ research_plan });
+  }
+
+  toggleFullScreen() {
+    this.props.toggleFullScreen()
+
+    // toogle update prop to notify react data grid for view change
+    this.setState({ update: !this.state.update })
   }
 
   // handle functions
@@ -186,8 +194,9 @@ export default class ResearchPlanDetails extends Component {
   }
 
   renderPropertiesTab(research_plan) {
-    let { name, body, attachments } = research_plan;
-    let submitLabel = research_plan.isNew ? "Create" : "Save";
+    const { name, body, attachments } = research_plan
+    const { update } = this.state
+    const submitLabel = research_plan.isNew ? "Create" : "Save"
 
     return (
       <ListGroup fill="true">
@@ -201,7 +210,8 @@ export default class ResearchPlanDetails extends Component {
               onChange={this.handleBodyChange.bind(this)}
               onDrop={this.handleBodyDrop.bind(this)}
               onAdd={this.handleBodyAdd.bind(this)}
-              onDelete={this.handleBodyDelete.bind(this)} />
+              onDelete={this.handleBodyDelete.bind(this)}
+              update={update} />
 
           <ResearchPlanDetailsAttachments attachments={attachments}
               onDrop={this.handleAttachmentDrop.bind(this)}
@@ -261,7 +271,7 @@ export default class ResearchPlanDetails extends Component {
                         overlay={<Tooltip id="fullSample">Fullresearch_plan</Tooltip>}>
 
           <Button bsStyle="info" bsSize="xsmall" className="button-right"
-            onClick={() => this.props.toggleFullScreen()}>
+            onClick={this.toggleFullScreen.bind(this)}>
             <i className="fa fa-expand"></i>
           </Button>
         </OverlayTrigger>

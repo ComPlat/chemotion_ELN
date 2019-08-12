@@ -19,6 +19,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      update: this.props.update,
       showModal: '',
       idx: null
     }
@@ -37,6 +38,12 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       editable: true,
       resizable: true,
       width: 200
+    }
+  }
+
+  componentDidUpdate() {
+    if (this.state.update != this.props.update) {
+      this.setState({ update: this.props.update })
     }
   }
 
@@ -247,4 +254,5 @@ ResearchPlanDetailsFieldTable.propTypes = {
   index: PropTypes.number,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
+  update: PropTypes.bool
 }
