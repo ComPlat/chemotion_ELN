@@ -21,10 +21,11 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     this.state = {
       update: this.props.update,
       showModal: '',
-      idx: null
+      idx: null,
+      selection: {}
     }
 
-    // document.addEventListener('copy', this.handleCopy.bind(this))
+    document.addEventListener('copy', this.handleCopy.bind(this))
     document.addEventListener('paste', this.handlePaste.bind(this))
 
     this.handleCellSelected = this.handleCellSelected.bind(this)
@@ -60,6 +61,13 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     }
 
     onChange(field.value, field.id)
+  }
+
+  handleRangeSelection(event) {
+    this.setState({ selection: {
+      topLeft: event.topLeft,
+      bottomRight: event.bottomRight
+    }})
   }
 
   handleCellSelected(event) {
@@ -183,21 +191,20 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   handleCopy(event) {
     event.preventDefault();
 
-    const { columns } = this.props
+    const { columns } = this.props.field.value
     const { selection } = this.state;
 
     // Loop through each row
-    const text = range(selection.topLeft.rowIdx, selection.botRight.rowIdx + 1).map(
+    const text = range(selection.topLeft.rowIdx, selection.bottomRight.rowIdx + 1).map(
       // Loop through each column
-      rowIdx => columns.slice(selection.topLeft.colIdx, selection.botRight.colIdx + 1).map(
+      rowIdx => columns.slice(selection.topLeft.idx, selection.bottomRight.idx + 1).map(
         // Grab the row values and make a text string
         col => this.rowGetter(rowIdx)[col.key],
       ).join('\t'),
-    ).join('\n');
+    ).join('\n')
 
     event.clipboardData.setData('text/plain', text);
   }
-
 
   rowGetter(idx) {
     return this.props.field.value.rows[idx]
@@ -219,6 +226,9 @@ export default class ResearchPlanDetailsFieldTable extends Component {
           onGridRowsUpdated={event => this.handleEdit(event)}
           enableCellSelect={true}
           editorPortalTarget={editorPortalTarget}
+          cellRangeSelection={{
+            onComplete: this.handleRangeSelection.bind(this),
+          }}
           onCellSelected={this.handleCellSelected.bind(this)}
           onCellDeSelected={this.handleCellDeSelected.bind(this)}
           onColumnResize={this.handleColumnResize.bind(this)}
