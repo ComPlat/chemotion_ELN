@@ -120,4 +120,50 @@ export default class ResearchPlansFetcher {
     });
     return promise;
   }
+
+  static fetchTableSchemas() {
+    return fetch('/api/v1/research_plans/table_schemas/', {
+      credentials: 'same-origin',
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      return response.json()
+    }).catch((errorMessage) => {
+      console.log(errorMessage)
+    })
+  }
+
+  static createTableSchema(name, value) {
+    return fetch('/api/v1/research_plans/table_schemas/', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, value })
+    }).then(response => {
+      return response.json()
+    }).catch((errorMessage) => {
+      console.log(errorMessage)
+    })
+  }
+
+  static deleteTableSchema(id) {
+    return fetch('/api/v1/research_plans/table_schemas/' + id, {
+      credentials: 'same-origin',
+      method: 'delete',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      return response.json()
+    }).catch((errorMessage) => {
+      console.log(errorMessage)
+    })
+  }
 }

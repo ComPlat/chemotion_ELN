@@ -1,12 +1,14 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { range } from 'lodash';
+import { Row, Col, Button } from 'react-bootstrap'
 import ReactDataGrid from 'react-data-grid';
 import { Menu } from "react-data-grid-addons"
 
 import ResearchPlanDetailsFieldTableContextMenu from './ResearchPlanDetailsFieldTableContextMenu'
-import ResearchPlanDetailsFieldTableToolbar from './ResearchPlanDetailsFieldTableToolbar'
 import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal'
+import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal'
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
 
 const { ContextMenuTrigger } = Menu
 
@@ -20,8 +22,13 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     super(props);
     this.state = {
       update: this.props.update,
-      showModal: '',
-      idx: null,
+      columnNameModal: {
+        show: false,
+        idx: null
+      },
+      schemaModal: {
+        show: false
+      },
       selection: {}
     }
 
@@ -78,27 +85,35 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     this.setState({ selected: {} })
   }
 
-  handleColumnNameModalOpen(showModal, idx) {
+  handleColumnNameModalShow(action, idx) {
     this.setState({
-      showModal: showModal,
-      idx: idx
+      columnNameModal: {
+        show: true,
+        action: action,
+        idx: idx
+      }
     })
   }
 
   handleColumnNameModalSubmit(columnName) {
-    const { showModal, idx } = this.state
+    const { action, idx } = this.state.columnNameModal
 
-    if (columnName) {
-      if (showModal == 'insert') {
-        this.handleColumnInsert(idx, columnName)
-      } else if (showModal == 'rename') {
-        this.handleColumnRename(idx, columnName)
-      }
+    if (action == 'insert') {
+      this.handleColumnInsert(idx, columnName)
+    } else if (action == 'rename') {
+      this.handleColumnRename(idx, columnName)
     }
 
+    this.handleColumnNameModalHide()
+  }
+
+  handleColumnNameModalHide() {
     this.setState({
-      showModal: '',
-      idx: null
+      columnNameModal: {
+        show: false,
+        action: null,
+        idx: null
+      }
     })
   }
 
@@ -206,6 +221,44 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     event.clipboardData.setData('text/plain', text);
   }
 
+  handleSchemaModalShow() {
+    ResearchPlansFetcher.fetchTableSchemas().then(json => {
+      this.setState({
+        schemaModal: {
+          show: true,
+          schemas: json['table_schemas']
+        }
+      })
+    })
+  }
+
+  handleSchemasModalSubmit(schemaName) {
+    ResearchPlansFetcher.createTableSchema(schemaName, this.props.field.value).then(() => {
+      this.handleSchemaModalShow()
+    })
+  }
+
+  handleSchemasModalHide() {
+    this.setState({
+      schemaModal: {
+        show: false
+      }
+    })
+  }
+
+  handleSchemasModalUse(schema) {
+    const { field, onChange } = this.props
+
+    onChange(schema.value, field.id)
+    this.handleSchemasModalHide()
+  }
+
+  handleSchemasModalDelete(schema) {
+    ResearchPlansFetcher.deleteTableSchema(schema.id).then(() => {
+      this.handleSchemaModalShow()
+    })
+  }
+
   rowGetter(idx) {
     return this.props.field.value.rows[idx]
   }
@@ -213,47 +266,65 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   render() {
     const { field } = this.props
     const { rows, columns } = field.value
-    const { showModal } = this.state
+    const { columnNameModal, schemaModal } = this.state
     const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[0]
 
     return (
       <div>
-        <ReactDataGrid
-          columns={columns}
-          rowGetter={this.rowGetter.bind(this)}
-          rowsCount={rows.length}
-          minHeight={272}
-          onGridRowsUpdated={event => this.handleEdit(event)}
-          enableCellSelect={true}
-          editorPortalTarget={editorPortalTarget}
-          cellRangeSelection={{
-            onComplete: this.handleRangeSelection.bind(this),
-          }}
-          onCellSelected={this.handleCellSelected.bind(this)}
-          onCellDeSelected={this.handleCellDeSelected.bind(this)}
-          onColumnResize={this.handleColumnResize.bind(this)}
-          toolbar={
-            <ResearchPlanDetailsFieldTableToolbar
-
-            />
-          }
-          contextMenu={
-            <ResearchPlanDetailsFieldTableContextMenu
-              onColumnInsertLeft={(event, { idx }) => this.handleColumnNameModalOpen('insert', idx)}
-              onColumnInsertRight={(event, { idx }) => this.handleColumnNameModalOpen('insert', idx + 1)}
-              onColumnRename={(event, { idx }) => this.handleColumnNameModalOpen('rename', idx)}
-              onColumnDelete={(event, { idx }) => this.handleColumnDelete(idx)}
-              onRowInsertAbove={(event, { rowIdx }) => this.handleRowInsert(rowIdx)}
-              onRowInsertBelow={(event, { rowIdx }) => this.handleRowInsert(rowIdx + 1)}
-              onRowDelete={(event, { rowIdx }) => this.handleRowDelete(rowIdx)}
-            />
-          }
-          RowsContainer={ContextMenuTrigger}
-        />
+        <div className="research-plan-table-grid">
+          <ReactDataGrid
+            columns={columns}
+            rowGetter={this.rowGetter.bind(this)}
+            rowsCount={rows.length}
+            minHeight={272}
+            onGridRowsUpdated={event => this.handleEdit(event)}
+            enableCellSelect={true}
+            editorPortalTarget={editorPortalTarget}
+            // cellRangeSelection={{
+            //   onComplete: this.handleRangeSelection.bind(this),
+            // }}
+            onCellSelected={this.handleCellSelected.bind(this)}
+            onCellDeSelected={this.handleCellDeSelected.bind(this)}
+            onColumnResize={this.handleColumnResize.bind(this)}
+            contextMenu={
+              <ResearchPlanDetailsFieldTableContextMenu
+                onColumnInsertLeft={(event, { idx }) => this.handleColumnNameModalShow('insert', idx)}
+                onColumnInsertRight={(event, { idx }) => this.handleColumnNameModalShow('insert', idx + 1)}
+                onColumnRename={(event, { idx }) => this.handleColumnNameModalShow('rename', idx)}
+                onColumnDelete={(event, { idx }) => this.handleColumnDelete(idx)}
+                onRowInsertAbove={(event, { rowIdx }) => this.handleRowInsert(rowIdx)}
+                onRowInsertBelow={(event, { rowIdx }) => this.handleRowInsert(rowIdx + 1)}
+                onRowDelete={(event, { rowIdx }) => this.handleRowDelete(rowIdx)}
+              />
+            }
+            RowsContainer={ContextMenuTrigger}
+          />
+        </div>
+        <div className="research-plan-table-toolbar">
+          <Row>
+            <Col lg={3}>
+              <Button bsSize="xsmall" onClick={this.handleSchemaModalShow.bind(this)}>
+                Table schemas
+              </Button>
+            </Col>
+            <Col lg={3} lgOffset={6}>
+              <Button bsSize="xsmall">
+                Export as Excel
+              </Button>
+            </Col>
+          </Row>
+        </div>
         <ResearchPlanDetailsFieldTableColumnNameModal
-          showModal={showModal}
-          columns={columns}
-          onSubmit={this.handleColumnNameModalSubmit.bind(this)}/>
+          modal={columnNameModal}
+          onSubmit={this.handleColumnNameModalSubmit.bind(this)}
+          onHide={this.handleColumnNameModalHide.bind(this)}
+          columns={columns} />
+        <ResearchPlanDetailsFieldTableSchemasModal
+          modal={schemaModal}
+          onSubmit={this.handleSchemasModalSubmit.bind(this)}
+          onHide={this.handleSchemasModalHide.bind(this)}
+          onUse={this.handleSchemasModalUse.bind(this)}
+          onDelete={this.handleSchemasModalDelete.bind(this)} />
       </div>
     )
   }

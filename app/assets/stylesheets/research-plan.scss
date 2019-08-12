@@ -77,7 +77,22 @@
     }
 
     .research-plan-table-toolbar {
-        margin-bottom: 10px;
+        margin-top: 10px;
+
+        button {
+            width: 100%;
+        }
+    }
+}
+
+.research-plan-table-schema-modal-create {
+    margin-bottom: 40px;
+}
+
+.research-plan-table-schema-modal-table {
+    button {
+        float: right;
+        margin-left: 5px;
     }
 }
 
