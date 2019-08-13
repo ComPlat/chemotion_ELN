@@ -203,7 +203,7 @@ group :test do
   gem 'factory_bot_rails', '~>4.11'
 
   gem 'capybara', '~> 3.10.0'
-  gem 'chromedriver-helper', '2.1.0'
+  gem 'webdrivers', '~> 4.1.2'
   gem 'faker', '~> 1.6.6'
   gem 'headless', '2.0.0'
   gem 'launchy', '~> 2.4.3'
