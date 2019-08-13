@@ -148,7 +148,6 @@ gem 'prawn-svg'
 gem 'rqrcode'
 
 gem 'countries'
-gem 'gman'
 gem 'ruby-mailchecker'
 gem 'swot'
 
@@ -195,7 +194,7 @@ group :development, :test do
   # gem 'capistrano3-delayed-job'
   gem 'slackistrano'
   gem 'rubyXL', '3.3.26'
-  gem 'chronic_duration'
+  gem 'chronic'
 end
 
 group :test do
