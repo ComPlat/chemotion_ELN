@@ -12,9 +12,32 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
 
 const { ContextMenuTrigger } = Menu
 
+// regexp to parse tap separated paste from the clipboard
 const defaultParsePaste = str => (
   str.split(/\r\n|\n|\r/).map(row => row.split('\t'))
 )
+
+// Monkey path for ReactDataGrid
+// see https://github.com/adazzle/react-data-grid/issues/1416#issuecomment-445488607
+// this works for react-data-grid 6.1.0, hopefully it will be fixed in the future
+class FixedReactDataGrid extends ReactDataGrid {
+  componentDidMount() {
+    this._mounted = true;
+    // store the data grid, assumes only one react datagrid component exists
+    this.dataGridComponent = document.getElementsByClassName('react-grid-Container')[0]
+    window.addEventListener('resize', this.metricsUpdated);
+    if (this.props.cellRangeSelection) {
+      this.dataGridComponent.addEventListener('mouseup', this.onWindowMouseUp);
+    }
+    this.metricsUpdated();
+  }
+
+  componentWillUnmount() {
+    this._mounted = false;
+    window.removeEventListener('resize', this.metricsUpdated);
+    this.dataGridComponent.removeEventListener('mouseup', this.onWindowMouseUp);
+  }
+}
 
 export default class ResearchPlanDetailsFieldTable extends Component {
 
@@ -272,7 +295,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     return (
       <div>
         <div className="research-plan-table-grid">
-          <ReactDataGrid
+          <FixedReactDataGrid
             columns={columns}
             rowGetter={this.rowGetter.bind(this)}
             rowsCount={rows.length}
@@ -280,9 +303,9 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             onGridRowsUpdated={event => this.handleEdit(event)}
             enableCellSelect={true}
             editorPortalTarget={editorPortalTarget}
-            // cellRangeSelection={{
-            //   onComplete: this.handleRangeSelection.bind(this),
-            // }}
+            cellRangeSelection={{
+              onComplete: this.handleRangeSelection.bind(this),
+            }}
             onCellSelected={this.handleCellSelected.bind(this)}
             onCellDeSelected={this.handleCellDeSelected.bind(this)}
             onColumnResize={this.handleColumnResize.bind(this)}
