@@ -31,6 +31,7 @@ import ResearchPlan from './models/ResearchPlan';
 import Literature from './models/Literature';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
 import UserStore from './stores/UserStore';
+import NotificationActions from './actions/NotificationActions';
 
 
 
@@ -250,6 +251,7 @@ export default class DetailsTabLiteratures extends Component {
 
   fetchDOIMetadata() {
     const { doi } = this.state.literature;
+    NotificationActions.removeByUid('literature');
     Cite.inputAsync(sanitizeDoi(doi)).then((json) => {
       if (json[0]) {
         const citation = new Cite(json[0]);
@@ -266,7 +268,19 @@ export default class DetailsTabLiteratures extends Component {
             }
           }
         }));
+        this.handleLiteratureAdd(this.state.literature);
       }
+    }).catch((errorMessage) => {
+      const notification = {
+        title: 'Add Literature',
+        message: `unable to fetch metadata for this doi: ${doi}`,
+        level: 'error',
+        dismissible: 'button',
+        autoDismiss: 5,
+        position: 'tr',
+        uid: 'literature'
+      };
+      NotificationActions.add(notification);
     });
   }
 
@@ -285,11 +299,14 @@ export default class DetailsTabLiteratures extends Component {
             </Col>
             <Col md={1} style={{ paddingRight: 0 }}>
               <Button
+                bsStyle="success"
+                bsSize="small"
+                style={{ marginTop: 2 }}
                 onClick={this.fetchDOIMetadata}
-                title="fetch metadata for this doi"
+                title="fetch metadata for this doi and add citation to selection"
                 disabled={!doiValid(literature.doi)}
               >
-                <Glyphicon glyph="retweet" />
+                <i className="fa fa-plus" />
               </Button>
             </Col>
             <Col md={12} style={{ paddingRight: 0 }}>
