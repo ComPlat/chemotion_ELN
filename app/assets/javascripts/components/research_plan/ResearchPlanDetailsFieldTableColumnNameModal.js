@@ -7,11 +7,25 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   constructor(props) {
     super(props);
 
-    const { columnName } = this.props
-
     this.state = {
-      columnNameValue: columnName ? columnName : '',
+      columnNameValue: '',
       columnNameError: ''
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props != prevProps) {
+      const { modal, columns } = this.props
+
+      let columnNameValue = ''
+      if (modal.action == 'rename') {
+        columnNameValue = columns[modal.idx].name
+      }
+
+      this.setState({
+        columnNameValue: columnNameValue,
+        columnNameError: ''
+      })
     }
   }
 
