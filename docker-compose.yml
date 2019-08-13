@@ -12,7 +12,7 @@ services:
       - /var/lib/postgresql
 
   postgres:
-    image: 'postgres:9.5'
+    image: 'postgres:10.10'
     environment:
       POSTGRES_PASSWORD: 3x4mpl3
 
