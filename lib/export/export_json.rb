@@ -209,7 +209,7 @@ module Export
           , (
               select array_to_json(array_agg(row_to_json(attachment)))
               from (
-                select att.filename, att.identifier, att.checksum, att.content_type
+                select att.filename, att.identifier, att.checksum, att.content_type, case att.aasm_state when 'oo_editing' then null else att.aasm_state end as aasm_state
                 from attachments att
                 where att.attachable_id = datc.id and att.attachable_type = 'Container'
               ) attachment

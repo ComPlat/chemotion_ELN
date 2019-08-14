@@ -253,6 +253,7 @@ class Import::ImportJson
         @new_attachments[att['identifier']] = Attachment.new(
           filename: att['filename'],
           content_type: att['content_type'],
+          aasm_state: att['aasm_state'],
           # identifier: att['identifier'],
           checksum: att['checksum'],
           attachable_id: new_a.id,
