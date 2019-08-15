@@ -5,7 +5,12 @@ begin
     config.editors = ActiveSupport::OrderedOptions.new
     config.editors.docserver = editors_config[:docserver] if editors_config
     config.editors.info = editors_config[:info] if editors_config
-    config.editors.docserver_api = config.editors.docserver[:protocol] + '://' + config.editors.docserver[:host] + ':' + config.editors.docserver[:port] + config.editors.docserver[:api]
+    location = URI.join(editors_config[:docserver][:uri], editors_config[:docserver][:api])
+    if location.is_a?(URI::HTTP)
+      config.editors.docserver_api = location.to_s
+    else
+      config.editors = nil
+    end
   end
 rescue StandardError => e
   Rails.logger.error e.message

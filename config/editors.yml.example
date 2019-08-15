@@ -1,10 +1,8 @@
 development:
   :docserver:
     :enable: true
-    :protocol: 'http'
-    :host: 'document_server'
-    :port: '80'
-    :api: '/web-apps/apps/api/documents/api.js'
+    :uri: 'http://localhost:5555/'
+    :api: 'web-apps/apps/api/documents/api.js'
     :callback_server: 'http://localhost:3000'
     :ext:
       :text:
@@ -27,12 +25,10 @@ development:
 
 production:
   :docserver:
-    :enable: true
-    :protocol: 'http'
-    :host: 'document_server'
-    :port: '80'
-    :api: '/web-apps/apps/api/documents/api.js'
-    :callback_server: 'http://localhost:3000'
+    :enable: false
+    :uri: 'http://onlyoffice.server.address/optional_virtual_path/'
+    :api: 'web-apps/apps/api/documents/api.js'
+    :callback_server: 'http://eln.server.address'
     :ext:
       :text:
         - 'doc'
@@ -50,4 +46,4 @@ production:
     :logo: 'https://www.chemotion.net/images/repo/chemotion_full.svg'
     :mail: 'chemotion@ioc.kit.edu'
     :website: 'www.chemotion.net'
-    :feedbackurl: 'https://git.scc.kit.edu/ComPlat/chemotion_ELN_support/boards'
+    :feedbackurl: ''
