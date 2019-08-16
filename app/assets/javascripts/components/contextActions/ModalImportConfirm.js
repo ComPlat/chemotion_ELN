@@ -224,7 +224,7 @@ export default class ModalImportConfirm extends React.Component {
     return (
       <div style={{width:'80%',height:'80%', margin:'auto'}}>
 
-        <div className="ag-bootstrap" style={{height: '500px'}} >
+        <div className="ag-theme-bootstrap" style={{height: '500px'}} >
           <AgGridReact
             columnDefs={columns.columnDefs}
             defaultColDef={columns.defaultColDef}
