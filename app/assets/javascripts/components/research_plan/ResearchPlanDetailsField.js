@@ -13,7 +13,7 @@ import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable'
 export default class ResearchPlanDetailsField extends Component {
 
   render() {
-    let { field, index, disabled, onChange, onDrop, onDelete, update } = this.props
+    let { field, index, disabled, onChange, onDrop, onDelete, update, edit } = this.props
 
     let label, component
     switch (field.type) {
@@ -21,48 +21,57 @@ export default class ResearchPlanDetailsField extends Component {
         label = 'Text'
         component = <ResearchPlanDetailsFieldRichText key={field.id}
                               field={field} index={index} disabled={disabled}
-                              onChange={onChange.bind(this)} />
+                              onChange={onChange.bind(this)} edit={edit} />
         break;
       case 'ketcher':
         label = 'Schema'
         component = <ResearchPlanDetailsFieldKetcher key={field.id}
                               field={field} index={index} disabled={disabled}
-                              onChange={onChange.bind(this)} />
+                              onChange={onChange.bind(this)} edit={edit} />
         break;
       case 'image':
         label = 'Image'
         component = <ResearchPlanDetailsFieldImage key={field.id}
                               field={field} index={index} disabled={disabled}
-                              onChange={onChange.bind(this)} />
+                              onChange={onChange.bind(this)} edit={edit} />
         break;
       case 'table':
         label = 'Table'
         component = <ResearchPlanDetailsFieldTable key={field.id}
                               field={field} index={index} disabled={disabled}
-                              onChange={onChange.bind(this)} update={update} />
+                              onChange={onChange.bind(this)} update={update} edit={edit} />
         break;
     }
 
-    return (
-      <Row>
-        <Col md={12}>
-          <ResearchPlanDetailsDropTarget index={index}/>
-        </Col>
-        <Col md={12}>
-          <div className="field">
-            <Button className="pull-right" bsStyle="danger" bsSize="xsmall"
-              onClick={() => onDelete(field.id)} >
-                <i className="fa fa-times"></i>
-            </Button>
-            <ResearchPlanDetailsDragSource index={index} onDrop={onDrop.bind(this)}/>
-            <ControlLabel>{label}</ControlLabel>
+    if (edit) {
+      return (
+        <Row>
+          <Col md={12}>
+            <ResearchPlanDetailsDropTarget index={index}/>
+          </Col>
+          <Col md={12}>
+            <div className="field">
+              <Button className="pull-right" bsStyle="danger" bsSize="xsmall"
+                onClick={() => onDelete(field.id)} >
+                  <i className="fa fa-times"></i>
+              </Button>
+              <ResearchPlanDetailsDragSource index={index} onDrop={onDrop.bind(this)}/>
+              <ControlLabel>{label}</ControlLabel>
+              {component}
+            </div>
+          </Col>
+        </Row>
+      )
+    } else {
+      return (
+        <Row>
+          <Col md={12}>
             {component}
-          </div>
-        </Col>
-      </Row>
-    )
+          </Col>
+        </Row>
+      )
+    }
   }
-
 }
 
 ResearchPlanDetailsField.propTypes = {

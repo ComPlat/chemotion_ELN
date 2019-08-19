@@ -72,16 +72,26 @@
         }
     }
 
-    .ql-hidden {
-        display: none;
-    }
-
     .research-plan-table-toolbar {
         margin-top: 10px;
 
         button {
             width: 100%;
         }
+    }
+}
+
+.research-plan-details-static {
+    .row {
+        margin-bottom: 20px;
+    }
+
+    .ql-editor {
+        padding: 0;
+    }
+
+    .ql-hidden {
+        display: none;
     }
 }
 

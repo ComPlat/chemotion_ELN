@@ -5,19 +5,23 @@ import { ControlLabel, FormControl, FormGroup, Row, Col } from 'react-bootstrap'
 export default class ResearchPlanDetailsName extends Component {
 
   render() {
-    let { value, disabled, onChange } = this.props
+    const { value, disabled, onChange, edit } = this.props
 
-    return (
-      <FormGroup>
-        <ControlLabel>Name</ControlLabel>
-        <FormControl
-          type="text"
-          value={value || ''}
-          onChange={(event) => onChange(event.target.value)}
-          disabled={disabled}
-        />
-      </FormGroup>
-    )
+    if (edit) {
+      return (
+        <FormGroup>
+          <ControlLabel>Name</ControlLabel>
+          <FormControl
+            type="text"
+            value={value || ''}
+            onChange={(event) => onChange(event.target.value)}
+            disabled={disabled}
+          />
+        </FormGroup>
+      )
+    } else {
+      return <h4>{value}</h4>
+    }
   }
 
 }

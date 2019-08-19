@@ -290,7 +290,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     return this.props.field.value.rows[idx]
   }
 
-  render() {
+  renderEdit() {
     const { field } = this.props
     const { rows, columns } = field.value
     const { columnNameModal, schemaModal } = this.state
@@ -355,6 +355,47 @@ export default class ResearchPlanDetailsFieldTable extends Component {
           onDelete={this.handleSchemasModalDelete.bind(this)} />
       </div>
     )
+  }
+
+  renderStatic() {
+    const { field } = this.props
+    const { columns, rows } = field.value
+
+    const th = columns.map(column => {
+      return <th key={column.key}>{column.name}</th>
+    })
+
+    const tr = rows.map((row, index) => {
+      const td = columns.map(column => {
+        return <td key={column.key}>{row[column.key]}</td>
+      })
+      return (
+        <tr key={index}>
+          {td}
+        </tr>
+      )
+    })
+
+    return (
+      <table className="table table-bordered">
+        <thead>
+          <tr>
+            {th}
+          </tr>
+        </thead>
+        <tbody>
+          {tr}
+        </tbody>
+      </table>
+    )
+  }
+
+  render() {
+    if (this.props.edit) {
+      return this.renderEdit()
+    } else {
+      return this.renderStatic()
+    }
   }
 }
 

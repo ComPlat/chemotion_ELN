@@ -78,6 +78,15 @@ export default class ResearchPlan extends Element {
           }
         })
         break;
+      case 'sample':
+        this.body.push({
+          id: uuidv4(),
+          type: 'sample',
+          value: {
+            sample_id: null
+          }
+        })
+        break;
     }
   }
 

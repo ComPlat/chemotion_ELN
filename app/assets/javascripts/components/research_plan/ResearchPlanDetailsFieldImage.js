@@ -19,7 +19,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     });
   }
 
-  render() {
+  renderEdit() {
     let { field } = this.props
 
     let content
@@ -46,6 +46,24 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     );
   }
 
+  renderStatic() {
+    const { field } = this.props
+    const src = '/images/research_plans/' + field.value.public_name
+
+    return (
+      <div className="image-container">
+        <img src={src} alt={field.value.file_name} />
+      </div>
+    )
+  }
+
+  render() {
+    if (this.props.edit) {
+      return this.renderEdit()
+    } else {
+      return this.renderStatic()
+    }
+  }
 }
 
 ResearchPlanDetailsFieldImage.propTypes = {

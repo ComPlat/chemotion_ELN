@@ -9,7 +9,7 @@ import Field from './ResearchPlanDetailsField'
 export default class ResearchPlanDetailsBody extends Component {
 
   render() {
-    let { body, disabled, onChange, onDrop, onAdd, onDelete, update } = this.props
+    let { body, disabled, onChange, onDrop, onAdd, onDelete, update, edit } = this.props
 
     let fields = body.map((field, index) => {
         return <Field key={field.id}
@@ -17,25 +17,34 @@ export default class ResearchPlanDetailsBody extends Component {
                       onChange={onChange.bind(this)}
                       onDrop={onDrop.bind(this)}
                       onDelete={onDelete.bind(this)}
-                      update={update} />
+                      update={update}
+                      edit={edit} />
     })
 
-    return (
-      <div className="research-plan-details-body">
-        {fields}
-        <Row>
-          <Col md={12}>
-            <ResearchPlanDetailsDropTarget index={fields.length}/>
-            <div>
-              <ControlLabel>Add field</ControlLabel>
+    if (edit) {
+      return (
+        <div className="research-plan-details-body">
+          {fields}
+          <Row>
+            <Col md={12}>
+              <ResearchPlanDetailsDropTarget index={fields.length}/>
               <div>
-                <ResearchPlanDetailsAddField onAdd={onAdd}/>
+                <ControlLabel>Add field</ControlLabel>
+                <div>
+                  <ResearchPlanDetailsAddField onAdd={onAdd}/>
+                </div>
               </div>
-            </div>
-          </Col>
-        </Row>
-      </div>
-    )
+            </Col>
+          </Row>
+        </div>
+      )
+    } else {
+      return (
+        <div className="research-plan-details-static">
+          {fields}
+        </div>
+      )
+    }
   }
 }
 

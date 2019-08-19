@@ -77,7 +77,7 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
     )
   }
 
-  render() {
+  renderEdit() {
     let { field, disabled } = this.state
 
     let className, svgPath
@@ -100,6 +100,25 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
         {this.renderStructureEditorModal(field)}
       </div>
     )
+  }
+
+  renderStatic() {
+    const { field } = this.state
+    const svgPath = '/images/research_plans/' + field.value.svg_file
+
+    return (
+      <div className="svg-container-static">
+        <SVG src={svgPath} className="molecule-mid" />
+      </div>
+    )
+  }
+
+  render() {
+    if (this.props.edit) {
+      return this.renderEdit()
+    } else {
+      return this.renderStatic()
+    }
   }
 }
 

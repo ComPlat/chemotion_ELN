@@ -2,11 +2,12 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import QuillEditor from '../QuillEditor'
+import QuillViewer from '../QuillViewer'
 
 export default class ResearchPlanDetailsFieldRichText extends Component {
 
-  render() {
-    let { field, index, disabled, onChange } = this.props
+  renderEdit() {
+    const { field, index, disabled, onChange } = this.props
 
     return (
       <QuillEditor value={field.value}
@@ -16,6 +17,19 @@ export default class ResearchPlanDetailsFieldRichText extends Component {
     )
   }
 
+  renderStatic() {
+    const { field } = this.props
+
+    return <QuillViewer value={field.value} />
+  }
+
+  render() {
+    if (this.props.edit) {
+      return this.renderEdit()
+    } else {
+      return this.renderStatic()
+    }
+  }
 }
 
 ResearchPlanDetailsFieldRichText.propTypes = {

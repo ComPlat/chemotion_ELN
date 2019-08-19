@@ -19,7 +19,6 @@ import ConfirmClose from './common/ConfirmClose';
 import ResearchPlanDetailsAttachments from './ResearchPlanDetailsAttachments';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
-import ResearchPlanDetailsStatic from './ResearchPlanDetailsStatic';
 
 
 export default class ResearchPlanDetails extends Component {
@@ -28,7 +27,7 @@ export default class ResearchPlanDetails extends Component {
     const { research_plan } = props;
     this.state = {
       research_plan,
-      edit: true,
+      edit: false,
       update: false
     };
   }
@@ -195,7 +194,7 @@ export default class ResearchPlanDetails extends Component {
 
   renderPropertiesTab(research_plan) {
     const { name, body, attachments } = research_plan
-    const { update } = this.state
+    const { update, edit } = this.state
     const submitLabel = research_plan.isNew ? "Create" : "Save"
 
     return (
@@ -203,7 +202,8 @@ export default class ResearchPlanDetails extends Component {
         <ListGroupItem>
           <ResearchPlanDetailsName value={name}
               disabled={research_plan.isMethodDisabled('name')}
-              onChange={this.handleNameChange.bind(this)} />
+              onChange={this.handleNameChange.bind(this)}
+              edit={edit} />
 
           <ResearchPlanDetailsBody body={body}
               disabled={research_plan.isMethodDisabled('body')}
@@ -211,14 +211,16 @@ export default class ResearchPlanDetails extends Component {
               onDrop={this.handleBodyDrop.bind(this)}
               onAdd={this.handleBodyAdd.bind(this)}
               onDelete={this.handleBodyDelete.bind(this)}
-              update={update} />
+              update={update}
+              edit={edit} />
 
           <ResearchPlanDetailsAttachments attachments={attachments}
               onDrop={this.handleAttachmentDrop.bind(this)}
               onDelete={this.handleAttachmentDelete.bind(this)}
               onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
               onDownload={this.handleAttachmentDownload.bind(this)}
-              onEdit={this.handleAttachmentEdit.bind(this)} />
+              onEdit={this.handleAttachmentEdit.bind(this)}
+              edit={edit} />
         </ListGroupItem>
       </ListGroup>
     );
@@ -280,36 +282,26 @@ export default class ResearchPlanDetails extends Component {
   }
 
   renderPanelBody(research_plan, edit) {
-    if (edit) {
-      const submitLabel = research_plan.isNew ? "Create" : "Save"
+    const submitLabel = research_plan.isNew ? "Create" : "Save"
 
-      return (
-        <Panel.Body>
-          {this.renderResearchPlanInfo(research_plan)}
-          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
-             id="screen-detail-tab">
-            <Tab eventKey={0} title={'Properties'}>
-              {this.renderPropertiesTab(research_plan)}
-            </Tab>
-            <Tab eventKey={1} title={'Literature'}>
-              {this.renderLiteratureTab(research_plan)}
-            </Tab>
-          </Tabs>
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(research_plan)}>Close</Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
-          </ButtonToolbar>
-        </Panel.Body>
-      )
-    } else {
-      const { name, body } = research_plan
-
-      return (
-        <Panel.Body>
-          <ResearchPlanDetailsStatic name={name} body={body} />
-        </Panel.Body>
-      )
-    }
+    return (
+      <Panel.Body>
+        {this.renderResearchPlanInfo(research_plan)}
+        <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
+           id="screen-detail-tab">
+          <Tab eventKey={0} title={'Properties'}>
+            {this.renderPropertiesTab(research_plan)}
+          </Tab>
+          <Tab eventKey={1} title={'Literature'}>
+            {this.renderLiteratureTab(research_plan)}
+          </Tab>
+        </Tabs>
+        <ButtonToolbar>
+          <Button bsStyle="primary" onClick={() => DetailActions.close(research_plan)}>Close</Button>
+          <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
+        </ButtonToolbar>
+      </Panel.Body>
+    )
   }
 
   render() {
