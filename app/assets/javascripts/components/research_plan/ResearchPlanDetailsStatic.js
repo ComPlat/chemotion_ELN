@@ -31,12 +31,45 @@ export default class ResearchPlanDetailsStatic extends Component {
           break;
 
         case 'image':
-          let src = '/images/research_plans/' + field.value.public_name
+          const src = '/images/research_plans/' + field.value.public_name
           html = (
             <div className="image-container">
               <img src={src} alt={field.value.file_name} />
             </div>
           )
+          break;
+
+        case 'table':
+          const { columns, rows } = field.value
+
+          const column_html = columns.map(column => {
+            return <th key={column.key}>{column.name}</th>
+          })
+
+          const rows_html = rows.map((row, index) => {
+            const row_html = columns.map(column => {
+              return <td key={column.key}>{row[column.key]}</td>
+            })
+            return (
+              <tr key={index}>
+                {row_html}
+              </tr>
+            )
+          })
+
+          html = (
+            <table className="table table-bordered">
+              <thead>
+                <tr>
+                  {column_html}
+                </tr>
+              </thead>
+              <tbody>
+                {rows_html}
+              </tbody>
+            </table>
+          )
+          break;
       }
 
       return (

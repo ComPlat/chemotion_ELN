@@ -23,11 +23,9 @@ const defaultParsePaste = str => (
 class FixedReactDataGrid extends ReactDataGrid {
   componentDidMount() {
     this._mounted = true;
-    // store the data grid, assumes only one react datagrid component exists
-    this.dataGridComponent = document.getElementsByClassName('react-grid-Container')[0]
     window.addEventListener('resize', this.metricsUpdated);
     if (this.props.cellRangeSelection) {
-      this.dataGridComponent.addEventListener('mouseup', this.onWindowMouseUp);
+      this.grid.addEventListener('mouseup', this.onWindowMouseUp);
     }
     this.metricsUpdated();
   }
@@ -35,7 +33,7 @@ class FixedReactDataGrid extends ReactDataGrid {
   componentWillUnmount() {
     this._mounted = false;
     window.removeEventListener('resize', this.metricsUpdated);
-    this.dataGridComponent.removeEventListener('mouseup', this.onWindowMouseUp);
+    this.grid.removeEventListener('mouseup', this.onWindowMouseUp);
   }
 }
 
@@ -57,6 +55,8 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
     document.addEventListener('copy', this.handleCopy.bind(this))
     document.addEventListener('paste', this.handlePaste.bind(this))
+
+    this.ref = React.createRef()
 
     this.handleCellSelected = this.handleCellSelected.bind(this)
     this.handleCellDeSelected = this.handleCellDeSelected.bind(this)
@@ -195,53 +195,57 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   handlePaste(event) {
-    event.preventDefault();
+    if (this.ref.current.grid.contains(document.activeElement)) {
+      event.preventDefault();
 
-    const { field, onChange } = this.props
-    const { selected } = this.state;
+      const { field, onChange } = this.props
+      const { selected } = this.state;
 
-    const newRows = [];
-    const pasteData = defaultParsePaste(event.clipboardData.getData('text/plain'));
+      const newRows = [];
+      const pasteData = defaultParsePaste(event.clipboardData.getData('text/plain'));
 
-    const colIdx = selected.idx
-    const rowIdx = selected.rowIdx
+      const colIdx = selected.idx
+      const rowIdx = selected.rowIdx
 
-    pasteData.forEach((row) => {
-      const rowData = {};
-      // Merge the values from pasting and the keys from the columns
-      field.value.columns.slice(colIdx, colIdx + row.length).forEach((col, j) => {
-          // Create the key-value pair for the row
-          rowData[col.key] = row[j];
-        });
-      // Push the new row to the changes
-      newRows.push(rowData);
-    });
+      pasteData.forEach((row) => {
+        const rowData = {};
+        // Merge the values from pasting and the keys from the columns
+        field.value.columns.slice(colIdx, colIdx + row.length).forEach((col, j) => {
+            // Create the key-value pair for the row
+            rowData[col.key] = row[j];
+          });
+        // Push the new row to the changes
+        newRows.push(rowData);
+      });
 
-    for (let i = 0; i < newRows.length; i++) {
-      if (rowIdx + i < field.value.rows.length) {
-        field.value.rows[rowIdx + i] = { ...field.value.rows[rowIdx + i], ...newRows[i] };
+      for (let i = 0; i < newRows.length; i++) {
+        if (rowIdx + i < field.value.rows.length) {
+          field.value.rows[rowIdx + i] = { ...field.value.rows[rowIdx + i], ...newRows[i] };
+        }
       }
-    }
 
-    onChange(field.value, field.id)
+      onChange(field.value, field.id)
+    }
   }
 
   handleCopy(event) {
-    event.preventDefault();
+    if (this.ref.current.grid.contains(document.activeElement)) {
+      event.preventDefault();
 
-    const { columns } = this.props.field.value
-    const { selection } = this.state;
+      const { columns } = this.props.field.value
+      const { selection } = this.state;
 
-    // Loop through each row
-    const text = range(selection.topLeft.rowIdx, selection.bottomRight.rowIdx + 1).map(
-      // Loop through each column
-      rowIdx => columns.slice(selection.topLeft.idx, selection.bottomRight.idx + 1).map(
-        // Grab the row values and make a text string
-        col => this.rowGetter(rowIdx)[col.key],
-      ).join('\t'),
-    ).join('\n')
+      // Loop through each row
+      const text = range(selection.topLeft.rowIdx, selection.bottomRight.rowIdx + 1).map(
+        // Loop through each column
+        rowIdx => columns.slice(selection.topLeft.idx, selection.bottomRight.idx + 1).map(
+          // Grab the row values and make a text string
+          col => this.rowGetter(rowIdx)[col.key],
+        ).join('\t'),
+      ).join('\n')
 
-    event.clipboardData.setData('text/plain', text);
+      event.clipboardData.setData('text/plain', text);
+    }
   }
 
   handleSchemaModalShow() {
@@ -296,6 +300,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       <div>
         <div className="research-plan-table-grid">
           <FixedReactDataGrid
+            ref={this.ref}
             columns={columns}
             rowGetter={this.rowGetter.bind(this)}
             rowsCount={rows.length}
