@@ -2,6 +2,7 @@ export default {
   WELL: 'well',
   SAMPLE: 'sample',
   MATERIAL: 'material',
+  REACTION: 'reaction',
   WELLPLATE: 'wellplate',
   MOLECULE: 'molecule',
   RESEARCH_PLAN: 'research_plan',

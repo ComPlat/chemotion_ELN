@@ -10,6 +10,8 @@ import ResearchPlanDetailsFieldKetcher from './ResearchPlanDetailsFieldKetcher'
 import ResearchPlanDetailsFieldImage from './ResearchPlanDetailsFieldImage'
 import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable'
 import ResearchPlanDetailsFieldSample from './ResearchPlanDetailsFieldSample'
+import ResearchPlanDetailsFieldReaction from './ResearchPlanDetailsFieldReaction'
+
 
 export default class ResearchPlanDetailsField extends Component {
 
@@ -45,6 +47,12 @@ export default class ResearchPlanDetailsField extends Component {
       case 'sample':
         label = 'Sample'
         component = <ResearchPlanDetailsFieldSample key={field.id}
+                              field={field} index={index} disabled={disabled}
+                              onChange={onChange.bind(this)} edit={edit} />
+        break;
+      case 'reaction':
+        label = 'Reaction'
+        component = <ResearchPlanDetailsFieldReaction key={field.id}
                               field={field} index={index} disabled={disabled}
                               onChange={onChange.bind(this)} edit={edit} />
         break;

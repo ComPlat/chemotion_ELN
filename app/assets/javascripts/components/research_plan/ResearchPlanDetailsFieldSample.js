@@ -16,8 +16,7 @@ const MWPrecision = 6;
 const spec = {
   drop(props, monitor) {
     const { field, onChange } = props
-    const sample = monitor.getItem().element
-    onChange({ sample_id: sample.id }, field.id)
+    onChange({ sample_id: monitor.getItem().element.id }, field.id)
   }
 }
 
@@ -56,6 +55,12 @@ class ResearchPlanDetailsFieldSample extends Component {
     })
   }
 
+  showSample() {
+    const { sample } = this.state;
+    UrlSilentNavigation(sample);
+    ElementActions.fetchSampleById(sample.id);
+  }
+
   // copied from SampleDetails.js
   sampleAverageMW(sample) {
     let mw = sample.molecule_molecular_weight;
@@ -74,8 +79,9 @@ class ResearchPlanDetailsFieldSample extends Component {
       return '';
   }
 
-  // modified from SampleDetails.js
-  sampleInfo(sample) {
+  // modified from sampleInfo in SampleDetails.js
+  renderSample(sample) {
+    const { edit } = this.props
     const style = { height: '200px' };
     const pubchemLcss = sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss ?
       sample.pubchem_tag.pubchem_lcss.Record.Section[0].Section[0].Section[0].Information : null;
@@ -84,8 +90,16 @@ class ResearchPlanDetailsFieldSample extends Component {
     const lcssSign = pubchemLcss ?
       <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : <div />;
 
-    let svgPath = sample.svgPath
-    let svgClassName = svgPath ? 'svg-container' : 'svg-container-empty'
+    let link
+    if (edit) {
+      link = (
+        <p>
+          Sample: <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
+            {sample.title()}
+          </a>
+        </p>
+      )
+    }
 
     return (
       <Row style={style}>
@@ -94,29 +108,15 @@ class ResearchPlanDetailsFieldSample extends Component {
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
           {lcssSign}
-          <p>
-            Sample: <a role="link" tabIndex={0} onClick={() => this.handleSampleClick()} style={{ cursor: 'pointer' }}>
-              {sample.title()}
-            </a>
-          </p>
+          {link}
         </Col>
         <Col md={8}>
           <div>
-            <SVG src={svgPath} className="molecule-mid"/>
+            <SVG src={sample.svgPath} className="molecule-mid"/>
           </div>
         </Col>
       </Row>
     )
-  }
-
-  handleSampleClick() {
-    const { sample } = this.state;
-    UrlSilentNavigation(sample);
-    ElementActions.showReactionMaterial({ sample });
-  }
-
-  renderSample() {
-    const { sample } = this.state
   }
 
   renderEdit() {
@@ -127,28 +127,17 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (isOver) className += ' is-over'
     if (canDrop) className += ' can-drop'
 
-    let content = 'Drop Sample here.'
-    if (sample.id !== null) {
-      content = this.sampleInfo(sample)
-    }
-
     return connectDropTarget(
       <div className={className}>
-        {content}
+        {sample.id ? this.renderSample(sample) : 'Drop sample here.'}
       </div>
     )
   }
 
   renderStatic() {
-    const { field } = this.props
     const { sample } = this.state
 
-    let content = 'No sample.'
-    if (sample.id !== null) {
-      content = this.sampleInfo(sample)
-    }
-
-    return content
+    return sample.id ? this.renderSample(sample) : ''
   }
 
   render() {
@@ -167,4 +156,4 @@ ResearchPlanDetailsFieldSample.propTypes = {
   onChange: PropTypes.func,
 }
 
-export default DropTarget([DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE, DragDropItemTypes.MATERIAL], spec, collect)(ResearchPlanDetailsFieldSample);
+export default DropTarget(DragDropItemTypes.SAMPLE, spec, collect)(ResearchPlanDetailsFieldSample);

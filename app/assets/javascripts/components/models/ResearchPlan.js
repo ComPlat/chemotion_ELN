@@ -87,6 +87,15 @@ export default class ResearchPlan extends Element {
           }
         })
         break;
+      case 'reaction':
+        this.body.push({
+          id: uuidv4(),
+          type: 'reaction',
+          value: {
+            reaction_id: null
+          }
+        })
+        break;
     }
   }
 

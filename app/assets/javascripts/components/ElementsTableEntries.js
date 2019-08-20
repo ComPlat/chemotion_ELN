@@ -89,6 +89,7 @@ export default class ElementsTableEntries extends Component {
     const { currentElement } = ElementStore.getState();
     const targets = {
       sample: ['reaction', 'wellplate'],
+      reaction: ['research_plan'],
       wellplate: ['screen'],
       generalProcedure: ['reaction'],
     };
@@ -124,12 +125,17 @@ export default class ElementsTableEntries extends Component {
       el.type === 'sample' && this.isCurrEleDropType('sample');
     const isDropForWellPlate =
       el.type === 'wellplate' && this.isCurrEleDropType('wellplate');
+    const isDropForResearchPlan =
+      el.type === 'reaction' && this.isCurrEleDropType('reaction');
     const isDropForGP = el.type === 'reaction' && el.role === 'gp' &&
       this.isCurrEleDropType('generalProcedure');
+
     if (isDropForSample) {
       sourceType = DragDropItemTypes.SAMPLE;
     } else if (isDropForWellPlate) {
       sourceType = DragDropItemTypes.WELLPLATE;
+    } else if (isDropForResearchPlan) {
+      sourceType = DragDropItemTypes.REACTION;
     } else if (isDropForGP) {
       sourceType = DragDropItemTypes.GENERALPROCEDURE;
     }

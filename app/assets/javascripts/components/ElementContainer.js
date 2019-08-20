@@ -20,7 +20,7 @@ const ElementContainer = ({ connectDragSource, sourceType }) => {
     return connectDragSource(
       <span className="fa fa-home dnd-arrow-enable text-info" />,
     );
-  } else if (sourceType === DragDropItemTypes.WELLPLATE) {
+  } else if (sourceType === DragDropItemTypes.WELLPLATE || sourceType === DragDropItemTypes.REACTION) {
     return connectDragSource(
       <span className="fa fa-arrows dnd-arrow-enable text-info" />,
     );
