@@ -25,7 +25,7 @@ export default class ResearchPlanDetailsField extends Component {
                               onChange={onChange.bind(this)} edit={edit} />
         break;
       case 'ketcher':
-        label = 'Schema'
+        label = 'Ketcher schema'
         component = <ResearchPlanDetailsFieldKetcher key={field.id}
                               field={field} index={index} disabled={disabled}
                               onChange={onChange.bind(this)} edit={edit} />
