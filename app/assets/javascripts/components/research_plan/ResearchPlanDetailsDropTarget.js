@@ -23,7 +23,7 @@ class ResearchPlanDetailsDropTarget extends Component {
   render() {
     const {index, connectDropTarget, isOver, canDrop} = this.props
 
-    let className = 'drop-target'
+    let className = 'field-drop-target'
 
     if (isOver) {
       className += ' is-over'

@@ -9,6 +9,7 @@ import ResearchPlanDetailsFieldRichText from './ResearchPlanDetailsFieldRichText
 import ResearchPlanDetailsFieldKetcher from './ResearchPlanDetailsFieldKetcher'
 import ResearchPlanDetailsFieldImage from './ResearchPlanDetailsFieldImage'
 import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable'
+import ResearchPlanDetailsFieldSample from './ResearchPlanDetailsFieldSample'
 
 export default class ResearchPlanDetailsField extends Component {
 
@@ -41,36 +42,44 @@ export default class ResearchPlanDetailsField extends Component {
                               field={field} index={index} disabled={disabled}
                               onChange={onChange.bind(this)} update={update} edit={edit} />
         break;
+      case 'sample':
+        label = 'Sample'
+        component = <ResearchPlanDetailsFieldSample key={field.id}
+                              field={field} index={index} disabled={disabled}
+                              onChange={onChange.bind(this)} edit={edit} />
+        break;
     }
 
+    let dropTarget, fieldHeader
     if (edit) {
-      return (
-        <Row>
-          <Col md={12}>
-            <ResearchPlanDetailsDropTarget index={index}/>
-          </Col>
-          <Col md={12}>
-            <div className="field">
-              <Button className="pull-right" bsStyle="danger" bsSize="xsmall"
-                onClick={() => onDelete(field.id)} >
-                  <i className="fa fa-times"></i>
-              </Button>
-              <ResearchPlanDetailsDragSource index={index} onDrop={onDrop.bind(this)}/>
-              <ControlLabel>{label}</ControlLabel>
-              {component}
-            </div>
-          </Col>
-        </Row>
+      dropTarget = (
+        <Col md={12}>
+          <ResearchPlanDetailsDropTarget index={index}/>
+        </Col>
       )
-    } else {
-      return (
-        <Row>
-          <Col md={12}>
-            {component}
-          </Col>
-        </Row>
+      fieldHeader = (
+        <div className="field-header">
+          <Button className="pull-right" bsStyle="danger" bsSize="xsmall"
+            onClick={() => onDelete(field.id)} >
+              <i className="fa fa-times"></i>
+          </Button>
+          <ResearchPlanDetailsDragSource index={index} onDrop={onDrop.bind(this)}/>
+          <ControlLabel>{label}</ControlLabel>
+        </div>
       )
     }
+
+    return (
+      <Row>
+        {dropTarget}
+        <Col md={12}>
+          <div className="field">
+            {fieldHeader}
+            {component}
+          </div>
+        </Col>
+      </Row>
+    )
   }
 }
 

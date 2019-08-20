@@ -21,30 +21,31 @@ export default class ResearchPlanDetailsBody extends Component {
                       edit={edit} />
     })
 
+    let className = 'research-plan-details-static'
+    let bodyFooter
     if (edit) {
-      return (
-        <div className="research-plan-details-body">
-          {fields}
-          <Row>
-            <Col md={12}>
-              <ResearchPlanDetailsDropTarget index={fields.length}/>
+      className = 'research-plan-details-body'
+      bodyFooter = (
+        <Row>
+          <Col md={12}>
+            <ResearchPlanDetailsDropTarget index={fields.length}/>
+            <div>
+              <ControlLabel>Add field</ControlLabel>
               <div>
-                <ControlLabel>Add field</ControlLabel>
-                <div>
-                  <ResearchPlanDetailsAddField onAdd={onAdd}/>
-                </div>
+                <ResearchPlanDetailsAddField onAdd={onAdd}/>
               </div>
-            </Col>
-          </Row>
-        </div>
-      )
-    } else {
-      return (
-        <div className="research-plan-details-static">
-          {fields}
-        </div>
+            </div>
+          </Col>
+        </Row>
       )
     }
+
+    return (
+      <div className={className}>
+        {fields}
+        {bodyFooter}
+      </div>
+    )
   }
 }
 

@@ -16,7 +16,7 @@
         margin-bottom: 0;
     }
 
-    .drop-target {
+    .field-drop-target {
         height: 20px;
 
         .indicator {
@@ -77,6 +77,17 @@
 
         button {
             width: 100%;
+        }
+    }
+
+    .drop-target {
+        min-height: 50px;
+        width: 100%;
+        border: 3px dashed lightgray;
+        padding: 10px;
+
+        &.is-over {
+            border: 3px solid lightgray;
         }
     }
 }

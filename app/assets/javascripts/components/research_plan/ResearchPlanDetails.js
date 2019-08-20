@@ -27,7 +27,7 @@ export default class ResearchPlanDetails extends Component {
     const { research_plan } = props;
     this.state = {
       research_plan,
-      edit: false,
+      edit: true,
       update: false
     };
   }
