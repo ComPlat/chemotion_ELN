@@ -151,6 +151,10 @@ export default class SampleForm extends React.Component {
       { label: 'p-ortho', value: 'p-ortho' },
       { label: 'p-meta', value: 'p-meta' },
       { label: 'p-para', value: 'p-para' },
+      { label: 'cis', value: 'cis' },
+      { label: 'trans', value: 'trans' },
+      { label: 'fac', value: 'fac' },
+      { label: 'mer', value: 'mer' },
     ];
 
     const value = sample.stereo ? sample.stereo.rel : 'any';
