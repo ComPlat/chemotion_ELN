@@ -9,9 +9,8 @@ class Sample < ActiveRecord::Base
   include Taggable
 
   STEREO_ABS = ['any', 'rac', 'meso', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)'].freeze
-  STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para'].freeze
+  STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para', 'cis', 'trans', 'fac', 'mer'].freeze
   STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }.freeze
-
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
