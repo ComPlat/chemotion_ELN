@@ -195,7 +195,12 @@ export default class ElementsTableSampleEntries extends Component {
     const moleculelist = {};
     elements.forEach((sample) => {
       let samples = [];
-      const molId = `M${sample.molecule.id}_${typeof sample.stereo.abs === 'undefined' ? 'any' : sample.stereo.abs}_${typeof sample.stereo.rel === 'undefined' ? 'any' : sample.stereo.rel}`;
+      let molId = '';
+      if (sample.stereo == null) {
+        molId = `M${sample.molecule.id}_any_any`;
+      } else {
+        molId = `M${sample.molecule.id}_${typeof sample.stereo.abs === 'undefined' ? 'any' : sample.stereo.abs}_${typeof sample.stereo.rel === 'undefined' ? 'any' : sample.stereo.rel}`;
+      }
       if (moleculelist[molId]) {
         samples = moleculelist[molId];
       }
