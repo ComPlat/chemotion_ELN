@@ -60,7 +60,7 @@ module Usecases
           message = Message.create_msg_notification(
             channel_subject: Channel::COLLECTION_TAKE_OWNERSHIP,
             data_args: {new_owner: user.name, collection_name: col.label },
-            mesage_from: new_owner_id, message_to: [o_owner_id]
+            message_from: new_owner_id, message_to: [o_owner_id]
           )
         else
           c = Collection.find(@params[:id])
