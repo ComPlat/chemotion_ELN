@@ -43,6 +43,11 @@ begin
     cron_config = ENV['CRON_CONFIG_PC_LCSS'].presence
     cron_config ||= "#{rand(0..59)} #{rand(0..23)} * * #{rand(6..7)}"
     PubchemLcssJob.set(cron: cron_config).perform_later
+    Delayed::Job.where("handler like ?", "%RefreshElementTagJob%").destroy_all
+    cron_config = ENV['CRON_CONFIG_ELEMENT_TAG'].presence
+    cron_config ||= "#{rand(0..59)} #{rand(20..23)} * * #{rand(6..7)}"
+    RefreshElementTagJob.set(cron: cron_config ).perform_later
+
   end
 rescue PG::ConnectionBad => e
   puts e.message
