@@ -10,6 +10,7 @@ const extractInfer = (ai, files) => {
     dt.attachments.forEach((att) => {
       if (valids.indexOf(att.aasm_state) > -1) hasValidFiles = true;
       if (att.aasm_state !== 'json') return;
+      if (!files) return;
       const pred = files
         .map(f => (f.id === att.id ? f : null))
         .filter(r => r != null)[0];

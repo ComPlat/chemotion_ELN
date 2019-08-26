@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 import {
   BadgeNotAvailable,
@@ -9,17 +8,19 @@ import {
   BadgeDefault,
 } from './common';
 
-const tpUvc = (
-  <Tooltip id="tpUvc">
-    UV Crystal
+/*
+const tpUv = (
+  <Tooltip id="tpUv">
+    UV
   </Tooltip>
 );
 
-const tpStr = (
-  <Tooltip id="tpStr">
-    Structure
+const tpXr = (
+  <Tooltip id="tpXr">
+    X-ray
   </Tooltip>
 );
+*/
 
 const LineTitle = () => (
   <div className="card-qcsum">
@@ -28,16 +29,8 @@ const LineTitle = () => (
     <span><strong>13C</strong></span>
     <span><strong>MS</strong></span>
     <span><strong>IR</strong></span>
-    <span>
-      <OverlayTrigger placement="top" overlay={tpUvc}>
-        <strong>UVC</strong>
-      </OverlayTrigger>
-    </span>
-    <span>
-      <OverlayTrigger placement="top" overlay={tpStr}>
-        <strong>STR</strong>
-      </OverlayTrigger>
-    </span>
+    <span><strong>UV</strong></span>
+    <span><strong>X-ray</strong></span>
     <span><strong>Rf</strong></span>
   </div>
 );
