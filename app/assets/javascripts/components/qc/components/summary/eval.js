@@ -21,22 +21,22 @@ const evalMsg = (score) => {
   return 'Unknown status.';
 };
 
-const isDisabled = ({ dav, qck, conclusion }) => {
+const isDisabled = ({ dav, qck, conclusionOwn }) => {
   const { ansQck } = qck;
-  return dav === undefined && ansQck === undefined && conclusion === undefined;
+  return dav === undefined && ansQck === undefined && conclusionOwn === undefined;
 };
 
 const isIncompDf = ({ dav, qck }) => qck && dav === undefined; // no dav, yes qck
 
 const isQckGood = ({ qck }) => qck.ansQck;
 
-const isQcpGood = ({ conclusion }) => conclusion;
+const isQcpGood = ({ conclusionOwn }) => conclusionOwn;
 
-const isOnlyPrc = ({ dav, conclusion }) => dav !== undefined && conclusion === undefined;
-const isMorePrc = ({ dav, conclusion }) => dav !== undefined && conclusion !== undefined;
+const isOnlyPrc = ({ dav, conclusionOwn }) => dav !== undefined && conclusionOwn === undefined;
+const isMorePrc = ({ dav, conclusionOwn }) => dav !== undefined && conclusionOwn !== undefined;
 
 const evalScoreStd1 = (ansHnmr, ansCnmr, ansMs, ansIr) => {
-  // Disabled = no dav, no qck, no conclusion // one column black
+  // Disabled = no dav, no qck, no conclusionOwn // one column black
   const nonZeroDisabled = isDisabled(ansHnmr)
     || isDisabled(ansCnmr) || isDisabled(ansMs);
   if (nonZeroDisabled) return 'nonZeroDisabled';

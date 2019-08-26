@@ -1,7 +1,20 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Label } from 'react-bootstrap';
 
 import { iconByBool } from '../helper/icon';
+
+const iconNmr = (ansNmr) => {
+  const { conclusion, conclusionOwn } = ansNmr;
+  if (!conclusion && conclusionOwn) {
+    return (
+      <Label bsStyle="success" className="label-qc">
+        Pass due to owner correction
+      </Label>
+    );
+  }
+  return iconByBool(conclusion);
+};
 
 const BlockConclusion = ({
   ansHnmr, ansCnmr, ansMs, ansIr,
@@ -13,11 +26,11 @@ const BlockConclusion = ({
     <div className="card-qc">
       <p>
         <span>1H NMR</span>
-        { iconByBool(ansHnmr.conclusion) }
+        { iconNmr(ansHnmr) }
       </p>
       <p>
         <span>13C NMR</span>
-        { iconByBool(ansCnmr.conclusion) }
+        { iconNmr(ansCnmr) }
       </p>
       <p>
         <span>MS</span>

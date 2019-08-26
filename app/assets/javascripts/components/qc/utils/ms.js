@@ -61,9 +61,10 @@ const evaluateMs = (msQc, sample) => {
   const qcp = makeQcp(pred, sample);
   const { matchMass } = qcp;
   const conclusion = matchMass;
+  const conclusionOwn = matchMass;
 
   return {
-    exist, dav, qck, qcp, conclusion,
+    exist, dav, qck, qcp, conclusion, conclusionOwn,
   };
 };
 

@@ -102,9 +102,10 @@ const evaluateNmr = (nmrQc, sumFormula) => {
   const { ansQck } = qck;
   const { ansMac, ansOwn } = qcp;
   const conclusion = ansMac && ansOwn && ansQck;
+  const conclusionOwn = ansOwn && ansQck;
 
   return {
-    exist, dav, qck, qcp, conclusion,
+    exist, dav, qck, qcp, conclusion, conclusionOwn,
   };
 };
 

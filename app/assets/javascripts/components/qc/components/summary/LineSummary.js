@@ -45,10 +45,10 @@ const LineQcp = ({
 }) => (
   <div className="card-qcsum">
     <span className="qc-title">QC-pass</span>
-    <span>{ statusLabel(ansHnmr.conclusion) }</span>
-    <span>{ statusLabel(ansCnmr.conclusion) }</span>
-    <span>{ statusLabel(ansMs.conclusion) }</span>
-    <span>{ statusLabel(ansIr.conclusion) }</span>
+    <span>{ statusLabel(ansHnmr.conclusionOwn) }</span>
+    <span>{ statusLabel(ansCnmr.conclusionOwn) }</span>
+    <span>{ statusLabel(ansMs.conclusionOwn) }</span>
+    <span>{ statusLabel(ansIr.conclusionOwn) }</span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>

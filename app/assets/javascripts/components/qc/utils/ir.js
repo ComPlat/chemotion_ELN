@@ -78,9 +78,10 @@ const evaluateIr = (irQc) => {
     ansMac80, ansOwn80, ansMacF90, ansOwnF90,
   } = qcp;
   const conclusion = ansMac80 && ansOwn80 && ansMacF90 && ansOwnF90;
+  const conclusionOwn = ansOwn80 && ansOwnF90;
 
   return {
-    exist, dav, qck, qcp, conclusion,
+    exist, dav, qck, qcp, conclusion, conclusionOwn,
   };
 };
 
