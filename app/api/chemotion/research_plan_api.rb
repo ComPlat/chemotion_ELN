@@ -162,7 +162,7 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Research plan id"
         requires :html, type: String, desc: "Client side rendered html"
-        optional :export_format, type: Symbol, desc: "Export format", values: [:html, :docx, :latex]
+        optional :export_format, type: Symbol, desc: "Export format", values: [:docx, :odt, :html, :markdown, :latex]
       end
       route_param :id do
         before do
@@ -171,21 +171,26 @@ module Chemotion
 
         post :export do
           research_plan = ResearchPlan.find(params[:id])
-          file_name = "#{research_plan.name}.#{params[:export_format]}"
+
+          # return the response "as is"
+          env['api.format'] = :binary
 
           if params[:export_format]
-            # make src in html relative
-            params[:html].gsub! 'src="/images/', 'src="images/'
-
-            # convert using pandoc and stream as file
+            # return a file
             content_type "application/octet-stream"
-            header['Content-Disposition'] = "attachment; filename=\"#{file_name}\""
-            env['api.format'] = :binary
 
-            present PandocRuby.convert(params[:html], :from => :html, :to => params[:export_format], :resource_path => Rails.public_path)
+            # init the export object
+            export = Export::ExportResearchPlan.new params[:html], params[:export_format]
+
+            if [:html, :markdown, :latex].include? params[:export_format]
+              header['Content-Disposition'] = "attachment; filename=\"#{research_plan.name}.zip\""
+              present export.to_zip
+            else
+              header['Content-Disposition'] = "attachment; filename=\"#{research_plan.name}.#{params[:export_format]}\""
+              present export.to_file
+            end
           else
             # return plain html
-            env['api.format'] = :binary
             present params[:html]
           end
         end

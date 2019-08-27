@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from "react-dom"
 import PropTypes from 'prop-types';
-import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Row, Col, Tabs, Tab } from 'react-bootstrap';
+import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Row, Col, Tabs, Tab, Dropdown, MenuItem } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { includes, last, findKey, values } from 'lodash';
 import ElementCollectionLabels from '../ElementCollectionLabels';
@@ -180,7 +180,7 @@ export default class ResearchPlanDetails extends Component {
     this.forceUpdate();
   }
 
-  handleExport() {
+  handleExport(exportFormat) {
     const { research_plan } = this.state;
 
     const bodyElements = ReactDOM.findDOMNode(this.ref.current).getElementsByClassName('field')
@@ -194,7 +194,7 @@ export default class ResearchPlanDetails extends Component {
       }
     })
 
-    ResearchPlansFetcher.export(research_plan, html, 'docx')
+    ResearchPlansFetcher.export(research_plan, html, exportFormat)
   }
 
   // render functions
@@ -211,24 +211,46 @@ export default class ResearchPlanDetails extends Component {
     )
   }
 
+  renderExportButton(edit) {
+    if (!edit) {
+      return (
+        <div className="pull-right">
+          <Dropdown id="research-plan-export-dropdown">
+            <Dropdown.Toggle>
+              Export
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <MenuItem onSelect={() => this.handleExport('docx')}>
+                as .docx
+              </MenuItem>
+              <MenuItem onSelect={() => this.handleExport('odt')}>
+                as .odt
+              </MenuItem>
+              <MenuItem onSelect={() => this.handleExport('html')}>
+                as HTML
+              </MenuItem>
+              <MenuItem onSelect={() => this.handleExport('markdown')}>
+                as Markdown
+              </MenuItem>
+              <MenuItem onSelect={() => this.handleExport('latex')}>
+                as LaTeX
+              </MenuItem>
+            </Dropdown.Menu>
+          </Dropdown>
+        </div>
+      )
+    }
+  }
+
   renderPropertiesTab(research_plan) {
     const { name, body, attachments } = research_plan
     const { update, edit } = this.state
     const submitLabel = research_plan.isNew ? "Create" : "Save"
 
-    let exportButton
-    if (!edit) {
-      exportButton = (
-        <div className="pull-right">
-          <Button bsStyle="default" onClick={this.handleExport.bind(this)}>Export</Button>
-        </div>
-      )
-    }
-
     return (
       <ListGroup fill="true">
         <ListGroupItem >
-          {exportButton}
+          {this.renderExportButton()}
 
           <ResearchPlanDetailsName value={name}
               disabled={research_plan.isMethodDisabled('name')}
