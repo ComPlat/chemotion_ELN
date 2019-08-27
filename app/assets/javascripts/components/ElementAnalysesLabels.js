@@ -12,7 +12,7 @@ export default class ElementAnalysesLabels extends React.Component {
   render() {
 
     return (
-      <div style={{display: 'inline-block'}} 
+      <div style={{display: 'inline-block'}}
           onClick={(e) => { e.stopPropagation() }}>
         {this.analysesLabels(this.state.element)}
       </div>
@@ -74,11 +74,17 @@ export default class ElementAnalysesLabels extends React.Component {
   }
 
   formatLabels(labels) {
+    const regExp = /\(([^)]+)\)/;
     return Object.keys(labels).map((key) => {
+      let key_syn = (regExp.exec(key || '') || ['']).pop().trim();
+      if (key_syn === '') {
+        key_syn = (key || '').split('|').pop().trim();
+      };
+
       return (
         <span className="collection-label" key={key}>
           <Label bsStyle='default' bsSize='xs'>
-            {key || "Analysis type Unkown"} - {labels[key]}
+            {key_syn || "Analysis type Unkown"} - {labels[key]}
           </Label>
         </span>
       )

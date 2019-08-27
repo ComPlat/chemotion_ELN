@@ -34,8 +34,18 @@ export default class ElementCollectionLabels extends React.Component {
     return label.is_shared ? "warning" : "info"
   }
 
-  formatLabels(labels, is_synchronized) {
+  formatLabels(labels, is_synchronized, currentUser) {
+
     return labels.map((label, index) => {
+      if (is_synchronized === true && label.isOwner === true) {
+        return (<span className="collection-label" key={index}>
+          <Button disabled bsStyle='default' bsSize='xs'>
+            {label.name}
+          </Button>
+          &nbsp;
+        </span>
+        )
+      }
       return (
         <span className="collection-label" key={index}>
           <Button bsStyle='default' bsSize='xs'
@@ -79,11 +89,17 @@ export default class ElementCollectionLabels extends React.Component {
     let sync_labels = []
     collection_labels.map((label) => {
       if (label) {
-        if (label.is_shared == false && label.user_id == currentUser.id) {
+        if (label.is_shared == false && label.is_synchronized == false && label.user_id == currentUser.id) {
           labels.push(label)
-        } else if (label.is_shared == true && label.shared_by_id == currentUser.id) {
+        } else if (label.is_shared == true && label.is_synchronized == false &&
+          (label.user_id == currentUser.id || label.shared_by_id == currentUser.id)) {
           shared_labels.push(label)
-        } else if (label.is_synchronized == true) {
+        } else if (label.is_synchronized == true && (label.user_id == currentUser.id || label.shared_by_id == currentUser.id)) {
+          if (label.shared_by_id == currentUser.id) {
+            label.isOwner = true;
+          } else {
+            label.isOwner = false;
+          }
           sync_labels.push(label)
         }
       }

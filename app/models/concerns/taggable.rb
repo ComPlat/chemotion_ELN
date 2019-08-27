@@ -56,16 +56,26 @@ module Taggable
   def collection_tag
     klass = "collections_#{self.class.name.underscore.pluralize}"
     return unless respond_to?(klass)
-    send(klass).map { |cc|
+    cols = []
+    send(klass).each do |cc|
       next unless c = cc.collection
-      next if c.label == 'All' # TODO
-      cid = collection_id(c)
-      {
+      next if c.label == 'All' && c.is_locked
+      cols.push({
         name: c.label, is_shared: c.is_shared, user_id: c.user_id,
-        id: cid, shared_by_id: c.shared_by_id,
-        is_synchronized: c.is_synchronized
-      }
-    }
+        id: c.id, shared_by_id: c.shared_by_id,
+        is_synchronized: false
+      })
+      if c.is_synchronized
+        c.sync_collections_users&.each do |syn|
+          cols.push({
+            name: c.label, is_shared: c.is_shared, user_id: syn.user_id,
+            id: syn.id, shared_by_id: syn.shared_by_id,
+            is_synchronized: c.is_synchronized
+          })
+        end
+      end
+    end
+    cols
   end
 
   def grouped_analyses
