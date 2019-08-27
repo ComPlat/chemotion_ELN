@@ -60,6 +60,16 @@ GIT
       net-sftp
 
 GIT
+  remote: https://github.com/leereilly/swot.git
+  revision: bfe392b4cd52f62fbc1d83156020275719783dd1
+  ref: bfe392b4cd52f62fbc1d83156020275719783dd1
+  branch: master
+  specs:
+    swot (1.0.0)
+      naughty_or_nice (~> 2.0)
+      public_suffix
+
+GIT
   remote: https://github.com/merlin-p/thumbnailer.git
   revision: 4935ef8836d097f22c7b6402978a93956fa5ed64
   specs:
@@ -559,9 +569,6 @@ GEM
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
     stackprof (0.2.12)
-    swot (1.0.0)
-      naughty_or_nice (~> 2.0)
-      public_suffix
     sys-filesystem (1.2.0)
       ffi
     term-ansicolor (1.7.1)
@@ -713,7 +720,7 @@ DEPENDENCIES
   slackistrano
   spring
   stackprof
-  swot
+  swot!
   sys-filesystem
   thin
   thor (= 0.19.1)
