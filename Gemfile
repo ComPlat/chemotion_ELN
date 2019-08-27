@@ -149,8 +149,8 @@ gem 'rqrcode'
 
 gem 'countries'
 gem 'ruby-mailchecker'
-gem 'swot'
-
+gem 'swot', git: 'https://github.com/leereilly/swot.git', branch: 'master', ref: 'bfe392b4cd52f62fbc1d83156020275719783dd1'
+# gem 'gman', '~> 7.0.3'
 gem 'activejob-status'
 
 group :development, :test do

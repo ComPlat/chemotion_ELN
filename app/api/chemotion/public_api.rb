@@ -139,6 +139,10 @@ module Chemotion
       end
 
       namespace :affiliations do
+        params do
+          optional :domain, type: String, desc: "email domain", regexp: /\A([a-z\d\-]+\.)+[a-z]{2,64}\z/i
+        end
+
         desc "Return all countries available"
         get "countries" do
           ISO3166::Country.all_translated
@@ -161,7 +165,9 @@ module Chemotion
 
         desc "return organization's name from email domain"
         get "swot" do
-          Swot::school_name "dummy@#{params[:domain]}"
+          return unless params[:domain].present?
+          Swot::school_name(params[:domain]).presence ||
+            Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
         end
       end
     end
