@@ -121,7 +121,7 @@ export default class MyCollections extends React.Component {
     } else {
       return (
         <ButtonGroup className="actions">
-          <Button bsSize="xsmall" bsStyle="primary"
+          <Button bsSize="xsmall" bsStyle="primary" disabled={node.isNew === true}
             onClick={()=>this.doSync(node,'CreateSync')}>
               <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>
