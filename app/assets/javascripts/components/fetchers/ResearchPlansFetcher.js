@@ -159,7 +159,11 @@ export default class ResearchPlansFetcher {
         'Content-Type': 'application/json'
       }
     }).then(response => {
-      return response.json()
+      if (response.ok) {
+        return response.json()
+      } else {
+        console.log(response)
+      }
     }).catch((errorMessage) => {
       console.log(errorMessage)
     })

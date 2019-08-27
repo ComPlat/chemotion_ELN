@@ -73,6 +73,41 @@ module Chemotion
         research_plan
       end
 
+      namespace :table_schemas do
+        desc "Return serialized table schemas of current user"
+        get do
+          { table_schemas: ResearchPlanTableSchema.where( creator: current_user)}
+        end
+
+        desc "Save table schema"
+        params do
+          requires :name, type: String
+          requires :value, type: Hash
+        end
+        post do
+          attributes = {
+            name: params[:name],
+            value: params[:value]
+          }
+
+          table_schema = ResearchPlanTableSchema.new attributes
+          table_schema.creator = current_user
+          table_schema.save!
+
+          table_schema
+        end
+
+        desc "Delete table schema"
+        route_param :id do
+          before do
+            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
+          end
+          delete do
+            ResearchPlanTableSchema.find(params[:id]).destroy
+          end
+        end
+      end
+
       desc "Return serialized research plan by id"
       params do
         requires :id, type: Integer, desc: "Research plan id"
@@ -190,42 +225,6 @@ module Chemotion
           end
         end
       end
-
-      namespace :table_schemas do
-        desc "Return serialized table schemas of current user"
-        get do
-          { table_schemas: ResearchPlanTableSchema.where( creator: current_user)}
-        end
-
-        desc "Save table schema"
-        params do
-          requires :name, type: String
-          requires :value, type: Hash
-        end
-        post do
-          attributes = {
-            name: params[:name],
-            value: params[:value]
-          }
-
-          table_schema = ResearchPlanTableSchema.new attributes
-          table_schema.creator = current_user
-          table_schema.save!
-
-          table_schema
-        end
-
-        desc "Delete table schema"
-        route_param :id do
-          before do
-            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
-          end
-          delete do
-            ResearchPlanTableSchema.find(params[:id]).destroy
-          end
-        end
-      end
-
     end
   end
 end
