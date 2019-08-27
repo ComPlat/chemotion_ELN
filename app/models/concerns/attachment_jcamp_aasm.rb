@@ -3,6 +3,8 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
+  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml raw]
+
   extend ActiveSupport::Concern
 
   included do # rubocop:disable BlockLength
@@ -178,13 +180,12 @@ module AttachmentJcampProcess
     jcamp_att
   end
 
-  def generate_spectrum(
-    is_create = false, is_regen = false, params = {}
-  )
+  def generate_spectrum(is_create = false, is_regen = false, params = {})
     is_create ? create_process(is_regen) : edit_process(is_regen, params)
-  rescue
+  rescue StandardError => e
     set_failure
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
+    Rails.logger.error(e)
   end
 
   def delete_tmps(tmp_arr)
@@ -227,9 +228,10 @@ module AttachmentJcampProcess
     typname == 'edit' ? set_edited : set_force_peaked
     delete_related_imgs(img_att)
     delete_tmps([tmp_img])
-  rescue
+  rescue StandardError => e
     set_failure
     Rails.logger.info('**** Jcamp Image Generation fails ***')
+    Rails.logger.error(e)
   end
 
   def infer_base_on_type(t_molfile, params)
