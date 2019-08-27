@@ -11,7 +11,7 @@ const emptyBlock = () => (
     </h5>
     <div className="card-qc">
       <Alert bsStyle="danger">
-        No Information. Please upload spectra to Spectra Viewer.
+        No Information. Please upload spectra to Spectra Editor.
       </Alert>
     </div>
   </div>

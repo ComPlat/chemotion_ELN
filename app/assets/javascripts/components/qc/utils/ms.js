@@ -1,4 +1,4 @@
-import { FN } from 'react-spectra-viewer';
+import { FN } from 'react-spectra-editor';
 
 import { makeDav } from './common';
 import { contentToText } from '../../utils/quillFormat';

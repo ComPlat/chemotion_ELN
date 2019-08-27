@@ -1,9 +1,9 @@
-.spectra-viewer {
+.spectra-editor {
   text-align: right;
   padding-bottom: 10px;
 }
 
-.spectra-viewer-dialog {
+.spectra-editor-dialog {
   display: block;
   padding-left: 0px;
   top: 45% !important;
@@ -23,7 +23,7 @@
   height: 30px;
 }
 
-.react-spectrum-viewer {
+.react-spectrum-editor {
   .txt-input-label {
     font-size: 16px !important;
   }
@@ -58,7 +58,7 @@
 
   .txt-panel-badge {
     span {
-      font-size: 11px !important;
+      font-size: 14px !important;
     }
   }
 
@@ -72,7 +72,7 @@
   }
 }
 
-.spectra-viewer-dialog {
+.spectra-editor-dialog {
   .card-box {
     display: -webkit-flex;
     display:         flex;

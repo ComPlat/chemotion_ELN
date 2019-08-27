@@ -32,40 +32,41 @@ const qCheckFail = (msg, kind, atomNum = '') => (
 );
 
 const qCheckMsg = (sample, container) => {
-  const availKinds = ['1H NMR', '13C NMR', 'Mass'];
-  if (sample.molecule
-      && container.extended_metadata
-      && availKinds.indexOf(container.extended_metadata.kind) < 0) {
+  if (sample.molecule && container.extended_metadata &&
+      (typeof container.extended_metadata.kind === 'undefined' ||
+      (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId
+        && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId)
+        && !container.extended_metadata.kind.split('|')[1].includes('mass spectrometry')
+      )) {
     return '';
   }
-  const { kind, content } = container.extended_metadata;
-  const str = contentToText(content);
+  const str = container.extended_metadata && contentToText(container.extended_metadata.content);
 
-  if (kind === '1H NMR') {
+  if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
     const msg = hNmrCheckMsg(sample.molecule.sum_formular, str);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'H', '1');
-  } else if (kind === '13C NMR') {
+  } else if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
     const msg = cNmrCheckMsg(sample.molecule.sum_formular, str);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'C', '13');
-  } else if (kind === 'Mass') {
+  } else if (container.extended_metadata.kind.split('|')[1].includes('mass spectrometry')) {
     const msg = msCheckMsg(sample.molecule.exact_molecular_weight, str);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'MS', '');
   }
   return '';
 };
 
-const SpectraViewerBtn = ({
+const SpectraEditorBtn = ({
   sample, spcInfo, hasJcamp, hasChemSpectra,
   toggleSpectraModal, confirmRegenerate,
 }) => (
   <OverlayTrigger
     placement="bottom"
     delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Viewer {!spcInfo ? ': Reprocess' : ''}</Tooltip>}
+    overlay={<Tooltip id="spectra">Spectra Editor {!spcInfo ? ': Reprocess' : ''}</Tooltip>}
   >{spcInfo ? (
     <ButtonGroup className="button-right">
       <SplitButton
-        id="spectra-viewer-split-button"
+        id="spectra-editor-split-button"
         pullRight
         bsStyle="info"
         bsSize="xsmall"
@@ -101,7 +102,7 @@ const SpectraViewerBtn = ({
   </OverlayTrigger>
 );
 
-SpectraViewerBtn.propTypes = {
+SpectraEditorBtn.propTypes = {
   sample: PropTypes.object,
   hasJcamp: PropTypes.bool,
   spcInfo: PropTypes.oneOfType([
@@ -113,7 +114,7 @@ SpectraViewerBtn.propTypes = {
   confirmRegenerate: PropTypes.func.isRequired,
 };
 
-SpectraViewerBtn.defaultProps = {
+SpectraEditorBtn.defaultProps = {
   hasJcamp: false,
   spcInfo: false,
   sample: {},
@@ -264,7 +265,7 @@ const headerBtnGroup = (
         analyses={[container]}
         ident={container.id}
       />
-      <SpectraViewerBtn
+      <SpectraEditorBtn
         sample={sample}
         hasJcamp={hasJcamp}
         spcInfo={spcInfo}

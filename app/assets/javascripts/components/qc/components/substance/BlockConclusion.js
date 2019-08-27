@@ -16,6 +16,18 @@ const iconNmr = (ansNmr) => {
   return iconByBool(conclusion);
 };
 
+const iconIr = (ansIr) => {
+  const { conclusion, conclusionOwn } = ansIr;
+  if (!conclusion && conclusionOwn) {
+    return (
+      <Label bsStyle="success" className="label-qc">
+        Pass due to owner correction
+      </Label>
+    );
+  }
+  return iconByBool(conclusion);
+};
+
 const BlockConclusion = ({
   ansHnmr, ansCnmr, ansMs, ansIr,
 }) => (
@@ -38,7 +50,7 @@ const BlockConclusion = ({
       </p>
       <p>
         <span>IR</span>
-        { iconByBool(ansIr.conclusion) }
+        { iconIr(ansIr) }
       </p>
     </div>
     <br />
