@@ -21,10 +21,9 @@ export default class ResearchPlanDetailsBody extends Component {
                       edit={edit} />
     })
 
-    let className = 'research-plan-details-static'
+    let className = 'research-plan-body'
     let bodyFooter
     if (edit) {
-      className = 'research-plan-details-body'
       bodyFooter = (
         <Row>
           <Col md={12}>
@@ -38,6 +37,8 @@ export default class ResearchPlanDetailsBody extends Component {
           </Col>
         </Row>
       )
+    } else {
+      className += ' static'
     }
 
     return (

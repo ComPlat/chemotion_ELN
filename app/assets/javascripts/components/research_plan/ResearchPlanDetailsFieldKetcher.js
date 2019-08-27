@@ -107,7 +107,7 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
     const svgPath = '/images/research_plans/' + field.value.svg_file
 
     return (
-      <div className="svg-container-static">
+      <div className="image-container">
         <img src={svgPath} />
       </div>
     )

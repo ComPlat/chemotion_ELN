@@ -135,7 +135,6 @@ module Chemotion
       desc "Save image file to filesystem"
       params do
         requires :file, type: File
-        optional :replace, type: String
       end
       post :image do
         file_name = params[:file][:filename]
@@ -146,10 +145,6 @@ module Chemotion
 
         File.open(public_path, 'wb') do |file|
           file.write(params[:file][:tempfile].read)
-        end
-
-        if params[:replace]
-          File.delete("public/images/research_plans/#{params[:replace]}")
         end
 
         {

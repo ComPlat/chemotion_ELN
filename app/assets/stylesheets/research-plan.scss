@@ -1,22 +1,54 @@
 .research-plan-details {
 
-    .field {
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .research-plan-name {
+        &.static {
+            margin-bottom: 20px;
+
+            h1 {
+                margin: 0;
+            }
+        }
+    }
+
+    .research-plan-field {
         label {
             margin-top: 5px;
         }
-
         .drag-source {
             float: right;
             margin-top: 5px;
             margin-right: 5px;
         }
+        &.static {
+            margin-bottom: 20px;
+
+            .ql-editor {
+                padding: 0;
+            }
+
+            .ql-hidden {
+                display: none;
+            }
+        }
+
+        .image-container {
+            text-align: center;
+
+            img {
+                max-width: 100%;
+            }
+
+            p {
+                margin-bottom: 0;
+            }
+        }
     }
 
-    .form-group {
-        margin-bottom: 0;
-    }
-
-    .field-drop-target {
+    .research-plan-field-drop-target {
         height: 20px;
 
         .indicator {
@@ -36,7 +68,7 @@
         }
     }
 
-    .add-field {
+    .research-plan-field-drop-add-field {
         float: left;
         margin-bottom: 20px;
 
@@ -47,12 +79,11 @@
         }
     }
 
-    .image-container {
-        text-align: center;
-        margin-bottom: 20px;
+    .research-plan-table-toolbar {
+        margin-top: 10px;
 
-        img {
-            max-width: 100%;
+        button {
+            width: 100%;
         }
     }
 
@@ -72,14 +103,6 @@
         }
     }
 
-    .research-plan-table-toolbar {
-        margin-top: 10px;
-
-        button {
-            width: 100%;
-        }
-    }
-
     .drop-target {
         min-height: 50px;
         width: 100%;
@@ -92,20 +115,6 @@
     }
 }
 
-.research-plan-details-static {
-    .row {
-        margin-bottom: 20px;
-    }
-
-    .ql-editor {
-        padding: 0;
-    }
-
-    .ql-hidden {
-        display: none;
-    }
-}
-
 .research-plan-table-schema-modal-create {
     margin-bottom: 40px;
 }
@@ -115,10 +124,4 @@
         float: right;
         margin-left: 5px;
     }
-}
-
-.svg-container-static {
-    min-height: 200px;
-    width: 100%;
-    height: 100%;
 }

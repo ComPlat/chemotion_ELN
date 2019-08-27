@@ -31,7 +31,8 @@ export default class ResearchPlanDetails extends Component {
       edit: false,
       update: false
     };
-    this.ref = React.createRef()
+    this.nameRef = React.createRef()
+    this.bodyRef = React.createRef()
   }
 
   componentWillReceiveProps(nextProps) {
@@ -182,15 +183,17 @@ export default class ResearchPlanDetails extends Component {
 
   handleExport(exportFormat) {
     const { research_plan } = this.state;
+    const name = ReactDOM.findDOMNode(this.nameRef.current)
+    const body = ReactDOM.findDOMNode(this.bodyRef.current)
 
-    const bodyElements = ReactDOM.findDOMNode(this.ref.current).getElementsByClassName('field')
+    let html = name.innerHTML
+    Array.from(body.getElementsByClassName('research-plan-field')).map(field => {
+      const editors = field.getElementsByClassName('ql-editor')
 
-    let html = ''
-    research_plan.body.map((field, index) => {
-      if (field.type == 'richtext') {
-        html += bodyElements[index].getElementsByClassName('ql-editor')[0].innerHTML
+      if (editors.length) {
+        html += editors[0].innerHTML
       } else {
-        html += bodyElements[index].innerHTML
+        html += field.innerHTML
       }
     })
 
@@ -250,12 +253,13 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem >
-          {this.renderExportButton()}
+          {this.renderExportButton(edit)}
 
           <ResearchPlanDetailsName value={name}
               disabled={research_plan.isMethodDisabled('name')}
               onChange={this.handleNameChange.bind(this)}
-              edit={edit} />
+              edit={edit}
+              ref={this.nameRef} />
 
           <ResearchPlanDetailsBody body={body}
               disabled={research_plan.isMethodDisabled('body')}
@@ -265,7 +269,7 @@ export default class ResearchPlanDetails extends Component {
               onDelete={this.handleBodyDelete.bind(this)}
               update={update}
               edit={edit}
-              ref={this.ref} />
+              ref={this.bodyRef} />
 
           <ResearchPlanDetailsAttachments attachments={attachments}
               onDrop={this.handleAttachmentDrop.bind(this)}

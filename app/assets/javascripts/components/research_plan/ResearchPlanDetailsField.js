@@ -58,7 +58,7 @@ export default class ResearchPlanDetailsField extends Component {
         break;
     }
 
-    let dropTarget, fieldHeader
+    let dropTarget, fieldHeader, className = 'research-plan-field'
     if (edit) {
       dropTarget = (
         <Col md={12}>
@@ -66,7 +66,7 @@ export default class ResearchPlanDetailsField extends Component {
         </Col>
       )
       fieldHeader = (
-        <div className="field-header">
+        <div className="research-plan-field-header">
           <Button className="pull-right" bsStyle="danger" bsSize="xsmall"
             onClick={() => onDelete(field.id)} >
               <i className="fa fa-times"></i>
@@ -75,13 +75,15 @@ export default class ResearchPlanDetailsField extends Component {
           <ControlLabel>{label}</ControlLabel>
         </div>
       )
+    } else {
+      className += ' static'
     }
 
     return (
       <Row>
         {dropTarget}
         <Col md={12}>
-          <div className="field">
+          <div className={className}>
             {fieldHeader}
             {component}
           </div>

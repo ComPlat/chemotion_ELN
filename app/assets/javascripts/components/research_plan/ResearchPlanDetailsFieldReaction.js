@@ -2,8 +2,6 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { DropTarget } from 'react-dnd'
 import DragDropItemTypes from '../DragDropItemTypes'
-import { Row, Col, Button } from 'react-bootstrap'
-import SVG from 'react-inlinesvg';
 
 import ElementActions from '../actions/ElementActions';
 import { UrlSilentNavigation } from '../utils/ElementUtils';
@@ -59,28 +57,27 @@ class ResearchPlanDetailsFieldReaction extends Component {
 
   renderReaction(reaction) {
     const { edit } = this.props
-    const style = { height: '200px' };
+    const title = reaction.title()
 
     let link
     if (edit) {
       link = (
         <p className="float-left">
           Reaction: <a role="link" tabIndex={0} onClick={() => this.showReaction()} style={{ cursor: 'pointer' }}>
-            {reaction.title()}
+            {title}
           </a>
         </p>
       )
     }
 
     return (
-      <Row style={style}>
-        <Col md={12}>
-          {link}
-          <div>
-            <img src={reaction.svgPath} />
-          </div>
-        </Col>
-      </Row>
+      <div className="research-plan-field-reaction">
+        {link}
+        <div className="image-container">
+          <img src={reaction.svgPath} alt={title} />
+          <p>{reaction.name}</p>
+        </div>
+      </div>
     )
   }
 

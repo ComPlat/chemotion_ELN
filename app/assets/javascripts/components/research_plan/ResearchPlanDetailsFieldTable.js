@@ -330,12 +330,12 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         </div>
         <div className="research-plan-table-toolbar">
           <Row>
-            <Col lg={3}>
+            <Col xs={3}>
               <Button bsSize="xsmall" onClick={this.handleSchemaModalShow.bind(this)}>
                 Table schemas
               </Button>
             </Col>
-            <Col lg={3} lgOffset={6}>
+            <Col xs={3} xsOffset={6}>
               <Button bsSize="xsmall">
                 Export as Excel
               </Button>

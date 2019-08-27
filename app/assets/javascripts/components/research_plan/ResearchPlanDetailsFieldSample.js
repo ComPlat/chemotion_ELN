@@ -61,61 +61,30 @@ class ResearchPlanDetailsFieldSample extends Component {
     ElementActions.fetchSampleById(sample.id);
   }
 
-  // copied from SampleDetails.js
-  sampleAverageMW(sample) {
-    let mw = sample.molecule_molecular_weight;
-    if(mw)
-      return `${mw.toFixed(MWPrecision)} g/mol`;
-    else
-      return '';
-  }
-
-  // copied from SampleDetails.js
-  sampleExactMW(sample) {
-    let mw = sample.molecule_exact_molecular_weight
-    if(mw)
-      return `Exact mass: ${mw.toFixed(MWPrecision)} g/mol`;
-    else
-      return '';
-  }
-
   // modified from sampleInfo in SampleDetails.js
   renderSample(sample) {
     const { edit } = this.props
-    const style = { height: '200px' };
-    const pubchemLcss = sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss ?
-      sample.pubchem_tag.pubchem_lcss.Record.Section[0].Section[0].Section[0].Information : null;
-    const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid ?
-      sample.pubchem_tag.pubchem_cid : 0;
-    const lcssSign = pubchemLcss ?
-      <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : <div />;
+    const title = sample.title()
 
     let link
     if (edit) {
       link = (
         <p>
           Sample: <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
-            {sample.title()}
+            {title}
           </a>
         </p>
       )
     }
 
     return (
-      <Row style={style}>
-        <Col md={4}>
-          <h4><SampleName sample={sample}/></h4>
-          <h5>{this.sampleAverageMW(sample)}</h5>
-          <h5>{this.sampleExactMW(sample)}</h5>
-          {lcssSign}
-          {link}
-        </Col>
-        <Col md={8}>
-          <div>
-            <img src={sample.svgPath} />
-          </div>
-        </Col>
-      </Row>
+      <div className="research-plan-field-image">
+        {link}
+        <div className="image-container">
+          <img src={sample.svgPath} alt={title} />
+          <SampleName sample={sample}/>
+        </div>
+      </div>
     )
   }
 

@@ -8,7 +8,7 @@ export default class ResearchPlanDetailsAddField extends Component {
     const { onAdd } = this.props
 
     return (
-      <div className="add-field">
+      <div className="research-plan-field-drop-add-field">
         <Button bsStyle="primary" bsSize="small" onClick={() => onAdd('richtext')} >
           <i className="fa fa-file-text-o"></i>&nbsp;<i className="fa fa-plus"></i>
         </Button>
