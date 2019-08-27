@@ -4,6 +4,7 @@ import ResearchPlan from '../models/ResearchPlan';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
 
+import { getFileName, downloadBlob } from '../utils/FetcherHelper'
 
 export default class ResearchPlansFetcher {
   static fetchById(id) {
@@ -28,6 +29,30 @@ export default class ResearchPlansFetcher {
 
   static fetchByCollectionId(id, queryParams={}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'research_plans', ResearchPlan);
+  }
+
+  static create(researchPlan) {
+    const files = (researchPlan.attachments || []).filter(a => a.is_new && !a.is_deleted);
+    const promise = fetch('/api/v1/research_plans/', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(researchPlan.serialize())
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      if (files.length <= 0) {
+        return new ResearchPlan(json.research_plan);
+      }
+      return AttachmentFetcher.updateAttachables(files, 'ResearchPlan', json.research_plan.id, [])()
+        .then(() => new ResearchPlan(json.research_plan));
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
   }
 
   static update(researchPlan) {
@@ -97,24 +122,28 @@ export default class ResearchPlansFetcher {
     return promise();
   }
 
-  static create(researchPlan) {
-    const files = (researchPlan.attachments || []).filter(a => a.is_new && !a.is_deleted);
-    const promise = fetch('/api/v1/research_plans/', {
+  static export(researchPlan, html, exportFormat) {
+    let file_name
+    const promise = fetch('/api/v1/research_plans/' + researchPlan.id + '/export/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(researchPlan.serialize())
+      body: JSON.stringify({
+        html: html,
+        export_format: exportFormat
+      })
     }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      if (files.length <= 0) {
-        return new ResearchPlan(json.research_plan);
+      if (response.ok) {
+        file_name = getFileName(response)
+        return response.blob()
+      } else {
+        console.log(response);
       }
-      return AttachmentFetcher.updateAttachables(files, 'ResearchPlan', json.research_plan.id, [])()
-        .then(() => new ResearchPlan(json.research_plan));
+    }).then((blob) => {
+      downloadBlob(file_name, blob)
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

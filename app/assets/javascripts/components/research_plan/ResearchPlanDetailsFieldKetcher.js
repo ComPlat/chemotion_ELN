@@ -108,7 +108,7 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
 
     return (
       <div className="svg-container-static">
-        <SVG src={svgPath} className="molecule-mid" />
+        <img src={svgPath} />
       </div>
     )
   }

@@ -46,90 +46,6 @@ module Chemotion
         paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
-      desc "Save svg file to filesystem"
-      params do
-        requires :svg_file, type: String, desc: "SVG raw file"
-        requires :is_chemdraw, type: Boolean, desc: "is chemdraw file?"
-      end
-      post :svg do
-        svg = params[:svg_file]
-        processor = Ketcherails::SVGProcessor.new svg if !params[:is_chemdraw]
-        processor = Chemotion::ChemdrawSvgProcessor.new svg if params[:is_chemdraw]
-        svg = processor.centered_and_scaled_svg
-
-        digest = Digest::SHA256.hexdigest svg
-        digest = Digest::SHA256.hexdigest digest
-        svg_file_name = "#{digest}.svg"
-        svg_file_path = "public/images/research_plans/#{svg_file_name}"
-
-        svg_file = File.new(svg_file_path, 'w+')
-        svg_file.write(svg)
-        svg_file.close
-
-        {svg_path: svg_file_name}
-      end
-
-      desc "Save image file to filesystem"
-      params do
-        requires :file, type: File
-        optional :replace, type: String
-      end
-      post :image do
-        file_name = params[:file][:filename]
-        file_extname = File.extname(file_name)
-
-        public_name = "#{SecureRandom.uuid}#{file_extname}"
-        public_path = "public/images/research_plans/#{public_name}"
-
-        File.open(public_path, 'wb') do |file|
-          file.write(params[:file][:tempfile].read)
-        end
-
-        if params[:replace]
-          File.delete("public/images/research_plans/#{params[:replace]}")
-        end
-
-        {
-          file_name: file_name,
-          public_name: public_name
-        }
-      end
-
-      namespace :table_schemas do
-        desc "Return serialized table schemas of current user"
-        get do
-          { table_schemas: ResearchPlanTableSchema.where( creator: current_user)}
-        end
-
-        desc "Save table schema"
-        params do
-          requires :name, type: String
-          requires :value, type: Hash
-        end
-        post do
-          attributes = {
-            name: params[:name],
-            value: params[:value]
-          }
-
-          table_schema = ResearchPlanTableSchema.new attributes
-          table_schema.creator = current_user
-          table_schema.save!
-
-          table_schema
-        end
-
-        desc "Delete table schema"
-        route_param :id do
-          before do
-            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
-          end
-          delete do
-            ResearchPlanTableSchema.find(params[:id]).destroy
-          end
-        end
-      end
-
       desc "Create a research plan"
       params do
         requires :name, type: String, desc: "Research plan name"
@@ -192,6 +108,124 @@ module Chemotion
           { research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized }
         end
       end
+
+      desc "Save svg file to filesystem"
+      params do
+        requires :svg_file, type: String, desc: "SVG raw file"
+        requires :is_chemdraw, type: Boolean, desc: "is chemdraw file?"
+      end
+      post :svg do
+        svg = params[:svg_file]
+        processor = Ketcherails::SVGProcessor.new svg if !params[:is_chemdraw]
+        processor = Chemotion::ChemdrawSvgProcessor.new svg if params[:is_chemdraw]
+        svg = processor.centered_and_scaled_svg
+
+        digest = Digest::SHA256.hexdigest svg
+        digest = Digest::SHA256.hexdigest digest
+        svg_file_name = "#{digest}.svg"
+        svg_file_path = "public/images/research_plans/#{svg_file_name}"
+
+        svg_file = File.new(svg_file_path, 'w+')
+        svg_file.write(svg)
+        svg_file.close
+
+        {svg_path: svg_file_name}
+      end
+
+      desc "Save image file to filesystem"
+      params do
+        requires :file, type: File
+        optional :replace, type: String
+      end
+      post :image do
+        file_name = params[:file][:filename]
+        file_extname = File.extname(file_name)
+
+        public_name = "#{SecureRandom.uuid}#{file_extname}"
+        public_path = "public/images/research_plans/#{public_name}"
+
+        File.open(public_path, 'wb') do |file|
+          file.write(params[:file][:tempfile].read)
+        end
+
+        if params[:replace]
+          File.delete("public/images/research_plans/#{params[:replace]}")
+        end
+
+        {
+          file_name: file_name,
+          public_name: public_name
+        }
+      end
+
+      desc "Export research plan by id"
+      params do
+        requires :id, type: Integer, desc: "Research plan id"
+        requires :html, type: String, desc: "Client side rendered html"
+        optional :export_format, type: Symbol, desc: "Export format", values: [:html, :docx, :latex]
+      end
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).read?
+        end
+
+        post :export do
+          research_plan = ResearchPlan.find(params[:id])
+          file_name = "#{research_plan.name}.#{params[:export_format]}"
+
+          if params[:export_format]
+            # make src in html relative
+            params[:html].gsub! 'src="/images/', 'src="images/'
+
+            # convert using pandoc and stream as file
+            content_type "application/octet-stream"
+            header['Content-Disposition'] = "attachment; filename=\"#{file_name}\""
+            env['api.format'] = :binary
+
+            present PandocRuby.convert(params[:html], :from => :html, :to => params[:export_format], :resource_path => Rails.public_path)
+          else
+            # return plain html
+            env['api.format'] = :binary
+            present params[:html]
+          end
+        end
+      end
+
+      namespace :table_schemas do
+        desc "Return serialized table schemas of current user"
+        get do
+          { table_schemas: ResearchPlanTableSchema.where( creator: current_user)}
+        end
+
+        desc "Save table schema"
+        params do
+          requires :name, type: String
+          requires :value, type: Hash
+        end
+        post do
+          attributes = {
+            name: params[:name],
+            value: params[:value]
+          }
+
+          table_schema = ResearchPlanTableSchema.new attributes
+          table_schema.creator = current_user
+          table_schema.save!
+
+          table_schema
+        end
+
+        desc "Delete table schema"
+        route_param :id do
+          before do
+            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
+          end
+          delete do
+            ResearchPlanTableSchema.find(params[:id]).destroy
+          end
+        end
+      end
+
     end
   end
 end

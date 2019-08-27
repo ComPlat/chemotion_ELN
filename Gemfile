@@ -99,8 +99,12 @@ gem 'axlsx', git: 'https://github.com/randym/axlsx'
 gem 'rmagick'
 gem 'rtf'
 gem 'sablon', git: 'https://github.com/ComPlat/sablon'
+
 # Import of elements from XLS and CSV file
 gem 'roo', '>2.5.0'
+
+# export reseearch plan
+gem 'pandoc-ruby'
 
 gem 'faraday', '~> 0.12.1'
 gem 'faraday_middleware', '~> 0.12.1'

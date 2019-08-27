@@ -77,7 +77,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
         <Col md={12}>
           {link}
           <div>
-            <SVG src={reaction.svgPath} className="molecule-mid"/>
+            <img src={reaction.svgPath} />
           </div>
         </Col>
       </Row>

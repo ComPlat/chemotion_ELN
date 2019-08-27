@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import ReactDOM from "react-dom"
 import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Row, Col, Tabs, Tab } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
@@ -27,9 +28,10 @@ export default class ResearchPlanDetails extends Component {
     const { research_plan } = props;
     this.state = {
       research_plan,
-      edit: true,
+      edit: false,
       update: false
     };
+    this.ref = React.createRef()
   }
 
   componentWillReceiveProps(nextProps) {
@@ -178,6 +180,23 @@ export default class ResearchPlanDetails extends Component {
     this.forceUpdate();
   }
 
+  handleExport() {
+    const { research_plan } = this.state;
+
+    const bodyElements = ReactDOM.findDOMNode(this.ref.current).getElementsByClassName('field')
+
+    let html = ''
+    research_plan.body.map((field, index) => {
+      if (field.type == 'richtext') {
+        html += bodyElements[index].getElementsByClassName('ql-editor')[0].innerHTML
+      } else {
+        html += bodyElements[index].innerHTML
+      }
+    })
+
+    ResearchPlansFetcher.export(research_plan, html, 'docx')
+  }
+
   // render functions
 
   renderResearchPlanInfo(research_plan) {
@@ -197,9 +216,20 @@ export default class ResearchPlanDetails extends Component {
     const { update, edit } = this.state
     const submitLabel = research_plan.isNew ? "Create" : "Save"
 
+    let exportButton
+    if (!edit) {
+      exportButton = (
+        <div className="pull-right">
+          <Button bsStyle="default" onClick={this.handleExport.bind(this)}>Export</Button>
+        </div>
+      )
+    }
+
     return (
       <ListGroup fill="true">
-        <ListGroupItem>
+        <ListGroupItem >
+          {exportButton}
+
           <ResearchPlanDetailsName value={name}
               disabled={research_plan.isMethodDisabled('name')}
               onChange={this.handleNameChange.bind(this)}
@@ -212,7 +242,8 @@ export default class ResearchPlanDetails extends Component {
               onAdd={this.handleBodyAdd.bind(this)}
               onDelete={this.handleBodyDelete.bind(this)}
               update={update}
-              edit={edit} />
+              edit={edit}
+              ref={this.ref} />
 
           <ResearchPlanDetailsAttachments attachments={attachments}
               onDrop={this.handleAttachmentDrop.bind(this)}

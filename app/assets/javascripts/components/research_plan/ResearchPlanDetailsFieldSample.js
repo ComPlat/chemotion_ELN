@@ -112,7 +112,7 @@ class ResearchPlanDetailsFieldSample extends Component {
         </Col>
         <Col md={8}>
           <div>
-            <SVG src={sample.svgPath} className="molecule-mid"/>
+            <img src={sample.svgPath} />
           </div>
         </Col>
       </Row>
