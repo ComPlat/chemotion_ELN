@@ -150,6 +150,30 @@ export default class ResearchPlansFetcher {
     return promise;
   }
 
+  static exportTable(researchPlan, field) {
+    let file_name
+    const promise = fetch('/api/v1/research_plans/' + researchPlan.id + '/export_table/' + field.id, {
+      credentials: 'same-origin',
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      if (response.ok) {
+        file_name = getFileName(response)
+        return response.blob()
+      } else {
+        throw Error(response.statusText);
+      }
+    }).then((blob) => {
+      downloadBlob(file_name, blob)
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
   static fetchTableSchemas() {
     return fetch('/api/v1/research_plans/table_schemas/', {
       credentials: 'same-origin',
@@ -158,15 +182,18 @@ export default class ResearchPlansFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       }
-    }).then(response => {
+    }).then((response) => {
       if (response.ok) {
-        return response.json()
+        file_name = getFileName(response)
+        return response.blob()
       } else {
-        console.log(response)
+        throw Error(response.statusText);
       }
+    }).then((blob) => {
+      downloadBlob(file_name, blob)
     }).catch((errorMessage) => {
-      console.log(errorMessage)
-    })
+      console.log(errorMessage);
+    });
   }
 
   static createTableSchema(name, value) {

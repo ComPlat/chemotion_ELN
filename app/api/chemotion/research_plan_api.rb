@@ -225,6 +225,31 @@ module Chemotion
           end
         end
       end
+
+      desc "Export research plan table by id and field_id"
+      params do
+        requires :id, type: Integer, desc: "Research plan id"
+        requires :field_id, type: String, desc: "Field id"
+      end
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).read?
+        end
+
+        get "export_table/:field_id" do
+          research_plan = ResearchPlan.find(params[:id])
+          field = research_plan.body.find {|field| field['id'] == params[:field_id]}
+
+          # return the response "as is" and set the content type and the filename
+          env['api.format'] = :binary
+          content_type "application/vnd.ms-excel"
+          header['Content-Disposition'] = "attachment; filename=\"Table.xlsx\""
+
+          export = Export::ExportResearchPlanTable.new
+          export.generate_sheet(field['value']['columns'], field['value']['rows'])
+          export.read
+        end
+      end
     end
   end
 end

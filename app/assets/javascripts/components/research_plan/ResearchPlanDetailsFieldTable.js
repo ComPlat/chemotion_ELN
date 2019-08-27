@@ -291,7 +291,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   renderEdit() {
-    const { field } = this.props
+    const { field, onExport } = this.props
     const { rows, columns } = field.value
     const { columnNameModal, schemaModal } = this.state
     const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[0]
@@ -336,7 +336,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
               </Button>
             </Col>
             <Col xs={3} xsOffset={6}>
-              <Button bsSize="xsmall">
+              <Button bsSize="xsmall" onClick={() => onExport(field)}>
                 Export as Excel
               </Button>
             </Col>

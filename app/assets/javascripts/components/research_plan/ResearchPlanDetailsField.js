@@ -16,7 +16,7 @@ import ResearchPlanDetailsFieldReaction from './ResearchPlanDetailsFieldReaction
 export default class ResearchPlanDetailsField extends Component {
 
   render() {
-    let { field, index, disabled, onChange, onDrop, onDelete, update, edit } = this.props
+    let { field, index, disabled, onChange, onDrop, onDelete, onExport, update, edit } = this.props
 
     let label, component
     switch (field.type) {
@@ -42,7 +42,8 @@ export default class ResearchPlanDetailsField extends Component {
         label = 'Table'
         component = <ResearchPlanDetailsFieldTable key={field.id}
                               field={field} index={index} disabled={disabled}
-                              onChange={onChange.bind(this)} update={update} edit={edit} />
+                              onChange={onChange.bind(this)} onExport={onExport}
+                              update={update} edit={edit} />
         break;
       case 'sample':
         label = 'Sample'
@@ -99,5 +100,8 @@ ResearchPlanDetailsField.propTypes = {
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   onDrop: PropTypes.func,
-  update: PropTypes.bool
+  onDelete: PropTypes.func,
+  onExport: PropTypes.func,
+  update: PropTypes.bool,
+  edit: PropTypes.bool
 }

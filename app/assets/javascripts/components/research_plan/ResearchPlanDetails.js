@@ -200,6 +200,11 @@ export default class ResearchPlanDetails extends Component {
     ResearchPlansFetcher.export(research_plan, html, exportFormat)
   }
 
+  handleExportField(field) {
+    const { research_plan } = this.props
+    ResearchPlansFetcher.exportTable(research_plan, field)
+  }
+
   // render functions
 
   renderResearchPlanInfo(research_plan) {
@@ -267,6 +272,7 @@ export default class ResearchPlanDetails extends Component {
               onDrop={this.handleBodyDrop.bind(this)}
               onAdd={this.handleBodyAdd.bind(this)}
               onDelete={this.handleBodyDelete.bind(this)}
+              onExport={this.handleExportField.bind(this)}
               update={update}
               edit={edit}
               ref={this.bodyRef} />
