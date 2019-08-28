@@ -53,7 +53,7 @@ const handleNotification = (nots, act, needCallback = true) => {
           ReportActions.updateProcessQueue([parseInt(n.content.report_id, 10)]);
           break;
         case 'ElementActions.refreshComputedProp':
-          if (n.contentc.prop) { ElementActions.refreshComputedProp(n.content.cprop); }
+          ElementActions.refreshComputedProp(n.content.cprop);
           break;
         case 'RefreshChemotionCollection':
           CollectionActions.fetchUnsharedCollectionRoots();
