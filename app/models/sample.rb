@@ -422,7 +422,11 @@ class Sample < ActiveRecord::Base
     mnl && !is_sum_form ? mnl : molecule_iupac_name
   end
 
-  private
+  def user_labels
+    self.tag && self.tag.taggable_data ? self.tag.taggable_data['user_labels'] : null
+  end
+
+private
 
   def has_collections
     if self.collections_samples.blank?

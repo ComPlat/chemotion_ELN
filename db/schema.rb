@@ -733,6 +733,18 @@ ActiveRecord::Schema.define(version: 20200819093220) do
 
   add_index "subscriptions", ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true, using: :btree
 
+  create_table "user_labels", force: :cascade do |t|
+    t.integer  "user_id"
+    t.string   "title",                     null: false
+    t.string   "description"
+    t.string   "color",                     null: false
+    t.integer  "access_level", default: 0
+    t.integer  "position",     default: 10
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
   create_table "sync_collections_users", force: :cascade do |t|
     t.integer  "user_id"
     t.integer  "collection_id"

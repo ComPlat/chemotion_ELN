@@ -269,6 +269,7 @@ export default class Sample extends Element {
       container: this.container,
       xref: this.xref,
       stereo: this.stereo,
+      user_labels: this.user_labels || []
     });
 
     return serialized;
@@ -386,6 +387,11 @@ export default class Sample extends Element {
     return this.showed_name;
   }
 
+
+  userLabels() {
+    return this.user_labels;
+  }
+
   iupac_name_tag(length) {
     let iupac_name = this.molecule.iupac_name || "";
     return iupac_name.length > length ?
@@ -478,6 +484,10 @@ export default class Sample extends Element {
   setDensity(density) {
     this.density = density.value;
     this.molarity_value = 0;
+  }
+
+  setUserLabels(userLabels) {
+    this.user_labels = userLabels;
   }
 
   setMolarity(molarity) {

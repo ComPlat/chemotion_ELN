@@ -22,6 +22,39 @@ module Chemotion
         present current_user, with: Entities::UserEntity, root: 'user'
       end
 
+      desc 'list user labels'
+      get 'list_labels' do
+        labels = UserLabel.where('user_id = ? or access_level >= 1', current_user.id).order("access_level desc, position, title")
+        present labels || [], with: Entities::UserLabelEntity, root: 'labels'
+      end
+
+      namespace :save_label do
+        desc 'create or update user labels'
+        params do
+          optional :id, type: Integer
+          optional :title, type: String
+          optional :description, type: String
+          optional :color, type: String
+          optional :access_level, type: Integer
+        end
+        put do
+          attr = {
+            id: params[:id],
+            user_id: current_user.id,
+            access_level: params[:access_level] || 0,
+            title: params[:title],
+            description: params[:description],
+            color: params[:color],
+          }
+          if params[:id].present?
+            label = UserLabel.find(params[:id]);
+            label.update!(attr)
+          else
+            UserLabel.create!(attr)
+          end
+        end
+      end
+
       desc 'Log out current_user'
       delete 'sign_out' do
         status 204

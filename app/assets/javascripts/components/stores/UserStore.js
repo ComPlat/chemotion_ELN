@@ -14,17 +14,23 @@ class UserStore {
       devices: [],
       rxnos: [],
       chmos: [],
+      labels: []
     };
 
     this.bindListeners({
       handleFetchOlsRxno: UserActions.fetchOlsRxno,
       handleFetchOlsChmo: UserActions.fetchOlsChmo,
       handleFetchCurrentUser: UserActions.fetchCurrentUser,
+      handleFetchUserLabels: UserActions.fetchUserLabels,
       handleFetchProfile: UserActions.fetchProfile,
       handleSelectTab: UserActions.selectTab,
       handleUpdateUserProfile: UserActions.updateUserProfile,
       handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
     })
+  }
+
+  handleFetchUserLabels(result) {
+    this.state.labels = result.labels;
   }
 
   handleFetchOlsRxno(result) {

@@ -24,6 +24,7 @@ import XMolHeadCont from './extra/ElementsTableSampleEntriesXMolHeadCont';
 import Sample from './models/Sample';
 import { sampleShowOrNew } from './routesUtils';
 import SvgWithPopover from './common/SvgWithPopover';
+import { ShowUserLabels } from './UserLabels';
 
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;
@@ -342,6 +343,7 @@ export default class ElementsTableSampleEntries extends Component {
           >
             {sample.title(selected)}
             <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
+              <ShowUserLabels element={sample} />
               <XvialIcon label={sample.external_label} />
               <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
               <ElementCollectionLabels element={sample} key={`${sample.id}`} />

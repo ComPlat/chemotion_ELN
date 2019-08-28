@@ -11,6 +11,7 @@ import Functions from './utils/Functions';
 import UsersFetcher from './fetchers/UsersFetcher';
 import MessagesFetcher from './fetchers/MessagesFetcher';
 import NotificationActions from '../components/actions/NotificationActions';
+import { UserLabelModal } from '../components/UserLabels';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -18,6 +19,7 @@ export default class UserAuth extends Component {
     this.state = {
       currentUser: props.currentUser || { name: 'unknown' },
       showModal: false,
+      showLabelModal: false,
       currentGroups: [],
       selectedUsers: null,
       showSubscription: false,
@@ -27,6 +29,8 @@ export default class UserAuth extends Component {
     this.onChange = this.onChange.bind(this);
     this.handleShow = this.handleShow.bind(this);
     this.handleClose = this.handleClose.bind(this);
+    this.handleLabelShow = this.handleLabelShow.bind(this);
+    this.handleLabelClose = this.handleLabelClose.bind(this);
     this.handleSubscriptionShow = this.handleSubscriptionShow.bind(this);
     this.handleSubscriptionClose = this.handleSubscriptionClose.bind(this);
 
@@ -46,6 +50,7 @@ export default class UserAuth extends Component {
   componentWillUnmount() {
     UserStore.unlisten(this.onChange);
   }
+
 
   onChange(state) {
     this.setState({
@@ -97,6 +102,16 @@ export default class UserAuth extends Component {
   // hide modal
   handleClose() {
     this.setState({ showModal: false, selectedUsers: null });
+  }
+
+  handleLabelShow() {
+    this.setState({
+      showLabelModal: true
+    });
+  }
+
+  handleLabelClose() {
+    this.setState({ showLabelModal: false });
   }
 
   // show modal Subscription
@@ -471,7 +486,6 @@ export default class UserAuth extends Component {
     );
   }
 
-
   // render modal
   renderSubscribeModal() {
     if (this.state.showSubscription) {
@@ -530,6 +544,7 @@ export default class UserAuth extends Component {
             <MenuItem eventKey="3" href="/users/edit" >Change Password</MenuItem>
             <MenuItem eventKey="5" href="/pages/affiliations" >My Affiliations</MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups</MenuItem>
+            <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
             {/* <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem> */}
@@ -540,6 +555,7 @@ export default class UserAuth extends Component {
           </NavItem>
         </Nav>
         { this.renderModal() }
+        <UserLabelModal showLabelModal={this.state.showLabelModal} onHide={() => this.handleLabelClose()} />
         { this.renderSubscribeModal() }
       </div>
     );

@@ -38,6 +38,7 @@ class App extends Component {
     UserActions.fetchOlsRxno();
     UserActions.fetchOlsChmo();
     UserActions.fetchProfile();
+    UserActions.fetchUserLabels();
     UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);
   }

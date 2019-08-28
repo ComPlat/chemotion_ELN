@@ -9,6 +9,7 @@ module Chemotion
     helpers CollectionHelpers
     helpers SampleHelpers
     helpers ProfileHelpers
+    helpers UserLabelHelpers
 
     resource :samples do
 
@@ -286,6 +287,7 @@ module Chemotion
         end
         optional :molecule_name_id, type: Integer
         requires :container, type: Hash
+        optional :user_labels, type: Array
         #use :root_container_params
       end
 
@@ -301,6 +303,8 @@ module Chemotion
           update_datamodel(attributes[:container]);
           attributes.delete(:container);
 
+          update_element_labels(@sample,attributes[:user_labels], current_user.id)
+          attributes.delete(:user_labels)
 
           # otherwise ActiveRecord::UnknownAttributeError appears
           attributes[:elemental_compositions].each do |i|

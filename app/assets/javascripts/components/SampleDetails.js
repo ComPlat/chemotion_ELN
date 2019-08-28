@@ -53,6 +53,7 @@ import PubchemLcss from './PubchemLcss';
 import QcMain from './qc/QcMain';
 import { chmoConversions } from './OlsComponent';
 import ConfirmClose from './common/ConfirmClose';
+import { EditUserLabels, ShowUserLabels } from './UserLabels';
 
 const MWPrecision = 6;
 
@@ -77,7 +78,7 @@ export default class SampleDetails extends React.Component {
       pageMessage: null
     };
 
-    const data = UserStore.getState().profile.data || {};
+    const data = (UserStore.getState().profile && UserStore.getState().profile.data) || {};
     this.enableComputedProps = _.get(data, 'computed_props.enable', false);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -418,6 +419,7 @@ export default class SampleDetails extends React.Component {
           <PubchemLabels element={sample} />
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
+        <ShowUserLabels element={sample} />
 
       </div>
     )
@@ -799,6 +801,7 @@ export default class SampleDetails extends React.Component {
                       parent={this}
                       customizableField={this.customizableField} />
         </ListGroupItem>
+          <EditUserLabels element={sample} />
           {this.elementalPropertiesItem(sample)}
           {this.chemicalIdentifiersItem(sample)}
       </Tab>
