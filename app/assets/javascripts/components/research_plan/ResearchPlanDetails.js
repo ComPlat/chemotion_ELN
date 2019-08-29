@@ -256,35 +256,44 @@ export default class ResearchPlanDetails extends Component {
   }
 
   renderPropertiesTab(research_plan, update) {
-    const { name, body, attachments } = research_plan
+    const { name, body } = research_plan
 
     return (
       <ListGroup fill="true">
         <ListGroupItem >
           <ResearchPlanDetailsName value={name}
-              disabled={research_plan.isMethodDisabled('name')}
-              onChange={this.handleNameChange.bind(this)}
-              edit={true}
-              ref={this.nameRef} />
+                                   disabled={research_plan.isMethodDisabled('name')}
+                                   onChange={this.handleNameChange.bind(this)}
+                                   edit={true}
+                                   ref={this.nameRef} />
 
           <ResearchPlanDetailsBody body={body}
-              disabled={research_plan.isMethodDisabled('body')}
-              onChange={this.handleBodyChange.bind(this)}
-              onDrop={this.handleBodyDrop.bind(this)}
-              onAdd={this.handleBodyAdd.bind(this)}
-              onDelete={this.handleBodyDelete.bind(this)}
-              onExport={this.handleExportField.bind(this)}
-              update={update}
-              edit={true}
-              ref={this.bodyRef} />
+                                   disabled={research_plan.isMethodDisabled('body')}
+                                   onChange={this.handleBodyChange.bind(this)}
+                                   onDrop={this.handleBodyDrop.bind(this)}
+                                   onAdd={this.handleBodyAdd.bind(this)}
+                                   onDelete={this.handleBodyDelete.bind(this)}
+                                   onExport={this.handleExportField.bind(this)}
+                                   update={update}
+                                   edit={true}
+                                   ref={this.bodyRef} />
+        </ListGroupItem>
+      </ListGroup>
+    )
+  }
 
+  renderAttachmentsTab(research_plan) {
+    const { attachments } = research_plan
+
+    return (
+      <ListGroup fill="true">
+        <ListGroupItem >
           <ResearchPlanDetailsAttachments attachments={attachments}
-              onDrop={this.handleAttachmentDrop.bind(this)}
-              onDelete={this.handleAttachmentDelete.bind(this)}
-              onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-              onDownload={this.handleAttachmentDownload.bind(this)}
-              onEdit={this.handleAttachmentEdit.bind(this)}
-              edit={true} />
+                                          onDrop={this.handleAttachmentDrop.bind(this)}
+                                          onDelete={this.handleAttachmentDelete.bind(this)}
+                                          onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+                                          onDownload={this.handleAttachmentDownload.bind(this)}
+                                          onEdit={this.handleAttachmentEdit.bind(this)} />
         </ListGroupItem>
       </ListGroup>
     )
@@ -344,7 +353,10 @@ export default class ResearchPlanDetails extends Component {
           <Tab eventKey={1} title={'Properties'}>
             {this.renderPropertiesTab(research_plan, update)}
           </Tab>
-          <Tab eventKey={2} title={'Literature'}>
+          <Tab eventKey={2} title={'Attachments'}>
+            {this.renderAttachmentsTab(research_plan)}
+          </Tab>
+          <Tab eventKey={3} title={'Literature'}>
             {this.renderLiteratureTab(research_plan)}
           </Tab>
         </Tabs>
