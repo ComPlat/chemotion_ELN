@@ -4,23 +4,19 @@
         margin-bottom: 0;
     }
 
-    .research-plan-export-buttons {
-        padding-top: 24px;
-
-        button {
-            line-height: 20px;
-            margin-left: 10px;
-        }
+    .research-plan-export-dropdown {
+        margin-top: 20px;
     }
 
     .research-plan-name {
         &.static {
-            margin-top: 22px;
+            margin-top: 20px;
             margin-bottom: 20px;
 
             h1 {
                 margin: 0;
-                line-height: 36px;
+                font-size: 26px;
+                line-height: 32px;
             }
         }
     }
