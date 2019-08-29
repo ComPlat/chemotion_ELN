@@ -10,15 +10,19 @@ export default class ResearchPlanDetailsName extends Component {
     if (edit) {
       return (
         <div className="research-plan-name">
-          <FormGroup>
-            <ControlLabel>Name</ControlLabel>
-            <FormControl
-              type="text"
-              value={value || ''}
-              onChange={(event) => onChange(event.target.value)}
-              disabled={disabled}
-            />
-          </FormGroup>
+          <Row>
+            <Col lg={8}>
+              <FormGroup>
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={value || ''}
+                  onChange={(event) => onChange(event.target.value)}
+                  disabled={disabled}
+                />
+              </FormGroup>
+            </Col>
+          </Row>
         </div>
       )
     } else {

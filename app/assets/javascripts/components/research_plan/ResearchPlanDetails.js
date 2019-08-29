@@ -219,35 +219,31 @@ export default class ResearchPlanDetails extends Component {
     )
   }
 
-  renderExportButton(edit) {
-    if (!edit) {
-      return (
-        <div className="pull-right">
-          <Dropdown id="research-plan-export-dropdown">
-            <Dropdown.Toggle>
-              Export
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <MenuItem onSelect={() => this.handleExport('docx')}>
-                as .docx
-              </MenuItem>
-              <MenuItem onSelect={() => this.handleExport('odt')}>
-                as .odt
-              </MenuItem>
-              <MenuItem onSelect={() => this.handleExport('html')}>
-                as HTML
-              </MenuItem>
-              <MenuItem onSelect={() => this.handleExport('markdown')}>
-                as Markdown
-              </MenuItem>
-              <MenuItem onSelect={() => this.handleExport('latex')}>
-                as LaTeX
-              </MenuItem>
-            </Dropdown.Menu>
-          </Dropdown>
-        </div>
-      )
-    }
+  renderExportButton() {
+    return (
+      <Dropdown id="research-plan-export-dropdown dropdown-right">
+        <Dropdown.Toggle>
+          Export
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          <MenuItem onSelect={() => this.handleExport('docx')}>
+            as .docx
+          </MenuItem>
+          <MenuItem onSelect={() => this.handleExport('odt')}>
+            as .odt
+          </MenuItem>
+          <MenuItem onSelect={() => this.handleExport('html')}>
+            as HTML
+          </MenuItem>
+          <MenuItem onSelect={() => this.handleExport('markdown')}>
+            as Markdown
+          </MenuItem>
+          <MenuItem onSelect={() => this.handleExport('latex')}>
+            as LaTeX
+          </MenuItem>
+        </Dropdown.Menu>
+      </Dropdown>
+    )
   }
 
   renderPropertiesTab(research_plan) {
@@ -258,7 +254,12 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem >
-          {this.renderExportButton(edit)}
+          <div className="research-plan-export-buttons pull-right">
+            {edit && this.renderExportButton()}
+            <Button bsStyle="warning" onClick={() => this.toggleEdit()}>
+              {edit ? 'Display' : 'Edit'}
+            </Button>
+          </div>
 
           <ResearchPlanDetailsName value={name}
               disabled={research_plan.isMethodDisabled('name')}
