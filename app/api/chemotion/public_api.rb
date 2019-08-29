@@ -132,7 +132,7 @@ module Chemotion
 
           Message.create_msg_notification(
             channel_subject: Channel::COMPUTED_PROPS_NOTIFICATION, message_from: cp.creator,
-            data_args: { sample_id: sample.id, status: 'finished'}, cprop: ComputedProp.find(cp.id),
+            data_args: { sample_id: cp.sample_id, status: 'finished'}, cprop: ComputedProp.find(cp.id),
             level: 'success'
           )
         end
