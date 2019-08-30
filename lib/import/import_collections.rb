@@ -468,13 +468,19 @@ module Import
     end
 
     def fetch_image(image_path, image_file_name)
-      svg = nil
-      if image_file_name.present? && (tmp_file =  @images["#{image_path}/#{image_file_name}"])
-        svg = tmp_file.read
-        tmp_file.close
-        tmp_file.unlink
+      begin
+        svg = nil
+        if image_file_name.present? && (tmp_file =  @images["#{image_path}/#{image_file_name}"])
+          if tmp_file && !tmp_file.closed?
+            svg = tmp_file.read
+          end
+        end
+      rescue => e
+        Rails.logger.error e
+      ensure
+        tmp_file.close!() if tmp_file && !tmp_file.closed?
       end
-      svg
+      svg || image_file_name
     end
 
     def update_instances!(uuid, instance)
