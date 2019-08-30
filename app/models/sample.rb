@@ -1,3 +1,53 @@
+# == Schema Information
+#
+# Table name: samples
+#
+#  id                  :integer          not null, primary key
+#  name                :string
+#  target_amount_value :float            default(0.0)
+#  target_amount_unit  :string           default("g")
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  description         :text             default("")
+#  molecule_id         :integer
+#  molfile             :binary
+#  purity              :float            default(1.0)
+#  solvent             :string           default("")
+#  impurities          :string           default("")
+#  location            :string           default("")
+#  is_top_secret       :boolean          default(FALSE)
+#  ancestry            :string
+#  external_label      :string           default("")
+#  created_by          :integer
+#  short_label         :string
+#  real_amount_value   :float
+#  real_amount_unit    :string
+#  imported_readout    :string
+#  deleted_at          :datetime
+#  sample_svg_file     :string
+#  user_id             :integer
+#  identifier          :string
+#  density             :float            default(0.0)
+#  melting_point       :float
+#  boiling_point       :float
+#  fingerprint_id      :integer
+#  xref                :jsonb
+#  molarity_value      :float            default(0.0)
+#  molarity_unit       :string           default("M")
+#  molecule_name_id    :integer
+#  molfile_version     :string(20)
+#  stereo              :jsonb
+#  mol_rdkit           :string
+#
+# Indexes
+#
+#  index_samples_on_deleted_at        (deleted_at)
+#  index_samples_on_identifier        (identifier)
+#  index_samples_on_molecule_name_id  (molecule_name_id)
+#  index_samples_on_sample_id         (molecule_id)
+#  index_samples_on_user_id           (user_id)
+#
+
 class Sample < ActiveRecord::Base
   acts_as_paranoid
   include ElementUIStateScopes

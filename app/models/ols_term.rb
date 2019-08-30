@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: ols_terms
+#
+#  id               :integer          not null, primary key
+#  owl_name         :string
+#  term_id          :string
+#  ancestry         :string
+#  ancestry_term_id :string
+#  label            :string
+#  synonym          :string
+#  synonyms         :jsonb
+#  desc             :string
+#  metadata         :jsonb
+#  is_enabled       :boolean          default(TRUE)
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#
+# Indexes
+#
+#  index_ols_terms_on_ancestry              (ancestry)
+#  index_ols_terms_on_owl_name_and_term_id  (owl_name,term_id) UNIQUE
+#
+
 class OlsTerm < ActiveRecord::Base
   has_ancestry
 

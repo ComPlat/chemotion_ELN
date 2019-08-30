@@ -1,5 +1,33 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: fingerprints
+#
+#  id           :integer          not null, primary key
+#  fp0          :bit(64)
+#  fp1          :bit(64)
+#  fp2          :bit(64)
+#  fp3          :bit(64)
+#  fp4          :bit(64)
+#  fp5          :bit(64)
+#  fp6          :bit(64)
+#  fp7          :bit(64)
+#  fp8          :bit(64)
+#  fp9          :bit(64)
+#  fp10         :bit(64)
+#  fp11         :bit(64)
+#  fp12         :bit(64)
+#  fp13         :bit(64)
+#  fp14         :bit(64)
+#  fp15         :bit(64)
+#  num_set_bits :integer
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  deleted_at   :time
+#
+
+
 class Fingerprint < ActiveRecord::Base
   # acts_as_paranoid
   include Collectable

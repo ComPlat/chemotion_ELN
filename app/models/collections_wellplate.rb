@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: collections_wellplates
+#
+#  id            :integer          not null, primary key
+#  collection_id :integer
+#  wellplate_id  :integer
+#  deleted_at    :datetime
+#
+# Indexes
+#
+#  index_collections_wellplates_on_collection_id                   (collection_id)
+#  index_collections_wellplates_on_deleted_at                      (deleted_at)
+#  index_collections_wellplates_on_wellplate_id_and_collection_id  (wellplate_id,collection_id) UNIQUE
+#
+
 class CollectionsWellplate < ActiveRecord::Base
   acts_as_paranoid
   belongs_to :collection

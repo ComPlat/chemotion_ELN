@@ -1,5 +1,46 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: reactions
+#
+#  id                 :integer          not null, primary key
+#  name               :string
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  description        :text
+#  timestamp_start    :string
+#  timestamp_stop     :string
+#  observation        :text
+#  purification       :string           default([]), is an Array
+#  dangerous_products :string           default([]), is an Array
+#  tlc_solvents       :string
+#  tlc_description    :text
+#  rf_value           :string
+#  temperature        :jsonb
+#  status             :string
+#  reaction_svg_file  :string
+#  solvent            :string
+#  deleted_at         :datetime
+#  short_label        :string
+#  created_by         :integer
+#  role               :string
+#  origin             :jsonb
+#  rinchi_string      :text
+#  rinchi_long_key    :text
+#  rinchi_short_key   :string
+#  rinchi_web_key     :string
+#  duration           :string
+#  rxno               :string
+#
+# Indexes
+#
+#  index_reactions_on_deleted_at      (deleted_at)
+#  index_reactions_on_rinchi_web_key  (rinchi_web_key)
+#  index_reactions_on_role            (role)
+#
+
+
 class Reaction < ActiveRecord::Base
   acts_as_paranoid
   include ElementUIStateScopes

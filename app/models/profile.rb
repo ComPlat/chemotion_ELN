@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: profiles
+#
+#  id                 :integer          not null, primary key
+#  show_external_name :boolean          default(FALSE)
+#  user_id            :integer          not null
+#  deleted_at         :datetime
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  data               :jsonb
+#
+# Indexes
+#
+#  index_profiles_on_deleted_at  (deleted_at)
+#  index_profiles_on_user_id     (user_id)
+#
+
 class Profile < ActiveRecord::Base
   acts_as_paranoid
 

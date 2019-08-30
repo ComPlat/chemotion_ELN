@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: research_plans
+#
+#  id          :integer          not null, primary key
+#  name        :string           not null
+#  description :text
+#  sdf_file    :string
+#  svg_file    :string
+#  created_by  :integer          not null
+#  deleted_at  :datetime
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  thumb_svg   :string
+#
+
 class ResearchPlan < ActiveRecord::Base
   acts_as_paranoid
   include ElementUIStateScopes

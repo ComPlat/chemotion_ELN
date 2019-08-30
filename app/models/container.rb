@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: containers
+#
+#  id                :integer          not null, primary key
+#  ancestry          :string
+#  containable_id    :integer
+#  containable_type  :string
+#  name              :string
+#  container_type    :string
+#  description       :text
+#  extended_metadata :hstore
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  parent_id         :integer
+#
+# Indexes
+#
+#  index_containers_on_containable  (containable_type,containable_id)
+#
+
 class Container < ActiveRecord::Base
   include ElementCodes
   belongs_to :containable, polymorphic: true

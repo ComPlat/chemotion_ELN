@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: collections_samples
+#
+#  id            :integer          not null, primary key
+#  collection_id :integer
+#  sample_id     :integer
+#  deleted_at    :datetime
+#
+# Indexes
+#
+#  index_collections_samples_on_collection_id                (collection_id)
+#  index_collections_samples_on_deleted_at                   (deleted_at)
+#  index_collections_samples_on_sample_id_and_collection_id  (sample_id,collection_id) UNIQUE
+#
+
 class CollectionsSample < ActiveRecord::Base
   acts_as_paranoid
   belongs_to :collection
