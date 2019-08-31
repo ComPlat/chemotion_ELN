@@ -122,19 +122,15 @@ export default class ResearchPlansFetcher {
     return promise();
   }
 
-  static export(researchPlan, html, exportFormat) {
+  static export(researchPlan, exportFormat) {
     let file_name
-    const promise = fetch('/api/v1/research_plans/' + researchPlan.id + '/export/', {
+    const promise = fetch(`/api/v1/research_plans/${researchPlan.id}/export/?export_format=${exportFormat}`, {
       credentials: 'same-origin',
-      method: 'post',
+      method: 'get',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        html: html,
-        export_format: exportFormat
-      })
+      }
     }).then((response) => {
       if (response.ok) {
         file_name = getFileName(response)
@@ -152,7 +148,7 @@ export default class ResearchPlansFetcher {
 
   static exportTable(researchPlan, field) {
     let file_name
-    const promise = fetch('/api/v1/research_plans/' + researchPlan.id + '/export_table/' + field.id, {
+    const promise = fetch(`/api/v1/research_plans/${researchPlan.id}/export_table/${field.id}/`, {
       credentials: 'same-origin',
       method: 'get',
       headers: {
@@ -184,13 +180,10 @@ export default class ResearchPlansFetcher {
       }
     }).then((response) => {
       if (response.ok) {
-        file_name = getFileName(response)
-        return response.blob()
+        return response.json()
       } else {
         throw Error(response.statusText);
       }
-    }).then((blob) => {
-      downloadBlob(file_name, blob)
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

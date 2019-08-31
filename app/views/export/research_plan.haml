@@ -1,0 +1,38 @@
+%h1= @name
+
+- @fields.each do |field|
+  - case field[:type]
+
+  - when 'richtext'
+    %div= field[:text].html_safe
+
+  - when 'table'
+    %div
+      %table{'border' => 1}
+        %thead
+          %tr
+            - field[:columns].each do |column|
+              %th= column['name']
+        %tbody
+          - field[:rows].each do |row|
+            %tr
+              - field[:columns].each do |column|
+                %td= row[column['key']]
+
+  - when 'ketcher'
+    %div
+      %img{"src" => field[:src]}
+
+  - when 'image'
+    %div
+      %img{"src" => field[:src]}
+
+  - when 'sample'
+    %div
+      %img{"src" => field[:src]}
+      %p= field[:p]
+
+  - when 'reaction'
+    %div
+      %img{"src" => field[:src]}
+      %p= field[:p]

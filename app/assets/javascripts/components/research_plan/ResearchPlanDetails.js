@@ -29,9 +29,7 @@ export default class ResearchPlanDetails extends Component {
     this.state = {
       research_plan,
       update: false
-    };
-    this.nameRef = React.createRef()
-    this.bodyRef = React.createRef()
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -174,21 +172,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleExport(exportFormat) {
     const { research_plan } = this.state;
-    const name = ReactDOM.findDOMNode(this.nameRef.current)
-    const body = ReactDOM.findDOMNode(this.bodyRef.current)
-
-    let html = name.innerHTML
-    Array.from(body.getElementsByClassName('research-plan-field')).map(field => {
-      const editors = field.getElementsByClassName('ql-editor')
-
-      if (editors.length) {
-        html += editors[0].innerHTML
-      } else {
-        html += field.innerHTML
-      }
-    })
-
-    ResearchPlansFetcher.export(research_plan, html, exportFormat)
+    ResearchPlansFetcher.export(research_plan, exportFormat)
   }
 
   handleExportField(field) {
@@ -237,8 +221,7 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanDetailsName value={name}
               disabled={research_plan.isMethodDisabled('name')}
               onChange={this.handleNameChange.bind(this)}
-              edit={false}
-              ref={this.nameRef} />
+              edit={false} />
 
           <ResearchPlanDetailsBody body={body}
               disabled={research_plan.isMethodDisabled('body')}
@@ -248,8 +231,7 @@ export default class ResearchPlanDetails extends Component {
               onDelete={this.handleBodyDelete.bind(this)}
               onExport={this.handleExportField.bind(this)}
               update={update}
-              edit={false}
-              ref={this.bodyRef} />
+              edit={false} />
         </ListGroupItem>
       </ListGroup>
     )
@@ -264,8 +246,7 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanDetailsName value={name}
                                    disabled={research_plan.isMethodDisabled('name')}
                                    onChange={this.handleNameChange.bind(this)}
-                                   edit={true}
-                                   ref={this.nameRef} />
+                                   edit={true} />
 
           <ResearchPlanDetailsBody body={body}
                                    disabled={research_plan.isMethodDisabled('body')}
@@ -275,8 +256,7 @@ export default class ResearchPlanDetails extends Component {
                                    onDelete={this.handleBodyDelete.bind(this)}
                                    onExport={this.handleExportField.bind(this)}
                                    update={update}
-                                   edit={true}
-                                   ref={this.bodyRef} />
+                                   edit={true} />
         </ListGroupItem>
       </ListGroup>
     )

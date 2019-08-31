@@ -191,7 +191,6 @@ module Chemotion
       desc "Export research plan by id"
       params do
         requires :id, type: Integer, desc: "Research plan id"
-        requires :html, type: String, desc: "Client side rendered html"
         optional :export_format, type: Symbol, desc: "Export format", values: [:docx, :odt, :html, :markdown, :latex]
       end
       route_param :id do
@@ -199,8 +198,11 @@ module Chemotion
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).read?
         end
 
-        post :export do
+        get :export do
           research_plan = ResearchPlan.find(params[:id])
+
+          # convert researhc plan
+          export = Export::ExportResearchPlan.new current_user, research_plan, params[:export_format]
 
           # return the response "as is"
           env['api.format'] = :binary
@@ -210,8 +212,6 @@ module Chemotion
             content_type "application/octet-stream"
 
             # init the export object
-            export = Export::ExportResearchPlan.new params[:html], params[:export_format]
-
             if [:html, :markdown, :latex].include? params[:export_format]
               header['Content-Disposition'] = "attachment; filename=\"#{research_plan.name}.zip\""
               present export.to_zip
@@ -221,7 +221,7 @@ module Chemotion
             end
           else
             # return plain html
-            present params[:html]
+            present export.to_html
           end
         end
       end
