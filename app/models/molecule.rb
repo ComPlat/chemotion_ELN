@@ -121,6 +121,10 @@ class Molecule < ActiveRecord::Base
     end
   end
 
+  def chem_repo
+    { id: self.tag&.taggable_data['chemrepo_id'] }
+  end
+
   def attach_svg svg_data
     return unless svg_data.match /\A<\?xml/
 

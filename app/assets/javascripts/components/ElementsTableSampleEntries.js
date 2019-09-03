@@ -9,6 +9,7 @@ import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementReactionLabels from './ElementReactionLabels';
 import PubchemLabels from './PubchemLabels';
+import ChemrepoLabels from './ChemrepoLabels';
 import ComputedPropLabel from './computed_props/ComputedPropLabel';
 import ArrayUtils from './utils/ArrayUtils';
 import ElementContainer from './ElementContainer';
@@ -158,6 +159,7 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
           <h4><SampleName sample={sample} /></h4>
         </div>
         <div style={{ position: 'absolute', top: '10px', right: '25px', float: 'right' }} >
+          <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />
           {tdExtraContents.map(e => e)}
           <PubchemLabels element={sample} />
         </div>

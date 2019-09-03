@@ -47,6 +47,10 @@ begin
     cron_config = ENV['CRON_CONFIG_ELEMENT_TAG'].presence
     cron_config ||= "#{rand(0..59)} #{rand(20..23)} * * #{rand(6..7)}"
     RefreshElementTagJob.set(cron: cron_config ).perform_later
+    Delayed::Job.where("handler like ?", "%ChemrepoIdJob%").destroy_all
+    cron_config = ENV['CRON_CONFIG_CHEM_REPO_ID'].presence
+    cron_config ||= "#{rand(0..59)} #{rand(17..19)} * * #{rand(6..7)}"
+    ChemrepoIdJob.set(cron: cron_config ).perform_later
 
   end
 rescue PG::ConnectionBad => e
