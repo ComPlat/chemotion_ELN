@@ -23,6 +23,10 @@ export default class DeviceBox extends React.Component {
     const { visible } = this.state;
     const cache = InboxStore.getState().cache;
 
+    device_box.children.sort((a, b) => {
+      if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
+    });
+
     const datasets = device_box.children.map((dataset) => {
       return(
         <DatasetContainer

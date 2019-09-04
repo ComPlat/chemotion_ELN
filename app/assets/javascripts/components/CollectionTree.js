@@ -146,25 +146,29 @@ export default class CollectionTree extends React.Component {
 
 
   inboxSubtrees() {
-    const inbox = this.state.inbox;
+    const { inbox } = this.state;
 
-    let boxes = ""
-    if(inbox.children){
-      boxes = inbox.children.map(device_box => {
-        return(
-            <DeviceBox key={"box_"+device_box.id} device_box={device_box} />
-        )
-      })
+    let boxes = '';
+    if (inbox.children) {
+      inbox.children.sort((a, b) => {
+        if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
+      });
+      boxes = inbox.children.map((deviceBox) => {
+        return (
+          <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} />
+        );
+      });
     }
-    return(
+
+    return (
       <div className="tree-view">
         {boxes}
         {inbox.unlinked_attachments
           ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
-          : ""
+          : ''
         }
       </div>
-    )
+    );
   }
 
   remoteSyncInSubtrees() {
