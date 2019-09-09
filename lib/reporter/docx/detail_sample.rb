@@ -22,7 +22,7 @@ module Reporter
       private
 
       def title
-        "#{obj.molecule_iupac_name} (#{obj.short_label})"
+        "#{obj.molecule_iupac_name} (#{obj.name.presence || obj.external_label.presence || obj.short_label.presence})"
       end
 
       def iupac_name

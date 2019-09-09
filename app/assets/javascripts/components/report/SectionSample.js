@@ -5,27 +5,33 @@ import QuillViewer from '../QuillViewer'
 
 const SectionSample = ({sample, settings, configs}) => {
   const { short_label, molecule_iupac_name, svgPath, analyses,
-          reaction_description } = sample;
+    reaction_description, name, external_label } = sample;
 
   return (
     <div>
-      <Alert style={{ textAlign: 'center',
-                      backgroundColor: '#000000',
-                      color:'white',
-                      border:'none'}}> {`${molecule_iupac_name} (${short_label})`}
+      <Alert style={{
+              textAlign: 'center',
+              backgroundColor: '#000000',
+              color: 'white',
+              border: 'none'
+            }}
+      > {`${molecule_iupac_name} (${name || external_label || short_label})`}
       </Alert>
 
-      <SVGContent show={settings.diagram}
-                  svgPath={svgPath} />
+      <SVGContent
+        show={settings.diagram}
+        svgPath={svgPath}
+      />
 
-      <AnalysesContent show={settings.analyses && analyses}
-                        showRecDes={settings.reactiondesc && reaction_description}
-                        analyses={analyses}
-                        reactionDescription={reaction_description} />
-
+      <AnalysesContent
+        show={settings.analyses && analyses}
+        showRecDes={settings.reactiondesc && reaction_description}
+        analyses={analyses}
+        reactionDescription={reaction_description}
+      />
     </div>
-  )
-}
+  );
+};
 
 const SVGContent = ({show, svgPath}) => {
   if(!show) { return null; }
