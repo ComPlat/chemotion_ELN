@@ -162,9 +162,9 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
             <tbody key={i}>
               <tr>
                 <td colSpan="5">
-                  <i className="fa fa-arrow-circle-right"></i>
-                  {sample.molecule_iupac_name}
-                  ({sample.short_label})
+                  <i className="fa fa-arrow-circle-right" aria-hidden="true" />&nbsp;
+                  {sample.molecule_iupac_name}&nbsp;
+                  ({sample.name || sample.external_label || sample.short_label || ''})
                 </td>
               </tr>
               <tr>
@@ -195,18 +195,18 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   );
 
   return (
-    show
-      ? <div>
-          <h4><Label bsStyle="success"> Starting Materials </Label></h4>
-          <div> {table(rows(starting_materials, false))} </div>
-          <h4><Label bsStyle="warning"> Reactants </Label></h4>
-          <div> {table(rows(reactants, false))} </div>
-          <h4><Label bsStyle="danger"> Products </Label></h4>
-          <div> {table(rows(products, true))} </div>
-        </div>
+    show ?
+      <div>
+        <h4><Label bsStyle="success"> Starting Materials </Label></h4>
+        <div> {table(rows(starting_materials, false))} </div>
+        <h4><Label bsStyle="warning"> Reactants </Label></h4>
+        <div> {table(rows(reactants, false))} </div>
+        <h4><Label bsStyle="danger"> Products </Label></h4>
+        <div> {table(rows(products, true))} </div>
+      </div>
       : null
-  )
-}
+  );
+};
 
 const SolventContent = ({ show, solvents, solvent }) => {
   const volume = (s) => {
