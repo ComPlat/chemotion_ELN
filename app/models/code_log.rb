@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: code_logs
+#
+#  id         :uuid             not null, primary key
+#  source     :string
+#  source_id  :integer
+#  value      :string(40)
+#  deleted_at :datetime
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_code_logs_on_source_and_source_id  (source,source_id)
+#
+
 class CodeLog < ActiveRecord::Base
   acts_as_paranoid
   after_create  :set_digit_value

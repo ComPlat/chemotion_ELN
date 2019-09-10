@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: elemental_compositions
+#
+#  id               :integer          not null, primary key
+#  sample_id        :integer          not null
+#  composition_type :string           not null
+#  data             :hstore           not null
+#  loading          :float
+#  created_at       :datetime
+#  updated_at       :datetime
+#
+# Indexes
+#
+#  index_elemental_compositions_on_sample_id  (sample_id)
+#
+
 class ElementalComposition < ActiveRecord::Base
   belongs_to :sample
 

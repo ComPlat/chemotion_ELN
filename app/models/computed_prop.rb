@@ -1,5 +1,29 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: computed_props
+#
+#  id                 :integer          not null, primary key
+#  molecule_id        :integer
+#  max_potential      :float            default(0.0)
+#  min_potential      :float            default(0.0)
+#  mean_potential     :float            default(0.0)
+#  lumo               :float            default(0.0)
+#  homo               :float            default(0.0)
+#  ip                 :float            default(0.0)
+#  ea                 :float            default(0.0)
+#  dipol_debye        :float            default(0.0)
+#  status             :integer          default(0)
+#  data               :jsonb
+#  created_at         :datetime
+#  updated_at         :datetime
+#  mean_abs_potential :float            default(0.0)
+#  creator            :integer          default(0)
+#  sample_id          :integer          default(0)
+#
+
+
 # ComputedProp, Molecule computed properties via OpenMOPAC and TURBOMOLE
 class ComputedProp < ActiveRecord::Base
   belongs_to :molecule

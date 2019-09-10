@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: collections_screens
+#
+#  id            :integer          not null, primary key
+#  collection_id :integer
+#  screen_id     :integer
+#  deleted_at    :datetime
+#
+# Indexes
+#
+#  index_collections_screens_on_collection_id                (collection_id)
+#  index_collections_screens_on_deleted_at                   (deleted_at)
+#  index_collections_screens_on_screen_id_and_collection_id  (screen_id,collection_id) UNIQUE
+#
+
 class CollectionsScreen < ActiveRecord::Base
   acts_as_paranoid
   belongs_to :collection

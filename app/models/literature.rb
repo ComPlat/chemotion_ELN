@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: literatures
+#
+#  id         :integer          not null, primary key
+#  title      :string
+#  url        :string
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  deleted_at :datetime
+#  refs       :jsonb
+#  doi        :string
+#
+# Indexes
+#
+#  index_literatures_on_deleted_at  (deleted_at)
+#
+
 class Literature < ActiveRecord::Base
   acts_as_paranoid
   has_many :literals

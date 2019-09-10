@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: screens
+#
+#  id           :integer          not null, primary key
+#  description  :string
+#  name         :string
+#  result       :string
+#  collaborator :string
+#  conditions   :string
+#  requirements :string
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  deleted_at   :datetime
+#
+# Indexes
+#
+#  index_screens_on_deleted_at  (deleted_at)
+#
+
 class Screen < ActiveRecord::Base
   acts_as_paranoid
   include ElementUIStateScopes

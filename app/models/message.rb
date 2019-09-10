@@ -1,5 +1,18 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: messages
+#
+#  id         :integer          not null, primary key
+#  channel_id :integer
+#  content    :jsonb            not null
+#  created_by :integer          not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+
+
 # Publish-Subscription Model
 class Message < ActiveRecord::Base
   belongs_to :channel

@@ -156,6 +156,8 @@ gem 'activejob-status'
 group :development, :test do
   gem 'binding_of_caller'
 
+  gem 'annotate'
+
   gem 'mailcatcher', '0.7.1'
 
   # Call 'byebug' anywhere in the code to stop execution

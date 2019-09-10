@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: collections_research_plans
+#
+#  id               :integer          not null, primary key
+#  collection_id    :integer
+#  research_plan_id :integer
+#  deleted_at       :datetime
+#
+# Indexes
+#
+#  index_collections_research_plans_on_rplan_id_and_coll_id  (research_plan_id,collection_id) UNIQUE
+#
+
 class CollectionsResearchPlan < ActiveRecord::Base
   acts_as_paranoid
   belongs_to :collection

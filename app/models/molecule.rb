@@ -1,3 +1,34 @@
+# == Schema Information
+#
+# Table name: molecules
+#
+#  id                     :integer          not null, primary key
+#  inchikey               :string
+#  inchistring            :string
+#  density                :float            default(0.0)
+#  molecular_weight       :float
+#  molfile                :binary
+#  melting_point          :float
+#  boiling_point          :float
+#  sum_formular           :string
+#  names                  :string           default([]), is an Array
+#  iupac_name             :string
+#  molecule_svg_file      :string
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  deleted_at             :datetime
+#  is_partial             :boolean          default(FALSE), not null
+#  exact_molecular_weight :float
+#  cano_smiles            :string
+#  cas                    :text
+#  molfile_version        :string(20)
+#
+# Indexes
+#
+#  index_molecules_on_deleted_at               (deleted_at)
+#  index_molecules_on_inchikey_and_is_partial  (inchikey,is_partial) UNIQUE
+#
+
 class Molecule < ActiveRecord::Base
   acts_as_paranoid
 

@@ -1,3 +1,29 @@
+# == Schema Information
+#
+# Table name: sync_collections_users
+#
+#  id                        :integer          not null, primary key
+#  user_id                   :integer
+#  collection_id             :integer
+#  shared_by_id              :integer
+#  permission_level          :integer          default(0)
+#  sample_detail_level       :integer          default(0)
+#  reaction_detail_level     :integer          default(0)
+#  wellplate_detail_level    :integer          default(0)
+#  screen_detail_level       :integer          default(0)
+#  fake_ancestry             :string
+#  researchplan_detail_level :integer          default(10)
+#  label                     :string
+#  created_at                :datetime
+#  updated_at                :datetime
+#
+# Indexes
+#
+#  index_sync_collections_users_on_collection_id              (collection_id)
+#  index_sync_collections_users_on_shared_by_id               (shared_by_id,user_id,fake_ancestry)
+#  index_sync_collections_users_on_user_id_and_fake_ancestry  (user_id,fake_ancestry)
+#
+
 class SyncCollectionsUser < ActiveRecord::Base
   belongs_to :user
   belongs_to :collection

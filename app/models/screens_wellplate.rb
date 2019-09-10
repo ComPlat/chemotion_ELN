@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: screens_wellplates
+#
+#  id           :integer          not null, primary key
+#  screen_id    :integer
+#  wellplate_id :integer
+#  deleted_at   :datetime
+#
+# Indexes
+#
+#  index_screens_wellplates_on_deleted_at    (deleted_at)
+#  index_screens_wellplates_on_screen_id     (screen_id)
+#  index_screens_wellplates_on_wellplate_id  (wellplate_id)
+#
+
 class ScreensWellplate < ActiveRecord::Base
   acts_as_paranoid
   belongs_to :screen
