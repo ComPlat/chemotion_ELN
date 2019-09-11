@@ -142,7 +142,9 @@ namespace :deploy do
     on roles :app do
       # Here we can do anything such as:
        within release_path do
-         execute :rake, 'tmp:cache:clear'
+	 with RAILS_ENV: fetch(:rails_env) do
+           execute :rake, 'tmp:cache:clear'
+	 end
       end
     end
   end
