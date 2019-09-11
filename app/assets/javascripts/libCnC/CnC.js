@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Grid, Row, Col } from 'react-bootstrap';
-import RFB from '@novnc/novnc/lib/rfb';
+import RFB from '@novnc/noVNC/lib/rfb';
 // import Immutable from 'immutable';
 
 import Navigation from './Navigation';
