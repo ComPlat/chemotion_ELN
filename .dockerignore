@@ -1,6 +1,9 @@
 .git
 backup
+uploads
+public
 .gitignore
 node_modules
 tmp
+.env
 

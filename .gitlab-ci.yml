@@ -1,4 +1,4 @@
-image: "complat/complat-ubuntu-runner"
+image: "complat/complat-ubuntu-runner:0.3"
 
 services:
   - postgres:10-alpine
@@ -8,37 +8,109 @@ variables:
   POSTGRES_USER: chemotion_test
   POSTGRES_PASSWORD: "123456"
 
-# cache:
-#   untracked: true
-#   key: "$CI_BUILD_REF_NAME"
-#   paths:
-#     - node_modules/
-#     - public/
-#     - .bundle/
-
-# stages:
-  # - rspec
-  # - npm
-
-test:
-  # stage: rspec
+.cachingbuild:
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
-    - node_modules/
-    - vendor/ruby
+      - public/
+      - .bundle/
+      - vendor/bundle/
+      - node_modules/
+      - .env
 
+.caching:
+  extends: .cachingbuild
+  cache:
+    policy: pull
+
+.before_scripting:
   before_script:
-  - /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm list"
-
-  script:
+    - mv ~/shared/bundle/ ~/shared/bundle.bak/
+    - mv vendor/bundle/  ~/shared/
     - cp config/database.yml.gitlab config/database.yml
     - cp -f config/storage.yml.example config/storage.yml
     - touch config/datacollectors.yml
-    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler  --no-ri --no-rdoc && bundle install -j 3 --path vendor && source ~/.nvm/nvm.sh &&
-        npm install && bundle exec rake db:test:prepare && bundle exec rake && npm test"
-# npm:
-#   stage: npm
-#   script:
-#     - /bin/bash -l -c "source ~/.nvm/nvm.sh && npm install && npm test"
 
+stages:
+  - build
+  - unit
+  - acceptance
+
+building:
+  extends: .cachingbuild
+  stage: build
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    # - mkdir -p ~/.ssh
+    # - chmod 700 ~/.ssh
+    # - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    # - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    # - chmod 600 ~/.ssh/id_rsa
+    # - ssh-add ~/.ssh/id_rsa
+    # - ssh-keyscan git.scc.kit.edu >> ~/.ssh/known_hosts
+    # - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - |
+      if [ ${#SSH_PRIVATE_KEY} -ge 1000 ]; then
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-add ~/.ssh/id_rsa
+        echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
+      fi
+    - chmod 600 ~/.ssh/known_hosts
+    - if test ! -d "node_modules"; then mv /home/gitlab-runner/shared/node_modules .; fi
+    - cp config/database.yml.gitlab config/database.yml
+    - cp -f config/storage.yml.example config/storage.yml
+    - echo "$DOTENV" > .env
+    - touch config/datacollectors.yml
+    # - ls node_modules
+  script:
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"
+    - /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && bundle exec rake db:test:prepare"
+  after_script:
+    # - ls -la ~/shared/bundle/
+    - if test -d "vendor/bundle"; then mv vendor/bundle ~/shared/vendor.bak; fi
+    - mv ~/shared/bundle/ vendor/
+    - ls -la vendor/bundle/ruby
+    - ls -la node_modules
+    - ls -la  .bundle/
+
+testrb:
+  extends:
+    - .caching
+    - .before_scripting
+  stage: unit
+  script:
+    # - ln -s /home/gitlab-runner/shared/bundle vendor/bundle
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
+  except:
+    variables:
+    - $CI_COMMIT_MESSAGE =~ /skip[ _-]unitrb/i
+    - $CI_COMMIT_MESSAGE =~ /skip[ _-]allunits?/i
+
+testjs:
+  extends:
+    - .caching
+    - .before_scripting
+  stage: unit
+  script:
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm &&  source ~/.nvm/nvm.sh && nvm use && bundle exec rake db:test:prepare && npm test"
+  except:
+    variables:
+    - $CI_COMMIT_MESSAGE =~ /skip[ _-]unitjs/i
+    - $CI_COMMIT_MESSAGE =~ /skip[ _-]allunits?/i
+
+testacceptance:
+  extends:
+    - .caching
+    - .before_scripting
+  stage: acceptance
+  script:
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && bundle exec rake db:test:prepare  && bundle exec rspec spec/features"
+  except:
+    variables:
+    - $CI_COMMIT_MESSAGE =~ /skip[ _-]acceptance/i

@@ -1,22 +1,29 @@
 #require 'coveralls'
 #Coveralls.wear!
-
+require 'rspec/repeat'
 require 'webmock/rspec'
-WebMock.disable_net_connect!(allow_localhost: true)
+
 
 require 'factory_bot_rails'
 require 'headless'
 require 'capybara'
+require 'webdrivers'
+# require 'capybara/rspec'
 require 'rails_helper'
 
 @headless = Headless.new
 @headless.start
 
+Webdrivers.logger.level = :DEBUG
+
 Capybara.register_driver :selenium do |app|
-  http_client = Selenium::WebDriver::Remote::Http::Default.new
-  http_client.read_timeout = 200
+  http_client = Selenium::WebDriver::Remote::Http::Default.new(
+    open_timeout: nil,
+    read_timeout: 500
+  )
   options = Selenium::WebDriver::Chrome::Options.new
   options.add_argument("--window-size=2048,768")
+  # options.add_argument('--disable-gpu')
 
   Capybara::Selenium::Driver.new(
     app,
@@ -25,6 +32,7 @@ Capybara.register_driver :selenium do |app|
     options: options
   )
 end
+
 
 hostname = 'http://pubchem.ncbi.nlm.nih.gov'
 inchi_path = '/rest/pug/compound/inchikey/'
@@ -107,4 +115,9 @@ RSpec.configure do |config|
 
   config.order = :random
   Kernel.srand config.seed
+
+  config.include RSpec::Repeat
+  config.around :each, type: :feature do |example|
+    repeat example, 3.times, verbose: true
+  end
 end

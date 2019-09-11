@@ -22,8 +22,7 @@ feature 'Reaction management' do
 
 
   background do
-    user.confirmed_at = Time.now
-    user.save
+    user.update!(confirmed_at: Time.now)
     sign_in(user)
     fp = Rails.root.join("public", "images", "molecules")
     `ln -s #{Rails.root.join("spec", "fixtures", "images", "molecule.svg")} #{fp} ` unless File.exist?(Rails.root.join(fp, "molecule.svg"))
@@ -50,8 +49,10 @@ feature 'Reaction management' do
       first('i.c-bs-success').click
       material_amount = 6800
 
-      tab_pane = find('div#reaction-detail-tab', match: :first, wait: 10).click
-      tab_scheme = tab_pane.first('div.tab-content').click
+
+      find('div#reaction-detail-tab a#reaction-detail-tab-tab-0').click
+
+      tab_scheme = find('div#reaction-detail-tab div.tab-content')
       material_field = tab_scheme.first('span.input-group').find_all('input').first
       material_field.click
 

@@ -321,7 +321,7 @@ module SVG
         materials.each do |m|
           material, yield_amount = *separate_material_yield(m)
           svg = inner_file_content(material)
-          vb = svg['viewBox'] && svg['viewBox'].split(/\s+/).map(&:to_i) || [0,0,0,0]
+          vb = svg && svg['viewBox']&.split(/\s+/).map(&:to_i) || [0,0,0,0]
           max < vb[3] && (max = vb[3])
         end
         max
@@ -353,11 +353,13 @@ module SVG
 
       def inner_file_content svg_path
         file = @rails_path ? "#{Rails.root}/public#{svg_path}" : svg_path
-        doc = Nokogiri::XML(File.open(file))
-        if(svg_path.include? '/samples')
-          doc.at_css("svg")
-        else
-          doc.at_css("g svg")
+        if !File.directory?(file)
+          doc = Nokogiri::XML(File.open(file))
+          if(svg_path.include? '/samples')
+            doc.at_css("svg")
+          else
+            doc.at_css("g svg")
+          end
         end
       end
 
@@ -425,7 +427,7 @@ module SVG
           end
           material, yield_amount = *separate_material_yield(m)
           svg = inner_file_content(material)
-          vb = svg['viewBox'] && svg['viewBox'].split(/\s+/).map(&:to_i) || []
+          vb = svg && svg['viewBox']&.split(/\s+/).map(&:to_i) || []
           unless vb.empty?
             x_shift = group_width + 10 - vb[0]
             y_shift = (y_center - vb[3]/2).round()
