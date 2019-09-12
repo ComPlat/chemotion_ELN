@@ -73,7 +73,7 @@ gem 'net-sftp'
 gem 'net-ssh'
 
 # svg composer
-gem 'nokogiri', '~> 1.8.2'
+gem 'nokogiri'
 
 # SFTP client
 gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git',
@@ -105,8 +105,8 @@ gem 'faraday_middleware', '~> 0.12.1'
 gem 'httparty'
 
 gem 'ketcherails', '~> 0.1.6', git: 'https://github.com/ComPlat/ketcher-rails',
-     ref: 'c8200cfce01f9c4a8d36d22d74964b818f02d6ef'
-     #path: '../ketcher-rails'
+    ref: '0ad1dec8c8c91074873c93f2a73b57442ab03c6f'
+# gem  'ketcherails', path: '../ketcher-rails'
 
 # Free font icons
 gem 'font-awesome-rails'
