@@ -9,7 +9,7 @@ class API < Grape::API
   helpers do
 
     def current_user
-      @current_user ||= WardenAuthentication.new(env).current_user
+      @current_user ||= API::WardenAuthentication.new(env).current_user
     end
 
     def user_ids

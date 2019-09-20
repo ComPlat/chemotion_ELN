@@ -1,5 +1,5 @@
 # This Dockerfile is intended to build a production-ready app image
-FROM phusion/passenger-ruby25:1.0.0
+FROM phusion/passenger-ruby25:1.0.6
 
 # Add the app's binaries path to $PATH
 ENV PATH /usr/local/rvm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
@@ -25,10 +25,14 @@ RUN add-apt-repository ppa:inkscape.dev/stable && \
       gtk2-engines-pixbuf xfonts-cyrillic xfonts-100dpi xfonts-75dpi \
       xfonts-base xfonts-scalable apt-utils cmake inkscape \
       libeigen3-dev build-essential wget nodejs sudo postgresql-client \
-      libmagickcore-dev libmagickwand-dev imagemagick tzdata --fix-missing
+      libmagickcore-dev libmagickwand-dev imagemagick tzdata gnupg2 \
+      python-dev libsqlite3-dev libboost-all-dev p7zip-full \
+      --fix-missing
 
 # node + npm via nvm; install npm packages
-RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | NVM_DIR=/usr/local/nvm bash
+RUN mkdir /usr/local/nvm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | NVM_DIR=/usr/local/nvm bash
+
 RUN mkdir -p $APP_HOME
 WORKDIR $APP_HOME
 ADD . $APP_HOME

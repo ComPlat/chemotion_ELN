@@ -1,10 +1,10 @@
 version: '2'
 
 services:
-  bundle:
-    image: busybox
-    volumes:
-      - /bundle
+  # bundle:
+  #   image: busybox
+  #   volumes:
+  #     - /bundle
 
   db_data:
     image: busybox
@@ -31,7 +31,7 @@ services:
       ["./run.sh", "postgres"]
     volumes:
       - .:/home/app/chemotion_ELN
-      - /home/app/chemotion_ELN/node_modules
+      # - /home/app/chemotion_ELN/node_modules
     volumes_from:
       - db_data
     ports:
@@ -44,4 +44,3 @@ services:
       DATABASE_URL: postgres://postgres:3x4mpl3@postgres:5432/chemotion_production
       PGPASSWORD: 3x4mpl3
       SECRET_KEY_BASE: my_s3cr3t_k3y
-

@@ -203,13 +203,14 @@ group :test do
   gem 'database_cleaner'
   gem 'factory_bot_rails', '~>4.11'
 
-  gem 'capybara', '~> 3.10.0'
+  gem 'capybara', '~> 3.29.0'
   gem 'webdrivers', '~> 4.1.2'
   gem 'faker', '~> 1.6.6'
   gem 'headless', '2.0.0'
   gem 'launchy', '~> 2.4.3'
-  gem 'selenium-webdriver', '~> 3.14.0'
+  # gem 'selenium-webdriver', '~> 3.14.0'
   gem 'webmock'
+  gem 'rspec-repeat'
 end
 
 # Chemotion plugins: list your ELN specific plugin gems in the Gemfile.plugin
