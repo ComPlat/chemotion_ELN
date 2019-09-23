@@ -34,6 +34,23 @@ export default class AdminFetcher {
 
     return promise;
   }
+  static removeDeviceMethod(params) {
+    const promise = fetch('/api/v1/admin/removeDeviceMethod/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
   static updateDeviceMethod(params) {
     const promise = fetch('/api/v1/admin/updateDeviceMethod/', {
       credentials: 'same-origin',

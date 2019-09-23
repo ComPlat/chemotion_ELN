@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'sys/filesystem'
 
 module Chemotion
@@ -13,7 +14,7 @@ module Chemotion
 
       desc 'Check disk space'
       get 'disk' do
-        stat = Sys::Filesystem.stat("/home")
+        stat = Sys::Filesystem.stat('/home')
         mb_available = stat.block_size * stat.blocks_available / 1024 / 1024
         { percent_used: stat.percent_used.round(2), mb_available: mb_available }
       end
@@ -28,12 +29,27 @@ module Chemotion
       namespace :device do
         desc 'Get device by Id'
         params do
-          requires :id, type: Integer, desc: "device id"
+          requires :id, type: Integer, desc: 'device id'
         end
         route_param :id do
           get do
             present Device.find(params[:id]), with: Entities::DeviceEntity, root: 'device'
           end
+        end
+      end
+
+      namespace :removeDeviceMethod do
+        desc 'Remove device profile method'
+        params do
+          requires :id, type: Integer, desc: 'device id'
+        end
+        post do
+          device = Device.find(params[:id])
+          data = device.profile.data || {}
+          data.delete('method') if data['method']
+          data.delete('method_params') if data['method_params']
+          device.profile.update!(data: data)
+          present device, with: Entities::DeviceEntity, root: 'device'
         end
       end
 
@@ -109,7 +125,7 @@ module Chemotion
             new_obj.profile.update!({data: {}})
             status 201
           rescue ActiveRecord::RecordInvalid => e
-            { error: e.message}
+            { error: e.message }
           end
         end
       end
@@ -131,7 +147,7 @@ module Chemotion
             user.update!(attributes) unless attributes.empty?
             status 201
           rescue ActiveRecord::RecordInvalid => e
-            { error: e.message}
+            { error: e.message }
           end
         end
       end
@@ -146,7 +162,7 @@ module Chemotion
         end
 
         post do
-          user = User.find_by(id: params[:user_id]);
+          user = User.find_by(id: params[:user_id])
           case params[:enable]
           when true
             user.unlock_access!()
@@ -222,10 +238,10 @@ module Chemotion
         post do
           extname = File.extname(params[:file][:filename])
           if extname.match(/\.(owl?|xml)/i)
-            owl_name = File.basename(params[:file][:filename], ".*")
+            owl_name = File.basename(params[:file][:filename], '.*')
             file_path = params[:file][:tempfile].path
             OlsTerm.delete_owl_by_name(owl_name)
-            OlsTerm.import_and_create_ols_from_file_path(owl_name,file_path)
+            OlsTerm.import_and_create_ols_from_file_path(owl_name, file_path)
             OlsTerm.disable_branch_by(Ols_name: owl_name, term_id: 'BFO:0000002')
             # discrete settings
             nmr_13c = OlsTerm.find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')
