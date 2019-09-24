@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe Chemotion::IconNmrAPI, if: ENV['DOCKER'] do
@@ -10,30 +12,31 @@ describe Chemotion::IconNmrAPI, if: ENV['DOCKER'] do
 
     describe 'POST /api/v1/icon_nmr/config' do
       let(:client) { SFTPClient.with_default_settings }
-      let(:params) {
+      let(:params) do
         {
-          "sample_id" => 48,
-          "data" => {
-            "HOLDER" => 8,
-            "EXPERIMENT" => "CMC_PROTON"
+          'sample_id' => 48,
+          'data' => {
+            'HOLDER' => 8,
+            'EXPERIMENT' => 'CMC_PROTON'
           }
         }
-      }
+      end
       let(:time) { Time.now }
-      let(:upload_path) { "uploads/#{time.utc.strftime("%Y-%m-%d-%H%M%S")}-48" }
+      let(:upload_path) { "uploads/#{time.utc.strftime('%Y-%m-%d-%H%M%S')}-48" }
 
       before do
         allow(Time).to receive(:now).and_return(time)
-        post "/api/v1/icon_nmr/config", params
+        post '/api/v1/icon_nmr/config', params
       end
+
       after do
         client.remove_file!(upload_path)
       end
 
       it 'creates a config file on the defined SFTP server' do
         content = client.read_file(upload_path)
-        expect(content).to include("HOLDER 8")
-        expect(content).to include("EXPERIMENT CMC_PROTON")
+        expect(content).to include('HOLDER 8')
+        expect(content).to include('EXPERIMENT CMC_PROTON')
       end
     end
   end

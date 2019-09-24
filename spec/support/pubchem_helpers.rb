@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 module PubchemHelpers
   def get_cids_from_inchikeys(body)
-    inchikey = body.split("=")[1]
+    inchikey = body.split('=')[1]
     response_hash = {
       PropertyTable: {
         Properties: [
           {
-            CID: 123456789,
+            CID: 123_456_789,
             InChIKey: inchikey
           }
         ]
@@ -19,11 +21,11 @@ module PubchemHelpers
       InformationList: {
         Information: [
           {
-            CID: 123456789,
+            CID: 123_456_789,
             RN: [
-              "123-456-789",
-              "987-654-321",
-              "558440-22-5"
+              '123-456-789',
+              '987-654-321',
+              '558440-22-5'
             ]
           }
         ]

@@ -1,17 +1,19 @@
-require 'rails_helper'
+# frozen_string_literal: true
 
-RSpec.describe PagesController do
-  #login_user
-  let(:user)    { create(:person) }
-  let (:g1) {create(:group)}
-  let (:g2) {create(:group)}
-  let(:json_options) {
-    {
-      only: [:id],
-      methods: [:name, :initials]
-    }
-  }
-  before do
-    sign__in(user)
-  end
-end
+# require 'rails_helper'
+#
+# RSpec.describe PagesController do
+#  let(:user) { create(:person) }
+#  let(:g1) { create(:group) }
+#  let(:g2) { create(:group) }
+#  let(:json_options) do
+#    {
+#      only: [:id],
+#      methods: %i[name initials]
+#    }
+#  end
+#
+#  before do
+#    sign_in(user)
+#  end
+# end

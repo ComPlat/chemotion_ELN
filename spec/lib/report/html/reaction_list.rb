@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'Reporter::Html::ReactionList instance' do
@@ -13,7 +15,7 @@ describe 'Reporter::Html::ReactionList instance' do
   end
 
   it 'contains a html file' do
-    [@sp_prd_a, @sp_prd_b].each_with_index do |prd, idx|
+    [@sp_prd_a, @sp_prd_b].each_with_index do |prd, _idx|
       expect(@target).to include(prd.molecule.inchistring)
       expect(@target).to include(prd.molecule.inchikey)
       expect(@target).to include(@r1.rinchi_long_key)

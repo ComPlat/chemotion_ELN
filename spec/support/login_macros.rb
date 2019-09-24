@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module LoginMacros
   def sign_in(user)
     visit root_path

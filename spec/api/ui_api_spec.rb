@@ -8,6 +8,7 @@ end
 
 describe Chemotion::UiAPI do
   let(:user) { create(:user) }
+
   before do
     allow_any_instance_of(WardenAuthentication).to(
       receive(:current_user).and_return(user)
@@ -21,6 +22,7 @@ describe Chemotion::UiAPI do
         Rails.configuration.spectra = StubConfig
         get '/api/v1/ui/initialize'
       end
+
       it 'return ChemSpectra config' do
         rsp = JSON.parse(response.body)
         expect(rsp['has_chem_spectra']).to eq(false)
@@ -33,6 +35,7 @@ describe Chemotion::UiAPI do
         Rails.configuration.spectra = StubConfig
         get '/api/v1/ui/initialize'
       end
+
       it 'return ChemSpectra config' do
         rsp = JSON.parse(response.body)
         expect(rsp['has_chem_spectra']).to eq(true)

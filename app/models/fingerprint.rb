@@ -27,7 +27,6 @@
 #  deleted_at   :time
 #
 
-
 class Fingerprint < ActiveRecord::Base
   # acts_as_paranoid
   include Collectable
@@ -51,7 +50,6 @@ class Fingerprint < ActiveRecord::Base
   #                  ],
   #                  message: 'existed fingerprint'
   #                 }
-
 
   validates :num_set_bits,
             presence: true,
@@ -143,18 +141,19 @@ class Fingerprint < ActiveRecord::Base
     def standardized_molfile(molfile)
       return molfile unless molfile.include? 'R#'
 
-      molfile.gsub!(/(> <PolymersList>[\W\w.\n]+[\d]+)/m, '')
+      mf = molfile.gsub(/(> <PolymersList>[\W\w.\n]+[\d]+)/m, '')
 
-      if molfile.include? ' R# '
-        lines = molfile.split "\n"
+      if mf.include? ' R# '
+        lines = mf.split "\n"
         lines[4..-1].each do |line|
           break if line =~ /(M.+END+)/
+
           line.gsub!(' R# ', ' R1  ')
         end
-        molfile = lines.join "\n"
+        mf = lines.join "\n"
       end
 
-      molfile
+      mf
     end
 
     def generate_sample_fingerprint

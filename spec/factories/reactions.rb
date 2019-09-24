@@ -7,14 +7,14 @@ FactoryBot.define do
     end
 
     sequence(:name) { |i| "Reaction #{i}" }
-    status { "Successful" }
-    solvent { "Aceton" }
-    description {{ "ops" => [{ "insert" => "I am description" }] }}
-    purification { "{TLC,Distillation}" }
+    status { 'Successful' }
+    solvent { 'Aceton' }
+    description { { 'ops' => [{ 'insert' => 'I am description' }] } }
+    purification { '{TLC,Distillation}' }
     rf_value { 0.99 }
-    tlc_solvents { "D2O" }
-    tlc_description { "I am tlc_description" }
-    observation {{ "ops" => [{ "insert" => "I am observation" }] }}
+    tlc_solvents { 'D2O' }
+    tlc_description { 'I am tlc_description' }
+    observation { { 'ops' => [{ 'insert' => 'I am observation' }] } }
 
     factory :valid_reaction do
       after(:build) do |reaction|

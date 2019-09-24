@@ -2,11 +2,11 @@
 
 require 'rails_helper'
 
-feature 'Reaction Equiv Spec' do
+describe 'Reaction Equiv Spec' do
   let!(:user) { create(:user, first_name: 'Hallo', last_name: 'Complat') }
   let!(:m1) { create(:molecule, molecular_weight: 171.03448) }
   let!(:m2) { create(:molecule, molecular_weight: 133.15058) }
-  let!(:r1) {
+  let!(:r1) do
     create(
       :residue,
       custom_info: {
@@ -14,8 +14,8 @@ feature 'Reaction Equiv Spec' do
         'polymer_type' => 'polystyrene', 'external_loading' => '2'
       }
     )
-  }
-  let!(:r2) {
+  end
+  let!(:r2) do
     create(
       :residue,
       custom_info: {
@@ -23,7 +23,7 @@ feature 'Reaction Equiv Spec' do
         'polymer_type' => 'polystyrene', 'external_loading' => '2'
       }
     )
-  }
+  end
   let!(:mr1) { create(:molecule, molecular_weight: 85.0813) }
   let!(:mr2) { create(:molecule, molecular_weight: 330.2360496) }
 
@@ -64,7 +64,7 @@ feature 'Reaction Equiv Spec' do
       ReactionsProductSample.create!(reaction: reaction, sample: product, equivalent: 1)
     end
 
-    scenario 'change material amount', js: true do
+    it 'change material amount', js: true do
       material_new_amount = 5000
       find('.tree-view', text: 'chemotion.net').click
       first('i.icon-reaction').click

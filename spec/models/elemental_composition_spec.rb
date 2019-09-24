@@ -1,23 +1,25 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe ElementalComposition, type: :model do
   describe '.set_loading' do
     before do
       attrs_found = {
-        composition_type: "found",
-        data: { "C"=>"90", "H"=>"10" },
+        composition_type: 'found',
+        data: { 'C' => '90', 'H' => '10' },
         loading: 3
       }
       attrs_expected = {
-        composition_type: "full_conv",
-        data: { "C"=>"95", "H"=>"5" },
+        composition_type: 'full_conv',
+        data: { 'C' => '95', 'H' => '5' },
         loading: 3
       }
       @sample = create(:sample)
       @residue = create(:residue)
       @sample.residues << @residue
-      @el_comp_found = ElementalComposition.new(attrs_found)
-      @el_comp_expected = ElementalComposition.new(attrs_expected)
+      @el_comp_found = described_class.new(attrs_found)
+      @el_comp_expected = described_class.new(attrs_expected)
       @sample.elemental_compositions << [@el_comp_found, @el_comp_expected]
     end
 
@@ -27,8 +29,8 @@ RSpec.describe ElementalComposition, type: :model do
           @el_comp_found.set_loading(@sample)
           updated_loading = @el_comp_found.loading
           target = Chemotion::Calculations.get_loading(@sample.molecule.sum_formular,
-                      @residue[:custom_info]["formula"],
-                      @el_comp_found.data).to_f
+                                                       @residue[:custom_info]['formula'],
+                                                       @el_comp_found.data).to_f
 
           expect(updated_loading).to eq(target)
         end
@@ -54,12 +56,13 @@ RSpec.describe ElementalComposition, type: :model do
         ReactionsProductSample.create!(sample: @sample, reaction: reaction)
         @sample.reload
       end
+
       it 'calculate loading from amount & yield' do
         updated_loading = @el_comp_found.set_loading(@sample)
 
         product_yield = Chemotion::Calculations.get_yield(@el_comp_found.data,
-                          {"H"=>"11.19", "O"=>"88.81"},
-                          @el_comp_expected.data)
+                                                          { 'H' => '11.19', 'O' => '88.81' },
+                                                          @el_comp_expected.data)
         new_amount = @sample.amount_mmol * product_yield
         amount = @sample.amount_mg
         target = new_amount / amount * 1000.0

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe CollectionsReaction, type: :model do
@@ -14,20 +16,21 @@ RSpec.describe CollectionsReaction, type: :model do
 
   describe 'delete_in_collection, ' do
     before do
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r3.id, deleted_at: Time.now)
-      CollectionsReaction.create!(collection_id: c2.id, reaction_id: r1.id)
-      CollectionsReaction.create!(collection_id: c2.id, reaction_id: r4.id)
+      described_class.create!(collection_id: c1.id, reaction_id: r1.id)
+      described_class.create!(collection_id: c1.id, reaction_id: r2.id)
+      described_class.create!(collection_id: c1.id, reaction_id: r3.id, deleted_at: Time.now)
+      described_class.create!(collection_id: c2.id, reaction_id: r1.id)
+      described_class.create!(collection_id: c2.id, reaction_id: r4.id)
     end
+
     it 'soft-deletes with arr args' do
-      CollectionsReaction.delete_in_collection([r1.id, r3.id, r4.id], [c1.id])
+      described_class.delete_in_collection([r1.id, r3.id, r4.id], [c1.id])
       c1.reload
       expect(c1.reactions).to match_array [r2]
       expect(c2.reactions).to match_array [r1, r4]
     end
     it 'soft-deletes with int args' do
-      CollectionsReaction.delete_in_collection(r1, c1.id)
+      described_class.delete_in_collection(r1, c1.id)
       c1.reload
       expect(c1.reactions).to match_array [r2]
       expect(c2.reactions).to match_array [r1, r4]
@@ -36,17 +39,18 @@ RSpec.describe CollectionsReaction, type: :model do
 
   describe 'insert_in_collection, ' do
     before do
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r3.id, deleted_at: Time.now)
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r4.id)
+      described_class.create!(collection_id: c1.id, reaction_id: r2.id)
+      described_class.create!(collection_id: c1.id, reaction_id: r3.id, deleted_at: Time.now)
+      described_class.create!(collection_id: c1.id, reaction_id: r4.id)
     end
+
     it 'creates with arr args' do
-      CollectionsReaction.insert_in_collection([r1.id, r3.id, r4.id], [c1.id])
+      described_class.insert_in_collection([r1.id, r3.id, r4.id], [c1.id])
       c1.reload
       expect(c1.reactions).to match_array [r1, r2, r3, r4]
     end
     it 'creates with int args' do
-      CollectionsReaction.insert_in_collection(r1.id, c2.id)
+      described_class.insert_in_collection(r1.id, c2.id)
       c2.reload
       expect(c2.reactions).to match_array [r1]
     end
@@ -54,11 +58,12 @@ RSpec.describe CollectionsReaction, type: :model do
 
   describe 'remove_in_collection, ' do
     before do
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r5.id)
+      described_class.create!(collection_id: c1.id, reaction_id: r5.id)
       CollectionsSample.create!(collection_id: c1.id, sample_id: s.id)
     end
+
     it 'also soft-deletes associated samples' do
-      CollectionsReaction.remove_in_collection([r5.id], [c1.id])
+      described_class.remove_in_collection([r5.id], [c1.id])
       expect(c1.reactions.map(&:id)).to match_array []
       expect(c1.collections_reactions.only_deleted.map(&:reaction_id)).to match_array [r5.id]
       expect(c1.samples).to match_array []
@@ -68,7 +73,7 @@ RSpec.describe CollectionsReaction, type: :model do
 
   describe 'create_in_collection, ' do
     it 'also creates for associated samples' do
-      CollectionsReaction.create_in_collection([r5.id], [c2.id])
+      described_class.create_in_collection([r5.id], [c2.id])
       expect(c2.reactions.map(&:id)).to match_array [r5.id]
       expect(c2.samples).to match_array [s]
     end
@@ -76,10 +81,11 @@ RSpec.describe CollectionsReaction, type: :model do
 
   describe 'move_in_collection, ' do
     before do
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r5.id)
+      described_class.create!(collection_id: c1.id, reaction_id: r5.id)
       CollectionsSample.create!(collection_id: c1.id, sample_id: s.id)
-      CollectionsReaction.move_to_collection([r5.id], [c1.id], [c2.id])
+      described_class.move_to_collection([r5.id], [c1.id], [c2.id])
     end
+
     it 'also soft-deletes associated samples' do
       expect(c1.reactions.map(&:id)).to match_array []
       expect(c1.collections_reactions.only_deleted.map(&:reaction_id)).to match_array [r5.id]

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require Rails.root.join 'spec/concerns/taggable.rb'
 require Rails.root.join 'spec/concerns/reaction_rinchi.rb'
@@ -34,13 +36,13 @@ RSpec.describe Reaction, type: :model do
     let(:s2) { create(:sample) }
     let(:s3) { create(:sample) }
     let(:s4) { create(:sample) }
-    let(:reaction) {
+    let(:reaction) do
       create(
         :reaction, starting_materials: [s1], solvents: [s2],
                    reactants: [s3], products: [s4],
                    collections: [collection]
       )
-    }
+    end
 
     before { reaction.destroy }
 
@@ -61,7 +63,7 @@ RSpec.describe Reaction, type: :model do
     end
 
     it 'only soft deletes reaction and associated samples' do
-      expect(reaction.deleted_at).to_not be_nil
+      expect(reaction.deleted_at).not_to be_nil
       expect(
         [
           reaction.reactions_starting_material_samples

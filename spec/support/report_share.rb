@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.shared_examples 'Rinchi Xlsx/Csv formats' do
   it 'has correct values' do
     [@sp_prd_a, @sp_prd_b].each_with_index do |prd, idx|
@@ -74,9 +76,9 @@ RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
   end
 
   def serialize_reaction
-    @obj_hash = [@r1].map { |o|
+    @obj_hash = [@r1].map do |o|
       ElementReportPermissionProxy.new(@user, o, [@user.id]).serialized
-    }
+    end
   end
 
   before do

@@ -1,8 +1,7 @@
 FactoryBot.define do
   factory :research_plan do
-
     sequence(:name) { |i| "Research plan #{i}" }
-    sequence(:description) { |i| { "ops" => [{ "insert" => "Lorem Ipsum ##{i}" }] }}
+    sequence(:description) { |i| { 'ops' => [{ 'insert' => "Lorem Ipsum ##{i}" }] } }
     sdf_file { 'sdf.test' }
     svg_file { 'svg.test' }
 

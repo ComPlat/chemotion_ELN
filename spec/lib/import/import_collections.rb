@@ -1,11 +1,13 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 # test for ExportJson ImportJson
 RSpec.describe 'ExportImportCollection' do
-  let(:user) {
+  let(:user) do
     create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU')
-  }
+  end
+
   before do
     user.save!
   end

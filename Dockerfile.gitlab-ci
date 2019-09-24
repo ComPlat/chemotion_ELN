@@ -47,6 +47,7 @@ COPY Gemfile /home/gitlab-runner/
 COPY Gemfile.lock /home/gitlab-runner/
 COPY package.json /home/gitlab-runner/
 COPY package-lock.json /home/gitlab-runner/
+RUN sudo chmod 666 Gemfile.lock
 RUN echo $(ls -1 .)
 
 RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 10.15.3 && npm install -g npm@6.11.3 && npm install"

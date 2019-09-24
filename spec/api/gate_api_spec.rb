@@ -3,12 +3,12 @@
 require 'rails_helper'
 
 describe Chemotion::GateAPI do
-  let(:user) {
+  let(:user) do
     create(:user, first_name: 'Person', last_name: 'Transmitting')
-  }
-  let(:receiver) {
+  end
+  let(:receiver) do
     create(:user, first_name: 'Person', last_name: 'Receiving')
-  }
+  end
 
   let(:c1) { create(:collection, user_id: user.id) }
   let(:s1) { create(:sample) }
@@ -20,9 +20,10 @@ describe Chemotion::GateAPI do
   end
 
   context 'remote gate properly registered' do
-    let(:key) {
+    let(:key) do
       create(:authentication_key, user_id: user.id, role: "gate out #{c1.id}")
-    }
+    end
+
     describe 'transmitting' do
       before do
         s1.collections << c1
@@ -44,33 +45,36 @@ describe Chemotion::GateAPI do
       # end
     end
   end
+
   describe :jwt do
     before do
-      get URI::encode("/api/v1/gate/jwt/new.json?collection_id=#{c1.id}&origin=http://localhost:3000")
+      get URI.encode("/api/v1/gate/jwt/new.json?collection_id=#{c1.id}&origin=http://localhost:3000")
     end
+
     it 'returns a jwt' do
-      jwt = JSON.parse(response.body)&.fetch('jwt',nil)
+      jwt = JSON.parse(response.body)&.fetch('jwt', nil)
       secret = Rails.application.secrets.secret_key_base
-      expect(JWT.decode(jwt, secret)[0]).to include({
+      expect(JWT.decode(jwt, secret)[0]).to include(
         'collection' => c1.id, 'iss' => user.email, 'origin' => 'http://localhost:3000'
-      })
+      )
+    end
+  end
+
+  describe 'register_gate' do
+    let(:gate_params) do
+      { collection_id: c1.id, destination: 'http://www.chemotion.net', token: 'qwerty' }
     end
 
-
-  end
-  describe 'register_gate' do
-    let(:gate_params) {
-      { collection_id: c1.id, destination: 'http://www.chemotion.net', token: 'qwerty'}
-    }
     describe 'registering new gate' do
       before do
         post('/api/v1/gate/register_gate.json', gate_params)
       end
+
       it 'persists a jwt' do
         acc_tok = AuthenticationKey.find_by(
-          user_id: user.id, role:"gate out #{c1.id}"
+          user_id: user.id, role: "gate out #{c1.id}"
         )
-        expect(acc_tok).to_not be_nil
+        expect(acc_tok).not_to be_nil
         expect(acc_tok&.token).to eq 'qwerty'
       end
     end

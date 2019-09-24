@@ -1,13 +1,15 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe ReactionsProductSample, type: :model do
-  let(:sample) { ReactionsProductSample.new }
+  let(:sample) { described_class.new }
   let(:eq_val) { 5.0 }
 
   describe 'formatted_yield' do
     context 'without an equivalent value' do
       it 'yields " %" only' do
-        expect(sample.formatted_yield).to eq " %"
+        expect(sample.formatted_yield).to eq ' %'
       end
     end
 

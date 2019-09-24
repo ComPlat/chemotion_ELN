@@ -33,10 +33,8 @@ shared_examples_for 'taggable_element_before_and_after_collection_update' do
       inst.collections << coll && inst.save! && inst.reload &&
       inst.tag.taggable_data['collection_labels']
     ).to include(
-      {
-        'name' => coll.label, 'is_shared' => false, 'user_id' => coll.user_id,
-        'id' => coll.id, 'shared_by_id' => nil, 'is_synchronized' => false
-      }
+      'name' => coll.label, 'is_shared' => false, 'user_id' => coll.user_id,
+      'id' => coll.id, 'shared_by_id' => nil, 'is_synchronized' => false
     )
   end
 end
@@ -44,19 +42,19 @@ end
 shared_examples_for 'taggable_element_before_and_after_analyses_update' do
   let(:model) { described_class }
   let(:inst) { create(('valid_' + model.to_s.underscore).to_sym) }
-  let(:new_analysis) {
-     create(
+  let(:new_analysis) do
+    create(
       :analysis_container,
       extended_metadata: { 'kind' => 'dummy kind', 'status' => 'Unconfirmed' }
     )
-  }
+  end
 
   it 'has taggable_data' do
     expect(inst.save! && inst.reload && inst.tag.taggable_data).to be_a Hash
   end
 
   it 'updates the collection tag' do
-    # TODO the way of adding an analysis is cumbersome
+    # TODO: the way of adding an analysis is cumbersome
     expect(
       inst.analyses.first.parent.children << new_analysis && inst.save! &&
       inst.reload && inst.tag.taggable_data['analyses']['unconfirmed']

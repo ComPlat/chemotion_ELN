@@ -1,29 +1,20 @@
+# inherit_from: .rubocop_todo.yml
+
+inherit_gem:
+  gitlab-styles:
+    - rubocop-metrics.yml
+    - rubocop-rspec.yml
+
 require:
   - rubocop-rspec
-
+  - rubocop-performance
 AllCops:
   DisplayCopNames: true
   TargetRubyVersion: 2.5.5
-
-Style/BlockDelimiters:
-  EnforcedStyle: semantic
-  FunctionalMethods:
-    - before
-    - let
-    - let!
-    - subject
-    - watch
-    - expect
-
-Metrics/ModuleLength:
   Exclude:
-    - "**/*_spec.rb"
-
-Metrics/BlockLength:
-  Exclude:
-    - "**/*_spec.rb"
-Metrics/LineLength:
-  Max: 100
-
-Metrics/MethodLength:
-  Max: 20
+    - 'bin/*'
+    - 'db/**/*'
+    - 'node_modules/**/*'
+    - 'tmp/**/*'
+    - 'vendor/**/*'
+  CacheRootDirectory: tmp
