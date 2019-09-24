@@ -1,9 +1,12 @@
 import React from 'react';
-import { Form, ControlLabel, Panel, Button, Table, Modal } from 'react-bootstrap';
+import { Form, ControlLabel, Panel, Button, Table, Modal, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import Select from 'react-select';
-import _ from 'lodash';
+import { startsWith, endsWith } from 'lodash';
 
 import AdminFetcher from '../components/fetchers/AdminFetcher';
+
+const editConfig = <Tooltip id="inchi_tooltip">edit config</Tooltip>;
+const removeConfig = <Tooltip id="inchi_tooltip">remove config</Tooltip>;
 
 export default class DataCollector extends React.Component {
   constructor(props) {
@@ -40,8 +43,8 @@ export default class DataCollector extends React.Component {
           this.setState({
             selectedDevice,
             selectedCollectMethod: selectedDevice.data.method,
-            disableForLocal: _.endsWith(selectedDevice.data.method, 'local'),
-            disableForFile: _.startsWith(selectedDevice.data.method, 'file'),
+            disableForLocal: endsWith(selectedDevice.data.method, 'local'),
+            disableForFile: startsWith(selectedDevice.data.method, 'file'),
             showConfigModal: show
           });
         }
@@ -60,8 +63,8 @@ export default class DataCollector extends React.Component {
 
   handleCollectMethodChange(selectedCollectMethod) {
     const { selectedDevice } = this.state;
-    
-    if (_.startsWith(selectedCollectMethod.value, 'file')) {
+
+    if (startsWith(selectedCollectMethod.value, 'file')) {
       if (selectedDevice.data.method_params && selectedDevice.data.method_params.number_of_files) {
         selectedDevice.data.method_params.number_of_files = 0;
       }
@@ -70,8 +73,8 @@ export default class DataCollector extends React.Component {
     if (selectedCollectMethod) {
       this.setState({
         selectedCollectMethod: selectedCollectMethod.value,
-        disableForLocal: _.endsWith(selectedCollectMethod.value, 'local'),
-        disableForFile: _.startsWith(selectedCollectMethod.value, 'file'),
+        disableForLocal: endsWith(selectedCollectMethod.value, 'local'),
+        disableForFile: startsWith(selectedCollectMethod.value, 'file'),
         selectedDevice,
       });
     }
@@ -86,6 +89,15 @@ export default class DataCollector extends React.Component {
       });
   }
 
+  handleRemoveConfig(id) {
+    const { devices } = this.state;
+    AdminFetcher.removeDeviceMethod({ id })
+      .then((result) => {
+        devices.splice(devices.findIndex(o => o.id === result.device.id), 1, result.device);
+        this.setState({ devices });
+      });
+  }
+
   saveData() {
     const { selectedDevice, selectedCollectMethod } = this.state;
 
@@ -97,7 +109,7 @@ export default class DataCollector extends React.Component {
       alert('Please input Dir!');
       return false;
     }
-    if (!_.endsWith(selectedCollectMethod, 'local')) {
+    if (!endsWith(selectedCollectMethod, 'local')) {
       if (!this.refHost || this.refHost.value.trim() === '') {
         alert('Please input Host!');
         return false;
@@ -107,7 +119,7 @@ export default class DataCollector extends React.Component {
         return false;
       }
     }
-    if (_.startsWith(selectedCollectMethod, 'folder') && Math.trunc(this.refNumberOfFiles.value) < 1) {
+    if (startsWith(selectedCollectMethod, 'folder') && Math.trunc(this.refNumberOfFiles.value) < 1) {
       alert('Number of Files must be greater than 0!');
       return false;
     }
@@ -122,11 +134,11 @@ export default class DataCollector extends React.Component {
       }
     };
 
-    if (!_.endsWith(selectedCollectMethod, 'local')) {
+    if (!endsWith(selectedCollectMethod, 'local')) {
       params.data.method_params.host = this.refHost.value.trim();
       params.data.method_params.user = this.refUser.value.trim();
     }
-    if (_.startsWith(selectedCollectMethod, 'folder')) {
+    if (startsWith(selectedCollectMethod, 'folder')) {
       params.data.method_params.number_of_files = Math.trunc(this.refNumberOfFiles.value);
     }
     AdminFetcher.updateDeviceMethod(params)
@@ -168,7 +180,7 @@ export default class DataCollector extends React.Component {
               <Panel>
                 <Panel.Heading>
                   <Panel.Title>
-                    Data Collector Method & Parameters
+                    Data Collector Method &amp; Parameters
                   </Panel.Title>
                 </Panel.Heading>
                 <ControlLabel>Data Collector Method</ControlLabel>
@@ -257,13 +269,13 @@ export default class DataCollector extends React.Component {
     const tcolumn = (
       <tr style={{ height: '26px', verticalAlign: 'middle' }}>
         <th width="1%">#</th>
-        <th width="2%" />
+        <th width="4%" />
         <th width="15%">Name</th>
         <th width="15%">Method</th>
         <th width="25%">Dir</th>
         <th width="20%">Host</th>
         <th width="15%">User</th>
-        <th width="5%">Num. of Files</th>
+        <th width="3%">Num. of Files</th>
         <th width="2%">ID</th>
       </tr>
     );
@@ -274,20 +286,33 @@ export default class DataCollector extends React.Component {
           {idx + 1}
         </td>
         <td>
-          <Button
-            bsSize="xsmall"
-            bsStyle="primary"
-            onClick={() => this.handleConfigModalShow(device.id, true)}
-          >
-            <i className="fa fa-pencil" />
-          </Button>
+          <OverlayTrigger placement="bottom" overlay={editConfig} >
+            <Button
+              bsSize="xsmall"
+              bsStyle="primary"
+              onClick={() => this.handleConfigModalShow(device.id, true)}
+            >
+              <i className="fa fa-pencil" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
+          <OverlayTrigger placement="bottom" overlay={removeConfig} >
+            <Button
+              bsSize="xsmall"
+              bsStyle="danger"
+              onClick={() => this.handleRemoveConfig(device.id)}
+            >
+              <i className="fa fa-eraser" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
         </td>
         <td> {device.name} </td>
         <td> {(device.data && device.data.method ? device.data.method : '')} </td>
         <td> {(device.data && device.data.method_params ? device.data.method_params.dir : '')} </td>
         <td> {(device.data && device.data.method_params ? device.data.method_params.host : '')} </td>
         <td> {(device.data && device.data.method_params ? device.data.method_params.user : '')} </td>
-        <td> {(device.data && device.data.method_params && device.data.method_params.number_of_files ?
+        <td>
+          {(device.data && device.data.method_params && device.data.method_params.number_of_files ?
           device.data.method_params.number_of_files : 0)}
         </td>
         <td> {device.id} </td>
