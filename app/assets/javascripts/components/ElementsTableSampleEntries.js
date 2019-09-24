@@ -159,7 +159,7 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
           <h4><SampleName sample={sample} /></h4>
         </div>
         <div style={{ position: 'absolute', top: '10px', right: '25px', float: 'right' }} >
-          <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />
+          <ChemrepoLabels chemrepoId={sample.molecule.chem_repo && sample.molecule.chem_repo.id} />
           {tdExtraContents.map(e => e)}
           <PubchemLabels element={sample} />
         </div>
