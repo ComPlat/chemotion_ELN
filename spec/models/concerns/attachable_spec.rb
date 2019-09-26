@@ -1,15 +1,17 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Report, type: :report do
-  let(:docx_mime_type) {
+  let(:docx_mime_type) do
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  }
+  end
   let(:user) { create(:user) }
 
-  let!(:rp) {
+  let!(:rp) do
     create(:report, :downloadable, user: user, file_name: 'ELN_Report_1')
-  }
-  let!(:att_rp) {
+  end
+  let!(:att_rp) do
     create(
       :attachment,
       filename: rp.file_name + '.docx',
@@ -17,11 +19,11 @@ RSpec.describe Report, type: :report do
       attachable_type: 'Report',
       content_type: docx_mime_type
     )
-  }
-  let!(:ct) {
+  end
+  let!(:ct) do
     create(:container, name: 'test', container_type: 'dataset')
-  }
-  let!(:att_ct) {
+  end
+  let!(:att_ct) do
     create(
       :attachment,
       filename: ct.name + '.jpg',
@@ -29,7 +31,7 @@ RSpec.describe Report, type: :report do
       attachable_type: 'Container',
       content_type: 'image/jpeg'
     )
-  }
+  end
 
   describe '.for_container?' do
     it 'returns true for Container attachments' do
@@ -72,5 +74,4 @@ RSpec.describe Report, type: :report do
       expect(att_ct.report).to be(nil)
     end
   end
-
 end

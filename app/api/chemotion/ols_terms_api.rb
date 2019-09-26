@@ -1,9 +1,7 @@
 
 module Chemotion
     # OLS Terms API
-    # rubocop:disable ClassLength
     class OlsTermsAPI < Grape::API
-      # rubocop:disable Metrics/BlockLength
       namespace :ols_terms do
         desc 'Get List'
         params do

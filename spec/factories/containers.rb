@@ -1,40 +1,38 @@
 FactoryBot.define do
   factory :container do
-    name { "root" }
+    name { 'root' }
     attachments { [] }
-    description { "" }
+    description { '' }
     extended_metadata {}
-    container_type { "root" }
+    container_type { 'root' }
 
     trait :with_analysis do
       after(:create) do |container|
         extended_metadata = {
-          "kind" => "13C NMR",
-          "status" => "Confirmed",
-          "datasets" => [],
-          "content" => "{\"ops\": [{\"insert\": \"analysis contents\"}]}"
+          'kind' => '13C NMR',
+          'status' => 'Confirmed',
+          'datasets' => [],
+          'content' => '{"ops": [{"insert": "analysis contents"}]}'
         }
 
-        analyses = FactoryBot.create(:container, parent: container, container_type: "analyses")
+        analyses = FactoryBot.create(:container, parent: container, container_type: 'analyses')
         analysis = FactoryBot.create(:container, parent: analyses,
-          container_type: "analysis",
-          name: "new",
-          description: "analysis description",
-          extended_metadata: extended_metadata
-        )
-
+                                                 container_type: 'analysis',
+                                                 name: 'new',
+                                                 description: 'analysis description',
+                                                 extended_metadata: extended_metadata)
       end
     end
   end
 
   factory :root_container, class: Container do
-    name { "root" }
+    name { 'root' }
     attachments { [] }
-    description { "" }
+    description { '' }
     extended_metadata {}
-    container_type { "root" }
+    container_type { 'root' }
     after(:create) do |container|
-      analyses = FactoryBot.create(:container, parent: container, container_type: "analyses")
+      analyses = FactoryBot.create(:container, parent: container, container_type: 'analyses')
     end
   end
 
@@ -47,27 +45,27 @@ FactoryBot.define do
       analysis.extended_metadata = {
         'kind' => '13C NMR',
         'status' => 'Confirmed',
-        #'datasets' => [],
-        'content' => "{\"ops\": [{\"insert\": \"analysis contents\"}]}"
+        # 'datasets' => [],
+        'content' => '{"ops": [{"insert": "analysis contents"}]}'
       }.merge(analysis.extended_metadata || {})
     end
   end
 
   # Inbox container root
   factory :inbox_container_root, class: Container do
-    name { "inbox" }
-    containable_type { "User" }
-    description { "" }
+    name { 'inbox' }
+    containable_type { 'User' }
+    description { '' }
     extended_metadata {}
-    container_type { "root" }
+    container_type { 'root' }
   end
 
   # Inbox container with attachments
   factory :inbox_container, class: Container do
-    name { "IR" }
-    description { "" }
+    name { 'IR' }
+    description { '' }
     extended_metadata {}
-    container_type { "sender_box_68" }
+    container_type { 'sender_box_68' }
 
     factory :inbox_container_with_attachments do
       transient do
@@ -77,10 +75,9 @@ FactoryBot.define do
         FactoryBot.create_list(
           :attachment,
           files.number_of_attachments,
-          attachable: inbox_container,
+          attachable: inbox_container
         )
       end
     end
   end
-
 end

@@ -17,12 +17,12 @@ shared_examples_for 'Esterification' do
   let(:sp_prd_02) { create(:sample, molfile: prd_02) }
   let(:sp_agt_01) { create(:sample, molfile: agt_01) }
 
-  let(:reaction) {
+  let(:reaction) do
     create(
       :reaction, starting_materials: [sp_rct_01, sp_rct_02], solvents: [],
                  reactants: [sp_agt_01], products: [sp_prd_01, sp_prd_02]
     )
-  }
+  end
 
   it 'has correct rinchi & rinchi-keys' do
     expect(reaction.rinchi_string).to eq(correct[0].chomp)
@@ -41,13 +41,13 @@ shared_examples_for '1_reactant_-_no_structure' do
   let(:sp_rct_01) { create(:sample, molfile: rct_01) }
   let(:sp_prd_01) { create(:sample, molfile: prd_01) }
 
-  let(:reaction) {
+  let(:reaction) do
     sp_prd_01.molecule = nil
     create(
       :reaction, starting_materials: [sp_rct_01], solvents: [],
                  reactants: [], products: [sp_prd_01]
     )
-  }
+  end
 
   it 'has correct rinchi & rinchi-keys' do
     expect(reaction.rinchi_string).to eq(correct[0].chomp)
@@ -66,12 +66,12 @@ shared_examples_for 'Inverted_stereochemistry' do
   let(:sp_rct_01) { create(:sample, molfile: rct_01) }
   let(:sp_prd_01) { create(:sample, molfile: prd_01) }
 
-  let(:reaction) {
+  let(:reaction) do
     create(
       :reaction, starting_materials: [sp_rct_01], solvents: [],
                  reactants: [], products: [sp_prd_01]
     )
-  }
+  end
 
   it 'has correct rinchi & rinchi-keys' do
     expect(reaction.rinchi_string).to eq(correct[0].chomp)

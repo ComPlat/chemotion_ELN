@@ -1,18 +1,20 @@
-require "rails_helper"
+# frozen_string_literal: true
 
-describe "Chemotion::Calculations" do
-  let(:sum_formula) { "C6H7N" }
-  let(:residue_formula) { "CH" }
+require 'rails_helper'
+
+describe 'Chemotion::Calculations' do
+  let(:sum_formula) { 'C6H7N' }
+  let(:residue_formula) { 'CH' }
   let(:loading) { 1 }
   let(:af) { Chemotion::Calculations.analyse_formula sum_formula }
   let(:total_mw) { Chemotion::Calculations.get_total_mw af }
-  let(:c_num) { af["C"][:atoms_number] }
-  let(:h_num) { af["H"][:atoms_number] }
-  let(:n_num) { af["N"][:atoms_number] }
-  let(:c_weight) { af["C"][:atomic_weight].to_f }
-  let(:h_weight) { af["H"][:atomic_weight].to_f }
-  let(:n_weight) { af["N"][:atomic_weight].to_f }
-  let(:c_weight_fraction) { af["C"][:weight_fraction].to_f }
+  let(:c_num) { af['C'][:atoms_number] }
+  let(:h_num) { af['H'][:atoms_number] }
+  let(:n_num) { af['N'][:atoms_number] }
+  let(:c_weight) { af['C'][:atomic_weight].to_f }
+  let(:h_weight) { af['H'][:atomic_weight].to_f }
+  let(:n_weight) { af['N'][:atomic_weight].to_f }
+  let(:c_weight_fraction) { af['C'][:weight_fraction].to_f }
   let(:c_real_num) { 6 }
   let(:h_real_num) { 7 }
   let(:n_real_num) { 1 }
@@ -20,7 +22,7 @@ describe "Chemotion::Calculations" do
   let(:h_real_weight) { 1.00794 }
   let(:n_real_weight) { 14.0067 }
 
-  describe ".analyse_formula" do
+  describe '.analyse_formula' do
     it 'calculates weight_fraction(wf) by: c_num * c_weight / sum(num * weight)' do
       calc_c_weight_fraction = (c_num * c_weight) / total_mw.to_f
 
@@ -36,10 +38,10 @@ describe "Chemotion::Calculations" do
       expect(n_weight).to eq(n_real_weight)
     end
 
-    it "returns a Hash with atoms_number/atomic_weight/weight_fraction" do
+    it 'returns a Hash with atoms_number/atomic_weight/weight_fraction' do
       expect(af.class).to eq(Hash)
-      expect(af["C"].class).to eq(Hash)
-      expect(af["C"][:atomic_weight].class).to eq(BigDecimal)
+      expect(af['C'].class).to eq(Hash)
+      expect(af['C'][:atomic_weight].class).to eq(BigDecimal)
     end
     # {
     #   "C"=>{:atoms_number=>6,
@@ -54,7 +56,7 @@ describe "Chemotion::Calculations" do
     # }
   end
 
-  describe ".parse_formula" do
+  describe '.parse_formula' do
     let(:pf) { Chemotion::Calculations.parse_formula sum_formula }
 
     it 'returns a Hash' do
@@ -62,22 +64,22 @@ describe "Chemotion::Calculations" do
     end
 
     it 'parses numbers of atoms' do
-      expect(pf["C"]).to eq(c_real_num)
+      expect(pf['C']).to eq(c_real_num)
     end
     # {"C"=>6, "H"=>7, "N"=>1}
   end
 
-  describe ".get_composition" do # composition <-> loading
-    context "not polymer" do
+  describe '.get_composition' do # composition <-> loading
+    context 'not polymer' do
       let(:comp) { Chemotion::Calculations.get_composition sum_formula }
 
-      it "returns a Hash with weight_fraction(%)" do
+      it 'returns a Hash with weight_fraction(%)' do
         expect(comp.class).to eq(Hash)
-        expect(comp["C"].class).to eq(BigDecimal)
+        expect(comp['C'].class).to eq(BigDecimal)
       end
 
-      it "calculates composition(wf) from molecule numbers & weigths" do
-        expect(comp["C"].to_f).to eq((c_weight_fraction * 100).round(2))
+      it 'calculates composition(wf) from molecule numbers & weigths' do
+        expect(comp['C'].to_f).to eq((c_weight_fraction * 100).round(2))
       end
       # {
       #   "C"=>#<BigDecimal:7ff31afc48f0,'0.7738E2',18(45)>,
@@ -86,27 +88,27 @@ describe "Chemotion::Calculations" do
       # }
     end
 
-    context "polymer" do
+    context 'polymer' do
       let(:residue_af) { Chemotion::Calculations.analyse_formula residue_formula }
-      let(:residue_c_weight_fraction) { residue_af["C"][:weight_fraction].to_f }
+      let(:residue_c_weight_fraction) { residue_af['C'][:weight_fraction].to_f }
       let(:comp) { Chemotion::Calculations.get_composition sum_formula, residue_formula, loading }
       let(:m_mux) { total_mw * loading / 1000.0 }
 
-      it "returns a Hash with weight_fraction(%)" do
+      it 'returns a Hash with weight_fraction(%)' do
         expect(comp.class).to eq(Hash)
-        expect(comp["C"].class).to eq(BigDecimal)
+        expect(comp['C'].class).to eq(BigDecimal)
       end
 
-      it "calculates ratio of molecule: m_mux = (molecule_mw * loading / 1000) " do
+      it 'calculates ratio of molecule: m_mux = (molecule_mw * loading / 1000) ' do
         expect(m_mux).to eq(0.09312648)
       end
 
-      it "calculates composition(wf) from loading: [m_wf * m_mux + p_wf * (1 - m_mux)]" do
+      it 'calculates composition(wf) from loading: [m_wf * m_mux + p_wf * (1 - m_mux)]' do
         c_molecule_weight = c_weight_fraction * m_mux
         c_polymer_weight = residue_c_weight_fraction * (1 - m_mux)
         c_total_weight_fraction = ((c_polymer_weight + c_molecule_weight) * 100).round(2)
 
-        expect(comp["C"].to_f).to eq(c_total_weight_fraction)
+        expect(comp['C'].to_f).to eq(c_total_weight_fraction)
       end
       # {
       #   "C"=>#<BigDecimal:7f9dc5986d80,'0.9087E2',18(54)>,
@@ -116,10 +118,10 @@ describe "Chemotion::Calculations" do
     end
   end
 
-  describe ".get_loading" do # composition <-> loading
+  describe '.get_loading' do # composition <-> loading
     before do
       comp = Chemotion::Calculations.get_composition sum_formula, residue_formula, loading
-      el_comp_data = {"C"=>comp["C"], "H"=>comp["H"], "N"=>comp["N"]}
+      el_comp_data = { 'C' => comp['C'], 'H' => comp['H'], 'N' => comp['N'] }
       @loading_from_comp = Chemotion::Calculations.get_loading sum_formula, residue_formula, el_comp_data
     end
 
@@ -133,14 +135,14 @@ describe "Chemotion::Calculations" do
     # #<BigDecimal:7f9dc69e84f8,'0.1999043314 9849714779 3555941554 6164569690 8085250016 0721084886 6E-2',63(72)>
   end
 
-  describe ".get_yield" do
+  describe '.get_yield' do
     before do
       @c_sm = 90
       @c_pd = 70
       @c_expected = 80
-      sm_data = {"C"=>@c_sm}
-      product_data = {"C"=>@c_pd}
-      expected_data = {"C"=>@c_expected}
+      sm_data = { 'C' => @c_sm }
+      product_data = { 'C' => @c_pd }
+      expected_data = { 'C' => @c_expected }
       @y = Chemotion::Calculations.get_yield product_data, sm_data, expected_data
     end
 
@@ -154,7 +156,7 @@ describe "Chemotion::Calculations" do
     end
   end
 
-  describe ".fixed_digit" do
+  describe '.fixed_digit' do
     it 'returns number with correct precisons' do
       num = 123.4567890
       result = Chemotion::Calculations.fixed_digit(num, 3)
@@ -164,9 +166,9 @@ describe "Chemotion::Calculations" do
     end
   end
 
-  describe ".valid_digit" do
+  describe '.valid_digit' do
     it 'returns number0 with correct precisons' do
-      num = 12345.67890
+      num = 12_345.67890
       result = Chemotion::Calculations.valid_digit(num, 3)
       target = '12346'
 
@@ -310,7 +312,7 @@ describe "Chemotion::Calculations" do
     end
 
     it 'returns number18 with correct precisons' do
-      num = 1234567890.1234567890
+      num = 1_234_567_890.1234567890
       result = Chemotion::Calculations.valid_digit(num, 3)
       target = '1234567890'
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Usecases::Sharing::ShareWithUser do
@@ -18,7 +20,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
   # user who gets the share
   let(:user_s)      { create(:user) }
 
-  let(:params) {
+  let(:params) do
     {
       collection_attributes: {
         user_id: user_s.id,
@@ -35,7 +37,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
       wellplate_ids: [wellplate_1.id, wellplate_2.id],
       screen_ids: [screen_1.id]
     }
-  }
+  end
 
   subject { described_class.new(params) }
 
@@ -62,7 +64,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
     it 'creates shared collection according to given params' do
       c = Collection.find_by(label: 'test')
 
-      expect(c).to_not be_nil
+      expect(c).not_to be_nil
       expect(c.user_id).to eq(user_s.id)
       expect(c.shared_by_id).to eq(user.id)
       expect(c.is_shared).to eq(true)
@@ -74,9 +76,9 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
 
     it 'finds or creates a shared root collection' do
       c = Collection.find_by(label: 'test')
-      rc = Collection.find_by(label: "with #{user_s.name_abbreviation}") #root_label = "to %s" %c.user.name_abbreviation
-      expect(c.ancestry).to_not be_nil
-      expect(c.root).to_not eq(c)
+      rc = Collection.find_by(label: "with #{user_s.name_abbreviation}") # root_label = "to %s" %c.user.name_abbreviation
+      expect(c.ancestry).not_to be_nil
+      expect(c.root).not_to eq(c)
       expect(c.root).to eq(rc)
       expect(c.root.user_id).to eq(c.user_id)
       expect(c.root.shared_by_id).to eq(c.shared_by_id)
@@ -85,23 +87,23 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
       expect(c.root.wellplates).to eq(Wellplate.none)
       expect(c.root.screens).to eq(Screen.none)
       expect(c.root.attributes).to include(
-        "user_id"=>user_s.id,
-        "label"=>"with #{user_s.name_abbreviation}",
-        "shared_by_id"=>user.id,
-        "is_shared"=>true,
-        "permission_level"=>0,
-        "sample_detail_level"=>10,
-        "reaction_detail_level"=>10,
-        "wellplate_detail_level"=>10,
-        #"position"=>nil,
-        "screen_detail_level"=>10,
-        "is_locked"=>true,
+        'user_id' => user_s.id,
+        'label' => "with #{user_s.name_abbreviation}",
+        'shared_by_id' => user.id,
+        'is_shared' => true,
+        'permission_level' => 0,
+        'sample_detail_level' => 10,
+        'reaction_detail_level' => 10,
+        'wellplate_detail_level' => 10,
+        # "position"=>nil,
+        'screen_detail_level' => 10,
+        'is_locked' => true
       )
     end
 
     it 'creates sample associations according to given params' do
       associated_sample_ids = Collection.find_by(label: 'test').sample_ids
-      expect(associated_sample_ids).to match_array([sample_1.id,sample_2.id, sample_a1.id])
+      expect(associated_sample_ids).to match_array([sample_1.id, sample_2.id, sample_a1.id])
     end
 
     it 'creates reaction associations according to given params' do

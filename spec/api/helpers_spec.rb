@@ -3,68 +3,69 @@
 require 'rails_helper'
 
 describe Chemotion::CollectionAPI do
-  subject {
-    Class.new(Grape::API) { |inst|
+  subject do
+    Class.new(Grape::API) do |inst|
       inst.extend(CollectionHelpers)
       inst.instance_eval { def user_ids(); end }
       inst.instance_eval { def current_user(); end }
-    }
-  }
+    end
+  end
+
   let(:p1) { create(:person) }
   let(:p2) { create(:person) }
   let(:g) { create(:group, users: [p1, p2]) }
 
-  let(:c_sync) {
+  let(:c_sync) do
     create(:collection,
            user_id: p2.id, is_shared: false, is_synchronized: true)
-  }
-  let(:c_own) {
+  end
+  let(:c_own) do
     create(:collection, user_id: p1.id, is_shared: false)
-  }
-  let(:c_shared) {
+  end
+  let(:c_shared) do
     create(
       :collection,
       user_id: p1.id, is_shared: true, shared_by_id: p2.id, permission_level: 1
     )
-  }
-  let(:c_shared_0) {
+  end
+  let(:c_shared_0) do
     create(
       :collection,
       user_id: p1.id, is_shared: true, shared_by_id: p2.id, permission_level: 0
     )
-  }
-  let(:c_group_shared) {
+  end
+  let(:c_group_shared) do
     create(
       :collection,
       user_id: g.id, is_shared: true, shared_by_id: p2.id, permission_level: 1
     )
-  }
-  let(:c_shared_by) {
+  end
+  let(:c_shared_by) do
     create(
       :collection,
       user_id: p2.id, is_shared: true, shared_by_id: p1.id, permission_level: 0
     )
-  }
-  let(:sync) {
+  end
+  let(:sync) do
     create(:sync_collections_user,
            user_id: p1.id, collection_id: c_sync.id,
            shared_by_id: p2.id, permission_level: 1)
-  }
-  let(:sync_g) {
+  end
+  let(:sync_g) do
     create(:sync_collections_user,
            user_id: g.id, collection_id: c_sync.id,
            shared_by_id: p2.id, permission_level: 1)
-  }
-  let(:sync_0) {
+  end
+  let(:sync_0) do
     create(:sync_collections_user,
            user_id: p1.id, collection_id: c_sync.id,
            shared_by_id: p2.id, permission_level: 0)
-  }
-  let(:sync_g_0) {
+  end
+  let(:sync_g_0) do
     create(:sync_collections_user,
            user_id: g.id, collection_id: c_sync.id,
            shared_by_id: p2.id, permission_level: 0)
-  }
+  end
 
   let(:user_ids_) { [p1.id, g.id] }
 

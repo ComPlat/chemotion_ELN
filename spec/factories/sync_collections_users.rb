@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :sync_collections_user do
-    user_id { 10000 }
+    user_id { 10_000 }
 
     permission_level { 0 }
     sample_detail_level { 0 }

@@ -1,35 +1,37 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 # test for ExportJson ImportJson
 RSpec.describe 'ExportImportCollection' do
-  let(:user) {
+  let(:user) do
     create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU')
-  }
-  let(:collection) {
+  end
+  let(:collection) do
     create(:collection, user_id: user.id, label: 'Awesome Collection')
-  }
-  let(:molfile){
-    IO.read(Rails.root.join("spec", "fixtures", "test_2.mol"))
-  }
-  let(:svg) {
-    IO.read(Rails.root.join("spec", "fixtures", "images", "molecule.svg"))
-  }
-  let(:sample) {
+  end
+  let(:molfile) do
+    IO.read(Rails.root.join('spec', 'fixtures', 'test_2.mol'))
+  end
+  let(:svg) do
+    IO.read(Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg'))
+  end
+  let(:sample) do
     build(
       :sample, created_by: user.id, name: 'Sample zero', molfile: molfile,
-      collections: [collection]
+               collections: [collection]
     )
-  }
+  end
   let(:molecule_name_name) { 'Awesome Molecule' }
-  let(:molecule_name) {
+  let(:molecule_name) do
     build(
       :molecule_name, user_id: user.id, name: molecule_name_name, molecule_id: sample.molecule_id
     )
-  }
-  let(:job_id) {
+  end
+  let(:job_id) do
     SecureRandom.uuid
-  }
+  end
+
   before do
     user.save!
     collection.save!

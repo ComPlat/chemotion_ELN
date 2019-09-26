@@ -3,17 +3,15 @@ FactoryBot.define do
     sequence(:email) { |n| "J#{n}.doe@foo.bar" }
     first_name { 'John' }
     last_name { 'Doe' }
-    sequence(:name_abbreviation) do |n|
-      result = 'J_D'
-      n.times { result.succ! }
-      result
-    end
+    name_abbreviation { "P#{SecureRandom.alphanumeric(2)}" }
     password { 'testtest' }
     password_confirmation { 'testtest' }
-    counters { {
-      samples: 0,
-      reactions: 0,
-      wellplates: 0,
-    } }
+    counters do
+      {
+        samples: 0,
+        reactions: 0,
+        wellplates: 0
+      }
+    end
   end
 end

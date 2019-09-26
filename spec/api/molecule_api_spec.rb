@@ -1,19 +1,20 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe Chemotion::MoleculeAPI do
-
   context 'authorized user logged in' do
-    let(:user)  { create(:person) }
+    let(:user) { create(:person) }
 
     before do
       allow_any_instance_of(WardenAuthentication).to(
-        receive(:current_user).and_return(user))
+        receive(:current_user).and_return(user)
+      )
     end
 
     describe 'POST /api/v1/molecules' do
       context 'with valid parameters' do
-
-        let!(:molfile) {
+        let!(:molfile) do
           "
   Ketcher 09231514282D 1   1.00000     0.00000     0
 
@@ -39,35 +40,33 @@ describe Chemotion::MoleculeAPI do
   8  4  1  0     0  0
   8  7  1  0     0  0
 M  END"
-        }
+        end
 
-        let!(:params) {
+        let!(:params) do
           {
-            inchistring: "InChI=1S/C8H8/c1-2-5-3(1)7-4(1)6(2)8(5)7/h1-8H",
-            #molecule_svg_file: "TXWRERCHRDBNLG-UHFFFAOYSA-N.svg",
-            inchikey: "TXWRERCHRDBNLG-UHFFFAOYSA-N",
+            inchistring: 'InChI=1S/C8H8/c1-2-5-3(1)7-4(1)6(2)8(5)7/h1-8H',
+            # molecule_svg_file: "TXWRERCHRDBNLG-UHFFFAOYSA-N.svg",
+            inchikey: 'TXWRERCHRDBNLG-UHFFFAOYSA-N',
             molecular_weight: 104.14912,
-            sum_formular: "C8H8",
-            iupac_name: "cubane",
-            names: ["cubane"],
+            sum_formular: 'C8H8',
+            iupac_name: 'cubane',
+            names: ['cubane']
           }
-        }
+        end
 
-        it 'should be able to find or create a molecule by molfile' do
+        it 'is able to find or create a molecule by molfile' do
           m = Molecule.find_by(molfile: molfile)
           expect(m).to be_nil
-          post '/api/v1/molecules', { molfile: molfile }
+          post '/api/v1/molecules', molfile: molfile
           m = Molecule.find_by(molfile: molfile)
-          expect(m).to_not be_nil
+          expect(m).not_to be_nil
           params.each do |k, v|
             expect(m.attributes.symbolize_keys[k]).to eq(v)
           end
           expect(m.molecule_svg_file).to match(/\w{128}\.svg/)
         end
-
       end
     end
-
 
     describe 'Get /api/v1/molecules/cas' do
       let!(:m) { create(:molecule) }
@@ -76,18 +75,18 @@ M  END"
         expect(m.cas).to eq([])
 
         get "/api/v1/molecules/cas?inchikey=#{m.inchikey}"
-        expect(JSON.parse(response.body)["cas"])
-          .to eq ["110-86-1"]
+        expect(JSON.parse(response.body)['cas'])
+          .to eq ['110-86-1']
       end
     end
 
     describe 'Get /api/v1/molecules/names' do
       let!(:m) { create(:molecule) }
-      let!(:nn) { "this_is_a_new_name" }
+      let!(:nn) { 'this_is_a_new_name' }
 
       it 'returns molecule_names hash' do
         get "/api/v1/molecules/names?inchikey=#{m.inchikey}"
-        mns = JSON.parse(response.body)["molecules"].map { |m| m["label"] }
+        mns = JSON.parse(response.body)['molecules'].map { |m| m['label'] }
         expect(mns).to include(m.sum_formular)
       end
     end

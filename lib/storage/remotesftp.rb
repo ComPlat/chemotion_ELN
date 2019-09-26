@@ -28,7 +28,7 @@ class RemoteSFTP < storage
           path_thumbnail = File.join(folder_thumbnail, file_id_filename + ".png")
 
           sftp.mkdir! folder_thumbnail
-          if File.exists?(path_thumbnail)
+          if File.exist?(path_thumbnail)
             sftp.upload! path_thumbnail
           else
             #thumbnail erzeugen?ß
@@ -48,7 +48,7 @@ class RemoteSFTP < storage
       path = File.join(folder, file_id)
 
       Net::SFTP.start(@host, @username, :password => @password) do |sftp|
-        return sftp.download! (path)
+        return sftp.download!(path)
       end
     rescue Exception => e
       puts "ERROR: Can not read file from ftp-server: " + e.message
@@ -62,9 +62,8 @@ class RemoteSFTP < storage
   def read_thumbnail(attachment)
   end
 
-private
+  private
 
   def create_thumbnail(created_by, file_path, file_id)
   end
-
 end

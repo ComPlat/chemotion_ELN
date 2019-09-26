@@ -1,19 +1,19 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-feature 'Collection management' do
-  let!(:user)    { create(:person) }
-  let!(:collection)    { create(:collection, user_id: user.id) }
+describe 'Collection management' do
+  let!(:user) { create(:person) }
+  let!(:collection) { create(:collection, user_id: user.id) }
 
-  background do
+  before do
     user.confirmed_at = Time.now
     user.save
     sign_in(user)
   end
 
   describe 'Createa an unshared collection' do
-
-    scenario 'create an unshared collection', js: true do
-
+    it 'create an unshared collection', js: true do
       # press Collections button (on the left-side tree view)
       find('div.take-ownership-btn').click
 
@@ -31,13 +31,11 @@ feature 'Collection management' do
 
       # except
       expect(find('.tree-view', text: factory_collection_name).text).to eq(factory_collection_name)
-
     end
   end
 
   describe 'Delete an unshared collection' do
-
-    scenario 'delete an unshared collection', js: true do
+    it 'delete an unshared collection', js: true do
       # byebug
       # press Collections button (on the left-side tree view)
       find('div.take-ownership-btn').click
@@ -55,7 +53,6 @@ feature 'Collection management' do
 
       # except after deletion
       expect(page).not_to have_content(factory_collection_name)
-
     end
   end
 end

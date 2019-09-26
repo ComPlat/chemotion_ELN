@@ -105,7 +105,7 @@ gem 'faraday_middleware', '~> 0.12.1'
 gem 'httparty'
 
 gem 'ketcherails', '~> 0.1.6', git: 'https://github.com/ComPlat/ketcher-rails',
-    ref: '0ad1dec8c8c91074873c93f2a73b57442ab03c6f'
+                               ref: '0ad1dec8c8c91074873c93f2a73b57442ab03c6f'
 # gem  'ketcherails', path: '../ketcher-rails'
 
 # Free font icons
@@ -126,8 +126,12 @@ gem 'paranoia', '~> 2.0'
 
 gem 'backup'
 gem 'whenever', require: false
+
 gem 'rubocop', require: false
+gem 'rubocop-performance', require: false
 gem 'rubocop-rspec', require: false
+gem 'gitlab-styles', require: false
+
 gem 'yaml_db'
 
 gem 'ruby-ole'
@@ -149,7 +153,8 @@ gem 'rqrcode'
 
 gem 'countries'
 gem 'ruby-mailchecker'
-gem 'swot', git: 'https://github.com/leereilly/swot.git', branch: 'master', ref: 'bfe392b4cd52f62fbc1d83156020275719783dd1'
+gem 'swot', git: 'https://github.com/leereilly/swot.git', branch: 'master',
+            ref: 'bfe392b4cd52f62fbc1d83156020275719783dd1'
 # gem 'gman', '~> 7.0.3'
 gem 'activejob-status'
 

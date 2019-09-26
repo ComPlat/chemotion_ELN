@@ -35,12 +35,16 @@ describe Chemotion::ContainerAPI do
       cont_dataset.save!
     end
 
-    describe 'check if the current user is the container owner before removing the linkage between container and attachments' do
+    after(:all) do
+      `rm -rf #{File.join(Rails.root, 'tmp', 'test')}`
+      puts "delete tmp folder #{File.join(Rails.root, 'tmp', 'test')} "
+    end
 
+    describe 'check if the current user is the container owner before removing the linkage between container and attachments' do
       it 'the current user is the container owner, returns 200 status code' do
         params = { container_id: cont_login_inbox.id, attachments: cont_login_inbox.attachments }
         patch(
-          "/api/v1/containers", params.to_json,
+          '/api/v1/containers', params.to_json,
           'CONTENT_TYPE' => 'application/json'
         )
         expect(response.status).to eq 200
@@ -58,15 +62,11 @@ describe Chemotion::ContainerAPI do
 
         params = { container_id: cont_hacker_inbox.id, attachments: cont_hacker_inbox.attachments }
         patch(
-          "/api/v1/containers", params.to_json,
+          '/api/v1/containers', params.to_json,
           'CONTENT_TYPE' => 'application/json'
         )
         expect(response.status).to eq 401
       end
-    end
-    after(:all) do
-      `rm -rf #{File.join(Rails.root, 'tmp', 'test')}`
-      puts "delete tmp folder #{File.join(Rails.root, 'tmp', 'test')} "
     end
   end
 end

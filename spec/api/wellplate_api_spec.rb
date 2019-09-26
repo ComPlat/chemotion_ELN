@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe Chemotion::WellplateAPI do
@@ -52,7 +54,7 @@ describe Chemotion::WellplateAPI do
           delete "/api/v1/wellplates/#{w1.id}"
         end
 
-        it 'should be able to delete a wellplate by id' do
+        it 'is able to delete a wellplate by id' do
           wellplate = Wellplate.find_by(name: 'test')
           expect(wellplate).to be_nil
           array = Well.where(wellplate_id: w1.id)
@@ -60,7 +62,6 @@ describe Chemotion::WellplateAPI do
           array = CollectionsWellplate.where(wellplate_id: w1.id)
           expect(array).to match_array([])
         end
-
       end
     end
   end

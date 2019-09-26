@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :collection do
-    user_id { 10000 }
+    user_id { 10_000 }
     sequence(:label) { |i| "Collection #{i}" }
 
     permission_level { 0 }

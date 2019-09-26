@@ -1,17 +1,18 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-feature 'Sample management' do
+describe 'Sample management' do
   let!(:user)    { create(:person) }
   let(:sample) { create(:sample, creator: user, collections: user.collections) }
 
-  background do
+  before do
     user.confirmed_at = Time.now
     user.save
     sign_in(user)
 
-    fp = Rails.root.join("public", "images", "molecules")
-    `ln -s #{Rails.root.join("spec", "fixtures", "images", "molecule.svg")} #{fp} ` unless File.exist?(Rails.root.join(fp, "molecule.svg"))
-
+    fp = Rails.root.join('public', 'images', 'molecules')
+    `ln -s #{Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')} #{fp} ` unless File.exist?(Rails.root.join(fp, 'molecule.svg'))
   end
 
   describe 'Split sample' do
@@ -19,7 +20,7 @@ feature 'Sample management' do
       user.collections.each { |c| CollectionsSample.find_or_create_by!(sample: sample, collection: c) }
     end
 
-    scenario 'splits sample', js: true do
+    it 'splits sample', js: true do
       # actions button is disabled if current collection is 'All'
       expect(find('button#create-split-button')[:disabled]).to eq('true')
 
@@ -29,24 +30,28 @@ feature 'Sample management' do
       expect(find('li', text: 'Split Sample')[:class]).to eq('disabled')
       click_button 'create-split-button'
 
-      sample_label =  sample.short_label  + ' ' + sample.name
+      sample_label = sample.short_label + ' ' + sample.name
       find('tr', text: sample_label).find('input').click
       click_button 'create-split-button'
       click_link 'Split Sample'
-      split_sample_label = sample.short_label  + '-1 ' + sample.name
+      split_sample_label = sample.short_label + '-1 ' + sample.name
       find('tr', text: split_sample_label).click
 
-      moleculeName = find('label', text: 'Molecule')
-        .find(:xpath, '..')
-        .find('.Select-value-label')
-        .text
-      expect(moleculeName).to eq(sample.molecule.iupac_name)
+      molecule_name = find('label', text: 'Molecule')
+                      .find(:xpath, '..')
+                      .find('.Select-value-label')
+                      .text
+      expect(molecule_name).to eq(sample.molecule.iupac_name)
 
-      %w(name external_label location purity solvent
-          density boiling_point melting_point).each do |field|
-        label = field.capitalize.gsub('_', ' ')
+      %w[name external_label location purity solvent
+         density boiling_point melting_point].each do |field|
+        label = field.capitalize.tr('_', ' ')
         value = find_bs_field(label).value
-        if (Float(value) rescue false)
+        if begin
+              Float(value)
+           rescue StandardError
+             false
+            end
           expect(value.to_f).to eq(sample[field].to_f)
         else
           expect(value).to eq(sample[field])
@@ -76,11 +81,11 @@ feature 'Sample management' do
         tr_text = ElementalComposition::TYPES[el_c.composition_type.to_sym]
         ea_table = find('tr', text: tr_text).find(:xpath, '../..')
         el_c.data.each do |element, value|
-          if(el_c.composition_type == 'found')
+          if el_c.composition_type == 'found'
             expect(find_bs_field(element).value.to_f).to eq(value.to_f)
           else
             opts = { text: /#{element}\s+#{value.to_f}/ }
-            expect{ea_table.find('span.data-item', opts)}.not_to raise_error
+            expect { ea_table.find('span.data-item', opts) }.not_to raise_error
           end
         end
       end

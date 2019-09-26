@@ -7,12 +7,12 @@ module AttachmentJcampAasm
 
   extend ActiveSupport::Concern
 
-  included do # rubocop:disable BlockLength
+  included do 
     include AASM
     before_create :init_aasm
     before_update :require_peaks_generation?
 
-    aasm do # rubocop:disable BlockLength
+    aasm do
       state :idle, initial: true
       state :queueing, :regenerating, :done
       state :peaked, :edited, :backup, :image
