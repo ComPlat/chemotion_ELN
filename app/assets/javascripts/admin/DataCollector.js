@@ -1,14 +1,78 @@
-import React from 'react';
+/* eslint-disable react/no-multi-comp */
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Form, ControlLabel, Panel, Button, Table, Modal, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import Select from 'react-select';
 import { startsWith, endsWith } from 'lodash';
-
+import NotificationActions from '../components/actions/NotificationActions';
 import AdminFetcher from '../components/fetchers/AdminFetcher';
 
-const editConfig = <Tooltip id="inchi_tooltip">edit config</Tooltip>;
-const removeConfig = <Tooltip id="inchi_tooltip">remove config</Tooltip>;
+const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
+const tipRemoveConfig = <Tooltip id="remove_tooltip">remove config</Tooltip>;
+const tipTestConnect = <Tooltip id="test_tooltip">test connection</Tooltip>;
 
-export default class DataCollector extends React.Component {
+class BtnConnect extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { lock: false };
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick(device) {
+    this.setState({ lock: true });
+    const params = {
+      method: device.data.method,
+      dir: device.data.method_params.dir,
+      host: device.data.method_params.host,
+      user: device.data.method_params.user
+    };
+    AdminFetcher.testSFTP(params)
+      .then((result) => {
+        this.setState({ lock: false });
+        NotificationActions.add({
+          title: `Test connection on [${device.name}]`,
+          message: result.message,
+          level: result.level,
+          position: 'tc',
+          dismissible: 'button',
+          autoDismiss: 3,
+        });
+      });
+  }
+
+  render() {
+    const { lock } = this.state;
+    return (
+      <OverlayTrigger placement="bottom" overlay={this.props.btnTip} >
+        <Button
+          bsSize="xsmall"
+          bsStyle="info"
+          onClick={() => this.handleClick(this.props.device)}
+        >
+          {
+            lock ? <i className="fa fa-spin fa-spinner" aria-hidden="true" /> : <i className="fa fa-plug" aria-hidden="true" />
+          }
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+}
+
+BtnConnect.propTypes = {
+  device: PropTypes.shape({
+    data: PropTypes.shape({
+      method: PropTypes.string,
+      method_params: PropTypes.shape({
+        dir: PropTypes.string,
+        host: PropTypes.string,
+        user: PropTypes.string,
+      })
+    })
+  }).isRequired,
+  btnTip: PropTypes.element.isRequired
+};
+
+export default class DataCollector extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -286,7 +350,7 @@ export default class DataCollector extends React.Component {
           {idx + 1}
         </td>
         <td>
-          <OverlayTrigger placement="bottom" overlay={editConfig} >
+          <OverlayTrigger placement="bottom" overlay={tipEditConfig} >
             <Button
               bsSize="xsmall"
               bsStyle="primary"
@@ -296,7 +360,7 @@ export default class DataCollector extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={removeConfig} >
+          <OverlayTrigger placement="bottom" overlay={tipRemoveConfig} >
             <Button
               bsSize="xsmall"
               bsStyle="danger"
@@ -305,6 +369,10 @@ export default class DataCollector extends React.Component {
               <i className="fa fa-eraser" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
+          &nbsp;
+          {
+            endsWith(device.data.method, 'sftp') ? <BtnConnect device={device} btnTip={tipTestConnect} /> : null
+          }
         </td>
         <td> {device.name} </td>
         <td> {(device.data && device.data.method ? device.data.method : '')} </td>

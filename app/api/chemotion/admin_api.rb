@@ -38,6 +38,35 @@ module Chemotion
         end
       end
 
+      namespace :sftpDevice do
+        desc 'Connect device via SFTP'
+        params do
+          requires :method, type: String
+          requires :host, type: String
+          optional :user, type: String
+        end
+        post do
+          credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
+            e[:user] == params[:user]
+          }.first
+          raise 'No match user credentials!' unless credentials
+
+          sftp = Net::SFTP.start(
+            params[:host],
+            credentials[:user],
+            password: credentials[:password],
+            auth_methods: ['password'],
+            number_of_password_prompts: 0,
+            timeout: 5
+          )
+          raise 'Connection can not be initialized!' unless sftp.open?
+
+          { level: 'success', message: 'Test connection successfully.' }
+        rescue StandardError => e
+          { level: 'error', message: e.message }
+        end
+      end
+
       namespace :removeDeviceMethod do
         desc 'Remove device profile method'
         params do
