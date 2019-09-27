@@ -14,12 +14,24 @@ class InboxActions {
   }
 
   fetchInbox() {
-    return (dispatch) => { InboxFetcher.fetchInbox()
+    return (dispatch) => {
+      InboxFetcher.fetchInbox(false)
       .then((result) => {
         dispatch(result.inbox);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
+  }
+
+  fetchInboxCount() {
+    return (dispatch) => {
+      InboxFetcher.fetchInbox(true)
+      .then((result) => {
+        dispatch(result.inbox);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
   removeAttachmentFromList(attachment){

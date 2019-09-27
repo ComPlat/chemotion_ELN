@@ -54,13 +54,21 @@ module Chemotion
     end
 
     resource :inbox do
+      params do
+        requires :cnt_only, type: Boolean, desc: 'return count number only'
+      end
       get do
         if current_user
-          if !current_user.container
-            current_user.container = Container.create(name: "inbox", container_type: "root")
+          unless current_user.container
+            current_user.container = Container.create(name: 'inbox', container_type: 'root')
           end
           # unlinked_attachments = Attachment.where(attachable_id: nil, attachable_type: 'Container', created_for: current_user.id)
-          InboxSerializer.new(current_user.container)
+          inbox = InboxSerializer.new(current_user.container)
+          if params[:cnt_only]
+            { inbox: { inbox_count: inbox.inbox_count } }
+          else
+            inbox
+          end
         end
       end
     end
