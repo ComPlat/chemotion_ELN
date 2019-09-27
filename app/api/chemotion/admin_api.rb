@@ -19,6 +19,13 @@ module Chemotion
         { percent_used: stat.percent_used.round(2), mb_available: mb_available }
       end
 
+      namespace :listLocalCollector do
+        desc 'List all local collectors'
+        get 'all' do
+          Rails.configuration.datacollectors.localcollectors
+        end
+      end
+
       namespace :listDevices do
         desc 'Find all devices'
         get 'all' do
@@ -97,9 +104,27 @@ module Chemotion
           end
         end
 
+        after_validation do
+          @p_method = params[:data][:method]
+          if @p_method.end_with?('local')
+            p_dir = params[:data][:method_params][:dir]
+            @pn = Pathname.new(p_dir)
+            error!('Dir is not a valid directory', 500) unless @pn.directory?
+
+            localpath = Rails.configuration.datacollectors.localcollectors.select { |e|
+              @pn.realpath.to_path.start_with?(e[:path])
+            }.first
+            localpath = @pn.realpath.to_path.sub(localpath[:path], '') unless localpath.nil?
+
+            error!('Dir is not in white-list for local data collection', 500) if localpath.nil?
+
+          end
+        end
+
         post do
           device = Device.find(params[:id])
           data = device.profile.data || {}
+          params[:data][:method_params][:dir] = @pn.realpath.to_path if @p_method.end_with?('local')
           new_profile = {
             data: data.merge(params[:data] || {})
           }

@@ -1,6 +1,15 @@
 import 'whatwg-fetch';
 
 export default class AdminFetcher {
+  static fetchLocalCollector() {
+    const promise = fetch('/api/v1/admin/listLocalCollector/all.json', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
   static checkDiskSpace() {
     const promise = fetch('/api/v1/admin/disk.json', {
       credentials: 'same-origin'
