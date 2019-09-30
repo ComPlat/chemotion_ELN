@@ -1,5 +1,5 @@
 class InboxSerializer < ActiveModel::Serializer
-  attributes :id, :name, :container_type, :children, :unlinked_attachments
+  attributes :id, :name, :container_type, :children, :unlinked_attachments, :inbox_count
   #has_many :attachments, :serializer => AttachmentSerializer
 
   def children
@@ -39,5 +39,16 @@ class InboxSerializer < ActiveModel::Serializer
       attachable_id: nil,
       created_for: object.containable.id
     )
+  end
+
+  def inbox_count
+    all_containers = object.hash_tree
+    root = all_containers.keys[0]
+    arr = []
+    get_attchement_ids(arr, all_containers[root])
+
+    cnt = Attachment.where_container(arr).length
+    cnt += unlinked_attachments.length
+    cnt
   end
 end

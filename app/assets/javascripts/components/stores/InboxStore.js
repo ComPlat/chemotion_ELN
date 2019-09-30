@@ -17,9 +17,10 @@ class InboxStore {
 
     this.bindListeners({
       handleFetchInbox: InboxActions.fetchInbox,
+      handleFetchInboxCount: InboxActions.fetchInboxCount,
       handleRemoveAttachmentFromList: InboxActions.removeAttachmentFromList,
       handleRemoveUnlinkedAttachmentFromList: InboxActions.removeUnlinkedAttachmentFromList,
-      handleRemoveDatasetFromList:InboxActions.removeDatasetFromList,
+      handleRemoveDatasetFromList: InboxActions.removeDatasetFromList,
       handleDeleteAttachment: InboxActions.deleteAttachment,
       handleDeleteContainer: InboxActions.deleteContainer,
       handleBackToInbox: InboxActions.backToInbox,
@@ -47,6 +48,10 @@ class InboxStore {
     this.state.inbox = result;
     this.sync();
     this.countAttachments();
+  }
+
+  handleFetchInboxCount(result) {
+    this.state.numberOfAttachments = result.inbox_count;
   }
 
   handleRemoveAttachmentFromList(attachment) {

@@ -1,23 +1,20 @@
 import React from 'react';
-import {Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstrap';
+import { Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstrap';
+import update from 'immutability-helper';
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import CollectionSubtree from './CollectionSubtree';
 import UIActions from './actions/UIActions';
 import InboxActions from './actions/InboxActions';
+import LoadingActions from './actions/LoadingActions';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import InboxStore from './stores/InboxStore';
 import Xdiv from './extra/CollectionTreeXdiv';
-import update from 'immutability-helper';
 import UserInfos from './UserInfos';
 
 import DeviceBox from './inbox/DeviceBox';
 import UnsortedBox from './inbox/UnsortedBox';
-
-import {DragDropContext} from 'react-dnd';
-import HTML5Backend from 'react-dnd-html5-backend';
-import DragDropItemTypes from './DragDropItemTypes';
 
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 
@@ -25,8 +22,8 @@ export default class CollectionTree extends React.Component {
   constructor(props) {
     super(props);
 
-    let collecState = CollectionStore.getState()
-    let inboxState = InboxStore.getState()
+    const collecState = CollectionStore.getState();
+    const inboxState = InboxStore.getState();
 
     this.state = {
       unsharedRoots: collecState.unsharedRoots,
@@ -41,9 +38,10 @@ export default class CollectionTree extends React.Component {
       inbox: inboxState.inbox,
       numberOfAttachments: inboxState.numberOfAttachments,
       inboxVisible: false
-    }
+    };
 
-    this.onChange = this.onChange.bind(this)
+    this.onChange = this.onChange.bind(this);
+    this.onClickInbox = this.onClickInbox.bind(this);
   }
 
   componentDidMount() {
@@ -54,7 +52,7 @@ export default class CollectionTree extends React.Component {
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
-    InboxActions.fetchInbox();
+    InboxActions.fetchInboxCount();
   }
 
   componentWillUnmount() {
@@ -66,7 +64,17 @@ export default class CollectionTree extends React.Component {
     this.setState(state);
   }
 
-  refreshInbox(){
+  onClickInbox() {
+    const { inboxVisible, inbox } = this.state;
+    this.setState({ inboxVisible: !inboxVisible });
+    if (!inbox.children) {
+      LoadingActions.start();
+      InboxActions.fetchInbox();
+    }
+  }
+
+  refreshInbox() {
+    LoadingActions.start();
     InboxActions.fetchInbox();
   }
 
@@ -284,8 +292,8 @@ export default class CollectionTree extends React.Component {
       extraDiv.push(<NoName key={"Xdiv"+j} />);
     }
 
-    let ownCollectionDisplay = ownCollectionVisible ? "" : "none"
-    let inboxDisplay = inboxVisible ? "" : "none"
+    const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
+    const inboxDisplay = inboxVisible ? '' : 'none';
 
     return (
       <div>
@@ -298,7 +306,7 @@ export default class CollectionTree extends React.Component {
             </div>
           </OverlayTrigger>
         </div>
-        <div className="tree-wrapper" style={{display: ownCollectionDisplay}}>
+        <div className="tree-wrapper" style={{ display: ownCollectionDisplay }}>
           {this.lockedSubtrees()}
           {this.unsharedSubtrees()}
         </div>
@@ -313,17 +321,17 @@ export default class CollectionTree extends React.Component {
         </div>
         {extraDiv.map((e)=>{return e})}
         <div className="tree-view">
-          <div className="title" style={{backgroundColor:'white'}}>
-            <i className="fa fa-inbox" onClick={() => this.setState({inboxVisible: !inboxVisible})}> &nbsp; Inbox &nbsp;</i>
+          <div className="title" style={{ backgroundColor: 'white' }}>
+            <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Inbox &nbsp;</i>
             {
-              this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ""
+              this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
             }
-            &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshInbox()}/>
+            &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshInbox()} />
           </div>
 
         </div>
-        <div className="tree-wrapper" style={{display: inboxDisplay}}>
-            {this.inboxSubtrees()}
+        <div className="tree-wrapper" style={{ display: inboxDisplay }}>
+          { this.inboxSubtrees() }
         </div>
       </div>
     )

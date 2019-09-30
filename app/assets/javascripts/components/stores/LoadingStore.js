@@ -2,6 +2,7 @@ import alt from '../alt';
 import LoadingActions from '../actions/LoadingActions';
 import ReportActions from '../actions/ReportActions';
 import ElementActions from '../actions/ElementActions';
+import InboxActions from '../actions/InboxActions';
 
 class LoadingStore {
   constructor() {
@@ -22,6 +23,7 @@ class LoadingStore {
           ElementActions.updateReaction,
           ElementActions.createResearchPlan,
           ElementActions.updateResearchPlan,
+          InboxActions.fetchInbox,
         ],
     });
   }
