@@ -183,10 +183,6 @@ export default class DataCollector extends Component {
         return false;
       }
     }
-    if (startsWith(selectedCollectMethod, 'folder') && Math.trunc(this.refNumberOfFiles.value) < 1) {
-      alert('Number of Files must be greater than 0!');
-      return false;
-    }
 
     const params = {
       id: selectedDevice.id,
@@ -295,13 +291,13 @@ export default class DataCollector extends Component {
                   />
                 </div>
                 <div>
-                  <ControlLabel>Number of Files</ControlLabel>
+                  <ControlLabel>Number of Files</ControlLabel>&nbsp;<span className="fa fa-info-circle" aria-hidden="true">&nbsp;Folderwatcher: set to 0 for a varying number of files</span>
                   <input
                     ref={(ref) => { this.refNumberOfFiles = ref; }}
                     className="form-control is-invalid"
                     type="number"
                     id="inputNumber"
-                    min="1"
+                    min="0"
                     readOnly={disableForFile}
                     defaultValue={defaultNumber}
                   />
