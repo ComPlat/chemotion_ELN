@@ -8,6 +8,7 @@ import Navigation from './Navigation';
 import DeviceActions from '../components/actions/UserActions';
 import DeviceStore from '../components/stores/UserStore';
 import FocusNovnc from '../components/FocusNovnc';
+import { ConnectedBtn, DisconnectedBtn } from '../components/NovncStatus';
 
 
 class CnC extends React.Component {
@@ -147,6 +148,8 @@ class CnC extends React.Component {
 
               >
                 {device.name}
+                {selectedId === device.id && this.state.connected ? <ConnectedBtn /> : null}
+                {selectedId === device.id && !this.state.connected ? <DisconnectedBtn /> : null}
               </div>
             </div>
           ))}
