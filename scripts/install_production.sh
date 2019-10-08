@@ -61,7 +61,7 @@ PART_6='prepare postgresql DB'
 PART_7='prepare production app directories and config'
 PART_71='reset DB pw'
 PART_8='prepare first deploy and deploy application code'
-PART_9='prepare boot start'
+PART_9='prepare boot start and log rotation'
 PART_10='configure NGINX and UFW'
 
 
@@ -369,7 +369,7 @@ fi
 ############################################
 ############################################
 sharpi 'PART 9'
-descripton="setting boot start"
+descripton="setting boot start and log rotation"
 ############################################
 
 if [ "${PART_9:-}" ]; then
@@ -426,6 +426,20 @@ EOL
     fi
   fi
 
+sharpi 'setting logrotate conf /etc/logrotate.d/chemotion_ELN'
+  echo | sudo tee /etc/logrotate.d/chemotion_ELN <<LOGR || true
+$PROD_DIR/shared/log/*.log {
+  weekly
+  missingok
+  rotate 8
+  compress
+  delaycompress
+  notifempty
+  copytruncate
+}
+
+LOGR
+
   green "done $description\n"
 else
   yellow "skip $description\n"
@@ -475,8 +489,8 @@ NGINXCONFIG
 NGINXCONFIG
   sharpi "create nginx config\n"
 
-  echo "$nginx_config_1" | sudo tee /etc/nginx/sites-available/prod_no_ssl
-  echo "$nginx_config_2" | sudo tee -a /etc/nginx/sites-available/prod_no_ssl
+  echo "$nginx_config_1" | sudo tee /etc/nginx/sites-available/chemotion_prod_no_ssl
+  echo "$nginx_config_2" | sudo tee -a /etc/nginx/sites-available/chemotion_prod_no_ssl
 
   if [ -f  /etc/nginx/sites-enabled/default ]; then
     sudo rm /etc/nginx/sites-enabled/default
