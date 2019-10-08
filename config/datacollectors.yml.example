@@ -4,8 +4,10 @@ development:
       :cron: '5,20,35,50 * * * *' # every 15 minutes starting a xx:05
     - :name: 'folderwatchersftp'
       :every: 5 # minutes
+      :watcher_sleep: 30 # seconds
     - :name: 'folderwatcherlocal'
       :every: 5 # minutes
+      :watcher_sleep: 30 # seconds
     - :name: 'filewatchersftp'
       :every: 2 # minutes
     - :name: 'filewatcherlocal'
