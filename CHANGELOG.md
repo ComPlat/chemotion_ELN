@@ -1,6 +1,34 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.5.0]
+> 2019-10-08
+
+* Features
+  * Analysis type according to Chemical Ontology (owl)
+  * export data from whole collections as zip (and import them)
+  * server notification system to users. E.g: user get notified when:
+    - the report generation is done
+    - it needs to refresh the browsers page to reload the cached application (update)
+  * Admin UI:
+    - NB: migrations will seed a default admin account => you need to change its password
+      email: `eln-admin@kit.edu` , pw: `PleaseChangeYourPassword`
+    - basic user management functions + direct notification to user
+    - DataCollector device configuration
+    - global notification to users
+  * Green Chemistry calculator for reaction
+  * RInChI integration
+  * new reporting functions
+  * sample/reaction large image preview from their element lists on hover
+  * clone samples/reactions to one's Chemotion Repository account (chemotion.net)
+
+* Upgrade Notes:
+  * must do: change the default password of the default admin account (vide supra)
+  * should do: reports are now stored as attachments run rake task
+  `data:ver_20180812115719_add_colums_to_attachment` to ensure the retrievability of previously generated
+  reports
+
+
 ## [v0.4.0]
 * Features
   * Element list: added time range filter / product filter
