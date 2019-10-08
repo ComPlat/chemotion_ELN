@@ -109,9 +109,20 @@ module Chemotion
     end
 
     resource :devices do
+      params do
+        optional :id, type: String, regexp: /\d+/, default: '0'
+        optional :status, type: String
+      end
+
       get :novnc do
         devices = Device.by_user_ids(user_ids).novnc.includes(:profile)
         present devices, with: Entities::DeviceNovncEntity, root: 'devices'
+      end
+
+      get 'current_connection' do
+        path = Rails.root.join('tmp/novnc_devices', params[:id])
+        cmd = "echo '#{current_user.id},#{params[:status] == 'true' ? 1 : 0}' >> #{path};LINES=$(tail -n 8 #{path});echo \"$LINES\" | tee #{path}"
+        { result: Open3.popen3(cmd) { |i, o, e, t| o.read.split(/\s/) } }
       end
     end
   end
