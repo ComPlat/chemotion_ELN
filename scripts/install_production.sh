@@ -250,7 +250,7 @@ if [ "${PART_7:-}" ]; then
   echo $RUBY_VERSION | sudo tee $pwd/.ruby-version
   echo "SECRET_KEY_BASE='$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | sha512sum -b | sed 's/ .*//')'" | sudo tee $pwd/.env >/dev/null
 
-echo | sudo tee -a $pwd/.env <<EOL
+echo | sudo tee -a $pwd/.env <<EOL || true
 DB_NAME='$DB_NAME'
 DB_ROLE='$DB_ROLE'
 DB_PW='$DB_PW'
@@ -264,7 +264,7 @@ EOL
   \cp -u $TMP_DIR/config/secrets.yml $pwd/config/secrets.yml
   rm_tmp
 
-echo | sudo tee $pwd/config/database.yml <<EOL
+echo | sudo tee $pwd/config/database.yml <<EOL || true
 production:
   adapter: postgresql
   encoding: unicode
@@ -277,7 +277,7 @@ production:
 EOL
 
 # SET storage config
-echo | sudo tee $pwd/config/storage.yml <<EOL
+echo | sudo tee $pwd/config/storage.yml <<EOL || true
 production:
   :primary_store: 'local'
   :secundary_store: ''
