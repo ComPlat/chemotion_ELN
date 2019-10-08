@@ -105,7 +105,7 @@ gem 'faraday_middleware', '~> 0.12.1'
 gem 'httparty'
 
 gem 'ketcherails', '~> 0.1.6', git: 'https://github.com/ComPlat/ketcher-rails',
-                               ref: '0ad1dec8c8c91074873c93f2a73b57442ab03c6f'
+                               ref: '34228105183085659319b67f6adb510f1afba13d'
 # gem  'ketcherails', path: '../ketcher-rails'
 
 # Free font icons

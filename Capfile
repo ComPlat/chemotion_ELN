@@ -9,8 +9,8 @@ require 'capistrano/rvm' # Ruby version manager
 require 'capistrano/nvm' # Node version manager
 require 'capistrano/npm' # Node package manager
 require 'capistrano/bundler'
-require 'capistrano/rails/assets'
 require 'capistrano/rails/migrations'
+require 'capistrano/rails/assets'
 #require 'capistrano/delayed_job'
 require 'whenever/capistrano'
 require 'slackistrano/capistrano'
