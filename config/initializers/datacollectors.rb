@@ -6,6 +6,7 @@ begin
     config.datacollectors.services = datacollectors_config[:services]
     config.datacollectors.mailcollector = datacollectors_config[:mailcollector]
     config.datacollectors.sftpusers = datacollectors_config[:sftpusers]
+    config.datacollectors.localcollectors = datacollectors_config[:localcollectors]
   end
 rescue StandardError => e
   puts e.message

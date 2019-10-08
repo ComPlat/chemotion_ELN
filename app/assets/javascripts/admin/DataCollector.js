@@ -1,9 +1,11 @@
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Form, ControlLabel, Panel, Button, Table, Modal, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Form, ControlLabel, Panel, Button, Table, Modal, Tooltip, OverlayTrigger, FormControl, InputGroup, FormGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import { startsWith, endsWith } from 'lodash';
+import uuid from 'uuid';
+import Clipboard from 'clipboard';
 import NotificationActions from '../components/actions/NotificationActions';
 import AdminFetcher from '../components/fetchers/AdminFetcher';
 
@@ -88,15 +90,32 @@ export default class DataCollector extends Component {
       selectedDevice: null,
       disableForLocal: true,
       disableForFile: true,
+      localCollector: []
     };
+    this.clipboard = new Clipboard('.clipboardBtn');
     this.handleDeviceListFetch = this.handleDeviceListFetch.bind(this);
     this.handleCollectMethodChange = this.handleCollectMethodChange.bind(this);
     this.handleConfigModalShow = this.handleConfigModalShow.bind(this);
     this.handleConfigModalClose = this.handleConfigModalClose.bind(this);
+    this.handleLocalCollectorFetch = this.handleLocalCollectorFetch.bind(this);
   }
 
   componentDidMount() {
     this.handleDeviceListFetch();
+    this.handleLocalCollectorFetch();
+  }
+
+  componentWillUnmount() {
+    this.clipboard.destroy();
+  }
+
+  handleLocalCollectorFetch() {
+    AdminFetcher.fetchLocalCollector()
+      .then((result) => {
+        this.setState({
+          localCollector: result.listLocalCollector,
+        });
+      });
   }
 
   handleConfigModalShow(deviceId, show) {
@@ -188,6 +207,8 @@ export default class DataCollector extends Component {
       return false;
     }
 
+    alert('Warning: Unprocessable files will be deleted from the target directory!');
+
     const params = {
       id: selectedDevice.id,
       data: {
@@ -208,6 +229,14 @@ export default class DataCollector extends Component {
     AdminFetcher.updateDeviceMethod(params)
       .then((result) => {
         if (result.error) {
+          NotificationActions.add({
+            title: `Edit config. on [${selectedDevice.name}]`,
+            message: result.error,
+            level: 'error',
+            position: 'tc',
+            dismissible: 'button',
+            autoDismiss: 3,
+          });
           return false;
         }
         this.handleConfigModalClose();
@@ -219,7 +248,7 @@ export default class DataCollector extends Component {
   renderConfiModal() {
     if (this.state.showConfigModal) {
       const {
-        selectedDevice, selectedCollectMethod, collectMethod, disableForLocal, disableForFile
+        selectedDevice, selectedCollectMethod, collectMethod, disableForLocal, disableForFile, localCollector
       } = this.state;
       let defaultNumber = 0;
       if (!disableForFile) {
@@ -227,6 +256,42 @@ export default class DataCollector extends Component {
         selectedDevice.data.method_params.number_of_files ?
           selectedDevice.data.method_params.number_of_files : 1;
       }
+
+      const clipboardTooltip = () => {
+        return (
+          <Tooltip id="assign_button">copy to clipboard</Tooltip>
+        );
+      };
+
+      const localCollectorList = (
+        <div style={{ margin: '5px', padding: '5px', border: 'thin dashed darkred' }}>
+          <h6 style={{ margin: 'unset' }}><b>Local Collector Dir Configurtaion</b></h6>
+          {
+            localCollector.map((c, i) => (
+              <div key={uuid.v4()}>
+                <FormGroup bsSize="small" style={{ marginBottom: 'unset' }}>
+                  <InputGroup>
+                    <InputGroup.Button>
+                      <OverlayTrigger placement="right" overlay={clipboardTooltip()}>
+                        <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
+                          <i className="fa fa-clipboard" />
+                        </Button>
+                      </OverlayTrigger>
+                    </InputGroup.Button>
+                    <FormControl
+                      id={`copy-input-${i}`}
+                      type="text"
+                      value={c.path}
+                      readOnly
+                      style={{ backgroundColor: 'unset', border: 'unset', boxShadow: 'none' }}
+                    />
+                  </InputGroup>
+                </FormGroup>
+              </div>
+            ))
+          }
+        </div>
+      );
 
       return (
         <Modal
@@ -255,7 +320,11 @@ export default class DataCollector extends Component {
                   placeholder="Select collection method"
                   autoFocus
                   required
+                  className="status-select"
                 />
+                {
+                  endsWith(selectedCollectMethod, 'local') ? localCollectorList : null
+                }
                 <div>
                   <ControlLabel>Dir</ControlLabel>
                   <input
