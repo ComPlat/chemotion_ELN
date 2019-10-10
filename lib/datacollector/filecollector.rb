@@ -9,13 +9,26 @@ class Filecollector
           e[:user] == device.profile.data['method_params']['user']
         }.first
         if credentials
-          Net::SFTP.start(
-            device.profile.data['method_params']['host'],
-            credentials[:user],
-            password: credentials[:password]
-          ) do |sftp|
-            @sftp = sftp
-            inspect_folder(device)
+          if device.profile.data['method_params']['authen'] == 'keyfile'
+            Net::SFTP.start(
+              device.profile.data['method_params']['host'],
+              credentials[:user],
+              key_data: [],
+              keys: device.profile.data['method_params']['key_path'],
+              keys_only: true
+            ) do |sftp|
+              @sftp = sftp
+              inspect_folder(device)
+            end
+          else
+            Net::SFTP.start(
+              device.profile.data['method_params']['host'],
+              credentials[:user],
+              password: credentials[:password]
+            ) do |sftp|
+              @sftp = sftp
+              inspect_folder(device)
+            end
           end
         end
       else
