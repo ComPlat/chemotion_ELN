@@ -1,31 +1,29 @@
-import React, { Component} from "react"
-import PropTypes from 'prop-types'
-import { Modal, ButtonToolbar, Button, FormGroup, ControlLabel, FormControl, HelpBlock } from 'react-bootstrap'
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { Modal, ButtonToolbar, Button, FormGroup, ControlLabel, FormControl, HelpBlock } from 'react-bootstrap';
 
 class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
-
   constructor(props) {
     super(props);
-
     this.state = {
       columnNameValue: '',
       columnNameError: ''
-    }
+    };
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props != prevProps) {
-      const { modal, columns } = this.props
+    if (this.props !== prevProps) {
+      const { modal, columns } = this.props;
 
-      let columnNameValue = ''
-      if (modal.action == 'rename') {
-        columnNameValue = columns[modal.idx].name
+      let columnNameValue = '';
+      if (modal.action === 'rename') {
+        columnNameValue = columns[modal.idx].name;
       }
 
       this.setState({
-        columnNameValue: columnNameValue,
+        columnNameValue,
         columnNameError: ''
-      })
+      });
     }
   }
 
@@ -34,32 +32,32 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   }
 
   handleSubmit() {
-    const { columns, onSubmit } = this.props
-    const { columnNameValue } = this.state
-    const keys = columns.map(column => { return column.key })
+    const { columns, onSubmit } = this.props;
+    const { columnNameValue } = this.state;
+    const keys = columns.map(column => column.key);
 
     if (!columnNameValue) {
-      this.setState({ columnNameError: 'Please give a column name.' })
+      this.setState({ columnNameError: 'Please give a column name.' });
     } else if (keys.indexOf(columnNameValue) > -1) {
-      this.setState({ columnNameError: 'A column with this title already exists.' })
+      this.setState({ columnNameError: 'A column with this title already exists.' });
     } else {
-      this.setState({ columnNameError: '', columnNameValue: '' })
-      onSubmit(columnNameValue)
+      this.setState({ columnNameError: '', columnNameValue: '' });
+      onSubmit(columnNameValue);
     }
   }
 
   render() {
-    const { modal, onHide } = this.props
-    const { columnNameValue, columnNameError } = this.state
+    const { modal, onHide } = this.props;
+    const { columnNameValue, columnNameError } = this.state;
 
-    let title
-    if (modal.action == 'insert') {
-      title = 'Insert column'
-    } else if (modal.action == 'rename') {
-      title = 'Rename column'
+    let title;
+    if (modal.action === 'insert') {
+      title = 'Insert column';
+    } else if (modal.action === 'rename') {
+      title = 'Rename column';
     }
 
-    let validationState = columnNameError ? 'error' : null
+    const validationState = columnNameError ? 'error' : null;
 
     return (
       <Modal animation show={modal.show} onHide={onHide}>
@@ -92,7 +90,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
           </div>
         </Modal.Body>
       </Modal>
-    )
+    );
   }
 }
 
@@ -102,6 +100,6 @@ ResearchPlanDetailsFieldTableColumnNameModal.propTypes = {
   onSubmit: PropTypes.func,
   onHide: PropTypes.func,
   columns: PropTypes.array
-}
+};
 
-export default ResearchPlanDetailsFieldTableColumnNameModal
+export default ResearchPlanDetailsFieldTableColumnNameModal;

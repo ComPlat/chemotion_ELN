@@ -1,34 +1,37 @@
-import React, { Component } from 'react'
-import PropTypes from 'prop-types'
-
-import QuillEditor from '../QuillEditor'
-import QuillViewer from '../QuillViewer'
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import QuillEditor from '../QuillEditor';
+import QuillViewer from '../QuillViewer';
 
 export default class ResearchPlanDetailsFieldRichText extends Component {
 
   renderEdit() {
-    const { field, index, disabled, onChange } = this.props
+    const {
+      field, disabled, onChange
+    } = this.props;
 
     return (
-      <QuillEditor value={field.value}
-        onChange={(value) => onChange(value, field.id)}
-        disabled={disabled}
-      />
-    )
+      <div className="quill-resize">
+        <QuillEditor
+          value={field.value}
+          height="100%"
+          onChange={value => onChange(value, field.id)}
+          disabled={disabled}
+        />
+      </div>
+    );
   }
 
   renderStatic() {
-    const { field } = this.props
-
-    return <QuillViewer value={field.value} />
+    const { field } = this.props;
+    return <QuillViewer value={field.value} />;
   }
 
   render() {
     if (this.props.edit) {
-      return this.renderEdit()
-    } else {
-      return this.renderStatic()
+      return this.renderEdit();
     }
+    return this.renderStatic();
   }
 }
 
@@ -37,4 +40,5 @@ ResearchPlanDetailsFieldRichText.propTypes = {
   index: PropTypes.number,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
+  edit: PropTypes.bool,
 }

@@ -8,7 +8,7 @@ class TransferThumbnailToPublicJob < ActiveJob::Base
         file_path = Rails.public_path.join('images', 'thumbnail', a.identifier)
         if a.read_thumbnail
           rp = ResearchPlan.find(a.attachable_id)
-          rp.update!(thumb_svg: '/images/thumbnail/' + a.identifier) unless rp.nil?
+          #rp.update!(thumb_svg: '/images/thumbnail/' + a.identifier) unless rp.nil?
           File.write(file_path, a.read_thumbnail.force_encoding("UTF-8"))
         end
       end

@@ -1,45 +1,49 @@
-import React, { Component } from 'react'
-import PropTypes from 'prop-types'
-import { ControlLabel, Row, Col } from 'react-bootstrap'
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { ControlLabel, Row, Col } from 'react-bootstrap';
+import ResearchPlanDetailsAddField from './ResearchPlanDetailsAddField';
+import ResearchPlanDetailsDropTarget from './ResearchPlanDetailsDropTarget';
+import Field from './ResearchPlanDetailsField';
 
-import ResearchPlanDetailsAddField from './ResearchPlanDetailsAddField'
-import ResearchPlanDetailsDropTarget from './ResearchPlanDetailsDropTarget'
-import Field from './ResearchPlanDetailsField'
-
+// eslint-disable-next-line react/prefer-stateless-function
 export default class ResearchPlanDetailsBody extends Component {
-
   render() {
-    let { body, disabled, onChange, onDrop, onAdd, onDelete, onExport, update, edit } = this.props
+    const {
+      body, disabled, onChange, onDrop, onAdd, onDelete, onExport, update, edit
+    } = this.props;
 
-    let fields = body.map((field, index) => {
-        return <Field key={field.id}
-                      field={field} index={index} disabled={disabled}
-                      onChange={onChange.bind(this)}
-                      onDrop={onDrop.bind(this)}
-                      onDelete={onDelete.bind(this)}
-                      onExport={onExport.bind(this)}
-                      update={update}
-                      edit={edit} />
-    })
+    const fields = body.map((field, index) =>
+      (<Field
+        key={field.id}
+        field={field}
+        index={index}
+        disabled={disabled}
+        onChange={onChange.bind(this)}
+        onDrop={onDrop.bind(this)}
+        onDelete={onDelete.bind(this)}
+        onExport={onExport.bind(this)}
+        update={update}
+        edit={edit}
+      />));
 
-    let className = 'research-plan-body'
-    let bodyFooter
+    let className = 'research-plan-body';
+    let bodyFooter;
     if (edit) {
       bodyFooter = (
         <Row>
           <Col md={12}>
-            <ResearchPlanDetailsDropTarget index={fields.length}/>
+            <ResearchPlanDetailsDropTarget index={fields.length} />
             <div>
               <ControlLabel>Add field</ControlLabel>
               <div>
-                <ResearchPlanDetailsAddField onAdd={onAdd}/>
+                <ResearchPlanDetailsAddField onAdd={onAdd} />
               </div>
             </div>
           </Col>
         </Row>
-      )
+      );
     } else {
-      className += ' static'
+      className += ' static';
     }
 
     return (
@@ -47,7 +51,7 @@ export default class ResearchPlanDetailsBody extends Component {
         {fields}
         {bodyFooter}
       </div>
-    )
+    );
   }
 }
 
@@ -60,4 +64,4 @@ ResearchPlanDetailsBody.propTypes = {
   onExport: PropTypes.func,
   update: PropTypes.bool,
   edit: PropTypes.bool
-}
+};

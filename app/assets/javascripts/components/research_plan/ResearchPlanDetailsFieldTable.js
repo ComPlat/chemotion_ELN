@@ -1,21 +1,20 @@
-import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { range } from 'lodash';
-import { Row, Col, Button } from 'react-bootstrap'
+import { Row, Col, Button } from 'react-bootstrap';
 import ReactDataGrid from 'react-data-grid';
-import { Menu } from "react-data-grid-addons"
+import { Menu } from 'react-data-grid-addons';
+import ResearchPlanDetailsFieldTableContextMenu from './ResearchPlanDetailsFieldTableContextMenu';
+import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal';
+import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal';
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 
-import ResearchPlanDetailsFieldTableContextMenu from './ResearchPlanDetailsFieldTableContextMenu'
-import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal'
-import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal'
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
-
-const { ContextMenuTrigger } = Menu
+const { ContextMenuTrigger } = Menu;
 
 // regexp to parse tap separated paste from the clipboard
 const defaultParsePaste = str => (
   str.split(/\r\n|\n|\r/).map(row => row.split('\t'))
-)
+);
 
 // Monkey path for ReactDataGrid
 // see https://github.com/adazzle/react-data-grid/issues/1416#issuecomment-445488607
@@ -51,83 +50,83 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         show: false
       },
       selection: {}
-    }
+    };
 
-    document.addEventListener('copy', this.handleCopy.bind(this))
-    document.addEventListener('paste', this.handlePaste.bind(this))
+    document.addEventListener('copy', this.handleCopy.bind(this));
+    document.addEventListener('paste', this.handlePaste.bind(this));
 
-    this.ref = React.createRef()
+    this.ref = React.createRef();
 
-    this.handleCellSelected = this.handleCellSelected.bind(this)
-    this.handleCellDeSelected = this.handleCellDeSelected.bind(this)
+    this.handleCellSelected = this.handleCellSelected.bind(this);
+    this.handleCellDeSelected = this.handleCellDeSelected.bind(this);
   }
 
-   buildColumn(columnName) {
+  componentDidUpdate() {
+    if (this.state.update !== this.props.update) {
+      this.setState({ update: this.props.update });
+    }
+  }
+
+  buildColumn(columnName) {
     return {
       key: columnName,
       name: columnName,
       editable: true,
       resizable: true,
       width: 200
-    }
-  }
-
-  componentDidUpdate() {
-    if (this.state.update != this.props.update) {
-      this.setState({ update: this.props.update })
-    }
+    };
   }
 
   buildRow() {
-    return []
+    return [];
   }
 
   handleEdit(event) {
-    const { fromRow, toRow, updated } = event
-    const { field, onChange } = this.props
+    const { fromRow, toRow, updated } = event;
+    const { field, onChange } = this.props;
 
     for (let i = fromRow; i <= toRow; i++) {
-      field.value.rows[i] = { ...field.value.rows[i], ...updated }
+      field.value.rows[i] = { ...field.value.rows[i], ...updated };
     }
 
-    onChange(field.value, field.id)
+    onChange(field.value, field.id);
   }
 
   handleRangeSelection(event) {
     this.setState({ selection: {
       topLeft: event.topLeft,
       bottomRight: event.bottomRight
-    }})
+    }});
   }
 
   handleCellSelected(event) {
-    this.setState({ selected: event })
+    this.setState({ selected: event });
   }
 
   handleCellDeSelected(event) {
-    this.setState({ selected: {} })
+    this.setState({ selected: {} });
   }
 
   handleColumnNameModalShow(action, idx) {
     this.setState({
       columnNameModal: {
         show: true,
-        action: action,
-        idx: idx
+        action,
+        idx
       }
-    })
+    });
   }
 
   handleColumnNameModalSubmit(columnName) {
-    const { action, idx } = this.state.columnNameModal
+    const { action, idx } = this.state.columnNameModal;
 
-    if (action == 'insert') {
-      this.handleColumnInsert(idx, columnName)
-    } else if (action == 'rename') {
-      this.handleColumnRename(idx, columnName)
+    if (action === 'insert') {
+      this.handleColumnInsert(idx, columnName);
+    } else if (action === 'rename') {
+      this.handleColumnRename(idx, columnName);
     }
 
-    this.handleColumnNameModalHide()
+    this.handleColumnNameModalHide();
   }
 
   handleColumnNameModalHide() {
@@ -137,83 +136,83 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         action: null,
         idx: null
       }
-    })
+    });
   }
 
   handleColumnInsert(columnIdx, columnName) {
-    const { field, onChange } = this.props
-    const columns = field.value.columns.slice()
+    const { field, onChange } = this.props;
+    const columns = field.value.columns.slice();
     columns.splice(columnIdx, 0, this.buildColumn(columnName));
-    field.value.columns = columns
-    onChange(field.value, field.id)
+    field.value.columns = columns;
+    onChange(field.value, field.id);
   }
 
   handleColumnRename(columnIdx, columnName) {
-    const { field, onChange } = this.props
-    const columns = field.value.columns.slice()
-    const rows = field.value.rows.slice()
-    const oldColumnName = columns[columnIdx]['key']
+    const { field, onChange } = this.props;
+    const columns = field.value.columns.slice();
+    const rows = field.value.rows.slice();
+    const oldColumnName = columns[columnIdx]['key'];
     const column = Object.assign({}, columns[columnIdx], {
       key: columnName,
       name: columnName
-    })
+    });
     columns.splice(columnIdx, 1, column);
-    field.value.columns = columns
+    field.value.columns = columns;
 
     for (let i = 0; i < rows.length; i++) {
-      rows[i][columnName] = rows[i][oldColumnName]
-      delete rows[i][oldColumnName]
+      rows[i][columnName] = rows[i][oldColumnName];
+      delete rows[i][oldColumnName];
     }
 
-    onChange({ columns, rows }, field.id)
+    onChange({ columns, rows }, field.id);
   }
 
   handleColumnResize(columnIdx, width) {
-    const { field, onChange } = this.props
-    field.value.columns[columnIdx]['width'] = width
-    onChange(field.value, field.id)
+    const { field, onChange } = this.props;
+    field.value.columns[columnIdx]['width'] = width;
+    onChange(field.value, field.id);
   }
 
   handleColumnDelete(columnIdx) {
-    const { field, onChange } = this.props
-    const columns = field.value.columns.slice()
-    columns.splice(columnIdx, 1)
-    field.value.columns = columns
-    onChange(field.value, field.id)
+    const { field, onChange } = this.props;
+    const columns = field.value.columns.slice();
+    columns.splice(columnIdx, 1);
+    field.value.columns = columns;
+    onChange(field.value, field.id);
   }
 
   handleRowInsert(rowIdx) {
-    const { field, onChange } = this.props
+    const { field, onChange } = this.props;
     field.value.rows.splice(rowIdx, 0, this.buildRow());
-    onChange(field.value, field.id)
+    onChange(field.value, field.id);
   }
 
   handleRowDelete(rowIdx) {
-    const { field, onChange } = this.props
-    field.value.rows.splice(rowIdx, 1)
-    onChange(field.value, field.id)
+    const { field, onChange } = this.props;
+    field.value.rows.splice(rowIdx, 1);
+    onChange(field.value, field.id);
   }
 
   handlePaste(event) {
     if (this.ref.current.grid.contains(document.activeElement)) {
       event.preventDefault();
 
-      const { field, onChange } = this.props
+      const { field, onChange } = this.props;
       const { selected } = this.state;
 
       const newRows = [];
       const pasteData = defaultParsePaste(event.clipboardData.getData('text/plain'));
 
-      const colIdx = selected.idx
-      const rowIdx = selected.rowIdx
+      const colIdx = selected.idx;
+      const rowIdx = selected.rowIdx;
 
       pasteData.forEach((row) => {
         const rowData = {};
         // Merge the values from pasting and the keys from the columns
         field.value.columns.slice(colIdx, colIdx + row.length).forEach((col, j) => {
-            // Create the key-value pair for the row
-            rowData[col.key] = row[j];
-          });
+          // Create the key-value pair for the row
+          rowData[col.key] = row[j];
+        });
         // Push the new row to the changes
         newRows.push(rowData);
       });
@@ -224,7 +223,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         }
       }
 
-      onChange(field.value, field.id)
+      onChange(field.value, field.id);
     }
   }
 
@@ -232,7 +231,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     if (this.ref.current.grid.contains(document.activeElement)) {
       event.preventDefault();
 
-      const { columns } = this.props.field.value
+      const { columns } = this.props.field.value;
       const { selection } = this.state;
 
       // Loop through each row
@@ -242,27 +241,27 @@ export default class ResearchPlanDetailsFieldTable extends Component {
           // Grab the row values and make a text string
           col => this.rowGetter(rowIdx)[col.key],
         ).join('\t'),
-      ).join('\n')
+      ).join('\n');
 
       event.clipboardData.setData('text/plain', text);
     }
   }
 
   handleSchemaModalShow() {
-    ResearchPlansFetcher.fetchTableSchemas().then(json => {
+    ResearchPlansFetcher.fetchTableSchemas().then((json) => {
       this.setState({
         schemaModal: {
           show: true,
           schemas: json['table_schemas']
         }
-      })
-    })
+      });
+    });
   }
 
   handleSchemasModalSubmit(schemaName) {
     ResearchPlansFetcher.createTableSchema(schemaName, this.props.field.value).then(() => {
-      this.handleSchemaModalShow()
-    })
+      this.handleSchemaModalShow();
+    });
   }
 
   handleSchemasModalHide() {
@@ -270,31 +269,31 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       schemaModal: {
         show: false
       }
-    })
+    });
   }
 
   handleSchemasModalUse(schema) {
-    const { field, onChange } = this.props
+    const { field, onChange } = this.props;
 
-    onChange(schema.value, field.id)
-    this.handleSchemasModalHide()
+    onChange(schema.value, field.id);
+    this.handleSchemasModalHide();
   }
 
   handleSchemasModalDelete(schema) {
     ResearchPlansFetcher.deleteTableSchema(schema.id).then(() => {
-      this.handleSchemaModalShow()
-    })
+      this.handleSchemaModalShow();
+    });
   }
 
   rowGetter(idx) {
-    return this.props.field.value.rows[idx]
+    return this.props.field.value.rows[idx];
   }
 
   renderEdit() {
-    const { field, onExport } = this.props
-    const { rows, columns } = field.value
-    const { columnNameModal, schemaModal } = this.state
-    const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[0]
+    const { field, onExport } = this.props;
+    const { rows, columns } = field.value;
+    const { columnNameModal, schemaModal } = this.state;
+    const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[0];
 
     return (
       <div>
@@ -354,27 +353,27 @@ export default class ResearchPlanDetailsFieldTable extends Component {
           onUse={this.handleSchemasModalUse.bind(this)}
           onDelete={this.handleSchemasModalDelete.bind(this)} />
       </div>
-    )
+    );
   }
 
   renderStatic() {
-    const { field } = this.props
-    const { columns, rows } = field.value
+    const { field } = this.props;
+    const { columns, rows } = field.value;
 
-    const th = columns.map(column => {
-      return <th key={column.key}>{column.name}</th>
-    })
+    const th = columns.map((column) => {
+      return <th key={column.key}>{column.name}</th>;
+    });
 
     const tr = rows.map((row, index) => {
-      const td = columns.map(column => {
-        return <td key={column.key}>{row[column.key]}</td>
-      })
+      const td = columns.map((column) => {
+        return <td key={column.key}>{row[column.key]}</td>;
+      });
       return (
         <tr key={index}>
           {td}
         </tr>
-      )
-    })
+      );
+    });
 
     return (
       <table className="table table-bordered">
@@ -387,15 +386,14 @@ export default class ResearchPlanDetailsFieldTable extends Component {
           {tr}
         </tbody>
       </table>
-    )
+    );
   }
 
   render() {
     if (this.props.edit) {
-      return this.renderEdit()
-    } else {
-      return this.renderStatic()
+      return this.renderEdit();
     }
+    return this.renderStatic();
   }
 }
 
@@ -404,5 +402,6 @@ ResearchPlanDetailsFieldTable.propTypes = {
   index: PropTypes.number,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
-  update: PropTypes.bool
-}
+  update: PropTypes.bool,
+  edit: PropTypes.bool
+};

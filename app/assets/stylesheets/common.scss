@@ -193,3 +193,20 @@
   max-width: 80%;
   vertical-align: middle;
 }
+
+.quill-resize {
+  .ql-container {
+    .ql-editor {
+      resize: vertical;
+      overflow-y: scroll;
+      height: 85px;
+    }
+  }
+}
+
+.research-plan-no-auth {
+  text-align: center;
+  border-color: #bfbfbf;
+  border-style: dashed;
+  border-width: thin;
+}

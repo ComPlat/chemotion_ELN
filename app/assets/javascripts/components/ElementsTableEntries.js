@@ -194,19 +194,18 @@ export default class ElementsTableEntries extends Component {
           {tdExtraContents.map((e)=>{return e;})}
         </td>
       );
-    } else if (element.type == 'research_plan') {
-      if (element.svg_file == '' && element.thumb_svg !== '') {
+    } else if (element.type === 'research_plan') {
+      if (element.thumb_svg !== 'not available') {
         return (
           <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
-            <img src={element.thumb_svg} alt="" style={{ cursor: 'pointer' }} />
-            {tdExtraContents.map((e)=>{return e;})}
+            <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" style={{ cursor: 'pointer' }} />
+            {tdExtraContents.map((e) => { return e; })}
           </td>
         );
       }
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
-          <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
-          {tdExtraContents.map((e)=>{return e;})}
+          {tdExtraContents.map((e) => { return e; })}
         </td>
       );
     }
@@ -341,19 +340,18 @@ export default class ElementsTableEntries extends Component {
               <td width="30px">
                 <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
               </td>
-              <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
+              <td onClick={e => this.showDetails(element)} style={{ cursor: 'pointer' }} width={element.type === 'research_plan' ? '280px': 'unset'}>
                 <div>
                   {
                       <SvgWithPopover
-                        hasPop={['reaction', 'research_plan'].includes(element.type)}
+                        hasPop={['reaction'].includes(element.type)}
                         preivewObject={{
                           txtOnly: element.title(),
                           isSVG: true,
                           src: element.svgPath
                         }}
                         popObject={{
-                          title: (element.type === 'reaction' && element.short_label) ||
-                                  (element.type === 'research_plan' && element.title()) || '',
+                          title: (element.type === 'reaction' && element.short_label) || '',
                           src: element.svgPath,
                           height: '26vh',
                           width: '52vw' }}

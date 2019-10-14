@@ -2,16 +2,13 @@
 #
 # Table name: research_plans
 #
-#  id          :integer          not null, primary key
-#  name        :string           not null
-#  description :text
-#  sdf_file    :string
-#  svg_file    :string
-#  created_by  :integer          not null
-#  deleted_at  :datetime
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#  thumb_svg   :string
+#  id         :integer          not null, primary key
+#  name       :string           not null
+#  created_by :integer          not null
+#  deleted_at :datetime
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  body       :jsonb
 #
 
 class ResearchPlan < ActiveRecord::Base
@@ -37,6 +34,16 @@ class ResearchPlan < ActiveRecord::Base
 
   def attachments
     Attachment.where(attachable_id: self.id, attachable_type: 'ResearchPlan')
+  end
+
+  def thumb_svg
+    image_atts = attachments.select { |a_img|
+      a_img&.content_type&.match(Regexp.union(%w[jpg jpeg png tiff tif]))
+    }
+
+    attachment = image_atts[0] || attachments[0]
+    preview = attachment.read_thumbnail if attachment
+    preview && Base64.encode64(preview) || 'not available'
   end
 
   private

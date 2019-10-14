@@ -33,7 +33,7 @@ module Export
             :src => "/images/research_plans/#{field['value']['public_name']}"
           }
         when 'sample'
-          sample = Sample.find(field['value']['sample_id'])
+          next unless (sample = Sample.find_by(id: field['value']['sample_id']))
 
           if ElementPolicy.new(@current_user, sample).read?
             @fields << {
@@ -43,7 +43,7 @@ module Export
             }
           end
         when 'reaction'
-          reaction = Reaction.find(field['value']['reaction_id'])
+          next unless (reaction = Reaction.find_by(id: field['value']['reaction_id']))
 
           if ElementPolicy.new(@current_user, reaction).read?
             @fields << {

@@ -132,7 +132,7 @@ module Chemotion
           if params[:attachable_type] == 'ResearchPlan'
             a = Attachment.find_by(attachable_type: 'ResearchPlan', attachable_id: params[:attachable_id])
             rp = ResearchPlan.find(params[:attachable_id])
-            rp.update!(thumb_svg: a.nil?? nil : '/images/thumbnail/' + a.identifier)
+            #rp.update!(thumb_svg: a.nil?? nil : '/images/thumbnail/' + a.identifier)
           end
         end
         true

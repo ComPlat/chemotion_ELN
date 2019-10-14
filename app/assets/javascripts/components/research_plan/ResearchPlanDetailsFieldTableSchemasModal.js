@@ -1,16 +1,15 @@
-import React, { Component} from "react"
-import PropTypes from 'prop-types'
-import { Table, Modal, ButtonToolbar, Button, FormGroup, ControlLabel, FormControl, HelpBlock, InputGroup } from 'react-bootstrap'
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { Table, Modal, Button, FormGroup, ControlLabel, FormControl, HelpBlock, InputGroup } from 'react-bootstrap';
 
 class ResearchPlanDetailsFieldTableSchemasModal extends Component {
-
   constructor(props) {
     super(props);
 
     this.state = {
       schemaNameValue: '',
       schemaNameError: ''
-    }
+    };
   }
 
   handleSchemaNameChange(event) {
@@ -18,31 +17,31 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
   }
 
   handleSubmit() {
-    const { onSubmit } = this.props
-    const { schemaNameValue } = this.state
+    const { onSubmit } = this.props;
+    const { schemaNameValue } = this.state;
 
     if (!schemaNameValue) {
-      this.setState({ schemaNameError: 'Please give a schema name.' })
+      this.setState({ schemaNameError: 'Please give a schema name.' });
     } else {
-      this.setState({ schemaNameError: '', schemaNameValue: '' })
-      onSubmit(schemaNameValue)
+      this.setState({ schemaNameError: '', schemaNameValue: '' });
+      onSubmit(schemaNameValue);
     }
   }
 
   render() {
-    const { modal, onHide, onUse, onDelete } = this.props
-    const { schemaNameValue, schemaNameError } = this.state
+    const {
+      modal, onHide, onUse, onDelete
+    } = this.props;
+    const { schemaNameValue, schemaNameError } = this.state;
 
-    let schemaTable = null
+    let schemaTable = null;
     if (modal.schemas) {
       schemaTable = modal.schemas.map((schema, index) => {
         return (
           <tr key={index}>
             <td>{schema.name}</td>
             <td>
-              {schema.value.columns.map(column => {
-                return column.name
-              }).join(', ')}
+              {schema.value.columns.map(column => column.name).join(', ')}
             </td>
             <td>
               {schema.value.rows.length}
@@ -56,8 +55,8 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
               </Button>
             </td>
           </tr>
-        )
-      })
+        );
+      });
     }
 
     return (
@@ -91,10 +90,10 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
             <Table>
               <thead>
                 <tr>
-                  <th style={{width: '20%'}}>Name</th>
-                  <th style={{width: '40%'}}>Columns</th>
-                  <th style={{width: '20%'}}># Rows</th>
-                  <th style={{width: '20%'}}></th>
+                  <th style={{ width: '20%' }}>Name</th>
+                  <th style={{ width: '40%' }}>Columns</th>
+                  <th style={{ width: '20%' }}># Rows</th>
+                  <th style={{ width: '20%' }} />
                 </tr>
               </thead>
               <tbody>
@@ -109,7 +108,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
           </div>
         </Modal.Body>
       </Modal>
-    )
+    );
   }
 }
 
@@ -119,6 +118,6 @@ ResearchPlanDetailsFieldTableSchemasModal.propTypes = {
   onHide: PropTypes.func,
   onUse: PropTypes.func,
   onDelete: PropTypes.func
-}
+};
 
-export default ResearchPlanDetailsFieldTableSchemasModal
+export default ResearchPlanDetailsFieldTableSchemasModal;

@@ -1,15 +1,17 @@
-import React, { Component} from "react"
-import PropTypes from 'prop-types'
-import ReactDataGrid from 'react-data-grid'
-import { Menu } from "react-data-grid-addons"
+/* eslint-disable react/prefer-stateless-function */
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { Menu } from 'react-data-grid-addons';
 
-const { ContextMenu, MenuItem, SubMenu, ContextMenuTrigger } = Menu
+const { ContextMenu, MenuItem } = Menu;
 
 class ResearchPlanDetailsFieldTableContextMenu extends Component {
 
   render() {
-    const { idx, id, rowIdx, onColumnInsertLeft, onColumnInsertRight, onColumnRename,
-      onColumnDelete, onRowInsertAbove, onRowInsertBelow, onRowDelete } = this.props
+    const {
+      idx, id, rowIdx, onColumnInsertLeft, onColumnInsertRight, onColumnRename,
+      onColumnDelete, onRowInsertAbove, onRowInsertBelow, onRowDelete
+    } = this.props;
 
     return (
       <ContextMenu id={id}>
@@ -48,7 +50,7 @@ class ResearchPlanDetailsFieldTableContextMenu extends Component {
         </MenuItem>
 
       </ContextMenu>
-    )
+    );
   }
 }
 
@@ -63,6 +65,6 @@ ResearchPlanDetailsFieldTableContextMenu.propTypes = {
   onRowInsertAbove: PropTypes.func,
   onRowInsertBelow: PropTypes.func,
   onRowDelete: PropTypes.func
-}
+};
 
-export default ResearchPlanDetailsFieldTableContextMenu
+export default ResearchPlanDetailsFieldTableContextMenu;

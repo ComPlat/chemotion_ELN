@@ -6,13 +6,18 @@ import Element from './Element';
 const uuidv4 = require('uuid/v4');
 
 export default class ResearchPlan extends Element {
+  constructor(args) {
+    super(args);
+    this.mode = args.mode ? args.mode : 'view';
+  }
 
   static buildEmpty(collection_id) {
     return new ResearchPlan({
       collection_id: collection_id,
       type: 'research_plan',
       name: 'New Research Plan',
-      body: []
+      body: [],
+      mode: 'edit'
     });
   }
 
@@ -45,13 +50,13 @@ export default class ResearchPlan extends Element {
         })
         break;
       case 'table':
-        const columns = ['a', 'b'].map(columnName => {
+        const columns = ['a', 'b', 'c', 'd', 'e', 'f'].map(columnName => {
           return {
               key: columnName,
               name: columnName,
               editable: true,
               resizable: true,
-              width: 200
+              width: 130
             }
         })
 
@@ -61,9 +66,9 @@ export default class ResearchPlan extends Element {
           value: {
             columns: columns,
             rows: [
-              {a: '1', b: ''},
-              {a: '2', b: ''},
-              {a: '3', b: ''}
+              { a: '1', b: '', c: '', d:'', e: '', f:'' },
+              { a: '1', b: '', c: '', d: '', e: '', f: '' },
+              { a: '1', b: '', c: '', d: '', e: '', f: '' },
             ]
           }
         })
@@ -112,5 +117,13 @@ export default class ResearchPlan extends Element {
   // overwrite isPendingToSave method in models/Element.js
   get isPendingToSave() {
     return !isEmpty(this) && (this.isNew || this.changed);
+  }
+
+  get mode() {
+    return this._mode;
+  }
+
+  set mode(mode) {
+    this._mode = mode;
   }
 }
