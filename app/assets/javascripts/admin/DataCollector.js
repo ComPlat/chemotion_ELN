@@ -147,7 +147,7 @@ class ModelConfig extends Component {
       params.data.method_params.host = this.refHost.value.trim();
       params.data.method_params.user = this.refUser.value.trim();
       if (selectedAuth === 'keyfile') {
-        params.data.method_params.key_path = this.refKey.value.trim();
+        params.data.method_params.key_name = this.refKey.value.trim();
       }
     }
     if (startsWith(selectedMethod, 'folder')) {
@@ -258,7 +258,7 @@ class ModelConfig extends Component {
                 placeholder="e.g. /home/user/.ssh/rsa/eln-privatekey.pem"
                 required
                 readOnly={endsWith(selectedMethod, 'local') || (selectedAuth === 'password')}
-                defaultValue={`${(this.props.device.data.method_params && this.props.device.data.method_params.key_path ? this.props.device.data.method_params.key_path : '')}`}
+                defaultValue={`${(this.props.device.data.method_params && this.props.device.data.method_params.key_name ? this.props.device.data.method_params.key_name : '')}`}
               />
             </Col>
           </Row>
@@ -319,7 +319,7 @@ ModelConfig.propTypes = {
         host: PropTypes.string,
         user: PropTypes.string,
         authen: PropTypes.string,
-        key_path: PropTypes.string,
+        key_name: PropTypes.string,
         number_of_files: PropTypes.number
       })
     })
@@ -344,7 +344,7 @@ class BtnConnect extends Component {
       host: device.data.method_params.host,
       user: device.data.method_params.user,
       authen: device.data.method_params.authen || 'password',
-      key_path: device.data.method_params.key_path,
+      key_name: device.data.method_params.key_name,
     };
     AdminFetcher.testSFTP(params)
       .then((result) => {
@@ -527,7 +527,7 @@ export default class DataCollector extends Component {
         <td>
           {(device.data && device.data.method_params && device.data.method_params.authen ? device.data.method_params.authen : 'password')}
         </td>
-        <td> {(device.data && device.data.method_params && device.data.method_params.key_path ? device.data.method_params.key_path : '')} </td>
+        <td> {(device.data && device.data.method_params && device.data.method_params.key_name ? device.data.method_params.key_name : '')} </td>
         <td> {(device.data && device.data.method_params ? device.data.method_params.dir : '')} </td>
         <td>
           {(device.data && device.data.method_params && device.data.method_params.number_of_files ?

@@ -29,6 +29,10 @@ development:
     - :user: 'user2'
       :password: 'pass'
 
+  # Dir of ssh keys for data collection over sftp
+  :keydir: 'config/data_collector_keys'
+
+  # Whitelisted dir paths for local data collection
   :localcollectors:
     - :path: '/home/ftpuser'
     - :path: '/home/eln/public'

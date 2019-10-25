@@ -25,7 +25,7 @@ class DatacollectorFile < DatacollectorObject
       created_for: recipient.id
     )
     a.save!
-    return a
+    a
   end
 
   def attach_remote(device)
@@ -44,10 +44,10 @@ class DatacollectorFile < DatacollectorObject
       tmpfile.unlink
     end
     a.save!
-    return a
+    a
   end
 
-  def add_attach_to_container(device, attach, send_message = false )
+  def add_attach_to_container(device, attach, _ = false)
     helper = CollectorHelper.new(device, recipient)
     dataset = helper.prepare_dataset(Time.now.strftime('%Y-%m-%d'))
     attach.update!(attachable: dataset)

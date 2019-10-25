@@ -53,28 +53,23 @@ module Chemotion
           requires :host, type: String
           requires :user, type: String
           requires :authen, type: String
-          optional :key_path, type: String
+          optional :key_name, type: String
         end
         post do
-          credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
-            e[:user] == params[:user]
-          }.first
-          raise 'No match user credentials!' unless credentials
+          case params[:authen]
+          when 'password'
+            credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
+              e[:user] == params[:user]
+            }.first
+            raise 'No match user credentials!' unless credentials
 
-          if params[:authen] == 'password'
             connect_sftp_with_password(
               host: params[:host],
               user: credentials[:user],
               password: credentials[:password]
             )
-          end
-          if params[:authen] == 'keyfile'
-            @pn = Pathname.new(params[:key_path])
-            connect_sftp_with_key(
-              host: params[:host],
-              user: credentials[:user],
-              key_path: params[:key_path]
-            )
+          when 'keyfile'
+            connect_sftp_with_key(params)
           end
 
           { lvl: 'success', msg: 'Test connection successfully.' }
@@ -109,7 +104,7 @@ module Chemotion
               optional :host, type: String
               optional :user, type: String
               optional :authen, type: String
-              optional :key_path, type: String
+              optional :key_name, type: String
               optional :number_of_files, type: Integer
             end
           end
@@ -131,9 +126,7 @@ module Chemotion
 
           end
           if @p_method.end_with?('sftp') && params[:data][:method_params][:authen] == 'keyfile'
-            p_key_path = Pathname.new(params[:data][:method_params][:key_path])
-            error!('No key file found', 500) unless p_key_path.file? && p_key_path.exist?
-
+            key_path(params[:data][:method_params][:key_name])
           end
         end
 
