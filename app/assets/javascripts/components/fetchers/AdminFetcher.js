@@ -1,6 +1,15 @@
 import 'whatwg-fetch';
 
 export default class AdminFetcher {
+  static fetchLocalCollector() {
+    const promise = fetch('/api/v1/admin/listLocalCollector/all.json', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
   static checkDiskSpace() {
     const promise = fetch('/api/v1/admin/disk.json', {
       credentials: 'same-origin'
@@ -32,6 +41,40 @@ export default class AdminFetcher {
         console.log(errorMessage);
       });
 
+    return promise;
+  }
+  static testSFTP(params) {
+    const promise = fetch('/api/v1/admin/sftpDevice/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+  static removeDeviceMethod(params) {
+    const promise = fetch('/api/v1/admin/removeDeviceMethod/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     return promise;
   }
   static updateDeviceMethod(params) {

@@ -1,10 +1,12 @@
 # frozen_string_literal: true
+
 require 'sys/filesystem'
 
 module Chemotion
   # Publish-Subscription MessageAPI
   # rubocop:disable ClassLength
   class AdminAPI < Grape::API
+    helpers AdminHelpers
     # rubocop:disable Metrics/BlockLength
     resource :admin do
       before do
@@ -13,9 +15,16 @@ module Chemotion
 
       desc 'Check disk space'
       get 'disk' do
-        stat = Sys::Filesystem.stat("/home")
+        stat = Sys::Filesystem.stat('/home')
         mb_available = stat.block_size * stat.blocks_available / 1024 / 1024
         { percent_used: stat.percent_used.round(2), mb_available: mb_available }
+      end
+
+      namespace :listLocalCollector do
+        desc 'List all local collectors'
+        get 'all' do
+          Rails.configuration.datacollectors.localcollectors
+        end
       end
 
       namespace :listDevices do
@@ -28,12 +37,59 @@ module Chemotion
       namespace :device do
         desc 'Get device by Id'
         params do
-          requires :id, type: Integer, desc: "device id"
+          requires :id, type: Integer, desc: 'device id'
         end
         route_param :id do
           get do
             present Device.find(params[:id]), with: Entities::DeviceEntity, root: 'device'
           end
+        end
+      end
+
+      namespace :sftpDevice do
+        desc 'Connect device via SFTP'
+        params do
+          requires :method, type: String
+          requires :host, type: String
+          requires :user, type: String
+          requires :authen, type: String
+          optional :key_name, type: String
+        end
+        post do
+          case params[:authen]
+          when 'password'
+            credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
+              e[:user] == params[:user]
+            }.first
+            raise 'No match user credentials!' unless credentials
+
+            connect_sftp_with_password(
+              host: params[:host],
+              user: credentials[:user],
+              password: credentials[:password]
+            )
+          when 'keyfile'
+            connect_sftp_with_key(params)
+          end
+
+          { lvl: 'success', msg: 'Test connection successfully.' }
+        rescue StandardError => e
+          { lvl: 'error', msg: e.message }
+        end
+      end
+
+      namespace :removeDeviceMethod do
+        desc 'Remove device profile method'
+        params do
+          requires :id, type: Integer, desc: 'device id'
+        end
+        post do
+          device = Device.find(params[:id])
+          data = device.profile.data || {}
+          data.delete('method') if data['method']
+          data.delete('method_params') if data['method_params']
+          device.profile.update!(data: data)
+          present device, with: Entities::DeviceEntity, root: 'device'
         end
       end
 
@@ -47,14 +103,37 @@ module Chemotion
               requires :dir, type: String
               optional :host, type: String
               optional :user, type: String
+              optional :authen, type: String
+              optional :key_name, type: String
               optional :number_of_files, type: Integer
             end
+          end
+        end
+
+        after_validation do
+          @p_method = params[:data][:method]
+          if @p_method.end_with?('local')
+            p_dir = params[:data][:method_params][:dir]
+            @pn = Pathname.new(p_dir)
+            error!('Dir is not a valid directory', 500) unless @pn.directory?
+
+            localpath = Rails.configuration.datacollectors.localcollectors.select { |e|
+              @pn.realpath.to_path.start_with?(e[:path])
+            }.first
+            localpath = @pn.realpath.to_path.sub(localpath[:path], '') unless localpath.nil?
+
+            error!('Dir is not in white-list for local data collection', 500) if localpath.nil?
+
+          end
+          if @p_method.end_with?('sftp') && params[:data][:method_params][:authen] == 'keyfile'
+            key_path(params[:data][:method_params][:key_name])
           end
         end
 
         post do
           device = Device.find(params[:id])
           data = device.profile.data || {}
+          params[:data][:method_params][:dir] = @pn.realpath.to_path if @p_method.end_with?('local')
           new_profile = {
             data: data.merge(params[:data] || {})
           }
@@ -109,7 +188,7 @@ module Chemotion
             new_obj.profile.update!({data: {}})
             status 201
           rescue ActiveRecord::RecordInvalid => e
-            { error: e.message}
+            { error: e.message }
           end
         end
       end
@@ -131,7 +210,7 @@ module Chemotion
             user.update!(attributes) unless attributes.empty?
             status 201
           rescue ActiveRecord::RecordInvalid => e
-            { error: e.message}
+            { error: e.message }
           end
         end
       end
@@ -146,7 +225,7 @@ module Chemotion
         end
 
         post do
-          user = User.find_by(id: params[:user_id]);
+          user = User.find_by(id: params[:user_id])
           case params[:enable]
           when true
             user.unlock_access!()
@@ -222,10 +301,10 @@ module Chemotion
         post do
           extname = File.extname(params[:file][:filename])
           if extname.match(/\.(owl?|xml)/i)
-            owl_name = File.basename(params[:file][:filename], ".*")
+            owl_name = File.basename(params[:file][:filename], '.*')
             file_path = params[:file][:tempfile].path
             OlsTerm.delete_owl_by_name(owl_name)
-            OlsTerm.import_and_create_ols_from_file_path(owl_name,file_path)
+            OlsTerm.import_and_create_ols_from_file_path(owl_name, file_path)
             OlsTerm.disable_branch_by(Ols_name: owl_name, term_id: 'BFO:0000002')
             # discrete settings
             nmr_13c = OlsTerm.find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')

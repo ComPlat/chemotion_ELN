@@ -26,6 +26,8 @@
 /config/datamailcollector.yml
 /config/datacollector.yml
 /config/datacollectors.yml
+/config/data_collector_keys/*
+!/config/data_collector_keys/.keep
 
 /config/database.yml
 /config/storage.yml

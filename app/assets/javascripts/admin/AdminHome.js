@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap';
 import AdminNavigation from './AdminNavigation';
-
+import Notifications from '../components/Notifications';
 import AdminDashboard from './AdminDashboard';
 import UserManagement from './UserManagement';
 import MessagePublish from './MessagePublish';
@@ -133,6 +133,9 @@ class AdminHome extends React.Component {
           <Row className="card-content container-fluid" >
             {this.tree()}
             {this.mainContent()}
+          </Row>
+          <Row>
+            <Notifications />
           </Row>
         </Grid>
       </div>

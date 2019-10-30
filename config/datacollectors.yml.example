@@ -4,8 +4,10 @@ development:
       :cron: '5,20,35,50 * * * *' # every 15 minutes starting a xx:05
     - :name: 'folderwatchersftp'
       :every: 5 # minutes
+      :watcher_sleep: 30 # seconds
     - :name: 'folderwatcherlocal'
       :every: 5 # minutes
+      :watcher_sleep: 30 # seconds
     - :name: 'filewatchersftp'
       :every: 2 # minutes
     - :name: 'filewatcherlocal'
@@ -26,6 +28,14 @@ development:
       :password: 'pass'
     - :user: 'user2'
       :password: 'pass'
+
+  # Dir of ssh keys for data collection over sftp
+  :keydir: 'config/data_collector_keys'
+
+  # Whitelisted dir paths for local data collection
+  :localcollectors:
+    - :path: '/home/ftpuser'
+    - :path: '/home/eln/public'
 
 production:
   :services:
@@ -55,3 +65,7 @@ production:
       :password: 'pass'
     - :user: 'user2'
       :password: 'pass'
+
+  :localcollectors:
+    - :path: '/home/ftpuser'
+    - :path: '/home/eln/public'
