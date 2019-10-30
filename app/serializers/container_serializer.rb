@@ -30,10 +30,10 @@ class ContainerSerializer < ActiveModel::Serializer
 
   def json_tree(attachments, containers)
     containers.map do |container, subcontainers|
-      current_attachments = attachments.select { |att|
+      current_attachments = attachments.select do |att|
         att.content_type = att.content_type || MimeMagic.by_path(att.filename)&.type
         att.for_container? && att.attachable_id == container.id
-      }
+      end
       {
         id: container.id,
         name: container.name,
@@ -50,6 +50,7 @@ class ContainerSerializer < ActiveModel::Serializer
   def get_extended_metadata(container)
     ext_mdata = container.extended_metadata
     return ext_mdata unless ext_mdata
+
     ext_mdata['report'] = ext_mdata['report'] == 'true' || ext_mdata == true
     unless ext_mdata['content'].blank?
       ext_mdata['content'] = JSON.parse(container.extended_metadata['content'])
@@ -58,12 +59,15 @@ class ContainerSerializer < ActiveModel::Serializer
   end
 
   def preview_img(container = object)
-    first_child = container.children.length > 0 && container.children[0]
-    has_dataset = first_child && first_child.container_type == "dataset"
-    if has_dataset
-      attachment = first_child.attachments.select {|att| att.thumb}[0]
-      preview = attachment.read_thumbnail if attachment
-      return preview && Base64.encode64(preview) || "not available"
+    first_child = container&.children&.first
+    has_dataset = first_child && first_child.container_type == 'dataset'
+    return 'not available' unless has_dataset
+
+    attachment = first_child.attachments.find do |att|
+      att.thumb && att.content_type&.match(Regexp.union(%w[jpg jpeg png tiff]))
     end
+    attachment ||= first_child.attachments.find(&:thumb)
+    preview = attachment.read_thumbnail if attachment
+    preview && Base64.encode64(preview) || 'not available'
   end
 end
