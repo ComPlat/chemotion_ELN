@@ -27,11 +27,11 @@ module Entities
       end
 
       attachments = Attachment.where_container(dataset_ids.values.flatten).to_a
-      code_logs =  CodeLog.where(source_id: dataset_ids.keys, source: 'container').to_a
+      code_logs = CodeLog.where(source_id: dataset_ids.keys, source: 'container').to_a
 
-      bt.dig('children',0,'children')&.each do |analysis|
+      bt.dig('children', 0, 'children')&.each do |analysis|
         analysis['preview_img'] = preview_img(dataset_ids[analysis['id']], attachments)
-        analysis['code_log'] = code_logs.find {|cl| cl.source_id == analysis['id']}.attributes
+        analysis['code_log'] = code_logs.find { |cl| cl.source_id == analysis['id'] }.attributes
         analysis['children'].each do |dataset|
           atts = attachments.select { |a| a.attachable_id == dataset['id'] }
           dataset['attachments'] = Entities::AttachmentEntity.represent(atts)
@@ -41,19 +41,18 @@ module Entities
     end
 
     private
+
     def preview_img(container_ids, attachments)
-      attachments = attachments.select { |a|
-        a.thumb == true &&
-          a.attachable_type == 'Container' &&
-          container_ids.include?(a.attachable_id)
-      }
-      attachment = attachments[0]
-      attachments.each do |a|
-        if a.non_jcamp?
-          attachment = a
-          break
-        end
+      attachments = attachments.select do |a|
+        a.thumb == true && a.attachable_type == 'Container' && container_ids.include?(a.attachable_id)
       end
+      image_atts = attachments.select do |a_img|
+        a_img&.content_type&.match(Regexp.union(%w[jpg jpeg png tiff]))
+      end
+
+      attachment = image_atts.find(&:non_jcamp?).presence || image_atts[0]
+      attachment ||= attachments.find(&:non_jcamp?).presence || attachments[0]
+
       preview = attachment.read_thumbnail if attachment
       preview && Base64.encode64(preview) || 'not available'
     end

@@ -3,16 +3,16 @@
 require 'rails_helper'
 
 RSpec.describe ElementsPolicy do
-  let(:u1) { create(:person, first_name: 'User', last_name: 'One', name_abbreviation: 'U1x') }
-  let(:u2) { create(:person, first_name: 'User', last_name: 'Two', name_abbreviation: 'U2x') }
+  let(:u1) { create(:person, first_name: 'User', last_name: 'One') }
+  let(:u2) { create(:person, first_name: 'User', last_name: 'Two') }
 
-  let(:g1) { create(:group, first_name: 'Group', users: [u1, u2], last_name: 'One Two', name_abbreviation: 'G1_2x') }
+  let(:g1) { create(:group, first_name: 'Group', users: [u1, u2], last_name: 'One Two') }
 
-  let(:c1) { create(:collection, user_id: u1.id, is_shared: nil, permission_level: 0, label: "U1x's collection") }
-  let(:c2) { create(:collection, user_id: u2.id, is_shared: nil, permission_level: 0, label: "U2x's collection") }
-  let(:c1_2) { create(:collection, user_id: u1.id, is_shared: true, permission_level: 0, shared_by_id: u2.id, label: "U2x'share to U1x") }
-  let(:c2_1) { create(:collection, user_id: u2.id, is_shared: true, permission_level: 0, shared_by_id: u1.id, label: "U1x'share to U2x") }
-  let(:cg1_2) { create(:collection, user_id: g1.id, is_shared: true, permission_level: 0, shared_by_id: u2.id, label: "U2x'share to G1_2x") }
+  let(:c1) { create(:collection, user_id: u1.id, is_shared: nil, permission_level: 0, label: "#{u1.name}'s collection") }
+  let(:c2) { create(:collection, user_id: u2.id, is_shared: nil, permission_level: 0, label: "#{u2.name}'s collection") }
+  let(:c1_2) { create(:collection, user_id: u1.id, is_shared: true, permission_level: 0, shared_by_id: u2.id, label: "#{u2.name} share to #{u1.name}") }
+  let(:c2_1) { create(:collection, user_id: u2.id, is_shared: true, permission_level: 0, shared_by_id: u1.id, label: "#{u1.name} share to #{u2.name}") }
+  let(:cg1_2) { create(:collection, user_id: g1.id, is_shared: true, permission_level: 0, shared_by_id: u2.id, label: "#{u2.name} share to #{g1.name}") }
 
   let(:s1) { create(:sample, name: 'sample 1') }
   let(:s2) { create(:sample, name: 'sample 2') }
