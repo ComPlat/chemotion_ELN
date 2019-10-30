@@ -4,6 +4,16 @@ Rails.application.routes.draw do
   authenticated :user, lambda {|u| u.type == "Admin"} do
     root to: 'pages#admin', as: :admin_root
     get 'admin', to: 'pages#admin'
+    get 'mydb/*any', to: 'pages#admin'
+    get 'mydb', to: 'pages#admin'
+  end
+
+
+  authenticated :user, lambda {|u| u.type == "Group"} do
+    root to: 'pages#cnc', as: :group_root
+    get 'group', to: 'pages#cnc'
+    get 'mydb/*any', to: 'pages#cnc'
+    get 'mydb', to: 'pages#cnc'
   end
 
   authenticated :user do
