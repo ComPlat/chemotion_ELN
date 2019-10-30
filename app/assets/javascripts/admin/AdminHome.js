@@ -5,6 +5,7 @@ import AdminNavigation from './AdminNavigation';
 import Notifications from '../components/Notifications';
 import AdminDashboard from './AdminDashboard';
 import UserManagement from './UserManagement';
+import GroupsDevices from './GroupsDevices';
 import MessagePublish from './MessagePublish';
 import DataCollector from './DataCollector';
 import OlsTerms from './OlsTerms';
@@ -47,6 +48,8 @@ class AdminHome extends React.Component {
     } else if (pageIndex === 3) {
       return this.renderDataCollector();
     } else if (pageIndex === 4) {
+      return this.renderGroupMgnt();
+    } else if (pageIndex === 5) {
       return this.renderOlsTerms();
     }
     return (<div />);
@@ -74,6 +77,9 @@ class AdminHome extends React.Component {
               Data Collector
             </NavItem>
             <NavItem eventKey={4}>
+              Groups & Devices
+            </NavItem>
+            <NavItem eventKey={5}>
               Load OLS Terms
             </NavItem>
           </Nav>
@@ -111,6 +117,14 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <DataCollector />
+      </Col>
+    );
+  }
+  renderGroupMgnt() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <GroupsDevices />
       </Col>
     );
   }

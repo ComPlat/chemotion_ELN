@@ -250,6 +250,108 @@ module Chemotion
         end
       end
 
+      resource :group_device do
+        namespace :list do
+          desc 'fetch groups'
+          params do
+            requires :type, type: String, values: %w[Group Device]
+          end
+          get do
+            data = User.where(type: params[:type])
+            present data, with: Entities::GroupDeviceEntity, root: 'list'
+          end
+        end
+
+        namespace :name do
+          desc 'Find top 3 matched user names by type'
+          params do
+            requires :type, type: String
+            requires :name, type: String
+          end
+          get do
+            unless params[:name].nil? || params[:name].empty?
+              { users: User.where(type: params[:type]).by_name(params[:name]).limit(3)
+                           .select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type') }
+            end
+          end
+        end
+
+        namespace :create do
+          desc 'create a group of persons'
+          params do
+            requires :rootType, type: String, values: %w[Group Device]
+            requires :first_name, type: String
+            requires :last_name, type: String
+            optional :email, type: String, regexp: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
+            requires :name_abbreviation, type: String
+          end
+          after_validation do
+            @group_params = declared(params, include_missing: false)
+            @root_type = @group_params.delete(:rootType)
+            @group_params[:email] ||= "%i@eln.edu" % [Time.now.getutc.to_i]
+            @group_params[:password] = Devise.friendly_token.first(8)
+            @group_params[:password_confirmation] = @group_params[:password]
+          end
+          post do
+            new_obj = Group.new(@group_params) if %w[Group].include?(@root_type)
+            new_obj = Device.new(@group_params) if %w[Device].include?(@root_type)
+
+            begin
+              new_obj.save!
+              present new_obj, with: Entities::GroupDeviceEntity
+            rescue ActiveRecord::RecordInvalid => e
+              { error: e.message }
+            end
+          end
+        end
+
+        namespace :update do
+          desc 'update a group of persons'
+          params do
+            requires :action, type: String, values: %w[RootDel NodeDel NodeAdd NodeAdm]
+            requires :rootType, type: String, values: %w[Group Device]
+            optional :actionType, type: String, values: %w[Person Device Group Adm]
+            requires :id, type: Integer
+            optional :admin_id, type: Integer
+            optional :rm_users, type: Array
+            optional :add_users, type: Array
+            optional :destroy_obj, type: Boolean, default: false
+            optional :set_admin, type: Boolean, default: false
+          end
+          put ':id' do
+            case params[:action]
+            when 'RootDel'
+              obj = Group.find(params[:id]) if params[:rootType] == 'Group'
+              obj = Device.find(params[:id]) if params[:rootType] == 'Device'
+              { destroyed_id: params[:id] } if params[:destroy_obj] && obj.destroy!
+            when 'NodeAdm'
+              ua = UsersAdmin.find_by(user_id: params[:id], admin_id: params[:admin_id])
+              UsersAdmin.create!(user_id: params[:id], admin_id: params[:admin_id]) if ua.nil? && params[:set_admin]
+              ua.destroy! if params[:set_admin] == false && !ua.nil?
+            when 'NodeAdd'
+              obj = Group.find(params[:id]) if %w[Group].include?(params[:rootType])
+              obj = Device.find(params[:id]) if %w[Device].include?(params[:rootType])
+              new_users = (params[:add_users] || []).map(&:to_i) - obj.users.pluck(:id) if %w[Person Group].include?(params[:actionType])
+              new_users = (params[:add_users] || []).map(&:to_i) - obj.devices.pluck(:id) if %w[Device].include?(params[:actionType])
+              obj.users << Person.where(id: new_users) if %w[Person].include?(params[:actionType])
+              obj.users << Group.where(id: new_users) if %w[Group].include?(params[:actionType])
+              obj.devices << Device.where(id: new_users) if %w[Device].include?(params[:actionType])
+              obj.save!
+              present obj, with: Entities::GroupDeviceEntity, root: 'root'
+            when 'NodeDel'
+              obj = Group.find(params[:id]) if %w[Group].include?(params[:rootType])
+              obj = Device.find(params[:id]) if %w[Device].include?(params[:rootType])
+              rm_users = (params[:rm_users] || []).map(&:to_i)
+              obj.users.delete(User.where(id: rm_users)) if %w[Person].include?(params[:actionType])
+              obj.admins.delete(User.where(id: rm_users)) if %w[Group].include?(params[:rootType]) && %w[Person].include?(params[:actionType])
+              obj.devices.delete(Device.where(id: rm_users)) if %w[Device].include?(params[:actionType])
+              obj
+              present obj, with: Entities::GroupDeviceEntity, root: 'root'
+            end
+          end
+        end
+      end
+
       namespace :olsEnableDisable do
         desc 'Ols Term Enable & Disable'
         params do

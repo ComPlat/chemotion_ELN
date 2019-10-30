@@ -211,4 +211,54 @@ export default class AdminFetcher {
     });
     return promise;
   }
+
+  static fetchGroupsDevices(type) {
+    const promise = fetch(`/api/v1/admin/group_device/list?type=${type}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
+  static updateGroup(params = {}) {
+    const promise = fetch(`/api/v1/admin/group_device/update/${params.id}`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
+  static fetchUsersByNameType(name, type) {
+    const promise = fetch(`/api/v1/admin/group_device/name.json?type=${type}&name=${name}`, {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static createGroupDevice(params = {}) {
+    const promise = fetch('/api/v1/admin/group_device/create', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
 }
