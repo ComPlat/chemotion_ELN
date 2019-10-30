@@ -6,6 +6,7 @@ module Chemotion
   # Publish-Subscription MessageAPI
   # rubocop:disable ClassLength
   class AdminAPI < Grape::API
+    helpers AdminHelpers
     # rubocop:disable Metrics/BlockLength
     resource :admin do
       before do
@@ -50,27 +51,30 @@ module Chemotion
         params do
           requires :method, type: String
           requires :host, type: String
-          optional :user, type: String
+          requires :user, type: String
+          requires :authen, type: String
+          optional :key_name, type: String
         end
         post do
-          credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
-            e[:user] == params[:user]
-          }.first
-          raise 'No match user credentials!' unless credentials
+          case params[:authen]
+          when 'password'
+            credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
+              e[:user] == params[:user]
+            }.first
+            raise 'No match user credentials!' unless credentials
 
-          sftp = Net::SFTP.start(
-            params[:host],
-            credentials[:user],
-            password: credentials[:password],
-            auth_methods: ['password'],
-            number_of_password_prompts: 0,
-            timeout: 5
-          )
-          raise 'Connection can not be initialized!' unless sftp.open?
+            connect_sftp_with_password(
+              host: params[:host],
+              user: credentials[:user],
+              password: credentials[:password]
+            )
+          when 'keyfile'
+            connect_sftp_with_key(params)
+          end
 
-          { level: 'success', message: 'Test connection successfully.' }
+          { lvl: 'success', msg: 'Test connection successfully.' }
         rescue StandardError => e
-          { level: 'error', message: e.message }
+          { lvl: 'error', msg: e.message }
         end
       end
 
@@ -99,6 +103,8 @@ module Chemotion
               requires :dir, type: String
               optional :host, type: String
               optional :user, type: String
+              optional :authen, type: String
+              optional :key_name, type: String
               optional :number_of_files, type: Integer
             end
           end
@@ -118,6 +124,9 @@ module Chemotion
 
             error!('Dir is not in white-list for local data collection', 500) if localpath.nil?
 
+          end
+          if @p_method.end_with?('sftp') && params[:data][:method_params][:authen] == 'keyfile'
+            key_path(params[:data][:method_params][:key_name])
           end
         end
 

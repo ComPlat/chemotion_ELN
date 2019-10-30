@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DatacollectorFolder < DatacollectorObject
   attr_accessor :files
 

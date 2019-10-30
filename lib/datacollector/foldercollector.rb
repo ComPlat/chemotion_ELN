@@ -2,46 +2,11 @@
 
 require 'zip'
 
-class Foldercollector
-  def execute(use_sftp)
-    unless Rails.configuration.datacollectors
-      raise 'No datacollector configuration!'
-    end
-    devices(use_sftp).each do |device|
-      if use_sftp
-        credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
-          e[:user] == device.profile.data['method_params']['user']
-        }.first
-        if credentials
-          Net::SFTP.start(
-            device.profile.data['method_params']['host'],
-            credentials[:user],
-            password: credentials[:password]
-          ) do |sftp|
-            @sftp = sftp
-            inspect_folder(device)
-          end
-        end
-      else
-        @sftp = nil
-        inspect_folder(device)
-      end
-    end
-  end
+# Collector: folder inspection and collection
+class Foldercollector < Fcollector
+  FCOLL = 'folder'
 
   private
-
-  def devices(use_sftp)
-    if use_sftp
-      Device.all.select { |e|
-        e.profile.data && e.profile.data['method'] == 'folderwatchersftp'
-      }
-    else
-      Device.all.select { |e|
-        e.profile.data && e.profile.data['method'] == 'folderwatcherlocal'
-      }
-    end
-  end
 
   def sleep_seconds(device)
     30 || Rails.configuration.datacollectors.services &&
@@ -71,35 +36,35 @@ class Foldercollector
         sleep sleep_time
       end
 
-      @current_folder = DatacollectorFolder.new(new_folder_p, @sftp)
-      @current_folder.files = list_files
+      @current_collector = DatacollectorFolder.new(new_folder_p, @sftp)
+      @current_collector.files = list_files
       error = CollectorError.find_by error_code: CollectorHelper.hash(
-        @current_folder.path,
+        @current_collector.path,
         @sftp
       )
       begin
         stored = false
-        if @current_folder.recipient
+        if @current_collector.recipient
           if params['number_of_files'].present? && params['number_of_files'].to_i != 0 &&
-             @current_folder.files.length != params['number_of_files'].to_i
+             @current_collector.files.length != params['number_of_files'].to_i
             log_info 'Wrong number of files!'
             next
           end
           unless error
-            @current_folder.collect(device)
+            @current_collector.collect(device)
             log_info 'Stored!'
             stored = true
           end
-          @current_folder.delete
+          @current_collector.delete
           log_info 'Status 200'
         else # Recipient unknown
-          @current_folder.delete
+          @current_collector.delete
           log_info 'Recipient unknown. Folder deleted!'
         end
       rescue => e
         if stored
           CollectorHelper.write_error(
-            CollectorHelper.hash(@current_folder.path, @sftp)
+            CollectorHelper.hash(@current_collector.path, @sftp)
           )
         end
         log_error e.backtrace.join('\n')
@@ -109,13 +74,13 @@ class Foldercollector
 
   def list_files
     if @sftp
-      all_files = @sftp.dir.entries(@current_folder.path).reject(
+      all_files = @sftp.dir.entries(@current_collector.path).reject(
         &:directory?
       )
       all_files.map!(&:name)
     else
-      all_files = Dir.entries(@current_folder.path).reject { |e|
-        File.directory?(File.join(@current_folder.path, e))
+      all_files = Dir.entries(@current_collector.path).reject { |e|
+        File.directory?(File.join(@current_collector.path, e))
       }
     end
     all_files.delete_if do |f|
@@ -136,17 +101,5 @@ class Foldercollector
       }
     end
     new_folders_p
-  end
-
-  def log_info(message)
-    DCLogger.log.info(self.class.name) {
-      @current_folder.path + ' >>> ' + message
-    }
-  end
-
-  def log_error(message)
-    DCLogger.log.error(self.class.name) {
-      @current_folder.path + ' >>> ' + message
-    }
   end
 end
