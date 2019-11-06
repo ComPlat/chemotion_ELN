@@ -1625,7 +1625,7 @@ export const reagents_kombi = {
   "o-Tolylmagnesium Bromide": 'Br[Mg]C1=CC=CC=C1C',
   "Oxalyl bromide": 'O=C(Br)C(Br)=O',
   "Oxalyl Chloride": 'O=C(Cl)C(Cl)=O',
-  "Oxone": 'O=S(O[KH])([O])=O.O=S(O[O])(O[KH])=O.O=S(O[K])(O[K])=O.O=S(O[O])(O[KH])=O',
+  "Oxone": '[O-]S(=O)(=O)[O-].[O-]S(=O)(=O)O.[O-]OS(=O)(=O)O.[O-]OS(=O)(=O)O.[K+].[K+].[K+].[K+].[K+]',
   "Oxygen": 'OO',
   "O2": 'OO',
   "Ozone": 'O=[O+][O-]',
