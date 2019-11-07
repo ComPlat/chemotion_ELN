@@ -40,8 +40,15 @@ module Chemotion
             svg_file.write(svg)
             svg_file.close
           else
-            svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
-            FileUtils.cp(svg_file_src, svg_file_path) if File.exist?(svg_file_src)
+            svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
+            if File.exist?(svg_file_src)
+              svg = File.read(svg_file_src)
+              ob_processor = Chemotion::OpenBabelSvgProcessor.new svg
+              svg = ob_processor.imitate_ketcher_svg
+              svg_file = File.new(svg_file_path, 'w+')
+              svg_file.write(svg.to_xml)
+              svg_file.close
+            end
           end
           molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name, ob_log: babel_info[:ob_log] })
         end
