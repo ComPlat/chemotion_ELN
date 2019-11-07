@@ -42,7 +42,7 @@ const SpectraViewerBtn = ({
   <OverlayTrigger
     placement="bottom"
     delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Viewer: {!spcInfo ? 'Reprocess jdx' : ''}</Tooltip>}
+    overlay={<Tooltip id="spectra">Spectra Viewer {!spcInfo ? ': Reprocess jdx' : ''}</Tooltip>}
   >{spcInfo ? (
     <ButtonGroup className="button-right">
       <SplitButton
@@ -53,7 +53,7 @@ const SpectraViewerBtn = ({
         title={<i className="fa fa-area-chart" />}
         onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
         onClick={toggleSpectraModal}
-        disabled={!spcInfo || !sample.can_update || !hasChemSpectra}
+        disabled={!spcInfo || !hasChemSpectra}
       >
         <MenuItem
           key="regenerate-spectra"
@@ -61,7 +61,7 @@ const SpectraViewerBtn = ({
             event.stopPropagation();
             confirmRegenerate(event);
           }}
-          disabled={!hasJcamp}
+          disabled={!hasJcamp || !sample.can_update}
         >
           <i className="fa fa-refresh" /> Reprocess jdx
         </MenuItem>

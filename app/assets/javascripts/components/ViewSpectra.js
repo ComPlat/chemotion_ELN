@@ -209,12 +209,13 @@ class ViewSpectra extends React.Component {
   }
 
   buildOpsByLayout(et) {
-    const baseOps = [
+    const updatable = this.props.sample && this.props.sample.can_update;
+    const baseOps = updatable ? [
       { name: 'write', value: this.writeOp },
       { name: 'write & close', value: this.writeCloseOp },
       { name: 'save', value: this.saveOp },
       { name: 'save & close', value: this.saveCloseOp },
-    ];
+    ] : [];
     const predictable = false; //['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
     if (predictable) {
       return [
