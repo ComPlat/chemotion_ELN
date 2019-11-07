@@ -10,7 +10,7 @@ import DeviceActions from '../components/actions/UserActions';
 import DeviceStore from '../components/stores/UserStore';
 import FocusNovnc from '../components/FocusNovnc';
 import { ConnectedBtn, DisconnectedBtn } from '../components/NovncStatus';
-
+import UsersFetcher from '../components/fetchers/UsersFetcher';
 
 class CnC extends React.Component {
   constructor() {
@@ -141,14 +141,11 @@ class CnC extends React.Component {
   }
 
   deviceClick(device) {
-    this.setState(
-      prevState => ({
-        ...prevState,
-        selected: device
-      })
-      ,
-      this.connect
-    );
+    UsersFetcher.fetchNoVNCDevices(device.id)
+      .then(devices => this.setState(
+        prevState => ({ ...prevState, selected: devices[0] }),
+        this.connect
+      ));
   }
 
   tree(dev, selectedId) {
