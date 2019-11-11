@@ -261,6 +261,7 @@ export default class AutoCompleteInput extends React.Component {
       reaction_name : {icon: 'icon-reaction', label: 'Reaction name'},
       reaction_status : {icon: 'icon-reaction', label: 'Reaction status'},
       reaction_short_label : {icon: 'icon-reaction', label: 'Reaction label'},
+      reaction_rinchi_string: { icon: 'icon-reaction', label: 'Reaction RInChI' },
       wellplate_name : {icon: 'icon-wellplate', label: 'Wellplate'},
       screen_name : {icon: 'icon-screen', label: 'Screen'},
       iupac_name : {icon: 'icon-sample', label: 'Molecule'},
@@ -294,6 +295,7 @@ export default class AutoCompleteInput extends React.Component {
                 key={'suggestion_' + index}
                 ref={'suggestion_' + index}
                 header={suggestion.name}
+                className="list-group-item-wrap"
               >
                 <i className={icon} style={{marginRight: 2}}></i>
                 {typeLabel}

@@ -302,7 +302,7 @@ module Chemotion
           else
             Sample.none
           end
-        when 'reaction_name', 'reaction_short_label', 'reaction_status'
+        when 'reaction_name', 'reaction_short_label', 'reaction_status', 'reaction_rinchi_string'
           Reaction.by_collection_id(c_id).search_by(search_method, arg)
         when 'wellplate_name'
           Wellplate.by_collection_id(c_id).search_by(search_method, arg)

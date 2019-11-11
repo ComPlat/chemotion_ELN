@@ -53,12 +53,12 @@ class Reaction < ActiveRecord::Base
   serialize :description, Hash
   serialize :observation, Hash
 
-  multisearchable against: :name
-  multisearchable against: :short_label
+  multisearchable against: %i[name short_label rinchi_string]
 
   # search scopes for exact matching
   pg_search_scope :search_by_reaction_name, against: :name
   pg_search_scope :search_by_reaction_short_label, against: :short_label
+  pg_search_scope :search_by_reaction_rinchi_string, against: :rinchi_string
 
   pg_search_scope :search_by_sample_name, associated_against: {
     samples: :name
@@ -84,6 +84,7 @@ class Reaction < ActiveRecord::Base
   # scopes for suggestions
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_rinchi_string, ->(query) { where('rinchi_string ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
   scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
@@ -91,6 +92,7 @@ class Reaction < ActiveRecord::Base
   scope :by_sample_ids,  ->(ids) { joins(:reactions_samples).where('samples.id IN (?)', ids) }
   scope :by_status,  ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
+  scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }
 
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions

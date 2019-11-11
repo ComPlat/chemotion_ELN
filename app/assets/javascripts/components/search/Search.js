@@ -197,7 +197,7 @@ export default class Search extends React.Component {
     );
 
     const inputAttributes = {
-      placeholder: 'IUPAC, InChI, SMILES, ...',
+      placeholder: 'IUPAC, InChI, SMILES, RInChI...',
       style: { minWidth: 200, maxWidth: 300 }
     };
 
