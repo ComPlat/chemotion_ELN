@@ -26,7 +26,7 @@ module Chemotion
         {
           id: att.id,
           file: raw_file(att),
-          predictions: att.predictions[0].try(:decision) || {}
+          predictions: JSON.parse(att.get_infer_json_content())
         }
       end
 

@@ -21,6 +21,8 @@ import LoadingActions from './actions/LoadingActions';
 import UIStore from './stores/UIStore';
 import UserStore from './stores/UserStore';
 import UIActions from './actions/UIActions';
+import QcActions from './actions/QcActions';
+import QcStore from './stores/QcStore';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
@@ -47,7 +49,7 @@ import PrintCodeButton from './common/PrintCodeButton'
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import PubchemLcss from './PubchemLcss';
-import QualityCheckMain from './qc/Main';
+import QcMain from './qc/QcMain';
 import { chmoConversions } from './OlsComponent';
 
 const MWPrecision = 6;
@@ -82,7 +84,9 @@ export default class SampleDetails extends React.Component {
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleSelect = this.handleSelect.bind(this);
     this.toggleInchi = this.toggleInchi.bind(this);
+    this.fetchQcWhenNeeded = this.fetchQcWhenNeeded.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -104,6 +108,8 @@ export default class SampleDetails extends React.Component {
 
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange);
+    const { activeTab } = this.state;
+    this.fetchQcWhenNeeded(activeTab);
   }
 
   componentWillUnmount() {
@@ -822,17 +828,30 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  fetchQcWhenNeeded(key) {
+    if (key !== 'qcMain') return;
+    const { infers } = QcStore.getState();
+    const { sample } = this.state;
+    let isInStore = false;
+    infers.forEach((i) => {
+      if (i.sId === sample.id) isInStore = true;
+    });
+    if (isInStore) return;
+    QcActions.setLoading.defer();
+    QcActions.loadInfers.defer({ sample });
+  }
+
   qualityCheckTab(ind) {
     const { sample } = this.state;
     if (!sample) { return null; }
     return (
       <Tab
-        eventKey={ind}
-        title="QC"
-        key={`QC_${sample.id}`}
+        eventKey="qcMain"
+        title="QC & curation"
+        key={`QC_${sample.id}_${ind}`}
       >
         <ListGroupItem style={{ paddingBottom: 20 }} >
-          <QualityCheckMain
+          <QcMain
             sample={sample}
           />
         </ListGroupItem>
@@ -905,7 +924,8 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSelect(eventKey) {
-    UIActions.selectTab({tabKey: eventKey, type: 'sample'});
+    UIActions.selectTab({ tabKey: eventKey, type: 'sample' });
+    this.fetchQcWhenNeeded(eventKey);
   }
 
   renderMolfileModal() {
@@ -961,6 +981,7 @@ export default class SampleDetails extends React.Component {
       i => this.sampleLiteratureTab(i),
       i => this.sampleImportReadoutTab(i),
       i => this.moleculeComputedProps(i),
+      i => this.qualityCheckTab(i),
     ];
 
     const offset = tabContents.length;

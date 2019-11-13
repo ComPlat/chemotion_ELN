@@ -48,13 +48,20 @@
 
   %br/
   .jumbotron
-    .h2 Sample Title
-    %br/
     .form-horizontal
     = form_for current_user.profile, url: pages_update_profiles_path do |f|
+      .h2 Sample Title
+      %br/
       .checkbox
         = f.check_box :show_external_name, autofocus: true, autocomplete: "off"
         = f.label :show_external_name, "Show external names on sample titles?"
+
+      .h2 Curation Standard
+      %br/
+      .radioButton
+        - curations = ["No curation standard", "Curation standard I: experimental organic chemistry"]
+        - curations = curations.map.with_index { |x, i| [x, i + 1] }.to_h
+        = f.select :curation, options_for_select(curations, current_user.profile.curation)
 
       %br/
 

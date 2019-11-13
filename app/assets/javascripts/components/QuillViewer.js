@@ -54,5 +54,8 @@ export default class QuillViewer extends React.Component {
 }
 
 QuillViewer.propTypes = {
-  value: PropTypes.object,
+  value: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.array
+  ]),
 }

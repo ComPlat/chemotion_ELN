@@ -1,5 +1,7 @@
 class PagesController < ApplicationController
-  skip_before_action :authenticate_user!, only: [:home, :about, :chemscanner, :chemspectra]
+  skip_before_action :authenticate_user!, only: [
+    :home, :about, :chemscanner, :chemspectra, :chemspectra_editor
+  ]
   before_action :fetch_affiliations, only: [:affiliations, :update_affiliations]
   before_action :build_affiliation, only: [:affiliations, :update_affiliations]
 
@@ -117,6 +119,6 @@ class PagesController < ApplicationController
   end
 
   def profile_params
-    params.require(:profile).permit(:show_external_name)
+    params.require(:profile).permit(:show_external_name, :curation)
   end
 end

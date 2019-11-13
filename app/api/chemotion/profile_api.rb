@@ -12,7 +12,11 @@ module Chemotion
           'screen' => 4,
           'research_plan' => 5
         }) if (data['layout'].nil?)
-        { data: data, show_external_name: profile.show_external_name }
+        {
+          data: data,
+          show_external_name: profile.show_external_name,
+          curation: profile.curation,
+        }
       end
 
       desc 'update user profile'

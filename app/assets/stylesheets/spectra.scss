@@ -1,9 +1,9 @@
-.spectra-viewer {
+.spectra-editor {
   text-align: right;
   padding-bottom: 10px;
 }
 
-.spectra-viewer-dialog {
+.spectra-editor-dialog {
   display: block;
   padding-left: 0px;
   top: 45% !important;
@@ -23,7 +23,7 @@
   height: 30px;
 }
 
-.react-spectrum-viewer {
+.react-spectrum-editor {
   .txt-input-label {
     font-size: 16px !important;
   }
@@ -58,7 +58,7 @@
 
   .txt-panel-badge {
     span {
-      font-size: 11px !important;
+      font-size: 14px !important;
     }
   }
 
@@ -72,7 +72,7 @@
   }
 }
 
-.spectra-viewer-dialog {
+.spectra-editor-dialog {
   .card-box {
     display: -webkit-flex;
     display:         flex;
@@ -84,4 +84,22 @@
     height: 60vh;
     text-align: center;
   }
+}
+
+.svg-file-zoom-pan {
+  width: 100%;
+  height: 100%;
+}
+
+.grid-qc-mol-view {
+  height: 250px;
+  width: 250px;
+}
+
+.qc-detail-panel {
+  margin-top: 10px;
+}
+
+.qc-detail-panel-title{
+  font-size: 12px !important;
 }

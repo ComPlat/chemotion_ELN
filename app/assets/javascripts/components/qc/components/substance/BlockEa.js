@@ -1,7 +1,7 @@
 import React from 'react';
 
 const BlockEa = () => (
-  <div>
+  <div className="card-qc">
     <h5>
       <span>5 Analysis of the provided EA analysis:</span>
     </h5>

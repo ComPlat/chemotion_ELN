@@ -1,5 +1,5 @@
 import React from 'react';
-import { SpectraViewer, FN } from 'react-spectra-viewer';
+import { SpectraEditor, FN } from 'react-spectra-editor';
 import { Modal, Well, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
@@ -26,7 +26,7 @@ class ViewSpectra extends React.Component {
     this.predictOp = this.predictOp.bind(this);
     this.checkedToWrite = this.checkedToWrite.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
-    this.renderSpectraViewer = this.renderSpectraViewer.bind(this);
+    this.renderSpectraEditor = this.renderSpectraEditor.bind(this);
     this.renderEmpty = this.renderEmpty.bind(this);
   }
 
@@ -89,11 +89,16 @@ class ViewSpectra extends React.Component {
 
   writeOp({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
-    keepPred,
+    keepPred, isIntensity,
   }) {
     const { sample, handleSampleChanged } = this.props;
-    const { spcInfo } = this.state;
-    const mBody = body || FN.peaksBody(peaks, layout, decimal, shift, isAscend);
+    const { spcInfo, jcamp } = this.state;
+    const { entity } = FN.buildData(jcamp.file);
+    const { maxY, minY } = entity.features[0];
+    const boundary = { maxY, minY };
+    const mBody = body || FN.peaksBody({
+      peaks, layout, decimal, shift, isAscend, isIntensity, boundary,
+    });
     const layoutOpsObj = SpectraOps[layout];
     const solventOps = this.opsSolvent(shift);
 
@@ -201,11 +206,12 @@ class ViewSpectra extends React.Component {
   checkWriteOp({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
   }) {
+    const cleanPeaks = FN.rmShiftFromPeaks(peaks, shift);
     LoadingActions.start.defer();
     SpectraActions.WriteStart.defer({
-      peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
-    });
-    this.predictOp({ peaks, layout, shift });
+      shift, scan, thres, analysis, layout, isAscend, decimal, peaks: cleanPeaks,
+    }); // keep payload to state.writing & handle by onChange/checkedToWrite after predictOp
+    this.predictOp({ layout, shift, peaks: cleanPeaks });
   }
 
   buildOpsByLayout(et) {
@@ -216,7 +222,7 @@ class ViewSpectra extends React.Component {
       { name: 'save', value: this.saveOp },
       { name: 'save & close', value: this.saveCloseOp },
     ] : [];
-    const predictable = false; //['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
+    const predictable = updatable && ['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
     if (predictable) {
       return [
         { name: 'check & write', value: this.checkWriteOp },
@@ -269,7 +275,7 @@ class ViewSpectra extends React.Component {
     );
   }
 
-  renderSpectraViewer() {
+  renderSpectraEditor() {
     const { jcamp, predictions } = this.state;
     const {
       entity, isExist,
@@ -277,7 +283,7 @@ class ViewSpectra extends React.Component {
 
     const operations = this.buildOpsByLayout(entity);
 
-    const predictObj = {
+    const forecast = {
       molecule: 'molecule',
       predictions,
     };
@@ -287,10 +293,10 @@ class ViewSpectra extends React.Component {
         {
           !isExist
             ? this.renderInvalid()
-            : <SpectraViewer
+            : <SpectraEditor
               entity={entity}
               operations={operations}
-              predictObj={predictObj}
+              forecast={forecast}
             />
         }
       </Modal.Body>
@@ -299,13 +305,13 @@ class ViewSpectra extends React.Component {
 
   render() {
     const { showModal, spcInfo, jcamp } = this.state;
-    const modalTitle = spcInfo ? `Spectra Viewer - ${spcInfo.title}` : '';
+    const modalTitle = spcInfo ? `Spectra Editor - ${spcInfo.title}` : '';
 
     return (
-      <div className="spectra-viewer">
+      <div className="spectra-editor">
         <Modal
           show={showModal}
-          dialogClassName="spectra-viewer-dialog"
+          dialogClassName="spectra-editor-dialog"
           animation
         >
           <Modal.Header>
@@ -325,7 +331,7 @@ class ViewSpectra extends React.Component {
           </Modal.Header>
           {
             showModal && jcamp
-              ? this.renderSpectraViewer()
+              ? this.renderSpectraEditor()
               : this.renderEmpty()
           }
         </Modal>

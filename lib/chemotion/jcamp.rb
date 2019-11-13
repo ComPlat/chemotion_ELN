@@ -68,7 +68,7 @@ module Chemotion
       def self.build_body(
         file, is_regen = false, params = {}
       )
-        clear = true if is_regen
+        clear = true if false
         {
           multipart: true,
           file: file,
@@ -94,7 +94,8 @@ module Chemotion
           body = build_body(file, is_regen, params)
           response = HTTParty.post(
             "http://#{url}:#{port}/zip_jcamp_n_img",
-            body: body
+            body: body,
+            timeout: 120
           )
         end
         response
@@ -181,7 +182,7 @@ module Chemotion
 
         def self.exec(molfile, layout, peaks, shift)
           rsp = stub_request(molfile, layout, peaks, shift)
-          rsp.parsed_response
+          rsp.code == 200 ? rsp.parsed_response : nil
         end
       end
 
@@ -215,7 +216,7 @@ module Chemotion
 
         def self.exec(molfile, spectrum)
           rsp = stub_request(molfile, spectrum)
-          rsp.parsed_response
+          rsp.code == 200 ? rsp.parsed_response : nil
         end
       end
 
@@ -249,7 +250,7 @@ module Chemotion
 
         def self.exec(molfile, spectrum)
           rsp = stub_request(molfile, spectrum)
-          rsp.parsed_response
+          rsp.code == 200 ? rsp.parsed_response : nil
         end
       end
     end

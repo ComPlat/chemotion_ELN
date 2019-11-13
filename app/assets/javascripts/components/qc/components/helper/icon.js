@@ -20,8 +20,8 @@ const iconByMargin = (result, margin = 0) => (
 );
 
 const iconTpMs = (
-  <Tooltip id="ans-tp">
-    No matching molecular mass in the scan.
+  <Tooltip id="ans-tp-ms">
+    Whether exact molecular mass is matched in the scan?
   </Tooltip>
 );
 
@@ -31,7 +31,7 @@ const iconMs = result => (
   </OverlayTrigger>
 );
 
-const statusTp = txt => <Tooltip>{ txt }</Tooltip>;
+const statusTp = txt => <Tooltip id="status-tp">{ txt }</Tooltip>;
 
 const iconStatus = (status) => {
   switch (status) {
