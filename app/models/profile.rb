@@ -9,6 +9,7 @@
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  data               :jsonb
+#  curation           :integer          default(2)
 #
 # Indexes
 #

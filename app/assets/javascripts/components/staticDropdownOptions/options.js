@@ -308,7 +308,13 @@ export const defaultMultiSolventsSmilesOptions = [{
     value: { external_label: 'Cyclopentylmethylether',
              smiles: 'COC1CCCC1',
              density: 0.86 }
-  }];
+  }, {
+    label: '1,2-Dichloroethane',
+    value: { external_label: '1,2-Dichloroethane',
+             smiles: 'ClCCCl',
+             density: 1.25 }
+  }
+];
 
 
 export const purificationOptions = [{
