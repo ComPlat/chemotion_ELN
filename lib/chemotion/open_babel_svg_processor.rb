@@ -39,6 +39,7 @@ module Chemotion
         @svg['version'] = '1.1'
       end
       decorate_text(@svg)
+      @svg = Nokogiri::XML(@svg.to_xml)
       @svg
     end
   end
