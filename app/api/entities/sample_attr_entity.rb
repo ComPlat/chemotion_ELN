@@ -1,7 +1,7 @@
 module Entities
   class SampleAttrEntity < Grape::Entity
     expose :id, documentation: { type: "Integer", desc: "Sample's unique id"}
-    expose :type, :name, :short_label, :description, :created_at,
+    expose :type, :name, :short_label, :description, :created_at, :updated_at,
     :target_amount_value, :target_amount_unit, :real_amount_value, :location,
     :real_amount_unit, :molfile, :solvent, :molarity_value, :molarity_unit,
     :is_top_secret, :is_restricted, :external_label, :analyses, :purity,
@@ -14,6 +14,10 @@ module Entities
 
     def created_at
       object.created_at.strftime("%d.%m.%Y, %H:%M")
+    end
+
+    def updated_at
+      object.updated_at.strftime("%d.%m.%Y, %H:%M")
     end
 
     def type

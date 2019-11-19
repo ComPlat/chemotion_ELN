@@ -266,9 +266,13 @@ export default class ReactionDetails extends Component {
 
   reactionHeader(reaction) {
     let hasChanged = reaction.changed ? '' : 'none'
+    const titleTooltip = `Created at: ${reaction.created_at} \n Updated at: ${reaction.updated_at}`;
+
     return (
       <div>
-        <i className="icon-reaction"/>&nbsp;{reaction.title()}
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+          <span><i className="icon-reaction"/>&nbsp;{reaction.title()}</span>
+        </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeReaction">Close Reaction</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"

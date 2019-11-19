@@ -126,6 +126,7 @@ module Chemotion
         optional :molecule_sort, type: Integer, desc: 'Sort by parameter'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
+        optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :product_only, type: Boolean, desc: 'query only reaction products'
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
@@ -176,8 +177,12 @@ module Chemotion
                 end
         from = params[:from_date]
         to = params[:to_date]
-        scope = scope.samples_created_time_from(Time.at(from)) if from
-        scope = scope.samples_created_time_to(Time.at(to) + 1.day) if to
+        by_created_at = params[:filter_created_at] || false
+
+        scope = scope.samples_created_time_from(Time.at(from)) if from && by_created_at
+        scope = scope.samples_created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        scope = scope.samples_updated_time_from(Time.at(from)) if from && !by_created_at
+        scope = scope.samples_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
         reset_pagination_page(scope)
         sample_serializer_selector =

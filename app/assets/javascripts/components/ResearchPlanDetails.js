@@ -219,11 +219,16 @@ export default class ResearchPlanDetails extends Component {
 
   researchPlanHeader(research_plan) {
     let saveBtnDisplay = research_plan.changed ? '' : 'none';
+    const titleTooltip = `Created at: ${research_plan.created_at} \n Updated at: ${research_plan.updated_at}`;
 
     return (
       <div>
-        <i className="fa fa-file-text-o" />
-        &nbsp; <span>{research_plan.name}</span> &nbsp;
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
+          <span>
+            <i className="fa fa-file-text-o" />
+            &nbsp; <span>{research_plan.name}</span> &nbsp;
+          </span>
+        </OverlayTrigger>
         <ElementCollectionLabels element={research_plan} placement="right"/>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeresearch_plan">Close research_plan</Tooltip>}>

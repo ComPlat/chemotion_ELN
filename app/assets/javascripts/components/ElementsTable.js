@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon
+  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
@@ -39,6 +39,7 @@ export default class ElementsTable extends React.Component {
 
     this.collapseSample = this.collapseSample.bind(this);
     this.changeSort = this.changeSort.bind(this);
+    this.changeDateFilter = this.changeDateFilter.bind(this);
 
     this.toggleProductOnly = this.toggleProductOnly.bind(this);
     this.setFromDate = this.setFromDate.bind(this);
@@ -60,7 +61,7 @@ export default class ElementsTable extends React.Component {
   onChangeUI(state) {
     const { checkedIds, uncheckedIds, checkedAll } = state[this.props.type];
     const {
-      fromDate, toDate, number_of_results, currentSearchSelection, productOnly
+      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly
     } = state;
 
     // check if element details of any type are open at the moment
@@ -73,13 +74,14 @@ export default class ElementsTable extends React.Component {
     }
 
     const stateChange = (
-      checkedIds || uncheckedIds || checkedAll || currentId ||
+      checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt ||
       fromDate || toDate || productOnly !== this.state.productOnly ||
       isAdvS !== this.state.advancedSearch
     );
 
     if (stateChange) {
       this.setState({
+        filterCreatedAt,
         ui: {
           checkedIds,
           uncheckedIds,
@@ -212,6 +214,12 @@ export default class ElementsTable extends React.Component {
     UIActions.setProductOnly(!this.state.productOnly);
   }
 
+  changeDateFilter() {
+    let { filterCreatedAt } = this.state;
+    filterCreatedAt = !filterCreatedAt;
+    UIActions.setFilterCreatedAt(filterCreatedAt);
+  }
+
   setFromDate(fromDate) {
     if (this.state.fromDate !== fromDate) UIActions.setFromDate(fromDate);
   }
@@ -286,9 +294,19 @@ export default class ElementsTable extends React.Component {
         </div>
       );
     }
+    const dateTitle = this.state.filterCreatedAt === true ? 'filter by creation date' : 'filter by update date';
+    const btnIcon = this.state.filterCreatedAt === true ? 'fa-calendar-o' : 'fa-calendar';
+
+    const inchiTooltip = <Tooltip id="date_tooltip">{dateTitle}</Tooltip>;
+    const dateIcon = <i className={`fa ${btnIcon}`} />;
 
     const headerRight = (
       <div className="header-right">
+        <OverlayTrigger placement="top" overlay={inchiTooltip}>
+          <button style={{ border: 'none' }} onClick={this.changeDateFilter} >
+            {dateIcon}
+          </button>
+        </OverlayTrigger>
         <div className="sample-list-from-date">
           <DatePicker
             selected={fromDate}

@@ -109,12 +109,17 @@ export default class ScreenDetails extends Component {
   }
 
   screenHeader(screen) {
-    let saveBtnDisplay = screen.isEdited ? '' : 'none'
+    let saveBtnDisplay = screen.isEdited ? '' : 'none';
+    const datetp = `Created at: ${screen.created_at} \n Updated at: ${screen.updated_at}`;
 
     return (
       <div>
-        <i className="icon-screen" />
-        &nbsp; <span>{screen.name}</span> &nbsp;
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
+          <span>
+            <i className="icon-screen" />
+            &nbsp;<span>{screen.name}</span> &nbsp;
+          </span>
+        </OverlayTrigger>
         <ElementCollectionLabels element={screen} placement="right"/>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeScreen">Close Screen</Tooltip>}>
@@ -140,7 +145,7 @@ export default class ScreenDetails extends Component {
         </OverlayTrigger>
         <PrintCodeButton element={screen}/>
       </div>
-    )
+    );
   }
 
   propertiesFields(screen){
@@ -253,7 +258,7 @@ export default class ScreenDetails extends Component {
              className="panel-detail">
         <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
         <Panel.Body>
-          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)} 
+          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
              id="screen-detail-tab">
             <Tab eventKey={0} title={'Properties'}>
               {this.propertiesFields(screen)}

@@ -7,7 +7,7 @@ class WellplateSerializer < ActiveModel::Serializer
 
   def code_log
     CodeLogSerializer.new(object.code_log).serializable_hash
-  end 
+  end
 
   def wells
     object.wells.order(position_y: :asc, position_x: :asc)
@@ -15,6 +15,10 @@ class WellplateSerializer < ActiveModel::Serializer
 
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
+  end
+
+  def updated_at
+    object.updated_at.strftime("%d.%m.%Y, %H:%M")
   end
 
   def type

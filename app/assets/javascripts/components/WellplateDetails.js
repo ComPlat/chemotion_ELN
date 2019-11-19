@@ -113,10 +113,15 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
 
     let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
-    return(
+    const datetp = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
+    return (
       <div>
-        <i className="icon-wellplate" />
-        &nbsp; <span>{wellplate.name}</span> &nbsp;
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
+          <span>
+            <i className="icon-wellplate" />
+            &nbsp; <span>{wellplate.name}</span> &nbsp;
+          </span>
+        </OverlayTrigger>
         <ElementCollectionLabels element={wellplate} placement="right"/>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeWellplate">Close Wellplate</Tooltip>}>

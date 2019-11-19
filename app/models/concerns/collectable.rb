@@ -12,6 +12,8 @@ module Collectable
     scope :updated_time_from, ->(time) { where('updated_at >= ?', time) }
     scope :samples_created_time_from, ->(time) { where('samples.created_at >= ?', time) }
     scope :samples_created_time_to, ->(time) { where('samples.created_at <= ?', time) }
+    scope :samples_updated_time_from, ->(time) { where('samples.updated_at >= ?', time) }
+    scope :samples_updated_time_to, ->(time) { where('samples.updated_at <= ?', time) }
     scope :join_collections_element, ->{
       tb = name.underscore
       joins("inner join collections_#{tb}s on #{tb}s.id = collections_#{tb}s.sample_id")
