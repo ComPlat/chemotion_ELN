@@ -94,6 +94,21 @@ export default class AdminFetcher {
       });
     return promise;
   }
+  static editNovncSettings(params) {
+    return fetch('/api/v1/admin/editNovncSettings/', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then((response) => {
+        if (response.status === 204) { return ''; }
+        return 'error';
+      });
+  }
   static resetUserPassword(params) {
     const promise = fetch('/api/v1/admin/resetPassword/', {
       credentials: 'same-origin',
@@ -195,18 +210,14 @@ export default class AdminFetcher {
   }
 
   static importOlsTerms(file) {
-    var data = new FormData();
-    data.append("file", file);
+    const data = new FormData();
+    data.append('file', file);
 
-    let promise = fetch('/api/v1/admin/importOlsTerms/', {
+    const promise = fetch('/api/v1/admin/importOlsTerms/', {
       credentials: 'same-origin',
       method: 'POST',
       body: data
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
     return promise;

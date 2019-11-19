@@ -23,7 +23,7 @@ module Chemotion
       namespace :listLocalCollector do
         desc 'List all local collectors'
         get 'all' do
-          Rails.configuration.datacollectors.localcollectors
+          Rails.configuration.datacollectors&.localcollectors || []
         end
       end
 
@@ -139,6 +139,31 @@ module Chemotion
           }
           device.profile.update!(**new_profile) &&
             new_profile || error!('profile update failed', 500)
+        end
+      end
+
+      namespace :editNovncSettings do
+        desc 'Edit device NoVNC settings'
+        params do
+          requires :id, type: Integer
+          requires :data, type: Hash do
+            optional :novnc, type: Hash do
+              optional :token, type: String
+              optional :target, type: String
+              optional :password, type: String
+            end
+          end
+        end
+        put do
+          profile = Device.find(params[:id]).profile
+          if (params[:data][:novnc][:target].present?)
+            updated = profile.data.merge(params[:data] || {})
+            profile.update!(data: updated)
+          else
+            profile.data.delete('novnc')
+            profile.save!
+          end
+          status 204
         end
       end
 
