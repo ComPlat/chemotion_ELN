@@ -343,6 +343,8 @@ class Material extends Component {
     const vol = lUnit ? `${lUnit}L, ` : '';
     const solVol = vol.substr(0, vol.length - 2);
     const mol = molUnit ? `${molUnit}mol, ` : '';
+    const mlt = m.molarity_value === 0.0 ?
+      '' : `${validDigit(m.molarity_value, 3)}${m.molarity_unit}, `;
     const eqv = `${validDigit(m.equivalent, 3)}`;
     const yld = `${Math.round(m.equivalent * 100)}%`;
 
@@ -352,10 +354,10 @@ class Material extends Component {
         return `${molName} (${solVol})`;
       }
       case 'products': {
-        return `${molName} (${grm}${vol}${mol}${yld} yield)`;
+        return `${molName} (${grm}${vol}${mol}${mlt}${yld} yield)`;
       }
       default: {
-        return `${molName} (${grm}${vol}${mol}${eqv} equiv)`;
+        return `${molName} (${grm}${vol}${mol}${mlt}${eqv} equiv)`;
       }
     }
   }
