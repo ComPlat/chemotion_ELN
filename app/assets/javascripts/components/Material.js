@@ -337,7 +337,7 @@ class Material extends Component {
 
     const gUnit = correctPrefix(m.amount_g, 3);
     const lUnit = correctPrefix(m.amount_l, 3);
-    const molUnit = correctPrefix(m.amount_mol, 2);
+    const molUnit = correctPrefix(m.amount_mol, 3); // ELN issue#829
 
     const grm = gUnit ? `${gUnit}g, ` : '';
     const vol = lUnit ? `${lUnit}L, ` : '';
