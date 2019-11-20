@@ -12,42 +12,45 @@ module Import
       @attachments = []
       @col_all = Collection.get_all_collection_for_user(current_user_id)
       @images = {}
+      @svg_files = []
     end
 
-    def extract()
+    def extract
       attachments = []
-      begin
-        @att.read_file
-        Zip::InputStream.open(StringIO.new(@att.read_file)) do |io|
-          while (entry = io.get_next_entry)
-            data = entry.get_input_stream.read #.force_encoding('UTF-8')
-            case entry.name
-            when 'export.json'
-              @data = JSON.parse(data)
-            when /attachments\/([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})/
-              attachment = Attachment.create!(
-                file_data: data,
-                created_by: @current_user_id,
-                created_for: @current_user_id,
-                filename: $1,
-              )
-              attachments << attachment
-            when /^images\/(samples|reactions|molecules|research_plans)\/(\w{1,128}\.\w{1,4})/
-              tmp_file = Tempfile.new
-              tmp_file.write(data)
-              tmp_file.rewind
-              @images["#{$1}/#{$2}"] = tmp_file
-            end
+      att = Tempfile.new(encoding: 'ascii-8bit')
+      att.write(@att.read_file)
+      att.rewind
+      Zip::File.open(att.path) do |zip_file|
+        # Handle entries one by one
+        zip_file.each do |entry|
+          data = entry.get_input_stream.read.force_encoding('UTF-8')
+          case entry.name
+          when 'export.json'
+            @data = JSON.parse(data)
+          when %r{attachments/([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})}
+            attachment = Attachment.create!(
+              file_data: data,
+              created_by: @current_user_id,
+              created_for: @current_user_id,
+              filename: Regexp.last_match(1)
+            )
+            attachments << attachment
+          when %r{^images/(samples|reactions|molecules|research_plans)/(\w{1,128}\.\w{1,4})}
+            tmp_file = Tempfile.new
+            tmp_file.write(data)
+            tmp_file.rewind
+            @images["#{Regexp.last_match(1)}/#{Regexp.last_match(2)}"] = tmp_file
           end
         end
-        @attachments = attachments.map(&:id)
-        attachments = []
-      rescue StandardError => e
-        # destroy created attachments, uploaded zip and tmp files if extraction fails
-        attachments.map(&:destroy)
-        cleanup
-        raise e
       end
+      @attachments = attachments.map(&:id)
+      attachments = []
+      att.close!
+    rescue StandardError => e
+      # destroy created attachments, uploaded zip and tmp files if extraction fails
+      attachments.map(&:destroy)
+      cleanup
+      raise e
     end
 
     def import
@@ -164,6 +167,11 @@ module Import
           :parent => fetch_ancestry('Sample', fields.fetch('ancestry'))
         }))
 
+        # for same sample_svg_file case
+        s_svg_file = @svg_files.select { |s| s[:sample_svg_file] == fields.fetch('sample_svg_file') }.first
+        @svg_files.push(sample_svg_file: fields.fetch('sample_svg_file'), svg_file: sample.sample_svg_file) if s_svg_file.nil?
+        sample.sample_svg_file = s_svg_file[:svg_file] unless s_svg_file.nil?
+
         # add sample to the @instances map
         update_instances!(uuid, sample)
       end
@@ -215,6 +223,9 @@ module Import
             'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid)
         }))
 
+        # add reaction to the @instances map
+        update_instances!(uuid, reaction)
+
         # create the root container like with samples
         reaction.container = Container.create_root_container
 
@@ -224,9 +235,6 @@ module Import
 
         # save the instance again
         reaction.save!
-
-        # add reaction to the @instances map
-        update_instances!(uuid, reaction)
       end
     end
 
