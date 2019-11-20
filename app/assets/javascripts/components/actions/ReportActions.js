@@ -114,7 +114,7 @@ class ReportActions {
       reaction: { checkedIds: reactionIds },
     };
     return (dispatch) => {
-      UIFetcher.fetchByUIState(uiState)
+      UIFetcher.loadReportElements(uiState)
         .then((result) => {
           dispatch({ objs: result, archive, defaultObjTags: { sampleIds, reactionIds } });
         }).catch((errorMessage) => {

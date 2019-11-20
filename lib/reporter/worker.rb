@@ -74,8 +74,8 @@ module Reporter
 
     def extract(objects)
       objects.map do |tag|
-        obj = tag["type"].camelize.constantize.find(tag["id"])
-        obj_permission_hash = ElementReportPermissionProxy.new(@author, obj, user_ids).serialized
+        e = tag['type'].camelize.constantize.find(tag['id'])
+        ElementReportPermissionProxy.new(@author, e, user_ids).serialized
       end
     end
 

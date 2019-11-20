@@ -33,4 +33,22 @@ export default class UIFetcher {
       })
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static loadReportElements(params) {
+    return fetch('/api/v1/ui_state/load_report_elements', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .then((json) => {
+        const samples = json.samples.map(s => new Sample(s));
+        const reactions = json.reactions.map(r => new Reaction(r));
+        return { samples, reactions };
+      })
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }

@@ -28,7 +28,7 @@ class DetailLevels::Reaction
 
   def report_base_attributes
     [
-      :temperature_display_with_unit
+      :temperature_display_with_unit, :literatures
     ]
   end
 end

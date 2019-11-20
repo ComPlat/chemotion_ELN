@@ -48,7 +48,7 @@ class DetailLevels::Sample
 
   def report_base_attributes
     [
-      :reactions, :molecule_iupac_name, :get_svg_path
+      :reactions, :molecule_iupac_name, :get_svg_path, :literatures
     ]
   end
 
