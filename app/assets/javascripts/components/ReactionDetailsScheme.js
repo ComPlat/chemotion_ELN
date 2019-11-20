@@ -368,6 +368,10 @@ export default class ReactionDetailsScheme extends Component {
     // mass check apply to 'polymers' only
     if (!updatedS.contains_residues) {
       mFull = referenceM.amount_mol * mwb;
+      if (updatedS.amount_g > mFull) {
+        errorMsg = 'Experimental mass value is more than possible\n' +
+        'by 100% conversion! Please check your data.';
+      }
     } else {
       const mwa = referenceM.molecule.molecular_weight;
       const deltaM = mwb - mwa;
