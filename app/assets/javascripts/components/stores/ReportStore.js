@@ -4,6 +4,7 @@ import alt from '../alt';
 import ReportActions from '../actions/ReportActions';
 import Utils from '../utils/Functions';
 import ArrayUtils from '../utils/ArrayUtils';
+import UserActions from '../actions/UserActions';
 import UserStore from './UserStore';
 import { reOrderArr } from '../utils/DndControl';
 import { UpdateSelectedObjs } from '../utils/ReportHelper';
@@ -53,13 +54,13 @@ class ReportStore {
     this.selMolSerials = [];
     this.imgFormat = 'png';
     this.archives = [];
-    this.fileName = this.initFileName();
     this.fileDescription = '';
     this.activeKey = 0;
     this.processings = [];
-    this.template = 'supporting_information';
+    this.template = 'standard';
     this.prdAtts = [];
     this.attThumbNails = [];
+    this.fileName = '';
 
     this.bindListeners({
       handleUpdateSplSettings: ReportActions.updateSplSettings,
@@ -84,7 +85,7 @@ class ReportStore {
       handleClone: ReportActions.clone,
       handleDelete: ReportActions.delete,
       hadnleRemove: ReportActions.remove,
-      hadnleReset: ReportActions.reset,
+      hadnleReset: [ReportActions.reset, UserActions.fetchCurrentUser],
       handleUpdMSVal: ReportActions.updMSVal,
       handleUpdateThumbNails: ReportActions.updateThumbNails,
       handleUpdateDefaultTags: ReportActions.updateDefaultTags,
@@ -320,18 +321,20 @@ class ReportStore {
     });
   }
 
-  stdReportPrefix() {
+  stdReportPrefix(initial) {
+    if (initial) return initial;
     const { currentUser } = UserStore.getState();
-    return currentUser.initials;
+    if (!currentUser) return '';
+    return currentUser.initials || '';
   }
 
-  initFileName(template = 'supporting_information') {
+  initFileName(template, initial) {
     let prefix = 'Supporting_Information_';
     let datetime = moment().format('YYYY-MM-DD[H]HH[M]mm[S]ss');
 
     switch (template) {
       case 'standard':
-        prefix = this.stdReportPrefix();
+        prefix = this.stdReportPrefix(initial);
         datetime = moment().format('YYYYMMDD');
         break;
       case 'spectrum':
@@ -536,12 +539,13 @@ class ReportStore {
     });
   }
 
-  hadnleReset() {
+  hadnleReset(user) {
+    const { initials } = user || {};
     this.setState({
       activeKey: 0,
-      template: 'supporting_information',
+      template: 'standard',
       fileDescription: '',
-      fileName: this.initFileName(),
+      fileName: this.initFileName('standard', initials),
       imgFormat: 'png',
       checkedAllSplSettings: true,
       checkedAllRxnSettings: true,
