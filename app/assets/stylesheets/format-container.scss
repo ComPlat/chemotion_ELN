@@ -6,3 +6,32 @@
   overflow-y: scroll;
   max-height: calc(100vh - 250px);
 }
+
+.attachment-dataset-modal {
+  height: 95%;
+  top: 52% !important;
+  margin: unset !important;
+  width: calc(80vw) !important;
+  .modal-content {
+    height: 95%;
+    .modal-header .modal-title .btn-toolbar {
+      float: right;
+    }
+    .modal-body {
+      height: 90%;
+      .row {
+        height: 100%;
+        .col-base .desc {
+          min-height: 200px;
+        }
+        .col-full {
+          height: 100%;
+          .list {
+            overflow: auto;
+            max-height: calc(100% - 70px) !important;
+          }
+        }
+      }
+    }
+  }
+}

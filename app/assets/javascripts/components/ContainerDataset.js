@@ -1,5 +1,5 @@
-import React, {Component} from 'react';
-import {Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, ButtonToolbar, Overlay } from 'react-bootstrap';
+import React, { Component } from 'react';
+import { Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, Overlay } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
 import Utils from './utils/Functions';
@@ -12,6 +12,7 @@ import Container from './models/Container';
 import InboxActions from './actions/InboxActions';
 import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
 import ChildOverlay from './managing_actions/ChildOverlay';
+import { callbackify } from 'util';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -123,82 +124,84 @@ export default class ContainerDataset extends Component {
   }
 
   handleSave() {
-    const {dataset_container} = this.state;
-    const {onChange, onModalHide} = this.props;
+    const { dataset_container } = this.state;
+    const { onChange, onModalHide } = this.props;
     onChange(dataset_container);
     onModalHide();
   }
 
-  listGroupItem(attachment){
+  listGroupItem(attachment) {
     const {disabled} = this.props;
-    if(attachment.is_deleted){
-      return(
-        <Table className="borderless"><tbody>
-          <tr>
-            <td rowSpan="2" width="128">
-              <img src={attachment.preview} />
-            </td>
-            <td>
-              <strike>{attachment.filename}</strike>
-            </td>
-          </tr>
-          <tr>
-            <td>
-            <Button
-              bsSize="xsmall"
-              bsStyle="danger"
-              onClick={() => this.handleUndo(attachment)}
-              disabled={disabled}
-            >
-              <i className="fa fa-undo"></i>
-            </Button>
-            </td>
-          </tr>
-        </tbody></Table>
+    if (attachment.is_deleted) {
+      return (
+        <Table className="borderless" style={{ marginBottom: 'unset' }}>
+          <tbody>
+            <tr>
+              <td rowSpan="2" width="128">
+                <img src={attachment.preview} alt="" />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ verticalAlign: 'middle' }}>
+                <strike>{attachment.filename}</strike><br />
+                <Button
+                  bsSize="xsmall"
+                  bsStyle="danger"
+                  onClick={() => this.handleUndo(attachment)}
+                  disabled={disabled}
+                >
+                  <i className="fa fa-undo" />
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </Table>
       );
-    }else{
-      return(
-        <Table className="borderless"><tbody>
+    }
+    return (
+      <Table className="borderless" style={{ marginBottom: 'unset' }}>
+        <tbody>
           <tr>
             <td rowSpan="2" width="128">
-              <img src={attachment.preview} />
-            </td>
-            <td>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
+              <img src={attachment.preview} alt="" />
             </td>
           </tr>
           <tr>
-            <td>
+            <td style={{ verticalAlign: 'middle' }}>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
               {this.removeAttachmentButton(attachment)} &nbsp;
               {this.attachmentBackToInboxButton(attachment)}
             </td>
           </tr>
-        </tbody></Table>
-      );
-    }
+        </tbody>
+      </Table>
+    );
   }
 
   attachments() {
-    const {dataset_container} = this.state;
-    if(dataset_container.attachments && dataset_container.attachments.length > 0) {
+    const { dataset_container } = this.state;
+    if (dataset_container.attachments && dataset_container.attachments.length > 0) {
       return (
-        <ListGroup>
-        {dataset_container.attachments.map(attachment => {
-          return (
-            <ListGroupItem key={attachment.id}>
-              {this.listGroupItem(attachment)}
-            </ListGroupItem>
-          )
-        })}
-        </ListGroup>
-      )
-    } else {
-      return (
-        <div style={{padding: 5}}>
-          There are currently no Datasets.<br/>
+        <div className="list">
+          <ListGroup>
+            {
+              dataset_container.attachments.map((attachment) => {
+                return (
+                  <ListGroupItem key={attachment.id} style={{ margin: 'unset', padding: 'unset' }}>
+                    {this.listGroupItem(attachment)}
+                  </ListGroupItem>
+                );
+              })
+            }
+          </ListGroup>
         </div>
-      )
+      );
     }
+    return (
+      <div style={{ padding: 15 }}>
+        There are currently no Datasets.<br />
+      </div>
+    );
   }
 
   removeAttachmentButton(attachment) {
@@ -368,7 +371,7 @@ export default class ContainerDataset extends Component {
 
   render() {
     const { dataset_container, showInstruments } = this.state;
-    const { readOnly, onModalHide, disabled } = this.props;
+    const { readOnly, disabled } = this.props;
 
     const overlayAttributes = {
       style: {
@@ -381,76 +384,58 @@ export default class ContainerDataset extends Component {
 
     return (
       <Row>
-        <Col md={6} style={{paddingRight: 0}}>
-          <Col md={12} style={{padding: 0}}>
-            <FormGroup controlId="datasetName">
-              <ControlLabel>Name</ControlLabel>
-              <FormControl
-                type="text"
-                value={dataset_container.name || ''}
-                disabled={readOnly || disabled}
-                onChange={event => this.handleInputChange('name', event)}
-              />
-            </FormGroup>
-          </Col>
-          <Col md={12} style={{ padding: 0 }}>
-            <FormGroup controlId="datasetInstrument">
-              <ControlLabel>Instrument</ControlLabel>
-              <FormControl
-                type="text"
-                value={dataset_container.extended_metadata['instrument'] || ''}
-                disabled={readOnly || disabled}
-                onChange={event => this.handleInstrumentValueChange(event,
-                  this.doneInstrumentTyping)}
-                ref={(input) => { this.autoComplete = input; }}
-                autoComplete="off"
-              />
-              <Overlay
-                placement="bottom"
-                style={{
-                  marginTop: 80, width: 398, height: 10, maxHeight: 20
-                }}
-                show={showInstruments}
-                container={this}
-                rootClose
-                onHide={() => this.abortAutoSelection()}
-              >
-                <ChildOverlay
-                  dataList={this.renderInstruments()}
-                  overlayAttributes={overlayAttributes}
-                />
-              </Overlay>
-            </FormGroup>
-          </Col>
-          <Col md={12} style={{padding: 0}}>
-            <FormGroup controlId="datasetDescription">
-              <ControlLabel>Description</ControlLabel>
-              <FormControl
-                componentClass="textarea"
-                value={dataset_container.description || ''}
-                disabled={readOnly || disabled}
-                onChange={event => this.handleInputChange('description', event)}
-                style={{minHeight: 100}}
-              />
-            </FormGroup>
-          </Col>
-        </Col>
-        <Col md={6}>
-          <label>Attachments</label>
-          {this.attachments()}
-          {this.dropzone()}
-        </Col>
-        <Col md={12}>
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => onModalHide()}>Close</Button>
-            <Button
-              bsStyle="warning"
-              onClick={() => this.handleSave()}
-              disabled={disabled}
+        <Col md={6} className="col-base">
+          <FormGroup controlId="datasetName">
+            <ControlLabel>Name</ControlLabel>
+            <FormControl
+              type="text"
+              value={dataset_container.name || ''}
+              disabled={readOnly || disabled}
+              onChange={event => this.handleInputChange('name', event)}
+            />
+          </FormGroup>
+          <FormGroup controlId="datasetInstrument">
+            <ControlLabel>Instrument</ControlLabel>
+            <FormControl
+              type="text"
+              value={dataset_container.extended_metadata['instrument'] || ''}
+              disabled={readOnly || disabled}
+              onChange={event => this.handleInstrumentValueChange(event,
+                this.doneInstrumentTyping)}
+              ref={(input) => { this.autoComplete = input; }}
+              autoComplete="off"
+            />
+            <Overlay
+              placement="bottom"
+              style={{
+                marginTop: 80, width: 398, height: 10, maxHeight: 20
+              }}
+              show={showInstruments}
+              container={this}
+              rootClose
+              onHide={() => this.abortAutoSelection()}
             >
-              Save
-            </Button>
-          </ButtonToolbar>
+              <ChildOverlay
+                dataList={this.renderInstruments()}
+                overlayAttributes={overlayAttributes}
+              />
+            </Overlay>
+          </FormGroup>
+          <FormGroup controlId="datasetDescription">
+            <ControlLabel>Description</ControlLabel>
+            <FormControl
+              componentClass="textarea"
+              value={dataset_container.description || ''}
+              disabled={readOnly || disabled}
+              onChange={event => this.handleInputChange('description', event)}
+              className="desc"
+            />
+          </FormGroup>
+        </Col>
+        <Col md={6} className="col-full">
+          <label>Attachments</label>
+          {this.dropzone()}
+          {this.attachments()}
         </Col>
       </Row>
     );
