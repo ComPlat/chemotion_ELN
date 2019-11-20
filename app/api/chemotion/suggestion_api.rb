@@ -70,6 +70,7 @@ module Chemotion
           reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
           reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
           reaction_status = dl_r > -1 && search_by_field.call(Reaction, :status, qry) || []
+          reaction_rinchi_string = dl_r > -1 && search_by_field.call(Reaction, :rinchi_string, qry) || []
           sample_name = dl_s > 0 && d_for.call(Sample).with_reactions.by_name(qry).pluck(:name).uniq || []
           iupac_name = dl_s > 0 && d_for.call(Molecule).with_reactions.by_iupac_name(qry).pluck(:iupac_name).uniq || []
           inchistring = dl_s > 0 && d_for.call(Molecule).with_reactions.by_inchistring(qry).pluck(:inchistring).uniq || []
@@ -78,6 +79,7 @@ module Chemotion
             reaction_name: reaction_name,
             reaction_short_label: reaction_short_label,
             reaction_status: reaction_status,
+            reaction_rinchi_string: reaction_rinchi_string,
             sample_name: sample_name,
             iupac_name: iupac_name,
             inchistring: inchistring,
@@ -120,6 +122,7 @@ module Chemotion
           reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
           reaction_status = dl_r > -1 && search_by_field.call(Reaction, :status, qry) || []
           reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
+          reaction_rinchi_string = dl_r > -1 && search_by_field.call(Reaction, :rinchi_string, qry) || []
           wellplate_name = dl_wp > -1 && search_by_field.call(Wellplate, :name, qry) || []
           screen_name = dl_sc > -1 && search_by_field.call(Screen, :name, qry) || []
           conditions = dl_sc > -1 && search_by_field.call(Screen, :conditions, qry) || []
@@ -137,6 +140,7 @@ module Chemotion
             reaction_name: reaction_name,
             reaction_short_label: reaction_short_label,
             reaction_status: reaction_status,
+            reaction_rinchi_string: reaction_rinchi_string,
             wellplate_name: wellplate_name,
             screen_name: screen_name,
             conditions: conditions,
