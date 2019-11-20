@@ -7,6 +7,7 @@ module Chemotion
 
     helpers ParamsHelpers
     helpers CollectionHelpers
+    helpers LiteratureHelpers
 
     namespace :ui_state do
       desc 'Delete elements by UI state'
@@ -99,6 +100,24 @@ module Chemotion
         # TODO: fallback if sample are not in owned collection and currentCollection is missing
         # (case when cloning report)
         selected
+      end
+
+      namespace :load_report_elements do
+        desc 'return samples and reactions for a report'
+        post do
+          selected = { 'samples' => [], 'reactions' => [] }
+          %w[sample reaction].each do |element|
+            next unless params[element][:checkedAll] || params[element][:checkedIds].present?
+
+            selected[element + 's'] = @collection.send(element + 's').by_ui_state(params[element]).map do |e|
+              se = ElementPermissionProxy.new(current_user, e, user_ids)
+                                         .serialized
+              se[:literatures] = citation_for_elements(e.id, e.class.to_s)
+              se
+            end
+          end
+          selected
+        end
       end
     end
   end

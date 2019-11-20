@@ -255,7 +255,7 @@ class ReportStore {
       || _.difference(reactionIds, reactionCheckedIds).length > 0;
 
     if (elementAdded) {
-      UIFetcher.fetchByUIState({ sample, reaction, currentCollection })
+      UIFetcher.loadReportElements({ sample, reaction, currentCollection })
         .then((result) => {
           const newTags = {
             sampleIds: result.samples.map(e => e.id),
