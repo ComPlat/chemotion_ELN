@@ -52,7 +52,7 @@ const originalState = {
   fileDescription: '',
   activeKey: 0,
   processings: [],
-  template: 'supporting_information',
+  template: 'standard',
   selMolSerials: [],
   attThumbNails: [],
   prdAtts: [],
