@@ -40,6 +40,10 @@ class ReactionSerializer < ActiveModel::Serializer
     object.created_at.strftime("%d.%m.%Y, %H:%M")
   end
 
+  def updated_at
+    object.updated_at.strftime("%d.%m.%Y, %H:%M")
+  end
+
   def type
     'reaction'
   end

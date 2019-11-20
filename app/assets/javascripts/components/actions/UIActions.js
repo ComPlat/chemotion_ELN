@@ -115,6 +115,10 @@ class UIActions {
     return null
   }
 
+  setFilterCreatedAt(filterCreatedAt) {
+    return filterCreatedAt;
+  }
+
   setFromDate(date) {
     return date;
   }

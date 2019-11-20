@@ -41,6 +41,7 @@ import PolymerSection from './PolymerSection';
 import ElementalCompositionGroup from './ElementalCompositionGroup';
 import ToggleSection from './common/ToggleSection'
 import SampleName from './common/SampleName'
+import ClipboardCopyText from './common/ClipboardCopyText';
 import SampleForm from './SampleForm'
 import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
 import ComputedPropLabel from './computed_props/ComputedPropLabel';
@@ -304,7 +305,7 @@ export default class SampleDetails extends React.Component {
   sampleAverageMW(sample) {
     let mw = sample.molecule_molecular_weight;
     if(mw)
-      return `${mw.toFixed(MWPrecision)} g/mol`;
+      return <ClipboardCopyText text={`${mw.toFixed(MWPrecision)} g/mol`} />;
     else
       return '';
   }
@@ -312,7 +313,7 @@ export default class SampleDetails extends React.Component {
   sampleExactMW(sample) {
     let mw = sample.molecule_exact_molecular_weight
     if(mw)
-      return `Exact mass: ${mw.toFixed(MWPrecision)} g/mol`;
+      return <ClipboardCopyText text={`Exact mass: ${mw.toFixed(MWPrecision)} g/mol`} />;
     else
       return '';
   }
@@ -372,10 +373,13 @@ export default class SampleDetails extends React.Component {
 
   sampleHeader(sample) {
     let saveBtnDisplay = sample.isEdited ? '' : 'none'
+    const titleTooltip = `Created at: ${sample.created_at} \n Updated at: ${sample.updated_at}`;
 
     return (
       <div>
-        <i className="icon-sample" /> {sample.title()}
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+          <span><i className="icon-sample" />{sample.title()}</span>
+        </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeSample">Close Sample</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"

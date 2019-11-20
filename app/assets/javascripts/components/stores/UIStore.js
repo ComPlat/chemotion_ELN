@@ -54,6 +54,7 @@ class UIStore {
 
       showPreviews: true,
       showAdvancedSearch: false,
+      filterCreatedAt: true,
       fromDate: null,
       toDate: null,
       productOnly: false,
@@ -98,6 +99,7 @@ class UIStore {
       handleCloseDeviceManagement: UIActions.closeDeviceManagement,
       handleShowModalChange: UIActions.updateModalProps,
       handleHideModal: UIActions.hideModal,
+      handleSetFilterCreatedAt: UIActions.setFilterCreatedAt,
       handleSetFromDate: UIActions.setFromDate,
       handleSetToDate: UIActions.setToDate,
       handleSetProductOnly: UIActions.setProductOnly,
@@ -251,7 +253,7 @@ class UIStore {
   handleSelectCollection(collection, hasChanged = false) {
     const state = this.state;
     const isSync = collection.is_sync_to_me ? true : false;
-    const { fromDate, toDate, productOnly } = state;
+    const { filterCreatedAt, fromDate, toDate, productOnly } = state;
 
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
@@ -270,7 +272,7 @@ class UIStore {
       this.state.isSync = isSync;
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
-      const params = { per_page, fromDate, toDate, productOnly };
+      const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
 
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
@@ -348,6 +350,13 @@ class UIStore {
       title: "",
       component: "",
       action: null
+    }
+  }
+
+  handleSetFilterCreatedAt(filterCreatedAt) {
+    this.state.filterCreatedAt = filterCreatedAt;
+    if (this.state.fromDate != null || this.state.toDate != null) {
+      this.handleSelectCollection(this.state.currentCollection, true);
     }
   }
 
