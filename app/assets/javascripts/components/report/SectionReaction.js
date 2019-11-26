@@ -297,7 +297,7 @@ const ObservationContent = ({show, observation}) => {
   return (
     show
       ? <div>
-          <h4> Observation </h4>
+          <h4>Additional information for publication and purification details</h4>
           <QuillViewer value={observation} />
         </div>
       : null
