@@ -156,6 +156,10 @@ class ReportActions {
         });
     };
   }
+
+  changeUi(current) {
+    return current;
+  }
 }
 
 export default alt.createActions(ReportActions);

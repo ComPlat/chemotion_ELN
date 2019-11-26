@@ -15,6 +15,7 @@ describe('ReportStore', () => {
     const actual = ReportStore.getState()
     const expected = originalState
     expected.fileName = actual.fileName
+    delete actual['lastUiChange']
     expect(actual).toEqual(expected)
   })
 
@@ -37,6 +38,7 @@ describe('ReportStore', () => {
   it('should handleToggleSplSettingsCheckAll', () => {
     ReportActions.toggleSplSettingsCheckAll()
     const newState = ReportStore.getState()
+    delete newState['lastUiChange']
     const expected = { ...originalState,
       checkedAllSplSettings: false,
       splSettings: [ {text: "diagram", checked: false},
@@ -50,6 +52,7 @@ describe('ReportStore', () => {
   it('should handleToggleRxnSettingsCheckAll', () => {
     ReportActions.toggleRxnSettingsCheckAll()
     const newState = ReportStore.getState()
+    delete newState['lastUiChange']
     const expected = { ...originalState,
       checkedAllRxnSettings: false,
       rxnSettings: [ {text: "diagram", checked: false},

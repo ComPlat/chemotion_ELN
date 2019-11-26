@@ -22,6 +22,7 @@ export default class ReportContainer extends Component {
     this.onChangeUI = this.onChangeUI.bind(this);
     this.panelHeader = this.panelHeader.bind(this);
     this.updateQueue = this.updateQueue.bind(this);
+    this.previewTab = this.previewTab.bind(this);
   }
 
   componentDidMount() {
@@ -42,7 +43,13 @@ export default class ReportContainer extends Component {
   }
 
   onChangeUI(state) {
-    ReportActions.updateCheckedTags.defer(state);
+    const { lastUiChange } = ReportStore.getState();
+    const current = new Date().getTime();
+    const shouldUpdate = current - lastUiChange >= 5000;
+    if (shouldUpdate) {
+      ReportActions.changeUi.defer(current);
+      setTimeout(() => ReportActions.updateCheckedTags.defer(state), 5000);
+    }
   }
 
   panelHeader() {
@@ -90,6 +97,18 @@ export default class ReportContainer extends Component {
     if (processings.length > 0) {
       ReportActions.updateProcessQueue.defer(processings);
     }
+  }
+
+  previewTab() {
+    const { previewLoading } = this.state;
+    return (
+      <p style={{ height: 0 }}>
+        preview
+        {
+          previewLoading ? <i className="fa fa-refresh fa-spin fa-fw" /> : null
+        }
+      </p>
+    );
   }
 
   render() {
@@ -143,7 +162,7 @@ export default class ReportContainer extends Component {
               <Serials selMolSerials={selMolSerials} template={template} />
             </div>
           </Tab>
-          <Tab eventKey={4} title={'Preview'}>
+          <Tab eventKey={4} title={this.previewTab()}>
             <div className="panel-fit-screen">
               <Previews
                 selectedObjs={selectedObjs}
