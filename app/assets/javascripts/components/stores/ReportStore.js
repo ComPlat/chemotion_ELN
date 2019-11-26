@@ -60,6 +60,8 @@ class ReportStore {
     this.template = 'standard';
     this.prdAtts = [];
     this.attThumbNails = [];
+    this.lastUiChange = new Date().getTime();
+    this.previewLoading = false;
     this.fileName = '';
 
     this.bindListeners({
@@ -89,6 +91,7 @@ class ReportStore {
       handleUpdMSVal: ReportActions.updMSVal,
       handleUpdateThumbNails: ReportActions.updateThumbNails,
       handleUpdateDefaultTags: ReportActions.updateDefaultTags,
+      handleChangeUi: ReportActions.changeUi,
     });
   }
 
@@ -277,6 +280,7 @@ class ReportStore {
             selectedObjs: finalObjs,
             prdAtts: newPrdAtts,
             selMolSerials: molSerials,
+            previewLoading: false,
           });
         }).catch((errorMessage) => {
           console.log(errorMessage);
@@ -300,6 +304,11 @@ class ReportStore {
         selectedObjs: finalObjs,
         prdAtts: newPrdAtts,
         selMolSerials: molSerials,
+        previewLoading: false,
+      });
+    } else {
+      this.setState({
+        previewLoading: false,
       });
     }
   }
@@ -717,6 +726,13 @@ class ReportStore {
   handleUpdateDefaultTags(defaultTags) {
     this.setState({ defaultTags });
     // TODO: update selectedObjs?
+  }
+
+  handleChangeUi(current) {
+    this.setState({
+      lastUiChange: current,
+      previewLoading: true,
+    });
   }
 }
 
