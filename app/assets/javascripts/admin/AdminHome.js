@@ -9,6 +9,7 @@ import GroupsDevices from './GroupsDevices';
 import MessagePublish from './MessagePublish';
 import DataCollector from './DataCollector';
 import OlsTerms from './OlsTerms';
+import NovncSettings from './NovncSettings';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -51,6 +52,8 @@ class AdminHome extends React.Component {
       return this.renderGroupMgnt();
     } else if (pageIndex === 5) {
       return this.renderOlsTerms();
+    } else if (pageIndex === 6) {
+      return this.renderNovncSettings();
     }
     return (<div />);
   }
@@ -81,6 +84,9 @@ class AdminHome extends React.Component {
             </NavItem>
             <NavItem eventKey={5}>
               Load OLS Terms
+            </NavItem>
+            <NavItem eventKey={6}>
+              NoVNC Settings
             </NavItem>
           </Nav>
         </Col>
@@ -133,6 +139,14 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <OlsTerms />
+      </Col>
+    );
+  }
+  renderNovncSettings() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <NovncSettings />
       </Col>
     );
   }
