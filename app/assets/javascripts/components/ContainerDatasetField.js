@@ -104,7 +104,7 @@ class ContainerDatasetField extends Component{
       return connectDropTarget(
         <div>
         <a style={{cursor: 'pointer'}} onClick={() => handleModalOpen(dataset_container)}>
-          {dataset_container.name}
+          {dataset_container.name || 'new'}
         </a>
         <ButtonToolbar className="pull-right">
           <Button bsSize="xsmall" bsStyle="info" onClick={() => AttachmentFetcher.downloadZip(dataset_container.id)}>
