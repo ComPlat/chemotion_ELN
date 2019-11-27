@@ -12,6 +12,10 @@ import ElementActions from '../actions/ElementActions';
 import UIStore from '../stores/UIStore';
 import UIActions from '../actions/UIActions';
 import UserStore from '../stores/UserStore';
+import GenericElCriteriaModal from '../GenericElCriteriaModal';
+import GenericElCriteriaMof from '../GenericElCriteriaMof';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
+import GenericEl from '../models/GenericEl';
 
 export default class Search extends React.Component {
   constructor(props) {
@@ -21,10 +25,26 @@ export default class Search extends React.Component {
       showStructureEditor: false,
       queryMolfile: null,
       searchType: 'similar',
-      tanimotoThreshold: 0.7
+      tanimotoThreshold: 0.7,
+      showGenericElCriteria: false,
+      genericEl: null
     };
     this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
+    this.hideGenericElCriteria = this.hideGenericElCriteria.bind(this);
+    this.genericElSearch = this.genericElSearch.bind(this);
+  }
+
+  componentDidMount() {
+    console.log('search.componentDidMount');
+    //GenericElsFetcher.fetchElementKlass('MOF')
+    //  .then((result) => {
+    //    const genericEl = GenericEl.buildEmpty(0, result.klass);
+    //    genericEl.name = '';
+    //    this.setState({ genericEl });
+    //  }).catch((errorMessage) => {
+    //    console.log(errorMessage);
+    //  });
   }
 
   handleSelectionChange(selection) {
@@ -73,6 +93,26 @@ export default class Search extends React.Component {
       });
   }
 
+  genericElSearch() {
+    const uiState = UIStore.getState();
+    const { currentCollection } = uiState;
+    const collectionId = currentCollection ? currentCollection.id : null;
+    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const { genericEl } = this.state;
+    const criteria = {
+      collectionId,
+      isSync,
+      search_by_method: 'MOF',
+      genericElName: genericEl.name,
+      genericElProperties: genericEl.properties,
+      elementType: this.state.elementType,
+      page_size: uiState.number_of_results,
+    };
+    UIActions.setSearchSelection(criteria);
+    ElementActions.fetchGenericElByCriteria(criteria);
+    this.hideGenericElCriteria();
+  }
+
   handleClearSearchSelection() {
     const { currentCollection, isSync } = UIStore.getState();
     currentCollection['clearSearch'] = true;
@@ -92,9 +132,20 @@ export default class Search extends React.Component {
     this.setState({ showStructureEditor: false });
   }
 
+  showGenericElCriteria() {
+    this.setState({ showGenericElCriteria: true });
+  }
+
+  hideGenericElCriteria() {
+    this.setState({ showGenericElCriteria: false });
+  }
 
   handleElementSelection(event) {
-    this.setState({ elementType: event });
+    if (event === 'genericelement') {
+      this.showGenericElCriteria();
+    } else {
+      this.setState({ elementType: event });
+    }
   }
 
   handleStructureEditorSave(molfile) {
@@ -125,10 +176,10 @@ export default class Search extends React.Component {
 
   renderMenuItems() {
     const elements = [
-      "All",
-      "Samples", "Reactions",
-      "Wellplates", "Screens"
-    ]
+      'All',
+      'Samples', 'Reactions',
+      'Wellplates', 'Screens'
+    ];
 
     const menu = elements.map(element => (
       <MenuItem key={element} onSelect={() => this.handleElementSelection(element.toLowerCase())}>
@@ -140,6 +191,13 @@ export default class Search extends React.Component {
     menu.push(
       <MenuItem key="advanced" onSelect={this.showAdvancedSearch}>
         Advanced Search
+      </MenuItem>
+    );
+
+    menu.push(<MenuItem key="divider-generic" divider />);
+    menu.push(
+      <MenuItem key="GenericElement" onSelect={() => this.handleElementSelection('GenericElement'.toLowerCase())}>
+        MOF
       </MenuItem>
     );
 
@@ -221,6 +279,13 @@ export default class Search extends React.Component {
       </DropdownButton>
     );
 
+    const mofProps = {
+      show: this.state.showGenericElCriteria,
+      component: <GenericElCriteriaMof genericEl={this.state.genericEl} onHide={this.hideGenericElCriteria} onSearch={this.genericElSearch} />,
+      title: 'Please input your search criteria for Metal-Organic Frameworks, MOF',
+      onHide: this.hideGenericElCriteria
+    };
+
     return (
       <div className="chemotion-search">
         <div className="search-structure-draw">
@@ -244,6 +309,9 @@ export default class Search extends React.Component {
             buttonAfter={buttonAfter}
           />
         </div>
+        {
+          this.state.showGenericElCriteria ? <GenericElCriteriaModal {...mofProps} /> : <div />
+        }
       </div>
     );
   }

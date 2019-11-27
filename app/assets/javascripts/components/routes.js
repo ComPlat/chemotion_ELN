@@ -7,13 +7,15 @@ import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 import rXr from './extra/routesXroutes';
 import routesUtils from './routesUtils';
+import UIFetcher from './fetchers/UIFetcher';
+import klasses from '../../../../config/klasses.json';
+
 
 const allRoutes = (r) => {
   let rts = { ...r };
   for (let i = 0; i < rXr.count; i++) { rts = { ...rts, ...rXr[`content${i}`] }; }
   return rts;
 }
-
 
 const routes = {
   '/': 'root',
@@ -103,10 +105,35 @@ const routes = {
     },
     '/': 'showFwdRxnPrediction'
   },
+  '/genericEl': {
+    target: {
+      showOrNew: routesUtils.genericElShowOrNew
+    },
+    '/:genericElID': 'showOrNew'
+  }
 };
 
+  // const { klasses } = UIStore.getState();
+  // console.log(klasses);
+
+
+// UIFetcher.initialize()
+//   .then((result) => {
+//     console.log(result);
+//     const klasses = result.klasses || [];
+//   });
+
+klasses && klasses.forEach((klass) => {
+  const item = {};
+  item['target'] = { showOrNew: routesUtils.genericElShowOrNew };
+  item[`/:${klass}ID`] = 'showOrNew';
+  routes[`/${klass}`] = item;
+});
+
+
+console.log(routes);
 export default function() {
   Aviator.root = '/mydb';
   Aviator.pushStateEnabled = true;
-  Aviator.setRoutes( allRoutes(routes));
+  Aviator.setRoutes(allRoutes(routes));
 }

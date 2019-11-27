@@ -16,7 +16,9 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ContainerFetcher from '../fetchers/ContainerFetcher';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 
+import GenericEl from '../models/GenericEl';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
@@ -179,8 +181,36 @@ class ElementActions {
       position: "tc",
       onAdd: function(notificationObject) { uid = notificationObject.uid; }
     });
+    if (params && params.selection && params.selection.search_by_method == 'MOF') {
+      return (dispatch) => {
+        GenericElsFetcher.search(criteria)
+          .then((result) => {
+            dispatch(result);
+            NotificationActions.removeByUid(uid);
+          }).catch((errorMessage) => { console.log(errorMessage); });
+      };
+    } else {
+      return (dispatch) => {
+        SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
+          .then((result) => {
+            dispatch(result);
+            NotificationActions.removeByUid(uid);
+          }).catch((errorMessage) => { console.log(errorMessage); });
+      };
+    }
+
+  }
+
+  fetchGenericElByCriteria(criteria) {
+    let uid = "search_generic_elements";
+    NotificationActions.add({
+      title: "Searching ...",
+      level: "info",
+      position: "tc",
+      uid,
+    });
     return (dispatch) => {
-      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
+      GenericElsFetcher.search(criteria)
         .then((result) => {
           dispatch(result);
           NotificationActions.removeByUid(uid);
@@ -189,6 +219,61 @@ class ElementActions {
   }
 
   // -- Collections --
+
+  fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch({ result, type: elementType });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  generateEmptyGenericEl(collection_id, type) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchElementKlass(type)
+    .then((result) => {
+      dispatch(GenericEl.buildEmpty(collection_id, result.klass));
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  };
+  }
+
+  fetchGenericElById(id, type) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchById(id)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  createGenericEl(params) {
+    return (dispatch) => {
+      GenericElsFetcher.create(params)
+      .then(result => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  updateGenericEl(params) {
+    return (dispatch) => {
+      GenericElsFetcher.update(params)
+      .then(result => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
 
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
       moleculeSort = false) {

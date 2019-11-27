@@ -26,6 +26,14 @@ module Chemotion
         status 204
       end
 
+      namespace :element_klasses_name do
+        desc "get klasses"
+        get do
+          list = ElementKlass.where(is_active: true)
+          list.pluck(:name)
+        end
+      end
+
       namespace :download do
         desc 'download file for editoring'
         before do

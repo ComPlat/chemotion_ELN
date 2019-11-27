@@ -2,7 +2,6 @@ import React from 'react';
 import { ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { List } from 'immutable';
-
 import { ShareButton, MoveOrAssignButton, RemoveOrDeleteButton } from './ManagingActionButtons';
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
@@ -15,10 +14,12 @@ import ManagingModalDelete from './ManagingModalDelete';
 import ManagingModalRemove from './ManagingModalRemove';
 import ManagingModalTopSecret from './ManagingModalTopSecret';
 import ElementActions from '../actions/ElementActions';
+import MatrixCheck from '../common/MatrixCheck';
+import klasses from '../../../../../config/klasses.json';
 
 const upState = (state) => {
   const { sample, reaction, screen, wellplate, research_plan } = state;
-  return ({
+  const stateObj  = {
     sample: {
       checkedAll: sample ? sample.checkedAll : false,
       checkedIds: sample ? sample.checkedIds : List(),
@@ -43,14 +44,32 @@ const upState = (state) => {
       checkedAll: research_plan ? research_plan.checkedAll : false,
       checkedIds: research_plan ? research_plan.checkedIds : List(),
       uncheckedIds: research_plan ? research_plan.uncheckedIds : List(),
-    },
-  });
+    }
+  };
+
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+
+    // eslint-disable-next-line no-unused-expressions
+    klasses && klasses.forEach((klass) => {
+      stateObj[`${klass}`] = {
+        checkedAll: state[`${klass}`] ? state[`${klass}`].checkedAll : false,
+        checkedIds: state[`${klass}`] ? state[`${klass}`].checkedIds : List(),
+        uncheckedIds: state[`${klass}`] ? state[`${klass}`].uncheckedIds : List(),
+      };
+    });
+  }
+
+
+  console.log(stateObj);
+  return (stateObj);
 };
 
 export default class ManagingActions extends React.Component {
   constructor(props) {
     super(props);
-    const { currentUser } = UserStore.getState();
+    const { currentUser, genericEls } = UserStore.getState();
+    //console.log(genericEls);
     this.state = {
       currentUser,
       currentCollection: { id: 0 },
@@ -58,11 +77,13 @@ export default class ManagingActions extends React.Component {
       deletion_allowed: false,
       remove_allowed: false,
       is_top_secret: false,
+      genericEls: [],
       ...upState({})
     };
 
     this.handleButtonClick = this.handleButtonClick.bind(this);
     this.onChange = this.onChange.bind(this);
+
     this.onUserChange = this.onUserChange.bind(this);
     this.onPermissionChange = this.onPermissionChange.bind(this);
   }
@@ -82,7 +103,7 @@ export default class ManagingActions extends React.Component {
 
   onChange(state) {
     const {
-      sample, reaction, screen, wellplate, research_plan, currentCollection
+      sample, reaction, screen, wellplate, research_plan, genericEl, currentCollection
     } = state;
     if (this.collectionChanged(state)) {
       this.setState({
@@ -95,8 +116,8 @@ export default class ManagingActions extends React.Component {
       });
     }
     else if (this.checkUIState(state)) {
-      const hasSel = [sample, reaction, screen, wellplate, research_plan].find(el => (
-        el && (el.checkedIds.size > 0 || el.checkedAll)));
+      const hasSel = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].concat(klasses || []).find(el => (
+        state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
       PermissionActions.fetchPermissionStatus(state);
       this.setState({
         ...upState(state), hasSel
@@ -109,7 +130,13 @@ export default class ManagingActions extends React.Component {
     const oldId = this.state.currentUser ? this.state.currentUser.id : null;
     if (newId !== oldId) {
       this.setState({
-        currentUser: state.currentUser
+        currentUser: state.currentUser,
+      });
+    }
+    //console.log(state.genericEls);
+    if (typeof state.genericEls !== 'undefined' && state.genericEls !== null) {
+      this.setState({
+        genericEls: state.genericEls
       });
     }
   }
@@ -120,17 +147,22 @@ export default class ManagingActions extends React.Component {
 
   collectionChanged(state) {
     const { currentCollection } = state;
+    if (typeof currentCollection === 'undefined' || currentCollection == null) {
+      return false;
+    }
     const { id, is_sync_to_me } = currentCollection;
     return this.state.currentCollection.id !== id ||
       this.state.currentCollection.is_sync_to_me !== is_sync_to_me;
   }
 
   checkUIState(state) {
-    const result = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].find(el => (
+    const genericNames = (this.state.genericEls && this.state.genericEls.map(el => el.name)) || [];
+    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].concat(genericNames);
+    const result = elNames.find(el => ( this.state[el] && state[el] && (
       state[el].checkedIds !== this.state[el].checkedIds ||
       state[el].checkedAll !== this.state[el].checkedAll ||
-      state[el].checkedIds !== this.state[el].checkedIds
-    ));
+      state[el].uncheckedIds !== this.state[el].uncheckedIds
+    )));
     return result;
   }
 
@@ -215,8 +247,10 @@ export default class ManagingActions extends React.Component {
 ManagingActions.propTypes = {
   updateModalProps: PropTypes.func.isRequired,
   customClass: PropTypes.string,
+  genericEls: PropTypes.array
 };
 
 ManagingActions.defaultProps = {
   customClass: null,
+  genericEls: []
 };

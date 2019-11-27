@@ -2,6 +2,22 @@ import 'whatwg-fetch';
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class UsersFetcher {
+  static fetchElementKlasses() {
+    return fetch('/api/v1/generic_elements/klasses.json', {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+  
+  static fetchElementKlassNames() {
+    return fetch('/api/v1/public/element_klasses_name.json', {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static fetchUsersByName(name) {
     const promise = fetch(`/api/v1/users/name.json?name=${name}`, {
       credentials: 'same-origin'

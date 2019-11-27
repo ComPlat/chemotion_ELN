@@ -18,7 +18,8 @@ module Usecases
             reaction_ids: @params.fetch(:reaction_ids, []),
             wellplate_ids: @params.fetch(:wellplate_ids, []),
             screen_ids: @params.fetch(:screen_ids, []),
-            research_plan_ids: @params.fetch(:research_plan_ids, [])
+            research_plan_ids: @params.fetch(:research_plan_ids, []),
+            element_ids: @params.fetch(:element_ids, [])
           ).execute!
         end
       end

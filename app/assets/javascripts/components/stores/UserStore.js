@@ -1,6 +1,5 @@
 import alt from '../alt';
 import _ from 'lodash';
-
 import UserActions from '../actions/UserActions';
 
 class UserStore {
@@ -14,19 +13,21 @@ class UserStore {
       devices: [],
       rxnos: [],
       chmos: [],
-      labels: []
+      labels: [],
+      genericEls: []
     };
 
     this.bindListeners({
       handleFetchOlsRxno: UserActions.fetchOlsRxno,
       handleFetchOlsChmo: UserActions.fetchOlsChmo,
+      handleFetchGenericEls: UserActions.fetchGenericEls,
       handleFetchCurrentUser: UserActions.fetchCurrentUser,
       handleFetchUserLabels: UserActions.fetchUserLabels,
       handleFetchProfile: UserActions.fetchProfile,
       handleSelectTab: UserActions.selectTab,
       handleUpdateUserProfile: UserActions.updateUserProfile,
       handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
-    })
+    });
   }
 
   handleFetchUserLabels(result) {
@@ -39,6 +40,10 @@ class UserStore {
 
   handleFetchOlsChmo(result) {
     this.state.chmos = result.ols_terms;
+  }
+
+  handleFetchGenericEls(result) {
+    this.state.genericEls = result.klass;
   }
 
   handleFetchCurrentUser(result) {
@@ -64,7 +69,7 @@ class UserStore {
   }
 
   handleSelectTab(tab) {
-    const { layout } = this.state.profile.data
+    const { layout } = this.state.profile.data;
     const type = Object.keys(layout).filter((e) => {
       return layout[e] === tab + 1
     })[0]

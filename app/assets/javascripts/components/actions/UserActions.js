@@ -2,9 +2,7 @@ import alt from '../alt';
 import UsersFetcher from '../fetchers/UsersFetcher';
 
 import cookie from 'react-cookie'
-
 import DocumentHelper from '../utils/DocumentHelper';
-
 
 class UserActions {
   fetchOlsRxno() {
@@ -37,6 +35,16 @@ class UserActions {
         console.log(errorMessage);
       });};
   }
+
+  fetchGenericEls() {
+    return (dispatch) => { UsersFetcher.fetchElementKlasses()
+      .then((roots) => {
+        dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
 
   logout() {
     fetch('/users/sign_out', {

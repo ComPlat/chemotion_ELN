@@ -72,6 +72,7 @@ module Chemotion
 
       desc "delete element from ui state selection."
       delete do
+
         deleted = { 'sample' => [] }
         %w[sample reaction wellplate screen research_plan].each do |element|
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
@@ -84,6 +85,10 @@ module Chemotion
         deleted['sample'] += Sample.joins(sql_join).joins(:collections)
           .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
           .destroy_all.map(&:id)
+        klasses = ElementKlass.find_each do |klass|
+          next unless params[klass.name].present? && (params[klass.name][:checkedAll] || params[klass.name][:checkedIds].present?)
+          deleted[klass.name] = @collection.send('elements').by_ui_state(params[klass.name]).destroy_all.map(&:id)
+        end
 
         { selecteds: params[:selecteds].select { |sel| !deleted.fetch(sel['type'], []).include?(sel['id']) } }
       end

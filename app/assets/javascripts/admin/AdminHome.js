@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap';
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
 import AdminNavigation from './AdminNavigation';
 import Notifications from '../components/Notifications';
 import AdminDashboard from './AdminDashboard';
@@ -12,6 +14,7 @@ import OlsTerms from './OlsTerms';
 import NovncSettings from './NovncSettings';
 import MatrixManagement from './MatrixManagement';
 import TextTemplateContainer from './text_templates/TextTemplateContainer';
+import GenericElementAdmin from './GenericElementAdmin';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -60,6 +63,8 @@ class AdminHome extends React.Component {
       return this.renderMatrix();
     } else if (pageIndex === 8) {
       return this.renderTextTemplates();
+    } else if (pageIndex === 9) {
+      return this.renderGenericElement();
     }
 
     return (<div />);
@@ -101,6 +106,9 @@ class AdminHome extends React.Component {
             </NavItem>
             <NavItem eventKey={8}>
               Text Templates
+            </NavItem>
+            <NavItem eventKey={9}>
+              Generic Elements
             </NavItem>
           </Nav>
         </Col>
@@ -189,6 +197,15 @@ class AdminHome extends React.Component {
     );
   }
 
+  renderGenericElement() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <GenericElementAdmin />
+      </Col>
+    );
+  }
+
   render() {
     return (
       <div>
@@ -209,7 +226,9 @@ class AdminHome extends React.Component {
   }
 }
 
+const AdminHomeWithDnD = DragDropContext(HTML5Backend)(AdminHome);
+
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('AdminHome');
-  if (domElement) { ReactDOM.render(<AdminHome />, domElement); }
+  if (domElement) { ReactDOM.render(<AdminHomeWithDnD />, domElement); }
 });

@@ -17,6 +17,8 @@ import ElementStore from './stores/ElementStore';
 import { SameEleTypId } from './utils/ElementUtils';
 import LiteratureDetails from './LiteratureDetails';
 import PredictionContainer from './prediction/PredictionContainer';
+import GenericElDetails from './GenericElDetails';
+import UserStore from './stores/UserStore';
 
 const tabInfoHash = {
   report: {
@@ -90,6 +92,7 @@ export default class ElementDetails extends Component {
       activeKey,
       deletingElement,
       showTooltip: false,
+      genericEls: UserStore.getState().genericEls || []
     };
 
     this.handleResize = this.handleResize.bind(this);
@@ -142,6 +145,7 @@ export default class ElementDetails extends Component {
   }
 
   content(el) {
+
     switch (el.type) {
       case 'sample':
         return (
@@ -201,6 +205,9 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       default:
+        if (el && el.klassType == 'GenericEl' && el.type != null) {
+          return <GenericElDetails genericEl={el} />;
+        }
         return (
           <div style={{ textAlign: 'center' }}>
             <br />
@@ -222,10 +229,11 @@ export default class ElementDetails extends Component {
     const focusing = elKey === this.state.activeKey;
 
     let iconElement = (<i className={`icon-${el.type}`} />);
-
+    
     const tab = tabInfoHash[el.type] || {};
     const title = tab.title || el.title();
     if (tab.iconEl) { iconElement = tab.iconEl; }
+    if (el.element_klass) { iconElement = (<i className={`${el.element_klass.icon_name}`} />); }
     const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle || ''}>{iconElement}</Label>);
     return (<div>{icon} &nbsp; {title} </div>);
   }

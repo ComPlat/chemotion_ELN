@@ -38,6 +38,7 @@ import { elementShowOrNew } from '../routesUtils';
 import DetailActions from '../actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
 import { chmoConversions } from '../OlsComponent';
+import MatrixCheck from '../common/MatrixCheck';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -53,49 +54,51 @@ const fetchOls = (elementType) => {
 
 class ElementStore {
   constructor() {
-    this.state = {
-      elements: {
-        samples: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        },
-        reactions: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        },
-        wellplates: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        },
-        screens: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        },
-        devices: {
-          devices: [],
-          activeAccordionDevice: 0,
-          selectedDeviceId: -1
-        },
-        research_plans: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        }
+    const elements = {
+      samples: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
       },
+      reactions: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
+      wellplates: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
+      screens: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
+      devices: {
+        devices: [],
+        activeAccordionDevice: 0,
+        selectedDeviceId: -1
+      },
+      research_plans: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
+    };
+
+    this.state = {
+      elements,
       currentElement: null,
       elementWarning: false,
       moleculeSort: false,
@@ -141,6 +144,11 @@ class ElementStore {
       handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
+      handleFetchGenericElByCriteria: ElementActions.fetchGenericElByCriteria,
+
+      handleFetchGenericElsByCollectionId: ElementActions.fetchGenericElsByCollectionId,
+      handleFetchGenericElById: ElementActions.fetchGenericElById,
+      handleCreateGenericEl: ElementActions.createGenericEl,
 
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
@@ -196,6 +204,7 @@ class ElementStore {
       handleRefreshElements: ElementActions.refreshElements,
       handleGenerateEmptyElement:
         [
+          ElementActions.generateEmptyGenericEl,
           ElementActions.generateEmptyWellplate,
           ElementActions.generateEmptyScreen,
           ElementActions.generateEmptyResearchPlan,
@@ -235,7 +244,8 @@ class ElementStore {
         // ElementActions.updateSample,
         ElementActions.updateWellplate,
         ElementActions.updateScreen,
-        ElementActions.updateResearchPlan
+        ElementActions.updateResearchPlan,
+        ElementActions.updateGenericEl,
       ],
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
     })
@@ -485,13 +495,17 @@ class ElementStore {
     });
   }
 
+  handleFetchGenericElByCriteria(result) {
+    this.state.elements['genericEls'] = result;
+  }
+
   // -- Elements --
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
     const { sample, reaction, wellplate, screen, research_plan, currentCollection } = ui_state;
     const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
-    ElementActions.deleteElementsByUIState({
+    const params = {
       options,
       sample,
       reaction,
@@ -500,7 +514,19 @@ class ElementStore {
       research_plan,
       currentCollection,
       selecteds
-    });
+    };
+
+    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+      const klasses = UIStore.getState();
+
+      // eslint-disable-next-line no-unused-expressions
+      klasses && klasses.forEach((klass) => {
+        params[`${klass}`] = ui_state[`${klass}`];
+      });
+    }
+
+    ElementActions.deleteElementsByUIState(params);
   }
 
   handleUpdateElementsCollection() {
@@ -539,8 +565,38 @@ class ElementStore {
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
+
+
+        const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+        if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+          const klasses = UIStore.getState();
+
+          // eslint-disable-next-line no-unused-expressions
+          klasses && klasses.forEach((klass) => {
+            if (layout[`${klass}`] && layout[`${klass}`] > 0) { this.handleRefreshElements(klass); }
+          });
+        }
       }
     }
+  }
+
+  handleFetchGenericElsByCollectionId(result) {
+    //const klassName = result.element_klass && result.element_klass.name;
+    let type = result.type;
+    if (typeof type === 'undefined' || type == null) {
+      type = (result.result.elements && result.result.elements.length > 0 && result.result.elements[0].type) || result.result.type;
+    }
+    this.state.elements[`${type}s`] = result.result;
+  }
+
+  handleFetchGenericElById(result) {
+    this.changeCurrentElement(result);
+  }
+
+  handleCreateGenericEl(genericEl) {
+    this.handleRefreshElements((genericEl.element_klass && genericEl.element_klass.name) || 'genericEl');
+    //this.handleRefreshElements('genericEl');
+    this.navigateToNewElement(genericEl, 'GenericEl');
   }
 
   handleFetchSamplesByCollectionId(result) {
@@ -856,7 +912,7 @@ class ElementStore {
 
   // -- Generic --
 
-  navigateToNewElement(element = {}) {
+  navigateToNewElement(element = {}, klassType='') {
     this.waitFor(UIStore.dispatchToken);
     const { type, id } = element;
     const { uri, namedParams } = Aviator.getCurrentRequest();
@@ -867,7 +923,7 @@ class ElementStore {
     }
     namedParams[`${type}ID`] = id;
     Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${id}`, { silent: true });
-    elementShowOrNew({ type, params: namedParams });
+    elementShowOrNew({ type, klassType, params: namedParams });
     return null;
   }
 
@@ -895,15 +951,19 @@ class ElementStore {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
     if (!uiState.currentCollection || !uiState.currentCollection.id) return;
+    if (typeof uiState[type] === 'undefined') return;
 
     const { page } = uiState[type];
     const { moleculeSort } = this.state;
-    this.state.elements[`${type}s`].page = page;
+    if (this.state.elements[`${type}s`]) {
+      this.state.elements[`${type}s`].page = page;
+    }
 
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
     const { currentSearchSelection } = uiState;
+
     if (currentSearchSelection != null) {
       currentSearchSelection.page_size = uiState.number_of_results;
       ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
@@ -916,21 +976,25 @@ class ElementStore {
     } else {
       const per_page = uiState.number_of_results;
       const { fromDate, toDate, productOnly } = uiState;
-      const params = { page, per_page, fromDate, toDate, productOnly };
+      const params = { page, per_page, fromDate, toDate, productOnly, name: type };
       const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
-      const fn = `fetch${fnName}ByCollectionId`;
+      let fn = `fetch${fnName}ByCollectionId`;
+      //const { currentType } = UserStore.getState();
       const allowedActions = [
         'fetchSamplesByCollectionId',
         'fetchReactionsByCollectionId',
         'fetchWellplatesByCollectionId',
         'fetchScreensByCollectionId',
-        'fetchResearchPlansByCollectionId',
+        'fetchResearchPlansByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
         ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+      } else {
+        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
       }
     }
   }
+
 
   // CurrentElement
   handleSetCurrentElement(result) {
@@ -1007,7 +1071,7 @@ class ElementStore {
 
 
   handleGetMoleculeCas(updatedSample) {
-    const selecteds = this.state.selecteds
+    const selecteds = this.state.selecteds;
     const index = this.elementIndex(selecteds, updatedSample)
     const newSelecteds = this.updateElement(updatedSample, index)
     this.setState({ selecteds: newSelecteds })
@@ -1068,6 +1132,9 @@ class ElementStore {
         fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
         this.handleRefreshElements('sample');
+        break;
+      case 'genericEl':
+        this.handleRefreshElements('genericEl');
         break;
       default:
         break;

@@ -12,12 +12,12 @@ module Usecases
       def execute!
         ActiveRecord::Base.transaction do
           c = Collection.create(@collection_attributes)
-
           sample_ids = @params.fetch(:sample_ids, [])
           reaction_ids =  @params.fetch(:reaction_ids, [])
           wellplate_ids = @params.fetch(:wellplate_ids, [])
           screen_ids = @params.fetch(:screen_ids, [])
           research_plan_ids = @params.fetch(:research_plan_ids, [])
+          element_ids = @params.fetch(:element_ids, [])
 
           # Reactions and Wellplates have associated Samples
           associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(@current_user_id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(@current_user_id, wellplate_ids).map(&:id)
@@ -58,6 +58,12 @@ module Usecases
 
           research_plan_ids.each do |research_plan_id|
             CollectionsResearchPlan.create(collection_id: c.id, research_plan_id: research_plan_id)
+          end
+
+          element_ids.each do |k, ids|
+            ids.each do |element_id|
+              CollectionsElement.create(collection_id: c.id, element_id: element_id, element_type: k)
+            end
           end
 
           # SendSharingNotificationJob.perform_later(@user, '')

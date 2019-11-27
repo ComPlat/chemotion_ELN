@@ -59,6 +59,9 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
+    if (typeof state[this.props.type] === 'undefined' || state[this.props.type] === null) {
+      return;
+    }
     const { checkedIds, uncheckedIds, checkedAll } = state[this.props.type];
     const {
       filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly
@@ -99,8 +102,7 @@ export default class ElementsTable extends React.Component {
 
   onChange(state) {
     const type = this.props.type + 's';
-    const elementsState = state.elements[type];
-
+    const elementsState = (state && state.elements && state.elements[type]) || {};
     const { elements, page, pages, perPage, totalElements } = elementsState;
 
     let currentElement;
@@ -188,6 +190,7 @@ export default class ElementsTable extends React.Component {
   handleNumberOfResultsChange(event) {
     const { value } = event.target;
     const { type } = this.props;
+    console.log(type);
     if (parseInt(value, 10) > 0) {
       UIActions.changeNumberOfResultsShown(value);
       ElementActions.refreshElements(type);

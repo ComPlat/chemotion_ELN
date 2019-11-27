@@ -12,6 +12,7 @@ import UserStore from '../stores/UserStore';
 import ElementActions from '../actions/ElementActions';
 import ClipboardActions from '../actions/ClipboardActions';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
+import MatrixCheck from '../common/MatrixCheck';
 
 export default class CreateButton extends React.Component {
   constructor(props) {
@@ -26,7 +27,7 @@ export default class CreateButton extends React.Component {
       }
     }
 
-    this.createBtn = this.createBtn.bind(this)
+    this.createBtn = this.createBtn.bind(this);
   }
 
   getSampleFilter() {
@@ -146,6 +147,8 @@ export default class CreateButton extends React.Component {
     )
   }
 
+
+
   createScreenFromWellplates() {
     let uiState = UIStore.getState();
     let wellplateFilter = this.filterParamsFromUIStateByElementType(uiState, "wellplate");
@@ -188,13 +191,25 @@ export default class CreateButton extends React.Component {
     Aviator.navigate(uri, { silent: true} );
     const e = { type, params: { collectionID: currentCollection.id } };
     e.params[`${type}ID`] = 'new'
+    const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
+    if (genericEls.find(el => el.name == type)) {
+      e.klassType = 'GenericEl';
+    }
     elementShowOrNew(e);
   }
 
   createBtn(type) {
+    let iconClass = `icon-${type}`;
+    const genericEls = UserStore.getState().genericEls || [];
+
+    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    if (!constEls.includes(type) && typeof genericEls !== 'undefined' && genericEls !== null && genericEls.length > 0) {
+      const genericEl = (genericEls && genericEls.find(el => el.name == type)) || {};
+      iconClass = `${genericEl.icon_name}`;
+    }
     return (
       <div>
-        <i className={"icon-" + type}></i> &nbsp; <i className="fa fa-plus"></i>
+        <i className={`${iconClass}`}></i> &nbsp; <i className="fa fa-plus"></i>
       </div>
     )
   }
@@ -209,8 +224,26 @@ export default class CreateButton extends React.Component {
   }
 
   render() {
-    const { isDisabled, customClass } = this.props
-    const type = UserStore.getState().currentType
+    const { isDisabled, customClass } = this.props;
+    const type = UserStore.getState().currentType;
+    const elements = [
+      { name: 'sample', label: 'Sample' },
+      { name: 'reaction', label: 'Reaction' },
+      { name: 'wellplate', label: 'Wellplate' },
+      { name: 'screen', label: 'Screen' },
+      { name: 'research_plan', label: 'Research Plan' }
+    ];
+    let genericEls = [];
+    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+
+    if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+      genericEls = UserStore.getState().genericEls || [];
+    }
+    const itemTables = [];
+
+    elements.concat(genericEls).forEach((el) => {
+      itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+    });
 
     return (
       <div>
@@ -223,12 +256,7 @@ export default class CreateButton extends React.Component {
           onClick={() => this.createElementOfType(type)}
         >
           {this.createWellplateModal()}
-
-          <MenuItem id="create-sample-button" onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
-          <MenuItem id="create-reaction-button" onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
-          <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
-          <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
-          <MenuItem onSelect={() => this.createElementOfType('research_plan')}>Create Research Plan</MenuItem>
+          {itemTables}
           <MenuItem divider />
           <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
           <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>

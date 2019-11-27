@@ -295,6 +295,109 @@ module Chemotion
         end
       end
 
+      namespace :updateGElTemplates do
+        desc 'update Generic Element Properties Template'
+        params do
+          requires :id, type: Integer, desc: 'Element Klass ID'
+          optional :label, type: String, desc: 'Element Klass Label'
+          requires :properties_template, type: Hash
+        end
+        post do
+          klass = ElementKlass.find(params[:id])
+          klass.properties_template = params[:properties_template]
+          klass.save!
+          klass
+        end
+      end
+
+      namespace :createElementKlass do
+        desc 'create Generic Element Properties Template'
+        params do
+          requires :name, type: String, desc: 'Element Klass Name'
+          optional :label, type: String, desc: 'Element Klass Label'
+          optional :icon_name, type: String, desc: 'Element Klass Icon Name'
+          optional :desc, type: String, desc: 'Element Klass Desc'
+        end
+        post do
+          template = {
+            layers:
+            {
+            },
+            select_options: {
+            }
+          }
+          attributes = declared(params, include_missing: false)
+          attributes[:properties_template] = template
+          new_klass = ElementKlass.create!(attributes)
+          new_klass.save
+
+          klass_names_file = Rails.root.join('config', 'klasses.json')
+          klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
+          File.write(klass_names_file, klasses)
+
+          status 201
+        rescue ActiveRecord::RecordInvalid => e
+          { error: e.message }
+        end
+      end
+
+      namespace :updateElementKlass do
+        desc 'update Generic Element Klass'
+        params do
+          requires :id, type: Integer, desc: 'Element Klass ID'
+          optional :label, type: String, desc: 'Element Klass Label'
+          optional :icon_name, type: String, desc: 'Element Klass Icon Name'
+          optional :desc, type: String, desc: 'Element Klass Desc'
+        end
+        post do
+          klass = ElementKlass.find(params[:id])
+          klass.label = params[:label] if params[:label].present?
+          klass.icon_name = params[:icon_name] if params[:icon_name].present?
+          klass.desc = params[:desc] if params[:desc].present?
+          klass.save!
+          klass
+        end
+      end
+
+      namespace :activeInActiveElementKlass do
+        desc 'activate or inactive Generic Element Klass'
+        params do
+          requires :klass_id, type: Integer, desc: 'Element Klass ID'
+          requires :is_active, type: Boolean, desc: 'Active or Inactive Klass'
+        end
+        post do
+          klass = ElementKlass.find(params[:klass_id])
+          klass&.update!(is_active: params[:is_active])
+
+          klass_dir = File.join(Rails.root,"data")
+          !File.directory?(klass_dir) && FileUtils.mkdir_p(klass_dir)
+          klass_names_file = File.join(klass_dir,"klasses.json")
+          klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
+          File.write(klass_names_file, klasses)
+
+          klass
+        end
+      end
+
+      namespace :deleteElementKlass do
+        desc 'delete Generic Element Klass'
+        params do
+          requires :klass_id, type: Integer, desc: 'Element Klass ID'
+        end
+        post do
+          klass = ElementKlass.find(params[:klass_id])
+          klass&.destroy!
+
+          klass_dir = File.join(Rails.root,"data")
+          !File.directory?(klass_dir) && FileUtils.mkdir_p(klass_dir)
+          klass_names_file = File.join(klass_dir,"klasses.json")
+          klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
+          File.write(klass_names_file, klasses)
+
+          status 201
+        end
+      end
+
       resource :group_device do
         namespace :list do
           desc 'fetch groups'

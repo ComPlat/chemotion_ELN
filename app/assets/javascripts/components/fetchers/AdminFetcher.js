@@ -1,6 +1,13 @@
 import 'whatwg-fetch';
 
 export default class AdminFetcher {
+  static fetchElementKlasses() {
+    return fetch('/api/v1/generic_elements/klasses_all.json', {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
   static fetchLocalCollector() {
     return fetch('/api/v1/admin/listLocalCollector/all.json', {
       credentials: 'same-origin'
@@ -269,5 +276,85 @@ export default class AdminFetcher {
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static updateGElTemplates(params) {
+    const promise = fetch('/api/v1/admin/updateGElTemplates/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static createElementKlass(params) {
+    const promise = fetch('/api/v1/admin/createElementKlass/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static updateElementKlass(params) {
+    const promise = fetch('/api/v1/admin/updateElementKlass/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static activeInActiveElementKlass(params) {
+    const promise = fetch('/api/v1/admin/activeInActiveElementKlass/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static deleteElementKlass(params) {
+    const promise = fetch('/api/v1/admin/deleteElementKlass/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
   }
 }

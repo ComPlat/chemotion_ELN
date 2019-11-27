@@ -51,7 +51,6 @@ class UIStore {
         currentId: null,
         page: 1,
       },
-
       showPreviews: true,
       showAdvancedSearch: false,
       filterCreatedAt: true,
@@ -69,6 +68,21 @@ class UIStore {
       hasChemSpectra: false,
       matrices: {}
     };
+
+    // console.log(this.state.klasses);
+    // // eslint-disable-next-line no-unused-expressions
+    // this.state.klasses && this.state.klasses.forEach((klass) => {
+    //   this.state[`${klass}`] = {
+    //     checkedAll: false,
+    //     checkedIds: List(),
+    //     uncheckedIds: List(),
+    //     currentId: null,
+    //     page: 1,
+    //     activeTab: 0,
+    //   };
+    // });
+
+    console.log(this.state);
 
     this.bindListeners({
       handleInitialize: UIActions.initialize,
@@ -109,6 +123,18 @@ class UIStore {
 
   handleInitialize(result) {
     this.setState(result);
+    const { klasses } = result;
+    console.log(result);
+    klasses && klasses.forEach((klass) => {
+      this.state[`${klass}`] = {
+        checkedAll: false,
+        checkedIds: List(),
+        uncheckedIds: List(),
+        currentId: null,
+        page: 1,
+        activeTab: 0,
+      };
+    });
   }
 
   handleToggleCollectionManagement() {
@@ -201,11 +227,13 @@ class UIStore {
   }
 
   handleUncheckWholeSelection() {
+    console.log(this.state.klasses);
     this.handleUncheckAllElements({ type: 'sample', range: 'all' });
     this.handleUncheckAllElements({ type: 'screen', range: 'all' });
     this.handleUncheckAllElements({ type: 'reaction', range: 'all' });
     this.handleUncheckAllElements({ type: 'wellplate', range: 'all' });
     this.handleUncheckAllElements({ type: 'research_plan', range: 'all' });
+    this.state.klasses && this.state.klasses.forEach((klass) => {this.handleUncheckAllElements({ type: klass, range: 'all' });});
   }
 
   handleCheckElement(element) {
@@ -310,6 +338,18 @@ class UIStore {
             Object.assign(params, { page: state.research_plan.page }),
           );
         }
+
+        Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].includes(l)).forEach((key) => {
+          if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
+            const page = state[key] ? state[key].page : 1;
+            ElementActions.fetchGenericElsByCollectionId(
+              collection.id,
+              Object.assign(params, { page, name: key }),
+              isSync,
+              key
+            );
+          }
+        });
       }
     }
   }

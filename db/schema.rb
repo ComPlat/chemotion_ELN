@@ -124,11 +124,26 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.datetime "deleted_at"
     t.boolean  "is_synchronized",           default: false, null: false
     t.integer  "researchplan_detail_level", default: 10
+    t.integer  "element_detail_level",      default: 10
   end
 
   add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree
   add_index "collections", ["deleted_at"], name: "index_collections_on_deleted_at", using: :btree
   add_index "collections", ["user_id"], name: "index_collections_on_user_id", using: :btree
+
+
+  create_table "collections_elements", force: :cascade do |t|
+    t.integer  "collection_id"
+    t.integer  "element_id"
+    t.datetime "deleted_at"
+    t.string   "element_type"
+  end
+
+  add_index "collections_elements", ["collection_id"], name: "index_collections_elements_on_collection_id", using: :btree
+  add_index "collections_elements", ["deleted_at"], name: "index_collections_elements_on_deleted_at", using: :btree
+  add_index "collections_elements", ["element_id", "collection_id"], name: "index_collections_elements_on_element_id_and_collection_id", unique: true, using: :btree
+  add_index "collections_elements", ["element_id"], name: "index_collections_elements_on_element_id", using: :btree
+
 
   create_table "collections_reactions", force: :cascade do |t|
     t.integer  "collection_id"
@@ -248,6 +263,29 @@ ActiveRecord::Schema.define(version: 20210416075103) do
   end
 
   add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
+
+  create_table "element_klasses", force: :cascade do |t|
+    t.string   "name"
+    t.string   "label"
+    t.string   "desc"
+    t.string   "icon_name"
+    t.jsonb    "properties_template"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.boolean  "is_active",           default: true, null: false
+  end
+
+  create_table "elements", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "element_klass_id"
+    t.jsonb    "properties"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
 
   create_table "element_tags", force: :cascade do |t|
     t.string   "taggable_type"
@@ -783,6 +821,7 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.string   "label"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "element_detail_level",      default: 10
   end
 
   add_index "sync_collections_users", ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree

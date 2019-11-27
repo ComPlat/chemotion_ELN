@@ -24,6 +24,19 @@ module Chemotion
         layout.keys&.each do |ll|
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
         end
+
+        if current_user.matrix_check_by_name('genericElement')
+          available_elments = ElementKlass.where(is_active: true).pluck(:name)
+          new_layout = data['layout'] || {}
+          ElementKlass.where(is_active: true).find_each do |el|
+            if data['layout'] && data['layout']["#{el.name}"].nil?
+              new_layout["#{el.name}"] = new_layout&.values&.min < 0 ? new_layout&.values.min-1 : -1;
+            end
+          end
+          new_layout = new_layout.select { |e| available_elments.include?(e) }
+          data[:layout] = new_layout.sort_by { |_k, v| v }.to_h
+        end
+
         {
           data: data,
           show_external_name: profile.show_external_name,
@@ -62,10 +75,16 @@ module Chemotion
       put do
         declared_params = declared(params, include_missing: false)
         data = current_user.profile.data || {}
+        available_ements = API::ELEMENTS + ElementKlass.where(is_active: true).pluck(:name)
+#byebug
+        layout = data['layout'].select { |e| available_ements.include?(e) }
+        data['layout'] = layout.sort_by { |_k, v| v }.to_h
+
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name]
         }
+
         current_user.profile.update!(**new_profile) &&
           new_profile || error!('profile update failed', 500)
       end

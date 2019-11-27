@@ -16,6 +16,7 @@
 #  label                     :string
 #  created_at                :datetime
 #  updated_at                :datetime
+#  element_detail_level      :integer          default(10)
 #
 # Indexes
 #

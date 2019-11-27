@@ -14,6 +14,7 @@ import ArrayUtils from './utils/ArrayUtils';
 import ElementContainer from './ElementContainer';
 
 import UIStore from './stores/UIStore';
+import UserStore from './stores/UserStore';
 import ElementStore from './stores/ElementStore';
 import KeyboardStore from './stores/KeyboardStore';
 
@@ -51,8 +52,12 @@ const targets = {
   molecule: ['reaction'],
 };
 
-const isCurrEleDropType = (sourceType, targetType) =>
-  sourceType && targetType && targets[sourceType].includes(targetType);
+const isCurrEleDropType = (sourceType, targetType) => {
+  if (sourceType == 'molecule' && !['wellplate', 'sample', 'device', 'research_plan'].includes(targetType)) {
+    return sourceType && targetType;
+  }
+  return sourceType && targetType && targets[sourceType].includes(targetType);
+};
 
 const dragColumn = (element, showDragColumn, sourceType, targetType) => {
   if (showDragColumn) {

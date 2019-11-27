@@ -131,6 +131,7 @@ class API < Grape::API
   mount Chemotion::PredictionAPI
   mount Chemotion::ComputeTaskAPI
   mount Chemotion::TextTemplateAPI
+  mount Chemotion::GenericElementAPI
    
   add_swagger_documentation(info: {
     "title": "Chemotion ELN",
