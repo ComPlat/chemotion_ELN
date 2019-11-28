@@ -1,7 +1,7 @@
 module UnitConvertable
   extend ActiveSupport::Concern
 
-  def convert_to_unit amount_g, unit, milli = false
+  def convert_to_unit amount_g, unit, m = false
     val = if self.contains_residues
       case unit
       when 'g'
@@ -35,7 +35,7 @@ module UnitConvertable
       end
     end
 
-    if milli
+    if m
       val * 1000
     else
       val

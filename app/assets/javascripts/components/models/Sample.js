@@ -129,6 +129,7 @@ export default class Sample extends Element {
       target_amount_unit: 'g',
       molarity_value: 0,
       molarity_unit: 'M',
+      metrics: 'mmm',
       description: '',
       purity: 1,
       density: 0,
@@ -189,6 +190,7 @@ export default class Sample extends Element {
     newSample.contains_residues = sample.contains_residues;
     newSample.filterResidueData(true);
     newSample.density = sample.density;
+    newSample.metrics = sample.metrics;
     newSample.molfile = sample.molfile || '';
     return newSample;
   }
@@ -255,6 +257,7 @@ export default class Sample extends Element {
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
       density: this.density,
+      metrics: this.metrics,
       boiling_point: this.boiling_point,
       melting_point: this.melting_point,
       residues: this.residues,
@@ -406,6 +409,14 @@ export default class Sample extends Element {
     this._description = description;
   }
 
+  get metrics() {
+    return this._metrics || 'mmm';
+  }
+
+  set metrics(metrics) {
+    this._metrics = metrics;
+  }
+
   get molarity_value() {
     return this._molarity_value;
   }
@@ -434,12 +445,24 @@ export default class Sample extends Element {
     if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
       this.amount_unit = amount.unit;
+      const mp = amount.metricPrefix || 'm';
+      if (amount.unit === 'l') {
+        this.metrics = (this.metrics && this.metrics.replace(/(.{1}).{1}/, `$1${mp}`)) || 'mmm';
+      } else if (amount.unit === 'mol') {
+        this.metrics = (this.metrics && this.metrics.replace(/(.{2}).{1}/, `$1${mp}`)) || 'mmm';
+      } else {
+        this.metrics = (this.metrics && this.metrics.replace(/(.{0}).{1}/, `$1${mp}`)) || 'mmm';
+      }
     }
   }
 
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
+  }
+
+  setMetrics(metrics) {
+    this.metrics = metrics.value;
   }
 
   setDensity(density) {

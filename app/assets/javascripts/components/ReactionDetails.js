@@ -122,7 +122,6 @@ export default class ReactionDetails extends Component {
     LoadingActions.start();
 
     const { reaction } = this.state;
-
     if (reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {

@@ -127,6 +127,9 @@ class Material extends Component {
       )
       : <Tooltip id="density_info">no density or molarity defined</Tooltip>;
 
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
+
     return (
       <td>
         <OverlayTrigger placement="top" overlay={tooltip}>
@@ -135,8 +138,8 @@ class Material extends Component {
               key={material.id}
               value={material.amount_l}
               unit="l"
-              metricPrefix="milli"
-              metricPrefixes={['milli', 'none', 'micro']}
+              metricPrefix={metric}
+              metricPrefixes={metricPrefixes}
               precision={3}
               disabled={(this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn}
               onChange={this.handleAmountUnitChange}
@@ -155,14 +158,15 @@ class Material extends Component {
     } else if (!material.contains_residues) {
       return notApplicableInput();
     }
+
     return (
       <td>
         <NumeralInputWithUnitsCompo
           key={material.id}
           value={material.loading}
           unit="mmol/g"
-          metricPrefix="none"
-          metricPrefixes={['none']}
+          metricPrefix="n"
+          metricPrefixes={['n']}
           bsStyle={material.error_loading ? 'error' : 'success'}
           precision={3}
           disabled={this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn)}
@@ -389,6 +393,11 @@ class Material extends Component {
     //const concn = mol / reaction.solventVolume;
     const mw = material.molecule && material.molecule.molecular_weight
 
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
+    const metricPrefixesMol = ['m', 'n'];
+    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
+
     return (
       <tr className="general-material">
         {compose(connectDragSource, connectDropTarget)(
@@ -415,8 +424,8 @@ class Material extends Component {
                 key={material.id}
                 value={material.amount_g}
                 unit="g"
-                metricPrefix="milli"
-                metricPrefixes={['milli', 'none', 'micro']}
+                metricPrefix={metric}
+                metricPrefixes={metricPrefixes}
                 precision={4}
                 disabled={this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn}
                 onChange={this.handleAmountUnitChange}
@@ -433,8 +442,8 @@ class Material extends Component {
             key={material.id}
             value={material.amount_mol}
             unit="mol"
-            metricPrefix="milli"
-            metricPrefixes={['milli', 'none']}
+            metricPrefix={metricMol}
+            metricPrefixes={metricPrefixesMol}
             precision={4}
             disabled={this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn)}
             onChange={this.handleAmountUnitChange}
@@ -449,8 +458,8 @@ class Material extends Component {
             key={material.id}
             value={material.concn}
             unit="mol/l"
-            metricPrefix="milli"
-            metricPrefixes={['milli', 'none']}
+            metricPrefix={metricMol}
+            metricPrefixes={metricPrefixesMol}
             precision={4}
             disabled
             onChange={this.handleAmountUnitChange}

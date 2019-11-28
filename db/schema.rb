@@ -681,6 +681,7 @@ ActiveRecord::Schema.define(version: 20190731120000) do
     t.integer  "molecule_name_id"
     t.string   "molfile_version",     limit: 20
     t.jsonb    "stereo"
+    t.string   "metrics",                        default: "mmm"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
