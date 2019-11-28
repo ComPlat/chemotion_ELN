@@ -61,8 +61,11 @@ PART_6='prepare postgresql DB'
 PART_7='prepare production app directories and config'
 PART_71='reset DB pw'
 PART_8='prepare first deploy and deploy application code'
+PART_81='seed common ketcher templates'
+PART_82='seed common reagents (~ 1h)'
 PART_9='prepare boot start and log rotation'
-PART_10='configure NGINX and UFW'
+PART_10='configure UFW'
+PART_11='configure NGINX'
 
 
 ############################################
@@ -125,7 +128,10 @@ if [ "${PART_1:-}" ]; then
     libnspr4 libnss3 libpango1.0-0 libxss1  \
     xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
     tzdata python-dev libsqlite3-dev libboost-all-dev p7zip-full \
-    nginx ranger htop \
+    nginx \
+    ufw \
+    ranger htop \
+
     --fix-missing
   green "done $description\n"
 else
@@ -368,6 +374,36 @@ fi
 
 ############################################
 ############################################
+sharpi 'PART 8.1'
+description="seeding ketcher common_templates"
+############################################
+if [ "${PART_81:-}" ]; then
+  sharpi "$description"
+  src='source ~/.nvm/nvm.sh && source ~/.rvm/scripts/rvm '
+  sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rake ketcherails:import:common_templates"
+  sudo rm -rf /var/www/chemotion_ELN/current/public/images/ketcherails/icons/original/*
+  sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rails r 'MakeKetcherailsSprites.perform_now'"
+  green "done $description\n"
+else
+  yellow "skip $description\n"
+fi
+
+############################################
+############################################
+sharpi 'PART 8.2'
+description="seeding common reagents "
+############################################
+if [ "${PART_82:-}" ]; then
+  sharpi "$description"
+  src='source ~/.nvm/nvm.sh && source ~/.rvm/scripts/rvm '
+  sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rake data:ver_20180205000000_reagent_seeds"
+  green "done $description\n"
+else
+  yellow "skip $description\n"
+fi
+
+############################################
+############################################
 sharpi 'PART 9'
 descripton="setting boot start and log rotation"
 ############################################
@@ -445,10 +481,32 @@ else
   yellow "skip $description\n"
 fi
 
+
+
 ############################################
 ############################################
 sharpi 'PART 10'
-description="configuring nginx and ufw"
+description="configuring ufw"
+############################################
+
+## enable ufw
+if [ "${PART_10:-}" ]; then
+  sharpi "$description"
+  sudo ufw enable
+  sudo ufw allow ssh
+  sudo ufw allow 80/tcp
+  sudo ufw allow 443/tcp
+
+  green "done $description\n"
+else
+  yellow "skip $description\n"
+fi
+
+
+############################################
+############################################
+sharpi 'PART 11'
+description="configuring nginx"
 ############################################
 
 ## enable ufw

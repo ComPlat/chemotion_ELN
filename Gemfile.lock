@@ -6,8 +6,8 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/ketcher-rails
-  revision: 34228105183085659319b67f6adb510f1afba13d
-  ref: 34228105183085659319b67f6adb510f1afba13d
+  revision: 32944d4e969950e429a96f3f3b992a7b135bbfad
+  ref: 32944d4e969950e429a96f3f3b992a7b135bbfad
   specs:
     ketcherails (0.1.6)
       active_model_serializers (< 0.10.0)
