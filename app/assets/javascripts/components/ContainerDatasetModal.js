@@ -20,7 +20,7 @@ export default class ContainerDatasetModal extends Component {
     } = this.props;
     if (show) {
       return (
-        <Modal show={show} bsSize="large" dialogClassName="attachment-dataset-modal" onHide={() => onHide()}>
+        <Modal show={show} backdrop="static" bsSize="large" dialogClassName="attachment-dataset-modal" onHide={() => onHide()}>
           <Modal.Header>
             <Modal.Title>
               {dataset_container.name}
