@@ -268,7 +268,7 @@ describe Chemotion::SampleAPI do
         )
         expect(
           first_sample[:tag]['taggable_data']['analyses']
-        ).to include('confirmed' => { '13C NMR' => 1 })
+        ).to include('confirmed' => { 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)' => 1 })
       end
     end
 
