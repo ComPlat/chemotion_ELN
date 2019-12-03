@@ -23,6 +23,7 @@ export default class SampleForm extends React.Component {
     this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
     this.showStructureEditor = this.showStructureEditor.bind(this);
+
   }
 
   componentWillReceiveProps() {
@@ -372,14 +373,11 @@ export default class SampleForm extends React.Component {
           <tr>
             <td colSpan="4">
               <div className="name-form">
-                <div style={{ width: '20%' }}>
+                <div style={{ width: '30%' }}>
                   {this.textInput(sample, 'name', 'Name')}
                 </div>
-                <div style={{ width: '20%' }}>
+                <div style={{ width: '30%' }}>
                   {this.textInput(sample, 'external_label', 'External label')}
-                </div>
-                <div style={{ width: '19%' }}>
-                  {this.textInput(sample, 'location', 'Location')}
                 </div>
                 <div style={{ width: '40%' }}>
                   <label htmlFor="solventInput">Solvent</label>
@@ -418,6 +416,14 @@ export default class SampleForm extends React.Component {
 
           <tr style={{ paddingTop: '15px' }}>
             <td colSpan="4">{this.sampleDescription(sample)}</td>
+          </tr>
+          <tr>
+            <td colspan="4">
+              {this.textInput(sample, 'location', 'Location')}
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="2"> {this.props.customizableField()} </td>
           </tr>
         </tbody>
       </Table>

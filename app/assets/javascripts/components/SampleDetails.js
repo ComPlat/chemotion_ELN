@@ -11,7 +11,7 @@ import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
 import Barcode from 'react-barcode';
 import Select from 'react-select';
-import _ from 'lodash';
+import { _, cloneDeep } from 'lodash';
 import uuid from 'uuid';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -66,6 +66,7 @@ export default class SampleDetails extends React.Component {
       showStructureEditor: false,
       loadingMolecule: false,
       showElementalComposition: false,
+      showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: "",
       isCasLoading: false,
@@ -89,6 +90,7 @@ export default class SampleDetails extends React.Component {
     this.handleSelect = this.handleSelect.bind(this);
     this.toggleInchi = this.toggleInchi.bind(this);
     this.fetchQcWhenNeeded = this.fetchQcWhenNeeded.bind(this);
+    this.customizableField = this.customizableField.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -647,9 +649,41 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleSectionToggle() {
+  customizableField() {
+    const { xref } = this.state.sample || '';
+    const customKeys = cloneDeep(xref);
+    delete customKeys.cas;
+    if (customKeys === '') { return null; }
+
+    return (
+      Object.keys(customKeys).map(key => (
+          <FormGroup>
+          <ControlLabel>{key}</ControlLabel>
+            <FormControl
+              type="text"
+              defaultValue={customKeys[key] || ''}
+              onChange={e => this.updateKey(key, e)}
+            />
+          </FormGroup>
+      ))
+    );
+  }
+
+  updateKey(key, e) {
+    const { sample } = this.state;
+    sample.xref[key] = e.target.value;
+    this.setState({ sample });
+  }
+
+  handleElementalSectionToggle() {
     this.setState({
       showElementalComposition: !this.state.showElementalComposition
+    });
+  }
+
+  handleChemIdentSectionToggle() {
+    this.setState({
+      showChemicalIdentifiers: !this.state.showChemicalIdentifiers
     });
   }
 
@@ -664,7 +698,7 @@ export default class SampleDetails extends React.Component {
       label = 'Elemental composition';
 
     return (
-      <ListGroupItem onClick={() => this.handleSectionToggle()}>
+      <ListGroupItem onClick={() => this.handleElementalSectionToggle()}>
         <Col className="padding-right elem-composition-header" md={6}>
           <label>{label}</label>
         </Col>
@@ -720,6 +754,52 @@ export default class SampleDetails extends React.Component {
 
   }
 
+  chemicalIdentifiersItemHeader() {
+    let label = 'Chemical identifiers';
+
+    return (
+      <ListGroupItem onClick={() => this.handleChemIdentSectionToggle()}>
+        <Col className="padding-right chem-identifiers-header" md={6}>
+          <label>{label}</label>
+        </Col>
+        <div className="col-md-6">
+          <ToggleSection show={this.state.showChemicalIdentifiers}/>
+        </div>
+      </ListGroupItem>
+    )
+  }
+
+  chemicalIdentifiersItemContent(sample, show) {
+    if(!show)
+      return false;
+
+    return (
+      <ListGroupItem>
+        {this.moleculeInchi(sample)}
+          {this.moleculeCanoSmiles(sample)}
+          {this.moleculeMolfile(sample)}
+          {this.moleculeCas()}
+      </ListGroupItem>
+    )
+  }
+
+  chemicalIdentifiersItem(sample) {
+    // avoid empty ListGroupItem
+    if(!sample.molecule.sum_formular)
+      return false;
+
+    const show = this.state.showChemicalIdentifiers;
+    
+    return(
+      <div width="100%" className="chem-identifiers-section">
+        {this.chemicalIdentifiersItemHeader()}
+
+        {this.chemicalIdentifiersItemContent(sample, show)}
+      </div>
+    )
+
+  }
+
   samplePropertiesTab(ind){
     let sample = this.state.sample || {};
 
@@ -728,15 +808,11 @@ export default class SampleDetails extends React.Component {
         key={'Props' + sample.id.toString()}>
         <ListGroupItem>
           <SampleForm sample={sample}
-                      parent={this}/>
+                      parent={this}
+                      customizableField={this.customizableField} />
         </ListGroupItem>
-        {this.elementalPropertiesItem(sample)}
-        <ListGroupItem>
-          {this.moleculeInchi(sample)}
-          {this.moleculeCanoSmiles(sample)}
-          {this.moleculeMolfile(sample)}
-          {this.moleculeCas()}
-        </ListGroupItem>
+          {this.elementalPropertiesItem(sample)}
+          {this.chemicalIdentifiersItem(sample)}
       </Tab>
     )
   }
