@@ -115,7 +115,11 @@ module Chemotion
       end
 
       get :novnc do
-        devices = Device.by_user_ids(user_ids).novnc.includes(:profile)
+        if params[:id] != '0'
+          devices = Device.by_user_ids(user_ids).novnc.where(id: params[:id]).includes(:profile)
+        else
+          devices = Device.by_user_ids(user_ids).novnc.includes(:profile)
+        end
         present devices, with: Entities::DeviceNovncEntity, root: 'devices'
       end
 
