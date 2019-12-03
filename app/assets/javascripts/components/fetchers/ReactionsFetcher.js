@@ -12,12 +12,10 @@ import Literature from '../models/Literature';
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
   static fetchById(id) {
-    let promise = fetch('/api/v1/reactions/' + id + '.json', {
-        credentials: 'same-origin'
-      })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
+    return fetch(`/api/v1/reactions/${id}.json`, {
+      credentials: 'same-origin'
+    }).then(response => response.json())
+      .then((json) => {
         if (json.hasOwnProperty("reaction")) {
           const reaction = new Reaction(json.reaction);
           if (json.literatures && json.literatures.length > 0) {
@@ -26,36 +24,33 @@ export default class ReactionsFetcher {
             reaction.literatures = lits;
           }
           return reaction;
-        } else {
-          const rReaction = new Reaction(json.reaction);
-          if (json.error) {
-            rReaction.id = `${id}:error:Reaction ${id} is not accessible!`;
-          }
-          return rReaction;
         }
+        const rReaction = new Reaction(json.reaction);
+        if (json.error) {
+          rReaction.id = `${id}:error:Reaction ${id} is not accessible!`;
+        }
+        return rReaction;
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-
-    return promise;
   }
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'reactions', Reaction);
   }
 
-  static update(reaction) {
-    let reactionFiles = AttachmentFetcher.getFileListfrom(reaction.container)
-    let productsFiles = []
+  static create(reaction, method = 'post') {
+    const reactionFiles = AttachmentFetcher.getFileListfrom(reaction.container);
+    let productsFiles = [];
     reaction.products.forEach((prod) => {
-      let files = AttachmentFetcher.getFileListfrom(prod.container)
+      const files = AttachmentFetcher.getFileListfrom(prod.container);
       productsFiles = [...productsFiles, ...files];
-    })
-    let allFiles = reactionFiles.concat(productsFiles)
+    });
+    const allFiles = reactionFiles.concat(productsFiles);
 
-    let promise = ()=> fetch('/api/v1/reactions/' + reaction.id, {
+    const promise = () => fetch(`/api/v1/reactions/${method === 'post' ? '' : reaction.id}`, {
       credentials: 'same-origin',
-      method: 'put',
+      method,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -78,46 +73,14 @@ export default class ReactionsFetcher {
       console.log(errorMessage);
     });
 
-    if (allFiles.length > 0 ){
-      return AttachmentFetcher.uploadFiles(allFiles)().then(()=> promise());
-    } else {
-      return promise()
+    if (allFiles.length > 0) {
+      return AttachmentFetcher.uploadFiles(allFiles)().then(() => promise());
     }
+    return promise();
   }
 
-  static create(reaction) {
-    let files = AttachmentFetcher.getFileListfrom(reaction.container)
-
-    let promise = ()=> fetch('/api/v1/reactions/', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(reaction.serialize())
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      const r = json.reaction;
-      r.duration_display = (indexOf(r.duration, ' ') > -1 ?
-        {
-          valueUnit: split(r.duration, ' ')[1],
-          userText: split(r.duration, ' ')[0].toString()
-        } : {
-          valueUnit: 'Day(s)',
-          userText: ''
-        });
-      return new Reaction(json.reaction);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    if(files.length > 0){
-      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
-    }else{
-      return promise()
-    }
+  static update(reaction) {
+    return ReactionsFetcher.create(reaction, 'put');
   }
 
   static importFromChemScanner({ reactions, molecules }) {
