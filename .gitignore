@@ -15,6 +15,8 @@
 !/log/.keep
 /tmp
 /tmp/*
+/tmp/novnc_devices/*
+!/tmp/novnc_devices/.keep
 
 .ruby-gemset
 .ruby-version

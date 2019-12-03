@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Grid, Row, Col } from 'react-bootstrap';
 import RFB from '@novnc/noVNC/lib/rfb';
+import { uniq } from 'lodash';
 // import Immutable from 'immutable';
 
 import Navigation from './Navigation';
@@ -21,7 +22,10 @@ class CnC extends React.Component {
       connected: false,
       rfb: null,
       isNotFocused: true,
-      show: false
+      show: false,
+      data: [],
+      watching: 0,
+      using: 0
     };
     this.UserStoreChange = this.UserStoreChange.bind(this);
     this.toggleDeviceList = this.toggleDeviceList.bind(this);
@@ -32,6 +36,7 @@ class CnC extends React.Component {
 
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+    this.fetchConnections = this.fetchConnections.bind(this);
   }
 
   componentDidMount() {
@@ -96,6 +101,26 @@ class CnC extends React.Component {
     rfb.addEventListener('connect', () => this.connected());
     rfb.addEventListener('disconnect', () => this.disconnected());
     this.setState(prevState => ({ ...prevState, rfb, isNotFocused: true }));
+    setInterval(this.fetchConnections, 10000);
+  }
+
+  fetchConnections() {
+    fetch(`/api/v1/devices/current_connection?id=${this.state.selected.id}&status=${this.state.isNotFocused}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json())
+      .then((json) => {
+        const data = uniq(json.result).map(line => line.split(','));
+        this.setState({ data });
+        this.setState({ using: 0, watching: 0 });
+        this.state.data.forEach((element) => {
+          const status = element[1].substring(0, 1);
+          if (status === '0') {
+            this.setState({ using: this.state.using + 1 });
+          } else if (status === '1') {
+            this.setState({ watching: this.state.watching + 1 });
+          }
+        });
+      });
   }
 
   disconnect() {
@@ -159,7 +184,9 @@ class CnC extends React.Component {
   }
 
   render() {
-    const { devices, selected, showDeviceList } = this.state;
+    const {
+      devices, selected, showDeviceList
+    } = this.state;
 
     return (
       <div>
@@ -175,6 +202,9 @@ class CnC extends React.Component {
                 handleFocus={this.handleFocus}
                 handleBlur={this.handleBlur}
                 connected={this.state.connected}
+                watching={this.state.watching}
+                using={this.state.using}
+                data={this.state.data}
               />
               <div
                 ref={(ref) => { this.canvas = ref; }}
