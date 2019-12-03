@@ -258,7 +258,7 @@ export default class SampleForm extends React.Component {
     if (!sample.contains_residues) return false;
 
     return this.numInput(sample, 'defined_part_amount', 'g',
-      ['milli', 'none'], 4, 'Attached', 'attachedAmountMg',
+      ['m', 'n'], 4, 'Attached', 'attachedAmountMg',
       true, 'Weight of the defined part');
   }
 
@@ -267,6 +267,7 @@ export default class SampleForm extends React.Component {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
 
+    const mpx = unit === 'l' ? prefixes[1] : unit === 'mol' ? prefixes[2] : prefixes[0];
     return (
       <td key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
@@ -274,7 +275,7 @@ export default class SampleForm extends React.Component {
           unit={unit}
           label={label}
           ref={ref}
-          metricPrefix={prefixes[0]}
+          metricPrefix={mpx}
           metricPrefixes={prefixes}
           precision={precision}
           title={title}
@@ -295,20 +296,20 @@ export default class SampleForm extends React.Component {
 
     if (sample.isMethodDisabled('amount_value') === false) {
       // if (sample.isMethodRestricted('molecule') === true) {
-      //   content.push(this.numInput(sample, 'amount_g', 'g', ['milli', 'none'],
+      //   content.push(this.numInput(sample, 'amount_g', 'g', ['m', 'n'],
       //     4, 'Amount', 'massMgInput', isDisabled, ''));
       // } else {
-      content.push(this.numInput(sample, 'amount_g', 'g', ['milli', 'none'],
+      content.push(this.numInput(sample, 'amount_g', 'g', ['m', 'n'],
         4, 'Amount', 'massMgInput', isDisabled, ''));
 
       if (!sample.contains_residues) {
         content.push(this.numInput(sample, 'amount_l', 'l',
-          ['milli', 'micro', 'none'], 5, '\u202F', 'l',
+          ['m', 'u', 'n'], 5, '\u202F', 'l',
           isDisabled, '', volumeBlocked));
       }
 
       content.push(this.numInput(sample, 'amount_mol', 'mol',
-        ['milli', 'none'], 4, '\u202F', 'amountInput', isDisabled, ''));
+        ['m', 'n'], 4, '\u202F', 'amountInput', isDisabled, ''));
 
       if (sample.contains_residues) {
         content.push(this.attachedAmountInput(sample));
@@ -391,26 +392,26 @@ export default class SampleForm extends React.Component {
           <tr className="visible-hd">
             {this.sampleAmount(sample)}
             {
-              this.numInput(sample, 'boiling_point', '°C', ['none'], 5,
+              this.numInput(sample, 'boiling_point', '°C', ['n'], 5,
                 'Boiling point', '', polyDisabled, '', false, isPolymer)
             }
           </tr>
 
           <tr>
             {
-              this.numInput(sample, 'density', 'g/ml', ['none'], 5,
+              this.numInput(sample, 'density', 'g/ml', ['n'], 5,
                 'Density', '', polyDisabled, '', densityBlocked, isPolymer)
             }
             {
-              this.numInput(sample, 'molarity_value', 'M', ['none'],
+              this.numInput(sample, 'molarity_value', 'M', ['n'],
                 5, 'Molarity', '', polyDisabled, '', molarityBlocked, isPolymer)
             }
             {
-              this.numInput(sample, 'purity', 'none', ['none'], 5,
+              this.numInput(sample, 'purity', 'n', ['n'], 5,
                 'Purity', '', isDisabled)
             }
             {
-              this.numInput(sample, 'melting_point', '°C', ['none'], 5,
+              this.numInput(sample, 'melting_point', '°C', ['n'], 5,
                 'Melting point', '', polyDisabled, '', false, isPolymer)
             }
           </tr>

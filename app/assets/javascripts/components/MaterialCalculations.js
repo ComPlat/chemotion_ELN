@@ -29,6 +29,10 @@ export default class MaterialCalculations extends Component {
   }
 
   materialVolume(material, inputsStyle) {
+
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
+
     if (material.contains_residues)
       return this.notApplicableInput(inputsStyle);
     else
@@ -38,8 +42,8 @@ export default class MaterialCalculations extends Component {
             key={material.id}
             value={material.amount_ml || ''}
             unit='l'
-            metricPrefix='milli'
-            metricPrefixes = {['milli','none','micro']}
+            metricPrefix={metric}
+            metricPrefixes = {metricPrefixes}
             onChange={(amount) => this.handleAmountChange(amount)}
           />
         </td>
@@ -48,6 +52,12 @@ export default class MaterialCalculations extends Component {
 
   render() {
     const {material, deleteMaterial, isDragging, connectDragSource} = this.props;
+
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
+
+      const metricPrefixesMol = ['m', 'n'];
+      const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
 
     const inputsStyle = {
       paddingTop: 15,
@@ -65,8 +75,8 @@ export default class MaterialCalculations extends Component {
           key={material.id}
           value={material.adjusted_amount_g}
           unit='g'
-          metricPrefix='milli'
-          metricPrefixes = {['milli','none','micro']}
+          metricPrefix={metric}
+          metricPrefixes = {metricPrefixes}
           precision={5}
           disabled
           readOnly
@@ -80,8 +90,8 @@ export default class MaterialCalculations extends Component {
           key={'adjusted_amount_mol' + material.id.toString()}
           value={material.adjusted_amount_mol}
           unit='mol'
-          metricPrefix='milli'
-          metricPrefixes = {['milli','none']}
+          metricPrefix={metricMol}
+          metricPrefixes = {metricPrefixesMol}
           precision={4}
           disabled
           readOnly
@@ -93,8 +103,8 @@ export default class MaterialCalculations extends Component {
           key={'adjusted_loading' + material.id.toString()}
           value={material.adjusted_loading}
           unit='mmol/g'
-          metricPrefix='none'
-          metricPrefixes = {['none']}
+          metricPrefix='n'
+          metricPrefixes = {['n']}
           precision={3}
           disabled
           readOnly

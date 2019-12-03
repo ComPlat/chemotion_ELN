@@ -121,8 +121,8 @@ export default class PolymerSection extends React.Component {
           <NumeralInputWithUnitsCompo
             value={sample.loading}
             unit='mmol/g'
-            metricPrefix='none'
-            metricPrefixes = {['none']}
+            metricPrefix='n'
+            metricPrefixes = {['n']}
             precision={3}
             key={'polymer_loading_input' + sample.id.toString()}
             name="polymer_loading"
@@ -182,8 +182,8 @@ export default class PolymerSection extends React.Component {
             <NumeralInputWithUnitsCompo
               value={sample.loading}
               unit='mmol/g'
-              metricPrefix='none'
-              metricPrefixes = {['none']}
+              metricPrefix='n'
+              metricPrefixes = {['n']}
               precision={3}
               key={'polymer_loading_input' + sample.id.toString()}
               name="polymer_loading"

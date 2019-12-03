@@ -63,6 +63,7 @@ module ReactionHelpers
               subsample.target_amount_unit = sample.target_amount_unit
               subsample.real_amount_value = sample.real_amount_value
               subsample.real_amount_unit = sample.real_amount_unit
+              subsample.metrics = sample.metrics
 
               #add new data container
               #subsample.container = create_root_container
@@ -122,6 +123,7 @@ module ReactionHelpers
             existing_sample.target_amount_unit = sample.target_amount_unit
             existing_sample.real_amount_value = sample.real_amount_value
             existing_sample.real_amount_unit = sample.real_amount_unit
+            existing_sample.metrics = sample.metrics
             existing_sample.external_label = sample.external_label if sample.external_label
             existing_sample.short_label = sample.short_label if sample.short_label
             existing_sample.short_label = fixed_label if fixed_label

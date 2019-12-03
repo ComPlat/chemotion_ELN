@@ -11,7 +11,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     this.state = {
       value,
       block,
-      metricPrefix: metricPrefix || 'none',
+      metricPrefix: metricPrefix || 'n',
       currentPrecision: precision,
       valueString: 0,
       showString: false,
@@ -78,7 +78,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
     this.setState(
       {
-        value: metPreConv(newValue, metricPrefix, 'none'),
+        value: metPreConv(newValue, metricPrefix, 'n'),
         showString: true,
         valueString,
       },
@@ -92,7 +92,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     this.setState({
       currentPrecision: undefined,
       showString: true,
-      valueString: metPreConv(value, 'none', metricPrefix) || 0,
+      valueString: metPreConv(value, 'n', metricPrefix) || 0,
     });
   }
 
@@ -114,7 +114,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   _onChangeCallback() {
     if (this.props.onChange) {
-      this.props.onChange({ ...this.state, unit: this.props.unit });
+      this.props.onChange({ ...this.state, unit: this.props.unit, metricPrefix: this.state.metricPrefix });
     }
   }
 
@@ -128,7 +128,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
     this.setState({
       metricPrefix: metricPrefixes[ind]
-    });
+    }, () => this._onChangeCallback());
   }
 
   render() {
@@ -143,7 +143,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       if (!showString && nanOrInfinity) {
         return 'n.d.';
       } else if (!showString) {
-        return metPreConv(value, 'none', metricPrefix).toPrecision(currentPrecision);
+        return metPreConv(value, 'n', metricPrefix).toPrecision(currentPrecision);
       }
       return valueString;
     };
@@ -151,7 +151,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     // BsStyle-s for Input and buttonAfter have differences
     const bsStyleBtnAfter = bsStyle === 'error' ? 'danger' : bsStyle;
     const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
-    if (unit !== 'none') {
+    if (unit !== 'n') {
       const prefixSwitch = (
         <InputGroup.Button>
           <Button
@@ -223,7 +223,7 @@ NumeralInputWithUnitsCompo.propTypes = {
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
-  unit: 'none',
+  unit: 'n',
   value: 0,
   units: [],
   disabled: false,
