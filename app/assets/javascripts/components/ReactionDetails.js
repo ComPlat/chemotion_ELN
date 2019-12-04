@@ -187,7 +187,7 @@ export default class ReactionDetails extends Component {
            onClick={() => this.handleProductClick(product)}
            style={{cursor: 'pointer'}}
            title="Open sample window">
-           {product.title()}
+          <i className="icon-sample" />&nbsp;{product.title()}
         </span>
       </span>
     )
@@ -217,7 +217,7 @@ export default class ReactionDetails extends Component {
         </Tab>
       );
     });
-
+    const reactionTab = <span>Analysis:&nbsp;<i className="icon-reaction" />&nbsp;{reaction.short_label}</span>;
     return (
       <Tabs
         id="data-detail-tab"
@@ -225,7 +225,7 @@ export default class ReactionDetails extends Component {
         unmountOnExit
       >
         {tabs}
-        <Tab eventKey={4.1} title={reaction.short_label}>
+        <Tab eventKey={4.1} title={reactionTab}>
           <ListGroupItem style={{ paddingBottom: 20 }}>
             <ReactionDetailsContainers reaction={reaction} parent={this} />
           </ListGroupItem>
