@@ -186,8 +186,13 @@ class Import::ImportSamples
       if field.to_s.strip =~ /^stereo_(abs|rel)$/
         stereo[$1] = row[field]
       end
-      next unless included_fields.include?(field)
-      sample[field] = row[field]
+      map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == '"' + field + '"' }
+      db_column = map_column.nil? ? field : map_column[0].sub('s.', '')
+      db_column.delete!('"')
+      next unless included_fields.include?(db_column)
+
+      sample[db_column] = row[field]
+      sample[db_column] = '' if %w[description solvent location external_label].include?(db_column) && row[field].nil?
     end
     sample.validate_stereo(stereo)
     sample.collections << Collection.find(collection_id)
