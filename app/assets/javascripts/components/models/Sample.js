@@ -105,6 +105,7 @@ export default class Sample extends Element {
     this.real_amount_value = 0;
     this.description = '';
     this.purity = 1;
+    this.equivalent = 0;
     this.imported_readout = '';
 
     return this;
