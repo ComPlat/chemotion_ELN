@@ -9,7 +9,7 @@ FactoryBot.define do
     trait :with_analysis do
       after(:create) do |container|
         extended_metadata = {
-          'kind' => '13C NMR',
+          'kind' => 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)',
           'status' => 'Confirmed',
           'datasets' => [],
           'content' => '{"ops": [{"insert": "analysis contents"}]}'
@@ -43,7 +43,7 @@ FactoryBot.define do
     container_type { 'analysis' }
     after(:build) do |analysis|
       analysis.extended_metadata = {
-        'kind' => '13C NMR',
+        'kind' => 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)',
         'status' => 'Confirmed',
         # 'datasets' => [],
         'content' => '{"ops": [{"insert": "analysis contents"}]}'
