@@ -131,8 +131,8 @@ if [ "${PART_1:-}" ]; then
     nginx \
     ufw \
     ranger htop \
-
     --fix-missing
+
   green "done $description\n"
 else
   yellow "skip $description\n"
