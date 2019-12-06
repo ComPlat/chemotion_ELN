@@ -25,7 +25,9 @@ class CnC extends React.Component {
       show: false,
       data: [],
       watching: 0,
-      using: 0
+      using: 0,
+      autoBlur: null,
+      autoDisconnect: null
     };
     this.UserStoreChange = this.UserStoreChange.bind(this);
     this.toggleDeviceList = this.toggleDeviceList.bind(this);
@@ -33,9 +35,13 @@ class CnC extends React.Component {
     this.connect = this.connect.bind(this);
     this.connected = this.connected.bind(this);
     this.disconnected = this.disconnected.bind(this);
+    this.autoDisconnect = this.autoDisconnect.bind(this);
 
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    
     this.fetchConnections = this.fetchConnections.bind(this);
   }
 
@@ -73,6 +79,8 @@ class CnC extends React.Component {
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = false;
     this.setState({ rfb: tempRFB, isNotFocused: false });
+    const blurTime = setTimeout(this.handleBlur, 2000);
+    this.setState({ autoBlur: blurTime });
   }
 
   handleBlur() {
@@ -80,7 +88,23 @@ class CnC extends React.Component {
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = true;
     this.setState({ rfb: tempRFB, isNotFocused: true });
+    const disconnectTime = setTimeout(this.autoDisconnect, 5000);
+    this.setState({ autoDisconnect: disconnectTime });
   }
+
+  handleMouseEnter() {
+    if (!this.state.rfb || this.state.isNotFocused) { return; }
+    clearTimeout(this.state.autoBlur);
+    clearTimeout(this.state.autoDisconnect);
+    this.setState({ autoBlur: null, autoDisconnect: null });
+  }
+
+  handleMouseLeave() {
+    if (this.state.isNotFocused) { return; }
+    const blurTime = setTimeout(this.handleFocus, 2000);
+    this.setState({ autoBlur: blurTime });
+   }
+
 
   connect() {
     this.disconnect();
@@ -121,6 +145,10 @@ class CnC extends React.Component {
           }
         });
       });
+  }
+
+  autoDisconnect() {
+    this.state.rfb.disconnect();
   }
 
   disconnect() {
@@ -205,6 +233,8 @@ class CnC extends React.Component {
               />
               <div
                 ref={(ref) => { this.canvas = ref; }}
+                onMouseEnter={this.handleMouseEnter}
+                onMouseLeave={this.handleMouseLeave}
               />
             </Col>
           </Row>
