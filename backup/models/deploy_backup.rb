@@ -15,8 +15,8 @@
       # archive.add File.readlink("#{Rails.root}/public/images/templates")
       archive.add File.readlink("#{Rails.root}/public/docx")
       archive.add File.readlink("#{Rails.root}/tmp/uploads")
-      archive.add File.readlink("#{Rails.root}/uploads")     
-      archive.add File.readlink("#{Rails.root}/uploadNew")
+      archive.add File.readlink("#{Rails.root}/uploads")
+      # archive.add File.readlink("#{Rails.root}/uploadNew")
     end
 
     database PostgreSQL do |db|

@@ -30,6 +30,21 @@ When ready make the script executable and run it:
 After reboot the application should be up and running at the ip of the machine (http://...)
 
 
+To update the application code for such an installation, use the update script:
+```
+curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/update_production.sh
+```
+
+If needed, edit the file  (change the variables or comments out parts to disable), then
+
+```
+chmod 700 chemotion_ELN_update.sh`
+
+sudo ./chemotion_ELN_update.sh
+```
+
+
+
 ## Using Docker
 
 This is a setup for a 'pseudo' production stage using passenger and aimed for user testing.
