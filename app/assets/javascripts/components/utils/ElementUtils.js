@@ -7,6 +7,15 @@ import { searchAndReplace } from './markdownUtils';
 
 import UIStore from '../stores/UIStore';
 
+const rfValueFormat = (input) => {
+  if (typeof input !== 'string') { return input; }
+  let result = input;
+  (input.match(/[0]+[,]\d+/mg) || []).forEach((rf) => {
+    result = result.replace(rf, rf.replace(',', '.'));
+  });
+  return result;
+};
+
 const atomCountInFormula = (formula, e = 'H') => {
   if (typeof formula !== 'string') { return 0; }
   const regStr = `${e}\\d*`;
@@ -437,6 +446,7 @@ const SampleCode = (index, materialGp) => {
 };
 
 module.exports = {
+  rfValueFormat,
   hNmrCheckMsg,
   cNmrCheckMsg,
   hNmrCount,

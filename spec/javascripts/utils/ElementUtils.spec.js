@@ -6,12 +6,22 @@ import {
   searchAndReplace
 } from '../../../app/assets/javascripts/components/utils/markdownUtils';
 import {
-  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg
+  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat
 } from '../../../app/assets/javascripts/components/utils/ElementUtils';
 import { contentToText } from '../../../app/assets/javascripts/components/utils/quillFormat';
 import { nmrData1H } from '../fixture/nmr1H';
 import { nmrData13C } from '../fixture/nmr13C';
+import { rfValues } from '../fixture/rfvalue';
 
+describe('RF Value formating', () => {
+  Object.keys(rfValues).map(k => (
+    it(k, () => {
+      const fixture = rfValues[k];
+      const result = rfValueFormat(fixture.rfValue);
+      expect(result).toEqual(fixture.expected);
+    })
+  ));
+});
 
 describe('1HNMR H counting', () => {
   Object.keys(nmrData1H).map(k => (
