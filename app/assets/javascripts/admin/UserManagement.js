@@ -50,8 +50,10 @@ const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">send passwo
 const confirmUserTooltip = <Tooltip id="assign_button">confirm this account</Tooltip>;
 const disableTooltip = <Tooltip id="assign_button">lock this account</Tooltip>;
 const enableTooltip = <Tooltip id="assign_button">unlock this account</Tooltip>;
-const templateModeratorEnableTooltip = <Tooltip id="assign_button">enable TemplateModerator <br /> (set to true)</Tooltip>;
-const templateModeratorDisableTooltip = <Tooltip id="assign_button">disable TemplateModerator <br /> (set to false)</Tooltip>;
+const templateModeratorEnableTooltip = <Tooltip id="assign_button">Enable Ketcher template editing for this user (currently disabled)</Tooltip>;
+const templateModeratorDisableTooltip = <Tooltip id="assign_button">Disable Ketcher template editing for this user (currently enabled)</Tooltip>;
+const moleculeModeratorEnableTooltip = <Tooltip id="assign_button">Enable editing the representation of the global molecules for this user (currently disabled)</Tooltip>;
+const moleculeModeratorDisableTooltip = <Tooltip id="assign_button">Disable editing the representation of the global molecules for this user (currently enabled)</Tooltip>;
 
 export default class UserManagement extends React.Component {
   constructor(props) {
@@ -149,7 +151,16 @@ export default class UserManagement extends React.Component {
     AdminFetcher.updateAccount({ user_id: id, is_templates_moderator: !isTemplatesModerator })
       .then((result) => {
         this.handleFetchUsers();
-        const message = isTemplatesModerator !== true ? 'Set isTemplatesModerator to true' : 'Set isTemplatesModerator to false'
+        const message = isTemplatesModerator === true ? 'Disable Ketcher template editing for this user' : 'Enable Ketcher template editing for this user';
+        alert(message);
+      });
+  }
+
+  handleMoleculesModerator(id, isMoleculesEditor) {
+    AdminFetcher.updateAccount({ user_id: id, molecule_editor: !isMoleculesEditor })
+      .then((result) => {
+        this.handleFetchUsers();
+        const message = isMoleculesEditor === true ? 'Disable editing the representation of the global molecules for this user' : 'Enable editing the representation of the global molecules for this user';
         alert(message);
       });
   }
@@ -576,7 +587,7 @@ export default class UserManagement extends React.Component {
           <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip} >
             <Button
               bsSize="xsmall"
-              bsStyle={g.locked_at === null ? 'light' : 'warning'}
+              bsStyle={g.locked_at === null ? 'default' : 'warning'}
               onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
             >
               <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
@@ -586,10 +597,20 @@ export default class UserManagement extends React.Component {
           <OverlayTrigger placement="bottom" overlay={g.is_templates_moderator === false ? templateModeratorEnableTooltip : templateModeratorDisableTooltip} >
             <Button
               bsSize="xsmall"
-              bsStyle={g.is_templates_moderator === false ? 'warning' : 'light'}
+              bsStyle={g.is_templates_moderator === false ? 'default' : 'success'}
               onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
             >
-              <i className={g.is_templates_moderator === false ? 'fa fa-book' : 'fa fa-times'} />
+              <i className="fa fa-book" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
+          <OverlayTrigger placement="bottom" overlay={g.molecule_editor === false ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip} >
+            <Button
+              bsSize="xsmall"
+              bsStyle={g.molecule_editor === false ? 'default' : 'success'}
+              onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
+            >
+              <i className="icon-sample" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           &nbsp;

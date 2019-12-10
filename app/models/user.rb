@@ -173,6 +173,7 @@ class User < ActiveRecord::Base
       unless result.nil? || result['ols_terms'].nil?
         data['chmo'] = result['ols_terms']
         data['is_templates_moderator'] = false
+        data['molecule_editor'] = false
         self.profile.update_columns(data: data)
       end
    end
@@ -208,6 +209,10 @@ class User < ActiveRecord::Base
 
   def is_templates_moderator
     profile&.data&.fetch('is_templates_moderator', false)
+  end
+
+  def molecule_editor
+    profile&.data&.fetch('molecule_editor', false)
   end
 
   private

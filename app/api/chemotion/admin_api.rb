@@ -247,6 +247,7 @@ module Chemotion
           optional :enable, type: Boolean, desc: 'enable or disable account'
           optional :is_templates_moderator, type: Boolean, desc: 'enable or disable ketcherails template moderation'
           optional :confirm_user, type: Boolean, desc: 'confirm account'
+          optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
         end
 
         post do
@@ -269,6 +270,13 @@ module Chemotion
           when true, false
             profile = user.profile
             data = profile.data.merge({ 'is_templates_moderator' => params[:is_templates_moderator] })
+            profile.update!(data: data)
+          end
+
+          case params[:molecule_editor]
+          when true, false
+            profile = user.profile
+            data = profile.data.merge({ 'molecule_editor' => params[:molecule_editor] })
             profile.update!(data: data)
           end
           user
