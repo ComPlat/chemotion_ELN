@@ -1,6 +1,13 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.5.1]
+> 2019-12-10
+
+* Features
+ * minor UX improvements
+ * admin UI for data-collector and noVNC connection
+
 ## [v0.5.0]
 > 2019-10-08
 

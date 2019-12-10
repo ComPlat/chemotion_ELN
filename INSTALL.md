@@ -23,7 +23,7 @@ check the variables at the beginning of the file, but also check the whole scrip
 
 When ready make the script executable and run it:
 
-`chmod 700 chemotion_ELN_install.sh`
+`chmod 700 chemotion_ELN_install.sh
 
 `sudo ./chemotion_ELN_install.sh`
 
