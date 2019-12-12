@@ -32,6 +32,7 @@ Rails.application.routes.draw do
     get 'command_n_control', to: 'pages#cnc'
     get 'mydb/*any', to: 'pages#welcome'
     get 'mydb', to: 'pages#welcome'
+    get 'molecule_moderator', to: 'pages#molecule_moderator'
   end
 
   # Standalone page for ChemScanner

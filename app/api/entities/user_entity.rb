@@ -15,6 +15,7 @@ module Entities
     expose :current_sign_in_at, if: -> (obj, opts) { obj.respond_to? :current_sign_in_at}
     expose :locked_at, if: -> (obj, opts) { obj.respond_to? :locked_at}
     expose :is_templates_moderator, documentation: { type: "Boolean", desc: "ketcherails template administrator" }
+    expose :molecule_editor, documentation: { type: 'Boolean', desc: 'molecule administrator' }
 
     def samples_count
       object.counters['samples'].to_i

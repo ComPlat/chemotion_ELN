@@ -517,6 +517,9 @@ export default class UserAuth extends Component {
     const templatesLink = (
       <MenuItem eventKey="2" href="/ketcher/common_templates">Template Management</MenuItem>
     );
+    const moderatorLink = (
+      <MenuItem eventKey="6" href="/molecule_moderator">Molecule Moderator</MenuItem>
+    );
 
     return (
       <div>
@@ -530,6 +533,7 @@ export default class UserAuth extends Component {
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
             {/* <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem> */}
+            {this.state.currentUser.molecule_editor ? moderatorLink : null}
           </NavDropdown>
           <NavItem onClick={() => this.logout()} style={{ marginRight: '5px' }} className="" title="Log out">
             <Glyphicon glyph="log-out" />

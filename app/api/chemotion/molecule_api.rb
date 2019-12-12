@@ -3,27 +3,27 @@ module Chemotion
     include Grape::Kaminari
 
     resource :molecules do
-
       namespace :smiles do
-        desc "Return molecule by SMILES"
+        desc 'Return molecule by SMILES'
         params do
-          requires :smiles, type: String, desc: "Input SMILES"
-          optional :svg_file, type: String, desc: "Molecule svg file"
-          optional :layout, type: String, desc: "Molecule molfile layout"
+          requires :smiles, type: String, desc: 'Input SMILES'
+          optional :svg_file, type: String, desc: 'Molecule svg file'
+          optional :layout, type: String, desc: 'Molecule molfile layout'
         end
 
         post do
           smiles = params[:smiles]
           svg = params[:svg_file]
 
-          babel_info = OpenBabelService.molecule_info_from_structure(smiles,'smi')
+          babel_info = OpenBabelService.molecule_info_from_structure(smiles, 'smi')
           inchikey = babel_info[:inchikey]
           return {} unless inchikey
-          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
 
+          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
           unless molecule
             molfile = babel_info[:molfile] if babel_info
             return {} unless molfile
+
             molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
           end
           return unless molecule
@@ -42,12 +42,17 @@ module Chemotion
           else
             svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
             if File.exist?(svg_file_src)
-              svg = File.read(svg_file_src)
-              ob_processor = Chemotion::OpenBabelSvgProcessor.new svg
-              svg = ob_processor.imitate_ketcher_svg
-              svg_file = File.new(svg_file_path, 'w+')
-              svg_file.write(svg.to_xml)
-              svg_file.close
+              mol = molecule.molfile.lines[0..1]
+              if mol[1]&.strip&.match?('OpenBabel')
+                svg = File.read(svg_file_src)
+                ob_processor = Chemotion::OpenBabelSvgProcessor.new svg
+                svg = ob_processor.imitate_ketcher_svg
+                svg_file = File.new(svg_file_path, 'w+')
+                svg_file.write(svg.to_xml)
+                svg_file.close
+              else
+                FileUtils.cp(svg_file_src, svg_file_path)
+              end
             end
           end
           molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name, ob_log: babel_info[:ob_log] })
@@ -161,6 +166,56 @@ module Chemotion
             desc: mn.description, mid: mn.molecule_id
           }
         end
+      end
+
+      desc 'return molecule by InChiKey'
+      params do
+        requires :inchikey, type: String, desc: 'InChiKey of molecule'
+      end
+      post :inchikey do
+        molecule = Molecule.find_by(inchikey: params[:inchikey])
+        molecule
+      rescue StandardError => e
+        return {}
+      end
+
+      desc 'return svg path'
+      params do
+        requires :id, type: Integer, desc: 'Molecule ID'
+        requires :svg_file, type: String, desc: 'SVG raw file'
+        requires :is_chemdraw, type: Boolean, desc: 'is chemdraw file?'
+      end
+      post :svg do
+        svg = params[:svg_file]
+        processor = Ketcherails::SVGProcessor.new svg unless params[:is_chemdraw]
+        processor = Chemotion::ChemdrawSvgProcessor.new svg if params[:is_chemdraw]
+        svg = processor.centered_and_scaled_svg
+        molecule = Molecule.find(params[:id])
+        molecule.attach_svg(svg)
+        { svg_path: molecule.molecule_svg_file }
+      rescue StandardError => e
+        return { msg: { level: 'error', message: e } }
+      end
+
+      desc 'update molfile and svg of molecule'
+      params do
+        requires :id, type: Integer, desc: 'Molecule ID'
+        requires :molfile, type: String, desc: 'Molecule molfile'
+        requires :svg_file, type: String, desc: 'Molecule svg file'
+      end
+      post :editor do
+        error!({ msg: { level: 'error', message: '401 Unauthorized' } }, 401) unless current_user&.molecule_editor
+        molecule = Molecule.find(params[:id])
+        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(params[:molfile])
+        inchikey = babel_info && babel_info[:inchikey]
+        return { msg: { level: 'error', message: 'The InChIKey will be changed to ' + inchikey.to_s + ' . Record update failed!' } } unless inchikey.present? && molecule.inchikey == inchikey
+
+        molecule.molfile = params[:molfile]
+        molecule.molecule_svg_file = params[:svg_file]
+        molecule.save!
+        return { msg: { level: 'info', message: 'Record updated successfully!' }, molecule: molecule }
+      rescue StandardError => e
+        return { msg: { level: 'error', message: e } }
       end
     end
   end
