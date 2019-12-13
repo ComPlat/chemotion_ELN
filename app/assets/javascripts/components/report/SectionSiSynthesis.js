@@ -368,10 +368,11 @@ const SynthesisRow = ({ el, counter, configs, molSerials, settings }) => (
   </div>
 );
 
-const SectionSiSynthesis = ({ selectedObjs, configs, molSerials,
-  settings }) => {
+const SectionSiSynthesis = ({
+  previewObjs, configs, molSerials, settings,
+}) => {
   let counter = 0;
-  const contents = selectedObjs.map((obj) => {
+  const contents = previewObjs.map((obj) => {
     if (obj.type === 'reaction' && obj.role !== 'gp') {
       counter += 1;
       return (

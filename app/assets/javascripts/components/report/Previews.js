@@ -15,12 +15,12 @@ const objToKeyValPairs = (obj = []) => (
   }, {})
 );
 
-const stdPreviews = ({ selectedObjs, splSettings, rxnSettings, configs }) => {
+const stdPreviews = ({ previewObjs, splSettings, rxnSettings, configs }) => {
   const splSettingsPairs = objToKeyValPairs(splSettings);
   const rxnSettingsPairs = objToKeyValPairs(rxnSettings);
   const configsPairs = objToKeyValPairs(configs);
 
-  const objs = selectedObjs.map((obj, i) => (
+  const objs = previewObjs.map((obj, i) => (
     obj.type === 'sample'
       ? <SectionSample
         key={i}
@@ -41,7 +41,7 @@ const stdPreviews = ({ selectedObjs, splSettings, rxnSettings, configs }) => {
   );
 };
 
-const suiPreviews = ({ selectedObjs, configs, molSerials, siRxnSettings }) => {
+const suiPreviews = ({ previewObjs, configs, molSerials, siRxnSettings }) => {
   const configsPairs = objToKeyValPairs(configs);
   const setPairs = objToKeyValPairs(siRxnSettings);
 
@@ -55,11 +55,11 @@ const suiPreviews = ({ selectedObjs, configs, molSerials, siRxnSettings }) => {
       <h4>2 General remarks</h4>
       <br />
       <h4>3 General procedures</h4>
-      <SectionSiProcedures selectedObjs={selectedObjs} />
+      <SectionSiProcedures previewObjs={previewObjs} />
       <br />
       <h4>4 Synthesis</h4>
       <SectionSiSynthesis
-        selectedObjs={selectedObjs}
+        previewObjs={previewObjs}
         configs={configsPairs}
         molSerials={molSerials}
         settings={setPairs}
@@ -80,9 +80,9 @@ const spcPreviews = ({ prdAtts, molSerials, attThumbNails }) => (
   </div>
 );
 
-const rxlPreviews = ({ selectedObjs, molSerials }) => (
+const rxlPreviews = ({ previewObjs, molSerials }) => (
   <SectionReactionList
-    objs={selectedObjs}
+    objs={previewObjs}
     molSerials={molSerials}
   />
 );

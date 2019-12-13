@@ -47,7 +47,7 @@ const generateReport = (allState, updateQueue) => {
 
 const GenerateReportBtn = ({ allState, updateQueue }) => {
   const { selectedObjTags, defaultObjTags, splSettings, rxnSettings,
-    processingReport, previewLoading } = allState;
+    processingReport } = allState;
 
   const hasObj = [...selectedObjTags.sampleIds,
     ...selectedObjTags.reactionIds, ...defaultObjTags.sampleIds,
@@ -68,7 +68,7 @@ const GenerateReportBtn = ({ allState, updateQueue }) => {
         bsStyle="primary"
         bsSize="xsmall"
         className="button-right"
-        disabled={!(showGeneReportBtn && hasObj && !previewLoading)}
+        disabled={!(showGeneReportBtn && hasObj)}
         onClick={onClick}
       >
         <span><i className="fa fa-file-text-o" /> Generate</span>

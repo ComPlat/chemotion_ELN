@@ -7,8 +7,7 @@ import ArrayUtils from '../utils/ArrayUtils';
 import UserActions from '../actions/UserActions';
 import UserStore from './UserStore';
 import { reOrderArr } from '../utils/DndControl';
-import { UpdateSelectedObjs } from '../utils/ReportHelper';
-import UIFetcher from '../fetchers/UIFetcher';
+import { UpdateSelectedObjs, OrderPreviewObjs } from '../utils/ReportHelper';
 
 class ReportStore {
   constructor() {
@@ -51,6 +50,7 @@ class ReportStore {
     this.defaultObjTags = { sampleIds: [], reactionIds: [] };
     this.selectedObjTags = { sampleIds: [], reactionIds: [] };
     this.selectedObjs = [];
+    this.previewObjs = [];
     this.selMolSerials = [];
     this.imgFormat = 'png';
     this.archives = [];
@@ -60,8 +60,6 @@ class ReportStore {
     this.template = 'standard';
     this.prdAtts = [];
     this.attThumbNails = [];
-    this.lastUiChange = new Date().getTime();
-    this.previewLoading = false;
     this.fileName = '';
 
     this.bindListeners({
@@ -91,7 +89,7 @@ class ReportStore {
       handleUpdMSVal: ReportActions.updMSVal,
       handleUpdateThumbNails: ReportActions.updateThumbNails,
       handleUpdateDefaultTags: ReportActions.updateDefaultTags,
-      handleChangeUi: ReportActions.changeUi,
+      handleLoadRreview: ReportActions.loadRreview,
     });
   }
 
@@ -240,77 +238,23 @@ class ReportStore {
     }), 2500);
   }
 
-  handleUpdateCheckedTags(uiState) {
-    const { sample, reaction, currentCollection } = uiState;
-    const sampleCheckedIds = sample.checkedIds.toArray();
-    const reactionCheckedIds = reaction.checkedIds.toArray();
-    const { sampleIds, reactionIds } = this.selectedObjTags;
-    const dfSIds = _.difference(sampleCheckedIds, sampleIds)
-      .filter(id => !this.defaultObjTags.sampleIds.includes(id));
-    const dfRIds = _.difference(reactionCheckedIds, reactionIds)
-      .filter(id => !this.defaultObjTags.reactionIds.includes(id));
-
-    // const diffTags = { sample: dfSIds, reaction: dfRIds };
-
-    const elementAdded = dfSIds.length > 0 || dfRIds.length > 0
-      || sample.checkedAll || reaction.checkedAll;
-
-    const elementSubs = _.difference(sampleIds, sampleCheckedIds).length > 0
-      || _.difference(reactionIds, reactionCheckedIds).length > 0;
-
-    if (elementAdded) {
-      UIFetcher.loadReportElements({ sample, reaction, currentCollection })
-        .then((result) => {
-          const newTags = {
-            sampleIds: result.samples.map(e => e.id),
-            reactionIds: result.reactions.map(e => e.id)
-          };
-          const newObjs = result;
-          const newSelectedObjs = UpdateSelectedObjs(
-            newTags,
-            newObjs,
-            this.defaultObjTags,
-            this.selectedObjs,
-          );
-          const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
-          const molSerials = this.updMolSerials(finalObjs);
-          const newPrdAtts = this.extractPrdAtts(finalObjs);
-          this.setState({
-            selectedObjTags: newTags,
-            selectedObjs: finalObjs,
-            prdAtts: newPrdAtts,
-            selMolSerials: molSerials,
-            previewLoading: false,
-          });
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    } else if (elementSubs) {
-      const newTags = {
-        sampleIds: sampleCheckedIds,
-        reactionIds: reactionCheckedIds
-      };
-      const newSelectedObjs = UpdateSelectedObjs(
-        newTags,
-        { samples: [], reactions: [] },
-        this.defaultObjTags,
-        this.selectedObjs,
-      );
-      const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
-      const molSerials = this.updMolSerials(finalObjs);
-      const newPrdAtts = this.extractPrdAtts(finalObjs);
-      this.setState({
-        selectedObjTags: newTags,
-        selectedObjs: finalObjs,
-        prdAtts: newPrdAtts,
-        selMolSerials: molSerials,
-        previewLoading: false,
-      });
-    } else {
-      this.setState({
-        previewLoading: false,
-      });
-    }
+  handleUpdateCheckedTags({ newTags, newObjs }) {
+    if (!newTags && !newObjs) return null;
+    const newSelectedObjs = UpdateSelectedObjs(
+      newTags,
+      newObjs,
+      this.defaultObjTags,
+      this.selectedObjs,
+    );
+    const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
+    const molSerials = this.updMolSerials(finalObjs);
+    const newPrdAtts = this.extractPrdAtts(finalObjs);
+    this.setState({
+      selectedObjTags: newTags,
+      selectedObjs: finalObjs,
+      prdAtts: newPrdAtts,
+      selMolSerials: molSerials,
+    });
   }
 
   isEqTypeId(a, b) {
@@ -728,11 +672,21 @@ class ReportStore {
     // TODO: update selectedObjs?
   }
 
-  handleChangeUi(current) {
+  handleLoadRreview({ objs }) {
+    if (!objs) return null;
+    const { samples, reactions } = objs;
+    let previewObjs = OrderPreviewObjs(
+      this.previewObjs, this.selectedObjs, [...samples, ...reactions],
+    );
+    previewObjs = this.orderObjsForTemplate(this.template, previewObjs);
+    const molSerials = this.updMolSerials(previewObjs);
+    const newPrdAtts = this.extractPrdAtts(previewObjs);
     this.setState({
-      lastUiChange: current,
-      previewLoading: true,
+      previewObjs,
+      prdAtts: newPrdAtts,
+      selMolSerials: molSerials,
     });
+    return null;
   }
 }
 

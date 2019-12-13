@@ -56,7 +56,7 @@ const originalState = {
   selMolSerials: [],
   attThumbNails: [],
   prdAtts: [],
-  previewLoading: false,
+  previewObjs: [],
 };
 
 export { originalState, splSettings, rxnSettings, configs };
