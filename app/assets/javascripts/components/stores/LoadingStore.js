@@ -14,6 +14,8 @@ class LoadingStore {
         [
           LoadingActions.stop,
           ReportActions.clone,
+          ReportActions.updateCheckedTags,
+          ReportActions.loadRreview,
           ElementActions.createSampleForReaction,
           ElementActions.updateSampleForReaction,
           ElementActions.updateSampleForWellplate,

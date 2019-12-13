@@ -26,9 +26,9 @@ const ProcedureRow = ({el, counter}) => {
   );
 }
 
-const SectionSiProcedures = ({selectedObjs}) => {
+const SectionSiProcedures = ({ previewObjs }) => {
   let counter = 0;
-  const contents = selectedObjs.map( obj => {
+  const contents = previewObjs.map( obj => {
     if(obj.type === 'reaction' && obj.role === 'gp') {
       counter += 1;
       return (

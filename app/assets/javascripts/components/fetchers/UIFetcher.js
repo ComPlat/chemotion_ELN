@@ -34,15 +34,17 @@ export default class UIFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static loadReportElements(params) {
-    return fetch('/api/v1/ui_state/load_report_elements', {
+  static loadReport(params, loadType) {
+    const tParams = Object.assign({}, params, { loadType });
+
+    return fetch('/api/v1/ui_state/load_report', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(tParams),
     }).then(response => response.json())
       .then((json) => {
         const samples = json.samples.map(s => new Sample(s));

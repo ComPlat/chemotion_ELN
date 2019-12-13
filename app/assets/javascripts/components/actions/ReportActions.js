@@ -3,7 +3,7 @@ import UIFetcher from '../fetchers/UIFetcher';
 import ReportsFetcher from '../fetchers/ReportsFetcher';
 import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 import _ from 'lodash';
-import { GetTypeIds } from '../utils/ReportHelper';
+import { GetTypeIds, LoadPreviewIds } from '../utils/ReportHelper';
 
 class ReportActions {
 
@@ -55,10 +55,6 @@ class ReportActions {
         console.log(errorMessage);
       });
     };
-  }
-
-  updateCheckedTags(uiState) {
-    return uiState;
   }
 
   //
@@ -114,7 +110,7 @@ class ReportActions {
       reaction: { checkedIds: reactionIds },
     };
     return (dispatch) => {
-      UIFetcher.loadReportElements(uiState)
+      UIFetcher.loadReport(uiState, 'lists')
         .then((result) => {
           dispatch({ objs: result, archive, defaultObjTags: { sampleIds, reactionIds } });
         }).catch((errorMessage) => {
@@ -157,8 +153,63 @@ class ReportActions {
     };
   }
 
-  changeUi(current) {
-    return current;
+  updateCheckedTags({ uiState, reportState }) {
+    const { sample, reaction, currentCollection } = uiState;
+    const { selectedObjTags, defaultObjTags } = reportState;
+    const sampleCheckedIds = sample.checkedIds.toArray();
+    const reactionCheckedIds = reaction.checkedIds.toArray();
+    const { sampleIds, reactionIds } = selectedObjTags;
+    const dfSIds = _.difference(sampleCheckedIds, sampleIds)
+      .filter(id => !defaultObjTags.sampleIds.includes(id));
+    const dfRIds = _.difference(reactionCheckedIds, reactionIds)
+      .filter(id => !defaultObjTags.reactionIds.includes(id));
+
+    // const diffTags = { sample: dfSIds, reaction: dfRIds };
+
+    const elementAdded = dfSIds.length > 0 || dfRIds.length > 0
+      || sample.checkedAll || reaction.checkedAll;
+
+    const elementSubs = _.difference(sampleIds, sampleCheckedIds).length > 0
+      || _.difference(reactionIds, reactionCheckedIds).length > 0;
+
+    if (elementAdded) {
+      return (dispatch) => {
+        UIFetcher.loadReport({ sample, reaction, currentCollection }, 'lists')
+          .then((result) => {
+            const newTags = {
+              sampleIds: result.samples.map(e => e.id),
+              reactionIds: result.reactions.map(e => e.id)
+            };
+            dispatch({ newTags, newObjs: result });
+          }).catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+      };
+    } else if (elementSubs) {
+      return (dispatch) => {
+        const newTags = {
+          sampleIds: sampleCheckedIds,
+          reactionIds: reactionCheckedIds
+        };
+        const result = { samples: [], reactions: [] };
+        dispatch({ newTags, newObjs: result });
+      };
+    }
+    return (dispatch) => {
+      dispatch({ newTags: false, newObjs: false });
+    };
+  }
+
+  loadRreview({ reportState }) {
+    const state = LoadPreviewIds(reportState);
+    return (dispatch) => {
+      UIFetcher.loadReport(state, 'elements')
+        .then((result) => {
+          dispatch({ objs: result });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 }
 

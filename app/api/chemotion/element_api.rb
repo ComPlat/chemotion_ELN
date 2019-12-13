@@ -102,23 +102,28 @@ module Chemotion
         selected
       end
 
-      namespace :load_report_elements do
-        desc 'return samples and reactions for a report'
+      namespace :load_report do
+        desc 'return samples & reactions for a report'
         post do
           selected = { 'samples' => [], 'reactions' => [] }
           %w[sample reaction].each do |element|
             next unless params[element][:checkedAll] || params[element][:checkedIds].present?
-
             selected[element + 's'] = @collection.send(element + 's').by_ui_state(params[element]).map do |e|
-              se = ElementPermissionProxy.new(current_user, e, user_ids)
-                                         .serialized
-              se[:literatures] = citation_for_elements(e.id, e.class.to_s)
-              se
+              if params[:loadType] == 'lists'
+                ElementListPermissionProxy.new(current_user, e, user_ids)
+                                          .serialized
+              else
+                se = ElementPermissionProxy.new(current_user, e, user_ids)
+                                            .serialized
+                se[:literatures] = citation_for_elements(e.id, e.class.to_s)
+                se
+              end
             end
           end
           selected
         end
       end
+
     end
   end
 end

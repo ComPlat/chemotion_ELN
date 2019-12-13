@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Panel, Tabs, Tab } from 'react-bootstrap';
+import LoadingActions from '../actions/LoadingActions';
 import ReportActions from '../actions/ReportActions';
 import ReportStore from '../stores/ReportStore';
 import UIStore from '../stores/UIStore';
@@ -12,6 +13,8 @@ import Config from './Config';
 import PanelHeader from '../common/PanelHeader';
 import { CloseBtn, ResetBtn, GenerateReportBtn } from './ReportComponent';
 
+const fetchPreviewTabs = [3, 4];
+
 export default class ReportContainer extends Component {
   constructor(props) {
     super(props);
@@ -22,14 +25,13 @@ export default class ReportContainer extends Component {
     this.onChangeUI = this.onChangeUI.bind(this);
     this.panelHeader = this.panelHeader.bind(this);
     this.updateQueue = this.updateQueue.bind(this);
-    this.previewTab = this.previewTab.bind(this);
   }
 
   componentDidMount() {
     ReportStore.listen(this.onChange);
     UIStore.listen(this.onChangeUI);
-    const state = UIStore.getState();
-    this.onChangeUI(state);
+    const uiState = UIStore.getState();
+    this.onChangeUI(uiState);
     ReportActions.getArchives.defer();
   }
 
@@ -42,14 +44,15 @@ export default class ReportContainer extends Component {
     this.setState({ ...state });
   }
 
-  onChangeUI(state) {
-    const { lastUiChange } = ReportStore.getState();
-    const current = new Date().getTime();
-    const shouldUpdate = current - lastUiChange >= 5000;
-    if (shouldUpdate) {
-      ReportActions.changeUi.defer(current);
-      setTimeout(() => ReportActions.updateCheckedTags.defer(state), 5000);
+  onChangeUI(uiState) {
+    // jump to config when in the preview
+    const { activeKey } = this.state;
+    if (fetchPreviewTabs.indexOf(activeKey) >= 0) {
+      ReportActions.updateActiveKey.defer(2);
     }
+    // load list data only
+    const state = { uiState, reportState: this.state };
+    ReportActions.updateCheckedTags.defer(state);
   }
 
   panelHeader() {
@@ -69,6 +72,11 @@ export default class ReportContainer extends Component {
 
   selectTab(key) {
     ReportActions.updateActiveKey(key);
+    if (fetchPreviewTabs.indexOf(key) >= 0) { // preview
+      LoadingActions.start.defer();
+      const reportState = ReportStore.getState();
+      ReportActions.loadRreview.defer({ reportState });
+    }
   }
 
   archivesTitle() {
@@ -99,24 +107,14 @@ export default class ReportContainer extends Component {
     }
   }
 
-  previewTab() {
-    const { previewLoading } = this.state;
-    return (
-      <p style={{ height: 0 }}>
-        preview
-        {
-          previewLoading ? <i className="fa fa-refresh fa-spin fa-fw" /> : null
-        }
-      </p>
-    );
-  }
-
   render() {
-    const { splSettings, checkedAllSplSettings, archives, activeKey,
+    const {
+      splSettings, checkedAllSplSettings, archives, activeKey,
       rxnSettings, checkedAllRxnSettings, imgFormat, fileName, template,
       configs, checkedAllConfigs, selectedObjs, selMolSerials,
       siRxnSettings, checkedAllSiRxnSettings, fileDescription,
-      prdAtts, attThumbNails } = this.state;
+      prdAtts, attThumbNails, previewObjs,
+    } = this.state;
     const archivesTitle = this.archivesTitle();
 
     return (
@@ -129,7 +127,7 @@ export default class ReportContainer extends Component {
           onSelect={this.selectTab}
           id="report-tabs"
         >
-          <Tab eventKey={0} title={'Config'}>
+          <Tab eventKey={0} title="Config">
             <Config
               imgFormat={imgFormat}
               fileName={fileName}
@@ -140,7 +138,7 @@ export default class ReportContainer extends Component {
               handleTemplateChanged={this.handleTemplateChanged}
             />
           </Tab>
-          <Tab eventKey={1} title={'Setting'}>
+          <Tab eventKey={1} title="Setting">
             <Setting
               template={template}
               splSettings={splSettings}
@@ -152,20 +150,20 @@ export default class ReportContainer extends Component {
             />
           </Tab>
 
-          <Tab eventKey={2} title={'Order'}>
+          <Tab eventKey={2} title="Order">
             <div className="panel-fit-screen">
               <Orders selectedObjs={selectedObjs} template={template} />
             </div>
           </Tab>
-          <Tab eventKey={3} title={'Label'}>
+          <Tab eventKey={3} title="Label">
             <div className="panel-fit-screen">
               <Serials selMolSerials={selMolSerials} template={template} />
             </div>
           </Tab>
-          <Tab eventKey={4} title={this.previewTab()}>
+          <Tab eventKey={4} title="Preview">
             <div className="panel-fit-screen">
               <Previews
-                selectedObjs={selectedObjs}
+                previewObjs={previewObjs}
                 splSettings={splSettings}
                 rxnSettings={rxnSettings}
                 siRxnSettings={siRxnSettings}

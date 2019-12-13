@@ -5,7 +5,7 @@ const allContent = ({ selectedObjs, template }) => (
   selectedObjs.map(obj => (
     <ObjRow
       id={obj.id}
-      key={obj.id}
+      key={`${obj.type}${obj.id}`}
       element={obj}
       template={template}
     />
@@ -18,7 +18,7 @@ const suiContent = ({ selectedObjs, template }) => (
       return (
         <ObjRow
           id={obj.id}
-          key={obj.id}
+          key={`${obj.type}${obj.id}`}
           element={obj}
           template={template}
         />

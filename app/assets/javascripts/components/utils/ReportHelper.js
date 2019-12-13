@@ -47,4 +47,39 @@ const UserSerial = (molecule, molSerials = []) => {
   return output;
 };
 
-module.exports = { UpdateSelectedObjs, GetTypeIds, UserSerial };
+const OrderPreviewObjs = (oriPreviewObjs, selectedObjs, newPreviewObjs) => {
+  const previewObjs = [...oriPreviewObjs, ...newPreviewObjs];
+  return (
+    selectedObjs.map(o => (
+      previewObjs.map(
+        p => ((p.id === o.id && p.type === o.type) ? p : null)
+      ).filter(r => r !== null)[0]
+    )).filter(r => r !== null)
+  );
+};
+
+const LoadPreviewIds = (reportState) => {
+  const { selectedObjTags, defaultObjTags, previewObjs } = reportState;
+  const sids = [...selectedObjTags.sampleIds, ...defaultObjTags.sampleIds];
+  const rids = [...selectedObjTags.reactionIds, ...defaultObjTags.reactionIds];
+  let psids = [];
+  let prids = [];
+  previewObjs.forEach((o) => {
+    if (o.type === 'sample') {
+      psids = [...psids, o.id];
+    } else {
+      prids = [...prids, o.id];
+    }
+  });
+  const lsids = sids.filter(x => !psids.includes(x));
+  const lrids = rids.filter(x => !prids.includes(x));
+  const targets = {
+    sample: { checkedIds: lsids },
+    reaction: { checkedIds: lrids },
+  };
+  return targets;
+};
+
+module.exports = {
+  UpdateSelectedObjs, GetTypeIds, UserSerial, OrderPreviewObjs, LoadPreviewIds,
+};
