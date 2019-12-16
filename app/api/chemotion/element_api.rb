@@ -104,14 +104,45 @@ module Chemotion
 
       namespace :load_report do
         desc 'return samples & reactions for a report'
+        params do
+          optional :currentCollection, default: Hash.new, type: Hash do
+            optional :id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
+          end
+          optional :sample, type: Hash do
+            use :ui_state_params
+          end
+          optional :reaction, type: Hash do
+            use :ui_state_params
+          end
+          optional :loadType, type: String
+          optional :selectedTags, default: Hash.new, type: Hash do
+            optional :sampleIds, type: Array[Integer]
+            optional :reactionIds, type: Array[Integer]
+          end
+        end
         post do
           selected = { 'samples' => [], 'reactions' => [] }
+          selectedTags = params['selectedTags']
           %w[sample reaction].each do |element|
             next unless params[element][:checkedAll] || params[element][:checkedIds].present?
-            selected[element + 's'] = @collection.send(element + 's').by_ui_state(params[element]).map do |e|
+            klass = Object.const_get(element.capitalize)
+            col_els = @collection.send(element + 's').by_ui_state(params[element])
+            col_ids = col_els.map(&:id)
+            all_ids = params[element][:checkedIds] || []
+            dif_ids = all_ids - col_ids
+            dif_els = klass.where(id: dif_ids)
+            all_els = (col_els + dif_els).uniq { |x| x.id }
+
+            tags = selectedTags["#{element}Ids".to_sym]
+            selected[element + 's'] = all_els.map do |e|
               if params[:loadType] == 'lists'
-                ElementListPermissionProxy.new(current_user, e, user_ids)
-                                          .serialized
+                if tags && tags.include?(e.id)
+                  { id: e.id, in_browser_memory: true }
+                else
+                  ElementListPermissionProxy.new(current_user, e, user_ids)
+                                            .serialized
+                end
               else
                 se = ElementPermissionProxy.new(current_user, e, user_ids)
                                             .serialized
@@ -123,7 +154,6 @@ module Chemotion
           selected
         end
       end
-
     end
   end
 end
