@@ -82,7 +82,7 @@ const cloneBtn = (archive) => {
   const onClickToClone = e => clickToClone(e, archive);
   const cloneTP = (
     <Tooltip id="clone-tp">
-      Load date from this report.
+      Load data from this report.
     </Tooltip>
   );
 
