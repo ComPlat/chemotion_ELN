@@ -12,7 +12,7 @@ module Entities
             { 'token': token, exp: (Time.now + 2.seconds).to_i }, ENV['NOVNC_SECRET'], 'HS256'
           )
         end
-        result['target'] = "#{result['target']}=#{token}"
+        result['target'] = "#{result['target']}?token=#{token}"
       end
       result
     end

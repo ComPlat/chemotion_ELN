@@ -25,7 +25,9 @@ class CnC extends React.Component {
       show: false,
       data: [],
       watching: 0,
-      using: 0
+      using: 0,
+      autoBlur: null,
+      autoDisconnect: null
     };
     this.UserStoreChange = this.UserStoreChange.bind(this);
     this.toggleDeviceList = this.toggleDeviceList.bind(this);
@@ -33,9 +35,14 @@ class CnC extends React.Component {
     this.connect = this.connect.bind(this);
     this.connected = this.connected.bind(this);
     this.disconnected = this.disconnected.bind(this);
+    this.autoDisconnect = this.autoDisconnect.bind(this);
 
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.clearTimers = this.clearTimers.bind(this);
+    
     this.fetchConnections = this.fetchConnections.bind(this);
   }
 
@@ -68,19 +75,40 @@ class CnC extends React.Component {
     this.setState({ connected: false });
   }
 
+  clearTimers() {
+    clearTimeout(this.state.autoBlur);
+    clearTimeout(this.state.autoDisconnect);
+  }
+
   handleFocus() {
     if (!this.state.rfb) { return; }
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = false;
-    this.setState({ rfb: tempRFB, isNotFocused: false });
+    this.clearTimers();
+    const blurTime = setTimeout(this.handleBlur, 2000);
+    this.setState({ rfb: tempRFB, isNotFocused: false, autoBlur: blurTime });
   }
 
   handleBlur() {
     if (!this.state.rfb) { return; }
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = true;
-    this.setState({ rfb: tempRFB, isNotFocused: true });
+    this.clearTimers();
+    const disconnectTime = setTimeout(this.autoDisconnect, 5000);
+    this.setState({ rfb: tempRFB, isNotFocused: true, autoDisconnect: disconnectTime });
   }
+
+  handleMouseEnter() {
+    if (!this.state.rfb || this.state.isNotFocused) { return; }
+    this.clearTimers();
+  }
+
+  handleMouseLeave() {
+    if (this.state.isNotFocused) { return; }
+    this.clearTimers();
+    const blurTime = setTimeout(this.handleFocus, 2000);
+    this.setState({ autoBlur: blurTime });
+   }
 
   connect() {
     this.disconnect();
@@ -121,6 +149,10 @@ class CnC extends React.Component {
           }
         });
       });
+  }
+
+  autoDisconnect() {
+    this.state.rfb.disconnect();
   }
 
   disconnect() {
@@ -205,6 +237,8 @@ class CnC extends React.Component {
               />
               <div
                 ref={(ref) => { this.canvas = ref; }}
+                onMouseEnter={this.handleMouseEnter}
+                onMouseLeave={this.handleMouseLeave}
               />
             </Col>
           </Row>
