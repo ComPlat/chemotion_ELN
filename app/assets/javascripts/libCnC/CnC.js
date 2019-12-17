@@ -2,13 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Grid, Row, Col } from 'react-bootstrap';
 import RFB from '@novnc/noVNC/lib/rfb';
+import { uniq } from 'lodash';
 // import Immutable from 'immutable';
 
 import Navigation from './Navigation';
 import DeviceActions from '../components/actions/UserActions';
 import DeviceStore from '../components/stores/UserStore';
 import FocusNovnc from '../components/FocusNovnc';
-
+import { ConnectedBtn, DisconnectedBtn } from '../components/NovncStatus';
+import UsersFetcher from '../components/fetchers/UsersFetcher';
 
 class CnC extends React.Component {
   constructor() {
@@ -20,7 +22,12 @@ class CnC extends React.Component {
       connected: false,
       rfb: null,
       isNotFocused: true,
-      show: false
+      show: false,
+      data: [],
+      watching: 0,
+      using: 0,
+      autoBlur: null,
+      autoDisconnect: null
     };
     this.UserStoreChange = this.UserStoreChange.bind(this);
     this.toggleDeviceList = this.toggleDeviceList.bind(this);
@@ -28,9 +35,15 @@ class CnC extends React.Component {
     this.connect = this.connect.bind(this);
     this.connected = this.connected.bind(this);
     this.disconnected = this.disconnected.bind(this);
+    this.autoDisconnect = this.autoDisconnect.bind(this);
 
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.clearTimers = this.clearTimers.bind(this);
+    
+    this.fetchConnections = this.fetchConnections.bind(this);
   }
 
   componentDidMount() {
@@ -62,19 +75,40 @@ class CnC extends React.Component {
     this.setState({ connected: false });
   }
 
+  clearTimers() {
+    clearTimeout(this.state.autoBlur);
+    clearTimeout(this.state.autoDisconnect);
+  }
+
   handleFocus() {
     if (!this.state.rfb) { return; }
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = false;
-    this.setState({ rfb: tempRFB, isNotFocused: false });
+    this.clearTimers();
+    const blurTime = setTimeout(this.handleBlur, 2000);
+    this.setState({ rfb: tempRFB, isNotFocused: false, autoBlur: blurTime });
   }
 
   handleBlur() {
     if (!this.state.rfb) { return; }
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = true;
-    this.setState({ rfb: tempRFB, isNotFocused: true });
+    this.clearTimers();
+    const disconnectTime = setTimeout(this.autoDisconnect, 5000);
+    this.setState({ rfb: tempRFB, isNotFocused: true, autoDisconnect: disconnectTime });
   }
+
+  handleMouseEnter() {
+    if (!this.state.rfb || this.state.isNotFocused) { return; }
+    this.clearTimers();
+  }
+
+  handleMouseLeave() {
+    if (this.state.isNotFocused) { return; }
+    this.clearTimers();
+    const blurTime = setTimeout(this.handleFocus, 2000);
+    this.setState({ autoBlur: blurTime });
+   }
 
   connect() {
     this.disconnect();
@@ -95,6 +129,30 @@ class CnC extends React.Component {
     rfb.addEventListener('connect', () => this.connected());
     rfb.addEventListener('disconnect', () => this.disconnected());
     this.setState(prevState => ({ ...prevState, rfb, isNotFocused: true }));
+    setInterval(this.fetchConnections, 10000);
+  }
+
+  fetchConnections() {
+    fetch(`/api/v1/devices/current_connection?id=${this.state.selected.id}&status=${this.state.isNotFocused}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json())
+      .then((json) => {
+        const data = uniq(json.result).map(line => line.split(','));
+        this.setState({ data });
+        this.setState({ using: 0, watching: 0 });
+        this.state.data.forEach((element) => {
+          const status = element[1].substring(0, 1);
+          if (status === '0') {
+            this.setState({ using: this.state.using + 1 });
+          } else if (status === '1') {
+            this.setState({ watching: this.state.watching + 1 });
+          }
+        });
+      });
+  }
+
+  autoDisconnect() {
+    this.state.rfb.disconnect();
   }
 
   disconnect() {
@@ -115,14 +173,11 @@ class CnC extends React.Component {
   }
 
   deviceClick(device) {
-    this.setState(
-      prevState => ({
-        ...prevState,
-        selected: device
-      })
-      ,
-      this.connect
-    );
+    UsersFetcher.fetchNoVNCDevices(device.id)
+      .then(devices => this.setState(
+        prevState => ({ ...prevState, selected: devices[0] }),
+        this.connect
+      ));
   }
 
   tree(dev, selectedId) {
@@ -147,6 +202,8 @@ class CnC extends React.Component {
 
               >
                 {device.name}
+                {selectedId === device.id && this.state.connected ? <ConnectedBtn /> : null}
+                {selectedId === device.id && !this.state.connected ? <DisconnectedBtn /> : null}
               </div>
             </div>
           ))}
@@ -156,7 +213,9 @@ class CnC extends React.Component {
   }
 
   render() {
-    const { devices, selected, showDeviceList } = this.state;
+    const {
+      devices, selected, showDeviceList
+    } = this.state;
 
     return (
       <div>
@@ -172,9 +231,14 @@ class CnC extends React.Component {
                 handleFocus={this.handleFocus}
                 handleBlur={this.handleBlur}
                 connected={this.state.connected}
+                watching={this.state.watching}
+                using={this.state.using}
+                data={this.state.data}
               />
               <div
                 ref={(ref) => { this.canvas = ref; }}
+                onMouseEnter={this.handleMouseEnter}
+                onMouseLeave={this.handleMouseLeave}
               />
             </Col>
           </Row>
