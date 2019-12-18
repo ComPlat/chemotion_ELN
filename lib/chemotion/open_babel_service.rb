@@ -383,6 +383,18 @@ M  END
 
   private
 
+  def self.molfile_clear_hydrogens molfile, options={}
+    cc = OpenBabel::OBConversion.new
+    cc.set_in_format 'mol'
+    cc.set_out_format 'mol'
+    cc.set_options 'd u', OpenBabel::OBConversion::OUTOPTIONS
+    mm = OpenBabel::OBMol.new
+    cc.read_string mm, molfile
+    mm.delete_hydrogens
+    cc.write_string(mm, false)
+
+  end
+
   def self.svg_from_molfile molfile, options={}
     c = OpenBabel::OBConversion.new
     c.set_in_format 'mol'

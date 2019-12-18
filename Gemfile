@@ -88,6 +88,8 @@ gem 'hashie-forbidden_attributes'
 gem 'kaminari'
 gem 'kaminari-grape'
 
+gem "rdkit_chem", git: "https://github.com/CamAnNguyen/rdkit_chem"
+
 gem 'api-pagination'
 
 gem 'pundit'

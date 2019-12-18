@@ -130,7 +130,9 @@ class Molecule < ActiveRecord::Base
     self.pcid = pubchem_info[:cid]
     self.check_sum_formular # correct exact and average MW for resins
 
-    self.attach_svg babel_info[:svg]
+    #self.attach_svg babel_info[:svg]
+    svg = Chemotion::OpenBabelService.svg_from_molfile(self.molfile)
+    self.attach_svg svg
 
     self.cano_smiles = babel_info[:cano_smiles]
     self.molfile_version = babel_info[:molfile_version]

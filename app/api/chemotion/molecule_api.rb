@@ -22,6 +22,23 @@ module Chemotion
           molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
           unless molecule
             molfile = babel_info[:molfile] if babel_info
+            begin
+              rw_mol = RDKitChem::RWMol.mol_from_smiles(smiles)
+              rd_mol = rw_mol.mol_to_mol_block  # molfile
+            rescue RuntimeError => e
+              rd_mol = rw_mol.mol_to_mol_block(true, -1, false)
+            end
+            if rd_mol.nil?
+              begin
+                pc_mol = Chemotion::PubchemService.molfile_from_smiles(smiles)
+                pc_mol = Chemotion::OpenBabelService.molfile_clear_hydrogens(pc_mol) unless pc_mol.nil?
+                molfile = pc_mol unless pc_mol.nil?
+              rescue StandardError
+              end
+            else
+              molfile = rd_mol
+            end
+
             return {} unless molfile
 
             molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
