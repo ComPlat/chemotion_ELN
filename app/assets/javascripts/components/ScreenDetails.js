@@ -15,7 +15,8 @@ import ElementActions from './actions/ElementActions';
 import DetailActions from './actions/DetailActions';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
-import PrintCodeButton from './common/PrintCodeButton'
+import PrintCodeButton from './common/PrintCodeButton';
+import ConfirmClose from './common/ConfirmClose'
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -121,13 +122,7 @@ export default class ScreenDetails extends Component {
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={screen} placement="right"/>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="closeScreen">Close Screen</Tooltip>}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => DetailActions.close(screen)} >
-            <i className="fa fa-times"></i>
-          </Button>
-        </OverlayTrigger>
+        <ConfirmClose el={screen} />
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"

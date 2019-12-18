@@ -23,6 +23,7 @@ import EditorFetcher from './fetchers/EditorFetcher';
 import SpinnerPencilIcon from './common/SpinnerPencilIcon';
 import ImageModal from './common/ImageModal';
 import LoadingActions from './actions/LoadingActions';
+import ConfirmClose from './common/ConfirmClose';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
@@ -230,13 +231,7 @@ export default class ResearchPlanDetails extends Component {
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={research_plan} placement="right"/>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="closeresearch_plan">Close research_plan</Tooltip>}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => DetailActions.close(research_plan)} >
-            <i className="fa fa-times"></i>
-          </Button>
-        </OverlayTrigger>
+        <ConfirmClose el={research_plan} />
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveresearch_plan">Save research_plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"

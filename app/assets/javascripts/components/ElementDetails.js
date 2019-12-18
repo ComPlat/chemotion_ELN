@@ -8,14 +8,13 @@ import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
 import ResearchPlanDetails from './ResearchPlanDetails';
-import { ConfirmModal } from './common/ConfirmModal';
 import ReportContainer from './report/ReportContainer';
 import FormatContainer from './FormatContainer';
 import GraphContainer from './GraphContainer';
 import DetailActions from './actions/DetailActions';
 import ElementStore from './stores/ElementStore';
 import { SameEleTypId } from './utils/ElementUtils';
-import LiteratureDetails from './LiteratureDetails'
+import LiteratureDetails from './LiteratureDetails';
 
 export default class ElementDetails extends Component {
   constructor(props) {
@@ -27,6 +26,7 @@ export default class ElementDetails extends Component {
       selecteds,
       activeKey,
       deletingElement,
+      showTooltip: false,
     };
 
     this.handleResize = this.handleResize.bind(this);
@@ -206,17 +206,9 @@ export default class ElementDetails extends Component {
     return (<div>{icon} &nbsp; {title} </div>);
   }
 
-  confirmDeleteContent() {
-    return (
-      <div>
-        <p>Unsaved data will be lost.</p>
-      </div>
-    );
-  }
-
   render() {
     const {
-      fullScreen, selecteds, activeKey, offsetTop, deletingElement
+      fullScreen, selecteds, activeKey, offsetTop
     } = this.state;
     const fScrnClass = fullScreen ? 'full-screen' : 'normal-screen';
 
@@ -248,12 +240,6 @@ export default class ElementDetails extends Component {
             </Tabs>
           </div>
         </StickyDiv>
-        <ConfirmModal
-          showModal={deletingElement !== null}
-          title="Confirm Close"
-          content={this.confirmDeleteContent()}
-          onClick={DetailActions.confirmDelete}
-        />
       </div>
     );
   }

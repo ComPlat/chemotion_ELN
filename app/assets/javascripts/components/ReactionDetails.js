@@ -27,6 +27,7 @@ import UIActions from './actions/UIActions';
 import { setReactionByType } from './ReactionDetailsShare';
 import { sampleShowOrNew } from './routesUtils';
 import ReactionSvgFetcher from './fetchers/ReactionSvgFetcher';
+import ConfirmClose from './common/ConfirmClose';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -271,13 +272,7 @@ export default class ReactionDetails extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
           <span><i className="icon-reaction"/>&nbsp;{reaction.title()}</span>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="closeReaction">Close Reaction</Tooltip>}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-              onClick={() => DetailActions.close(reaction)}>
-            <i className="fa fa-times"></i>
-          </Button>
-        </OverlayTrigger>
+        <ConfirmClose el={reaction} />
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
           <Button
