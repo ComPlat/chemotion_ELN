@@ -5,6 +5,12 @@ GIT
     rinchi-gem (1.0.1)
 
 GIT
+  remote: https://github.com/CamAnNguyen/rdkit_chem
+  revision: 6777f2b2c74948064750e0724f7952b097c4a3c5
+  specs:
+    rdkit_chem (2019.03.3.1)
+
+GIT
   remote: https://github.com/ComPlat/ketcher-rails
   revision: 32944d4e969950e429a96f3f3b992a7b135bbfad
   ref: 32944d4e969950e429a96f3f3b992a7b135bbfad
@@ -718,6 +724,7 @@ DEPENDENCIES
   pundit
   rack-mini-profiler!
   rails (= 4.2.11.1)
+  rdkit_chem!
   rinchi-gem (= 1.0.1)!
   rmagick
   roo (> 2.5.0)
