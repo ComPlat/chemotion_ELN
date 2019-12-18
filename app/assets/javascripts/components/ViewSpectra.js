@@ -175,10 +175,21 @@ class ViewSpectra extends React.Component {
   }
 
   writeCloseOp({
-    peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+    peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
+    keepPred, isIntensity,
   }) {
     this.writeOp({
-      peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+      peaks,
+      shift,
+      scan,
+      thres,
+      analysis,
+      layout,
+      isAscend,
+      decimal,
+      body,
+      keepPred,
+      isIntensity,
     });
     this.closeOp();
   }
@@ -217,8 +228,8 @@ class ViewSpectra extends React.Component {
   buildOpsByLayout(et) {
     const updatable = this.props.sample && this.props.sample.can_update;
     const baseOps = updatable ? [
-      { name: 'write', value: this.writeOp },
-      { name: 'write & close', value: this.writeCloseOp },
+      { name: 'write & save', value: this.writeOp },
+      { name: 'write, save & close', value: this.writeCloseOp },
       { name: 'save', value: this.saveOp },
       { name: 'save & close', value: this.saveCloseOp },
     ] : [];
