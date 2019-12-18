@@ -52,6 +52,7 @@ import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import PubchemLcss from './PubchemLcss';
 import QcMain from './qc/QcMain';
 import { chmoConversions } from './OlsComponent';
+import ConfirmClose from './common/ConfirmClose';
 
 const MWPrecision = 6;
 
@@ -380,13 +381,7 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
           <span><i className="icon-sample" />{sample.title()}</span>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="closeSample">Close Sample</Tooltip>}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => DetailActions.close(sample)}>
-            <i className="fa fa-times"></i>
-          </Button>
-        </OverlayTrigger>
+        <ConfirmClose el={sample} />
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"

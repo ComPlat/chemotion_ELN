@@ -18,6 +18,7 @@ import WellplateDetailsContainers from './WellplateDetailsContainers';
 import PrintCodeButton from './common/PrintCodeButton'
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
+import ConfirmClose from './common/ConfirmClose';
 
 const cols = 12;
 
@@ -123,13 +124,7 @@ export default class WellplateDetails extends Component {
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={wellplate} placement="right"/>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="closeWellplate">Close Wellplate</Tooltip>}>
-          <Button bsStyle="danger" bsSize="xsmall"
-            className="button-right" onClick={() => DetailActions.close(wellplate)} >
-            <i className="fa fa-times"></i>
-          </Button>
-        </OverlayTrigger>
+        <ConfirmClose el={wellplate} />
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
