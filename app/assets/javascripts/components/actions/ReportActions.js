@@ -174,8 +174,10 @@ class ReportActions {
 
     if (elementAdded) {
       return (dispatch) => {
-        UIFetcher.loadReport({ sample, reaction, currentCollection }, 'lists')
-          .then((result) => {
+        UIFetcher.loadReport({
+          sample, reaction, currentCollection, selectedTags: selectedObjTags, },
+          'lists',
+        ).then((result) => {
             const newTags = {
               sampleIds: result.samples.map(e => e.id),
               reactionIds: result.reactions.map(e => e.id)

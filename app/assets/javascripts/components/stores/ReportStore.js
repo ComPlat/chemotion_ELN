@@ -238,11 +238,28 @@ class ReportStore {
     }), 2500);
   }
 
+  mergeMemoryFetchObjs(newObjs) {
+    const fetchSpls = newObjs.samples.filter(x => !x.in_browser_memory);
+    const fetchRxns = newObjs.reactions.filter(x => !x.in_browser_memory);
+    let memSpls = [];
+    let memRxns = [];
+    this.selectedObjs.forEach((x) => {
+      x.type === 'sample'
+        ? memSpls = [...memSpls, x]
+        : memRxns = [...memRxns, x]
+    });
+    return {
+      samples: [...fetchSpls, ...memSpls],
+      reactions: [...fetchRxns, ...memRxns],
+    };
+  }
+
   handleUpdateCheckedTags({ newTags, newObjs }) {
     if (!newTags && !newObjs) return null;
+    const targetObjs = this.mergeMemoryFetchObjs(newObjs);
     const newSelectedObjs = UpdateSelectedObjs(
       newTags,
-      newObjs,
+      targetObjs,
       this.defaultObjTags,
       this.selectedObjs,
     );
