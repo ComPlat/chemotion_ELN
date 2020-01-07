@@ -114,7 +114,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   _onChangeCallback() {
     if (this.props.onChange) {
-      this.props.onChange({ ...this.state, unit: this.props.unit, metricPrefix: this.state.metricPrefix });
+      this.props.onChange({ ...this.state, unit: this.props.unit });
     }
   }
 
@@ -128,7 +128,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
     this.setState({
       metricPrefix: metricPrefixes[ind]
-    }, () => this._onChangeCallback());
+    });
+
+    this.props.onMetricsChange({ ...this.state, metricUnit: this.props.unit, metricPrefix: metricPrefixes[ind] });
   }
 
   render() {
@@ -211,6 +213,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
 NumeralInputWithUnitsCompo.propTypes = {
   onChange: PropTypes.func,
+  onMetricsChange: PropTypes.func,
   unit: PropTypes.string,
   units: PropTypes.array,
   metricPrefix: PropTypes.string,

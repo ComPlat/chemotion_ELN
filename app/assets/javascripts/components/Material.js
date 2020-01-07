@@ -107,6 +107,7 @@ class Material extends Component {
 
     this.createParagraph = this.createParagraph.bind(this);
     this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
+    this.handleMetricsChange = this.handleMetricsChange.bind(this);
   }
 
   handleMaterialClick(sample) {
@@ -143,6 +144,7 @@ class Material extends Component {
               precision={3}
               disabled={(this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn}
               onChange={this.handleAmountUnitChange}
+              onMetricsChange={this.handleMetricsChange}
               bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
             />
           </div>
@@ -305,6 +307,20 @@ class Material extends Component {
     }
   }
 
+  handleMetricsChange(e) {
+    if (this.props.onChange && e) {
+      const event = {
+        metricUnit: e.metricUnit,
+        metricPrefix: e.metricPrefix,
+        type: 'MetricsChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+
+      };
+      this.props.onChange(event);
+    }
+  }
+
   handleLoadingChange(newLoading) {
     this.props.material.residues[0].custom_info.loading = newLoading.value;
 
@@ -397,6 +413,8 @@ class Material extends Component {
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
     const metricPrefixesMol = ['m', 'n'];
     const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
+    const metricPrefixesMolConc = ['m', 'n'];
+    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
 
     return (
       <tr className="general-material">
@@ -429,6 +447,7 @@ class Material extends Component {
                 precision={4}
                 disabled={this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn}
                 onChange={this.handleAmountUnitChange}
+                onMetricsChange={this.handleMetricsChange}
                 bsStyle={material.error_mass ? 'error' : massBsStyle}
               />
             </div>
@@ -447,6 +466,7 @@ class Material extends Component {
             precision={4}
             disabled={this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn)}
             onChange={this.handleAmountUnitChange}
+            onMetricsChange={this.handleMetricsChange}
             bsStyle={material.amount_unit === 'mol' ? 'success' : 'default'}
           />
         </td>
@@ -458,11 +478,12 @@ class Material extends Component {
             key={material.id}
             value={material.concn}
             unit="mol/l"
-            metricPrefix={metricMol}
-            metricPrefixes={metricPrefixesMol}
+            metricPrefix={metricMolConc}
+            metricPrefixes={metricPrefixesMolConc}
             precision={4}
             disabled
             onChange={this.handleAmountUnitChange}
+            onMetricsChange={this.handleMetricsChange}
           />
         </td>
 

@@ -198,6 +198,11 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForAmountUnitChange(changeEvent)
         );
         break;
+      case 'MetricsChanged':
+        this.onReactionChange(
+          this.updatedReactionForMetricsChange(changeEvent)
+        );
+        break;
       case 'loadingChanged':
         this.onReactionChange(
           this.updatedReactionForLoadingChange(changeEvent)
@@ -296,6 +301,14 @@ export default class ReactionDetailsScheme extends Component {
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
     updatedSample.setAmount(amount);
+
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+  }
+
+  updatedReactionForMetricsChange(changeEvent) {
+    const { sampleID, metricUnit, metricPrefix } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
+    updatedSample.setUnitMetrics(metricUnit, metricPrefix);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }
