@@ -130,7 +130,7 @@ export default class Sample extends Element {
       target_amount_unit: 'g',
       molarity_value: 0,
       molarity_unit: 'M',
-      metrics: 'mmm',
+      metrics: 'mmmm',
       description: '',
       purity: 1,
       density: 0,
@@ -411,7 +411,7 @@ export default class Sample extends Element {
   }
 
   get metrics() {
-    return this._metrics || 'mmm';
+    return this._metrics || 'mmmm';
   }
 
   set metrics(metrics) {
@@ -446,17 +446,26 @@ export default class Sample extends Element {
     if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
       this.amount_unit = amount.unit;
-      const mp = amount.metricPrefix || 'm';
-      if (amount.unit === 'l') {
-        this.metrics = (this.metrics && this.metrics.replace(/(.{1}).{1}/, `$1${mp}`)) || 'mmm';
-      } else if (amount.unit === 'mol') {
-        this.metrics = (this.metrics && this.metrics.replace(/(.{2}).{1}/, `$1${mp}`)) || 'mmm';
-      } else {
-        this.metrics = (this.metrics && this.metrics.replace(/(.{0}).{1}/, `$1${mp}`)) || 'mmm';
-      }
     }
   }
 
+  setUnitMetrics(unit, metricPrefix) {
+    const mp = metricPrefix || 'm';
+    if (unit === 'l') {
+      this.metrics = (this.metrics && this.metrics.replace(/(.{1}).{1}/, `$1${mp}`)) || 'mmmm';
+    } else if (unit === 'mol') {
+      this.metrics = (this.metrics && this.metrics.replace(/(.{2}).{1}/, `$1${mp}`)) || 'mmmm';
+    } else if (unit === 'mol/l') {
+      if (this.metrics && this.metrics.length === 3) {
+        this.metrics = this.metrics + mp;
+      } else {
+        this.metrics = (this.metrics && this.metrics.replace(/(.{3}).{1}/, `$1${mp}`)) || 'mmmm';
+      }
+    }
+    else {
+      this.metrics = (this.metrics && this.metrics.replace(/(.{0}).{1}/, `$1${mp}`)) || 'mmmm';
+    }
+  }
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
