@@ -77,10 +77,28 @@ export default class ReactionDetailsProperties extends Component {
 
   setCurrentTime(type) {
     const currentTime = new Date().toLocaleString('en-GB').split(', ').join(' ');
+    const { reaction } = this.state;
 
     const wrappedEvent = { target: { value: currentTime } };
     const inputType = type === 'start' ? 'timestampStart' : 'timestampStop';
     this.props.onInputChange(inputType, wrappedEvent);
+
+    if (inputType === 'timestampStart') {
+      if (reaction.status === 'Planning' || reaction.status === '') {
+        this.props.onInputChange('status', { target: { value: "Running" }})
+        // TO DO
+        // Flash the status change
+      }
+      return
+    }
+    else {
+      if (reaction.status === 'Running') {
+        this.props.onInputChange('status', { target: { value: "Done" } })
+        // TO DO
+        // Flash the status change
+      }
+      return
+    }
   }
 
   handleOnReactionChange(reaction) {
@@ -212,6 +230,53 @@ export default class ReactionDetailsProperties extends Component {
         { key: 'Minute(s)', val: 'minutes' },
         { key: 'Second(s)', val: 'seconds' }
       ];
+      
+      const checkUnit = moment.preciseDiff(start, stop, true);
+      for (let [key, value] of Object.entries(checkUnit)) {
+        if (value > 0) {
+          switch(key) {
+            case 'years':
+            case 'year':
+                this.props.onInputChange('durationUnit', "Year(s)");
+                this.durationUnit = "Year(s)"
+                break;
+            case 'months':
+            case 'month':
+                this.props.onInputChange('durationUnit', "Month(s)");
+                this.durationUnit = "Month(s)"
+                break;
+            case 'weeks':
+            case 'week':
+                this.props.onInputChange('durationUnit', "Week(s)");
+                this.durationUnit = "Week(s)"
+                break;
+            case 'days':
+            case 'day':
+                this.props.onInputChange('durationUnit', "Day(s)");
+                this.durationUnit = "Day(s)"
+                break;
+            case 'hours':
+            case 'hour':
+                this.props.onInputChange('durationUnit', "Hour(s)");
+                this.durationUnit = "Hour(s)"
+                break;
+            case 'minutes':
+            case 'minute':
+                this.props.onInputChange('durationUnit', "Minute(s)");
+                this.durationUnit = "Minute(s)"
+                break;
+            case 'seconds':
+            case 'second':
+                this.props.onInputChange('durationUnit', "Second(s)");
+                this.durationUnit = "Second(s)"
+                break;
+            default:
+              break;
+          }
+          break;
+        }
+      }
+
       let v = moment.duration(stop.diff(start))
         .as(find(MomentUnit, m => m.key === this.durationUnit).val);
       if (start < stop) {

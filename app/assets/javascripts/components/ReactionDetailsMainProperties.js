@@ -25,9 +25,10 @@ import OlsTreeSelect from './OlsComponent';
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
     super(props)
+    const { temperature } = props && props.reaction;
     this.state = {
       showTemperatureChart: false,
-      temperature: props.reaction.temperature
+      temperature,
     }
 
     this.toggleTemperatureChart = this.toggleTemperatureChart.bind(this);
@@ -115,8 +116,9 @@ export default class ReactionDetailsMainProperties extends Component {
             <FormGroup>
               <ControlLabel>Status</ControlLabel>
               <Select
-                className="status-select"
+                className="status-select reaction-status-change"
                 name="status"
+                key={reaction.status}
                 multi={false}
                 options={statusOptions}
                 value={reaction.status}

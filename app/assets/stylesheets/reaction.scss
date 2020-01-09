@@ -202,3 +202,23 @@ table.reaction-scheme-solvent {
   border-top-right-radius: 4px !important;
   border-top-left-radius: 4px !important;
 }
+
+.reaction-status-change {
+  .Select-value {
+
+  -webkit-animation: reaction-status-color-change 3s;  /* Safari 4.0 - 8.0 */
+  -webkit-animation-fill-mode: forwards; /* Safari 4.0 - 8.0 */
+  animation: reaction-status-color-change 3s;
+  }
+
+}
+
+/* Safari 4.0 - 8.0 */
+@-webkit-keyframes reaction-status-color-change {
+  from { background-color: aliceblue;}
+}
+
+@keyframes reaction-status-color-change {
+  //from {top: 0px;}
+  from { background-color: aliceblue;}
+}
