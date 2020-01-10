@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
-  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml raw]
+  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml raw cdf]
 
   extend ActiveSupport::Concern
 
@@ -84,14 +84,14 @@ module AttachmentJcampAasm
   def init_aasm
     return unless idle?
     _, extname = extension_parts
-    %w[dx jdx jcamp mzml raw].include?(extname.downcase) ? set_queueing : set_non_jcamp
+    FILE_EXT_SPECTRA.include?(extname.downcase) ? set_queueing : set_non_jcamp
   end
 
   def require_peaks_generation? # rubocop:disable all
     return unless belong_to_analysis?
     typname, extname = extension_parts
     return if peaked? || edited?
-    return unless %w[dx jdx jcamp mzml raw].include?(extname.downcase)
+    return unless FILE_EXT_SPECTRA.include?(extname.downcase)
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
     generate_spectrum(true, false) if queueing? && !new_upload
