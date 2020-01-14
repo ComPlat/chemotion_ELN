@@ -34,6 +34,7 @@
 #  failed_attempts        :integer          default(0), not null
 #  unlock_token           :string
 #  locked_at              :datetime
+#  account_active         :boolean
 #
 # Indexes
 #

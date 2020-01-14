@@ -32,6 +32,7 @@
 #  failed_attempts        :integer          default(0), not null
 #  unlock_token           :string
 #  locked_at              :datetime
+#  account_active         :boolean
 #
 # Indexes
 #
@@ -46,7 +47,7 @@ class User < ActiveRecord::Base
   acts_as_paranoid
   # Include default devise modules. Others available are:
   # :lockable, :timeoutable and :omniauthable
-  devise :database_authenticatable, :registerable, #:confirmable,
+  devise :database_authenticatable, :registerable, :confirmable,
          :recoverable, :rememberable, :trackable, :validatable, :lockable
 
   has_one :profile, dependent: :destroy
@@ -95,6 +96,10 @@ class User < ActiveRecord::Base
     where('LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ?',
           "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%")
   }
+
+  def active_for_authentication?
+    super && account_active
+  end
 
   def name_abbreviation_length
     na = name_abbreviation
@@ -249,6 +254,12 @@ class Person < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
   has_many :administrated_accounts,  through: :users_admins, source: :user
+
+  before_create :set_account_active
+
+  def set_account_active
+    account_active = ENV['DEVISE_NEW_ACCOUNT_INACTIVE'].presence != 'true'
+  end
 end
 
 class Device < User
