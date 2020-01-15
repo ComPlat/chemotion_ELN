@@ -35,6 +35,8 @@ see [INSTALL.md][INSTALL]
 
 ## Code Status
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1054134.svg)](https://doi.org/10.5281/zenodo.1054134)
+
 [![Build Status](https://travis-ci.org/ComPlat/chemotion_ELN.svg?branch=master)](https://travis-ci.org/ComPlat/chemotion_ELN)
 
 [![Coverage Status](https://coveralls.io/repos/github/ComPlat/chemotion_ELN/badge.svg)](https://coveralls.io/github/ComPlat/chemotion_ELN)

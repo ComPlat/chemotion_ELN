@@ -21,14 +21,14 @@ check the variables at the beginning of the file, but also check the whole scrip
 * do a capistrano app deploy
 * config nginx (NB: no ssl set) and UFW
 
-When ready make the script executable and run it:
+When ready, make the script executable and run it as a non-root user (but in the sudo group):
 
 `chmod 700 chemotion_ELN_install.sh
 
 `sudo ./chemotion_ELN_install.sh`
 
 After reboot the application should be up and running at the ip of the machine (http://...)
-
+An admin account should have been created (email: eln-admin@kit.edu, pw: PleaseChangeYourPassword)
 
 To update the application code for such an installation, use the update script:
 ```
