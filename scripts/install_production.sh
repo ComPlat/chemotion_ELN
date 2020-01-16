@@ -47,16 +47,16 @@ NCPU=$(grep -c ^processor /proc/cpuinfo)
 
 
 ############################################
-######### INSTALLATION PARTS  ##############
+######### INSTALLATION PARTS TO RUN  #######
 ############################################
 
-### comment line out to skip a part#########
+### comment out any line below (PART_....) to skip the corresponding installation part#########
 
-PART_1='deb dependencies'
-PART_2='phusionpassenger'
-PART_3='create user'
-PART_4='rvm and ruby'
-PART_5='nvm and npm'
+PART_1='deb dependencies installation'
+PART_2='phusionpassenger installation'
+PART_3='create a ubuntu user'
+PART_4='rvm and ruby installation'
+PART_5='nvm and npm installation'
 PART_6='prepare postgresql DB'
 PART_7='prepare production app directories and config'
 PART_71='reset DB pw'
@@ -228,13 +228,23 @@ description="Prepare postgresql DB"
 
 if [ "${PART_6:-}" ]; then
   sharpi "$description"
-  sudo -u postgres psql -c " CREATE ROLE $DB_ROLE LOGIN CREATEDB NOSUPERUSER PASSWORD '$DB_PW';" || yellow "ROLE $DB_ROLE already exists and will be used!"
-  sudo -u postgres psql -c " CREATE DATABASE $DB_NAME OWNER $DB_ROLE;" ||  { red "DATABASE $DB_NAME already exists! Skip this part if you want to use this DB"; exit ; }
+
+  sudo -u postgres psql -c " CREATE ROLE $DB_ROLE LOGIN CREATEDB NOSUPERUSER PASSWORD '$DB_PW';" ||\
+   yellow "ROLE $DB_ROLE already exists and will be used!"
+
+ sudo -u postgres psql -c " CREATE DATABASE $DB_NAME OWNER $DB_ROLE;" ||\
+   { red "DATABASE $DB_NAME already exists! Press s to skip this part if you want to use the existing DB (default), press r to reset this DB (all existing data will be lost), or a to abort. [s/r/a]?" &&\
+   read x && { [[ "$x" == "a" ]] && yellow "aborting" && rm_tmp && exit; } ||\
+   { [[ "$x" == "r" ]] && { sudo -u postgres psql -c " DROP DATABASE $DB_NAME;" || yellow "DB could not be DROPPED, press any key to continue with the exisiting DB" && read x; } } ||\
+   yellow "skip create DB and continue with existing DB"; }
+
   sudo -u postgres psql -d $DB_NAME -c ' CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+
   green "done $description\n"
 else
   yellow "skip $description\n"
 fi
+
 #sudo -u postgres psql -c "ALTER USER $DB_ROLE PASSWORD '$pw';"
 
 ############################################
@@ -327,6 +337,7 @@ if [ "${PART_8:-}" ]; then
   sharpi "$description"
   yellow "Clone remote code\n"
 
+  rm_tmp
   sudo -H -u $PROD bash -c "git clone --branch $BRANCH --depth 1 $REPO $TMP_DIR"
   sudo -H -u $PROD bash -c "cd $TMP_DIR &&  echo $RUBY_VERSION > .ruby-version"
   sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle config build.nokogiri --use-system-libraries"
