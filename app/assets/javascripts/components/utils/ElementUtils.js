@@ -37,9 +37,14 @@ const reduceByPeak = (splitData) => {
   let within = 0;
   return splitData.split(/(\(|\)|,)/).reduce(
     (acc, cv) => {
-      if (cv === ',' && within === 0) {
-        acc.push('');
-        return acc;
+      if (within === 0) {
+        if (cv === ',' ) {
+          acc.push('');
+          return acc;
+        } else if (cv && cv.match(/[^\d]?\.[^\d]/)) {
+          acc.push('.');
+          return acc;
+        }
       }
       if (cv === '(') {
         within += 1;
@@ -58,6 +63,7 @@ const atomCountCInNMRDescription = (cNmrStr) => {
   if (!m) { return 0; }
 
   const mdata = reduceByPeak(m[2]);
+
   let cCount = mdata.length;
   mdata.forEach((peak) => {
     if (!peak.match(/\d/)) {
@@ -72,6 +78,8 @@ const atomCountCInNMRDescription = (cNmrStr) => {
           const xCount = bracket[1].match(/(\d+)\s*(×|x)\s*./);
           if (xCount) { cCount += parseInt(xCount[1], 10) - 1; }
         }
+      } else if (peak.match(/^\./)) {
+        cCount -= 1;
       }
     }
   });
@@ -112,7 +120,6 @@ const cNmrCheckMsg = (formula, nmrStr) => {
   }
   const countInFormula = atomCountInFormula(formula, 'C');
   const countInDesc = atomCountCInNMRDescription(nmrStr);
-
   if (countInFormula !== countInDesc) {
     return ` count: ${countInDesc}/${countInFormula}`;
   }

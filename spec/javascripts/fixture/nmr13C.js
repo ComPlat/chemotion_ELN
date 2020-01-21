@@ -37,7 +37,7 @@ const nmrData13C = {
   },
   'REPO-2536-Daniel': {
     formula: 'C21H19N',
-    content: {"ops":[{"attributes":{"bold":true},"insert":"13C NMR "},{"insert":"(101 MHz, CDCl3) "},{"attributes":{"italic":true},"insert":"δ"},{"insert":" [ppm] = 144.1 (Cquat.), 141.1 (Cquat.), 139.6 (Cquat.), 137.4 (Cquat.), 137.1 (Cquat.), 134.7 (+, CArH), 134.7 (+, CArH), 133.7 (+, CArH), 133.6 (+, CArH), 132.8 (+, CArH), 132.6 (+, CArH), 131.2 (+, CArH), 36.51 (–, CH2), 36.41 (–, CH2), 36.33 (–, CH2), 36.16 (–, CH2).\n"}]},
+    content: {"ops":[{"attributes":{"bold":true},"insert":"13C NMR "},{"insert":"(101 MHz, CDCl3) "},{"attributes":{"italic":true},"insert":"δ"},{"insert":" [ppm] = 144.1 (Cquat .), 141.1 (Cquat . ), 139.6 (Cquat. ), 137.4 (Cquat.), 137.1 (Cquat.), 134.7 (+, CArH), 134.7 (+, CArH), 133.7 (+, CArH), 133.6 (+, CArH), 132.8 (+, CArH), 132.6 (+, CArH), 131.2 (+, CArH), 36.51 (–, CH2), 36.41 (–, CH2), 36.33 (–, CH2), 36.16 (–, CH2).\n"}]},
     expected: ' count: 16/21',
   },
   'REPO-41901-Simone': {
@@ -106,6 +106,27 @@ const nmrData13C = {
       {insert: '13C NMR (125 MHz, CDCl3, ppm) δ = 164.7 (CO2CH3), 147.0 (2C, Cq), 137.8 (2C, Cq), 134.4 (2C, CH), 132.0 (2C, Cq), 131.0 (2C, CH), 126.2 (2C, CH), 53.1 (2C, CO2CH3).' }
     ] },
     expected: ' count: 15/16',
+  },
+  'NJ-dot': {
+    formula: 'C81H50N2O8',
+    content: { ops: [
+      {insert: '13C NMR (126 MHz, CDCl3): δ = 167.0 (Cq, COOEt), 146.2 (Cq), 145.7 (Cq), 145.5 (Cq), 141.9 (Cq), 134.8 (+, CH), 134.6 (+, CH), 134.5 (+, CH), 134.5 (+, CH), 134.3 (+, CH), 134.2 (+, CH), 134.2 (+, CH), 129.7 (+, CH), 127.9 (+, CH), 127.9 (+, CH), 127.6 (+, CH), 127.5 (+, CH), 127.3 (+, CH), 127.2 (+, CH), 126.6 (+, CH), 126.6 (+, CH), 126.4 (+, CH), 119.8 (Cq), 119.5 (Cq), 118.0 (Cq), 117.3 (Cq), 61.5 (–, COCH2), 14.8 (+, CH2CH3) . Missing signals (52C) due to signal overlap.' }
+    ] },
+    expected: ' count: 80/81',
+  },
+  'NJ-dot2': {
+    formula: 'C5H4',
+    content: { ops: [
+      {insert: '13C NMR : δ = 167.0 (CH), 14.8 (+, CH2CH3).Missing signals (2C) due to signal overlap.' }
+    ] },
+    expected: ' count: 4/5',
+  },
+  'NJ-comma': {
+    formula: 'C5H4',
+    content: { ops: [
+      {insert: '13C NMR : δ = 167.0 (CH), 14.8 (+, CH2CH3), Missing signals (2C) due to signal overlap.' }
+    ] },
+    expected: ' count: 4/5',
   }
 };
 
