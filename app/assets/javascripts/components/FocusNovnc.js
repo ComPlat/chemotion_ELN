@@ -8,6 +8,7 @@ export default class FocusNovnc extends React.Component {
 
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+    this.handleCursor = this.handleCursor.bind(this);
   }
 
   handleFocus() {
@@ -18,9 +19,12 @@ export default class FocusNovnc extends React.Component {
     this.props.handleBlur();
   }
 
+  handleCursor() {
+    this.props.handleCursor();
+  }
+
   render() {
-    const { connected } = this.props;
-    const { isNotFocused } = this.props;
+    const { connected, isNotFocused, forceCursor } = this.props;
     const focusedColor = 'btn btn-xs btn-success m-4';
     const blurredColor = 'btn btn-xs btn-danger m-4';
     const normalColor = 'btn btn-xs m-2';
@@ -58,6 +62,18 @@ export default class FocusNovnc extends React.Component {
           <BlurBtn />
           <FocusBtn />
         </ButtonGroup>
+
+        <Button
+          className={(!forceCursor) ? normalColor : focusedColor}
+          onClick={this.handleCursor}
+          title="force mouse cursor"
+        >
+          <span className="fa-stack ">
+            <i className="fa fa-desktop" aria-hidden="true" />
+            <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
+          </span>
+        </Button>
+
         { connected ? <UsersConnected /> : null }
       </ButtonToolbar>
 
@@ -69,8 +85,9 @@ FocusNovnc.propTypes = {
   watching: PropTypes.number.isRequired,
   using: PropTypes.number.isRequired,
   isNotFocused: PropTypes.bool.isRequired,
+  connected: PropTypes.bool.isRequired,
+  forceCursor: PropTypes.bool.isRequired,
   handleBlur: PropTypes.func.isRequired,
   handleFocus: PropTypes.func.isRequired,
-  connected: PropTypes.bool.isRequired
+  handleCursor: PropTypes.func.isRequired,
 };
-
