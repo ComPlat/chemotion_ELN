@@ -59,11 +59,11 @@ module Chemotion
             resp = connection.get { |req| req.url('/api/v1/public/ping') }
             unless resp.success?
               resp_body['error'] = resp.reason_phrase
-              error!(resp_body , resp.status)
+              error!(resp_body, resp.status)
             end
           rescue StandardError => e
             resp_body['error'] = e
-            error!(resp_body , 503)
+            error!(resp_body, 503)
           end
           unless (@collection = Collection.find_by(
             id: params[:id], user_id: current_user.id, is_shared: false
@@ -94,7 +94,7 @@ module Chemotion
           resp = connection.get { |req| req.url('/api/v1/gate/ping') }
           resp_body.merge!(JSON.parse(resp.body)) if resp.headers["content-type"] == "application/json"
 
-          error!(resp_body , resp.status) unless resp.success?
+          error!(resp_body, resp.status) unless resp.success?
           @resp_body = resp_body
         end
 
@@ -159,6 +159,7 @@ module Chemotion
           new_attachments = []
           imp.new_attachments&.each_pair do |key, att|
             next unless (tmp = params[key]&.fetch('tempfile', nil))
+
             att.file_path = tmp.path
             att.created_by = @user.id
             att.created_for = nil

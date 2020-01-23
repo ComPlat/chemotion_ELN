@@ -3,9 +3,9 @@
 class Import::ImportJson
   attr_accessor :data,  :force_uuid
   attr_reader :user_id, :collection_id, :collection, :all_collection, :user,
-    :new_data, :log, :new_attachments
+              :new_data, :log, :new_attachments
 
-#Dir["public/images/reactions/*"].each{|f| if !(Reaction.find_by(reaction_svg_file: File.basename(f))) then  File.delete(f) end}
+# Dir["public/images/reactions/*"].each{|f| if !(Reaction.find_by(reaction_svg_file: File.basename(f))) then  File.delete(f) end}
 
 
   # def dummy_data
@@ -91,8 +91,8 @@ class Import::ImportJson
     @data = d.is_a?(String) && JSON.parse(d, allow_nan: true) || d
     @user_id = arg[:user_id]
     @collection_id = arg[:collection_id]
-    @new_data = { }
-    @new_attachments = { }
+    @new_data = {}
+    @new_attachments = {}
     @log = { 'reactions' => {}, 'samples' => {} }
     @force_uuid = arg[:force_uuid]
     find_collection
@@ -107,16 +107,16 @@ class Import::ImportJson
     end
     import_reactions
     import_samples
-    #File.write("log_#{Time.now.to_i}.json", JSON.pretty_generate(@log))
+    # File.write("log_#{Time.now.to_i}.json", JSON.pretty_generate(@log))
   end
 
-  def collection_id= id
+  def collection_id=(id)
     @collection_id = id
     find_collection
     id
   end
 
-  def user_id= id
+  def user_id=(id)
     @user_id = id
     find_collection_all
     id
@@ -126,13 +126,14 @@ class Import::ImportJson
 
   def import_reactions
     return unless collections?
+
     attribute_names = filter_attributes(Reaction)
     reactions.each_value do |el|
       attribs = el.slice(*attribute_names).merge(
         created_by: user_id,
         collections_reactions_attributes: [
-          {collection_id: collection.id},
-          {collection_id: all_collection.id}
+          { collection_id: collection.id },
+          { collection_id: all_collection.id }
         ]
       )
       create_element(el['uuid'], attribs, Reaction, 'reaction', el['literatures'])
@@ -141,6 +142,7 @@ class Import::ImportJson
 
   def import_samples
     return unless collections?
+
     attribute_names = filter_attributes(Sample)
     samples.each_value do |el|
       attribs = el.slice(*attribute_names).merge(
@@ -151,21 +153,22 @@ class Import::ImportJson
         ]
       )
       if attribs['molecule_name_attributes']
-        attribs['molecule_name_attributes'].slice!('name','description','user_id')
+        attribs['molecule_name_attributes'].slice!('name', 'description', 'user_id')
         attribs['molecule_name_attributes']['user_id'] = user_id if attribs['molecule_name_attributes']['user_id']
       end
       attribs['residues_attributes'] ||=  []
       new_el = create_element(el['uuid'], attribs, Sample, 'sample', el['literatures'])
       next unless new_el
+
       klass = el['reaction_sample']&.constantize
       add_to_reaction(klass, el, new_el) if klass
     end
   end
 
-  def map_data_uuids(h)
-    %w(reactions samples).each do |method|
+  def map_data_uuids(obj)
+    %w[reactions samples].each do |method|
       send(method).each_key do |uuid|
-        h[method][uuid] = {}
+        obj[method][uuid] = {}
       end
     end
   end
@@ -199,7 +202,7 @@ class Import::ImportJson
       end
       new_el = klass.new(element)
       if new_el.save!
-        create_literatures(new_el.id, literatures) unless literatures.nil? || literatures.length == 0
+        create_literatures(new_el.id, literatures) if literatures.present?
         if force_uuid
           new_el.code_log.really_destroy!
           CodeLog.create(id: uuid, source: source, source_id: new_el.id)
@@ -209,7 +212,7 @@ class Import::ImportJson
         if !(new_el.container)
           new_el.container = Container.create_root_container(
             containable_id: new_el.id,
-            containable_type: klass.name,
+            containable_type: klass.name
           )
         end
         create_analyses(uuid, new_el)
@@ -224,17 +227,17 @@ class Import::ImportJson
   def create_analyses(uuid, el)
     analyses[uuid]&.each do |a|
       new_a = el.container.children.where(container_type: 'analyses')
-        .first.children.create(
-        container_type: 'analysis',
-        extended_metadata: a['extended_metadata'],
-        description: a['description'],
-        name: a['name']
-      )
+                .first.children.create(
+                  container_type: 'analysis',
+                  extended_metadata: a['extended_metadata'],
+                  description: a['description'],
+                  name: a['name']
+                )
       @log['analyses'] ||= {}
       remote_id = a['id']
       @log['analyses'][remote_id] = new_a.id
 
-      create_datasets(a.fetch('datasets',[]), new_a)
+      create_datasets(a.fetch('datasets', []), new_a)
     end
   end
 
@@ -257,22 +260,22 @@ class Import::ImportJson
           checksum: att['checksum'],
           attachable_id: new_a.id,
           attachable_type: 'Container'
-	}
-	attrib[:aasm_state] = att['aasm_state'] if att['aasm_state'] && %w[done image non_jcamp peaked edited].include?(att['aasm_state'])
+        }
+        attrib[:aasm_state] = att['aasm_state'] if att['aasm_state'] && %w[done image non_jcamp peaked edited].include?(att['aasm_state'])
         @new_attachments[att['identifier']] = Attachment.new(attrib)
       end
     end
   end
 
   def filter_attributes(klass)
-    attributes = klass.attribute_names - %w(id user_id created_by deleted_at )
+    attributes = klass.attribute_names - %w[id user_id created_by deleted_at]
     case klass.name
     when 'Sample'
       attributes -= [
         'ancestry', 'molecule_id', 'xref', 'fingerprint_id', 'molecule_name_id',
         'is_top_secret', 'molecule_svg_file'
-       ]
-      attributes += ['residues_attributes', 'elemental_compositions_attributes', 'molecule_name_attributes']
+      ]
+      attributes += %w[residues_attributes elemental_compositions_attributes molecule_name_attributes]
     # when 'Reaction'
     #   attributes -= ['reaction_svg_file']
     end
@@ -284,7 +287,7 @@ class Import::ImportJson
     r_uuid = el['r_uuid']
     ref = (el['r_reference'] == 't') || el['r_reference'] == 'f'
     eq = el['r_equivalent']
-    if new_data &&  new_data[r_uuid] && new_data[r_uuid]['id']
+    if new_data && new_data[r_uuid] && new_data[r_uuid]['id']
       @log['samples'][el_uuid][klass.name] = klass.create(
         sample_id: new_el.id, reaction_id: new_data[r_uuid]['id'],
         reference: ref, equivalent: eq, position: el['r_position']
@@ -320,6 +323,7 @@ class Import::ImportJson
 
   def find_collection_all(id = user_id)
     return unless id.is_a?(Integer)
+
     @all_collection = Collection.get_all_collection_for_user(id)
   end
 end
