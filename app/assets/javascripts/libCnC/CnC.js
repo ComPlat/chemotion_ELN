@@ -12,6 +12,13 @@ import FocusNovnc from '../components/FocusNovnc';
 import { ConnectedBtn, DisconnectedBtn } from '../components/NovncStatus';
 import UsersFetcher from '../components/fetchers/UsersFetcher';
 
+// Timeout before disconnection when not focused
+const TIME_DISCO = 180000;
+// Timeout before bluring when focused and mouse has left the canvas
+const TIME_BLUR = 55000;
+// Interval to query connection counter
+const TIME_CONN = 4000;
+
 class CnC extends React.Component {
   constructor() {
     super();
@@ -23,11 +30,12 @@ class CnC extends React.Component {
       rfb: null,
       isNotFocused: true,
       show: false,
-      data: [],
       watching: 0,
       using: 0,
       autoBlur: null,
-      autoDisconnect: null
+      autoDisconnect: null,
+      forceCursor: false,
+      connections: null,
     };
     this.UserStoreChange = this.UserStoreChange.bind(this);
     this.toggleDeviceList = this.toggleDeviceList.bind(this);
@@ -39,10 +47,11 @@ class CnC extends React.Component {
 
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+    this.handleCursor = this.handleCursor.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
     this.clearTimers = this.clearTimers.bind(this);
-    
+
     this.fetchConnections = this.fetchConnections.bind(this);
   }
 
@@ -85,8 +94,7 @@ class CnC extends React.Component {
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = false;
     this.clearTimers();
-    const blurTime = setTimeout(this.handleBlur, 2000);
-    this.setState({ rfb: tempRFB, isNotFocused: false, autoBlur: blurTime });
+    this.setState({ rfb: tempRFB, isNotFocused: false });
   }
 
   handleBlur() {
@@ -94,8 +102,12 @@ class CnC extends React.Component {
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = true;
     this.clearTimers();
-    const disconnectTime = setTimeout(this.autoDisconnect, 5000);
+    const disconnectTime = setTimeout(this.autoDisconnect, TIME_DISCO);
     this.setState({ rfb: tempRFB, isNotFocused: true, autoDisconnect: disconnectTime });
+  }
+
+  handleCursor() {
+    this.setState({ forceCursor: !this.state.forceCursor });
   }
 
   handleMouseEnter() {
@@ -106,9 +118,9 @@ class CnC extends React.Component {
   handleMouseLeave() {
     if (this.state.isNotFocused) { return; }
     this.clearTimers();
-    const blurTime = setTimeout(this.handleFocus, 2000);
+    const blurTime = setTimeout(this.handleBlur, TIME_BLUR);
     this.setState({ autoBlur: blurTime });
-   }
+  }
 
   connect() {
     this.disconnect();
@@ -126,36 +138,45 @@ class CnC extends React.Component {
     );
     rfb.viewOnly = true;
     rfb.reconnect = true;
+    rfb.show_dot = true;
     rfb.addEventListener('connect', () => this.connected());
     rfb.addEventListener('disconnect', () => this.disconnected());
-    this.setState(prevState => ({ ...prevState, rfb, isNotFocused: true }));
-    setInterval(this.fetchConnections, 10000);
+    this.setState(prevState => ({
+      ...prevState,
+      rfb,
+      isNotFocused: true,
+      connections: setInterval(this.fetchConnections, TIME_CONN)
+    }));
   }
 
   fetchConnections() {
-    fetch(`/api/v1/devices/current_connection?id=${this.state.selected.id}&status=${this.state.isNotFocused}`, {
+    const {
+      selected, isNotFocused
+    } = this.state;
+    fetch(`/api/v1/devices/current_connection?id=${selected.id}&status=${isNotFocused}`, {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then((json) => {
+        let using = 0;
+        let watching = 0;
         const data = uniq(json.result).map(line => line.split(','));
-        this.setState({ data });
-        this.setState({ using: 0, watching: 0 });
-        this.state.data.forEach((element) => {
-          const status = element[1].substring(0, 1);
-          if (status === '0') {
-            this.setState({ using: this.state.using + 1 });
-          } else if (status === '1') {
-            this.setState({ watching: this.state.watching + 1 });
-          }
+        const conn = Object.fromEntries(data);
+
+        Object.keys(conn).forEach((k) => {
+          if (conn[k] === '0') { using += 1; }
+          if (conn[k] === '1') { watching += 1; }
         });
+        this.setState({ using, watching });
       });
   }
 
   autoDisconnect() {
+    clearInterval(this.state.connections);
     this.state.rfb.disconnect();
   }
 
   disconnect() {
+    clearInterval(this.state.connections);
     if (!this.state.rfb) {
       return;
     }
@@ -214,7 +235,8 @@ class CnC extends React.Component {
 
   render() {
     const {
-      devices, selected, showDeviceList
+      devices, selected, showDeviceList,
+      isNotFocused, connected, watching, using, forceCursor
     } = this.state;
 
     return (
@@ -227,15 +249,17 @@ class CnC extends React.Component {
             {showDeviceList ? this.tree(devices, selected.id) : null}
             <Col className="small-col main-content" >
               <FocusNovnc
-                isNotFocused={this.state.isNotFocused}
+                isNotFocused={isNotFocused}
                 handleFocus={this.handleFocus}
                 handleBlur={this.handleBlur}
-                connected={this.state.connected}
-                watching={this.state.watching}
-                using={this.state.using}
-                data={this.state.data}
+                connected={connected}
+                watching={watching}
+                using={using}
+                forceCursor={forceCursor}
+                handleCursor={this.handleCursor}
               />
               <div
+                className={forceCursor ? 'force-mouse-pointer' : ''}
                 ref={(ref) => { this.canvas = ref; }}
                 onMouseEnter={this.handleMouseEnter}
                 onMouseLeave={this.handleMouseLeave}
