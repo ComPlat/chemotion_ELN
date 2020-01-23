@@ -166,7 +166,7 @@ module Export
         , (select array_to_json(array_agg(row_to_json(ecd)))
              from (select ec.composition_type, ec.loading, ec."data" from elemental_compositions ec where s.id = ec.sample_id) ecd) as elemental_compositions_attributes
         , (select array_to_json(array_agg(row_to_json(red)))
-            from (select re.custom_info,'residue_type', re.residue_type from residues re where s.id = re.sample_id) red) as residues_attributes
+            from (select re.custom_info, re.residue_type from residues re where s.id = re.sample_id) red) as residues_attributes
         , row_to_json(mn) as molecule_name_attributes
         ,(select array_to_json(array_agg(row_to_json(lis))) as lls from (
         select lh.element_type,lh.element_id,lh.category,ld.title,ld.url,ld.refs,ld.doi
