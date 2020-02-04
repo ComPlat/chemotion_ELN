@@ -9,7 +9,7 @@ import UIStore from '../stores/UIStore';
 
 const atomCountInFormula = (formula, e = 'H') => {
   if (typeof formula !== 'string') { return 0; }
-  const regStr = `${e}\\d*`
+  const regStr = `${e}\\d*`;
   const re = new RegExp(regStr);
   const hForm = re.exec(formula);
   if (!hForm) { return 0; }
@@ -18,27 +18,12 @@ const atomCountInFormula = (formula, e = 'H') => {
   return parseInt(count, 10);
 };
 
-const atomCountInNMRDescription = (nmrStr) => {
-  const nmrCnt = [];
-  // /(\d*)H\s*\)/g
-  (nmrStr.match(/[^\(*]+[$\)]+/g) || []).map(ex => ex.trim().slice(0, -1))
-    .forEach((exp) => {
-      nmrCnt.push((
-        (
-          (exp.split(',') || []).filter(t => t.includes('H') && !isNaN(t.trim().slice(0, -1)) && t.trim().length > 1)
-        ) || []
-      ).map(tt => parseInt(tt.trim().slice(0, -1), 10)));
-    });
-  return _.flattenDeep(nmrCnt).reduce((a, b) => a + b, 0);
-};
-
-
 const reduceByPeak = (splitData) => {
   let within = 0;
   return splitData.split(/(\(|\)|,)/).reduce(
     (acc, cv) => {
       if (within === 0) {
-        if (cv === ',' ) {
+        if (cv === ',') {
           acc.push('');
           return acc;
         } else if (cv && cv.match(/[^\d]?\.[^\d]/)) {
@@ -58,32 +43,84 @@ const reduceByPeak = (splitData) => {
   );
 };
 
+const splitDotPhrase = (phrases) => {
+  let within = 0;
+  return phrases.split(/(\(|\[\]|\)|\d\.\d|\.)/).reduce(
+    (acc, cv) => {
+      if (within === 0) {
+        if (cv && cv.match(/\d\.\d/)) {
+          //
+        } else if (cv === '.') {
+          acc.push('');
+          return acc;
+        }
+      }
+      if (cv === '(' || cv === '[') {
+        within += 1;
+      } else if (cv === ')' || cv === ']') {
+        within -= 1;
+      }
+      acc[acc.length - 1] += cv;
+      return acc;
+    },
+    ['']
+  );
+};
+
+const countHWithinBracket = (peakContent) => {
+  const bracketContent = peakContent && peakContent.match(/\((.*\d+[^C]*H.*)\)/);
+  if (!bracketContent) { return false; }
+
+  const simpleCount = bracketContent[1].match(/(^|[^\w])(\d+(\.\d+)?)H/);
+  if (simpleCount) { return parseFloat(simpleCount[2], 10); }
+
+  // const xCount = bracketContent[1].match(/(\d+(\.\d+)?)\s*(×|x)\s*./);
+  // if (xCount) { return parseFloat(xCount[1], 10); }
+
+  return false;
+};
+
+const countCWithinBracket = (peakContent) => {
+  const bracketContent = peakContent && peakContent.match(/\((.*\d+[^C]*C.*)\)/);
+  if (!bracketContent) { return false; }
+
+  const simpleCount = bracketContent[1].match(/(^|[^\w])(\d+(\.\d+)?)\s*C/);
+  if (simpleCount) { return parseFloat(simpleCount[2], 10); }
+
+  const xCount = bracketContent[1].match(/(\d+(\.\d+)?)\s*(×|x)\s*./);
+  if (xCount) { return parseFloat(xCount[1], 10); }
+
+  return false;
+};
+
+const atomCountInNMRDescription = (nmrStr) => {
+  const phraseArr = splitDotPhrase(nmrStr);
+  const count = reduceByPeak(phraseArr[0]).reduce((acc, peak) => {
+    const hs = countHWithinBracket(peak);
+    if (hs) { return acc + hs; }
+    return acc;
+  }, 0);
+  const missed = countHWithinBracket(phraseArr[1]);
+  if (missed) { return missed + count; }
+
+  return count;
+};
+
 const atomCountCInNMRDescription = (cNmrStr) => {
   const m = cNmrStr.match(/\s*(=|:|δ)(.*)\S/);
   if (!m) { return 0; }
 
-  const mdata = reduceByPeak(m[2]);
+  const phraseArr = splitDotPhrase(m[2]);
+  const count = reduceByPeak(phraseArr[0]).reduce((acc, peak) => {
+    if (!peak.match(/\d/)) { return acc; }
+    const cwb = countCWithinBracket(peak);
+    if (cwb) { return acc + cwb; }
+    return acc + 1;
+  }, 0);
+  const missed = countCWithinBracket(phraseArr[1]);
+  if (missed) { return count + missed; }
 
-  let cCount = mdata.length;
-  mdata.forEach((peak) => {
-    if (!peak.match(/\d/)) {
-      cCount -= 1;
-    } else {
-      const bracket = peak.match(/\((.*\d+[^C]*C.*)\)/);
-      if (bracket) {
-        const simpleCount = bracket[1].match(/(^|[^\w])(\d+)\s*C/);
-        if (simpleCount) {
-          cCount += parseInt(simpleCount[2], 10) - 1;
-        } else {
-          const xCount = bracket[1].match(/(\d+)\s*(×|x)\s*./);
-          if (xCount) { cCount += parseInt(xCount[1], 10) - 1; }
-        }
-      } else if (peak.match(/^\./)) {
-        cCount -= 1;
-      }
-    }
-  });
-  return cCount;
+  return count;
 };
 
 

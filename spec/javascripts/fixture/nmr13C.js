@@ -121,6 +121,14 @@ const nmrData13C = {
     ] },
     expected: ' count: 4/5',
   },
+  'NJ-dot3': {
+    formula: 'C5H4',
+    content: { ops: [
+      {insert: '13C NMR : δ = 167.0 (CH), 14.8. Missing signals  due to signal overlap.' }
+    ] },
+    expected: ' count: 2/5',
+  },
+
   'NJ-comma': {
     formula: 'C5H4',
     content: { ops: [

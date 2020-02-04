@@ -45,18 +45,27 @@ const nmrData1H = {
 
     expected: '',
   },
-  42164: {
-    formula: 'C12H12N2',
-    content: { ops: [{ attributes: { script: "super" }, insert: "1" }, { insert: "H NMR (500 MHz, CDCl" }, { attributes: { script: "sub" }, insert: "3" }, { insert: ", ppm): δ = 8.68 (s, 2H, 2'- and 6'-C" }, { attributes: { italic: true }, insert: "H" }, { insert: "), 7.46 (d, 2H, J = 4.9 Hz, 2H, 3'- and 5'-C" }, { attributes: { italic: true }, insert: "H" }, { insert: "), 7.15 (s, 2H, 3- and 5-C" }, { attributes: { italic: true }, insert: "H" }, { insert: "), 2.57 – 2.54 (m, 6H, 2- and   6-C" }, { attributes: { italic: true }, insert: "H" }, { attributes: { script: "sub" }, insert: "3" }, { insert: ").\n"}]},
-
-    expected: ' count: 14/12',
-  },
+//  42164: {
+//    formula: 'C12H12N2',
+//    content: { ops: [{ insert: "1H NMR (500 MHz, CDCl3, ppm): δ = 8.68 (s, 2H, 2'- and 6'-CH), 7.46 (d, 2H, J = 4.9 Hz, 2H, 3'- and 5'-CH), 7.15 (s, 2H, 3- and 5-CH), 2.57 – 2.54 (m, 6H, 2- and   6-CH3)." }]},
+//    expected: ' count: 14/12',
+//  },
   2875: {
     formula: 'C72H32F30N8O2',
     content: { ops: [{ attributes: { bold: true,script: "super" }, insert: "1" }, { attributes: { bold: true }, insert: "H NMR" }, { insert: " (400 MHz, Chloroform-" }, { attributes: { italic: true }, insert: "d" }, { insert: ") δ 7.98 (d, " }, { attributes: { italic: true }, insert: "J" }, { insert: " = 7.7 Hz, 1H), 7.69 – 7.60 (m, 4H), 7.40 (d, " }, { attributes: { italic: true }, insert: "J" }, { insert: " = 7.7 Hz, 2H), 7.37 – 7.27 (m, 2H), 7.25 – 7.17 (m, 4H), 7.14 – 7.08 (m, 6H), 7.04 – 6.94 (m, 8H), 6.84 (t,   " }, { attributes: { italic: true }, insert: "J" }, { insert: " = 7.4 Hz, 2H), 6.71 (ddd, " }, { attributes: { italic: true }, insert: "J" }, { insert: " = 8.4, 7.2, 1.2 Hz, 2H)." }, { attributes: { "align": "justify" }, insert: "\n" }, { insert: "\n"}]},
 
     expected: ' count: 31/32',
   },
+   'VK-1': {
+    formula: 'C21H38O10',
+    content: { ops: [{insert: "1H NMR (400 MHz, CDCl3, ppm) δ = 4.68 (dddd, 3J = 10.9, 10.9, 4.9, 4.9 Hz, 1H, 3-CHOAc), 3.62 (dd, 3J = 8.5, 8.5 Hz, 1H, 17-CHOH), 2.13–2.03 (m, 1H, CH2), 2.02 (s, 3H, COCH3), 1.86–1.73 (m, 3H, 3 different CH2), 1.74–1.66 (m, 1H, CH2), 1.66–1.49 (m, 4H, 4 different CH2), 1.49–1.32 (m, 3H, 2 different CH2 + 8-CH), 1.31–1.17 (m, 5H, 3 different CH2 + 5-CH), 1.11–0.85 (m, 4H, 3 different CH2 + 14-CH), 0.83 (s, 3H, 19-CH3), 0.72 (s, 3H, 18‑CH3), 0.64 (ddd, J = 12.1, 10.4, 4.2 Hz, 1H, 9-CH). missing signal (5H) due to H/D exchange. "}]},
+    expected: '',
+  },
+   'VK-2': {
+    formula: 'C21H37O10',
+    content: { ops: [{insert: "1H NMR (400 MHz, CDCl3, ppm) δ = 4.68 (dddd, 3J = 10.9, 10.9, 4.9, 4.9 Hz, 0.5H, 3-CHOAc), 3.62 (dd, 3J = 8.5, 8.5 Hz, 1H, 17-CHOH), 2.13–2.03 (m, 1H, CH2), 2.02 (s, 2.5H, C(O)-CH3), 1.86–1.73 (m, 3H, 3 different CH2), 1.74–1.66 (m, 1H, CH2), 1.66–1.49 (m, 4H, 4 different CH2), 1.49–1.32 (m, 3H, 2 different CH2 + 8-CH), 1.31–1.17 (m, 5H, 3 different CH2 + 5-CH), 1.11–0.85 (m, 4H, 3 different CH2 + 14-CH), 0.83 (s, 3H, 19-CH3), 0.72 (s, 3H, 18‑CH3), 0.64 (ddd, J = 12.1, 10.4, 4.2 Hz, 1H, 9-CH), missing signal (5H) due to H/D exchange. "}]},
+    expected: '',
+  }
 };
 
 export { nmrData1H };
