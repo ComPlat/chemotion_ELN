@@ -28,6 +28,8 @@ import { setReactionByType } from './ReactionDetailsShare';
 import { sampleShowOrNew } from './routesUtils';
 import ReactionSvgFetcher from './fetchers/ReactionSvgFetcher';
 import ConfirmClose from './common/ConfirmClose';
+import { rfValueFormat } from './utils/ElementUtils';
+
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -153,6 +155,8 @@ export default class ReactionDetails extends Component {
     if (type === 'temperatureUnit' || type === 'temperatureData' ||
       type === 'description' || type === 'role' || type === 'observation' || type === 'durationUnit' || type === 'duration' || type === 'rxno') {
       value = event;
+    } else if (type === 'rfValue') {
+      value = rfValueFormat(event.target.value) || '';
     } else {
       value = event.target.value;
     }
