@@ -58,4 +58,10 @@ QuillViewer.propTypes = {
     PropTypes.object,
     PropTypes.array
   ]),
-}
+  preview: PropTypes.bool
+};
+
+QuillViewer.defaultProps = {
+  value: [],
+  preview: false
+};
