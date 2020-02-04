@@ -378,6 +378,7 @@ export default class ReactionDetails extends Component {
                 reaction={reaction}
                 onReactionChange={reaction => this.handleReactionChange(reaction)}
                 onInputChange={(type, event) => this.handleInputChange(type, event)}
+                key={reaction.checksum}
                 />
             </Tab>
             <Tab eventKey={2} title={'References'}>

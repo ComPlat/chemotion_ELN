@@ -1,67 +1,110 @@
-import _ from 'lodash';
+import {
+  isEmpty,
+  round,
+} from 'lodash';
 import Delta from 'quill-delta';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
-import Immutable from 'immutable';
 
 import Element from './Element';
 import Sample from './Sample';
-import Literature from './Literature';
-import Container from './Container.js'
+import Container from './Container';
 
 import UserStore from '../stores/UserStore';
 
-const TemperatureUnit = ["°C", "°F", "K"]
-const MomentUnit = [
-  { key: 'Year(s)', val: 'years' },
-  { key: 'Month(s)', val: 'months' },
-  { key: 'Week(s)', val: 'weeks' },
-  { key: 'Day(s)', val: 'days' },
-  { key: 'Hour(s)', val: 'hours' },
-  { key: 'Minute(s)', val: 'minutes' },
-  { key: 'Second(s)', val: 'seconds' }
-];
-const DurationUnit = ['Year(s)', 'Month(s)', 'Week(s)', 'Day(s)', 'Hour(s)', 'Minute(s)', 'Second(s)'];
-const DurationDefault = {
-  valueUnit: 'Day(s)',
-  userText: ''
-};
-export default class Reaction extends Element {
+const TemperatureUnit = ['°C', '°F', 'K'];
 
+const MomentUnit = {
+  'Week(s)': 'weeks',
+  'Day(s)': 'days',
+  'Hour(s)': 'hours',
+  'Minute(s)': 'minutes',
+  'Second(s)': 'seconds',
+};
+
+const LegMomentUnit = {
+  'Year(s)': 'years',
+  'Month(s)': 'months',
+  ...MomentUnit
+};
+
+const DurationUnit = [
+  // 'Year(s)',
+  // 'Month(s)',
+  'Week(s)',
+  'Day(s)',
+  'Hour(s)',
+  'Minute(s)',
+  'Second(s)'
+];
+
+const DurationDefault = {
+  dispUnit: 'Hour(s)',
+  dispValue: '',
+  memValue: null,
+  memUnit: 'Hour(s)'
+};
+
+const convertDuration = (value, unit, newUnit) => {
+  const d = moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
+    .as(MomentUnit[newUnit]);
+  return round(d, 1).toString();
+};
+
+const durationDiff = (startAt, stopAt, precise = false) => {
+  if (startAt && stopAt) {
+    const start = moment(startAt, 'DD-MM-YYYY HH:mm:ss');
+    const stop = moment(stopAt, 'DD-MM-YYYY HH:mm:ss');
+    if (start < stop) {
+      return precise ? moment.preciseDiff(start, stop) : moment.duration(stop.diff(start));
+    }
+  }
+  return null;
+};
+
+const highestUnitFromDuration = (d, threshold = 1.0) => {
+  if (d.asWeeks() >= threshold) { return 'Week(s)'; }
+  if (d.asDays() >= threshold) { return 'Day(s)'; }
+  if (d.asHours() >= threshold) { return 'Hour(s)'; }
+  if (d.asMinutes() >= threshold) { return 'Minute(s)'; }
+  if (d.asSeconds() >= threshold) { return 'Second(s)'; }
+  return 'Hour(s)';
+};
+
+export default class Reaction extends Element {
   static buildEmpty(collection_id) {
     const temperatureDefault = {
-      "valueUnit": "°C",
-      "userText": "",
-      "data": []
+      'valueUnit': '°C',
+      'userText': '',
+      'data': []
     }
 
     const reaction = new Reaction({
       collection_id,
-      type: 'reaction',
-      name: '',
-      status: "",
-      role: "",
-      description: Reaction.quillDefault(),
-      timestamp_start: "",
-      timestamp_stop: "",
-      durationCalc: "",
-      observation: Reaction.quillDefault(),
-      purification: "",
-      dangerous_products: "",
-      tlc_solvents: "",
-      rf_value: 0.00,
-      temperature: temperatureDefault,
-      tlc_description: "",
-      starting_materials: [],
-      reactants: [],
-      solvents: [],
-      purification_solvents: [],
-      products: [],
-      literatures: {},
-      solvent: '',
       container: Container.init(),
-      duration_display: DurationDefault,
-      duration: ''
+      dangerous_products: '',
+      description: Reaction.quillDefault(),
+      duration: '',
+      durationDisplay: DurationDefault,
+      literatures: {},
+      name: '',
+      observation: Reaction.quillDefault(),
+      products: [],
+      purification: '',
+      purification_solvents: [],
+      reactants: [],
+      rf_value: 0.00,
+      role: '',
+      solvent: '',
+      solvents: [],
+      status: '',
+      starting_materials: [],
+      temperature: temperatureDefault,
+      timestamp_start: '',
+      timestamp_stop: '',
+      tlc_description: '',
+      tlc_solvents: '',
+      type: 'reaction',
     })
 
     reaction.short_label = this.buildReactionShortLabel()
@@ -70,18 +113,12 @@ export default class Reaction extends Element {
   }
 
   static buildReactionShortLabel() {
-    let {currentUser} = UserStore.getState()
-    if(!currentUser) {
-      return 'New Reaction';
-    } else {
-      let number = currentUser.reactions_count + 1;
-      let prefix = currentUser.reaction_name_prefix;
-      return `${currentUser.initials}-${prefix}${number}`;
-    }
-  }
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return 'New Reaction'; }
 
-  static get duration_unit() {
-    return DurationUnit;
+    const number = currentUser.reactions_count + 1;
+    const prefix = currentUser.reaction_name_prefix;
+    return `${currentUser.initials}-${prefix}${number}`;
   }
 
   static get temperature_unit() {
@@ -99,62 +136,90 @@ export default class Reaction extends Element {
   serialize() {
     return super.serialize({
       collection_id: this.collection_id,
-      id: this.id,
-      name: this.name,
+      container: this.container,
       description: this.description,
-      timestamp_start: this.timestamp_start,
-      timestamp_stop: this.timestamp_stop,
-      durationCalc: this.durationCalc,
-      observation: this.observation,
-      purification: this.purification,
       dangerous_products: this.dangerous_products,
-      solvent: this.solvent,
+      duration: this.duration,
+      durationDisplay: this.durationDisplay,
+      durationCalc: this.durationCalc(),
+      id: this.id,
+      literatures: this.literatures,
+      materials: {
+        starting_materials: this.starting_materials.map(s => s.serializeMaterial()),
+        reactants: this.reactants.map(s => s.serializeMaterial()),
+        solvents: this.solvents.map(s => s.serializeMaterial()),
+        purification_solvents: this.purification_solvents.map(s => s.serializeMaterial()),
+        products: this.products.map(s => s.serializeMaterial())
+      },
+      name: this.name,
+      observation: this.observation,
+      origin: this.origin,
+      purification: this.purification,
       tlc_solvents: this.tlc_solvents,
       tlc_description: this.tlc_description,
-      rf_value: this.rf_value,
-      temperature: this.temperature,
-      short_label: this.short_label,
-      status: this.status,
-      role: this.role,
-      origin: this.origin,
       reaction_svg_file: this.reaction_svg_file,
-      materials: {
-        starting_materials: this.starting_materials.map(s=>s.serializeMaterial()),
-        reactants: this.reactants.map(s=>s.serializeMaterial()),
-        solvents: this.solvents.map(s=>s.serializeMaterial()),
-        purification_solvents: this.purification_solvents.map(s=>s.serializeMaterial()),
-        products: this.products.map(s=>s.serializeMaterial())
-      },
-      literatures: this.literatures,
-      container: this.container,
-      duration: this.duration,
-      duration_display: this.duration_display,
+      role: this.role,
+      rf_value: this.rf_value,
       rxno: this.rxno,
+      short_label: this.short_label,
+      solvent: this.solvent,
+      status: this.status,
+      temperature: this.temperature,
+      timestamp_start: this.timestamp_start,
+      timestamp_stop: this.timestamp_stop,
     });
   }
 
-  get temperature_display() {
-    let userText = this._temperature.userText
-    if (userText !== "") return userText
+  // Reaction Duration
 
-    if (this._temperature.data.length == 0) return ""
-
-    let arrayData = this._temperature.data
-    let maxTemp = Math.max.apply(Math, arrayData.map(function(o){return o.value}))
-    let minTemp = Math.min.apply(Math, arrayData.map(function(o){return o.value}))
-
-    if (minTemp == maxTemp)
-      return minTemp
-    else
-      return minTemp + " ~ " + maxTemp
+  durationCalc() {
+    return durationDiff(this.timestamp_start, this.timestamp_stop, true);
   }
 
-  get duration_display() {
-    return this._duration_display;
+  get durationDisplay() {
+    return this._durationDisplay;
   }
 
-  set duration_display(duration_display) {
-    this._duration_display = duration_display;
+  set durationDisplay(newDuration) {
+    const { fromStartStop, nextUnit, nextValue } = newDuration;
+    const {
+      dispUnit, memUnit, memValue
+    } = this._durationDisplay || {};
+
+    if (fromStartStop) {
+      const d = durationDiff(this.timestamp_start, this.timestamp_stop);
+      if (d) {
+        const dUnit = highestUnitFromDuration(d);
+        const val = d.as(MomentUnit[dUnit]);
+        const dispValue = round(val, 1).toString();
+        this._durationDisplay = {
+          dispUnit: dUnit,
+          dispValue,
+          memUnit: dUnit,
+          memValue: val.toString(),
+        };
+        this._duration = `${dispValue} ${dUnit}`;
+      }
+    } else if (nextValue || nextValue === '') {
+      this._durationDisplay = {
+        dispValue: nextValue,
+        dispUnit,
+        memUnit,
+        memValue: nextValue
+      };
+      this._duration = `${nextValue} ${dispUnit}`;
+    } else if (nextUnit) {
+      const index = DurationUnit.indexOf(this._durationDisplay.dispUnit);
+      const u = DurationUnit[(index + 1) % DurationUnit.length];
+      const dispValue = convertDuration(memValue, memUnit, u);
+      this._durationDisplay = {
+        dispUnit: u,
+        dispValue,
+        memUnit,
+        memValue
+      };
+      this._duration = `${dispValue} ${u}`;
+    }
   }
 
   get duration() {
@@ -164,6 +229,45 @@ export default class Reaction extends Element {
   set duration(duration) {
     this._duration = duration;
   }
+
+  get durationUnit() {
+    return this._durationDisplay.dispUnit;
+  }
+
+  convertDurationDisplay() {
+    const duration = this._duration;
+    if (this._durationDisplay && this._durationDisplay.memValue !== '') { return null; }
+    const m = duration && duration.match(/(\d+\.?(\d+)?)\s+([\w()]+)/)
+    if (m) {
+      this._durationDisplay = {
+        dispUnit: m[3],
+        memUnit: m[3],
+        dispValue: m[1],
+        memValue: m[1],
+        ...this._durationDisplay
+      };
+      return null;
+    }
+    this._durationDisplay = { ...DurationDefault };
+    return null;
+  }
+
+  // Reaction Temperature
+
+  get temperature_display() {
+    const userText = this._temperature.userText;
+    if (userText !== '') { return userText; }
+
+    if (this._temperature.data.length === 0) { return ''; }
+
+    const arrayData = this._temperature.data;
+    const maxTemp = Math.max(...arrayData.map(o => o.value));
+    const minTemp = Math.min(...arrayData.map(o => o.value));
+
+    if (minTemp === maxTemp) { return minTemp; }
+    return `${minTemp} ~ ${maxTemp}`;
+  }
+
 
   get temperature() {
     return this._temperature
@@ -186,20 +290,6 @@ export default class Reaction extends Element {
     const observationDelta = new Delta(this.observation);
     const composedDelta = observationDelta.concat(insertDelta);
     this.observation = composedDelta;
-  }
-
-  convertDuration(newUnit) {
-    let duration = this._duration_display;
-    const oldUnit = duration.valueUnit;
-    duration.valueUnit = newUnit;
-
-    if (duration.userText && !isNaN(duration.userText)) {
-      const durationMoment = moment.duration(Number.parseFloat(duration.userText), _.find(MomentUnit, m => m.key === oldUnit).val);
-      let v = durationMoment.as(_.find(MomentUnit, m => m.key === newUnit).val);
-      v = _.round(v, 1);
-      duration.userText = v.toString();
-    }
-    return duration;
   }
 
   convertTemperature(newUnit) {
@@ -689,7 +779,7 @@ export default class Reaction extends Element {
 
   // overwrite isPendingToSave method in models/Element.js
   get isPendingToSave() {
-    return !_.isEmpty(this) && (this.isNew || this.changed);
+    return !isEmpty(this) && (this.isNew || this.changed);
   }
 
   extractNameFromOri(origin) {

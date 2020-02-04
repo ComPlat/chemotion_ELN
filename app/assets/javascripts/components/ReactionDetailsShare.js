@@ -56,11 +56,7 @@ const setReactionByType = (reaction, type, value) => {
       reaction.name = reaction.nameFromRole(value);
       break;
     case 'duration':
-      reaction.duration_display.userText = value;
-      options = { schemaChanged: true }
-      break;
-    case 'durationUnit':
-      reaction.duration_display = reaction.convertDuration(value);
+      reaction.durationDisplay = value;
       options = { schemaChanged: true }
       break;
     case 'rxno':
