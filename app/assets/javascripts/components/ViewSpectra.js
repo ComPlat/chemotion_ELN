@@ -149,7 +149,7 @@ class ViewSpectra extends React.Component {
   }
 
   saveOp({
-    peaks, shift, scan, thres, analysis, keepPred,
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity,
   }) {
     const { handleSubmit } = this.props;
     const { spcInfo } = this.state;
@@ -164,6 +164,8 @@ class ViewSpectra extends React.Component {
       shift,
       scan,
       thres,
+      JSON.stringify(integration),
+      JSON.stringify(multiplicity),
       predict,
       handleSubmit,
       keepPred,
@@ -195,10 +197,10 @@ class ViewSpectra extends React.Component {
   }
 
   saveCloseOp({
-    peaks, shift, scan, thres, analysis,
+    peaks, shift, scan, thres, analysis, integration, multiplicity,
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis,
+      peaks, shift, scan, thres, analysis, integration, multiplicity,
     });
     this.closeOp();
   }

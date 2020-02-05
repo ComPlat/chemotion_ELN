@@ -251,7 +251,7 @@ export default class AttachmentFetcher {
     });
   }
 
-  static saveSpectrum(attId, peaksStr, shift, scan, thres, predict, keepPred) {
+  static saveSpectrum(attId, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred) {
     const params = {
       attachmentId: attId,
       peaksStr,
@@ -260,6 +260,8 @@ export default class AttachmentFetcher {
       shiftRefValue: shift.ref.value,
       scan,
       thres,
+      integration,
+      multiplicity,
       predict,
       keepPred,
     };

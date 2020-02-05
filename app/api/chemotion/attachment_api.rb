@@ -355,6 +355,9 @@ module Chemotion
         optional :shift_select_x, type: String
         optional :shift_ref_name, type: String
         optional :shift_ref_value, type: String
+        optional :shift_ref_value, type: String
+        optional :integration, type: String
+        optional :multiplicity, type: String
         optional :mass, type: String
         optional :scan, type: String
         optional :thres, type: String

@@ -80,7 +80,9 @@ module Chemotion
           shift_select_x: params[:shift_select_x],
           shift_ref_name: params[:shift_ref_name],
           shift_ref_value: params[:shift_ref_value],
-          peaks_str: params[:peaks_str]
+          peaks_str: params[:peaks_str],
+          integration: params[:integration],
+          multiplicity: params[:multiplicity],
         }
       end
 
