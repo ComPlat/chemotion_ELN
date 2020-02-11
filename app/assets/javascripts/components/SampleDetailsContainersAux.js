@@ -356,7 +356,7 @@ const HeaderNormal = ({
             <span style={{ float: 'left', marginRight: '5px' }}>
               Content:
             </span>
-            <QuillViewer value={contentOneLine} preview />
+            <QuillViewer value={contentOneLine} />
           </div>
         </div>
       </div>

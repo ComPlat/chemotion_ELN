@@ -10,8 +10,10 @@ import moment from 'moment';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
 import { round, find, indexOf, split, trim } from 'lodash';
-import { purificationOptions,
-  dangerousProductsOptions } from './staticDropdownOptions/options';
+import {
+  purificationOptions,
+  dangerousProductsOptions
+} from './staticDropdownOptions/options';
 import Reaction from './models/Reaction';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import MaterialGroupContainer from './MaterialGroupContainer';
@@ -25,17 +27,9 @@ function dummy() { return true; }
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
     super(props);
-    const { reaction } = props;
-
-    reaction.duration_display = this.convertDurationDisplay(reaction);
-
-    this.state = {
-      reaction,
-      durationCalcButtonDisabled: false
-    };
+    props.reaction.convertDurationDisplay();
 
     this.clipboard = new Clipboard('.clipboardBtn');
-
     this.handlePurificationChange = this.handlePurificationChange.bind(this);
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
@@ -46,29 +40,11 @@ export default class ReactionDetailsProperties extends Component {
 
     this.copyToDuration = this.copyToDuration.bind(this);
     this.handleDurationChange = this.handleDurationChange.bind(this);
-    this.durationUnit = props.reaction.duration_display.valueUnit;
   }
 
   componentWillReceiveProps(nextProps) {
-    const nextReaction = nextProps.reaction;
-    let durationCalcButtonDisabled = false;
-    nextReaction.durationCalc = this.calcDuration(nextReaction);
-
-    if (nextReaction.durationCalc == null) {
-      nextReaction.durationCalc = 'No time traveling here';
-      durationCalcButtonDisabled = true;
-    }
-
-    if (nextReaction.duration_display.userText !== null || nextReaction.duration_display.userText !== '') {
-      nextReaction.duration = trim(`${nextReaction.duration_display.userText} ${nextReaction.duration_display.valueUnit}`);
-    }
-
-    this.setState({
-      reaction: nextReaction,
-      durationCalcButtonDisabled
-    });
-
-    this.durationUnit = nextProps.reaction.duration_display.valueUnit;
+    if (!nextProps.reaction) { return; }
+    nextProps.reaction.convertDurationDisplay();
   }
 
   componentWillUnmount() {
@@ -77,27 +53,13 @@ export default class ReactionDetailsProperties extends Component {
 
   setCurrentTime(type) {
     const currentTime = new Date().toLocaleString('en-GB').split(', ').join(' ');
-    const { reaction } = this.state;
-
+    const { reaction } = this.props;
     const wrappedEvent = { target: { value: currentTime } };
-    const inputType = type === 'start' ? 'timestampStart' : 'timestampStop';
-    this.props.onInputChange(inputType, wrappedEvent);
-
-    if (inputType === 'timestampStart') {
-      if (reaction.status === 'Planning' || reaction.status === '') {
-        this.props.onInputChange('status', { target: { value: "Running" }})
-        // TO DO
-        // Flash the status change
-      }
-      return
-    }
-    else {
-      if (reaction.status === 'Running') {
-        this.props.onInputChange('status', { target: { value: "Done" } })
-        // TO DO
-        // Flash the status change
-      }
-      return
+    this.props.onInputChange(type, wrappedEvent);
+    if (type === 'timestampStart' && (reaction.status === 'Planned' || !reaction.status)) {
+      this.props.onInputChange('status', { target: { value: 'Running' } });
+    } else if (type === 'timestampStop' && reaction.status === 'Running') {
+      this.props.onInputChange('status', { target: { value: 'Done' } });
     }
   }
 
@@ -111,7 +73,7 @@ export default class ReactionDetailsProperties extends Component {
     }
 
     const obs = observationPurification;
-    const { reaction } = this.state;
+    const { reaction } = this.props;
 
     const selectedVal = selected[selected.length - 1].value;
     const predefinedObs = obs.filter(x =>
@@ -153,7 +115,7 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   dropPSolvent(srcSample, tagMaterial, tagGroup, extLabel) {
-    const { reaction } = this.state;
+    const { reaction } = this.props;
     let splitSample = Sample.buildNew(srcSample, reaction.collection_id, tagGroup);
     splitSample.short_label = tagGroup.slice(0, -1);
     splitSample.external_label = extLabel;
@@ -168,7 +130,7 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   handleOnSolventSelect(eventKey) {
-    const { reaction } = this.state;
+    const { reaction } = this.props;
 
     let val;
     if (eventKey > solventsTL.length) {
@@ -182,116 +144,18 @@ export default class ReactionDetailsProperties extends Component {
     this.handleOnReactionChange(reaction);
   }
 
-  calcDuration(reaction) {
-    let durationCalc = null;
-
-    if (reaction.timestamp_start && reaction.timestamp_stop) {
-      const start = moment(reaction.timestamp_start, 'DD-MM-YYYY HH:mm:ss')
-      const stop = moment(reaction.timestamp_stop, 'DD-MM-YYYY HH:mm:ss')
-      if (start < stop) {
-        durationCalc = moment.preciseDiff(start, stop)
-      }
-    }
-
-    return durationCalc;
-  }
-
-  convertDurationDisplay(reaction) {
-    if (indexOf(reaction.duration, ' ') > -1) {
-      const d = split(reaction.duration, ' ');
-      return {
-        valueUnit: d[1],
-        userText: d[0].toString()
-      };
-    }
-    return {
-      valueUnit: 'Day(s)',
-      userText: ''
-    };
-  }
-
   changeDurationUnit() {
-    const index = Reaction.duration_unit.indexOf(this.durationUnit);
-    const unit = Reaction.duration_unit[(index + 1) % 7];
-    this.props.onInputChange('durationUnit', unit);
+    this.props.onInputChange('duration', { nextUnit: true });
   }
 
   copyToDuration() {
-    const { reaction } = this.state;
-    if (reaction.timestamp_start && reaction.timestamp_stop) {
-      const start = moment(reaction.timestamp_start, 'DD-MM-YYYY HH:mm:ss');
-      const stop = moment(reaction.timestamp_stop, 'DD-MM-YYYY HH:mm:ss');
-      const MomentUnit = [
-        { key: 'Year(s)', val: 'years' },
-        { key: 'Month(s)', val: 'months' },
-        { key: 'Week(s)', val: 'weeks' },
-        { key: 'Day(s)', val: 'days' },
-        { key: 'Hour(s)', val: 'hours' },
-        { key: 'Minute(s)', val: 'minutes' },
-        { key: 'Second(s)', val: 'seconds' }
-      ];
-      
-      const checkUnit = moment.preciseDiff(start, stop, true);
-      for (let [key, value] of Object.entries(checkUnit)) {
-        if (value > 0) {
-          switch(key) {
-            case 'years':
-            case 'year':
-                this.props.onInputChange('durationUnit', "Year(s)");
-                this.durationUnit = "Year(s)"
-                break;
-            case 'months':
-            case 'month':
-                this.props.onInputChange('durationUnit', "Month(s)");
-                this.durationUnit = "Month(s)"
-                break;
-            case 'weeks':
-            case 'week':
-                this.props.onInputChange('durationUnit', "Week(s)");
-                this.durationUnit = "Week(s)"
-                break;
-            case 'days':
-            case 'day':
-                this.props.onInputChange('durationUnit', "Day(s)");
-                this.durationUnit = "Day(s)"
-                break;
-            case 'hours':
-            case 'hour':
-                this.props.onInputChange('durationUnit', "Hour(s)");
-                this.durationUnit = "Hour(s)"
-                break;
-            case 'minutes':
-            case 'minute':
-                this.props.onInputChange('durationUnit', "Minute(s)");
-                this.durationUnit = "Minute(s)"
-                break;
-            case 'seconds':
-            case 'second':
-                this.props.onInputChange('durationUnit', "Second(s)");
-                this.durationUnit = "Second(s)"
-                break;
-            default:
-              break;
-          }
-          break;
-        }
-      }
-
-      let v = moment.duration(stop.diff(start))
-        .as(find(MomentUnit, m => m.key === this.durationUnit).val);
-      if (start < stop) {
-        v = round(v, 1).toString();
-      } else {
-        v = '0';
-      }
-      this.props.onInputChange('duration', v);
-    }
+    this.props.onInputChange('duration', { fromStartStop: true });
   }
 
   handleDurationChange(event) {
-    const value = event.target.value;
-    if (!isNaN(value)) {
-      this.props.onInputChange('duration', value);
+    const nextValue = event.target.value && event.target.value.replace(',', '.');
+    if (!isNaN(nextValue) || nextValue === '') {
+      this.props.onInputChange('duration', { nextValue });
     }
   }
 
@@ -302,9 +166,8 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   render() {
-    const { reaction, durationCalcButtonDisabled } = this.state;
-    let durationCalc = this.calcDuration(reaction);
-    durationCalc = durationCalc || '';
+    const { reaction } = this.props;
+    const durationCalc = reaction && reaction.durationCalc();
 
     const solventsItems = solventsTL.map((x, i) => {
       const val = Object.keys(x)[0];
@@ -347,7 +210,7 @@ export default class ReactionDetailsProperties extends Component {
                       <Button
                         active
                         style={{ padding: '6px' }}
-                        onClick={this.setCurrentTime.bind(this, 'start')}
+                        onClick={() => this.setCurrentTime('timestampStart')}
                       >
                         <i className="fa fa-clock-o" />
                       </Button>
@@ -370,7 +233,7 @@ export default class ReactionDetailsProperties extends Component {
                       <Button
                         active
                         style={{ padding: '6px' }}
-                        onClick={this.setCurrentTime.bind(this, 'stop')}
+                        onClick={() => this.setCurrentTime('timestampStop')}
                       >
                         <i className="fa fa-clock-o" />
                       </Button>
@@ -396,7 +259,6 @@ export default class ReactionDetailsProperties extends Component {
                         <Button
                           active
                           className="clipboardBtn"
-                          disabled={durationCalcButtonDisabled}
                           data-clipboard-text={durationCalc || ' '}
                         >
                           <i className="fa fa-clipboard" />
@@ -424,7 +286,7 @@ export default class ReactionDetailsProperties extends Component {
                   <InputGroup>
                     <FormControl
                       type="text"
-                      value={reaction.duration_display.userText || ''}
+                      value={reaction.durationDisplay.dispValue || ''}
                       inputRef={this.refDuration}
                       placeholder="Input Duration..."
                       onChange={event => this.handleDurationChange(event)}
@@ -438,7 +300,7 @@ export default class ReactionDetailsProperties extends Component {
                           bsStyle="success"
                           onClick={() => this.changeDurationUnit()}
                         >
-                          {this.durationUnit}
+                          {reaction.durationUnit}
                         </Button>
                       </OverlayTrigger>
                     </InputGroup.Button>
