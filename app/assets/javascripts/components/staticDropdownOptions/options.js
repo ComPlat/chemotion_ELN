@@ -469,3 +469,17 @@ export const rolesOptions = [{
   icon: 'fa-asterisk',
   bsStyle: 'c-bs-danger',
 }];
+
+export const conditionsOptions = [{
+  label: 'UV',
+  value: 'UV'
+}, {
+  label: 'microwave',
+  value: 'microwave'
+}, {
+  label: 'ultrasound',
+  value: 'ultrasound'
+}, {
+  label: 'visible light',
+  value: 'visible light'
+}];

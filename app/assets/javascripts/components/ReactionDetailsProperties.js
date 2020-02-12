@@ -9,7 +9,7 @@ import Select from 'react-select';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
-import { round, find, indexOf, split, trim } from 'lodash';
+import { difference, concat } from 'lodash';
 import {
   purificationOptions,
   dangerousProductsOptions
@@ -168,6 +168,7 @@ export default class ReactionDetailsProperties extends Component {
   render() {
     const { reaction } = this.props;
     const durationCalc = reaction && reaction.durationCalc();
+
 
     const solventsItems = solventsTL.map((x, i) => {
       const val = Object.keys(x)[0];

@@ -3,7 +3,7 @@ class DetailLevels::Reaction
     [
       :id, :type, :name, :created_at, :updated_at, :description,
       :timestamp_start, :timestamp_stop,
-      :observation, :purification, :dangerous_products, :solvent,
+      :observation, :purification, :dangerous_products, :conditions, :solvent,
       :tlc_solvents, :tlc_description,
       :rf_value, :temperature, :status, :reaction_svg_file,
       :short_label, :container, :code_log, :role, :origin,
@@ -20,7 +20,7 @@ class DetailLevels::Reaction
 
   def list_removed_attributes
     [
-      :description, :timestamp_start, :timestamp_stop, :dangerous_products,
+      :description, :timestamp_start, :timestamp_stop, :dangerous_products, :conditions,
       :observation, :purification, :solvent, :tlc_solvents, :tlc_description,
       :rf_value, :temperature, :container, :code_log, :duration, :purification_solvents
     ]

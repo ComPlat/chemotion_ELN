@@ -327,6 +327,7 @@ module Chemotion
         optional :observation, type: Hash
         optional :purification, type: Array[String]
         optional :dangerous_products, type: Array[String]
+        optional :conditions, type: String
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String
@@ -385,6 +386,7 @@ module Chemotion
         optional :observation, type: Hash
         optional :purification, type: Array[String]
         optional :dangerous_products, type: Array[String]
+        optional :conditions, type: String
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String

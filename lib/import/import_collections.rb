@@ -205,6 +205,7 @@ module Import
           'observation',
           'purification',
           'dangerous_products',
+          'conditions',
           'tlc_solvents',
           'tlc_description',
           'rf_value',

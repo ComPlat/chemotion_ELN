@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroup, ListGroupItem, FormGroup, ControlLabel,
-  Row, Col, Collapse, Button, ButtonGroup,
+  ListGroup, ListGroupItem, FormGroup, ControlLabel, FormControl,
+  Row, Col, Collapse, Button, ButtonGroup
 } from 'react-bootstrap';
 import Select from 'react-select';
 import Delta from 'quill-delta';
@@ -16,13 +16,13 @@ import QuillEditor from './QuillEditor';
 import NotificationActions from './actions/NotificationActions';
 import { reactionToolbarSymbol } from './utils/quillToolbarSymbol';
 import GeneralProcedureDnd from './GeneralProcedureDnD';
-import { rolesOptions } from './staticDropdownOptions/options';
+import { rolesOptions, conditionsOptions } from './staticDropdownOptions/options';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
     let { reaction } = props;
-    this.state = { reaction, lockEquivColumn: false };
+    this.state = { reaction, lockEquivColumn: false, cCon: false };
     this.quillref = React.createRef();
 
     this.onChangeRole = this.onChangeRole.bind(this);
@@ -31,6 +31,7 @@ export default class ReactionDetailsScheme extends Component {
     this.dropMaterial = this.dropMaterial.bind(this);
     this.dropSample = this.dropSample.bind(this);
     this.switchEquiv = this.switchEquiv.bind(this);
+    this.handleOnConditionSelect = this.handleOnConditionSelect.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -80,6 +81,17 @@ export default class ReactionDetailsScheme extends Component {
   switchEquiv() {
     const { lockEquivColumn } = this.state;
     this.setState({ lockEquivColumn: !lockEquivColumn });
+  }
+
+  handleOnConditionSelect(eventKey) {
+    const { reaction } = this.props;
+    const val = eventKey.value;
+    if (reaction.conditions == null || reaction.conditions.length === 0) {
+      reaction.conditions = `${val} `;
+    } else {
+      reaction.conditions += `\n${val} `;
+    }
+    this.props.onReactionChange(reaction, { schemaChanged: true });
   }
 
   renderGPDnD() {
@@ -599,6 +611,22 @@ export default class ReactionDetailsScheme extends Component {
     );
   }
 
+  conditionsCollapseBtn() {
+    const cCon = this.state.cCon;
+    const arrow = cCon
+      ? <i className="fa fa-angle-double-up" />
+      : <i className="fa fa-angle-double-down" />;
+    return (
+      <ButtonGroup vertical block>
+        <Button
+          bsSize="xsmall"
+          style={{ backgroundColor: '#ddd' }}
+          onClick={() => this.setState({ cCon: !cCon })}
+        >{arrow} &nbsp; Conditions</Button>
+      </ButtonGroup>
+    );
+  }
+
   render() {
     const { reaction, lockEquivColumn } = this.state;
     const minPadding = { padding: '1px 2px 2px 0px' };
@@ -708,6 +736,27 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
                   switchEquiv={this.switchEquiv}
                   lockEquivColumn={this.state.lockEquivColumn}
                   headIndex={0}
+                />
+              </div>
+            </Collapse>
+          </ListGroupItem>
+          <ListGroupItem style={minPadding}>
+            { this.conditionsCollapseBtn() }
+            <Collapse in={this.state.cCon}>
+              <div>
+                <Select
+                  name="default_conditions"
+                  multi={false}
+                  options={conditionsOptions}
+                  onChange={this.handleOnConditionSelect}
+                />
+                <FormControl
+                  componentClass="textarea"
+                  rows="4"
+                  value={reaction.conditions || ''}
+                  disabled={reaction.isMethodDisabled('conditions')}
+                  placeholder="Conditions..."
+                  onChange={event => this.props.onInputChange('conditions', event)}
                 />
               </div>
             </Collapse>

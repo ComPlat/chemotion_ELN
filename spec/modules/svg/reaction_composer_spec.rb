@@ -24,19 +24,18 @@ RSpec.describe SVG::ReactionComposer do
       is_report: false
     )
   end
+  let(:file_path) { composer.send(:file_path) }
 
   describe 'composing the SVG' do
-    let(:svg) { composer.compose_reaction_svg.gsub(/\s/, '') }
-    let(:expected_svg) { File.read(Rails.root.join('spec/fixtures/images/compose_reaction_svg.svg')).gsub(/\s/, '') }
+    let(:svg) { composer.compose_reaction_svg }
+    let(:expected_svg) { File.read(Rails.root.join('spec/fixtures/images/compose_reaction_svg.svg')) }
 
     it 'generates a svg' do
       expect(svg.strip).to eq(expected_svg.strip)
     end
 
     it 'saves the svg' do
-      file_path = composer.send(:file_path)
-      composer.compose_reaction_svg_and_save
-      expect(File.exist?(file_path)).to eq(true)
+      expect(composer.compose_reaction_svg_and_save && File.exist?(file_path)).to eq(true)
     end
   end
 end

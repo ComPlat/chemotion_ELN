@@ -122,6 +122,7 @@ module Export
         , r.timestamp_start, r.timestamp_stop, r.observation
         , array_to_json(r.purification) as purification
         , array_to_json(r.dangerous_products) as dangerous_products
+        , r.conditions
         , r.tlc_solvents, r.tlc_description
         , r.rf_value, r.temperature, r.status, r.solvent, r.short_label
         , r.duration, r.rxno
