@@ -96,7 +96,7 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
   handleNotification([not], 'add', false);
 };
 
-const reviewUrl = (url, url_title) => (url ? <a href={url} target="_blank">{url_title || url}</a> : <span/> )
+const reviewUrl = (url, urlTitle) => (url ? <a href={url} target="_blank" rel="noopener noreferrer">{urlTitle || url}</a> : <span />);
 
 export default class NoticeButton extends React.Component {
   constructor(props) {
@@ -323,10 +323,8 @@ export default class NoticeButton extends React.Component {
           <Modal.Header closeButton>
             <Modal.Title>Unread Messages</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
-            <div id="div-modal-body" style={{ maxHeight: 'calc(100vh - 300px)', overflow: 'auto' }}>
-              {this.renderBody()}
-            </div>
+          <Modal.Body style={{ overflow: 'auto' }}>
+            {this.renderBody()}
           </Modal.Body>
           <Modal.Footer>
             <Button id="notice-button-ack-all" key="notice-button-ack-all" onClick={() => this.messageAck(0, true)}>Mark as <strong>all read</strong>&nbsp;<i className="fa fa-paper-plane" /></Button>
