@@ -10,8 +10,7 @@ import ResearchPlansLiteratures from '../DetailsTabLiteratures';
 import Attachment from '../models/Attachment';
 import Utils from '../utils/Functions';
 import LoadingActions from '../actions/LoadingActions';
-import ConfirmClose from './common/ConfirmClose';
-
+import ConfirmClose from '../common/ConfirmClose';
 import ResearchPlanDetailsAttachments from './ResearchPlanDetailsAttachments';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
@@ -275,19 +274,18 @@ export default class ResearchPlanDetails extends Component {
   }
 
   renderPanelHeading(research_plan) {
+    const titleTooltip = `Created at: ${research_plan.created_at} \n Updated at: ${research_plan.updated_at}`;
+
     return (
       <Panel.Heading>
-        <i className="fa fa-file-text-o" />
-        &nbsp; <span>{research_plan.name}</span> &nbsp;
-        <ElementCollectionLabels element={research_plan} placement="right" />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="closeresearch_plan">Close research_plan</Tooltip>}
-        >
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={() => DetailActions.close(research_plan)}>
-            <i className="fa fa-times" aria-hidden="true" />
-          </Button>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
+          <span>
+            <i className="fa fa-file-text-o" />
+            &nbsp; <span>{research_plan.name}</span> &nbsp;
+          </span>
         </OverlayTrigger>
+        <ElementCollectionLabels element={research_plan} placement="right" />
+        <ConfirmClose el={research_plan} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save research_plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: research_plan.changed ? '' : 'none' }}>
             <i className="fa fa-floppy-o" aria-hidden="true" />
