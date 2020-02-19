@@ -9,7 +9,7 @@ describe Chemotion::UserAPI do
         id type reaction_name_prefix email
         last_name first_name
       ],
-      methods: %i[name initials is_templates_moderator molecule_editor]
+      methods: %i[name initials is_templates_moderator molecule_editor account_active]
     }
   end
   let(:srlzr) do

@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Usecases::Sharing::ShareWithUser do
-  let(:user)        { create(:user) }
+  let(:user)        { create(:person) }
   let(:collection)  { create(:collection, user: user) }
   let(:sample_1)    { create(:sample) }
   let(:sample_2)    { create(:sample) }
@@ -18,7 +18,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
   let(:wellplate_a) { create(:wellplate) }
   let(:wellplate_b) { create(:wellplate) }
   # user who gets the share
-  let(:user_s)      { create(:user) }
+  let(:user_s)      { create(:person) }
 
   let(:params) do
     {

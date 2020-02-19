@@ -48,8 +48,7 @@ describe 'Message' do
   end
 
   before do
-    u2.confirmed_at = Time.now
-    u2.save
+    u2.update!(confirmed_at: Time.now, account_active: true)
     sign_in(u2)
   end
 

@@ -6,8 +6,7 @@ describe 'Pages' do
   let!(:john) { create(:person) }
 
   before do
-    john.confirmed_at = Time.now
-    john.save
+    john.update!(confirmed_at: Time.now, account_active: true)
     sign_in(john)
   end
 
