@@ -13,6 +13,7 @@ set -euo pipefail
 ## CHEMOTION ELN GIT REPOSITORY
 REPO='https://git.scc.kit.edu/complat/chemotion_ELN_server'
 BRANCH=development
+TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
 PROD=production
@@ -25,8 +26,8 @@ BUNDLER_VERSION=1.17.3
 
 ## NODEJS
 NVM_VERSION='v0.34.0'
-NODE_VERSION=10.15.3
-NPM_VERSION=6.11.3
+NODE_VERSION=12.16.1
+NPM_VERSION=6.13.7
 
 ## TMP DIR (has to be acccesible to install and PROD user)
 TMP_DIR=/tmp/chemotion_stage
@@ -45,6 +46,8 @@ DB_PORT=5432
 
 NCPU=$(grep -c ^processor /proc/cpuinfo)
 
+## Pandoc version https://github.com/jgm/pandoc/releases
+PANDOC_VERSION=2.9.2
 
 ############################################
 ######### INSTALLATION PARTS TO RUN  #######
@@ -52,7 +55,9 @@ NCPU=$(grep -c ^processor /proc/cpuinfo)
 
 ### comment out any line below (PART_....) to skip the corresponding installation part#########
 
+PART_0='update OS'
 PART_1='deb dependencies installation'
+PART_1_1='deb specific dep version'
 PART_2='phusionpassenger installation'
 PART_3='create a ubuntu user'
 PART_4='rvm and ruby installation'
@@ -102,8 +107,27 @@ rm_tmp() {
   sudo rm -rf $TMP_DIR
 }
 
-trap "rm_tmp; red 'An error has occured'" ERR
+rm_tmp_repo() {
+  yellow 'removing tmp repo..'
+  sudo rm -rf $TMP_REPO_DIR
+}
 
+trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
+
+
+############################################
+############################################
+sharpi 'PART 0'
+description="updating OS"
+############################################
+
+if [ "${PART_0:-}" ]; then
+  sharpi "$description"
+  sudo apt -y update && sudo apt upgrade && sudo apt autoremove
+  green "done $description\n"
+else
+  yellow "skip $description\n"
+fi
 
 ############################################
 ############################################
@@ -115,12 +139,12 @@ if [ "${PART_1:-}" ]; then
   sharpi "$description"
   # sudo add-apt-repository -y  ppa:inkscape.dev/stable
   sudo apt-get -y update
-  # sudo apt-get install inkscape
-  sudo apt-get -y install inkscape ca-certificates apt-transport-https git curl gnupg2 \
+  sudo apt-get -y install ca-certificates apt-transport-https git curl dirmngr gnupg gnupg2 \
     autoconf automake bison libffi-dev libgdbm-dev libncurses5-dev \
     libyaml-dev sqlite3 libgmp-dev libreadline-dev libssl-dev \
     postgresql postgresql-client postgresql-contrib libpq-dev \
-    imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev  \
+    imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
+    inkscape pandoc \
     swig cmake libeigen3-dev \
     libxslt-dev libxml2-dev \
     libsass-dev \
@@ -140,6 +164,29 @@ fi
 
 ############################################
 ############################################
+sharpi 'PART 1.1'
+description="installing specific version of debian dependencies"
+############################################
+
+if [ "${PART_1_1:-}" ]; then
+  sharpi "$description"
+
+  ## Pandoc
+  pandoc_ver="pandoc-${PANDOC_VERSION}-1-amd64.deb"
+  yellow "Pandoc version ${PANDOC_VERSION}"
+  yellow "downloading Pandoc ${pandoc_ver}\n"
+  curl -o /tmp/${pandoc_ver} -L https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/${pandoc_ver}
+  yellow "installing Pandoc ${pandoc_ver}\n"
+  sudo dpkg -i /tmp/${pandoc_ver}
+  green "done installing Pandoc ${PANDOC_VERSION}"
+
+  green "done $description\n"
+else
+  yellow "skip $description\n"
+fi
+
+############################################
+############################################
 sharpi 'PART 2'
 description='installing passenger'
 ############################################
@@ -148,7 +195,7 @@ if [ "${PART_2:-}" ]; then
   sharpi "$description"
   ## https://www.phusionpassenger.com/library/install/nginx/install/oss/bionic/
 
-  sudo apt-get install -y dirmngr gnupg
+  # sudo apt-get install -y dirmngr gnupg
   sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
   sudo apt-get install -y apt-transport-https ca-certificates
   sudo sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger bionic main > /etc/apt/sources.list.d/passenger.list'
@@ -220,7 +267,7 @@ else
   yellow "skip $description\n"
 fi
 
-###########################################
+############################################
 ############################################
 sharpi 'PART 6'
 description="Prepare postgresql DB"
@@ -235,7 +282,7 @@ if [ "${PART_6:-}" ]; then
  sudo -u postgres psql -c " CREATE DATABASE $DB_NAME OWNER $DB_ROLE;" ||\
    { red "DATABASE $DB_NAME already exists! Press s to skip this part if you want to use the existing DB (default), press r to reset this DB (all existing data will be lost), or a to abort. [s/r/a]?" &&\
    read x && { [[ "$x" == "a" ]] && yellow "aborting" && rm_tmp && exit; } ||\
-   { [[ "$x" == "r" ]] && { sudo -u postgres psql -c " DROP DATABASE $DB_NAME;" || yellow "DB could not be DROPPED, press any key to continue with the exisiting DB" && read x; } } ||\
+   { [[ "$x" == "r" ]] && { sudo -u postgres psql -c " DROP DATABASE $DB_NAME;" || yellow "DB could not be DROPPED, press any key to continue with the existing DB" && read x; } } ||\
    yellow "skip create DB and continue with existing DB"; }
 
   sudo -u postgres psql -d $DB_NAME -c ' CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
@@ -245,10 +292,8 @@ else
   yellow "skip $description\n"
 fi
 
-#sudo -u postgres psql -c "ALTER USER $DB_ROLE PASSWORD '$pw';"
-
 ############################################
-############################################
+###########################################
 sharpi 'PART 7'
 description="Preparing production directories and configuration files"
 ############################################
@@ -279,6 +324,7 @@ EOL
   \cp -u $TMP_DIR/config/storage.yml.example $pwd/config/storage.yml
   \cp -u $TMP_DIR/config/secrets.yml $pwd/config/secrets.yml
   rm_tmp
+  rm_tmp_repo
 
 echo | sudo tee $pwd/config/database.yml <<EOL || true
 production:
@@ -338,7 +384,10 @@ if [ "${PART_8:-}" ]; then
   yellow "Clone remote code\n"
 
   rm_tmp
-  sudo -H -u $PROD bash -c "git clone --branch $BRANCH --depth 1 $REPO $TMP_DIR"
+  rm_tmp_repo
+
+  sudo -H -u $PROD bash -c "git clone --branch $BRANCH --depth 2 --bare $REPO $TMP_REPO_DIR"
+  sudo -H -u $PROD bash -c "git clone --branch $BRANCH --depth 1 $TMP_REPO_DIR $TMP_DIR"
   sudo -H -u $PROD bash -c "cd $TMP_DIR &&  echo $RUBY_VERSION > .ruby-version"
   sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle config build.nokogiri --use-system-libraries"
   # sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle install --jobs $NCPU --path $PROD_HOME/shared/bundle"
@@ -349,12 +398,15 @@ if [ "${PART_8:-}" ]; then
   # grep AuthorizedKeysFile /etc/ssh/sshd_config
   # sudo -H -u $PROD bash -c  'rm -v $PROD_HOME/.ssh/known_hosts $PROD_HOME/.ssh/id_rsa $PROD_HOME/.ssh/id_rsa.pub'
   sudo -H -u $PROD bash -c  "ssh-keygen -t rsa -N '' -f $PROD_HOME/.ssh/id_rsa" || echo ' using existing keys'
-  sudo -H -u $PROD bash -c  "cat $PROD_HOME/.ssh/id_rsa.pub | tee -a $PROD_HOME/.ssh/authorized_keys"
+  localkey=$(sudo cat $PROD_HOME/.ssh/id_rsa.pub)
+  sudo -H -u $PROD bash -c  "if [ -z \"\$(grep \"$localkey\" $PROD_HOME/.ssh/authorized_keys )\" ]; then echo $localkey | tee -a $PROD_HOME/.ssh/authorized_keys; fi;"
+
+
   sharpi "prepare config"
 
   read -d '' deploy_config <<CONFIG || true
 user = '$PROD'
-set :repo_url, '$REPO'
+set :repo_url, 'file://$TMP_REPO_DIR'
 set :branch, '$BRANCH'
 #before 'deploy:migrate', 'deploy:backup'
 server 'localhost', user: user, roles: %w{app web db}
@@ -520,14 +572,8 @@ sharpi 'PART 11'
 description="configuring nginx"
 ############################################
 
-## enable ufw
-if [ "${PART_10:-}" ]; then
+if [ "${PART_11:-}" ]; then
   sharpi "$description"
-  sudo ufw enable
-  sudo ufw allow ssh
-  sudo ufw allow 80/tcp
-  sudo ufw allow 443/tcp
-
   read -d '' nginx_config_1 <<NGINXCONFIG || true
 server {
         listen 80 ;
@@ -578,6 +624,8 @@ else
   yellow "skip $description\n"
 fi
 
+############################################
+############################################
 sharpi
 yellow 'Installation completed. Do you want to reboot now? (y/n)' && read x && [[ "$x" == "y" ]] && /sbin/reboot;
 sharpi
