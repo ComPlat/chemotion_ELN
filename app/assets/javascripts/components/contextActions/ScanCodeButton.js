@@ -1,9 +1,8 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import {
-  Alert, Button, Modal, OverlayTrigger, Tooltip, SplitButton,
-  FormGroup, ControlLabel, FormControl, MenuItem, Form
+  Alert, Button, Modal, SplitButton,
+  FormGroup, FormControl, MenuItem
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import Quagga from 'quagga';
@@ -14,36 +13,37 @@ import UIStore from '../stores/UIStore';
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       showModal: false,
       showQrReader: false,
       scanError: null,
       scanInfo: null,
       checkedIds: UIStore.getState().sample.checkedIds
-    }
+    };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.open = this.open.bind(this);
     this.close = this.close.bind(this);
     this.startBarcodeScan = this.startBarcodeScan.bind(this);
     this.startQrCodeScan = this.startQrCodeScan.bind(this);
-  }
-
-  onUIStoreChange(state) {
-    if (state.sample.checkedIds != this.state.checkedIds){
-      this.setState({
-        checkedIds: state.sample.checkedIds
-      })
-    }
+    this.handleKeyPress = this.handleKeyPress.bind(this);
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIStoreChange)
+    UIStore.listen(this.onUIStoreChange);
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange)
+    UIStore.unlisten(this.onUIStoreChange);
+  }
+
+  onUIStoreChange(state) {
+    if (state.sample.checkedIds !== this.state.checkedIds) {
+      this.setState({
+        checkedIds: state.sample.checkedIds
+      });
+    }
   }
 
   open() {
@@ -56,13 +56,13 @@ export default class ScanCodeButton extends React.Component {
 
   initializeBarcodeScan() {
     Quagga.init({
-      inputStream : {
-        name : "Live",
-        type : "LiveStream",
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
         target: document.querySelector('#code-scanner'),
       },
-      decoder : {
-        readers : ["code_128_reader"],
+      decoder: {
+        readers: ["code_128_reader"],
       }
     }, function(err) {
       if (err) {
@@ -75,13 +75,13 @@ export default class ScanCodeButton extends React.Component {
   }
 
   startBarcodeScan() {
-    this.initializeBarcodeScan()
+    this.initializeBarcodeScan();
 
     Quagga.onDetected((data) => {
-      let barcode = data.codeResult.code;
-      this.handleScan(barcode,true)
-    })
-    Quagga.stop()
+      const barcode = data.codeResult.code;
+      this.handleScan(barcode, true);
+    });
+    Quagga.stop();
   }
 
   startQrCodeScan() {
@@ -89,91 +89,95 @@ export default class ScanCodeButton extends React.Component {
   }
 
   qrReader(state) {
-    if(state.showQrReader == true) {
+    if (state.showQrReader === true) {
       return (
         <QrReader
           handleScan={this.handleScan.bind(this)}
           handleError={this.handleError}
-          previewStyle={{width: 550}}/>
-      )
-    } else {
-      return ""
+          previewStyle={{ width: 550 }}
+        />
+      );
     }
+    return '';
   }
 
   checkJSONResponse(json) {
     if(json.error) {
-      var error = new Error(json.error)
-      error.response = json
-      throw error
+      var error = new Error(json.error);
+      error.response = json;
+      throw error;
     } else {
-      return json
+      return json;
     }
   }
 
-  handleScan(data,stopQuagga=false) {
-    // this.setState((previousState) => {
-    //     return { ...previousState, scanInfo: data };
-    // })
-
-    let code_log = {}
+  handleScan(d, stopQuagga = false) {
+    const data = this.codeInput.value;
+    let code_log = {};
     fetch(`/api/v1/code_logs/generic?code=${data}`, {
       credentials: 'same-origin'
     })
-    .then((response) => {
-      return response.json()
-    })
-    .then(this.checkJSONResponse)
-    .then(json => {
-      code_log = json.code_log
-      stopQuagga && Quagga.stop()
-      if(code_log.source == "container") {
-        // open active analysis
-        UIActions.selectTab({tabKey: 1 ,type: code_log.root_code.source})
-        UIActions.selectActiveAnalysis(code_log.source_id)
-        Aviator.navigate(`/collection/all/${code_log.root_code.source}/${code_log.root_code.source_id}`)
-        this.close();
-
-      } else {
-        UIActions.selectTab({tabKey: 0 ,type: code_log.root_code.source})
-        Aviator.navigate(`/collection/all/${code_log.source}/${code_log.source_id}`)
-        this.close();
-      }
-     }).catch(errorMessage => {
+      .then(response => response.json())
+      .then(this.checkJSONResponse)
+      .then((json) => {
+        code_log = json.code_log
+        stopQuagga && Quagga.stop()
+        if (code_log.source === 'container') {
+          // open active analysis
+          UIActions.selectTab({ tabKey: 1, type: code_log.root_code.source });
+          UIActions.selectActiveAnalysis(code_log.source_id);
+          Aviator.navigate(`/collection/all/${code_log.root_code.source}/${code_log.root_code.source_id}`);
+          this.close();
+        } else {
+          UIActions.selectTab({ tabKey: 0, type: code_log.root_code.source });
+          Aviator.navigate(`/collection/all/${code_log.source}/${code_log.source_id}`);
+          this.close();
+        }
+      })
+      .catch((errorMessage) => {
         console.log(errorMessage.message);
-        this.setState({scanError: errorMessage.message})
-    });
+        this.setState({ scanError: errorMessage.message });
+      });
   }
 
-  handleError(err){
-    console.error(err)
+  handleKeyPress(e) {
+    const code = e.keyCode || e.which;
+    if (code === 13) {
+      e.preventDefault();
+      this.scanInput.click();
+    }
+  }
+
+  handleError(err) {
+    console.error(err);
   }
 
   scanModal() {
-    if(this.state.showModal == true) {
+    if (this.state.showModal === true) {
       return (
         <Modal show={this.state.showModal} onHide={this.close}>
           <Modal.Header closeButton>
             <Modal.Title>Scan barcode or QR code</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div id="code-scanner" style={{maxHeight: '400px', overflow: 'hidden'}}>
+            <div id="code-scanner" style={{ maxHeight: '400px', overflow: 'hidden' }}>
               {this.qrReader(this.state)}
-              <Form  onSubmit={()=>{
-                this.handleScan(ReactDOM.findDOMNode(this.codeInput).value)
-                }}>
-                <FormGroup>
-                  <ControlLabel></ControlLabel>
-                  <FormControl
-                    autoFocus
-                    type="text"
-                    ref={input => {this.codeInput = input}}
-                    />
-                  <Button type="submit" style={{display:"none"}}></Button>
-                </FormGroup>
-              </Form>
+              <FormGroup>
+                <FormControl
+                  autoFocus
+                  type="text"
+                  inputRef={(m) => { this.codeInput = m; }}
+                  onKeyPress={this.handleKeyPress}
+                />
+              </FormGroup>
+              <input
+                type="button"
+                style={{ display: 'none' }}
+                ref={(scanInput) => { this.scanInput = scanInput; }}
+                onClick={() => this.handleScan()}
+              />
             </div>
-            <br/>
+            <br />
             {this.scanAlert()}
           </Modal.Body>
           <Modal.Footer>
@@ -181,26 +185,26 @@ export default class ScanCodeButton extends React.Component {
             <Button onClick={this.startQrCodeScan}>Start QR code scan</Button>
           </Modal.Footer>
         </Modal>
-      )
-    } else {
-      return ""
+      );
     }
+    return '';
   }
 
   scanAlert() {
-    if(this.state.scanError) {
+    if (this.state.scanError) {
       return (
         <div>
-        { this.state.scanInfo
+          { this.state.scanInfo
             ? <Alert bsStyle="info">{this.state.scanInfo}</Alert>
             : null
-        }
-        <Alert bsStyle="danger">
-          {this.state.scanError}
-        </Alert>
+          }
+          <Alert bsStyle="danger">
+            {this.state.scanError}
+          </Alert>
         </div>
-      )
+      );
     }
+    return null;
   }
 
   render() {
@@ -238,11 +242,12 @@ export default class ScanCodeButton extends React.Component {
           style={{ height: '34px' }}
         >
           {menuItems.map(e => (
-            <MenuItem key={e.key}
+            <MenuItem
+              key={e.key}
               disabled={disabledPrint}
               onSelect={(eventKey, event) => {
                 event.stopPropagation();
-                Utils.downloadFile({ contents: e.contents })
+                Utils.downloadFile({ contents: e.contents });
               }}
             >
               {e.text}
