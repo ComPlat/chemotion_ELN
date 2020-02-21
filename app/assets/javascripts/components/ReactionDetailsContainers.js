@@ -81,9 +81,7 @@ export default class ReactionDetailsContainers extends Component {
   handleUndo(container) {
     const { reaction } = this.state;
     container.is_deleted = false;
-
-    this.props.parent.setState({ reaction });
-    this.forceUpdate();
+    this.props.parent.handleReactionChange(reaction, { schemaChanged: false });
   }
 
   handleAdd() {
@@ -107,8 +105,7 @@ export default class ReactionDetailsContainers extends Component {
     ))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
-
-    this.props.parent.setState({ reaction: reaction });
+    this.props.parent.handleReactionChange(reaction, { schemaChanged: false });
   }
 
   handleOnClickRemove(container) {
@@ -139,8 +136,7 @@ export default class ReactionDetailsContainers extends Component {
     let { reaction } = this.state;
 
     container.is_deleted = true;
-
-    this.props.parent.setState({ reaction: reaction });
+    this.props.parent.handleReactionChange(reaction, { schemaChanged: false });
   }
 
   handleAccordionOpen(key) {
