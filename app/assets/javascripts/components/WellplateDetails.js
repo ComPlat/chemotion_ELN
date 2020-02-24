@@ -157,9 +157,9 @@ export default class WellplateDetails extends Component {
 
     return (
       <Panel bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'}
-             className="panel-detail">
+        className="eln-panel-detail">
         <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
-        <Panel.Body className="panel-body">
+        <Panel.Body>
         <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
               id="wellplateDetailsTab">
           <Tab eventKey={0} title={'Designer'}>

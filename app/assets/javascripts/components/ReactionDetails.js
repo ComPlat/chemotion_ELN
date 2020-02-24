@@ -359,7 +359,7 @@ export default class ReactionDetails extends Component {
     }
 
     return (
-      <Panel className='panel-detail'
+      <Panel className="eln-panel-detail"
              bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
         <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
         <Panel.Body>

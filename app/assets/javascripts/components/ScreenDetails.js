@@ -250,7 +250,7 @@ export default class ScreenDetails extends Component {
 
     return (
       <Panel bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
-             className="panel-detail">
+        className="eln-panel-detail">
         <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
         <Panel.Body>
           <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
