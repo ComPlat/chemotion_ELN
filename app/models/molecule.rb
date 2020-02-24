@@ -155,7 +155,7 @@ class Molecule < ActiveRecord::Base
   end
 
   def chem_repo
-    { id: self.tag&.taggable_data['chemrepo_id'] }
+    { id: self.tag&.taggable_data&.fetch('chemrepo_id', nil) }
   end
 
   def attach_svg svg_data
