@@ -1015,10 +1015,9 @@ export default class SampleDetails extends React.Component {
       </Alert>
     ) : null;
 
-
     return (
       <Panel
-        className="panel-detail"
+        className="eln-panel-detail"
         bsStyle={sample.isPendingToSave ? 'info' : 'primary'}
       >
         <Panel.Heading>{this.sampleHeader(sample)}{messageBlock}</Panel.Heading>
