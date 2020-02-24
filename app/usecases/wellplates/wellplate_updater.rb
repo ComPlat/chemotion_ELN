@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Usecases::Wellplates::WellplateUpdater
   def self.update_wells_for_wellplate(wellplate, wells)
     collections = wellplate.collections
@@ -14,10 +16,10 @@ module Usecases::Wellplates::WellplateUpdater
 
           subsample = parent_sample.dup
           subsample.parent = parent_sample
-          subsample.short_label = nil #we don't want to inherit short_label from parent
+          subsample.short_label = nil # we don't want to inherit short_label from parent
           subsample.name = sample[:name]
 
-          #assign subsample to all collections
+          # assign subsample to all collections
           subsample.collections << collections
           subsample.save!
           subsample.reload
@@ -27,23 +29,22 @@ module Usecases::Wellplates::WellplateUpdater
         included_sample_ids << sample_id
       end
 
-
-      unless well[:is_new]
-        Well.find(well[:id]).update(
-            sample_id: sample_id,
-            readout: well[:readout],
-            additive: well[:additive],
-            position_x: well[:position][:x],
-            position_y: well[:position][:y],
-        )
-      else
+      if well[:is_new]
         Well.create(
           wellplate_id: wellplate.id,
           sample_id: sample_id,
           readout: well[:readout],
           additive: well[:additive],
           position_x: well[:position][:x],
-          position_y: well[:position][:y],
+          position_y: well[:position][:y]
+        )
+      else
+        Well.find(well[:id]).update(
+          sample_id: sample_id,
+          readout: well[:readout],
+          additive: well[:additive],
+          position_x: well[:position][:x],
+          position_y: well[:position][:y]
         )
       end
     end

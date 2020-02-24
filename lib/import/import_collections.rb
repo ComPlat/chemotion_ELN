@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'json'
 
 module Import
   class ImportCollections
-
     def initialize(att, current_user_id)
       @att = att
       @current_user_id = current_user_id
@@ -71,16 +72,14 @@ module Import
     end
 
     def import!
-      begin
-        import
-      rescue StandardError => e
-        # destroy created attachments if import fails
-        Attachment.where(id: @attachments).destroy_all
-        raise e
-      ensure
-        # destroy created uploaded zip and tmp files if extraction fails
-        cleanup
-      end
+      import
+    rescue StandardError => e
+      # destroy created attachments if import fails
+      Attachment.where(id: @attachments).destroy_all
+      raise e
+    ensure
+      # destroy created uploaded zip and tmp files if extraction fails
+      cleanup
     end
 
     # desc: to destroy uploaded zip and sweep image tmp files
@@ -106,10 +105,10 @@ module Import
           'researchplan_detail_level',
           'created_at',
           'updated_at'
-        ).merge({
-          :user_id => @current_user_id,
-          :parent => fetch_ancestry('Collection', fields.fetch('ancestry'))
-        }))
+        ).merge(
+          user_id: @current_user_id,
+          parent: fetch_ancestry('Collection', fields.fetch('ancestry'))
+        ))
 
         # add collection to @instances map
         update_instances!(uuid, collection)
@@ -158,14 +157,15 @@ module Import
           'stereo',
           'created_at',
           'updated_at'
-        ).merge({
-          :created_by => @current_user_id,
-          :collections => fetch_many(
-            'Collection', 'CollectionsSample', 'sample_id', 'collection_id', uuid),
-          :molecule_name => molecule_name,
-          :sample_svg_file => fetch_image('samples', fields.fetch('sample_svg_file')),
-          :parent => fetch_ancestry('Sample', fields.fetch('ancestry'))
-        }))
+        ).merge(
+          created_by: @current_user_id,
+          collections: fetch_many(
+            'Collection', 'CollectionsSample', 'sample_id', 'collection_id', uuid
+          ),
+          molecule_name: molecule_name,
+          sample_svg_file: fetch_image('samples', fields.fetch('sample_svg_file')),
+          parent: fetch_ancestry('Sample', fields.fetch('ancestry'))
+        ))
 
         # for same sample_svg_file case
         s_svg_file = @svg_files.select { |s| s[:sample_svg_file] == fields.fetch('sample_svg_file') }.first
@@ -185,9 +185,9 @@ module Import
           'custom_info',
           'created_at',
           'updated_at'
-        ).merge({
-          :sample => @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
-        }))
+        ).merge(
+          sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+        ))
 
         # add reaction to the @instances map
         update_instances!(uuid, residue)
@@ -218,11 +218,12 @@ module Import
           'duration',
           'created_at',
           'updated_at'
-        ).merge({
-          :created_by => @current_user_id,
-          :collections => fetch_many(
-            'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid)
-        }))
+        ).merge(
+          created_by: @current_user_id,
+          collections: fetch_many(
+            'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid
+          )
+        ))
 
         # add reaction to the @instances map
         update_instances!(uuid, reaction)
@@ -255,10 +256,10 @@ module Import
             'position',
             'waste',
             'coefficient'
-          ).merge({
-            :reaction => @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
-            :sample => @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
-          }))
+          ).merge(
+            reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
+            sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+          ))
 
           # add reactions_sample to the @instances map
           update_instances!(uuid, reactions_sample)
@@ -274,10 +275,11 @@ module Import
           'size',
           'created_at',
           'updated_at'
-        ).merge({
-          :collections => fetch_many(
-            'Collection', 'CollectionsWellplate', 'wellplate_id', 'collection_id', uuid)
-        }))
+        ).merge(
+          collections: fetch_many(
+            'Collection', 'CollectionsWellplate', 'wellplate_id', 'collection_id', uuid
+          )
+        ))
 
         # create the root container like with samples
         wellplate.container = Container.create_root_container
@@ -298,10 +300,10 @@ module Import
           'additive',
           'created_at',
           'updated_at'
-        ).merge({
-          :wellplate => @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
-          :sample => @instances.fetch('Sample').fetch(fields.fetch('sample_id'), nil)
-        }))
+        ).merge(
+          wellplate: @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
+          sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'), nil)
+        ))
 
         # add reaction to the @instances map
         update_instances!(uuid, well)
@@ -321,12 +323,14 @@ module Import
           'requirements',
           'created_at',
           'updated_at'
-        ).merge({
-          :collections => fetch_many(
-            'Collection', 'CollectionsScreen', 'screen_id', 'collection_id', uuid),
-          :wellplates => fetch_many(
-            'Wellplate', 'ScreensWellplate', 'screen_id', 'wellplate_id', uuid)
-        }))
+        ).merge(
+          collections: fetch_many(
+            'Collection', 'CollectionsScreen', 'screen_id', 'collection_id', uuid
+          ),
+          wellplates: fetch_many(
+            'Wellplate', 'ScreensWellplate', 'screen_id', 'wellplate_id', uuid
+          )
+        ))
 
         # create the root container like with samples
         screen.container = Container.create_root_container
@@ -347,12 +351,13 @@ module Import
           'svg_file',
           'created_at',
           'updated_at'
-        ).merge({
-          :created_by => @current_user_id,
-          :collections => fetch_many(
-            'Collection', 'CollectionsResearchPlan', 'research_plan_id', 'collection_id', uuid),
-          :svg_file => fetch_image('research_plans', fields.fetch('svg_file'))
-        }))
+        ).merge(
+          created_by: @current_user_id,
+          collections: fetch_many(
+            'Collection', 'CollectionsResearchPlan', 'research_plan_id', 'collection_id', uuid
+          ),
+          svg_file: fetch_image('research_plans', fields.fetch('svg_file'))
+        ))
 
         # add reaction to the @instances map
         update_instances!(uuid, research_plan)
@@ -371,21 +376,21 @@ module Import
         when 'analyses'
           # get the analyses container from its parent (root) container
           parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'))
-          container = parent.children.where("container_type = 'analyses'").first()
+          container = parent.children.where("container_type = 'analyses'").first
         else
           # get the parent container
           parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'))
 
           # create the container
           container = parent.children.create!(fields.slice(
-            'containable_type',
-            'name',
-            'container_type',
-            'description',
-            'extended_metadata',
-            'created_at',
-            'updated_at'
-          ))
+                                                'containable_type',
+                                                'name',
+                                                'container_type',
+                                                'description',
+                                                'extended_metadata',
+                                                'created_at',
+                                                'updated_at'
+                                              ))
         end
 
         # in any case, add container to the @instances map
@@ -412,7 +417,7 @@ module Import
           # created_at: fields.fetch('created_at'),
           # updated_at: fields.fetch('updated_at')
         )
-         # TODO: if attachment.checksum != fields.fetch('checksum')
+        # TODO: if attachment.checksum != fields.fetch('checksum')
 
         # add attachment to the @instances map
         update_instances!(uuid, attachment)
@@ -434,16 +439,16 @@ module Import
         # create the literature if it was not imported before
         begin
           literature =  @instances.fetch('Literature').fetch(literature_uuid)
-        rescue KeyError => ex
+        rescue KeyError => e
           # create the literature
           literature = Literature.create!(literature_fields.slice(
-            'title',
-            'url',
-            'refs',
-            'doi',
-            'created_at',
-            'updated_at'
-          ))
+                                            'title',
+                                            'url',
+                                            'refs',
+                                            'doi',
+                                            'created_at',
+                                            'updated_at'
+                                          ))
 
           # add literature to the @instances map
           update_instances!(literature_uuid, literature)
@@ -456,11 +461,11 @@ module Import
             'category',
             'created_at',
             'updated_at'
-          ).merge({
-            :user_id => @current_user_id,
-            :element => element,
-            :literature => literature
-          })
+          ).merge(
+            user_id: @current_user_id,
+            element: element,
+            literature: literature
+          )
         )
 
         # add literal to the @instances map
@@ -469,7 +474,7 @@ module Import
     end
 
     def fetch_ancestry(type, ancestry)
-      unless ancestry.nil? or ancestry.empty?
+      unless ancestry.nil? || ancestry.empty?
         parents = ancestry.split('/')
         parent_uuid = parents[-1]
         @instances.fetch(type, {}).fetch(parent_uuid, nil)
@@ -479,15 +484,13 @@ module Import
     def fetch_image(image_path, image_file_name)
       begin
         svg = nil
-        if image_file_name.present? && (tmp_file =  @images["#{image_path}/#{image_file_name}"])
-          if tmp_file && !tmp_file.closed?
-            svg = tmp_file.read
-          end
+        if image_file_name.present? && (tmp_file = @images["#{image_path}/#{image_file_name}"])
+          svg = tmp_file.read if tmp_file && !tmp_file.closed?
         end
-      rescue => e
+      rescue StandardError => e
         Rails.logger.error e
       ensure
-        tmp_file.close!() if tmp_file && !tmp_file.closed?
+        tmp_file.close! if tmp_file && !tmp_file.closed?
       end
       svg || image_file_name
     end
@@ -499,9 +502,7 @@ module Import
       end
 
       type = instance.class.name
-      unless @instances.key?(type)
-        @instances[type] = {}
-      end
+      @instances[type] = {} unless @instances.key?(type)
 
       @instances[type][uuid] = instance
     end
@@ -509,16 +510,14 @@ module Import
     # Follows a has_many relation to `foreign_type` through `association_type`
     def fetch_many(foreign_type, association_type, local_field, foreign_field, local_id)
       associations = []
-      @data.fetch(association_type, {}).each do |uuid, fields|
-        if fields.fetch(local_field) == local_id
-          foreign_id = fields.fetch(foreign_field)
-          instance = @instances.fetch(foreign_type, {}).fetch(foreign_id, nil)
-          unless instance.nil?
-            associations << instance
-          end
-        end
+      @data.fetch(association_type, {}).each do |_uuid, fields|
+        next unless fields.fetch(local_field) == local_id
+
+        foreign_id = fields.fetch(foreign_field)
+        instance = @instances.fetch(foreign_type, {}).fetch(foreign_id, nil)
+        associations << instance unless instance.nil?
       end
-      return associations
+      associations
     end
   end
 end

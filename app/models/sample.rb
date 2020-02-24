@@ -102,8 +102,8 @@ class Sample < ActiveRecord::Base
   # scopes for suggestions
   scope :by_residues_custom_info, ->(info, val) { joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?", "%#{sanitize_sql_like(val)}%")}
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :by_short_label, ->(query) { where('short_label ILIKE ?',"%#{sanitize_sql_like(query)}%") }
-  scope :by_external_label, ->(query) { where('external_label ILIKE ?',"%#{sanitize_sql_like(query)}%") }
+  scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :with_reactions, -> {
     joins(:reactions_samples)
   }
@@ -137,6 +137,7 @@ class Sample < ActiveRecord::Base
       Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
     end
     return samples if as_array
+
     Sample.where(id: samples.map(&:id))
   }
 
@@ -176,7 +177,7 @@ class Sample < ActiveRecord::Base
   belongs_to :user
   belongs_to :molecule_name
 
-  has_one :container, :as => :containable
+  has_one :container, as: :containable
   has_one :well, dependent: :destroy
 
   has_many :wellplates, through: :well
@@ -184,7 +185,7 @@ class Sample < ActiveRecord::Base
   has_many :elemental_compositions, dependent: :destroy
 
   has_many :sync_collections_users, through: :collections
-  composed_of :amount, mapping: %w(amount_value, amount_unit)
+  composed_of :amount, mapping: %w[amount_value amount_unit]
 
   has_ancestry
 
@@ -205,23 +206,23 @@ class Sample < ActiveRecord::Base
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
 
   def molecule_sum_formular
-    self.molecule ? self.molecule.sum_formular : ""
+    self.molecule ? self.molecule.sum_formular : ''
   end
 
   def molecule_iupac_name
-    self.molecule ? self.molecule.iupac_name : ""
+    self.molecule ? self.molecule.iupac_name : ''
   end
 
   def molecule_inchistring
-    self.molecule ? self.molecule.inchistring : ""
+    self.molecule ? self.molecule.inchistring : ''
   end
 
   def molecule_inchikey
-    self.molecule ? self.molecule.inchikey : ""
+    self.molecule ? self.molecule.inchikey : ''
   end
 
   def molecule_cano_smiles
-    self.molecule ? self.molecule.cano_smiles : ""
+    self.molecule ? self.molecule.cano_smiles : ''
   end
 
   def analyses
@@ -244,7 +245,7 @@ class Sample < ActiveRecord::Base
     # Ex(p|t)ensive method to get a proper counter:
     # take into consideration sample children that have been hard/soft deleted
     children_count = self.children.with_deleted.count
-    last_child_label = self.children.with_deleted.order("created_at")
+    last_child_label = self.children.with_deleted.order('created_at')
                      .where('short_label LIKE ?', "#{self.short_label}-%").last&.short_label
     last_child_counter = last_child_label &&
       last_child_label.match(/^#{self.short_label}-(\d+)/) && $1.to_i || 0
@@ -256,7 +257,8 @@ class Sample < ActiveRecord::Base
     subsample.created_by = user.id
     subsample.residues_attributes = self.residues.select(:custom_info, :residue_type).as_json
     subsample.elemental_compositions_attributes = self.elemental_compositions.select(
-     :composition_type, :data, :loading).as_json if copy_ea
+      :composition_type, :data, :loading
+    ).as_json if copy_ea
 
     # associate to arg collections and creator's All collection
     collections = (
@@ -279,7 +281,7 @@ class Sample < ActiveRecord::Base
 
   def validate_stereo(_stereo = {})
     self.stereo ||= Sample::STEREO_DEF
-    self.stereo.merge!(_stereo.slice('abs','rel'))
+    self.stereo.merge!(_stereo.slice('abs', 'rel'))
     self.stereo['abs'] = 'any' unless Sample::STEREO_ABS.include?(self.stereo['abs'])
     self.stereo['rel'] = 'any' unless Sample::STEREO_REL.include?(self.stereo['rel'])
     self.stereo
@@ -287,10 +289,13 @@ class Sample < ActiveRecord::Base
 
   def find_or_create_molecule_based_on_inchikey
     return unless molfile.present?
+
     return if molecule.present?
+
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
     inchikey = babel_info[:inchikey]
     return unless inchikey.present?
+
     is_partial = babel_info[:is_partial]
     molfile_version = babel_info[:version]
     if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
@@ -318,15 +323,15 @@ class Sample < ActiveRecord::Base
   def attach_svg
     svg = self.sample_svg_file
     return unless svg.present?
+
     svg_file_name = "#{SecureRandom.hex(64)}.svg"
-    if svg.match /TMPFILE[0-9a-f]{64}.svg/
-      svg_path = "#{Rails.root}/public/images/samples/#{svg}"
+    if svg =~ /TMPFILE[0-9a-f]{64}.svg/
+      svg_path = Rails.public_path.join('images', 'samples', svg.to_s).to_s
       FileUtils.mv(svg_path, svg_path.gsub(/(TMPFILE\S+)/, svg_file_name))
 
       self.sample_svg_file = svg_file_name
-    elsif svg.match /\A<\?xml/
-      svg_path = "#{Rails.root}/public/images/samples/#{svg_file_name}"
-
+    elsif svg.start_with?('<?xml')
+      svg_path = Rails.public_path.join('images', 'samples', svg_file_name)
       svg_file = File.new(svg_path, 'w+')
       svg_file.write(svg)
       svg_file.close
@@ -337,28 +342,25 @@ class Sample < ActiveRecord::Base
 
   def init_elemental_compositions
     residue = self.residues[0]
-    return unless m_formula = (self.molecule && self.molecule.sum_formular)
+    return unless (m_formula = (self.molecule && self.molecule.sum_formular))
 
-    if residue.present? && self.molfile.include?(' R# ')# case when residue will be deleted
+    if residue.present? && self.molfile.include?(' R# ') # case when residue will be deleted
       p_formula = residue.custom_info['formula']
       p_loading = residue.custom_info['loading'].try(:to_d)
 
-      if loading_full = residue.custom_info['loading_full_conv']
-        d = Chemotion::Calculations
-                       .get_composition(m_formula, p_formula, loading_full.to_f)
+      if (loading_full = residue.custom_info['loading_full_conv'])
+        d = Chemotion::Calculations.get_composition(m_formula, p_formula, loading_full.to_f)
         set_elem_composition_data 'full_conv', d, loading_full
       end
 
       if p_formula.present?
-        d = Chemotion::Calculations
-                 .get_composition(m_formula, p_formula, (p_loading || 0.0))
-
+        d = Chemotion::Calculations.get_composition(m_formula, p_formula, (p_loading || 0.0))
         # if it is reaction product then loading has been calculated
         l_type = if residue['custom_info']['loading_type'] == 'mass_diff'
-          'mass_diff'
-        else
-          'loading'
-        end
+                   'mass_diff'
+                 else
+                   'loading'
+                 end
 
         unless p_loading.to_f == 0.0
           set_elem_composition_data l_type, d, p_loading
@@ -373,7 +375,7 @@ class Sample < ActiveRecord::Base
     end
 
     # init empty object keys for user-calculated composition input
-    unless self.elemental_compositions.find {|i|i.composition_type== 'found'}
+    unless self.elemental_compositions.find { |i| i.composition_type == 'found' }
       clone_data = (d || {}).keys.map do |key|
         [key, nil]
       end.to_h
@@ -393,7 +395,7 @@ class Sample < ActiveRecord::Base
 
   def preferred_tag
     if (tag = self.preferred_label) && tag && tag.length > 20
-      tag[0, 20] + "..."
+      tag[0, 20] + '...'
     else
       tag
     end
@@ -401,25 +403,26 @@ class Sample < ActiveRecord::Base
 
   def molecule_name_hash
     mn = molecule_name
-    mn ? {
-      label: mn.name, value: mn.id, desc: mn.description , mid: mn.molecule_id
-      } : {}
+    return {} unless mn
+
+    { label: mn.name, value: mn.id, desc: mn.description, mid: mn.molecule_id }
   end
 
   def molecule_molfile
     return if molecule.blank?
+
     molecule.molfile
   end
 
   def showed_name
     mn = molecule_name
-    mnl = mn && mn.name
-    mnd = mn && mn.description
-    is_sum_form = mnd && mnd.include?('sum_formula')
+    mnl = mn&.name
+    mnd = mn&.description
+    is_sum_form = mnd&.include?('sum_formula')
     mnl && !is_sum_form ? mnl : molecule_iupac_name
   end
 
-private
+  private
 
   def has_collections
     if self.collections_samples.blank?
@@ -499,9 +502,7 @@ private
   end
 
   def update_svg_for_reactions
-    reactions.each do |reaction|
-      reaction.save
-    end
+    reactions.each(&:save)
   end
 
   def auto_set_short_label
@@ -536,7 +537,7 @@ private
   end
 
   def assign_molecule_name
-    if molecule_name && molecule_name.new_record? && molecule.persisted? && molecule_name.name.present?
+    if molecule_name&.new_record? && molecule.persisted? && molecule_name.name.present?
       att = molecule_name.attributes.slice('user_id', 'description', 'name')
       att['molecule_id'] = molecule.id
       mn = MoleculeName.find_or_create_by(att)
@@ -558,10 +559,10 @@ private
   end
 
   def has_molarity
-    molarity_value.present? && molarity_value > 0 && density.zero?
+    molarity_value.present? && molarity_value.positive? && density.zero?
   end
 
   def has_density
-    density.present? && density > 0 && (!molarity_value.present? || molarity_value.zero?)
+    density.present? && density.positive? && (!molarity_value.present? || molarity_value.zero?)
   end
 end

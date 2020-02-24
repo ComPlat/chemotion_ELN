@@ -8,15 +8,15 @@ ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
 
 set :deploy_to, '/home/deploy/www/chemotion'
 
-set :rails_env,   "production"
-set :unicorn_env, "production"
-set :unicorn_rack_env, "production"
-set :whenever_identifier, ->{ "#{fetch(:application)}_#{fetch(:stage)}" }
+set :rails_env, 'production'
+set :unicorn_env, 'production'
+set :unicorn_rack_env, 'production'
+set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 set :bundle_jobs, 4 # parallel bundler
 
 set :nvm_type, :user
-set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip  || 'v12.16.1'
-set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip  || '6.13.7'
+set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip || 'v12.16.1'
+set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip || '6.13.7'
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('bundle')
 # Default value for :format is :pretty
@@ -35,7 +35,7 @@ set :linked_files, fetch(:linked_files, []).push(
   'config/database.yml',
   'config/storage.yml',
   # 'config/datacollectors.yml',
-  #'config/datamailcollector.yml',
+  # 'config/datamailcollector.yml',
   'config/secrets.yml',
   # 'config/spectra.yml',
   '.env'
@@ -76,7 +76,6 @@ before 'npm:install', 'deploy:clear_node_module'
 
 after 'deploy:publishing', 'deploy:restart'
 
-
 namespace :git do
   task :update_repo_url do
     on roles(:all) do
@@ -88,10 +87,8 @@ namespace :git do
 end
 
 namespace :deploy do
-
-
   task :backup do
-    server_name = ""
+    server_name = ''
     on roles :app do |server|
       server_name = server.hostname
       within "#{fetch(:deploy_to)}/current/" do
@@ -119,12 +116,11 @@ namespace :deploy do
   task :npm_install_npm do
     on roles :app do
       execute <<~SH
-       source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == "#{fetch(:npm_version)}" ]] && echo "npm already installed" || npm install -g npm
+        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == "#{fetch(:npm_version)}" ]] && echo "npm already installed" || npm install -g npm
       SH
-       # source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
+      # source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
     end
   end
-
 
   task :clear_node_module do
     on roles :app do
@@ -141,10 +137,10 @@ namespace :deploy do
   after :restart, :clear_cache do
     on roles :app do
       # Here we can do anything such as:
-       within release_path do
-	 with RAILS_ENV: fetch(:rails_env) do
-           execute :rake, 'tmp:cache:clear'
-	 end
+      within release_path do
+        with RAILS_ENV: fetch(:rails_env) do
+          execute :rake, 'tmp:cache:clear'
+        end
       end
     end
   end
@@ -158,7 +154,7 @@ end
 
 namespace :delayed_job do
   def args
-    fetch(:delayed_job_args, "")
+    fetch(:delayed_job_args, '')
   end
 
   def delayed_job_roles

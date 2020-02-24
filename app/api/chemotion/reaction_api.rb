@@ -39,13 +39,12 @@ module ReactionHelpers
       product: Array(material_attributes['products']).map{|m| OSample.new(m)}
     }
 
-
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
         fixed_label = material_group =~ /solvents?|reactants?/ && $&
         reactions_sample_klass = "Reactions#{material_group.to_s.camelize}Sample"
-        samples.each_with_index do |sample,idx|
+        samples.each_with_index do |sample, idx|
           sample.position = idx if sample.position.nil?
           sample.reference = false if material_group === 'solvent' && sample.reference == true
           #create new subsample
@@ -242,7 +241,7 @@ module Chemotion
       get do
         scope = if params[:collection_id]
           begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
+            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
               .find(params[:collection_id])
               .reactions
           rescue ActiveRecord::RecordNotFound
@@ -283,7 +282,7 @@ module Chemotion
 
         get do
           reaction = Reaction.find(params[:id])
-          {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized, literatures: citation_for_elements(params[:id],'Reaction')}
+          { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized, literatures: citation_for_elements(params[:id], 'Reaction') }
         end
       end
 
@@ -367,7 +366,7 @@ module Chemotion
           update_materials_for_reaction(reaction, materials, current_user)
           # update_literatures_for_reaction(reaction, literatures)
           reaction.reload
-          recent_ols_term_update('rxno',[params[:rxno]]) if params[:rxno].present?
+          recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
           #save to profile
           kinds = reaction.container&.analyses&.pluck("extended_metadata->'kind'")
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
@@ -416,30 +415,31 @@ module Chemotion
         collection = Collection.find(collection_id)
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
-        recent_ols_term_update('rxno',[params[:rxno]]) if params[:rxno].present?
+        recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
 
-        if (literatures && literatures.length > 0)
+        if literatures.present?
           literatures.each do |literature|
             next unless literature&.length > 1
+
             refs = literature[1].refs
             doi = literature[1].doi
             url = literature[1].url
             title = literature[1].title
 
-            lit = Literature.find_or_create_by(doi: doi, url:url, title:title)
+            lit = Literature.find_or_create_by(doi: doi, url: url, title: title)
             lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs
 
             attributes = {
-             literature_id: lit.id,
-             user_id: current_user.id,
-             element_type: 'Reaction',
-             element_id: reaction.id,
-             category: 'detail'
-           }
-           unless Literal.find_by(attributes)
-             Literal.create(attributes)
-             reaction.touch
-           end
+              literature_id: lit.id,
+              user_id: current_user.id,
+              element_type: 'Reaction',
+              element_id: reaction.id,
+              category: 'detail'
+            }
+            unless Literal.find_by(attributes)
+              Literal.create(attributes)
+              reaction.touch
+            end
           end
         end
         reaction.container = update_datamodel(container_info)

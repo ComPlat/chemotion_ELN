@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Usecases
   module Sharing
     class ShareWithUser
@@ -26,7 +28,7 @@ module Usecases
           wellplate_ids = (wellplate_ids + associated_wellplate_ids).uniq
 
           # find or create and assign parent collection ()
-          root_label = "with %s" % c.user.name_abbreviation
+          root_label = format('with %s', c.user.name_abbreviation)
           root_collection_attributes = {
             user_id: @collection_attributes[:user_id],
             shared_by_id: @current_user_id,

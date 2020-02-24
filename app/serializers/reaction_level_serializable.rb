@@ -10,7 +10,7 @@ module ReactionLevelSerializable
 
     alias_method :original_initialize, :initialize
 
-    def initialize(element, options={})
+    def initialize(element, options = {})
       original_initialize(element)
       is_hash_opt = options.class == Hash && options[:nested_dl]
       @nested_dl = is_hash_opt ? options[:nested_dl] : options
@@ -27,15 +27,15 @@ module ReactionLevelSerializable
     end
 
     def starting_materials
-      MaterialDecorator.new(object.reactions_starting_material_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, @nested_dl).serializable_hash }
+      MaterialDecorator.new(object.reactions_starting_material_samples).decorated.map { |s| "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, @nested_dl).serializable_hash }
     end
 
     def reactants
-      MaterialDecorator.new(object.reactions_reactant_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, @nested_dl).serializable_hash }
+      MaterialDecorator.new(object.reactions_reactant_samples).decorated.map { |s| "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, @nested_dl).serializable_hash }
     end
 
     def solvents
-      MaterialDecorator.new(object.reactions_solvent_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
+      MaterialDecorator.new(object.reactions_solvent_samples).decorated.map { |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
     end
 
     def products
@@ -44,10 +44,8 @@ module ReactionLevelSerializable
         spl_opts = {  nested_dl: @nested_dl,
                       policy: ElementPolicy.new(@current_user, spl_obj),
                       current_user: @current_user }
-        "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".
-          constantize.
-          new(s, spl_opts).serializable_hash
-        end
+        "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, spl_opts).serializable_hash
+      end
     end
   end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Usecases
   module Sharing
     class ShareWithUsers
@@ -13,10 +15,10 @@ module Usecases
           Usecases::Sharing::ShareWithUser.new(
             collection_attributes: collection_attributes,
             sample_ids: @params.fetch(:sample_ids, []),
-            reaction_ids:  @params.fetch(:reaction_ids, []),
-            wellplate_ids:  @params.fetch(:wellplate_ids, []),
-            screen_ids:  @params.fetch(:screen_ids, []),
-            research_plan_ids:  @params.fetch(:research_plan_ids, [])
+            reaction_ids: @params.fetch(:reaction_ids, []),
+            wellplate_ids: @params.fetch(:wellplate_ids, []),
+            screen_ids: @params.fetch(:screen_ids, []),
+            research_plan_ids: @params.fetch(:research_plan_ids, [])
           ).execute!
         end
       end
