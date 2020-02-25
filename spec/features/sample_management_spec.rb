@@ -7,8 +7,7 @@ describe 'Sample management' do
   let(:sample) { create(:sample, creator: user, collections: user.collections) }
 
   before do
-    user.confirmed_at = Time.now
-    user.save
+    user.update!(confirmed_at: Time.now, account_active: true)
     sign_in(user)
 
     fp = Rails.root.join('public', 'images', 'molecules')

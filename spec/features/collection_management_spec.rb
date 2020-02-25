@@ -7,8 +7,7 @@ describe 'Collection management' do
   let!(:collection) { create(:collection, user_id: user.id) }
 
   before do
-    user.confirmed_at = Time.now
-    user.save
+    user.update!(confirmed_at: Time.now, account_active: true)
     sign_in(user)
   end
 

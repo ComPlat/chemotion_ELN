@@ -4,10 +4,8 @@ require 'sys/filesystem'
 
 module Chemotion
   # Publish-Subscription MessageAPI
-  # rubocop:disable ClassLength
   class AdminAPI < Grape::API
     helpers AdminHelpers
-    # rubocop:disable Metrics/BlockLength
     resource :admin do
       before do
         error(401) unless current_user.is_a?(Admin)
@@ -58,9 +56,9 @@ module Chemotion
         post do
           case params[:authen]
           when 'password'
-            credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
+            credentials = Rails.configuration.datacollectors.sftpusers.select do |e|
               e[:user] == params[:user]
-            }.first
+            end.first
             raise 'No match user credentials!' unless credentials
 
             connect_sftp_with_password(
@@ -117,17 +115,15 @@ module Chemotion
             @pn = Pathname.new(p_dir)
             error!('Dir is not a valid directory', 500) unless @pn.directory?
 
-            localpath = Rails.configuration.datacollectors.localcollectors.select { |e|
+            localpath = Rails.configuration.datacollectors.localcollectors.select do |e|
               @pn.realpath.to_path.start_with?(e[:path])
-            }.first
+            end.first
             localpath = @pn.realpath.to_path.sub(localpath[:path], '') unless localpath.nil?
 
             error!('Dir is not in white-list for local data collection', 500) if localpath.nil?
 
           end
-          if @p_method.end_with?('sftp') && params[:data][:method_params][:authen] == 'keyfile'
-            key_path(params[:data][:method_params][:key_name])
-          end
+          key_path(params[:data][:method_params][:key_name]) if @p_method.end_with?('sftp') && params[:data][:method_params][:authen] == 'keyfile'
         end
 
         post do
@@ -156,7 +152,7 @@ module Chemotion
         end
         put do
           profile = Device.find(params[:id]).profile
-          if (params[:data][:novnc][:target].present?)
+          if params[:data][:novnc][:target].present?
             updated = profile.data.merge(params[:data] || {})
             profile.update!(data: updated)
           else
@@ -188,8 +184,7 @@ module Chemotion
                  pwd = params[:password].presence || Devise.friendly_token.first(8)
                  u.reset_password(pwd, pwd)
                else
-                 pwd
-                 u.send_reset_password_instructions if u.respond_to?(:send_reset_password_instructions)
+                 u.respond_to?(:send_reset_password_instructions) && u.send_reset_password_instructions
                end
           status(400) unless rp
           { pwd: pwd, rp: rp, email: u.email }
@@ -207,14 +202,12 @@ module Chemotion
           requires :name_abbreviation, type: String, desc: 'user name abbr'
         end
         post do
-          begin
-            attributes = declared(params, include_missing: false)
-            new_obj = User.create!(attributes)
-            new_obj.profile.update!({data: {}})
-            status 201
-          rescue ActiveRecord::RecordInvalid => e
-            { error: e.message }
-          end
+          attributes = declared(params, include_missing: false)
+          new_obj = User.create!(attributes)
+          new_obj.profile.update!(data: {})
+          status 201
+        rescue ActiveRecord::RecordInvalid => e
+          { error: e.message }
         end
       end
 
@@ -225,6 +218,7 @@ module Chemotion
           requires :email, type: String, desc: 'user email'
           requires :first_name, type: String, desc: 'user first_name'
           requires :last_name, type: String, desc: 'user last_name'
+          requires :name_abbreviation, type: String, desc: 'user name name_abbreviation'
           requires :type, type: String, desc: 'user type'
         end
         post do
@@ -248,37 +242,51 @@ module Chemotion
           optional :is_templates_moderator, type: Boolean, desc: 'enable or disable ketcherails template moderation'
           optional :confirm_user, type: Boolean, desc: 'confirm account'
           optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
+          optional :account_active, type: Boolean, desc: 'active or inactive this user'
         end
 
         post do
           user = User.find_by(id: params[:user_id])
-          case params[:enable]
-          when true
-            user.unlock_access!()
-          when false
-            user.lock_access!(send_instructions: false)
+          unless params[:enable].nil?
+            case params[:enable]
+            when true
+              user.unlock_access!
+            when false
+              user.lock_access!(send_instructions: false)
+            end
           end
 
-          case params[:confirm_user]
-          when true
-            user.update!(confirmed_at: DateTime.now)
-          when false
-            user.update!(confirmed_at: nil)
+          unless params[:confirm_user].nil?
+            case params[:confirm_user]
+            when true
+              user.update!(confirmed_at: DateTime.now)
+            when false
+              user.update!(confirmed_at: nil)
+            end
           end
 
-          case params[:is_templates_moderator]
-          when true, false
-            profile = user.profile
-            data = profile.data.merge({ 'is_templates_moderator' => params[:is_templates_moderator] })
-            profile.update!(data: data)
+          unless params[:is_templates_moderator].nil?
+            case params[:is_templates_moderator]
+            when true, false
+              profile = user.profile
+              pdata = profile.data || {}
+              data = pdata.merge('is_templates_moderator' => params[:is_templates_moderator])
+              profile.update!(data: data)
+            end
           end
 
-          case params[:molecule_editor]
-          when true, false
-            profile = user.profile
-            data = profile.data.merge({ 'molecule_editor' => params[:molecule_editor] })
-            profile.update!(data: data)
+          unless params[:molecule_editor].nil?
+            case params[:molecule_editor]
+            when true, false
+              profile = user.profile
+              pdata = profile.data || {}
+              data = pdata.merge('molecule_editor' => params[:molecule_editor])
+              profile.update!(data: data)
+            end
           end
+
+          user.update!(account_active: params[:account_active]) unless params[:account_active].nil?
+
           user
         end
       end
@@ -321,7 +329,7 @@ module Chemotion
           after_validation do
             @group_params = declared(params, include_missing: false)
             @root_type = @group_params.delete(:rootType)
-            @group_params[:email] ||= "%i@eln.edu" % [Time.now.getutc.to_i]
+            @group_params[:email] ||= format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
             @group_params[:password] = Devise.friendly_token.first(8)
             @group_params[:password_confirmation] = @group_params[:password]
           end
@@ -378,7 +386,6 @@ module Chemotion
               obj.users.delete(User.where(id: rm_users)) if %w[Person].include?(params[:actionType])
               obj.admins.delete(User.where(id: rm_users)) if %w[Group].include?(params[:rootType]) && %w[Person].include?(params[:actionType])
               obj.devices.delete(Device.where(id: rm_users)) if %w[Device].include?(params[:actionType])
-              obj
               present obj, with: Entities::GroupDeviceEntity, root: 'root'
             end
           end
@@ -393,37 +400,38 @@ module Chemotion
           optional :disableIds, type: Array, desc: 'disable term_ids'
         end
         post do
-          [:enableIds, :disableIds].each do |cat|
+          %i[enableIds disableIds].each do |cat|
             next unless params[cat].present?
-            term_ids = params[cat].map{|t| t.split('|').first.strip }
+
+            term_ids = params[cat].map { |t| t.split('|').first.strip }
             ids = OlsTerm.where(term_id: term_ids).pluck(:id)
             OlsTerm.switch_by_ids(ids, cat == :enableIds)
           end
 
           result_all = Entities::OlsTermEntity.represent(
-            OlsTerm.where(owl_name: params[:owl_name]).arrange_serializable(:order => :label),
+            OlsTerm.where(owl_name: params[:owl_name]).arrange_serializable(order: :label),
             serializable: true
           )
-          OlsTerm.write_public_file(params[:owl_name], { ols_terms: result_all })
+          OlsTerm.write_public_file(params[:owl_name], ols_terms: result_all)
 
           # rewrite edited json file
           result = Entities::OlsTermEntity.represent(
             OlsTerm.where(owl_name: params[:owl_name], is_enabled: true).select(
               <<~SQL
-              id, owl_name, term_id, label, synonym, synonyms, 'desc' as desc,
-              case when (ancestry is null) then null else
-                (select array_to_string(array(
-                  select id from ols_terms sub join unnest(regexp_split_to_array(ols_terms.ancestry,'/')::int[])
-                  with ordinality t(id,ord) using(id) where is_enabled order by t.ord
-                ),'/'))
-              end as ancestry
-            SQL
-            ).arrange_serializable(:order => :label),
-              serializable: true
-            ).unshift(
-              {'key': params[:owl_name], 'title': '-- Recently selected --', selectable: false, 'children': []}
-            )
-          OlsTerm.write_public_file("#{params[:owl_name]}.edited", { ols_terms: result })
+                id, owl_name, term_id, label, synonym, synonyms, 'desc' as desc,
+                case when (ancestry is null) then null else
+                  (select array_to_string(array(
+                    select id from ols_terms sub join unnest(regexp_split_to_array(ols_terms.ancestry,'/')::int[])
+                    with ordinality t(id,ord) using(id) where is_enabled order by t.ord
+                  ),'/'))
+                end as ancestry
+              SQL
+            ).arrange_serializable(order: :label),
+            serializable: true
+          ).unshift(
+            'key': params[:owl_name], 'title': '-- Recently selected --', selectable: false, 'children': []
+          )
+          OlsTerm.write_public_file("#{params[:owl_name]}.edited", ols_terms: result)
           status 204
         end
       end
@@ -435,7 +443,7 @@ module Chemotion
         end
         post do
           extname = File.extname(params[:file][:filename])
-          if extname.match(/\.(owl?|xml)/i)
+          if /\.(owl?|xml)/i.match?(extname)
             owl_name = File.basename(params[:file][:filename], '.*')
             file_path = params[:file][:tempfile].path
             OlsTerm.delete_owl_by_name(owl_name)
@@ -443,23 +451,23 @@ module Chemotion
             OlsTerm.disable_branch_by(Ols_name: owl_name, term_id: 'BFO:0000002')
             # discrete settings
             nmr_13c = OlsTerm.find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')
-            nmr_13c.update!(synonym: '13C NMR') if nmr_13c
+            nmr_13c&.update!(synonym: '13C NMR')
 
             # write original owl
             result = Entities::OlsTermEntity.represent(
-              OlsTerm.where(owl_name: owl_name).arrange_serializable(:order => :label),
+              OlsTerm.where(owl_name: owl_name).arrange_serializable(order: :label),
               serializable: true
             )
-            OlsTerm.write_public_file(owl_name, { ols_terms: result })
+            OlsTerm.write_public_file(owl_name, ols_terms: result)
 
             # write edited owl
             result = Entities::OlsTermEntity.represent(
-              OlsTerm.where(owl_name: owl_name, is_enabled: true).arrange_serializable(:order => :label),
+              OlsTerm.where(owl_name: owl_name, is_enabled: true).arrange_serializable(order: :label),
               serializable: true
             ).unshift(
-              {'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': []}
+              'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': []
             )
-            OlsTerm.write_public_file("#{owl_name}.edited", { ols_terms: result })
+            OlsTerm.write_public_file("#{owl_name}.edited", ols_terms: result)
 
             status 204
           end

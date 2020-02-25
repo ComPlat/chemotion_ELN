@@ -23,7 +23,7 @@ describe 'Reaction management' do
   let(:reaction_r) { create(:reaction, status: 'Successful', short_label: 'Reaction 2', creator: user, collections: user.collections) }
 
   before do
-    user.update!(confirmed_at: Time.now)
+    user.update!(confirmed_at: Time.now, account_active: true)
     sign_in(user)
     fp = Rails.root.join('public', 'images', 'molecules')
     `ln -s #{Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')} #{fp} ` unless File.exist?(Rails.root.join(fp, 'molecule.svg'))

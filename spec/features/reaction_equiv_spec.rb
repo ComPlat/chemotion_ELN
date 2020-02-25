@@ -39,7 +39,7 @@ describe 'Reaction Equiv Spec' do
   let(:reaction_r) { create(:reaction, status: 'Successful', short_label: 'Reaction 2', collections: user.collections) }
 
   before do
-    user.update!(confirmed_at: Time.now)
+    user.update!(confirmed_at: Time.now, account_active: true)
     sign_in(user)
     fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
     svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')

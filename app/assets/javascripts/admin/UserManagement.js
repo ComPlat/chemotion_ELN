@@ -54,6 +54,8 @@ const templateModeratorEnableTooltip = <Tooltip id="assign_button">Enable Ketche
 const templateModeratorDisableTooltip = <Tooltip id="assign_button">Disable Ketcher template editing for this user (currently enabled)</Tooltip>;
 const moleculeModeratorEnableTooltip = <Tooltip id="assign_button">Enable editing the representation of the global molecules for this user (currently disabled)</Tooltip>;
 const moleculeModeratorDisableTooltip = <Tooltip id="assign_button">Disable editing the representation of the global molecules for this user (currently enabled)</Tooltip>;
+const accountActiveTooltip = <Tooltip id="assign_button">This user account is deactivated, press button to [activate]</Tooltip>;
+const accountInActiveTooltip = <Tooltip id="assign_button">This user account is activated, press button to [deactivate]</Tooltip>;
 
 export default class UserManagement extends React.Component {
   constructor(props) {
@@ -165,6 +167,15 @@ export default class UserManagement extends React.Component {
       });
   }
 
+  handleActiveInActiveAccount(id, isActive) {
+    AdminFetcher.updateAccount({ user_id: id, account_active: !isActive })
+      .then((result) => {
+        this.handleFetchUsers();
+        const message = isActive === true ? 'User is In-Active!' : 'User is Active now!';
+        alert(message);
+      });
+  }
+
   handleSelectUser(val) {
     if (val) {
       this.setState({ selectedUsers: val });
@@ -238,8 +249,8 @@ export default class UserManagement extends React.Component {
     if (!validateEmail(this.u_email.value.trim())) {
       this.setState({ editUserMessage: 'You have entered an invalid email address!' });
       return false;
-    } else if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim() === '') {
-      this.setState({ editUserMessage: 'please input first name and last name' });
+    } else if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim() === '' || this.u_abbr.value.trim() === '') {
+      this.setState({ editUserMessage: 'please input first name, last name and name abbreviation!' });
       return false;
     }
     AdminFetcher.updateUser({
@@ -247,6 +258,7 @@ export default class UserManagement extends React.Component {
       email: this.u_email.value.trim(),
       first_name: this.u_firstname.value.trim(),
       last_name: this.u_lastname.value.trim(),
+      name_abbreviation: this.u_abbr.value.trim(),
       type: this.u_type.value
     })
       .then((result) => {
@@ -258,6 +270,7 @@ export default class UserManagement extends React.Component {
         this.u_email.value = '';
         this.u_firstname.value = '';
         this.u_lastname.value = '';
+        this.u_abbr.value = '';
         this.handleFetchUsers();
         return true;
       });
@@ -480,6 +493,14 @@ export default class UserManagement extends React.Component {
                   <FormControl type="text" name="u_lastname" defaultValue={user.last_name} inputRef={(ref) => { this.u_lastname = ref; }} />
                 </Col>
               </FormGroup>
+              <FormGroup controlId="formControlAbbr">
+                <Col componentClass={ControlLabel} sm={3}>
+                  Abbr (3):
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="text" name="u_abbr" defaultValue={user.initials} inputRef={(ref) => { this.u_abbr = ref; }} />
+                </Col>
+              </FormGroup>
               <FormGroup controlId="formControlsType">
                 <Col componentClass={ControlLabel} sm={3}>
                   Type:
@@ -528,10 +549,10 @@ export default class UserManagement extends React.Component {
               <i className="fa fa-check-square" />
             </Button>
           </OverlayTrigger>
-        )
+        );
       }
-      return <div />
-    }
+      return <span />;
+    };
 
     const { users } = this.state;
 
@@ -594,23 +615,33 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={g.is_templates_moderator === false ? templateModeratorEnableTooltip : templateModeratorDisableTooltip} >
+          <OverlayTrigger placement="bottom" overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip} >
             <Button
               bsSize="xsmall"
-              bsStyle={g.is_templates_moderator === false ? 'default' : 'success'}
+              bsStyle={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? 'default' : 'success'}
               onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
             >
               <i className="fa fa-book" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={g.molecule_editor === false ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip} >
+          <OverlayTrigger placement="bottom" overlay={(g.molecule_editor == null || g.molecule_editor === false) ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip} >
             <Button
               bsSize="xsmall"
-              bsStyle={g.molecule_editor === false ? 'default' : 'success'}
+              bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
               onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
             >
               <i className="icon-sample" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
+          <OverlayTrigger placement="bottom" overlay={g.account_active === false ? accountActiveTooltip : accountInActiveTooltip} >
+            <Button
+              bsSize="xsmall"
+              bsStyle={g.account_active === true ? 'default' : 'danger'}
+              onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
+            >
+              <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true"  />
             </Button>
           </OverlayTrigger>
           &nbsp;
