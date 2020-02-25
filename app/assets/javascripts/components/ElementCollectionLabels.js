@@ -95,12 +95,11 @@ export default class ElementCollectionLabels extends React.Component {
           (label.user_id == currentUser.id || label.shared_by_id == currentUser.id)) {
           shared_labels.push(label)
         } else if (label.is_synchronized == true && (label.user_id == currentUser.id || label.shared_by_id == currentUser.id)) {
-          if (label.shared_by_id == currentUser.id) {
-            label.isOwner = true;
-          } else {
-            label.isOwner = false;
+          let isOwner = false;
+          if (label.shared_by_id === currentUser.id) {
+            isOwner = true;
           }
-          sync_labels.push(label)
+          sync_labels.push({ ...label, isOwner });
         }
       }
     })
