@@ -55,7 +55,7 @@ module Reporter
       def gp_title_html
         Sablon.content(
           :html,
-          Delta.new({"ops" => gp_title_delta}, @font_family).getHTML()
+          Delta.new({ "ops" => gp_title_delta }, @font_family).getHTML()
         )
       end
 
@@ -73,7 +73,7 @@ module Reporter
       def synthesis_title_html
         Sablon.content(
           :html,
-          Delta.new({"ops" => synthesis_title_delta}, @font_family).getHTML()
+          Delta.new({ "ops" => synthesis_title_delta }, @font_family).getHTML
         )
       end
 
@@ -99,7 +99,7 @@ module Reporter
       def products_html
         Sablon.content(
           :html,
-          Delta.new({"ops" => products_delta}, @font_family).getHTML()
+          Delta.new({ "ops" => products_delta }, @font_family).getHTML
         )
       end
 

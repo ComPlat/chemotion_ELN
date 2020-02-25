@@ -567,6 +567,7 @@ ActiveRecord::Schema.define(version: 20190731120000) do
     t.string   "rinchi_web_key"
     t.string   "duration"
     t.string   "rxno"
+    t.string   "conditions"
   end
 
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree

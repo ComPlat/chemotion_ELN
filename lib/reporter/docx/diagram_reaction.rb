@@ -19,6 +19,8 @@ module Reporter
                       .new(materials_svg_paths,
                            solvents: solvents,
                            temperature: temperature_svg_paths,
+                           duration: obj.duration,
+                           conditions: obj.conditions,
                            is_report: true,
                            show_yield: show_yield,
                            supporting_information: si)

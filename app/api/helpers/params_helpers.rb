@@ -48,7 +48,6 @@ module ParamsHelpers
     optional :code_log
 
     optional :attachments, type: Array
-
   end
 
   params :root_container_params do
@@ -59,21 +58,19 @@ module ParamsHelpers
         optional :children, type: Array do
           use :common_container_params
           optional :children, type: Array do
-            # optional :id, type: Integer
-             optional :name, type: String
-             optional :container_type, type: String
-             optional :description
-             optional :extended_metadata
-             optional :is_new #, type: Boolean
-             optional :is_deleted #, type: Boolean
-             optional :attachments, type: Array
-             optional :_checksum, type: String
-             optional :code_log
-          #   optional :children
-           end
+            optional :name, type: String
+            optional :container_type, type: String
+            optional :description
+            optional :extended_metadata
+            optional :is_new # , type: Boolean
+            optional :is_deleted # , type: Boolean
+            optional :attachments, type: Array
+            optional :_checksum, type: String
+            optional :code_log
+            #   optional :children
+          end
         end
       end
-
     end
   end
 
@@ -85,10 +82,8 @@ module ParamsHelpers
     your_recs = your_page.to_i * per_page_recs.to_i
     total_page = (total_recs.to_f / per_page_recs.to_f).ceil
 
-    if total_recs > 0 && your_page > total_page
-      your_page = 1
-    end
+    your_page = 1 if total_recs.positive? && your_page > total_page
 
     params[:page] = your_page
   end
-end #module
+end

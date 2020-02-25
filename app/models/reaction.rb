@@ -32,6 +32,7 @@
 #  rinchi_web_key     :string
 #  duration           :string
 #  rxno               :string
+#  conditions         :string
 #
 # Indexes
 #
@@ -213,7 +214,9 @@ class Reaction < ActiveRecord::Base
 
       begin
         composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
+                                                    duration: duration,
                                                     solvents: solvents_in_svg,
+                                                    conditions: conditions,
                                                     show_yield: true)
         self.reaction_svg_file = composer.compose_reaction_svg_and_save
       rescue Exception => e

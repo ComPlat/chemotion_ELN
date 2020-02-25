@@ -115,7 +115,7 @@ export default class ReactionDetails extends Component {
       temperature = temperature + " " + reaction.temperature.valueUnit
     }
 
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents).then((result) => {
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions).then((result) => {
       reaction.reaction_svg_file = result.reaction_svg;
       this.setState(reaction);
     });

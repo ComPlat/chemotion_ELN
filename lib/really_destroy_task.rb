@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# Really destroy soft deleted elements
 module ReallyDestroyTask
   def self.execute!
     models.each do |model|
@@ -6,9 +9,11 @@ module ReallyDestroyTask
   end
 
   def self.models
-    %w(Collection CollectionsReaction CollectionsSample CollectionsScreen
-    CollectionsWellplate ScreensWellplate ReactionsProductSample Sample
-    Reaction ReactionsReactantSample ReactionsStartingMaterialSample
-    Literature Molecule Wellplate Screen Well User CodeLog)
+    %w[
+      Collection CollectionsReaction CollectionsSample CollectionsScreen
+      CollectionsWellplate ScreensWellplate ReactionsProductSample Sample
+      Reaction ReactionsReactantSample ReactionsStartingMaterialSample
+      Literature Molecule Wellplate Screen Well User CodeLog
+    ]
   end
 end

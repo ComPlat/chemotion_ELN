@@ -87,7 +87,7 @@ class OlsTerm < ActiveRecord::Base
             synonym = synonyms
             synonyms = [synonyms]
           else # synonyms.is_a?(Array)
-            synonym = synonyms.sort_by(&:length)[0]
+            synonym = synonyms.min_by(&:length)
           end
         end
         label = node['label'].is_a?(String)? node['label'] : node['label'][0]

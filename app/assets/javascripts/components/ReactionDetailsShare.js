@@ -47,6 +47,10 @@ const setReactionByType = (reaction, type, value) => {
     case 'dangerousProducts':
       reaction.dangerous_products = value;
       break;
+    case 'conditions':
+      reaction.conditions = value;
+      options = {schemaChanged: true}
+      break;
     case 'solvent':
       reaction.solvent = value;
       options = {schemaChanged: true}
