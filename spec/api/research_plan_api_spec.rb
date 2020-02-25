@@ -25,7 +25,7 @@ describe Chemotion::ResearchPlanAPI do
           expect(response.status).to eq 200
         end
 
-        it 'returns serialized sample' do
+        it 'returns serialized research_plan' do
           expect(JSON.parse(response.body)['research_plan']['name']).to eq research_plan.name
         end
       end
@@ -45,10 +45,7 @@ describe Chemotion::ResearchPlanAPI do
         expect(response.status).to eq 200
         expect(first_rp).to include(
           'type' => 'research_plan',
-          'name' => rp.name,
-          'description' => rp.description,
-          'sdf_file' => 'sdf.test',
-          'svg_file' => 'svg.test'
+          'name' => rp.name
         )
       end
     end
@@ -57,10 +54,7 @@ describe Chemotion::ResearchPlanAPI do
       context 'with valid parameters' do
         let(:params) do
           {
-            name: 'test',
-            description: { 'ops' => [{ 'insert' => 'test description' }] },
-            sdf_file: 'test_inline_content',
-            svg_file: 'test_inline_svg_content'
+            name: 'test'
           }
         end
 

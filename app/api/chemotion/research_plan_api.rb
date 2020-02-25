@@ -5,10 +5,10 @@ module Chemotion
     helpers CollectionHelpers
 
     namespace :research_plans do
-      desc "Return serialized research plans of current user"
+      desc 'Return serialized research plans of current user'
       params do
-        optional :collection_id, type: Integer, desc: "Collection id"
-        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :collection_id, type: Integer, desc: 'Collection id'
+        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -46,11 +46,11 @@ module Chemotion
         paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
-      desc "Create a research plan"
+      desc 'Create a research plan'
       params do
-        requires :name, type: String, desc: "Research plan name"
-        requires :body, type: Array, desc: "Research plan body"
-        optional :collection_id, type: Integer, desc: "Collection ID"
+        requires :name, type: String, desc: 'Research plan name'
+        optional :body, type: Array, desc: 'Research plan body'
+        optional :collection_id, type: Integer, desc: 'Collection ID'
       end
       post do
         attributes = {
@@ -74,12 +74,12 @@ module Chemotion
       end
 
       namespace :table_schemas do
-        desc "Return serialized table schemas of current user"
+        desc 'Return serialized table schemas of current user'
         get do
-          { table_schemas: ResearchPlanTableSchema.where( creator: current_user)}
+          { table_schemas: ResearchPlanTableSchema.where(creator: current_user) }
         end
 
-        desc "Save table schema"
+        desc 'Save table schema'
         params do
           requires :name, type: String
           requires :value, type: Hash
@@ -97,7 +97,7 @@ module Chemotion
           table_schema
         end
 
-        desc "Delete table schema"
+        desc 'Delete table schema'
         route_param :id do
           before do
             error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
@@ -108,9 +108,9 @@ module Chemotion
         end
       end
 
-      desc "Return serialized research plan by id"
+      desc 'Return serialized research plan by id'
       params do
-        requires :id, type: Integer, desc: "Research plan id"
+        requires :id, type: Integer, desc: 'Research plan id'
       end
       route_param :id do
         before do
@@ -118,16 +118,18 @@ module Chemotion
         end
         get do
           research_plan = ResearchPlan.find(params[:id])
-          {research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
-          attachments: Entities::AttachmentEntity.represent(research_plan.attachments)}
+          {
+            research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
+            attachments: Entities::AttachmentEntity.represent(research_plan.attachments)
+          }
         end
       end
 
-      desc "Update research plan by id"
+      desc 'Update research plan by id'
       params do
-        requires :id, type: Integer, desc: "Research plan id"
-        optional :name, type: String, desc: "Research plan name"
-        optional :body, type: Array, desc: "Research plan body"
+        requires :id, type: Integer, desc: 'Research plan id'
+        optional :name, type: String, desc: 'Research plan name'
+        optional :body, type: Array, desc: 'Research plan body'
       end
       route_param :id do
         before do
@@ -144,14 +146,14 @@ module Chemotion
         end
       end
 
-      desc "Save svg file to filesystem"
+      desc 'Save svg file to filesystem'
       params do
-        requires :svg_file, type: String, desc: "SVG raw file"
-        requires :is_chemdraw, type: Boolean, desc: "is chemdraw file?"
+        requires :svg_file, type: String, desc: 'SVG raw file'
+        requires :is_chemdraw, type: Boolean, desc: 'is chemdraw file?'
       end
       post :svg do
         svg = params[:svg_file]
-        processor = Ketcherails::SVGProcessor.new svg if !params[:is_chemdraw]
+        processor = Ketcherails::SVGProcessor.new svg unless params[:is_chemdraw]
         processor = Chemotion::ChemdrawSvgProcessor.new svg if params[:is_chemdraw]
         svg = processor.centered_and_scaled_svg
 
@@ -167,7 +169,7 @@ module Chemotion
         {svg_path: svg_file_name}
       end
 
-      desc "Save image file to filesystem"
+      desc 'Save image file to filesystem'
       params do
         requires :file, type: File
       end
@@ -188,10 +190,10 @@ module Chemotion
         }
       end
 
-      desc "Export research plan by id"
+      desc 'Export research plan by id'
       params do
-        requires :id, type: Integer, desc: "Research plan id"
-        optional :export_format, type: Symbol, desc: "Export format", values: [:docx, :odt, :html, :markdown, :latex]
+        requires :id, type: Integer, desc: 'Research plan id'
+        optional :export_format, type: Symbol, desc: 'Export format', values: [:docx, :odt, :html, :markdown, :latex]
       end
       route_param :id do
         before do
@@ -209,7 +211,7 @@ module Chemotion
 
           if params[:export_format]
             # return a file
-            content_type "application/octet-stream"
+            content_type 'application/octet-stream'
 
             # init the export object
             if [:html, :markdown, :latex].include? params[:export_format]
@@ -226,24 +228,24 @@ module Chemotion
         end
       end
 
-      desc "Export research plan table by id and field_id"
+      desc 'Export research plan table by id and field_id'
       params do
-        requires :id, type: Integer, desc: "Research plan id"
-        requires :field_id, type: String, desc: "Field id"
+        requires :id, type: Integer, desc: 'Research plan id'
+        requires :field_id, type: String, desc: 'Field id'
       end
       route_param :id do
         before do
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).read?
         end
 
-        get "export_table/:field_id" do
+        get 'export_table/:field_id' do
           research_plan = ResearchPlan.find(params[:id])
-          field = research_plan.body.find {|field| field['id'] == params[:field_id]}
+          field = research_plan.body.find { |f| f['id'] == params[:field_id] }
 
           # return the response "as is" and set the content type and the filename
           env['api.format'] = :binary
-          content_type "application/vnd.ms-excel"
-          header['Content-Disposition'] = "attachment; filename=\"Table.xlsx\""
+          content_type 'application/vnd.ms-excel'
+          header['Content-Disposition'] = 'attachment; filename=\"Table.xlsx\"'
 
           export = Export::ExportResearchPlanTable.new
           export.generate_sheet(field['value']['columns'], field['value']['rows'])
