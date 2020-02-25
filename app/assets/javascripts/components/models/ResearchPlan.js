@@ -80,6 +80,7 @@ export default class ResearchPlan extends Element {
           value: {
             file_name: null,
             public_name: null,
+            zoom: null
           }
         })
         break;
