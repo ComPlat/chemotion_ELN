@@ -56,9 +56,10 @@ export default class ResearchPlansFetcher {
   }
 
   static update(researchPlan) {
+    const containerFiles = AttachmentFetcher.getFileListfrom(researchPlan.container);
     const newFiles = (researchPlan.attachments || []).filter(a => a.is_new && !a.is_deleted);
     const delFiles = (researchPlan.attachments || []).filter(a => !a.is_new && a.is_deleted);
-    const promise = fetch('/api/v1/research_plans/' + researchPlan.id, {
+    const promise = () => fetch(`/api/v1/research_plans/${researchPlan.id}`, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -82,7 +83,10 @@ export default class ResearchPlansFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-    return promise;
+    if (containerFiles.length > 0) {
+      return AttachmentFetcher.uploadFiles(containerFiles)().then(() => promise());
+    }
+    return promise();
   }
 
   static updateSVGFile(svg_file, isChemdraw = false) {

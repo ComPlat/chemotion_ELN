@@ -22,6 +22,9 @@ class ResearchPlan < ActiveRecord::Base
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
 
+  after_create :create_root_container
+
+  has_one :container, as: :containable
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
   has_many :attachments, as: :attachable
@@ -44,6 +47,16 @@ class ResearchPlan < ActiveRecord::Base
     attachment = image_atts[0] || attachments[0]
     preview = attachment.read_thumbnail if attachment
     preview && Base64.encode64(preview) || 'not available'
+  end
+
+  def create_root_container
+    if self.container == nil
+      self.container = Container.create_root_container
+    end
+  end
+
+  def analyses
+    self.container ? self.container.analyses : Container.none
   end
 
   private

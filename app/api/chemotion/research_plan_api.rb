@@ -3,6 +3,7 @@ module Chemotion
     include Grape::Kaminari
     helpers ParamsHelpers
     helpers CollectionHelpers
+    helpers ContainerHelpers
 
     namespace :research_plans do
       desc 'Return serialized research plans of current user'
@@ -51,6 +52,7 @@ module Chemotion
         requires :name, type: String, desc: 'Research plan name'
         optional :body, type: Array, desc: 'Research plan body'
         optional :collection_id, type: Integer, desc: 'Collection ID'
+        requires :container, type: Hash
       end
       post do
         attributes = {
@@ -60,7 +62,7 @@ module Chemotion
 
         research_plan = ResearchPlan.new attributes
         research_plan.creator = current_user
-
+        research_plan.container = update_datamodel(params[:container])
         research_plan.save!
 
         if col_id = params[:collection_id]
@@ -130,6 +132,7 @@ module Chemotion
         requires :id, type: Integer, desc: 'Research plan id'
         optional :name, type: String, desc: 'Research plan name'
         optional :body, type: Array, desc: 'Research plan body'
+        requires :container, type: Hash, desc: 'Research plan analyses'
       end
       route_param :id do
         before do
@@ -138,6 +141,8 @@ module Chemotion
 
         put do
           attributes = declared(params, include_missing: false)
+          update_datamodel(attributes[:container])
+          attributes.delete(:container)
 
           if research_plan = ResearchPlan.find(params[:id])
             research_plan.update!(attributes)

@@ -14,6 +14,7 @@ import ConfirmClose from '../common/ConfirmClose';
 import ResearchPlanDetailsAttachments from './ResearchPlanDetailsAttachments';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
+import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -24,6 +25,7 @@ export default class ResearchPlanDetails extends Component {
       update: false,
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
+    this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -36,6 +38,11 @@ export default class ResearchPlanDetails extends Component {
 
     // toogle update prop to notify react data grid for view change
     this.setState({ update: !this.state.update });
+  }
+
+  handleResearchPlanChange(research_plan) {
+    research_plan.changed = true;
+    this.setState({ research_plan });
   }
 
   handleSwitchMode(mode) {
@@ -53,6 +60,8 @@ export default class ResearchPlanDetails extends Component {
     if (research_plan.isNew) {
       ElementActions.createResearchPlan(research_plan);
     } else {
+      // console.log('handleSubmit');
+      // console.log(JSON.stringify(research_plan));
       ElementActions.updateResearchPlan(research_plan);
     }
 
@@ -255,6 +264,14 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
+  renderAnalysesTab(research_plan) {
+    return (
+      <ListGroupItem style={{ paddingBottom: 20 }}>
+        <ResearchPlanDetailsContainers researchPlan={research_plan} readOnly={false} parent={this} />
+      </ListGroupItem>
+    );
+  }
+
   renderAttachmentsTab(research_plan) {
     const { attachments } = research_plan;
     return (
@@ -286,7 +303,7 @@ export default class ResearchPlanDetails extends Component {
         </OverlayTrigger>
         <ElementCollectionLabels element={research_plan} placement="right" />
         <ConfirmClose el={research_plan} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save research_plan</Tooltip>}>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: research_plan.changed ? '' : 'none' }}>
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
@@ -313,6 +330,9 @@ export default class ResearchPlanDetails extends Component {
               {btnMode}
             </div>
             {this.renderResearchPlanMain(research_plan, update)}
+          </Tab>
+          <Tab eventKey={1} title="Analyses">
+            {this.renderAnalysesTab(research_plan)}
           </Tab>
           <Tab eventKey={2} title="Attachments">
             {this.renderAttachmentsTab(research_plan)}

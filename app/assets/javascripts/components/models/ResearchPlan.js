@@ -2,6 +2,7 @@ import React from 'react';
 import { isEmpty } from 'lodash';
 
 import Element from './Element';
+import Container from './Container';
 
 const uuidv4 = require('uuid/v4');
 
@@ -13,11 +14,12 @@ export default class ResearchPlan extends Element {
 
   static buildEmpty(collection_id) {
     return new ResearchPlan({
-      collection_id: collection_id,
+      collection_id,
       type: 'research_plan',
       name: 'New Research Plan',
       body: [],
-      mode: 'edit'
+      mode: 'edit',
+      container: Container.init(),
     });
   }
 
@@ -25,7 +27,8 @@ export default class ResearchPlan extends Element {
     return super.serialize({
       name: this.name,
       body: this.body,
-      attachments: this.attachments
+      attachments: this.attachments,
+      container: this.container,
     });
   }
 
