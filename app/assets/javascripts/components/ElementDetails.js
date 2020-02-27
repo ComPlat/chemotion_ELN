@@ -121,7 +121,7 @@ export default class ElementDetails extends Component {
       case 'research_plan':
         return (
           <ResearchPlanDetails
-            research_plan={el}
+            researchPlan={el}
             toggleFullScreen={this.toggleFullScreen}
           />
         );

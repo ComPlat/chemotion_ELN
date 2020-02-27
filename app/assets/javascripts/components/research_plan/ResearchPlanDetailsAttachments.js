@@ -250,11 +250,15 @@ export default class ResearchPlanDetailsAttachments extends Component {
 }
 
 ResearchPlanDetailsAttachments.propTypes = {
-  attachments: PropTypes.array.isRequired,
+  attachments: PropTypes.array,
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
   onDownload: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired
+};
+
+ResearchPlanDetailsAttachments.defaultProps = {
+  attachments: []
 };
