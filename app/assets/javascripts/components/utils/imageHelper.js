@@ -11,5 +11,11 @@ const previewContainerImage = (container, noAttSvg = '/images/wild_card/no_attac
   }
 };
 
-// eslint-disable-next-line import/prefer-default-export
-export { previewContainerImage };
+const previewAttachmentImage = (attachment, noAttSvg = '/images/wild_card/no_attachment.svg') => {
+  if (attachment.thumb) {
+    return `/images/thumbnail/${attachment.identifier}`;
+  }
+  return noAttSvg;
+};
+
+export { previewContainerImage, previewAttachmentImage };

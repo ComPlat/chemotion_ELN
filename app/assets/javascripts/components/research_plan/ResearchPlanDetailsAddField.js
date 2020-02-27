@@ -44,5 +44,5 @@ export default class ResearchPlanDetailsAddField extends Component {
 }
 
 ResearchPlanDetailsAddField.propTypes = {
-  onAdd: PropTypes.func,
+  onAdd: PropTypes.func.isRequired,
 };

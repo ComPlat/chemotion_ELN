@@ -6,6 +6,7 @@ import { last, findKey, values } from 'lodash';
 import EditorFetcher from '../fetchers/EditorFetcher';
 import ImageModal from '../common/ImageModal';
 import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
+import { previewAttachmentImage } from './../utils/imageHelper';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
@@ -15,14 +16,6 @@ const imageStyle = {
     width: 60,
     height: 60
   }
-};
-
-const previewImage = (attachment) => {
-  const noAttSvg = '/images/wild_card/no_attachment.svg';
-  if (attachment.thumb) {
-    return `/images/thumbnail/${attachment.identifier}`;
-  }
-  return noAttSvg;
 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
@@ -114,7 +107,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const fetchNeeded = false;
     const fetchId = attachment.id;
 
-    const previewImg = previewImage(attachment);
+    const previewImg = previewAttachmentImage(attachment);
     const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
 
     const docType = this.documentType(attachment.filename);
