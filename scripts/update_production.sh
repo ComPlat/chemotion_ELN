@@ -220,7 +220,7 @@ if [ "${PART_8:-}" ]; then
   rm_tmp
   rm_tmp_repo
 
-  sudo -H -u $PROD bash -c "git clone --branch $BRANCH --depth 2 --bare $REPO $TMP_REPO_DIR"
+  sudo -H -u $PROD bash -c "git clone --branch $BRANCH --bare $REPO $TMP_REPO_DIR"
   sudo -H -u $PROD bash -c "git clone --branch $BRANCH --depth 1 $TMP_REPO_DIR $TMP_DIR"
   sudo -H -u $PROD bash -c "cd $TMP_DIR &&  echo $RUBY_VERSION > .ruby-version"
   sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle config build.nokogiri --use-system-libraries"

@@ -532,7 +532,7 @@ module SVG
 
     def generate_filename
       filenames = { starting_materials: starting_materials, reactants: reactants, products: products }
-      key_base = "#{filenames.to_a.flatten.join}#{solvents.join('_')}#{temperature}"
+      key_base = "#{filenames.to_a}#{solvents}#{temperature}#{duration}#{conditions}"
       hash_of_filenames = Digest::SHA256.hexdigest(key_base)
       hash_of_filenames + '.svg'
     end

@@ -15,7 +15,6 @@ module Chemotion
         requires :collection_id, type: String
         requires :query, type: String, desc: 'Search query'
         optional :is_sync, type: Boolean, default: false
-        requires :query, type: String
       end
 
       def search_possibilities_to_suggestions(search_possibilities)
