@@ -116,7 +116,7 @@ module CollectionHelpers
       researchplan_detail_level: 10,
     }
 
-    @dl = detail_level_for_collection(c_id, is_sync) if !@is_owned
+    @dl = detail_level_for_collection(c_id, is_sync) unless @is_owned
     @pl = @dl[:permission_level]
     @dl_s = @dl[:sample_detail_level]
     @dl_r = @dl[:reaction_detail_level]
