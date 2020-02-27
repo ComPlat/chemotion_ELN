@@ -200,10 +200,11 @@ class UIStore {
   }
 
   handleUncheckWholeSelection() {
-    this.handleUncheckAllElements({type: 'sample', range: 'all'});
-    this.handleUncheckAllElements({type: 'screen', range: 'all'});
-    this.handleUncheckAllElements({type: 'reaction', range: 'all'});
-    this.handleUncheckAllElements({type: 'wellplate', range: 'all'});
+    this.handleUncheckAllElements({ type: 'sample', range: 'all' });
+    this.handleUncheckAllElements({ type: 'screen', range: 'all' });
+    this.handleUncheckAllElements({ type: 'reaction', range: 'all' });
+    this.handleUncheckAllElements({ type: 'wellplate', range: 'all' });
+    this.handleUncheckAllElements({ type: 'research_plan', range: 'all' });
   }
 
   handleCheckElement(element) {
@@ -244,6 +245,7 @@ class UIStore {
     this.state.sample.currentId = null;
     this.state.reaction.currentId = null;
     this.state.wellplate.currentId = null;
+    this.state.research_plan.currentId = null;
   }
 
   handleSelectElement(element) {
