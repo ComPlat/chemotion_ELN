@@ -1,6 +1,16 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import uuid from 'uuid';
+import { Button, ButtonGroup, Tooltip, OverlayTrigger } from 'react-bootstrap';
+
+const buttonObjects = [
+  { label: 'Add Text Editor', type: 'richtext', icon: 'fa fa-file-text-o' },
+  { label: 'Add Table Editor', type: 'table', icon: 'fa fa-table' },
+  { label: 'Add Ketcher Editor', type: 'ketcher', icon: 'fa fa-pencil-square-o' },
+  { label: 'Add Image', type: 'image', icon: 'fa fa-picture-o' },
+  { label: 'Add Sample', type: 'sample', icon: 'icon-sample' },
+  { label: 'Add Reaction', type: 'reaction', icon: 'icon-reaction' },
+];
 
 // eslint-disable-next-line react/prefer-stateless-function
 export default class ResearchPlanDetailsAddField extends Component {
@@ -8,36 +18,17 @@ export default class ResearchPlanDetailsAddField extends Component {
     const { onAdd } = this.props;
     return (
       <div className="research-plan-field-drop-add-field">
-        <OverlayTrigger placement="top" overlay={<Tooltip id="rp_richtext">Add Text Editor</Tooltip>}>
-          <Button bsStyle="primary" bsSize="small" onClick={() => onAdd('richtext')} >
-            <i className="fa fa-file-text-o" aria-hidden="true" />&nbsp;<i className="fa fa-plus" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="rp_table">Add Table Editor</Tooltip>}>
-          <Button bsStyle="primary" bsSize="small" onClick={() => onAdd('table')} >
-            <i className="fa fa-table" aria-hidden="true" />&nbsp;<i className="fa fa-plus" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="rp_ketcher">Add Ketcher Editor</Tooltip>}>
-          <Button bsStyle="primary" bsSize="small" onClick={() => onAdd('ketcher')} >
-            <i className="fa fa-pencil-square-o" aria-hidden="true" />&nbsp;<i className="fa fa-plus" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="rp_image">Add Image</Tooltip>}>
-          <Button bsStyle="primary" bsSize="small" onClick={() => onAdd('image')} >
-            <i className="fa fa-picture-o" aria-hidden="true" />&nbsp;<i className="fa fa-plus" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="rp_sample">Add Sample</Tooltip>}>
-          <Button bsStyle="primary" bsSize="small" onClick={() => onAdd('sample')} >
-            <i className="icon-sample" aria-hidden="true" />&nbsp;<i className="fa fa-plus" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="rp_reaction">Add Reaction</Tooltip>}>
-          <Button bsStyle="primary" bsSize="small" onClick={() => onAdd('reaction')} >
-            <i className="icon-reaction" aria-hidden="true" />&nbsp;<i className="fa fa-plus" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
+        <ButtonGroup bsSize="xsmall">
+          {
+            buttonObjects.map(button => (
+              <OverlayTrigger key={uuid.v4()} placement="top" overlay={<Tooltip id={`rp_tooptip_${button.type}`}>{button.label}</Tooltip>}>
+                <Button onClick={() => onAdd(button.type)} >
+                  <i className={button.icon} aria-hidden="true" />&nbsp;<i className="fa fa-plus" aria-hidden="true" />
+                </Button>
+              </OverlayTrigger>
+            ))
+          }
+        </ButtonGroup>
       </div>
     );
   }
