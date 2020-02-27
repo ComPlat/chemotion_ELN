@@ -25,7 +25,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
       attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
     } = props;
     this.state = {
-      attachments,
       onDrop,
       onDelete,
       onUndoDelete,
@@ -181,7 +180,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 className="button-right"
                 bsStyle="success"
                 disabled={editDisable}
-                onClick={() => this.handleEdit(attachment).bind(this)}
+                onClick={() => this.handleEdit(attachment)}
               >
                 <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
               </Button>
@@ -193,7 +192,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderAttachments() {
-    const { attachments } = this.state;
+    const { attachments } = this.props;
     if (attachments && attachments.length > 0) {
       return (
         <ListGroup>
