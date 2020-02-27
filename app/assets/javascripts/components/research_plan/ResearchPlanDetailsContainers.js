@@ -250,6 +250,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                     <Panel.Body collapsible>
                       <ContainerComponent
                         readOnly={readOnly}
+                        disabled={readOnly}
                         container={container}
                         onChange={this.handleChange.bind(this, container)}
                       />
