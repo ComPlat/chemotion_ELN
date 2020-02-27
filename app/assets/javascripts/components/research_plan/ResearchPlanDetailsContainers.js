@@ -15,9 +15,7 @@ import { previewContainerImage } from './../utils/imageHelper';
 export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
     super(props);
-    // const { researchPlan } = props;
     this.state = {
-      // researchPlan,
       activeContainer: 0
     };
 
@@ -28,8 +26,7 @@ export default class ResearchPlanDetailsContainers extends Component {
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
   }
 
-  handleChange(container) {
-    // const { researchPlan } = this.state;
+  handleChange() {
     const { researchPlan } = this.props;
     this.props.parent.handleResearchPlanChange(researchPlan);
   }
@@ -39,23 +36,18 @@ export default class ResearchPlanDetailsContainers extends Component {
   }
 
   handleRemove(container) {
-    // const { researchPlan } = this.state;
     const { researchPlan } = this.props;
     container.is_deleted = true;
     this.props.parent.handleResearchPlanChange(researchPlan);
-    // this.props.parent.setState({ research_plan: researchPlan });
   }
 
   handleUndo(container) {
-    // const { researchPlan } = this.state;
     const { researchPlan } = this.props;
     container.is_deleted = false;
     this.props.parent.handleResearchPlanChange(researchPlan);
-    // this.props.parent.setState({ research_plan: researchPlan });
   }
 
   handleAdd() {
-    // const { researchPlan } = this.state;
     const { researchPlan } = this.props;
     const container = Container.buildEmpty();
     container.container_type = 'analysis';
@@ -77,7 +69,6 @@ export default class ResearchPlanDetailsContainers extends Component {
 
     this.handleAccordionOpen(newKey);
     this.props.parent.handleResearchPlanChange(researchPlan);
-    // this.props.parent.setState({ research_plan: researchPlan });
   }
 
   headerBtnGroup(container, readOnly) {
@@ -115,11 +106,8 @@ export default class ResearchPlanDetailsContainers extends Component {
   }
 
   render() {
-    // const { researchPlan } = this.state;
-    const { researchPlan } = this.props;
-    // const { researchPlan, activeContainer } = this.state;
+    const { researchPlan, readOnly } = this.props;
     const { activeContainer } = this.state;
-    const { readOnly } = this.props;
 
     const containerHeader = (container) => {
       let kind = container.extended_metadata.kind || '';
@@ -252,7 +240,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                         readOnly={readOnly}
                         disabled={readOnly}
                         container={container}
-                        onChange={this.handleChange.bind(this, container)}
+                        onChange={this.handleChange}
                       />
                     </Panel.Body>
                   </Panel>
