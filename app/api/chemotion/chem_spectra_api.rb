@@ -12,10 +12,12 @@ module Chemotion
         Base64.encode64(target)
       end
 
-      def to_zip_file(filename, jcamp, img, predict)
+      def to_zip_file(filename, src, dst, img, predict)
         Zip::OutputStream.write_buffer do |zip|
+          zip.put_next_entry "orig_#{src[:filename]}"
+          zip.write src[:tempfile].read
           zip.put_next_entry "#{filename}.jdx"
-          zip.write jcamp.read
+          zip.write dst.read
           zip.put_next_entry "#{filename}.png"
           zip.write img.read
           unless predict.try(:[], 'output')
@@ -39,12 +41,12 @@ module Chemotion
       end
 
       def convert_to_zip(params)
-        file = params[:file][:tempfile]
+        file = params[:dst][:tempfile]
         jcamp, img = Chemotion::Jcamp::Create.spectrum(
           file.path, false, params
         )
         predict = JSON.parse(params['predict'])
-        to_zip_file(params[:filename], jcamp, img, predict)
+        to_zip_file(params[:filename], params[:src], jcamp, img, predict)
       rescue
         error!('Save files error!', 500)
       end
@@ -63,12 +65,15 @@ module Chemotion
 
         desc 'Save files'
         params do
-          requires :file, type: Hash
+          requires :src, type: Hash
+          requires :dst, type: Hash
           requires :filename, type: String
           requires :peaks_str, type: String
           requires :shift_select_x, type: String
           requires :shift_ref_name, type: String
           requires :shift_ref_value, type: String
+          optional :integration, type: String
+          optional :multiplicity, type: String
           optional :mass, type: String
           optional :scan, type: String
           optional :thres, type: String

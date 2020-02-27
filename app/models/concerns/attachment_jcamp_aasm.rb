@@ -150,6 +150,7 @@ module AttachmentJcampProcess
     _, extname = extension_parts
     params[:mass] = attachable.root_element.molecule.exact_molecular_weight || 0.0
     params[:ext] = extname.downcase
+    params[:fname] = filename.to_s
     params
   end
 

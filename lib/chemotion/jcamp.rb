@@ -83,6 +83,7 @@ module Chemotion
           peaks_str: params[:peaks_str],
           integration: params[:integration],
           multiplicity: params[:multiplicity],
+          fname: params[:fname] || (params[:file] && params[:file].try(:[], :filename)),
         }
       end
 
