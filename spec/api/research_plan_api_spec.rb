@@ -54,7 +54,14 @@ describe Chemotion::ResearchPlanAPI do
       context 'with valid parameters' do
         let(:params) do
           {
-            name: 'test'
+            name: 'test',
+            container: {
+              attachments: [],
+              children: [],
+              is_new: true,
+              is_deleted: false,
+              name: 'new'
+            }
           }
         end
 
@@ -63,7 +70,7 @@ describe Chemotion::ResearchPlanAPI do
         it 'is able to create a new research plan' do
           rp = ResearchPlan.find_by(name: 'test')
           expect(rp).not_to be_nil
-
+          params.delete(:container)
           params.each do |k, v|
             expect(rp.attributes.symbolize_keys[k]).to eq(v)
           end
