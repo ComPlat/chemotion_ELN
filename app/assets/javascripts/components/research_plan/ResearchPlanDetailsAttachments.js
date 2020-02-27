@@ -96,7 +96,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { onDelete } = this.state;
 
     return (
-      <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => onDelete(attachment)}>
+      <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => onDelete(attachment)} disabled={this.props.readOnly}>
         <i className="fa fa-trash-o" aria-hidden="true" />
       </Button>
     );
@@ -223,14 +223,14 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { onDrop } = this.state;
 
     return (
-      <Dropzone
-        onDrop={files => onDrop(files)}
-        style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-      >
-        <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
+      <div className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}>
+        <Dropzone
+          onDrop={files => onDrop(files)}
+          className="zone"
+        >
           Drop Files, or Click to Select.
-        </div>
-      </Dropzone>
+        </Dropzone>
+      </div>
     );
   }
 
@@ -250,10 +250,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
 }
 
 ResearchPlanDetailsAttachments.propTypes = {
-  attachments: PropTypes.array,
-  onDrop: PropTypes.func,
-  onDelete: PropTypes.func,
-  onUndoDelete: PropTypes.func,
-  onDownload: PropTypes.func,
-  onEdit: PropTypes.func
+  attachments: PropTypes.array.isRequired,
+  onDrop: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onUndoDelete: PropTypes.func.isRequired,
+  onDownload: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool.isRequired
 };

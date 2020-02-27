@@ -267,7 +267,7 @@ export default class ResearchPlanDetails extends Component {
   renderAnalysesTab(research_plan) {
     return (
       <ListGroupItem style={{ paddingBottom: 20 }}>
-        <ResearchPlanDetailsContainers researchPlan={research_plan} readOnly={false} parent={this} />
+        <ResearchPlanDetailsContainers researchPlan={research_plan} readOnly={research_plan.mode !== 'edit'} parent={this} />
       </ListGroupItem>
     );
   }
@@ -284,6 +284,7 @@ export default class ResearchPlanDetails extends Component {
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
             onDownload={this.handleAttachmentDownload.bind(this)}
             onEdit={this.handleAttachmentEdit.bind(this)}
+            readOnly={research_plan.mode !== 'edit'}
           />
         </ListGroupItem>
       </ListGroup>

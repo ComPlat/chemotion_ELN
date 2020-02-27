@@ -132,3 +132,28 @@
         margin-left: 5px;
     }
 }
+
+.research-plan-dropzone-enable {
+    height: 50px;
+    width: 100%;
+    border: 3px dashed lightgray;
+    display: flex;
+    .zone {
+        margin: auto;
+        color: grey;
+    }
+}
+
+.research-plan-dropzone-disable {
+    height: 50px;
+    width: 100%;
+    border: 3px dashed lightgray;
+    display: flex;
+    cursor: not-allowed;
+    background-color: #e8e8e8;
+    .zone {
+        margin: auto;
+        color: grey;
+        pointer-events: none;
+    }
+}
