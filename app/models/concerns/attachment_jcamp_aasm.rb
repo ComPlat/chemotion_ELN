@@ -82,12 +82,14 @@ module AttachmentJcampAasm
   end
 
   def init_aasm
+    return if transferred?
     return unless idle?
     _, extname = extension_parts
     FILE_EXT_SPECTRA.include?(extname.downcase) ? set_queueing : set_non_jcamp
   end
 
   def require_peaks_generation? # rubocop:disable all
+    return if transferred?
     return unless belong_to_analysis?
     typname, extname = extension_parts
     return if peaked? || edited?
