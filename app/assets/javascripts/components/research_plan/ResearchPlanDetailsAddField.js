@@ -17,7 +17,7 @@ export default class ResearchPlanDetailsAddField extends Component {
   render() {
     const { onAdd } = this.props;
     return (
-      <div className="research-plan-field-drop-add-field">
+      <span className="research-plan-field-drop-add-field">
         <ButtonGroup bsSize="xsmall">
           {
             buttonObjects.map(button => (
@@ -29,7 +29,7 @@ export default class ResearchPlanDetailsAddField extends Component {
             ))
           }
         </ButtonGroup>
-      </div>
+      </span>
     );
   }
 }

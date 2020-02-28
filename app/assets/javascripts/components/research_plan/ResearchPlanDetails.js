@@ -29,6 +29,7 @@ export default class ResearchPlanDetails extends Component {
     this.toggleFullScreen = this.toggleFullScreen.bind(this);
     this.handleNameChange = this.handleNameChange.bind(this);
     this.handleBodyChange = this.handleBodyChange.bind(this);
+    this.handleBodyAdd = this.handleBodyAdd.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -228,7 +229,7 @@ export default class ResearchPlanDetails extends Component {
             disabled={researchPlan.isMethodDisabled('body')}
             onChange={this.handleBodyChange}
             onDrop={this.handleBodyDrop.bind(this)}
-            onAdd={this.handleBodyAdd.bind(this)}
+            onAdd={this.handleBodyAdd}
             onDelete={this.handleBodyDelete.bind(this)}
             onExport={this.handleExportField.bind(this)}
             update={update}
@@ -255,7 +256,7 @@ export default class ResearchPlanDetails extends Component {
             disabled={researchPlan.isMethodDisabled('body')}
             onChange={this.handleBodyChange.bind(this)}
             onDrop={this.handleBodyDrop.bind(this)}
-            onAdd={this.handleBodyAdd.bind(this)}
+            onAdd={this.handleBodyAdd}
             onDelete={this.handleBodyDelete.bind(this)}
             onExport={this.handleExportField.bind(this)}
             update={update}
