@@ -358,7 +358,7 @@ export default class ResearchPlanDetails extends Component {
   render() {
     const { researchPlan, update } = this.state;
     return (
-      <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="panel-detail research-plan-details">
+      <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">
         {this.renderPanelHeading(researchPlan)}
         {this.renderPanelBody(researchPlan, update)}
       </Panel>
