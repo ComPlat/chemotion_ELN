@@ -33,11 +33,12 @@ const qCheckFail = (msg, kind, atomNum = '') => (
 
 const qCheckMsg = (sample, container) => {
   if (sample.molecule && container.extended_metadata &&
-      (typeof container.extended_metadata.kind === 'undefined' ||
+    ((typeof container.extended_metadata.kind === 'undefined' || container.extended_metadata.kind == null ||
+      container.extended_metadata.kind.split('|').length < 2) ||
       (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId
-        && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId)
-        && !container.extended_metadata.kind.split('|')[1].includes('mass spectrometry')
-      )) {
+      && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId
+      && !container.extended_metadata.kind.split('|')[1].includes('mass spectrometry'))
+    )) {
     return '';
   }
   const str = container.extended_metadata && contentToText(container.extended_metadata.content);
