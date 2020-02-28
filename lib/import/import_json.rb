@@ -259,9 +259,10 @@ class Import::ImportJson
           # identifier: att['identifier'],
           checksum: att['checksum'],
           attachable_id: new_a.id,
+          transferred: true,
           attachable_type: 'Container'
         }
-        attrib[:aasm_state] = att['aasm_state'] if att['aasm_state'] && %w[done image non_jcamp peaked edited].include?(att['aasm_state'])
+        attrib[:aasm_state] = att['aasm_state'] if att['aasm_state']
         @new_attachments[att['identifier']] = Attachment.new(attrib)
       end
     end

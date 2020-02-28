@@ -32,7 +32,7 @@ class Attachment < ActiveRecord::Base
   include AttachmentJcampAasm
   include AttachmentJcampProcess
 
-  attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated
+  attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
   before_create :generate_key
   before_create :store_tmp_file_and_thumbnail, if: :new_upload
@@ -212,6 +212,10 @@ class Attachment < ActiveRecord::Base
     self.thumb = store.store_thumb if stored
     self.save if stored
     stored
+  end
+
+  def transferred?
+    self.transferred || false
   end
 
   def delete_file_and_thumbnail
