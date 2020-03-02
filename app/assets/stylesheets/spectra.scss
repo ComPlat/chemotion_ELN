@@ -1,78 +1,19 @@
-.spectra-editor {
-  text-align: right;
-  padding-bottom: 10px;
-}
-
-.spectra-editor-dialog {
-  display: block;
-  padding-left: 0px;
-  top: 45% !important;
-  width: 75vw !important;
-}
-
 .d3-tip {
   z-index: 1998;
 }
 
-.txt-sv-input-label {
-  font-size: 16px !important;
+.spectra-editor {
+  text-align: right;
 }
 
-.txt-sv-tp {
-  font-size: 11px !important;
-  height: 30px;
-}
-
-.react-spectrum-editor {
-  .txt-input-label {
-    font-size: 16px !important;
-  }
-
-  .txt-tp {
-    font-size: 11px !important;
-  }
-
-  .txt-input {
-    font-size: 14px !important;
-  }
-
-  .txt-percent {
-    font-size: 14px !important;
-  }
-
-  .txt-btn-write {
-    font-size: 14px !important;
-  }
-
-  .txt-btn-save {
-    font-size: 14px !important;
-  }
-
-  .txt-panel-header {
-    font-size: 14px !important;
-  }
-
-  .txt-panel-content {
-    font-size: 12px !important;
-  }
-
-  .txt-panel-badge {
-    span {
-      font-size: 14px !important;
-    }
-  }
-
-  .xLabel, .yLabel {
-    font-size: 12px !important;
-  }
-
-  .txt-prd-table-title, .txt-prd-table-content, .txt-mol-label,
-  .txt-shift-tab-label, .txt-prd-tab-label {
-
-  }
-}
-
+#ChemSpectra,
+#ChemSpectraEditor,
 .spectra-editor-dialog {
+  display: block;
+  padding-left: 0px;
+  top: 45% !important;
+  width: 98vw !important;
+
   .card-box {
     display: -webkit-flex;
     display:         flex;
@@ -81,9 +22,51 @@
     -webkit-justify-content: center;
             justify-content: center;
 
-    height: 60vh;
     text-align: center;
   }
+
+  .txt-sv-panel-title,
+  .txt-sv-panel-head {
+    font-size: 12px !important;
+    font-family: 'Helvetica'!important;
+  }
+
+  .icon-sv-bar-refint {
+    height: 16px !important;
+    width: 16px !important;
+  }
+
+  .icon-sv-bar-addint,
+  .icon-sv-bar-rmint,
+  .icon-sv-bar-rmallint {
+    height: 16px !important;
+    width: 16px !important;
+  }
+
+  .txtfield-sv-bar-input fieldset legend,
+  .input-sv-bar-layout fieldset legend,
+  .input-sv-bar-shift fieldset legend,
+  .input-sv-bar-order fieldset legend,
+  .input-sv-bar-intensity fieldset legend,
+  .input-sv-bar-decimal fieldset legend,
+  .input-sv-bar-operation fieldset legend {
+    border: hidden !important;
+  }
+}
+
+.txt-sv-tp {
+  font-size: 12px !important;
+  font-family: 'Helvetica'!important;
+}
+
+.txt-sv-input-label {
+  font-size: 14px !important;
+  font-family: 'Helvetica'!important;
+}
+
+.txt-sv-panel-txt {
+  font-size: 14px !important;
+  font-family: 'Helvetica'!important;
 }
 
 .svg-file-zoom-pan {

@@ -46,7 +46,7 @@ module Chemotion
             data = entry.get_input_stream.read.force_encoding('UTF-8')
             if %w[png].include?(ext)
               tmp_img = generate_tmp_file(data, ext)
-            elsif %w[dx jdx jcamp mzml raw cdf].include?(ext.downcase)
+            elsif %w[dx jdx jcamp mzml raw cdf zip].include?(ext.downcase)
               tmp_jcamp = generate_tmp_file(data, ext)
             end
           end
@@ -80,7 +80,10 @@ module Chemotion
           shift_select_x: params[:shift_select_x],
           shift_ref_name: params[:shift_ref_name],
           shift_ref_value: params[:shift_ref_value],
-          peaks_str: params[:peaks_str]
+          peaks_str: params[:peaks_str],
+          integration: params[:integration],
+          multiplicity: params[:multiplicity],
+          fname: params[:fname] || (params[:file] && params[:file].try(:[], :filename)),
         }
       end
 

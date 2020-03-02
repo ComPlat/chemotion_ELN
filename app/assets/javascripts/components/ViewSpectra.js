@@ -28,6 +28,7 @@ class ViewSpectra extends React.Component {
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
     this.renderSpectraEditor = this.renderSpectraEditor.bind(this);
     this.renderEmpty = this.renderEmpty.bind(this);
+    this.formatPks = this.formatPks.bind(this);
   }
 
   componentDidMount() {
@@ -87,20 +88,97 @@ class ViewSpectra extends React.Component {
     }
   }
 
-  writeOp({
-    peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
-    keepPred, isIntensity,
+  formatPks({
+    peaks, shift, layout, isAscend, decimal, body,
+    isIntensity,
   }) {
-    const { sample, handleSampleChanged } = this.props;
-    const { spcInfo, jcamp } = this.state;
+    const { jcamp } = this.state;
     const { entity } = FN.buildData(jcamp.file);
-    const { maxY, minY } = entity.features[0];
+    const { features } = entity;
+    const { maxY, minY } = Array.isArray(features)
+      ? features[0]
+      : (features.editPeak || features.autoPeak);
     const boundary = { maxY, minY };
     const mBody = body || FN.peaksBody({
       peaks, layout, decimal, shift, isAscend, isIntensity, boundary,
     });
     const layoutOpsObj = SpectraOps[layout];
     const solventOps = this.opsSolvent(shift);
+    return [
+      ...layoutOpsObj.head(solventOps),
+      { insert: mBody },
+      ...layoutOpsObj.tail(),
+    ];
+  }
+
+  formatMpy({
+    shift, isAscend, decimal,
+    integration, multiplicity, layout,
+  }) {
+    // obsv freq
+    const { jcamp } = this.state;
+    const { entity } = FN.buildData(jcamp.file);
+    const { features } = entity;
+    const { observeFrequency } = Array.isArray(features)
+      ? features[0]
+      : (features.editPeak || features.autoPeak);
+    const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
+    const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
+    // multiplicity
+    const { refArea, refFactor } = integration;
+    const shiftVal = multiplicity.shift;
+    const ms = multiplicity.stack;
+    const is = integration.stack;
+
+    const macs = ms.map((m) => {
+      const { peaks, mpyType, xExtent } = m;
+      const { xL, xU } = xExtent;
+      const it = is.filter(i => i.xL === xL && i.xU === xU)[0] || { area: 0 };
+      const area = (it.area * refFactor) / refArea;
+      const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
+      return Object.assign({}, m, { area, center });
+    }).sort((a, b) => (isAscend ? a.center - b.center : b.center - a.center));
+    const str = macs.map((m) => {
+      const c = m.center.toFixed(1);
+      const type = m.mpyType;
+      const it = Math.round(m.area);
+      const js = m.js.map(j => `J = ${j.toFixed(decimal)} Hz`).join(', ');
+      const atomCount = layout === '1H' ? `, ${it}H` : '';
+      return m.js.length === 0
+        ? `${c} (${type}${atomCount})`
+        : `${c} (${type}, ${js}${atomCount})`;
+    }).join(', ');
+    const { label, value, name } = shift.ref;
+    const solvent = label ? `${name}, ` : '';
+    return [
+      { attributes: { script: 'super' }, insert: layout.slice(0, -1) },
+      { insert: `${layout.slice(-1)} (${freqStr}${solvent}${value} ppm) δ = ${str}.` },
+    ];
+  }
+
+  writeOp({
+    peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
+    keepPred, isIntensity, multiplicity, integration,
+  }) {
+    const { sample, handleSampleChanged } = this.props;
+    const { spcInfo } = this.state;
+
+    let ops = [];
+    if (['1H', '13C', '19F'].indexOf(layout) >= 0) {
+      ops = this.formatMpy({
+        multiplicity, integration, shift, isAscend, decimal, layout,
+      });
+    } else {
+      ops = this.formatPks({
+        peaks,
+        shift,
+        layout,
+        isAscend,
+        decimal,
+        body,
+        isIntensity,
+      });
+    }
 
     sample.analysesContainers().forEach((ae) => {
       if (ae.id !== spcInfo.idAe) return;
@@ -108,16 +186,14 @@ class ViewSpectra extends React.Component {
         if (ai.id !== spcInfo.idAi) return;
         ai.extended_metadata.content.ops = [ // eslint-disable-line
           ...ai.extended_metadata.content.ops,
-          ...layoutOpsObj.head(solventOps),
-          { insert: mBody },
-          ...layoutOpsObj.tail(),
+          ...ops,
         ];
       });
     });
 
     const cb = () => (
       this.saveOp({
-        peaks, shift, scan, thres, analysis, keepPred,
+        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity,
       })
     );
     handleSampleChanged(sample, cb);
@@ -127,6 +203,7 @@ class ViewSpectra extends React.Component {
     if (!writing || predictions.output.result.length === 0) return null;
     const {
       peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+      isIntensity, multiplicity, integration,
     } = writing;
 
     const data = predictions.output.result[0].shifts;
@@ -142,6 +219,9 @@ class ViewSpectra extends React.Component {
       decimal,
       body,
       keepPred: true,
+      isIntensity,
+      multiplicity,
+      integration,
     });
 
     SpectraActions.WriteStop.defer();
@@ -149,7 +229,7 @@ class ViewSpectra extends React.Component {
   }
 
   saveOp({
-    peaks, shift, scan, thres, analysis, keepPred,
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity,
   }) {
     const { handleSubmit } = this.props;
     const { spcInfo } = this.state;
@@ -164,6 +244,8 @@ class ViewSpectra extends React.Component {
       shift,
       scan,
       thres,
+      JSON.stringify(integration),
+      JSON.stringify(multiplicity),
       predict,
       handleSubmit,
       keepPred,
@@ -176,7 +258,7 @@ class ViewSpectra extends React.Component {
 
   writeCloseOp({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
-    keepPred, isIntensity,
+    keepPred, isIntensity, multiplicity, integration,
   }) {
     this.writeOp({
       peaks,
@@ -190,15 +272,17 @@ class ViewSpectra extends React.Component {
       body,
       keepPred,
       isIntensity,
+      multiplicity,
+      integration,
     });
     this.closeOp();
   }
 
   saveCloseOp({
-    peaks, shift, scan, thres, analysis,
+    peaks, shift, scan, thres, analysis, integration, multiplicity,
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis,
+      peaks, shift, scan, thres, analysis, integration, multiplicity,
     });
     this.closeOp();
   }
@@ -216,11 +300,13 @@ class ViewSpectra extends React.Component {
 
   checkWriteOp({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+    multiplicity, integration,
   }) {
     const cleanPeaks = FN.rmShiftFromPeaks(peaks, shift);
     LoadingActions.start.defer();
     SpectraActions.WriteStart.defer({
       shift, scan, thres, analysis, layout, isAscend, decimal, peaks: cleanPeaks,
+      multiplicity, integration,
     }); // keep payload to state.writing & handle by onChange/checkedToWrite after predictOp
     this.predictOp({ layout, shift, peaks: cleanPeaks });
   }
@@ -233,10 +319,10 @@ class ViewSpectra extends React.Component {
       { name: 'save', value: this.saveOp },
       { name: 'save & close', value: this.saveCloseOp },
     ] : [];
+    // { name: 'check & write', value: this.checkWriteOp },
     const predictable = updatable && ['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
     if (predictable) {
       return [
-        { name: 'check & write', value: this.checkWriteOp },
         ...baseOps,
         { name: 'predict', value: this.predictOp },
       ];

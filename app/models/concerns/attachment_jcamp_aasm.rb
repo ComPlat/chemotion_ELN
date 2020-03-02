@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
-  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml raw cdf]
+  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml raw cdf zip]
 
   extend ActiveSupport::Concern
 
@@ -150,6 +150,7 @@ module AttachmentJcampProcess
     _, extname = extension_parts
     params[:mass] = attachable.root_element.molecule.exact_molecular_weight || 0.0
     params[:ext] = extname.downcase
+    params[:fname] = filename.to_s
     params
   end
 

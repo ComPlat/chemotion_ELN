@@ -34,9 +34,9 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(spcInfo, peaksStr, shift, scan, thres, predict, cb, keepPred = false) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false) {
     return (dispatch) => {
-      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, predict, keepPred)
+      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred)
         .then((target) => {
           dispatch({ target, spcInfo });
           cb();
