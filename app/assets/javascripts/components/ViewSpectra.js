@@ -403,12 +403,19 @@ class ViewSpectra extends React.Component {
   render() {
     const { showModal, spcInfo, jcamp } = this.state;
     const modalTitle = spcInfo ? `Spectra Editor - ${spcInfo.title}` : '';
+    const dialogClassName = 'spectra-editor-dialog';
+    // WORKAROUND: react-stickydiv duplicates elements.
+    const specElements = Array.from(document.getElementsByClassName(dialogClassName));
+    if (specElements.length > 1) {
+      specElements.slice(1).forEach(el => el.parentNode.style.display = 'none'); // eslint-disable-line
+    }
+    // WORKAROUND: react-stickydiv duplicates elements.
 
     return (
       <div className="spectra-editor">
         <Modal
           show={showModal}
-          dialogClassName="spectra-editor-dialog"
+          dialogClassName={dialogClassName}
           animation
         >
           <Modal.Header>
