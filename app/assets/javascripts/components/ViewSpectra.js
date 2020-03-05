@@ -417,6 +417,7 @@ class ViewSpectra extends React.Component {
           show={showModal}
           dialogClassName={dialogClassName}
           animation
+          onHide={this.closeOp}
         >
           <Modal.Header>
             <Modal.Title>
