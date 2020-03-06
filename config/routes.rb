@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  if ENV['DEVISE_DISABLED_SIGN_UP'].presence != 'true'
+  if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
     devise_for :users, controllers: { registrations: 'users/registrations' }, skip: [:registrations]
     as :user do
       get 'sign_in' => 'devise/sessions#new'
