@@ -222,21 +222,30 @@ const reactionToolbarSymbol = [
   },
 ];
 
-const ops1HHead = (solventOps = []) => (
+const ops1HHead = (solventOps = [], freqStr = '', ppm = '') => (
   [
     { attributes: { script: 'super' }, insert: '1' },
-    { insert: 'H NMR (400 MHz, ' },
+    { insert: `H NMR (${freqStr}` },
     ...solventOps,
-    { insert: 'ppm) δ = ' },
+    { insert: `${ppm} ppm) δ = ` },
   ]
 );
 
-const ops13CHead = (solventOps = []) => (
+const ops13CHead = (solventOps = [], freqStr = '', ppm = '') => (
   [
     { attributes: { script: 'super' }, insert: '13' },
-    { insert: 'C NMR (100 MHz, ' },
+    { insert: `C NMR (${freqStr}` },
     ...solventOps,
-    { insert: 'ppm) δ = ' },
+    { insert: `${ppm} ppm) δ = ` },
+  ]
+);
+
+const ops19FHead = (solventOps = [], freqStr = '', ppm = '') => (
+  [
+    { attributes: { script: 'super' }, insert: '19' },
+    { insert: `F NMR (${freqStr}` },
+    ...solventOps,
+    { insert: `${ppm} ppm) δ = ` },
   ]
 );
 
@@ -352,6 +361,7 @@ const SpectraOps = {
   PLAIN: { head: [], tail: [] },
   '1H': { head: ops1HHead, tail: opsCommonTail },
   '13C': { head: ops13CHead, tail: opsCommonTail },
+  '19F': { head: ops19FHead, tail: opsCommonTail },
   IR: { head: opsIRHead, tail: opsIRTail },
   MS: { head: opsMSHead, tail: opsMSTail },
 };

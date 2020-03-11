@@ -37,7 +37,7 @@ class SpectraStore {
       try {
         const raw = base64.decode(f.file);
         const file = FN.ExtractJcamp(raw);
-        if (!file.spectrum) return null;
+        if (!file.spectra) return null;
         return Object.assign({}, f, { file });
       } catch (err) {
         return null;
