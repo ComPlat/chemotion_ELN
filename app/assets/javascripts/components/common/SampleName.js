@@ -2,22 +2,6 @@ import React from 'react';
 import Formula from './Formula';
 import ClipboardCopyText from './ClipboardCopyText';
 
-const sumFormula = (sf, stereo) => <Formula formula={sf} customText={stereo} />;
-
-const sampleNameWithResidues = (polymer_type, sumFormulaCom, moleculeName, sum_formular='') => {
-  const polymerName = (polymer_type.charAt(0).toUpperCase()
-    + polymer_type.slice(1)).replace('_', '-') + ' - ';
-
-  return (
-    <div>
-      <p>
-        {polymerName}
-        <ClipboardCopyText text={sumFormulaCom} clipText={`${polymerName}${sum_formular}`} />
-      </p>
-      <p><ClipboardCopyText text={moleculeName} /></p>
-    </div>
-  );
-};
 
 const SampleName = ({ sample }) => {
   const { sum_formular } = sample._molecule;
@@ -36,10 +20,20 @@ const SampleName = ({ sample }) => {
 
     stereo = stereoInfo === '' ? '' : ` - ${stereoInfo}`;
   }
-  const sumFormulaCom = sumFormula(sum_formular, stereo);
+
+  const sumFormulaCom = <Formula formula={sum_formular} customText={stereo} />;
 
   if (contains_residues) {
-    return sampleNameWithResidues(polymer_type, sumFormulaCom, moleculeName, sum_formular);
+    const polymerName = `${polymer_type.charAt(0).toUpperCase()}${polymer_type.slice(1)}`.replace('_', '-');
+    return (
+      <div>
+        <p>
+          {polymerName}
+          <ClipboardCopyText text={sumFormulaCom} clipText={`${polymerName} - ${sum_formular}`} />
+        </p>
+        <p><ClipboardCopyText text={moleculeName} /></p>
+      </div>
+    );
   }
 
   return (

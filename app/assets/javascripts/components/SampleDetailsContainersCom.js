@@ -110,7 +110,7 @@ const RndEdit = ({
               key={`${id}CRowEdit`}
             >
             <Panel.Heading>{headerNormalFunc(container, id)}</Panel.Heading>
-            <Panel.Body collapsible="true">
+            <Panel.Body collapsible>
               <ContainerComponent
                 readOnly={readOnly}
                 container={container}

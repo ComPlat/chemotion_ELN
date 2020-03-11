@@ -3,6 +3,8 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Clipboard from 'clipboard';
 
+import Formula from './Formula';
+
 export default class ClipboardCopyText extends Component {
   constructor(props) {
     super(props);
@@ -16,17 +18,28 @@ export default class ClipboardCopyText extends Component {
         placement="bottom"
         overlay={<Tooltip id="copy_clipboard">copy to clipboard</Tooltip>}
       >
-        <div style={{ display: 'inline' }} role="button" data-clipboard-text={clipText || ' '} className="clipboardBtn" >{this.props.text}</div>
+        <span
+          style={{ display: 'inline' }}
+          role="button"
+          data-clipboard-text={clipText}
+          className="clipboardBtn"
+        >
+          {this.props.text}
+        </span>
       </OverlayTrigger>
     );
   }
 }
 
 ClipboardCopyText.propTypes = {
-  text: PropTypes.string.isRequired,
+  text: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.instanceOf(Formula),
+  ]),
   clipText: PropTypes.string
 };
 
 ClipboardCopyText.defaultProps = {
+  text: '',
   clipText: ''
 };

@@ -88,8 +88,16 @@ class User < ActiveRecord::Base
   validate :name_abbreviation_length
 # validate :academic_email
   validate :mail_checker
+
+  # NB: only Persons and Admins can get a confirmation email and confirm their email.
+  before_create :skip_confirmation_notification!, unless: proc { |user| %w[Person Admin].include?(user.type) }
+  # NB: option to skip devise confirmable for Admins and Persons
+  before_create :skip_confirmation!, if: proc { |user| %w[Person Admin].include?(user.type) && self.class.allow_unconfirmed_access_for.nil? }
+  before_create :set_account_active, if: proc { |user| %w[Person].include?(user.type) }
+
   after_create :create_chemotion_public_collection
   after_create :create_all_collection, :has_profile
+
   before_destroy :delete_data
 
   scope :by_name, ->(query) {
@@ -235,48 +243,45 @@ class User < ActiveRecord::Base
     return unless self.type == 'Person'
     Collection.create(user: self, label: 'chemotion.net', is_locked: true, position: 1)
   end
-end
 
-def delete_data
-  # TODO: logic to check if user can be really destroy or which data can be deleted
-  count = self.samples.count
-    # + self.reactions.count
-    # + self.wellplates.count
-    # + self.screens.count
-    # + self.research_plans.count
-  self.update_columns(email: "#{id}_#{name_abbreviation}@deleted")
-  self.update_columns(name_abbreviation: nil )if count.zero?
+  def set_account_active
+    self.account_active = ENV['DEVISE_NEW_ACCOUNT_INACTIVE'].presence != 'true'
+  end
+
+  def delete_data
+    # TODO: logic to check if user can be really destroy or which data can be deleted
+    count = self.samples.count
+      # + self.reactions.count
+      # + self.wellplates.count
+      # + self.screens.count
+      # + self.research_plans.count
+    self.update_columns(email: "#{id}_#{name_abbreviation}@deleted")
+    self.update_columns(name_abbreviation: nil )if count.zero?
+  end
 end
 
 class Person < User
-  has_many :users_groups,  dependent: :destroy, foreign_key: :user_id
+  has_many :users_groups, dependent: :destroy, foreign_key: :user_id
   has_many :groups, through: :users_groups
 
   has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
   has_many :administrated_accounts,  through: :users_admins, source: :user
-
-  before_create :set_account_active
-
-  def set_account_active
-    account_active = ENV['DEVISE_NEW_ACCOUNT_INACTIVE'].presence != 'true'
-  end
 end
 
 class Device < User
   has_many :users_devices, dependent: :destroy
-  has_many :users, class_name: "User", through: :users_devices
+  has_many :users, class_name: 'User', through: :users_devices
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
-  has_many :admins,  through: :users_admins, source: :admin
+  has_many :admins, through: :users_admins, source: :admin
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :novnc, -> { joins(:profile).merge(Profile.novnc) }
 end
 
 class Group < User
-
   has_many :users_groups, dependent: :destroy
-  has_many :users,class_name: "User", through: :users_groups
+  has_many :users, class_name: 'User', through: :users_groups
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins,  through: :users_admins, source: :admin# ,  foreign_key:    association_foreign_key: :admin_id
