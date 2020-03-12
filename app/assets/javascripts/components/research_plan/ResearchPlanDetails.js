@@ -289,7 +289,7 @@ export default class ResearchPlanDetails extends Component {
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
             onDownload={this.handleAttachmentDownload.bind(this)}
             onEdit={this.handleAttachmentEdit.bind(this)}
-            readOnly={researchPlan.mode !== 'edit'}
+            readOnly={false}
           />
         </ListGroupItem>
       </ListGroup>

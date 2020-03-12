@@ -27,7 +27,8 @@ export default class ResearchPlan extends Element {
       body: [],
       mode: 'edit',
       container: Container.init(),
-      changed: true
+      changed: true,
+      attachments: []
     });
   }
 
