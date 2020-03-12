@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   PanelGroup,
   Panel,
-  Button,
+  Button
 } from 'react-bootstrap';
 import { startsWith, filter, map, flatMap } from 'lodash';
 import Container from '../models/Container';

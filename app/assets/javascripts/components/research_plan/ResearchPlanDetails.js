@@ -269,9 +269,11 @@ export default class ResearchPlanDetails extends Component {
 
   renderAnalysesTab(researchPlan) {
     return (
-      <ListGroupItem style={{ paddingBottom: 20 }}>
-        <ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={researchPlan.mode !== 'edit'} parent={this} />
-      </ListGroupItem>
+      <ListGroup fill="true">
+        <ListGroupItem>
+          <ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={false} parent={this} />
+        </ListGroupItem>
+      </ListGroup>
     );
   }
 
