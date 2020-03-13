@@ -265,6 +265,10 @@ const commonFormatPattern = [
     pattern: '(\\d+) - (\\d+)',
     replace: '$1–$2'
   },
+  {
+    pattern: '(\\d+) ([\\u2013-\\u2015]) (\\d+)',
+    replace: '$1$2$3'
+  },
 ];
 
 const sampleAnalysesFormatPattern = {
