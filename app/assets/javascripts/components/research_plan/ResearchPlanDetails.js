@@ -22,7 +22,7 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = props;
     this.state = {
       researchPlan,
-      update: false,
+      update: false
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -30,6 +30,7 @@ export default class ResearchPlanDetails extends Component {
     this.handleNameChange = this.handleNameChange.bind(this);
     this.handleBodyChange = this.handleBodyChange.bind(this);
     this.handleBodyAdd = this.handleBodyAdd.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -271,7 +272,7 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          <ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={false} parent={this} />
+          <ResearchPlanDetailsContainers handleSubmit={this.handleSubmit} researchPlan={researchPlan} readOnly={false} parent={this} />
         </ListGroupItem>
       </ListGroup>
     );

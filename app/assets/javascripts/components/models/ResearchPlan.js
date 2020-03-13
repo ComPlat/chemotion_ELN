@@ -28,6 +28,7 @@ export default class ResearchPlan extends Element {
       mode: 'edit',
       container: Container.init(),
       changed: true,
+      can_update: true,
       attachments: []
     });
   }
@@ -39,6 +40,18 @@ export default class ResearchPlan extends Element {
       attachments: this.attachments,
       container: this.container,
     });
+  }
+
+
+  analysesContainers() {
+    if (this.container.children.length === 0) {
+      const analyses = Container.buildEmpty();
+      analyses.container_type = 'analyses';
+      this.container.children.push(analyses);
+    }
+    return this.container
+      .children
+      .filter(el => ~el.container_type.indexOf('analyses'));
   }
 
   addBodyField(type) {

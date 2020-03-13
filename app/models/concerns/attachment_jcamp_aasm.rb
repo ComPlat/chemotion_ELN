@@ -148,7 +148,11 @@ module AttachmentJcampProcess
 
   def build_params(params = {})
     _, extname = extension_parts
-    params[:mass] = attachable.root_element.molecule.exact_molecular_weight || 0.0
+    if attachable&.root_element.class.to_s == 'Sample'
+      params[:mass] = attachable&.root_element&.molecule&.exact_molecular_weight || 0.0
+    else
+      params[:mass] = 0.0;
+    end
     params[:ext] = extname.downcase
     params[:fname] = filename.to_s
     params

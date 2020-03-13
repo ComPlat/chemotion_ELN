@@ -7,6 +7,7 @@ import LoadingActions from './actions/LoadingActions';
 import SpectraActions from './actions/SpectraActions';
 import SpectraStore from './stores/SpectraStore';
 import { SpectraOps } from './utils/quillToolbarSymbol';
+import ResearchPlan from './models/ResearchPlan';
 
 class ViewSpectra extends React.Component {
   constructor(props) {
@@ -348,6 +349,12 @@ class ViewSpectra extends React.Component {
   // }
 
   buildOpsByLayout(et) {
+    if (this.props.sample && this.props.sample instanceof ResearchPlan) {
+      return [
+        { name: 'write & save', value: this.writeOp },
+        { name: 'write, save & close', value: this.writeCloseOp },
+      ];
+    }
     const updatable = this.props.sample && this.props.sample.can_update;
     let baseOps = updatable ? [
       { name: 'write peak & save', value: this.writePeakOp },
