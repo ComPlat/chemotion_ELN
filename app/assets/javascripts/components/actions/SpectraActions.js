@@ -6,16 +6,16 @@ class SpectraActions {
     return null;
   }
 
-  LoadSpectra(spcInfo) {
-    const idx = spcInfo && spcInfo.idx;
-    if (!idx) {
+  LoadSpectra(spcInfos) {
+    const idxs = spcInfos && spcInfos.map(si => si.idx);
+    if (idxs.length === 0) {
       return null;
     }
 
     return (dispatch) => {
-      AttachmentFetcher.fetchFiles([idx])
-        .then((target) => {
-          dispatch({ target, spcInfo });
+      AttachmentFetcher.fetchFiles(idxs)
+        .then((fetchedFiles) => {
+          dispatch({ fetchedFiles, spcInfos });
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         });
@@ -37,8 +37,8 @@ class SpectraActions {
   SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false) {
     return (dispatch) => {
       AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred)
-        .then((target) => {
-          dispatch({ target, spcInfo });
+        .then((fetchedFiles) => {
+          dispatch({ fetchedFiles, spcInfo });
           cb();
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
@@ -69,6 +69,10 @@ class SpectraActions {
           console.log(errorMessage); // eslint-disable-line
         });
     };
+  }
+
+  SelectIdx(spcIdx) {
+    return spcIdx;
   }
 }
 

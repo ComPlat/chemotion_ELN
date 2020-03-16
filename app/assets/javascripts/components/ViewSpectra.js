@@ -1,6 +1,7 @@
 import React from 'react';
 import { SpectraEditor, FN } from 'react-spectra-editor';
 import { Modal, Well, Button } from 'react-bootstrap';
+import Select from 'react-select';
 import PropTypes from 'prop-types';
 
 import LoadingActions from './actions/LoadingActions';
@@ -32,7 +33,10 @@ class ViewSpectra extends React.Component {
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
     this.renderSpectraEditor = this.renderSpectraEditor.bind(this);
     this.renderEmpty = this.renderEmpty.bind(this);
+    this.renderTitle = this.renderTitle.bind(this);
     this.formatPks = this.formatPks.bind(this);
+    this.getContent = this.getContent.bind(this);
+    this.getSpcInfo = this.getSpcInfo.bind(this);
   }
 
   componentDidMount() {
@@ -92,12 +96,25 @@ class ViewSpectra extends React.Component {
     }
   }
 
+  getContent() {
+    const { spcMetas, spcIdx } = this.state;
+    const sm = spcMetas.filter(x => x.idx === spcIdx)[0];
+    return sm || spcMetas[0] || { jcamp: null, predictions: null };
+  }
+
+  getSpcInfo() {
+    const { spcInfos, spcIdx } = this.state;
+    const sis = spcInfos.filter(x => x.idx === spcIdx);
+    const si = sis.length > 0 ? sis[0] : spcInfos[0];
+    return si;
+  }
+
   formatPks({
     peaks, shift, layout, isAscend, decimal, body,
     isIntensity,
   }) {
-    const { jcamp } = this.state;
-    const { entity } = FN.buildData(jcamp.file);
+    const { jcamp } = this.getContent();
+    const { entity } = FN.buildData(jcamp);
     const { features } = entity;
     const { observeFrequency } = Array.isArray(features)
       ? features[0]
@@ -127,8 +144,8 @@ class ViewSpectra extends React.Component {
     integration, multiplicity, layout,
   }) {
     // obsv freq
-    const { jcamp } = this.state;
-    const { entity } = FN.buildData(jcamp.file);
+    const { jcamp } = this.getContent();
+    const { entity } = FN.buildData(jcamp);
     const { features } = entity;
     const { observeFrequency } = Array.isArray(features)
       ? features[0]
@@ -191,7 +208,8 @@ class ViewSpectra extends React.Component {
     keepPred, isIntensity, multiplicity, integration,
   }, isMpy = false) {
     const { sample, handleSampleChanged } = this.props;
-    const { spcInfo } = this.state;
+    const si = this.getSpcInfo();
+    if (!si) return;
 
     let ops = [];
     if (['1H', '13C', '19F'].indexOf(layout) >= 0 && isMpy) {
@@ -211,9 +229,9 @@ class ViewSpectra extends React.Component {
     }
 
     sample.analysesContainers().forEach((ae) => {
-      if (ae.id !== spcInfo.idAe) return;
+      if (ae.id !== si.idAe) return;
       ae.children.forEach((ai) => {
-        if (ai.id !== spcInfo.idAi) return;
+        if (ai.id !== si.idAi) return;
         ai.extended_metadata.content.ops = [ // eslint-disable-line
           ...ai.extended_metadata.content.ops,
           ...ops,
@@ -273,14 +291,15 @@ class ViewSpectra extends React.Component {
     peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity,
   }) {
     const { handleSubmit } = this.props;
-    const { spcInfo } = this.state;
+    const si = this.getSpcInfo();
+    if (!si) return;
     const fPeaks = FN.rmRef(peaks, shift);
     const peaksStr = FN.toPeakStr(fPeaks);
     const predict = JSON.stringify(analysis);
 
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
-      spcInfo,
+      si,
       peaksStr,
       shift,
       scan,
@@ -326,11 +345,12 @@ class ViewSpectra extends React.Component {
   predictOp({
     peaks, layout, shift,
   }) {
-    const { spcInfo } = this.state;
+    const si = this.getSpcInfo();
+    if (!si) return;
 
     SpectraActions.InferRunning.defer();
     SpectraActions.InferSpectrum.defer({
-      spcInfo, peaks, layout, shift,
+      spcInfo: si, peaks, layout, shift,
     });
   }
 
@@ -419,11 +439,10 @@ class ViewSpectra extends React.Component {
     );
   }
 
-  renderSpectraEditor() {
-    const { jcamp, predictions } = this.state;
+  renderSpectraEditor(jcamp, predictions) {
     const {
       entity, isExist,
-    } = FN.buildData(jcamp.file);
+    } = FN.buildData(jcamp);
 
     const operations = this.buildOpsByLayout(entity);
 
@@ -447,9 +466,45 @@ class ViewSpectra extends React.Component {
     );
   }
 
+  renderTitle(idx) {
+    const { spcInfos } = this.state;
+    const si = this.getSpcInfo();
+    if (!si) return null;
+    const modalTitle = si ? `Spectra Editor - ${si.title}` : '';
+    const options = spcInfos.map(x => ({ value: x.idx, label: x.label }));
+    const onSelectChange = e => SpectraActions.SelectIdx(e.value);
+
+    return (
+      <div className="spectra-editor-title">
+        <span className="txt-spectra-editor-title">
+          { modalTitle }
+        </span>
+        <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }} >
+          <Select
+            options={options}
+            value={idx}
+            clearable={false}
+            style={{ width: 500 }}
+            onChange={onSelectChange}
+          />
+        </div>
+        <Button
+          bsStyle="danger"
+          bsSize="small"
+          className="button-right"
+          onClick={this.closeOp}
+        >
+          <span>
+            <i className="fa fa-times" /> Close without Save
+          </span>
+        </Button>
+      </div>
+    );
+  }
+
   render() {
-    const { showModal, spcInfo, jcamp } = this.state;
-    const modalTitle = spcInfo ? `Spectra Editor - ${spcInfo.title}` : '';
+    const { showModal } = this.state;
+    const { jcamp, predictions, idx } = this.getContent();
     const dialogClassName = 'spectra-editor-dialog';
     // WORKAROUND: react-stickydiv duplicates elements.
     const specElements = Array.from(document.getElementsByClassName(dialogClassName));
@@ -466,24 +521,12 @@ class ViewSpectra extends React.Component {
           animation
           onHide={this.closeOp}
         >
-          <Modal.Header>
-            <Modal.Title>
-              { modalTitle }
-              <Button
-                bsStyle="danger"
-                bsSize="small"
-                className="button-right"
-                onClick={this.closeOp}
-              >
-                <span>
-                  <i className="fa fa-times" /> Close without Save
-                </span>
-              </Button>
-            </Modal.Title>
-          </Modal.Header>
+          {
+            this.renderTitle(idx)
+          }
           {
             showModal && jcamp
-              ? this.renderSpectraEditor()
+              ? this.renderSpectraEditor(jcamp, predictions)
               : this.renderEmpty()
           }
         </Modal>

@@ -8,6 +8,17 @@
 
 #ChemSpectra,
 #ChemSpectraEditor,
+.spectra-editor-title {
+  margin: 5px 5px 0 5px;
+
+  .txt-spectra-editor-title {
+    font-size: 22px;
+    margin: 0 0 0 30px;
+  }
+}
+
+#ChemSpectra,
+#ChemSpectraEditor,
 .spectra-editor-dialog {
   display: block;
   padding-left: 0px;
