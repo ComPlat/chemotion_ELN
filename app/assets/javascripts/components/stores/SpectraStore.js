@@ -40,6 +40,7 @@ class SpectraStore {
         if (!file.spectra) return null;
         return Object.assign({}, f, { file });
       } catch (err) {
+        console.log('stores/SpectraStore.js: decodeSpectrum error!');
         return null;
       }
     }).filter(r => r != null);

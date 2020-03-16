@@ -113,9 +113,10 @@ class ViewSpectra extends React.Component {
       peaks, layout, decimal, shift, isAscend, isIntensity, boundary,
     });
     const layoutOpsObj = SpectraOps[layout];
-    const solventOps = this.opsSolvent(shift);
+    const { label, value, name } = shift.ref;
+    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
     return [
-      ...layoutOpsObj.head(solventOps, freqStr, shift.ref.value),
+      ...layoutOpsObj.head(freqStr, solvent),
       { insert: mBody },
       ...layoutOpsObj.tail(),
     ];
@@ -148,23 +149,40 @@ class ViewSpectra extends React.Component {
       const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
       return Object.assign({}, m, { area, center });
     }).sort((a, b) => (isAscend ? a.center - b.center : b.center - a.center));
-    const str = macs.map((m) => {
-      const c = m.center.toFixed(decimal);
+    let couplings = [].concat(...macs.map((m) => {
+      const c = m.center;
       const type = m.mpyType;
       const it = Math.round(m.area);
-      const js = m.js.map(j => `J = ${j.toFixed(decimal)} Hz`).join(', ');
+      const js = [].concat(...m.js.map(j => (
+        [
+          { insert: 'J', attributes: { italic: true } },
+          { insert: ` = ${j.toFixed(decimal)} Hz` },
+          { insert: ', ' },
+        ]
+      )));
       const atomCount = layout === '1H' ? `, ${it}H` : '';
       const xs = m.peaks.map(p => p.x).sort((a, b) => a - b);
-      const location = type === 'm' ? `${xs[0].toFixed(decimal)}-${xs[xs.length - 1].toFixed(decimal)}` : `${c}x`;
+      const location = type === 'm' ? `${xs[0].toFixed(decimal)}–${xs[xs.length - 1].toFixed(decimal)}` : `${c.toFixed(decimal)}`;
       return m.js.length === 0
-        ? `${location} (${type}${atomCount})`
-        : `${location} (${type}, ${js}${atomCount})`;
-    }).join(', ');
+        ? [
+          { insert: `${location} (${type}${atomCount})` },
+          { insert: ', ' },
+        ]
+        : [
+          { insert: `${location} (${type}, ` },
+          ...js.slice(0, js.length - 1),
+          { insert: `${atomCount})` },
+          { insert: ', ' },
+        ];
+    }));
+    couplings = couplings.slice(0, couplings.length - 1);
     const { label, value, name } = shift.ref;
-    const solvent = label ? `${name}, ` : '';
+    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
     return [
       { attributes: { script: 'super' }, insert: layout.slice(0, -1) },
-      { insert: `${layout.slice(-1)} NMR (${freqStr}${solvent}${value} ppm) δ = ${str}.` },
+      { insert: `${layout.slice(-1)} NMR (${freqStr}${solvent}ppm) δ = ` },
+      ...couplings,
+      { insert: '.' },
     ];
   }
 
