@@ -164,7 +164,13 @@ class ViewSpectra extends React.Component {
       const it = is.filter(i => i.xL === xL && i.xU === xU)[0] || { area: 0 };
       const area = (it.area * refFactor) / refArea;
       const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
-      return Object.assign({}, m, { area, center });
+      const xs = m.peaks.map(p => p.x).sort((a, b) => a - b);
+      const [aIdx, bIdx] = isAscend ? [0, xs.length - 1] : [xs.length - 1, 0];
+      const mxA = mpyType === 'm' ? (xs[aIdx] - shiftVal).toFixed(decimal) : 0;
+      const mxB = mpyType === 'm' ? (xs[bIdx] - shiftVal).toFixed(decimal) : 0;
+      return Object.assign({}, m, {
+        area, center, mxA, mxB,
+      });
     }).sort((a, b) => (isAscend ? a.center - b.center : b.center - a.center));
     let couplings = [].concat(...macs.map((m) => {
       const c = m.center;
@@ -178,8 +184,7 @@ class ViewSpectra extends React.Component {
         ]
       )));
       const atomCount = layout === '1H' ? `, ${it}H` : '';
-      const xs = m.peaks.map(p => p.x).sort((a, b) => a - b);
-      const location = type === 'm' ? `${xs[0].toFixed(decimal)}–${xs[xs.length - 1].toFixed(decimal)}` : `${c.toFixed(decimal)}`;
+      const location = type === 'm' ? `${m.mxA}–${m.mxB}` : `${c.toFixed(decimal)}`;
       return m.js.length === 0
         ? [
           { insert: `${location} (${type}${atomCount})` },
