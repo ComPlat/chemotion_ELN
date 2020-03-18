@@ -31,6 +31,7 @@ module Import
           when %r{attachments/([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})}
             attachment = Attachment.create!(
               file_data: data,
+              transferred: true,
               created_by: @current_user_id,
               created_for: @current_user_id,
               filename: Regexp.last_match(1)
@@ -410,6 +411,8 @@ module Import
 
         attachment.update!(
           attachable: attachable,
+          transferred: true,
+          aasm_state: fields.fetch('aasm_state'),
           filename: fields.fetch('filename'),
           content_type: fields.fetch('content_type'),
           storage: primary_store
