@@ -156,7 +156,7 @@ class ViewSpectra extends React.Component {
       const js = [].concat(...m.js.map(j => (
         [
           { insert: 'J', attributes: { italic: true } },
-          { insert: ` = ${j.toFixed(decimal)} Hz` },
+          { insert: ` = ${j.toFixed(1)} Hz` },
           { insert: ', ' },
         ]
       )));
