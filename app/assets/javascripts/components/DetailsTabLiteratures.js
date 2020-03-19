@@ -245,6 +245,18 @@ export default class DetailsTabLiteratures extends Component {
           sortedIds: groupByCitation(literatures),
           sorting: 'literature_id'
         }));
+      }).catch((errorMessage) => {
+        const notification = {
+          title: 'Add Literature',
+          message: errorMessage.error,
+          level: 'error',
+          dismissible: 'button',
+          autoDismiss: 5,
+          position: 'tr',
+          uid: 'literature'
+        };
+        NotificationActions.add(notification);
+        this.setState({ literature: Literature.buildEmpty() });
       });
     }
   }
