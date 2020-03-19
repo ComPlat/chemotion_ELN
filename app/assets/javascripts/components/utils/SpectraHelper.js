@@ -27,7 +27,7 @@ const JcampIds = (container) => {
   return { orig: origJcampIds, gene: geneJcampIds };
 };
 
-const extractJcampFile = (container) => {
+const extractJcampFiles = (container) => {
   let files = [];
   container.children.forEach((dt) => {
     dt.attachments.forEach((att) => {
@@ -51,7 +51,7 @@ const extractJcampFile = (container) => {
       }
     });
   });
-  return files[0];
+  return files;
 };
 
 const extractAnalysesId = (sample, container) => {
@@ -66,21 +66,23 @@ const extractAnalysesId = (sample, container) => {
   return idAe;
 };
 
-const BuildSpcInfo = (sample, container) => {
-  if (!sample || !container) return null;
-  const file = extractJcampFile(container);
-  if (!file) return null;
+const BuildSpcInfos = (sample, container) => {
+  if (!sample || !container) return [];
+  const files = extractJcampFiles(container);
+  if (files.length < 1) return [];
   const idAe = extractAnalysesId(sample, container);
-  return {
-    value: null,
-    label: file.filename,
-    title: sample.short_label,
-    idSp: sample.id,
-    idAe,
-    idAi: container.id,
-    idDt: file.idDt,
-    idx: file.id,
-  };
+  return files.map(file => (
+    {
+      value: null,
+      label: file.filename,
+      title: sample.short_label,
+      idSp: sample.id,
+      idAe,
+      idAi: container.id,
+      idDt: file.idDt,
+      idx: file.id,
+    }
+  ));
 };
 
-export { BuildSpcInfo, JcampIds }; // eslint-disable-line
+export { BuildSpcInfos, JcampIds }; // eslint-disable-line

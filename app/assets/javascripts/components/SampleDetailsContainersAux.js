@@ -11,7 +11,7 @@ import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
 import LoadingActions from './actions/LoadingActions';
-import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
+import { BuildSpcInfos, JcampIds } from './utils/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import UIStore from './stores/UIStore';
@@ -57,14 +57,14 @@ const qCheckMsg = (sample, container) => {
 };
 
 const SpectraEditorBtn = ({
-  sample, spcInfo, hasJcamp, hasChemSpectra,
+  sample, spcInfos, hasJcamp, hasChemSpectra,
   toggleSpectraModal, confirmRegenerate,
 }) => (
   <OverlayTrigger
     placement="bottom"
     delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Editor {!spcInfo ? ': Reprocess' : ''}</Tooltip>}
-  >{spcInfo ? (
+    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess' }</Tooltip>}
+  >{spcInfos.length > 0 ? (
     <ButtonGroup className="button-right">
       <SplitButton
         id="spectra-editor-split-button"
@@ -74,7 +74,7 @@ const SpectraEditorBtn = ({
         title={<i className="fa fa-area-chart" />}
         onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
         onClick={toggleSpectraModal}
-        disabled={!spcInfo || !hasChemSpectra}
+        disabled={!(spcInfos.length > 0) || !hasChemSpectra}
       >
         <MenuItem
           id="regenerate-spectra"
@@ -106,10 +106,7 @@ const SpectraEditorBtn = ({
 SpectraEditorBtn.propTypes = {
   sample: PropTypes.object,
   hasJcamp: PropTypes.bool,
-  spcInfo: PropTypes.oneOfType([
-    PropTypes.object,
-    PropTypes.bool,
-  ]),
+  spcInfos: PropTypes.array,
   hasChemSpectra: PropTypes.bool,
   toggleSpectraModal: PropTypes.func.isRequired,
   confirmRegenerate: PropTypes.func.isRequired,
@@ -117,7 +114,7 @@ SpectraEditorBtn.propTypes = {
 
 SpectraEditorBtn.defaultProps = {
   hasJcamp: false,
-  spcInfo: false,
+  spcInfos: [],
   sample: {},
   hasChemSpectra: false,
 };
@@ -232,11 +229,12 @@ const headerBtnGroup = (
     toggleAddToReport(container);
   };
 
-  const spcInfo = BuildSpcInfo(sample, container);
+  // spcInfos = [ { value, label, title, idSp, idAe, idx, ... }, ...]
+  const spcInfos = BuildSpcInfos(sample, container);
   const toggleSpectraModal = (e) => {
     e.stopPropagation();
     SpectraActions.ToggleModal();
-    SpectraActions.LoadSpectra.defer(spcInfo);
+    SpectraActions.LoadSpectra.defer(spcInfos); // going to fetch files base on spcInfos
   };
 
   const jcampIds = JcampIds(container);
@@ -269,7 +267,7 @@ const headerBtnGroup = (
       <SpectraEditorBtn
         sample={sample}
         hasJcamp={hasJcamp}
-        spcInfo={spcInfo}
+        spcInfos={spcInfos}
         hasChemSpectra={hasChemSpectra}
         toggleSpectraModal={toggleSpectraModal}
         confirmRegenerate={confirmRegenerate}

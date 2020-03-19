@@ -11,8 +11,9 @@ const defaultPred = {
 
 class SpectraStore {
   constructor() {
-    this.jcamp = null;
-    this.spcInfo = null;
+    this.spcMetas = [];
+    this.spcInfos = [];
+    this.spcIdx = 0;
     this.showModal = false;
     this.fetched = false;
     this.writing = false;
@@ -27,55 +28,72 @@ class SpectraStore {
       handleInferRunning: SpectraActions.InferRunning,
       handleWriteStart: SpectraActions.WriteStart,
       handleWriteStop: SpectraActions.WriteStop,
+      handleSelectIdx: SpectraActions.SelectIdx,
     });
   }
 
-  decodeSpectrum(target) {
-    const { files } = target;
-    if (!files) return [];
-    const jcamps = files.map((f) => {
-      try {
-        const raw = base64.decode(f.file);
-        const file = FN.ExtractJcamp(raw);
-        if (!file.spectra) return null;
-        return Object.assign({}, f, { file });
-      } catch (err) {
-        console.log('stores/SpectraStore.js: decodeSpectrum error!');
-        return null;
-      }
-    }).filter(r => r != null);
-    if (!jcamps) return [];
-    const { predictions } = files[0];
+  decodeSpectrum(target) { // eslint-disable-line class-methods-use-this
+    const { file, predictions, id } = target;
+    if (!file) return null;
+    let spectrum = { predictions: defaultPred, idx: id };
     if (predictions.outline && predictions.outline.code) {
-      return { jcamp: jcamps[0], predictions };
+      spectrum = Object.assign({}, spectrum, { predictions });
     }
-    return {
-      jcamp: jcamps[0],
-      predictions: Object.assign({}, defaultPred),
-    };
+
+    try {
+      const raw = base64.decode(file);
+      const jcamp = FN.ExtractJcamp(raw);
+      if (!jcamp.spectra) return null;
+      spectrum = Object.assign({}, spectrum, { jcamp });
+    } catch (err) {
+      console.log('stores/SpectraStore.js: decodeSpectrum error!');
+      return null;
+    }
+
+    return spectrum; // spectrum = { predictions: {…}, jcamp: {…} }
+  }
+
+  decodeSpectra(fetchedFiles = {}) {
+    const { files } = fetchedFiles;
+    if (!files) return [];
+    return files.map(f => this.decodeSpectrum(f)).filter(r => r !== null);
   }
 
   handleToggleModal() {
     this.setState({
-      jcamp: null,
-      spcInfo: null,
+      spcMetas: [],
+      spcInfos: [],
       showModal: !this.showModal,
       fetched: false,
     });
   }
 
-  handleLoadSpectra({ target, spcInfo }) {
-    const { jcamp, predictions } = this.decodeSpectrum(target);
+  handleLoadSpectra({ fetchedFiles, spcInfos }) {
+    const spcMetas = this.decodeSpectra(fetchedFiles);
     this.setState({
-      spcInfo, jcamp, predictions, fetched: true,
+      spcInfos, spcMetas, fetched: true,
     });
   }
 
-  handleSaveToFile({ target, spcInfo }) {
-    const { jcamp, predictions } = this.decodeSpectrum(target);
-    const newSpcInfo = Object.assign({}, spcInfo, { idx: target.files[0].id });
+  handleSaveToFile({ fetchedFiles, spcInfo = defaultPred }) {
+    const fetchedSpcMetas = this.decodeSpectra(fetchedFiles);
+    const fsm = fetchedSpcMetas.length > 0 ? fetchedSpcMetas[0] : null;
+    if (!fsm) return;
+    const fetchedIdx = fsm.idx;
+    const prevIdx = spcInfo.idx;
+    const fsi = Object.assign({}, spcInfo, { idx: fetchedIdx }); //  shortcut
+    const { spcInfos, spcMetas } = this;
+    const newSpcInfos = spcInfos.map(si => (
+      si.idx === prevIdx ? fsi : si
+    )).filter(r => r !== null);
+    const newSpcMetas = spcMetas.map(sm => (
+      sm.idx === prevIdx ? fsm : sm
+    )).filter(r => r !== null);
     this.setState({
-      jcamp, predictions, fetched: true, spcInfo: newSpcInfo,
+      spcInfos: newSpcInfos,
+      spcMetas: newSpcMetas,
+      fetched: true,
+      spcIdx: fetchedIdx,
     });
   }
 
@@ -102,6 +120,10 @@ class SpectraStore {
   handleInferSpectrum(predictions) {
     const target = predictions || Object.assign({}, defaultPred);
     this.setState({ predictions: target });
+  }
+
+  handleSelectIdx(spcIdx) {
+    this.setState({ spcIdx });
   }
 }
 
