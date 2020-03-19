@@ -27,15 +27,15 @@ export default class LiteraturesFetcher {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ element_type: type, element_id: id, ref: literature })
     }).then(response => response.json())
-      .then(json => json.literatures)
-      .then(literatures => literatures.map(literature => new Literature(literature)))
+      .then((json) => { if (json.error) { throw json; } return json.literatures; })
+      .then(literatures => literatures.map(lits => new Literature(lits)))
       .then(lits => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch((errorMessage) => { console.log(errorMessage); throw errorMessage; });
   }
 
   static deleteElementReference(params) {
