@@ -43,6 +43,7 @@
   height: 100%;
 
   span.glyphicon {
+    margin-top: -1px;
     visibility: hidden;
     border: thick solid transparent;
   }
@@ -53,7 +54,6 @@
 
   span.glyphicon {
     border-color: powderblue;
-    margin-top: -1px;
     visibility: visible;
     background-color: powderblue;
   }

@@ -48,7 +48,7 @@ const showDetails = (id) => {
 };
 
 const targets = {
-  sample: ['reaction', 'wellplate', 'device'],
+  sample: ['reaction', 'wellplate', 'device', 'research_plan'],
   molecule: ['reaction'],
 };
 

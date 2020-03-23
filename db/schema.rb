@@ -625,16 +625,22 @@ ActiveRecord::Schema.define(version: 20200117115709) do
   add_index "reports_users", ["report_id"], name: "index_reports_users_on_report_id", using: :btree
   add_index "reports_users", ["user_id"], name: "index_reports_users_on_user_id", using: :btree
 
-  create_table "research_plans", force: :cascade do |t|
-    t.string   "name",        null: false
-    t.text     "description"
-    t.string   "sdf_file"
-    t.string   "svg_file"
-    t.integer  "created_by",  null: false
+  create_table "research_plan_table_schemas", force: :cascade do |t|
+    t.string   "name"
+    t.jsonb    "value"
+    t.integer  "created_by", null: false
     t.datetime "deleted_at"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
-    t.string   "thumb_svg"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "research_plans", force: :cascade do |t|
+    t.string   "name",       null: false
+    t.integer  "created_by", null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb    "body"
   end
 
   create_table "residues", force: :cascade do |t|
@@ -786,6 +792,7 @@ ActiveRecord::Schema.define(version: 20200117115709) do
     t.string   "unlock_token"
     t.datetime "locked_at"
     t.boolean  "account_active"
+    t.boolean  "is_templates_moderator"
   end
 
   add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
@@ -912,6 +919,45 @@ ActiveRecord::Schema.define(version: 20200117115709) do
           end;
        $function$
   SQL
+  create_function :user_ids, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+          select $1 as id
+          union
+          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+         and users.type in ('Group') and users_groups.user_id = $1)
+        $function$
+  SQL
+  create_function :user_as_json, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
+       RETURNS json
+       LANGUAGE sql
+      AS $function$
+         select row_to_json(result) from (
+           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           from users where id = $1
+         ) as result
+       $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+         begin
+          if (in_user_id = in_current_user_id) then
+            return null;
+          else
+            return (select row_to_json(result) from (
+            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+            from users where id = $1
+            ) as result);
+          end if;
+          end;
+       $function$
+  SQL
   create_function :detail_level_for_sample, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)
        RETURNS TABLE(detail_level_sample integer, detail_level_wellplate integer)
@@ -944,6 +990,16 @@ ActiveRecord::Schema.define(version: 20200117115709) do
 
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
+  SQL
+  create_function :group_user_ids, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select id from users where type='Person' and id= $1
+             union
+             select user_id from users_groups where group_id = $1
+      $function$
   SQL
   create_function :group_user_ids, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)

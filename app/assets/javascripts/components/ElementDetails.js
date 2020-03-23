@@ -7,7 +7,7 @@ import DeviceDetails from './DeviceDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
-import ResearchPlanDetails from './ResearchPlanDetails';
+import ResearchPlanDetails from './research_plan/ResearchPlanDetails';
 import ReportContainer from './report/ReportContainer';
 import FormatContainer from './FormatContainer';
 import GraphContainer from './GraphContainer';
@@ -121,7 +121,7 @@ export default class ElementDetails extends Component {
       case 'research_plan':
         return (
           <ResearchPlanDetails
-            research_plan={el}
+            researchPlan={el}
             toggleFullScreen={this.toggleFullScreen}
           />
         );

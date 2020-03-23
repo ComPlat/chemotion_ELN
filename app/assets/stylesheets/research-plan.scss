@@ -1,0 +1,154 @@
+.research-plan-details {
+
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .research-plan-export-dropdown {
+        margin-top: 20px;
+    }
+
+    .research-plan-name {
+        &.static {
+            margin-top: 20px;
+            margin-bottom: 20px;
+
+            h1 {
+                margin: 0;
+                font-size: 26px;
+                line-height: 32px;
+            }
+        }
+    }
+
+    .research-plan-field {
+        label {
+            margin-top: 5px;
+        }
+        .drag-source {
+            float: right;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+        &.static {
+            margin-bottom: 20px;
+
+            .ql-editor {
+                padding: 0;
+            }
+
+            .ql-hidden {
+                display: none;
+            }
+        }
+
+        .image-container {
+            text-align: center;
+
+            img {
+                max-width: 100%;
+            }
+
+            p {
+                margin-bottom: 0;
+            }
+        }
+    }
+
+    .research-plan-field-drop-target {
+        height: 20px;
+
+        .indicator {
+            height: 10px;
+        }
+
+        &.can-drop {
+            .indicator {
+                border-bottom: 4px dashed lightgray;
+            }
+        }
+
+        &.is-over {
+            .indicator {
+                border-bottom: 4px solid lightgray;
+            }
+        }
+    }
+
+    .research-plan-field-drop-add-field {
+        button {
+            width: 60px;
+        }
+    }
+
+    .research-plan-table-toolbar {
+        margin-top: 10px;
+
+        button {
+            width: 100%;
+        }
+    }
+
+    .dropzone {
+        min-height: 50px;
+        width: 100%;
+        border: 3px dashed lightgray;
+
+        .image-container {
+            margin: 15px;
+        }
+
+        p {
+            text-align: center;
+            padding-top: 12px;
+            color: grey;
+        }
+    }
+
+    .drop-target {
+        min-height: 50px;
+        width: 100%;
+        border: 3px dashed lightgray;
+        padding: 10px;
+
+        &.is-over {
+            border: 3px solid lightgray;
+        }
+    }
+}
+
+.research-plan-table-schema-modal-create {
+    margin-bottom: 40px;
+}
+
+.research-plan-table-schema-modal-table {
+    button {
+        float: right;
+        margin-left: 5px;
+    }
+}
+
+.research-plan-dropzone-enable {
+    height: 50px;
+    width: 100%;
+    border: 3px dashed lightgray;
+    display: flex;
+    .zone {
+        margin: auto;
+        color: grey;
+    }
+}
+
+.research-plan-dropzone-disable {
+    height: 50px;
+    width: 100%;
+    border: 3px dashed lightgray;
+    display: flex;
+    cursor: not-allowed;
+    background-color: #e8e8e8;
+    .zone {
+        margin: auto;
+        color: grey;
+        pointer-events: none;
+    }
+}

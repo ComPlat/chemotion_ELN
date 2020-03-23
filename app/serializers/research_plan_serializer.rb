@@ -2,6 +2,8 @@ class ResearchPlanSerializer < ActiveModel::Serializer
 
   attributes *DetailLevels::ResearchPlan.new.base_attributes
 
+  has_one :container, :serializer => ContainerSerializer
+
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
   end
