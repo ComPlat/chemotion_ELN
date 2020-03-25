@@ -101,7 +101,7 @@ module ReportHelpers
             , max(GREATEST(co.permission_level, scu.permission_level)) as pl
             , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
             from samples s
-            inner join collections_samples c_s on s.id = c_s.sample_id
+            inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
             left join collections co on (
               co.id = c_s.collection_id and co.user_id in (#{u_ids})
             )
@@ -195,7 +195,7 @@ module ReportHelpers
 
     if checkedAll
       return unless c_id
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.collection_id = #{c_id} "
+      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
       selection = s_ids.empty? && '' || "s.id not in (#{s_ids}) and"
     else
@@ -219,7 +219,7 @@ module ReportHelpers
           , max(GREATEST(co.permission_level, scu.permission_level)) as pl
           , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
         from samples s
-        inner join collections_samples c_s on s.id = c_s.sample_id
+        inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
         left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
@@ -244,7 +244,7 @@ module ReportHelpers
     cont_type = 'Sample' # containable_type
     if checkedAll
       return unless c_id
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.collection_id = #{c_id} "
+      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
       selection = s_ids.empty? && '' || "s.id not in (#{s_ids}) and"
     else
@@ -297,7 +297,7 @@ module ReportHelpers
           , max(GREATEST(co.permission_level, scu.permission_level)) as pl
           , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
         from samples s
-        inner join collections_samples c_s on s.id = c_s.sample_id
+        inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
         left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
@@ -335,7 +335,7 @@ module ReportHelpers
 
     if checkedAll
       return unless c_id
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.collection_id = #{c_id} "
+      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 'wp_id asc'
       selection = wp_ids.empty? && '' || "w.wellplate_id not in (#{wp_ids}) and"
     else
@@ -365,7 +365,7 @@ module ReportHelpers
           , (array_agg(w.position_y)) [1] as "wy"
         from samples s
         inner join wells w on s.id = w.sample_id
-        inner join collections_samples c_s on s.id = c_s.sample_id
+        inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
         left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
@@ -391,7 +391,7 @@ module ReportHelpers
 
     if checkedAll
       return unless c_id
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.collection_id = #{c_id} "
+      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 'r_id asc'
       selection = r_ids.empty? && '' || "r_s.reaction_id not in (#{r_ids}) and"
     else
@@ -426,7 +426,7 @@ module ReportHelpers
           , (array_agg(r_s.reaction_id)) [1] as r_id
         from samples s
         inner join reactions_samples r_s on s.id = r_s.sample_id
-        inner join collections_samples c_s on s.id = c_s.sample_id
+        inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
         left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
