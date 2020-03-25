@@ -8,7 +8,7 @@ class ImportCollectionsJob < ActiveJob::Base
       Message.create_msg_notification(
         channel_subject: Channel::COLLECTION_ZIP,
         message_from: @user_id,
-        data_args: { col_labels: '',  operation: 'import', expires_at: nil },
+        data_args: { col_labels: '', operation: 'import', expires_at: nil },
         autoDismiss: 5
       ) if @success
     rescue StandardError => e
@@ -28,10 +28,12 @@ class ImportCollectionsJob < ActiveJob::Base
       Message.create_msg_notification(
         channel_subject: Channel::COLLECTION_ZIP_FAIL,
         message_from: @user_id,
-        data_args: { col_labels: '',  operation: 'import' },
+        data_args: { col_labels: '', operation: 'import' },
         autoDismiss: 5
       )
       @success = false
+    ensure
+      att&.destroy!
     end
   end
 end
