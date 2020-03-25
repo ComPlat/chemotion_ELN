@@ -386,7 +386,7 @@ module Chemotion
             att = Attachment.new(
               bucket: file[:container_id],
               filename: file[:filename],
-              key: file[:name],
+              key: File.basename(file[:tempfile].path),
               file_path: file[:tempfile],
               created_by: current_user.id,
               created_for: current_user.id,

@@ -7,7 +7,7 @@ import ContainerComponent from '../ContainerComponent';
 import QuillViewer from '../QuillViewer';
 import ImageModal from '../common/ImageModal';
 import { previewContainerImage } from './../utils/imageHelper';
-import { JcampIds, BuildSpcInfo } from '../utils/SpectraHelper';
+import { JcampIds, BuildSpcInfos } from '../utils/SpectraHelper';
 import UIStore from '../stores/UIStore';
 import SpectraActions from '../actions/SpectraActions';
 import LoadingActions from '../actions/LoadingActions';
@@ -156,7 +156,7 @@ export default class ResearchPlanDetailsContainers extends Component {
         SpectraActions.Regenerate(jcampIds, this.handleChange);
       }
     };
-    const spcInfo = BuildSpcInfo(researchPlan, container);
+    const spcInfo = BuildSpcInfos(researchPlan, container);
     const { hasChemSpectra } = UIStore.getState();
     const toggleSpectraModal = (e) => {
       e.stopPropagation();
