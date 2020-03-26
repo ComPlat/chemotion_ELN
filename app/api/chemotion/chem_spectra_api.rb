@@ -136,7 +136,7 @@ module Chemotion
           m = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
 
           content_type('application/json')
-          { smi: m[:smiles], mass: m[:mass], status: true }
+          { smi: m[:smiles], mass: m[:mass], svg: m[:svg], status: true }
         end
       end
     end
