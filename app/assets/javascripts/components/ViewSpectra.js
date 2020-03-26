@@ -452,6 +452,7 @@ class ViewSpectra extends React.Component {
   }
 
   renderSpectraEditor(jcamp, predictions) {
+    const { sample } = this.props;
     const {
       entity, isExist,
     } = FN.buildData(jcamp);
@@ -472,6 +473,7 @@ class ViewSpectra extends React.Component {
               entity={entity}
               operations={operations}
               forecast={forecast}
+              molSvg={sample.svgPath}
             />
         }
       </Modal.Body>
