@@ -64,7 +64,7 @@
     "react-qr-reader": "^2.1.0",
     "react-redux": "^5.0.0",
     "react-select": "1.1.0",
-    "react-spectra-editor": "^0.6.46",
+    "react-spectra-editor": "^0.6.48",
     "react-stickydiv": "^3.4.19",
     "react-svg-file-zoom-pan": "0.1.5",
     "react-svg-inline": "^1.2.0",
