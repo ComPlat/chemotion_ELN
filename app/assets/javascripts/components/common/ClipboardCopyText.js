@@ -34,7 +34,9 @@ export default class ClipboardCopyText extends Component {
 ClipboardCopyText.propTypes = {
   text: PropTypes.oneOfType([
     PropTypes.string,
-    PropTypes.instanceOf(Formula),
+    PropTypes.shape({
+      type: PropTypes.oneOf([Formula])
+    }),
   ]),
   clipText: PropTypes.string
 };
