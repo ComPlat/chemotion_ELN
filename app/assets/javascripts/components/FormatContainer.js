@@ -81,7 +81,11 @@ export default class FormatContainer extends React.Component {
   }
 
   onChangeUI(state) {
-    ReportActions.updateCheckedTags.defer(state);
+    const { selectedObjTags, defaultObjTags } = this.state;
+    ReportActions.updateCheckedTags.defer({
+      uiState: state,
+      reportState: { selectedObjTags, defaultObjTags }
+    });
   }
 
   onChangeRp(state) {

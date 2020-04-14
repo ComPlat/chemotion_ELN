@@ -2,7 +2,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
 import { Panel, Button, Accordion } from 'react-bootstrap';
 
 import ReportActions from './actions/ReportActions';
@@ -44,10 +43,15 @@ export default class GraphContainer extends React.Component {
   }
 
   onChangeUI(state) {
-    ReportActions.updateCheckedTags.defer(state);
+    const { selectedObjTags, defaultObjTags } = this.state;
+    ReportActions.updateCheckedTags.defer({
+      uiState: state,
+      reportState: { selectedObjTags, defaultObjTags }
+    });
   }
 
   onChangeRp(state) {
+    const { selectedObjTags, defaultObjTags } = state;
     const selectedComputedProps = [];
     state.selectedObjs.filter(s => s.molecule_computed_props).forEach((s) => {
       const cprops = s.molecule_computed_props.sort((a, b) => (
@@ -59,8 +63,8 @@ export default class GraphContainer extends React.Component {
 
     this.setState({
       selectedComputedProps,
-      selectedObjTags: state.selectedObjTags,
-      defaultObjTags: state.defaultObjTags
+      selectedObjTags,
+      defaultObjTags
     });
   }
 
@@ -88,16 +92,16 @@ export default class GraphContainer extends React.Component {
         bsStyle="primary"
       >
         <Panel.Heading>
-            {header}
+          {header}
         </Panel.Heading>
         <Panel.Body>
-        <Accordion>
-          <ComputedPropsGraphContainer
-            show
-            style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}
-            graphData={selectedComputedProps}
-          />
-        </Accordion>
+          <Accordion>
+            <ComputedPropsGraphContainer
+              show
+              style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}
+              graphData={selectedComputedProps}
+            />
+          </Accordion>
         </Panel.Body>
       </Panel>
     );
