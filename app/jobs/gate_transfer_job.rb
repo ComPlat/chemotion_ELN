@@ -9,11 +9,13 @@ class GateTransferJob < ActiveJob::Base
   STATE_BEFORE_TRANSFER = 'before transfer'
   STATE_TRANSFER = 'transferring'
   STATE_TRANSFERRED = 'transferred'
+  STATE_FAILED_TRANSFER = 'unable to transfer'
 
   def perform(id, url, req_headers)
     # ping remote
     @url = url
     @req_headers = req_headers
+    @no_error = true
 
     connection = Faraday.new(url: @url) do |f|
       f.use FaradayMiddleware::FollowRedirects
@@ -39,12 +41,14 @@ class GateTransferJob < ActiveJob::Base
         transfer_data(type: GateTransferJob::REACTION, id: reaction_id, state: GateTransferJob::STATE_BEFORE_TRANSFER, msg: '')
       end
 
-      all_sample_ids.each do |sample_id|
-        transfer_data(type: GateTransferJob::SAMPLE, id: sample_id, state: GateTransferJob::STATE_BEFORE_TRANSFER, msg: '')
-      end
-
-      if @reactions.present? || @samples.present?
-        MoveToCollectionJob.set(queue: "move_to_collection_#{id}").perform_later(id, @reactions, @samples)
+      begin
+        all_sample_ids.each do |sample_id|
+          transfer_data(type: GateTransferJob::SAMPLE, id: sample_id, state: GateTransferJob::STATE_BEFORE_TRANSFER, msg: '')
+        end
+      ensure
+        if @no_error && (@reactions.present? || @samples.present?)
+          MoveToCollectionJob.set(queue: "move_to_collection_#{id}").perform_later(id, @reactions, @samples)
+        end
       end
     end
     true
@@ -71,7 +75,12 @@ class GateTransferJob < ActiveJob::Base
     attachments.each do |att|
       cont_type = att.content_type || MimeMagic.by_path(att.filename)&.type
       tmp_files << Tempfile.new(encoding: 'ascii-8bit')
-      tmp_files[-1].write(att.read_file)
+      file_stream = att.read_file
+      file_checksum = Digest::SHA256.hexdigest(file_stream)
+      if att.checksum != file_checksum
+        raise 'The file checksum does not mach, unable to transfer, please try again later!'
+      end
+      tmp_files[-1].write(file_stream)
       tmp_files[-1].rewind
       req_payload[att.identifier] = Faraday::UploadIO.new(
         tmp_files[-1].path, cont_type, att.filename
@@ -104,8 +113,16 @@ class GateTransferJob < ActiveJob::Base
       element[:msg] = 'resp is not successful'
     end
   rescue => e
-    element[:state] = GateTransferJob::STATE_TRANSFER
-    element[:msg] = e
+    element[:state] = GateTransferJob::STATE_FAILED_TRANSFER
+    element[:msg] = e.message
+    @no_error = false
+    Message.create_msg_notification(
+      channel_subject: Channel::GATE_TRANSFER_NOTIFICATION,
+      data_args: { comment: e.message },
+      level: 'error',
+      message_from: @collection.user_id,
+    )
+
   ensure
     @samples.push(element) if element[:type] == GateTransferJob::SAMPLE
     @reactions.push(element) if element[:type] == GateTransferJob::REACTION
