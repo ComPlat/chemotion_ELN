@@ -451,7 +451,7 @@ module Chemotion
         if reaction
           if attributes['origin'] && attributes['origin'].short_label
             materials.products&.map! do |prod|
-              prod.name.gsub! attributes['origin'].short_label, reaction.short_label
+              prod.name&.gsub! attributes['origin'].short_label, reaction.short_label
               prod
             end
           end
