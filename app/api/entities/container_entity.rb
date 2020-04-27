@@ -50,8 +50,7 @@ module Entities
         a_img&.content_type&.match(Regexp.union(%w[jpg jpeg png tiff]))
       end
 
-      attachment = image_atts.find(&:non_jcamp?).presence || image_atts[0]
-      attachment ||= attachments.find(&:non_jcamp?).presence || attachments[0]
+      attachment = image_atts[0] || attachments[0]
 
       preview = attachment.read_thumbnail if attachment
       preview && Base64.encode64(preview) || 'not available'
