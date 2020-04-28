@@ -38,6 +38,7 @@ class ViewSpectra extends React.Component {
     this.formatPks = this.formatPks.bind(this);
     this.getContent = this.getContent.bind(this);
     this.getSpcInfo = this.getSpcInfo.bind(this);
+    this.getQDescVal = this.getQDescVal.bind(this);
   }
 
   componentDidMount() {
@@ -108,6 +109,22 @@ class ViewSpectra extends React.Component {
     const sis = spcInfos.filter(x => x.idx === spcIdx);
     const si = sis.length > 0 ? sis[0] : spcInfos[0];
     return si;
+  }
+
+  getQDescVal() {
+    const { sample } = this.props;
+    const { spcInfos, spcIdx } = this.state;
+    const sis = spcInfos.filter(x => x.idx === spcIdx);
+    const si = sis.length > 0 ? sis[0] : spcInfos[0];
+
+    const ops = sample.analysesContainers().map((ae) => {
+      if (ae.id !== si.idAe) return null;
+      return ae.children.map((ai) => {
+        if (ai.id !== si.idAi) return null;
+        return ai.extended_metadata.content.ops; // eslint-disable-line
+      }).filter(r => r !== null);
+    }).filter(r => r !== null)[0][0];
+    return ops;
   }
 
   formatPks({
@@ -458,7 +475,7 @@ class ViewSpectra extends React.Component {
     } = FN.buildData(jcamp);
 
     const operations = this.buildOpsByLayout(entity);
-
+    const descriptions = this.getQDescVal();
     const forecast = {
       molecule: 'molecule',
       predictions,
@@ -474,6 +491,7 @@ class ViewSpectra extends React.Component {
               operations={operations}
               forecast={forecast}
               molSvg={sample.svgPath}
+              descriptions={descriptions}
             />
         }
       </Modal.Body>
