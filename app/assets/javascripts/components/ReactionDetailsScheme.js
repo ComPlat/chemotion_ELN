@@ -776,12 +776,15 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
               <Col md={12}>
                 <FormGroup>
                   <ControlLabel>Description</ControlLabel>
-                  <QuillEditor
-                    ref={this.quillref}
-                    value={reaction.description}
-                    onChange={event => this.props.onInputChange('description', event)}
-                    toolbarSymbol={reactionToolbarSymbol}
-                  />
+                  <div className="quill-resize">
+                    <QuillEditor
+                      height="100%"
+                      ref={this.quillref}
+                      value={reaction.description}
+                      onChange={event => this.props.onInputChange('description', event)}
+                      toolbarSymbol={reactionToolbarSymbol}
+                    />
+                  </div>
                 </FormGroup>
               </Col>
             </Row>
