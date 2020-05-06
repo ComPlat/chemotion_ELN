@@ -13,27 +13,21 @@ import {
   Row
 } from 'react-bootstrap';
 import Select from 'react-select';
-
 import Reaction from './models/Reaction';
-
-import { statusOptions } from './staticDropdownOptions/options'
-
-import LineChartContainer from './lineChart/LineChartContainer'
-import EditableTable from './lineChart/EditableTable'
-import OlsTreeSelect from './OlsComponent';
+import { statusOptions } from './staticDropdownOptions/options';
+import LineChartContainer from './lineChart/LineChartContainer';
+import EditableTable from './lineChart/EditableTable';
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
-    super(props)
+    super(props);
     const { temperature } = props && props.reaction;
     this.state = {
       showTemperatureChart: false,
       temperature,
-    }
-
+    };
     this.toggleTemperatureChart = this.toggleTemperatureChart.bind(this);
     this.updateTemperature = this.updateTemperature.bind(this);
-
     this.temperatureUnit = props.reaction.temperature.valueUnit;
   }
 
@@ -46,24 +40,21 @@ export default class ReactionDetailsMainProperties extends Component {
   }
 
   updateTemperature(newData) {
-    let {temperature} = this.state
-    temperature.data = newData
-
-    this.setState({temperature: temperature})
-
-    this.props.onInputChange('temperatureData', temperature)
+    const { temperature } = this.state;
+    temperature.data = newData;
+    this.setState({ temperature });
+    this.props.onInputChange('temperatureData', temperature);
   }
 
   toggleTemperatureChart() {
-    let {showTemperatureChart} = this.state
-    this.setState({ showTemperatureChart: !showTemperatureChart })
+    const { showTemperatureChart } = this.state;
+    this.setState({ showTemperatureChart: !showTemperatureChart });
   }
 
   changeUnit() {
-    let index = Reaction.temperature_unit.indexOf(this.temperatureUnit)
-    let unit = Reaction.temperature_unit[(index + 1) % 3]
-
-    this.props.onInputChange('temperatureUnit', unit)
+    const index = Reaction.temperature_unit.indexOf(this.temperatureUnit);
+    const unit = Reaction.temperature_unit[(index + 1) % 3];
+    this.props.onInputChange('temperatureUnit', unit);
   }
 
   render() {
@@ -169,19 +160,6 @@ export default class ReactionDetailsMainProperties extends Component {
         <Row>
           {TempChartRow}
         </Row>
-        <Row>
-          <Col md={12}>
-            <FormGroup>
-              <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
-              <OlsTreeSelect
-                selectName="rxno"
-                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                onSelectChange={event => onInputChange('rxno', event.trim())}
-                selectedDisable={reaction.isMethodDisabled('rxno')}
-              />
-            </FormGroup>
-          </Col>
-        </Row>
       </Grid>
     );
   }
@@ -190,4 +168,9 @@ export default class ReactionDetailsMainProperties extends Component {
 ReactionDetailsMainProperties.propTypes = {
   reaction: PropTypes.object,
   onInputChange: PropTypes.func
-}
+};
+
+ReactionDetailsMainProperties.defaultProps = {
+  reaction: {},
+  onInputChange: () => {}
+};
