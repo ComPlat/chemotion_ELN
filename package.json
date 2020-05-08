@@ -3,6 +3,7 @@
   "repository": {},
   "dependencies": {
     "@novnc/noVNC": "novnc/noVNC#v1.0.0",
+    "acorn": "^5.7.0",
     "ag-grid-community": "^19.1.2",
     "ag-grid-react": "^19.1.2",
     "alt": "0.18.6",
