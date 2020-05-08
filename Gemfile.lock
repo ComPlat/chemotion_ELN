@@ -6,9 +6,9 @@ GIT
 
 GIT
   remote: https://github.com/CamAnNguyen/rdkit_chem
-  revision: 6777f2b2c74948064750e0724f7952b097c4a3c5
+  revision: cf8a3890c5aa7f4db74e40d1cbd3a50b62bd8d94
   specs:
-    rdkit_chem (2019.03.3.1)
+    rdkit_chem (2020.04.30.1)
 
 GIT
   remote: https://github.com/ComPlat/ketcher-rails
