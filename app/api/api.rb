@@ -125,4 +125,5 @@ class API < Grape::API
   mount Chemotion::EditorAPI
   mount Chemotion::UiAPI
   mount Chemotion::OlsTermsAPI
+  mount Chemotion::PredictionAPI
 end
