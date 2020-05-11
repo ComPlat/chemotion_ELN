@@ -3,6 +3,7 @@ import LoadingActions from '../actions/LoadingActions';
 import ReportActions from '../actions/ReportActions';
 import ElementActions from '../actions/ElementActions';
 import InboxActions from '../actions/InboxActions';
+import PredictionActions from '../actions/PredictionActions';
 
 class LoadingStore {
   constructor() {
@@ -28,6 +29,7 @@ class LoadingStore {
           ElementActions.createWellplate,
           ElementActions.updateWellplate,
           InboxActions.fetchInbox,
+          PredictionActions.predictProducts,
         ],
     });
   }
