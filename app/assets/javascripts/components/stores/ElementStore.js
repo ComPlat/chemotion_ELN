@@ -206,6 +206,7 @@ class ElementStore {
           ElementActions.showComputedPropsGraph,
           ElementActions.showDeviceControl,
           ElementActions.showLiteratureDetail,
+          ElementActions.showPredictionContainer,
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,
@@ -954,7 +955,9 @@ class ElementStore {
 
   handleClose({ deleteEl, force }) {
     // Currently ignore report "isPendingToSave"
-    if (force || deleteEl.type === 'report' || this.isDeletable(deleteEl)) {
+    const deletableTyps = ['report', 'prediction'];
+    const isDeletableTyps = deletableTyps.indexOf(deleteEl.type) >= 0;
+    if (force || isDeletableTyps || this.isDeletable(deleteEl)) {
       this.deleteCurrentElement(deleteEl);
     } else {
       this.setState({ deletingElement: deleteEl });

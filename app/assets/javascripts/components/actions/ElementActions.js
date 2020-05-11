@@ -26,6 +26,7 @@ import Format from '../models/Format';
 import Graph from '../models/Graph';
 import DeviceControl from '../models/DeviceControl';
 import LiteratureMap from '../models/LiteratureMap';
+import Prediction from '../models/Prediction';
 
 import _ from 'lodash';
 
@@ -601,6 +602,10 @@ class ElementActions {
     return LiteratureMap.buildEmpty();
   }
 
+  // -- Prediction --
+  showPredictionContainer() {
+    return Prediction.buildEmpty();
+  }
 
   // -- General --
 

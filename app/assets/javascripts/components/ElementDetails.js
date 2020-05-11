@@ -15,6 +15,7 @@ import DetailActions from './actions/DetailActions';
 import ElementStore from './stores/ElementStore';
 import { SameEleTypId } from './utils/ElementUtils';
 import LiteratureDetails from './LiteratureDetails';
+import PredictionContainer from './prediction/PredictionContainer';
 
 export default class ElementDetails extends Component {
   constructor(props) {
@@ -127,6 +128,8 @@ export default class ElementDetails extends Component {
         );
       case 'report':
         return <ReportContainer report={el} />;
+      case 'prediction':
+        return <PredictionContainer prediction={el} />;
       case 'format':
         return <FormatContainer format={el} />;
       case 'graph':
@@ -164,6 +167,14 @@ export default class ElementDetails extends Component {
         <span>
           <i className="fa fa-file-text-o" />&nbsp;&nbsp;
           <i className="fa fa-pencil" />
+        </span>
+      );
+    } else if (el.type === 'prediction') {
+      title = 'Reaction Prediction';
+      bsStyle = 'primary';
+      iconElement = (
+        <span>
+          <i className="fa fa-percent" />
         </span>
       );
     } else if (el.type === 'deviceCtrl') {
