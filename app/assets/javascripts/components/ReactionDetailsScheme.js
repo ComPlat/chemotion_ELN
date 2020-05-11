@@ -12,16 +12,17 @@ import Reaction from './models/Reaction';
 import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import QuillEditor from './QuillEditor';
-
 import NotificationActions from './actions/NotificationActions';
 import { reactionToolbarSymbol } from './utils/quillToolbarSymbol';
 import GeneralProcedureDnd from './GeneralProcedureDnD';
 import { rolesOptions, conditionsOptions } from './staticDropdownOptions/options';
+import OlsTreeSelect from './OlsComponent';
+import ReactionDetailsDuration from './ReactionDetailsDuration';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
-    let { reaction } = props;
+    const { reaction } = props;
     this.state = { reaction, lockEquivColumn: false, cCon: false };
     this.quillref = React.createRef();
 
@@ -151,7 +152,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   deleteMaterial(material, materialGroup) {
-    let { reaction } = this.state;
+    const { reaction } = this.state;
     reaction.deleteMaterial(material, materialGroup);
 
     // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
@@ -189,7 +190,7 @@ export default class ReactionDetailsScheme extends Component {
     this.onReactionChange(reaction, { schemaChanged: true });
   }
 
-  onReactionChange(reaction, options={}) {
+  onReactionChange(reaction, options = {}) {
     this.props.onReactionChange(reaction, options);
   }
 
@@ -279,22 +280,22 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedReactionForExternalLabelChange(changeEvent) {
-    let {sampleID, externalLabel} = changeEvent;
-    let updatedSample = this.props.reaction.sampleById(sampleID);
+    const { sampleID, externalLabel } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
 
     updatedSample.external_label = externalLabel;
 
-    return this.updatedReactionWithSample(this.updatedSamplesForExternalLabelChange.bind(this), updatedSample)
+    return this.updatedReactionWithSample(this.updatedSamplesForExternalLabelChange.bind(this), updatedSample);
   }
 
   updatedReactionForReferenceChange(changeEvent) {
-    const {sampleID} = changeEvent;
-    const {reaction} = this.state;
+    const { sampleID } = changeEvent;
+    const { reaction } = this.state;
     const sample = reaction.sampleById(sampleID);
 
     reaction.markSampleAsReference(sampleID);
 
-    return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample)
+    return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
   }
 
   updatedReactionForAmountChange(changeEvent) {
@@ -304,7 +305,7 @@ export default class ReactionDetailsScheme extends Component {
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
   updatedReactionForAmountUnitChange(changeEvent) {
@@ -314,7 +315,7 @@ export default class ReactionDetailsScheme extends Component {
     // updatedSample.setAmountAndNormalizeToGram(amount);
     updatedSample.setAmount(amount);
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
   updatedReactionForMetricsChange(changeEvent) {
@@ -322,7 +323,7 @@ export default class ReactionDetailsScheme extends Component {
     const updatedSample = this.props.reaction.sampleById(sampleID);
     updatedSample.setUnitMetrics(metricUnit, metricPrefix);
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
   updatedReactionForLoadingChange(changeEvent) {
@@ -331,25 +332,25 @@ export default class ReactionDetailsScheme extends Component {
 
     updatedSample.amountType = amountType;
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
   updatedReactionForAmountTypeChange(changeEvent) {
-    let { sampleID, amountType } = changeEvent;
-    let updatedSample = this.props.reaction.sampleById(sampleID);
+    const { sampleID, amountType } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
 
     updatedSample.amountType = amountType;
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
   updatedReactionForEquivalentChange(changeEvent) {
-    let {sampleID, equivalent} = changeEvent;
-    let updatedSample = this.props.reaction.sampleById(sampleID);
+    const { sampleID, equivalent } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
 
     updatedSample.equivalent = equivalent;
 
-    return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample)
+    return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
   }
 
   calculateEquivalent(refM, updatedSample) {
@@ -596,7 +597,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   solventCollapseBtn() {
-    const open = this.state.open;
+    const { open } = this.state;
     const arrow = open
       ? <i className="fa fa-angle-double-up" />
       : <i className="fa fa-angle-double-down" />;
@@ -606,13 +607,14 @@ export default class ReactionDetailsScheme extends Component {
           bsSize="xsmall"
           style={{ backgroundColor: '#ddd' }}
           onClick={() => this.setState({ open: !open })}
-        >{arrow} &nbsp; Solvents</Button>
+        >{arrow} &nbsp; Solvents
+        </Button>
       </ButtonGroup>
     );
   }
 
   conditionsCollapseBtn() {
-    const cCon = this.state.cCon;
+    const { cCon } = this.state;
     const arrow = cCon
       ? <i className="fa fa-angle-double-up" />
       : <i className="fa fa-angle-double-down" />;
@@ -622,7 +624,8 @@ export default class ReactionDetailsScheme extends Component {
           bsSize="xsmall"
           style={{ backgroundColor: '#ddd' }}
           onClick={() => this.setState({ cCon: !cCon })}
-        >{arrow} &nbsp; Conditions</Button>
+        >{arrow} &nbsp; Conditions
+        </Button>
       </ButtonGroup>
     );
   }
@@ -652,14 +655,14 @@ export default class ReactionDetailsScheme extends Component {
       });
     }
 
-if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
-    reaction.starting_materials.map((sample) => {
-      sample.concn = sample.amount_mol / reaction.solventVolume;
-    });
-    reaction.reactants.map((sample) => {
-      sample.concn = sample.amount_mol / reaction.solventVolume;
-    });
-  }
+    if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
+      reaction.starting_materials.map((sample) => {
+        sample.concn = sample.amount_mol / reaction.solventVolume;
+      });
+      reaction.reactants.map((sample) => {
+        sample.concn = sample.amount_mol / reaction.solventVolume;
+      });
+    }
 
     // if no reference material then mark first starting material
     const refM = this.props.reaction.starting_materials[0];
@@ -679,7 +682,9 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
               dropMaterial={this.dropMaterial}
-              deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+              deleteMaterial={
+                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+              }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
@@ -695,7 +700,9 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
               materialGroup="reactants"
               materials={reaction.reactants}
               dropMaterial={this.dropMaterial}
-              deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+              deleteMaterial={
+                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+              }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
@@ -711,7 +718,9 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
               materialGroup="products"
               materials={reaction.products}
               dropMaterial={this.dropMaterial}
-              deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+              deleteMaterial={
+                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+              }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
@@ -729,7 +738,9 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
                   materialGroup="solvents"
                   materials={reaction.solvents}
                   dropMaterial={this.dropMaterial}
-                  deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+                  deleteMaterial={
+                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+                  }
                   dropSample={this.dropSample}
                   showLoadingColumn={!!reaction.hasPolymers()}
                   onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
@@ -771,6 +782,19 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
                 onInputChange={(type, event) => this.props.onInputChange(type, event)}
               />
             </div>
+            <ReactionDetailsDuration
+              reaction={reaction}
+              onInputChange={(type, event) => this.props.onInputChange(type, event)}
+            />
+            <FormGroup>
+              <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
+              <OlsTreeSelect
+                selectName="rxno"
+                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
+                onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
+                selectedDisable={reaction.isMethodDisabled('rxno')}
+              />
+            </FormGroup>
             {this.renderRole()}
             <Row>
               <Col md={12}>

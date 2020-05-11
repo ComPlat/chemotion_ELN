@@ -1,26 +1,24 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Row, Col, FormGroup, ControlLabel, FormControl, MenuItem, Button,
-  ListGroupItem, ListGroup, InputGroup, OverlayTrigger, Tooltip,
+  Row, Col, FormGroup, ControlLabel, FormControl, MenuItem,
+  ListGroupItem, ListGroup, InputGroup, Tooltip,
   DropdownButton
 } from 'react-bootstrap';
 import Select from 'react-select';
-import moment from 'moment';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
-import { difference, concat } from 'lodash';
 import {
   purificationOptions,
   dangerousProductsOptions
 } from './staticDropdownOptions/options';
-import Reaction from './models/Reaction';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import QuillEditor from './QuillEditor';
 import Sample from './models/Sample';
 import StringTag from './StringTag';
 import { observationPurification, solventsTL } from './utils/reactionPredefined';
+import OlsTreeSelect from './OlsComponent';
 
 function dummy() { return true; }
 
@@ -33,13 +31,9 @@ export default class ReactionDetailsProperties extends Component {
     this.handlePurificationChange = this.handlePurificationChange.bind(this);
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
-    this.setCurrentTime = this.setCurrentTime.bind(this);
     this.handlePSolventChange = this.handlePSolventChange.bind(this);
     this.deletePSolvent = this.deletePSolvent.bind(this);
     this.dropPSolvent = this.dropPSolvent.bind(this);
-
-    this.copyToDuration = this.copyToDuration.bind(this);
-    this.handleDurationChange = this.handleDurationChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -49,18 +43,6 @@ export default class ReactionDetailsProperties extends Component {
 
   componentWillUnmount() {
     this.clipboard.destroy();
-  }
-
-  setCurrentTime(type) {
-    const currentTime = new Date().toLocaleString('en-GB').split(', ').join(' ');
-    const { reaction } = this.props;
-    const wrappedEvent = { target: { value: currentTime } };
-    this.props.onInputChange(type, wrappedEvent);
-    if (type === 'timestampStart' && (reaction.status === 'Planned' || !reaction.status)) {
-      this.props.onInputChange('status', { target: { value: 'Running' } });
-    } else if (type === 'timestampStop' && reaction.status === 'Running') {
-      this.props.onInputChange('status', { target: { value: 'Done' } });
-    }
   }
 
   handleOnReactionChange(reaction) {
@@ -144,32 +126,8 @@ export default class ReactionDetailsProperties extends Component {
     this.handleOnReactionChange(reaction);
   }
 
-  changeDurationUnit() {
-    this.props.onInputChange('duration', { nextUnit: true });
-  }
-
-  copyToDuration() {
-    this.props.onInputChange('duration', { fromStartStop: true });
-  }
-
-  handleDurationChange(event) {
-    const nextValue = event.target.value && event.target.value.replace(',', '.');
-    if (!isNaN(nextValue) || nextValue === '') {
-      this.props.onInputChange('duration', { nextValue });
-    }
-  }
-
-  clipboardTooltip() {
-    return (
-      <Tooltip id="copy_duration_to_clipboard">copy to clipboard</Tooltip>
-    )
-  }
-
   render() {
     const { reaction } = this.props;
-    const durationCalc = reaction && reaction.durationCalc();
-
-
     const solventsItems = solventsTL.map((x, i) => {
       const val = Object.keys(x)[0];
       return (
@@ -195,120 +153,15 @@ export default class ReactionDetailsProperties extends Component {
                 onInputChange={(type, event) => this.props.onInputChange(type, event)}
               />
             </div>
-            <Row className="small-padding">
-              <Col md={3}>
-                <FormGroup>
-                  <ControlLabel>Start</ControlLabel>
-                  <InputGroup>
-                    <FormControl
-                      type="text"
-                      value={reaction.timestamp_start || ''}
-                      disabled={reaction.isMethodDisabled('timestamp_start')}
-                      placeholder="DD/MM/YYYY hh:mm:ss"
-                      onChange={event => this.props.onInputChange('timestampStart', event)}
-                    />
-                    <InputGroup.Button>
-                      <Button
-                        active
-                        style={{ padding: '6px' }}
-                        onClick={() => this.setCurrentTime('timestampStart')}
-                      >
-                        <i className="fa fa-clock-o" />
-                      </Button>
-                    </InputGroup.Button>
-                  </InputGroup>
-                </FormGroup>
-              </Col>
-              <Col md={3}>
-                <FormGroup>
-                  <ControlLabel>Stop</ControlLabel>
-                  <InputGroup>
-                    <FormControl
-                      type="text"
-                      value={reaction.timestamp_stop || ''}
-                      disabled={reaction.isMethodDisabled('timestamp_stop')}
-                      placeholder="DD/MM/YYYY hh:mm:ss"
-                      onChange={event => this.props.onInputChange('timestampStop', event)}
-                    />
-                    <InputGroup.Button>
-                      <Button
-                        active
-                        style={{ padding: '6px' }}
-                        onClick={() => this.setCurrentTime('timestampStop')}
-                      >
-                        <i className="fa fa-clock-o" />
-                      </Button>
-                    </InputGroup.Button>
-                  </InputGroup>
-                </FormGroup>
-              </Col>
-              <Col md={3}>
-                <FormGroup>
-                  <ControlLabel>Duration</ControlLabel>
-                  <InputGroup>
-                    <FormControl
-                      type="text"
-                      value={durationCalc || ''}
-                      disabled
-                      placeholder="Duration"
-                    />
-                    <InputGroup.Button>
-                      <OverlayTrigger
-                        placement="bottom"
-                        overlay={this.clipboardTooltip()}
-                      >
-                        <Button
-                          active
-                          className="clipboardBtn"
-                          data-clipboard-text={durationCalc || ' '}
-                        >
-                          <i className="fa fa-clipboard" />
-                        </Button>
-                      </OverlayTrigger>
-                      <OverlayTrigger
-                        placement="bottom"
-                        overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
-                      >
-                        <Button
-                          active
-                          className="clipboardBtn"
-                          onClick={() => this.copyToDuration()}
-                        >
-                          <i className="fa fa-arrow-right" />
-                        </Button>
-                      </OverlayTrigger>
-                    </InputGroup.Button>
-                  </InputGroup>
-                </FormGroup>
-              </Col>
-              <Col md={3}>
-                <FormGroup>
-                  <ControlLabel>&nbsp;</ControlLabel>
-                  <InputGroup>
-                    <FormControl
-                      type="text"
-                      value={reaction.durationDisplay.dispValue || ''}
-                      inputRef={this.refDuration}
-                      placeholder="Input Duration..."
-                      onChange={event => this.handleDurationChange(event)}
-                    />
-                    <InputGroup.Button>
-                      <OverlayTrigger
-                        placement="bottom"
-                        overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}
-                      >
-                        <Button
-                          bsStyle="success"
-                          onClick={() => this.changeDurationUnit()}
-                        >
-                          {reaction.durationUnit}
-                        </Button>
-                      </OverlayTrigger>
-                    </InputGroup.Button>
-                  </InputGroup>
-                </FormGroup>
-              </Col>
-            </Row>
+            <FormGroup>
+              <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
+              <OlsTreeSelect
+                selectName="rxno"
+                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
+                onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
+                selectedDisable={reaction.isMethodDisabled('rxno')}
+              />
+            </FormGroup>
             <Row>
               <Col md={12}>
                 <FormGroup>
@@ -430,4 +283,4 @@ ReactionDetailsProperties.propTypes = {
   reaction: PropTypes.object,
   onReactionChange: PropTypes.func,
   onInputChange: PropTypes.func
-}
+};
