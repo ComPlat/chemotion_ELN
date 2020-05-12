@@ -11,6 +11,7 @@ import Sample from './models/Sample';
 import Reaction from './models/Reaction';
 import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+import ReactionDetailsPurification from './ReactionDetailsPurification';
 import QuillEditor from './QuillEditor';
 import NotificationActions from './actions/NotificationActions';
 import { reactionToolbarSymbol } from './utils/quillToolbarSymbol';
@@ -25,10 +26,10 @@ export default class ReactionDetailsScheme extends Component {
     const { reaction } = props;
     this.state = { reaction, lockEquivColumn: false, cCon: false };
     this.quillref = React.createRef();
-
+    this.additionQuillRef = React.createRef();
     this.onChangeRole = this.onChangeRole.bind(this);
     this.renderRole = this.renderRole.bind(this);
-    this.addSampleToDescription = this.addSampleToDescription.bind(this);
+    this.addSampleTo = this.addSampleTo.bind(this);
     this.dropMaterial = this.dropMaterial.bind(this);
     this.dropSample = this.dropSample.bind(this);
     this.switchEquiv = this.switchEquiv.bind(this);
@@ -241,42 +242,32 @@ export default class ReactionDetailsScheme extends Component {
         this.onReactionChange(reaction, {schemaChanged: true});
         break;
       case 'addToDesc':
-        this.addSampleToDescription(changeEvent);
+        this.addSampleTo(changeEvent,  'description');
+        this.addSampleTo(changeEvent, 'observation');
         break;
     }
   }
 
-  addSampleToDescription(e) {
-    const { description } = this.state.reaction;
-    let newDesc = {
-      ops: [...description.ops, { insert: e.paragraph }],
-    };
-    const quillEditor = this.quillref.current.editor;
+  addSampleTo(e, type) {
+    const { paragraph } = e;
+    let quillEditor = this.quillref.current.editor;
+    if (type === 'observation') quillEditor = this.additionQuillRef.current.editor;
     const range = quillEditor.getSelection();
-
     if (range) {
       let contents = quillEditor.getContents();
-      let insertOps = [{ insert: e.paragraph }];
+      let insertOps = [{ insert: paragraph }];
       const insertDelta = new Delta(insertOps);
       if (range.index > 0) {
         insertOps = [{ retain: range.index }].concat(insertOps);
       }
       const elementDelta = new Delta(insertOps);
       contents = contents.compose(elementDelta);
-
       quillEditor.setContents(contents);
       range.length = 0;
       range.index += insertDelta.length();
       quillEditor.setSelection(range);
-
-      newDesc = contents;
-    } else {
-      newDesc = {
-        ops: [...description.ops, { insert: e.paragraph }],
-      };
+      this.props.onInputChange(type, new Delta(contents));
     }
-    const newDescDelta = new Delta(newDesc);
-    this.props.onInputChange('description', newDescDelta);
   }
 
   updatedReactionForExternalLabelChange(changeEvent) {
@@ -676,7 +667,6 @@ export default class ReactionDetailsScheme extends Component {
       <div>
         <ListGroup fill="true">
           <ListGroupItem style={minPadding}>
-
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="starting_materials"
@@ -694,7 +684,6 @@ export default class ReactionDetailsScheme extends Component {
             />
           </ListGroupItem>
           <ListGroupItem style={minPadding} >
-
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="reactants"
@@ -773,7 +762,6 @@ export default class ReactionDetailsScheme extends Component {
             </Collapse>
           </ListGroupItem>
         </ListGroup>
-
         <ListGroup>
           <ListGroupItem>
             <div className="reaction-scheme-props">
@@ -812,6 +800,12 @@ export default class ReactionDetailsScheme extends Component {
                 </FormGroup>
               </Col>
             </Row>
+            <ReactionDetailsPurification
+              reaction={reaction}
+              onReactionChange={r => this.onReactionChange(r)}
+              onInputChange={(type, event) => this.props.onInputChange(type, event)}
+              additionQuillRef={this.additionQuillRef}
+            />
           </ListGroupItem>
         </ListGroup>
       </div>

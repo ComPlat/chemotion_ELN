@@ -93,7 +93,7 @@ const iupacNameTooltip = material => (
 
 const refreshSvgTooltip = <Tooltip id="refresh_svg_tooltip">Refresh reaction diagram</Tooltip>;
 
-const AddtoDescToolTip = <Tooltip id="tp-spl-code">Add to description</Tooltip>;
+const AddtoDescToolTip = <Tooltip id="tp-spl-code" className="left_tooltip">Add to description or additional information for publication and purification details</Tooltip>;
 
 const solvConcentration = (material, solventVolume) => {
   const concn = ((material.amount_l / solventVolume) * 100).toFixed(1);
