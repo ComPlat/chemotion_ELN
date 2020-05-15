@@ -39,9 +39,9 @@ const buildQcs = (sample, infer) => {
     const { type } = inferO;
     if (type === 'ms' || kind === 'Mass') {
       msQc = Object.assign({}, msQc, inferO, { ops, exist: true, type: 'Mass' });
-    } else if (type === 'nmr;13C;1d' || kind === '13C NMR') {
+    } else if (type === 'nmr;13C;1d' || (kind && kind.includes('13C NMR'))) {
       cnmrQc = Object.assign({}, cnmrQc, inferO, { ops, exist: true, type: '13C NMR' });
-    } else if (type === 'nmr;1H;1d' || kind === '1H NMR') {
+    } else if (type === 'nmr;1H;1d' || (kind && kind.includes('1H NMR'))) {
       hnmrQc = Object.assign({}, hnmrQc, inferO, { ops, exist: true, type: '1H NMR' });
     } else if (type === 'ir' || kind === 'IR') {
       irQc = Object.assign({}, irQc, inferO, { ops, exist: true, type: 'IR' });
