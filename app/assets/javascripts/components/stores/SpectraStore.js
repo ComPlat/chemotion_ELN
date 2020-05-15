@@ -17,7 +17,6 @@ class SpectraStore {
     this.showModal = false;
     this.fetched = false;
     this.writing = false;
-    this.predictions = Object.assign({}, defaultPred);
 
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
@@ -71,7 +70,7 @@ class SpectraStore {
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
     const spcMetas = this.decodeSpectra(fetchedFiles);
     this.setState({
-      spcInfos, spcMetas, fetched: true,
+      spcInfos, spcMetas, fetched: true, spcIdx: (spcMetas[0].idx || 0),
     });
   }
 
@@ -102,9 +101,9 @@ class SpectraStore {
   }
 
   handleWriteStart(payload) {
+    this.replacePredictions(defaultPred);
     this.setState({
       writing: payload,
-      predictions: Object.assign({}, defaultPred),
     });
   }
 
@@ -113,17 +112,27 @@ class SpectraStore {
   }
 
   handleInferRunning() {
-    const predictions = Object.assign({}, defaultPred, { running: true });
-    this.setState({ predictions });
+    const targetPreds = Object.assign({}, defaultPred, { running: true });
+    this.replacePredictions(targetPreds);
   }
 
-  handleInferSpectrum(predictions) {
-    const target = predictions || Object.assign({}, defaultPred);
-    this.setState({ predictions: target });
+  handleInferSpectrum(preds) {
+    const targetPreds = preds || Object.assign({}, defaultPred);
+    this.replacePredictions(targetPreds);
   }
 
   handleSelectIdx(spcIdx) {
     this.setState({ spcIdx });
+  }
+
+  replacePredictions(predictions) {
+    const { spcIdx } = this;
+    const spcMetas = this.spcMetas.map(x => (
+      x.idx === spcIdx
+        ? Object.assign({}, x, { predictions })
+        : x
+    ));
+    this.setState({ spcMetas });
   }
 }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import SvgFileZoomPan from 'react-svg-file-zoom-pan';
+import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 
 const QcMolView = ({ svg }) => {
   if (!svg) return null;

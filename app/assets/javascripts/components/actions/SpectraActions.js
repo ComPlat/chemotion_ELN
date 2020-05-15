@@ -59,12 +59,13 @@ class SpectraActions {
   }
 
   InferSpectrum({
-    spcInfo, peaks, layout, shift,
+    spcInfo, peaks, layout, shift, cb,
   }) {
     return (dispatch) => {
       AttachmentFetcher.inferSpectrum(spcInfo.idx, peaks, layout, shift)
         .then((json) => {
           dispatch(json);
+          cb();
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         });
