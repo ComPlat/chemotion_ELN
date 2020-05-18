@@ -135,20 +135,20 @@ export default class ReactionDetailsScheme extends Component {
     const { role } = this.props.reaction;
     const accordTo = role === 'parts' ? 'According to' : null;
     return (
-      <Row>
-        <Col md={4}>
+      <span>
+        <Col md={3} style={{ paddingLeft: '6px' }}>
           <FormGroup>
             <ControlLabel>Role</ControlLabel>
             {this.renderRoleSelect()}
           </FormGroup>
         </Col>
-        <Col md={4}>
+        <Col md={3} style={{ paddingLeft: '6px' }}>
           <FormGroup>
             <ControlLabel>{accordTo}</ControlLabel>
             {this.renderGPDnD()}
           </FormGroup>
         </Col>
-      </Row>
+      </span>
     );
   }
 
@@ -774,16 +774,20 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               onInputChange={(type, event) => this.props.onInputChange(type, event)}
             />
-            <FormGroup>
-              <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
-              <OlsTreeSelect
-                selectName="rxno"
-                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
-                selectedDisable={reaction.isMethodDisabled('rxno')}
-              />
-            </FormGroup>
-            {this.renderRole()}
+            <Row>
+              <Col md={6}>
+                <FormGroup>
+                  <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
+                  <OlsTreeSelect
+                    selectName="rxno"
+                    selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
+                    onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
+                    selectedDisable={reaction.isMethodDisabled('rxno')}
+                  />
+                </FormGroup>
+              </Col>
+              {this.renderRole()}
+            </Row>
             <Row>
               <Col md={12}>
                 <FormGroup>
