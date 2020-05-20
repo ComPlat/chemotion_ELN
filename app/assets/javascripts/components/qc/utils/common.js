@@ -8,7 +8,7 @@ const realFormat = (val, status) => {
 };
 
 const makeDav = (hasFiles, hasValidFiles) => {
-  if (hasFiles) return hasValidFiles;
+  if (hasFiles !== undefined) return hasValidFiles;
   return undefined;
 };
 
