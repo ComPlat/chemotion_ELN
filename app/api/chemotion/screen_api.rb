@@ -4,6 +4,7 @@ module Chemotion
     helpers ContainerHelpers
     helpers ParamsHelpers
     helpers CollectionHelpers
+    helpers ProfileHelpers
 
     resource :screens do
       desc "Return serialized screens"
