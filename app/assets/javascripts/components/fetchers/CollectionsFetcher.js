@@ -1,8 +1,7 @@
 import 'whatwg-fetch';
 import BaseFetcher from './BaseFetcher';
-
-import CollectionActions from '../actions/CollectionActions';
 import NotificationActions from '../actions/NotificationActions';
+import { downloadBlob } from '../utils/FetcherHelper';
 
 export default class CollectionsFetcher {
   static takeOwnership(params) {
@@ -246,6 +245,21 @@ export default class CollectionsFetcher {
       })
     }).then(response => response)
       .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static expotSamples(type, id) {
+    const fileName = `${type.charAt(0).toUpperCase() + type.substring(1)}_${id}_Samples Excel.xlsx`;
+    return fetch(`/api/v1/reports/excel_${type}?id=${id}`, {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+    }).then((response) => {
+      if (response.ok) { return response.blob(); }
+      throw Error(response.statusText);
+    }).then((blob) => {
+      downloadBlob(fileName, blob);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
 
   static removeElementsCollection(params) {
