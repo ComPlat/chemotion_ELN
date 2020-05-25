@@ -20,6 +20,7 @@
 #  folder          :string
 #  attachable_type :string
 #  aasm_state      :string
+#  filesize        :integer
 #
 # Indexes
 #
@@ -38,6 +39,7 @@ class Attachment < ActiveRecord::Base
   before_create :store_tmp_file_and_thumbnail, if: :new_upload
   before_create :add_checksum, if: :new_upload
   before_create :add_content_type
+  before_save :update_filesize
 
   before_save  :move_from_store, if: :store_changed, on: :update
 
@@ -160,6 +162,11 @@ class Attachment < ActiveRecord::Base
     store.destroy
     store.store_file
     self
+  end
+
+  def update_filesize
+    self.filesize = File.size(self.file_path) if self.file_path.present?
+    self.filesize = self.file_data.bytesize if self.file_data && self.filesize.nil?
   end
 
   def add_content_type
