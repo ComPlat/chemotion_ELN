@@ -147,14 +147,6 @@ class CollectionActions {
     Utils.downloadFile({contents: "/api/v1/reports/excel?id=" + currentCollection.id +"&tab="+tab});
   }
 
-  downloadReportWellplate(wellplateId){
-    Utils.downloadFile({contents: "/api/v1/reports/excel_wellplate?id=" + wellplateId});
-  }
-
-  downloadReportReaction(reactionId){
-    Utils.downloadFile({contents: "/api/v1/reports/excel_reaction?id=" + reactionId});
-  }
-
   exportCollectionsToFile(params) {
     return (dispatch) => { CollectionsFetcher.createExportJob(params)
       .then((result) => {

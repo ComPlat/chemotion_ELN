@@ -8,7 +8,6 @@ import LoadingActions from './actions/LoadingActions';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
 import DetailActions from './actions/DetailActions';
-import CollectionActions from './actions/CollectionActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 import WellplateProperties from './WellplateProperties';
@@ -17,6 +16,7 @@ import PrintCodeButton from './common/PrintCodeButton';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import ConfirmClose from './common/ConfirmClose';
+import ExportSamplesBtn from './ExportSamplesBtn';
 
 const cols = 12;
 
@@ -193,9 +193,7 @@ export default class WellplateDetails extends Component {
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
               {submitLabel}
             </Button>
-            <Button bsStyle="default" onClick={() => CollectionActions.downloadReportWellplate(wellplate.id)}>
-              Export samples
-            </Button>
+            <ExportSamplesBtn type="wellplate" id={wellplate.id} />
           </ButtonToolbar>
         </Panel.Body>
       </Panel>

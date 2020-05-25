@@ -5,14 +5,11 @@ import {
   Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
-
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
 import DetailActions from './actions/DetailActions';
-import CollectionActions from './actions/CollectionActions';
 import LoadingActions from './actions/LoadingActions';
-
 import ReactionDetailsLiteratures from './DetailsTabLiteratures';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
 import SampleDetailsContainers from './SampleDetailsContainers';
@@ -29,7 +26,7 @@ import { sampleShowOrNew } from './routesUtils';
 import ReactionSvgFetcher from './fetchers/ReactionSvgFetcher';
 import ConfirmClose from './common/ConfirmClose';
 import { rfValueFormat } from './utils/ElementUtils';
-
+import ExportSamplesBtn from './ExportSamplesBtn';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -407,9 +404,7 @@ export default class ReactionDetails extends Component {
             <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
               {submitLabel}
             </Button>
-            <Button bsStyle="default" onClick={() => CollectionActions.downloadReportReaction(reaction.id)}>
-              Export samples
-            </Button>
+            <ExportSamplesBtn type="reaction" id={reaction.id} />
           </ButtonToolbar>
         </Panel.Body>
       </Panel>
