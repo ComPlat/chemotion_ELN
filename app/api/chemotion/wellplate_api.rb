@@ -5,6 +5,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers SampleHelpers
+    helpers ProfileHelpers
 
     resource :wellplates do
       namespace :bulk do
