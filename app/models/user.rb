@@ -85,6 +85,7 @@ class User < ActiveRecord::Base
     format: {with: /\A[a-zA-Z][a-zA-Z0-9\-_]{0,4}[a-zA-Z0-9]\Z/,
     message: "can be alphanumeric, middle '_' and '-' are allowed,"+
     " but leading digit, or trailing '-' and '_' are not."}
+  validate :name_abbreviation_reserved_list
   validate :name_abbreviation_length
 # validate :academic_email
   validate :mail_checker
@@ -109,18 +110,29 @@ class User < ActiveRecord::Base
     super && account_active
   end
 
+  def name_abbreviation_reserved_list
+    name_abbr_config = Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
+    if (name_abbr_config[:reserved_list] || []).include?(name_abbreviation)
+      errors.add(:name_abbreviation, " is reserved, please change")
+    end
+  end
+
   def name_abbreviation_length
     na = name_abbreviation
+    name_abbr_config = Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
     if type == 'Group'
-      na.blank? || !na.length.between?(2, 5)  && errors.add(:name_abbreviation,
-      "has to be 2 to 5 characters long")
+      min_val = name_abbr_config[:length_group]&.first || 2
+      max_val = name_abbr_config[:length_group]&.last || 5
     elsif type == 'Device'
-        na.blank? || !na.length.between?(2, 6)  && errors.add(:name_abbreviation,
-        "has to be 2 to 6 characters long")
+      min_val = name_abbr_config[:length_device]&.first || 2
+      max_val = name_abbr_config[:length_device]&.last || 5
     else
-      na.blank? || !na.length.between?(2, 3)  && errors.add(:name_abbreviation,
-        "has to be 2 to 3 characters long")
+      min_val = name_abbr_config[:length_default]&.first || 2
+      max_val = name_abbr_config[:length_default]&.last || 3
     end
+
+    na.blank? || !na.length.between?(min_val, max_val)  && errors.add(:name_abbreviation,
+    "has to be #{min_val} to #{max_val} characters long")
   end
 
   def academic_email
