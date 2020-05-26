@@ -141,6 +141,7 @@ export default class WellplateDetails extends Component {
       wells, name, size, description
     } = wellplate;
     const submitLabel = wellplate.isNew ? 'Create' : 'Save';
+    const exportButton = (wellplate && wellplate.isNew) ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
     const properties = { name, size, description };
     return (
       <Panel bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
@@ -193,7 +194,7 @@ export default class WellplateDetails extends Component {
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
               {submitLabel}
             </Button>
-            <ExportSamplesBtn type="wellplate" id={wellplate.id} />
+            {exportButton}
           </ButtonToolbar>
         </Panel.Body>
       </Panel>

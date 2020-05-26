@@ -350,6 +350,7 @@ export default class ReactionDetails extends Component {
     const {reaction} = this.state;
 
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
+    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
     let extraTabs =[];
     for (let j=0;j < XTabs.count;j++){
       if (XTabs['on'+j](reaction)){extraTabs.push((i)=>this.extraTab(i))}
@@ -404,7 +405,7 @@ export default class ReactionDetails extends Component {
             <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
               {submitLabel}
             </Button>
-            <ExportSamplesBtn type="reaction" id={reaction.id} />
+            {exportButton}
           </ButtonToolbar>
         </Panel.Body>
       </Panel>
