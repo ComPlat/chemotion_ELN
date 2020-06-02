@@ -267,7 +267,7 @@ class Sample < ActiveRecord::Base
     subsample.collections << collections
 
     subsample.container = Container.create_root_container
-
+    subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
     subsample.save! && subsample
   end
 
