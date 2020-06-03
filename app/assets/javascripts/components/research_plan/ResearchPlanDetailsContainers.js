@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
-import { startsWith, filter, map, flatMap } from 'lodash';
 import Container from '../models/Container';
 import ContainerComponent from '../ContainerComponent';
 import QuillViewer from '../QuillViewer';
@@ -224,14 +223,9 @@ export default class ResearchPlanDetailsContainers extends Component {
       let hasPop = true;
       let fetchNeeded = false;
       let fetchId = 0;
-      if (container.preview_img && container.preview_img !== undefined && container.preview_img !== 'not available') {
-        const containerAttachments = filter(container.children, o => o.attachments.length > 0);
-        const atts = flatMap(map(containerAttachments, 'attachments'));
-        const imageThumb = filter(atts, o => o.thumb === true && startsWith(o.content_type, 'image/'));
-        if (imageThumb && imageThumb.length > 0) {
-          fetchNeeded = true;
-          fetchId = imageThumb[0].id;
-        }
+      if (previewImg.startsWith('data:image')) {
+        fetchNeeded = true;
+        fetchId = container.preview_img.id;
       } else {
         hasPop = false;
       }

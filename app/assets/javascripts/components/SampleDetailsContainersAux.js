@@ -4,7 +4,6 @@ import {
   Button, Checkbox, OverlayTrigger, Tooltip,
   MenuItem, SplitButton, ButtonGroup
 } from 'react-bootstrap';
-import { startsWith, filter, map, flatMap } from 'lodash';
 import QuillViewer from './QuillViewer';
 import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
@@ -16,6 +15,7 @@ import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import UIStore from './stores/UIStore';
 import { chmoConversions } from './OlsComponent';
+import { previewContainerImage } from './utils/imageHelper';
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>
@@ -194,21 +194,6 @@ const HeaderDeleted = ({ container, handleUndo, mode }) => {
   );
 };
 
-const previewImage = (container) => {
-  const rawImg = container.preview_img;
-  const noAttSvg = '/images/wild_card/no_attachment.svg';
-  const noAvaSvg = '/images/wild_card/not_available.svg';
-  switch (rawImg) {
-    case null:
-    case undefined:
-      return noAttSvg;
-    case 'not available':
-      return noAvaSvg;
-    default:
-      return `data:image/png;base64,${rawImg}`;
-  }
-};
-
 const headerBtnGroup = (
   container, sample, mode, handleRemove, handleSubmit,
   toggleAddToReport, isDisabled, readOnly,
@@ -296,7 +281,7 @@ const HeaderNormal = ({
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
   const status = container.extended_metadata.status || '';
-  const previewImg = previewImage(container);
+  const previewImg = previewContainerImage(container);
   const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
   const contentOneLine = {
     ops: content.ops.map((x) => {
@@ -308,14 +293,9 @@ const HeaderNormal = ({
   let hasPop = true;
   let fetchNeeded = false;
   let fetchId = 0;
-  if (container.preview_img && container.preview_img !== undefined && container.preview_img !== 'not available') {
-    const containerAttachments = filter(container.children, o => o.attachments.length > 0);
-    const atts = flatMap(map(containerAttachments, 'attachments'));
-    const imageThumb = filter(atts, o => o.thumb === true && startsWith(o.content_type, 'image/'));
-    if (imageThumb && imageThumb.length > 0) {
-      fetchNeeded = true;
-      fetchId = imageThumb[0].id;
-    }
+  if (previewImg.startsWith('data:image')) {
+    fetchNeeded = true;
+    fetchId = container.preview_img.id;
   } else {
     hasPop = false;
   }

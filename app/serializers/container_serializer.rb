@@ -59,15 +59,23 @@ class ContainerSerializer < ActiveModel::Serializer
   end
 
   def preview_img(container = object)
-    first_child = container&.children&.first
-    has_dataset = first_child && first_child.container_type == 'dataset'
-    return 'not available' unless has_dataset
-
-    attachment = first_child.attachments.find do |att|
-      att.thumb && att.content_type&.match(Regexp.union(%w[jpg jpeg png tiff]))
+    dataset_ids = (container && container.children.map { |ds| ds.container_type == 'dataset' && ds.id }) || {}
+    return { preview: 'not available', id: nil, filename: nil } if dataset_ids.empty?
+    attachments = Attachment.where_container(dataset_ids).to_a
+    attachments = attachments.select do |a|
+      a.thumb == true && a.attachable_type == 'Container' && dataset_ids.include?(a.attachable_id)
     end
-    attachment ||= first_child.attachments.find(&:thumb)
+    image_atts = attachments.select do |a_img|
+      a_img&.content_type&.match(Regexp.union(%w[jpg jpeg png tiff]))
+    end
+
+    attachment = image_atts[0] || attachments[0]
     preview = attachment.read_thumbnail if attachment
-    preview && Base64.encode64(preview) || 'not available'
+    result = if preview
+      { preview: Base64.encode64(preview), id: attachment.id, filename: attachment.filename }
+    else
+      { preview: 'not available', id: nil, filename: nil }
+    end
+    result
   end
 end
