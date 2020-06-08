@@ -137,13 +137,15 @@ export default class ReactionDetailsPurification extends Component {
           <Col md={12}>
             <FormGroup>
               <div><b>Additional information for publication and purification details</b></div>
-              <QuillEditor
-                ref={additionQuillRef}
-                value={reaction.observation}
-                height="95px"
-                disabled={reaction.isMethodDisabled('observation')}
-                onChange={event => onInputChange('observation', event)}
-              />
+              <div className="quill-resize">
+                <QuillEditor
+                  ref={additionQuillRef}
+                  value={reaction.observation}
+                  height="100%"
+                  disabled={reaction.isMethodDisabled('observation')}
+                  onChange={event => onInputChange('observation', event)}
+                />
+              </div>
             </FormGroup>
           </Col>
         </Row>
