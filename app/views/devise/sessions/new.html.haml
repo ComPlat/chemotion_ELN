@@ -4,9 +4,9 @@
     %div{class: "alert alert-warning"}= value
   = form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
     .form-group.field
-      = f.label :email
+      = f.label :login, "Email or name abbreviation(case-sensitive)"
       %br/
-      = f.email_field :email, autofocus: true, class: 'form-control'
+      = f.text_field :login, autofocus: true, class: 'form-control'
     .form-group.field
       = f.label :password
       %br/
