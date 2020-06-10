@@ -85,8 +85,8 @@ class User < ActiveRecord::Base
     format: {with: /\A[a-zA-Z][a-zA-Z0-9\-_]{0,4}[a-zA-Z0-9]\Z/,
     message: "can be alphanumeric, middle '_' and '-' are allowed,"+
     " but leading digit, or trailing '-' and '_' are not."}
-  validate :name_abbreviation_reserved_list
-  validate :name_abbreviation_length
+  validate :name_abbreviation_reserved_list, on: :create
+  validate :name_abbreviation_length, on: :create
 # validate :academic_email
   validate :mail_checker
 
