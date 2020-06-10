@@ -20,6 +20,7 @@ export default class ImageModal extends Component {
     this.fetchImage = this.fetchImage.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
     this.handleModalShow = this.handleModalShow.bind(this);
+    this.handleImageError = this.handleImageError.bind(this);
   }
 
   componentDidMount() {
@@ -55,6 +56,10 @@ export default class ImageModal extends Component {
     this.setState({ showModal: true });
   }
 
+  handleImageError() {
+    this.setState({ fetchSrc: this.props.preivewObject.src });
+  }
+
   render() {
     const { hasPop, preivewObject, popObject } = this.props;
 
@@ -81,6 +86,7 @@ export default class ImageModal extends Component {
                 maxWidth: '100%',
               }}
               alt=""
+              onError={this.handleImageError}
             />
           </Modal.Body>
           <Modal.Footer>

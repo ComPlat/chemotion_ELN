@@ -53,7 +53,12 @@ module Entities
       attachment = image_atts[0] || attachments[0]
 
       preview = attachment.read_thumbnail if attachment
-      preview && Base64.encode64(preview) || 'not available'
+      result = if preview
+        { preview: Base64.encode64(preview), id: attachment.id, filename: attachment.filename }
+      else
+        { preview: 'not available', id: nil, filename: nil }
+      end
+      result
     end
 
     def get_extended_metadata(container)
