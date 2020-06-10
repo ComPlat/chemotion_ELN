@@ -44,12 +44,12 @@
 #
 
 class User < ActiveRecord::Base
+  attr_writer :login
   acts_as_paranoid
   # Include default devise modules. Others available are:
   # :lockable, :timeoutable and :omniauthable
   devise :database_authenticatable, :registerable, :confirmable,
-         :recoverable, :rememberable, :trackable, :validatable, :lockable
-
+         :recoverable, :rememberable, :trackable, :validatable, :lockable, authentication_keys: [:login]
   has_one :profile, dependent: :destroy
   has_one :container, :as => :containable
 
@@ -105,6 +105,19 @@ class User < ActiveRecord::Base
     where('LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ?',
           "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%")
   }
+
+  def login
+    @login || self.name_abbreviation || self.email
+  end
+
+  def self.find_first_by_auth_conditions(warden_conditions)
+    conditions = warden_conditions.dup
+    if login = conditions.delete(:login)
+      where(conditions).where(["name_abbreviation = :value OR lower(email) = lower(:value)", { value: login }]).first
+    else
+      where(conditions).first
+    end
+  end
 
   def active_for_authentication?
     super && account_active
