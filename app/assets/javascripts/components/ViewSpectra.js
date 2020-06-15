@@ -364,16 +364,33 @@ class ViewSpectra extends React.Component {
     this.closeOp();
   }
 
+  getPeaksByLayou(peaks, layout, multiplicity) {
+    if (['IR', '13C'].indexOf(layout) >= 0) return peaks;
+
+    const { stack, shift } = multiplicity;
+    const nmrMpyCenters = stack.map((stk) => {
+      const { mpyType, peaks } = stk;
+      return {
+        x: FN.CalcMpyCenter(peaks, shift, mpyType),
+        y: 0,
+      };
+    });
+    const defaultCenters = [{ x: -1000.0, y: 0}];
+    return nmrMpyCenters.length > 0 ? nmrMpyCenters : defaultCenters;
+  }
+
   predictOp({
-    peaks, layout, shift,
+    peaks, layout, shift, multiplicity,
   }) {
     const { handleSubmit } = this.props;
     const si = this.getSpcInfo();
     if (!si) return;
 
+    const targetPeaks = this.getPeaksByLayou(peaks, layout, multiplicity);
+
     SpectraActions.InferRunning.defer();
     SpectraActions.InferSpectrum.defer({
-      spcInfo: si, peaks, layout, shift, cb: handleSubmit,
+      spcInfo: si, peaks: targetPeaks, layout, shift, cb: handleSubmit,
     });
   }
 
