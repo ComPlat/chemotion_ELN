@@ -23,7 +23,6 @@ export default class SampleForm extends React.Component {
     this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
     this.showStructureEditor = this.showStructureEditor.bind(this);
-
   }
 
   componentWillReceiveProps() {
@@ -69,7 +68,7 @@ export default class SampleForm extends React.Component {
         <Checkbox
           inputRef={(ref) => { this.topSecretInput = ref; }}
           checked={sample.is_top_secret}
-          onChange={(e) => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
+          onChange={e => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
         >
           Top secret
         </Checkbox>
@@ -283,7 +282,7 @@ export default class SampleForm extends React.Component {
           disabled={disabled}
           block={block}
           bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
-          onChange={(e) => this.handleFieldChanged(sample, field, e)}
+          onChange={e => this.handleFieldChanged(sample, field, e)}
         />
       </td>
     );
@@ -336,7 +335,7 @@ export default class SampleForm extends React.Component {
           ref={(input) => { this.descriptionInput = input; }}
           placeholder={sample.description}
           value={sample.description || ''}
-          onChange={(e) => this.handleFieldChanged(sample, 'description', e.target.value)}
+          onChange={e => this.handleFieldChanged(sample, 'description', e.target.value)}
           rows={2}
           disabled={!sample.can_update}
         />
@@ -390,27 +389,22 @@ export default class SampleForm extends React.Component {
           <tr className="visible-hd">
             {this.sampleAmount(sample)}
             {
-              this.numInput(sample, 'boiling_point', '°C', ['n'], 5,
-                'Boiling point', '', polyDisabled, '', false, isPolymer)
+              this.numInput(sample, 'boiling_point', '°C', ['n'], 5, 'Boiling point', '', polyDisabled, '', false, isPolymer)
             }
           </tr>
 
           <tr>
             {
-              this.numInput(sample, 'density', 'g/ml', ['n'], 5,
-                'Density', '', polyDisabled, '', densityBlocked, isPolymer)
+              this.numInput(sample, 'density', 'g/ml', ['n'], 5, 'Density', '', polyDisabled, '', densityBlocked, isPolymer)
             }
             {
-              this.numInput(sample, 'molarity_value', 'M', ['n'],
-                5, 'Molarity', '', polyDisabled, '', molarityBlocked, isPolymer)
+              this.numInput(sample, 'molarity_value', 'M', ['n'], 5, 'Molarity', '', polyDisabled, '', molarityBlocked, isPolymer)
             }
             {
-              this.numInput(sample, 'purity', 'n', ['n'], 5,
-                'Purity', '', isDisabled)
+              this.numInput(sample, 'purity', 'n', ['n'], 5, 'Purity', '', isDisabled)
             }
             {
-              this.numInput(sample, 'melting_point', '°C', ['n'], 5,
-                'Melting point', '', polyDisabled, '', false, isPolymer)
+              this.numInput(sample, 'melting_point', '°C', ['n'], 5, 'Melting point', '', polyDisabled, '', false, isPolymer)
             }
           </tr>
 
@@ -418,13 +412,11 @@ export default class SampleForm extends React.Component {
             <td colSpan="4">{this.sampleDescription(sample)}</td>
           </tr>
           <tr>
-            <td colspan="4">
+            <td colSpan="4">
               {this.textInput(sample, 'location', 'Location')}
             </td>
           </tr>
-          <tr>
-            <td colSpan="2"> {this.props.customizableField()} </td>
-          </tr>
+          {this.props.customizableField()}
         </tbody>
       </Table>
     );
@@ -433,5 +425,6 @@ export default class SampleForm extends React.Component {
 
 SampleForm.propTypes = {
   sample: PropTypes.object,
-  parent: PropTypes.object
-}
+  parent: PropTypes.object,
+  customizableField: PropTypes.func.isRequired
+};

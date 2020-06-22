@@ -650,21 +650,20 @@ export default class SampleDetails extends React.Component {
   }
 
   customizableField() {
-    const { xref } = this.state.sample || '';
-    const customKeys = cloneDeep(xref);
+    const { xref } = this.state.sample;
+    const customKeys = cloneDeep(xref || {});
     delete customKeys.cas;
-    if (customKeys === '') { return null; }
-
+    if (Object.keys(customKeys).length === 0) return null;
     return (
       Object.keys(customKeys).map(key => (
-          <FormGroup>
-          <ControlLabel>{key}</ControlLabel>
-            <FormControl
-              type="text"
-              defaultValue={customKeys[key] || ''}
-              onChange={e => this.updateKey(key, e)}
-            />
-          </FormGroup>
+        <tr key={`field_${key}`}>
+          <td colSpan="4">
+            <FormGroup>
+              <ControlLabel>{key}</ControlLabel>
+              <FormControl type="text" defaultValue={customKeys[key] || ''} onChange={e => this.updateKey(key, e)} />
+            </FormGroup>
+          </td>
+        </tr>
       ))
     );
   }
@@ -755,49 +754,40 @@ export default class SampleDetails extends React.Component {
   }
 
   chemicalIdentifiersItemHeader() {
-    let label = 'Chemical identifiers';
-
     return (
       <ListGroupItem onClick={() => this.handleChemIdentSectionToggle()}>
         <Col className="padding-right chem-identifiers-header" md={6}>
-          <label>{label}</label>
+          <b>Chemical identifiers</b>
         </Col>
         <div className="col-md-6">
-          <ToggleSection show={this.state.showChemicalIdentifiers}/>
+          <ToggleSection show={this.state.showChemicalIdentifiers} />
         </div>
       </ListGroupItem>
-    )
+    );
   }
 
   chemicalIdentifiersItemContent(sample, show) {
-    if(!show)
-      return false;
-
+    if (!show) return false;
     return (
       <ListGroupItem>
         {this.moleculeInchi(sample)}
-          {this.moleculeCanoSmiles(sample)}
-          {this.moleculeMolfile(sample)}
-          {this.moleculeCas()}
+        {this.moleculeCanoSmiles(sample)}
+        {this.moleculeMolfile(sample)}
+        {this.moleculeCas()}
       </ListGroupItem>
-    )
+    );
   }
 
   chemicalIdentifiersItem(sample) {
     // avoid empty ListGroupItem
-    if(!sample.molecule.sum_formular)
-      return false;
-
+    if (!sample.molecule.sum_formular) return false;
     const show = this.state.showChemicalIdentifiers;
-    
-    return(
+    return (
       <div width="100%" className="chem-identifiers-section">
         {this.chemicalIdentifiersItemHeader()}
-
         {this.chemicalIdentifiersItemContent(sample, show)}
       </div>
-    )
-
+    );
   }
 
   samplePropertiesTab(ind){
