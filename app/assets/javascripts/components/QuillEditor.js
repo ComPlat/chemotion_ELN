@@ -6,6 +6,7 @@ import Quill from 'quill';
 import Delta from 'quill-delta';
 
 import _ from 'lodash';
+import { ButtonToolbar, DropdownButton, MenuItem } from 'react-bootstrap';
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],
@@ -104,6 +105,26 @@ export default class QuillEditor extends React.Component {
     }, bounce ? this.debouncedOnChange(contents) : this.onChange(contents));
   }
 
+  handleEditorValue(toolbarItems, item) {
+    const { editor } = this;
+    const range = editor.getSelection();
+    if (range) {
+      let contents = editor.getContents();
+      let elementOps = toolbarItems.find(x => x.name === item.name).ops;
+      const insertDelta = new Delta(elementOps);
+      if (range.index > 0) {
+        elementOps = [{ retain: range.index }].concat(elementOps);
+      }
+      const elementDelta = new Delta(elementOps);
+      contents = contents.compose(elementDelta);
+      editor.setContents(contents);
+      range.length = 0;
+      range.index += insertDelta.length();
+      editor.setSelection(range);
+      this.updateEditorValue(contents, false);
+    }
+  }
+
   initQuill() {
     if (!this.editor) {
       const quillEditor = ReactDOM.findDOMNode(this.refs[this.id]);
@@ -136,36 +157,14 @@ export default class QuillEditor extends React.Component {
         }
       });
 
-      const updateEditorValue = this.updateEditorValue;
-      const editor = this.editor;
       const id = this.id;
-      const toolbarSymbol = this.props.toolbarSymbol;
 
       this.toolbar.forEach((element) => {
         const selector = `#toolbar-${id} #${element.name}_id`;
         const btn = document.querySelector(selector);
 
         btn.addEventListener('click', () => {
-          const range = editor.getSelection();
-
-          if (range) {
-            let contents = editor.getContents();
-            let elementOps = toolbarSymbol.find(x => x.name === element.name).ops;
-            const insertDelta = new Delta(elementOps);
-            if (range.index > 0) {
-              elementOps = [{ retain: range.index }].concat(elementOps);
-            }
-            const elementDelta = new Delta(elementOps);
-            contents = contents.compose(elementDelta);
-
-            editor.setContents(contents);
-
-            range.length = 0;
-            range.index += insertDelta.length();
-            editor.setSelection(range);
-
-            updateEditorValue(contents, false);
-          }
+          this.handleEditorValue(this.props.toolbarSymbol, element);
         });
       });
     }
@@ -246,6 +245,25 @@ export default class QuillEditor extends React.Component {
     );
   }
 
+  renderCustomDropdown() {
+    if (this.theme !== 'snow' || !this.toolbar || this.toolbar.length === 0 || this.props.toolbarDropdown.length === 0) {
+      return null;
+    }
+    return (
+      <span className="ql-formats custom-toolbar">
+        <ButtonToolbar>
+          <DropdownButton
+            title="MS"
+            id="quill-cuz-dropdown"
+            className="quill-cuz-dropdown"
+          >
+            {this.props.toolbarDropdown.map(t => <MenuItem key={`mi_${t.name}`} eventKey={t.name} onSelect={() => this.handleEditorValue(this.props.toolbarDropdown, t)}>{t.name.toUpperCase()}</MenuItem>)}
+          </DropdownButton>
+        </ButtonToolbar>
+      </span>
+    );
+  }
+
   render() {
     return (
       <div>
@@ -255,6 +273,7 @@ export default class QuillEditor extends React.Component {
             { this.props.customToolbar }
           </span>
           {this.renderCustomToolbar()}
+          {this.renderCustomDropdown()}
         </div>
         <div
           ref={this.id}
@@ -269,6 +288,7 @@ QuillEditor.propTypes = {
   value: PropTypes.object,
   customToolbar: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
   toolbarSymbol: PropTypes.array,
+  toolbarDropdown: PropTypes.arrayOf(PropTypes.object),
   theme: PropTypes.string,
   height: PropTypes.string,
   disabled: PropTypes.bool,
@@ -279,6 +299,7 @@ QuillEditor.defaultProps = {
   value: {},
   customToolbar: '',
   toolbarSymbol: [],
+  toolbarDropdown: [],
   theme: 'snow',
   height: '230px',
   disabled: false,

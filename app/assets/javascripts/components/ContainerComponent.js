@@ -9,7 +9,7 @@ import ContainerDatasets from './ContainerDatasets';
 import QuillEditor from './QuillEditor';
 import QuillViewer from './QuillViewer';
 import OlsTreeSelect from './OlsComponent';
-import { sampleAnalysesContentSymbol } from './utils/quillToolbarSymbol';
+import { sampleAnalysesContentSymbol, sampleAnalysesContentDropdown } from './utils/quillToolbarSymbol';
 import { formatAnalysisContent } from './utils/ElementUtils';
 import { confirmOptions } from './staticDropdownOptions/options';
 
@@ -100,6 +100,7 @@ export default class ContainerComponent extends Component {
           onChange={this.handleInputChange.bind(this, 'content')}
           disabled={readOnly}
           toolbarSymbol={sampleAnalysesContentSymbol}
+          toolbarDropdown={sampleAnalysesContentDropdown}
           customToolbar={formatButton}
         />
       );

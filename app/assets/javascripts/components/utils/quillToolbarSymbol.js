@@ -1,12 +1,8 @@
 import React from 'react';
 
-const minusRender = (name) => (
-  <span
-    key={`${name}_key`}
-    id={`${name}_id`}
-    style={{ marginRight: '10px', cursor: 'pointer' }}
-  >
-    <i className='fa fa-minus' />
+const minusRender = name => (
+  <span key={`${name}_key`} id={`${name}_id`} style={{ marginRight: '10px', cursor: 'pointer' }}>
+    <i className="fa fa-minus" />
   </span>
 );
 
@@ -298,46 +294,6 @@ const sampleAnalysesContentSymbol = [
     ops: [...opsIRHead(), ...opsIRTail()],
   },
   {
-    name: 'ei',
-    ops: [
-      { insert: 'EI (m/z, 70 eV, XX °C): XXX (XX).' },
-    ],
-  },
-  {
-    name: 'hr',
-    ops: [
-      { insert: 'HRMS (): calcd , found .' },
-    ],
-  },
-  {
-    name: 'hr1',
-    ops: [
-      { insert: 'HRMS–EI ' },
-      { insert: '(m/z)', attributes: { italic: true } },
-      { insert: ': [M]' },
-      { insert: '+', attributes: { script: 'super' } },
-      { insert: ' calcd for , ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '; found, ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '.' },
-    ],
-  },
-  {
-    name: 'hr2',
-    ops: [
-      { insert: 'HRMS–FAB ' },
-      { insert: '(m/z)', attributes: { italic: true } },
-      { insert: ': [M + H]' },
-      { insert: '+', attributes: { script: 'super' } },
-      { insert: ' calcd for , ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '; found, ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '.' },
-    ],
-  },
-  {
     name: 'uv',
     ops: [
       { insert: 'UV-VIS (CH' },
@@ -375,6 +331,95 @@ const SpectraOps = {
   MS: { head: opsMSHead, tail: opsMSTail },
 };
 
+const sampleAnalysesContentDropdown = [
+  {
+    name: 'ei',
+    ops: [
+      { insert: 'MS (EI, 70 eV, XX °C), m/z (%):' },
+    ],
+  },
+  {
+    name: 'fab',
+    ops: [
+      { insert: 'MS (FAB, 3-NBA), m/z (%):' },
+    ],
+  },
+  {
+    name: 'esi',
+    ops: [
+      { insert: 'MS (ESI), m/z (%):' },
+    ],
+  },
+  {
+    name: 'apci',
+    ops: [
+      { insert: 'MS (APCI, CH' },
+      {
+        attributes: { script: 'sub' },
+        insert: '3',
+      },
+      { insert: 'COONH' },
+      {
+        attributes: { script: 'sub' },
+        insert: '4',
+      },
+      { insert: '), m/z (%): ' },
+    ],
+  },
+  {
+    name: 'asap',
+    ops: [
+      { insert: 'MS (ASAP), m/z (%):' },
+    ],
+  },
+  {
+    name: 'maldi',
+    ops: [
+      { insert: 'MS (MALDI-TOF), m/z (%):' },
+    ],
+  },
+  {
+    name: 'm+',
+    ops: [
+      { insert: '[M+]' },
+    ],
+  },
+  {
+    name: 'hr',
+    ops: [
+      { insert: 'HRMS (): calcd , found .' },
+    ],
+  },
+  {
+    name: 'hr-ei',
+    ops: [
+      { insert: 'HRMS–EI ' },
+      { insert: '(m/z)', attributes: { italic: true } },
+      { insert: ': [M]' },
+      { insert: '+', attributes: { script: 'super' } },
+      { insert: ' calcd for , ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '; found, ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '.' },
+    ],
+  },
+  {
+    name: 'hr-fab',
+    ops: [
+      { insert: 'HRMS–FAB ' },
+      { insert: '(m/z)', attributes: { italic: true } },
+      { insert: ': [M + H]' },
+      { insert: '+', attributes: { script: 'super' } },
+      { insert: ' calcd for , ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '; found, ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '.' },
+    ],
+  },
+];
+
 module.exports = {
-  reactionToolbarSymbol, sampleAnalysesContentSymbol, SpectraOps,
+  reactionToolbarSymbol, sampleAnalysesContentSymbol, SpectraOps, sampleAnalysesContentDropdown
 };
