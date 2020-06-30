@@ -63,6 +63,7 @@ describe 'Sample management' do
       molarity = sample.molarity_value
       expect(find_bs_field('Molarity').value.to_f).to eq(molarity)
 
+      find('div.chem-identifiers-section').click
       expect(find('input#inchistringInput')[:disabled]).to eq('true')
       expect(find('input#inchistringInput')[:readonly]).to eq('true')
 

@@ -1,4 +1,4 @@
-.polymer-section {
+.polymer-section, .chem-identifiers-section {
   tr td {
     vertical-align: top;
   }
@@ -22,7 +22,7 @@
     }
   }
 
-  .elem-composition-header{
+  .elem-composition-header, .chem-identifiers-header {
     padding-left: 0px;
   }
 }
