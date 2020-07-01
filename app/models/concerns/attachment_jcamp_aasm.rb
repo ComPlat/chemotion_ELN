@@ -178,9 +178,13 @@ module AttachmentJcampProcess
 
   def create_process(is_regen)
     params = build_params
-    tmp_jcamp, tmp_img, spc_type = Chemotion::Jcamp::Create.spectrum(
-      abs_path, is_regen, params
-    )
+    tmp_jcamp, tmp_img, spc_type =  Tempfile.create('molfile') do |t_molfile|
+      t_molfile.write(attachable.root_element.molecule.molfile)
+      t_molfile.rewind
+      Chemotion::Jcamp::Create.spectrum(
+        abs_path, t_molfile.path, is_regen, params
+      )
+    end
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
     jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'peak')
@@ -193,9 +197,13 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, spc_type = Chemotion::Jcamp::Create.spectrum(
-      abs_path, is_regen, params
-    )
+    tmp_jcamp, tmp_img, spc_type =  Tempfile.create('molfile') do |t_molfile|
+      t_molfile.write(attachable.root_element.molecule.molfile)
+      t_molfile.rewind
+      Chemotion::Jcamp::Create.spectrum(
+        abs_path, t_molfile.path, is_regen, params
+      )
+    end
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
     jcamp_att.update_prediction(params, spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'edit', true)

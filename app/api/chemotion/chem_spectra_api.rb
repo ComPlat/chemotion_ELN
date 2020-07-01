@@ -30,8 +30,9 @@ module Chemotion
 
       def conversion(params)
         file = params[:file][:tempfile]
+        molfile = params[:molfile][:tempfile]
         tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
-          file.path, false, params
+          file.path, molfile.path, false, params
         ) # abs_path, is_regen, peaks, shift
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
@@ -42,8 +43,9 @@ module Chemotion
 
       def convert_to_zip(params)
         file = params[:dst][:tempfile]
+        molfile = params[:molfile][:tempfile]
         jcamp, img = Chemotion::Jcamp::Create.spectrum(
-          file.path, false, params
+          file.path, molfile.path, false, params
         )
         predict = JSON.parse(params['predict'])
         to_zip_file(params[:filename], params[:src], jcamp, img, predict)
@@ -57,6 +59,7 @@ module Chemotion
         desc 'Convert file'
         params do
           requires :file, type: Hash
+          requires :molfile, type: Hash
           requires :mass, type: String
         end
         post 'convert' do
@@ -67,6 +70,7 @@ module Chemotion
         params do
           requires :src, type: Hash
           requires :dst, type: Hash
+          requires :molfile, type: Hash
           requires :filename, type: String
           requires :peaks_str, type: String
           requires :shift_select_x, type: String

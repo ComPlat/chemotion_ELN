@@ -66,12 +66,13 @@ module Chemotion
       include HTTParty
 
       def self.build_body(
-        file, is_regen = false, params = {}
+        file, molfile, is_regen = false, params = {}
       )
         clear = true if false
         {
           multipart: true,
           file: file,
+          molfile: molfile,
           clear: clear,
           mass: params[:mass],
           scan: params[:scan],
@@ -88,26 +89,28 @@ module Chemotion
       end
 
       def self.stub_http(
-        path, is_regen = false, params = {}
+        file_path, mol_path, is_regen = false, params = {}
       )
         response = nil
         url = Rails.configuration.spectra.url
         port = Rails.configuration.spectra.port
-        File.open(path, 'r') do |file|
-          body = build_body(file, is_regen, params)
-          response = HTTParty.post(
-            "http://#{url}:#{port}/zip_jcamp_n_img",
-            body: body,
-            timeout: 120
-          )
+        File.open(file_path, 'r') do |file|
+          File.open(mol_path, 'r') do |molfile|
+            body = build_body(file, molfile, is_regen, params)
+            response = HTTParty.post(
+              "http://#{url}:#{port}/zip_jcamp_n_img",
+              body: body,
+              timeout: 120
+            )
+          end
         end
         response
       end
 
       def self.spectrum(
-        path, is_regen = false, params = {}
+        file_path, mol_path, is_regen = false, params = {}
       )
-        rsp = stub_http(path, is_regen, params)
+        rsp = stub_http(file_path, mol_path, is_regen, params)
         rsp_io = StringIO.new(rsp.body.to_s)
         spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
         Util.extract_zip(rsp_io) << spc_type
