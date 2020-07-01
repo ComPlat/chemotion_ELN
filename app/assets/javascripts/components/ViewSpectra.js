@@ -428,13 +428,13 @@ class ViewSpectra extends React.Component {
       ];
     }
     // { name: 'check & write', value: this.checkWriteOp },
-    const predictable = updatable && ['1H', '13C', 'IR'].indexOf(et.layout) >= 0;
-    if (predictable) {
-      baseOps = [
-        ...baseOps,
-        { name: 'predict', value: this.predictOp },
-      ];
-    }
+    // const predictable = updatable && ['1H', '13C', 'IR'].indexOf(et.layout) >= 0;
+    // if (predictable) {
+    //   baseOps = [
+    //     ...baseOps,
+    //     { name: 'predict', value: this.predictOp },
+    //   ];
+    // }
     const saveable = updatable;
     if (saveable) {
       baseOps = [
@@ -498,6 +498,7 @@ class ViewSpectra extends React.Component {
     const operations = this.buildOpsByLayout(entity);
     const descriptions = this.getQDescVal();
     const forecast = {
+      btnCb: this.predictOp,
       molecule: 'molecule',
       predictions,
     };
