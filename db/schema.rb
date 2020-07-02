@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# encoding: utf-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20200513100000) do
+ActiveRecord::Schema.define(version: 20200702091855) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -201,6 +201,7 @@ ActiveRecord::Schema.define(version: 20200513100000) do
     t.float    "mean_abs_potential", default: 0.0
     t.integer  "creator",            default: 0
     t.integer  "sample_id",          default: 0
+    t.jsonb    "tddft",              default: {}
   end
 
   create_table "container_hierarchies", id: false, force: :cascade do |t|

@@ -82,6 +82,31 @@ export default class SampleComputedProps extends React.Component {
         width: 72,
       },
       {
+        headerName: 'S1',
+        valueGetter: params => params.data.tddft.s1_energy,
+        width: 55,
+      },
+      {
+        headerName: 'T1',
+        valueGetter: params => params.data.tddft.t1_energy,
+        width: 55,
+      },
+      {
+        headerName: 'deltaEST',
+        valueGetter: params => params.data.tddft.delta_est,
+        width: 90,
+      },
+      {
+        headerName: 'Singlet osc str.',
+        valueGetter: params => params.data.tddft.s1_osc,
+        width: 125,
+      },
+      {
+        headerName: 'TADF rate',
+        valueGetter: params => params.data.tddft.tadf_rate,
+        width: 105,
+      },
+      {
         headerName: 'Date',
         headerTooltip: 'Request Date',
         field: 'created_at',
