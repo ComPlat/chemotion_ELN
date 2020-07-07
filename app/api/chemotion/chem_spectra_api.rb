@@ -52,6 +52,19 @@ module Chemotion
       rescue
         error!('Save files error!', 500)
       end
+
+      def convert_for_refresh(params)
+        file = params[:dst][:tempfile]
+        molfile = params[:molfile][:tempfile]
+        tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
+          file.path, molfile.path, false, params
+        )
+        jcamp = encode64(tmp_jcamp.path)
+        img = encode64(tmp_img.path)
+        { status: true, jcamp: jcamp, img: img }
+      rescue
+        { status: false }
+      end
     end
 
     resource :chemspectra do # rubocop:disable BlockLength
@@ -92,6 +105,27 @@ module Chemotion
           zip_io = convert_to_zip(params)
           zip_io.rewind
           zip_io.read
+        end
+
+        desc 'Refresh files'
+        params do
+          requires :src, type: Hash
+          requires :dst, type: Hash
+          requires :molfile, type: Hash
+          requires :filename, type: String
+          requires :peaks_str, type: String
+          requires :shift_select_x, type: String
+          requires :shift_ref_name, type: String
+          requires :shift_ref_value, type: String
+          optional :integration, type: String
+          optional :multiplicity, type: String
+          optional :mass, type: String
+          optional :scan, type: String
+          optional :thres, type: String
+          optional :predict, type: String
+        end
+        post 'refresh' do
+          convert_for_refresh(params)
         end
       end
 
