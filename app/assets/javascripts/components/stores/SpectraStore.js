@@ -116,8 +116,10 @@ class SpectraStore {
     this.replacePredictions(targetPreds);
   }
 
-  handleInferSpectrum(preds) {
-    const targetPreds = preds || Object.assign({}, defaultPred);
+  handleInferSpectrum(props) {
+    this.handleSaveToFile(props);
+    const preds = props.fetchedFiles.predict || defaultPred;
+    const targetPreds = Object.assign({}, preds, { refreshed: true });
     this.replacePredictions(targetPreds);
   }
 

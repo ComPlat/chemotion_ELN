@@ -288,9 +288,19 @@ export default class AttachmentFetcher {
     return promise;
   }
 
-  static inferSpectrum(attId, peaks, layout, shift) {
+  static inferSpectrum(attId, peaksStr, shift, scan, thres, integration, multiplicity, predict, peaks, layout, keepPred) {
     const params = {
       attachmentId: attId,
+      peaksStr,
+      shiftSelectX: shift.peak.x,
+      shiftRefName: shift.ref.name,
+      shiftRefValue: shift.ref.value,
+      scan,
+      thres,
+      integration,
+      multiplicity,
+      predict,
+      keepPred,
       peaks: JSON.stringify(peaks),
       shift: JSON.stringify(shift),
       layout,
