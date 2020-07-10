@@ -779,8 +779,6 @@ export default class SampleDetails extends React.Component {
   }
 
   chemicalIdentifiersItem(sample) {
-    // avoid empty ListGroupItem
-    if (!sample.molecule.sum_formular) return false;
     const show = this.state.showChemicalIdentifiers;
     return (
       <div width="100%" className="chem-identifiers-section">
