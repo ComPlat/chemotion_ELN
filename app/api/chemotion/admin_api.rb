@@ -241,6 +241,7 @@ module Chemotion
           optional :enable, type: Boolean, desc: 'enable or disable account'
           optional :is_templates_moderator, type: Boolean, desc: 'enable or disable ketcherails template moderation'
           optional :confirm_user, type: Boolean, desc: 'confirm account'
+          optional :reconfirm_user, type: Boolean, desc: 'reconfirm account'
           optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
           optional :account_active, type: Boolean, desc: 'active or inactive this user'
         end
@@ -254,6 +255,10 @@ module Chemotion
             when false
               user.lock_access!(send_instructions: false)
             end
+          end
+
+          if params[:reconfirm_user].present?
+            user.update_columns(email: user.unconfirmed_email, unconfirmed_email: nil) if params[:reconfirm_user] == true
           end
 
           unless params[:confirm_user].nil?
