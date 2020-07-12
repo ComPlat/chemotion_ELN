@@ -11,6 +11,7 @@ module Entities
     expose :reaction_name_prefix, if: -> (obj, opts) { obj.respond_to? :reaction_name_prefix}
     expose :layout, if: -> (obj, opts) { obj.respond_to? :layout}
     expose :email, if: -> (obj, opts) { obj.respond_to? :email}
+    expose :unconfirmed_email, if: -> (obj, opts) { obj.respond_to? :unconfirmed_email}
     expose :confirmed_at, if: -> (obj, opts) { obj.respond_to? :confirmed_at}
     expose :current_sign_in_at, if: -> (obj, opts) { obj.respond_to? :current_sign_in_at}
     expose :locked_at, if: -> (obj, opts) { obj.respond_to? :locked_at}

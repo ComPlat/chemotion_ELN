@@ -48,6 +48,7 @@ const editTooltip = <Tooltip id="inchi_tooltip">edit User Info</Tooltip>;
 const resetPasswordTooltip = <Tooltip id="assign_button">reset password</Tooltip>;
 const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">send password instructions</Tooltip>;
 const confirmUserTooltip = <Tooltip id="assign_button">confirm this account</Tooltip>;
+const confirmEmailChangeTooltip = email => (<Tooltip id="email_change_button">confirm email: <br /> {email}</Tooltip>);
 const disableTooltip = <Tooltip id="assign_button">lock this account</Tooltip>;
 const enableTooltip = <Tooltip id="assign_button">unlock this account</Tooltip>;
 const templateModeratorEnableTooltip = <Tooltip id="assign_button">Enable Ketcher template editing for this user (currently disabled)</Tooltip>;
@@ -187,7 +188,17 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         if (result !== null) {
           this.handleFetchUsers();
-          alert('User Account Confirmed!');
+          alert('User Account has been confirmed!');
+        }
+      });
+  }
+
+  handleReConfirmUserAccount(id) {
+    AdminFetcher.updateAccount({ user_id: id, reconfirm_user: true })
+      .then((result) => {
+        if (result !== null) {
+          this.handleFetchUsers();
+          alert('User New Email has been confirmed!');
         }
       });
   }
@@ -554,6 +565,23 @@ export default class UserManagement extends React.Component {
       return <span />;
     };
 
+    const renderReConfirmButton = (unconfirmed_email, userId) => {
+      if (unconfirmed_email) {
+        return (
+          <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmed_email)}>
+            <Button
+              bsSize="xsmall"
+              bsStyle="warning"
+              onClick={() => this.handleReConfirmUserAccount(userId)}
+            >
+              <i className="fa fa-check-square" />
+            </Button>
+          </OverlayTrigger>
+        );
+      }
+      return <span />;
+    };
+
     const { users } = this.state;
 
     const tcolumn = (
@@ -646,6 +674,7 @@ export default class UserManagement extends React.Component {
           </OverlayTrigger>
           &nbsp;
           { renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id) }
+          { renderReConfirmButton(g.unconfirmed_email, g.id) }
         </td>
         <td width="12%"> {g.name} </td>
         <td width="6%"> {g.initials} </td>

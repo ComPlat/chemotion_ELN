@@ -107,7 +107,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'Returns current user' do
-        expect(JSON.parse(response.body)['user'].except('confirmed_at', 'current_sign_in_at', 'locked_at')).to(
+        expect(JSON.parse(response.body)['user'].except('confirmed_at', 'current_sign_in_at', 'locked_at', 'unconfirmed_email')).to(
           eq p1.as_json(json_options).merge(srlzr).merge('layout' => layout)
         )
       end
