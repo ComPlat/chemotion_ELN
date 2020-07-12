@@ -381,7 +381,8 @@ const sampleAnalysesContentDropdown = [
   {
     name: 'm+',
     ops: [
-      { insert: '[M+]' },
+      { insert: '[M]' },
+      { insert: '+', attributes: { script: 'super' } },
     ],
   },
   {
@@ -397,9 +398,9 @@ const sampleAnalysesContentDropdown = [
       { insert: '(m/z)', attributes: { italic: true } },
       { insert: ': [M]' },
       { insert: '+', attributes: { script: 'super' } },
-      { insert: ' calcd for , ' },
+      { insert: ' calcd for ' },
       { insert: 'MASS', attributes: { bold: true } },
-      { insert: '; found, ' },
+      { insert: '; found ' },
       { insert: 'MASS', attributes: { bold: true } },
       { insert: '.' },
     ],
@@ -411,9 +412,9 @@ const sampleAnalysesContentDropdown = [
       { insert: '(m/z)', attributes: { italic: true } },
       { insert: ': [M + H]' },
       { insert: '+', attributes: { script: 'super' } },
-      { insert: ' calcd for , ' },
+      { insert: ' calcd for ' },
       { insert: 'MASS', attributes: { bold: true } },
-      { insert: '; found, ' },
+      { insert: '; found ' },
       { insert: 'MASS', attributes: { bold: true } },
       { insert: '.' },
     ],
