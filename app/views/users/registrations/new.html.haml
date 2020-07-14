@@ -31,7 +31,7 @@
         (Kürzel)
       %br/
       = f.text_field :name_abbreviation, autofocus: true, class: 'form-control', required: true
-    = f.fields_for :affiliations, resource.affiliations.build do |a|
+    = f.fields_for :affiliations, resource.affiliations do |a|
       = render "devise/shared/affiliations", f: a, disabled: false
 
     = render 'devise/shared/pn_and_tos'

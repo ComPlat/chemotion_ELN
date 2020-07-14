@@ -44,7 +44,9 @@ $("input#user_email").focusout(
       '/api/v1/public/affiliations/swot?domain='+ encodeURIComponent(domain)
     ).done(
       function(organization){
-        $("input#organization-select").val(organization)
+        if(organization) {
+          $("input#organization-select").val(organization)
+        }
       }
     );
   }
