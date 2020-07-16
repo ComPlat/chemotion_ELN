@@ -486,19 +486,10 @@ class Sample < ActiveRecord::Base
   end
 
   def update_equivalent_for_reactions
-    %w(product reactant).each do |name|
-      self.send("reactions_#{name}_samples").each do |record|
-        record.update_equivalent
-      end
-    end
+    rel_reaction_id = reactions_samples.first&.reaction_id
+    return unless rel_reaction_id
 
-    self.reactions_starting_material_samples.each do |record|
-      %w(product reactant).each do |name|
-        record.reaction.send("reactions_#{name}_samples").each do |record|
-          record.update_equivalent
-        end
-      end
-    end
+    ReactionsSample.where(reaction_id: rel_reaction_id, type: %w[ReactionsProductSample ReactionsReactantSample ReactionsStartingMaterialSample]).each(&:update_equivalent)
   end
 
   def update_svg_for_reactions

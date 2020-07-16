@@ -234,12 +234,12 @@ describe Chemotion::ReactionAPI do
                  .find_by(sample_id: sample_1.id)
           sa2 = r.reactions_starting_material_samples
                  .find_by(sample_id: sample_2.id)
+          sa2_eq = (sa2.sample.amount_mmol / sa1.sample.amount_mmol).round(14)
           expect(sa1.attributes).to include(
             'reference' => true, 'equivalent' => 1.0
           )
-          expect(sa2.attributes).to include(
-            'reference' => false, 'equivalent' => 5.5
-          )
+          expect(sa2.attributes).to include('reference' => false)
+          expect(sa2.equivalent.round(14)).to eq(sa2_eq)
           expect(r.reactions_reactant_samples).to be_empty
         end
 

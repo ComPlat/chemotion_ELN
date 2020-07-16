@@ -37,9 +37,11 @@ end
 
 class ReactionsStartingMaterialSample < ReactionsSample
   include Tagging
+  include Reactable
 end
 
 class ReactionsReactantSample < ReactionsSample
+  include Tagging
   include Reactable
 end
 
