@@ -731,25 +731,39 @@ export default class Reaction extends Element {
   }
 
   updateMaterial(material) {
-    this._updateEquivalentForMaterial(material);
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
-
     let i = 0;
     let group;
-    let index;
     while (i < cats.length) {
       const groupName = `_${cats[i]}`;
       group = this[groupName];
       if (group) {
-        const index = group.findIndex(x => x.id == material.id);
+        const index = group.findIndex(x => x.id === material.id);
         if (index >= 0) {
-          group[index] = new Sample(material);
+          const mat = new Sample(material);
+          mat.reference = group[index].reference;
+          mat.updateChecksum();
+          group[index] = mat;
           break;
         }
       }
 
       i += 1;
     }
+    this.refreshEquivalent();
+  }
+
+  refreshEquivalent() {
+    let matGroup;
+    const refMat = this.samples.find(sample => sample.reference);
+    ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
+      matGroup = this[g];
+      if (matGroup) {
+        this[g] = matGroup.map((mat) => {
+          const m = mat; m.equivalent = m.amount_mol / refMat.amount_mol; return m;
+        });
+      }
+    });
   }
 
   // literatures
