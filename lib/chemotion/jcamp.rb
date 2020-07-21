@@ -162,22 +162,23 @@ module Chemotion
       module NmrPeaksForm
         include HTTParty
 
-        def self.build_body(molfile, layout, peaks, shift)
+        def self.build_body(molfile, layout, peaks, shift, spectrum)
           {
             multipart: true,
             molfile: molfile,
             layout: layout,
             peaks: peaks,
-            shift: shift
+            shift: shift,
+            spectrum: spectrum
           }
         end
 
-        def self.stub_request(molfile, layout, peaks, shift)
+        def self.stub_request(molfile, layout, peaks, shift, spectrum)
           response = nil
           url = Rails.configuration.spectra.url
           port = Rails.configuration.spectra.port
           File.open(molfile.path, 'r') do |file|
-            body = build_body(file, layout, peaks, shift)
+            body = build_body(file, layout, peaks, shift, spectrum)
             response = HTTParty.post(
               "http://#{url}:#{port}/predict/by_peaks_form",
               body: body
@@ -186,8 +187,8 @@ module Chemotion
           response
         end
 
-        def self.exec(molfile, layout, peaks, shift)
-          rsp = stub_request(molfile, layout, peaks, shift)
+        def self.exec(molfile, layout, peaks, shift, spectrum)
+          rsp = stub_request(molfile, layout, peaks, shift, spectrum)
           rsp.code == 200 ? rsp.parsed_response : nil
         end
       end

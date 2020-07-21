@@ -140,7 +140,7 @@ module Chemotion
         post 'nmr_peaks_form' do
           molfile = params['molfile']['tempfile']
           rsp = Chemotion::Jcamp::Predict::NmrPeaksForm.exec(
-            molfile, params[:layout], params[:peaks], params[:shift]
+            molfile, params[:layout], params[:peaks], params[:shift], false
           )
 
           content_type('application/json')

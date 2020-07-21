@@ -289,9 +289,18 @@ module AttachmentJcampProcess
         )
       end
     else
-      Chemotion::Jcamp::Predict::NmrPeaksForm.exec(
-        t_molfile, params[:layout], params[:peaks], params[:shift]
-      )
+      spectrum = read_file
+      Tempfile.create('spectrum') do |t_spectrum|
+        t_spectrum.write(spectrum)
+        t_spectrum.rewind
+        Chemotion::Jcamp::Predict::NmrPeaksForm.exec(
+          t_molfile,
+          params[:layout],
+          params[:peaks] || '[]',
+          params[:shift] || '{}',
+          t_spectrum
+        )
+      end
     end
   end
 
@@ -337,6 +346,8 @@ module AttachmentJcampProcess
 
   def auto_infer_n_clear_json(spc_type, is_regen)
     case spc_type
+    when '13C'
+      infer_spectrum({ layout: '13C' })
     when 'INFRARED'
       infer_spectrum({ layout: 'IR' })
     when 'MS'
