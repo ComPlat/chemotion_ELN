@@ -52,7 +52,7 @@ Rails.application.routes.draw do
 
   # Standalone page for ChemSpectra
   get 'chemspectra', to: 'pages#chemspectra'
-  get 'chemspectra-editor', to: 'pages#chemspectra_editor'
+  # get 'chemspectra-editor', to: 'pages#chemspectra_editor'
 
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'
