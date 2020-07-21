@@ -67,7 +67,7 @@ module AttachmentJcampAasm
       end
 
       event :set_failure do
-        transitions from: %i[idle queueing regenerating peaked edited failure], to: :failure
+        transitions from: %i[idle queueing regenerating failure], to: :failure
       end
     end
   end
