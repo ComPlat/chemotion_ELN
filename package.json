@@ -34,7 +34,7 @@
     "immutable": "^4.0.0-rc.12",
     "jcampconverter": "^2.11.0",
     "jsdom": "^9.8.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "moment": "^2.22.2",
     "moment-precise-range-plugin": "^1.2.4",
     "normalizr": "^3.3.0",
