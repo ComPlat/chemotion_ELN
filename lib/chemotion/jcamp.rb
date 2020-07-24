@@ -72,7 +72,7 @@ module Chemotion
         {
           multipart: true,
           file: file,
-          molfile: molfile,
+          molfile: molfile.size > 10 ? molfile : false,
           clear: clear,
           mass: params[:mass],
           scan: params[:scan],

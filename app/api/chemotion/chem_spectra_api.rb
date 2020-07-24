@@ -28,9 +28,16 @@ module Chemotion
         end
       end
 
+      def get_molfile(params)
+        if params[:molfile].is_a? String
+          params[:molfile] = { tempfile: Tempfile.new }
+        end
+        params[:molfile][:tempfile]
+      end
+
       def conversion(params)
         file = params[:file][:tempfile]
-        molfile = params[:molfile][:tempfile]
+        molfile = get_molfile(params)
         tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
           file.path, molfile.path, false, params
         ) # abs_path, is_regen, peaks, shift
@@ -43,7 +50,7 @@ module Chemotion
 
       def convert_to_zip(params)
         file = params[:dst][:tempfile]
-        molfile = params[:molfile][:tempfile]
+        molfile = get_molfile(params)
         jcamp, img = Chemotion::Jcamp::Create.spectrum(
           file.path, molfile.path, false, params
         )
@@ -55,7 +62,7 @@ module Chemotion
 
       def convert_for_refresh(params)
         file = params[:dst][:tempfile]
-        molfile = params[:molfile][:tempfile]
+        molfile = get_molfile(params)
         tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
           file.path, molfile.path, false, params
         )
@@ -72,8 +79,8 @@ module Chemotion
         desc 'Convert file'
         params do
           requires :file, type: Hash
-          requires :molfile, type: Hash
           requires :mass, type: String
+          optional :molfile
         end
         post 'convert' do
           conversion(params)
@@ -83,7 +90,6 @@ module Chemotion
         params do
           requires :src, type: Hash
           requires :dst, type: Hash
-          requires :molfile, type: Hash
           requires :filename, type: String
           requires :peaks_str, type: String
           requires :shift_select_x, type: String
@@ -95,6 +101,7 @@ module Chemotion
           optional :scan, type: String
           optional :thres, type: String
           optional :predict, type: String
+          optional :molfile
         end
         post 'save' do
           env['api.format'] = :binary
