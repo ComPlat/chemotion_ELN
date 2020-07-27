@@ -58,13 +58,16 @@ class SpectraActions {
     return null;
   }
 
-  InferSpectrum({
-    spcInfo, peaks, layout, shift, cb,
-  }) {
+  InferSpectrum(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict,
+    targetPeaks, layout,
+    cb, keepPred = false,
+  ) {
     return (dispatch) => {
-      AttachmentFetcher.inferSpectrum(spcInfo.idx, peaks, layout, shift)
-        .then((json) => {
-          dispatch(json);
+      AttachmentFetcher.inferSpectrum(
+        spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity,
+        predict, targetPeaks, layout, keepPred
+      ).then((fetchedFiles) => {
+          dispatch({ fetchedFiles, spcInfo });
           cb();
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line

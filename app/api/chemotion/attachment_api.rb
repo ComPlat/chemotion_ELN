@@ -374,13 +374,29 @@ module Chemotion
       desc 'Make spectra inference'
       params do
         requires :attachment_id, type: Integer
+        optional :peaks_str, type: String
+        optional :shift_select_x, type: String
+        optional :shift_ref_name, type: String
+        optional :shift_ref_value, type: String
+        optional :shift_ref_value, type: String
+        optional :integration, type: String
+        optional :multiplicity, type: String
+        optional :mass, type: String
+        optional :scan, type: String
+        optional :thres, type: String
+        optional :predict, type: String
+        optional :keep_pred, type: Boolean
         optional :peaks, type: String
         optional :shift, type: String
         optional :layout, type: String
       end
       post 'infer' do
-        content_type('application/json')
-        @attachment.infer_spectrum(params)
+        predict = @attachment.infer_spectrum(params)
+        params[:predict] = predict.to_json
+        jcamp_att = @attachment.generate_spectrum(
+          false, false, params
+        )
+        { files: [raw_file_obj(jcamp_att)], predict: predict }
       end
 
       namespace :svgs do

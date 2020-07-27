@@ -10,6 +10,12 @@ import SpectraStore from './stores/SpectraStore';
 import { SpectraOps } from './utils/quillToolbarSymbol';
 import ResearchPlan from './models/ResearchPlan';
 
+const rmRefreshed = (analysis) => {
+  if (!analysis) return analysis;
+  const { refreshed, ...coreAnalysis } = analysis;
+  return coreAnalysis;
+};
+
 class ViewSpectra extends React.Component {
   constructor(props) {
     super(props);
@@ -317,7 +323,7 @@ class ViewSpectra extends React.Component {
     if (!si) return;
     const fPeaks = FN.rmRef(peaks, shift);
     const peaksStr = FN.toPeakStr(fPeaks);
-    const predict = JSON.stringify(analysis);
+    const predict = JSON.stringify(rmRefreshed(analysis));
 
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
@@ -380,18 +386,34 @@ class ViewSpectra extends React.Component {
   }
 
   predictOp({
-    peaks, layout, shift, multiplicity,
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity,
+    layout,
   }) {
     const { handleSubmit } = this.props;
     const si = this.getSpcInfo();
     if (!si) return;
-
+    const fPeaks = FN.rmRef(peaks, shift);
+    const peaksStr = FN.toPeakStr(fPeaks);
+    const predict = JSON.stringify(rmRefreshed(analysis));
     const targetPeaks = this.getPeaksByLayou(peaks, layout, multiplicity);
 
+    // LoadingActions.start.defer();
     SpectraActions.InferRunning.defer();
-    SpectraActions.InferSpectrum.defer({
-      spcInfo: si, peaks: targetPeaks, layout, shift, cb: handleSubmit,
-    });
+    SpectraActions.InferSpectrum.defer(
+      si,
+      peaksStr,
+      shift,
+      scan,
+      thres,
+      JSON.stringify(integration),
+      JSON.stringify(multiplicity),
+      predict,
+      targetPeaks,
+      layout,
+      handleSubmit,
+      keepPred,
+    );
+    // spcInfo: si, peaks: targetPeaks, layout, shift, cb: handleSubmit,
   }
 
   // checkWriteOp({
@@ -428,13 +450,13 @@ class ViewSpectra extends React.Component {
       ];
     }
     // { name: 'check & write', value: this.checkWriteOp },
-    const predictable = updatable && ['1H', '13C', 'IR'].indexOf(et.layout) >= 0;
-    if (predictable) {
-      baseOps = [
-        ...baseOps,
-        { name: 'predict', value: this.predictOp },
-      ];
-    }
+    // const predictable = updatable && ['1H', '13C', 'IR'].indexOf(et.layout) >= 0;
+    // if (predictable) {
+    //   baseOps = [
+    //     ...baseOps,
+    //     { name: 'predict', value: this.predictOp },
+    //   ];
+    // }
     const saveable = updatable;
     if (saveable) {
       baseOps = [
@@ -498,6 +520,8 @@ class ViewSpectra extends React.Component {
     const operations = this.buildOpsByLayout(entity);
     const descriptions = this.getQDescVal();
     const forecast = {
+      btnCb: this.predictOp,
+      refreshCb: this.saveOp,
       molecule: 'molecule',
       predictions,
     };
