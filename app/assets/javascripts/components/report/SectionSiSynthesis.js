@@ -288,7 +288,7 @@ const DangerBlock = ({ el }) => {
 };
 
 const descContent = (el) => {
-  if (el.role !== 'single') return [];
+  if (['single', ''].indexOf(el.role) < 0) return [];
   let block = rmOpsRedundantSpaceBreak(el.description.ops);
   block = [{ insert: '\n' }, ...block, { insert: '\n' }];
   return block;
