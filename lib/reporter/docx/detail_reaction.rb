@@ -79,11 +79,12 @@ module Reporter
 
       def synthesis_title_delta
         font_size = 13
-        delta = [{ 'attributes' => { 'font-size' => font_size },
-                   'insert' => "4.#{@index + 1} " }]
+        # delta = [{ 'attributes' => { 'font-size' => font_size },
+        #            'insert' => "4.#{@index + 1} " }]
+        delta = []
         obj.products.each do |p|
           delta = delta +
-                  sample_molecule_name_delta(p, font_size) +
+                  sample_molecule_name_delta(p, font_size, true) +
                   [{ 'attributes' => { 'font-size' => font_size },
                      'insert' => ' (' }] +
                   mol_serial_delta(p[:molecule][:id], font_size) +
@@ -407,7 +408,7 @@ module Reporter
       end
 
       def single_description_delta
-        return [] if obj.role != "single"
+        return [] unless ["single", ""].include?(obj.role)
         delta_desc = obj.description.deep_stringify_keys["ops"]
         clean_desc = remove_redundant_space_break(delta_desc)
         return [{"insert"=>"\n"}] + clean_desc + [{"insert"=>"\n"}]
@@ -540,17 +541,17 @@ module Reporter
         delta
       end
 
-      def sample_molecule_name_delta(sample, font_size = 12)
+      def sample_molecule_name_delta(sample, font_size = 12, bold = false)
         showed_nm = sample[:showed_name] || sample[:iupac_name] || nil
         if showed_nm.present?
-          [{ 'attributes' => { 'font-size' => font_size },
+          [{ 'attributes' => { 'bold' => bold, 'font-size' => font_size },
              'insert' => showed_nm.to_s }]
         else
-          [{ 'attributes' => { 'font-size' => font_size },
+          [{ 'attributes' => { 'bold' => bold, 'font-size' => font_size },
              'insert' => '"' },
            { 'attributes' => { 'bold' => 'true', 'font-size' => font_size },
              'insert' => 'NAME' },
-           { 'attributes' => { 'font-size' => font_size },
+           { 'attributes' => { 'bold' => bold, 'font-size' => font_size },
              'insert' => '"' }]
         end
       end
