@@ -18,6 +18,7 @@ module Reporter
       @img_format = @report.img_format
       @template_path = args[:template_path]
       @mol_serials = @report.mol_serials
+      @std_rxn = args[:std_rxn] || false
       init_specific_variable
     end
 
@@ -86,7 +87,8 @@ module Reporter
                       rxn_settings: @rxn_settings,
                       si_rxn_settings: @si_rxn_settings,
                       configs: @configs,
-                      img_format: @img_format
+                      img_format: @img_format,
+                      std_rxn: @std_rxn,
                     ).convert
     end
 

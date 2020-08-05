@@ -18,7 +18,8 @@ module Reporter
                             img_format: img_format,
                             font_family: "Times New Roman",
                             template: "supporting_information",
-                            mol_serials: @mol_serials
+                            mol_serials: @mol_serials,
+                            std_rxn: @std_rxn,
                           ).convert
     end
 
@@ -32,7 +33,8 @@ module Reporter
                               img_format: img_format,
                               font_family: "Times New Roman",
                               template: "supporting_information",
-                              mol_serials: @mol_serials
+                              mol_serials: @mol_serials,
+                              std_rxn: @std_rxn,
                             ).convert
     end
 

@@ -57,7 +57,11 @@ class Report < ActiveRecord::Base
       ).process
     when 'supporting_information'
       Reporter::WorkerSi.new(
-        report: self, template_path: tpl_path
+        report: self, template_path: tpl_path, std_rxn: false
+      ).process
+    when 'supporting_information_std_rxn'
+      Reporter::WorkerSi.new(
+        report: self, template_path: tpl_path, std_rxn: true
       ).process
     when 'rxn_list_xlsx'
       Reporter::WorkerRxnList.new(
@@ -107,6 +111,8 @@ class Report < ActiveRecord::Base
     case template
       when "supporting_information"
         "Supporting_Information_#{now}.docx"
+      when "supporting_information_std_rxn"
+        "Supporting_Information_Standard_Reaction_#{now}.docx"
       when "single_reaction"
         "ELN_Reaction_#{now}.docx"
       else
@@ -117,6 +123,8 @@ class Report < ActiveRecord::Base
   def self.template_path(template)
     case template
     when 'supporting_information'
+      Rails.root.join('lib', 'template', 'Supporting_information.docx')
+    when "supporting_information_std_rxn"
       Rails.root.join('lib', 'template', 'Supporting_information.docx')
     when 'spectrum'
       Rails.root.join('lib', 'template', 'Spectra.docx')

@@ -13,6 +13,8 @@ module Reporter
         @font_family = args[:font_family]
         @template = args[:template]
         @mol_serials = args[:mol_serials]
+        @template_path = args[:template_path]
+        @std_rxn = args[:std_rxn]
       end
 
       def convert
@@ -38,6 +40,7 @@ module Reporter
           font_family: @font_family,
           template: @template,
           mol_serials: @mol_serials,
+          std_rxn: @std_rxn,
         ).content
       end
 
