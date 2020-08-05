@@ -102,6 +102,7 @@ const Setting = (props) => {
     case 'spectrum':
       return spcSetting();
     case 'supporting_information':
+    case 'supporting_information_std_rxn':
       return suiSetting(props);
     case 'rxn_list_xlsx':
     case 'rxn_list_csv':

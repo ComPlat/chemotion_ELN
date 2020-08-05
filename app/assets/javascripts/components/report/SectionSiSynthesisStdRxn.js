@@ -6,7 +6,7 @@ import { fixDigit, validDigit } from '../utils/MathUtils';
 import { rmOpsRedundantSpaceBreak, frontBreak } from '../utils/quillFormat';
 import ArrayUtils from '../utils/ArrayUtils';
 import { Alphabet } from '../utils/ElementUtils';
-import { UserSerial } from '../utils/ReportHelper';
+import { UserSerial, CapitalizeFirstLetter } from '../utils/ReportHelper';
 
 const onlyBlank = (target) => {
   if (target.length === 0) return true;
@@ -25,7 +25,7 @@ const Title = ({ el, counter, molSerials }) => {
     const us = UserSerial(p.molecule, molSerials);
     const key = `${i}-text`;
     const comma = <span key={`${i}-comma`}>, </span>;
-    const smn = p.showedName();
+    const smn = i == 0 ? CapitalizeFirstLetter(p.showedName()) : p.showedName();
     title = smn
       ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
@@ -263,7 +263,7 @@ const analysesContent = (products) => {
   });
   if (onlyBlank(content)) return [];
   content = rmOpsRedundantSpaceBreak(content);
-  content = [...content.slice(0, -1), { insert: '.' }];
+  content = [{ insert: '\n' }, ...content.slice(0, -1), { insert: '.' }];
   return frontBreak(content);
 };
 
@@ -294,17 +294,17 @@ const descContent = (el) => {
 };
 
 const synNameContent = (el) => {
-  const title = el.name || el.short_label;
+  const title = (el.name || el.short_label).replace(/\-R\d*/, '-R').replace(/Single R\d*/, 'Single R');
   return [{ insert: `${title}: ` }];
 };
 
 const ContentBlock = ({ el, molSerials }) => {
   const synName = synNameContent(el);
   const desc = descContent(el);
-  const materials = materailsContent(el, molSerials);
+  // const materials = materailsContent(el, molSerials);
   const obsvTlc = obsvTlcContent(el);
   const analyses = analysesContent(el.products);
-  const block = [...synName, ...desc, ...materials, ...obsvTlc, ...analyses];
+  const block = [...synName, ...desc, ...obsvTlc, ...analyses];
   return <QuillViewer value={{ ops: block }} />;
 };
 

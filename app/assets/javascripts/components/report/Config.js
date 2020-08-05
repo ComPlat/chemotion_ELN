@@ -17,6 +17,7 @@ const templateOpts = () => (
   [
     { label: 'Standard', value: 'standard' },
     { label: 'Supporting Information', value: 'supporting_information' },
+    { label: 'Supporting Information - Standard Reaction', value: 'supporting_information_std_rxn' },
     { label: 'Supporting Information - Spectra', value: 'spectrum' },
     { label: 'Supporting Information - Reaction List (.xlsx)', value: 'rxn_list_xlsx' },
     { label: 'Supporting Information - Reaction List (.csv)', value: 'rxn_list_csv' },
@@ -137,6 +138,28 @@ const suiConfig = ({ template, configs, fileName, checkedAllConfigs,
   );
 };
 
+const suiStdRxnConfig = ({
+  template, configs, fileName, checkedAllConfigs, fileDescription, 
+}) => {
+
+  const filteredConfigs = configs.filter(c => c.text === 'Show all chemicals in schemes (unchecked to show products only)');
+  return (
+    <div>
+      <br />
+      <Template template={template} />
+      <br />
+      <FileName fileName={fileName} />
+      <FileDescription fileDescription={fileDescription} />
+      <CheckBoxs
+        items={filteredConfigs}
+        toggleCheckbox={toggleConfigs}
+        toggleCheckAll={toggleConfigsAll}
+        checkedAll={checkedAllConfigs}
+      />
+    </div>
+  );
+};
+
 const stdConfig = ({template, configs, fileName, checkedAllConfigs,
   imgFormat, fileDescription }) => {
   return (
@@ -179,6 +202,8 @@ const Config = (props) => {
       return spcConfig(props);
     case 'supporting_information':
       return suiConfig(props);
+    case 'supporting_information_std_rxn':
+      return suiStdRxnConfig(props);
     case 'rxn_list_xlsx':
     case 'rxn_list_csv':
     case 'rxn_list_html':
