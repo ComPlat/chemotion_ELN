@@ -39,6 +39,7 @@ const ordersContent = (props) => {
     case 'spectrum':
       return spcContent(props);
     case 'supporting_information':
+    case 'supporting_information_std_rxn':
       return suiContent(props);
     case 'rxn_list_xlsx':
     case 'rxn_list_csv':

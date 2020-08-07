@@ -59,6 +59,7 @@ const Serials = (props) => {
     case 'spectrum':
       return spcSerials(props);
     case 'supporting_information':
+    case 'supporting_information_std_rxn':
       return suiSerials(props);
     case 'rxn_list_xlsx':
     case 'rxn_list_csv':

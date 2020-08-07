@@ -8,6 +8,7 @@ module Reporter
         @index = args[:index] || 0
         @template = args[:template]
         @mol_serials = args[:mol_serials] || []
+        @std_rxn = args[:std_rxn]
       end
 
       def content
@@ -82,9 +83,9 @@ module Reporter
         # delta = [{ 'attributes' => { 'font-size' => font_size },
         #            'insert' => "4.#{@index + 1} " }]
         delta = []
-        obj.products.each do |p|
+        obj.products.each_with_index do |p, idx|
           delta = delta +
-                  sample_molecule_name_delta(p, font_size, true) +
+                  sample_molecule_name_delta(p, font_size, true, idx, @std_rxn) +
                   [{ 'attributes' => { 'font-size' => font_size },
                      'insert' => ' (' }] +
                   mol_serial_delta(p[:molecule][:id], font_size) +
@@ -396,15 +397,16 @@ module Reporter
       def synthesis_delta
         synthesis_name_delta +
           single_description_delta +
-          materials_table_delta +
+          (@std_rxn ? [{"insert"=>"\n"}] : materials_table_delta) +
           obsv_tlc_delta +
+          (@std_rxn ? [{"insert"=>"\n"}] : []) +
           product_analyses_delta +
           dangerous_delta +
           bib_delta
       end
 
       def synthesis_name_delta
-        [{"insert"=>"#{title}: "}]
+        @std_rxn ? [{"insert"=>"#{title.gsub(/\-R\d*/, '-R').gsub(/Single R\d*/, 'Single R')}: "}] : [{"insert"=>"#{title}: "}]
       end
 
       def single_description_delta
@@ -541,11 +543,13 @@ module Reporter
         delta
       end
 
-      def sample_molecule_name_delta(sample, font_size = 12, bold = false)
+      def sample_molecule_name_delta(sample, font_size = 12, bold = false, idx = 1, std_rxn = false)
         showed_nm = sample[:showed_name] || sample[:iupac_name] || nil
         if showed_nm.present?
+          snm = showed_nm.to_s
+          snm = snm.slice(0,1).capitalize + snm.slice(1..-1) if std_rxn && idx == 0
           [{ 'attributes' => { 'bold' => bold, 'font-size' => font_size },
-             'insert' => showed_nm.to_s }]
+             'insert' => snm }]
         else
           [{ 'attributes' => { 'bold' => bold, 'font-size' => font_size },
              'insert' => '"' },

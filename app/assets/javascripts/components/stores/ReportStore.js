@@ -313,6 +313,9 @@ class ReportStore {
       case 'supporting_information':
         prefix = 'Supporting_Information_';
         break;
+      case 'supporting_information_std_rxn':
+        prefix = 'Supporting_Information_Standard_Reaction_';
+        break;
       case 'rxn_list_xlsx':
       case 'rxn_list_csv':
       case 'rxn_list_html':
@@ -364,6 +367,7 @@ class ReportStore {
       case 'standard':
       case 'spectrum':
       case 'supporting_information':
+      case 'supporting_information_std_rxn':
       default:
         ext = 'docx';
         break;

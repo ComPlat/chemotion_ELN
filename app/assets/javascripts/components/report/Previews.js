@@ -5,6 +5,7 @@ import SectionSiProcedures from './SectionSiProcedures';
 import SectionSiSynthesis from './SectionSiSynthesis';
 import SectionSpectrum from './SectionSpectrum';
 import SectionReactionList from './SectionReactionList';
+import SectionSiSynthesisStdRxn from './SectionSiSynthesisStdRxn';
 
 const objToKeyValPairs = (obj = []) => (
   obj.reduce((ob, { text, checked }) => {
@@ -69,6 +70,34 @@ const suiPreviews = ({ previewObjs, configs, molSerials, siRxnSettings }) => {
   );
 };
 
+const suiStdRxnPreviews = ({ previewObjs, configs, molSerials, siRxnSettings }) => {
+  const configsPairs = objToKeyValPairs(configs);
+  const setPairs = objToKeyValPairs(siRxnSettings);
+
+  return (
+    <div>
+      <p>Experimental Part:</p>
+      <br />
+      <h4>1 Versions</h4>
+      <p>Version InChI (1.04), Version SMILES (Daylight)</p>
+      <br />
+      <h4>2 General remarks</h4>
+      <br />
+      <h4>3 General procedures</h4>
+      <SectionSiProcedures previewObjs={previewObjs} />
+      <br />
+      <h4>4 Synthesis</h4>
+      <SectionSiSynthesisStdRxn
+        previewObjs={previewObjs}
+        configs={configsPairs}
+        molSerials={molSerials}
+        settings={setPairs}
+      />
+      <br />
+    </div>
+  );
+};
+
 const spcPreviews = ({ prdAtts, molSerials, attThumbNails }) => (
   <div>
     <SectionSpectrum
@@ -95,6 +124,8 @@ const previewsContent = (props) => {
       return spcPreviews(props);
     case 'supporting_information':
       return suiPreviews(props);
+    case 'supporting_information_std_rxn':
+      return suiStdRxnPreviews(props);
     case 'rxn_list_xlsx':
     case 'rxn_list_csv':
     case 'rxn_list_html':

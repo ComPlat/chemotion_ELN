@@ -107,6 +107,16 @@ const suiLabel = () => (
   </OverlayTrigger>
 );
 
+const suiStdRxnLabelTooltip = () => (
+  <Tooltip id="sui-tp">Supporting Information - Standard Reaction</Tooltip>
+);
+
+const suiStdRxnLabel = () => (
+  <OverlayTrigger placement="right" overlay={suiStdRxnLabelTooltip()}>
+    <Label bsStyle="info">SI STD-RXN</Label>
+  </OverlayTrigger>
+);
+
 const spcTooltip = () => (
   <Tooltip id="spc-tp">SI Spectrum</Tooltip>
 );
@@ -147,6 +157,8 @@ const templateLable = (archive) => {
       return spcLabel();
     case 'supporting_information':
       return suiLabel();
+    case 'supporting_information_std_rxn':
+      return suiStdRxnLabel();
     case 'rxn_list_xlsx':
       return rxlXlsxLabel();
     case 'rxn_list_csv':
