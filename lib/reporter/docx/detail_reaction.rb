@@ -547,7 +547,7 @@ module Reporter
         showed_nm = sample[:showed_name] || sample[:iupac_name] || nil
         if showed_nm.present?
           snm = showed_nm.to_s
-          snm = snm.slice(0,1).capitalize + snm.slice(1..-1) if std_rxn && idx == 0
+          snm = snm.slice(0,1).capitalize + snm.slice(1..-1) if std_rxn && idx == 0 && snm
           [{ 'attributes' => { 'bold' => bold, 'font-size' => font_size },
              'insert' => snm }]
         else

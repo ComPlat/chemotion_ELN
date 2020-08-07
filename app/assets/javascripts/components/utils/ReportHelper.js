@@ -80,7 +80,11 @@ const LoadPreviewIds = (reportState) => {
   return targets;
 };
 
-const CapitalizeFirstLetter = str => str.charAt(0).toUpperCase() + str.slice(1);
+const CapitalizeFirstLetter = str => (
+  str && str.length > 0
+    ? str.charAt(0).toUpperCase() + str.slice(1)
+    : str
+);
 
 module.exports = {
   UpdateSelectedObjs, GetTypeIds, UserSerial, OrderPreviewObjs, LoadPreviewIds,
