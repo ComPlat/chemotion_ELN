@@ -406,14 +406,15 @@ module Reporter
       end
 
       def synthesis_name_delta
-        @std_rxn ? [{"insert"=>"#{title.gsub(/\-R\d*/, '-R').gsub(/Single R\d*/, 'Single R')}: "}] : [{"insert"=>"#{title}: "}]
+        return [] if @std_rxn && !["gp", "parts"].include?(obj.role)
+        [{"insert"=>"#{title}: "}]
       end
 
       def single_description_delta
-        return [] unless ["single", ""].include?(obj.role)
+        return [] if ["gp", "parts"].include?(obj.role)
         delta_desc = obj.description.deep_stringify_keys["ops"]
         clean_desc = remove_redundant_space_break(delta_desc)
-        return [{"insert"=>"\n"}] + clean_desc + [{"insert"=>"\n"}]
+        return (@std_rxn ? [] : [{"insert"=>"\n"}]) + clean_desc + (@std_rxn ? [] : [{"insert"=>"\n"}])
       end
 
       def observation_delta
@@ -543,11 +544,25 @@ module Reporter
         delta
       end
 
+      def capitalize_first_letter(snm)
+        if snm && snm.length > 0
+          char_idxs = []
+          snm.split('').each_with_index do |m, idx|
+            char_idxs += [idx] if m.match(/^[a-zA-Z()]$/)
+          end
+          char_idx = char_idxs[0]
+          if char_idx >= 0
+            return snm.slice(0, char_idx) + snm.slice(char_idx, 1).capitalize + snm.slice(char_idx + 1..-1)
+          end
+        end
+        snm
+      end
+
       def sample_molecule_name_delta(sample, font_size = 12, bold = false, idx = 1, std_rxn = false)
         showed_nm = sample[:showed_name] || sample[:iupac_name] || nil
         if showed_nm.present?
           snm = showed_nm.to_s
-          snm = snm.slice(0,1).capitalize + snm.slice(1..-1) if std_rxn && idx == 0 && snm
+          snm = capitalize_first_letter(snm) if std_rxn && idx == 0 && snm
           [{ 'attributes' => { 'bold' => bold, 'font-size' => font_size },
              'insert' => snm }]
         else

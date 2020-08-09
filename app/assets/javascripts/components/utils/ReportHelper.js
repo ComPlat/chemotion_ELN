@@ -80,11 +80,25 @@ const LoadPreviewIds = (reportState) => {
   return targets;
 };
 
-const CapitalizeFirstLetter = str => (
-  str && str.length > 0
-    ? str.charAt(0).toUpperCase() + str.slice(1)
-    : str
-);
+const CapitalizeFirstLetter = (str) => {
+  if (str && str.length > 0) {
+    let charIdxs = [];
+    [...str].forEach((t, idx) => {
+      if (/^[a-zA-Z()]$/.test(t)) {
+        charIdxs = [...charIdxs, idx];
+      }
+    });
+    const charIdx = charIdxs[0];
+    if (charIdx >= 0) {
+      return (
+        str.slice(0, charIdx) +
+        str.charAt(charIdx).toUpperCase() +
+        str.slice(charIdx + 1)
+      );
+    }
+  }
+  return str
+};
 
 module.exports = {
   UpdateSelectedObjs, GetTypeIds, UserSerial, OrderPreviewObjs, LoadPreviewIds,

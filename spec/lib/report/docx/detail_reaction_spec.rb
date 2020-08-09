@@ -20,6 +20,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
   let(:equiv) { 0.88 }
   let(:d1)    { 'Damage to environment' }
   let(:d2)    { 'Explosive (Class 1)' }
+  let(:role)  { 'parts' }
   let(:dangerous) { "{\"#{d1}\", \"#{d2}\"}" }
   let!(:user) { create(:user) }
   let!(:gp)   { create(:group, users: [user]) }
@@ -42,6 +43,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
                       tlc_solvents: t_sol,
                       tlc_description: t_des,
                       observation: obs,
+                      role: role,
                       dangerous_products: dangerous)
   end
   let!(:s1) do
