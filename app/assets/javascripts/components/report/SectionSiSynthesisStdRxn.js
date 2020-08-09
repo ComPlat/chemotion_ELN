@@ -287,14 +287,15 @@ const DangerBlock = ({ el }) => {
 };
 
 const descContent = (el) => {
-  if (['single', ''].indexOf(el.role) < 0) return [];
+  if (['gp', 'parts'].indexOf(el.role) >= 0) return [];
   let block = rmOpsRedundantSpaceBreak(el.description.ops);
-  block = [{ insert: '\n' }, ...block, { insert: '\n' }];
+  block = [{ insert: '\n' }, ...block];
   return block;
 };
 
 const synNameContent = (el) => {
-  const title = (el.name || el.short_label).replace(/\-R\d*/, '-R').replace(/Single R\d*/, 'Single R');
+  if (['gp', 'parts'].indexOf(el.role) < 0) return [];
+  const title = el.name || el.short_label;
   return [{ insert: `${title}: ` }];
 };
 
