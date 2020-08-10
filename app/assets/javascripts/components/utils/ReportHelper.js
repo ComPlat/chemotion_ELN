@@ -84,7 +84,7 @@ const CapitalizeFirstLetter = (str) => {
   if (str && str.length > 0) {
     let charIdxs = [];
     [...str].forEach((t, idx) => {
-      if (/^[a-zA-Z()]$/.test(t)) {
+      if (/^[a-zA-Z]$/.test(t)) {
         charIdxs = [...charIdxs, idx];
       }
     });

@@ -548,7 +548,7 @@ module Reporter
         if snm && snm.length > 0
           char_idxs = []
           snm.split('').each_with_index do |m, idx|
-            char_idxs += [idx] if m.match(/^[a-zA-Z()]$/)
+            char_idxs += [idx] if m.match(/^[a-zA-Z]$/)
           end
           char_idx = char_idxs[0]
           if char_idx >= 0
