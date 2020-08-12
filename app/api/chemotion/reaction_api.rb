@@ -429,15 +429,15 @@ module Chemotion
             lit = Literature.find_or_create_by(doi: doi, url: url, title: title)
             lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs
 
-            attributes = {
+            lattributes = {
               literature_id: lit.id,
               user_id: current_user.id,
               element_type: 'Reaction',
               element_id: reaction.id,
               category: 'detail'
             }
-            unless Literal.find_by(attributes)
-              Literal.create(attributes)
+            unless Literal.find_by(lattributes)
+              Literal.create(lattributes)
               reaction.touch
             end
           end
