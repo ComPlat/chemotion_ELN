@@ -420,7 +420,7 @@ export default class Reaction extends Element {
   buildCopy(params = {}) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
-
+    copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map(
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
     );
@@ -434,6 +434,7 @@ export default class Reaction extends Element {
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true)
     );
 
+    copy.rebuildProductName();
     copy.container = Container.init();
     return copy;
   }

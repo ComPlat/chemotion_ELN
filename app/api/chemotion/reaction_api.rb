@@ -30,7 +30,6 @@ module ReactionHelpers
     collections = reaction.collections
 
     materials = OpenStruct.new(material_attributes)
-
     materials = {
       starting_material: Array(material_attributes['starting_materials']).map{|m| OSample.new(m)},
       reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
@@ -429,15 +428,15 @@ module Chemotion
             lit = Literature.find_or_create_by(doi: doi, url: url, title: title)
             lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs
 
-            attributes = {
+            lattributes = {
               literature_id: lit.id,
               user_id: current_user.id,
               element_type: 'Reaction',
               element_id: reaction.id,
               category: 'detail'
             }
-            unless Literal.find_by(attributes)
-              Literal.create(attributes)
+            unless Literal.find_by(lattributes)
+              Literal.create(lattributes)
               reaction.touch
             end
           end
@@ -447,10 +446,10 @@ module Chemotion
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
-
         if reaction
           if attributes['origin'] && attributes['origin'].short_label
             materials.products&.map! do |prod|
+              prod.name&.gsub! params['short_label'], reaction.short_label
               prod.name&.gsub! attributes['origin'].short_label, reaction.short_label
               prod
             end
