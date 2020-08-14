@@ -93,13 +93,4 @@ describe 'Message' do
       expect(find('span.badge.badge-pill')).to have_content '0'
     end
   end
-
-  describe 'Ack on pop up notification' do
-    it 'ack on pop up notification', js: true do
-      # required: wait for fetching messages
-      # notification_pops[]
-      find('button.notification-action-button').click
-      expect(find('span.badge.badge-pill')).to have_content '0'
-    end
-  end
 end
