@@ -99,13 +99,12 @@ class ReportStore {
 
   handleUpdateTemplate(value) {
     const newSelectedObjs = this.orderObjsForTemplate(value);
-    const molSerials = this.updMolSerials(newSelectedObjs, value);
+    // const molSerials = this.updMolSerials(newSelectedObjs, value);
     const newPrdAtts = this.extractPrdAtts(newSelectedObjs);
     this.setState({ template: value,
       fileName: this.initFileName(value),
       selectedObjs: newSelectedObjs,
       prdAtts: newPrdAtts,
-      selMolSerials: molSerials,
     });
   }
 
@@ -282,12 +281,11 @@ class ReportStore {
     const oldObjs = this.selectedObjs || [];
     const newObjs = reOrderArr(sourceTag, targetTag, this.isEqTypeId, oldObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
-    const molSerials = this.updMolSerials(finalObjs);
+    // const molSerials = this.updMolSerials(finalObjs);
     const newPrdAtts = this.extractPrdAtts(finalObjs);
     this.setState({
       selectedObjs: finalObjs,
       prdAtts: newPrdAtts,
-      selMolSerials: molSerials,
     });
   }
 
@@ -501,7 +499,7 @@ class ReportStore {
     sTags = { sampleIds: [], reactionIds: [] };
     const newObjs = UpdateSelectedObjs(sTags, currentObjs, dTags, currentObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
-    const molSerials = this.updMolSerials(finalObjs);
+    // const molSerials = this.updMolSerials(finalObjs);
     const newPrdAtts = this.extractPrdAtts(finalObjs);
 
     this.setState({
@@ -509,7 +507,6 @@ class ReportStore {
       selectedObjTags: sTags,
       selectedObjs: finalObjs,
       prdAtts: newPrdAtts,
-      selMolSerials: molSerials,
     });
   }
 
@@ -580,7 +577,7 @@ class ReportStore {
   updMolSerials(objs, template) {
     const currentTemplate = template || this.template;
     if (currentTemplate === 'standard') return [];
-    if (objs.length === 0) return [];
+    if (objs.length === 0) return this.selMolSerials;
 
     return this.extractMolSerials(objs);
   }
@@ -595,6 +592,8 @@ class ReportStore {
       ));
       return unchangedMolSerial || { mol: newMol, value: null };
     });
+
+    if (newSelMolSerials.length === 0) return this.selMolSerials;
 
     return newSelMolSerials;
   }
