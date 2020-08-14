@@ -5,6 +5,7 @@ import {
   Panel,
   Button,
 } from 'react-bootstrap';
+import { filter } from 'lodash';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton';
@@ -152,6 +153,14 @@ export default class ReactionDetailsContainers extends Component {
     let containerHeader = (container) => {
       let kind = container.extended_metadata.kind || '';
       kind = (kind.split('|')[1] || kind).trim();
+
+      let ttlIns = [];
+      if (container.children && container.children.length > 0) {
+        ttlIns = filter(container.children, o => o.extended_metadata && o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
+      }
+      const insText = container.children && container.children.length > 0 ? ` Instrument: ${ttlIns.length}/${container.children.length}` : '';
+
+
       const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
@@ -195,8 +204,7 @@ export default class ReactionDetailsContainers extends Component {
             <div className="lower-text">
               <div className="main-title">{container.name}</div>
               <div className="sub-title">Type: {kind}</div>
-              <div className="sub-title">Status: {status} {nmrMsg(reaction, container)}</div>
-
+              <div className="sub-title">Status: {status} {nmrMsg(reaction, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
               <div className="desc sub-title">
                 <span style={{ float: 'left', marginRight: '5px' }}>
                   Content:
