@@ -757,14 +757,16 @@ export default class Reaction extends Element {
   refreshEquivalent() {
     let matGroup;
     const refMat = this.samples.find(sample => sample.reference);
-    ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
-      matGroup = this[g];
-      if (matGroup) {
-        this[g] = matGroup.map((mat) => {
-          const m = mat; m.equivalent = m.amount_mol / refMat.amount_mol; return m;
-        });
-      }
-    });
+    if (refMat && refMat.amount_mol) {
+      ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
+        matGroup = this[g];
+        if (matGroup) {
+          this[g] = matGroup.map((mat) => {
+            const m = mat; m.equivalent = m.amount_mol / refMat.amount_mol; return m;
+          });
+        }
+      });
+    }
   }
 
   // literatures
