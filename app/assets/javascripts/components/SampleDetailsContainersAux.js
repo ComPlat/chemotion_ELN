@@ -4,7 +4,6 @@ import {
   Button, Checkbox, OverlayTrigger, Tooltip,
   MenuItem, SplitButton, ButtonGroup
 } from 'react-bootstrap';
-import { filter } from 'lodash';
 import QuillViewer from './QuillViewer';
 import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
@@ -12,7 +11,7 @@ import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
 import LoadingActions from './actions/LoadingActions';
 import { BuildSpcInfos, JcampIds } from './utils/SpectraHelper';
-import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg } from './utils/ElementUtils';
+import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import UIStore from './stores/UIStore';
 import { chmoConversions } from './OlsComponent';
@@ -281,13 +280,7 @@ const HeaderNormal = ({
 
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
-
-  let ttlIns = [];
-  if (container.children && container.children.length > 0) {
-    ttlIns = filter(container.children, o => o.extended_metadata && o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
-  }
-  const insText = container.children && container.children.length > 0 ? ` Instrument: ${ttlIns.length}/${container.children.length}` : '';
-
+  const insText = instrumentText(container);
   const status = container.extended_metadata.status || '';
   const previewImg = previewContainerImage(container);
   const content = container.extended_metadata.content || { ops: [{ insert: '' }] };

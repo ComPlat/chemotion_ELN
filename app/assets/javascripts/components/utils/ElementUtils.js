@@ -451,6 +451,19 @@ const SampleCode = (index, materialGp) => {
   }
 };
 
+const instrumentText = (analysis) => {
+  if (typeof analysis === 'undefined' || analysis == null ||
+      typeof analysis.children === 'undefined' || analysis.children == null || analysis.children.length === 0) {
+    return '';
+  }
+  let ttlIns = [];
+  if (analysis.children && analysis.children.length > 0) {
+    ttlIns = _.filter(analysis.children, o => o.extended_metadata &&
+       o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
+  }
+  return ` Instrument: ${ttlIns.length}/${analysis.children.length}`;
+};
+
 module.exports = {
   rfValueFormat,
   hNmrCheckMsg,
@@ -469,4 +482,5 @@ module.exports = {
   atomCountInNMRDescription,
   atomCountCInNMRDescription,
   emwInStr,
+  instrumentText,
 };
