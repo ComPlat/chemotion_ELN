@@ -4,6 +4,7 @@ import {
   Button, Checkbox, OverlayTrigger, Tooltip,
   MenuItem, SplitButton, ButtonGroup
 } from 'react-bootstrap';
+import { filter } from 'lodash';
 import QuillViewer from './QuillViewer';
 import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
@@ -280,6 +281,13 @@ const HeaderNormal = ({
 
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
+
+  let ttlIns = [];
+  if (container.children && container.children.length > 0) {
+    ttlIns = filter(container.children, o => o.extended_metadata && o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
+  }
+  const insText = container.children && container.children.length > 0 ? ` Instrument: ${ttlIns.length}/${container.children.length}` : '';
+
   const status = container.extended_metadata.status || '';
   const previewImg = previewContainerImage(container);
   const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
@@ -329,7 +337,7 @@ const HeaderNormal = ({
           <div className="main-title">{container.name}</div>
           <div className="sub-title">Type: {kind}</div>
           <div className="sub-title">
-            Status: {status} {qCheckMsg(sample, container)}
+            Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
           </div>
           <div className="desc sub-title">
             <span style={{ float: 'left', marginRight: '5px' }}>
