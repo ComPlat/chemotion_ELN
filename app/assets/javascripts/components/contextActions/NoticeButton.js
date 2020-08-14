@@ -22,11 +22,11 @@ const handleNotification = (nots, act, needCallback = true) => {
         message: newText,
         level: n.content.level || 'warning',
         dismissible: 'button',
-        autoDismiss: n.content.autoDismiss || 0,
+        autoDismiss: n.content.autoDismiss || 5,
         position: n.content.position || 'tr',
         uid: n.id,
         action: {
-          label: 'Got it',
+          label: <span><i className="fa fa-check" aria-hidden="true" />&nbsp;&nbsp;Got it</span>,
           callback() {
             if (needCallback) {
               const params = { ids: [] };
@@ -274,12 +274,9 @@ export default class NoticeButton extends React.Component {
           }}
         >
           <Panel.Heading>
-            {
-              <i className="fa fa-commenting-o" aria-hidden="true">&nbsp;{not.subject}&nbsp;&nbsp;
-                <span><strong>From: </strong>{not.sender_name}</span>&nbsp;&nbsp;
-                <span><strong>Created On: </strong>{not.created_at}</span>
-              </i>
-            }
+            <i className="fa fa-commenting-o" aria-hidden="true" />&nbsp;{not.subject}&nbsp;&nbsp;
+            <span><strong>From: </strong>{not.sender_name}</span>&nbsp;&nbsp;
+            <span><strong>Created On: </strong>{not.created_at}</span>
           </Panel.Heading>
           <Panel.Body>
             <Table>
@@ -291,7 +288,7 @@ export default class NoticeButton extends React.Component {
                       key={`notice-button-ack-${not.id}`}
                       onClick={() => this.messageAck(not.id, false)}
                     >
-                      Got it!&nbsp;<i className="fa fa-paper-plane" />
+                      <i className="fa fa-check" aria-hidden="true" />&nbsp;Got it
                     </Button>
                   </td>
                   <td width="90%">
@@ -327,7 +324,7 @@ export default class NoticeButton extends React.Component {
             {this.renderBody()}
           </Modal.Body>
           <Modal.Footer>
-            <Button id="notice-button-ack-all" key="notice-button-ack-all" onClick={() => this.messageAck(0, true)}>Mark as <strong>all read</strong>&nbsp;<i className="fa fa-paper-plane" /></Button>
+            <Button id="notice-button-ack-all" key="notice-button-ack-all" onClick={() => this.messageAck(0, true)}><i className="fa fa-check" aria-hidden="true" />&nbsp;Mark as <strong>all read</strong></Button>
           </Modal.Footer>
         </Modal>
       );

@@ -18,8 +18,8 @@ module Chemotion
         requires :is_ack, type: Integer, desc: 'messages is acknowledged or not'
       end
       get 'list' do
-        messages = NotifyMessage.where(receiver_id: current_user.id)
-        messages = messages.where(is_ack: params[:is_ack]) if params[:is_ack] < 9
+        messages = NotifyMessage.where(receiver_id: current_user.id, is_ack: params[:is_ack]) if params[:is_ack] < 9
+        messages = NotifyMessage.where(receiver_id: current_user.id) unless params[:is_ack] < 9
         if Rails.env.production?
           asset_application = Rails.application.assets_manifest.assets['application.js']
           cur = present(messages, with: Entities::MessageEntity, root: 'messages')
