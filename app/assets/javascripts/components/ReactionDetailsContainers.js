@@ -5,13 +5,12 @@ import {
   Panel,
   Button,
 } from 'react-bootstrap';
-import { filter } from 'lodash';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton';
 import QuillViewer from './QuillViewer';
 import ImageModal from './common/ImageModal';
-import { hNmrCount, cNmrCount } from './utils/ElementUtils';
+import { hNmrCount, cNmrCount, instrumentText } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import { chmoConversions } from './OlsComponent';
 import { previewContainerImage } from './utils/imageHelper';
@@ -153,14 +152,7 @@ export default class ReactionDetailsContainers extends Component {
     let containerHeader = (container) => {
       let kind = container.extended_metadata.kind || '';
       kind = (kind.split('|')[1] || kind).trim();
-
-      let ttlIns = [];
-      if (container.children && container.children.length > 0) {
-        ttlIns = filter(container.children, o => o.extended_metadata && o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
-      }
-      const insText = container.children && container.children.length > 0 ? ` Instrument: ${ttlIns.length}/${container.children.length}` : '';
-
-
+      const insText = instrumentText(container);
       const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };

@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
-import { filter } from 'lodash';
 import Container from '../models/Container';
 import ContainerComponent from '../ContainerComponent';
 import QuillViewer from '../QuillViewer';
 import ImageModal from '../common/ImageModal';
+import { instrumentText } from '../utils/ElementUtils';
 import { previewContainerImage } from './../utils/imageHelper';
 import { JcampIds, BuildSpcInfos } from '../utils/SpectraHelper';
 import UIStore from '../stores/UIStore';
@@ -211,13 +211,7 @@ export default class ResearchPlanDetailsContainers extends Component {
     const containerHeader = (container) => {
       let kind = container.extended_metadata.kind || '';
       kind = (kind.split('|')[1] || kind).trim();
-
-      let ttlIns = [];
-      if (container.children && container.children.length > 0) {
-        ttlIns = filter(container.children, o => o.extended_metadata && o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
-      }
-      const insText = container.children && container.children.length > 0 ? ` Instrument: ${ttlIns.length}/${container.children.length}` : '';
-
+      const insText = instrumentText(container);
       const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
