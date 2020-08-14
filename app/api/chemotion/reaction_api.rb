@@ -446,6 +446,7 @@ module Chemotion
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
+        CollectionsReaction.update_tag_by_element_ids(reaction.id)
         if reaction
           if attributes['origin'] && attributes['origin'].short_label
             materials.products&.map! do |prod|
