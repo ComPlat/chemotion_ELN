@@ -251,6 +251,7 @@ const endingSymbol = (content, symbol) => {
 const analysesContent = (products) => {
   let content = [];
   products.forEach((p) => {
+    let current = [];
     const sortAnalyses = ArrayUtils.sortArrByIndex(p.analyses);
     sortAnalyses.forEach((a) => {
       const data = a && a.extended_metadata
@@ -258,12 +259,14 @@ const analysesContent = (products) => {
         && a.extended_metadata.report === 'true'
         ? JSON.parse(a.extended_metadata.content)
         : { ops: [] };
-      content = [...content, ...endingSymbol(data.ops, '; ')];
+      current = [...current, ...endingSymbol(data.ops, '; ')];
     });
+    if (!onlyBlank(current)) {
+      current = rmOpsRedundantSpaceBreak(current);
+      content = [... content, { insert: '\n\n' }, ...current.slice(0, -1), { insert: '.' }];
+    }
   });
   if (onlyBlank(content)) return [];
-  content = rmOpsRedundantSpaceBreak(content);
-  content = [{ insert: '\n' }, ...content.slice(0, -1), { insert: '.' }];
   return frontBreak(content);
 };
 

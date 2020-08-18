@@ -38,7 +38,6 @@ module Reporter
           is_reaction: true,
           gp_title_html: gp_title_html,
           synthesis_title_html: synthesis_title_html,
-          products_html: is_disable_all ? nil : products_html,
           synthesis_html: synthesis_html,
         }
       end
@@ -96,13 +95,6 @@ module Reporter
         end
         delta.pop
         delta
-      end
-
-      def products_html
-        Sablon.content(
-          :html,
-          Delta.new({ "ops" => products_delta }, @font_family).getHTML
-        )
       end
 
       def products_delta
@@ -390,8 +382,18 @@ module Reporter
       def synthesis_html
         Sablon.content(
           :html,
-          Delta.new({"ops" => synthesis_delta}, @font_family).getHTML()
+          Delta.new({"ops" => products_synthesis_delta}, @font_family).getHTML()
         )
+      end
+
+      def products_synthesis_delta
+        pd = is_disable_all ? [] : products_delta
+        sd = synthesis_delta
+        if pd.length == 0
+          sd
+        else
+          pd + sd
+        end
       end
 
       def synthesis_delta
@@ -425,16 +427,30 @@ module Reporter
 
       def obsv_tlc_delta
         tlc_delta_arr = tlc_delta
-        return [] if obsv_blank && tlc_delta_arr.blank?
-        observation_delta + [{"insert"=>"."}] +
-          [{"insert"=>" "}] + tlc_delta_arr + [{"insert"=>"\n"}]
+        is_obsv_blank = obsv_blank
+        return [] if is_obsv_blank && tlc_delta_arr.blank?
+        target = is_obsv_blank ? [] : (observation_delta + [{"insert"=>". "}])
+        target + tlc_delta_arr + [{"insert"=>"\n"}]
+      end
+
+      def subscripts_to_quill(input)
+        input.split(/([₀-₉])/).map do |t|
+          if not t.match(/[₀-₉]/)
+            { "insert" => t }
+          else
+            num = '₀₁₂₃₄₅₆₇₈₉'.index(t)
+            {"attributes"=>{"script"=>"sub"}, "insert"=> num }
+          end
+        end
       end
 
       def tlc_delta
         return [] if obj.tlc_solvents.blank?
-        [{"attributes"=>{"italic"=> "true"}, "insert"=>"R"},
+        [
+          {"attributes"=>{"italic"=> "true"}, "insert"=>"R"},
           {"attributes"=>{"italic"=> "true", "script"=>"sub"}, "insert"=>"f"},
-          {"insert"=>" = #{obj.rf_value} (#{obj.tlc_solvents})."}]
+          {"insert"=>" = #{obj.rf_value} ("}
+        ] + subscripts_to_quill(obj.tlc_solvents) + [{"insert"=>")."}]
       end
 
       def obsv_blank
@@ -445,13 +461,18 @@ module Reporter
       def product_analyses_delta
         delta = []
         obj.products.each do |product|
+          current = []
           valid_analyses = keep_report(product[:analyses])
           sorted_analyses = sort_by_index(valid_analyses)
-          delta = merge_items_symbols(delta, sorted_analyses, '; ')
+          current = merge_items_symbols(current, sorted_analyses, '; ')
+          if !current.length.zero?
+            current = remove_redundant_space_break(current)[0..-2] +
+              [{ 'insert' => '.' }, { 'insert' => "\n\n" }]
+            delta += current
+          end
         end
         return [] if delta.length.zero?
-        remove_redundant_space_break(delta)[0..-2] +
-          [{ 'insert' => '.' }, { 'insert' => "\n" }]
+        delta[0..-2] + [{ 'insert' => "\n" }]
       end
 
       def materials_table_delta
