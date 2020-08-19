@@ -1,4 +1,4 @@
-# encoding: utf-8
+# encoding: UTF-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20200702091855) do
+ActiveRecord::Schema.define(version: 20200819093220) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -764,37 +764,36 @@ ActiveRecord::Schema.define(version: 20200702091855) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string   "email",                            default: "",                                                                                      null: false
-    t.string   "encrypted_password",               default: "",                                                                                      null: false
+    t.string   "email",                             default: "",                                                                                      null: false
+    t.string   "encrypted_password",                default: "",                                                                                      null: false
     t.string   "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.integer  "sign_in_count",                    default: 0,                                                                                       null: false
+    t.integer  "sign_in_count",                     default: 0,                                                                                       null: false
     t.datetime "current_sign_in_at"
     t.datetime "last_sign_in_at"
     t.inet     "current_sign_in_ip"
     t.inet     "last_sign_in_ip"
-    t.datetime "created_at",                                                                                                                         null: false
-    t.datetime "updated_at",                                                                                                                         null: false
+    t.datetime "created_at",                                                                                                                          null: false
+    t.datetime "updated_at",                                                                                                                          null: false
     t.string   "name"
-    t.string   "first_name",                                                                                                                         null: false
-    t.string   "last_name",                                                                                                                          null: false
+    t.string   "first_name",                                                                                                                          null: false
+    t.string   "last_name",                                                                                                                           null: false
     t.datetime "deleted_at"
-    t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
-    t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
-    t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "counters",                          default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
+    t.string   "name_abbreviation",      limit: 12
+    t.string   "type",                              default: "Person"
+    t.string   "reaction_name_prefix",   limit: 3,  default: "R"
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
+    t.hstore   "layout",                            default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
-    t.integer  "failed_attempts",                  default: 0,                                                                                       null: false
+    t.integer  "failed_attempts",                   default: 0,                                                                                       null: false
     t.string   "unlock_token"
     t.datetime "locked_at"
     t.boolean  "account_active"
-    t.boolean  "is_templates_moderator"
   end
 
   add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
@@ -922,45 +921,6 @@ ActiveRecord::Schema.define(version: 20200702091855) do
           end;
        $function$
   SQL
-  create_function :user_ids, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-          select $1 as id
-          union
-          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-         and users.type in ('Group') and users_groups.user_id = $1)
-        $function$
-  SQL
-  create_function :user_as_json, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-         select row_to_json(result) from (
-           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           from users where id = $1
-         ) as result
-       $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-         begin
-          if (in_user_id = in_current_user_id) then
-            return null;
-          else
-            return (select row_to_json(result) from (
-            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-            from users where id = $1
-            ) as result);
-          end if;
-          end;
-       $function$
-  SQL
   create_function :detail_level_for_sample, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)
        RETURNS TABLE(detail_level_sample integer, detail_level_wellplate integer)
@@ -993,16 +953,6 @@ ActiveRecord::Schema.define(version: 20200702091855) do
 
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
-  SQL
-  create_function :group_user_ids, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
   SQL
   create_function :group_user_ids, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)

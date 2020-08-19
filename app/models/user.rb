@@ -20,7 +20,7 @@
 #  last_name              :string           not null
 #  deleted_at             :datetime
 #  counters               :hstore           not null
-#  name_abbreviation      :string(5)
+#  name_abbreviation      :string(12)
 #  type                   :string           default("Person")
 #  reaction_name_prefix   :string(3)        default("R")
 #  layout                 :hstore           not null
@@ -82,10 +82,12 @@ class User < ActiveRecord::Base
   accepts_nested_attributes_for :affiliations
 
   validates_presence_of :first_name, :last_name, allow_blank: false
-  validates :name_abbreviation, uniqueness:  {message: " has already been taken." },
-    format: {with: /\A[a-zA-Z][a-zA-Z0-9\-_]{0,4}[a-zA-Z0-9]\Z/,
-    message: "can be alphanumeric, middle '_' and '-' are allowed,"+
-    " but leading digit, or trailing '-' and '_' are not."}
+  validates :name_abbreviation,
+            uniqueness: { message: " has already been taken." },
+            format: {
+              with: /\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/,
+              message: " can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not."
+            }
   validate :name_abbreviation_reserved_list, on: :create
   validate :name_abbreviation_length, on: :create
 # validate :academic_email

@@ -20,7 +20,7 @@
 #  last_name              :string           not null
 #  deleted_at             :datetime
 #  counters               :hstore           not null
-#  name_abbreviation      :string(5)
+#  name_abbreviation      :string(12)
 #  type                   :string           default("Person")
 #  reaction_name_prefix   :string(3)        default("R")
 #  layout                 :hstore           not null
