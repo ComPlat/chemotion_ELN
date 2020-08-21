@@ -426,6 +426,7 @@ ActiveRecord::Schema.define(version: 20200819093220) do
     t.datetime "deleted_at"
     t.jsonb    "refs"
     t.string   "doi"
+    t.string   "isbn"
   end
 
   add_index "literatures", ["deleted_at"], name: "index_literatures_on_deleted_at", using: :btree

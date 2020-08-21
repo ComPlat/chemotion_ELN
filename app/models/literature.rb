@@ -10,6 +10,7 @@
 #  deleted_at :datetime
 #  refs       :jsonb
 #  doi        :string
+#  isbn       :string
 #
 # Indexes
 #

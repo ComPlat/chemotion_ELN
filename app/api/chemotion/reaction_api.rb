@@ -374,9 +374,9 @@ module Chemotion
         end
       end
 
-      desc "Creates reaction"
+      desc 'Creates reaction'
       params do
-        requires :collection_id, type: Integer, desc: "Collection id"
+        requires :collection_id, type: Integer, desc: 'Collection id'
         optional :name, type: String
         optional :description, type: Hash
         optional :timestamp_start, type: String
@@ -424,8 +424,9 @@ module Chemotion
             doi = literature[1].doi
             url = literature[1].url
             title = literature[1].title
+            isbn = literature[1].isbn
 
-            lit = Literature.find_or_create_by(doi: doi, url: url, title: title)
+            lit = Literature.find_or_create_by(doi: doi, url: url, title: title, isbn: isbn)
             lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs
 
             lattributes = {
@@ -448,7 +449,7 @@ module Chemotion
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
         if reaction
-          if attributes['origin'] && attributes['origin'].short_label
+          if attributes['origin']&.short_label
             materials.products&.map! do |prod|
               prod.name&.gsub! params['short_label'], reaction.short_label
               prod.name&.gsub! attributes['origin'].short_label, reaction.short_label
@@ -460,7 +461,7 @@ module Chemotion
           # update_literatures_for_reaction(reaction, literatures)
           reaction.reload
 
-          #save to profile
+          # save to profile
           kinds = reaction.container&.analyses&.pluck("extended_metadata->'kind'")
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 

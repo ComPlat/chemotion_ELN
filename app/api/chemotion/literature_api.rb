@@ -46,6 +46,7 @@ module Chemotion
           optional :doi, type: String
           optional :url, type: String
           optional :title, type: String
+          optional :isbn, type: String
           optional :refs, type: Hash do
             optional :bibtex, type: String
           end
@@ -57,7 +58,8 @@ module Chemotion
                 Literature.find_or_create_by(
                   doi: params[:ref][:doi],
                   url: params[:ref][:url],
-                  title: params[:ref][:title]
+                  title: params[:ref][:title],
+                  isbn: params[:ref][:isbn]
                 )
               else
                 Literature.find_by(id: params[:ref][:id])

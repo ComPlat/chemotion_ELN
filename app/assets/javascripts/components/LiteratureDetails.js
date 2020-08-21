@@ -26,9 +26,7 @@ import {
   doiValid,
   sanitizeDoi,
   AddButton,
-  DoiInput,
-  UrlInput,
-  TitleInput,
+  LiteratureInput,
   sortByElement,
   sortByReference,
   literatureContent
@@ -491,7 +489,7 @@ export default class LiteratureDetails extends Component {
                   <ListGroupItem>
                     <Row>
                       <Col md={11} style={{ paddingRight: 0 }}>
-                        <DoiInput handleInputChange={this.handleInputChange} literature={literature} />
+                        <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="doi" placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..." />
                       </Col>
                       <Col md={1} style={{ paddingRight: 0 }}>
                         <Button
@@ -509,13 +507,10 @@ export default class LiteratureDetails extends Component {
                         <Citation literature={literature} />
                       </Col>
                       <Col md={7} style={{ paddingRight: 0 }}>
-                        <TitleInput
-                          handleInputChange={this.handleInputChange}
-                          literature={literature}
-                        />
+                        <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="title" placeholder="Title..." />
                       </Col>
                       <Col md={4} style={{ paddingRight: 0 }}>
-                        <UrlInput handleInputChange={this.handleInputChange} literature={literature} />
+                        <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="url" placeholder="URL..." />
                       </Col>
                       <Col md={1}>
                         <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} title="add citation to selection"/>

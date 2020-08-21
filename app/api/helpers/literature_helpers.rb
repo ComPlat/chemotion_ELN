@@ -7,7 +7,7 @@ module LiteratureHelpers
     literatures.each do |lit|
 
       if lit.is_new
-        l = Literature.find_or_create_by(title: lit.title, url: lit.url, doi: lit.doi)
+        l = Literature.find_or_create_by(title: lit.title, url: lit.url, doi: lit.doi, isbn: lit.isbn)
         element.literals.where(literature_id: l.id).first || element.literals.build(literature_id: l.id, user_id: current_user.id) if l
       else
 

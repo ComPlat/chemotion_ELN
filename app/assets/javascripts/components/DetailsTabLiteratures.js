@@ -20,9 +20,7 @@ import {
   sanitizeDoi,
   groupByCitation,
   AddButton,
-  DoiInput,
-  UrlInput,
-  TitleInput,
+  LiteratureInput,
   literatureContent
 } from './LiteratureCommon';
 import Sample from './models/Sample';
@@ -32,8 +30,20 @@ import Literature from './models/Literature';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
 import UserStore from './stores/UserStore';
 import NotificationActions from './actions/NotificationActions';
+import LoadingActions from './actions/LoadingActions';
 
+const CiteCore = require('@citation-js/core');
+require('@citation-js/plugin-isbn');
 
+const notification = message => ({
+  title: 'Add Literature',
+  message,
+  level: 'error',
+  dismissible: 'button',
+  autoDismiss: 5,
+  position: 'tr',
+  uid: 'literature'
+});
 
 const clipboardTooltip = () => {
   return (
@@ -93,7 +103,7 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
               </Button>
               <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
                 <Button bsSize="small" active className="clipboardBtn" data-clipboard-text={content} >
-                  <i className="fa fa-clipboard"></i>
+                  <i className="fa fa-clipboard" aria-hidden="true" />
                 </Button>
               </OverlayTrigger>
             </td>
@@ -116,8 +126,6 @@ CitationTable.defaultProps = {
   userId: 0
 };
 
-
-
 const sameConseqLiteratureId = (citations, sortedIds, i) => {
   if (i === 0) { return false; }
   const a = citations.get(sortedIds[i])
@@ -137,6 +145,8 @@ export default class DetailsTabLiteratures extends Component {
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
     this.handleLiteratureRemove = this.handleLiteratureRemove.bind(this);
     this.fetchDOIMetadata = this.fetchDOIMetadata.bind(this);
+    this.fetchISBNMetadata = this.fetchISBNMetadata.bind(this);
+    this.fetchMetadata = this.fetchMetadata.bind(this);
   }
 
   componentDidMount() {
@@ -161,26 +171,10 @@ export default class DetailsTabLiteratures extends Component {
     }
   }
 
-  // shouldComponentUpdate(nextProps, nextState){
-  //
-  // }
-
   handleInputChange(type, event) {
     const { literature } = this.state;
     const { value } = event.target;
-    switch (type) {
-      case 'url':
-        literature.url = value;
-        break;
-      case 'title':
-        literature.title = value;
-        break;
-      case 'doi':
-        literature.doi = value;
-        break;
-      default:
-        break;
-    }
+    literature[type] = value.trim();
     this.setState(prevState => ({ ...prevState, literature }));
   }
 
@@ -212,14 +206,15 @@ export default class DetailsTabLiteratures extends Component {
 
   handleLiteratureAdd(literature) {
     const { element } = this.props;
-    const { doi, url, title } = literature;
+    const { doi, url, title, isbn } = literature;
     if (element.isNew === true && element.type === 'reaction'
     && element.literatures && element.literatures.size > 0) {
       const newlit = {
         ...literature,
         doi: sanitizeDoi(doi),
         url: url.trim().replace(/ +/g, ' '),
-        title: title.trim().replace(/ +/g, ' ')
+        title: title.trim().replace(/ +/g, ' '),
+        isbn
       };
       const objliterature = new Literature(newlit);
       element.literatures = element.literatures.set(objliterature.id, objliterature);
@@ -236,7 +231,8 @@ export default class DetailsTabLiteratures extends Component {
           ...literature,
           doi: sanitizeDoi(doi),
           url: url.trim().replace(/ +/g, ' '),
-          title: title.trim().replace(/ +/g, ' ')
+          title: title.trim().replace(/ +/g, ' '),
+          isbn
         },
       }).then((literatures) => {
         this.setState(() => ({
@@ -246,25 +242,26 @@ export default class DetailsTabLiteratures extends Component {
           sorting: 'literature_id'
         }));
       }).catch((errorMessage) => {
-        const notification = {
-          title: 'Add Literature',
-          message: errorMessage.error,
-          level: 'error',
-          dismissible: 'button',
-          autoDismiss: 5,
-          position: 'tr',
-          uid: 'literature'
-        };
-        NotificationActions.add(notification);
+        NotificationActions.add(notification(errorMessage.error));
         this.setState({ literature: Literature.buildEmpty() });
       });
     }
   }
 
-  fetchDOIMetadata() {
-    const { doi } = this.state.literature;
+  fetchMetadata() {
+    const { doi_isbn } = this.state.literature;
+    if (doiValid(doi_isbn)) {
+      this.fetchDOIMetadata(doi_isbn);
+    } else {
+      this.fetchISBNMetadata(doi_isbn);
+    }
+  }
+
+  fetchDOIMetadata(doi) {
     NotificationActions.removeByUid('literature');
+    LoadingActions.start();
     Cite.inputAsync(sanitizeDoi(doi)).then((json) => {
+      LoadingActions.stop();
       if (json[0]) {
         const citation = new Cite(json[0]);
         const { title, year } = json[0];
@@ -272,6 +269,7 @@ export default class DetailsTabLiteratures extends Component {
           ...prevState,
           literature: {
             ...prevState.literature,
+            doi,
             title,
             year,
             refs: {
@@ -283,16 +281,37 @@ export default class DetailsTabLiteratures extends Component {
         this.handleLiteratureAdd(this.state.literature);
       }
     }).catch((errorMessage) => {
-      const notification = {
-        title: 'Add Literature',
-        message: `unable to fetch metadata for this doi: ${doi}`,
-        level: 'error',
-        dismissible: 'button',
-        autoDismiss: 5,
-        position: 'tr',
-        uid: 'literature'
-      };
-      NotificationActions.add(notification);
+      LoadingActions.stop();
+      NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}`));
+    });
+  }
+
+  fetchISBNMetadata(isbn) {
+    NotificationActions.removeByUid('literature');
+    LoadingActions.start();
+    CiteCore.Cite.async(isbn).then((json) => {
+      LoadingActions.stop();
+      if (json.data && json.data.length > 0) {
+        const citation = new Cite(json.data);
+        this.setState(prevState => ({
+          ...prevState,
+          literature: {
+            ...prevState.literature,
+            isbn,
+            title: json.data[0].title || '',
+            year: (json.data[0] && json.data[0].issued && json.data[0].issued['date-parts'][0]) || '',
+            url: (json.data[0] && json.data[0].URL) || '',
+            refs: {
+              citation,
+              bibtex: citation.format('bibtex')
+            }
+          }
+        }));
+        this.handleLiteratureAdd(this.state.literature);
+      }
+    }).catch((errorMessage) => {
+      LoadingActions.stop();
+      NotificationActions.add(notification(`unable to fetch metadata for this ISBN: ${isbn}`));
     });
   }
 
@@ -307,33 +326,32 @@ export default class DetailsTabLiteratures extends Component {
         <ListGroupItem>
           <Row>
             <Col md={11} style={{ paddingRight: 0 }}>
-              <DoiInput handleInputChange={this.handleInputChange} literature={literature} />
+              <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="doi_isbn" placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..." />
             </Col>
             <Col md={1} style={{ paddingRight: 0 }}>
               <Button
                 bsStyle="success"
                 bsSize="small"
                 style={{ marginTop: 2 }}
-                onClick={this.fetchDOIMetadata}
-                title="fetch metadata for this doi and add citation to selection"
-                disabled={!doiValid(literature.doi)}
+                onClick={this.fetchMetadata}
+                title="fetch metadata for this doi or ISBN(open services) and add citation to selection"
+                disabled={!(doiValid(literature.doi_isbn || '') || /^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''))}
               >
-                <i className="fa fa-plus" />
+                <i className="fa fa-plus" aria-hidden="true" />
               </Button>
             </Col>
             <Col md={12} style={{ paddingRight: 0 }}>
               <Citation literature={literature} />
             </Col>
             <Col md={7} style={{ paddingRight: 0 }}>
-              <TitleInput handleInputChange={this.handleInputChange} literature={literature} />
+              <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="title" placeholder="Title..." />
             </Col>
             <Col md={4} style={{ paddingRight: 0 }}>
-              <UrlInput handleInputChange={this.handleInputChange} literature={literature} />
+              <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="url" placeholder="URL..." />
             </Col>
             <Col md={1}>
               <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} />
             </Col>
-
           </Row>
         </ListGroupItem>
       </ListGroup>

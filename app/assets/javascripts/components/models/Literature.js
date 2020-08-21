@@ -6,6 +6,7 @@ export default class Literature extends Element {
       title: '',
       url: '',
       doi: '',
+      isbn: '',
       type: 'literature',
       is_new: false,
       refs: {}
@@ -18,6 +19,7 @@ export default class Literature extends Element {
       title: this.title,
       url: this.url,
       doi: this.doi,
+      isbn: this.isbn,
       type: this.type,
       is_new: this.isNew || false,
       refs: this.refs || {}

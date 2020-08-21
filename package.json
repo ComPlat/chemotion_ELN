@@ -2,6 +2,8 @@
   "name": "chemotion",
   "repository": {},
   "dependencies": {
+    "@citation-js/core": "^0.5.0-alpha.6",
+    "@citation-js/plugin-isbn": "^0.2.1",
     "@novnc/noVNC": "novnc/noVNC#v1.0.0",
     "acorn": "^5.7.0",
     "ag-grid-community": "^19.1.2",

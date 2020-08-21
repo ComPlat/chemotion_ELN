@@ -6,30 +6,12 @@ import Cite from 'citation-js';
 import Literature from './models/Literature';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
 
-const TitleInput = ({ literature, handleInputChange }) => (
+const LiteratureInput = ({ literature, handleInputChange, field, placeholder }) => (
   <FormControl
     type="text"
-    onChange={event => handleInputChange('title', event)}
-    placeholder="Title..."
-    value={literature.title || ''}
-  />
-);
-
-const UrlInput = ({ literature, handleInputChange }) => (
-  <FormControl
-    type="text"
-    onChange={event => handleInputChange('url', event)}
-    placeholder="URL..."
-    value={literature.url || ''}
-  />
-);
-
-const DoiInput = ({ literature, handleInputChange }) => (
-  <FormControl
-    type="text"
-    onChange={event => handleInputChange('doi', event)}
-    placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..."
-    value={literature.doi || ''}
+    onChange={event => handleInputChange(field, event)}
+    placeholder={placeholder}
+    value={literature[field] || ''}
   />
 );
 
@@ -123,9 +105,9 @@ const literatureContent = (literature, onlyText) => {
 }
 
 const Citation = ({ literature }) => {
-  const { title, year, doi, url, refs } = literature;
+  const { title, year, doi, url, refs, isbn } = literature;
   const formatedDoi = doi ? `https://dx.doi.org/${sanitizeDoi(doi)}` : null;
-  const link = formatedDoi || url;
+  const link = formatedDoi || url || isbn;
   const content = literatureContent(literature);
 
   return (
@@ -133,7 +115,8 @@ const Citation = ({ literature }) => {
       href={link}
       target="_blank"
       rel="noopener noreferrer"
-      title={link}
+      title={title}
+      style={{ wordBreak: 'break-word' }}
     >{content}
     </a>
   );
@@ -224,9 +207,7 @@ export {
   literatureUrl,
   AddButton,
   isLiteratureValid,
-  DoiInput,
-  UrlInput,
-  TitleInput,
+  LiteratureInput,
   groupByCitation,
   sortByElement,
   sortByReference,
