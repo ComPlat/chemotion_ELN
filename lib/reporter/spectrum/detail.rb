@@ -80,9 +80,11 @@ module Reporter
         return nil unless img_ext?(file_ext)
         img = scale_img(target)
         fname = "#{target.identifier}.#{file_ext}"
-        Sablon::Image::Definition.new(
+        sab_img_def = Sablon::Image::Definition.new(
           fname, img.to_blob, img.columns, img.rows
         )
+        img.destroy!
+        sab_img_def
       rescue
         nil
       end
