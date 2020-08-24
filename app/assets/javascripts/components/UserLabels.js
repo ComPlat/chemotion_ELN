@@ -7,6 +7,9 @@ import UsersFetcher from './fetchers/UsersFetcher';
 import NotificationActions from './actions/NotificationActions';
 import UserActions from './actions/UserActions';
 import UserStore from './stores/UserStore';
+import MatrixCheck from './common/MatrixCheck';
+
+const UL_FUNC_NAME = 'UserLabel';
 
 class UserLabelModal extends Component {
   constructor(props) {
@@ -331,6 +334,11 @@ class EditUserLabels extends React.Component {
   render() {
     let { selectedLabels } = this.state;
     const { currentUser, labels } = this.state;
+
+    if (!MatrixCheck(currentUser.matrix, UL_FUNC_NAME)) {
+      return (<span />);
+    }
+
     const { element } = this.props;
     const curLableIds = (element.tag && element.tag.taggable_data) ? element.tag.taggable_data.user_labels : [];
 
@@ -400,6 +408,9 @@ class ShowUserLabels extends React.Component {
     const { currentUser, labels } = this.state;
     const curLableIds = (element.tag && element.tag.taggable_data) ? element.tag.taggable_data.user_labels : [];
 
+    if (!MatrixCheck(currentUser.matrix, UL_FUNC_NAME)) {
+      return (<span />);
+    }
     const elementLabels = (labels || []).filter(r => (
       (curLableIds || []).includes(r.id) && (r.access_level > 0 || r.user_id === currentUser.id)
     )).map(ll => (

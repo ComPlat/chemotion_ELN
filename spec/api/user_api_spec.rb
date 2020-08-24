@@ -6,7 +6,7 @@ describe Chemotion::UserAPI do
   let(:json_options) do
     {
       only: %i[
-        id type reaction_name_prefix email
+        id type reaction_name_prefix email matrix
         last_name first_name
       ],
       methods: %i[name initials is_templates_moderator molecule_editor account_active]

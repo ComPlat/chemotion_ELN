@@ -272,4 +272,44 @@ export default class AdminFetcher {
     });
     return promise;
   }
+
+  static fetchUserGroupByName(name) {
+    const promise = fetch(`/api/v1/admin/matrix/find_user.json?name=${name}`, {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static fetchMatrices() {
+    const promise = fetch('/api/v1/admin/matrix/list.json', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static updateMatrice(params) {
+    const promise = fetch('/api/v1/admin/matrix/update/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
 }

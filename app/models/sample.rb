@@ -423,7 +423,7 @@ class Sample < ActiveRecord::Base
   end
 
   def user_labels
-    self.tag && self.tag.taggable_data ? self.tag.taggable_data['user_labels'] : null
+    tag&.taggable_data&.fetch('user_labels', nil)
   end
 
 private

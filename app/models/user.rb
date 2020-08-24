@@ -33,6 +33,7 @@
 #  unlock_token           :string
 #  locked_at              :datetime
 #  account_active         :boolean
+#  matrix                 :integer          default(0)
 #
 # Indexes
 #
@@ -101,7 +102,7 @@ class User < ActiveRecord::Base
 
   after_create :create_chemotion_public_collection
   after_create :create_all_collection, :has_profile
-
+  after_create :update_matrix
   before_destroy :delete_data
 
   scope :by_name, ->(query) {
@@ -254,6 +255,37 @@ class User < ActiveRecord::Base
 
   def molecule_editor
     profile&.data&.fetch('molecule_editor', false)
+  end
+
+  def matrix_check_by_name(name)
+    mx = Matrice.find_by(name: name)
+    return false if mx.nil?
+    matrix_check(mx.id)
+  end
+
+  def matrix_check(id)
+    pins = matrix.to_s(base=2)
+    return false if pins.nil? || id > pins.length
+    (pins&.reverse[id]) == "1" ? true : false
+  end
+
+  def update_matrix
+    sql = ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', id])
+    ActiveRecord::Base.connection.exec_query(sql)
+  end
+
+  def remove_from_matrices
+    Matrice.where("include_ids @> ARRAY[?]", [id]).each { |ma| ma.update_columns(include_ids: ma.include_ids -= [id]) }
+    Matrice.where("exclude_ids @> ARRAY[?]", [id]).each { |ma| ma.update_columns(exclude_ids: ma.exclude_ids -= [id]) }
+  end
+
+  def self.gen_matrix(user_ids=nil)
+    if user_ids.nil? || user_ids.length == 0
+      sql = ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(null)'])
+    else
+      sql = ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', user_ids])
+    end
+    ActiveRecord::Base.connection.exec_query(sql)
   end
 
   private

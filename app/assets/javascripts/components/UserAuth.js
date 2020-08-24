@@ -12,6 +12,7 @@ import UsersFetcher from './fetchers/UsersFetcher';
 import MessagesFetcher from './fetchers/MessagesFetcher';
 import NotificationActions from '../components/actions/NotificationActions';
 import { UserLabelModal } from '../components/UserLabels';
+import MatrixCheck from '../components/common/MatrixCheck';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -329,7 +330,7 @@ export default class UserAuth extends Component {
   // render buttons if user is group's administrator
   renderAdminButtons(group) {
     const { selectedUsers } = this.state;
-    if (group.admins[0].id === this.state.currentUser.id) {
+    if (group.admins && group.admins.length > 0 && group.admins[0].id === this.state.currentUser.id) {
       return (
         <td>
           <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" data-toggle="collapse" data-target={`.div_row_${group.id}`} />&nbsp;&nbsp;
@@ -361,7 +362,7 @@ export default class UserAuth extends Component {
 
   // render buttons for user
   renderUserButtons(groupRec, userRec = null) {
-    if (groupRec.admins[0].id === this.state.currentUser.id || userRec.id === this.state.currentUser.id) {
+    if ((groupRec.admins && groupRec.admins.length > 0 && groupRec.admins[0].id === this.state.currentUser.id) || userRec.id === this.state.currentUser.id) {
       return this.renderDeleteButton('user', groupRec, userRec);
     }
     return (<div />);
@@ -380,13 +381,13 @@ export default class UserAuth extends Component {
     if (Object.keys(currentGroups).length <= 0) {
       tbody = '';
     } else {
-      tbody = currentGroups.map(g => (
+      tbody = currentGroups ? currentGroups.map(g => (
         <tbody key={`tbody_${g.id}`}>
           <tr key={`row_${g.id}`} id={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
             <td>{g.name}</td>
             <td>{g.initials}</td>
             <td>
-              {g.admins[0].name}&nbsp;&nbsp;
+              {g.admins && g.admins.length > 0 && g.admins[0].name}&nbsp;&nbsp;
             </td>
             { this.renderAdminButtons(g) }
           </tr>
@@ -409,7 +410,7 @@ export default class UserAuth extends Component {
             </td>
           </tr>
         </tbody>
-      ));
+      )) : '';
     }
 
     return (
@@ -535,6 +536,11 @@ export default class UserAuth extends Component {
       <MenuItem eventKey="6" href="/molecule_moderator">Molecule Moderator</MenuItem>
     );
 
+    let userLabel = (<span />);
+    if (MatrixCheck(this.state.currentUser.matrix, 'UserLabel')) {
+      userLabel = (<MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>);
+    }
+
     return (
       <div>
         <Nav navbar pullRight>
@@ -544,7 +550,7 @@ export default class UserAuth extends Component {
             <MenuItem eventKey="3" href="/users/edit" >Change Password</MenuItem>
             <MenuItem eventKey="5" href="/pages/affiliations" >My Affiliations</MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups</MenuItem>
-            <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>
+            {userLabel}
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
             {/* <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem> */}

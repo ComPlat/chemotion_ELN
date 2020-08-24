@@ -15,4 +15,11 @@
 class UsersGroup < ActiveRecord::Base
   belongs_to :user
   belongs_to :group
+
+  after_create :update_user_matrix
+
+  def update_user_matrix
+    user = User.find_by(id: self.user_id)
+    user.update_matrix unless user.nil?
+  end
 end

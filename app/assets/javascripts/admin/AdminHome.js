@@ -10,6 +10,7 @@ import MessagePublish from './MessagePublish';
 import DataCollector from './DataCollector';
 import OlsTerms from './OlsTerms';
 import NovncSettings from './NovncSettings';
+import MatrixManagement from './MatrixManagement';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -54,6 +55,8 @@ class AdminHome extends React.Component {
       return this.renderOlsTerms();
     } else if (pageIndex === 6) {
       return this.renderNovncSettings();
+    } else if (pageIndex === 7) {
+      return this.renderMatrix();
     }
     return (<div />);
   }
@@ -87,6 +90,9 @@ class AdminHome extends React.Component {
             </NavItem>
             <NavItem eventKey={6}>
               NoVNC Settings
+            </NavItem>
+            <NavItem eventKey={7}>
+              UI features
             </NavItem>
           </Nav>
         </Col>
@@ -147,6 +153,14 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <NovncSettings />
+      </Col>
+    );
+  }
+  renderMatrix() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <MatrixManagement />
       </Col>
     );
   }

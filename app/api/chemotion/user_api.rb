@@ -125,6 +125,7 @@ module Chemotion
         put ':id' do
           group = Group.find(params[:id])
           if params[:destroy_group]
+            User.find_by(id: params[:id])&.remove_from_matrices
             { destroyed_id: params[:id] } if group.destroy!
           else
             new_users =
@@ -133,7 +134,7 @@ module Chemotion
             group.users << Person.where(id: new_users)
             group.save!
             group.users.delete(User.where(id: rm_users))
-            group
+            User.gen_matrix(rm_users) if rm_users&.length&.positive?
             present group, with: Entities::GroupEntity, root: 'group'
           end
         end

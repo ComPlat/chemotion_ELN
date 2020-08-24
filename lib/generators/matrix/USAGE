@@ -1,0 +1,30 @@
+Description:
+    Generate a new PIN to enable/disable your function
+
+    ## In your js code, add this to validate if the user is allowed to access the function:
+    import MatrixCheck from './common/MatrixCheck';
+    if (MatrixCheck(currentUser.matrix, 'UserLabel')) {
+      // Enable your function
+    }
+
+    ## In your ruby code, add this to validate if the user is allowed to access the function:
+    if user.matrix_check_by_name("UserLabel")
+      // Enable your function
+    end
+
+    ## In rails console, switch your function on:
+    Matrice.find_by(name: 'UserLabel').update_columns(enabled: true)
+
+    ## In rails console, switch your function off:
+    Matrice.find_by(name: 'UserLabel').update_columns(enabled: false)
+
+
+Example:
+    rails generate matrix UserLabel
+    or
+    rails generate matrix user_label
+
+    This will create:
+        db/migrate/20200825101133_matrice_user_label.rb
+    and return the name:
+    function name: [UserLabel] created
