@@ -143,7 +143,7 @@ if [ "${PART_1:-}" ]; then
     autoconf automake bison libffi-dev libgdbm-dev libncurses5-dev \
     libyaml-dev sqlite3 libgmp-dev libreadline-dev libssl-dev \
     postgresql postgresql-client postgresql-contrib libpq-dev \
-    imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
+    g++ imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
     inkscape pandoc \
     swig cmake libeigen3-dev \
     libxslt-dev libxml2-dev \
