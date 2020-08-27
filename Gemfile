@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '4.2.11.1'
+gem 'rails', '4.2.11.3'
 
 gem 'thor', '0.19.1'
 
@@ -36,7 +36,7 @@ gem 'bibtex-ruby'
 gem 'aasm'
 
 group :development do
-  gem 'sdoc', '~> 0.4.0', group: :doc
+  # gem 'sdoc', '~> 1.1.0', group: :doc
 
   gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
 
@@ -71,7 +71,8 @@ gem 'closure_tree'
 
 gem 'net-sftp'
 gem 'net-ssh'
-
+gem 'ed25519', '>= 1.2', '< 2.0'
+gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
 # svg composer
 gem 'nokogiri'
 
@@ -144,7 +145,7 @@ gem 'ruby-ole'
 gem 'ruby-geometry', require: 'geometry'
 
 # CI
-gem 'coveralls', require: false
+# gem 'coveralls', require: false
 
 # openbabel
 # to compile from github/openbabel/openbabel master
@@ -190,7 +191,7 @@ group :development, :test do
   gem 'thin'
 
   # generate icon fonts
-  gem 'fontcustom'
+  # gem 'fontcustom'
 
   # nice debug print
   gem 'awesome_print'
