@@ -128,7 +128,7 @@ class ModelConfig extends Component {
         return false;
       }
     }
-    if (!this.refDictionary || this.refDictionary.value.trim() === '') {
+    if (!this.refDirectory || this.refDirectory.value.trim() === '') {
       NotificationError({ device, msg: 'Please input Dir!' });
       return false;
     }
@@ -139,7 +139,7 @@ class ModelConfig extends Component {
         method: selectedMethod,
         method_params: {
           authen: selectedAuth,
-          dir: this.refDictionary.value.trim(),
+          dir: this.refDirectory.value.trim(),
         }
       }
     };
@@ -264,14 +264,14 @@ class ModelConfig extends Component {
           </Row>
           <Row style={rowStyle}>
             <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Watch dictionary</b>
+              <b>Watch Directory</b>
             </Col>
             <Col sm={10} md={10} lg={10}>
               <input
-                ref={(ref) => { this.refDictionary = ref; }}
+                ref={(ref) => { this.refDirectory = ref; }}
                 className="form-control is-invalid"
                 type="text"
-                id="inputDictionary"
+                id="inputDirectory"
                 placeholder="e.g. /home/sftp/eln"
                 required
                 defaultValue={`${(this.props.device.data.method_params ? this.props.device.data.method_params.dir : '')}`}
@@ -482,7 +482,7 @@ export default class DataCollector extends Component {
         <th width="15%">Host</th>
         <th width="5%">SFTP Authentication</th>
         <th width="10%">Key file Path</th>
-        <th width="25%">Watch Dictionary</th>
+        <th width="25%">Watch Directory</th>
         <th width="3%">Num. of Files</th>
         <th width="2%">ID</th>
       </tr>
