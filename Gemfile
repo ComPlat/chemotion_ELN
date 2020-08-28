@@ -5,10 +5,9 @@ gem 'rails', '4.2.11.3'
 
 gem 'thor', '0.19.1'
 
-gem 'haml-rails', '~> 0.9'
+gem 'haml-rails', '~> 1.0'
 # Use SCSS for stylesheets
-gem 'sassc-rails', '~> 2.1'
-
+gem 'sassc-rails', '~> 2.1.2'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 4.0.0'
 
@@ -111,8 +110,7 @@ gem 'faraday', '~> 0.12.1'
 gem 'faraday_middleware', '~> 0.12.1'
 gem 'httparty'
 
-gem 'ketcherails', '~> 0.1.6', git: 'https://github.com/ComPlat/ketcher-rails',
-                               ref: '32944d4e969950e429a96f3f3b992a7b135bbfad'
+gem 'ketcherails', '~> 0.1.7', git: 'https://github.com/ComPlat/ketcher-rails', ref: '5ba24d302ae1db2885be74e0784f876cba122800'
 # gem  'ketcherails', path: '../ketcher-rails'
 
 # Free font icons

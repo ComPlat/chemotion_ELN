@@ -99,5 +99,5 @@ Rails.application.configure do
     :openssl_verify_mode  => ENV['SMTP_SSL_MODE']
   }
 
-  config.browserify_rails.commandline_options = "-t [ babelify --presets [ es2015 react ] --plugins [ transform-object-rest-spread ] ]  -g uglifyify  -p bundle-collapser/plugin "
+  config.browserify_rails.commandline_options = "-t [ babelify --presets [ @babel/preset-env  @babel/preset-react ] --plugins [ @babel/plugin-proposal-object-rest-spread ] ] -g uglifyify "
 end

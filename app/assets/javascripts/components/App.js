@@ -113,7 +113,6 @@ class App extends Component {
 
 const AppWithDnD = DragDropContext(HTML5Backend)(App);
 
-// $(document).ready(function() {
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('app');
   if (domElement) {

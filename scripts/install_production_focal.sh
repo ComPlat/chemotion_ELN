@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## This is a script to install a production ready chemotion_ELN server
-## with NGINX/PASSENGER/RAILS/POSTGRESQL on a Ubuntu 18.04 machine
+## with NGINX/PASSENGER/RAILS/POSTGRESQL on a Ubuntu 20.04 machine
 ## Could work on another debian but passenger install (part 2)
 ## should be edited accordingly
 
@@ -21,13 +21,13 @@ PROD=production
 # PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.5.6
+RUBY_VERSION=2.6.6
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
-NVM_VERSION='v0.34.0'
-NODE_VERSION=12.16.1
-NPM_VERSION=6.13.7
+NVM_VERSION='v0.35.3'
+NODE_VERSION=12.18.3
+NPM_VERSION=6.14.6
 
 ## TMP DIR (has to be acccesible to install and PROD user)
 TMP_DIR=/tmp/chemotion_stage
@@ -47,7 +47,7 @@ DB_PORT=5432
 NCPU=$(grep -c ^processor /proc/cpuinfo)
 
 ## Pandoc version https://github.com/jgm/pandoc/releases
-PANDOC_VERSION=2.9.2
+PANDOC_VERSION=2.10.1
 
 ############################################
 ######### INSTALLATION PARTS TO RUN  #######
@@ -143,9 +143,9 @@ if [ "${PART_1:-}" ]; then
     autoconf automake bison libffi-dev libgdbm-dev libncurses5-dev \
     libyaml-dev sqlite3 libgmp-dev libreadline-dev libssl-dev \
     postgresql postgresql-client postgresql-contrib libpq-dev \
-    g++ imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
+    imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
     inkscape pandoc \
-    swig cmake libeigen3-dev \
+    g++ swig cmake libeigen3-dev \
     libxslt-dev libxml2-dev \
     libsass-dev \
     fonts-liberation gconf-service libgconf-2-4 \
@@ -198,7 +198,7 @@ if [ "${PART_2:-}" ]; then
   # sudo apt-get install -y dirmngr gnupg
   sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
   sudo apt-get install -y apt-transport-https ca-certificates
-  sudo sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger bionic main > /etc/apt/sources.list.d/passenger.list'
+  sudo sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger focal main > /etc/apt/sources.list.d/passenger.list'
   sudo apt-get update
   sudo apt-get install -y libnginx-mod-http-passenger
   if [ ! -f /etc/nginx/modules-enabled/50-mod-http-passenger.conf ]; then
@@ -412,6 +412,7 @@ set :branch, '$BRANCH'
 #before 'deploy:migrate', 'deploy:backup'
 server 'localhost', user: user, roles: %w{app web db}
 puts %w(publickey)
+set :npm_version, '$NPM_VERSION'
 set :ssh_options, { forward_agent: true, auth_methods: %w(publickey) }
 #set :pty, false
 set :linked_files, fetch(:linked_files, []).push(

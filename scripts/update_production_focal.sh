@@ -17,13 +17,13 @@ PROD=production
 PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.5.6
+RUBY_VERSION=2.6.6
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
-NVM_VERSION='v0.34.0'
-NODE_VERSION=12.16.1
-NPM_VERSION=6.13.7
+NVM_VERSION='v0.35.3'
+NODE_VERSION=12.18.3
+NPM_VERSION=6.14.6
 
 ## TMP DIR (has to be acccesible to install and PROD user)
 TMP_DIR=/tmp/chemotion_stage
@@ -37,12 +37,13 @@ PORT=4001
 NCPU=$(grep -c ^processor /proc/cpuinfo)
 
 ## Pandoc version https://github.com/jgm/pandoc/releases
-PANDOC_VERSION=2.9.2
+PANDOC_VERSION=2.10.1
 
 ## next line is to run a backup (will be saved in PROD_DIR/shared/backup/deploy).
 DEPLOY_BACKUP="before 'deploy:migrate', 'deploy:backup'"
 
-
+# NGINX config filename at /etc/nginx/sites-available/
+NGINX_CONFIG=chemotion_prod_no_ssl
 
 
 
@@ -134,7 +135,7 @@ if [ "${PART_1:-}" ]; then
     postgresql postgresql-client postgresql-contrib libpq-dev \
     imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
     inkscape pandoc \
-    swig cmake libeigen3-dev \
+    g++ swig cmake libeigen3-dev \
     libxslt-dev libxml2-dev \
     libsass-dev \
     fonts-liberation gconf-service libgconf-2-4 \
@@ -186,6 +187,17 @@ if [ "${PART_4:-}" ]; then
   sudo -H -u $PROD bash -c 'gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB'
   sudo -H -u $PROD bash -c "curl -sSL https://get.rvm.io | bash -s stable --ruby=$RUBY_VERSION --auto-dotfiles"
   sudo -H -u $PROD bash -c "source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && gem install bundler -v $BUNDLER_VERSION "
+
+  # update RUBY_VERSION in application directory
+  sudo -H -u $PROD bash -c "echo $RUBY_VERSION | tee $PROD_DIR/shared/.ruby-version"
+ 
+  # update RUBY_VERSION in boot script
+  sudo sed -i.bak "s/ruby_version=.*/ruby_version=$RUBY_VERSION /" $PROD_HOME/boot-ELN.sh
+
+  # update RUBY_VERSION in NGINX config
+  ##  vide infra
+  
+
   green "done $description\n"
 else
   yellow "skip $description\n"
@@ -246,6 +258,7 @@ set :branch, '$BRANCH'
 ${DEPLOY_BACKUP:-}
 server 'localhost', user: user, roles: %w{app web db}
 puts %w(publickey)
+set :npm_version, '$NPM_VERSION'
 set :ssh_options, { forward_agent: true, auth_methods: %w(publickey) }
 #set :pty, false
 set :linked_files, fetch(:linked_files, []).push(
@@ -300,6 +313,27 @@ if [ "${PART_82:-}" ]; then
 else
   yellow "skip $description\n"
 fi
+
+
+###########################################
+###########################################
+sharpi 'PART 4'
+description="upd nginx config with new ruby version"
+###########################################
+if [ "${PART_4:-}" ]; then
+
+  # update RUBY_VERSION in NGINX config
+  sudo sed -i.bak "s~ *passenger_ruby .*~        passenger_ruby $PROD_HOME/.rvm/wrappers/ruby-$RUBY_VERSION/ruby;~" /etc/nginx/sites-available/$NGINX_CONFIG
+
+  sharpi "test nginx config"
+  sudo nginx -t -c /etc/nginx/nginx.conf
+  sharpi "restart nginx"
+  sudo systemctl restart nginx
+  green "done $description\n"
+else
+  yellow "skip $description\n"
+fi
+
 
 ############################################
 ############################################

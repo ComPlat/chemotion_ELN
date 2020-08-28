@@ -5,12 +5,19 @@
 copy the installation script on a ubuntu server 18.04 (could work with another deb)
 
 ```
-curl -o chemotion_ELN_install.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/install_production.sh
+curl -o chemotion_ELN_install.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/install_production_bionic.sh
 ```
 
-check the variables at the beginning of the file, but also check the whole script to see what it is doing.
+or, for Ubuntu 20.04:
 
-**TLDR**: it will ...
+```
+curl -o chemotion_ELN_install.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/install_production_focal.sh
+```
+
+
+Check the variables at the beginning of the file, but also check the whole script to see what it is doing.
+
+**TLDR**: the script will ...
 
 * install OS package dependencies
 * install passenger
@@ -23,17 +30,27 @@ check the variables at the beginning of the file, but also check the whole scrip
 
 When ready, make the script executable and run it as a non-root user (but in the sudo group):
 
-`chmod 700 chemotion_ELN_install.sh
+```
+chmod 700 chemotion_ELN_install.sh
 
-`sudo ./chemotion_ELN_install.sh`
+sudo ./chemotion_ELN_install.sh
+```
 
 After reboot the application should be up and running at the ip of the machine (http://...)
 An admin account should have been created (email: eln-admin@kit.edu, pw: PleaseChangeYourPassword)
 
 To update the application code for such an installation, use the update script:
+
 ```
-curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/update_production.sh
+curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/update_production_bionic.sh
 ```
+
+or, if using focal:
+
+```
+curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/update_production_focal.sh
+```
+
 
 If needed, edit the file  (change the variables or comments out parts to disable), then
 
