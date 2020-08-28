@@ -519,6 +519,8 @@ export default class UserManagement extends React.Component {
                 <Col sm={9}>
                   <FormControl componentClass="select" defaultValue={user.type} inputRef={(ref) => { this.u_type = ref; }} >
                     <option value="Person">Person</option>
+                    <option value="Group">Group</option>
+                    <option value="Device">Device</option>
                     <option value="Admin">Admin</option>
                   </FormControl>
                 </Col>
