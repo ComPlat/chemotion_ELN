@@ -105,8 +105,8 @@ class User < ActiveRecord::Base
   before_destroy :delete_data
 
   scope :by_name, ->(query) {
-    where('LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ?',
-          "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%")
+    where("LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ?",
+          "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%")
   }
 
   def login
