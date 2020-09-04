@@ -33,6 +33,7 @@
 #  unlock_token           :string
 #  locked_at              :datetime
 #  account_active         :boolean
+#  matrix                 :integer          default(0)
 #
 # Indexes
 #

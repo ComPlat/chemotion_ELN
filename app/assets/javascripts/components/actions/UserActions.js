@@ -1,5 +1,6 @@
 import alt from '../alt';
 import UsersFetcher from '../fetchers/UsersFetcher';
+
 import cookie from 'react-cookie'
 
 import DocumentHelper from '../utils/DocumentHelper';
@@ -69,6 +70,17 @@ class UserActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
+  }
+
+  fetchUserLabels() {
+    return (dispatch) => {
+      UsersFetcher.listUserLabels(true)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
   fetchNoVNCDevices() {

@@ -119,4 +119,29 @@ export default class UsersFetcher {
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static listUserLabels() {
+    const promise = fetch('/api/v1/users/list_labels.json', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static updateUserLabel(params = {}) {
+    const promise = fetch('/api/v1/users/save_label/', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
 }

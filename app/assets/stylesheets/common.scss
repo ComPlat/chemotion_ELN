@@ -168,6 +168,12 @@
   }
 }
 
+.status-select {
+  .Select-menu-outer {
+    z-index: 3;
+  }
+}
+
 .spacer-10 {
   margin: 0 10px;
 }

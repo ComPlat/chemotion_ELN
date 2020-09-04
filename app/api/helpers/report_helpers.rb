@@ -58,7 +58,7 @@ module ReportHelpers
   def reaction_smiles_hash(c_id, ids, all = false, u_ids = user_ids)
     result = db_exec_query_reaction_smiles(
       c_id, ids, all, u_ids
-    ).first.fetch('result', nil)
+    ).first&.fetch('result', nil)
     JSON.parse(result) if result
   end
 
@@ -556,11 +556,13 @@ module ReportHelpers
     }.freeze
 
   # desc: concatenate columns to be queried
-  def build_column_query(sel, attrs = EXP_MAP_ATTR)
+  def build_column_query(sel, user_id=0, attrs = EXP_MAP_ATTR)
     selection = []
     attrs.keys.each do |table|
       sel.symbolize_keys.fetch(table, []).each do |col|
-        if (s = attrs[table][col.to_sym])
+        if col == 'user_labels'
+          selection << "labels_by_user_sample(#{user_id}, s_id) as user_labels"
+        elsif (s = attrs[table][col.to_sym])
           selection << (s[1] && s[0] + ' as ' + s[1] || s[0])
         end
       end

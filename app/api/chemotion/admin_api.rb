@@ -369,6 +369,7 @@ module Chemotion
             when 'RootDel'
               obj = Group.find(params[:id]) if params[:rootType] == 'Group'
               obj = Device.find(params[:id]) if params[:rootType] == 'Device'
+              User.find_by(id: params[:id])&.remove_from_matrices if params[:rootType] == 'Group'
               { destroyed_id: params[:id] } if params[:destroy_obj] && obj.destroy!
             when 'NodeAdm'
               ua = UsersAdmin.find_by(user_id: params[:id], admin_id: params[:admin_id])
@@ -391,6 +392,7 @@ module Chemotion
               obj.users.delete(User.where(id: rm_users)) if %w[Person].include?(params[:actionType])
               obj.admins.delete(User.where(id: rm_users)) if %w[Group].include?(params[:rootType]) && %w[Person].include?(params[:actionType])
               obj.devices.delete(Device.where(id: rm_users)) if %w[Device].include?(params[:actionType])
+              User.gen_matrix(rm_users) if rm_users&.length&.positive?
               present obj, with: Entities::GroupDeviceEntity, root: 'root'
             end
           end
@@ -438,6 +440,51 @@ module Chemotion
           )
           OlsTerm.write_public_file("#{params[:owl_name]}.edited", ols_terms: result)
           status 204
+        end
+      end
+
+      resource :matrix do
+        namespace :find_user do
+          desc 'Find top 5 matched user/group names by type'
+          params do
+            requires :name, type: String
+          end
+          get do
+            if params[:name].nil? || params[:name].empty?
+              { users: [] }
+            else
+              { users: User.where(type: %w[Person Group]).by_name(params[:name]).limit(5).select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type') }
+            end
+          end
+        end
+
+        namespace :list do
+          desc 'Find all matrices'
+          get do
+            present Matrice.all.order('id'), with: Entities::MatriceEntity, root: 'matrices'
+          end
+        end
+
+        namespace :update do
+          desc 'update matrice'
+          params do
+            requires :id, type: Integer, desc: 'Matrice ID'
+            requires :label, type: String, desc: 'Matrice label'
+            requires :enabled, type: Boolean, desc: 'globally enabled'
+            optional :include_ids, type: Array, desc: 'include_ids'
+            optional :exclude_ids, type: Array, desc: 'exclude_ids'
+          end
+          post do
+            attributes = declared(params, include_missing: false)
+            matrice = Matrice.find_by(id: params[:id])
+            error!('401 Not found', 404) unless matrice
+            begin
+              matrice.update!(attributes) unless attributes.empty?
+              status 201
+            rescue ActiveRecord::RecordInvalid => e
+              { error: e.message }
+            end
+          end
         end
       end
 

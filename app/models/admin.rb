@@ -35,6 +35,7 @@
 #  unlock_token           :string
 #  locked_at              :datetime
 #  account_active         :boolean
+#  matrix                 :integer          default(0)
 #
 # Indexes
 #
@@ -45,7 +46,6 @@
 #  index_users_on_reset_password_token  (reset_password_token) UNIQUE
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
-
 
 # Publish-Subscription Model
 class Admin < User

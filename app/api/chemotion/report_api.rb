@@ -54,7 +54,7 @@ module Chemotion
           next unless (p_t = params[:uiState][table])
           ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
           next unless p_t[:checkedAll] || ids.present?
-          column_query = build_column_query(filter_column_selection(table))
+          column_query = build_column_query(filter_column_selection(table), current_user.id)
           sql_query = send("build_sql_#{table}_sample",  column_query, c_id, ids, p_t[:checkedAll])
           next unless sql_query
           result = db_exec_query(sql_query)
@@ -65,7 +65,7 @@ module Chemotion
           next unless (p_t = params[:uiState][table])
           ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
           next unless p_t[:checkedAll] || ids
-          column_query = build_column_query(filter_column_selection("#{table}_analyses".to_sym))
+          column_query = build_column_query(filter_column_selection("#{table}_analyses".to_sym), current_user.id)
           sql_query = send("build_sql_#{table}_analyses", column_query, c_id, ids, p_t[:checkedAll])
           next unless sql_query
           result = db_exec_query(sql_query)
@@ -121,7 +121,7 @@ module Chemotion
           Samples Excel.xlsx")}"
         )
         export = Export::ExportExcel.new
-        column_query = build_column_query(default_columns_wellplate)
+        column_query = build_column_query(default_columns_wellplate, current_user.id)
         sql_query = build_sql_wellplate_sample(column_query, nil, params[:id], false)
         next unless sql_query
         result = db_exec_query(sql_query)
@@ -142,7 +142,7 @@ module Chemotion
           Samples Excel.xlsx")}"
         )
         export = Export::ExportExcel.new
-        column_query = build_column_query(default_columns_reaction)
+        column_query = build_column_query(default_columns_reaction, current_user.id)
         sql_query = build_sql_reaction_sample(column_query, nil, params[:id], false)
         next unless sql_query
         result = db_exec_query(sql_query)

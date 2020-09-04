@@ -29,6 +29,7 @@ variables:
     - mv vendor/bundle/  ~/shared/
     - cp config/database.yml.gitlab config/database.yml
     - cp -f config/storage.yml.example config/storage.yml
+    - cp -f config/matrices.json.example config/matrices.json
     - touch config/datacollectors.yml
 
 stages:
@@ -65,6 +66,7 @@ building:
     - cp -f config/storage.yml.example config/storage.yml
     - echo "$DOTENV" > .env
     - touch config/datacollectors.yml
+    - cp -f config/matrices.json.example config/matrices.json
     # - ls node_modules
   script:
     - /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"

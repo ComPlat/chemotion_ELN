@@ -24,6 +24,7 @@
 
 .env
 
+/config/matrices.json
 /config/mailcollector.yml
 /config/datamailcollector.yml
 /config/datacollector.yml

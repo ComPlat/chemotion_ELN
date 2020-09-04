@@ -22,6 +22,39 @@ module Chemotion
         present current_user, with: Entities::UserEntity, root: 'user'
       end
 
+      desc 'list user labels'
+      get 'list_labels' do
+        labels = UserLabel.where('user_id = ? or access_level >= 1', current_user.id).order("access_level desc, position, title")
+        present labels || [], with: Entities::UserLabelEntity, root: 'labels'
+      end
+
+      namespace :save_label do
+        desc 'create or update user labels'
+        params do
+          optional :id, type: Integer
+          optional :title, type: String
+          optional :description, type: String
+          optional :color, type: String
+          optional :access_level, type: Integer
+        end
+        put do
+          attr = {
+            id: params[:id],
+            user_id: current_user.id,
+            access_level: params[:access_level] || 0,
+            title: params[:title],
+            description: params[:description],
+            color: params[:color],
+          }
+          if params[:id].present?
+            label = UserLabel.find(params[:id]);
+            label.update!(attr)
+          else
+            UserLabel.create!(attr)
+          end
+        end
+      end
+
       desc 'Log out current_user'
       delete 'sign_out' do
         status 204
@@ -92,6 +125,7 @@ module Chemotion
         put ':id' do
           group = Group.find(params[:id])
           if params[:destroy_group]
+            User.find_by(id: params[:id])&.remove_from_matrices
             { destroyed_id: params[:id] } if group.destroy!
           else
             new_users =
@@ -100,7 +134,7 @@ module Chemotion
             group.users << Person.where(id: new_users)
             group.save!
             group.users.delete(User.where(id: rm_users))
-            group
+            User.gen_matrix(rm_users) if rm_users&.length&.positive?
             present group, with: Entities::GroupEntity, root: 'group'
           end
         end
