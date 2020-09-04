@@ -20,18 +20,18 @@ RUN add-apt-repository ppa:inkscape.dev/stable && \
   apt-get -y install ca-certificates apt-transport-https git \
       imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl \
       libappindicator1 swig \
-      fonts-liberation xvfb gconf-service libasound2 libgconf-2-4 cmake \
+      fonts-liberation xvfb gconf-service libasound2 libgconf-2-4 \
       libnspr4 libnss3 libpango1.0-0 libxss1 xdg-utils libpq-dev \
       gtk2-engines-pixbuf xfonts-cyrillic xfonts-100dpi xfonts-75dpi \
       xfonts-base xfonts-scalable apt-utils cmake inkscape \
       libeigen3-dev build-essential wget nodejs sudo postgresql-client \
-      libmagickcore-dev libmagickwand-dev imagemagick tzdata gnupg2 \
+      tzdata gnupg2 \
       python-dev libsqlite3-dev libboost-all-dev p7zip-full \
       --fix-missing
 
 # node + npm via nvm; install npm packages
 RUN mkdir /usr/local/nvm
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | NVM_DIR=/usr/local/nvm bash
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | NVM_DIR=/usr/local/nvm bash
 
 RUN mkdir -p $APP_HOME
 WORKDIR $APP_HOME
@@ -39,8 +39,8 @@ ADD . $APP_HOME
 
 RUN /bin/bash -c 'bundle install'
 RUN /bin/bash -c 'source /usr/local/nvm/nvm.sh;\
-  nvm install;\
-  nvm use;\
+  nvm install 12.18.3;\
+  nvm use 12.18.3;\
   npm install'
 
 RUN echo '[ -s /usr/local/nvm/nvm.sh ] && . /usr/local/nvm/nvm.sh' >> /home/app/.bashrc

@@ -4,9 +4,9 @@ module SampleLevelSerializable
   included do
     attributes *DetailLevels::Sample.new.base_attributes
     has_one :molecule
-    has_many :residues
-    has_many :elemental_compositions
-    has_one :container
+    has_many :residues, serializer: ResidueSerializer
+    has_many :elemental_compositions, serializer: ElementalCompositionSerializer
+    has_one :container, serializer: ContainerSerializer
     has_one :tag
 
     alias_method :policy_initialize, :initialize

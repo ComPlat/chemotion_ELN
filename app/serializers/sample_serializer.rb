@@ -6,7 +6,7 @@ class SampleSerializer < ActiveModel::Serializer
   has_one :tag
 
   has_many :residues, serializer: ResidueSerializer
-  has_many :elemental_compositions
+  has_many :elemental_compositions, serializer: ElementalCompositionSerializer
 
   def code_log
     CodeLogSerializer.new(object.code_log).serializable_hash
