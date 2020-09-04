@@ -11,6 +11,7 @@ import {
   OverlayTrigger,
   Tooltip
 } from 'react-bootstrap';
+import uuid from 'uuid';
 import Immutable from 'immutable';
 import Cite from 'citation-js';
 import {
@@ -42,7 +43,7 @@ const notification = message => ({
   dismissible: 'button',
   autoDismiss: 5,
   position: 'tr',
-  uid: 'literature'
+  uid: uuid.v4()
 });
 
 const clipboardTooltip = () => {
@@ -133,6 +134,15 @@ const sameConseqLiteratureId = (citations, sortedIds, i) => {
   return (a.id === b.id)
 };
 
+const checkElementStatus = (element) => {
+  const type = element.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  if (element.isNew) {
+    NotificationActions.add(notification(`Create ${type} first.`));
+    return false;
+  }
+  return true;
+};
+
 export default class DetailsTabLiteratures extends Component {
   constructor(props) {
     super(props);
@@ -206,6 +216,9 @@ export default class DetailsTabLiteratures extends Component {
 
   handleLiteratureAdd(literature) {
     const { element } = this.props;
+    if (!checkElementStatus(element)) {
+      return;
+    }
     const { doi, url, title, isbn } = literature;
     if (element.isNew === true && element.type === 'reaction'
     && element.literatures && element.literatures.size > 0) {
@@ -249,6 +262,10 @@ export default class DetailsTabLiteratures extends Component {
   }
 
   fetchMetadata() {
+    const { element } = this.props;
+    if (!checkElementStatus(element)) {
+      return;
+    }
     const { doi_isbn } = this.state.literature;
     if (doiValid(doi_isbn)) {
       this.fetchDOIMetadata(doi_isbn);
