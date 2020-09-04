@@ -53,14 +53,14 @@ class User < ActiveRecord::Base
   devise :database_authenticatable, :registerable, :confirmable,
          :recoverable, :rememberable, :trackable, :validatable, :lockable, authentication_keys: [:login]
   has_one :profile, dependent: :destroy
-  has_one :container, :as => :containable
+  has_one :container, as: :containable
 
   has_many :collections
-  has_many :samples, -> { unscope(:order).distinct }, :through => :collections
+  has_many :samples, -> { unscope(:order).distinct }, through: :collections
   has_many :reactions, through: :collections
   has_many :wellplates, through: :collections
   has_many :screens, through: :collections
-  has_many :research_plans, :through => :collections
+  has_many :research_plans, through: :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
@@ -70,12 +70,12 @@ class User < ActiveRecord::Base
   has_many :shared_collections,  through: :sync_in_collections_users, source: :collection
   has_many :users_devices, dependent: :destroy, foreign_key: :user_id
   has_many :devices, through: :users_devices
-  #belongs_to :selected_device, class_name: 'Device'
+  # belongs_to :selected_device, class_name: 'Device'
 
   has_many :reports_users
   has_many :reports, through: :reports_users
 
-  has_many :user_affiliations, :dependent => :destroy
+  has_many :user_affiliations, dependent: :destroy
   has_many :affiliations, through: :user_affiliations
 
   has_many :computed_props
@@ -84,14 +84,14 @@ class User < ActiveRecord::Base
 
   validates_presence_of :first_name, :last_name, allow_blank: false
   validates :name_abbreviation,
-            uniqueness: { message: " has already been taken." },
+            uniqueness: { message: ' has already been taken.' },
             format: {
               with: /\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/,
               message: " can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not."
             }
   validate :name_abbreviation_reserved_list, on: :create
   validate :name_abbreviation_length, on: :create
-# validate :academic_email
+  # validate :academic_email
   validate :mail_checker
 
   # NB: only Persons and Admins can get a confirmation email and confirm their email.
@@ -116,7 +116,7 @@ class User < ActiveRecord::Base
 
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
-    if login = conditions.delete(:login)
+    if (login = conditions.delete(:login))
       where(conditions).where(["name_abbreviation = :value OR lower(email) = lower(:value)", { value: login }]).first
     else
       where(conditions).first
@@ -137,10 +137,11 @@ class User < ActiveRecord::Base
   def name_abbreviation_length
     na = name_abbreviation
     name_abbr_config = Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
-    if type == 'Group'
+    case type
+    when 'Group'
       min_val = name_abbr_config[:length_group]&.first || 2
       max_val = name_abbr_config[:length_group]&.last || 5
-    elsif type == 'Device'
+    when 'Device'
       min_val = name_abbr_config[:length_device]&.first || 2
       max_val = name_abbr_config[:length_device]&.last || 5
     else
@@ -148,8 +149,8 @@ class User < ActiveRecord::Base
       max_val = name_abbr_config[:length_default]&.last || 3
     end
 
-    na.blank? || !na.length.between?(min_val, max_val)  && errors.add(:name_abbreviation,
-    "has to be #{min_val} to #{max_val} characters long")
+    na.blank? || !na.length.between?(min_val, max_val) &&
+      errors.add(:name_abbreviation, "has to be #{min_val} to #{max_val} characters long")
   end
 
   def academic_email
@@ -189,7 +190,6 @@ class User < ActiveRecord::Base
       l.split('#').last.to_i
     end.max || 0
 
-
     self.counters = {
       samples: samples_number,
       reactions: reactions_number,
@@ -199,8 +199,9 @@ class User < ActiveRecord::Base
     self.save!
   end
 
-  def increment_counter key
+  def increment_counter(key)
     return if self.counters[key].nil?
+
     self.counters[key] = self.counters[key].succ
     self.save!
   end
@@ -210,43 +211,43 @@ class User < ActiveRecord::Base
     if self.type == 'Person'
       profile = self.profile
       data = profile.data || {}
-      file = Rails.root.join('db','chmo.default.profile.json')
-      result = JSON.parse(File.read(file, encoding:  'bom|utf-8')) if File.exist?(file)
+      file = Rails.root.join('db', 'chmo.default.profile.json')
+      result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
       unless result.nil? || result['ols_terms'].nil?
         data['chmo'] = result['ols_terms']
         data['is_templates_moderator'] = false
         data['molecule_editor'] = false
         self.profile.update_columns(data: data)
       end
-   end
+    end
   end
 
-  has_many :users_groups,  dependent: :destroy, foreign_key: :user_id
+  has_many :users_groups, dependent: :destroy, foreign_key: :user_id
   has_many :groups, through: :users_groups
 
   def group_ids
-    self.groups.pluck(:id)
+    groups.pluck(:id)
   end
 
   def group_collections
-    Collection.where("user_id = ? AND is_locked = ?", self.groups.pluck(:id), false)
+    Collection.where('user_id = ? AND is_locked = ?', group_ids, false)
   end
 
   def all_collections
-    Collection.where("user_id IN (?) ", [self.id]+self.groups.pluck(:id))
+    Collection.where('user_id IN (?) ', [id] + group_ids)
   end
 
   def all_sync_in_collections_users
-    SyncCollectionsUser.where("user_id IN (?) ", [self.id]+self.groups.pluck(:id))
+    SyncCollectionsUser.where('user_id IN (?) ', [id] + group_ids)
   end
 
   def current_affiliations
     Affiliation.joins(
-     "INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id"
+      'INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id'
     ).where(
-      "(ua.user_id = ?) and (ua.deleted_at ISNULL) \
-      and (ua.to ISNULL or ua.to > ?)", id, Time.now
-    ).order("ua.from DESC")
+      '(ua.user_id = ?) and (ua.deleted_at ISNULL) and (ua.to ISNULL or ua.to > ?)',
+      id, Time.now
+    ).order('ua.from DESC')
   end
 
   def is_templates_moderator
@@ -260,13 +261,15 @@ class User < ActiveRecord::Base
   def matrix_check_by_name(name)
     mx = Matrice.find_by(name: name)
     return false if mx.nil?
+
     matrix_check(mx.id)
   end
 
   def matrix_check(id)
-    pins = matrix.to_s(base=2)
+    pins = matrix.to_s(2)
     return false if pins.nil? || id > pins.length
-    (pins&.reverse[id]) == "1" ? true : false
+
+    (pins && pins.reverse[id]) == '1'
   end
 
   def update_matrix
@@ -275,16 +278,16 @@ class User < ActiveRecord::Base
   end
 
   def remove_from_matrices
-    Matrice.where("include_ids @> ARRAY[?]", [id]).each { |ma| ma.update_columns(include_ids: ma.include_ids -= [id]) }
-    Matrice.where("exclude_ids @> ARRAY[?]", [id]).each { |ma| ma.update_columns(exclude_ids: ma.exclude_ids -= [id]) }
+    Matrice.where('include_ids @> ARRAY[?]', [id]).each { |ma| ma.update_columns(include_ids: ma.include_ids -= [id]) }
+    Matrice.where('exclude_ids @> ARRAY[?]', [id]).each { |ma| ma.update_columns(exclude_ids: ma.exclude_ids -= [id]) }
   end
 
-  def self.gen_matrix(user_ids=nil)
-    if user_ids.nil? || user_ids.length == 0
-      sql = ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(null)'])
-    else
-      sql = ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', user_ids])
-    end
+  def self.gen_matrix(user_ids = nil)
+    sql = if user_ids.present?
+            ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', user_ids])
+          else
+            'select generate_users_matrix(null)'
+          end
     ActiveRecord::Base.connection.exec_query(sql)
   end
 
@@ -301,6 +304,7 @@ class User < ActiveRecord::Base
 
   def create_chemotion_public_collection
     return unless self.type == 'Person'
+
     Collection.create(user: self, label: 'chemotion.net', is_locked: true, position: 1)
   end
 
@@ -310,13 +314,13 @@ class User < ActiveRecord::Base
 
   def delete_data
     # TODO: logic to check if user can be really destroy or which data can be deleted
-    count = self.samples.count
+    count = samples.count
       # + self.reactions.count
       # + self.wellplates.count
       # + self.screens.count
       # + self.research_plans.count
-    self.update_columns(email: "#{id}_#{name_abbreviation}@deleted")
-    self.update_columns(name_abbreviation: nil )if count.zero?
+    update_columns(email: "#{id}_#{name_abbreviation}@deleted")
+    update_columns(name_abbreviation: nil) if count.zero?
   end
 end
 
@@ -344,5 +348,5 @@ class Group < User
   has_many :users, class_name: 'User', through: :users_groups
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
-  has_many :admins,  through: :users_admins, source: :admin# ,  foreign_key:    association_foreign_key: :admin_id
+  has_many :admins,  through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
 end

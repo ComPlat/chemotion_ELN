@@ -2,49 +2,39 @@ import 'whatwg-fetch';
 
 export default class AdminFetcher {
   static fetchLocalCollector() {
-    const promise = fetch('/api/v1/admin/listLocalCollector/all.json', {
+    return fetch('/api/v1/admin/listLocalCollector/all.json', {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
+
   static checkDiskSpace() {
-    const promise = fetch('/api/v1/admin/disk.json', {
+    return fetch('/api/v1/admin/disk.json', {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
+
   static fetchDevices() {
-    const promise = fetch('/api/v1/admin/listDevices/all.json', {
+    return fetch('/api/v1/admin/listDevices/all.json', {
       credentials: 'same-origin'
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
+
   static fetchDeviceById(deviceId) {
-    const promise = fetch(`/api/v1/admin/device/${deviceId}`, {
+    return fetch(`/api/v1/admin/device/${deviceId}`, {
       credentials: 'same-origin'
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 
-    return promise;
-  }
   static testSFTP(params) {
-    const promise = fetch('/api/v1/admin/sftpDevice/', {
+    return fetch('/api/v1/admin/sftpDevice/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -52,16 +42,13 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
+
   static removeDeviceMethod(params) {
-    const promise = fetch('/api/v1/admin/removeDeviceMethod/', {
+    return fetch('/api/v1/admin/removeDeviceMethod/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -69,16 +56,13 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
+
   static updateDeviceMethod(params) {
-    const promise = fetch('/api/v1/admin/updateDeviceMethod/', {
+    return fetch('/api/v1/admin/updateDeviceMethod/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -86,14 +70,11 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
+
   static editNovncSettings(params) {
     return fetch('/api/v1/admin/editNovncSettings/', {
       credentials: 'same-origin',
@@ -103,14 +84,14 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then((response) => {
-        if (response.status === 204) { return ''; }
-        return 'error';
-      });
+    }).then((response) => {
+      if (response.status === 204) { return ''; }
+      return 'error';
+    });
   }
+
   static resetUserPassword(params) {
-    const promise = fetch('/api/v1/admin/resetPassword/', {
+    return fetch('/api/v1/admin/resetPassword/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -118,17 +99,13 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static createUserAccount(params) {
-    const promise = fetch('/api/v1/admin/newUser/', {
+    return fetch('/api/v1/admin/newUser/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -136,15 +113,13 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static updateUser(params) {
-    const promise = fetch('/api/v1/admin/updateUser/', {
+    return fetch('/api/v1/admin/updateUser/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -152,28 +127,21 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchUsers() {
-    const promise = fetch('/api/v1/admin/listUsers/all.json', {
+    return fetch('/api/v1/admin/listUsers/all.json', {
       credentials: 'same-origin'
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static updateAccount(params) {
-    const promise = fetch('/api/v1/admin/updateAccount/', {
+    return fetch('/api/v1/admin/updateAccount/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -181,18 +149,13 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-
   static olsTermDisableEnable(params) {
-    const promise = fetch('/api/v1/admin/olsEnableDisable/', {
+    return fetch('/api/v1/admin/olsEnableDisable/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -200,40 +163,36 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then((response) => {
-        if (response.status === 204) {
-          return true;
-        }
-      });
-    return promise;
+    }).then((response) => {
+      if (response.status === 204) {
+        return true;
+      }
+    });
   }
 
   static importOlsTerms(file) {
     const data = new FormData();
     data.append('file', file);
 
-    const promise = fetch('/api/v1/admin/importOlsTerms/', {
+    return fetch('/api/v1/admin/importOlsTerms/', {
       credentials: 'same-origin',
       method: 'POST',
       body: data
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchGroupsDevices(type) {
-    const promise = fetch(`/api/v1/admin/group_device/list?type=${type}`, {
+    return fetch(`/api/v1/admin/group_device/list?type=${type}`, {
       credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static updateGroup(params = {}) {
-    const promise = fetch(`/api/v1/admin/group_device/update/${params.id}`, {
+    return fetch(`/api/v1/admin/group_device/update/${params.id}`, {
       credentials: 'same-origin',
       method: 'PUT',
       headers: {
@@ -241,25 +200,21 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchUsersByNameType(name, type) {
-    const promise = fetch(`/api/v1/admin/group_device/name.json?type=${type}&name=${name}`, {
+    return fetch(`/api/v1/admin/group_device/name.json?type=${type}&name=${name}`, {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static createGroupDevice(params = {}) {
-    const promise = fetch('/api/v1/admin/group_device/create', {
+    return fetch('/api/v1/admin/group_device/create', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -267,38 +222,29 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchUserGroupByName(name) {
-    const promise = fetch(`/api/v1/admin/matrix/find_user.json?name=${name}`, {
+    return fetch(`/api/v1/admin/matrix/find_user.json?name=${name}`, {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchMatrices() {
-    const promise = fetch('/api/v1/admin/matrix/list.json', {
+    return fetch('/api/v1/admin/matrix/list.json', {
       credentials: 'same-origin'
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static updateMatrice(params) {
-    const promise = fetch('/api/v1/admin/matrix/update/', {
+    return fetch('/api/v1/admin/matrix/update/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -306,10 +252,8 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

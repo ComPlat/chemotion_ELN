@@ -47,7 +47,6 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-
 # Publish-Subscription Model
 class Admin < User
 end

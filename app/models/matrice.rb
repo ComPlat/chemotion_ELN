@@ -23,9 +23,9 @@ class Matrice < ActiveRecord::Base
 
   def self.gen_matrices_json
     mx = {}
-    matrices_names_file = Rails.root.join('config').join('matrices.json').to_s
+    config = Rails.root.join('config', 'matrices.json').to_s
     Matrice.all&.map { |ma| mx[ma.name] = ma.id } if ActiveRecord::Base.connection.table_exists? 'matrices'
-    File.write(matrices_names_file, mx.to_json)
+    File.write(config, mx.to_json)
   end
 
   private
