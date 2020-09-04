@@ -19,18 +19,4 @@
 #
 class Matrice < ActiveRecord::Base
   acts_as_paranoid
-  after_create :gen_json
-
-  def self.gen_matrices_json
-    mx = {}
-    config = Rails.root.join('config', 'matrices.json').to_s
-    Matrice.all&.map { |ma| mx[ma.name] = ma.id } if ActiveRecord::Base.connection.table_exists? 'matrices'
-    File.write(config, mx.to_json)
-  end
-
-  private
-
-  def gen_json
-    Matrice.gen_matrices_json
-  end
 end

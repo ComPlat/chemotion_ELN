@@ -53,4 +53,15 @@ export default class UIFetcher {
       })
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static fetchMatrices() {
+    const promise = fetch('/api/v1/users/matrices.json', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
 }

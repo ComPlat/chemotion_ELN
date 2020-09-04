@@ -28,6 +28,15 @@ module Chemotion
         present labels || [], with: Entities::UserLabelEntity, root: 'labels'
       end
 
+      namespace :matrices do
+        desc 'Find all matrices'
+        get do
+          mx = {}
+          Matrice.all&.map { |ma| mx[ma.name] = ma.id } if ActiveRecord::Base.connection.table_exists? 'matrices'
+          mx
+        end
+      end
+
       namespace :save_label do
         desc 'create or update user labels'
         params do
