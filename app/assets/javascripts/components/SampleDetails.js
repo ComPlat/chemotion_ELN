@@ -54,6 +54,7 @@ import QcMain from './qc/QcMain';
 import { chmoConversions } from './OlsComponent';
 import ConfirmClose from './common/ConfirmClose';
 import { EditUserLabels, ShowUserLabels } from './UserLabels';
+import CopyElementModal from './common/CopyElementModal';
 
 const MWPrecision = 6;
 
@@ -379,6 +380,21 @@ export default class SampleDetails extends React.Component {
     let saveBtnDisplay = sample.isEdited ? '' : 'none'
     const titleTooltip = `Created at: ${sample.created_at} \n Updated at: ${sample.updated_at}`;
 
+    const { currentCollection } = UIStore.getState();
+    const defCol = currentCollection && currentCollection.is_shared === false &&
+      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+    const copyBtn = (sample.can_copy && !sample.isNew) ? (
+      <CopyElementModal
+        element={sample}
+        defCol={defCol}
+      />
+    ) : null;
+
+    const colLabel = sample.isNew ? null : (
+      <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
+    );
+
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
@@ -404,6 +420,7 @@ export default class SampleDetails extends React.Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
+        {copyBtn}
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
           <Button bsStyle="info" bsSize="xsmall" className="button-right"
@@ -414,7 +431,7 @@ export default class SampleDetails extends React.Component {
         <PrintCodeButton element={sample}/>
         <div style={{display: "inline-block", marginLeft: "10px"}}>
           <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
-          <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
+          {colLabel}
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
           <PubchemLabels element={sample} />
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
@@ -527,7 +544,7 @@ export default class SampleDetails extends React.Component {
       <InputGroup className='sample-molecule-identifier'>
         <InputGroup.Addon>Canonical Smiles</InputGroup.Addon>
         <FormGroup controlId="smilesInput">
-          <FormControl type="text"
+          <FormControl type="text" id="smilesInput"
              inputRef={(m) => { this.smilesInput = m; }}
              defaultValue={sample.molecule_cano_smiles || ''}
              disabled={this.state.smileReadonly}
@@ -543,7 +560,7 @@ export default class SampleDetails extends React.Component {
         </InputGroup.Button>
         <InputGroup.Button>
           <OverlayTrigger placement="bottom" overlay={this.moleculeCreatorTooltip()}>
-            <Button active className="clipboardBtn"
+            <Button active className="clipboardBtn" id="smile-create-molecule"
               disabled={this.state.smileReadonly}
               readOnly={this.state.smileReadonly}
               onClick={() => this.handleMoleculeBySmile()} >
@@ -944,7 +961,7 @@ export default class SampleDetails extends React.Component {
     if(closeView) submitLabel += ' and close';
 
     return (
-      <Button bsStyle="warning"
+      <Button id="submit-sample-btn" bsStyle="warning"
               onClick={() => this.handleSubmit(closeView)}
               disabled={!this.sampleIsValid() || isDisabled}>
               {submitLabel}
@@ -953,7 +970,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleFooter() {
-    const {sample} = this.state;
+    const { sample } = this.state;
     const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
 
     let saveAndCloseBtn = belongToReaction && !sample.isNew
@@ -963,8 +980,7 @@ export default class SampleDetails extends React.Component {
                               null;
     return (
       <ButtonToolbar>
-        <Button bsStyle="primary"
-                onClick={() => DetailActions.close(sample)}>
+        <Button bsStyle="primary" onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}

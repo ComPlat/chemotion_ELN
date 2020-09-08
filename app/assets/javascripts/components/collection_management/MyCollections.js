@@ -185,7 +185,7 @@ export default class MyCollections extends React.Component {
 
   addButton(node) {
     return (
-      <Button bsSize="xsmall" bsStyle="success" onClick={this.addSubcollection.bind(this, node)}>
+      <Button id={`mycol_${node.id}`} bsSize="xsmall" bsStyle="success" onClick={this.addSubcollection.bind(this, node)}>
         <i className="fa fa-plus"></i>
       </Button>
     )

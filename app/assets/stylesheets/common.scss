@@ -170,7 +170,7 @@
 
 .status-select {
   .Select-menu-outer {
-    z-index: 3;
+    z-index: 30;
   }
 }
 
@@ -220,4 +220,16 @@
 .quill-cuz-dropdown {
   background-color: unset !important;
   box-shadow: unset !important;
+}
+
+.select-collection {
+  display: flex;
+  align-items: center;
+  b {
+    padding-right: 6px;
+    padding-left: 10px;
+  }
+  .select-component {
+    width: 20vw;
+  }
 }

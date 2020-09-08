@@ -13,6 +13,10 @@ module SamplePolicySerializable
       @policy && @policy.try(:update?)
     end
 
+    def can_copy
+      @policy && @policy.try(:copy?)
+    end
+
     def can_publish
       @policy && @policy.try(:destroy?)
     end

@@ -406,8 +406,8 @@ module Chemotion
         attributes = declared(params, include_missing: false).symbolize_keys
         materials = attributes.delete(:materials)
         literatures = attributes.delete(:literatures)
+        attributes.delete(:can_copy)
         collection_id = attributes.delete(:collection_id)
-
         container_info = params[:container]
         attributes.delete(:container)
 
@@ -465,7 +465,7 @@ module Chemotion
           kinds = reaction.container&.analyses&.pluck("extended_metadata->'kind'")
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          reaction
+          { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized }
         end
       end
     end

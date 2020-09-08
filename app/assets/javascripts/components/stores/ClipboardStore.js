@@ -10,7 +10,7 @@ class ClipboardStore {
     };
 
     this.bindListeners({
-      handleFetchSamplesByUIStateAndLimit: ClipboardActions.fetchSamplesByUIStateAndLimit,
+      handleFetchSamplesByUIStateAndLimit: [ClipboardActions.fetchSamplesByUIStateAndLimit, ClipboardActions.fetchElementAndBuildCopy],
       handleFetchWellplatesByUIState: ClipboardActions.fetchWellplatesByUIState
     })
   }

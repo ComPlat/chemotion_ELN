@@ -94,10 +94,10 @@ const sampleShowOrNew = (e) => {
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
   // UIActions.selectTab(2);
-  if (reactionID !== 'new') {
+  if (reactionID !== 'new' && reactionID !== 'copy') {
     ElementActions.fetchReactionById(reactionID);
   } else if (reactionID === 'copy') {
-    ElementActions.copyReactionFromClipboard(collectionID);
+    //ElementActions.copyReactionFromClipboard(collectionID);
   } else {
     ElementActions.generateEmptyReaction(collectionID);
   }

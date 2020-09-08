@@ -54,6 +54,10 @@ class SampleSerializer < ActiveModel::Serializer
     false
   end
 
+  def can_copy
+    false
+  end
+
   def can_publish
     false
   end

@@ -71,6 +71,10 @@ class ReactionSerializer::Level10 < ReactionSerializer
     @current_user = is_hash_opt ? options[:current_user] : nil
   end
 
+  def can_copy
+    true
+  end
+
   def starting_materials
     MaterialDecorator.new(object.reactions_starting_material_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, @nested_dl).serializable_hash }
   end

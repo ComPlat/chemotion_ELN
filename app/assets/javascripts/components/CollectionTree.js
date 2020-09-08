@@ -139,7 +139,7 @@ export default class CollectionTree extends React.Component {
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div className="title" style={{backgroundColor:'white'}}
+        <div id="shared-home-link" className="title" style={{backgroundColor:'white'}}
              onClick={() => this.setState({sharedWithCollectionVisible: !sharedWithCollectionVisible})}>
           <i className="fa fa-share-alt share-icon"/>
           &nbsp;&nbsp;

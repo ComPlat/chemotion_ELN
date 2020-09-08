@@ -56,6 +56,8 @@ class Reaction < ActiveRecord::Base
 
   multisearchable against: %i[name short_label rinchi_string]
 
+  attr_accessor :can_copy
+
   # search scopes for exact matching
   pg_search_scope :search_by_reaction_name, against: :name
   pg_search_scope :search_by_reaction_short_label, against: :short_label

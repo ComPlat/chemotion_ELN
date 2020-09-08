@@ -415,6 +415,12 @@ class ElementActions {
     });};
   }
 
+  copyReaction(reaction, colId) {
+    return (
+      { reaction: reaction, colId: colId }
+    )
+  }
+
   openReactionDetails(reaction) {
     return  reaction;
   }

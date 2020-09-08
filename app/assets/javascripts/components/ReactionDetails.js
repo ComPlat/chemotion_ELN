@@ -27,6 +27,7 @@ import ReactionSvgFetcher from './fetchers/ReactionSvgFetcher';
 import ConfirmClose from './common/ConfirmClose';
 import { rfValueFormat } from './utils/ElementUtils';
 import ExportSamplesBtn from './ExportSamplesBtn';
+import CopyElementModal from './common/CopyElementModal';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -268,6 +269,22 @@ export default class ReactionDetails extends Component {
     let hasChanged = reaction.changed ? '' : 'none'
     const titleTooltip = `Created at: ${reaction.created_at} \n Updated at: ${reaction.updated_at}`;
 
+    const { currentCollection } = UIStore.getState();
+    const defCol = currentCollection && currentCollection.is_shared === false &&
+      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+
+    const copyBtn = (reaction.can_copy === true && !reaction.isNew) ? (
+      <CopyElementModal
+        element={reaction}
+        defCol={defCol}
+      />
+    ) : null;
+
+    const colLabel = reaction.isNew ? null : (
+      <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
+    );
+
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
@@ -297,6 +314,7 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
+        {copyBtn}
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
@@ -331,7 +349,7 @@ export default class ReactionDetails extends Component {
           </Button>
         </OverlayTrigger>
         <div style={{display: "inline-block", marginLeft: "10px"}}>
-          <ElementCollectionLabels element={reaction} key={reaction.id} placement="right"/>
+          {colLabel}
           <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
         </div>
         <PrintCodeButton element={reaction}/>
