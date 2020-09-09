@@ -67,6 +67,7 @@ class UIStore {
       showModal: false,
       modalParams: {},
       hasChemSpectra: false,
+      matrices: {}
     };
 
     this.bindListeners({

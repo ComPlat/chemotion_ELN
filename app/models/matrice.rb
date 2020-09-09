@@ -22,10 +22,14 @@ class Matrice < ActiveRecord::Base
   after_create :gen_json
 
   def self.gen_matrices_json
+    mx = pluck(:name, :id).to_h
+  rescue ActiveRecord::StatementInvalid, PG::ConnectionBad, PG::UndefinedTable
     mx = {}
-    config = Rails.root.join('config', 'matrices.json').to_s
-    Matrice.all&.map { |ma| mx[ma.name] = ma.id } if ActiveRecord::Base.connection.table_exists? 'matrices'
-    File.write(config, mx.to_json)
+  ensure
+    File.write(
+      Rails.root.join('config', 'matrices.json'),
+      mx.to_json
+    )
   end
 
   private

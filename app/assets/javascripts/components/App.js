@@ -18,7 +18,6 @@ import UserActions from './actions/UserActions';
 import KeyboardActions from './actions/KeyboardActions';
 import UIStore from './stores/UIStore';
 
-
 class App extends Component {
   constructor(props) {
     super();
@@ -47,7 +46,6 @@ class App extends Component {
     UIStore.unlisten(this.handleUiStoreChange);
     document.removeEventListener('keydown', this.documentKeyDown);
   }
-
   handleUiStoreChange(state) {
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });

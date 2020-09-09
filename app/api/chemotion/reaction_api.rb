@@ -75,7 +75,7 @@ module ReactionHelpers
             else
               attributes = sample.to_h.except(
                 :id, :is_new, :is_split, :reference, :equivalent, :position,
-                :type, :molecule, :collection_id, :short_label, :waste, :coefficient
+                :type, :molecule, :collection_id, :short_label, :waste, :coefficient, :user_labels
               ).merge(created_by: current_user.id)
 
               # update attributes[:name] for a copied reaction

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import matricesJson from '../../../../../config/matrices.json';
+import UIStore from '../stores/UIStore';
 
 const UserMatrixCheck = (matrix = 0, id = 0) => {
   if (matrix <= 0 || id <= 0) {
@@ -16,10 +16,12 @@ const UserMatrixCheck = (matrix = 0, id = 0) => {
 };
 
 const MatrixCheck = (matrix = 0, name = '') => {
-  if (typeof matricesJson === 'undefined' || matricesJson === null) {
+  const { matrices } = UIStore.getState();
+  if (typeof matrices === 'undefined' || matrices === null) {
     return false;
   }
-  const CONFIG_ID = matricesJson[name] || 0;
+
+  const CONFIG_ID = matrices[name] || 0;
   return UserMatrixCheck(matrix, CONFIG_ID);
 };
 
