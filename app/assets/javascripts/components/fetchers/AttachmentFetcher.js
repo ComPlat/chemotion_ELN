@@ -83,6 +83,28 @@ export default class AttachmentFetcher {
     return promise;
   }
 
+  static fetchJcamp(target) {
+    const { file, mass, mol } = target;
+    const data = new FormData();
+    data.append('file', file);
+    data.append('molfile', mol);
+    data.append('mass', mass);
+
+    let promise = fetch('/api/v1/chemspectra/file/convert', {
+      credentials: 'same-origin',
+      method: 'POST',
+      body: data,
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static getFileListfrom(container) {
     const allFiles = [];
     this.filterAllAttachments(allFiles, container.children);

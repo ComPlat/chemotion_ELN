@@ -17,6 +17,7 @@ class SpectraStore {
     this.showModal = false;
     this.fetched = false;
     this.writing = false;
+    this.others = [];
 
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
@@ -28,6 +29,7 @@ class SpectraStore {
       handleWriteStart: SpectraActions.WriteStart,
       handleWriteStop: SpectraActions.WriteStop,
       handleSelectIdx: SpectraActions.SelectIdx,
+      handleAddOthers: SpectraActions.AddOthers,
     });
   }
 
@@ -64,13 +66,18 @@ class SpectraStore {
       spcInfos: [],
       showModal: !this.showModal,
       fetched: false,
+      others: [],
     });
   }
 
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
     const spcMetas = this.decodeSpectra(fetchedFiles);
     this.setState({
-      spcInfos, spcMetas, fetched: true, spcIdx: (spcMetas[0].idx || 0),
+      spcInfos,
+      spcMetas,
+      fetched: true,
+      spcIdx: (spcMetas[0].idx || 0),
+      others: [],
     });
   }
 
@@ -93,6 +100,7 @@ class SpectraStore {
       spcMetas: newSpcMetas,
       fetched: true,
       spcIdx: fetchedIdx,
+      others: [],
     });
   }
 
@@ -104,11 +112,15 @@ class SpectraStore {
     this.replacePredictions(defaultPred);
     this.setState({
       writing: payload,
+      others: [],
     });
   }
 
   handleWriteStop() {
-    this.setState({ writing: false });
+    this.setState({
+      writing: false,
+      others: [],
+    });
   }
 
   handleInferRunning() {
@@ -124,7 +136,7 @@ class SpectraStore {
   }
 
   handleSelectIdx(spcIdx) {
-    this.setState({ spcIdx });
+    this.setState({ spcIdx, others: [] });
   }
 
   replacePredictions(predictions) {
@@ -134,7 +146,13 @@ class SpectraStore {
         ? Object.assign({}, x, { predictions })
         : x
     ));
-    this.setState({ spcMetas });
+    this.setState({ spcMetas, others: [] });
+  }
+
+  handleAddOthers(rsp) {
+    const origData = base64.decode(rsp.jcamp);
+    const jcampData = FN.ExtractJcamp(origData);
+    this.setState({ others: [jcampData] });
   }
 }
 

@@ -1,3 +1,5 @@
+import base64 from 'base-64';
+
 import alt from '../alt';
 import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 
@@ -77,6 +79,20 @@ class SpectraActions {
 
   SelectIdx(spcIdx) {
     return spcIdx;
+  }
+
+  AddOthers(payload)  {
+    const jcamps = payload.jcamps || [];
+    const jcamp = jcamps[0];
+
+    return (dispatch) => {
+      AttachmentFetcher.fetchJcamp({ file: jcamp })
+        .then((rsp) => {
+          dispatch(rsp);
+        }).catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+        });
+    };
   }
 }
 

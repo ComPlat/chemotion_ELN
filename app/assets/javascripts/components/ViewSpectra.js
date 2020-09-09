@@ -45,6 +45,7 @@ class ViewSpectra extends React.Component {
     this.getContent = this.getContent.bind(this);
     this.getSpcInfo = this.getSpcInfo.bind(this);
     this.getQDescVal = this.getQDescVal.bind(this);
+    this.buildOthers = this.buildOthers.bind(this);
   }
 
   componentDidMount() {
@@ -469,6 +470,15 @@ class ViewSpectra extends React.Component {
     return baseOps;
   }
 
+  buildOthers() {
+    const { others } = this.state;
+
+    return {
+      others,
+      addOthersCb: SpectraActions.AddOthers,
+    };
+  }
+
   renderEmpty() {
     const { fetched } = this.state;
     const content = fetched
@@ -517,6 +527,7 @@ class ViewSpectra extends React.Component {
       entity, isExist,
     } = FN.buildData(jcamp);
 
+    const others = this.buildOthers();
     const operations = this.buildOpsByLayout(entity);
     const descriptions = this.getQDescVal();
     const forecast = {
@@ -533,6 +544,7 @@ class ViewSpectra extends React.Component {
             ? this.renderInvalid()
             : <SpectraEditor
               entity={entity}
+              others={others}
               operations={operations}
               forecast={forecast}
               molSvg={sample.svgPath}
