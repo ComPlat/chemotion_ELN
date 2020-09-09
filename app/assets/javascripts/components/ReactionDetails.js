@@ -402,7 +402,7 @@ export default class ReactionDetails extends Component {
             <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
               Close
             </Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
+            <Button id="submit-reaction-btn" bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
               {submitLabel}
             </Button>
             {exportButton}

@@ -19,5 +19,8 @@ RSpec.configure do |config|
 
   config.after do
     DatabaseCleaner.clean
+  rescue Exception => e
+    sleep 2
+    DatabaseCleaner.clean
   end
 end
