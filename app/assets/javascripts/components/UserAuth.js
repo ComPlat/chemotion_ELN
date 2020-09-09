@@ -537,7 +537,7 @@ export default class UserAuth extends Component {
     );
 
     let userLabel = (<span />);
-    if (MatrixCheck(this.state.currentUser.matrix, 'UserLabel')) {
+    if (MatrixCheck(this.state.currentUser.matrix, 'userLabel')) {
       userLabel = (<MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>);
     }
 

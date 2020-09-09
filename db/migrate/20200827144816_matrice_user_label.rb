@@ -1,9 +1,9 @@
 class MatriceUserLabel < ActiveRecord::Migration
   def change
     Matrice.create(
-      name: 'UserLabel',
+      name: 'userLabel',
       enabled: false,
-      label: 'UserLabel',
+      label: 'userLabel',
       include_ids: [],
       exclude_ids: []
     )
