@@ -130,15 +130,6 @@ class UIActions {
   setProductOnly(bool) {
     return bool;
   }
-  fetchMatrices() {
-    return (dispatch) => {
-      UIFetcher.fetchMatrices()
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-        });
-    };
-  }
 }
 
 export default alt.createActions(UIActions);

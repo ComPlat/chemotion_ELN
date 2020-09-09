@@ -39,7 +39,6 @@ class App extends Component {
     UserActions.fetchProfile();
     UserActions.fetchUserLabels();
     UIActions.initialize.defer();
-    UIActions.fetchMatrices();
     document.addEventListener('keydown', this.documentKeyDown);
   }
 

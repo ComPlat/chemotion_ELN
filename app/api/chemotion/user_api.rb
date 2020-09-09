@@ -1,17 +1,15 @@
 # frozen_string_literal: true
 module Chemotion
   class UserAPI < Grape::API
-
     resource :users do
-
       desc 'Find top 3 matched user names'
       params do
         requires :name, type: String
       end
       get 'name' do
         unless params[:name].nil? || params[:name].empty?
-          { users: User.where(type: %w(Person Group)).by_name(params[:name]).limit(3)
-                       .select('first_name','last_name','name','id','name_abbreviation', 'name_abbreviation as abb', 'type as user_type')}
+          { users: User.where(type: %w[Person Group]).by_name(params[:name]).limit(3)
+                       .select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type') }
         else
           { users: [] }
         end
@@ -24,17 +22,9 @@ module Chemotion
 
       desc 'list user labels'
       get 'list_labels' do
-        labels = UserLabel.where('user_id = ? or access_level >= 1', current_user.id).order("access_level desc, position, title")
+        labels = UserLabel.where('user_id = ? or access_level >= 1', current_user.id)
+                          .order('access_level desc, position, title')
         present labels || [], with: Entities::UserLabelEntity, root: 'labels'
-      end
-
-      namespace :matrices do
-        desc 'Find all matrices'
-        get do
-          mx = {}
-          Matrice.all&.map { |ma| mx[ma.name] = ma.id } if ActiveRecord::Base.connection.table_exists? 'matrices'
-          mx
-        end
       end
 
       namespace :save_label do
@@ -53,10 +43,10 @@ module Chemotion
             access_level: params[:access_level] || 0,
             title: params[:title],
             description: params[:description],
-            color: params[:color],
+            color: params[:color]
           }
           if params[:id].present?
-            label = UserLabel.find(params[:id]);
+            label = UserLabel.find(params[:id])
             label.update!(attr)
           else
             UserLabel.create!(attr)
@@ -72,9 +62,9 @@ module Chemotion
 
     resource :groups do
       rescue_from ActiveRecord::RecordInvalid do |error|
-        message = error.record.errors.messages.map { |attr, msg|
+        message = error.record.errors.messages.map do |attr, msg|
           "%s %s" % [attr, msg.first]
-        }
+        end
         error!(message.join(', '), 404)
       end
 
@@ -109,8 +99,7 @@ module Chemotion
       namespace :qrycurrent do
         desc 'fetch groups of current user'
         get do
-          data = current_user.groups | current_user.administrated_accounts
-                                              .where(type: 'Group').uniq
+          data = current_user.groups | current_user.administrated_accounts.where(type: 'Group').uniq
           present data, with: Entities::GroupEntity, root: 'currentGroups'
         end
       end

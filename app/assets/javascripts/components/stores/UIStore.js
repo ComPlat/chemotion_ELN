@@ -67,7 +67,7 @@ class UIStore {
       showModal: false,
       modalParams: {},
       hasChemSpectra: false,
-      matricesJson: {}
+      matrices: {}
     };
 
     this.bindListeners({
@@ -104,7 +104,6 @@ class UIStore {
       handleSetFromDate: UIActions.setFromDate,
       handleSetToDate: UIActions.setToDate,
       handleSetProductOnly: UIActions.setProductOnly,
-      handleFetchMatrices: UIActions.fetchMatrices
     });
   }
 
@@ -377,13 +376,6 @@ class UIStore {
   handleSetProductOnly(productOnly) {
     this.state.productOnly = productOnly;
     this.handleSelectCollection(this.state.currentCollection, true);
-  }
-
-  handleFetchMatrices(result) {
-    console.log(result);
-    this.setState({
-      matricesJson: result
-    })
   }
 }
 
