@@ -9,7 +9,7 @@ import UserActions from './actions/UserActions';
 import UserStore from './stores/UserStore';
 import MatrixCheck from './common/MatrixCheck';
 
-const UL_FUNC_NAME = 'UserLabel';
+const UL_FUNC_NAME = 'userLabel';
 
 class UserLabelModal extends Component {
   constructor(props) {

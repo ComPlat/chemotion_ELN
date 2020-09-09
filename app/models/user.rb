@@ -273,8 +273,14 @@ class User < ActiveRecord::Base
   end
 
   def update_matrix
-    sql = ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', id])
-    ActiveRecord::Base.connection.exec_query(sql)
+    check_sql = ActiveRecord::Base.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
+    result = ActiveRecord::Base.connection.exec_query(check_sql)
+    if result.first["rs"] == 't'
+      sql = ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', id])
+      ActiveRecord::Base.connection.exec_query(sql)
+    end
+  rescue StandardError => e
+    log_error 'Error on update_matrix'
   end
 
   def remove_from_matrices
@@ -283,12 +289,18 @@ class User < ActiveRecord::Base
   end
 
   def self.gen_matrix(user_ids = nil)
-    sql = if user_ids.present?
-            ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', user_ids])
-          else
-            'select generate_users_matrix(null)'
-          end
-    ActiveRecord::Base.connection.exec_query(sql)
+    check_sql = ActiveRecord::Base.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
+    result = ActiveRecord::Base.connection.exec_query(check_sql)
+    if result.first['rs'] == 't'
+      sql = if user_ids.present?
+              ActiveRecord::Base.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', user_ids])
+            else
+              'select generate_users_matrix(null)'
+            end
+      ActiveRecord::Base.connection.exec_query(sql)
+    end
+  rescue StandardError => e
+    log_error 'Error on update_matrix'
   end
 
   private
