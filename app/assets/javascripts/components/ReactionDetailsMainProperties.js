@@ -95,6 +95,7 @@ export default class ReactionDetailsMainProperties extends Component {
             <FormGroup>
               <ControlLabel>Name</ControlLabel>
               <FormControl
+                id="reaction-detail-name"
                 type="text"
                 value={reaction.name || ''}
                 placeholder="Name..."

@@ -224,8 +224,8 @@ export default class CreateButton extends React.Component {
         >
           {this.createWellplateModal()}
 
-          <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
-          <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
+          <MenuItem id="create-sample-button" onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
+          <MenuItem id="create-reaction-button" onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
           <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
           <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
           <MenuItem onSelect={() => this.createElementOfType('research_plan')}>Create Research Plan</MenuItem>
