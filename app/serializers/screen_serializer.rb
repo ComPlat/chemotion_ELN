@@ -2,7 +2,7 @@ class ScreenSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Screen.new.base_attributes
 
   has_many :wellplates
-  has_one :container
+  has_one :container, serializer: ContainerSerializer
   has_one :tag
 
   def code_log

@@ -5,7 +5,7 @@ class SampleSerializer < ActiveModel::Serializer
   has_one :container, :serializer => ContainerSerializer
   has_one :tag
 
-  has_many :residues
+  has_many :residues, serializer: ResidueSerializer
   has_many :elemental_compositions
 
   def code_log

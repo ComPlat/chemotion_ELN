@@ -9,7 +9,7 @@ class ReactionSerializer < ActiveModel::Serializer
 
   # has_many :literatures
 
-  has_one :container
+  has_one :container, serializer: ContainerSerializer
   has_one :tag
 
   def code_log
