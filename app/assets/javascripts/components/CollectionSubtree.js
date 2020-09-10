@@ -240,7 +240,7 @@ export default class CollectionSubtree extends React.Component {
       <div className="tree-view" key={root.id}>
         {this.takeOwnershipButton()}
 
-        <div className={"title " + this.selectedCssClass()}
+        <div id={`tree-id-${root.label}`} className={"title " + this.selectedCssClass()}
              onClick={this.handleClick}>
           {this.expandButton()}
           {this.synchronizedIcon()}
