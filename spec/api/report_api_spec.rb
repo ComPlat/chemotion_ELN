@@ -54,6 +54,134 @@ describe Chemotion::ReportAPI do
       end
     end
 
+    describe 'export_samples_from_selections as SDfiles' do
+      let!(:mf2000_1) { IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_1.mol')) }
+      let!(:mf2000_2) { IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_2.mol')) }
+      let!(:mf2000_3) { IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_3.mol')) }
+      let!(:mf3000_1) { IO.read(Rails.root.join('spec', 'fixtures', 'mof_v3000_1.mol')) }
+      let(:c) { create(:collection, user_id: user.id) }
+      let(:sample_1) { create(:sample, name: 'Sample 20001', molfile: mf2000_1) }
+      let(:sample_2) { create(:sample, name: 'Sample 20002', molfile: mf2000_2) }
+      let(:sample_3) { create(:sample, name: 'Sample 20002', molfile: mf2000_3) }
+      let(:sample_4) { create(:sample, name: 'Sample 30001', molfile: mf3000_1) }
+      let(:no_checked) do
+        {
+          checkedIds: [],
+          uncheckedIds: [],
+          checkedAll: false
+        }
+      end
+      let(:params) do
+        {
+          exportType: 2,
+          uiState: {
+            sample: {
+              checkedIds: [],
+              uncheckedIds: [],
+              checkedAll: false
+            },
+            reaction: no_checked,
+            wellplate: no_checked,
+            currentCollection: c.id,
+            isSync: false
+          },
+          columns: {
+            analyses: [],
+            molecule: %w[cano_smiles],
+            reaction: %w[name short_label],
+            sample: %w[name external_label real_amount_value real_amount_unit created_at]
+          }
+        }
+      end
+
+      before do
+        CollectionsSample.create!(sample: sample_1, collection: c)
+        CollectionsSample.create!(sample: sample_2, collection: c)
+        CollectionsSample.create!(sample: sample_3, collection: c)
+        CollectionsSample.create!(sample: sample_4, collection: c)
+      end
+
+      context 'with V2000 molfile contains no dollar sign' do
+        before do
+          params[:uiState][:sample][:checkedIds] = [sample_1.id]
+          post(
+            '/api/v1/reports/export_samples_from_selections', params.to_json,
+            'CONTENT_TYPE' => 'application/json'
+          )
+        end
+
+        it 'returns correct sdf' do
+          expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
+          expect(response['Content-Disposition']).to include('.sdf')
+          msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_1.sdf'))
+          sdf = response.body
+          sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          expect(sdf).to eq(msdf)
+        end
+      end
+
+      context 'with V2000 molfile contains dollar sign' do
+        before do
+          params[:uiState][:sample][:checkedIds] = [sample_2.id]
+          post(
+            '/api/v1/reports/export_samples_from_selections', params.to_json,
+            'CONTENT_TYPE' => 'application/json'
+          )
+        end
+
+        it 'returns correct sdf' do
+          expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
+          expect(response['Content-Disposition']).to include('.sdf')
+          msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_2.sdf'))
+          sdf = response.body
+          sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          expect(sdf).to eq(msdf)
+        end
+      end
+
+      context 'with V2000 molfile contains extart tags and no dollar sign' do
+        before do
+          params[:uiState][:sample][:checkedIds] = [sample_3.id]
+          post(
+            '/api/v1/reports/export_samples_from_selections', params.to_json,
+            'CONTENT_TYPE' => 'application/json'
+          )
+        end
+
+        it 'returns correct sdf' do
+          expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
+          expect(response['Content-Disposition']).to include('.sdf')
+          msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_3.sdf'))
+          sdf = response.body
+          sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          expect(sdf).to eq(msdf)
+        end
+      end
+
+      context 'with V3000 molfile' do
+        before do
+          params[:uiState][:sample][:checkedIds] = [sample_4.id]
+          post(
+            '/api/v1/reports/export_samples_from_selections', params.to_json,
+            'CONTENT_TYPE' => 'application/json'
+          )
+        end
+
+        it 'returns correct sdf' do
+          expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
+          expect(response['Content-Disposition']).to include('.sdf')
+          msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v3000_1.sdf'))
+          sdf = response.body
+          sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          expect(sdf).to eq(msdf)
+        end
+      end
+    end
+
     describe 'POST /api/v1/reports/export_samples_from_selections' do
       let(:c)        { create(:collection, user_id: user.id) }
       let(:sample_1) { create(:sample) }

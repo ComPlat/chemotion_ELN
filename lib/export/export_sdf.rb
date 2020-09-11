@@ -38,9 +38,11 @@ module Export
       if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
         data = validate_molfile(sample['molfile'])
         return nil unless data.presence
+
         if sample['molfile_version'] =~ /^(V2000).*T9/
           data = Chemotion::OpenBabelService.mofile_clear_coord_bonds(data, $1)
         end
+        data = data.rstrip
         data += "\n"
 
         @headers.each do |column|
@@ -53,6 +55,8 @@ module Export
 
         data = validate_molfile(sample['molfile'])
         return nil unless data.presence
+
+        data = data.rstrip
         data += "\n"
 
         dl = sample['dl_wp'] || sample['dl_r'] || 0
@@ -61,11 +65,12 @@ module Export
         headers = instance_variable_get("headers#{sample['dl_s']}#{dl}")
         headers.each do |column|
           next unless column
+
           column_data = format_field(column, sample[column])
           data.concat(column_data)
         end
       end
-      data.concat("\n\$\$\$\$\n")
+      data.concat("\$\$\$\$\n")
     end
 
     def format_field(column, raw_value)
@@ -75,13 +80,15 @@ module Export
     end
 
     def validate_molfile(molfile)
-      molfile.to_s =~ /^\$\$\$\$/
-      $` || molfile
+      return ($`).concat('M  END') if molfile.to_s =~ /^M  END/
+
+      molfile
     end
 
     def validate_value(value)
-      return "_ #{value}" if value.to_s.start_with?('>', '$', '<')
-      value.to_s
+      return "_ #{value.strip}" if value.to_s.start_with?('>', '$', '<')
+
+      value.to_s.strip
     end
 
     def set_extension
