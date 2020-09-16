@@ -111,7 +111,7 @@ export default class MyCollections extends React.Component {
     if(node.id == -1) {
       return (
         <div className="root-actions">
-          <Button bsSize="xsmall" bsStyle="warning"
+          <Button id="my-collections-update-btn" bsSize="xsmall" bsStyle="warning"
             onClick={this.bulkUpdate.bind(this)}>
             Update
           </Button>
@@ -121,7 +121,7 @@ export default class MyCollections extends React.Component {
     } else {
       return (
         <ButtonGroup className="actions">
-          <Button bsSize="xsmall" bsStyle="primary" disabled={node.isNew === true}
+          <Button id="sync-users-btn" bsSize="xsmall" bsStyle="primary" disabled={node.isNew === true}
             onClick={()=>this.doSync(node,'CreateSync')}>
               <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>

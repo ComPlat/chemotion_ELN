@@ -195,7 +195,7 @@ export default class CollectionTree extends React.Component {
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div className="title" style={{backgroundColor:'white'}}
+        <div id="synchron-home-link" className="title" style={{backgroundColor:'white'}}
              onClick={() => this.setState({syncCollectionVisible: !syncCollectionVisible})}>
           <i className="fa fa-share-alt"/>&nbsp;&nbsp;
           Synchronized with me &nbsp;
@@ -245,7 +245,7 @@ export default class CollectionTree extends React.Component {
   collectionManagementButton() {
     return (
       <div className="take-ownership-btn">
-        <Button bsSize="xsmall" bsStyle="danger"
+        <Button id="col-mgnt-btn" bsSize="xsmall" bsStyle="danger"
                 onClick={() => this.handleCollectionManagementToggle()}>
           <i className="fa fa-cog"></i>
         </Button>

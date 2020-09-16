@@ -277,7 +277,7 @@ export default class ManagingModalSharing extends React.Component {
     return(
       <div style={style}>
         <ControlLabel>Select Users to share with</ControlLabel>
-        <Select.AsyncCreatable multi={true} isLoading={true}
+        <Select.AsyncCreatable id="share-users-select" multi={true} isLoading={true}
           backspaceRemoves={true} value={selectedUsers}
           valueKey="value" labelKey="label" matchProp="name"
           promptTextCreator={this.promptTextCreator}
@@ -367,7 +367,7 @@ export default class ManagingModalSharing extends React.Component {
         </FormGroup>
         {this.selectUsers()}
         <br/>
-        <Button bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
+        <Button id="create-sync-shared-col-btn" bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
       </div>
     )
   }
