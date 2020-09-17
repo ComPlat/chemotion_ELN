@@ -69,6 +69,10 @@ RSpec.configure do |config|
         )
     end
 
+    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/UFWIBTONFRDIAS-UHFFFAOYSA-N/record/JSON')
+      .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'text/json' })
+      .to_return(status: 200, body: '', headers: {})
+
     stub_request(:post, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/record/JSON')
       .with(headers: { 'Content-Type' => 'text/json' }, body: { 'inchikey' => 'RDHQFKQIGNGIED-UHFFFAOYSA-N,RDHQFKQIGNGIED-UHFFFAOYSA-O' })
       .to_return(

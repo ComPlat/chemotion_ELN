@@ -1,0 +1,38 @@
+962
+  -OEChem-03241609052D
+
+  3  2  0     0  0  0  0  0  0999 V2000
+    2.5369   -0.1550    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0739    0.1550    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0000    0.1550    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+M  END
+>  <RESIDUE_TYPE>
+
+
+>  <STEREO_ABS>
+
+
+>  <STEREO_REL>
+
+
+>  <SAMPLE_NAME>
+Sample 20001
+
+>  <SAMPLE_EXTERNAL_LABEL>
+
+
+>  <REAL_AMOUNT>
+
+
+>  <REAL_UNIT>
+
+
+>  <CREATED_AT>
+2020-09-15 09:52:14.091277
+
+>  <CANONICAL_SMILES>
+O
+
+$$$$
