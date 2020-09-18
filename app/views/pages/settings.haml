@@ -2,80 +2,77 @@
   %h2
     Account &amp; Profile
   %br/
-  %br/
 
   .panel.panel-default
-    .panel-heading{:role => "tab"}
-      %h4.panel-title
-        %a{"aria-controls" => "collapseOne", "data-toggle" => "collapse", :href => "#collapseOne", :role => "button"}
-          Reaction Label
-    #collapseOne.panel-collapse.collapse{:role => "tabpanel"}
-      .panel-body
-        .form-horizontal
-          = form_for current_user, url: pages_update_user_path do |f|
-            .form-group
-              = f.label 'Counter prefix', class: 'control-label col-sm-2'
-              .col-sm-2
-                = text_field_tag :reaction_name_prefix,
-                                  current_user.reaction_name_prefix,
-                                  maxlength: 3,
+    .panel-heading
+      %h3.panel-title
+        Reaction Label
+    .panel-body
+      .form-horizontal
+        = form_for current_user, url: pages_update_user_path do |f|
+          .form-group
+            = f.label 'Counter prefix', class: 'col-sm-2 col-sm-offset-2 control-label'
+            .col-sm-2
+              = text_field_tag :reaction_name_prefix,
+                                current_user.reaction_name_prefix,
+                                maxlength: 3,
+                                class: 'form-control',
+                                id: 'reaction-name-prefix',
+                                oninput: 'showExampleLabel();'
+          .form-group
+            = f.label 'Counter starts at', class: 'col-sm-2 col-sm-offset-2 control-label'
+            .col-sm-2
+              = number_field_tag :reactions_count,
+                                  current_user.counters['reactions'],
+                                  min: 0,
                                   class: 'form-control',
-                                  id: 'reaction-name-prefix',
+                                  id: 'reactions-count',
                                   oninput: 'showExampleLabel();'
-            .form-group
-              = f.label 'Counter starts at', class: 'control-label col-sm-2'
-              .col-sm-2
-                = number_field_tag :reactions_count,
-                                    current_user.counters['reactions'],
-                                    min: 0,
-                                    class: 'form-control',
-                                    id: 'reactions-count',
-                                    oninput: 'showExampleLabel();'
-            = hidden_field_tag :name_abbreviation, current_user.name_abbreviation
-            %h5
-              Next reaction label will be:
+          = hidden_field_tag :name_abbreviation, current_user.name_abbreviation
+          %div
+            .col-sm-4.col-sm-offset-2
+              = f.label 'Next reaction label will be:', class: 'control-label'
               %span{id: 'reaction-label-example'}
-            %br/
-            .actions
+            .col-sm-4.col-sm-offset-2
               = f.submit "Update user settings", class: "btn btn-primary"
+
+  .panel.panel-default
+    .panel-heading
+      %h3.panel-title
+        Sample Title
+    .panel-body
+      .form-horizontal
+        = form_for current_user.profile, url: pages_update_profiles_path do |f|
+          .form-group
+            = f.label :show_external_name, "Show external names on sample titles?", class: 'col-sm-4 control-label'
+            .col-sm-2
+              .checkbox{ :style => "margin-left: 20px;" }
+                = f.check_box :show_external_name, autocomplete: "off"
+            .col-sm-4.col-sm-offset-2
+              = f.submit "Update user profiles", class: "btn btn-primary"
+
+  .panel.panel-default
+    .panel-heading
+      %h3.panel-title
+        Curation
+    .panel-body
+      .form-horizontal
+        = form_for current_user.profile, url: pages_update_profiles_path do |f|
+          .form-group
+            = f.label 'Curation Standard', class: 'col-sm-4 control-label'
+            .col-sm-4
+              - curations = ["No curation standard", "Curation standard I: experimental organic chemistry"]
+              - curations = curations.map.with_index { |x, i| [x, i + 1] }.to_h
+              = f.select :curation, options_for_select(curations, current_user.profile.curation), class: 'form-control'
+            .col-sm-4
+              = f.submit "Update user profiles", class: "btn btn-primary"
 
   - plugin_with_setting_view_list.each_with_index do |plugin, i|
     .panel.panel-default
-      .panel-heading{:role => "tab"}
-        %h4.panel-title
-          %a.collapsed{"aria-controls" => "collapse#{i}", "data-toggle" => "collapse", :href => "#collapse#{i}", :role => "button"}
-            = (p=plugin.capitalize.constantize)::const_defined?('TITLE') && p::TITLE || plugin.to_s
-        .panel-collapse.collapse{:role => "tabpanel", :id => "collapse#{i}"}
-          .panel-body
-            = render "#{plugin}/home/account"
-
-  .panel.panel-default
-    .panel-heading{:role => "tab"}
-      %h4.panel-title
-        %a.collapsed{"aria-controls" => "collapseTwo", "data-toggle" => "collapse", :href => "#collapseTwo", :role => "button"}
-          Sample Title
-    #collapseTwo.panel-collapse.collapse{:role => "tabpanel"}
+      .panel-heading
+        %h3.panel-title
+          = (p=plugin.capitalize.constantize)::const_defined?('TITLE') && p::TITLE || plugin.to_s
       .panel-body
-        .form-horizontal
-          = form_for current_user.profile, url: pages_update_profiles_path do |f|
-            .checkbox{ :style => "margin-left: 20px;" }
-              = f.check_box :show_external_name, autofocus: true, autocomplete: "off"
-              = f.label :show_external_name, "Show external names on sample titles?"
+        = render "#{plugin}/home/account"
 
-            .h3 Curation Standard
-            %br/
-            .radioButton
-              - curations = ["No curation standard", "Curation standard I: experimental organic chemistry"]
-              - curations = curations.map.with_index { |x, i| [x, i + 1] }.to_h
-              = f.select :curation, options_for_select(curations, current_user.profile.curation)
-
-            %br/
-
-            .actions
-              = f.submit "Update user profiles", class: "btn btn-primary"
-
-
-  %br/
-  %br/
-  
   = link_to "Back", root_path
