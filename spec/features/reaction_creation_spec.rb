@@ -21,7 +21,7 @@ describe 'Create and update Reaction' do
   end
 
   it 'Create and update reaction UI', js: true do
-    find('.tree-view', text: 'chemotion.net').click
+    find_by_id('tree-id-chemotion.net').click
     find_by_id('create-split-button').click
     find_by_id('create-reaction-button').click
     source = first('span.dnd-arrow-enable')

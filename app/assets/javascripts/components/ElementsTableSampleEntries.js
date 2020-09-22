@@ -88,7 +88,7 @@ TopSecretIcon.propTypes = {
 };
 
 const XvialIcon = ({ label }) => {
-  return label.match(/^X\d+.*/) ? (
+  return (label || '').match(/^X\d+.*/) ? (
     <i
       className="icon-xvial"
       style={{ marginRight: '5px', fontSize: '20px' }}

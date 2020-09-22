@@ -9,7 +9,7 @@ module Entities
     :sample_svg_file, :density, :boiling_point, :melting_point, :stereo,
     :reaction_description, :container, :metrics,
     :pubchem_tag, :xref, :code_log,
-    :can_update, :can_publish, :molecule_name_hash, #:molecule_computed_props,
+    :can_update, :can_copy, :can_publish, :molecule_name_hash, #:molecule_computed_props,
     :showed_name, :user_labels
 
     def created_at
@@ -51,6 +51,10 @@ module Entities
     end
 
     def can_update
+      false
+    end
+
+    def can_copy
       false
     end
 

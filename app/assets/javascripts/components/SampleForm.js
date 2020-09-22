@@ -228,6 +228,7 @@ export default class SampleForm extends React.Component {
       <FormGroup>
         <ControlLabel>{label}</ControlLabel>
         <FormControl
+          id={`txinput_${field}`}
           type="text"
           value={sample[field] || ''}
           onChange={(e) => {this.handleFieldChanged(sample, field, e.target.value)}}

@@ -22,6 +22,10 @@ module ReactionLevelSerializable
       'reaction'
     end
 
+    def can_copy
+      @policy&.try(:copy?)
+    end
+
     def is_restricted
       true
     end

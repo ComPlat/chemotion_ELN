@@ -18,6 +18,10 @@ class ElementPolicy
     any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 1
   end
 
+  def copy?
+    maximum_element_permission_level(user_collections) >= 1 || maximum_element_permission_level(user_scollections) >= 1
+  end
+
   def share?
     return true unless record
 
@@ -49,6 +53,10 @@ class ElementPolicy
 
   def maximum_permission_level(collections,sync_collections=SyncCollectionsUser.none)
     (collections.pluck(:permission_level) + sync_collections.pluck(:permission_level)).max || -1
+  end
+
+  def maximum_element_permission_level(sync_collections = SyncCollectionsUser.none)
+    sync_collections.pluck("#{@record.class.name.downcase}_detail_level").max || -1
   end
 
   def user_ids

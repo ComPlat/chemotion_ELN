@@ -171,6 +171,7 @@ class ElementStore {
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
+      handleCopyReaction: ElementActions.copyReaction,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples:
@@ -660,7 +661,9 @@ class ElementStore {
 
   handleCopySampleFromClipboard(collection_id) {
     const clipboardSamples = ClipboardStore.getState().samples;
-    this.changeCurrentElement(Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id, true));
+    if (clipboardSamples && clipboardSamples.length > 0) {
+      this.changeCurrentElement(Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id, true));
+    }
   }
 
   /**
@@ -781,7 +784,7 @@ class ElementStore {
   // -- Reactions --
 
   handleFetchReactionById(result) {
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
+    if (!this.state.currentElement || (this.state.currentElement && this.state.currentElement._checksum) != result._checksum) {
       this.changeCurrentElement(result);
       this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
     //  this.navigateToNewElement(result);
@@ -822,6 +825,11 @@ class ElementStore {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
     this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id));
+  }
+
+  handleCopyReaction(result) {
+    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(result.reaction, result.colId));
+    Aviator.navigate(`/collection/${result.colId}/reaction/copy`);
   }
 
   handleOpenReactionDetails(reaction) {

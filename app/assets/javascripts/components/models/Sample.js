@@ -147,6 +147,7 @@ export default class Sample extends Element {
       attached_amount_mg: '', // field for polymers calculations
       container: Container.init(),
       can_update: true,
+      can_copy: false,
       stereo: Sample.defaultStereo()
     });
 
@@ -168,6 +169,7 @@ export default class Sample extends Element {
     sample.short_label = Sample.buildNewShortLabel();
     sample.container = Container.init();
     sample.can_update = true;
+    sample.can_copy = false;
     return sample;
   }
 

@@ -21,5 +21,12 @@ class ClipboardActions {
         console.log(errorMessage);
       });};
   }
+
+  fetchElementAndBuildCopy(sample, collection_id, action) {
+    sample.collection_id = collection_id;
+    return (
+      { samples: [sample], collection_id: collection_id, action: action}
+    )
+  }
 }
 export default alt.createActions(ClipboardActions);

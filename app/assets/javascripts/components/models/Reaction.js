@@ -106,6 +106,7 @@ export default class Reaction extends Element {
       tlc_description: '',
       tlc_solvents: '',
       type: 'reaction',
+      can_copy: false
     })
 
     reaction.short_label = this.buildReactionShortLabel()
@@ -436,6 +437,7 @@ export default class Reaction extends Element {
 
     copy.rebuildProductName();
     copy.container = Container.init();
+    copy.can_copy = false;
     return copy;
   }
 
