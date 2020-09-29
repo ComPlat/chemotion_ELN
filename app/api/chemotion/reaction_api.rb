@@ -26,6 +26,16 @@ class OSample < OpenStruct
 end
 
 module ReactionHelpers
+  def rangebound(lower, upper)
+    lower = lower.blank? ? -Float::INFINITY : BigDecimal(lower.to_s)
+    upper = upper.blank? ? Float::INFINITY : BigDecimal(upper.to_s)
+    if lower == -Float::INFINITY && upper == Float::INFINITY
+      Range.new(-Float::INFINITY, Float::INFINITY, '()')
+    else
+      Range.new(lower, upper)
+    end
+  end
+
   def update_materials_for_reaction(reaction, material_attributes, current_user)
     collections = reaction.collections
 
@@ -75,8 +85,12 @@ module ReactionHelpers
             else
               attributes = sample.to_h.except(
                 :id, :is_new, :is_split, :reference, :equivalent, :position,
-                :type, :molecule, :collection_id, :short_label, :waste, :coefficient, :user_labels
-              ).merge(created_by: current_user.id)
+                :type, :molecule, :collection_id, :short_label, :waste, :coefficient, :user_labels,
+                :boiling_point_lowerbound, :boiling_point_upperbound,
+                :melting_point_lowerbound, :melting_point_upperbound
+              ).merge(created_by: current_user.id,
+                      boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
+                      melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
 
               # update attributes[:name] for a copied reaction
               if (reaction.name || '').include?("Copy") && attributes[:name].present?
