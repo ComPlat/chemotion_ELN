@@ -276,8 +276,10 @@ module Chemotion
         optional :molecule_id, type: Integer
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :density, type: Float, desc: "Sample density"
-        optional :boiling_point, type: Float, desc: "Sample boiling point"
-        optional :melting_point, type: Float, desc: "Sample melting point"
+        optional :boiling_point_upperbound, type: Float, desc: 'upper bound of sample boiling point'
+        optional :boiling_point_lowerbound, type: Float, desc: 'lower bound of sample boiling point'
+        optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
+        optional :melting_point_lowerbound, type: Float, desc: 'lower bound of sample melting point'
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
@@ -318,6 +320,17 @@ module Chemotion
               "#{prop}_attributes".to_sym => prop_value
             ) unless prop_value.blank?
           end
+
+          boiling_point_lowerbound = params['boiling_point_lowerbound'].blank? ? -Float::INFINITY : params['boiling_point_lowerbound']
+          boiling_point_upperbound = params['boiling_point_upperbound'].blank? ? Float::INFINITY : params['boiling_point_upperbound']
+          melting_point_lowerbound = params['melting_point_lowerbound'].blank? ? -Float::INFINITY : params['melting_point_lowerbound']
+          melting_point_upperbound = params['melting_point_upperbound'].blank? ? Float::INFINITY : params['melting_point_upperbound']
+          attributes['boiling_point'] = Range.new(boiling_point_lowerbound, boiling_point_upperbound)
+          attributes['melting_point'] = Range.new(melting_point_lowerbound, melting_point_upperbound)
+          attributes.delete(:boiling_point_lowerbound)
+          attributes.delete(:boiling_point_upperbound)
+          attributes.delete(:melting_point_lowerbound)
+          attributes.delete(:melting_point_upperbound)
 
           @sample.update!(attributes)
 
@@ -364,8 +377,10 @@ module Chemotion
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :density, type: Float, desc: "Sample density"
-        optional :boiling_point, type: Float, desc: "Sample boiling point"
-        optional :melting_point, type: Float, desc: "Sample melting point"
+        optional :boiling_point_upperbound, type: Float, desc: 'upper bound of sample boiling point'
+        optional :boiling_point_lowerbound, type: Float, desc: 'lower bound of sample boiling point'
+        optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
+        optional :melting_point_lowerbound, type: Float, desc: 'lower bound of sample melting point'
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
@@ -398,8 +413,6 @@ module Chemotion
           sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
           density: params[:density],
-          boiling_point: params[:boiling_point],
-          melting_point: params[:melting_point],
           residues: params[:residues],
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id,
@@ -407,6 +420,13 @@ module Chemotion
           stereo: params[:stereo],
           molecule_name_id: params[:molecule_name_id]
         }
+
+        boiling_point_lowerbound = params['boiling_point_lowerbound'].blank? ? -Float::INFINITY : params['boiling_point_lowerbound']
+        boiling_point_upperbound = params['boiling_point_upperbound'].blank? ? Float::INFINITY : params['boiling_point_upperbound']
+        melting_point_lowerbound = params['melting_point_lowerbound'].blank? ? -Float::INFINITY : params['melting_point_lowerbound']
+        melting_point_upperbound = params['melting_point_upperbound'].blank? ? Float::INFINITY : params['melting_point_upperbound']
+        attributes['boiling_point'] = Range.new(boiling_point_lowerbound, boiling_point_upperbound)
+        attributes['melting_point'] = Range.new(melting_point_lowerbound, melting_point_upperbound)
 
         # otherwise ActiveRecord::UnknownAttributeError appears
         # TODO should be in params validation

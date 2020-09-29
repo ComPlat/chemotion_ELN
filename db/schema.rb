@@ -696,8 +696,8 @@ ActiveRecord::Schema.define(version: 20200819093220) do
     t.integer  "user_id"
     t.string   "identifier"
     t.float    "density",                        default: 0.0
-    t.float    "melting_point"
-    t.float    "boiling_point"
+    t.numrange "melting_point"
+    t.numrange "boiling_point"
     t.integer  "fingerprint_id"
     t.jsonb    "xref",                           default: {}
     t.float    "molarity_value",                 default: 0.0

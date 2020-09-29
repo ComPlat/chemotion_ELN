@@ -7,6 +7,7 @@ import {
 import Select from 'react-select';
 import DetailActions from './actions/DetailActions';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
+import TextRangeWithAddon from './TextRangeWithAddon';
 import { solventOptions } from './staticDropdownOptions/options';
 
 export default class SampleForm extends React.Component {
@@ -23,6 +24,7 @@ export default class SampleForm extends React.Component {
     this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
     this.showStructureEditor = this.showStructureEditor.bind(this);
+    this.handleRangeChanged = this.handleRangeChanged.bind(this);
   }
 
   componentWillReceiveProps() {
@@ -204,6 +206,12 @@ export default class SampleForm extends React.Component {
         </InputGroup>
       </FormGroup>
     );
+  }
+
+  handleRangeChanged(field, lower, upper) {
+    const { sample } = this.props;
+    sample.updateRange(field, lower, upper);
+    this.props.parent.setState({ sample });
   }
 
   handleFieldChanged(sample, field, e) {
@@ -389,9 +397,17 @@ export default class SampleForm extends React.Component {
 
           <tr className="visible-hd">
             {this.sampleAmount(sample)}
-            {
-              this.numInput(sample, 'boiling_point', '°C', ['n'], 5, 'Boiling point', '', polyDisabled, '', false, isPolymer)
-            }
+            <td>
+              <TextRangeWithAddon
+                field="boiling_point"
+                label="Boiling point"
+                addon="°C"
+                value={sample.boiling_point_display}
+                disabled={polyDisabled}
+                onChange={this.handleRangeChanged}
+                tipOnText="Use space-separated value to input a Temperature range"
+              />
+            </td>
           </tr>
 
           <tr>
@@ -404,9 +420,17 @@ export default class SampleForm extends React.Component {
             {
               this.numInput(sample, 'purity', 'n', ['n'], 5, 'Purity', '', isDisabled)
             }
-            {
-              this.numInput(sample, 'melting_point', '°C', ['n'], 5, 'Melting point', '', polyDisabled, '', false, isPolymer)
-            }
+            <td>
+              <TextRangeWithAddon
+                field="melting_point"
+                label="Melting point"
+                addon="°C"
+                value={sample.melting_point_display}
+                disabled={polyDisabled}
+                onChange={this.handleRangeChanged}
+                tipOnText="Use space-separated value to input a Temperature range"
+              />
+            </td>
           </tr>
 
           <tr style={{ paddingTop: '15px' }}>

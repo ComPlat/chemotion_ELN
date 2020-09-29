@@ -43,7 +43,7 @@ describe 'Sample management' do
       expect(molecule_name).to eq(sample.molecule.iupac_name)
 
       %w[name external_label location purity solvent
-         density boiling_point melting_point].each do |field|
+         density].each do |field|
         label = field.capitalize.tr('_', ' ')
         value = find_bs_field(label).value
         if begin
@@ -55,6 +55,12 @@ describe 'Sample management' do
         else
           expect(value).to eq(sample[field])
         end
+      end
+
+      %w[boiling_point melting_point].each do |field|
+        label = field.capitalize.tr('_', ' ')
+        value = find_bs_field(label).value
+        expect(value).to eq('')
       end
 
       amount = sample.target_amount_value * 1000

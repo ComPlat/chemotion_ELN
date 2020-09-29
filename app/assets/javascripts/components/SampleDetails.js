@@ -55,8 +55,22 @@ import { chmoConversions } from './OlsComponent';
 import ConfirmClose from './common/ConfirmClose';
 import { EditUserLabels, ShowUserLabels } from './UserLabels';
 import CopyElementModal from './common/CopyElementModal';
+import NotificationActions from './actions/NotificationActions';
 
 const MWPrecision = 6;
+
+const rangeCheck = (field, sample) => {
+  if (sample[`${field}_lowerbound`] && sample[`${field}_lowerbound`] !== ''
+    && sample[`${field}_upperbound`] && sample[`${field}_upperbound`] !== ''
+    && Number.parseFloat(sample[`${field}_upperbound`]) < Number.parseFloat(sample[`${field}_lowerbound`])) {
+    NotificationActions.add({
+      title: `Error on ${field.replace(/(^\w{1})|(_{1}\w{1})/g, match => match.toUpperCase())}`, message: 'range lower bound must be less than or equal to range upper', level: 'error', position: 'tc'
+    });
+    LoadingActions.stop();
+    return false;
+  }
+  return true;
+};
 
 export default class SampleDetails extends React.Component {
   constructor(props) {
@@ -253,6 +267,8 @@ export default class SampleDetails extends React.Component {
   handleSubmit(closeView = false) {
     LoadingActions.start();
     const { sample } = this.state;
+    if (!rangeCheck('boiling_point', sample)) return;
+    if (!rangeCheck('melting_point', sample)) return;
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
       reaction.editedSample = sample;
@@ -269,6 +285,7 @@ export default class SampleDetails extends React.Component {
       if (sample.isNew) {
         ElementActions.createSample(sample, closeView)
       } else {
+        sample.cleanBoilingMelting();
         ElementActions.updateSample(new Sample(sample), closeView)
       }
     }

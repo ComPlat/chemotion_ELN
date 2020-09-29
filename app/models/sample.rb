@@ -28,8 +28,8 @@
 #  user_id             :integer
 #  identifier          :string
 #  density             :float            default(0.0)
-#  melting_point       :float
-#  boiling_point       :float
+#  melting_point       :numrange
+#  boiling_point       :numrange
 #  fingerprint_id      :integer
 #  xref                :jsonb
 #  molarity_value      :float            default(0.0)
@@ -151,6 +151,7 @@ class Sample < ActiveRecord::Base
               :set_loading_from_ea
   before_save :auto_set_short_label
   before_create :check_molecule_name
+  before_create :set_boiling_melting_points
   after_save :update_counter
   after_create :create_root_container
   after_save :update_data_for_reactions
@@ -546,6 +547,11 @@ private
   def check_molecule_name
     return unless molecule_name_id.blank?
     assign_molecule_name
+  end
+
+  def set_boiling_melting_points
+    self.boiling_point = Range.new(-Float::INFINITY, Float::INFINITY, '()') if boiling_point.nil?
+    self.melting_point = Range.new(-Float::INFINITY, Float::INFINITY, '()') if melting_point.nil?
   end
 
   def update_molecule_name

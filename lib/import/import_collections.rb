@@ -116,6 +116,17 @@ module Import
       end
     end
 
+    def fetch_bound(value)
+      bounds = value.to_s.split(/\.{2,3}/)
+      lower = BigDecimal(bounds[0])
+      upper = BigDecimal(bounds[1])
+      if lower == -Float::INFINITY && upper == Float::INFINITY
+        Range.new(-Float::INFINITY, Float::INFINITY, '()')
+      else
+        Range.new(lower, upper)
+      end
+    end
+
     def import_samples
       @data.fetch('Sample', {}).each do |uuid, fields|
         # look for the molecule_name
@@ -152,8 +163,6 @@ module Import
           'imported_readout',
           'identifier',
           'density',
-          'melting_point',
-          'boiling_point',
           'xref',
           'stereo',
           'created_at',
@@ -165,7 +174,9 @@ module Import
           ),
           molecule_name: molecule_name,
           sample_svg_file: fetch_image('samples', fields.fetch('sample_svg_file')),
-          parent: fetch_ancestry('Sample', fields.fetch('ancestry'))
+          parent: fetch_ancestry('Sample', fields.fetch('ancestry')),
+          melting_point: fetch_bound(fields.fetch('melting_point')),
+          boiling_point: fetch_bound(fields.fetch('boiling_point'))
         ))
 
         # for same sample_svg_file case

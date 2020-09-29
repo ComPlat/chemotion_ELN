@@ -170,7 +170,11 @@ describe Chemotion::SampleAPI do
               is_new: true,
               is_deleted: false,
               name: 'new'
-            }
+            },
+            boiling_point_upperbound: 100.0,
+            boiling_point_lowerbound: nil,
+            melting_point_upperbound: 121.5,
+            melting_point_lowerbound: nil
           }
         end
 
@@ -288,8 +292,10 @@ describe Chemotion::SampleAPI do
             solvent: '',
             location: '',
             density: 0.5,
-            boiling_point: 100,
-            melting_point: 200,
+            boiling_point_upperbound: 100,
+            boiling_point_lowerbound: 100,
+            melting_point_upperbound: 200,
+            melting_point_lowerbound: 200,
             molfile: File.read(Rails.root + 'spec/fixtures/test_2.mol'),
             is_top_secret: false,
             xref: { 'cas' => cas },
@@ -314,7 +320,11 @@ describe Chemotion::SampleAPI do
           # end
 
           params.each do |k, v|
-            expect(s.attributes.symbolize_keys[k]).to eq(v)
+            expect(s.attributes.symbolize_keys[:boiling_point].first).to eq(v) if k.to_s == 'boiling_point_upperbound'
+            expect(s.attributes.symbolize_keys[:boiling_point].last).to eq(v) if k.to_s == 'boiling_point_lowerbound'
+            expect(s.attributes.symbolize_keys[:melting_point].first).to eq(v) if k.to_s == 'melting_point_upperbound'
+            expect(s.attributes.symbolize_keys[:melting_point].last).to eq(v) if k.to_s == 'melting_point_lowerbound'
+            expect(s.attributes.symbolize_keys[k]).to eq(v) unless k.to_s.include? 'bound'
           end
         end
 

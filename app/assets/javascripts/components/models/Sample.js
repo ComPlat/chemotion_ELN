@@ -7,10 +7,41 @@ import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 import Container from './Container.js';
 
+const prepareRangeBound = (args, field) => {
+  const argsNew = args;
+  if (args[field] && typeof args[field] === 'string') {
+    const bounds = args[field].split(/\.{2,3}/);
+    if (!args[`${field}_upperbound`]) {
+      argsNew[`${field}_upperbound`] = Number.POSITIVE_INFINITY === Number(bounds[1]) ? null : Number(bounds[1]);
+    }
+    if (!args[`${field}_lowerbound`]) {
+      argsNew[`${field}_lowerbound`] = Number.NEGATIVE_INFINITY === Number(bounds[0]) ? null : Number(bounds[0]);
+    }
+    if (argsNew[`${field}_upperbound`] == null || argsNew[`${field}_upperbound`] == null) {
+      argsNew[`${field}_display`] = (argsNew[`${field}_lowerbound`] || '').toString().trim();
+    } else {
+      argsNew[`${field}_display`] = ((argsNew[`${field}_lowerbound`] || '').toString().concat(' – ', argsNew[`${field}_upperbound`])).trim();
+    }
+  }
+  return argsNew;
+};
+
 export default class Sample extends Element {
   // isMethodRestricted(m) {
   //   return false;
   // }
+
+  constructor(args) {
+    let argsNew = args;
+    argsNew = prepareRangeBound(argsNew, 'boiling_point');
+    argsNew = prepareRangeBound(argsNew, 'melting_point');
+    super(argsNew);
+  }
+
+  cleanBoilingMelting() {
+    this.boiling_point = null;
+    this.melting_point = null;
+  }
 
   static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false, keepResidueInfo = false) {
     const newSample = sample.buildCopy();
@@ -261,8 +292,10 @@ export default class Sample extends Element {
       parent_id: this.parent_id,
       density: this.density,
       metrics: this.metrics,
-      boiling_point: this.boiling_point,
-      melting_point: this.melting_point,
+      boiling_point_upperbound: this.boiling_point_upperbound,
+      boiling_point_lowerbound: this.boiling_point_lowerbound,
+      melting_point_upperbound: this.melting_point_upperbound,
+      melting_point_lowerbound: this.melting_point_lowerbound,
       residues: this.residues,
       elemental_compositions: this.elemental_compositions,
       is_split: this.is_split || false,
@@ -448,6 +481,22 @@ export default class Sample extends Element {
 
   set imported_readout(imported_readout) {
     this._imported_readout = imported_readout;
+  }
+
+  updateRange(field, lower, upper) {
+    this[`${field}_lowerbound`] = lower;
+    this[`${field}_upperbound`] = upper;
+    if (lower === '' && upper === '') {
+      this[`${field}_display`] = lower.toString();
+      this[field] = lower.toString();
+    } else if (lower === upper) {
+      this[`${field}_upperbound`] = '';
+      this[`${field}_display`] = lower.toString();
+      this[field] = lower.toString().concat('...', Number.POSITIVE_INFINITY);
+    } else {
+      this[`${field}_display`] = (lower.toString().concat(' – ', upper)).trim();
+      this[field] = lower.toString().concat('..', upper);
+    }
   }
 
   setAmount(amount) {
