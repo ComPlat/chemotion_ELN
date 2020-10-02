@@ -29,9 +29,11 @@ const contentBlock = els => (
 );
 
 const ContentOutputs = (template, outputEls) => {
-  const titleStr = template === 'predictProd'
-    ? 'Output: Products'
-    : 'TBD';
+  const titleFromTemplate = (tpl) => ({
+    'predictProducts': 'Output: Products',
+    'predictReactants': 'Output: Starting Materials',
+  })[tpl]
+  const titleStr = titleFromTemplate(template) || 'TBD';
 
   return (
     <Panel bsStyle="default" defaultExpanded>

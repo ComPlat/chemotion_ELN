@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { Row, Col } from 'react-bootstrap';
+import UIActions from '../actions/UIActions';
 import PredictionActions from '../actions/PredictionActions';
 import ContentInputs from './ContentInputs';
 import ContentOutputs from './ContentOutputs';
@@ -14,12 +15,14 @@ const styles = {
 
 const templateOpts = () => (
   [
-    { label: 'Predict Products', value: 'predictProd' },
+    { label: 'Predict Products', value: 'predictProducts' },
+    { label: 'Predict Starting Materials', value: 'predictReactants' },
   ]
 );
 
 const onTemplateChange = (e) => {
   PredictionActions.updateTemplate(e.value);
+  UIActions.uncheckWholeSelection.defer();
 };
 
 const ContentTemplate = template => (

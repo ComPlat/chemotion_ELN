@@ -43,16 +43,17 @@ class PredictionContainer extends Component {
 
   panelHeader() {
     const { prediction } = this.props;
-    const { inputEls } = this.state;
+    const { inputEls, template } = this.state;
     const btns = [
       <CloseBtn key="closeBtn" el={prediction} />,
       <PredictBtn
         key="predictBtn"
         inputEls={inputEls}
+        template={template}
       />,
       <ResetBtn key="resetBtn" />,
     ];
-    return <PanelHeader title="Reaction Prediction" btns={btns} />;
+    return <PanelHeader title="Synthesis Prediction" btns={btns} />;
   }
 
   selectTab(key) { // eslint-disable-line class-methods-use-this

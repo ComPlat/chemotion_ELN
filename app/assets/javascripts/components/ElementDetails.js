@@ -170,7 +170,7 @@ export default class ElementDetails extends Component {
         </span>
       );
     } else if (el.type === 'prediction') {
-      title = 'Reaction Prediction';
+      title = 'Synthesis Prediction';
       bsStyle = 'primary';
       iconElement = (
         <span>

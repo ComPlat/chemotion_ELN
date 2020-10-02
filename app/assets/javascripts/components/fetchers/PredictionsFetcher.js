@@ -3,8 +3,9 @@ import 'whatwg-fetch';
 import NotificationActions from '../actions/NotificationActions';
 
 export default class PredictionsFetcher {
-  static fetchProducts(smis) {
-    const promise = fetch('/api/v1/prediction/products', {
+  static fetchInfer(smis, template) {
+    const path = template === 'predictProducts' ? 'products' : 'reactants' ;
+    const promise = fetch(`/api/v1/prediction/${path}`, {
       credentials: 'same-origin',
       method: 'post',
       headers: {

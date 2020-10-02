@@ -29,7 +29,7 @@ class LoadingStore {
           ElementActions.createWellplate,
           ElementActions.updateWellplate,
           InboxActions.fetchInbox,
-          PredictionActions.predictProducts,
+          PredictionActions.infer,
         ],
     });
   }

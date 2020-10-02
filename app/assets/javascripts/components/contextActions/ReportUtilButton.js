@@ -56,7 +56,7 @@ const ReportUtilButton = ({ customClass  }) => {
         {graphItem}
         <MenuItem divider />
         <MenuItem onSelect={showPredictionContainer} title="Predict">
-          Reaction Prediction
+          Synthesis Prediction
         </MenuItem>
       </Dropdown.Menu>
     </Dropdown>

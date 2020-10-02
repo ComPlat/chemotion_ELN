@@ -41,10 +41,10 @@ const ResetBtn = () => (
   </Button>
 );
 
-const PredictBtn = ({ inputEls }) => {
+const PredictBtn = ({ inputEls, template }) => {
   const onClick = () => {
     LoadingActions.start.defer();
-    PredictionActions.predictProducts.defer(inputEls);
+    PredictionActions.infer.defer(inputEls, template);
   };
   const disableBtn = inputEls.length === 0;
 

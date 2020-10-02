@@ -47,9 +47,11 @@ const contentBlock = (els) => {
 };
 
 const ContentInputs = (template, els) => {
-  const titleStr = template === 'predictProd'
-    ? 'Input: Starting Materials'
-    : 'TBD';
+  const titleFromTemplate = (tpl) => ({
+    'predictProducts': 'Input: Starting Materials (accept max 10 molecules)',
+    'predictReactants': 'Input: Product (accept max 1 molecule)',
+  })[tpl]
+  const titleStr = titleFromTemplate(template) || 'TBD';
 
   return (
     <Panel bsStyle="default" defaultExpanded>

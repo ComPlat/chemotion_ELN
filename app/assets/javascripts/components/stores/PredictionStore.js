@@ -6,13 +6,13 @@ import PredictionActions from '../actions/PredictionActions';
 class PredictionStore {
   constructor() {
     this.activeKey = 0;
-    this.template = 'predictProd';
+    this.template = 'predictProducts';
     this.inputEls = [];
     this.defaultEls = [];
     this.outputEls = [];
 
     this.bindListeners({
-      handlePredictProducts: PredictionActions.predictProducts,
+      handleInfer: PredictionActions.infer,
       handleUpdateActiveKey: PredictionActions.updateActiveKey,
       handleUpdateTemplate: PredictionActions.updateTemplate,
       handleUpdateUI: PredictionActions.updateUI,
@@ -21,8 +21,12 @@ class PredictionStore {
     });
   }
 
-  handlePredictProducts(results) {
-    const outputEls = results.error ? [] : results.products;
+  handleInfer(results) {
+    if (results.error) {
+      this.setState({ outputEls: [] });
+    }
+
+    const outputEls = results.products || results.reactants || [];
     this.setState({ outputEls });
   }
 
@@ -31,7 +35,13 @@ class PredictionStore {
   }
 
   handleUpdateTemplate(template) {
-    this.setState({ template });
+    this.setState({
+      activeKey: 0,
+      template,
+      inputEls: [],
+      defaultEls: [],
+      outputEls: [],
+    });
   }
 
   handleUpdateUI(result) {
@@ -45,9 +55,10 @@ class PredictionStore {
     let inputEls = samples.filter((x, idx) => ( // avoid 2 samples with the same smiles
       rspSmis.indexOf(x.molecule.cano_smiles) === idx
     ));
+    const maxNumEls = this.template === 'predictProducts' ? 10 : 1;
     inputEls = inputEls.map(x => ( // avoid including defaultSmis
       uniqLoadSmis.indexOf(x.molecule.cano_smiles) >= 0 ? x : null
-    )).filter(r => r != null).filter((val, idx) => idx < 3);
+    )).filter(r => r != null).filter((val, idx) => idx < maxNumEls);
 
     this.setState({ inputEls });
     return null;
@@ -61,7 +72,7 @@ class PredictionStore {
   handleReset() {
     this.setState({
       activeKey: 0,
-      template: 'predictProd',
+      template: 'predictProducts',
       inputEls: [],
       defaultEls: [],
       outputEls: [],

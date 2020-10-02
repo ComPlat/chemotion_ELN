@@ -5,13 +5,13 @@ import UIFetcher from '../fetchers/UIFetcher';
 import PredictionsFetcher from '../fetchers/PredictionsFetcher';
 
 class PredictionActions {
-  predictProducts(targets) { // eslint-disable-line class-methods-use-this
+  infer(targets, template) { // eslint-disable-line class-methods-use-this
     const smis = targets.map(t => t.molecule_cano_smiles);
     const target = { smis };
 
     return (dispatch) => {
       PredictionsFetcher
-        .fetchProducts(target)
+        .fetchInfer(target, template)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -51,7 +51,7 @@ class PredictionActions {
           'lists',
         ).then((rsp) => {
           const newSpls = rsp.samples.filter(x => !x.in_browser_memory);
-          const allSpls = [...defaultEls, ...inputEls, ...newSpls];
+          const allSpls = [...newSpls, ...inputEls, ...defaultEls];
           const result = { samples: allSpls };
           dispatch(result);
         }).catch((errorMessage) => {
