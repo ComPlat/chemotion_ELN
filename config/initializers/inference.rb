@@ -5,6 +5,7 @@ if File.exist? Rails.root.join('config', 'inference.yml')
 
   Rails.application.configure do
     config.inference = ActiveSupport::OrderedOptions.new
-    config.inference.products = inference_config[:products]
+    config.inference.url = inference_config[:url]
+    config.inference.port = inference_config[:port]
   end
 end
