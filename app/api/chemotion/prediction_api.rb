@@ -12,6 +12,17 @@ module Chemotion
           Ai::Inference.products(smis)
         end
       end
+
+      resource :reactants do
+        desc 'Retro reaction prediction'
+        params do
+          optional :smis, type: Array[String]
+        end
+        post do
+          smis = params[:smis]
+          Ai::Inference.reactants(smis)
+        end
+      end
     end
   end
 end
