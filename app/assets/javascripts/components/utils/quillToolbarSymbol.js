@@ -273,6 +273,20 @@ const opsRAMANTail = () => (
   ]
 );
 
+const opsUVVISHead = () => (
+  [
+    { insert: 'UV/VIS (ṽ) = ' },
+  ]
+);
+
+const opsUVVISTail = () => (
+  [
+    { insert: ' cm' },
+    { attributes: { script: 'super' }, insert: '–1' },
+    { insert: '. ' },
+  ]
+);
+
 const sampleAnalysesContentSymbol = [
   {
     name: 'ndash',
@@ -328,6 +342,7 @@ const SpectraOps = {
   '19F': { head: ops19FHead, tail: opsCommonTail },
   IR: { head: opsIRHead, tail: opsIRTail },
   RAMAN: { head: opsRAMANHead, tail: opsRAMANTail },
+  'UV/VIS': { head: opsUVVISHead, tail: opsUVVISTail },
   MS: { head: opsMSHead, tail: opsMSTail },
 };
 
