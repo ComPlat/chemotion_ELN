@@ -81,7 +81,7 @@ class Report < ActiveRecord::Base
       ).process
     end
   end
-  handle_asynchronously :create_docx
+  handle_asynchronously :create_docx, :run_at => Proc.new { 30.seconds.from_now }
 
   def queue_name
     "report_#{self.id}"

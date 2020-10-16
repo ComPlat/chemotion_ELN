@@ -52,6 +52,10 @@ module Chemotion
         plugin_path = File.join(Gem.loaded_specs[plugin].full_gem_path, '.').to_s
         # `ln -s #{aliasify_file} #{plugin_path}` # unless File.exist?(File.join(plugin_path,"aliasifyConfig.js"))
         `ln -s #{node_modules_dir} #{plugin_path}` # unless File.exist?(File.join(plugin_path,"node_modules"))
+        pack_path = Rails.root.join('package.json')
+	plugin_pack_path = File.join(plugin_path, 'package.json')
+	`rm #{plugin_pack_path}` if File.exist?(plugin_pack_path)
+        `ln -s #{plugin_pack_path} #{pack_path}`				
       end
 
       # Extra module import/export mapping for each registered plugin

@@ -53,11 +53,14 @@ module Reporter
           created_for: @author.id,
           content_type: @typ
         )
-        att.update!(storage: @primary_store)
+
+        TransferFileFromTmpJob.set(queue: "transfer_report_from_tmp_#{att.id}").perform_later([att]) unless att.nil?
+
         @report.update_attributes(
           generated_at: Time.zone.now
         )
       end
+
 
       message = Message.create_msg_notification(
         channel_subject: Channel::REPORT_GENERATOR_NOTIFICATION,

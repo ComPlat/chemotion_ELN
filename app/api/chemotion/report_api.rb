@@ -228,7 +228,7 @@ module Chemotion
       report = Report.create(attributes)
       current_user.reports << report
       report.create_docx
-      return report
+      report
     end
 
     resource :download_report do
