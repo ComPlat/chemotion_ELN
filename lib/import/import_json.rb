@@ -200,7 +200,19 @@ class Import::ImportJson
         @log[source + 's'][uuid]['uuid'] = 'already attributed'
         return
       end
-      new_el = klass.new(element)
+
+      if klass.name == 'Sample'
+        b_point = create_range(element['boiling_point'])
+        m_point = create_range(element['melting_point'])
+        element.delete('boiling_point')
+        element.delete('melting_point')
+        new_el = klass.new(element)
+        new_el.boiling_point = b_point
+        new_el.melting_point = m_point
+      else
+        new_el = klass.new(element)
+      end
+
       if new_el.save!
         create_literatures(new_el.id, literatures) if literatures.present?
         if force_uuid
@@ -326,5 +338,11 @@ class Import::ImportJson
     return unless id.is_a?(Integer)
 
     @all_collection = Collection.get_all_collection_for_user(id)
+  end
+
+  def create_range(val)
+    return Range.new(val || -Float::INFINITY, Float::INFINITY, '()') if val.nil? || val.is_a?(Float)
+
+    val
   end
 end
