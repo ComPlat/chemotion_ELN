@@ -2,11 +2,12 @@ import React from 'react';
 import { Panel, Table, FormGroup, Checkbox, FormControl, Button, Modal, Col, Form, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
 import Select from 'react-select';
+import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from '../components/fetchers/AdminFetcher';
 import NotificationActions from '../components/actions/NotificationActions';
 
-
-const editTooltip = <Tooltip id="edit_tooltip">Edit Matrix Configuration</Tooltip>;
+const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
+const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;
 const Notification = props =>
   (
     NotificationActions.add({
@@ -26,20 +27,34 @@ export default class MatrixManagement extends React.Component {
       matrices: [],
       matrice: {},
       showEditModal: false,
+      showJsonModal: false,
+      showJsonBtn: false,
       includeUsers: null,
       excludeUsers: null
     };
     this.edit = this.edit.bind(this);
+    this.editJson = this.editJson.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleIncludeUser = this.handleIncludeUser.bind(this);
     this.handleExcludeUser = this.handleExcludeUser.bind(this);
     this.loadUserByName = this.loadUserByName.bind(this);
     this.handleSave = this.handleSave.bind(this);
+    this.handleJsonSave = this.handleJsonSave.bind(this);
     this.handleClose = this.handleClose.bind(this);
+    this.handleJsonClose = this.handleJsonClose.bind(this);
+    this.onChangeJson = this.onChangeJson.bind(this);
   }
 
   componentDidMount() {
     this.fetchMatrices();
+  }
+
+  onChangeJson(e) {
+    const { matrice } = this.state;
+    if (e.error === false) {
+      matrice.configs = e.jsObject;
+      this.setState({ matrice, showJsonBtn: true });
+    }
   }
 
   fetchMatrices() {
@@ -50,7 +65,15 @@ export default class MatrixManagement extends React.Component {
   }
 
   edit(matrice) {
-    this.setState({ showEditModal: true, matrice, includeUsers: null, excludeUsers: null });
+    this.setState({
+      showEditModal: true, showJsonModal: false, matrice, includeUsers: null, excludeUsers: null
+    });
+  }
+
+  editJson(matrice) {
+    this.setState({
+      showJsonModal: true, showEditModal: false, matrice
+    });
   }
 
   handleChange(val, e) {
@@ -117,8 +140,27 @@ export default class MatrixManagement extends React.Component {
       });
   }
 
+
+  handleJsonSave(matrice) {
+    AdminFetcher.updateMatriceJson({ id: matrice.id, configs: matrice.configs })
+      .then((result) => {
+        if (result.error) {
+          Notification({ title: `Function [${matrice.name}]`, lvl: 'error', msg: result.error });
+          return false;
+        }
+        Notification({ title: `Function [${matrice.name}]`, lvl: 'info', msg: 'JSON Configuration updated successfully' });
+        this.setState({ showJsonModal: false, showJsonBtn: false, matrice: {} });
+        this.fetchMatrices();
+        return true;
+      });
+  }
+
   handleClose() {
     this.setState({ showEditModal: false });
+  }
+
+  handleJsonClose() {
+    this.setState({ showJsonModal: false });
   }
 
   renderList() {
@@ -135,6 +177,16 @@ export default class MatrixManagement extends React.Component {
                 onClick={() => this.edit(e)}
               >
                 <i className="fa fa-pencil-square-o" />
+              </Button>
+            </OverlayTrigger>
+            &nbsp;
+            <OverlayTrigger placement="bottom" overlay={jsonTooltip} >
+              <Button
+                bsSize="xsmall"
+                bsStyle="warning"
+                onClick={() => this.editJson(e)}
+              >
+                <i className="fa fa-cog" />
               </Button>
             </OverlayTrigger>
             &nbsp;
@@ -190,7 +242,7 @@ export default class MatrixManagement extends React.Component {
 
     return (
       <Modal show={this.state.showEditModal} onHide={this.handleClose}>
-        <Modal.Header closeButton><Modal.Title>Edit</Modal.Title></Modal.Header>
+        <Modal.Header closeButton><Modal.Title>Edit Permisson</Modal.Title></Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
             <Form horizontal className="input-form">
@@ -270,11 +322,61 @@ export default class MatrixManagement extends React.Component {
     );
   }
 
+
+  renderJsonModal() {
+    const { matrice, showJsonBtn } = this.state;
+
+    return (
+      <Modal show={this.state.showJsonModal} onHide={this.handleJsonClose}>
+        <Modal.Header closeButton><Modal.Title>JSON Configurations</Modal.Title></Modal.Header>
+        <Modal.Body style={{ overflow: 'auto' }}>
+          <div className="col-md-12">
+            <Form horizontal className="input-form">
+              <FormGroup controlId="formControlId">
+                <InputGroup>
+                  <InputGroup.Addon>ID</InputGroup.Addon>
+                  <FormControl type="text" defaultValue={matrice.id} readOnly />
+                </InputGroup>
+              </FormGroup>
+              <FormGroup controlId="formControlName">
+                <InputGroup>
+                  <InputGroup.Addon>Function name</InputGroup.Addon>
+                  <FormControl type="text" defaultValue={matrice.name} readOnly />
+                </InputGroup>
+              </FormGroup>
+              <FormGroup controlId="formControlJson">
+                <JSONInput
+                  placeholder={matrice.configs}
+                  width="100%"
+                  onChange={e => this.onChangeJson(e)}
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Col smOffset={0} sm={10}>
+                  <Button bsStyle="warning" onClick={() => this.handleJsonClose()} >
+                    Cancel&nbsp;
+                  </Button>
+                  &nbsp;
+                  <Button bsStyle="primary" disabled={!showJsonBtn} onClick={() => this.handleJsonSave(matrice)} >
+                    Update&nbsp;
+                    <i className="fa fa-save" />
+                  </Button>
+                </Col>
+              </FormGroup>
+            </Form>
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
+  }
+
   render() {
     return (
       <div>
         {this.renderList()}
         {this.renderEditModal()}
+        {this.renderJsonModal()}
       </div>
     );
   }

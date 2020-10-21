@@ -64,6 +64,7 @@
     "react-dropzone": "^3.6.0",
     "react-inlinesvg": "0.8.1",
     "react-input-autosize": "1.1.0",
+    "react-json-editor-ajrm": "^2.5.10",
     "react-notification-system": "^0.2.7",
     "react-qr-reader": "^2.1.0",
     "react-redux": "^5.0.0",

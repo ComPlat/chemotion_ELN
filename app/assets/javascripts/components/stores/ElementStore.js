@@ -1185,9 +1185,9 @@ class ElementStore {
     if (samples.length === 0) return this.handleRefreshElements('sample');
 
     samples.forEach(el => {
-      const found = el.molecule_computed_props.find(x => x.id == cprop.id);
+      const found = el.molecule_computed_props && el.molecule_computed_props.find(x => x.id == cprop.id);
       if (!found) {
-        el.molecule_computed_props.push(cprop);
+        el.molecule_computed_props && el.molecule_computed_props.push(cprop);
         return;
       }
 

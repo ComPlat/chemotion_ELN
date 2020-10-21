@@ -3,10 +3,11 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 
 import UserStore from '../stores/UserStore';
+import MatrixCheck from '../common/MatrixCheck';
 
 const ComputedPropLabel = ({ cprops }) => {
-  const data = UserStore.getState().profile.data || {};
-  const enableComputedProps = _.get(data, 'computed_props.enable', false);
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
   if (!enableComputedProps) return <span />;
 
   if (!cprops || cprops.length === 0) return <span />;

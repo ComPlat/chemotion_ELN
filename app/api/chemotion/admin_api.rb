@@ -486,6 +486,25 @@ module Chemotion
             end
           end
         end
+
+        namespace :update_json do
+          desc 'update matrice configs'
+          params do
+            requires :id, type: Integer, desc: 'Matrice ID'
+            requires :configs, type: Hash, desc: 'Matrice configs'
+          end
+          post do
+            matrice = Matrice.find_by(id: params[:id])
+            error!('401 Not found', 401) unless matrice
+            begin
+              matrice.update!(configs: params[:configs])
+              status 201
+            rescue ActiveRecord::RecordInvalid => e
+              Rails.logger.error ["update_json", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+              { error: e.message }
+            end
+          end
+        end
       end
 
       namespace :importOlsTerms do
