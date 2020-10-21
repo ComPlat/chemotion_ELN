@@ -256,4 +256,18 @@ export default class AdminFetcher {
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static updateMatriceJson(params) {
+    return fetch('/api/v1/admin/matrix/update_json/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }

@@ -5,6 +5,7 @@ import { Dropdown, MenuItem } from 'react-bootstrap';
 
 import ElementActions from '../actions/ElementActions';
 import UserStore from '../stores/UserStore';
+import MatrixCheck from '../common/MatrixCheck';
 
 const showReportContainer = () => {
   ElementActions.showReportContainer();
@@ -21,10 +22,8 @@ const showComputedPropsGraph = () => {
 };
 
 const ReportUtilButton = ({ customClass  }) => {
-  const userState = UserStore.getState();
-  const profileData = _.get(userState, 'profile.data', {});
-  const enableComputedProps = _.get(profileData, 'computed_props.enable', false);
-
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
   const graphItem = enableComputedProps ? (
     <MenuItem onSelect={showComputedPropsGraph} title="Graph">
       Graph

@@ -13,6 +13,7 @@ import Barcode from 'react-barcode';
 import Select from 'react-select';
 import { _, cloneDeep } from 'lodash';
 import uuid from 'uuid';
+
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
@@ -56,6 +57,7 @@ import ConfirmClose from './common/ConfirmClose';
 import { EditUserLabels, ShowUserLabels } from './UserLabels';
 import CopyElementModal from './common/CopyElementModal';
 import NotificationActions from './actions/NotificationActions';
+import MatrixCheck from './common/MatrixCheck';
 
 const MWPrecision = 6;
 
@@ -93,8 +95,8 @@ export default class SampleDetails extends React.Component {
       pageMessage: null
     };
 
-    const data = (UserStore.getState().profile && UserStore.getState().profile.data) || {};
-    this.enableComputedProps = _.get(data, 'computed_props.enable', false);
+    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');

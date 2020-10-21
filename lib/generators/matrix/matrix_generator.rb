@@ -12,6 +12,6 @@ class MatrixGenerator < Rails::Generators::NamedBase
     db_path = "#{db_dir_path}/#{Time.now.strftime('%Y%m%d%H%M%S')}_matrice_#{@name.underscore}.rb"
 
     template 'db.erb', db_path
-    puts "function name: [#{@module_name.camelize}] created"
+    puts "function name: [#{@module_name.camelize(:lower)}] created"
   end
 end

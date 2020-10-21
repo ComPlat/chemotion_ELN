@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-if File.exist? Rails.root.join('config', 'compute_props.yml')
-  compute_config = Rails.application.config_for :compute_props
-
+begin
+  compute_config = Matrice.find_by(name: 'computedProp')&.configs || {}
+rescue ActiveRecord::StatementInvalid, PG::ConnectionBad, PG::UndefinedTable
+  compute_config = {}
+ensure
   Rails.application.configure do
     config.compute_config = ActiveSupport::OrderedOptions.new
     config.compute_config.server = compute_config[:server]
