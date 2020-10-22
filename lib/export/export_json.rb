@@ -155,8 +155,8 @@ module Export
         , s.purity, s.solvent, s.impurities, s.location, s.is_top_secret
         , s.external_label, s.short_label
         , s.imported_readout, s.sample_svg_file, s.identifier
-        , s.density, lower(s.melting_point) as melting_point
-        , lower(s.boiling_point) boiling_point, s.stereo
+        , s.density, s.melting_point as melting_point
+        , s.boiling_point as boiling_point, s.stereo
         , m.inchikey, m.molecule_svg_file
         , cl.id as uuid
         , cl_r.id as r_uuid
