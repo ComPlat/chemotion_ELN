@@ -157,6 +157,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       const prefixSwitch = (
         <InputGroup.Button>
           <Button
+            disabled={inputDisabled}
             active
             onClick={() => { this.togglePrefix(); }}
             bsStyle={bsStyleBtnAfter}

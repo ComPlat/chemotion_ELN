@@ -233,3 +233,9 @@
     width: 20vw;
   }
 }
+
+.permission-r {
+  pointer-events: none;
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+}

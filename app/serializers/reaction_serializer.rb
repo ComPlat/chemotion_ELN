@@ -48,6 +48,10 @@ class ReactionSerializer < ActiveModel::Serializer
     'reaction'
   end
 
+  def can_update
+    false
+  end
+
   class Level0 < ActiveModel::Serializer
     include ReactionLevelSerializable
     define_restricted_methods_for_level(0)
@@ -73,6 +77,10 @@ class ReactionSerializer::Level10 < ReactionSerializer
 
   def can_copy
     true
+  end
+
+  def can_update
+    @policy&.try(:update?)
   end
 
   def starting_materials

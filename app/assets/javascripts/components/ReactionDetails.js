@@ -28,6 +28,7 @@ import ConfirmClose from './common/ConfirmClose';
 import { rfValueFormat } from './utils/ElementUtils';
 import ExportSamplesBtn from './ExportSamplesBtn';
 import CopyElementModal from './common/CopyElementModal';
+import { permitOn } from './common/uis';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -230,7 +231,7 @@ export default class ReactionDetails extends Component {
         {tabs}
         <Tab eventKey={4.1} title={reactionTab}>
           <ListGroupItem style={{ paddingBottom: 20 }}>
-            <ReactionDetailsContainers reaction={reaction} parent={this} />
+            <ReactionDetailsContainers reaction={reaction} parent={this} readOnly={!permitOn(reaction)} />
           </ListGroupItem>
         </Tab>
       </Tabs>
@@ -298,7 +299,7 @@ export default class ReactionDetails extends Component {
             bsSize="xsmall"
             className="button-right"
             onClick={() => this.handleSubmit(true)}
-            disabled={!this.reactionIsValid() || reaction.isNew}
+            disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
             style={{ display: hasChanged }}
           >
             <i className="fa fa-floppy-o" />
@@ -309,7 +310,7 @@ export default class ReactionDetails extends Component {
             overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
               onClick={() => this.handleSubmit()}
-              disabled={!this.reactionIsValid()}
+              disabled={!permitOn(reaction) || !this.reactionIsValid()}
               style={{display: hasChanged}} >
             <i className="fa fa-floppy-o "></i>
           </Button>
@@ -420,7 +421,7 @@ export default class ReactionDetails extends Component {
             <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
               Close
             </Button>
-            <Button id="submit-reaction-btn" bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
+            <Button id="submit-reaction-btn" bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
               {submitLabel}
             </Button>
             {exportButton}
