@@ -8,13 +8,13 @@ class DetailLevels::Reaction
       :rf_value, :temperature, :status, :reaction_svg_file,
       :short_label, :container, :code_log, :role, :origin,
       :rinchi_long_key, :rinchi_web_key, :rinchi_short_key,
-      :duration, :rxno, :can_copy
+      :duration, :rxno, :can_copy, :can_update
     ]
   end
 
   def level0_attributes
     [
-      :id, :type, :is_restricted, :observation, :description, :role, :can_copy
+      :id, :type, :is_restricted, :observation, :description, :role, :can_copy, :can_update
     ]
   end
 
@@ -22,7 +22,7 @@ class DetailLevels::Reaction
     [
       :description, :timestamp_start, :timestamp_stop, :dangerous_products, :conditions,
       :observation, :purification, :solvent, :tlc_solvents, :tlc_description,
-      :rf_value, :temperature, :container, :code_log, :duration, :purification_solvents, :can_copy
+      :rf_value, :temperature, :container, :code_log, :duration, :purification_solvents, :can_copy, :can_update
     ]
   end
 

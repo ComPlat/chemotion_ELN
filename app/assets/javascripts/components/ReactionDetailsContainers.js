@@ -268,6 +268,7 @@ export default class ReactionDetailsContainers extends Component {
                     </Panel.Heading>
                     <Panel.Body collapsible="true">
                       <ContainerComponent
+                        disabled={readOnly}
                         readOnly={readOnly}
                         container={container}
                         onChange={this.handleChange.bind(this, container)}

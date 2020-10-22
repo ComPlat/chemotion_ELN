@@ -13,10 +13,12 @@ import {
   Row
 } from 'react-bootstrap';
 import Select from 'react-select';
+import uuid from 'uuid';
 import Reaction from './models/Reaction';
 import { statusOptions } from './staticDropdownOptions/options';
 import LineChartContainer from './lineChart/LineChartContainer';
 import EditableTable from './lineChart/EditableTable';
+import { permitOn } from './common/uis';
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
@@ -95,11 +97,12 @@ export default class ReactionDetailsMainProperties extends Component {
             <FormGroup>
               <ControlLabel>Name</ControlLabel>
               <FormControl
-                id="reaction-detail-name"
+                id={uuid.v4()}
+                name="reaction_name"
                 type="text"
                 value={reaction.name || ''}
                 placeholder="Name..."
-                disabled={reaction.isMethodDisabled('name')}
+                disabled={!permitOn(reaction) || reaction.isMethodDisabled('name')}
                 onChange={event => onInputChange('name', event)}
               />
             </FormGroup>
@@ -114,7 +117,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 multi={false}
                 options={statusOptions}
                 value={reaction.status}
-                disabled={reaction.isMethodDisabled('status')}
+                disabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
                 onChange={(event) => {
                   const wrappedEvent = {
                     target: { value: event && event.value },
@@ -131,6 +134,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 <InputGroup.Button>
                   <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
                     <Button
+                      disabled={!permitOn(reaction)}
                       active
                       className="clipboardBtn"
                       onClick={this.toggleTemperatureChart}
@@ -142,12 +146,13 @@ export default class ReactionDetailsMainProperties extends Component {
                 <FormControl
                   type="text"
                   value={temperatureDisplay || ''}
-                  disabled={reaction.isMethodDisabled('temperature')}
+                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('temperature')}
                   placeholder="Temperature..."
                   onChange={event => onInputChange('temperature', event)}
                 />
                 <InputGroup.Button>
                   <Button
+                    disabled={!permitOn(reaction)}
                     bsStyle="success"
                     onClick={() => this.changeUnit()}
                   >

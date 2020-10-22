@@ -290,12 +290,13 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Reaction.find(params[:id])).read?
+          @element_policy = ElementPolicy.new(current_user, Reaction.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.read?
         end
 
         get do
           reaction = Reaction.find(params[:id])
-          { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized, literatures: citation_for_elements(params[:id], 'Reaction') }
+          { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids, @element_policy).serialized, literatures: citation_for_elements(params[:id], 'Reaction') }
         end
       end
 
@@ -361,7 +362,8 @@ module Chemotion
 
         after_validation do
           @reaction = Reaction.find_by(id: params[:id])
-          error!('401 Unauthorized', 401) unless @reaction && ElementPolicy.new(current_user, @reaction).update?
+          @element_policy = ElementPolicy.new(current_user, @reaction)
+          error!('401 Unauthorized', 401) unless @reaction && @element_policy.update?
         end
 
         put do
@@ -384,7 +386,7 @@ module Chemotion
           kinds = reaction.container&.analyses&.pluck("extended_metadata->'kind'")
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
+          {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids, @element_policy).serialized}
         end
       end
 

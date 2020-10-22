@@ -35,13 +35,13 @@ describe 'Sync Collection Test' do
     source.drag_to(target1)
     target2 = scheme_tab.find_all('span.glyphicon-plus')[2]
     source.drag_to(target2)
-    find_by_id('reaction-detail-name').set('reaction A').send_keys(:enter)
+    find_field('reaction_name').set('reaction A').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
     expect(page).to have_content('reaction A', wait: 10)
   end
 
   def update_reaction
-    find_by_id('reaction-detail-name').set('reaction B').send_keys(:enter)
+    find_field('reaction_name').set('reaction B').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
   end
   before do
@@ -80,7 +80,6 @@ describe 'Sync Collection Test' do
     find_by_id('synchron-home-link').click
     find_all('span.glyphicon-plus')[0].click
     find_by_id('tree-id-sync_test').click
-    update_reaction
-    expect(page).to have_content('Close this window')
+    expect { find_button('submit-reaction-btn', disabled: true) }.not_to raise_error
   end
 end

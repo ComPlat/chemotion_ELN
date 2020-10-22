@@ -11,6 +11,7 @@ import Reaction from './models/Reaction';
 import { defaultMultiSolventsSmilesOptions } from './staticDropdownOptions/options';
 import { ionic_liquids } from './staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from './staticDropdownOptions/reagents_kombi';
+import { permitOn } from './common/uis';
 
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
@@ -137,6 +138,7 @@ const GeneralMaterialGroup = ({
     });
     reagentDd = (
       <VirtualizedSelect
+        disabled={!permitOn(reaction)}
         className="reagents-select"
         name="Reagents"
         multi={false}
@@ -159,6 +161,7 @@ const GeneralMaterialGroup = ({
    */
   const addSampleButton = (
     <Button
+      disabled={!permitOn(reaction)}
       bsStyle="success"
       bsSize="xs"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
@@ -194,7 +197,7 @@ const GeneralMaterialGroup = ({
             { !isReactants && <th /> }
             { showLoadingColumn && !isReactants && <th>{headers.loading}</th> }
             { !isReactants && <th>{headers.concn}</th> }
-            { !isReactants && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
+            {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
           </tr>
         </thead>
         <tbody>
@@ -211,6 +214,7 @@ const SolventsMaterialGroup = ({
 }) => {
   const addSampleButton = (
     <Button
+      disabled={!permitOn(reaction)}
       bsStyle="success"
       bsSize="xs"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
@@ -254,6 +258,7 @@ const SolventsMaterialGroup = ({
             <th width="4%">{addSampleButton}</th>
             <th width="21%">
               <VirtualizedSelect
+                disabled={!permitOn(reaction)}
                 className="solvents-select"
                 name="default solvents"
                 multi={false}

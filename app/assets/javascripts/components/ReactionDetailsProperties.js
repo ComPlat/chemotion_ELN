@@ -12,6 +12,7 @@ import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import StringTag from './StringTag';
 import { solventsTL } from './utils/reactionPredefined';
 import OlsTreeSelect from './OlsComponent';
+import { permitOn } from './common/uis';
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
@@ -90,7 +91,7 @@ export default class ReactionDetailsProperties extends Component {
                 selectName="rxno"
                 selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
                 onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
-                selectedDisable={reaction.isMethodDisabled('rxno')}
+                selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
               />
             </FormGroup>
             <Row>
@@ -101,7 +102,7 @@ export default class ReactionDetailsProperties extends Component {
                   multi
                   options={dangerousProductsOptions}
                   value={reaction.dangerous_products}
-                  disabled={reaction.isMethodDisabled('dangerous_products')}
+                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
                   onChange={selectedOptions => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
                 />
               </Col>
@@ -116,6 +117,7 @@ export default class ReactionDetailsProperties extends Component {
                   <FormGroup>
                     <InputGroup>
                       <DropdownButton
+                        disabled={!permitOn(reaction)}
                         componentClass={InputGroup.Button}
                         id="solvents_dd"
                         title=""
@@ -127,7 +129,7 @@ export default class ReactionDetailsProperties extends Component {
                         style={{ zIndex: 0 }}
                         type="text"
                         value={reaction.tlc_solvents || ''}
-                        disabled={reaction.isMethodDisabled('tlc_solvents')}
+                        disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_solvents')}
                         placeholder="Solvents as parts..."
                         onChange={event => this.props.onInputChange('tlc_solvents', event)}
                       />
@@ -141,7 +143,7 @@ export default class ReactionDetailsProperties extends Component {
                   <FormControl
                     type="text"
                     value={reaction.rf_value || ''}
-                    disabled={reaction.isMethodDisabled('rf_value')}
+                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('rf_value')}
                     placeholder="Rf-Value..."
                     onChange={event => this.props.onInputChange('rfValue', event)}
                   />
@@ -155,7 +157,7 @@ export default class ReactionDetailsProperties extends Component {
                   <FormControl
                     componentClass="textarea"
                     value={reaction.tlc_description || ''}
-                    disabled={reaction.isMethodDisabled('tlc_description')}
+                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_description')}
                     placeholder="TLC-Description..."
                     onChange={event => this.props.onInputChange('tlcDescription', event)}
                   />

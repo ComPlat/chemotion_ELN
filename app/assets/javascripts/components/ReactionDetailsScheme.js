@@ -13,12 +13,14 @@ import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import ReactionDetailsPurification from './ReactionDetailsPurification';
 import QuillEditor from './QuillEditor';
+import QuillViewer from './QuillViewer';
 import NotificationActions from './actions/NotificationActions';
 import { reactionToolbarSymbol } from './utils/quillToolbarSymbol';
 import GeneralProcedureDnd from './GeneralProcedureDnD';
 import { rolesOptions, conditionsOptions } from './staticDropdownOptions/options';
 import OlsTreeSelect from './OlsComponent';
 import ReactionDetailsDuration from './ReactionDetailsDuration';
+import { permitOn } from './common/uis';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -120,6 +122,7 @@ export default class ReactionDetailsScheme extends Component {
     const { role } = this.props.reaction;
     return (
       <Select
+        disabled={!permitOn(this.props.reaction)}
         name="role"
         options={rolesOptions}
         optionRenderer={this.renderRolesOptions}
@@ -745,6 +748,7 @@ export default class ReactionDetailsScheme extends Component {
             <Collapse in={this.state.cCon}>
               <div>
                 <Select
+                  disabled={!permitOn(reaction)}
                   name="default_conditions"
                   multi={false}
                   options={conditionsOptions}
@@ -754,7 +758,7 @@ export default class ReactionDetailsScheme extends Component {
                   componentClass="textarea"
                   rows="4"
                   value={reaction.conditions || ''}
-                  disabled={reaction.isMethodDisabled('conditions')}
+                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
                   placeholder="Conditions..."
                   onChange={event => this.props.onInputChange('conditions', event)}
                 />
@@ -782,7 +786,7 @@ export default class ReactionDetailsScheme extends Component {
                     selectName="rxno"
                     selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
                     onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
-                    selectedDisable={reaction.isMethodDisabled('rxno')}
+                    selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
                   />
                 </FormGroup>
               </Col>
@@ -793,13 +797,17 @@ export default class ReactionDetailsScheme extends Component {
                 <FormGroup>
                   <ControlLabel>Description</ControlLabel>
                   <div className="quill-resize">
-                    <QuillEditor
-                      height="100%"
-                      ref={this.quillref}
-                      value={reaction.description}
-                      onChange={event => this.props.onInputChange('description', event)}
-                      toolbarSymbol={reactionToolbarSymbol}
-                    />
+                    {
+                      permitOn(reaction) ?
+                        <QuillEditor
+                          disabled={!permitOn(reaction)}
+                          height="100%"
+                          ref={this.quillref}
+                          value={reaction.description}
+                          onChange={event => this.props.onInputChange('description', event)}
+                          toolbarSymbol={reactionToolbarSymbol}
+                        /> : <QuillViewer value={reaction.description} />
+                    }
                   </div>
                 </FormGroup>
               </Col>

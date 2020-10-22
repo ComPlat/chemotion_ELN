@@ -106,6 +106,7 @@ export default class Reaction extends Element {
       tlc_description: '',
       tlc_solvents: '',
       type: 'reaction',
+      can_update: true,
       can_copy: false
     })
 
@@ -437,6 +438,7 @@ export default class Reaction extends Element {
 
     copy.rebuildProductName();
     copy.container = Container.init();
+    copy.can_update = true;
     copy.can_copy = false;
     return copy;
   }

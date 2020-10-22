@@ -11,7 +11,6 @@ const target = {
     const { dropSample, dropMaterial } = tagProps;
     const srcItem = monitor.getItem();
     const srcType = monitor.getItemType();
-
     if (srcType === DragDropItemTypes.SAMPLE) {
       dropSample(
         srcItem.element,

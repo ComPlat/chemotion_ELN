@@ -115,7 +115,7 @@ export default class ContainerComponent extends Component {
             label="Name"
             value={container.name || '***'}
             onChange={this.handleInputChange.bind(this, 'name')}
-            disabled={disabled} />
+            disabled={readOnly || disabled} />
         </Col>
         <Col md={4}>
           <div style={{ marginBottom: 11 }}>

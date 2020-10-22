@@ -63,7 +63,7 @@ describe 'Copy reactions' do
     first('i.c-bs-success').click
     first('i.fa-clone').click
     find_by_id('submit-copy-element-btn').click
-    find_by_id('reaction-detail-name').set('reaction B').send_keys(:enter)
+    find_field('reaction_name').set('reaction B').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
     expect(page).to have_content('reaction B')
   end
@@ -80,7 +80,7 @@ describe 'Copy reactions' do
     first('i.fa-clone').click
     find_field('modal-collection-id-select').set('Col2').send_keys(:enter)
     find_by_id('submit-copy-element-btn').click
-    find_by_id('reaction-detail-name').set('reaction B').send_keys(:enter)
+    find_field('reaction_name').set('reaction B').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
     expect(page).to have_content('reaction B')
   end
@@ -96,7 +96,7 @@ describe 'Copy reactions' do
     first('i.fa-clone').click
     find_field('modal-collection-id-select').set('Col1').send_keys(:enter)
     find_by_id('submit-copy-element-btn').click
-    find_by_id('reaction-detail-name').set('reaction B').send_keys(:enter)
+    find_field('reaction_name').set('reaction B').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
     find('.tree-view', text: 'Col1').click
     first('i.icon-reaction').click

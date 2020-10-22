@@ -30,11 +30,11 @@ describe 'Create and update Reaction' do
     source.drag_to(target1)
     target2 = scheme_tab.find_all('span.glyphicon-plus')[2]
     source.drag_to(target2)
-    find_by_id('reaction-detail-name').set('reaction A').send_keys(:enter)
+    find_field('reaction_name').set('reaction A').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
     expect(page).to have_content('reaction A')
 
-    find_by_id('reaction-detail-name').set('reaction B').send_keys(:enter)
+    find_field('reaction_name').set('reaction B').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
     expect(page).to have_content('reaction B')
 

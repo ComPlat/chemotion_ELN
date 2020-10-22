@@ -6,8 +6,10 @@ import 'moment-precise-range-plugin';
 import { purificationOptions } from './staticDropdownOptions/options';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import QuillEditor from './QuillEditor';
+import QuillViewer from './QuillViewer';
 import Sample from './models/Sample';
 import { observationPurification, solventsTL } from './utils/reactionPredefined';
+import { permitOn } from './common/uis';
 
 function dummy() { return true; }
 
@@ -110,7 +112,7 @@ export default class ReactionDetailsPurification extends Component {
               style={{ zIndex: 10 }}
               name="purification"
               multi
-              disabled={reaction.isMethodDisabled('purification')}
+              disabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
               options={purificationOptions}
               onChange={this.handlePurificationChange}
               value={reaction.purification}
@@ -138,13 +140,16 @@ export default class ReactionDetailsPurification extends Component {
             <FormGroup>
               <div><b>Additional information for publication and purification details</b></div>
               <div className="quill-resize">
-                <QuillEditor
-                  ref={additionQuillRef}
-                  value={reaction.observation}
-                  height="100%"
-                  disabled={reaction.isMethodDisabled('observation')}
-                  onChange={event => onInputChange('observation', event)}
-                />
+                {
+                  permitOn(reaction) ?
+                    <QuillEditor
+                      ref={additionQuillRef}
+                      value={reaction.observation}
+                      height="100%"
+                      disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
+                      onChange={event => onInputChange('observation', event)}
+                    /> : <QuillViewer value={reaction.observation} />
+                }
               </div>
             </FormGroup>
           </Col>
