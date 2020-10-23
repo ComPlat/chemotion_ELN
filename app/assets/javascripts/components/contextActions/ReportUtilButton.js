@@ -26,6 +26,7 @@ const showComputedPropsGraph = () => {
 const ReportUtilButton = ({ customClass  }) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
+  const enableReactionPredict = MatrixCheck(currentUser.matrix, 'reactionPrediction');
   const graphItem = enableComputedProps ? (
     <MenuItem onSelect={showComputedPropsGraph} title="Graph">
       Graph
@@ -34,6 +35,11 @@ const ReportUtilButton = ({ customClass  }) => {
     <span />
   );
 
+  const predBtn = enableReactionPredict ? (
+    <MenuItem onSelect={showPredictionContainer} title="Predict">
+      Synthesis Prediction
+    </MenuItem>
+  ) : (<span />);
 
   return (
     <Dropdown id="format-dropdown">
@@ -55,9 +61,7 @@ const ReportUtilButton = ({ customClass  }) => {
         </MenuItem>
         {graphItem}
         <MenuItem divider />
-        <MenuItem onSelect={showPredictionContainer} title="Predict">
-          Synthesis Prediction
-        </MenuItem>
+        {predBtn}
       </Dropdown.Menu>
     </Dropdown>
   );
