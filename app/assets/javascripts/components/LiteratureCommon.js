@@ -3,8 +3,24 @@ import PropTypes from 'prop-types';
 import { Button, FormControl } from 'react-bootstrap';
 import Immutable from 'immutable';
 import Cite from 'citation-js';
+import Select from 'react-select';
 import Literature from './models/Literature';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
+
+
+const LiteralType = ({ val, handleInputChange, disabled = false }) => (
+  <FormControl
+    componentClass="select"
+    onChange={event => handleInputChange('litype', event)}
+    placeholder="type"
+    value={val}
+    disabled={disabled}
+  >
+    <option value="">&nbsp;</option>
+    <option value="citing">referring to</option>
+    <option value="cited">cited by</option>
+  </FormControl>
+);
 
 const LiteratureInput = ({ literature, handleInputChange, field, placeholder }) => (
   <FormControl
@@ -126,7 +142,11 @@ Citation.propTypes = {
 };
 
 const CitationUserRow = ({ literature, userId }) => (
-  <span>added by {userId && literature.user_id === userId ? 'me' : literature.user_name}</span>
+  <span>added by {userId && literature.user_id === userId ? 'me' : literature.user_name}
+    &nbsp;
+    {(typeof literature.litype == 'undefined' || literature.litype == null || literature.litype == '') ? '' : `, type: ${literature.litype}`}
+  </span>
+  
 );
 
 CitationUserRow.propTypes = {
@@ -211,5 +231,6 @@ export {
   groupByCitation,
   sortByElement,
   sortByReference,
-  literatureContent
+  literatureContent,
+  LiteralType
 };

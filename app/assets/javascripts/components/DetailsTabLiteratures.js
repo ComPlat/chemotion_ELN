@@ -22,6 +22,7 @@ import {
   groupByCitation,
   AddButton,
   LiteratureInput,
+  LiteralType,
   literatureContent
 } from './LiteratureCommon';
 import Sample from './models/Sample';
@@ -342,8 +343,11 @@ export default class DetailsTabLiteratures extends Component {
         </ListGroupItem>
         <ListGroupItem>
           <Row>
-            <Col md={11} style={{ paddingRight: 0 }}>
+            <Col md={8} style={{ paddingRight: 0 }}>
               <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="doi_isbn" placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..." />
+            </Col>
+            <Col md={3} style={{ paddingRight: 0 }}>
+              <LiteralType handleInputChange={this.handleInputChange} disabled={false} val={literature.litype} />
             </Col>
             <Col md={1} style={{ paddingRight: 0 }}>
               <Button

@@ -7,10 +7,11 @@ export default class Literature extends Element {
       url: '',
       doi: '',
       isbn: '',
+      litype: '',
       type: 'literature',
       is_new: false,
       refs: {}
-    })
+    });
   }
 
   serialize() {
@@ -20,6 +21,7 @@ export default class Literature extends Element {
       url: this.url,
       doi: this.doi,
       isbn: this.isbn,
+      litype: this.litype,
       type: this.type,
       is_new: this.isNew || false,
       refs: this.refs || {}
