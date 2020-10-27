@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { range } from 'lodash';
 import { Row, Col, Button } from 'react-bootstrap';
-import ReactDataGrid from 'react-data-grid';
+import DataGrid from 'react-data-grid';
 import { Menu } from 'react-data-grid-addons';
 import ResearchPlanDetailsFieldTableContextMenu from './ResearchPlanDetailsFieldTableContextMenu';
 import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal';
@@ -19,7 +19,7 @@ const defaultParsePaste = str => (
 // Monkey path for ReactDataGrid
 // see https://github.com/adazzle/react-data-grid/issues/1416#issuecomment-445488607
 // this works for react-data-grid 6.1.0, hopefully it will be fixed in the future
-class FixedReactDataGrid extends ReactDataGrid {
+class FixedReactDataGrid extends DataGrid {
   componentDidMount() {
     this._mounted = true;
     window.addEventListener('resize', this.metricsUpdated);
