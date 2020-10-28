@@ -1,5 +1,8 @@
 module Chemotion
   class PredictionAPI < Grape::API
+    before do
+      return 401 unless current_user.matrix_check_by_name("reactionPrediction")
+    end
 
     resource :prediction do
       resource :products do

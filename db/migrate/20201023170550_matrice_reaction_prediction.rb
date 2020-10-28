@@ -1,4 +1,7 @@
 class MatriceReactionPrediction < ActiveRecord::Migration
+  class Matrice < ActiveRecord::Base
+  end
+
   def change
     name =  { name: 'reactionPrediction' }
     Matrice.find_or_create_by(name)&.update(
@@ -7,8 +10,8 @@ class MatriceReactionPrediction < ActiveRecord::Migration
       include_ids: [],
       exclude_ids: [],
       configs: {
-        url: '127.0.0.1',
-        port: '5001'
+        url: '',
+        port: ''
       }
     )
   end
