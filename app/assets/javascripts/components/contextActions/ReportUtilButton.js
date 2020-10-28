@@ -15,7 +15,9 @@ const showFormatContainer = () => {
   ElementActions.showFormatContainer();
 };
 
-
+const showPredictionContainer = () => {
+  ElementActions.showPredictionContainer();
+};
 
 const showComputedPropsGraph = () => {
   ElementActions.showComputedPropsGraph();
@@ -24,6 +26,7 @@ const showComputedPropsGraph = () => {
 const ReportUtilButton = ({ customClass  }) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
+  const enableReactionPredict = MatrixCheck(currentUser.matrix, 'reactionPrediction');
   const graphItem = enableComputedProps ? (
     <MenuItem onSelect={showComputedPropsGraph} title="Graph">
       Graph
@@ -32,12 +35,18 @@ const ReportUtilButton = ({ customClass  }) => {
     <span />
   );
 
+  const predBtn = enableReactionPredict ? (
+    <MenuItem onSelect={showPredictionContainer} title="Predict">
+      Synthesis Prediction
+    </MenuItem>
+  ) : (<span />);
 
   return (
     <Dropdown id="format-dropdown">
       <Dropdown.Toggle className={customClass || 'btn-success'}>
         <i className="fa fa-file-text-o" style={{ marginRight: 4 }} />
-        <i className="fa fa-pencil" />
+        <i className="fa fa-pencil" style={{ marginRight: 4 }} />
+        <i className="fa fa-percent" />
       </Dropdown.Toggle>
       <Dropdown.Menu>
         <MenuItem onSelect={showReportContainer} title="Report">
@@ -51,6 +60,8 @@ const ReportUtilButton = ({ customClass  }) => {
           Literature
         </MenuItem>
         {graphItem}
+        <MenuItem divider />
+        {predBtn}
       </Dropdown.Menu>
     </Dropdown>
   );

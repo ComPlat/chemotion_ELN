@@ -96,7 +96,13 @@ const routes = {
       showOrNew: routesUtils.researchPlanShowOrNew
     },
     '/:research_planID': 'showOrNew'
-  }
+  },
+  '/fwdRxnPrediction': {
+    target: {
+      showFwdRxnPrediction: routesUtils.predictionShowFwdRxn
+    },
+    '/': 'showFwdRxnPrediction'
+  },
 };
 
 export default function() {

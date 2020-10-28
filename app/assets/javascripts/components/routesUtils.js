@@ -79,6 +79,10 @@ const reportShowReport = () => {
   ElementActions.showReportContainer();
 };
 
+const predictionShowFwdRxn = () => {
+  ElementActions.showPredictionContainer();
+};
+
 const sampleShowOrNew = (e) => {
   const { sampleID, collectionID } = e.params;
   if (sampleID === 'new') {
@@ -203,5 +207,6 @@ module.exports = {
   deviceShow,
   deviceShowDeviceManagement,
   researchPlanShowOrNew,
-  elementShowOrNew
+  elementShowOrNew,
+  predictionShowFwdRxn,
 };
