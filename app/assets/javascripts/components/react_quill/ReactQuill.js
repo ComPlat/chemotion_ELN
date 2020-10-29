@@ -42,7 +42,7 @@ const setEditorTabIndex = (editor, tabIndex) => {
 
   // eslint-disable-next-line no-param-reassign
   editor.scroll.domNode.tabIndex = tabIndex;
-}
+};
 
 export default class ReactQuill extends React.Component {
   constructor(props) {
@@ -216,7 +216,9 @@ export default class ReactQuill extends React.Component {
   }
 
   getEditor() {
-    if (!this.editor) throw new Error('Accessing non-instantiated editor');
+    if (this.editor == null) {
+      throw new Error('Accessing non-instantiated editor');
+    }
 
     return this.editor;
   }
@@ -515,3 +517,4 @@ ReactQuill.defaultProps = {
   theme: 'snow',
   value: null
 };
+
