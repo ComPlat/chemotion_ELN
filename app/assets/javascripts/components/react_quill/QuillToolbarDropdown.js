@@ -33,6 +33,7 @@ export default class QuillToolbarDropdown extends React.Component {
     const cssRule = `
       .ql-snow .ql-picker.${this.ddQuillId} .ql-picker-label::before, .${this.ddQuillId} .ql-picker.ql-size .ql-picker-item::before {
           content: attr(data-label);
+          line-height: 25px;
       }
     `;
 
