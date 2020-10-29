@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Checkbox, Table } from 'react-bootstrap';
+import { Button, Checkbox, FormControl, Table } from 'react-bootstrap';
 
 export default class DynamicTemplateCreator extends React.Component {
   constructor(props) {
@@ -21,7 +21,7 @@ export default class DynamicTemplateCreator extends React.Component {
     const { predefinedMacros, iconMacros, dropdownMacros } = this.props;
     const ddTitles = Object.keys(dropdownMacros);
     const definedHeader = Object.entries(predefinedMacros).map(([k, v]) => (
-      <th key={k}>
+      <th key={k} style={{ textAlign: 'center' }}>
         {React.isValidElement(v.icon) ? v.icon : k.toUpperCase()}
       </th>
     ));
@@ -29,6 +29,9 @@ export default class DynamicTemplateCreator extends React.Component {
     const toolbarRow = (
       <tr>
         <td />
+        <td style={{ verticalAlign: 'middle' }}>
+          &nbsp;Toolbar
+        </td>
         {Object.keys(predefinedMacros).map(k => (
           <td key={`_toolbar_${k}`} style={{ textAlign: 'center' }}>
             <Checkbox checked={iconMacros[k] || false} />
@@ -47,7 +50,17 @@ export default class DynamicTemplateCreator extends React.Component {
       return (
         <tr key={`${title}`}>
           <td style={{ verticalAlign: 'middle' }}>
-            {title}
+            <Button bsStyle="danger" bsSize="xs">
+              <i className="fa fa-times" />
+            </Button>
+          </td>
+          <td style={{ verticalAlign: 'middle' }}>
+            <FormControl
+              type="text"
+              value={title}
+              placeholder="Dropdown label"
+              // onChange={this.handleChange}
+            />
           </td>
           {templateValues}
         </tr>
@@ -57,11 +70,16 @@ export default class DynamicTemplateCreator extends React.Component {
 
     return (
       <div>
-        <Button>Add new dropdown</Button>
-        <br /><br />
+        <div>
+          <Button bsStyle="success">Save</Button>
+          &nbsp;&nbsp;&nbsp;
+          <Button bsStyle="info">New dropdown</Button>
+        </div>
+        <br />
         <Table striped bordered condensed hover responsive>
           <thead>
             <tr>
+              <th />
               <th />
               {definedHeader}
             </tr>
