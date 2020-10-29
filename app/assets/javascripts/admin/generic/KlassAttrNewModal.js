@@ -14,6 +14,7 @@ export default class KlassAttrNewModal extends Component {
     const element = {
       name: this.formRef.current.k_name.value.trim(),
       label: this.formRef.current.k_label.value.trim(),
+      klass_prefix: this.formRef.current.k_prefix.value.trim(),
       icon_name: this.formRef.current.k_iconname.value.trim(),
       desc: this.formRef.current.k_desc.value.trim()
     };

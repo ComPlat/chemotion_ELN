@@ -594,6 +594,7 @@ class ElementStore {
   }
 
   handleCreateGenericEl(genericEl) {
+    UserActions.fetchCurrentUser();
     this.handleRefreshElements((genericEl.element_klass && genericEl.element_klass.name) || 'genericEl');
     //this.handleRefreshElements('genericEl');
     this.navigateToNewElement(genericEl, 'GenericEl');

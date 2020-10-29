@@ -55,6 +55,10 @@ const validateInput = (element) => {
     Notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'Please input Klass.' });
     return false;
   }
+  if (element.klass_prefix === '') {
+    Notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'Please input Prefix.' });
+    return false;
+  }
   if (element.label === '') {
     Notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'Please input Label.' });
     return false;
@@ -813,6 +817,7 @@ export default class GenericElementAdmin extends React.Component {
             &nbsp;
           </td>
           <td>{e.name}</td>
+          <td>{e.klass_prefix}</td>
           <td>
             <Label bsStyle={e.is_active === true ? 'success' : 'danger'}>
               <i className={e.is_active === true ? 'fa fa-check' : 'fa fa-ban'} aria-hidden="true" />
@@ -846,13 +851,14 @@ export default class GenericElementAdmin extends React.Component {
             <thead>
               <tr style={{ backgroundColor: '#ddd' }}>
                 <th width="4%">#</th>
-                <th width="10%">Actions</th>
+                <th width="8%">Actions</th>
                 <th width="10%">Klass</th>
+                <th width="10%">Prefix</th>
                 <th width="8%">Active</th>
                 <th width="10%">Label</th>
-                <th width="10%">Icon</th>
-                <th width="28%">Description</th>
-                <th width="28%">Template</th>
+                <th width="8%">Icon</th>
+                <th width="26%">Description</th>
+                <th width="24%">Template</th>
               </tr>
             </thead>
             { tbody }

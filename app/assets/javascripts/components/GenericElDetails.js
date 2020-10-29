@@ -238,7 +238,7 @@ export default class GenericElDetails extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="genericElDatesx">{datetp}</Tooltip>}>
           <span>
             <i className={iconClass} />
-            &nbsp;<span>{genericEl.name}</span> &nbsp;
+            &nbsp;<span>{genericEl.short_label}</span> &nbsp;
           </span>
         </OverlayTrigger>
         <ConfirmClose el={genericEl} />

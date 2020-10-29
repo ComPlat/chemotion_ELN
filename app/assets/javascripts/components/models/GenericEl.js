@@ -1,6 +1,7 @@
 import { isEmpty, filter } from 'lodash';
 import Element from './Element';
 import Container from './Container';
+import UserStore from '../stores/UserStore';
 
 export default class GenericEl extends Element {
   static buildEmpty(collection_id, klass) {
@@ -9,6 +10,7 @@ export default class GenericEl extends Element {
       collection_id,
       type: klass.name,
       element_klass_id: this.element_klass_id,
+      short_label: GenericEl.buildNewShortLabel(klass),
       name: `New ${klass.label}`,
       container: Container.init(),
       properties: template.layers,
@@ -27,6 +29,13 @@ export default class GenericEl extends Element {
       //select_options: this.select_options,
       container: this.container,
     });
+  }
+
+  static buildNewShortLabel(klass) {
+    console.log(klass);
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return `new_${klass.label}`; }
+    return `${currentUser.initials}-${klass.klass_prefix}${parseInt(currentUser.counters[klass.name] || 0, 10) + 1}`;
   }
 
   get klassType() {
@@ -84,7 +93,7 @@ export default class GenericEl extends Element {
   }
 
   title() {
-    return this.name;
+    return `${this.short_label}     ${this.name}` ;
   }
 
   get isPendingToSave() {

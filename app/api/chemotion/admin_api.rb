@@ -314,7 +314,8 @@ module Chemotion
         desc 'create Generic Element Properties Template'
         params do
           requires :name, type: String, desc: 'Element Klass Name'
-          optional :label, type: String, desc: 'Element Klass Label'
+          requires :label, type: String, desc: 'Element Klass Label'
+          requires :klass_prefix, type: String, desc: 'Element Klass Short Label Prefix'
           optional :icon_name, type: String, desc: 'Element Klass Icon Name'
           optional :desc, type: String, desc: 'Element Klass Desc'
         end
@@ -346,12 +347,14 @@ module Chemotion
         params do
           requires :id, type: Integer, desc: 'Element Klass ID'
           optional :label, type: String, desc: 'Element Klass Label'
+          optional :klass_prefix, type: String, desc: 'Element Klass Short Label Prefix'
           optional :icon_name, type: String, desc: 'Element Klass Icon Name'
           optional :desc, type: String, desc: 'Element Klass Desc'
         end
         post do
           klass = ElementKlass.find(params[:id])
           klass.label = params[:label] if params[:label].present?
+          klass.klass_prefix = params[:klass_prefix] if params[:klass_prefix].present?
           klass.icon_name = params[:icon_name] if params[:icon_name].present?
           klass.desc = params[:desc] if params[:desc].present?
           klass.save!

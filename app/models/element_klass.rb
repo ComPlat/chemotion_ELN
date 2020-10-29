@@ -11,8 +11,9 @@
 #  created_by          :integer
 #  created_at          :datetime
 #  updated_at          :datetime
-#  is_active           :boolean          default(TRUE), not null
 #  deleted_at          :datetime
+#  is_active           :boolean          default(TRUE), not null
+#  klass_prefix        :string           default("E"), not null
 #
 
 class ElementKlass < ActiveRecord::Base

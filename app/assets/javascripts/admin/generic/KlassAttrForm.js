@@ -18,6 +18,12 @@ export default class KlassAttrForm extends Component {
             Klass should not contain special characters like $, !, %, etc.
           </div>
         </FormGroup>
+        <FormGroup controlId="formControlPrefix">
+          <InputGroup>
+            <InputGroup.Addon>Prefix</InputGroup.Addon>
+            <FormControl type="text" defaultValue={element.klass_prefix} inputRef={(ref) => { this.k_prefix = ref; }} />
+          </InputGroup>
+        </FormGroup>
         <FormGroup controlId="formControlLabel">
           <InputGroup>
             <InputGroup.Addon>Label</InputGroup.Addon>

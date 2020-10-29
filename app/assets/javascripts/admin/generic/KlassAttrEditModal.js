@@ -17,6 +17,7 @@ export default class KlassAttrEditModal extends Component {
     const { element, fnUpdate } = this.props;
     const updates = {
       label: this.formRef.current.k_label.value.trim(),
+      klass_prefix: this.formRef.current.k_prefix.value.trim(),
       icon_name: this.formRef.current.k_iconname.value.trim(),
       desc: this.formRef.current.k_desc.value.trim()
     };
