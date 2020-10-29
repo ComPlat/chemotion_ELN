@@ -26,6 +26,16 @@ sampleAnalysesMacros['c-nmr'].icon = (
   <span>C</span>
 );
 
+const toolbarOptions = [
+  'header',
+  'bold',
+  'italic',
+  'underline',
+  'script',
+  'list',
+  'bullet',
+];
+
 const editTemplate = () => { console.log('ad'); };
 const autoFormat = () => { console.log('autoFormat'); };
 
@@ -56,7 +66,6 @@ const extractMacros = (macros) => {
 export default class ContainerComponentEditor extends React.Component {
   constructor(props) {
     super(props);
-    // this.state = { editorDelta: {} };
 
     this.toolbarId = `_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -81,10 +90,6 @@ export default class ContainerComponentEditor extends React.Component {
 
   selectDropdown(key, value) {
     console.log(`select  Dropdown ${key} - ${value}`);
-  }
-
-  toolbarOnClick() {
-    console.log('toolbar onclick');
   }
 
   iconOnClick(macro) {
@@ -182,6 +187,8 @@ export default class ContainerComponentEditor extends React.Component {
         <ReactQuill
           modules={this.modules}
           theme="snow"
+          formats={toolbarOptions}
+          style={{ height: '120px' }}
         />
       </div>
     );
