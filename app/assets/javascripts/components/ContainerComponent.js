@@ -6,24 +6,29 @@ import {
 import Select from 'react-select';
 import _ from 'lodash';
 import ContainerDatasets from './ContainerDatasets';
-import QuillEditor from './QuillEditor';
 import QuillViewer from './QuillViewer';
+import ContainerComponentEditor from './ContainerComponentEditor';
 import OlsTreeSelect from './OlsComponent';
-import { sampleAnalysesContentSymbol, sampleAnalysesContentDropdown } from './utils/quillToolbarSymbol';
 import { formatAnalysisContent } from './utils/ElementUtils';
 import { confirmOptions } from './staticDropdownOptions/options';
+
+import UserStore from './stores/UserStore';
+import UserActions from './actions/UserActions';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
     super();
+
     const { container } = props;
     this.state = {
       container,
+      editorTemplate: {}
     };
 
     this.onChange = this.onChange.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.reformatContent = this.reformatContent.bind(this);
+    this.updateEditorTemplate = this.updateEditorTemplate.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -77,9 +82,17 @@ export default class ContainerComponent extends Component {
     this.onChange(container);
   }
 
+  updateEditorTemplate(data) {
+    UserActions.updateUserProfile({ editor_template: data });
+    this.setState({ editorTemplate: data });
+  }
+
   render() {
     const { container } = this.state;
     const { readOnly, disabled } = this.props;
+
+    const userProfile = UserStore.getState().profile;
+    const userMacros = userProfile.data.macros || {};
 
     const formatButton = (
       <Button bsSize="xsmall" onClick={this.reformatContent}>
@@ -94,78 +107,17 @@ export default class ContainerComponent extends Component {
       );
     } else {
       quill = (
-        <QuillEditor
-          height="120px"
-          value={container.extended_metadata.content}
-          onChange={this.handleInputChange.bind(this, 'content')}
-          disabled={readOnly}
-          toolbarSymbol={sampleAnalysesContentSymbol}
-          toolbarDropdown={sampleAnalysesContentDropdown}
-          customToolbar={formatButton}
+        <ContainerComponentEditor
+          container={container}
+          macros={userMacros}
+          updateMacros={this.updateEditorTemplate}
         />
       );
     }
 
     return (
       <div>
-        <Col md={8}>
-          <label>Name</label>
-          <FormControl
-            type="text"
-            label="Name"
-            value={container.name || '***'}
-            onChange={this.handleInputChange.bind(this, 'name')}
-            disabled={disabled} />
-        </Col>
-        <Col md={4}>
-          <div style={{ marginBottom: 11 }}>
-            <label>Status</label>
-            <Select
-              name='status'
-              multi={false}
-              options={confirmOptions}
-              value={container.extended_metadata['status']}
-              disabled={readOnly || disabled}
-              onChange={this.handleInputChange.bind(this, 'status')}
-            />
-          </div>
-        </Col>
-        <Col md={12}>
-          <div style={{ marginBottom: 11 }}>
-            <ControlLabel>Type (Chemical Methods Ontology)</ControlLabel>
-            <OlsTreeSelect
-              selectName="chmo"
-              selectedValue={container.extended_metadata['kind'] || ''}
-              onSelectChange={event => this.handleInputChange('kind', event)}
-              selectedDisable={readOnly || disabled || false}
-            />
-          </div>
-        </Col>
-        <Col md={12}>
-          <FormGroup>
-            <ControlLabel>Content</ControlLabel>
-            {quill}
-          </FormGroup>
-          <FormGroup>
-            <ControlLabel>Description</ControlLabel>
-            <FormControl
-              componentClass="textarea"
-              label="Description"
-              value={container.description || ''}
-              disabled={readOnly || disabled}
-              onChange={this.handleInputChange.bind(this, 'description')}
-            />
-          </FormGroup>
-        </Col>
-        <Col md={12}>
-          <label>Datasets</label>
-          <ContainerDatasets
-            container={container}
-            readOnly={readOnly}
-            disabled={disabled}
-            onChange={this.onChange}
-          />
-        </Col>
+        {quill}
       </div>
     );
   }
