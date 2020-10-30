@@ -1138,6 +1138,7 @@ class ElementStore {
         this.handleRefreshElements('genericEl');
         break;
       default:
+        this.handleRefreshElements(updatedElement.type);
         break;
     }
 
