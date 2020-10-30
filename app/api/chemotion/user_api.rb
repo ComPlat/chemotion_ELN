@@ -54,6 +54,19 @@ module Chemotion
         end
       end
 
+      namespace :update_counter do
+        desc 'create or update user labels'
+        params do
+          optional :type, type: String
+          optional :counter, type: Integer
+        end
+        put do
+          counters = current_user.counters
+          counters[params[:type]] = params[:counter]
+          current_user.update(counters: counters)
+        end
+      end
+
       desc 'Log out current_user'
       delete 'sign_out' do
         status 204

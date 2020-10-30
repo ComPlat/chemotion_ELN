@@ -160,4 +160,20 @@ export default class UsersFetcher {
     });
     return promise;
   }
+
+  static updateUserCounter(params = {}) {
+    const promise = fetch('/api/v1/users/update_counter', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

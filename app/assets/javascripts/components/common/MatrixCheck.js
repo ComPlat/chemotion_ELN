@@ -17,6 +17,7 @@ const UserMatrixCheck = (matrix = 0, id = 0) => {
 
 const MatrixCheck = (matrix = 0, name = '') => {
   const { matrices } = UIStore.getState();
+  console.log(matrices);
   if (typeof matrices === 'undefined' || matrices === null) {
     return false;
   }
