@@ -1,14 +1,16 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable react/no-multi-comp */
 import React from 'react';
 import PropTypes from 'prop-types';
 
 import { OverlayTrigger, Popover } from 'react-bootstrap';
 
 import ReactQuill from './react_quill/ReactQuill';
+import Delta from 'quill-delta';
+
 import QuillToolbarDropdown from './react_quill/QuillToolbarDropdown';
 import QuillToolbarIcon from './react_quill/QuillToolbarIcon';
 import DynamicTemplateCreator from './analyses_toolbar/DynamicTemplateCreator';
+
+import { formatAnalysisContent } from './utils/ElementUtils';
 
 import {
   sampleAnalysesMacros,
@@ -27,17 +29,10 @@ sampleAnalysesMacros['c-nmr'].icon = (
 );
 
 const toolbarOptions = [
-  'header',
-  'bold',
-  'italic',
-  'underline',
-  'script',
-  'list',
-  'bullet',
+  'bold', 'italic', 'underline',
+  'header', 'script',
+  'list', 'bullet',
 ];
-
-const editTemplate = () => { console.log('ad'); };
-const autoFormat = () => { console.log('autoFormat'); };
 
 const extractMacros = (macros) => {
   const tKeys = Object.keys(macros);
@@ -68,32 +63,84 @@ export default class ContainerComponentEditor extends React.Component {
     super(props);
 
     this.toolbarId = `_${Math.random().toString(36).substr(2, 9)}`;
+    this.reactQuillRef = React.createRef();
 
     this.modules = {
-      toolbar: {
-        container: `#${this.toolbarId}`,
-        handlers: {
-          editTemplate,
-          autoFormat
-        }
-      },
+      toolbar: { container: `#${this.toolbarId}` },
     };
 
-    this.handleChange = this.handleChange.bind(this);
+    this.onChangeContent = this.onChangeContent.bind(this);
+    this.autoFormatContent = this.autoFormatContent.bind(this);
+    this.quillOnChange = this.quillOnChange.bind(this);
     this.selectDropdown = this.selectDropdown.bind(this);
     this.iconOnClick = this.iconOnClick.bind(this);
+    this.applyMacro = this.applyMacro.bind(this);
   }
 
-  handleChange(delta) {
-    // this.setState({ editorDelta: delta });
+  onChangeContent(quillEditor) {
+    const { onChange } = this.props;
+
+    if (onChange) {
+      onChange(quillEditor.getContents());
+    }
   }
 
-  selectDropdown(key, value) {
-    console.log(`select  Dropdown ${key} - ${value}`);
+  autoFormatContent() {
+    if (this.reactQuillRef.current == null) {
+      return;
+    }
+
+    const { container } = this.props;
+
+    let value = container.extended_metadata.content || {};
+    value = formatAnalysisContent(container);
+
+    const quill = this.reactQuillRef.current.getEditor();
+    quill.setContents(value);
+    this.onChangeContent(quill);
+  }
+
+  quillOnChange(content, delta, source, editor) {
+    if (this.reactQuillRef.current == null) {
+      return;
+    }
+
+    this.onChangeContent(editor);
+  }
+
+  applyMacro(macro) {
+    const check = ('ops' in macro) && Array.isArray(macro.ops);
+    if (!check) return;
+
+    if (this.reactQuillRef.current == null) {
+      return;
+    }
+
+    const quill = this.reactQuillRef.current.getEditor();
+    const range = quill.getSelection();
+    if (!range) return;
+
+    let contents = quill.getContents();
+    let elementOps = macro.ops;
+    if (range.index > 0) {
+      elementOps = [{ retain: range.index }].concat(elementOps);
+    }
+    const macroDelta = new Delta(elementOps);
+    contents = contents.compose(macroDelta);
+    quill.setContents(contents);
+    range.length = 0;
+    range.index += macroDelta.length();
+    quill.setSelection(range);
+
+    this.onChangeContent(quill);
+  }
+
+  selectDropdown(_key, value) {
+    this.applyMacro(sampleAnalysesMacros[value]);
   }
 
   iconOnClick(macro) {
-    console.log(macro);
+    this.applyMacro(macro);
   }
 
   render() {
@@ -104,7 +151,6 @@ export default class ContainerComponentEditor extends React.Component {
         MS: defaultMacroDropdown
       };
     }
-
     const [iconMacros, ddMacros] = extractMacros(macros);
 
     const templateCreatorPopover = (
@@ -120,12 +166,15 @@ export default class ContainerComponentEditor extends React.Component {
         />
       </Popover>
     );
+
+    const { container, readOnly } = this.props;
+    const value = container.extended_metadata.content || {};
     const autoFormatIcon = <span className="fa fa-magic" />;
 
     return (
       <div>
         <div id={this.toolbarId}>
-          <select className="ql-header" defaultValue="" onChange={e => e.persist()}>
+          <select className="ql-header" defaultValue="">
             <option value="1" />
             <option value="2" />
             <option value="3" />
@@ -143,7 +192,7 @@ export default class ContainerComponentEditor extends React.Component {
           <button className="ql-script" value="super" />
           <QuillToolbarIcon
             icon={autoFormatIcon}
-            onClick={autoFormat}
+            onClick={this.autoFormatContent}
           />
           {Object.keys(iconMacros).map((name) => {
             const val = iconMacros[name];
@@ -175,6 +224,7 @@ export default class ContainerComponentEditor extends React.Component {
           <OverlayTrigger
             trigger="click"
             placement="top"
+            rootClose
             overlay={templateCreatorPopover}
           >
             <span className="ql-formats">
@@ -189,6 +239,10 @@ export default class ContainerComponentEditor extends React.Component {
           theme="snow"
           formats={toolbarOptions}
           style={{ height: '120px' }}
+          ref={this.reactQuillRef}
+          onChange={this.quillOnChange}
+          defaultValue={value}
+          readOnly={readOnly}
         />
       </div>
     );
@@ -196,10 +250,17 @@ export default class ContainerComponentEditor extends React.Component {
 }
 
 ContainerComponentEditor.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
+  /* eslint-disable react/forbid-prop-types */
   macros: PropTypes.object,
+  container: PropTypes.object,
+  onChange: PropTypes.func,
+  readOnly: PropTypes.bool,
+  /* eslint-enable react/forbid-prop-types */
 };
 
 ContainerComponentEditor.defaultProps = {
+  readOnly: false,
   macros: {},
+  container: {},
+  onChange: null
 };
