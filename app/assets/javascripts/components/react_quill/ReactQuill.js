@@ -1,4 +1,7 @@
+/* eslint-disable react/require-default-props */
 /* eslint-disable react/sort-comp */
+/* eslint-disable react/forbid-prop-types */
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -467,7 +470,6 @@ ReactQuill.propTypes = {
   ]),
   formats: PropTypes.arrayOf(PropTypes.string),
   id: PropTypes.string,
-  // eslint-disable-next-line react/forbid-prop-types
   modules: PropTypes.object,
   onChange: PropTypes.func,
   onChangeSelection: PropTypes.func,
@@ -483,7 +485,6 @@ ReactQuill.propTypes = {
     PropTypes.string,
     PropTypes.element
   ]),
-  // eslint-disable-next-line react/forbid-prop-types
   style: PropTypes.object,
   tabIndex: PropTypes.number,
   theme: PropTypes.string,
@@ -494,27 +495,7 @@ ReactQuill.propTypes = {
 };
 
 ReactQuill.defaultProps = {
-  bounds: 'document.body',
-  className: '',
-  children: null,
-  defaultValue: null,
-  formats: [],
-  id: '',
   modules: {},
-  onBlur: null,
-  onChange: null,
-  onChangeSelection: null,
-  onFocus: null,
-  onKeyDown: null,
-  onKeyPress: null,
-  onKeyUp: null,
-  placeholder: null,
-  preserveWhitespace: false,
-  readOnly: false,
-  scrollingContainer: null,
-  style: {},
-  tabIndex: 0,
   theme: 'snow',
-  value: null
 };
 
