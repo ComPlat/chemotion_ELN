@@ -331,96 +331,6 @@ const SpectraOps = {
   MS: { head: opsMSHead, tail: opsMSTail },
 };
 
-const sampleAnalysesContentDropdown = [
-  {
-    name: 'ei',
-    ops: [
-      { insert: 'MS (EI, 70 eV, XX °C), m/z (%):' },
-    ],
-  },
-  {
-    name: 'fab',
-    ops: [
-      { insert: 'MS (FAB, 3-NBA), m/z (%):' },
-    ],
-  },
-  {
-    name: 'esi',
-    ops: [
-      { insert: 'MS (ESI), m/z (%):' },
-    ],
-  },
-  {
-    name: 'apci',
-    ops: [
-      { insert: 'MS (APCI, CH' },
-      {
-        attributes: { script: 'sub' },
-        insert: '3',
-      },
-      { insert: 'COONH' },
-      {
-        attributes: { script: 'sub' },
-        insert: '4',
-      },
-      { insert: '), m/z (%): ' },
-    ],
-  },
-  {
-    name: 'asap',
-    ops: [
-      { insert: 'MS (ASAP), m/z (%):' },
-    ],
-  },
-  {
-    name: 'maldi',
-    ops: [
-      { insert: 'MS (MALDI-TOF), m/z (%):' },
-    ],
-  },
-  {
-    name: 'm+',
-    ops: [
-      { insert: '[M]' },
-      { insert: '+', attributes: { script: 'super' } },
-    ],
-  },
-  {
-    name: 'hr',
-    ops: [
-      { insert: 'HRMS (): calcd , found .' },
-    ],
-  },
-  {
-    name: 'hr-ei',
-    ops: [
-      { insert: 'HRMS–EI ' },
-      { insert: '(m/z)', attributes: { italic: true } },
-      { insert: ': [M]' },
-      { insert: '+', attributes: { script: 'super' } },
-      { insert: ' calcd for ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '; found ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '.' },
-    ],
-  },
-  {
-    name: 'hr-fab',
-    ops: [
-      { insert: 'HRMS–FAB ' },
-      { insert: '(m/z)', attributes: { italic: true } },
-      { insert: ': [M + H]' },
-      { insert: '+', attributes: { script: 'super' } },
-      { insert: ' calcd for ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '; found ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '.' },
-    ],
-  },
-];
-
 const reactionAnalysesMacros = {
   ndash: {
     ops: [
@@ -662,7 +572,7 @@ const sampleAnalysesMacros = {
       { insert: 'MS (ESI), m/z (%):' },
     ],
   },
-  acpi: {
+  apci: {
     ops: [
       { insert: 'MS (APCI, CH' },
       {
@@ -727,13 +637,16 @@ const sampleAnalysesMacros = {
 };
 
 const defaultMacroToolbar = ['ndash', 'h-nmr', 'c-nmr', 'ir', 'uv', 'ea'];
-const defaultMacroDropdown = ['ei', 'fab', 'esi', 'apci', 'asap', 'maldi', 'm+', 'hr', 'hr-ei', 'hr-fab'];
+const defaultMacroDropdown = {
+  MS: [
+    'ei', 'fab', 'esi', 'apci', 'asap', 'maldi', 'm+', 'hr', 'hr-ei', 'hr-fab'
+  ]
+};
 
 module.exports = {
   reactionToolbarSymbol,
   sampleAnalysesContentSymbol,
   SpectraOps,
-  sampleAnalysesContentDropdown,
   sampleAnalysesMacros,
   reactionAnalysesMacros,
   defaultMacroDropdown,
