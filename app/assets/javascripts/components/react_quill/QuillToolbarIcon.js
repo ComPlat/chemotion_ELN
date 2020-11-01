@@ -17,14 +17,21 @@ export default class QuillDynamicToolbarIcon extends React.Component {
     const { icon } = this.props;
     if (React.isValidElement(icon)) {
       return (
-        <button onClick={this.onClick}>
+        <button
+          style={{ width: 'auto' }}
+          onClick={this.onClick}
+        >
           {icon}
         </button>
       );
     }
 
     return (
-      <button className={`ql_${icon}`} onClick={this.onClick}>
+      <button
+        className={`ql_${icon}`}
+        style={{ width: 'auto' }}
+        onClick={this.onClick}
+      >
         <span>
           {icon.toUpperCase()}
         </span>
