@@ -6,20 +6,85 @@ export default class DynamicTemplateCreator extends React.Component {
   constructor(props) {
     super(props);
 
+    const ddKeys = Object.keys(props.dropdownMacros);
     this.state = {
-      template: {}
+      iconMacros: props.iconMacros,
+      dropdownTitles: ddKeys,
+      dropdownValues: Object.values(props.dropdownMacros)
     };
+    this.ddRefs = ddKeys.map(() => React.createRef());
 
-    this.onChange = this.onChange.bind(this);
+    this.createDropdownMacro = this.createDropdownMacro.bind(this);
+    this.removeDropdownMacro = this.removeDropdownMacro.bind(this);
+    this.saveUserMacros = this.saveUserMacros.bind(this);
+    this.onChangeCheckbox = this.onChangeCheckbox.bind(this);
   }
 
-  onChange() {
-    this.props.onChange(this.state.template);
+  onChangeCheckbox(title, idx, predefinedName) {
+    if (title === '_toolbar') {
+      const { iconMacros } = this.state;
+      const existed = iconMacros.filter(x => x === predefinedName).length > 0;
+
+      if (existed) {
+        this.setState({ iconMacros: iconMacros.filter(x => x !== predefinedName) });
+      } else {
+        iconMacros.push(predefinedName);
+        this.setState({ iconMacros });
+      }
+    } else {
+      const { dropdownValues } = this.state;
+      let dropdown = dropdownValues[idx];
+      const existed = dropdown.filter(x => x === predefinedName).length > 0;
+
+      if (existed) {
+        dropdown = dropdown.filter(x => x !== predefinedName);
+      } else {
+        dropdown.push(predefinedName);
+      }
+
+      dropdownValues[idx] = dropdown;
+      this.setState({ dropdownValues });
+    }
+  }
+
+  createDropdownMacro() {
+    const { dropdownTitles, dropdownValues } = this.state;
+
+    this.ddRefs.push(React.createRef());
+    this.setState({
+      dropdownTitles: dropdownTitles.concat(['']),
+      dropdownValues: dropdownValues.concat([[]])
+    });
+  }
+
+  removeDropdownMacro(idx) {
+    const { dropdownTitles, dropdownValues } = this.state;
+    dropdownTitles.splice(idx, 1);
+    dropdownValues.splice(idx, 1);
+    this.ddRefs.splice(idx, 1);
+    this.setState({ dropdownTitles, dropdownValues });
+  }
+
+  saveUserMacros() {
+    const { updateUserMacros } = this.props;
+    if (!updateUserMacros) return;
+
+    const { iconMacros, dropdownTitles, dropdownValues } = this.state;
+
+    const dropdownMacros = {};
+    dropdownTitles.forEach((_title, idx) => {
+      // eslint-disable-next-line no-underscore-dangle
+      const title = this.ddRefs[idx].current._reactInternalFiber.child.stateNode.value;
+      if (!title) return;
+
+      dropdownMacros[title] = dropdownValues[idx];
+    });
+    updateUserMacros(iconMacros, dropdownMacros);
   }
 
   render() {
-    const { predefinedMacros, iconMacros, dropdownMacros } = this.props;
-    const ddTitles = Object.keys(dropdownMacros);
+    const { predefinedMacros } = this.props;
+    const { iconMacros, dropdownTitles, dropdownValues } = this.state;
     const definedHeader = Object.entries(predefinedMacros).map(([k, v]) => (
       <th key={k} style={{ textAlign: 'center' }}>
         {React.isValidElement(v.icon) ? v.icon : k.toUpperCase()}
@@ -34,32 +99,41 @@ export default class DynamicTemplateCreator extends React.Component {
         </td>
         {Object.keys(predefinedMacros).map(k => (
           <td key={`_toolbar_${k}`} style={{ textAlign: 'center' }}>
-            <Checkbox checked={iconMacros[k] || false} />
+            <Checkbox
+              checked={iconMacros.includes(k)}
+              // onClick={() => this.onChangeCheckbox('_toolbar', null, k)}
+              onChange={() => this.onChangeCheckbox('_toolbar', null, k)}
+            />
           </td>
         ))}
       </tr>
     );
 
-    const dropdownRows = ddTitles.map((title) => {
+    const dropdownRows = dropdownTitles.map((title, idx) => {
       const templateValues = Object.keys(predefinedMacros).map(k => (
         <td key={`${title}_${k}`} style={{ textAlign: 'center' }}>
-          <Checkbox checked={dropdownMacros[title][k] || false} />
+          <Checkbox
+            checked={dropdownValues[idx].includes(k)}
+            // onClick={() => this.onChangeCheckbox(title, idx, k)}
+            onChange={() => this.onChangeCheckbox(title, idx, k)}
+          />
         </td>
       ));
+
+      const removeDropdown = () => this.removeDropdownMacro(idx);
 
       return (
         <tr key={`${title}`}>
           <td style={{ verticalAlign: 'middle' }}>
-            <Button bsStyle="danger" bsSize="xs">
+            <Button bsStyle="danger" bsSize="xs" onClick={removeDropdown}>
               <i className="fa fa-times" />
             </Button>
           </td>
           <td style={{ verticalAlign: 'middle' }}>
             <FormControl
               type="text"
-              value={title}
-              placeholder="Dropdown label"
-              // onChange={this.handleChange}
+              defaultValue={title}
+              ref={this.ddRefs[idx]}
             />
           </td>
           {templateValues}
@@ -67,13 +141,22 @@ export default class DynamicTemplateCreator extends React.Component {
       );
     });
 
-
     return (
       <div>
         <div>
-          <Button bsStyle="success">Save</Button>
+          <Button
+            bsStyle="success"
+            onClick={this.saveUserMacros}
+          >
+            Save
+          </Button>
           &nbsp;&nbsp;&nbsp;
-          <Button bsStyle="info">New dropdown</Button>
+          <Button
+            bsStyle="info"
+            onClick={this.createDropdownMacro}
+          >
+            New dropdown
+          </Button>
         </div>
         <br />
         <Table striped bordered condensed hover responsive>
@@ -100,10 +183,12 @@ DynamicTemplateCreator.propTypes = {
   iconMacros: PropTypes.object,
   dropdownMacros: PropTypes.object,
   /* eslint-enable react/forbid-prop-types */
+  updateUserMacros: PropTypes.func
 };
 
 DynamicTemplateCreator.defaultProps = {
   predefinedMacros: {},
   iconMacros: {},
   dropdownMacros: {},
+  updateUserMacros: null
 };

@@ -34,29 +34,9 @@ const toolbarOptions = [
   'list', 'bullet',
 ];
 
-const extractMacros = (macros) => {
-  const tKeys = Object.keys(macros);
-
-  return tKeys.reduce(([iData, ddData], tKey) => {
-    const macroNames = macros[tKey];
-
-    /* eslint-disable no-param-reassign */
-    if (tKey === '_toolbar') {
-      macroNames.forEach((name) => {
-        iData[name] = sampleAnalysesMacros[name];
-      });
-    } else {
-      const data = {};
-      macroNames.forEach((name) => {
-        data[name] = sampleAnalysesMacros[name];
-      });
-      ddData[tKey] = data;
-    }
-    /* eslint-enable no-param-reassign */
-
-    return [iData, ddData];
-  }, [{}, {}]);
-};
+const extractMacros = macroNames => macroNames.reduce((hash, n) => (
+  Object.assign(hash, { [n]: sampleAnalysesMacros[n] })
+), {});
 
 export default class ContainerComponentEditor extends React.Component {
   constructor(props) {
@@ -75,6 +55,7 @@ export default class ContainerComponentEditor extends React.Component {
     this.selectDropdown = this.selectDropdown.bind(this);
     this.iconOnClick = this.iconOnClick.bind(this);
     this.applyMacro = this.applyMacro.bind(this);
+    this.updateUserMacros = this.updateUserMacros.bind(this);
   }
 
   onChangeContent(quillEditor) {
@@ -143,16 +124,41 @@ export default class ContainerComponentEditor extends React.Component {
     this.applyMacro(macro);
   }
 
+  updateUserMacros(iconMacroNames, dropdownMacroNames) {
+    const { updateUserMacros } = this.props;
+    const userMacros = { _toolbar: iconMacroNames };
+    Object.keys(dropdownMacroNames).forEach((n) => {
+      userMacros[n] = dropdownMacroNames[n];
+    });
+
+    updateUserMacros(userMacros);
+  }
+
   render() {
     let { macros } = this.props;
     if (Object.keys(macros).length === 0) {
-      macros = {
-        _toolbar: defaultMacroToolbar,
-        MS: defaultMacroDropdown
-      };
+      macros = Object.assign(
+        defaultMacroDropdown,
+        { _toolbar: defaultMacroToolbar }
+      );
     }
-    const [iconMacros, ddMacros] = extractMacros(macros);
 
+    // eslint-disable-next-line no-underscore-dangle
+    const iconMacroNames = macros._toolbar;
+    const ddMacroNames = [];
+    Object.keys(macros).filter(n => n !== '_toolbar').forEach((n) => {
+      ddMacroNames[n] = macros[n];
+    });
+
+    const iconMacros = extractMacros(iconMacroNames);
+    const ddMacros = {};
+    Object.keys(ddMacroNames).forEach((n) => {
+      ddMacros[n] = extractMacros(ddMacroNames[n]);
+    });
+
+    const { container, readOnly } = this.props;
+    const value = container.extended_metadata.content || {};
+    const autoFormatIcon = <span className="fa fa-magic" />;
     const templateCreatorPopover = (
       <Popover
         id="popover-positioned-top"
@@ -160,16 +166,13 @@ export default class ContainerComponentEditor extends React.Component {
         className="analyses-template-creator"
       >
         <DynamicTemplateCreator
-          iconMacros={iconMacros}
-          dropdownMacros={ddMacros}
+          iconMacros={iconMacroNames}
+          dropdownMacros={ddMacroNames}
           predefinedMacros={sampleAnalysesMacros}
+          updateUserMacros={this.updateUserMacros}
         />
       </Popover>
     );
-
-    const { container, readOnly } = this.props;
-    const value = container.extended_metadata.content || {};
-    const autoFormatIcon = <span className="fa fa-magic" />;
 
     return (
       <div>
@@ -226,6 +229,7 @@ export default class ContainerComponentEditor extends React.Component {
             placement="top"
             rootClose
             overlay={templateCreatorPopover}
+            onHide={this.onCloseTemplateCreator}
           >
             <span className="ql-formats">
               <button className="ql-editTemplate">
@@ -253,14 +257,16 @@ ContainerComponentEditor.propTypes = {
   /* eslint-disable react/forbid-prop-types */
   macros: PropTypes.object,
   container: PropTypes.object,
-  onChange: PropTypes.func,
-  readOnly: PropTypes.bool,
   /* eslint-enable react/forbid-prop-types */
+  readOnly: PropTypes.bool,
+  onChange: PropTypes.func,
+  updateUserMacros: PropTypes.func,
 };
 
 ContainerComponentEditor.defaultProps = {
   readOnly: false,
   macros: {},
   container: {},
-  onChange: null
+  onChange: null,
+  updateUserMacros: null
 };
