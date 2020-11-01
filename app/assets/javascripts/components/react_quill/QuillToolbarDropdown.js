@@ -43,6 +43,8 @@ export default class QuillToolbarDropdown extends React.Component {
     this.pickerLabel.current.style.width = `${requiredWidth}px`;
 
     window.addEventListener('click', (e) => {
+      if (!this.pickerSpan.current) return;
+
       if (!this.pickerSpan.current.contains(e.target)) {
         this.pickerSpan.current.classList.remove('ql-expanded');
       }
