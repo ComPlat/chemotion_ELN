@@ -3,10 +3,10 @@ import {
   slice,
   intersectionWith,
   findIndex,
+  filter
 } from 'lodash';
 import Aviator from 'aviator';
 import alt from '../alt';
-
 import UserStore from './UserStore';
 import ElementActions from '../actions/ElementActions';
 import CollectionActions from '../actions/CollectionActions';
@@ -484,9 +484,40 @@ class ElementStore {
   // SEARCH
 
   handleFetchBasedOnSearchSelection(result) {
+    console.log(result);
     Object.keys(result).forEach((key) => {
-      this.state.elements[key] = result[key];
+      console.log(key);
+      console.log(result[key]);
+      if (key == 'genericEls') {
+        console.log(result[key]);
+
+        const { klasses } = UIStore.getState();
+        console.log(klasses);
+
+        // eslint-disable-next-line no-unused-expressions
+        klasses && klasses.forEach((klass) => {
+          console.log(klass);
+          const els = filter(result[key].elements, o => o.type == klass);
+          const elIds = els.map(el => el.id);
+
+          this.state.elements[`${klass}s`] = {
+            elements: els,
+            ids: elIds,
+            page: result[key].page,
+            pages: result[key].pages,
+            perPage: result[key].perPage,
+            totalElements: els.length
+          };
+          //result[key].elements.filter(u => u.type == klass);
+          //filter(result[key].elements, o => o.type == klass);
+        });
+
+        //this.state.elements['mofs'] = result[key];
+      } else {
+        this.state.elements[key] = result[key];
+      }
     });
+    console.log(this.state.elements);
   }
 
   handlefetchBasedOnStructureAndCollection(result) {
@@ -496,7 +527,8 @@ class ElementStore {
   }
 
   handleFetchGenericElByCriteria(result) {
-    this.state.elements['genericEls'] = result;
+    console.log(result);
+    this.state.elements.mofs = result.mofs.elements;
   }
 
   // -- Elements --
@@ -518,7 +550,7 @@ class ElementStore {
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-      const klasses = UIStore.getState();
+      const { klasses } = UIStore.getState();
 
       // eslint-disable-next-line no-unused-expressions
       klasses && klasses.forEach((klass) => {

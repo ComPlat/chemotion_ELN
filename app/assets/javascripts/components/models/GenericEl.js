@@ -9,7 +9,7 @@ export default class GenericEl extends Element {
     return new GenericEl({
       collection_id,
       type: klass.name,
-      element_klass_id: this.element_klass_id,
+      element_klass_id: this.element_klass_id || (klass && klass.id),
       short_label: GenericEl.buildNewShortLabel(klass),
       name: `New ${klass.label}`,
       container: Container.init(),

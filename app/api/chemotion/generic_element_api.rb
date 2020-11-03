@@ -36,31 +36,39 @@ module Chemotion
         desc "search Generic Elements"
         params do
           optional :collectionId, type: Integer, desc: 'Collection id'
-          optional :isSync, type: Integer, desc: 'isSync'
+          optional :isSync, type: Boolean, desc: 'isSync'
           optional :genericElName, type: String, desc: 'genericElName'
           optional :genericElProperties, type: Hash, desc: 'genericElProperties'
+          optional :searchName, type: String, desc: 'genericElName'
+          optional :searchProperties, type: Hash, desc: 'genericElProperties'
         end
         paginate per_page: 7, offset: 0, max_per_page: 100
         post do
-          element_scope = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
-                          .find(params[:collectionId]).elements
-          if params[:genericElName].present?
-            element_scope = element_scope.where("name like (?)", "%#{params[:genericElName]}%")
-          end
+#byebug
+          element_scope = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).find(params[:collectionId]).elements
+#byebug
 
-          params[:genericElProperties] && params[:genericElProperties].keys.each do |lk|
-            layer = params[:genericElProperties][lk]
-            qs = layer[:fields].select{ |f| f[:value].present? }
-            qs.each do |f|
-              query = {"#{lk}":{"fields":[{"field": "#{f[:field]}", "value":"#{f[:value]}"}]}}
-              element_scope = element_scope.where("properties @> ?", query.to_json)
-            end
+          if params[:searchName].present?
+            element_scope = element_scope.where("name like (?)", "%#{params[:searchName]}%")
           end
+#byebug
+          # if params[:searchProperties].present?
+          #   params[:searchProperties] && params[:searchProperties][:layer] && params[:searchProperties][:layer].keys.each do |lk|
+          #     layer = params[:searchProperties][:layer][lk]
+          #     qs = layer[:fields].select{ |f| f[:value].present? }
+          #     qs.each do |f|
+          #       query = {"#{lk}":{"fields":[{"field": "#{f[:field]}", "value":"#{f[:value]}"}]}}
+          #       element_scope = element_scope.where("properties @> ?", query.to_json)
+          #     end
+          #   end
+          # end
 
           reset_pagination_page(element_scope)
-          paginate(element_scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
-
-
+          serialized_elements = paginate(element_scope).map{ |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
+#byebug
+          result = {}
+          result["#{params[:genericElName]}s"] = { elements: serialized_elements, totalElements: 100, page: 1, pages: 15, perPage: 15, ids: [6] }
+          result
         end
       end
 

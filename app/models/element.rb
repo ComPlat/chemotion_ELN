@@ -16,12 +16,19 @@
 # Generic Element
 class Element < ActiveRecord::Base
   acts_as_paranoid
+  include PgSearch
   include ElementUIStateScopes
   include Collectable
   include AnalysisCodes
   include Taggable
 
+  multisearchable against: %i[name short_label]
+
+  pg_search_scope :search_by_substring, against: %i[name short_label], using: { trigram: { threshold: 0.0001 }}
+
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_klass_id_short_label, ->(klass_id, short_label) { where('element_klass_id = ? and short_label ILIKE ?', klass_id, "%#{sanitize_sql_like(short_label)}%") }
 
   belongs_to :element_klass
   has_many :collections_elements, dependent: :destroy

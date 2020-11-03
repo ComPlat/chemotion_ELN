@@ -3,6 +3,7 @@ import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+import GenericEl from '../models/GenericEl';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
@@ -25,7 +26,7 @@ export default class SearchFetcher {
       })
     }).then(response => response.json())
       .then((json) => {
-        const { samples, reactions, wellplates, screens } = json;
+        const { samples, reactions, wellplates, screens, genericEls } = json;
         const result = { ...json };
         if (samples && samples.totalElements && samples.totalElements > 0) {
           result.samples.elements = samples.elements.map(s => (new Sample(s)));
@@ -39,6 +40,10 @@ export default class SearchFetcher {
         if (screens && screens.totalElements && screens.totalElements > 0) {
           result.screens.elements = screens.elements.map(s => (new Screen(s)));
         } else { result.screens = { elements: [], totalElements: 0, ids: [] }; }
+        if (genericEls && genericEls.totalElements && genericEls.totalElements > 0) {
+          result.genericEls.elements = genericEls.elements.map(s => (new GenericEl(s)));
+        } else { result.screens = { elements: [], totalElements: 0, ids: [] }; }
+
         return result;
       }).catch((errorMessage) => { console.log(errorMessage); });
   }

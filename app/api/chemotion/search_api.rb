@@ -205,6 +205,7 @@ module Chemotion
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
+        element_list = elements.fetch(:elements, [])
         samples_data = serialize_samples(samples, page, search_by_method, molecule_sort)
         serialized_samples = samples_data[:data]
         samples_size = samples_data[:size]
@@ -235,6 +236,13 @@ module Chemotion
           collections: :sync_collections_users
         ).find(ids).map{ |s|
           ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys
+        }
+
+        ids = Kaminari.paginate_array(element_list).page(page).per(page_size)
+        serialized_elements = Element.includes(
+          collections: :sync_collections_users
+        ).find(ids).map{ |s|
+          ElementSerializer.new(s).serializable_hash.deep_symbolize_keys
         }
 
         {
@@ -269,6 +277,14 @@ module Chemotion
             pages: pages(screens.size),
             perPage: page_size,
             ids: screens
+          },
+          genericEls: {
+            elements: serialized_elements,
+            totalElements: element_list.size,
+            page: page,
+            pages: pages(element_list.size),
+            perPage: page_size,
+            ids: element_list
           }
         }
       end
@@ -309,7 +325,7 @@ module Chemotion
           Wellplate.by_collection_id(c_id).search_by(search_method, arg)
         when 'screen_name'
           Screen.by_collection_id(c_id).search_by(search_method, arg)
-        when 'substring'
+        when 'substring'         
           # NB we'll have to split the content of the pg_search_document into
           # MW + external_label (dl_s = 0) and the other info only available
           # from dl_s > 0. For now one can use the suggested search instead.
@@ -338,14 +354,15 @@ module Chemotion
                       .order(
                         "LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"
                       ).order('molecules.sum_formular')
+        elsif search_by_method.start_with?("element_short_label_")
+          klass = ElementKlass.find_by(name: search_by_method.sub("element_short_label_",""))
+          return Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
         end
-
         return scope
       end
 
       def elements_by_scope(scope, collection_id = @c_id)
         elements = {}
-
         user_samples = Sample.by_collection_id(collection_id)
           .includes(molecule: :tag)
         user_reactions = Reaction.by_collection_id(collection_id).includes(
@@ -359,6 +376,8 @@ module Chemotion
           wells: :sample
         )
         user_screens = Screen.by_collection_id(collection_id)
+
+        user_elements = Element.by_collection_id(collection_id)
         case scope&.first
         when Sample
           elements[:samples] = scope&.pluck(:id)
@@ -386,10 +405,11 @@ module Chemotion
           elements[:reactions] = (
             user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
           ).uniq.pluck(:id)
+        when Element
+          elements[:elements] = scope&.pluck(:id)
         when AllElementSearch::Results
           # TODO check this samples_ids + molecules_ids ????
           elements[:samples] = (scope&.samples_ids + scope&.molecules_ids)
-
           elements[:reactions] = (
             scope&.reactions_ids +
             user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
@@ -404,8 +424,8 @@ module Chemotion
             scope&.screens_ids +
             user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
           ).uniq
+          elements[:elements] = (scope&.element_ids).uniq
         end
-
         elements
       end
     end
@@ -424,7 +444,6 @@ module Chemotion
         post do
           scope = search_elements(@c_id, @dl)
           return unless scope
-
           elements_ids = elements_by_scope(scope)
 
           serialization_by_elements_and_page(

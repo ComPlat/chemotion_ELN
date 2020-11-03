@@ -19,6 +19,7 @@ export default class GenericElsFetcher {
 
 
   static search(criteria) {
+    console.log(criteria);
     const promise = () => fetch('/api/v1/generic_elements/search/', {
       credentials: 'same-origin',
       method: 'post',
@@ -27,15 +28,12 @@ export default class GenericElsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(criteria)
-    }).then(response => (
-      response.json()
-        .then(json => ({
-          elements: json.search.map(r => (new GenericEl(r))),
-          totalElements: parseInt(response.headers.get('X-Total'), 10),
-          page: parseInt(response.headers.get('X-Page'), 10),
-          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
-          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
-        }))))
+    }).then(response => (response.json())
+      .then((json) => {
+        const result = { ...json };
+        result[`${criteria.genericElName}s`].elements = result[`${criteria.genericElName}s`].elements.map(r => (new GenericEl(r)));
+        return result;
+      }))
       .catch((errorMessage) => { console.log(errorMessage); });
 
     return promise();

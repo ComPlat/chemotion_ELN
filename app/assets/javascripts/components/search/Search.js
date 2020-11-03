@@ -13,7 +13,7 @@ import UIStore from '../stores/UIStore';
 import UIActions from '../actions/UIActions';
 import UserStore from '../stores/UserStore';
 import GenericElCriteriaModal from '../GenericElCriteriaModal';
-import GenericElCriteriaMof from '../GenericElCriteriaMof';
+import GenericElCriteria from '../GenericElCriteria';
 import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 import GenericEl from '../models/GenericEl';
 
@@ -93,17 +93,21 @@ export default class Search extends React.Component {
       });
   }
 
-  genericElSearch() {
+  genericElSearch(geEl=null) {
+    console.log(geEl);
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
     const { genericEl } = this.state;
+    console.log(genericEl.search_name);
     const criteria = {
       collectionId,
       isSync,
       search_by_method: 'MOF',
       genericElName: genericEl.name,
+      searchName: genericEl.search_name,
+      searchProperties: genericEl.search_properties,
       genericElProperties: genericEl.properties,
       elementType: this.state.elementType,
       page_size: uiState.number_of_results,
@@ -140,9 +144,10 @@ export default class Search extends React.Component {
     this.setState({ showGenericElCriteria: false });
   }
 
-  handleElementSelection(event) {
-    if (event === 'genericelement') {
+  handleElementSelection(event, element = null) {
+    if (event.startsWith('elements-')) {
       this.showGenericElCriteria();
+      this.setState({ elementType: event, genericEl: element });
     } else {
       this.setState({ elementType: event });
     }
@@ -195,11 +200,16 @@ export default class Search extends React.Component {
     );
 
     menu.push(<MenuItem key="divider-generic" divider />);
-    menu.push(
-      <MenuItem key="GenericElement" onSelect={() => this.handleElementSelection('GenericElement'.toLowerCase())}>
-        MOF
-      </MenuItem>
-    );
+
+    const genericEls = UserStore.getState().genericEls || [];
+
+    genericEls.forEach((el) => {
+      menu.push(
+        <MenuItem key={`menu-el-${el.name}`} onSelect={() => this.handleElementSelection(`elements-${el.name}`, el)}>
+          {el.label}
+        </MenuItem>
+      );  
+    });
 
     return menu;
   }
@@ -281,8 +291,9 @@ export default class Search extends React.Component {
 
     const mofProps = {
       show: this.state.showGenericElCriteria,
-      component: <GenericElCriteriaMof genericEl={this.state.genericEl} onHide={this.hideGenericElCriteria} onSearch={this.genericElSearch} />,
-      title: 'Please input your search criteria for Metal-Organic Frameworks, MOF',
+      type: this.state.elementType,
+      component: <GenericElCriteria genericEl={this.state.genericEl} onHide={this.hideGenericElCriteria} onSearch={this.genericElSearch} />,
+      title: `Please input your search criteria for ${this.state.elementType}`,
       onHide: this.hideGenericElCriteria
     };
 

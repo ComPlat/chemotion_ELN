@@ -174,6 +174,7 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(params) {
+    console.log(params);
     let uid;
     NotificationActions.add({
       title: "Searching ...",
@@ -181,9 +182,9 @@ class ElementActions {
       position: "tc",
       onAdd: function(notificationObject) { uid = notificationObject.uid; }
     });
-    if (params && params.selection && params.selection.search_by_method == 'MOF') {
+    if (params && params.selection && params.selection.search_by_method && params.selection.search_by_method.startsWith("1sselement_short_label")) {
       return (dispatch) => {
-        GenericElsFetcher.search(criteria)
+        GenericElsFetcher.search(params)
           .then((result) => {
             dispatch(result);
             NotificationActions.removeByUid(uid);
@@ -202,6 +203,7 @@ class ElementActions {
   }
 
   fetchGenericElByCriteria(criteria) {
+    console.log(criteria);
     let uid = "search_generic_elements";
     NotificationActions.add({
       title: "Searching ...",
