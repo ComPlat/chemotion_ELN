@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
-  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml raw cdf zip]
+  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip]
 
   extend ActiveSupport::Concern
 
