@@ -1,4 +1,4 @@
-const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'raw', 'cdf', 'zip'];
+const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'mzxml', 'raw', 'cdf', 'zip'];
 
 const JcampIds = (container) => {
   let origJcampIds = [];
