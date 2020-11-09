@@ -14,6 +14,7 @@ import ConfirmClose from './common/ConfirmClose';
 import GenericElDetailsContainers from './GenericElDetailsContainers';
 import { GenProperties, GenPropertiesLayer } from './GenericElCommon';
 import GenericEl from './models/GenericEl';
+import CopyElementModal from './common/CopyElementModal';
 import NotificationActions from '../components/actions/NotificationActions';
 
 export default class GenericElDetails extends Component {
@@ -231,6 +232,19 @@ export default class GenericElDetails extends Component {
   header(genericEl) {
     const iconClass = (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
 
+    const { currentCollection } = UIStore.getState();
+    const defCol = currentCollection && currentCollection.is_shared === false &&
+    currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+    //genericEl.can_copy = true;
+    const copyBtn = (genericEl.can_copy && !genericEl.isNew) ? (
+      <CopyElementModal
+        element={genericEl}
+        defCol={defCol}
+      />
+    ) : null;
+
+
     const saveBtnDisplay = genericEl.changed ? '' : 'none';
     const datetp = `Created at: ${genericEl.created_at} \n Updated at: ${genericEl.updated_at}`;
     return (
@@ -242,6 +256,7 @@ export default class GenericElDetails extends Component {
           </span>
         </OverlayTrigger>
         <ConfirmClose el={genericEl} />
+        {copyBtn}
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="saveScreen">Save</Tooltip>}

@@ -181,6 +181,8 @@ const genericElShowOrNew = (e, type) => {
   const genericElID = e.params[`${itype}ID`];
   if (genericElID === 'new') {
     ElementActions.generateEmptyGenericEl(collectionID, itype);
+  } else if (genericElID === 'copy') {
+    //
   } else {
     ElementActions.fetchGenericElById(genericElID, itype);
   }

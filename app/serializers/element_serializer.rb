@@ -16,6 +16,10 @@ class ElementSerializer < ActiveModel::Serializer
     object.element_klass.name
   end
 
+  def can_copy
+    true
+  end
+  
   def type
     object.element_klass.name #'genericEl' #object.type
   end

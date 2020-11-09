@@ -1,7 +1,7 @@
 class DetailLevels::Element
     def base_attributes
       [
-        :id, :type, :name, :properties, :created_by, :created_at, :updated_at, :container, :short_label
+        :id, :type, :name, :properties, :created_by, :created_at, :updated_at, :container, :short_label, :can_copy
       ]
     end
 

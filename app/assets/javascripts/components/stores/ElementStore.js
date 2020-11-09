@@ -39,6 +39,7 @@ import DetailActions from '../actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
 import { chmoConversions } from '../OlsComponent';
 import MatrixCheck from '../common/MatrixCheck';
+import GenericEl from '../models/GenericEl';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -180,6 +181,7 @@ class ElementStore {
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
       handleCopyReaction: ElementActions.copyReaction,
+      handleCopyElement: ElementActions.copyElement,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples:
@@ -921,6 +923,12 @@ class ElementStore {
   handleCopyReaction(result) {
     this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(result.reaction, result.colId));
     Aviator.navigate(`/collection/${result.colId}/reaction/copy`);
+  }
+
+  handleCopyElement(result) {
+    console.log(result);
+    this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
+    Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
   }
 
   handleOpenReactionDetails(reaction) {

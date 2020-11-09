@@ -57,10 +57,15 @@ export default class CopyElementModal extends React.Component {
       return false;
     }
 
+    console.log(element);
+    console.log(element.type);
+
     if (element.type == 'sample') {
       ClipboardActions.fetchElementAndBuildCopy(element, selectedCol, 'copy_sample');
     } else if (element.type == 'reaction') {
-      ElementActions.copyReaction(element, selectedCol);
+      ElementActions.copyReaction(element, selectedCol);  
+    } else {
+      ElementActions.copyElement(element, selectedCol);  
     }
 
     this.setState({ showModal: false });

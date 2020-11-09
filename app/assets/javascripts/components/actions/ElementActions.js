@@ -511,6 +511,12 @@ class ElementActions {
     )
   }
 
+  copyElement(element, colId) {
+    return (
+      { element: element, colId: colId }
+    )
+  }
+
   openReactionDetails(reaction) {
     return  reaction;
   }

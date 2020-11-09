@@ -4,6 +4,7 @@ import Container from './Container';
 import UserStore from '../stores/UserStore';
 
 export default class GenericEl extends Element {
+
   static buildEmpty(collection_id, klass) {
     const template = (klass && klass.properties_template) || {};
     return new GenericEl({
@@ -15,6 +16,7 @@ export default class GenericEl extends Element {
       container: Container.init(),
       properties: template.layers,
       element_klass: klass,
+      can_copy: false,
       properties_template: []
     });
   }
@@ -22,6 +24,7 @@ export default class GenericEl extends Element {
   serialize() {
     return super.serialize({
       name: this.name,
+      can_copy: true,
       klassType: 'GenericEl',
       element_klass: this.element_klass,
       element_klass_id: this._element_klass_id,
@@ -36,6 +39,32 @@ export default class GenericEl extends Element {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return `new_${klass.label}`; }
     return `${currentUser.initials}-${klass.klass_prefix}${parseInt(currentUser.counters[klass.name] || 0, 10) + 1}`;
+  }
+
+
+  buildCopy(params = {}) {
+    const copy = super.buildCopy();
+    console.log(copy);
+    Object.assign(copy, params);
+    copy.short_label = GenericEl.buildNewShortLabel(copy.element_klass);
+    copy.can_update = true;
+    copy.can_copy = false;
+    return copy;
+  }
+
+  static copyFromCollectionId(element, collection_id) {
+    const params = {
+      collection_id,
+      role: 'parts',
+      timestamp_start: '',
+      timestamp_stop: '',
+      rf_value: 0.00,
+      status: '',
+    }
+    const copy = element.buildCopy(params);
+    copy.origin = { id: element.id, short_label: element.short_label };
+    //copy.name = copy.nameFromRole(copy.role);
+    return copy;
   }
 
   get klassType() {

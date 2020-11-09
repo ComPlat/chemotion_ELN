@@ -26,6 +26,8 @@ class Element < ActiveRecord::Base
 
   pg_search_scope :search_by_substring, against: %i[name short_label], using: { trigram: { threshold: 0.0001 }}
 
+  attr_accessor :can_copy
+
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_klass_id_short_label, ->(klass_id, short_label) { where('element_klass_id = ? and short_label ILIKE ?', klass_id, "%#{sanitize_sql_like(short_label)}%") }
