@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import alt from '../alt';
 
 import UIActions from './UIActions';
@@ -24,6 +25,7 @@ import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
 import Format from '../models/Format';
 import Graph from '../models/Graph';
+import ComputeTask from '../models/ComputeTask';
 import DeviceControl from '../models/DeviceControl';
 import LiteratureMap from '../models/LiteratureMap';
 import Prediction from '../models/Prediction';
@@ -596,6 +598,10 @@ class ElementActions {
 
   showComputedPropsGraph() {
     return Graph.buildEmptyScatter();
+  }
+
+  showComputedPropsTasks() {
+    return ComputeTask.buildEmpty();
   }
 
   showLiteratureDetail() {

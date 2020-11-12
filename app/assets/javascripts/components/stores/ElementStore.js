@@ -204,6 +204,7 @@ class ElementStore {
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
+          ElementActions.showComputedPropsTasks,
           ElementActions.showDeviceControl,
           ElementActions.showLiteratureDetail,
           ElementActions.showPredictionContainer,
