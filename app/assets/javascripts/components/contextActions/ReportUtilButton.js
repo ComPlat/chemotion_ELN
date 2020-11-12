@@ -23,23 +23,40 @@ const showComputedPropsGraph = () => {
   ElementActions.showComputedPropsGraph();
 };
 
-const ReportUtilButton = ({ customClass  }) => {
+const showComputedPropsTasks = () => {
+  ElementActions.showComputedPropsTasks();
+};
+
+const ReportUtilButton = ({ customClass }) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
   const enableReactionPredict = MatrixCheck(currentUser.matrix, 'reactionPrediction');
-  const graphItem = enableComputedProps ? (
-    <MenuItem onSelect={showComputedPropsGraph} title="Graph">
-      Graph
-    </MenuItem>
-  ) : (
-    <span />
-  );
 
-  const predBtn = enableReactionPredict ? (
-    <MenuItem onSelect={showPredictionContainer} title="Predict">
-      Synthesis Prediction
-    </MenuItem>
-  ) : (<span />);
+  let graph = <span />;
+  let task = <span />;
+  if (enableComputedProps) {
+    graph = (
+      <MenuItem onSelect={showComputedPropsGraph} title="Graph">
+        Computed Props Graph
+      </MenuItem>
+    );
+    task = (
+      <MenuItem onSelect={showComputedPropsTasks} title="Graph">
+        Computed Props Tasks
+      </MenuItem>
+    );
+  }
+
+  let predDiv = <span />;
+  let divider = <span />;
+  if (enableReactionPredict) {
+    divider = <MenuItem divider />;
+    predDiv = (
+      <MenuItem onSelect={showPredictionContainer} title="Predict">
+        Synthesis Prediction
+      </MenuItem>
+    );
+  }
 
   return (
     <Dropdown id="format-dropdown">
@@ -59,9 +76,10 @@ const ReportUtilButton = ({ customClass  }) => {
         <MenuItem onSelect={ElementActions.showLiteratureDetail} title="Reference Manager">
           Literature
         </MenuItem>
-        {graphItem}
-        <MenuItem divider />
-        {predBtn}
+        {graph}
+        {task}
+        {divider}
+        {predDiv}
       </Dropdown.Menu>
     </Dropdown>
   );

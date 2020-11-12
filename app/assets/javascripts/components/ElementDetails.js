@@ -11,11 +11,73 @@ import ResearchPlanDetails from './research_plan/ResearchPlanDetails';
 import ReportContainer from './report/ReportContainer';
 import FormatContainer from './FormatContainer';
 import GraphContainer from './GraphContainer';
+import ComputeTaskContainer from './ComputeTaskContainer';
 import DetailActions from './actions/DetailActions';
 import ElementStore from './stores/ElementStore';
 import { SameEleTypId } from './utils/ElementUtils';
 import LiteratureDetails from './LiteratureDetails';
 import PredictionContainer from './prediction/PredictionContainer';
+
+const tabInfoHash = {
+  report: {
+    title: 'Report',
+    iconEl: (
+      <span>
+        <i className="fa fa-file-text-o" />&nbsp;&nbsp;
+        <i className="fa fa-pencil" />
+      </span>
+    )
+  },
+  prediction: {
+    title: 'Synthesis Prediction',
+    iconEl: (
+      <span>
+        <i className="fa fa-percent" />
+      </span>
+    )
+  },
+  deviceCtrl: {
+    title: 'Measurement',
+    iconEl: (
+      <span>
+        <i className="fa fa-bar-chart" />
+        <i className="fa fa-cogs" />
+      </span>
+    )
+  },
+  format: {
+    title: 'Format',
+    iconEl: (
+      <span>
+        <i className="fa fa-magic" />
+      </span>
+    )
+  },
+  graph: {
+    title: 'Graph',
+    iconEl: (
+      <span>
+        <i className="fa fa-area-chart" />
+      </span>
+    )
+  },
+  task: {
+    title: 'Task',
+    iconEl: (
+      <span>
+        <i className="fa fa-wrench" />
+      </span>
+    )
+  },
+  literature_map: {
+    title: 'Literature',
+    iconEl: (
+      <span>
+        <i className="fa fa-book" aria-hidden="true" />
+      </span>
+    )
+  }
+};
 
 export default class ElementDetails extends Component {
   constructor(props) {
@@ -134,8 +196,10 @@ export default class ElementDetails extends Component {
         return <FormatContainer format={el} />;
       case 'graph':
         return <GraphContainer graph={el} />;
+      case 'task':
+        return <ComputeTaskContainer task={el} />;
       case 'literature_map':
-        return <LiteratureDetails literatureMap={el} />
+        return <LiteratureDetails literatureMap={el} />;
       default:
         return (
           <div style={{ textAlign: 'center' }}>
@@ -154,66 +218,15 @@ export default class ElementDetails extends Component {
   }
 
   tabTitle(el, elKey) {
-    let bsStyle = el.isPendingToSave ? 'info' : 'primary';
+    const bsStyle = el.isPendingToSave ? 'info' : 'primary';
     const focusing = elKey === this.state.activeKey;
 
     let iconElement = (<i className={`icon-${el.type}`} />);
-    let title = el.title();
 
-    if (el.type === 'report') {
-      title = 'Report';
-      bsStyle = 'primary';
-      iconElement = (
-        <span>
-          <i className="fa fa-file-text-o" />&nbsp;&nbsp;
-          <i className="fa fa-pencil" />
-        </span>
-      );
-    } else if (el.type === 'prediction') {
-      title = 'Synthesis Prediction';
-      bsStyle = 'primary';
-      iconElement = (
-        <span>
-          <i className="fa fa-percent" />
-        </span>
-      );
-    } else if (el.type === 'deviceCtrl') {
-      title = 'Measurement';
-      bsStyle = 'primary';
-      iconElement = (
-        <span>
-          <i className="fa fa-bar-chart" />
-          <i className="fa fa-cogs" />
-        </span>
-      );
-    } else if (el.type === 'format') {
-      title = "Format";
-      bsStyle = "primary";
-      iconElement = (
-        <span>
-          <i className="fa fa-magic" />
-        </span>
-      );
-    } else if (el.type === 'graph') {
-      title = 'Graph';
-      bsStyle = 'primary';
-      iconElement = (
-        <span>
-          <i className="fa fa-area-chart" />
-        </span>
-      );
-    } else if (el.type === 'literature_map') {
-      title = 'Literature';
-      bsStyle = 'primary';
-      iconElement = (
-        <span>
-          <i className="fa fa-book" aria-hidden="true" />
-        </span>
-      );
-    }
-
-    const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle}>{iconElement}</Label>);
-
+    const tab = tabInfoHash[el.type] || {};
+    const title = tab.title || el.title();
+    iconElement = tab.iconEl;
+    const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle || ''}>{iconElement}</Label>);
     return (<div>{icon} &nbsp; {title} </div>);
   }
 
