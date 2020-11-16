@@ -51,7 +51,7 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', '~> 0.1.7', git: 'https://github.com/ComPlat/ketcher-rails', ref: '5ba24d302ae1db2885be74e0784f876cba122800'
+# gem 'ketcherails', '~> 0.1.7', git: 'https://github.com/ComPlat/ketcher-rails', ref: '5ba24d302ae1db2885be74e0784f876cba122800'
 
 gem 'net-sftp'
 gem 'net-ssh'
@@ -67,7 +67,7 @@ gem 'prawn'
 gem 'prawn-svg'
 gem 'pundit'
 
-gem 'rails', '4.2.11.3'
+gem 'rails', '~> 5.0.0'
 gem 'rdkit_chem', git: "https://github.com/CamAnNguyen/rdkit_chem"
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'
@@ -131,7 +131,9 @@ group :development, :test do
 
   gem 'chronic'
 
-  gem 'mailcatcher', '0.7.1'
+  # Install mailcatcher outside the bundle since it does not support rack 2.0
+  # Use `gem install mailcatcher` instead
+  # gem 'mailcatcher'
   gem 'meta_request'
 
   gem 'rspec-rails'
