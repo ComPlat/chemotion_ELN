@@ -1,7 +1,7 @@
 # Job to update molecule info for molecules with no CID
 # associated CID (molecule tag) and iupac names (molecule_names) are updated if
 # inchikey found in PC db
-class MoveToCollectionJob < ActiveJob::Base
+class MoveToCollectionJob < ApplicationJob
   # queue_as :move_to_collection
 
   STATE_MOVING = 'moving'

@@ -42,7 +42,7 @@
 #
 
 
-class Reaction < ActiveRecord::Base
+class Reaction < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch

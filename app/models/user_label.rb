@@ -14,6 +14,6 @@
 #  deleted_at   :datetime
 #
 
-class UserLabel < ActiveRecord::Base
+class UserLabel < ApplicationRecord
     acts_as_paranoid
 end

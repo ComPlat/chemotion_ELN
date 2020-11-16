@@ -1,7 +1,7 @@
 # Job to update molecule info for molecules with no CID
 # associated CID (molecule tag) and iupac names (molecule_names) are updated if
 # inchikey found in PC db
-class GateTransferJob < ActiveJob::Base
+class GateTransferJob < ApplicationJob
   # queue_as :gate_transfer
   # job_options retry: false
   SAMPLE = 'Sample'

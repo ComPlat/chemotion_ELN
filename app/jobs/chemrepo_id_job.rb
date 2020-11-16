@@ -2,7 +2,7 @@
 
 # Job to update molecule info(molecule tag) for molecules with no chemrepo_id if
 # inchikey found in ChemotionRepository
-class ChemrepoIdJob < ActiveJob::Base
+class ChemrepoIdJob < ApplicationJob
   queue_as :chemrepo_id_job
 
   def perform(

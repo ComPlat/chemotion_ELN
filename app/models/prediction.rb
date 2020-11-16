@@ -19,6 +19,6 @@
 
 
 # Prediction model
-class Prediction < ActiveRecord::Base
+class Prediction < ApplicationRecord
   belongs_to :predictable, polymorphic: true
 end

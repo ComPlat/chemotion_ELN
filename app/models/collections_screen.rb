@@ -14,7 +14,7 @@
 #  index_collections_screens_on_screen_id_and_collection_id  (screen_id,collection_id) UNIQUE
 #
 
-class CollectionsScreen < ActiveRecord::Base
+class CollectionsScreen < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection
   belongs_to :screen

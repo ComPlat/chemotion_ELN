@@ -31,9 +31,8 @@
 #
 
 # ComputedProp, Molecule computed properties via OpenMOPAC and TURBOMOLE
-class ComputedProp < ActiveRecord::Base
+class ComputedProp < ApplicationRecord
   acts_as_paranoid
-
   belongs_to :molecule
   belongs_to :user
 

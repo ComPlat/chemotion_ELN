@@ -12,7 +12,7 @@
 #  index_users_groups_on_user_id   (user_id)
 #
 
-class UsersGroup < ActiveRecord::Base
+class UsersGroup < ApplicationRecord
   belongs_to :user
   belongs_to :group
 

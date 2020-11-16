@@ -15,7 +15,7 @@
 #  index_wellplates_on_deleted_at  (deleted_at)
 #
 
-class Wellplate < ActiveRecord::Base
+class Wellplate < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch

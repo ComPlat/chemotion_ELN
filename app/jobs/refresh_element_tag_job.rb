@@ -1,4 +1,4 @@
-class RefreshElementTagJob < ActiveJob::Base
+class RefreshElementTagJob < ApplicationJob
   queue_as :refresh_element_tag
 
   def perform

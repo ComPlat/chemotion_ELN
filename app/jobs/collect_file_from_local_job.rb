@@ -1,4 +1,4 @@
-class CollectFileFromLocalJob < ActiveJob::Base
+class CollectFileFromLocalJob < ApplicationJob
   queue_as :collect_data
   
   def perform

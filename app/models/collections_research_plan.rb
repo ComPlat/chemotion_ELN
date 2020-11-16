@@ -12,7 +12,7 @@
 #  index_collections_research_plans_on_rplan_id_and_coll_id  (research_plan_id,collection_id) UNIQUE
 #
 
-class CollectionsResearchPlan < ActiveRecord::Base
+class CollectionsResearchPlan < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection
   belongs_to :research_plan

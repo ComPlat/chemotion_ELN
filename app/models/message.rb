@@ -14,7 +14,7 @@
 
 
 # Publish-Subscription Model
-class Message < ActiveRecord::Base
+class Message < ApplicationRecord
   belongs_to :channel
   scope :where_content, ->(field, value) { where("content ->> ? = ?", field, value) }
 
@@ -38,7 +38,7 @@ class Message < ActiveRecord::Base
     receiver_ids = "ARRAY#{receiver_ids || []}::int[]"
     sql = "select generate_notifications(#{channel_id}, #{message_id},
            #{user_id}, #{receiver_ids}) as message_id"
-    ActiveRecord::Base.connection.exec_query(sql)
+    ApplicationRecord.connection.exec_query(sql)
   end
 
   private_class_method :bulk_create_notifications

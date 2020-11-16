@@ -14,7 +14,7 @@
 #  index_collections_reactions_on_reaction_id_and_collection_id  (reaction_id,collection_id) UNIQUE
 #
 
-class CollectionsReaction < ActiveRecord::Base
+class CollectionsReaction < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection
   belongs_to :reaction

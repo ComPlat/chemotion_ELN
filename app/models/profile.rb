@@ -17,7 +17,7 @@
 #  index_profiles_on_user_id     (user_id)
 #
 
-class Profile < ActiveRecord::Base
+class Profile < ApplicationRecord
   acts_as_paranoid
 
   belongs_to :user

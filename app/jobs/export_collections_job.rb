@@ -1,4 +1,4 @@
-class ExportCollectionsJob < ActiveJob::Base
+class ExportCollectionsJob < ApplicationJob
   include ActiveJob::Status
 
   queue_as :export_collections

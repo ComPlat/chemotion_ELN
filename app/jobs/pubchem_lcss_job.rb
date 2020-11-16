@@ -1,6 +1,6 @@
 # Job to update molecule info for molecules with no LCSS
 # associated LCSS (molecule tag) is updated if cid found in PC db
-class PubchemLcssJob < ActiveJob::Base
+class PubchemLcssJob < ApplicationJob
   queue_as :pubchemLcss
 
   # NB: PC has request restriction policy and timeout , hence the sleep_time and batch_size params

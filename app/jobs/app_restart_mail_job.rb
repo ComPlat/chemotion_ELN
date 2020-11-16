@@ -1,4 +1,4 @@
-class AppRestartMailJob < ActiveJob::Base
+class AppRestartMailJob < ApplicationJob
   queue_as :default
 
   def perform

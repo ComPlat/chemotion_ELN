@@ -8,5 +8,5 @@
 #  updated_at :datetime         not null
 #
 
-class CollectorError < ActiveRecord::Base
+class CollectorError < ApplicationRecord
 end

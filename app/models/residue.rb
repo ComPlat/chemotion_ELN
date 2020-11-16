@@ -14,7 +14,7 @@
 #  index_residues_on_sample_id  (sample_id)
 #
 
-class Residue < ActiveRecord::Base
+class Residue < ApplicationRecord
 
   belongs_to :sample
   validate :loading_present

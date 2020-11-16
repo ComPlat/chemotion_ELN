@@ -14,7 +14,7 @@
 #  index_screens_wellplates_on_wellplate_id  (wellplate_id)
 #
 
-class ScreensWellplate < ActiveRecord::Base
+class ScreensWellplate < ApplicationRecord
   acts_as_paranoid
   belongs_to :screen
   belongs_to :wellplate

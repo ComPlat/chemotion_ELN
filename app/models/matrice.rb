@@ -17,7 +17,7 @@
 #
 #  index_matrices_on_name  (name) UNIQUE
 #
-class Matrice < ActiveRecord::Base
+class Matrice < ApplicationRecord
   acts_as_paranoid
   after_create :gen_json
 

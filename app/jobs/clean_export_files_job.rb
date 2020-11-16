@@ -1,4 +1,4 @@
-class CleanExportFilesJob < ActiveJob::Base
+class CleanExportFilesJob < ApplicationJob
     queue_as :clean_export_files
 
     def perform(job_id, ext)

@@ -1,4 +1,4 @@
-class CollectDataFromMailJob < ActiveJob::Base
+class CollectDataFromMailJob < ApplicationJob
   queue_as :collect_data
   
   def perform
