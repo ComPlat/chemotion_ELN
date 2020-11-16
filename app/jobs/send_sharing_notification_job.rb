@@ -1,4 +1,4 @@
-class SendSharingNotificationJob < ActiveJob::Base
+class SendSharingNotificationJob < ApplicationJob
   queue_as :default
 
   def perform(user, data)

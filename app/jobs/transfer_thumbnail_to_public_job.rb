@@ -1,4 +1,4 @@
-class TransferThumbnailToPublicJob < ActiveJob::Base
+class TransferThumbnailToPublicJob < ApplicationJob
   queue_as :transfer_thumbnail_to_public
 
   def perform(attach_ary)
