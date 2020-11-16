@@ -11,7 +11,7 @@
 #  updated_at :datetime         not null
 #
 
-class ResearchPlanTableSchema < ActiveRecord::Base
+class ResearchPlanTableSchema < ApplicationRecord
   acts_as_paranoid
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'

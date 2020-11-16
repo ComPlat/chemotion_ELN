@@ -14,7 +14,7 @@
 
 
 # Publish-Subscription Model
-class Channel < ActiveRecord::Base
+class Channel < ApplicationRecord
   has_many :subscriptions
   SYSTEM_UPGRADE = 'System Upgrade'
   SYSTEM_NOTIFICATION = 'System Notification'

@@ -16,6 +16,6 @@
 #  index_authentication_keys_on_user_id  (user_id)
 #
 
-class AuthenticationKey < ActiveRecord::Base
+class AuthenticationKey < ApplicationRecord
   belongs_to :user
 end

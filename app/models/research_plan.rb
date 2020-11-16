@@ -11,7 +11,7 @@
 #  body       :jsonb
 #
 
-class ResearchPlan < ActiveRecord::Base
+class ResearchPlan < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
   include Collectable

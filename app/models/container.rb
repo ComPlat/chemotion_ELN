@@ -19,7 +19,7 @@
 #  index_containers_on_containable  (containable_type,containable_id)
 #
 
-class Container < ActiveRecord::Base
+class Container < ApplicationRecord
   include ElementCodes
   belongs_to :containable, polymorphic: true
   has_many :attachments, as: :attachable

@@ -48,7 +48,7 @@
 #  index_samples_on_user_id           (user_id)
 #
 
-class Sample < ActiveRecord::Base
+class Sample < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch

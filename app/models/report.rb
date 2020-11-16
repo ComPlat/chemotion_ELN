@@ -27,7 +27,7 @@
 #  index_reports_on_file_name  (file_name)
 #
 
-class Report < ActiveRecord::Base
+class Report < ApplicationRecord
   acts_as_paranoid
 
   serialize :configs, Hash

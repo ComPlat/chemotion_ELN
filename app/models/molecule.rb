@@ -29,7 +29,7 @@
 #  index_molecules_on_inchikey_and_is_partial  (inchikey,is_partial) UNIQUE
 #
 
-class Molecule < ActiveRecord::Base
+class Molecule < ApplicationRecord
   acts_as_paranoid
 
   attr_accessor :pcid, :ob_log

@@ -14,7 +14,7 @@
 #  index_collections_samples_on_sample_id_and_collection_id  (sample_id,collection_id) UNIQUE
 #
 
-class CollectionsSample < ActiveRecord::Base
+class CollectionsSample < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection
   belongs_to :sample

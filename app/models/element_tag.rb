@@ -14,6 +14,6 @@
 #  index_element_tags_on_taggable_id  (taggable_id)
 #
 
-class ElementTag < ActiveRecord::Base
+class ElementTag < ApplicationRecord
   belongs_to :taggable, polymorphic: true
 end

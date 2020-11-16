@@ -19,7 +19,7 @@
 #
 
 
-class Affiliation < ActiveRecord::Base
+class Affiliation < ApplicationRecord
   attr_accessor :from_month, :to_month
   validates :organization, presence: true
   before_save :from_to

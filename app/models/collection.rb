@@ -28,7 +28,7 @@
 #  index_collections_on_user_id     (user_id)
 #
 
-class Collection < ActiveRecord::Base
+class Collection < ApplicationRecord
   acts_as_paranoid
   belongs_to :user
   has_ancestry
@@ -74,7 +74,7 @@ class Collection < ActiveRecord::Base
   end
 
   def self.bulk_update(user_id, collection_attributes, deleted_ids)
-    ActiveRecord::Base.transaction do
+    ApplicationRecord.transaction do
       update_or_create(user_id, collection_attributes)
       update_parent_child_associations(user_id, collection_attributes)
       delete_set(user_id, deleted_ids)

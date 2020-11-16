@@ -18,7 +18,7 @@
 #  index_screens_on_deleted_at  (deleted_at)
 #
 
-class Screen < ActiveRecord::Base
+class Screen < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch

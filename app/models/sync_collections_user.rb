@@ -24,7 +24,7 @@
 #  index_sync_collections_users_on_user_id_and_fake_ancestry  (user_id,fake_ancestry)
 #
 
-class SyncCollectionsUser < ActiveRecord::Base
+class SyncCollectionsUser < ApplicationRecord
   belongs_to :user
   belongs_to :collection
   belongs_to :sharer, foreign_key: :shared_by_id, class_name: 'User'

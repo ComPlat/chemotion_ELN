@@ -29,7 +29,7 @@
 #
 
 
-class Attachment < ActiveRecord::Base
+class Attachment < ApplicationRecord
   include AttachmentJcampAasm
   include AttachmentJcampProcess
 

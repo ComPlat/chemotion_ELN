@@ -19,7 +19,7 @@
 #  index_reactions_samples_on_sample_id    (sample_id)
 #
 
-class ReactionsSample < ActiveRecord::Base
+class ReactionsSample < ApplicationRecord
   acts_as_paranoid
   belongs_to :reaction
   belongs_to :sample

@@ -22,7 +22,7 @@
 #  index_ols_terms_on_owl_name_and_term_id  (owl_name,term_id) UNIQUE
 #
 
-class OlsTerm < ActiveRecord::Base
+class OlsTerm < ApplicationRecord
   has_ancestry
 
   class << self
@@ -59,7 +59,7 @@ class OlsTerm < ActiveRecord::Base
 
     def delete_owl_by_name(owl_name)
       delete_sql =  sanitize_sql([ SQL_BULK_DELETE, owl_name])
-      ActiveRecord::Base.connection.exec_query(delete_sql)
+      ApplicationRecord.connection.exec_query(delete_sql)
     end
 
     def import_and_create_ols_from_file_path(owl_name, file_path)
@@ -107,7 +107,7 @@ class OlsTerm < ActiveRecord::Base
         next unless value.compact.present?
         values <<  sanitize_sql([SQL_BULK_INSERT_SANITIZE] + value)[BULK_INSERT_STRING_SIZE..-1]
       end
-      ActiveRecord::Base.connection.exec_query("#{SQL_BULK_INSERT} #{values.join(',')}") if values.present?
+      ApplicationRecord.connection.exec_query("#{SQL_BULK_INSERT} #{values.join(',')}") if values.present?
     end
 
     def rebuilt_ancestry_by_owl_name(owl_name)
@@ -146,7 +146,7 @@ class OlsTerm < ActiveRecord::Base
     def switch_by_ids(ids, bool = false)
       ids = [ids].flatten
       sanitized_sql = sanitize_sql([SQL_BULK_SWITCH, bool, ids])
-      ActiveRecord::Base.connection.exec_query(sanitized_sql)
+      ApplicationRecord.connection.exec_query(sanitized_sql)
     end
 
     def write_public_file(owl_name, owl)

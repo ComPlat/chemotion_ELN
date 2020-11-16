@@ -17,7 +17,7 @@
 #  index_code_logs_on_source_and_source_id  (source,source_id)
 #
 
-class CodeLog < ActiveRecord::Base
+class CodeLog < ApplicationRecord
   acts_as_paranoid
   after_create :set_digit_value
 

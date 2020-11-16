@@ -15,7 +15,7 @@
 #  index_elemental_compositions_on_sample_id  (sample_id)
 #
 
-class ElementalComposition < ActiveRecord::Base
+class ElementalComposition < ApplicationRecord
   belongs_to :sample
 
   TYPES = {

@@ -14,7 +14,7 @@
 #  index_collections_wellplates_on_wellplate_id_and_collection_id  (wellplate_id,collection_id) UNIQUE
 #
 
-class CollectionsWellplate < ActiveRecord::Base
+class CollectionsWellplate < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection
   belongs_to :wellplate
