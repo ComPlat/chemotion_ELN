@@ -20,7 +20,7 @@
 #  updated_at          :datetime         not null
 #
 
-class AnalysesExperiment < ActiveRecord::Base
+class AnalysesExperiment < ApplicationRecord
   belongs_to :sample
   belongs_to :devices_analysis
 end

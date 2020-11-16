@@ -19,7 +19,7 @@
 #  updated_at          :datetime         not null
 #
 
-class Experiment < ActiveRecord::Base
+class Experiment < ApplicationRecord
   belongs_to :device
   belongs_to :container
   belongs_to :experimentable, :polymorphic => true

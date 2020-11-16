@@ -7,7 +7,7 @@
 #  device_id :integer
 #
 
-class UsersDevice < ActiveRecord::Base
+class UsersDevice < ApplicationRecord
   belongs_to :user
   belongs_to :device
 

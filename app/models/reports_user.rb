@@ -17,7 +17,7 @@
 #  index_reports_users_on_user_id     (user_id)
 #
 
-class ReportsUser < ActiveRecord::Base
+class ReportsUser < ApplicationRecord
   acts_as_paranoid
 
   belongs_to :user, dependent: :destroy

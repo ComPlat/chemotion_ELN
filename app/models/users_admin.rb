@@ -12,7 +12,7 @@
 #  index_users_admins_on_user_id   (user_id)
 #
 
-class UsersAdmin < ActiveRecord::Base
+class UsersAdmin < ApplicationRecord
   belongs_to :user
   belongs_to :admin, class_name: "Person"
 end

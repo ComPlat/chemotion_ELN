@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Job to transfer thumbnail to public
-class TransferThumbnailToPublicJob < ActiveJob::Base
+class TransferThumbnailToPublicJob < ApplicationJob
   queue_as :transfer_thumbnail_to_public
   def perform(attach_ary)
     attach_ary.each do |attach_id|

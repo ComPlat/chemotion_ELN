@@ -1,4 +1,4 @@
-class ImportCollectionsJob < ActiveJob::Base
+class ImportCollectionsJob < ApplicationJob
   include ActiveJob::Status
 
   queue_as :import_collections

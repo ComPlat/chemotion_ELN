@@ -31,7 +31,7 @@
 #  index_reports_on_report_templates_id  (report_templates_id)
 #
 
-class Report < ActiveRecord::Base
+class Report < ApplicationRecord
   acts_as_paranoid
 
   serialize :configs, Hash

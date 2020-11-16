@@ -13,7 +13,7 @@
 #  main           :boolean
 #
 
-class UserAffiliation < ActiveRecord::Base
+class UserAffiliation < ApplicationRecord
   acts_as_paranoid
   belongs_to :user
   belongs_to :affiliation

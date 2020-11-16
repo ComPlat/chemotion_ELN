@@ -1,4 +1,4 @@
-class CollectDataFromSftpJob < ActiveJob::Base
+class CollectDataFromSftpJob < ApplicationJob
   queue_as :collect_data
 
   def perform

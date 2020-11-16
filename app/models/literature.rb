@@ -17,7 +17,7 @@
 #  index_literatures_on_deleted_at  (deleted_at)
 #
 
-class Literature < ActiveRecord::Base
+class Literature < ApplicationRecord
   acts_as_paranoid
   has_many :literals
 

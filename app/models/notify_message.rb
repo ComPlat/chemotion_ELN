@@ -15,5 +15,5 @@
 #  is_ack       :integer
 #
 
-class NotifyMessage < ActiveRecord::Base
+class NotifyMessage < ApplicationRecord
 end

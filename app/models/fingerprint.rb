@@ -27,7 +27,7 @@
 #  deleted_at   :time
 #
 
-class Fingerprint < ActiveRecord::Base
+class Fingerprint < ApplicationRecord
   # acts_as_paranoid
   include Collectable
 

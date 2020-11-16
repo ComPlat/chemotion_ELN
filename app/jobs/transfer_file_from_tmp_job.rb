@@ -1,4 +1,4 @@
-class TransferFileFromTmpJob < ActiveJob::Base
+class TransferFileFromTmpJob < ApplicationJob
   queue_as :transfer_file_from_tmp
 
   def perform(attach_ary)

@@ -20,7 +20,7 @@
 #
 
 
-class LiteralGroup < ActiveRecord::Base
+class LiteralGroup < ApplicationRecord
   scope :by_element_ids_and_cat, ->(s_ids, r_ids, cats) {
     sql_arr = []
     sql_arr << "(element_type = 'Sample' and element_id in (#{s_ids.join(',')}))" if s_ids.present?

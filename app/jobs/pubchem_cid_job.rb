@@ -1,7 +1,7 @@
 # Job to update molecule info for molecules with no CID
 # associated CID (molecule tag) and iupac names (molecule_names) are updated if
 # inchikey found in PC db
-class PubchemCidJob < ActiveJob::Base
+class PubchemCidJob < ApplicationJob
   queue_as :pubchem
 
   # NB: PC has request restriction policy and timeout , hence the sleep_time and batch_size params
