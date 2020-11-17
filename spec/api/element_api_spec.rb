@@ -22,7 +22,7 @@ describe Chemotion::ElementAPI do
     end
 
     describe 'POST /api/v1/ui_state w currentCollection params' do
-      before { post '/api/v1/ui_state/', params.to_json, 'CONTENT_TYPE' => 'application/json' }
+      before { post '/api/v1/ui_state/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' } }
 
       it 'returns selected list content' do
         response_samples = JSON.parse(response.body)['samples']

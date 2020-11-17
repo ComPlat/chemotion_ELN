@@ -8,7 +8,7 @@ describe TokenAuthentication do
 
   context 'with proper headers, ' do
     before do
-      get('/api/v1/public/ping', '', 'AUTHORIZATION' => 'Bearer qwerty')
+      get('/api/v1/public/ping', params: '', headers: { 'AUTHORIZATION' => 'Bearer qwerty' })
       @ta = described_class.new(request)
     end
 
@@ -23,7 +23,7 @@ describe TokenAuthentication do
 
   context 'with proper headers, with REMOTE_ADDR check,' do
     before do
-      get('/api/v1/public/ping', '', 'AUTHORIZATION' => 'Bearer qwerty')
+      get('/api/v1/public/ping', params: '', headers: { 'AUTHORIZATION' => 'Bearer qwerty' })
       @ta = described_class.new(request, with_remote_addr: true)
     end
 
