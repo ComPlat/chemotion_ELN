@@ -99,7 +99,7 @@ module Chemotion
       namespace :qrycurrent do
         desc 'fetch groups of current user'
         get do
-          data = current_user.groups | current_user.administrated_accounts.where(type: 'Group').uniq
+          data = current_user.groups | current_user.administrated_accounts.where(type: 'Group').distinct
           present data, with: Entities::GroupEntity, root: 'currentGroups'
         end
       end

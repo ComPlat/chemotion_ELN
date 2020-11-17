@@ -230,7 +230,7 @@ class Sample < ApplicationRecord
   end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
-    (for_user(user_id).by_reaction_ids(reaction_ids)).uniq
+    (for_user(user_id).by_reaction_ids(reaction_ids)).distinct
   end
 
   def self.associated_by_user_id_and_wellplate_ids(user_id, wellplate_ids)

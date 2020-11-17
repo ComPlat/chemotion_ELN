@@ -23,10 +23,10 @@ module ElementUIStateScopes
 
       if (all)
         excluded_ids = ui_state.fetch(:excluded_ids, [])
-        collection_id == 'all' ? where.not(id: excluded_ids).uniq : by_collection_id(collection_id.to_i).where.not(id: excluded_ids).uniq
+        collection_id == 'all' ? where.not(id: excluded_ids).uniq : by_collection_id(collection_id.to_i).where.not(id: excluded_ids).distinct
       else
         included_ids = ui_state.fetch(:included_ids, [])
-        where(id: included_ids).uniq
+        where(id: included_ids).distinct
       end
     end
 
