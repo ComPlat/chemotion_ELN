@@ -71,7 +71,7 @@ module Chemotion
           end
         else
           # All collection of current_user
-          Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
+          Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
         end.includes(collections: :sync_collections_users).order("created_at DESC")
 
         from = params[:from_date]
