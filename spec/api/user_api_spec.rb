@@ -125,7 +125,7 @@ describe Chemotion::UserAPI do
       end
 
       before do
-        post '/api/v1/groups/create', params
+        post '/api/v1/groups/create', params: params
       end
 
       it 'Creates a group of persons' do
@@ -159,7 +159,7 @@ describe Chemotion::UserAPI do
       end
 
       before do
-        put "/api/v1/groups/upd/#{g2.id}", params
+        put "/api/v1/groups/upd/#{g2.id}", params: params
       end
 
       it 'Updates a group of persons' do
@@ -175,7 +175,7 @@ describe Chemotion::UserAPI do
       end
 
       before do
-        put "/api/v1/groups/upd/#{g3.id}", params
+        put "/api/v1/groups/upd/#{g3.id}", params: params
       end
 
       it 'Deletes a group of persons' do
@@ -193,7 +193,7 @@ describe Chemotion::UserAPI do
       end
 
       before do
-        put "/api/v1/groups/upd/#{g4.id}", params
+        put "/api/v1/groups/upd/#{g4.id}", params: params
       end
 
       it 'Does not update a group of persons' do

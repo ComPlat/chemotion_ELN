@@ -54,7 +54,10 @@ describe Chemotion::PermissionAPI do
       end
 
       it 'responds with true if sharing allowed' do
-        post '/api/v1/permissions/status', params.to_json, 'CONTENT_TYPE' => 'application/json'
+        post '/api/v1/permissions/status',
+          params: params.to_json,
+          headers: { 'CONTENT_TYPE' => 'application/json' }
+
         expect(JSON.parse(response.body)['sharing_allowed']).to eq true
       end
     end

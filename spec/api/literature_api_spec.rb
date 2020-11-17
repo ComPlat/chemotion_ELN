@@ -30,7 +30,7 @@ describe Chemotion::LiteratureAPI do
     describe 'GET /api/v1/literatures' do
       context 'with valid parameters' do
         before do
-          get '/api/v1/literatures', element_id: r1.id, element_type: 'reaction'
+          get '/api/v1/literatures', params: { element_id: r1.id, element_type: 'reaction' }
         end
 
         it 'responds 200' do
@@ -55,7 +55,7 @@ describe Chemotion::LiteratureAPI do
 
     describe 'POST /api/v1/literatures' do
       context 'with valid parameters' do
-        before { post '/api/v1/literatures', params }
+        before { post '/api/v1/literatures', params: params }
 
         it 'responds 201' do
           expect(response.status).to be 201

@@ -32,9 +32,12 @@ describe Chemotion::ReactionSvgAPI do
       end
 
       before do
-        post '/api/v1/reaction_svg', params.to_json,
-             'HTTP_ACCEPT' => 'application/json',
-             'CONTENT_TYPE' => 'application/json'
+        post '/api/v1/reaction_svg',
+          params: params.to_json,
+          headers: {
+            'HTTP_ACCEPT' => 'application/json',
+            'CONTENT_TYPE' => 'application/json'
+          }
       end
 
       it 'returns svg with correct temperature, duration, solvents' do

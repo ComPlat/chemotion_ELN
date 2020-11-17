@@ -45,7 +45,7 @@ describe Chemotion::ReportAPI do
     describe 'GET /api/v1/reports/docx' do
       before do
         params = { id: r1.id.to_s }
-        get '/api/v1/reports/docx', params
+        get '/api/v1/reports/docx', params: params
       end
 
       it 'returns a header with docx-type' do
@@ -104,9 +104,9 @@ describe Chemotion::ReportAPI do
       context 'with V2000 molfile contains no dollar sign' do
         before do
           params[:uiState][:sample][:checkedIds] = [sample_1.id]
-          post(
-            '/api/v1/reports/export_samples_from_selections', params.to_json,
-            'CONTENT_TYPE' => 'application/json'
+          post('/api/v1/reports/export_samples_from_selections',
+            params: params.to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
           )
         end
 
@@ -124,9 +124,9 @@ describe Chemotion::ReportAPI do
       context 'with V2000 molfile contains dollar sign' do
         before do
           params[:uiState][:sample][:checkedIds] = [sample_2.id]
-          post(
-            '/api/v1/reports/export_samples_from_selections', params.to_json,
-            'CONTENT_TYPE' => 'application/json'
+          post('/api/v1/reports/export_samples_from_selections',
+            params: params.to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
           )
         end
 
@@ -144,9 +144,9 @@ describe Chemotion::ReportAPI do
       context 'with V2000 molfile contains extart tags and no dollar sign' do
         before do
           params[:uiState][:sample][:checkedIds] = [sample_3.id]
-          post(
-            '/api/v1/reports/export_samples_from_selections', params.to_json,
-            'CONTENT_TYPE' => 'application/json'
+          post('/api/v1/reports/export_samples_from_selections',
+            params: params.to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
           )
         end
 
@@ -164,9 +164,9 @@ describe Chemotion::ReportAPI do
       context 'with V3000 molfile' do
         before do
           params[:uiState][:sample][:checkedIds] = [sample_4.id]
-          post(
-            '/api/v1/reports/export_samples_from_selections', params.to_json,
-            'CONTENT_TYPE' => 'application/json'
+          post('/api/v1/reports/export_samples_from_selections',
+            params: params.to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
           )
         end
 
@@ -219,10 +219,12 @@ describe Chemotion::ReportAPI do
             created_at updated_at molfile
           ]
         }
-        post(
-          '/api/v1/reports/export_samples_from_selections', params.to_json,
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'application/json'
+        post('/api/v1/reports/export_samples_from_selections',
+           params: params.to_json,
+           headers: {
+             'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+             'CONTENT_TYPE' => 'application/json'
+           }
         )
       end
 
@@ -315,10 +317,12 @@ describe Chemotion::ReportAPI do
       end
 
       it 'returns a txt file with reaction smiles' do
-        post(
-          '/api/v1/reports/export_reactions_from_selections', params.to_json,
-          'HTTP_ACCEPT' => 'text/plain, text/csv',
-          'CONTENT_TYPE' => 'application/json'
+        post('/api/v1/reports/export_reactions_from_selections',
+          params: params.to_json,
+          headers: {
+            'HTTP_ACCEPT' => 'text/plain, text/csv',
+            'CONTENT_TYPE' => 'application/json'
+          }
         )
         expect(response['Content-Type']).to eq('text/csv')
       end
@@ -390,7 +394,7 @@ describe Chemotion::ReportAPI do
     describe 'POST /api/v1/archives/downloadable' do
       before do
         params = { ids: [rp3.id, rp2.id] }
-        post '/api/v1/archives/downloadable', params
+        post '/api/v1/archives/downloadable', params: params
       end
 
       it 'return reports which can be downloaded now' do
@@ -477,14 +481,14 @@ describe Chemotion::ReportAPI do
 
       it 'returns a created -standard- report' do
         params[:template] = 'standard'
-        post '/api/v1/reports', params
+        post '/api/v1/reports', params: params
 
         expect(response.body).to include(fileName)
       end
 
       it 'returns a created -supporting_information- report' do
         params[:template] = 'supporting_information'
-        post '/api/v1/reports', params
+        post '/api/v1/reports', params: params
         expect(response.body).to include(fileName)
       end
     end
@@ -492,7 +496,7 @@ describe Chemotion::ReportAPI do
     describe 'GET /api/v1/download_report/file' do
       before do
         params = { id: rp1.id, ext: ext }
-        get '/api/v1/download_report/file', params
+        get '/api/v1/download_report/file', params: params
       end
 
       it 'returns a header with ext' do

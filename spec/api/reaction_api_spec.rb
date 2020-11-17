@@ -105,7 +105,7 @@ describe Chemotion::ReactionAPI do
 
         before do
           CollectionsReaction.create(reaction_id: r1.id, collection_id: c1.id)
-          delete "/api/v1/reactions/#{r1.id}", params
+          delete "/api/v1/reactions/#{r1.id}", params: params
         end
 
         it 'is able to delete a reaction' do
@@ -209,7 +209,7 @@ describe Chemotion::ReactionAPI do
         end
 
         before do
-          put "/api/v1/reactions/#{reaction_1.id}", params
+          put "/api/v1/reactions/#{reaction_1.id}", params: params
         end
 
         let(:r) { Reaction.find(reaction_1.id) }
@@ -296,9 +296,9 @@ describe Chemotion::ReactionAPI do
         end
 
         before do
-          put(
-            "/api/v1/reactions/#{reaction_1.id}.json", params.to_json,
-            'CONTENT_TYPE' => 'application/json'
+          put("/api/v1/reactions/#{reaction_1.id}.json",
+            params: params.to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
           )
         end
 
@@ -371,9 +371,9 @@ describe Chemotion::ReactionAPI do
         end
 
         before do
-          post(
-            '/api/v1/reactions.json', params.to_json,
-            'CONTENT_TYPE' => 'application/json'
+          post('/api/v1/reactions.json',
+            params: params.to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
           )
         end
 
@@ -452,7 +452,7 @@ describe Chemotion::ReactionAPI do
         end
 
         before do
-          post '/api/v1/reactions', params
+          post '/api/v1/reactions', params: params
         end
 
         let(:r) { Reaction.last }

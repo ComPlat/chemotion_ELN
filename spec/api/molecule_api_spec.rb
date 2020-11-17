@@ -57,7 +57,7 @@ M  END"
         it 'is able to find or create a molecule by molfile' do
           m = Molecule.find_by(molfile: molfile)
           expect(m).to be_nil
-          post '/api/v1/molecules', molfile: molfile
+          post '/api/v1/molecules', params: { molfile: molfile }
           m = Molecule.find_by(molfile: molfile)
           expect(m).not_to be_nil
           params.each do |k, v|
