@@ -185,7 +185,7 @@ describe Chemotion::CollectionAPI do
       it 'is able to create new collections' do
         collection = Collection.find_by(label: 'test')
         expect(collection).to be_nil
-        post '/api/v1/collections/unshared', params
+        post '/api/v1/collections/unshared', params: params
         collection = Collection.find_by(label: 'test')
         expect(collection).not_to be_nil
       end
@@ -279,21 +279,21 @@ describe Chemotion::CollectionAPI do
         # end
         describe 'PUT /api/v1/collections/elements' do
           it 'moves all elements and returns 204' do
-            put '/api/v1/collections/elements', ui_state: ui_state, collection_id: c_target.id
+            put '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c_target.id }
             expect(response.status).to eq 204
           end
         end
 
         describe 'POST /api/v1/collections/elements' do
           it 'assigns elements to collection and returns 204' do
-            post '/api/v1/collections/elements', ui_state: ui_state, collection_id: c_target.id
+            post '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c_target.id }
             expect(response.status).to eq 204
           end
         end
 
         describe 'DELETE /api/v1/collections/elements' do
           it 'removes elements from a collection and returns 204' do
-            delete '/api/v1/collections/elements', ui_state: ui_state
+            delete '/api/v1/collections/elements', params: { ui_state: ui_state }
             expect(response.status).to eq 204
           end
         end
@@ -302,14 +302,14 @@ describe Chemotion::CollectionAPI do
       describe '02 - from collection owned by user to collection shared by user, ' do
         describe 'PUT /api/v1/collections/elements to collection shared by user' do
           it 'moves all elements and returns 204' do
-            put '/api/v1/collections/elements', ui_state: ui_state, collection_id: c3_target.id
+            put '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c3_target.id }
             expect(response.status).to eq 204
           end
         end
 
         describe 'POST /api/v1/collections/elements to collection shared by user' do
           it 'assigns elements to collection and returns 204' do
-            post '/api/v1/collections/elements', ui_state: ui_state, collection_id: c3_target.id
+            post '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c3_target.id }
             expect(response.status).to eq 204
           end
         end
@@ -318,21 +318,21 @@ describe Chemotion::CollectionAPI do
       describe '03 - from collection shared by user, to collection owned by user, ' do
         describe 'PUT /api/v1/collections/elements from collection shared by user' do
           it 'moves all elements and returns 204' do
-            put('/api/v1/collections/elements', ui_state: ui_state_shared, collection_id: c_target.id)
+            put('/api/v1/collections/elements', params: { ui_state: ui_state_shared, collection_id: c_target.id })
             expect(response.status).to eq 204
           end
         end
 
         describe 'POST /api/v1/collections/elements from collection shared by user' do
           it 'assigns elements to collection and returns 204' do
-            post '/api/v1/collections/elements', ui_state: ui_state_shared, collection_id: c_target.id
+            post '/api/v1/collections/elements', params: { ui_state: ui_state_shared, collection_id: c_target.id }
             expect(response.status).to eq 204
           end
         end
 
         describe 'DELETE /api/v1/collections/elements from collection shared by user' do
           it 'removes elements from a collection and returns 204' do
-            delete '/api/v1/collections/elements', ui_state: ui_state_shared
+            delete '/api/v1/collections/elements', params: { ui_state: ui_state_shared }
             expect(response.status).to eq 204
           end
         end
@@ -341,21 +341,21 @@ describe Chemotion::CollectionAPI do
       describe '04 - from collection shared to user with high permission level (>3), to collection owned by user, ' do
         describe 'PUT /api/v1/collections/elements from collection shared by user' do
           it 'moves all elements and returns 204' do
-            put '/api/v1/collections/elements', ui_state: ui_state_shared_to_high, collection_id: c_target.id
+            put '/api/v1/collections/elements', params: { ui_state: ui_state_shared_to_high, collection_id: c_target.id }
             expect(response.status).to eq 204
           end
         end
 
         describe 'POST /api/v1/collections/elements from collection shared by user' do
           it 'assigns elements to collection and returns 204' do
-            post '/api/v1/collections/elements', ui_state: ui_state_shared_to_high, collection_id: c_target.id
+            post '/api/v1/collections/elements', params: { ui_state: ui_state_shared_to_high, collection_id: c_target.id }
             expect(response.status).to eq 204
           end
         end
 
         describe 'DELETE /api/v1/collections/elements from collection shared by user' do
           it 'removes elements from a collection and returns 204' do
-            delete '/api/v1/collections/elements', ui_state: ui_state_shared_to_high
+            delete '/api/v1/collections/elements', params: { ui_state: ui_state_shared_to_high }
             expect(response.status).to eq 204
           end
         end
@@ -364,21 +364,21 @@ describe Chemotion::CollectionAPI do
       describe '05 - from collection shared to user with low permission level, to collection owned by user, ' do
         describe 'PUT /api/v1/collections/elements from collection shared by user' do
           it 'refuses with 401' do
-            put '/api/v1/collections/elements', ui_state: ui_state_shared_to_low, collection_id: c_target.id
+            put '/api/v1/collections/elements', params: { ui_state: ui_state_shared_to_low, collection_id: c_target.id }
             expect(response.status).to eq 401
           end
         end
 
         describe 'POST /api/v1/collections/elements from collection shared by user' do
           it 'refuses with 401' do
-            post '/api/v1/collections/elements', ui_state: ui_state_shared_to_low, collection_id: c_target.id
+            post '/api/v1/collections/elements', params: { ui_state: ui_state_shared_to_low, collection_id: c_target.id }
             expect(response.status).to eq 401
           end
         end
 
         describe 'DELETE /api/v1/collections/elements from collection shared by user' do
           it 'refuses with 401' do
-            delete '/api/v1/collections/elements', ui_state: ui_state_shared_to_low
+            delete '/api/v1/collections/elements', params: { ui_state: ui_state_shared_to_low }
             expect(response.status).to eq 401
           end
         end
@@ -387,21 +387,21 @@ describe Chemotion::CollectionAPI do
       describe '06 - from unauthorized collections ()' do
         describe 'PUT /api/v1/collections/elements' do
           it 'refuses with 401' do
-            put '/api/v1/collections/elements', ui_state: ui_state_tweaked, collection_id: c_target.id
+            put '/api/v1/collections/elements', params: { ui_state: ui_state_tweaked, collection_id: c_target.id }
             expect(response.status).to eq 401
           end
         end
 
         describe 'POST /api/v1/collections/elements' do
           it 'refuses with 401' do
-            post '/api/v1/collections/elements', ui_state: ui_state_tweaked, collection_id: c_target.id
+            post '/api/v1/collections/elements', params: { ui_state: ui_state_tweaked, collection_id: c_target.id }
             expect(response.status).to eq 401
           end
         end
 
         describe 'DELETE /api/v1/collections/elements' do
           it 'refuses with 401' do
-            delete '/api/v1/collections/elements', ui_state: ui_state_tweaked
+            delete '/api/v1/collections/elements', params: { ui_state: ui_state_tweaked }
             expect(response.status).to eq 401
           end
         end
@@ -410,14 +410,14 @@ describe Chemotion::CollectionAPI do
       describe '07 - to unauthorized collections ()' do
         describe 'PUT /api/v1/collections/elements' do
           it 'refuses with 401' do
-            put '/api/v1/collections/elements', ui_state: ui_state, collection_id: c2_target.id
+            put '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c2_target.id }
             expect(response.status).to eq 401
           end
         end
 
         describe 'POST /api/v1/collections/elements' do
           it 'refuses with 401' do
-            post '/api/v1/collections/elements', ui_state: ui_state, collection_id: c2_target.id
+            post '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c2_target.id }
             expect(response.status).to eq 401
           end
         end
@@ -438,7 +438,7 @@ describe Chemotion::CollectionAPI do
       end
 
       before do
-        put "/api/v1/collections/shared/#{c2.id}", params
+        put "/api/v1/collections/shared/#{c2.id}", params: params
         c2.reload
       end
 
@@ -494,7 +494,7 @@ describe Chemotion::CollectionAPI do
           end
 
           it 'creates shared collection with given samples' do
-            post '/api/v1/collections/shared', params.to_json, 'CONTENT_TYPE' => 'application/json'
+            post '/api/v1/collections/shared', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
             # naming convention for shared collections
             c = Collection.where(is_shared: true, user_id: u2.id, shared_by_id: user.id)
                           .where("label LIKE 'My project with%'").first
@@ -531,7 +531,7 @@ describe Chemotion::CollectionAPI do
           end
 
           it 'creates no shared collection' do
-            post '/api/v1/collections/shared', params.to_json, 'CONTENT_TYPE' => 'application/json'
+            post '/api/v1/collections/shared', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
             expect(Collection.where(is_shared: true, user_id: u2.id, shared_by_id: user.id)
               .where("label LIKE 'My project with%'").first).to be_nil
           end
@@ -553,7 +553,7 @@ describe Chemotion::CollectionAPI do
         end
 
         it 'creates an export job' do
-          post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
+          post '/api/v1/collections/exports', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
           expect(response.status).to eq(204)
         end
       end
@@ -568,7 +568,7 @@ describe Chemotion::CollectionAPI do
         end
 
         it 'returns 401 Unauthorized' do
-          post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
+          post '/api/v1/collections/exports', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
           expect(response.status).to eq(401)
         end
       end
@@ -583,7 +583,7 @@ describe Chemotion::CollectionAPI do
         end
 
         it 'returns 401 Unauthorized' do
-          post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
+          post '/api/v1/collections/exports', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
           expect(response.status).to eq(401)
         end
       end
@@ -600,7 +600,7 @@ describe Chemotion::CollectionAPI do
         end
 
         it 'creates an import job' do
-          status = post '/api/v1/collections/imports', file_upload
+          status = post '/api/v1/collections/imports', params: file_upload
           expect(response.status).to eq(204)
         end
       end
@@ -636,7 +636,7 @@ describe Chemotion::CollectionAPI do
       end
 
       it 'does not create a new collection' do
-        post '/api/v1/collections/shared', params
+        post '/api/v1/collections/shared', params: params
 
         expect(response.status).to eq(401)
 
@@ -656,7 +656,7 @@ describe Chemotion::CollectionAPI do
         end
 
         it 'responds with 401 status code' do
-          post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
+          post '/api/v1/collections/exports', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
           expect(response.status).to eq(401)
         end
       end
@@ -673,7 +673,7 @@ describe Chemotion::CollectionAPI do
         end
 
         it 'responds with 401 status code' do
-          status = post '/api/v1/collections/imports', file_upload
+          status = post '/api/v1/collections/imports', params: file_upload
           expect(response.status).to eq(401)
         end
       end

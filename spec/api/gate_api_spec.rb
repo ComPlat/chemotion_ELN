@@ -67,7 +67,7 @@ describe Chemotion::GateAPI do
 
     describe 'registering new gate' do
       before do
-        post('/api/v1/gate/register_gate.json', gate_params)
+        post('/api/v1/gate/register_gate.json', params: gate_params)
       end
 
       it 'persists a jwt' do

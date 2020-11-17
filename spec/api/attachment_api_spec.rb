@@ -67,7 +67,7 @@ describe Chemotion::AttachmentAPI do
 
     describe 'upload files thru POST attachments/upload_dataset_attachments' do
       before do
-        post '/api/v1/attachments/upload_dataset_attachments', file_upload
+        post '/api/v1/attachments/upload_dataset_attachments', params: file_upload
       end
 
       it 'creates attachments for each file' do
@@ -81,7 +81,7 @@ describe Chemotion::AttachmentAPI do
 
     describe 'upload img thru POST attachments/upload_dataset_attachments' do
       before do
-        post '/api/v1/attachments/upload_dataset_attachments', img_upload
+        post '/api/v1/attachments/upload_dataset_attachments', params: img_upload
       end
 
       it 'creates attachments for each file' do
@@ -121,7 +121,7 @@ describe Chemotion::AttachmentAPI do
       describe 'Return Base64 encoded thumbnails' do
         before do
           params = { ids: [img_attachments.last.id] }
-          post '/api/v1/attachments/thumbnails', params
+          post '/api/v1/attachments/thumbnails', params: params
         end
 
         it 'creates attachments for each file' do
@@ -200,9 +200,9 @@ describe Chemotion::SampleAPI do
     context 'with appropriate permissions' do
       describe 'update sample analysis with a new dataset and a new img file' do
         before do
-          put(
-            "/api/v1/samples/#{s1.id}.json", sample_upd_1_params.to_json,
-            'CONTENT_TYPE' => 'application/json'
+          put("/api/v1/samples/#{s1.id}.json",
+            params: sample_upd_1_params.to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
           )
         end
 
@@ -256,9 +256,9 @@ describe Chemotion::SampleAPI do
             s2.container.children[0].id
           # sample_upd_1_params[:container][:children][0][:children][0][:id] =
           #  s2.container.children[0].children[0].id
-          put(
-            "/api/v1/samples/#{s1.id}.json", sample_upd_1_params.to_json,
-            'CONTENT_TYPE' => 'application/json'
+          put("/api/v1/samples/#{s1.id}.json",
+            params: sample_upd_1_params.to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
           )
         end
 
@@ -268,9 +268,9 @@ describe Chemotion::SampleAPI do
         it 'has not created a dataset for the corresponding analysis' do
           expect(cont_s2_analysis.children.count).to eq(1)
           expect do
-            put(
-              "/api/v1/samples/#{s1.id}.json", sample_upd_1_params.to_json,
-              'CONTENT_TYPE' => 'application/json'
+            put("/api/v1/samples/#{s1.id}.json",
+              params: sample_upd_1_params.to_json,
+              headers: { 'CONTENT_TYPE' => 'application/json' }
             )
           end.to change { s2.analyses.first.children.count }.by 0
         end

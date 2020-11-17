@@ -58,7 +58,7 @@ M  END"
         it 'is able to find or create a molecule by molfile' do
           m = Molecule.find_by(molfile: molfile)
           expect(m).to be_nil
-          post '/api/v1/molecules', molfile: molfile, decoupled: false
+          post '/api/v1/molecules', params: { molfile: molfile, decoupled: false }
           m = Molecule.find_by(molfile: molfile)
           expect(m).not_to be_nil
 	  mw = params.delete(:molecular_weight)
