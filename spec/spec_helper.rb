@@ -42,6 +42,8 @@ hostname = 'http://pubchem.ncbi.nlm.nih.gov'
 inchi_path = '/rest/pug/compound/inchikey/'
 
 RSpec.configure do |config|
+  config.example_status_persistence_file_path = "spec/examples.txt"
+
   config.include FactoryBot::Syntax::Methods
 
   config.before do
