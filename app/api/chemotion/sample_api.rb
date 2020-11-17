@@ -163,7 +163,7 @@ module Chemotion
         else
           # All collection
           own_collection = true
-          scope = Sample.for_user(current_user.id).uniq
+          scope = Sample.for_user(current_user.id).distinct
         end
         scope = scope.includes(
           :residues, :tag, :molecule_name,
@@ -174,7 +174,7 @@ module Chemotion
         scope = if prod_only
                   scope.product_only
                 else
-                  scope.uniq.sample_or_startmat_or_products
+                  scope.distinct.sample_or_startmat_or_products
                 end
         from = params[:from_date]
         to = params[:to_date]
