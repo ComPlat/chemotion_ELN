@@ -400,7 +400,7 @@ GEM
     public_suffix (3.1.1)
     pundit (2.0.1)
       activesupport (>= 3.0.0)
-    rack (2.2.3)
+    rack (2.0.9)
     rack-accept (0.4.5)
       rack (>= 0.4)
     rack-contrib (2.2.0)
@@ -564,8 +564,8 @@ GEM
       coercible (~> 1.0)
       descendants_tracker (~> 0.0, >= 0.0.3)
       equalizer (~> 0.0, >= 0.0.9)
-    warden (1.2.7)
-      rack (>= 1.0)
+    warden (1.2.9)
+      rack (>= 2.0.9)
     web-console (2.3.0)
       activemodel (>= 4.0)
       binding_of_caller (>= 0.7.2)
@@ -672,6 +672,7 @@ DEPENDENCIES
   prawn-svg
   pundit
   rack-cors
+  rack (~> 2.0.0)
   rack-mini-profiler!
   rails (~> 5.0.0)
   rdkit_chem!
