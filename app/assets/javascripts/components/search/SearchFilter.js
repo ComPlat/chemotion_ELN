@@ -51,9 +51,9 @@ export default class SearchFilter extends React.Component {
       },
       {
         value: {
-          table: 'molecules',
-          column: 'cas',
-          ext_key: 'molecule_id',
+          table: 'samples',
+          column: 'xref',
+          opt: 'cas',
           label: 'CAS'
         },
         label: 'CAS'

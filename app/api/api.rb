@@ -85,8 +85,7 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w(name short_label external_label),
-    'molecules' => %w(cas)
+    'samples' => %w(name short_label external_label xref)
   }
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 

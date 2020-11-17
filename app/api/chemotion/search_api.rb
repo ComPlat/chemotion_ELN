@@ -110,6 +110,7 @@ module Chemotion
           words = filter['value'].split(/,|(\r)?\n/).map!(&:strip)
           words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } unless filter['match'] == '='
 
+          field = "xref -> 'cas' ->> 'value'" if field == 'xref' && filter['field']['opt'] == 'cas'
           conditions = words.collect { "#{table}.#{field} #{filter['match']} ? " }.join(' OR ')
           query = "#{query} #{filter['link']} (#{conditions}) "
           cond_val += words
