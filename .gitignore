@@ -143,3 +143,5 @@ backup/weekly_backup
 tags
 tags.temp
 .vscode/*
+
+spec/examples.txt
