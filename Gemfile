@@ -66,6 +66,9 @@ gem 'prawn'
 gem 'prawn-svg'
 gem 'pundit'
 
+# If we want to upgrade past rack >= 2.1 we need to upgrade to at least grape
+# 1.3.0
+gem 'rack', '~> 2.0.0'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 5.0.0'
 gem 'rdkit_chem', git: 'https://github.com/CamAnNguyen/rdkit_chem'
