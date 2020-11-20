@@ -5,3 +5,7 @@
   name_abbreviation: 'TMo', confirmed_at: Time.now,
 #  is_templates_moderator: true # Use admin user managment page to set it instead
 )
+
+Dir[File.join(Rails.root, 'db', 'seeds', '*.rb')].sort.each do |seed|
+  load seed
+end
