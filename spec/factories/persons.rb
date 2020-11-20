@@ -14,4 +14,13 @@ FactoryBot.define do
       }
     end
   end
+
+  factory :admin do
+    sequence(:email) { |n| "Admin-#{n}@foo.bar" }
+    first_name { 'Don' }
+    last_name { 'Admin' }
+    name_abbreviation { "P#{SecureRandom.alphanumeric(2)}" }
+    password { 'testtest' }
+    password_confirmation { 'testtest' }
+  end
 end

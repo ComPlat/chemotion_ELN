@@ -30,6 +30,7 @@ gem 'sys-filesystem'
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 
 gem 'bibtex-ruby'
+# gem 'bolognese'
 
 # state machine
 gem 'aasm'
@@ -94,6 +95,7 @@ gem 'rack-cors', :require => 'rack/cors'
 gem 'grape-swagger-rails'
 
 gem "rdkit_chem", git: "https://github.com/CamAnNguyen/rdkit_chem"
+# gem "rdkit_chem", git: "https://github.com/megorei/rdkit_chem.git", branch: 'fix-macos-installation'
 
 gem 'api-pagination'
 

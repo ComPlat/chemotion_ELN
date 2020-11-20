@@ -1,6 +1,6 @@
 class DeviceSerializer < ActiveModel::Serializer
-  attributes :id, :title, :code, :types, :user_id, :samples, :devices_analyses
-  
+  attributes :id, :title, :code, :types, :user_id, :samples, :devices_analyses, :device_metadata
+
   def samples
     object.devices_samples.map {|devices_sample|
       sample = Sample.find(devices_sample.sample_id)

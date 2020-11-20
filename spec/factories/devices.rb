@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :device do
-    sequence(:email) { |n| "group#{n}@foo.bar" }
+    sequence(:email) { |n| "device#{n}@foo.bar" }
     first_name { 'Device' }
     last_name { 'One' }
     name_abbreviation { "D#{SecureRandom.alphanumeric(3)}" }

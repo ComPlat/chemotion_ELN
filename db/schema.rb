@@ -349,6 +349,35 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.datetime "deleted_at"
   end
 
+  create_table "device_metadata", force: :cascade do |t|
+    t.integer  "device_id"
+    t.string   "doi"
+    t.string   "url"
+    t.string   "landing_page"
+    t.string   "name"
+    t.string   "type"
+    t.string   "description"
+    t.string   "publisher"
+    t.integer  "publication_year"
+    t.jsonb    "manufacturers"
+    t.jsonb    "owners"
+    t.jsonb    "dates"
+    t.datetime "created_at",                                null: false
+    t.datetime "updated_at",                                null: false
+    t.datetime "deleted_at"
+    t.integer  "doi_sequence"
+    t.string   "data_cite_prefix"
+    t.datetime "data_cite_created_at"
+    t.datetime "data_cite_updated_at"
+    t.integer  "data_cite_version"
+    t.jsonb    "data_cite_last_response", default: {}
+    t.string   "data_cite_state",         default: "draft"
+    t.string   "data_cite_creator_name"
+  end
+
+  add_index "device_metadata", ["deleted_at"], name: "index_device_metadata_on_deleted_at", using: :btree
+  add_index "device_metadata", ["device_id"], name: "index_device_metadata_on_device_id", using: :btree
+
   create_table "element_tags", force: :cascade do |t|
     t.string   "taggable_type"
     t.integer  "taggable_id"
@@ -1209,6 +1238,21 @@ ActiveRecord::Schema.define(version: 20210416075103) do
         return true;
       end
       $function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
   SQL
   create_function :update_users_matrix, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.update_users_matrix()

@@ -475,7 +475,7 @@ export default class UserManagement extends React.Component {
         onHide={this.handleEditUserClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>New User</Modal.Title>
+          <Modal.Title>Edit User</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-9">
