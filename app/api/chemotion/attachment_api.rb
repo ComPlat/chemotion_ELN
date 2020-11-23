@@ -157,6 +157,13 @@ module Chemotion
               can_dwnld = can_read &&
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
+          elsif request.url =~ /sample_analyses/
+            @sample = Sample.find(params[:sample_id])
+            if (element = @sample)
+              can_read = ElementPolicy.new(current_user, element).read?
+              can_dwnld = can_read && 
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+            end
           elsif @attachment
             can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
             if !can_dwnld && (element = @attachment.container&.root&.containable)
@@ -265,6 +272,50 @@ module Chemotion
           DESC
           @container.attachments.each do |att|
             zip.write "#{att.filename} #{att.checksum}\n"
+          end
+        end
+        zip.rewind
+        zip.read
+      end
+
+      desc "Download the zip attachment file by sample_id"
+      get 'sample_analyses/:sample_id' do
+        env['api.format'] = :binary
+        content_type('application/zip, application/octet-stream')
+        #@sample = Sample.find(params[:sample_id])
+        filename = URI.escape("#{@sample.short_label}-analytical-files.zip")
+        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
+        zip = Zip::OutputStream.write_buffer do |zip|
+
+          @sample.analyses.each do |analysis|
+            analysis.children.each do |dataset|
+              dataset.attachments.each do |att|
+                zip.put_next_entry att.filename
+                zip.write att.read_file
+              end
+            end
+          end
+
+          zip.put_next_entry "sample_#{@sample.short_label} analytical_files.txt"
+          zip.write <<~DESC
+          sample short label: #{@sample.short_label}
+          sample id: #{@sample.id}
+          analyses count: #{@sample.analyses&.length || 0}
+
+          Files:
+          DESC
+
+          @sample.analyses&.each do |analysis|
+            zip.write "analysis name: #{analysis.name}\n"
+            zip.write "analysis type: #{analysis.extended_metadata.fetch('kind', nil)}\n\n"
+            analysis.children.each do |dataset|
+              zip.write "dataset: #{dataset.name}\n"
+              zip.write "instrument: #{dataset.extended_metadata.fetch('instrument', nil)}\n\n"
+              dataset.attachments.each do |att|
+                zip.write "#{att.filename}   #{att.checksum}\n"
+              end
+            end
+            zip.write "\n"
           end
         end
         zip.rewind

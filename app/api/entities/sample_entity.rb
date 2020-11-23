@@ -33,7 +33,7 @@ module Entities
       define_restricted_methods_for_level(2)
 
       def analyses
-        object.analyses.map {|x| x['datasets'] = {:datasets => []}}
+        object.analyses && object.analyses.map {|x| x['datasets'] = {:datasets => []} if x['datasets'].present? }
       end
     end
 

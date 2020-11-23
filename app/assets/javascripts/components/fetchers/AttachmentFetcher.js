@@ -21,9 +21,9 @@ export default class AttachmentFetcher {
     }).then((response) => {
       return response.blob();
     }).then((blob) => {
-      return  { 
-        type:blob.type, 
-        data:URL.createObjectURL(blob) 
+      return  {
+        type:blob.type,
+        data:URL.createObjectURL(blob)
      };
     }).catch((errorMessage) => {
       console.log(errorMessage);
@@ -250,6 +250,35 @@ export default class AttachmentFetcher {
   static downloadZip(id){
     let file_name = 'dataset.zip'
     return fetch(`/api/v1/attachments/zip/${id}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+    }).then((response) => {
+      const disposition = response.headers.get('Content-Disposition')
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+        let filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        let matches = filenameRegex.exec(disposition);
+        if (matches != null && matches[1]) {
+          file_name = matches[1].replace(/['"]/g, '');
+        }
+      }
+      return response.blob()
+    }).then((blob) => {
+      const a = document.createElement("a");
+      a.style = "display: none";
+      document.body.appendChild(a);
+      let url = window.URL.createObjectURL(blob);
+      a.href = url;
+      a.download = file_name
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
+  static downloadZipBySample(sample_id){
+    let file_name = 'dataset.zip'
+    return fetch(`/api/v1/attachments/sample_analyses/${sample_id}`, {
       credentials: 'same-origin',
       method: 'GET',
     }).then((response) => {
