@@ -1,14 +1,18 @@
 class OSample < OpenStruct
   def initialize data
     # set nested attributes
-    %i(residues elemental_compositions).each do |prop|
+
+    %w(residues elemental_compositions).each do |prop|
       prop_value = data.delete(prop) || []
+
       prop_value.each { |i| i.delete :id }
+
       data.merge!(
-        "#{prop}_attributes".to_sym => prop_value
+        "#{prop}_attributes" => prop_value
       ) unless prop_value.blank?
     end
-    data[:elemental_compositions_attributes].each { |i| i.delete(:description)} if data[:elemental_compositions_attributes]
+
+    data["elemental_compositions_attributes"].each { |i| i.delete("description") } if data["elemental_compositions_attributes"]
     super
   end
 
@@ -201,7 +205,6 @@ end
 
 module Chemotion
   class ReactionAPI < Grape::API
-    include Grape::Extensions::Hashie::Mash::ParamBuilder
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ReactionHelpers
@@ -428,7 +431,7 @@ module Chemotion
         attributes.delete(:container)
 
         collection = Collection.find(collection_id)
-        attributes.assign_property(:created_by, current_user.id)
+        attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
 
