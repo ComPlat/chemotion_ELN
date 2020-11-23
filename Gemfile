@@ -134,7 +134,7 @@ group :development, :test do
 
   gem 'chronic'
 
-  gem 'ruby_jard'
+  gem 'listen'
 
   # Install mailcatcher outside the bundle since it does not support rack 2.0
   # Use `gem install mailcatcher` instead
@@ -146,6 +146,7 @@ group :development, :test do
   gem 'pry-rails'
 
   gem 'rspec-rails'
+  gem 'ruby_jard'
   gem 'rubyXL', '3.3.26'
 
   gem 'spring'
