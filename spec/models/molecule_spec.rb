@@ -24,9 +24,11 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'has molecule_names' do
-      names = molecule.molecule_names.map(&:name)
-      expect(names).to include molecule.sum_formular
-      expect(names & molecule.names == molecule.names).to be(true)
+      association_names = molecule.molecule_names.map(&:name)
+      database_names    = molecule.names
+
+      expect(association_names).to include molecule.sum_formular
+      expect(database_names).to match_array(association_names.without(molecule.sum_formular))
     end
   end
 
