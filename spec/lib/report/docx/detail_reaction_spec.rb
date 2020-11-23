@@ -69,10 +69,10 @@ describe 'Reporter::Docx::DetailReaction instance' do
       reaction: r1, sample: s1, equivalent: equiv
     )
     ReactionsProductSample.create!(
-      reaction: r1, sample: s2, equivalent: equiv
+      reaction: r1, sample: s2, equivalent: equiv, position: 1
     )
     ReactionsProductSample.create!(
-      reaction: r1, sample: s3, equivalent: equiv
+      reaction: r1, sample: s3, equivalent: equiv, position: 2
     )
     ReactionsSolventSample.create!(
       reaction: r1, sample: s4, equivalent: equiv
