@@ -1,4 +1,3 @@
-# encoding: UTF-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -70,10 +69,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string   "attachable_type"
     t.string   "aasm_state"
     t.integer  "filesize"
+    t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id", using: :btree
+    t.index ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
   end
-
-  add_index "attachments", ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id", using: :btree
-  add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string   "token",      null: false
@@ -83,9 +81,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string   "fqdn"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["user_id"], name: "index_authentication_keys_on_user_id", using: :btree
   end
-
-  add_index "authentication_keys", ["user_id"], name: "index_authentication_keys_on_user_id", using: :btree
 
   create_table "channels", force: :cascade do |t|
     t.string   "subject"
@@ -102,9 +99,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "deleted_at"
     t.datetime "created_at",            null: false
     t.datetime "updated_at",            null: false
+    t.index ["source", "source_id"], name: "index_code_logs_on_source_and_source_id", using: :btree
   end
-
-  add_index "code_logs", ["source", "source_id"], name: "index_code_logs_on_source_and_source_id", using: :btree
 
   create_table "collections", force: :cascade do |t|
     t.integer  "user_id",                                   null: false
@@ -124,59 +120,53 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "deleted_at"
     t.boolean  "is_synchronized",           default: false, null: false
     t.integer  "researchplan_detail_level", default: 10
+    t.index ["ancestry"], name: "index_collections_on_ancestry", using: :btree
+    t.index ["deleted_at"], name: "index_collections_on_deleted_at", using: :btree
+    t.index ["user_id"], name: "index_collections_on_user_id", using: :btree
   end
-
-  add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree
-  add_index "collections", ["deleted_at"], name: "index_collections_on_deleted_at", using: :btree
-  add_index "collections", ["user_id"], name: "index_collections_on_user_id", using: :btree
 
   create_table "collections_reactions", force: :cascade do |t|
     t.integer  "collection_id"
     t.integer  "reaction_id"
     t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_reactions_on_collection_id", using: :btree
+    t.index ["deleted_at"], name: "index_collections_reactions_on_deleted_at", using: :btree
+    t.index ["reaction_id", "collection_id"], name: "index_collections_reactions_on_reaction_id_and_collection_id", unique: true, using: :btree
   end
-
-  add_index "collections_reactions", ["collection_id"], name: "index_collections_reactions_on_collection_id", using: :btree
-  add_index "collections_reactions", ["deleted_at"], name: "index_collections_reactions_on_deleted_at", using: :btree
-  add_index "collections_reactions", ["reaction_id", "collection_id"], name: "index_collections_reactions_on_reaction_id_and_collection_id", unique: true, using: :btree
 
   create_table "collections_research_plans", force: :cascade do |t|
     t.integer  "collection_id"
     t.integer  "research_plan_id"
     t.datetime "deleted_at"
+    t.index ["research_plan_id", "collection_id"], name: "index_collections_research_plans_on_rplan_id_and_coll_id", unique: true, using: :btree
   end
-
-  add_index "collections_research_plans", ["research_plan_id", "collection_id"], name: "index_collections_research_plans_on_rplan_id_and_coll_id", unique: true, using: :btree
 
   create_table "collections_samples", force: :cascade do |t|
     t.integer  "collection_id"
     t.integer  "sample_id"
     t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
+    t.index ["deleted_at"], name: "index_collections_samples_on_deleted_at", using: :btree
+    t.index ["sample_id", "collection_id"], name: "index_collections_samples_on_sample_id_and_collection_id", unique: true, using: :btree
   end
-
-  add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
-  add_index "collections_samples", ["deleted_at"], name: "index_collections_samples_on_deleted_at", using: :btree
-  add_index "collections_samples", ["sample_id", "collection_id"], name: "index_collections_samples_on_sample_id_and_collection_id", unique: true, using: :btree
 
   create_table "collections_screens", force: :cascade do |t|
     t.integer  "collection_id"
     t.integer  "screen_id"
     t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_screens_on_collection_id", using: :btree
+    t.index ["deleted_at"], name: "index_collections_screens_on_deleted_at", using: :btree
+    t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true, using: :btree
   end
-
-  add_index "collections_screens", ["collection_id"], name: "index_collections_screens_on_collection_id", using: :btree
-  add_index "collections_screens", ["deleted_at"], name: "index_collections_screens_on_deleted_at", using: :btree
-  add_index "collections_screens", ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true, using: :btree
 
   create_table "collections_wellplates", force: :cascade do |t|
     t.integer  "collection_id"
     t.integer  "wellplate_id"
     t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree
+    t.index ["deleted_at"], name: "index_collections_wellplates_on_deleted_at", using: :btree
+    t.index ["wellplate_id", "collection_id"], name: "index_collections_wellplates_on_wellplate_id_and_collection_id", unique: true, using: :btree
   end
-
-  add_index "collections_wellplates", ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree
-  add_index "collections_wellplates", ["deleted_at"], name: "index_collections_wellplates_on_deleted_at", using: :btree
-  add_index "collections_wellplates", ["wellplate_id", "collection_id"], name: "index_collections_wellplates_on_wellplate_id_and_collection_id", unique: true, using: :btree
 
   create_table "collector_errors", force: :cascade do |t|
     t.string   "error_code"
@@ -212,10 +202,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.integer "ancestor_id",   null: false
     t.integer "descendant_id", null: false
     t.integer "generations",   null: false
+    t.index ["ancestor_id", "descendant_id", "generations"], name: "container_anc_desc_udx", unique: true, using: :btree
+    t.index ["descendant_id"], name: "container_desc_idx", using: :btree
   end
-
-  add_index "container_hierarchies", ["ancestor_id", "descendant_id", "generations"], name: "container_anc_desc_udx", unique: true, using: :btree
-  add_index "container_hierarchies", ["descendant_id"], name: "container_desc_idx", using: :btree
 
   create_table "containers", force: :cascade do |t|
     t.string   "ancestry"
@@ -228,9 +217,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "created_at",                     null: false
     t.datetime "updated_at",                     null: false
     t.integer  "parent_id"
+    t.index ["containable_type", "containable_id"], name: "index_containers_on_containable", using: :btree
   end
-
-  add_index "containers", ["containable_type", "containable_id"], name: "index_containers_on_containable", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -245,9 +233,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "cron"
+    t.index ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
   end
-
-  add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
 
   create_table "element_tags", force: :cascade do |t|
     t.string   "taggable_type"
@@ -255,9 +242,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.jsonb    "taggable_data"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["taggable_id"], name: "index_element_tags_on_taggable_id", using: :btree
   end
-
-  add_index "element_tags", ["taggable_id"], name: "index_element_tags_on_taggable_id", using: :btree
 
   create_table "elemental_compositions", force: :cascade do |t|
     t.integer  "sample_id",                     null: false
@@ -266,9 +252,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.float    "loading"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["sample_id"], name: "index_elemental_compositions_on_sample_id", using: :btree
   end
-
-  add_index "elemental_compositions", ["sample_id"], name: "index_elemental_compositions_on_sample_id", using: :btree
 
   create_table "experiments", force: :cascade do |t|
     t.string   "type",                limit: 20
@@ -418,10 +403,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "created_at",               null: false
     t.datetime "updated_at",               null: false
     t.string   "litype"
+    t.index ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature", using: :btree
+    t.index ["literature_id", "element_type", "element_id"], name: "index_on_literature", using: :btree
   end
-
-  add_index "literals", ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature", using: :btree
-  add_index "literals", ["literature_id", "element_type", "element_id"], name: "index_on_literature", using: :btree
 
   create_table "literatures", force: :cascade do |t|
     t.string   "title"
@@ -432,9 +416,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.jsonb    "refs"
     t.string   "doi"
     t.string   "isbn"
+    t.index ["deleted_at"], name: "index_literatures_on_deleted_at", using: :btree
   end
-
-  add_index "literatures", ["deleted_at"], name: "index_literatures_on_deleted_at", using: :btree
 
   create_table "matrices", force: :cascade do |t|
     t.string   "name",                        null: false
@@ -446,9 +429,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.index ["name"], name: "index_matrices_on_name", unique: true, using: :btree
   end
-
-  add_index "matrices", ["name"], name: "index_matrices_on_name", unique: true, using: :btree
 
   create_table "messages", force: :cascade do |t|
     t.integer  "channel_id"
@@ -466,13 +448,12 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "deleted_at"
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
+    t.index ["deleted_at"], name: "index_molecule_names_on_deleted_at", using: :btree
+    t.index ["molecule_id"], name: "index_molecule_names_on_molecule_id", using: :btree
+    t.index ["name"], name: "index_molecule_names_on_name", using: :btree
+    t.index ["user_id", "molecule_id"], name: "index_molecule_names_on_user_id_and_molecule_id", using: :btree
+    t.index ["user_id"], name: "index_molecule_names_on_user_id", using: :btree
   end
-
-  add_index "molecule_names", ["deleted_at"], name: "index_molecule_names_on_deleted_at", using: :btree
-  add_index "molecule_names", ["molecule_id"], name: "index_molecule_names_on_molecule_id", using: :btree
-  add_index "molecule_names", ["name"], name: "index_molecule_names_on_name", using: :btree
-  add_index "molecule_names", ["user_id", "molecule_id"], name: "index_molecule_names_on_user_id_and_molecule_id", using: :btree
-  add_index "molecule_names", ["user_id"], name: "index_molecule_names_on_user_id", using: :btree
 
   create_table "molecules", force: :cascade do |t|
     t.string   "inchikey"
@@ -494,10 +475,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string   "cano_smiles"
     t.text     "cas"
     t.string   "molfile_version",        limit: 20
+    t.index ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
+    t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
   end
-
-  add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
-  add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
 
   create_table "notifications", force: :cascade do |t|
     t.integer  "message_id"
@@ -505,9 +485,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.integer  "is_ack",     default: 0
     t.datetime "created_at",             null: false
     t.datetime "updated_at",             null: false
+    t.index ["message_id", "user_id"], name: "index_notifications_on_message_id_and_user_id", unique: true, using: :btree
   end
-
-  add_index "notifications", ["message_id", "user_id"], name: "index_notifications_on_message_id_and_user_id", unique: true, using: :btree
 
   create_table "ols_terms", force: :cascade do |t|
     t.string   "owl_name"
@@ -522,10 +501,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.boolean  "is_enabled",       default: true
     t.datetime "created_at",                      null: false
     t.datetime "updated_at",                      null: false
+    t.index ["ancestry"], name: "index_ols_terms_on_ancestry", using: :btree
+    t.index ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true, using: :btree
   end
-
-  add_index "ols_terms", ["ancestry"], name: "index_ols_terms_on_ancestry", using: :btree
-  add_index "ols_terms", ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true, using: :btree
 
   create_table "pg_search_documents", force: :cascade do |t|
     t.text     "content"
@@ -533,9 +511,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string   "searchable_type"
     t.datetime "created_at",      null: false
     t.datetime "updated_at",      null: false
+    t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id", using: :btree
   end
-
-  add_index "pg_search_documents", ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id", using: :btree
 
   create_table "predictions", force: :cascade do |t|
     t.integer  "predictable_id"
@@ -543,10 +520,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.jsonb    "decision",         default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["decision"], name: "index_predictions_on_decision", using: :gin
+    t.index ["predictable_type", "predictable_id"], name: "index_predictions_on_predictable_type_and_predictable_id", using: :btree
   end
-
-  add_index "predictions", ["decision"], name: "index_predictions_on_decision", using: :gin
-  add_index "predictions", ["predictable_type", "predictable_id"], name: "index_predictions_on_predictable_type_and_predictable_id", using: :btree
 
   create_table "profiles", force: :cascade do |t|
     t.boolean  "show_external_name", default: false
@@ -556,10 +532,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "updated_at",                         null: false
     t.jsonb    "data"
     t.integer  "curation",           default: 2
+    t.index ["deleted_at"], name: "index_profiles_on_deleted_at", using: :btree
+    t.index ["user_id"], name: "index_profiles_on_user_id", using: :btree
   end
-
-  add_index "profiles", ["deleted_at"], name: "index_profiles_on_deleted_at", using: :btree
-  add_index "profiles", ["user_id"], name: "index_profiles_on_user_id", using: :btree
 
   create_table "reactions", force: :cascade do |t|
     t.string   "name"
@@ -590,11 +565,10 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string   "duration"
     t.string   "rxno"
     t.string   "conditions"
+    t.index ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree
+    t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key", using: :btree
+    t.index ["role"], name: "index_reactions_on_role", using: :btree
   end
-
-  add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree
-  add_index "reactions", ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key", using: :btree
-  add_index "reactions", ["role"], name: "index_reactions_on_role", using: :btree
 
   create_table "reactions_samples", force: :cascade do |t|
     t.integer  "reaction_id"
@@ -606,10 +580,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "deleted_at"
     t.boolean  "waste",       default: false
     t.float    "coefficient", default: 1.0
+    t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
+    t.index ["sample_id"], name: "index_reactions_samples_on_sample_id", using: :btree
   end
-
-  add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
-  add_index "reactions_samples", ["sample_id"], name: "index_reactions_samples_on_sample_id", using: :btree
 
   create_table "reports", force: :cascade do |t|
     t.integer  "author_id"
@@ -629,10 +602,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.text     "mol_serials",          default: "--- []\n"
     t.text     "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
     t.text     "prd_atts",             default: "--- []\n"
+    t.index ["author_id"], name: "index_reports_on_author_id", using: :btree
+    t.index ["file_name"], name: "index_reports_on_file_name", using: :btree
   end
-
-  add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree
-  add_index "reports", ["file_name"], name: "index_reports_on_file_name", using: :btree
 
   create_table "reports_users", force: :cascade do |t|
     t.integer  "user_id"
@@ -641,11 +613,10 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "deleted_at"
     t.datetime "created_at",    null: false
     t.datetime "updated_at",    null: false
+    t.index ["deleted_at"], name: "index_reports_users_on_deleted_at", using: :btree
+    t.index ["report_id"], name: "index_reports_users_on_report_id", using: :btree
+    t.index ["user_id"], name: "index_reports_users_on_user_id", using: :btree
   end
-
-  add_index "reports_users", ["deleted_at"], name: "index_reports_users_on_deleted_at", using: :btree
-  add_index "reports_users", ["report_id"], name: "index_reports_users_on_report_id", using: :btree
-  add_index "reports_users", ["user_id"], name: "index_reports_users_on_user_id", using: :btree
 
   create_table "research_plan_table_schemas", force: :cascade do |t|
     t.string   "name"
@@ -671,9 +642,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.hstore   "custom_info"
     t.datetime "created_at",   null: false
     t.datetime "updated_at",   null: false
+    t.index ["sample_id"], name: "index_residues_on_sample_id", using: :btree
   end
-
-  add_index "residues", ["sample_id"], name: "index_residues_on_sample_id", using: :btree
 
   create_table "samples", force: :cascade do |t|
     t.string   "name"
@@ -711,13 +681,12 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string   "molfile_version",     limit: 20
     t.jsonb    "stereo"
     t.string   "metrics",                        default: "mmm"
+    t.index ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
+    t.index ["identifier"], name: "index_samples_on_identifier", using: :btree
+    t.index ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
+    t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id", using: :btree
+    t.index ["user_id"], name: "index_samples_on_user_id", using: :btree
   end
-
-  add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
-  add_index "samples", ["identifier"], name: "index_samples_on_identifier", using: :btree
-  add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
-  add_index "samples", ["molecule_name_id"], name: "index_samples_on_molecule_name_id", using: :btree
-  add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
   create_table "screens", force: :cascade do |t|
     t.string   "description"
@@ -729,28 +698,25 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "created_at",   null: false
     t.datetime "updated_at",   null: false
     t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_screens_on_deleted_at", using: :btree
   end
-
-  add_index "screens", ["deleted_at"], name: "index_screens_on_deleted_at", using: :btree
 
   create_table "screens_wellplates", force: :cascade do |t|
     t.integer  "screen_id"
     t.integer  "wellplate_id"
     t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_screens_wellplates_on_deleted_at", using: :btree
+    t.index ["screen_id"], name: "index_screens_wellplates_on_screen_id", using: :btree
+    t.index ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id", using: :btree
   end
-
-  add_index "screens_wellplates", ["deleted_at"], name: "index_screens_wellplates_on_deleted_at", using: :btree
-  add_index "screens_wellplates", ["screen_id"], name: "index_screens_wellplates_on_screen_id", using: :btree
-  add_index "screens_wellplates", ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id", using: :btree
 
   create_table "subscriptions", force: :cascade do |t|
     t.integer  "channel_id"
     t.integer  "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true, using: :btree
   end
-
-  add_index "subscriptions", ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true, using: :btree
 
   create_table "user_labels", force: :cascade do |t|
     t.integer  "user_id"
@@ -778,11 +744,10 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string   "label"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree
+    t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id", using: :btree
+    t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry", using: :btree
   end
-
-  add_index "sync_collections_users", ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree
-  add_index "sync_collections_users", ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id", using: :btree
-  add_index "sync_collections_users", ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry", using: :btree
 
   create_table "user_affiliations", force: :cascade do |t|
     t.integer  "user_id"
@@ -827,22 +792,20 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "locked_at"
     t.boolean  "account_active"
     t.integer  "matrix",                            default: 0
+    t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
+    t.index ["deleted_at"], name: "index_users_on_deleted_at", using: :btree
+    t.index ["email"], name: "index_users_on_email", unique: true, using: :btree
+    t.index ["name_abbreviation"], name: "index_users_on_name_abbreviation", unique: true, where: "(name_abbreviation IS NOT NULL)", using: :btree
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
+    t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true, using: :btree
   end
-
-  add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
-  add_index "users", ["deleted_at"], name: "index_users_on_deleted_at", using: :btree
-  add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
-  add_index "users", ["name_abbreviation"], name: "index_users_on_name_abbreviation", unique: true, where: "(name_abbreviation IS NOT NULL)", using: :btree
-  add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
-  add_index "users", ["unlock_token"], name: "index_users_on_unlock_token", unique: true, using: :btree
 
   create_table "users_admins", force: :cascade do |t|
     t.integer "user_id"
     t.integer "admin_id"
+    t.index ["admin_id"], name: "index_users_admins_on_admin_id", using: :btree
+    t.index ["user_id"], name: "index_users_admins_on_user_id", using: :btree
   end
-
-  add_index "users_admins", ["admin_id"], name: "index_users_admins_on_admin_id", using: :btree
-  add_index "users_admins", ["user_id"], name: "index_users_admins_on_user_id", using: :btree
 
   create_table "users_devices", force: :cascade do |t|
     t.integer "user_id"
@@ -852,10 +815,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
   create_table "users_groups", force: :cascade do |t|
     t.integer "user_id"
     t.integer "group_id"
+    t.index ["group_id"], name: "index_users_groups_on_group_id", using: :btree
+    t.index ["user_id"], name: "index_users_groups_on_user_id", using: :btree
   end
-
-  add_index "users_groups", ["group_id"], name: "index_users_groups_on_group_id", using: :btree
-  add_index "users_groups", ["user_id"], name: "index_users_groups_on_user_id", using: :btree
 
   create_table "wellplates", force: :cascade do |t|
     t.string   "name"
@@ -864,9 +826,8 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
     t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_wellplates_on_deleted_at", using: :btree
   end
-
-  add_index "wellplates", ["deleted_at"], name: "index_wellplates_on_deleted_at", using: :btree
 
   create_table "wells", force: :cascade do |t|
     t.integer  "sample_id"
@@ -878,11 +839,10 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string   "readout"
     t.string   "additive"
     t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_wells_on_deleted_at", using: :btree
+    t.index ["sample_id"], name: "index_wells_on_sample_id", using: :btree
+    t.index ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
   end
-
-  add_index "wells", ["deleted_at"], name: "index_wells_on_deleted_at", using: :btree
-  add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
-  add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
 
   add_foreign_key "literals", "literatures"
 
