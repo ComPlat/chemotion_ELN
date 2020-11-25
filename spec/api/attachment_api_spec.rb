@@ -83,6 +83,10 @@ describe Chemotion::AttachmentAPI do
     describe 'upload img thru POST attachments/upload_dataset_attachments' do
       before do
         post '/api/v1/attachments/upload_dataset_attachments', params: img_upload
+        img_attachments.reload.last.update!(
+          attachable_id: cont_s1_analysis.id,
+          attachable_type: 'Container'
+        )
       end
 
       it 'creates attachments for each file' do
@@ -108,20 +112,9 @@ describe Chemotion::AttachmentAPI do
         end
       end
 
-      describe 'Return Base64 encoded thumbnail' do
-        before do
-          get "/api/v1/attachments/thumbnail/#{img_attachments.last.id}"
-        end
-
-        it 'creates attachments for each file' do
-          encoded_thumbnail = Base64.encode64(img_attachments.last.read_thumbnail)
-          expect(response.body).to include(encoded_thumbnail.inspect)
-        end
-      end
-
       describe 'Return Base64 encoded thumbnails' do
         before do
-          params = { ids: [img_attachments.last.id] }
+          params = { ids: [img_attachments.reload.last.id] }
           post '/api/v1/attachments/thumbnails', params: params
         end
 
