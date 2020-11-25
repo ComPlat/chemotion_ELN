@@ -76,9 +76,10 @@ module ReactionHelpers
               #add new data container
               #subsample.container = create_root_container
               subsample.container = update_datamodel(sample.container) if sample.container
-
               subsample.save!
               subsample.reload
+              subsample.save_segments(segments: parent_sample.segments, current_user_id: current_user.id)
+
               included_sample_ids << subsample.id
               s_id = subsample.id
             #create new sample
@@ -87,7 +88,7 @@ module ReactionHelpers
                 :id, :is_new, :is_split, :reference, :equivalent, :position,
                 :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
                 :boiling_point_lowerbound, :boiling_point_upperbound,
-                :melting_point_lowerbound, :melting_point_upperbound
+                :melting_point_lowerbound, :melting_point_upperbound, :segments
               ).merge(created_by: current_user.id,
                       boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                       melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
@@ -101,6 +102,7 @@ module ReactionHelpers
 
               container_info = attributes[:container]
               attributes.delete(:container)
+              attributes.delete(:segments)
               new_sample = Sample.new(
                 attributes
               )
@@ -113,6 +115,7 @@ module ReactionHelpers
 
               new_sample.collections << collections
               new_sample.save!
+              new_sample.save_segments(segments: sample.segments, current_user_id: current_user.id)
               included_sample_ids << new_sample.id
               s_id = new_sample.id
             end
@@ -151,6 +154,8 @@ module ReactionHelpers
             end
 
             existing_sample.save!
+            existing_sample.save_segments(segments: sample.segments, current_user_id: current_user.id) if sample.segments
+
             included_sample_ids << existing_sample.id
 
             existing_association = ReactionsSample.find_by(sample_id: sample.id)
@@ -360,6 +365,7 @@ module Chemotion
         requires :container, type: Hash
         optional :duration, type: String
         optional :rxno, type: String
+        optional :segments, type: Array
       end
       route_param :id do
 
@@ -378,11 +384,13 @@ module Chemotion
 
           update_datamodel(attributes[:container])
           attributes.delete(:container)
+          attributes.delete(:segments)
 
           reaction.update_attributes!(attributes)
           reaction.touch
           update_materials_for_reaction(reaction, materials, current_user)
           # update_literatures_for_reaction(reaction, literatures)
+          reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
           #save to profile
@@ -413,7 +421,7 @@ module Chemotion
         optional :role, type: String
         optional :origin, type: Hash
         optional :reaction_svg_file, type: String
-
+        optional :segments, type: Array
         requires :materials, type: Hash
         optional :literatures, type: Hash
         requires :container, type: Hash
@@ -429,6 +437,7 @@ module Chemotion
         collection_id = attributes.delete(:collection_id)
         container_info = params[:container]
         attributes.delete(:container)
+        attributes.delete(:segments)
 
         collection = Collection.find(collection_id)
         attributes.assign_property(:created_by, current_user.id)
@@ -463,7 +472,7 @@ module Chemotion
         end
         reaction.container = update_datamodel(container_info)
         reaction.save!
-
+        reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
         CollectionsReaction.update_tag_by_element_ids(reaction.id)

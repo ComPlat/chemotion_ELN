@@ -15,6 +15,7 @@ import NovncSettings from './NovncSettings';
 import MatrixManagement from './MatrixManagement';
 import TextTemplateContainer from './text_templates/TextTemplateContainer';
 import GenericElementAdmin from './GenericElementAdmin';
+import SegmentElementAdmin from './SegmentElementAdmin';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -60,11 +61,13 @@ class AdminHome extends React.Component {
     } else if (pageIndex === 6) {
       return this.renderNovncSettings();
     } else if (pageIndex === 7) {
-      return this.renderMatrix();
+      return this.renderContent(<MatrixManagement />);
     } else if (pageIndex === 8) {
       return this.renderTextTemplates();
     } else if (pageIndex === 9) {
-      return this.renderGenericElement();
+      return this.renderContent(<GenericElementAdmin />);
+    } else if (pageIndex === 10) {
+      return this.renderContent(<SegmentElementAdmin />);
     }
 
     return (<div />);
@@ -93,7 +96,7 @@ class AdminHome extends React.Component {
               Data Collector
             </NavItem>
             <NavItem eventKey={4}>
-              Groups & Devices
+              Groups &amp; Devices
             </NavItem>
             <NavItem eventKey={5}>
               Load OLS Terms
@@ -109,6 +112,9 @@ class AdminHome extends React.Component {
             </NavItem>
             <NavItem eventKey={9}>
               Generic Elements
+            </NavItem>
+            <NavItem eventKey={10}>
+              Segment Elements
             </NavItem>
           </Nav>
         </Col>
@@ -178,16 +184,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
-
-  renderMatrix() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <MatrixManagement />
-      </Col>
-    );
-  }
-
+ 
   renderTextTemplates() {
     const { contentClassName } = this.state;
     return (
@@ -197,11 +194,11 @@ class AdminHome extends React.Component {
     );
   }
 
-  renderGenericElement() {
+  renderContent(component) {
     const { contentClassName } = this.state;
     return (
       <Col className={contentClassName} >
-        <GenericElementAdmin />
+        {component}
       </Col>
     );
   }

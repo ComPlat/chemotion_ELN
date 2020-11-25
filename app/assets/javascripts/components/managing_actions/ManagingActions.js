@@ -61,7 +61,6 @@ const upState = (state) => {
   }
 
 
-  console.log(stateObj);
   return (stateObj);
 };
 

@@ -5,6 +5,7 @@ import {
   Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
+import { findIndex } from 'lodash';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
@@ -29,14 +30,9 @@ import { rfValueFormat } from './utils/ElementUtils';
 import ExportSamplesBtn from './ExportSamplesBtn';
 import CopyElementModal from './common/CopyElementModal';
 import { permitOn } from './common/uis';
-import UserStore from './stores/UserStore'
-import UserActions from './actions/UserActions';
+import { addSegmentTabs } from './generic/SegmentDetails';
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
-import ArrayUtils from './utils/ArrayUtils';
-import KeyboardActions from './actions/KeyboardActions';
-import TabLayoutContainer from './TabLayoutContainer';
-import _ from 'lodash';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -58,7 +54,8 @@ export default class ReactionDetails extends Component {
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleReactionChange = this.handleReactionChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   onUIStoreChange(state) {
@@ -379,6 +376,16 @@ export default class ReactionDetails extends Component {
     this.setState({visible})
   }
 
+  handleSegmentsChange(se) {
+    const { reaction } = this.state;
+    const { segments } = reaction;
+    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    reaction.segments = segments;
+    reaction.changed = true;
+    this.setState({ reaction });
+  }
+
   render() {
     const {reaction} = this.state;
     const { visible } = this.state;
@@ -430,7 +437,6 @@ export default class ReactionDetails extends Component {
       green_chemistry: 'Green Chemistry'
     }
 
-
     for (let j = 0; j < XTabs.count; j += 1) {
       if (XTabs[`on${j}`](reaction)) {
         const NoName = XTabs[`content${j}`];
@@ -445,6 +451,8 @@ export default class ReactionDetails extends Component {
       }
     }
 
+    addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
+
     const tabContents = [];
     visible.forEach((value) => {
       const tabContent = tabContentsMap[value];
@@ -455,6 +463,7 @@ export default class ReactionDetails extends Component {
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
 
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
+
     return (
       <Panel className="eln-panel-detail"
              bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>

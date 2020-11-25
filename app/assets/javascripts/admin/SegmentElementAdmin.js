@@ -15,28 +15,19 @@ import LayerAttrNewModal from './generic/LayerAttrNewModal';
 import SelectAttrNewModal from './generic/SelectAttrNewModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification } from '../admin/generic/Utils';
 
-const validateKlass = klass => (/\b[a-z]{3,5}\b/g.test(klass));
 const validateInput = (element) => {
-  if (element.name === '') {
-    notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'Please input Klass.' });
-    return false;
-  }
-  if (element.klass_prefix === '') {
-    notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'Please input Prefix.' });
+  if (element.klass_element === '') {
+    notification({ title: 'Create Segment Error', lvl: 'error', msg: 'Please select Klass.' });
     return false;
   }
   if (element.label === '') {
-    notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'Please input Label.' });
-    return false;
-  }
-  if (element.icon_name === '') {
-    notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'Please input Icon.' });
+    notification({ title: 'Create Segment Error', lvl: 'error', msg: 'Please input Label.' });
     return false;
   }
   return true;
 };
 
-export default class GenericElementAdmin extends React.Component {
+export default class SegmentElementAdmin extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -238,22 +229,12 @@ export default class GenericElementAdmin extends React.Component {
 
   handleCreateKlass(element) {
     if (!validateInput(element)) return;
-    if (!validateKlass(element.name)) {
-      notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'This Klass is invalid, please try a different one.' });
-      return;
-    }
-    const { elements } = this.state;
-    const existKlass = elements.filter(el => el.name === element.name);
-    if (existKlass.length > 0) {
-      notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: 'This Klass is already taken. Please choose another one.' });
-      return;
-    }
-    AdminFetcher.createElementKlass(element)
+    AdminFetcher.createSegmentKlass(element)
       .then((result) => {
         if (result.error) {
-          notification({ title: `Klass [${element.name}]`, lvl: 'error', msg: result.error });
+          notification({ title: 'Create Segment fail', lvl: 'error', msg: result.error });
         } else {
-          notification({ title: `Klass [${element.name}]`, lvl: 'info', msg: 'Created successfully' });
+          notification({ title: 'Create Segment successfully', lvl: 'info', msg: 'Created successfully' });
           this.handleNewKlassClose();
           this.fetchElements();
         }
@@ -265,12 +246,12 @@ export default class GenericElementAdmin extends React.Component {
   handleUpdateKlass(element, updates) {
     const inputs = { ...element, ...updates };
     if (!validateInput(inputs)) return;
-    AdminFetcher.updateElementKlass(inputs)
+    AdminFetcher.updateSegmentKlass(inputs)
       .then((result) => {
         if (result.error) {
-          notification({ title: `Klass [${inputs.name}]`, lvl: 'error', msg: result.error });
+          notification({ title: 'Update Segment fail', lvl: 'error', msg: result.error });
         } else {
-          notification({ title: `Klass [${inputs.name}]`, lvl: 'info', msg: 'Updated successfully' });
+          notification({ title: 'Update Segment successfully', lvl: 'info', msg: 'Updated successfully' });
           this.handleKlassClose();
           this.fetchElements();
         }
@@ -280,20 +261,29 @@ export default class GenericElementAdmin extends React.Component {
   }
 
   handleActivateKlass(id, isActive) {
-    AdminFetcher.activeInActiveElementKlass({ klass_id: id, is_active: !isActive })
+    AdminFetcher.deActiveSegmentKlass({ id, is_active: !isActive })
       .then((result) => {
-        notification({ title: `Klass [${result.name}]`, lvl: 'info', msg: `Klass is ${result.is_active ? 'active' : 'deactive'} now` });
-        this.handleKlassClose();
-        this.fetchElements();
+        if (result.error) {
+          notification({ title: 'Update Segment fail', lvl: 'error', msg: result.error });
+        } else {
+          notification({ title: 'Update Segment successfully', lvl: 'info', msg: `Segment is ${result.is_active ? 'active' : 'deactive'} now` });
+          this.handleKlassClose();
+          this.fetchElements();
+        }
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
       });
   }
 
   handleDeleteKlass(element) {
-    AdminFetcher.deleteElementKlass({ klass_id: element.id })
-      .then(() => {
-        notification({ title: `Klass [${element.name}]`, lvl: 'info', msg: 'Deleted successfully' });
-        this.handleKlassClose();
-        this.fetchElements();
+    AdminFetcher.deleteSegmentKlass(element.id)
+      .then((result) => {
+        if (result.error) {
+          notification({ title: 'Delete Segment fail', lvl: 'error', msg: result.error });
+        } else {
+          notification({ title: `Klass [${element.name}]`, lvl: 'info', msg: 'Deleted successfully' });
+          this.handleKlassClose();
+        }
       });
   }
 
@@ -429,9 +419,9 @@ export default class GenericElementAdmin extends React.Component {
   }
 
   fetchElements() {
-    AdminFetcher.fetchElementKlasses()
+    AdminFetcher.listSegmentKlass()
       .then((result) => {
-        this.setState({ elements: result.klass.filter(k => k.is_generic) });
+        this.setState({ elements: result.klass });
       });
   }
 
@@ -449,11 +439,15 @@ export default class GenericElementAdmin extends React.Component {
       element.properties_template.layers[key].fields = sortedFields;
     });
 
-    AdminFetcher.updateGElTemplates(element)
+    AdminFetcher.updateSegmentTemplate(element)
       .then((result) => {
-        notification({ title: `Klass [${element.name}]`, lvl: 'info', msg: 'Saved successfully' });
+        if (result.error) {
+          notification({ title: 'Update Segment template fail', lvl: 'error', msg: result.error });
+        } else {
+          notification({ title: 'Update Segment template successfully', lvl: 'info', msg: 'Saved successfully' });
+          this.setState({ element });
+        }
         LoadingActions.stop();
-        this.setState({ element });
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -545,7 +539,7 @@ export default class GenericElementAdmin extends React.Component {
       ));
 
       const snode = (
-        <Panel className="panel_generic_properties" defaultExpanded>
+        <Panel className="panel_generic_properties" defaultExpanded key={`select_options_${key}`} >
           <Panel.Heading className="template_panel_heading">
             <Panel.Title toggle>
               {key}
@@ -611,6 +605,7 @@ export default class GenericElementAdmin extends React.Component {
       const layerKey = `${layer.key}`;
       const fields = ((layer && layer.fields) || []).map((f, idx) => (
         <ElementField
+          genericType="Segment"
           key={`${layerKey}${f.field}`}
           layerKey={layerKey}
           position={idx + 1}
@@ -693,7 +688,7 @@ export default class GenericElementAdmin extends React.Component {
       return (
         <Panel show={showPropModal.toString()}>
           <Panel.Heading>
-            <b>{`Properties Template of Klass [${element.name}]`}</b>
+            <b>{`Properties Template of Segment [${element.label}]: ${element.desc}`}</b>
             <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Save template</Tooltip>}>
               <Button className="button-right" bsSize="xs" bsStyle="primary" onClick={() => this.handleSubmit()}>
                 Save&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" />
@@ -721,23 +716,21 @@ export default class GenericElementAdmin extends React.Component {
         <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
           <td>{idx + 1}</td>
           <td width="12%">
-            <ButtonTooltip tip="Edit Klass attributes" element={e} fnClick={this.editKlass} />
+            <ButtonTooltip tip="Edit Segment attributes" fnClick={this.editKlass} element={e} />
             &nbsp;
           </td>
-          <td>{e.name}</td>
-          <td>{e.klass_prefix}</td>
+          <td>{e.label}</td>
+          <td>{e.desc}</td>
           <td>
             {
               e.is_active ? <i className="fa fa-check" aria-hidden="true" style={{ color: 'green' }} /> : <i className="fa fa-ban" aria-hidden="true" style={{ color: 'red' }} />
             }
           </td>
-          <td>{e.label}</td>
-          <td><i className={e.icon_name} /></td>
-          <td>{e.desc}</td>
           <td>
-            <ButtonTooltip tip="Edit Klass template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
-            <ButtonTooltip tip="Edit Klass template in JSON format" fnClick={this.showJsonModal} element={e} bs="default" fa="fa-file-code-o" />
+            <ButtonTooltip tip="Edit Segment template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
+            <ButtonTooltip tip="Edit Segment template in JSON format" fnClick={this.showJsonModal} element={e} bs="default" fa="fa-file-code-o" />
           </td>
+          <td>{e.element_klass.label}&nbsp;<i className={e.element_klass.icon_name} /></td>
         </tr>
       </tbody>
     ));
@@ -750,13 +743,11 @@ export default class GenericElementAdmin extends React.Component {
               <tr style={{ backgroundColor: '#ddd' }}>
                 <th width="4%">#</th>
                 <th width="8%">Actions</th>
-                <th width="10%">Klass</th>
-                <th width="10%">Prefix</th>
+                <th width="10%">Segment</th>
+                <th width="30%">Description</th>
                 <th width="8%">Active</th>
-                <th width="10%">Label</th>
-                <th width="8%">Icon</th>
-                <th width="26%">Description</th>
                 <th width="24%">Template</th>
+                <th width="10%">Belongs to</th>
               </tr>
             </thead>
             { tbody }
@@ -773,7 +764,7 @@ export default class GenericElementAdmin extends React.Component {
     return (
       <div>
         <Button bsStyle="primary" bsSize="small" onClick={() => this.newKlass()}>
-          New Klass&nbsp;<i className="fa fa-plus-circle" aria-hidden="true" />
+          New Segment&nbsp;<i className="fa fa-plus-circle" aria-hidden="true" />
         </Button>
         &nbsp;
         <br />
@@ -803,13 +794,13 @@ export default class GenericElementAdmin extends React.Component {
             element={this.state.element}
           />
           <AttrNewModal
-            content="Klass"
+            content="Segment"
             showModal={this.state.showNewKlass}
             fnClose={this.handleNewKlassClose}
             fnCreate={this.handleCreateKlass}
           />
           <AttrEditModal
-            content="Klass"
+            content="Segment"
             showModal={this.state.showEditKlass}
             element={this.state.element}
             fnClose={this.handleKlassClose}

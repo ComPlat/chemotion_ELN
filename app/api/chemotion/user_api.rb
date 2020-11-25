@@ -19,7 +19,7 @@ module Chemotion
       get 'current' do
         present current_user, with: Entities::UserEntity, root: 'user'
       end
-
+      
       desc 'list user labels'
       get 'list_labels' do
         labels = UserLabel.where('user_id = ? or access_level >= 1', current_user.id)

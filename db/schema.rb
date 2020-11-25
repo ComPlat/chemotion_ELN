@@ -275,11 +275,40 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.boolean  "is_active",           default: true, null: false
+    t.string   "klass_prefix",        default: "E",  null: false
+    t.boolean  "is_generic",          default: true, null: false
+    t.integer  "place",               default: 100,  null: false
   end
 
   create_table "elements", force: :cascade do |t|
     t.string   "name"
     t.integer  "element_klass_id"
+    t.jsonb    "properties"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.string   "short_label"
+  end
+
+
+  create_table "segment_klasses", force: :cascade do |t|
+    t.integer  "element_klass_id"
+    t.string   "label",                              null: false
+    t.string   "desc"
+    t.jsonb    "properties_template"
+    t.boolean  "is_active",           default: true, null: false
+    t.integer  "place",               default: 100,  null: false
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  create_table "segments", force: :cascade do |t|
+    t.integer  "segment_klass_id"
+    t.string   "element_type"
+    t.integer  "element_id"
     t.jsonb    "properties"
     t.integer  "created_by"
     t.datetime "created_at"

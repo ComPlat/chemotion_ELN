@@ -4,13 +4,13 @@ import { Form, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 
 export default class KlassAttrForm extends Component {
   render() {
-    const { element, isKlassReadonly } = this.props;
+    const { element, editable } = this.props;
     return (
       <Form horizontal className="input-form">
         <FormGroup controlId="formControlKlass">
           <InputGroup>
             <InputGroup.Addon>Klass</InputGroup.Addon>
-            <FormControl type="text" defaultValue={element.name} inputRef={(ref) => { this.k_name = ref; }} readOnly={isKlassReadonly} />
+            <FormControl type="text" defaultValue={element.name} inputRef={(ref) => { this.k_name = ref; }} readOnly={!editable} />
           </InputGroup>
           <div className="help">
             Klass must be at least 3 characters long and can not be longer than 5 characters<br />
@@ -46,6 +46,12 @@ export default class KlassAttrForm extends Component {
             <FormControl type="text" defaultValue={element.desc} inputRef={(ref) => { this.k_desc = ref; }} />
           </InputGroup>
         </FormGroup>
+        <FormGroup controlId="formControlKlassPlace">
+          <InputGroup>
+            <InputGroup.Addon>Sequential position</InputGroup.Addon>
+            <FormControl type="number" defaultValue={element.place || 100} inputRef={(ref) => { this.k_place = ref; }} min={1} />
+          </InputGroup>
+        </FormGroup>
       </Form>
     );
   }
@@ -53,5 +59,5 @@ export default class KlassAttrForm extends Component {
 
 KlassAttrForm.propTypes = {
   element: PropTypes.object.isRequired,
-  isKlassReadonly: PropTypes.bool.isRequired,
+  editable: PropTypes.bool.isRequired,
 };

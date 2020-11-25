@@ -6,6 +6,7 @@ import Molecule from './Molecule';
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 import Container from './Container.js';
+import Segment from './Segment';
 
 const prepareRangeBound = (args, field) => {
   const argsNew = args;
@@ -65,6 +66,8 @@ export default class Sample extends Element {
     }
 
     newSample.filterElementalComposition();
+    console.log(sample.segments);
+    newSample.segments = _.cloneDeep(sample.segments);
 
     return newSample;
   }
@@ -315,7 +318,8 @@ export default class Sample extends Element {
       user_labels: this.user_labels || [],
       decoupled: this.decoupled,
       molecular_mass: this.molecular_mass,
-      sum_formula: this.sum_formula
+      sum_formula: this.sum_formula,
+      segments: this.segments.map(s => s.serialize()),
     });
 
     return serialized;
@@ -429,10 +433,18 @@ export default class Sample extends Element {
     return this._external_label || this.molecule.iupac_name || this.molecule_formula;
   }
 
+
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
+  }
+
   showedName() {
     return this.showed_name;
   }
-
 
   userLabels() {
     return this.user_labels;

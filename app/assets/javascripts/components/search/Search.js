@@ -12,10 +12,8 @@ import ElementActions from '../actions/ElementActions';
 import UIStore from '../stores/UIStore';
 import UIActions from '../actions/UIActions';
 import UserStore from '../stores/UserStore';
-import GenericElCriteriaModal from '../GenericElCriteriaModal';
-import GenericElCriteria from '../GenericElCriteria';
-import GenericElsFetcher from '../fetchers/GenericElsFetcher';
-import GenericEl from '../models/GenericEl';
+import GenericElCriteriaModal from '../generic/GenericElCriteriaModal';
+import GenericElCriteria from '../generic/GenericElCriteria';
 
 export default class Search extends React.Component {
   constructor(props) {
@@ -33,18 +31,6 @@ export default class Search extends React.Component {
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
     this.hideGenericElCriteria = this.hideGenericElCriteria.bind(this);
     this.genericElSearch = this.genericElSearch.bind(this);
-  }
-
-  componentDidMount() {
-    console.log('search.componentDidMount');
-    //GenericElsFetcher.fetchElementKlass('MOF')
-    //  .then((result) => {
-    //    const genericEl = GenericEl.buildEmpty(0, result.klass);
-    //    genericEl.name = '';
-    //    this.setState({ genericEl });
-    //  }).catch((errorMessage) => {
-    //    console.log(errorMessage);
-    //  });
   }
 
   handleSelectionChange(selection) {
@@ -208,7 +194,7 @@ export default class Search extends React.Component {
         <MenuItem key={`menu-el-${el.name}`} onSelect={() => this.handleElementSelection(`elements-${el.name}`, el)}>
           {el.label}
         </MenuItem>
-      );  
+      );
     });
 
     return menu;

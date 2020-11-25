@@ -124,7 +124,6 @@ class UIStore {
   handleInitialize(result) {
     this.setState(result);
     const { klasses } = result;
-    console.log(result);
     klasses && klasses.forEach((klass) => {
       this.state[`${klass}`] = {
         checkedAll: false,

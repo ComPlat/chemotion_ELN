@@ -19,8 +19,12 @@ module Chemotion
 
       namespace :klasses do
         desc "get klasses"
+        params do
+          optional :generic_only, type: Boolean, desc: "list generic element only"
+        end
         get do
-          list = ElementKlass.where(is_active: true)
+          list = ElementKlass.where(is_active: true, is_generic: true).order('place') if params[:generic_only].present? && params[:generic_only] == true
+          list = ElementKlass.where(is_active: true).order('place') unless params[:generic_only].present? && params[:generic_only] == true
           present list, with: Entities::ElementKlassEntity, root: 'klass'
         end
       end
@@ -28,7 +32,7 @@ module Chemotion
       namespace :klasses_all do
         desc "get all klasses for admin function"
         get do
-          list = ElementKlass.all
+          list = ElementKlass.all.sort_by { |e| e.place }
           present list, with: Entities::ElementKlassEntity, root: 'klass'
         end
       end

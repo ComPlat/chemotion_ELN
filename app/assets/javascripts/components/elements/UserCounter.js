@@ -1,23 +1,16 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { Grid, Row, Col, Panel, Button, FormControl, Label } from 'react-bootstrap';
-import PropTypes from 'prop-types';
-import Select from 'react-select';
+import { Row, Col, Panel, Button, FormControl } from 'react-bootstrap';
 import uuid from 'uuid';
 import UserStore from '../stores/UserStore';
 import UserActions from '../actions/UserActions';
 import AdminFetcher from '../fetchers/AdminFetcher';
 import UsersFetcher from '../fetchers/UsersFetcher';
-import MatrixCheck from '../common/MatrixCheck';
-
 
 export default class UserCounter extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      currentUser: null,
-      klasses: []
-    };
+    this.state = { currentUser: null, klasses: [] };
     this.onChange = this.onChange.bind(this);
     this.fetchKlasses = this.fetchKlasses.bind(this);
     this.handleCounterChange = this.handleCounterChange.bind(this);
@@ -34,7 +27,7 @@ export default class UserCounter extends Component {
     const newId = state.currentUser ? state.currentUser.id : null;
     const oldId = this.state.currentUser ? this.state.currentUser.id : null;
     if (newId !== oldId) {
-      this.setState({ currentUser: state.currentUser }); 
+      this.setState({ currentUser: state.currentUser });
       this.fetchKlasses();
     }
   }
@@ -45,39 +38,26 @@ export default class UserCounter extends Component {
     const counters = (currentUser && currentUser.counters) || {};
     counters[key] = value;
     currentUser.counters = counters;
-    this.setState({
-      currentUser
-    });
+    this.setState({ currentUser });
   }
 
   handleUpdate(type) {
     const { currentUser } = this.state;
     const counters = (currentUser && currentUser.counters) || {};
-
     UsersFetcher.updateUserCounter({
       type,
       counter: counters[type] || 0
-    }).then(() => {
-      document.location.href = '/';
-    }).catch((errorMessage) => {
+    }).then(() => { document.location.href = '/'; }).catch((errorMessage) => {
       console.log(errorMessage);
     });
   }
 
   fetchKlasses() {
-    const { currentUser } = this.state;
-    console.log(currentUser);
-    console.log(MatrixCheck(currentUser && currentUser.matrix, 'genericElement'));
-    // if (MatrixCheck(currentUser && currentUser.matrix, 'genericElement')) {
-    //   AdminFetcher.fetchElementKlasses()
-    //     .then((result) => {
-    //       this.setState({ klasses: result.klass || [] });
-    //     });
-    // }
-
     AdminFetcher.fetchElementKlasses()
       .then((result) => {
-        this.setState({ klasses: result.klass || [] });
+        console.log(result.klass);
+        const genericEntities = result && result.klass.filter(u => u.is_generic === true);
+        this.setState({ klasses: genericEntities || [] });
       });
   }
 
@@ -94,7 +74,7 @@ export default class UserCounter extends Component {
             <Col sm={2}>{klass.label}</Col>
             <Col sm={1}>{klass.klass_prefix}</Col>
             <Col sm={3}>
-              <FormControl type="number" value={counter} onChange={(e) => this.handleCounterChange(klass.name, e.target.value)} min={0} />
+              <FormControl type="number" value={counter} onChange={e => this.handleCounterChange(klass.name, e.target.value)} min={0} />
             </Col>
             <Col sm={2}>{nextNum}</Col>
             <Col sm={4}><Button bsStyle="primary" onClick={() => this.handleUpdate(klass.name)}>Update counter</Button></Col>
@@ -102,18 +82,10 @@ export default class UserCounter extends Component {
         </div>
       );
     });
-
-    if (klasses && klasses.length == 0) {
-      return (<span />);
-    }
-
+    if (klasses && klasses.length === 0) return (<span />);
     return (
       <Panel>
-        <Panel.Heading>
-          <Panel.Title>
-            Element Counter
-          </Panel.Title>
-        </Panel.Heading>
+        <Panel.Heading><Panel.Title>Element Counter</Panel.Title></Panel.Heading>
         <Panel.Body>
           <Row>
             <Col sm={2}><b><u>Klass Label</u></b></Col>
@@ -128,7 +100,6 @@ export default class UserCounter extends Component {
     );
   }
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('UserCounter');

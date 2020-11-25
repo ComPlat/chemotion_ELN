@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Row, Col } from 'react-bootstrap';
 import { sortBy, filter } from 'lodash';
 import { GenProperties, GenPropertiesLayerSearchCriteria } from './GenericElCommon';
-import GenericEl from './models/GenericEl';
+import GenericEl from '../models/GenericEl';
 
 const buildCriteria = (props) => {
   const { genericEl } = props;

@@ -1,5 +1,6 @@
 import alt from '../alt';
 import UsersFetcher from '../fetchers/UsersFetcher';
+import SegmentsFetcher from '../fetchers/SegmentsFetcher';
 
 import cookie from 'react-cookie'
 import DocumentHelper from '../utils/DocumentHelper';
@@ -96,6 +97,17 @@ class UserActions {
       UsersFetcher.fetchNoVNCDevices()
         .then(result => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  fetchSegmentKlasses() {
+    return (dispatch) => {
+      SegmentsFetcher.fetchKlass()
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 }

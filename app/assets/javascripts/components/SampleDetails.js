@@ -11,7 +11,7 @@ import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
 import Barcode from 'react-barcode';
 import Select from 'react-select';
-import { _, cloneDeep } from 'lodash';
+import { _, cloneDeep, findIndex } from 'lodash';
 import uuid from 'uuid';
 import classNames from 'classnames';
 
@@ -63,6 +63,7 @@ import AttachmentFetcher from './fetchers/AttachmentFetcher';
 
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
+import { addSegmentTabs } from './generic/SegmentDetails';
 
 const MWPrecision = 6;
 
@@ -135,7 +136,8 @@ export default class SampleDetails extends React.Component {
     this.fetchQcWhenNeeded = this.fetchQcWhenNeeded.bind(this);
     this.customizableField = this.customizableField.bind(this);
     this.decoupleMolecule = this.decoupleMolecule.bind(this);
-    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -173,7 +175,6 @@ export default class SampleDetails extends React.Component {
       }})
     }
   }
-
   handleMolfileShow() {
     this.setState({
       showMolfileModal: true
@@ -729,6 +730,16 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+
+  handleSegmentsChange(se) {
+    const { sample } = this.state;
+    const { segments } = sample;
+    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    sample.segments = segments;
+    this.setState({ sample });
+  }
+
   customizableField() {
     const { xref } = this.state.sample;
     const {
@@ -1187,6 +1198,8 @@ export default class SampleDetails extends React.Component {
         tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
       }
     }
+
+    addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
     visible.forEach((value) => {

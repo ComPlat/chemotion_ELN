@@ -6,6 +6,7 @@ class ReactionSerializer < ActiveModel::Serializer
   has_many :solvents, serializer: MaterialSerializer
   has_many :purification_solvents, serializer: MaterialSerializer
   has_many :products, serializer: MaterialSerializer
+  has_many :segments
 
   # has_many :literatures
 

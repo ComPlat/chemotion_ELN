@@ -1,46 +1,61 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Form, FormGroup, Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import KlassAttrForm from './KlassAttrForm';
+import { Form, FormGroup, Modal, Button, OverlayTrigger } from 'react-bootstrap';
+import { Content, TipActive, TipInActive, TipDelete } from './AttrForm';
 
-const klassActiveTooltip = <Tooltip id="active_button">This klass is deactivated, press button to [activate]</Tooltip>;
-const klassInActiveTooltip = <Tooltip id="disable_button">This klass is activated, press button to [deactivate]</Tooltip>;
-const klassDeleteTooltip = <Tooltip id="delete_button">Delete this Klass, after deletion, all elements are unaccessible</Tooltip>;
-
-export default class KlassAttrEditModal extends Component {
+export default class AttrEditModal extends Component {
   constructor(props) {
     super(props);
     this.formRef = React.createRef();
   }
 
   handleUpdate() {
-    const { element, fnUpdate } = this.props;
-    const updates = {
-      label: this.formRef.current.k_label.value.trim(),
-      klass_prefix: this.formRef.current.k_prefix.value.trim(),
-      icon_name: this.formRef.current.k_iconname.value.trim(),
-      desc: this.formRef.current.k_desc.value.trim()
-    };
-    fnUpdate(element, updates);
+    const { element, fnUpdate, content } = this.props;
+    switch (content) {
+      case 'Segment': {
+        const updates = {
+          label: this.formRef.current.k_label.value.trim(),
+          desc: this.formRef.current.k_desc.value.trim(),
+          place: this.formRef.current.k_place.value
+        };
+        fnUpdate(element, updates);
+        break;
+      }
+      case 'Klass': {
+        const updates = {
+          label: this.formRef.current.k_label.value.trim(),
+          klass_prefix: this.formRef.current.k_prefix.value.trim(),
+          icon_name: this.formRef.current.k_iconname.value.trim(),
+          desc: this.formRef.current.k_desc.value.trim(),
+          place: this.formRef.current.k_place.value
+        };
+        fnUpdate(element, updates);
+        break;
+      }
+      default:
+        console.log(`Warning: ${content} is not supported.`);
+    }
   }
 
   render() {
     const {
-      element, showModal, fnClose, fnDelete, fnActivate
+      content, element, showModal, fnClose, fnDelete, fnActivate
     } = this.props;
     return (
       <Modal backdrop="static" show={showModal} onHide={() => fnClose()}>
-        <Modal.Header closeButton><Modal.Title>Edit Klass attributes</Modal.Title></Modal.Header>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit {content} attributes</Modal.Title>
+        </Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
-            <KlassAttrForm ref={this.formRef} element={element} isKlassReadonly />
+            <Content ref={this.formRef} content={content} element={element} editable={false} />;
             <Form horizontal>
               <FormGroup>
-                <OverlayTrigger placement="bottom" overlay={klassDeleteTooltip} >
+                <OverlayTrigger placement="bottom" overlay={TipDelete(content)} >
                   <Button bsStyle="danger" onClick={() => fnDelete(element)}>Delete&nbsp;<i className="fa fa-trash" aria-hidden="true" /></Button>
                 </OverlayTrigger>
                 &nbsp;
-                <OverlayTrigger placement="bottom" overlay={element.is_active === false ? klassActiveTooltip : klassInActiveTooltip} >
+                <OverlayTrigger placement="bottom" overlay={element.is_active === false ? TipActive(content) : TipInActive(content)} >
                   <Button
                     bsStyle={element.is_active === false ? 'success' : 'warning'}
                     onClick={() => fnActivate(element.id, element.is_active)}
@@ -62,7 +77,8 @@ export default class KlassAttrEditModal extends Component {
   }
 }
 
-KlassAttrEditModal.propTypes = {
+AttrEditModal.propTypes = {
+  content: PropTypes.string.isRequired,
   showModal: PropTypes.bool.isRequired,
   element: PropTypes.object.isRequired,
   fnClose: PropTypes.func.isRequired,

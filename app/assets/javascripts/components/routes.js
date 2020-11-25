@@ -131,7 +131,6 @@ klasses && klasses.forEach((klass) => {
 });
 
 
-console.log(routes);
 export default function() {
   Aviator.root = '/mydb';
   Aviator.pushStateEnabled = true;

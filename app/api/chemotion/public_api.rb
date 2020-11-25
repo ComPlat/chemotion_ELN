@@ -28,8 +28,12 @@ module Chemotion
 
       namespace :element_klasses_name do
         desc "get klasses"
+        params do
+          optional :generic_only, type: Boolean, desc: "list generic element only"
+        end
         get do
-          list = ElementKlass.where(is_active: true)
+          list = ElementKlass.where(is_active: true) if params[:generic_only].present? && params[:generic_only] == true
+          list = ElementKlass.where(is_active: true) unless params[:generic_only].present? && params[:generic_only] == true
           list.pluck(:name)
         end
       end

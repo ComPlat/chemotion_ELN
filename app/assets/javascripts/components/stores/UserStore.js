@@ -14,7 +14,8 @@ class UserStore {
       rxnos: [],
       chmos: [],
       labels: [],
-      genericEls: []
+      genericEls: [],
+      segmentKlasses: []
     };
 
     this.bindListeners({
@@ -27,6 +28,7 @@ class UserStore {
       handleSelectTab: UserActions.selectTab,
       handleUpdateUserProfile: UserActions.updateUserProfile,
       handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
+      handleSegementKlasses: UserActions.fetchSegmentKlasses
     });
   }
 
@@ -81,6 +83,11 @@ class UserStore {
   handleFetchNoVNCDevices(devices) {
     if (devices) { this.state.devices = devices; }
   }
+
+  handleSegementKlasses(result) {
+    this.state.segmentKlasses = result.klass;
+  }
+
 }
 
 export default alt.createStore(UserStore, 'UserStore');

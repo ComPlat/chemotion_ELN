@@ -39,6 +39,7 @@ class App extends Component {
     UserActions.fetchProfile();
     UserActions.fetchUserLabels();
     UserActions.fetchGenericEls();
+    UserActions.fetchSegmentKlasses();
     UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);
   }

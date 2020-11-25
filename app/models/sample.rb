@@ -61,6 +61,7 @@ class Sample < ActiveRecord::Base
   include AnalysisCodes
   include UnitConvertable
   include Taggable
+  include Segmentable
 
   STEREO_ABS = ['any', 'rac', 'meso', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)'].freeze
   STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para', 'cis', 'trans', 'fac', 'mer'].freeze

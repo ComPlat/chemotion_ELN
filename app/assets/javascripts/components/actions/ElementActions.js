@@ -506,9 +506,12 @@ class ElementActions {
   }
 
   copyReaction(reaction, colId) {
-    return (
-      { reaction: reaction, colId: colId }
-    )
+    return (dispatch) => { ReactionsFetcher.fetchById(reaction.id)
+      .then((result) => {
+        dispatch({ reaction: result, colId: colId });
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
   }
 
   copyElement(element, colId) {

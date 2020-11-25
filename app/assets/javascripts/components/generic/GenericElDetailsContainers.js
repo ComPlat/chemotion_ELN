@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Button } from 'react-bootstrap';
-import Container from './models/Container';
-import ContainerComponent from './ContainerComponent';
-import PrintCodeButton from './common/PrintCodeButton';
+import Container from '../models/Container';
+import ContainerComponent from '../ContainerComponent';
+import PrintCodeButton from '../common/PrintCodeButton';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {

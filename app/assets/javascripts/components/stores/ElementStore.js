@@ -486,19 +486,14 @@ class ElementStore {
   // SEARCH
 
   handleFetchBasedOnSearchSelection(result) {
-    console.log(result);
     Object.keys(result).forEach((key) => {
       console.log(key);
       console.log(result[key]);
       if (key == 'genericEls') {
-        console.log(result[key]);
-
         const { klasses } = UIStore.getState();
-        console.log(klasses);
 
         // eslint-disable-next-line no-unused-expressions
         klasses && klasses.forEach((klass) => {
-          console.log(klass);
           const els = filter(result[key].elements, o => o.type == klass);
           const elIds = els.map(el => el.id);
 
@@ -519,7 +514,6 @@ class ElementStore {
         this.state.elements[key] = result[key];
       }
     });
-    console.log(this.state.elements);
   }
 
   handlefetchBasedOnStructureAndCollection(result) {
@@ -529,7 +523,6 @@ class ElementStore {
   }
 
   handleFetchGenericElByCriteria(result) {
-    console.log(result);
     this.state.elements.mofs = result.mofs.elements;
   }
 
@@ -926,7 +919,6 @@ class ElementStore {
   }
 
   handleCopyElement(result) {
-    console.log(result);
     this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
     Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
   }
