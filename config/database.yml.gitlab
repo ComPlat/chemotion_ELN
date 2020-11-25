@@ -1,15 +1,16 @@
-development:
+default: &default
   adapter: postgresql
-  encoding: unicode
-  database: chemotion_dev
   pool: 5
-  username: chemotion_dev
-  password: 123456
-test:
-  adapter: postgresql
   encoding: unicode
-  database: chemotion_test
-  username: chemotion_test
-  pool: 5
-  password: 123456
   host: postgres
+  password: 123456
+
+development:
+  <<: *default
+  database: chemotion_dev
+  username: chemotion_dev
+
+test:
+  <<: *default
+  username: chemotion_test
+  database: chemotion_test
