@@ -4,6 +4,10 @@ Rails.application.configure do
   # Code is not reloaded between requests.
   config.cache_classes = true
 
+  # TODO: Keep rails 4.2 bahaviour til constants and file structure are
+  # compatible with eager loading.
+  config.enable_dependency_loading = true
+
   # Eager load code on boot. This eager loads most of Rails and
   # your application in memory, allowing both threaded web servers
   # and those relying on copy on write to perform better.
