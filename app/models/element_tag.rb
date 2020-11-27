@@ -15,5 +15,5 @@
 #
 
 class ElementTag < ApplicationRecord
-  belongs_to :taggable, polymorphic: true
+  belongs_to :taggable, polymorphic: true, optional: true
 end

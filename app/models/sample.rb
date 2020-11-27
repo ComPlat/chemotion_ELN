@@ -173,9 +173,9 @@ class Sample < ApplicationRecord
   has_many :devices_samples
   has_many :analyses_experiments
 
-  belongs_to :fingerprint
-  belongs_to :user
-  belongs_to :molecule_name
+  belongs_to :fingerprint, optional: true
+  belongs_to :user, optional: true
+  belongs_to :molecule_name, optional: true
 
   has_one :container, as: :containable
   has_one :well, dependent: :destroy
@@ -190,7 +190,7 @@ class Sample < ApplicationRecord
   has_ancestry
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
-  belongs_to :molecule
+  belongs_to :molecule, optional: true
 
   accepts_nested_attributes_for :molecule_name
   accepts_nested_attributes_for :collections_samples

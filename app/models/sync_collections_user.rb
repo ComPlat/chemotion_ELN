@@ -26,7 +26,7 @@
 
 class SyncCollectionsUser < ApplicationRecord
   belongs_to :user
-  belongs_to :collection
+  belongs_to :collection, optional: true
   belongs_to :sharer, foreign_key: :shared_by_id, class_name: 'User'
 
   has_many :samples, through: :collection

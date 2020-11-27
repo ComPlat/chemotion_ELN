@@ -49,7 +49,7 @@ class Attachment < ApplicationRecord
 
   after_destroy :delete_file_and_thumbnail
 
-  belongs_to :attachable, polymorphic: true
+  belongs_to :attachable, polymorphic: true, optional: true
 
   scope :where_research_plan, lambda { |c_id|
     where(attachable_id: c_id, attachable_type: 'ResearchPlan')
