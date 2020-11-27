@@ -54,7 +54,7 @@ module Reporter
           content_type: @typ
         )
 
-        TransferFileFromTmpJob.set(queue: "transfer_report_from_tmp_#{att.id}").perform_later([att]) unless att.nil?
+        TransferFileFromTmpJob.set(queue: "transfer_report_from_tmp_#{att.id}").perform_later([att.id]) unless att.nil?
 
         @report.update_attributes(
           generated_at: Time.zone.now
