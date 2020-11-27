@@ -16,7 +16,7 @@
 
 class Residue < ApplicationRecord
 
-  belongs_to :sample
+  belongs_to :sample, optional: true
   validate :loading_present
 
   TYPES = Hash[*%i(polymer residue).collect { |v| [ v, v ] }.flatten]

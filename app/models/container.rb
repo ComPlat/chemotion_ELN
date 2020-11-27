@@ -23,7 +23,7 @@ class Container < ApplicationRecord
   include ElementCodes
   include Datasetable
 
-  belongs_to :containable, polymorphic: true
+  belongs_to :containable, polymorphic: true, optional: true
   has_many :attachments, as: :attachable
   # TODO: dependent destroy for attachments should be implemented when attachment get paranoidized instead of this DJ
   before_destroy :delete_attachment

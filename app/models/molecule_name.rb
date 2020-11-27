@@ -23,8 +23,8 @@
 class MoleculeName < ApplicationRecord
   acts_as_paranoid
 
-  belongs_to :user
-  belongs_to :molecule
+  belongs_to :user, optional: true
+  belongs_to :molecule, optional: true
 
   has_many :samples
 end
