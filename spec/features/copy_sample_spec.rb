@@ -40,6 +40,9 @@ describe 'Copy sample' do
     find_by_id('submit-copy-element-btn').click
     find_by_id('txinput_name').set('Sample B').send_keys(:enter)
     find_by_id('submit-sample-btn').click
+    # FIXME: Improve this spec by getting rid of the sleep after being on a
+    # stable rails 5.1 version
+    sleep 6
     expect(page).to have_content('Sample B')
   end
 
