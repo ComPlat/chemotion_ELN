@@ -51,7 +51,7 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', '~> 0.1.8', git: 'https://git.taktsoft.com/taktsoft/ketcherails.git', ref: 'c3b7256ba358309f6e42eff3b497d9e1f6853082'
+#gem 'ketcherails', '~> 0.1.8', git: 'https://git.taktsoft.com/taktsoft/ketcherails.git', ref: 'c3b7256ba358309f6e42eff3b497d9e1f6853082'
 
 gem 'net-sftp'
 gem 'net-ssh'
@@ -70,7 +70,7 @@ gem 'pundit'
 # If we want to upgrade past rack >= 2.1 we need to upgrade to at least grape
 # 1.3.0
 gem 'rack', '~> 2.0.0'
-gem 'rails', '~> 5.0.0'
+gem 'rails', '~> 5.1.0'
 gem 'rdkit_chem', git: "https://github.com/CamAnNguyen/rdkit_chem"
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'
