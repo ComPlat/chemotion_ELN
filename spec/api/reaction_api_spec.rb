@@ -452,7 +452,7 @@ describe Chemotion::ReactionAPI do
         end
 
         before do
-          post '/api/v1/reactions', params: params
+          post '/api/v1/reactions', params: params, as: :json
         end
 
         let(:r) { Reaction.last }

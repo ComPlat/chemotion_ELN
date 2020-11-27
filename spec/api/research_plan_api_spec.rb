@@ -65,7 +65,7 @@ describe Chemotion::ResearchPlanAPI do
           }
         end
 
-        before { post '/api/v1/research_plans', params: params }
+        before { post '/api/v1/research_plans', params: params,  as: :json}
 
         it 'is able to create a new research plan' do
           rp = ResearchPlan.find_by(name: 'test')

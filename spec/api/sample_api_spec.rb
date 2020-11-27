@@ -54,7 +54,7 @@ describe Chemotion::SampleAPI do
         end
 
         describe 'limit param not given' do
-          before { post '/api/v1/samples/ui_state/', params: params }
+          before { post '/api/v1/samples/ui_state/', params: params, as: :json }
 
           it 'fetches all samples for given ui_state' do
             expect(JSON.parse(response.body)['samples'].size).to eq 2
@@ -185,7 +185,7 @@ describe Chemotion::SampleAPI do
         end
 
         describe 'updating sample 1' do
-          before { put "/api/v1/samples/#{s1.id}", params: params }
+          before { put "/api/v1/samples/#{s1.id}", params: params, as: :json }
 
           it 'returns 200 status code' do
             expect(response.status).to eq 200
@@ -200,7 +200,7 @@ describe Chemotion::SampleAPI do
         end
 
         describe 'updating sample 2' do
-          before { put "/api/v1/samples/#{s2.id}", params: params }
+          before { put "/api/v1/samples/#{s2.id}", params: params, as: :json }
 
           it 'returns 200 status code' do
             expect(response.status).to eq 200
@@ -309,7 +309,7 @@ describe Chemotion::SampleAPI do
           }
         end
 
-        before { post '/api/v1/samples', params: params }
+        before { post '/api/v1/samples', params: params, as: :json }
 
         it 'is able to create a new sample' do
           s = Sample.find_by(name: 'test')
@@ -466,7 +466,7 @@ describe Chemotion::SampleAPI do
 
         describe 'POST /api/v1/samples/subsamples' do
           it 'is able to split Samples into Subsamples' do
-            post '/api/v1/samples/subsamples', params: params
+            post '/api/v1/samples/subsamples', params: params, as: :json 
             subsamples = Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id])
             s3 = subsamples[0]
             s4 = subsamples[1]
