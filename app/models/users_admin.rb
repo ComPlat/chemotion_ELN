@@ -13,6 +13,6 @@
 #
 
 class UsersAdmin < ApplicationRecord
-  belongs_to :user
-  belongs_to :admin, class_name: "Person"
+  belongs_to :user, optional: true
+  belongs_to :admin, class_name: "Person", optional: true
 end
