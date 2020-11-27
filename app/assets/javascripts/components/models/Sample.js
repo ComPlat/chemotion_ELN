@@ -43,7 +43,7 @@ export default class Sample extends Element {
     this.melting_point = null;
   }
 
-  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false, keepResidueInfo = false) {
+  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false, keepResidueInfo = false, keepExternalLabel = true) {
     const newSample = sample.buildCopy();
     newSample.collection_id = collection_id;
     if (sample.name) { newSample.name = sample.name; }
@@ -54,6 +54,10 @@ export default class Sample extends Element {
       newSample.filterResidueData(true);
     } else {
       newSample.filterResidueData(keepResidueInfo);
+    }
+
+    if (keepExternalLabel == false) {
+      newSample.external_label = '';
     }
 
     if (sample.elemental_compositions) {

@@ -433,7 +433,7 @@ export default class Reaction extends Element {
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
     );
     copy.products = this.products.map(
-      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true)
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true, false)
     );
 
     copy.rebuildProductName();
