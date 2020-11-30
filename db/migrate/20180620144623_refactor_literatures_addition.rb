@@ -1,4 +1,4 @@
-class RefactorLiteraturesAddition < ActiveRecord::Migration
+class RefactorLiteraturesAddition < ActiveRecord::Migration[4.2]
   def self.up
     add_column :literatures, :refs, :jsonb unless column_exists? :literatures, :refs
     add_column :literatures, :doi, :string unless column_exists? :literatures, :doi

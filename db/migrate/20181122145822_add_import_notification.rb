@@ -1,4 +1,4 @@
-class AddImportNotification < ActiveRecord::Migration
+class AddImportNotification < ActiveRecord::Migration[4.2]
   def change
     channel = Channel.find_by(subject: Channel::SEND_IMPORT_NOTIFICATION)
     return unless channel.nil?

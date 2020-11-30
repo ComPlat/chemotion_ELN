@@ -1,4 +1,4 @@
-class DropCodeLogs < ActiveRecord::Migration
+class DropCodeLogs < ActiveRecord::Migration[4.2]
   def change
 
     drop_table :code_logs

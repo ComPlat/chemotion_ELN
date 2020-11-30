@@ -1,4 +1,4 @@
-class AddScreen < ActiveRecord::Migration
+class AddScreen < ActiveRecord::Migration[4.2]
   def change
     create_table "screens", force: :cascade do |t|
       t.string   "description"

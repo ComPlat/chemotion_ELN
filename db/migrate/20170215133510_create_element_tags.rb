@@ -1,4 +1,4 @@
-class CreateElementTags < ActiveRecord::Migration
+class CreateElementTags < ActiveRecord::Migration[4.2]
   def self.up
     create_table :element_tags do |t|
       t.string  :taggable_type

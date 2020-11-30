@@ -1,4 +1,4 @@
-class ChangeDefaultDetailLevels < ActiveRecord::Migration
+class ChangeDefaultDetailLevels < ActiveRecord::Migration[4.2]
   def change
     change_column :collections, :sample_detail_level, :integer, default: 10
     change_column :collections, :reaction_detail_level, :integer, default: 10

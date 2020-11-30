@@ -1,4 +1,4 @@
-class CreateMolecules < ActiveRecord::Migration
+class CreateMolecules < ActiveRecord::Migration[4.2]
   def change
     create_table :molecules do |t|
       t.string :inchikey

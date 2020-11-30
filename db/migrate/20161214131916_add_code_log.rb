@@ -1,4 +1,4 @@
-class AddCodeLog < ActiveRecord::Migration
+class AddCodeLog < ActiveRecord::Migration[4.2]
   def change
     create_table :code_logs do |t|
       t.string :code_type, null: false

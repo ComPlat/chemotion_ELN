@@ -1,4 +1,4 @@
-class DropIndexOnAncestryFromContainers < ActiveRecord::Migration
+class DropIndexOnAncestryFromContainers < ActiveRecord::Migration[4.2]
   disable_ddl_transaction!
   def self.up
     remove_index :containers, name: :index_containers_on_ancestry unless !index_name_exists?(:containers, "index_containers_on_ancestry", true)

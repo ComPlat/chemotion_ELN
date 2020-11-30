@@ -1,4 +1,4 @@
-class AddColumsToAttachment < ActiveRecord::Migration
+class AddColumsToAttachment < ActiveRecord::Migration[4.2]
   def change
     rename_column :attachments, :container_id, :attachable_id
     add_column :attachments, :attachable_type, :string

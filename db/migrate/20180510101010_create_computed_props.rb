@@ -1,4 +1,4 @@
-class CreateComputedProps < ActiveRecord::Migration
+class CreateComputedProps < ActiveRecord::Migration[4.2]
   def change
     create_table :computed_props do |t|
       t.integer :molecule_id

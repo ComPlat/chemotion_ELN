@@ -1,4 +1,4 @@
-class AddFingerprintToMolecules < ActiveRecord::Migration
+class AddFingerprintToMolecules < ActiveRecord::Migration[4.2]
   def change
     Molecule.reset_column_information
 

@@ -1,4 +1,4 @@
-class AddCreatdByToReactions < ActiveRecord::Migration
+class AddCreatdByToReactions < ActiveRecord::Migration[4.2]
   def up
     add_column :reactions, :created_by, :integer
   end

@@ -1,4 +1,4 @@
-class RemoveFingerprintFromMolecule < ActiveRecord::Migration
+class RemoveFingerprintFromMolecule < ActiveRecord::Migration[4.2]
   def change
     Molecule.reset_column_information
     remove_column :molecules, :fp0, "bit(64)"

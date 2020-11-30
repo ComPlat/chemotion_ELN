@@ -1,4 +1,4 @@
-class CreateResidues < ActiveRecord::Migration
+class CreateResidues < ActiveRecord::Migration[4.2]
   def change
     enable_extension 'hstore' unless extension_enabled?('hstore')
 

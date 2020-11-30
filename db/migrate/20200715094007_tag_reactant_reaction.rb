@@ -1,4 +1,4 @@
-class TagReactantReaction < ActiveRecord::Migration
+class TagReactantReaction < ActiveRecord::Migration[4.2]
   def change
     output_data = ''
     ReactionsSample.where(type: 'ReactionsReactantSample').find_each do |rs|

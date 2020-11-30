@@ -1,4 +1,4 @@
-class CollectionSharedNames < ActiveRecord::Migration
+class CollectionSharedNames < ActiveRecord::Migration[4.2]
   def self.up
     execute "CREATE OR REPLACE FUNCTION collection_shared_names(user_id integer, collection_id integer)
      RETURNS json

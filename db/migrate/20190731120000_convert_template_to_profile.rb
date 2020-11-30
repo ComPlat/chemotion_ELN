@@ -1,4 +1,4 @@
-class ConvertTemplateToProfile < ActiveRecord::Migration
+class ConvertTemplateToProfile < ActiveRecord::Migration[4.2]
   class User < ActiveRecord::Base
     has_one :profile
   end

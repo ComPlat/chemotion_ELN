@@ -1,4 +1,4 @@
-class AddMissingAttributesToSamples < ActiveRecord::Migration
+class AddMissingAttributesToSamples < ActiveRecord::Migration[4.2]
   def change
     add_column :samples, :purity, :float
     add_column :samples, :solvent, :string, :default => ""

@@ -1,4 +1,4 @@
-class DropDevice < ActiveRecord::Migration
+class DropDevice < ActiveRecord::Migration[4.2]
     def change
       drop_table :devices if table_exists? :devices
       drop_table :devices_analyses if table_exists? :devices_analyses

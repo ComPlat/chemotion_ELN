@@ -1,4 +1,4 @@
-class InsertAdministratorAccount < ActiveRecord::Migration
+class InsertAdministratorAccount < ActiveRecord::Migration[4.2]
   class User < ActiveRecord::Base
     self.inheritance_column = nil
     devise :database_authenticatable

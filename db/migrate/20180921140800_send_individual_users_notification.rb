@@ -1,4 +1,4 @@
-class SendIndividualUsersNotification < ActiveRecord::Migration
+class SendIndividualUsersNotification < ActiveRecord::Migration[4.2]
  def change
    channel = Channel.find_by(subject: Channel::SEND_INDIVIDUAL_USERS)
    if (channel.nil?)

@@ -1,4 +1,4 @@
-class UpdateFingerprint < ActiveRecord::Migration
+class UpdateFingerprint < ActiveRecord::Migration[4.2]
   def change
     Sample.reset_column_information
     # Extract all molecule

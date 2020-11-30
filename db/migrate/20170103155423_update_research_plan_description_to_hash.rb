@@ -1,4 +1,4 @@
-class UpdateResearchPlanDescriptionToHash < ActiveRecord::Migration
+class UpdateResearchPlanDescriptionToHash < ActiveRecord::Migration[4.2]
   class ResearchPlan < ActiveRecord::Base
     serialize :description
   end

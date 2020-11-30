@@ -1,4 +1,4 @@
-class AddDeletedAtToAffiliations < ActiveRecord::Migration
+class AddDeletedAtToAffiliations < ActiveRecord::Migration[4.2]
   def change
     add_column :user_affiliations, :deleted_at, :datetime unless column_exists? :user_affiliations, :deleted_at
     add_column :affiliations, :from , :date unless column_exists? :affiliations, :from

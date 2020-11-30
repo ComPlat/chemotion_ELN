@@ -1,4 +1,4 @@
-class CreateDevicesSamples < ActiveRecord::Migration
+class CreateDevicesSamples < ActiveRecord::Migration[4.2]
   def change
     create_table :devices_samples do |t|
       t.integer :device_id, null: false

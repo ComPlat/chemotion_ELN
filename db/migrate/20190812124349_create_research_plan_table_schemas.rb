@@ -1,4 +1,4 @@
-class CreateResearchPlanTableSchemas < ActiveRecord::Migration
+class CreateResearchPlanTableSchemas < ActiveRecord::Migration[4.2]
   def change
     create_table :research_plan_table_schemas do |t|
       t.string :name

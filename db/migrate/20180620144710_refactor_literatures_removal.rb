@@ -1,4 +1,4 @@
-class RefactorLiteraturesRemoval < ActiveRecord::Migration
+class RefactorLiteraturesRemoval < ActiveRecord::Migration[4.2]
   def self.up
     remove_column :literatures, :reaction_id if column_exists? :literatures, :reaction_id
   end

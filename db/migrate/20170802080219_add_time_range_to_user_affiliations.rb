@@ -1,4 +1,4 @@
-class AddTimeRangeToUserAffiliations < ActiveRecord::Migration
+class AddTimeRangeToUserAffiliations < ActiveRecord::Migration[4.2]
   def change
     add_column :user_affiliations, :from, :date unless column_exists? :user_affiliations, :from
     add_column :user_affiliations, :to, :date unless column_exists? :user_affiliations, :to

@@ -1,4 +1,4 @@
-class CreateUserAffiliations < ActiveRecord::Migration
+class CreateUserAffiliations < ActiveRecord::Migration[4.2]
   def change
     create_table :user_affiliations do |t|
       t.integer :user_id

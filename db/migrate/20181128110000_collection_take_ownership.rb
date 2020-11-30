@@ -1,4 +1,4 @@
-class CollectionTakeOwnership < ActiveRecord::Migration
+class CollectionTakeOwnership < ActiveRecord::Migration[4.2]
   def change
     channel = Channel.find_by(subject: Channel::COLLECTION_TAKE_OWNERSHIP)
     if (channel.nil?)
