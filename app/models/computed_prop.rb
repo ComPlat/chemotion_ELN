@@ -14,7 +14,7 @@
 #  ip                 :float            default(0.0)
 #  ea                 :float            default(0.0)
 #  dipol_debye        :float            default(0.0)
-#  status             :integer          default(0)
+#  status             :integer          default("not_computed")
 #  data               :jsonb
 #  created_at         :datetime
 #  updated_at         :datetime
