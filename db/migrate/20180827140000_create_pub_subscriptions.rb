@@ -1,4 +1,4 @@
-class CreatePubSubscriptions < ActiveRecord::Migration
+class CreatePubSubscriptions < ActiveRecord::Migration[4.2]
   def change
     create_table :channels do |t|
       t.string :subject

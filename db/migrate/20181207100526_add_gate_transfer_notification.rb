@@ -1,4 +1,4 @@
-class AddGateTransferNotification < ActiveRecord::Migration
+class AddGateTransferNotification < ActiveRecord::Migration[4.2]
   def change
     channel = Channel.find_by(subject: Channel::GATE_TRANSFER_NOTIFICATION)
     return unless channel.nil?

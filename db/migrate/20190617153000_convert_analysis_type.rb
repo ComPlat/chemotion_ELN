@@ -1,4 +1,4 @@
-class ConvertAnalysisType < ActiveRecord::Migration
+class ConvertAnalysisType < ActiveRecord::Migration[4.2]
 
   CONV = [
     { kind: '1H NMR', ols: 'CHMO:0000593 | 1H nuclear magnetic resonance spectroscopy (1H NMR)' },

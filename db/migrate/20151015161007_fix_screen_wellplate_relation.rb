@@ -1,4 +1,4 @@
-class FixScreenWellplateRelation < ActiveRecord::Migration
+class FixScreenWellplateRelation < ActiveRecord::Migration[4.2]
   def change
     remove_column :wellplates, :screen_id, :integer
 

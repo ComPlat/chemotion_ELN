@@ -1,4 +1,4 @@
-class CreateLiteratures < ActiveRecord::Migration
+class CreateLiteratures < ActiveRecord::Migration[4.2]
   def change
     create_table :literatures do |t|
       t.integer :reaction_id, null: false, index: true

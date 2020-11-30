@@ -1,4 +1,4 @@
-class CreateSolvents < ActiveRecord::Migration
+class CreateSolvents < ActiveRecord::Migration[4.2]
   def change
     create_table :reactions_solvent_samples do |t|
       t.integer :reaction_id

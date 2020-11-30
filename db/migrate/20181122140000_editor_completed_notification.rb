@@ -1,4 +1,4 @@
-class EditorCompletedNotification < ActiveRecord::Migration
+class EditorCompletedNotification < ActiveRecord::Migration[4.2]
  def change
    channel = Channel.find_by(subject: Channel::EDITOR_CALLBACK)
    channel.destroy if channel

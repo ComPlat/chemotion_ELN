@@ -1,4 +1,4 @@
-class UpdateWellplateDescriptionToHash < ActiveRecord::Migration
+class UpdateWellplateDescriptionToHash < ActiveRecord::Migration[4.2]
   class Wellplate < ActiveRecord::Base
     serialize :description
   end

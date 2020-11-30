@@ -1,4 +1,4 @@
-class UpdateReactionObservationToHash < ActiveRecord::Migration
+class UpdateReactionObservationToHash < ActiveRecord::Migration[4.2]
   class Reaction < ActiveRecord::Base
     serialize :observation
   end

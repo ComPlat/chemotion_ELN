@@ -1,4 +1,4 @@
-class AddCanoSmileToMolecules < ActiveRecord::Migration
+class AddCanoSmileToMolecules < ActiveRecord::Migration[4.2]
   def change
     add_column :molecules, :cano_smiles, :string
 

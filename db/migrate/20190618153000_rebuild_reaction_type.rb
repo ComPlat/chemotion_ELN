@@ -1,4 +1,4 @@
-class RebuildReactionType < ActiveRecord::Migration
+class RebuildReactionType < ActiveRecord::Migration[4.2]
 
   def up
     # convert

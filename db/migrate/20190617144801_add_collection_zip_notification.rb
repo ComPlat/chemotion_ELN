@@ -1,4 +1,4 @@
-class AddCollectionZipNotification < ActiveRecord::Migration
+class AddCollectionZipNotification < ActiveRecord::Migration[4.2]
   def change
     channel = Channel.find_or_create_by(subject: Channel::COLLECTION_ZIP)
     attributes = {

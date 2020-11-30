@@ -1,4 +1,4 @@
-class CreateElementalCompositions < ActiveRecord::Migration
+class CreateElementalCompositions < ActiveRecord::Migration[4.2]
   def self.up
     create_table :elemental_compositions do |t|
       t.integer :sample_id, null: false

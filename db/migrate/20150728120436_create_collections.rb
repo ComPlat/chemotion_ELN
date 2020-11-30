@@ -1,4 +1,4 @@
-class CreateCollections < ActiveRecord::Migration
+class CreateCollections < ActiveRecord::Migration[4.2]
   def change
     create_table :collections do |t|
       t.integer :user_id, null: false, index: true

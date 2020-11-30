@@ -1,4 +1,4 @@
-class AddDataModel < ActiveRecord::Migration
+class AddDataModel < ActiveRecord::Migration[4.2]
   def up
     create_table :containers do |t|
       t.string :ancestry, index: true

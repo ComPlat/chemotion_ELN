@@ -1,4 +1,4 @@
-class MigrateLayoutToProfileInt < ActiveRecord::Migration
+class MigrateLayoutToProfileInt < ActiveRecord::Migration[4.2]
   def change
     Profile.find_each do |pr|
       d = pr.data || {}

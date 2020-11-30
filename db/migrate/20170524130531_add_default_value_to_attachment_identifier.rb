@@ -1,4 +1,4 @@
-class AddDefaultValueToAttachmentIdentifier < ActiveRecord::Migration
+class AddDefaultValueToAttachmentIdentifier < ActiveRecord::Migration[4.2]
   def self.up
     change_column :attachments, :identifier, :string , null: true, unique: true
     change_column :attachments, :identifier, 'uuid USING uuid(attachments.identifier)'

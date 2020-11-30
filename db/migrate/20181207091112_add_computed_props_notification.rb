@@ -1,4 +1,4 @@
-class AddComputedPropsNotification < ActiveRecord::Migration
+class AddComputedPropsNotification < ActiveRecord::Migration[4.2]
   def change
     channel = Channel.find_by(subject: Channel::COMPUTED_PROPS_NOTIFICATION)
     return unless channel.nil?

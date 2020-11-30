@@ -1,4 +1,4 @@
-class FixSyncCollections < ActiveRecord::Migration
+class FixSyncCollections < ActiveRecord::Migration[4.2]
   def change
     Collection.find_each do |collection|
       unless collection.sync_collections_users.count > 0

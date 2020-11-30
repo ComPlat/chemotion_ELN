@@ -1,4 +1,4 @@
-class PubchemCidCuration < ActiveRecord::Migration
+class PubchemCidCuration < ActiveRecord::Migration[4.2]
   def change
     return unless table_exists? :element_tags
     return unless column_exists? :element_tags, :taggable_type

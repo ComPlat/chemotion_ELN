@@ -1,4 +1,4 @@
-class CreateFingerprints < ActiveRecord::Migration
+class CreateFingerprints < ActiveRecord::Migration[4.2]
   def change
     create_table :fingerprints do |t|
       t.bit      :fp0,           limit: 64

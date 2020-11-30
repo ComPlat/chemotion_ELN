@@ -1,4 +1,4 @@
-class UpdateReactionDescriptionToHash < ActiveRecord::Migration
+class UpdateReactionDescriptionToHash < ActiveRecord::Migration[4.2]
   class Reaction < ActiveRecord::Base
       serialize :description
     end
