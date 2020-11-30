@@ -1,4 +1,4 @@
-class SetSampleDefaults < ActiveRecord::Migration
+class SetSampleDefaults < ActiveRecord::Migration[4.2]
   def up
     change_column :samples, :purity, :float, default: 1
     change_column :samples, :amount_value, :float, default: 0

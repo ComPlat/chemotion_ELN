@@ -1,4 +1,4 @@
-class UpdateReactionTemperature < ActiveRecord::Migration
+class UpdateReactionTemperature < ActiveRecord::Migration[4.2]
   def change
     add_column :reactions, :tmp, :string, default: ''
     Reaction.reset_column_information

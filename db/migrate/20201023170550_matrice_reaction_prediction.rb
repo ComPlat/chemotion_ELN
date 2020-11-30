@@ -1,4 +1,4 @@
-class MatriceReactionPrediction < ActiveRecord::Migration
+class MatriceReactionPrediction < ActiveRecord::Migration[4.2]
   class Matrice < ActiveRecord::Base
   end
 

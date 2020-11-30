@@ -1,4 +1,4 @@
-class UpdateSampleAnalysesDumpContentToHash < ActiveRecord::Migration
+class UpdateSampleAnalysesDumpContentToHash < ActiveRecord::Migration[4.2]
   def up
     Sample.find_each do |s|
       analyses = s.analyses.map do |a|

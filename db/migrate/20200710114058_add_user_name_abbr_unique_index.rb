@@ -1,4 +1,4 @@
-class AddUserNameAbbrUniqueIndex < ActiveRecord::Migration
+class AddUserNameAbbrUniqueIndex < ActiveRecord::Migration[4.2]
   def change
     deleted_users = User.only_deleted.where.not(name_abbreviation: nil)
 

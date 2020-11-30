@@ -1,4 +1,4 @@
-class AddUniqCollectionsElements < ActiveRecord::Migration
+class AddUniqCollectionsElements < ActiveRecord::Migration[4.2]
   def change
     add_index :collections_reactions, [:reaction_id, :collection_id], unique: true
     add_index :collections_wellplates, [:wellplate_id, :collection_id], unique: true

@@ -1,4 +1,4 @@
-class AddIsSynchronizedToCollections < ActiveRecord::Migration
+class AddIsSynchronizedToCollections < ActiveRecord::Migration[4.2]
   def change
     add_column :collections, :is_synchronized, :boolean, null: false, default: false
     Collection.reset_column_information

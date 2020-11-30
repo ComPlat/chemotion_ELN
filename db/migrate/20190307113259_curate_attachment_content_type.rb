@@ -1,4 +1,4 @@
-class CurateAttachmentContentType < ActiveRecord::Migration
+class CurateAttachmentContentType < ActiveRecord::Migration[4.2]
   def change
     Attachment.where(content_type: nil).find_each do |attachment|
       m =  begin MimeMagic.by_path(attachment.filename)

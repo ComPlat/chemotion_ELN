@@ -1,4 +1,4 @@
-class AddDeletedAtToElementTables < ActiveRecord::Migration
+class AddDeletedAtToElementTables < ActiveRecord::Migration[4.2]
   def change
     add_column :collections, :deleted_at, :datetime
     add_index :collections, :deleted_at

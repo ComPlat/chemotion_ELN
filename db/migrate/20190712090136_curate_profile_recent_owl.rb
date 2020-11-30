@@ -1,4 +1,4 @@
-class CurateProfileRecentOwl < ActiveRecord::Migration
+class CurateProfileRecentOwl < ActiveRecord::Migration[4.2]
   def change
     Profile.find_each do |profile|
       data = profile.data

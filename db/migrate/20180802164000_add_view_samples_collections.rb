@@ -1,4 +1,4 @@
-class AddViewSamplesCollections < ActiveRecord::Migration
+class AddViewSamplesCollections < ActiveRecord::Migration[4.2]
   def self.up
     execute "create or replace
     	view v_samples_collections as select

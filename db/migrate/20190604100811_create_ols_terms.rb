@@ -1,4 +1,4 @@
-class CreateOlsTerms < ActiveRecord::Migration
+class CreateOlsTerms < ActiveRecord::Migration[4.2]
   def change
     #drop_table(:ols_terms, if_exists: true)
     unless table_exists? :ols_terms

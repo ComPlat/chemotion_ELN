@@ -1,4 +1,4 @@
-class CreateSyncCollectionsUsers < ActiveRecord::Migration
+class CreateSyncCollectionsUsers < ActiveRecord::Migration[4.2]
   def change
     create_table :sync_collections_users do |t|
       t.integer :user_id

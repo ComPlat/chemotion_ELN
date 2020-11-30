@@ -1,4 +1,4 @@
-class UpdateScreenDescriptionToHash < ActiveRecord::Migration
+class UpdateScreenDescriptionToHash < ActiveRecord::Migration[4.2]
   class Screen < ActiveRecord::Base
     serialize :description
   end

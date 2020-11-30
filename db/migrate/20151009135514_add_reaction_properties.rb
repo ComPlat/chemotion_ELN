@@ -1,4 +1,4 @@
-class AddReactionProperties < ActiveRecord::Migration
+class AddReactionProperties < ActiveRecord::Migration[4.2]
   def change
     add_column :reactions, :description, :text
     add_column :reactions, :timestamp_start, :string

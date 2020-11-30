@@ -1,4 +1,4 @@
-class CreateMoleculeNames < ActiveRecord::Migration
+class CreateMoleculeNames < ActiveRecord::Migration[4.2]
   def change
     create_table :molecule_names do |t|
       t.belongs_to :molecule, index: true

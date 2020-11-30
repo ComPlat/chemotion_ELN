@@ -1,4 +1,4 @@
-class AddInboxArrivalsToMe < ActiveRecord::Migration
+class AddInboxArrivalsToMe < ActiveRecord::Migration[4.2]
   def change
     channel = Channel.find_by(subject: Channel::INBOX_ARRIVALS_TO_ME)
     if (channel.nil?)

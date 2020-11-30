@@ -1,4 +1,4 @@
-class ChangeMoleculeDensityDefault < ActiveRecord::Migration
+class ChangeMoleculeDensityDefault < ActiveRecord::Migration[4.2]
   def up
     change_column_default :molecules, :density, 0.0
   end

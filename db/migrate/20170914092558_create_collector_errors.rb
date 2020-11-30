@@ -1,4 +1,4 @@
-class CreateCollectorErrors < ActiveRecord::Migration
+class CreateCollectorErrors < ActiveRecord::Migration[4.2]
   def change
     create_table :collector_errors do |t|
       t.string :error_code

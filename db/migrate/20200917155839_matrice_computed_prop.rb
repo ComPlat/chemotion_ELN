@@ -1,4 +1,4 @@
-class MatriceComputedProp < ActiveRecord::Migration
+class MatriceComputedProp < ActiveRecord::Migration[4.2]
   class Matrice < ActiveRecord::Base
   end
 

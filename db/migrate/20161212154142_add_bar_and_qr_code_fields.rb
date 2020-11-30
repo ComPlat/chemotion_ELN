@@ -1,4 +1,4 @@
-class AddBarAndQrCodeFields < ActiveRecord::Migration
+class AddBarAndQrCodeFields < ActiveRecord::Migration[4.2]
   def change
     add_column :samples, :bar_code, :string
     add_column :samples, :qr_code, :string

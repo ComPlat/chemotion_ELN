@@ -1,4 +1,4 @@
-class AddColumsToReaction < ActiveRecord::Migration
+class AddColumsToReaction < ActiveRecord::Migration[4.2]
   def change
     add_column :reactions, :rinchi_string, :text
     add_column :reactions, :rinchi_long_key, :text

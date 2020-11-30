@@ -1,4 +1,4 @@
-class AddTypeToUsers < ActiveRecord::Migration
+class AddTypeToUsers < ActiveRecord::Migration[4.2]
   def change
     add_column :users, :type, :string, default: 'Person'  unless column_exists? :users, :type
     User.reset_column_information

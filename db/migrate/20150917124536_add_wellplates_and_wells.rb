@@ -1,4 +1,4 @@
-class AddWellplatesAndWells < ActiveRecord::Migration
+class AddWellplatesAndWells < ActiveRecord::Migration[4.2]
   def change
     create_table "wells", force: :cascade do |t|
       t.integer "sample_id", null: false, index: true

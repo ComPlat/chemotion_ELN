@@ -120,21 +120,9 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "deleted_at"
     t.boolean "is_synchronized", default: false, null: false
     t.integer "researchplan_detail_level", default: 10
-    t.integer "element_detail_level", default: 10
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["user_id"], name: "index_collections_on_user_id"
-  end
-
-  create_table "collections_elements", id: :serial, force: :cascade do |t|
-    t.integer "collection_id"
-    t.integer "element_id"
-    t.string "element_type"
-    t.datetime "deleted_at"
-    t.index ["collection_id"], name: "index_collections_elements_on_collection_id"
-    t.index ["deleted_at"], name: "index_collections_elements_on_deleted_at"
-    t.index ["element_id", "collection_id"], name: "index_collections_elements_on_element_id_and_collection_id", unique: true
-    t.index ["element_id"], name: "index_collections_elements_on_element_id"
   end
 
   create_table "collections_reactions", id: :serial, force: :cascade do |t|
@@ -204,9 +192,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.integer "creator", default: 0
     t.integer "sample_id", default: 0
     t.jsonb "tddft", default: {}
-    t.string "task_id"
-    t.datetime "deleted_at"
-    t.index ["deleted_at"], name: "index_computed_props_on_deleted_at"
   end
 
   create_table "container_hierarchies", id: false, force: :cascade do |t|
@@ -231,61 +216,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
 
-  create_table "dataset_klasses", id: :serial, force: :cascade do |t|
-    t.string "ols_term_id", null: false
-    t.string "label", null: false
-    t.string "desc"
-    t.jsonb "properties_template", default: {"layers"=>{}, "select_options"=>{}}, null: false
-    t.boolean "is_active", default: false, null: false
-    t.integer "place", default: 100, null: false
-    t.integer "created_by", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-    t.string   "uuid"
-    t.jsonb    "properties_release",  default: {}
-    t.datetime "released_at"
-  end
-
-  create_table "dataset_klasses_revisions", force: :cascade do |t|
-    t.integer  "dataset_klass_id"
-    t.string   "uuid"
-    t.jsonb    "properties_release", default: {}
-    t.datetime "released_at"
-    t.integer  "released_by"
-    t.integer  "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-  end
-
-  add_index "dataset_klasses_revisions", ["dataset_klass_id"], name: "index_dataset_klasses_revisions_on_dataset_klass_id", using: :btree
-
-  create_table "datasets", force: :cascade do |t|
-    t.integer  "dataset_klass_id"
-    t.string   "element_type"
-    t.integer  "element_id"
-    t.jsonb    "properties"
-    t.datetime "created_at",       null: false
-    t.datetime "updated_at"
-    t.string   "uuid"
-    t.string   "klass_uuid"
-    t.datetime "deleted_at"
-  end
-
-  create_table "datasets_revisions", force: :cascade do |t|
-    t.integer  "dataset_id"
-    t.string   "uuid"
-    t.string   "klass_uuid"
-    t.jsonb    "properties", default: {}
-    t.integer  "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-  end
-
-  add_index "datasets_revisions", ["dataset_id"], name: "index_datasets_revisions_on_dataset_id", using: :btree
-
   create_table "delayed_jobs", id: :serial, force: :cascade do |t|
     t.integer "priority", default: 0, null: false
     t.integer "attempts", default: 0, null: false
@@ -300,50 +230,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "updated_at"
     t.string "cron"
     t.index ["priority", "run_at"], name: "delayed_jobs_priority"
-  end
-
-  create_table "device_metadata", id: :serial, force: :cascade do |t|
-    t.integer "device_id"
-    t.string "doi"
-    t.string "url"
-    t.string "landing_page"
-    t.string "name"
-    t.string "type"
-    t.string "description"
-    t.string "publisher"
-    t.integer "publication_year"
-    t.jsonb "manufacturers"
-    t.jsonb "owners"
-    t.jsonb "dates"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
-    t.integer "doi_sequence"
-    t.string "data_cite_prefix"
-    t.datetime "data_cite_created_at"
-    t.datetime "data_cite_updated_at"
-    t.integer "data_cite_version"
-    t.jsonb "data_cite_last_response", default: {}
-    t.string "data_cite_state", default: "draft"
-    t.string "data_cite_creator_name"
-    t.index ["deleted_at"], name: "index_device_metadata_on_deleted_at"
-    t.index ["device_id"], name: "index_device_metadata_on_device_id"
-  end
-
-  create_table "element_klasses", id: :serial, force: :cascade do |t|
-    t.string "name"
-    t.string "label"
-    t.string "desc"
-    t.string "icon_name"
-    t.boolean "is_active", default: true, null: false
-    t.string "klass_prefix", default: "E", null: false
-    t.boolean "is_generic", default: true, null: false
-    t.integer "place", default: 100, null: false
-    t.jsonb "properties_template"
-    t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
   end
 
   create_table "element_tags", id: :serial, force: :cascade do |t|
@@ -363,31 +249,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["sample_id"], name: "index_elemental_compositions_on_sample_id"
-  end
-
-  create_table "elements", id: :serial, force: :cascade do |t|
-    t.string "name"
-    t.integer "element_klass_id"
-    t.string "short_label"
-    t.jsonb "properties"
-    t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-    t.string   "short_label"
-    t.string   "uuid"
-    t.string   "klass_uuid"
-  end
-
-  create_table "elements_samples", id: :serial, force: :cascade do |t|
-    t.integer "element_id"
-    t.integer "sample_id"
-    t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-    t.index ["element_id"], name: "index_elements_samples_on_element_id"
-    t.index ["sample_id"], name: "index_elements_samples_on_sample_id"
   end
 
   create_table "experiments", id: :serial, force: :cascade do |t|
@@ -430,101 +291,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.time "deleted_at"
   end
 
-  create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.integer "aid", default: 1, null: false
-    t.integer "aid2", default: 1, null: false
-    t.integer "bid", default: 1, null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.string "status"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.index ["moderated_by"], name: "index_ketcherails_amino_acids_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_amino_acids_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_amino_acids_on_suggested_by"
-  end
-
-  create_table "ketcherails_atom_abbreviations", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.integer "aid", default: 1, null: false
-    t.integer "bid", default: 1, null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.string "status"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.string "rtl_name"
-    t.index ["moderated_by"], name: "index_ketcherails_atom_abbreviations_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_atom_abbreviations_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_atom_abbreviations_on_suggested_by"
-  end
-
-  create_table "ketcherails_common_templates", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.integer "template_category_id"
-    t.string "status"
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.index ["moderated_by"], name: "index_ketcherails_common_templates_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_common_templates_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_common_templates_on_suggested_by"
-  end
-
-  create_table "ketcherails_custom_templates", id: :serial, force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.index ["user_id"], name: "index_ketcherails_custom_templates_on_user_id"
-  end
-
-  create_table "ketcherails_template_categories", id: :serial, force: :cascade do |t|
-    t.string "name", null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.string "sprite_class"
-  end
-
   create_table "literals", id: :serial, force: :cascade do |t|
     t.integer "literature_id"
     t.integer "element_id"
@@ -533,7 +299,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.integer "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "litype"
     t.index ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature"
     t.index ["literature_id", "element_type", "element_id"], name: "index_on_literature"
   end
@@ -610,18 +375,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true
   end
 
-  create_table "nmr_sim_nmr_simulations", id: :serial, force: :cascade do |t|
-    t.integer "molecule_id"
-    t.text "path_1h"
-    t.text "path_13c"
-    t.text "source"
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at"
-    t.index ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true
-  end
-
   create_table "notifications", id: :serial, force: :cascade do |t|
     t.integer "message_id"
     t.integer "user_id"
@@ -673,7 +426,7 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "data", default: {}, null: false
+    t.jsonb "data"
     t.integer "curation", default: 2
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
@@ -723,7 +476,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "deleted_at"
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
-    t.boolean "show_label", default: false, null: false
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -760,43 +512,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.index ["deleted_at"], name: "index_reports_users_on_deleted_at"
     t.index ["report_id"], name: "index_reports_users_on_report_id"
     t.index ["user_id"], name: "index_reports_users_on_user_id"
-  end
-
-  create_table "research_plan_metadata", id: :serial, force: :cascade do |t|
-    t.integer "research_plan_id"
-    t.string "doi"
-    t.string "url"
-    t.string "landing_page"
-    t.string "title"
-    t.string "type"
-    t.string "publisher"
-    t.integer "publication_year"
-    t.jsonb "dates"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
-    t.string "data_cite_prefix"
-    t.datetime "data_cite_created_at"
-    t.datetime "data_cite_updated_at"
-    t.integer "data_cite_version"
-    t.jsonb "data_cite_last_response", default: {}
-    t.string "data_cite_state", default: "draft"
-    t.string "data_cite_creator_name"
-    t.jsonb "description"
-    t.text "creator"
-    t.text "affiliation"
-    t.text "contributor"
-    t.string "language"
-    t.text "rights"
-    t.string "format"
-    t.string "version"
-    t.jsonb "geo_location"
-    t.jsonb "funding_reference"
-    t.text "subject"
-    t.jsonb "alternate_identifier"
-    t.jsonb "related_identifier"
-    t.index ["deleted_at"], name: "index_research_plan_metadata_on_deleted_at"
-    t.index ["research_plan_id"], name: "index_research_plan_metadata_on_research_plan_id"
   end
 
   create_table "research_plan_table_schemas", id: :serial, force: :cascade do |t|
@@ -862,9 +577,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.string "molfile_version", limit: 20
     t.jsonb "stereo"
     t.string "metrics", default: "mmm"
-    t.boolean "decoupled", default: false, null: false
-    t.float "molecular_mass"
-    t.string "sum_formula"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
@@ -894,47 +606,6 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.index ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id"
   end
 
-  create_table "segment_klasses", id: :serial, force: :cascade do |t|
-    t.integer "element_klass_id"
-    t.string "label", null: false
-    t.string "desc"
-    t.jsonb "properties_template"
-    t.boolean "is_active", default: true, null: false
-    t.integer "place", default: 100, null: false
-    t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-    t.string   "uuid"
-    t.jsonb    "properties_release",  default: {}
-    t.datetime "released_at"
-  end
-
-  create_table "segment_klasses_revisions", force: :cascade do |t|
-    t.integer  "segment_klass_id"
-    t.string   "uuid"
-    t.jsonb    "properties_release", default: {}
-    t.datetime "released_at"
-    t.integer  "released_by"
-    t.integer  "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-  end
-
-  create_table "segments", id: :serial, force: :cascade do |t|
-    t.integer "segment_klass_id"
-    t.string "element_type"
-    t.integer "element_id"
-    t.jsonb "properties"
-    t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-    t.string   "uuid"
-    t.string   "klass_uuid"
-  end
-
   create_table "subscriptions", id: :serial, force: :cascade do |t|
     t.integer "channel_id"
     t.integer "user_id"
@@ -957,23 +628,9 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.string "label"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer "element_detail_level", default: 10
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
     t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
-  end
-
-  create_table "text_templates", id: :serial, force: :cascade do |t|
-    t.string "type"
-    t.integer "user_id", null: false
-    t.string "name"
-    t.jsonb "data", default: {}
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
-    t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
-    t.index ["user_id"], name: "index_text_templates_on_user_id"
   end
 
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
@@ -1303,7 +960,7 @@ ActiveRecord::Schema.define(version: 20210617132532) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL

@@ -1,4 +1,4 @@
-class CreateMatrices < ActiveRecord::Migration
+class CreateMatrices < ActiveRecord::Migration[4.2]
   def change
     create_table :matrices do |t|
       t.string :name, null: false

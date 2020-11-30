@@ -1,4 +1,4 @@
-class ReactionsSample < ActiveRecord::Migration
+class ReactionsSample < ActiveRecord::Migration[4.2]
   def self.up
     create_table :reactions_samples do |t|
       t.integer :reaction_id

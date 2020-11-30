@@ -1,4 +1,4 @@
-class MatriceUserLabel < ActiveRecord::Migration
+class MatriceUserLabel < ActiveRecord::Migration[4.2]
   def change
     Matrice.create(
       name: 'userLabel',

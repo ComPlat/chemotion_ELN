@@ -1,4 +1,4 @@
-class DefaultRecentProfile < ActiveRecord::Migration
+class DefaultRecentProfile < ActiveRecord::Migration[4.2]
 
   CHMO = ['CHMO:0000593', 'CHMO:0000595', 'CHMO:0000470', 'CHMO:0001075', 'CHMO:0000497', 'CHMO:0001009', 'CHMO:0000630', 'CHMO:0001007', 'CHMO:0000156', 'BFO:0000015']
 

@@ -1,4 +1,4 @@
-class FixSolventReference < ActiveRecord::Migration
+class FixSolventReference < ActiveRecord::Migration[4.2]
   class ReactionsSample < ActiveRecord::Base
   end
 

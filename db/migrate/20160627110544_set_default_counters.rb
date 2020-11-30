@@ -1,4 +1,4 @@
-class SetDefaultCounters < ActiveRecord::Migration
+class SetDefaultCounters < ActiveRecord::Migration[4.2]
   def change
     d = {
       samples: 0,

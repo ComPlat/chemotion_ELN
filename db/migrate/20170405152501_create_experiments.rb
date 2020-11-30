@@ -1,4 +1,4 @@
-class CreateExperiments < ActiveRecord::Migration
+class CreateExperiments < ActiveRecord::Migration[4.2]
   def change
     create_table :experiments do |t|
       t.string :type, limit: 20

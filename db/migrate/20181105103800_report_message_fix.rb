@@ -1,4 +1,4 @@
-class ReportMessageFix < ActiveRecord::Migration
+class ReportMessageFix < ActiveRecord::Migration[4.2]
  def change
    channel = Channel.find_by(subject: Channel::REPORT_GENERATOR_NOTIFICATION)
    if (channel)

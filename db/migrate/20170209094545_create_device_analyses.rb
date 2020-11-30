@@ -1,4 +1,4 @@
-class CreateDeviceAnalyses < ActiveRecord::Migration
+class CreateDeviceAnalyses < ActiveRecord::Migration[4.2]
   def change
     create_table :devices_analyses do |t|
       t.integer :device_id, null: false
