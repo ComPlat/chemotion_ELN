@@ -95,7 +95,7 @@ module ReactionHelpers
               ).merge(created_by: current_user.id,
                       boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                       melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
-              
+
                       # update attributes[:name] for a copied reaction
               if (reaction.name || '').include?("Copy") && attributes[:name].present?
                 named_by_reaction = "#{reaction.short_label}"
@@ -371,7 +371,7 @@ module Chemotion
 
         put do
           reaction = @reaction
-          attributes = declared(params, include_missing: false).symbolize_keys
+          attributes = declared(params, include_missing: false)
           materials = attributes.delete(:materials)
           literatures = attributes.delete(:literatures)
           id = attributes.delete(:id)
@@ -422,7 +422,7 @@ module Chemotion
       end
 
       post do
-        attributes = declared(params, include_missing: false).symbolize_keys
+        attributes = declared(params, include_missing: false)
         materials = attributes.delete(:materials)
         literatures = attributes.delete(:literatures)
         attributes.delete(:can_copy)
