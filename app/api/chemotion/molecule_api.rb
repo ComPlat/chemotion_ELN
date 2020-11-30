@@ -111,9 +111,11 @@ module Chemotion
               }.to_json
             }
 
-            HTTParty.post(cconfig.server, options)
-            cp.status = 'in_progress'
+            req = HTTParty.post(cconfig.server, options)
+            cp.task_id = req.parsed_response["taskID"] if req.ok?
+            cp.status = 'pending'
           end
+
           cp.save!
 
           Message.create_msg_notification(

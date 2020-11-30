@@ -22,6 +22,7 @@
 #  creator            :integer          default(0)
 #  sample_id          :integer          default(0)
 #  tddft              :jsonb
+#  task_id            :string
 #
 
 # ComputedProp, Molecule computed properties via OpenMOPAC and TURBOMOLE
@@ -29,7 +30,14 @@ class ComputedProp < ActiveRecord::Base
   belongs_to :molecule
   belongs_to :user
 
-  enum status: { not_computed: 0, in_progress: 1, completed: 2 }
+  enum status: %w[
+    pending
+    started
+    success
+    failure
+    retry
+    revoked
+  ]
 
   def self.parse_single(line_arr, target_str)
     matches = parse_data(line_arr, target_str)
@@ -47,6 +55,8 @@ class ComputedProp < ActiveRecord::Base
   end
 
   def self.from_raw(compute_id, data)
+    return if data.nil? || data.empty?
+
     cp = ComputedProp.find(compute_id)
     return if cp.nil?
 
