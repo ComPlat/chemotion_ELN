@@ -520,7 +520,7 @@ private
 
   def update_counter
     return if short_label =~ /solvents?|reactants?/ || self.parent
-    return unless short_label_changed?
+    return unless saved_change_to_short_label?
     return unless short_label =~ /^#{self.creator.name_abbreviation}-\d+$/
     self.creator.increment_counter 'samples'
   end
