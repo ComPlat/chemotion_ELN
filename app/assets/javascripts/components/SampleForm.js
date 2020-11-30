@@ -31,6 +31,11 @@ export default class SampleForm extends React.Component {
     this.setState({ isMolNameLoading: false });
   }
 
+  handleDecoupledChanged(e) {
+    // TODO: Handle additionally required fields
+    this.props.sample.decoupled = e;
+  }
+
   handleAmountChanged(amount) {
     this.props.sample.setAmount(amount);
   }
@@ -73,6 +78,22 @@ export default class SampleForm extends React.Component {
           onChange={e => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
         >
           Top secret
+        </Checkbox>
+      );
+    }
+
+    return (<span />);
+  }
+
+  decoupledCheckbox(sample) {
+    if (sample.can_update) {
+      return (
+        <Checkbox
+          inputRef={(ref) => { this.decoupledInput = ref; }}
+          checked={sample.decoupled}
+          onChange={e => this.handleFieldChanged(sample, 'decoupled', e.target.checked)}
+        >
+          Decoupled
         </Checkbox>
       );
     }
@@ -221,6 +242,8 @@ export default class SampleForm extends React.Component {
       this.handleMolarityChanged(e);
     } else if (/density/.test(field)) {
       this.handleDensityChanged(e);
+    } else if (field === 'decoupled') {
+      this.handleDecoupledChanged(e);
     } else if (e && e.value) {
       // for numeric inputs
       sample[field] = e.value;
@@ -373,6 +396,9 @@ export default class SampleForm extends React.Component {
                 </div>
                 <div style={{ width: '15%' }} className="top-secret-checkbox">
                   {this.topSecretCheckbox(sample)}
+                </div>
+                <div style={{ width: '15%' }} className="decoupled-checkbox">
+                  {this.decoupledCheckbox(sample)}
                 </div>
               </div>
             </td>

@@ -183,7 +183,8 @@ export default class Sample extends Element {
       container: Container.init(),
       can_update: true,
       can_copy: false,
-      stereo: Sample.defaultStereo()
+      stereo: Sample.defaultStereo(),
+      decoupled: false
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -308,10 +309,19 @@ export default class Sample extends Element {
       container: this.container,
       xref: this.xref,
       stereo: this.stereo,
-      user_labels: this.user_labels || []
+      user_labels: this.user_labels || [],
+      decoupled: this.decoupled
     });
 
     return serialized;
+  }
+
+  get decoupled() {
+    return this._decoupled;
+  }
+
+  set decoupled(decoupled) {
+    this._decoupled = decoupled;
   }
 
   get is_top_secret() {

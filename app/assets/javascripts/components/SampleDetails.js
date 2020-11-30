@@ -13,6 +13,7 @@ import Barcode from 'react-barcode';
 import Select from 'react-select';
 import { _, cloneDeep } from 'lodash';
 import uuid from 'uuid';
+import classNames from 'classnames';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -819,7 +820,13 @@ export default class SampleDetails extends React.Component {
   chemicalIdentifiersItem(sample) {
     const show = this.state.showChemicalIdentifiers;
     return (
-      <div width="100%" className="chem-identifiers-section">
+      <div
+        width="100%"
+        className={classNames({
+          'chem-identifiers-section': true,
+          decoupled: sample.decoupled
+        })}
+      >
         {this.chemicalIdentifiersItemHeader()}
         {this.chemicalIdentifiersItemContent(sample, show)}
       </div>
