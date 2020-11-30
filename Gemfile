@@ -51,7 +51,7 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-#gem 'ketcherails', '~> 0.1.8', git: 'https://git.taktsoft.com/taktsoft/ketcherails.git', ref: 'c3b7256ba358309f6e42eff3b497d9e1f6853082'
+gem 'ketcherails', '~> 0.1.9', git: 'https://git.taktsoft.com/taktsoft/ketcherails.git', ref: '972965e0d51f9fb123c7b13e7e5d958f3ac0dd28'
 
 gem 'net-sftp'
 gem 'net-ssh'

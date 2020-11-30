@@ -388,7 +388,7 @@ describe Chemotion::SampleAPI do
           }
         end
 
-        xit 'should be able to delete samples when "all" is false' do
+        it 'should be able to delete samples when "all" is false' do
           sample_ids = [sample_1.id, sample_2.id]
           array = Sample.where(id: sample_ids).to_a
           expect(array).to match_array([sample_1, sample_2])
@@ -396,7 +396,7 @@ describe Chemotion::SampleAPI do
           CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
           s = Sample.find_by(id: sample_3.id)
           expect(s).not_to be_nil
-          delete '/api/v1/samples', ui_state: params_all_false
+          delete '/api/v1/samples', params: { ui_state: params_all_false }
           s = Sample.find_by(id: sample_3.id)
           expect(s).not_to be_nil
           array = Sample.where(id: sample_ids).to_a
@@ -413,7 +413,7 @@ describe Chemotion::SampleAPI do
           expect(a).to match_array([])
         end
 
-        xit 'should be able to delete samples when "all" is false' do
+        it 'should be able to delete samples when "all" is false' do
           sample_ids = [sample_1.id, sample_2.id]
           array = Sample.where(id: sample_ids).to_a
           expect(array).to match_array([sample_1, sample_2])
@@ -421,7 +421,7 @@ describe Chemotion::SampleAPI do
           CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
           s = Sample.find_by(id: sample_3.id)
           expect(s).not_to be_nil
-          delete '/api/v1/samples', ui_state: params_all_true
+          delete '/api/v1/samples', params: { ui_state: params_all_true }
           s = Sample.find_by(id: sample_3.id)
           expect(s).not_to be_nil
           array = Sample.where(id: sample_ids).to_a
@@ -466,7 +466,7 @@ describe Chemotion::SampleAPI do
 
         describe 'POST /api/v1/samples/subsamples' do
           it 'is able to split Samples into Subsamples' do
-            post '/api/v1/samples/subsamples', params: params, as: :json 
+            post '/api/v1/samples/subsamples', params: params, as: :json
             subsamples = Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id])
             s3 = subsamples[0]
             s4 = subsamples[1]
