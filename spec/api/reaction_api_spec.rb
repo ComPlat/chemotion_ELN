@@ -209,7 +209,7 @@ describe Chemotion::ReactionAPI do
         end
 
         before do
-          put "/api/v1/reactions/#{reaction_1.id}", params: params
+          put "/api/v1/reactions/#{reaction_1.id}", params: params, as: :json
         end
 
         let(:r) { Reaction.find(reaction_1.id) }
