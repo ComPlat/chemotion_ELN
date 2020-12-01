@@ -4,6 +4,7 @@ import { Panel, Button, Table } from 'react-bootstrap';
 
 import ComputeTaskActions from './actions/ComputeTaskActions';
 import DetailActions from './actions/DetailActions';
+import LoadingActions from './actions/LoadingActions';
 
 import ComputeTaskStore from './stores/ComputeTaskStore';
 import ComputeTask from './ComputeTask';
@@ -18,6 +19,10 @@ export default class ComputeTaskContainer extends React.Component {
 
     this.onChangeComputeTask = this.onChangeComputeTask.bind(this);
     this.onClose = this.onClose.bind(this);
+
+    this.checkState = this.checkState.bind(this);
+    this.revokeTask = this.revokeTask.bind(this);
+    this.deleteTask = this.deleteTask.bind(this);
   }
 
   componentDidMount() {
@@ -39,6 +44,23 @@ export default class ComputeTaskContainer extends React.Component {
 
     this.setState({ tasks });
   }
+
+  /* eslint-disable class-methods-use-this */
+  checkState(taskId) {
+    LoadingActions.start();
+    ComputeTaskActions.checkState(taskId);
+  }
+
+  revokeTask(taskId) {
+    LoadingActions.start();
+    ComputeTaskActions.revokeTask(taskId);
+  }
+
+  deleteTask(taskId) {
+    LoadingActions.start();
+    ComputeTaskActions.deleteTask(taskId);
+  }
+  /* eslint-enable class-methods-use-this */
 
   render() {
     const { tasks } = this.state;
@@ -71,7 +93,13 @@ export default class ComputeTaskContainer extends React.Component {
             </thead>
             <tbody>
               {tasks.map(task => (
-                <ComputeTask key={task.id} task={task} />
+                <ComputeTask
+                  key={task.id}
+                  task={task}
+                  checkState={this.checkState}
+                  revokeTask={this.revokeTask}
+                  deleteTask={this.deleteTask}
+                />
               ))}
             </tbody>
           </Table>

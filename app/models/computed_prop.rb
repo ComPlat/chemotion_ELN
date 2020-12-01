@@ -23,10 +23,17 @@
 #  sample_id          :integer          default(0)
 #  tddft              :jsonb
 #  task_id            :string
+#  deleted_at         :datetime
+#
+# Indexes
+#
+#  index_computed_props_on_deleted_at  (deleted_at)
 #
 
 # ComputedProp, Molecule computed properties via OpenMOPAC and TURBOMOLE
 class ComputedProp < ActiveRecord::Base
+  acts_as_paranoid
+
   belongs_to :molecule
   belongs_to :user
 

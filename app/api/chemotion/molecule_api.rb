@@ -100,7 +100,7 @@ module Chemotion
           cp.creator = uid
           cp.save!
 
-          if cp.status == 'not_computed'
+          if cp.status == 'pending'
             options = {
               timeout: 10,
               headers: { 'Content-Type' => 'application/json' },
@@ -112,7 +112,7 @@ module Chemotion
             }
 
             req = HTTParty.post(cconfig.server, options)
-            cp.task_id = req.parsed_response["taskID"] if req.ok?
+            cp.task_id = req.parsed_response["taskID"] if req.created?
             cp.status = 'pending'
           end
 

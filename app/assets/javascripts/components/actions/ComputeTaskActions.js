@@ -12,6 +12,36 @@ class ComputeTaskActions {
       });
     };
   }
+
+  checkState(taskId) {
+    return (dispatch) => {
+      ComputeTaskFetcher.checkState(taskId).then(res => (
+        dispatch(res)
+      )).catch((err) => {
+        console.log(err);
+      });
+    };
+  }
+
+  revokeTask(taskId) {
+    return (dispatch) => {
+      ComputeTaskFetcher.revokeTask(taskId).then(res => (
+        dispatch(res)
+      )).catch((err) => {
+        console.log(err);
+      });
+    };
+  }
+
+  deleteTask(taskId) {
+    return (dispatch) => {
+      ComputeTaskFetcher.deleteTask(taskId).then(res => (
+        dispatch(res)
+      )).catch((err) => {
+        console.log(err);
+      });
+    };
+  }
 }
 
 export default alt.createActions(ComputeTaskActions);
