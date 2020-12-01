@@ -39,7 +39,7 @@ export default class ComputeTaskFetcher {
       credentials: 'same-origin',
     }).then(res => res.json()).then((json) => {
       LoadingActions.stop.defer();
-      return camelizeKeys(json.revoke[0]);
+      return camelizeKeys(json);
     }).catch(err => console.log(err));
   }
 }

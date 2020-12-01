@@ -50,14 +50,19 @@ module Chemotion
         end
       end
 
-    end
+      desc 'Delete a task.'
+      params do
+        requires :id, type: Integer, desc: 'Task ID.'
+      end
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ComputedProp.find(params[:id]).creator == current_user.id
+        end
 
-    desc 'Delete a status.'
-    params do
-      requires :id, type: String, desc: 'Status ID.'
-    end
-    delete ':id' do
-      ComputedProp.find(params[:id]).destroy
+        delete do
+          ComputedProp.find(params[:id]).destroy
+        end
+      end
     end
   end
 end

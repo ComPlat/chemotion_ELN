@@ -85,7 +85,7 @@ export default class ComputeTaskContainer extends React.Component {
           <Table striped condensed hover>
             <thead>
               <tr>
-                <th style={{ textAlign: 'center' }}>Sample ID</th>
+                <th style={{ textAlign: 'center' }}>Sample</th>
                 <th style={{ textAlign: 'center' }}>Status</th>
                 <th style={{ textAlign: 'center' }}>Updated at</th>
                 <th style={{ textAlign: 'center' }}>Actions</th>

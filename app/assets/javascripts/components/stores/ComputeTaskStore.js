@@ -13,7 +13,8 @@ class ComputeTaskStore {
       handleUpdateTask: [
         ComputeTaskActions.checkState,
         ComputeTaskActions.revokeTask,
-      ]
+      ],
+      handleDeleteTask: ComputeTaskActions.deleteTask
     });
   }
 
@@ -26,6 +27,11 @@ class ComputeTaskStore {
     this.state.tasks = tasks.map(task => (
       task.id === newTask.id ? { ...newTask } : task
     ));
+  }
+
+  handleDeleteTask(deletedTask) {
+    const { tasks } = this.state;
+    this.state.tasks = tasks.filter(task => task.id !== deletedTask.id);
   }
 }
 
