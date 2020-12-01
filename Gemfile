@@ -50,7 +50,7 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', '~> 0.1.9', git: 'https://github.com/complat/ketcher-rails.git', ref: '972965e0d51f9fb123c7b13e7e5d958f3ac0dd28'
+gem 'ketcherails', '~> 0.1.11', git: 'https://github.com/complat/ketcher-rails.git', ref: '76e9df0aca42618ab5a6f3659606c600f745a4ee'
 
 gem 'net-sftp'
 gem 'net-ssh'
