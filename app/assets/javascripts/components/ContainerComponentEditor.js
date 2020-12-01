@@ -103,6 +103,7 @@ export default class ContainerComponentEditor extends React.Component {
 
     let contents = quill.getContents();
     let elementOps = macro.ops;
+    const insertDelta = new Delta(elementOps);
     if (range.index > 0) {
       elementOps = [{ retain: range.index }].concat(elementOps);
     }
@@ -110,7 +111,7 @@ export default class ContainerComponentEditor extends React.Component {
     contents = contents.compose(macroDelta);
     quill.setContents(contents);
     range.length = 0;
-    range.index += macroDelta.length();
+    range.index += insertDelta.length();
     quill.setSelection(range);
 
     this.onChangeContent(quill);
