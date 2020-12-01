@@ -6,10 +6,10 @@ GIT
 
 GIT
   remote: https://git.taktsoft.com/taktsoft/ketcherails.git
-  revision: 972965e0d51f9fb123c7b13e7e5d958f3ac0dd28
-  ref: 972965e0d51f9fb123c7b13e7e5d958f3ac0dd28
+  revision: a20e542d9d2ee2b793ebffe8b0685130346631ae
+  ref: a20e542d9d2ee2b793ebffe8b0685130346631ae
   specs:
-    ketcherails (0.1.9)
+    ketcherails (0.1.10)
       active_model_serializers (< 0.10.0)
       bootstrap-kaminari-views (= 0.0.5)
       bootstrap-sass
