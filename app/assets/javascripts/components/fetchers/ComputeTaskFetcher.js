@@ -9,7 +9,7 @@ export default class ComputeTaskFetcher {
       method: 'GET',
       credentials: 'same-origin',
     }).then(res => res.json()).then(json => (
-      camelizeKeys(json.compute_task)
+      camelizeKeys(json.compute_tasks || [])
     )).catch(err => console.log(err));
   }
 
