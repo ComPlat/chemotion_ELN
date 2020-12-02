@@ -29,7 +29,7 @@ module Taggable
 
   def update_tag!(**args)
     update_tag(**args)
-    tag.save!
+    tag.save! unless tag.destroyed?
   end
 
   def remove_blank_value(hash)
