@@ -5,6 +5,30 @@ GIT
     rinchi-gem (1.0.1)
 
 GIT
+  remote: https://git.taktsoft.com/taktsoft/ketcherails.git
+  revision: 1dbb0514f2edc600ecf5f3b963a3116155a7c577
+  ref: 1dbb0514f2edc600ecf5f3b963a3116155a7c577
+  specs:
+    ketcherails (0.1.12)
+      active_model_serializers (< 0.10.0)
+      bootstrap-kaminari-views (= 0.0.5)
+      bootstrap-sass
+      daemons
+      delayed_job_active_record
+      grape (< 2.0)
+      grape-active_model_serializers (~> 1.3.2)
+      haml-rails
+      httparty
+      jquery-rails
+      jquery-ui-rails (~> 5.0.5)
+      kaminari
+      nokogiri (~> 1.10.0)
+      openbabel
+      paperclip (~> 5.2.0)
+      rails (~> 5.2.0)
+      sprite-factory (= 1.7.1)
+
+GIT
   remote: https://github.com/CamAnNguyen/rdkit_chem
   revision: cf8a3890c5aa7f4db74e40d1cbd3a50b62bd8d94
   specs:
@@ -154,6 +178,9 @@ GEM
       debug_inspector (>= 0.0.1)
     bootsnap (1.5.1)
       msgpack (~> 1.0)
+    bootstrap-kaminari-views (0.0.5)
+      kaminari (>= 0.13)
+      rails (>= 3.1)
     bootstrap-sass (3.4.1)
       autoprefixer-rails (>= 5.2.1)
       sassc (>= 2.0.0)
@@ -195,9 +222,12 @@ GEM
       rake (< 13.0)
     chronic (0.10.2)
     chunky_png (1.3.11)
+    climate_control (0.2.0)
     closure_tree (7.0.0)
       activerecord (>= 4.2.10)
       with_advisory_lock (>= 4.0.0)
+    cocaine (0.5.8)
+      climate_control (>= 0.0.3, < 1.0)
     coderay (1.1.2)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
@@ -329,6 +359,8 @@ GEM
       rails-dom-testing (>= 1, < 3)
       railties (>= 4.2.0)
       thor (>= 0.14, < 2.0)
+    jquery-ui-rails (5.0.5)
+      railties (>= 3.2.16)
     jwt (2.1.0)
     kaminari (1.2.1)
       activesupport (>= 4.1.0)
@@ -393,6 +425,12 @@ GEM
     open4 (1.3.4)
     orm_adapter (0.5.0)
     pandoc-ruby (2.0.2)
+    paperclip (5.2.1)
+      activemodel (>= 4.2.0)
+      activesupport (>= 4.2.0)
+      cocaine (~> 0.5.5)
+      mime-types
+      mimemagic (~> 0.3.0)
     parallel (1.17.0)
     paranoia (2.4.2)
       activerecord (>= 4.0, < 6.1)
@@ -553,6 +591,7 @@ GEM
       capistrano (>= 3.8.1)
     spring (2.0.2)
       activesupport (>= 4.2)
+    sprite-factory (1.7.1)
     sprockets (3.7.2)
       concurrent-ruby (~> 1.0)
       rack (> 1, < 3)
@@ -687,6 +726,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
+  ketcherails (~> 0.1.9)!
   launchy (~> 2.4.3)
   listen
   memory_profiler
