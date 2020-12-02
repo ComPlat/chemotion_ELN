@@ -10,8 +10,9 @@ gem 'backup'
 gem 'barby'
 gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
 gem 'bibtex-ruby'
+gem 'bootsnap'
 gem 'bootstrap-sass', '~> 3.4.1'
-gem 'browserify-rails', '~> 4.2.0'
+gem 'browserify-rails', '~> 4.3'
 
 gem 'closure_tree'
 gem 'countries'
@@ -51,7 +52,7 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', '~> 0.1.9', git: 'https://git.taktsoft.com/taktsoft/ketcherails.git', ref: '76e9df0aca42618ab5a6f3659606c600f745a4ee'
+#gem 'ketcherails', '~> 0.1.9', git: 'https://git.taktsoft.com/taktsoft/ketcherails.git', ref: '76e9df0aca42618ab5a6f3659606c600f745a4ee'
 
 gem 'net-sftp'
 gem 'net-ssh'
@@ -70,7 +71,7 @@ gem 'pundit'
 # If we want to upgrade past rack >= 2.1 we need to upgrade to at least grape
 # 1.3.0
 gem 'rack', '~> 2.0.0'
-gem 'rails', '~> 5.1.0'
+gem 'rails', '~> 5.2.0'
 gem 'rdkit_chem', git: "https://github.com/CamAnNguyen/rdkit_chem"
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'
