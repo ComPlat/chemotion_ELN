@@ -4,7 +4,9 @@ import { PanelGroup, Panel, Button } from 'react-bootstrap';
 
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
-import PrintCodeButton from './common/PrintCodeButton'
+import PrintCodeButton from './common/PrintCodeButton';
+
+import TextTemplateActions from './actions/TextTemplateActions';
 
 export default class ScreenDetailsContainers extends Component {
   constructor(props) {
@@ -14,6 +16,10 @@ export default class ScreenDetailsContainers extends Component {
       screen,
       activeContainer: 0
     };
+  }
+
+  componentDidMount() {
+    TextTemplateActions.fetchTextTemplates('screen');
   }
 
   componentWillReceiveProps(nextProps) {
@@ -121,6 +127,7 @@ export default class ScreenDetailsContainers extends Component {
                   <Panel.Heading>{containerHeader(container)}</Panel.Heading>
                   <Panel.Body collapsible="true">
                     <ContainerComponent
+                      templateType="screen"
                       readOnly={readOnly}
                       container={container}
                       onChange={container => this.handleChange(container)}

@@ -82,8 +82,7 @@ export default class QuillToolbarDropdown extends React.Component {
         <span
           className="ql-picker-item"
           key={`mi_${v}`}
-          eventKey={v}
-          dataValue={v}
+          value={v}
           onClick={onClick}
         >
           {k}

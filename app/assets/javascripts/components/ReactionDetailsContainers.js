@@ -15,6 +15,8 @@ import { contentToText } from './utils/quillFormat';
 import { chmoConversions } from './OlsComponent';
 import { previewContainerImage } from './utils/imageHelper';
 
+import TextTemplateActions from './actions/TextTemplateActions';
+
 const nmrMsg = (reaction, container) => {
   if (container.extended_metadata &&
       (typeof container.extended_metadata.kind === 'undefined' ||
@@ -48,6 +50,10 @@ export default class ReactionDetailsContainers extends Component {
     this.handleUndo = this.handleUndo.bind(this);
     this.handleOnClickRemove = this.handleOnClickRemove.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
+  }
+
+  componentDidMount() {
+    TextTemplateActions.fetchTextTemplates('reaction');
   }
 
   componentWillReceiveProps(nextProps) {
@@ -270,6 +276,7 @@ export default class ReactionDetailsContainers extends Component {
                       <ContainerComponent
                         disabled={readOnly}
                         readOnly={readOnly}
+                        templateType="reaction"
                         container={container}
                         onChange={this.handleChange.bind(this, container)}
                       />

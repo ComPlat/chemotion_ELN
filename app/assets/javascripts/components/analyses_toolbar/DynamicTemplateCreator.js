@@ -70,8 +70,8 @@ export default class DynamicTemplateCreator extends React.Component {
   }
 
   saveUserMacros() {
-    const { updateUserMacros } = this.props;
-    if (!updateUserMacros) return;
+    const { updateTextTemplates } = this.props;
+    if (!updateTextTemplates) return;
 
     const { iconMacros, dropdownTitles, dropdownValues } = this.state;
 
@@ -83,7 +83,7 @@ export default class DynamicTemplateCreator extends React.Component {
 
       dropdownMacros[title] = dropdownValues[idx];
     });
-    updateUserMacros(iconMacros, dropdownMacros);
+    updateTextTemplates(iconMacros, dropdownMacros);
   }
 
   render() {
@@ -184,15 +184,15 @@ export default class DynamicTemplateCreator extends React.Component {
 DynamicTemplateCreator.propTypes = {
   /* eslint-disable react/forbid-prop-types */
   predefinedMacros: PropTypes.object,
-  iconMacros: PropTypes.object,
-  dropdownMacros: PropTypes.object,
+  iconMacros: PropTypes.array,
+  dropdownMacros: PropTypes.array,
   /* eslint-enable react/forbid-prop-types */
-  updateUserMacros: PropTypes.func
+  updateTextTemplates: PropTypes.func
 };
 
 DynamicTemplateCreator.defaultProps = {
   predefinedMacros: {},
-  iconMacros: {},
-  dropdownMacros: {},
-  updateUserMacros: null
+  iconMacros: [],
+  dropdownMacros: [],
+  updateTextTemplates: null
 };

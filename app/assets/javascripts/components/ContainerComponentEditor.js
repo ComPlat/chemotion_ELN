@@ -12,11 +12,7 @@ import DynamicTemplateCreator from './analyses_toolbar/DynamicTemplateCreator';
 
 import { formatAnalysisContent } from './utils/ElementUtils';
 
-import {
-  sampleAnalysesMacros,
-  defaultMacroDropdown,
-  defaultMacroToolbar
-} from './utils/quillToolbarSymbol';
+import { sampleAnalysesMacros } from './utils/quillToolbarSymbol';
 
 sampleAnalysesMacros.ndash.icon = (
   <span className="fa fa-minus" />
@@ -55,7 +51,7 @@ export default class ContainerComponentEditor extends React.Component {
     this.selectDropdown = this.selectDropdown.bind(this);
     this.iconOnClick = this.iconOnClick.bind(this);
     this.applyMacro = this.applyMacro.bind(this);
-    this.updateUserMacros = this.updateUserMacros.bind(this);
+    this.updateTextTemplates = this.updateTextTemplates.bind(this);
   }
 
   onChangeContent(quillEditor) {
@@ -125,27 +121,21 @@ export default class ContainerComponentEditor extends React.Component {
     this.applyMacro(macro);
   }
 
-  updateUserMacros(iconMacroNames, dropdownMacroNames) {
-    const { updateUserMacros } = this.props;
-    const userMacros = { _toolbar: iconMacroNames };
+  updateTextTemplates(iconMacroNames, dropdownMacroNames) {
+    const { updateTextTemplates } = this.props;
+    const textTemplates = { _toolbar: iconMacroNames };
     Object.keys(dropdownMacroNames).forEach((n) => {
-      userMacros[n] = dropdownMacroNames[n];
+      textTemplates[n] = dropdownMacroNames[n];
     });
 
-    updateUserMacros(userMacros);
+    updateTextTemplates(textTemplates);
   }
 
   render() {
-    let { macros } = this.props;
-    if (Object.keys(macros).length === 0) {
-      macros = Object.assign(
-        defaultMacroDropdown,
-        { _toolbar: defaultMacroToolbar }
-      );
-    }
+    const { macros } = this.props;
 
     // eslint-disable-next-line no-underscore-dangle
-    const iconMacroNames = macros._toolbar;
+    const iconMacroNames = macros._toolbar || [];
     const ddMacroNames = [];
     Object.keys(macros).filter(n => n !== '_toolbar').forEach((n) => {
       ddMacroNames[n] = macros[n];
@@ -170,7 +160,7 @@ export default class ContainerComponentEditor extends React.Component {
           iconMacros={iconMacroNames}
           dropdownMacros={ddMacroNames}
           predefinedMacros={sampleAnalysesMacros}
-          updateUserMacros={this.updateUserMacros}
+          updateTextTemplates={this.updateTextTemplates}
         />
       </Popover>
     );
@@ -232,8 +222,9 @@ export default class ContainerComponentEditor extends React.Component {
             overlay={templateCreatorPopover}
             onHide={this.onCloseTemplateCreator}
           >
-            <span className="ql-formats" style={{ display: 'none' }}>
-              <button className="ql-editTemplate">
+            <span className="ql-formats">
+              {/* <button className="ql-editTemplate"> */}
+              <button>
                 <span className="fa fa-cog" />
               </button>
             </span>
@@ -261,7 +252,7 @@ ContainerComponentEditor.propTypes = {
   /* eslint-enable react/forbid-prop-types */
   readOnly: PropTypes.bool,
   onChange: PropTypes.func,
-  updateUserMacros: PropTypes.func,
+  updateTextTemplates: PropTypes.func,
 };
 
 ContainerComponentEditor.defaultProps = {
@@ -269,5 +260,5 @@ ContainerComponentEditor.defaultProps = {
   macros: {},
   container: {},
   onChange: null,
-  updateUserMacros: null
+  updateTextTemplates: null
 };
