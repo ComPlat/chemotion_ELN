@@ -66,7 +66,7 @@ export default class ComputeTaskContainer extends React.Component {
     const { tasks } = this.state;
 
     return (
-      <Panel bsStyle="primary">
+      <Panel className="eln-panel-detail" bsStyle="primary">
         <Panel.Heading>
           {'Task'}
           <div className="button-right">
