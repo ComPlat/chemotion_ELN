@@ -352,7 +352,7 @@ module Chemotion
           # end
 
           #save to profile
-          kinds = @sample.container&.analyses&.pluck("extended_metadata->'kind'")
+          kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
           var_detail_level = db_exec_detail_level_for_sample(current_user.id, @sample.id)
@@ -497,7 +497,7 @@ module Chemotion
         # end
 
         #save to profile
-        kinds = sample.container&.analyses&.pluck("extended_metadata->'kind'")
+        kinds = sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         sample

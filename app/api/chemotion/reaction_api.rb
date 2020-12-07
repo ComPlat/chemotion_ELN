@@ -397,7 +397,7 @@ module Chemotion
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
           #save to profile
-          kinds = reaction.container&.analyses&.pluck("extended_metadata->'kind'")
+          kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
           {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids, @element_policy).serialized}
@@ -495,7 +495,7 @@ module Chemotion
           reaction.reload
 
           # save to profile
-          kinds = reaction.container&.analyses&.pluck("extended_metadata->'kind'")
+          kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
           { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized }
