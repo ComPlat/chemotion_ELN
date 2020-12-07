@@ -58,8 +58,11 @@ describe 'Message' do
       Notification.create!(message: m3_sys, user: u2, is_ack: false)
     end
 
-    it 'check message box number', js: true do
-      expect(find('span.badge.badge-pill')).to have_content('3')
+    it 'check message box number', js: true do      
+      within "span.badge.badge-pill" do
+        sleep(2)
+        expect(page).to have_content(3)
+      end
     end
 
     it 'open message box and acknowledge all messages', js: true do
