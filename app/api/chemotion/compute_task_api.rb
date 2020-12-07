@@ -3,7 +3,7 @@ module Chemotion
     resource :compute_tasks do
       desc 'Return all computational tasks.'
       get :all, each_serializer: ComputedPropsSerializer do
-        ComputedProp.where(creator: current_user.id)
+        ComputedProp.where(creator: current_user.id).order(updated_at: :desc)
       end
 
       desc "Handle task by id"
