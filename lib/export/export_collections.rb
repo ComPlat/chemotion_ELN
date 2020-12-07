@@ -88,7 +88,7 @@ module Export
 
     def prepare_data
       # get the collections from the database, in order of ancestry, but with empty ancestry first
-      collections = Collection.order("NULLIF(ancestry, '') ASC NULLS FIRST").find(@collection_ids)
+      collections = Collection.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST")).find(@collection_ids)
 
       # add decendants for nested collections
       if @nested
@@ -118,7 +118,7 @@ module Export
 
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
-      samples = collection.samples.order("NULLIF(ancestry, '') ASC NULLS FIRST")
+      samples = collection.samples.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST"))
 
       # fetch samples
       fetch_many(samples, {
