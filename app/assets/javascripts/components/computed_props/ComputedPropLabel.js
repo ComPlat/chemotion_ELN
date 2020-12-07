@@ -16,11 +16,15 @@ const ComputedPropLabel = ({ cprops }) => {
 
   let statusIcon = '';
   const style = {};
-  if (status === 'completed') {
+  if (status === 'success') {
     statusIcon = 'fa-calculator';
     style.color = 'green';
-  } else if (status === 'in_progress') {
+  } else if (status === 'pending') {
+    statusIcon = 'fa-ellipsis-h';
+    style.color = '#f0ad4e';
+  } else if (status === 'started') {
     statusIcon = 'fa-spinner fa-spin';
+    style.color = '#5bc0de';
   }
 
   return (
