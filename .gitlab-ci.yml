@@ -70,7 +70,6 @@ building:
     - touch config/datacollectors.yml
     # - ls node_modules
   script:
-    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && bundle config --local https://git.taktsoft.com/taktsoft/ketcherails.git $KETCHERAILS_INSTALL_TOKEN"
     - /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"
     - /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
     # - /bin/bash -l -c "source ~/.rvm/scripts/rvm && bundle exec rake db:test:prepare"

@@ -5,7 +5,13 @@ GIT
     rinchi-gem (1.0.1)
 
 GIT
-  remote: https://git.taktsoft.com/taktsoft/ketcherails.git
+  remote: https://github.com/CamAnNguyen/rdkit_chem
+  revision: cf8a3890c5aa7f4db74e40d1cbd3a50b62bd8d94
+  specs:
+    rdkit_chem (2020.04.30.1)
+
+GIT
+  remote: https://github.com/ComPlat/ketcher-rails.git
   revision: 1dbb0514f2edc600ecf5f3b963a3116155a7c577
   ref: 1dbb0514f2edc600ecf5f3b963a3116155a7c577
   specs:
@@ -27,12 +33,6 @@ GIT
       paperclip (~> 5.2.0)
       rails (~> 5.2.0)
       sprite-factory (= 1.7.1)
-
-GIT
-  remote: https://github.com/CamAnNguyen/rdkit_chem
-  revision: cf8a3890c5aa7f4db74e40d1cbd3a50b62bd8d94
-  specs:
-    rdkit_chem (2020.04.30.1)
 
 GIT
   remote: https://github.com/ComPlat/openbabel-gem.git
@@ -726,7 +726,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  ketcherails (~> 0.1.9)!
+  ketcherails!
   launchy (~> 2.4.3)
   listen
   memory_profiler
