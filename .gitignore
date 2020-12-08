@@ -137,3 +137,4 @@ backup/weekly_backup
 # vim tags
 tags
 tags.temp
+database.yml
