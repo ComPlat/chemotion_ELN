@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Checkbox, FormControl, Table } from 'react-bootstrap';
@@ -6,11 +7,14 @@ export default class DynamicTemplateCreator extends React.Component {
   constructor(props) {
     super(props);
 
-    const ddKeys = Object.keys(props.dropdownMacros);
+    const dropdownMacros = cloneDeep(props.dropdownMacros);
+    const iconMacros = cloneDeep(props.iconMacros);
+
+    const ddKeys = Object.keys(dropdownMacros);
     this.state = {
-      iconMacros: props.iconMacros,
-      dropdownTitles: ddKeys,
-      dropdownValues: Object.values(props.dropdownMacros)
+      iconMacros,
+      dropdownTitles: [...ddKeys],
+      dropdownValues: Object.values(dropdownMacros)
     };
     this.ddRefs = ddKeys.map(() => React.createRef());
 
