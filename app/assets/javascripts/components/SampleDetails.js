@@ -760,8 +760,7 @@ export default class SampleDetails extends React.Component {
                           materialGroup={materialGroup}/>
         </ListGroupItem>
       )
-    else
-      return (
+    return (
         <ListGroupItem className="ea-section">
           <Row>
             <Col md={6}>
@@ -776,27 +775,31 @@ export default class SampleDetails extends React.Component {
 
   elementalPropertiesItem(sample) {
     // avoid empty ListGroupItem
-    if(!sample.molecule.sum_formular)
+    if (!sample.molecule_formula) {
       return false;
+    }
 
-    let show = this.state.showElementalComposition;
-    let materialGroup = this.state.materialGroup;
+    const { showElementalComposition, materialGroup } = this.state;
 
-    return(
+    return (
       <div width="100%" className="polymer-section">
         {this.elementalPropertiesItemHeader(sample)}
 
-        {this.elementalPropertiesItemContent(sample, materialGroup, show)}
+        {this.elementalPropertiesItemContent(sample, materialGroup, showElementalComposition)}
       </div>
-    )
-
+    );
   }
 
-  chemicalIdentifiersItemHeader() {
+  chemicalIdentifiersItemHeader(sample) {
     return (
       <ListGroupItem onClick={() => this.handleChemIdentSectionToggle()}>
         <Col className="padding-right chem-identifiers-header" md={6}>
           <b>Chemical identifiers</b>
+          { sample.decoupled &&
+            <span className="text-danger">
+              &nbsp;[decoupled]
+            </span>
+          }
         </Col>
         <div className="col-md-6">
           <ToggleSection show={this.state.showChemicalIdentifiers} />
@@ -827,7 +830,7 @@ export default class SampleDetails extends React.Component {
           decoupled: sample.decoupled
         })}
       >
-        {this.chemicalIdentifiersItemHeader()}
+        {this.chemicalIdentifiersItemHeader(sample)}
         {this.chemicalIdentifiersItemContent(sample, show)}
       </div>
     );

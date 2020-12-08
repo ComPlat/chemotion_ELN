@@ -16,6 +16,7 @@ export default class SampleForm extends React.Component {
     this.state = {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
+      moleculeFormulaWas: props.sample.molecule_formula,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -31,9 +32,8 @@ export default class SampleForm extends React.Component {
     this.setState({ isMolNameLoading: false });
   }
 
-  handleDecoupledChanged(e) {
-    // TODO: Handle additionally required fields
-    this.props.sample.decoupled = e;
+  formulaChanged() {
+    return this.props.sample.molecule_formula !== this.state.moleculeFormulaWas;
   }
 
   handleAmountChanged(amount) {
@@ -75,7 +75,7 @@ export default class SampleForm extends React.Component {
         <Checkbox
           inputRef={(ref) => { this.topSecretInput = ref; }}
           checked={sample.is_top_secret}
-          onChange={e => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
+          onChange={e => this.handleFieldChanged('is_top_secret', e.target.checked)}
         >
           Top secret
         </Checkbox>
@@ -91,7 +91,7 @@ export default class SampleForm extends React.Component {
         <Checkbox
           inputRef={(ref) => { this.decoupledInput = ref; }}
           checked={sample.decoupled}
-          onChange={e => this.handleFieldChanged(sample, 'decoupled', e.target.checked)}
+          onChange={e => this.handleFieldChanged('decoupled', e.target.checked)}
         >
           Decoupled
         </Checkbox>
@@ -235,21 +235,23 @@ export default class SampleForm extends React.Component {
     this.props.parent.setState({ sample });
   }
 
-  handleFieldChanged(sample, field, e) {
+  handleFieldChanged(field, e) {
+    const { sample } = this.props;
+
     if (/amount/.test(field)) {
       this.handleAmountChanged(e);
     } else if (/molarity/.test(field)) {
       this.handleMolarityChanged(e);
     } else if (/density/.test(field)) {
       this.handleDensityChanged(e);
-    } else if (field === 'decoupled') {
-      this.handleDecoupledChanged(e);
     } else if (e && e.value) {
       // for numeric inputs
       sample[field] = e.value;
     } else {
       sample[field] = e;
     }
+
+    sample.formulaChanged = this.formulaChanged();
 
     this.props.parent.setState({ sample });
   }
@@ -262,7 +264,7 @@ export default class SampleForm extends React.Component {
           id={`txinput_${field}`}
           type="text"
           value={sample[field] || ''}
-          onChange={(e) => {this.handleFieldChanged(sample, field, e.target.value)}}
+          onChange={(e) => {this.handleFieldChanged(field, e.target.value)}}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update}
         />
@@ -281,7 +283,7 @@ export default class SampleForm extends React.Component {
         options={solventOptions}
         value={sample.solvent}
         disabled={!sample.can_update}
-        onChange={(e) => this.handleFieldChanged(sample, 'solvent', e)}
+        onChange={(e) => this.handleFieldChanged('solvent', e)}
       />
     );
   }
@@ -314,7 +316,7 @@ export default class SampleForm extends React.Component {
           disabled={disabled}
           block={block}
           bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
-          onChange={e => this.handleFieldChanged(sample, field, e)}
+          onChange={e => this.handleFieldChanged(field, e)}
         />
       </td>
     );
@@ -367,7 +369,7 @@ export default class SampleForm extends React.Component {
           ref={(input) => { this.descriptionInput = input; }}
           placeholder={sample.description}
           value={sample.description || ''}
-          onChange={e => this.handleFieldChanged(sample, 'description', e.target.value)}
+          onChange={e => this.handleFieldChanged('description', e.target.value)}
           rows={2}
           disabled={!sample.can_update}
         />
@@ -420,6 +422,19 @@ export default class SampleForm extends React.Component {
               </div>
             </td>
           </tr>
+
+          { sample.decoupled &&
+            <tr>
+              {
+                this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled, '', densityBlocked)
+              }
+              <td colSpan="3">
+                {
+                  this.textInput(sample, 'sum_formula', 'Sum formula')
+                }
+              </td>
+            </tr>
+          }
 
           <tr className="visible-hd">
             {this.sampleAmount(sample)}

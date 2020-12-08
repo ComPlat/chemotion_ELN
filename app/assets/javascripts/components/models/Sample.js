@@ -184,7 +184,9 @@ export default class Sample extends Element {
       can_update: true,
       can_copy: false,
       stereo: Sample.defaultStereo(),
-      decoupled: false
+      decoupled: false,
+      molecular_mass: 0,
+      sum_formula: ''
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -310,18 +312,12 @@ export default class Sample extends Element {
       xref: this.xref,
       stereo: this.stereo,
       user_labels: this.user_labels || [],
-      decoupled: this.decoupled
+      decoupled: this.decoupled,
+      molecular_mass: this.molecular_mass,
+      sum_formula: this.sum_formula
     });
 
     return serialized;
-  }
-
-  get decoupled() {
-    return this._decoupled;
-  }
-
-  set decoupled(decoupled) {
-    this._decoupled = decoupled;
   }
 
   get is_top_secret() {
@@ -429,7 +425,7 @@ export default class Sample extends Element {
   }
 
   get preferred_label() {
-    return this._external_label || this.molecule.iupac_name || this.molecule.sum_formular;
+    return this._external_label || this.molecule.iupac_name || this.molecule_formula;
   }
 
   showedName() {
@@ -766,14 +762,22 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
+    if (this.decoupled) {
+      return this.molecular_mass;
+    }
+
     return this.molecule && this.molecule.molecular_weight;
   }
 
   get molecule_exact_molecular_weight() {
-    return this.molecule && this.molecule.exact_molecular_weight;
+    return !this.decoupled && this.molecule && this.molecule.exact_molecular_weight;
   }
 
   get molecule_formula() {
+    if (this.decoupled) {
+      return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : false;
+    }
+
     return this.molecule && this.molecule.sum_formular;
   }
 
@@ -811,12 +815,15 @@ export default class Sample extends Element {
   }
 
   get concat_formula() {
-    // TODO Workaround, need to check how can molecule is null
-    if (!this.molecule) { return ''; }
-    if(this.contains_residues) {
-      return (this.molecule.sum_formular || '') + this.polymer_formula;
+    if (!this.molecule_formula) {
+      return '';
     }
-    return (this.molecule.sum_formular || '');
+
+    if (this.contains_residues) {
+      return this.molecule_formula + this.polymer_formula;
+    }
+
+    return this.molecule_formula;
   }
 
   get polymer_type() {

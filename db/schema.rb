@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20201127071139) do
+ActiveRecord::Schema.define(version: 20201130121311) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -712,6 +712,8 @@ ActiveRecord::Schema.define(version: 20201127071139) do
     t.jsonb    "stereo"
     t.string   "metrics",                        default: "mmm"
     t.boolean  "decoupled",                      default: false, null: false
+    t.float    "molecular_mass"
+    t.string   "sum_formula"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree

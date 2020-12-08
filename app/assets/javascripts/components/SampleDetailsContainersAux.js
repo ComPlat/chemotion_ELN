@@ -44,10 +44,10 @@ const qCheckMsg = (sample, container) => {
   const str = container.extended_metadata && contentToText(container.extended_metadata.content);
 
   if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
-    const msg = hNmrCheckMsg(sample.molecule.sum_formular, str);
+    const msg = hNmrCheckMsg(sample.molecule_formula, str);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'H', '1');
   } else if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
-    const msg = cNmrCheckMsg(sample.molecule.sum_formular, str);
+    const msg = cNmrCheckMsg(sample.molecule_formula, str);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'C', '13');
   } else if (container.extended_metadata.kind.split('|')[1].includes('mass spectrometry')) {
     const msg = msCheckMsg(sample.molecule.exact_molecular_weight, str);

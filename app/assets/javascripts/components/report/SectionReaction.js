@@ -168,7 +168,7 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
                 </td>
               </tr>
               <tr>
-                <td style={{width: '20%'}}>{sample.molecule.sum_formular}</td>
+                <td style={{width: '20%'}}>{sample.molecule_formula}</td>
                 <td style={{width: '20%'}}>{materialCalc(sample.amount_g, 1, 3)}</td>
                 <td style={{width: '20%'}}>{materialCalc(sample.amount_l, 1000, 3)}</td>
                 <td style={{width: '20%'}}>{materialCalc(sample.amount_mol, 1000, 3)}</td>
