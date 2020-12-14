@@ -186,7 +186,8 @@ export default class Sample extends Element {
       stereo: Sample.defaultStereo(),
       decoupled: false,
       molecular_mass: 0,
-      sum_formula: ''
+      sum_formula: '',
+      xref: {}
     });
 
     sample.short_label = Sample.buildNewShortLabel();

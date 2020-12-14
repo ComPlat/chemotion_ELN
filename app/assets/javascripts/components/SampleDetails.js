@@ -690,8 +690,16 @@ export default class SampleDetails extends React.Component {
 
   customizableField() {
     const { xref } = this.state.sample;
-    const customKeys = cloneDeep(xref || {});
-    delete customKeys.cas;
+    const {
+      cas,
+      optical_rotation,
+      rfvalue,
+      rfsovents,
+      supplier,
+      private_notes,
+      ...customKeys
+    } = cloneDeep(xref || {});
+
     if (Object.keys(customKeys).length === 0) return null;
     return (
       Object.keys(customKeys).map(key => (

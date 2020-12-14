@@ -244,6 +244,9 @@ export default class SampleForm extends React.Component {
       this.handleMolarityChanged(e);
     } else if (/density/.test(field)) {
       this.handleDensityChanged(e);
+    } else if (/^xref_/.test(field)) {
+      const key = field.split('xref_')[1];
+      sample.xref[key] = e;
     } else if (e && e.value) {
       // for numeric inputs
       sample[field] = e.value;
@@ -263,8 +266,8 @@ export default class SampleForm extends React.Component {
         <FormControl
           id={`txinput_${field}`}
           type="text"
-          value={sample[field] || ''}
-          onChange={(e) => {this.handleFieldChanged(field, e.target.value)}}
+          value={(/^xref_/.test(field) ? sample.xref[field.split('xref_')[1]] : sample[field]) || ''}
+          onChange={(e) => { this.handleFieldChanged(field, e.target.value); }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update}
         />
@@ -448,6 +451,43 @@ export default class SampleForm extends React.Component {
                 onChange={this.handleRangeChanged}
                 tipOnText="Use space-separated value to input a Temperature range"
               />
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              {
+                this.textInput(sample, 'xref_optical_rotation', 'Optical rotation')
+              }
+            </td>
+            <td>
+              {
+                this.textInput(sample, 'xref_rfvalue', 'Rf-Value')
+              }
+            </td>
+            <td>
+              {
+                this.textInput(sample, 'xref_rfsovents', 'Rf-Sovents')
+              }
+            </td>
+            <td>
+              {
+                this.textInput(sample, 'xref_supplier', 'Supplier')
+              }
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="4">
+              <FormGroup>
+                <ControlLabel>Private notes</ControlLabel>
+                <FormControl
+                  componentClass="textarea"
+                  value={sample.xref.private_notes || ''}
+                  onChange={e => this.handleFieldChanged('xref_private_notes', e.target.value)}
+                  rows={2}
+                  disabled={!sample.can_update}
+                />
+              </FormGroup>
             </td>
           </tr>
 
