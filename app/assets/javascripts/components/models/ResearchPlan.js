@@ -1,6 +1,7 @@
 import { isEmpty } from 'lodash';
 import Element from './Element';
 import Container from './Container';
+import Segment from './Segment';
 
 const uuidv4 = require('uuid/v4');
 
@@ -54,7 +55,8 @@ export default class ResearchPlan extends Element {
       container: Container.init(),
       changed: true,
       can_update: true,
-      attachments: []
+      attachments: [],
+      segments: []
     });
   }
 
@@ -64,6 +66,7 @@ export default class ResearchPlan extends Element {
       body: this.body,
       attachments: this.attachments,
       container: this.container,
+      segments: this.segments.map(s => s.serialize())
     });
   }
 
@@ -172,5 +175,13 @@ export default class ResearchPlan extends Element {
 
   set mode(mode) {
     this._mode = mode;
+  }
+
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
   }
 }

@@ -125,6 +125,7 @@ module Chemotion
         optional :description, type: Hash
         optional :wells, type: Array
         requires :container, type: Hash
+        optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
         before do
@@ -135,7 +136,7 @@ module Chemotion
           update_datamodel(params[:container]);
           params.delete(:container);
 
-          wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false)).execute!
+          wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false), current_user.id).execute!
 
           #save to profile
           kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
@@ -153,6 +154,7 @@ module Chemotion
         optional :wells, type: Array
         optional :collection_id, type: Integer
         requires :container, type: Hash
+        optional :segments, type: Array, desc: 'Segments'
       end
       post do
 

@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Col, ControlLabel, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row } from 'react-bootstrap';
 import uuid from 'uuid';
-import { sortBy } from 'lodash';
+import { sortBy, filter } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 
@@ -218,7 +218,8 @@ GenPropertiesLayerSearchCriteria.defaultProps = {
 };
 
 const LayersLayout = (layers, options, cbFunc, layout = []) => {
-  const sortedLayers = sortBy(layers, l => l.position) || [];
+  const filterLayers = filter(layers, l => l.condition == null || l.condition.trim().length === 0) || [];
+  const sortedLayers = sortBy(filterLayers, l => l.position) || [];
   sortedLayers.forEach((layer) => {
     const ig = (
       <GenPropertiesLayer
@@ -230,6 +231,26 @@ const LayersLayout = (layers, options, cbFunc, layout = []) => {
     );
     layout.push(ig);
   });
+
+  const filterConLayers = filter(layers, l => l.condition && l.condition.trim().length > 0) || [];
+  const sortedConLayers = sortBy(filterConLayers, l => l.position) || [];
+  sortedConLayers.forEach((layerProps) => {
+    const arr = layerProps.condition.split(',');
+    if (arr.length >= 3) {
+      const specific = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
+      if (specific === arr[2] && arr[2].trim()) {
+        const igs = (
+          <GenPropertiesLayer
+            layer={layerProps}
+            onChange={cbFunc}
+            selectOptions={options}
+          />
+        );
+        layout.push(igs);
+      }
+    }
+  });
+
   return layout;
 };
 

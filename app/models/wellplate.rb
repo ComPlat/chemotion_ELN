@@ -22,6 +22,7 @@ class Wellplate < ActiveRecord::Base
   include Collectable
   include ElementCodes
   include Taggable
+  include Segmentable
 
   serialize :description, Hash
 

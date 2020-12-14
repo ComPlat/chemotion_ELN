@@ -52,7 +52,8 @@ module Chemotion
         requires :name, type: String, desc: 'Research plan name'
         optional :body, type: Array, desc: 'Research plan body'
         optional :collection_id, type: Integer, desc: 'Collection ID'
-        requires :container, type: Hash
+        requires :container, type: Hash, desc: 'Containers'
+        optional :segments, type: Array, desc: 'Segments'
       end
       post do
         attributes = {
@@ -64,6 +65,8 @@ module Chemotion
         research_plan.creator = current_user
         research_plan.container = update_datamodel(params[:container])
         research_plan.save!
+        research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
+
 
         if col_id = params[:collection_id]
           research_plan.collections << current_user.collections.find(col_id)
@@ -133,6 +136,7 @@ module Chemotion
         optional :name, type: String, desc: 'Research plan name'
         optional :body, type: Array, desc: 'Research plan body'
         requires :container, type: Hash, desc: 'Research plan analyses'
+        optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
         before do
@@ -140,12 +144,14 @@ module Chemotion
         end
 
         put do
-          attributes = declared(params, include_missing: false)
+          attributes = declared(params.except(:segments), include_missing: false)
           update_datamodel(attributes[:container])
           attributes.delete(:container)
 
           if research_plan = ResearchPlan.find(params[:id])
             research_plan.update!(attributes)
+            research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
+
           end
           { research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized }
         end

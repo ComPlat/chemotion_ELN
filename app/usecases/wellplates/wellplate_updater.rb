@@ -23,7 +23,7 @@ module Usecases::Wellplates::WellplateUpdater
           subsample.collections << collections
           subsample.save!
           subsample.reload
-
+          subsample.save_segments(segments: parent_sample.segments, current_user_id: parent_sample.created_by)
           sample_id = subsample.id
         end
         included_sample_ids << sample_id

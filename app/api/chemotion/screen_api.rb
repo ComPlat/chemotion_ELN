@@ -78,6 +78,7 @@ module Chemotion
         optional :description, type: Hash
         requires :wellplate_ids, type: Array
         requires :container, type: Hash
+        optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
         before do
@@ -85,13 +86,14 @@ module Chemotion
         end
 
         put do
-          update_datamodel(params[:container]);
-          params.delete(:container);
+          update_datamodel(params[:container])
+          params.delete(:container)
 
-          attributes = declared(params.except(:wellplate_ids), include_missing: false)
+          attributes = declared(params.except(:wellplate_ids, :segments), include_missing: false)
 
           screen = Screen.find(params[:id])
           screen.update(attributes)
+          screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
           old_wellplate_ids = screen.wellplates.pluck(:id)
 
           #save to profile
@@ -120,6 +122,7 @@ module Chemotion
         optional :collection_id, type: Integer
         requires :wellplate_ids, type: Array
         requires :container, type: Hash
+        optional :segments, type: Array, desc: 'Segments'
       end
       post do
         attributes = {
@@ -135,6 +138,7 @@ module Chemotion
 
         screen.container = update_datamodel(params[:container])
         screen.save!
+        screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
         #save to profile
         kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")

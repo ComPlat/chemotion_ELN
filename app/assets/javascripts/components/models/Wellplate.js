@@ -2,6 +2,7 @@ import Element from './Element';
 import Well from './Well';
 import Sample from './Sample';
 import Container from './Container.js';
+import Segment from './Segment';
 
 export default class Wellplate extends Element {
   constructor(args) {
@@ -20,6 +21,7 @@ export default class Wellplate extends Element {
         description: Wellplate.quillDefault(),
         wells: [],
         container: Container.init(),
+        segments: []
       }
     )
   }
@@ -44,6 +46,7 @@ export default class Wellplate extends Element {
         description: Wellplate.quillDefault(),
         wells: wells,
         container: Container.init(),
+        segments: []
       }
     )
   }
@@ -72,6 +75,13 @@ export default class Wellplate extends Element {
     this._wells = wells.map(w => new Well(w));
   }
 
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
+  }
 
   serialize() {
     return super.serialize({
@@ -79,7 +89,8 @@ export default class Wellplate extends Element {
       size: this.size,
       description: this.description,
       wells: this.wells.map(w => w.serialize()),
-      container: this.container
+      container: this.container,
+      segments: this.segments.map(s => s.serialize())
     })
   }
 

@@ -4,6 +4,7 @@ class ScreenSerializer < ActiveModel::Serializer
   has_many :wellplates
   has_one :container, serializer: ContainerSerializer
   has_one :tag
+  has_many :segments
 
   def code_log
     CodeLogSerializer.new(object.code_log).serializable_hash
