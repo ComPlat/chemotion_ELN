@@ -11,6 +11,10 @@ module Chemotion
         requires :id, type: Integer, desc: "Compute task id"
       end
       route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ComputedProp.find(params[:id]).creator == current_user.id
+        end
+
         desc 'Check task status.'
         get :check, root: 'check', each_serializer: ComputedPropsSerializer do
           task = ComputedProp.find(params[:id])
