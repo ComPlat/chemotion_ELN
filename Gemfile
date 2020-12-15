@@ -64,6 +64,8 @@ gem 'dotenv-rails', require: 'dotenv/rails-now'
 
 gem 'browserify-rails', '~> 4.2.0'
 
+gem 'bigdecimal', '1.3.5'
+
 # for collection tree structure
 gem 'ancestry'
 gem 'closure_tree'
