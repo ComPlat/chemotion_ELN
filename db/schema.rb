@@ -437,7 +437,7 @@ ActiveRecord::Schema.define(version: 20201201051854) do
 
   create_table "matrices", force: :cascade do |t|
     t.string   "name",                        null: false
-    t.boolean  "enabled",     default: false
+    t.boolean  "enabled",  default: false
     t.string   "label"
     t.integer  "include_ids", default: [],                 array: true
     t.integer  "exclude_ids", default: [],                 array: true
@@ -751,6 +751,18 @@ ActiveRecord::Schema.define(version: 20201201051854) do
 
   add_index "subscriptions", ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true, using: :btree
 
+  create_table "user_labels", force: :cascade do |t|
+    t.integer  "user_id"
+    t.string   "title",                     null: false
+    t.string   "description"
+    t.string   "color",                     null: false
+    t.integer  "access_level", default: 0
+    t.integer  "position",     default: 10
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
   create_table "sync_collections_users", force: :cascade do |t|
     t.integer  "user_id"
     t.integer  "collection_id"
@@ -780,18 +792,6 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.date     "from"
     t.date     "to"
     t.boolean  "main"
-  end
-
-  create_table "user_labels", force: :cascade do |t|
-    t.integer  "user_id"
-    t.string   "title",                     null: false
-    t.string   "description"
-    t.string   "color",                     null: false
-    t.integer  "access_level", default: 0
-    t.integer  "position",     default: 10
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
   end
 
   create_table "users", force: :cascade do |t|
@@ -1027,21 +1027,6 @@ ActiveRecord::Schema.define(version: 20201201051854) do
       	return in_message_id;
       end;$function$
   SQL
-  create_function :labels_by_user_sample, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
-       $function$
-  SQL
   create_function :generate_users_matrix, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
        RETURNS boolean
@@ -1051,24 +1036,20 @@ ActiveRecord::Schema.define(version: 20201201051854) do
       	if in_user_ids is null then
           update users u set matrix = (
       	    select coalesce(sum(2^mx.id),0) from (
-      		    select distinct m1.* from matrices m1, users u1
-      				left join users_groups ug1 on ug1.user_id = u1.id
+      		    select distinct m1.* from matrices m1, users u1, users_groups ug1
       		      where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
       	      except
-      		    select distinct m2.* from matrices m2, users u2
-      				left join users_groups ug2 on ug2.user_id = u2.id
+      		    select distinct m2.* from matrices m2, users u2, users_groups ug2
       		      where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
       	    ) mx
           );
       	else
-      		  update users u set matrix = (
+      		  update users u set updated_at = now(), matrix = (
       		  	select coalesce(sum(2^mx.id),0) from (
-      			   select distinct m1.* from matrices m1, users u1
-      				 left join users_groups ug1 on ug1.user_id = u1.id
+      			   select distinct m1.* from matrices m1, users u1, users_groups ug1
       			     where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
       			   except
-      			   select distinct m2.* from matrices m2, users u2
-      				 left join users_groups ug2 on ug2.user_id = u2.id
+      			   select distinct m2.* from matrices m2, users u2, users_groups ug2
       			     where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
       			  ) mx
       		  ) where ((in_user_ids) @> array[u.id]) or (u.id in (select ug3.user_id from users_groups ug3 where (in_user_ids) @> array[ug3.group_id]));
@@ -1102,7 +1083,7 @@ ActiveRecord::Schema.define(version: 20201201051854) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
