@@ -417,6 +417,7 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.integer  "user_id"
     t.datetime "created_at",               null: false
     t.datetime "updated_at",               null: false
+    t.string   "litype"
   end
 
   add_index "literals", ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature", using: :btree

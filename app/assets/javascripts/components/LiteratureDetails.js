@@ -29,6 +29,7 @@ import {
   LiteratureInput,
   sortByElement,
   sortByReference,
+  LiteralType,
   literatureContent
 } from './LiteratureCommon';
 import Literature from './models/Literature';
@@ -297,7 +298,10 @@ export default class LiteratureDetails extends Component {
       case 'doi':
         literature.doi = value;
         break;
-      default:
+      case 'litype':
+        literature.litype = value;
+        break;
+        default:
         break;
     }
     this.setState(prevState => ({ ...prevState, literature }));
@@ -488,8 +492,11 @@ export default class LiteratureDetails extends Component {
                 <ListGroup>
                   <ListGroupItem>
                     <Row>
-                      <Col md={11} style={{ paddingRight: 0 }}>
+                      <Col md={8} style={{ paddingRight: 0 }}>
                         <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="doi" placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..." />
+                      </Col>
+                      <Col md={3} style={{ paddingRight: 0 }}>
+                        <LiteralType handleInputChange={this.handleInputChange} disabled={false} val={literature.litype} />
                       </Col>
                       <Col md={1} style={{ paddingRight: 0 }}>
                         <Button

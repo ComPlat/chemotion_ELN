@@ -45,6 +45,7 @@ module Chemotion
           optional :id, types: [Integer, String]
           optional :doi, type: String
           optional :url, type: String
+          optional :litype, type: String
           optional :title, type: String
           optional :isbn, type: String
           optional :refs, type: Hash do
@@ -66,12 +67,12 @@ module Chemotion
               end
 
         lit.update!(refs: (lit.refs || {}).merge(declared(params)[:ref][:refs])) if params[:ref][:refs]
-
         attributes = {
           literature_id: lit.id,
           user_id: current_user.id,
           element_type: @element_klass,
           element_id: params[:element_id],
+          litype: params[:ref][:litype],
           category: 'detail'
         }
         unless Literal.find_by(attributes)
@@ -137,6 +138,7 @@ module Chemotion
             optional :id, types: [Integer, String]
             optional :doi, type: String
             optional :url, type: String
+            optional :litype, type: String
             optional :title, type: String
             optional :refs, type: Hash do
               optional :bibtex, type: String
@@ -173,6 +175,7 @@ module Chemotion
                     user_id: current_user.id,
                     element_type: type,
                     element_id: id,
+                    litype: params[:ref][:litype],
                     category: 'detail'
                   )
                 end
