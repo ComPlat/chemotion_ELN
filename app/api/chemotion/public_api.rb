@@ -128,6 +128,8 @@ module Chemotion
           cp = ComputedProp.find(params[:compute_id])
           return if cp.nil?
 
+          cp.status = params[:code]
+
           ComputedProp.from_raw(cp.id, params[:data])
 
           Message.create_msg_notification(

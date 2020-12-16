@@ -100,7 +100,7 @@ module Chemotion
           cp.creator = uid
           cp.save!
 
-          if cp.status == 'not_computed'
+          if cp.status == 'pending'
             options = {
               timeout: 10,
               headers: { 'Content-Type' => 'application/json' },
@@ -111,9 +111,11 @@ module Chemotion
               }.to_json
             }
 
-            HTTParty.post(cconfig.server, options)
-            cp.status = 'in_progress'
+            req = HTTParty.post(cconfig.server, options)
+            cp.task_id = req.parsed_response["taskID"] if req.created?
+            cp.status = 'pending'
           end
+
           cp.save!
 
           Message.create_msg_notification(

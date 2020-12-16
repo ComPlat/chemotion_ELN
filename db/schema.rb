@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20200819093220) do
+ActiveRecord::Schema.define(version: 20201201051854) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -202,7 +202,11 @@ ActiveRecord::Schema.define(version: 20200819093220) do
     t.integer  "creator",            default: 0
     t.integer  "sample_id",          default: 0
     t.jsonb    "tddft",              default: {}
+    t.string   "task_id"
+    t.datetime "deleted_at"
   end
+
+  add_index "computed_props", ["deleted_at"], name: "index_computed_props_on_deleted_at", using: :btree
 
   create_table "container_hierarchies", id: false, force: :cascade do |t|
     t.integer "ancestor_id",   null: false
