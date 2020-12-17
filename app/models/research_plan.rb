@@ -26,6 +26,7 @@ class ResearchPlan < ActiveRecord::Base
   after_create :create_root_container
 
   has_one :container, as: :containable
+  has_one :research_plan_metadata, dependent: :destroy, foreign_key: :research_plan_id
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
   has_many :attachments, as: :attachable

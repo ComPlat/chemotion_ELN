@@ -34,8 +34,10 @@ describe Chemotion::ResearchPlanAPI do
     describe 'GET /api/v1/research_plans' do
       let!(:c) { create(:collection, label: 'C1', user: user, is_shared: false) }
       let(:rp) { create(:research_plan) }
+      let!(:research_plan_metadata) { create(:research_plan_metadata) }
 
       before do
+        rp.research_plan_metadata = research_plan_metadata
         CollectionsResearchPlan.create!(research_plan: rp, collection: c)
       end
 
@@ -46,6 +48,11 @@ describe Chemotion::ResearchPlanAPI do
         expect(first_rp).to include(
           'type' => 'research_plan',
           'name' => rp.name
+        )
+        expect(first_rp['research_plan_metadata']).to include(
+          'id' => research_plan_metadata.id,
+          'doi' => research_plan_metadata.doi,
+          'name' => research_plan_metadata.name
         )
       end
     end

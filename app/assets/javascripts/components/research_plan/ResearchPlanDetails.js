@@ -8,6 +8,7 @@ import ElementActions from '../actions/ElementActions';
 import DetailActions from '../actions/DetailActions';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import ResearchPlansLiteratures from '../DetailsTabLiteratures';
+import ResearchPlansMetadata from '../DetailsTabMetadata';
 import Attachment from '../models/Attachment';
 import Utils from '../utils/Functions';
 import LoadingActions from '../actions/LoadingActions';
@@ -168,7 +169,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   handleAttachmentDownload(attachment) {
-      Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
   }
 
   handleAttachmentEdit(attachment) {
@@ -190,6 +191,55 @@ export default class ResearchPlanDetails extends Component {
   handleExportField(field) {
     const { researchPlan } = this.props;
     ResearchPlansFetcher.exportTable(researchPlan, field);
+  }
+
+  newItemByType(fieldName, value, type) {
+    switch (fieldName) {
+      case 'description':
+        return {
+          description: value,
+          descriptionType: type
+        }
+      case 'alternate_identifier':
+        return {
+          alternateIdentifier: value,
+          alternateIdentifierType: type
+        }
+      case 'related_identifier':
+        return {
+          relatedIdentifier: value,
+          relatedIdentifierType: type
+        }
+      }
+  }
+
+  handleCopyToMetadata(id, fieldName) {
+    const { researchPlan } = this.state;
+    const researchPlanMetadata = researchPlan.research_plan_metadata;
+    const args = { research_plan_id: researchPlanMetadata.research_plan_id };
+    const index = researchPlan.body.findIndex(field => field.id === id);
+    const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || ''
+    if (fieldName === 'name') {
+      researchPlanMetadata.title = researchPlan.name;
+      args.title = researchPlan.name.trim();
+    } else if (fieldName === 'subject') {
+      researchPlanMetadata.subject = value;
+      args.subject = value;
+    } else {
+      const type = researchPlan.body[index]?.title?.trim() || ''
+      const newItem = this.newItemByType(fieldName, value, type)
+
+      const currentCollection = researchPlanMetadata[fieldName] ? researchPlanMetadata[fieldName] : []
+      const newCollection = currentCollection.concat(newItem)
+      researchPlanMetadata[fieldName] = newCollection
+      args[`${fieldName}`] = researchPlanMetadata[fieldName]
+    }
+
+    ResearchPlansFetcher.postResearchPlanMetadata(args).then((result) => {
+      if (result.error) {
+        alert(result.error);
+      }
+    });
   }
 
   // render functions
@@ -250,6 +300,7 @@ export default class ResearchPlanDetails extends Component {
             onAdd={this.handleBodyAdd}
             onDelete={this.handleBodyDelete.bind(this)}
             onExport={this.handleExportField.bind(this)}
+            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             update={update}
             edit={false}
           />
@@ -265,8 +316,10 @@ export default class ResearchPlanDetails extends Component {
         <ListGroupItem >
           <ResearchPlanDetailsName
             value={name}
+            isNew={researchPlan.isNew}
             disabled={researchPlan.isMethodDisabled('name')}
             onChange={this.handleNameChange}
+            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             edit
           />
           <ResearchPlanDetailsBody
@@ -277,6 +330,14 @@ export default class ResearchPlanDetails extends Component {
             onAdd={this.handleBodyAdd}
             onDelete={this.handleBodyDelete.bind(this)}
             onExport={this.handleExportField.bind(this)}
+            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+            isNew={researchPlan.isNew}
+            copyableFields={[
+              { title: 'Subject', fieldName: 'subject' },
+              { title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
+              { title: 'Related Identifier', fieldName: 'related_identifier' },
+              { title: 'Description', fieldName: 'description' }
+            ]}
             update={update}
             edit
           />
@@ -289,7 +350,12 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          <ResearchPlanDetailsContainers handleSubmit={this.handleSubmit} researchPlan={researchPlan} readOnly={false} parent={this} />
+          <ResearchPlanDetailsContainers
+            handleSubmit={this.handleSubmit}
+            researchPlan={researchPlan}
+            readOnly={false}
+            parent={this}
+          />
         </ListGroupItem>
       </ListGroup>
     );
@@ -377,6 +443,14 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlansLiteratures element={researchPlan} />
         </Tab>
       ),
+      metadata: (
+        <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
+          <ResearchPlansMetadata
+            parentResearchPlan={researchPlan}
+            parentResearchPlanMetadata={researchPlan.research_plan_metadata}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
@@ -384,6 +458,7 @@ export default class ResearchPlanDetails extends Component {
       analyses: 'Analyses',
       attachments: 'Attachments',
       literature: 'Literature',
+      metadata: 'Metadata',
     };
     addSegmentTabs(researchPlan, this.handleSegmentsChange, tabContentsMap);
 
@@ -404,7 +479,7 @@ export default class ResearchPlanDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
+          <Tabs activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
             {tabContents}
           </Tabs>
           <ButtonToolbar>

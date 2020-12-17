@@ -223,4 +223,18 @@ export default class ResearchPlansFetcher {
       console.log(errorMessage)
     })
   }
+
+  static postResearchPlanMetadata(params) {
+    return fetch('/api/v1/research_plan_metadata', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }
