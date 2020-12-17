@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20201130121311) do
+ActiveRecord::Schema.define(version: 20201216153122) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -606,6 +606,7 @@ ActiveRecord::Schema.define(version: 20201130121311) do
     t.datetime "deleted_at"
     t.boolean  "waste",       default: false
     t.float    "coefficient", default: 1.0
+    t.boolean  "show_label",  default: false, null: false
   end
 
   add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree

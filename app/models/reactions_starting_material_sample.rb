@@ -12,6 +12,7 @@
 #  deleted_at  :datetime
 #  waste       :boolean          default(FALSE)
 #  coefficient :float            default(1.0)
+#  show_label  :boolean          default(FALSE), not null
 #
 # Indexes
 #

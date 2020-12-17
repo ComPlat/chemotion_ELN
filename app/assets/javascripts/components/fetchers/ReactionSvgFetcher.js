@@ -3,7 +3,7 @@ import 'whatwg-fetch';
 export default class ReactionSvgFetcher {
 
   static fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, duration, conditions) {
-    let promise = fetch('/api/v1/reaction_svg', {
+    const promise = fetch('/api/v1/reaction_svg', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -17,11 +17,11 @@ export default class ReactionSvgFetcher {
         solvents,
         conditions: (typeof conditions === 'string') ? conditions : '',
       })
-    }).then(response => {
+    }).then((response) => {
       return response.status == 201 ? response.json() : {}
-    }).catch(errorMessage => {
-        console.log(errorMessage);
-      });
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
 
     return promise;
   }
