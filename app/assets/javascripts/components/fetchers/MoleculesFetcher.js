@@ -136,4 +136,34 @@ export default class MoleculesFetcher {
         console.log(errorMessage);
       });
   }
+
+  static deleteMoleculeName(params) {
+    return fetch('/api/v1/molecules/delete_name', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static saveMoleculeName(params) {
+    return fetch('/api/v1/molecules/save_name', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }

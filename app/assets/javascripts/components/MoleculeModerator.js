@@ -81,7 +81,7 @@ class MoleculeModerator extends Component {
         msg.show = true;
         msg.level = result ? 'info' : 'error';
         msg.message = result ? 'Record found!' : 'No record found!';
-        this.setState({ msg, molecule: result, showStructureEditor: false });
+        this.setState({ msg, molecule: result.molecule, showStructureEditor: false });
         LoadingActions.stop();
         pageNotify('Search', msg.level, msg.message);
       }).catch((errorMessage) => {

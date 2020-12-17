@@ -195,7 +195,40 @@ module Chemotion
       end
       post :inchikey do
         molecule = Molecule.find_by(inchikey: params[:inchikey])
-        molecule
+        present molecule, with: Entities::MoleculeNamesEntity, root: 'molecule'
+      rescue StandardError => e
+        return {}
+      end
+
+      desc 'delete a molecule name'
+      params do
+        requires :id, type: Integer, desc: 'id of molecule name'
+      end
+      post :delete_name do
+        error!('Unauthorized to delete molecule name!', 401) unless current_user&.molecule_editor
+        mn = MoleculeName.find(params[:id])
+        mn.destroy! if mn.present?
+      rescue StandardError => e
+        return {}
+      end
+
+      desc 'create or update a molecule name'
+      params do
+        requires :id, type: Integer, desc: 'id of molecule'
+        requires :name_id, type: Integer, desc: 'id of molecule name'
+        requires :name, type: String, desc: 'name of molecule name'
+        requires :description, type: String, desc: 'description of molecule name'
+      end
+      post :save_name do
+        error!('Unauthorized to delete molecule name!', 401) unless current_user&.molecule_editor
+
+        if params[:name_id] == -1
+          mn = MoleculeName.create(molecule_id: params[:id], user_id: current_user.id, description: "#{params[:description]} #{current_user.id}", name: params[:name])
+        else
+          mn = MoleculeName.find(params[:name_id])
+          mn.update!(name: params[:name]) if mn.present?
+        end
+        mn
       rescue StandardError => e
         return {}
       end
