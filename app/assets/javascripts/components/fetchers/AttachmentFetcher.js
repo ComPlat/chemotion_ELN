@@ -21,7 +21,10 @@ export default class AttachmentFetcher {
     }).then((response) => {
       return response.blob();
     }).then((blob) => {
-      return URL.createObjectURL(blob);
+      return  { 
+        type:blob.type, 
+        data:URL.createObjectURL(blob) 
+     };
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
