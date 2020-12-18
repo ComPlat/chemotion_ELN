@@ -415,7 +415,7 @@ module SVG
         <?xml version="1.0"?>
         <svg xmlns="http://www.w3.org/2000/svg" height="80.00161338000004" version="1.1" width="138.56508078000002" style="overflow: hidden; position: relative;" viewBox="0 0 100 100">
           <g transform="translate(-15, 0)">
-            <text x="10" alignment-baseline="central" y="#{(40 - text_lines.size * 10)}" font-size="0.8em">
+            <text x="10" alignment-baseline="central" y="#{(40 - text_lines.size * 10)}" font-size="1em">
               #{text_lines.join}
             </text>
           </g>

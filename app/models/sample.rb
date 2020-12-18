@@ -324,6 +324,11 @@ class Sample < ActiveRecord::Base
     end
   end
 
+  def svg_text_path
+    text = name.presence || molecule_sum_formular.presence || molecule.iupac_name
+    "svg_text/#{text}"
+  end
+
   def loading
     self.residues[0] && self.residues[0].custom_info['loading'].to_f
   end

@@ -205,6 +205,11 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForReferenceChange(changeEvent)
         );
         break;
+      case 'showLabelChanged':
+        this.onReactionChange(
+          this.updatedReactionForShowLabelChange(changeEvent)
+        );
+        break;
       case 'amountChanged':
         this.onReactionChange(
           this.updatedReactionForAmountChange(changeEvent)
@@ -290,6 +295,17 @@ export default class ReactionDetailsScheme extends Component {
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
+  }
+
+  updatedReactionForShowLabelChange(changeEvent) {
+    const { sampleID, value } = changeEvent;
+    const { reaction } = this.state;
+    const sample = reaction.sampleById(sampleID);
+
+    reaction.toggleShowLabelForSample(sampleID);
+    this.onReactionChange(reaction, { schemaChanged: true });
+
+    return this.updatedReactionWithSample(this.updatedSamplesForShowLabelChange.bind(this), sample);
   }
 
   updatedReactionForAmountChange(changeEvent) {
@@ -561,6 +577,10 @@ export default class ReactionDetailsScheme extends Component {
       }
       return sample;
     });
+  }
+
+  updatedSamplesForShowLabelChange(samples, referenceMaterial) {
+    return samples;
   }
 
   updatedSamplesForReferenceChange(samples, referenceMaterial) {

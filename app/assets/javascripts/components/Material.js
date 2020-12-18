@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Checkbox, Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import DragDropItemTypes from './DragDropItemTypes';
@@ -196,6 +196,20 @@ class Material extends Component {
     );
   }
 
+  materialShowLabel(material, style = { padding: '5px 4px', width: '18px' }) {
+    return (
+      <Button
+        active
+        style={style}
+        onClick={e => this.handleShowLabelChange(e)}
+        bsStyle={material.show_label ? 'success' : 'primary'}
+        bsSize="small"
+        title={material.show_label ? 'Switch to structure' : 'Switch to label'}
+      >{material.show_label ? 'l' : 's'}
+      </Button>
+    );
+  }
+
   equivalentOrYield(material) {
     if (this.props.materialGroup === 'products') {
       if (this.props.reaction.hasPolymers()){
@@ -264,6 +278,19 @@ class Material extends Component {
     if (this.props.onChange) {
       const event = {
         type: 'referenceChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        value
+      };
+      this.props.onChange(event);
+    }
+  }
+
+  handleShowLabelChange(e) {
+    const value = e.target.checked;
+    if (this.props.onChange) {
+      const event = {
+        type: 'showLabelChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
         value
@@ -434,6 +461,10 @@ class Material extends Component {
         {this.materialRef(material)}
 
         <td>
+          {this.materialShowLabel(material)}
+        </td>
+
+        <td>
           {this.switchTargetReal(isTarget)}
         </td>
 
@@ -588,7 +619,7 @@ class Material extends Component {
     );
   }
 
-  switchTargetReal(isTarget, style = { padding: '5px 4px' }) {
+  switchTargetReal(isTarget, style = { padding: '5px 4px', width: '18px' }) {
     return (
       <Button
         disabled={!permitOn(this.props.reaction)}

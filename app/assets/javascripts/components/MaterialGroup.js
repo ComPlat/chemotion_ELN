@@ -105,6 +105,7 @@ const GeneralMaterialGroup = ({
   let headers = {
     ref: 'Ref',
     group: 'Starting materials',
+    show_label: 'L/S',
     tr: 'T/R',
     mass: 'Mass',
     amount: 'Amount',
@@ -191,6 +192,7 @@ const GeneralMaterialGroup = ({
             <th>{headers.group}</th>
             { isReactants && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th> }
             { !isReactants && <th>{refTHead}</th> }
+            <th>{headers.show_label}</th>
             { !isReactants && <th>{headers.tr}</th> }
             { !isReactants && <th>{headers.amount}</th> }
             { !isReactants && <th /> }

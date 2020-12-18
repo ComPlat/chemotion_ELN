@@ -194,23 +194,37 @@ class Reaction < ActiveRecord::Base
   end
 
   def update_svg_file!
-    svg = self.reaction_svg_file
+    svg = reaction_svg_file
     if svg.present? && svg.end_with?('</svg>')
-        svg_file_name = "#{SecureRandom.hex(64)}.svg"
-        svg_path = "#{Rails.root}/public/images/reactions/#{svg_file_name}"
+      svg_file_name = "#{SecureRandom.hex(64)}.svg"
+      svg_path = "#{Rails.root}/public/images/reactions/#{svg_file_name}"
 
-        svg_file = File.new(svg_path, 'w+')
-        svg_file.write(svg)
-        svg_file.close
+      svg_file = File.new(svg_path, 'w+')
+      svg_file.write(svg)
+      svg_file.close
 
-        self.reaction_svg_file = svg_file_name
+      self.reaction_svg_file = svg_file_name
       # end
     else
       paths = {}
-      %i(starting_materials reactants products).each do |prop|
-        d = self.send(prop).includes(:molecule)
-        paths[prop]= d.pluck(:id, :sample_svg_file, :'molecules.molecule_svg_file').map do |item|
-          prop == :products ? [svg_path(item[1], item[2]), yield_amount(item[0])] : svg_path(item[1], item[2])
+
+      {
+        starting_materials: :reactions_starting_material_samples,
+        reactants: :reactions_reactant_samples,
+        products: :reactions_product_samples
+      }.each do |prop, resource|
+        collection = public_send(resource).includes(sample: :molecule)
+        paths[prop] = collection.map do |reactions_sample|
+          sample = reactions_sample.sample
+          params = [
+            sample.sample_svg_file,
+            sample.molecule.molecule_svg_file
+          ]
+
+          params[0] = sample.svg_text_path if reactions_sample.show_label
+
+          params.append(yield_amount(sample.id)) if prop == :products
+          params
         end
       end
 
@@ -221,8 +235,8 @@ class Reaction < ActiveRecord::Base
                                                     conditions: conditions,
                                                     show_yield: true)
         self.reaction_svg_file = composer.compose_reaction_svg_and_save
-      rescue Exception => e
-        Rails.logger.info("**** SVG::ReactionComposer failed ***")
+      rescue StandardError => _e
+        Rails.logger.info('**** SVG::ReactionComposer failed ***')
       end
     end
   end

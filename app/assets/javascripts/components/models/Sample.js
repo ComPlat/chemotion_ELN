@@ -426,7 +426,6 @@ export default class Sample extends Element {
   }
 
   get preferred_label() {
-    // TODO: here?
     return this._external_label || this.molecule.iupac_name || this.molecule_formula;
   }
 
@@ -871,21 +870,24 @@ export default class Sample extends Element {
     return (this && this.molfile &&
             !this.error_loading && !this.error_polymer_type);
   }
-// TODO implement here
+
   get svgPath() {
-    if (this.sample_svg_file) {
-      if(this.sample_svg_file === '***')
-        return `/images/wild_card/no_image_180.svg`
-      else
-        return `/images/samples/${this.sample_svg_file}`;
-    } else {
-      return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+    if (this.show_label) {
+      return `svg_text/${this.labelText}`
     }
+
+    if (this.sample_svg_file) {
+      if (this.sample_svg_file === '***') {
+        return `/images/wild_card/no_image_180.svg`
+      }
+      return `/images/samples/${this.sample_svg_file}`;
+    }
+    return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
   }
   //todo: have a dedicated Material Sample subclass
 
-  get reactionSvgPath() {
-    return `svg_text/${this.preferred_label}`
+  get labelText() {
+    return this.name || this.molecule_formula || this.molecule.iupac_name;
   }
 
   set equivalent(equivalent) {
@@ -918,7 +920,7 @@ export default class Sample extends Element {
       equivalent: this.equivalent,
       position: this.position,
       reference: this.reference || false,
-      structure: this.structure || false,
+      show_label: this.show_label || false,
       waste: this.waste,
       coefficient: this.coefficient,
     };
