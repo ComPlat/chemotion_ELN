@@ -35,7 +35,6 @@ export default class GenericEl extends Element {
   }
 
   static buildNewShortLabel(klass) {
-    console.log(klass);
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return `new_${klass.label}`; }
     return `${currentUser.initials}-${klass.klass_prefix}${parseInt(currentUser.counters[klass.name] || 0, 10) + 1}`;

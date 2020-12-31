@@ -6,6 +6,7 @@ import UserStore from '../stores/UserStore';
 import { LayersLayout } from './GenericElCommon';
 import Segment from '../models/Segment';
 import MatrixCheck from '../common/MatrixCheck';
+import { genUnits } from '../../admin/generic/Utils';
 
 const addSegmentTabs = (element, onChange, contentMap) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -71,6 +72,7 @@ class SegmentDetails extends Component {
   constructor(props) {
     super(props);
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleUnitClick = this.handleUnitClick.bind(this);
     this.handleReload = this.handleReload.bind(this);
   }
 
@@ -90,6 +92,19 @@ class SegmentDetails extends Component {
         ({ value } = event.target);
     }
     properties[`${layer}`].fields.find(e => e.field === field).value = value;
+    if (type === 'system-defined' && (!properties[`${layer}`].fields.find(e => e.field === field).value_system || properties[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
+      const opt = properties[`${layer}`].fields.find(e => e.field === field).option_layers;
+      properties[`${layer}`].fields.find(e => e.field === field).value_system = genUnits(opt)[0].key;
+    }
+    segment.properties = properties;
+    segment.changed = true;
+    this.props.onChange(segment);
+  }
+
+  handleUnitClick(layer, obj) {
+    const { segment } = this.props;
+    const { properties } = segment;
+    properties[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
     segment.properties = properties;
     segment.changed = true;
     this.props.onChange(segment);
@@ -105,6 +120,10 @@ class SegmentDetails extends Component {
         const curIdx = findIndex(curFields, o => o.field === f.field);
         if (curIdx >= 0) {
           newProps[key].fields[idx].value = segment.properties[key].fields[curIdx].value;
+          if (newProps[key].fields[idx].type === 'system-defined') {
+            const units = genUnits(newProps[key].fields[idx].option_layers);
+            newProps[key].fields[idx].value_system = units.find(u => u.key === segment.properties[key].fields[curIdx].value_system) || units[0].key;
+          }
         }
       });
     });
@@ -117,7 +136,8 @@ class SegmentDetails extends Component {
     const layersLayout = LayersLayout(
       segment.properties,
       klass.properties_template.select_options || {},
-      this.handleInputChange
+      this.handleInputChange,
+      this.handleUnitClick
     );
     return (<div style={{ margin: '5px' }}>{layersLayout}</div>);
   }

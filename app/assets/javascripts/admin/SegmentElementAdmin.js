@@ -1,5 +1,5 @@
 import React from 'react';
-import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, ButtonGroup } from 'react-bootstrap';
+import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy } from 'lodash';
@@ -342,8 +342,8 @@ export default class SegmentElementAdmin extends React.Component {
     const { element } = this.state;
 
     let value = '';
-    if (tp === 'select') {
-      value = event.value;
+    if (tp === 'select' || tp === 'system-defined') {
+      ({ value } = event);
     } else if (tp && tp.startsWith('drag')) {
       value = event;
     } else {
@@ -419,10 +419,9 @@ export default class SegmentElementAdmin extends React.Component {
   }
 
   fetchElements() {
-    AdminFetcher.listSegmentKlass()
-      .then((result) => {
-        this.setState({ elements: result.klass });
-      });
+    AdminFetcher.listSegmentKlass().then((result) => {
+      this.setState({ elements: result.klass });
+    });
   }
 
   handleSubmit() {
@@ -681,10 +680,7 @@ export default class SegmentElementAdmin extends React.Component {
 
   renderPropPanel() {
     const { element, showPropModal } = this.state;
-
     if (showPropModal) {
-      // let molfile = this.element;
-      // molfile = molfile.replace(/\r?\n/g, '<br />');
       return (
         <Panel show={showPropModal.toString()}>
           <Panel.Heading>
@@ -698,8 +694,8 @@ export default class SegmentElementAdmin extends React.Component {
           </Panel.Heading>
           <Panel.Body>
             <Row style={{ maxWidth: '2000px', margin: 'auto' }}>
-              <Col sm={8}> {this.renderProperties()} </Col>
-              <Col sm={4}> {this.renderSelectOptions()} </Col>
+              <Col sm={8}>{this.renderProperties()}</Col>
+              <Col sm={4}>{this.renderSelectOptions()}</Col>
             </Row>
           </Panel.Body>
         </Panel>
@@ -710,7 +706,6 @@ export default class SegmentElementAdmin extends React.Component {
 
   renderList() {
     const { elements } = this.state;
-
     const tbody = elements && elements.map((e, idx) => (
       <tbody key={`tbody_${e.id}`}>
         <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
@@ -734,7 +729,6 @@ export default class SegmentElementAdmin extends React.Component {
         </tr>
       </tbody>
     ));
-
     return (
       <Panel>
         <Panel.Heading>

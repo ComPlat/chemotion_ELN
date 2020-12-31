@@ -1,0 +1,97 @@
+{
+  "fields": [
+    {
+      "type": "numeric",
+      "field": "temperature",
+      "label": "Temperature",
+      "default": "",
+      "position": 1,
+      "placeholder": "Please input temperature",
+      "units": [
+        { "key": "C", "label": "°C" },
+        { "key": "F", "label": "°F" },
+        { "key": "K", "label": "°K" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "degree",
+      "label": "Degree",
+      "default": "",
+      "position": 2,
+      "placeholder": "Please input degree",
+      "units": [
+        { "key": "degree", "label": "°" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "volumes",
+      "label": "Volumes",
+      "default": "",
+      "position": 3,
+      "placeholder": "Please input volume",
+      "units": [
+        { "key": "l", "label": "l" },
+        { "key": "ml", "label": "ml" },
+        { "key": "ul", "label": "µl" },
+        { "key": "nl", "label": "nl" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "mass",
+      "label": "Mass",
+      "default": "",
+      "position": 4,
+      "placeholder": "Please input mass",
+      "units": [
+        { "key": "g", "label": "g" },
+        { "key": "mg", "label": "mg" },
+        { "key": "ug", "label": "µg" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "length",
+      "label": "Length",
+      "default": "",
+      "position": 5,
+      "placeholder": "Please input length",
+      "units": [
+        { "key": "pm", "label": "pm" },
+        { "key": "nm", "label": "nm" },
+        { "key": "mm", "label": "mm" },
+        { "key": "cm", "label": "cm" },
+        { "key": "m", "label": "m" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "duration",
+      "label": "Duration",
+      "default": "",
+      "position": 6,
+      "placeholder": "Please input duration",
+      "units": [
+        { "key": "d", "label": "day(s)" },
+        { "key": "h", "label": "hour(s)" },
+        { "key": "min", "label": "min(s)" },
+        { "key": "s", "label": "sec(s)" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "concentration",
+      "label": "Concentration",
+      "default": "",
+      "position": 7,
+      "placeholder": "Please input concentration",
+      "units": [
+        { "key": "ng_l", "label": "ng/L" },
+        { "key": "mg_l", "label": "mg/L" },
+        { "key": "g_l", "label": "g/L" }
+      ]
+    }
+  ]
+}

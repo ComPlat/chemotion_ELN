@@ -1,5 +1,5 @@
 import React from 'react';
-import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, ButtonGroup } from 'react-bootstrap';
+import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy } from 'lodash';
@@ -352,8 +352,8 @@ export default class GenericElementAdmin extends React.Component {
     const { element } = this.state;
 
     let value = '';
-    if (tp === 'select') {
-      value = event.value;
+    if (tp === 'select' || tp === 'system-defined') {
+      ({ value } = event);
     } else if (tp && tp.startsWith('drag')) {
       value = event;
     } else {

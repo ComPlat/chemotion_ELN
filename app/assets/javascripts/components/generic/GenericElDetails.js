@@ -13,7 +13,7 @@ import GenericElDetailsContainers from './GenericElDetailsContainers';
 import { GenProperties, GenPropertiesLayer } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
 import CopyElementModal from '../common/CopyElementModal';
-import { notification } from '../../admin/generic/Utils';
+import { notification, genUnits } from '../../admin/generic/Utils';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -24,6 +24,7 @@ export default class GenericElDetails extends Component {
     this.onChangeUI = this.onChangeUI.bind(this);
     this.handleReload = this.handleReload.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleUnitClick = this.handleUnitClick.bind(this);
   }
 
   componentDidMount() {
@@ -63,6 +64,10 @@ export default class GenericElDetails extends Component {
         const curIdx = findIndex(curFields, o => o.field === f.field);
         if (curIdx >= 0) {
           newProps[key].fields[idx].value = genericEl.properties[key].fields[curIdx].value;
+          if (newProps[key].fields[idx].type === 'system-defined') {
+            const units = genUnits(newProps[key].fields[idx].option_layers);
+            newProps[key].fields[idx].value_system = units.find(u => u.key === genericEl.properties[key].fields[curIdx].value_system) || units[0].key;
+          }
         }
       });
     });
@@ -107,7 +112,20 @@ export default class GenericElDetails extends Component {
       genericEl.name = value;
     } else {
       properties[`${layer}`].fields.find(e => e.field === field).value = value;
+      if (type === 'system-defined' && (!properties[`${layer}`].fields.find(e => e.field === field).value_system || properties[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
+        const opt = properties[`${layer}`].fields.find(e => e.field === field).option_layers;
+        properties[`${layer}`].fields.find(e => e.field === field).value_system = genUnits(opt)[0].key;
+      }
     }
+    genericEl.properties = properties;
+    genericEl.changed = true;
+    this.handleGenericElChanged(genericEl);
+  }
+
+  handleUnitClick(layer, obj) {
+    const { genericEl } = this.state;
+    const { properties } = genericEl;
+    properties[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
     genericEl.properties = properties;
     genericEl.changed = true;
     this.handleGenericElChanged(genericEl);
@@ -131,6 +149,7 @@ export default class GenericElDetails extends Component {
           layer={layerProps}
           onChange={this.handleInputChange}
           selectOptions={selectOptions}
+          onClick={this.handleUnitClick}
         />
       );
       options.push(ig);
@@ -150,6 +169,7 @@ export default class GenericElDetails extends Component {
               layer={layerProps}
               onChange={this.handleInputChange}
               selectOptions={selectOptions}
+              onClick={this.handleUnitClick}
             />
           );
           options.push(igs);

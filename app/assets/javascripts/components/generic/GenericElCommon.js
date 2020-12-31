@@ -1,11 +1,12 @@
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Col, ControlLabel, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row } from 'react-bootstrap';
+import { Panel, Col, ControlLabel, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
 import { sortBy, filter } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
+import { genUnit, genUnits } from '../../admin/generic/Utils';
 
 const GenPropertiesText = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
@@ -66,6 +67,33 @@ const GenPropertiesNumber = (opt) => {
   );
 };
 
+const GenPropertiesSystemDefined = (opt) => {
+  let className = opt.isEditable ? 'editable' : 'readonly';
+  className = opt.isRequired && opt.isEditable ? 'required' : className;
+  return (
+    <FormGroup>
+      <ControlLabel>{opt.label}</ControlLabel>
+      <InputGroup>
+        <FormControl
+          type="number"
+          value={opt.value}
+          onChange={opt.onChange}
+          className={className}
+          readOnly={opt.readOnly}
+          required={opt.isRequired}
+          placeholder={opt.placeholder}
+          min={1}
+        />
+        <InputGroup.Button>
+          <Button disabled={opt.readOnly} active onClick={opt.onClick} bsStyle="success">
+            {genUnit(opt.option_layers, opt.value_system).label || ''}
+          </Button>
+        </InputGroup.Button>
+      </InputGroup>
+    </FormGroup>
+  );
+};
+
 const GenPropertiesDrop = (opt) => {
   const className = opt.isRequired ? 'drop_generic_properties field_required' : 'drop_generic_properties';
   return (
@@ -98,6 +126,8 @@ const GenProperties = (opt) => {
       return GenPropertiesDrop(fieldProps);
     case 'integer':
       return GenPropertiesNumber(fieldProps);
+    case 'system-defined':
+      return GenPropertiesSystemDefined(fieldProps);
     default:
       return GenPropertiesText(fieldProps);
   }
@@ -111,6 +141,16 @@ class GenPropertiesLayer extends Component {
     this.props.onChange(e, f, k, t);
   }
 
+  // event, field, key of layer, field object, value, unitsSystem
+  handleClick(keyLayer, obj, val) {
+    const units = genUnits(obj.option_layers);
+    let uIdx = units.findIndex(e => e.key === val);
+    if (uIdx < units.length - 1) uIdx += 1; else uIdx = 0;
+    const update = obj;
+    update.value_system = units.length > 0 ? units[uIdx].key : '';
+    this.props.onClick(keyLayer, update);
+  }
+
   views() {
     const { layer, selectOptions } = this.props;
     const { cols, fields, key } = layer;
@@ -119,6 +159,7 @@ class GenPropertiesLayer extends Component {
     const vs = [];
     let op = [];
     fields.forEach((f, i) => {
+      const unit = genUnits(f.option_layers)[0] || {};
       const eachCol = (
         <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col}>
           <GenProperties
@@ -132,6 +173,9 @@ class GenPropertiesLayer extends Component {
             readOnly={false}
             isRequired={f.required || false}
             placeholder={f.placeholder || ''}
+            option_layers={f.option_layers}
+            value_system={f.value_system || unit.key}
+            onClick={() => this.handleClick(key, f, (f.value_system || unit.key))}
           />
         </Col>
       );
@@ -162,10 +206,11 @@ GenPropertiesLayer.propTypes = {
   layer: PropTypes.object,
   selectOptions: PropTypes.object,
   onChange: PropTypes.func.isRequired,
+  onClick: PropTypes.func
 };
 
 GenPropertiesLayer.defaultProps = {
-  selectOptions: {}
+  selectOptions: {}, onClick: () => {}
 };
 
 class GenPropertiesLayerSearchCriteria extends Component {
@@ -217,7 +262,7 @@ GenPropertiesLayerSearchCriteria.defaultProps = {
   selectOptions: {}
 };
 
-const LayersLayout = (layers, options, cbFunc, layout = []) => {
+const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout = []) => {
   const filterLayers = filter(layers, l => l.condition == null || l.condition.trim().length === 0) || [];
   const sortedLayers = sortBy(filterLayers, l => l.position) || [];
   sortedLayers.forEach((layer) => {
@@ -225,8 +270,9 @@ const LayersLayout = (layers, options, cbFunc, layout = []) => {
       <GenPropertiesLayer
         key={layer.key}
         layer={layer}
-        onChange={cbFunc}
+        onChange={funcChange}
         selectOptions={options}
+        onClick={funcClick}
       />
     );
     layout.push(ig);
@@ -242,8 +288,9 @@ const LayersLayout = (layers, options, cbFunc, layout = []) => {
         const igs = (
           <GenPropertiesLayer
             layer={layerProps}
-            onChange={cbFunc}
+            onChange={funcChange}
             selectOptions={options}
+            onClick={funcClick}
           />
         );
         layout.push(igs);

@@ -4,15 +4,28 @@ import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigge
 import Select from 'react-select';
 import uuid from 'uuid';
 import { ButtonTooltip } from '../../admin/generic/Utils';
+import AdminFetcher from '../fetchers/AdminFetcher';
 
 const ElementFieldTypes = [{ value: 'integer', name: 'integer', label: 'Integer' }, { value: 'text', name: 'text', label: 'Text' }, { value: 'select', name: 'select', label: 'Select' }];
 class ElementField extends Component {
   constructor(props) {
     super(props);
+    this.state = { unitsSystem: [] };
     this.handleChange = this.handleChange.bind(this);
     this.handleDrop = this.handleDrop.bind(this);
     this.handelDelete = this.handelDelete.bind(this);
     this.handleMove = this.handleMove.bind(this);
+    this.fetchConfigs = this.fetchConfigs.bind(this);
+  }
+
+  componentDidMount() {
+    this.fetchConfigs();
+  }
+
+  fetchConfigs() {
+    AdminFetcher.fetchUnitsSystem().then((result) => {
+      this.setState({ unitsSystem: result });
+    });
   }
 
   handleChange(e, orig, fe, lk, fc, tp) {
@@ -55,19 +68,24 @@ class ElementField extends Component {
   }
 
   renderComponent() {
-    const typeOpts = this.props.genericType === 'Element' ? ElementFieldTypes.concat([{ value: 'drag_molecule', name: 'drag_molecule', label: 'DragMolecule' }]) : ElementFieldTypes;
+    const { unitsSystem } = this.state;
+    const unitConfig = (unitsSystem.fields || []).map(_c =>
+      ({ value: _c.field, name: _c.label, label: _c.label }));
+    let typeOpts = this.props.genericType === 'Element' ? ElementFieldTypes.concat([{ value: 'drag_molecule', name: 'drag_molecule', label: 'DragMolecule' }]) : ElementFieldTypes;
+    typeOpts = typeOpts.concat([{ value: 'system-defined', name: 'system-defined', label: 'System-Defined' }]);
     const skipRequired = this.props.genericType === 'Segment' ? { display: 'none' } : {};
     const f = this.props.field;
-    const selectOptions = f.type === 'select' ? (
+    const selectOptions = (f.type === 'select' || f.type === 'system-defined') ? (
       <FormGroup controlId="formControlFieldType">
-        <Col componentClass={ControlLabel} sm={3}>Options:</Col>
+        <Col componentClass={ControlLabel} sm={3}>{f.type === 'select' ? 'Options' : <span />}</Col>
         <Col sm={9}>
           <Select
+            className="drop-up"
             name={f.field}
             multi={false}
-            options={this.props.select_options}
+            options={f.type === 'select' ? this.props.select_options : unitConfig}
             value={f.option_layers}
-            onChange={event => this.handleChange(event, f.option_layers, f.field, this.props.layerKey, 'option_layers', 'select')}
+            onChange={event => this.handleChange(event, f.option_layers, f.field, this.props.layerKey, 'option_layers', f.type)}
           />
         </Col>
       </FormGroup>)
@@ -117,6 +135,7 @@ class ElementField extends Component {
                   <Col componentClass={ControlLabel} sm={3}>Type</Col>
                   <Col sm={9}>
                     <Select
+                      className="drop-up"
                       name={f.field}
                       multi={false}
                       options={typeOpts}

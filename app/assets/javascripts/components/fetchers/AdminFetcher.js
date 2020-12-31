@@ -2,6 +2,16 @@ import 'whatwg-fetch';
 import BaseFetcher from './BaseFetcher';
 
 export default class AdminFetcher {
+  static fetchUnitsSystem() {
+    return fetch('/units_system/units_system.json', {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { 'cache-control': 'no-cache' }
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static fetchLocalCollector() {
     return fetch('/api/v1/admin/listLocalCollector/all.json', {
       credentials: 'same-origin'

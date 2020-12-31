@@ -15,7 +15,8 @@ class UserStore {
       chmos: [],
       labels: [],
       genericEls: [],
-      segmentKlasses: []
+      segmentKlasses: [],
+      unitsSystem: {}
     };
 
     this.bindListeners({
@@ -28,7 +29,8 @@ class UserStore {
       handleSelectTab: UserActions.selectTab,
       handleUpdateUserProfile: UserActions.updateUserProfile,
       handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
-      handleSegementKlasses: UserActions.fetchSegmentKlasses
+      handleSegementKlasses: UserActions.fetchSegmentKlasses,
+      handleUnitsSystem: UserActions.fetchUnitsSystem
     });
   }
 
@@ -88,6 +90,9 @@ class UserStore {
     this.state.segmentKlasses = result.klass;
   }
 
+  handleUnitsSystem(result) {
+    this.state.unitsSystem = result;
+  }
 }
 
 export default alt.createStore(UserStore, 'UserStore');
