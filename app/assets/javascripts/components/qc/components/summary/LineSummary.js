@@ -44,7 +44,7 @@ const LineQcp = ({
   ansHnmr, ansCnmr, ansMs, ansIr,
 }) => (
   <div className="card-qcsum">
-    <span className="qc-title">QC-pass</span>
+    <span className="qc-title">Data Evaluation</span>
     <span>{ statusLabel(ansHnmr.conclusionOwn) }</span>
     <span>{ statusLabel(ansCnmr.conclusionOwn) }</span>
     <span>{ statusLabel(ansMs.conclusionOwn) }</span>
@@ -64,7 +64,7 @@ LineQcp.propTypes = {
 
 const LineQck = ({ ansHnmr, ansCnmr, ansMs }) => (
   <div className="card-qcsum">
-    <span className="qc-title">Quick Check</span>
+    <span className="qc-title">Analysis Check</span>
     <span>{ statusLabel(ansHnmr.qck.ansQck) }</span>
     <span>{ statusLabel(ansCnmr.qck.ansQck) }</span>
     <span>{ statusLabel(ansMs.qck.ansQck) }</span>

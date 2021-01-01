@@ -414,6 +414,7 @@ class ViewSpectra extends React.Component {
       handleSubmit,
       keepPred,
     );
+    this.closeOp();
     // spcInfo: si, peaks: targetPeaks, layout, shift, cb: handleSubmit,
   }
 

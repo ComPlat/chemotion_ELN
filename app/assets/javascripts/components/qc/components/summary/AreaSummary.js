@@ -18,6 +18,12 @@ const AreaSummary = ({
     <div>
       <div className="col-qcsum-l">
         <LineTitle />
+        <LineDav
+          ansHnmr={ansHnmr}
+          ansCnmr={ansCnmr}
+          ansMs={ansMs}
+          ansIr={ansIr}
+        />
         <LineQcp
           ansHnmr={ansHnmr}
           ansCnmr={ansCnmr}
@@ -28,12 +34,6 @@ const AreaSummary = ({
           ansHnmr={ansHnmr}
           ansCnmr={ansCnmr}
           ansMs={ansMs}
-        />
-        <LineDav
-          ansHnmr={ansHnmr}
-          ansCnmr={ansCnmr}
-          ansMs={ansMs}
-          ansIr={ansIr}
         />
       </div>
       <div className="col-qcsum-r">
