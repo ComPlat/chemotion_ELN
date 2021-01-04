@@ -285,7 +285,7 @@
     ]
   },
   {
-    "name": "acpi",
+    "name": "apci",
     "ops": [
       { "insert": "MS (APCI, CH" },
       {

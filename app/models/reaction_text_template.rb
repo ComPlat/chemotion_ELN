@@ -13,7 +13,7 @@
 #
 # Indexes
 #
-#  index_predefined_template           (name) UNIQUE WHERE ((type)::text = 'PredefinedTemplate'::text)
+#  index_predefined_template           (name) UNIQUE WHERE ((type)::text = 'PredefinedTextTemplate'::text)
 #  index_text_templates_on_deleted_at  (deleted_at)
 #  index_text_templates_on_user_id     (user_id)
 #
