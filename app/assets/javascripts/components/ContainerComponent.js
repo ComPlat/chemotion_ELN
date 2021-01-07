@@ -1,29 +1,44 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Col, FormControl, FormGroup, ControlLabel
+  Button,
+  Col,
+  FormControl,
+  FormGroup,
+  ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
-import _ from 'lodash';
 import ContainerDatasets from './ContainerDatasets';
-import QuillEditor from './QuillEditor';
 import QuillViewer from './QuillViewer';
 import OlsTreeSelect from './OlsComponent';
-import { sampleAnalysesContentSymbol, sampleAnalysesContentDropdown } from './utils/quillToolbarSymbol';
-import { formatAnalysisContent } from './utils/ElementUtils';
 import { confirmOptions } from './staticDropdownOptions/options';
+
+import ContainerComponentEditor from './ContainerComponentEditor';
+
+import UserStore from './stores/UserStore';
+import UserActions from './actions/UserActions';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
     super();
+
     const { container } = props;
-    this.state = {
-      container,
-    };
+    let userMacros = {};
+    const userProfile = UserStore.getState().profile;
+    if (userProfile && userProfile.data) {
+      userMacros = userProfile.data.macros || {};
+    }
+    this.state = { container, userMacros };
 
     this.onChange = this.onChange.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
-    this.reformatContent = this.reformatContent.bind(this);
+    this.updateUserMacros = this.updateUserMacros.bind(this);
+
+    this.handleProfileChange = this.handleProfileChange.bind(this);
+  }
+
+  componentDidMount() {
+    UserStore.listen(this.handleProfileChange);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -32,8 +47,21 @@ export default class ContainerComponent extends Component {
     });
   }
 
+  componentWillUnmount() {
+    UserStore.unlisten(this.handleProfileChange);
+  }
+
   onChange(container) {
     this.props.onChange(container);
+  }
+
+  handleProfileChange() {
+    let userMacros = {};
+    const userProfile = UserStore.getState().profile;
+    if (userProfile && userProfile.data) {
+      userMacros = userProfile.data.macros || {};
+    }
+    this.setState({ userMacros });
   }
 
   handleInputChange(type, ev) {
@@ -70,22 +98,17 @@ export default class ContainerComponent extends Component {
     if (isChanged) this.onChange(container);
   }
 
-  reformatContent() {
-    const { container } = this.state;
-
-    container.extended_metadata.content = formatAnalysisContent(container);
-    this.onChange(container);
+  // eslint-disable-next-line class-methods-use-this
+  updateUserMacros(userMacros) {
+    const userProfile = UserStore.getState().profile;
+    userProfile.data.macros = userMacros;
+    UserActions.updateUserProfile(userProfile);
+    this.setState({ userMacros });
   }
 
   render() {
-    const { container } = this.state;
+    const { container, userMacros } = this.state;
     const { readOnly, disabled } = this.props;
-
-    const formatButton = (
-      <Button bsSize="xsmall" onClick={this.reformatContent}>
-        <i className="fa fa-magic" />
-      </Button>
-    );
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -94,14 +117,12 @@ export default class ContainerComponent extends Component {
       );
     } else {
       quill = (
-        <QuillEditor
+        <ContainerComponentEditor
           height="120px"
-          value={container.extended_metadata.content}
+          macros={userMacros}
           onChange={this.handleInputChange.bind(this, 'content')}
-          disabled={readOnly}
-          toolbarSymbol={sampleAnalysesContentSymbol}
-          toolbarDropdown={sampleAnalysesContentDropdown}
-          customToolbar={formatButton}
+          container={container}
+          updateUserMacros={this.updateUserMacros}
         />
       );
     }
