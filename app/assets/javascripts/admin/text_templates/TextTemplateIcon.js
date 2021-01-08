@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const ToolbarIcon = ({ template }) => {
+const TextTemplateIcon = ({ template }) => {
   if (!template) return <span />;
 
   const { data, name } = template;
@@ -19,13 +19,13 @@ const ToolbarIcon = ({ template }) => {
   );
 };
 
-ToolbarIcon.propTypes = {
+TextTemplateIcon.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   template: PropTypes.object
 };
 
-ToolbarIcon.defaultProps = {
+TextTemplateIcon.defaultProps = {
   template: null
 };
 
-export default ToolbarIcon;
+export default TextTemplateIcon;

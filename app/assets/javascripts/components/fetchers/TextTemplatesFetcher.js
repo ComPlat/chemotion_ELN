@@ -52,6 +52,21 @@ export default class TextTemplatesFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static updatePredefinedTemplates(template) {
+    const method = template.id ? 'PUT' : 'POST';
+
+    return fetch('/api/v1/text_templates/predefined_text_template', {
+      credentials: 'same-origin',
+      method,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(template)
+    }).then(response => response.json())
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
   static deletePredefinedTemplateByName(name) {
     return fetch(`/api/v1/text_templates/by_name?name=${name}`, {
       credentials: 'same-origin',

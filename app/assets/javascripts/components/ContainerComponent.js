@@ -8,25 +8,26 @@ import {
   ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
+
+import TextTemplateStore from './stores/TextTemplateStore';
+import TextTemplateActions from './actions/TextTemplateActions';
+
 import ContainerDatasets from './ContainerDatasets';
 import QuillViewer from './QuillViewer';
 import OlsTreeSelect from './OlsComponent';
 import { confirmOptions } from './staticDropdownOptions/options';
 
-import ContainerComponentEditor from './ContainerComponentEditor';
-
-import TextTemplateStore from './stores/TextTemplateStore';
-import TextTemplateActions from './actions/TextTemplateActions';
+import AnalysisEditor from './AnalysisEditor';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
     super();
 
     const { container, templateType } = props;
-    const textTemplates = TextTemplateStore.getState()[templateType] || Map();
+    const textTemplate = TextTemplateStore.getState()[templateType] || Map();
     this.state = {
       container,
-      textTemplates: textTemplates.toJS()
+      textTemplate: textTemplate.toJS()
     };
 
     this.onChange = this.onChange.bind(this);
@@ -57,8 +58,8 @@ export default class ContainerComponent extends Component {
   handleTemplateChange() {
     const { templateType } = this.props;
 
-    const textTemplates = TextTemplateStore.getState()[templateType];
-    this.setState({ textTemplates: textTemplates.toJS() });
+    const textTemplate = TextTemplateStore.getState()[templateType];
+    this.setState({ textTemplate: textTemplate.toJS() });
   }
 
   handleInputChange(type, ev) {
@@ -96,27 +97,29 @@ export default class ContainerComponent extends Component {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  updateTextTemplates(textTemplates) {
-    TextTemplateActions.updateTextTemplates(this.props.templateType, textTemplates);
+  updateTextTemplates(textTemplate) {
+    const { templateType } = this.props;
+    TextTemplateActions.updateTextTemplates(templateType, textTemplate);
   }
 
   render() {
-    const { container, textTemplates } = this.state;
+    const { container, textTemplate } = this.state;
     const { readOnly, disabled } = this.props;
 
     let quill = (<span />);
+    const { content } = container.extended_metadata;
     if (readOnly || disabled) {
       quill = (
         <QuillViewer value={container.extended_metadata.content} />
       );
     } else {
       quill = (
-        <ContainerComponentEditor
+        <AnalysisEditor
           height="120px"
-          macros={textTemplates}
-          onChange={this.handleInputChange.bind(this, 'content')}
-          container={container}
+          template={textTemplate}
+          analysis={container}
           updateTextTemplates={this.updateTextTemplates}
+          onChangeContent={this.handleInputChange.bind(this, 'content')}
         />
       );
     }

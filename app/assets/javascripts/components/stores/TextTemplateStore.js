@@ -12,14 +12,16 @@ class TextTemplateStore {
       screen: Map(),
       wellplate: Map(),
       researchPlan: Map(),
+      reactionDescription: Map(),
       predefinedTemplateNames: OrderedSet(),
+      fetchedPredefinedTemplates: Map()
     };
 
     this.bindListeners({
       handleFetchTextTemplates: TextTemplateActions.fetchTextTemplates,
       handleFetchPredefinedTemplateNames: TextTemplateActions.fetchPredefinedTemplateNames,
       handleUpdateTextTemplates: TextTemplateActions.updateTextTemplates,
-      // handleFetchTemplateByName: TextTemplateActions.fetchTemplateByName,
+      handleFetchTemplateByNames: TextTemplateActions.fetchPredefinedTemplateByNames,
     });
   }
 
@@ -42,18 +44,14 @@ class TextTemplateStore {
     this.state.predefinedTemplateNames = predefinedTemplateNames.concat(OrderedSet(names));
   }
 
-  // handleFetchTemplateByName(template) {
-  //   const { predefinedTemplates } = this.state;
-  //   console.log(predefinedTemplates);
-  //   const idx = predefinedTemplates.findIndex(t => t.name === template.name);
+  handleFetchTemplateByNames(templates) {
+    let fetchedTemplates = this.state.fetchedPredefinedTemplates;
+    templates.forEach((template) => {
+      fetchedTemplates = fetchedTemplates.set(template.name, fromJS(template));
+    });
 
-  //   // not found
-  //   if (idx < 0) {
-  //     this.state.predefinedTemplates = predefinedTemplates.push(template);
-  //   } else {
-  //     this.state.predefinedTemplateNames = predefinedTemplates.setIn(idx, fromJS(template));
-  //   }
-  // }
+    this.state.fetchedPredefinedTemplates = fetchedTemplates;
+  }
 }
 
 export default alt.createStore(TextTemplateStore, 'TextTemplateStore');

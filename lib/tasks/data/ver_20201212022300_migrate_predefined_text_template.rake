@@ -6,6 +6,8 @@ namespace :data do
     admin = Admin.first
 
     predefined_templates.each do |template|
+      next if PredefinedTextTemplate.where(name: template["name"]).count > 0
+
       text_template = PredefinedTextTemplate.new
       text_template.name = template.delete("name")
       text_template.data = template

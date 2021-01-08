@@ -25,7 +25,7 @@ export default class TextTemplateContainer extends React.Component {
     });
   }
 
-  addTemplate() {
+  addTemplate(gridApi) {
     const { predefinedTemplateNames, fetchedTemplates } = this.state;
 
     this.setState({
@@ -35,8 +35,9 @@ export default class TextTemplateContainer extends React.Component {
         ...fetchedTemplates
       ]
     }, () => {
-      if (!this.gridApi) return;
-      this.gridApi.startEditingCell({ rowIndex: 0, colKey: 'name' });
+      if (!gridApi) return;
+
+      gridApi.startEditingCell({ rowIndex: 0, colKey: 'name' });
     });
   }
 
@@ -68,19 +69,17 @@ export default class TextTemplateContainer extends React.Component {
   updateTemplate(template) {
     const { fetchedTemplates } = this.state;
     const selectedNameIdx = fetchedTemplates.findIndex(t => (
-      t.name === template.name
+      t.id === template.id
     ));
     if (selectedNameIdx < 0) return;
 
-    const type = 'predefinedTextTemplate';
-    TextTemplatesFetcher.updateTextTemplates(type, template).then((res) => {
+    TextTemplatesFetcher.updatePredefinedTemplates(template).then((res) => {
       if (!res) return;
 
-      this.setState({
-        fetchedTemplates: fetchedTemplates.map((t, idx) => (
-          (idx === selectedNameIdx) ? template : t
-        ))
-      });
+      const newTemplates = fetchedTemplates.map((t, idx) => (
+        (idx === selectedNameIdx) ? res : t
+      ));
+      this.setState({ fetchedTemplates: newTemplates });
     });
   }
 

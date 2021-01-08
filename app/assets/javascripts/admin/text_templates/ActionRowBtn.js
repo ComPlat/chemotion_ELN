@@ -60,18 +60,21 @@ SaveRowBtn.propTypes = {
   node: PropTypes.object.isRequired,
 };
 
-const ActionRowBtn = ({ removeRow, saveRow, node }) => {
-  const { data } = node;
-  if (data.name || data.name !== '') {
-    return <RemoveRowBtn node={node} removeRow={removeRow} />;
-  }
+// const ActionRowBtn = ({ removeRow, saveRow, node }) => {
+const ActionRowBtn = ({ removeRow, node }) => {
+  return <RemoveRowBtn node={node} removeRow={removeRow} />;
 
-  return <SaveRowBtn node={node} saveRow={saveRow} />;
+  // const { data } = node;
+  // if (data.name || data.name !== '') {
+  //   return <RemoveRowBtn node={node} removeRow={removeRow} />;
+  // }
+
+  // return <SaveRowBtn node={node} saveRow={saveRow} />;
 };
 
 ActionRowBtn.propTypes = {
   removeRow: PropTypes.func.isRequired,
-  saveRow: PropTypes.func.isRequired,
+  // saveRow: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   node: PropTypes.object.isRequired,
 };

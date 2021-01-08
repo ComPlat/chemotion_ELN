@@ -83,6 +83,7 @@ class User < ActiveRecord::Base
   has_many :text_templates, dependent: :destroy
   has_one :sample_text_template, dependent: :destroy
   has_one :reaction_text_template, dependent: :destroy
+  has_one :reaction_description_text_template, dependent: :destroy
   has_one :screen_text_template, dependent: :destroy
   has_one :wellplate_text_template, dependent: :destroy
   has_one :research_plan_text_template, dependent: :destroy

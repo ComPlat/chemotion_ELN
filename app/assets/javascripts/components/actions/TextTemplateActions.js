@@ -19,6 +19,14 @@ class TextTemplateActions {
     };
   }
 
+  fetchPredefinedTemplateByNames(names) {
+    return (dispatch) => {
+      TextTemplatesFetcher.fetchPredefinedTemplateByNames(names)
+        .then(result => dispatch(result))
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
   updateTextTemplates(elName, templates) {
     return (dispatch) => {
       TextTemplatesFetcher.updateTextTemplates(elName, templates)

@@ -18,39 +18,7 @@
 #  index_text_templates_on_user_id     (user_id)
 #
 
-class TextTemplate < ActiveRecord::Base
-  enum type: %i(
-    SampleTextTemplate
-    ReactionTextTemplate
-    WellplateTextTemplate
-    ScreenTextTemplate
-    ResearchPlanTextTemplate
-  )
-
-  belongs_to :user
-end
-
-class SampleTextTemplate < TextTemplate
-end
-
-class ReactionTextTemplate < TextTemplate
-end
-
-class ReactionDescTextTemplate < TextTemplate
-end
-
-class WellplateTextTemplate < TextTemplate
-end
-
-class ScreenTextTemplate < TextTemplate
-end
-
-class ResearchPlanTextTemplate < TextTemplate
-end
-
-class PredefinedTextTemplate < TextTemplate
-end
-
 class ReactionDescriptionTextTemplate < TextTemplate
+  # STI: this file is only here because of rails model autoloading.
+  # place all code in app/models/text_template.rb.
 end
-

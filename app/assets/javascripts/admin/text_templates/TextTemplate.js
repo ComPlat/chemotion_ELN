@@ -10,8 +10,7 @@ import {
 } from 'react-bootstrap';
 
 import ReactQuill from '../../components/react_quill/ReactQuill';
-import TextTemplatesFetcher from '../../components/fetchers/TextTemplatesFetcher';
-import ToolbarIcon from './ToolbarIcon';
+import TextTemplateIcon from './TextTemplateIcon';
 import ActionHeaderBtn from './ActionHeaderBtn';
 import ActionRowBtn from './ActionRowBtn';
 
@@ -32,7 +31,6 @@ export default class TextTemplate extends React.Component {
     this.onCellValueChanged = this.onCellValueChanged.bind(this);
     this.onChangeText = this.onChangeText.bind(this);
     this.onChangeIcon = this.onChangeIcon.bind(this);
-    // this.onSaveTemplate = this.onSaveTemplate.bind(this);
 
     this.saveTemplate = this.saveTemplate.bind(this);
     this.removeRow = this.removeRow.bind(this);
@@ -55,7 +53,6 @@ export default class TextTemplate extends React.Component {
         cellRendererFramework: ActionRowBtn,
         cellRendererParams: {
           removeRow: this.removeRow,
-          saveRow: this.saveRow
         },
         editable: false,
         filter: false,
@@ -72,7 +69,6 @@ export default class TextTemplate extends React.Component {
     const selectedNameIdx = fetchedTemplates.findIndex(t => (
       t.name === selectedRows[0].name
     ));
-
     if (selectedNameIdx < 0) return;
 
     const newSelectedTemplate = cloneDeep(fetchedTemplates[selectedNameIdx]);
@@ -121,7 +117,7 @@ export default class TextTemplate extends React.Component {
 
   onCellValueChanged(params) {
     const { oldValue, newValue } = params;
-    const { fetchedTemplates } = this.state;
+    const { fetchedTemplates, updateTemplate } = this.props;
     const selectedNameIdx = fetchedTemplates.findIndex(t => (
       t.name === oldValue
     ));
@@ -129,15 +125,7 @@ export default class TextTemplate extends React.Component {
 
     const selectedTemplate = cloneDeep(fetchedTemplates[selectedNameIdx]);
     selectedTemplate.name = newValue;
-    TextTemplatesFetcher.updateTextTemplates('predefinedTextTemplate', selectedTemplate).then((res) => {
-      if (!res) return;
-
-      this.setState({
-        fetchedTemplates: fetchedTemplates.map((t, idx) => (
-          (idx === selectedNameIdx) ? selectedTemplate : t
-        ))
-      });
-    });
+    updateTemplate(selectedTemplate);
   }
 
   onChangeText(e) {
@@ -167,68 +155,30 @@ export default class TextTemplate extends React.Component {
     const quill = this.reactQuillRef.current.getEditor();
     const delta = quill.getContents();
 
-    const { selectedTemplateName, fetchedTemplates } = this.state;
-    const selectedNameIdx = fetchedTemplates.findIndex(t => (
-      t.name === selectedTemplateName
-    ));
-    if (selectedNameIdx < 0) return;
+    // Quill automatically append a trailing newline, we don't want that
+    // Remove it !!!
+    const deltaLength = delta.length();
+    const removeTrailingNewline = new Delta().retain(deltaLength - 1).delete(1);
+    const content = delta.compose(removeTrailingNewline);
 
-    const selectedTemplate = cloneDeep(fetchedTemplates[selectedNameIdx]);
-    selectedTemplate.data.ops = delta.ops;
-    TextTemplatesFetcher.updateTextTemplates('predefinedTextTemplate', selectedTemplate).then((res) => {
-      if (!res) return;
-
-      this.setState({
-        fetchedTemplates: fetchedTemplates.map((t, idx) => (
-          (idx === selectedNameIdx) ? selectedTemplate : t
-        ))
-      });
-    });
+    const selectedTemplate = cloneDeep(this.state.selectedTemplate);
+    selectedTemplate.data.ops = content.ops;
+    this.props.updateTemplate(selectedTemplate);
   }
 
   removeRow(name) {
     const { removeTemplate } = this.props;
-    console.log(name);
-    // TextTemplatesFetcher.deletePredefinedTemplateByName(name).then((res) => {
-    //   if (!res) return;
-
-    //   const { fetchedTemplates, predefinedTemplateNames } = this.props;
-    //   this.setState({
-    //     fetchedTemplates: fetchedTemplates.filter(t => t.name !== name),
-    //     predefinedTemplateNames: predefinedTemplateNames.filter(t => (
-    //       t.name !== name
-    //     ))
-    //   });
-    // });
-  }
-
-  saveRow(name) {
+    removeTemplate(name);
   }
 
   addRow() {
-    const { predefinedTemplateNames, fetchedTemplates } = this.state;
-
-    this.setState({
-      predefinedTemplateNames: [{ name: '' }, ...predefinedTemplateNames],
-      fetchedTemplates: [
-        { name: '', data: {} },
-        ...fetchedTemplates
-      ]
-    }, () => {
-      if (!this.gridApi) return;
-      this.gridApi.startEditingCell({ rowIndex: 0, colKey: 'name' });
-    });
+    const { addTemplate } = this.props;
+    addTemplate(this.gridApi);
   }
 
   render() {
     const { predefinedTemplateNames } = this.props;
     const { selectedTemplate, text, icon } = this.state;
-
-    let quillDelta;
-    if (selectedTemplate) {
-      const { ops } = selectedTemplate.data;
-      quillDelta = new Delta({ ops });
-    }
 
     return (
       <Panel style={{ height: 'calc(100vh - 150px)' }}>
@@ -255,7 +205,7 @@ export default class TextTemplate extends React.Component {
                   Preview
                 </ControlLabel>
                 &nbsp;
-                <ToolbarIcon template={selectedTemplate} />
+                <TextTemplateIcon template={selectedTemplate} />
               </div>
               <div style={{ margin: '10px' }}>
                 <Form inline>
@@ -275,7 +225,7 @@ export default class TextTemplate extends React.Component {
                   theme="snow"
                   style={{ height: '120px' }}
                   ref={this.reactQuillRef}
-                  value={quillDelta}
+                  value={(selectedTemplate || {}).data}
                 />
               </div>
               &nbsp;&nbsp;
@@ -297,6 +247,9 @@ TextTemplate.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   fetchedTemplates: PropTypes.arrayOf(PropTypes.object),
   fetchTemplate: PropTypes.func.isRequired,
+  addTemplate: PropTypes.func.isRequired,
+  updateTemplate: PropTypes.func.isRequired,
+  removeTemplate: PropTypes.func.isRequired,
 };
 
 TextTemplate.defaultProps = {
