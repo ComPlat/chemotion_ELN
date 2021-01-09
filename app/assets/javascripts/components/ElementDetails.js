@@ -225,7 +225,7 @@ export default class ElementDetails extends Component {
 
     const tab = tabInfoHash[el.type] || {};
     const title = tab.title || el.title();
-    iconElement = tab.iconEl;
+    if (tab.iconEl) { iconElement = tab.iconEl; }
     const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle || ''}>{iconElement}</Label>);
     return (<div>{icon} &nbsp; {title} </div>);
   }
