@@ -1,7 +1,11 @@
+#module API
+require 'grape-entity'
+require 'grape-swagger'
+
 class API < Grape::API
-  prefix 'api'
-  version 'v1'
   format :json
+  prefix :api
+  version 'v1'
   formatter :json, Grape::Formatter::ActiveModelSerializers
 
   # TODO needs to be tested,
@@ -126,4 +130,9 @@ class API < Grape::API
   mount Chemotion::OlsTermsAPI
   mount Chemotion::PredictionAPI
   mount Chemotion::ComputeTaskAPI
+   
+  add_swagger_documentation(info: {
+    "title": "Chemotion ELN",
+    "version": "1.0"
+  }) if Rails.env.development?
 end
