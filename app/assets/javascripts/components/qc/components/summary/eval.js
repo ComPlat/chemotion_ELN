@@ -28,6 +28,8 @@ const isDisabled = ({ dav, qck, conclusionOwn }) => {
 
 const isIncompDf = ({ dav, qck }) => qck && dav === undefined; // no dav, yes qck
 
+const isDavGood = ({ dav }) => !!dav;
+
 const isQckGood = ({ qck }) => qck.ansQck;
 
 const isQcpGood = ({ conclusionOwn }) => conclusionOwn;
@@ -36,73 +38,53 @@ const isOnlyPrc = ({ dav, conclusionOwn }) => dav !== undefined && conclusionOwn
 const isMorePrc = ({ dav, conclusionOwn }) => dav !== undefined && conclusionOwn !== undefined;
 
 const evalScoreStd1 = (ansHnmr, ansCnmr, ansMs, ansIr) => {
-  // Disabled = no dav, no qck, no conclusionOwn // one column black
-  const nonZeroDisabled = isDisabled(ansHnmr)
-    || isDisabled(ansCnmr) || isDisabled(ansMs);
-  if (nonZeroDisabled) return 'nonZeroDisabled';
-  // IncompDf = no dav, yes qck // only qck in one column
-  const nonZeroIncompDf = isIncompDf(ansHnmr)
-    || isIncompDf(ansCnmr) || isIncompDf(ansMs);
-  if (nonZeroIncompDf && isDisabled(ansIr)) {
-    if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs)) return -2;
-    return -4;
-  } else if (nonZeroIncompDf && ansIr.qck.ansQck === false) {
-    if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs)) return -1;
-    return -3;
-  }
-  // each column has qck & dav
-  if (!nonZeroDisabled && !nonZeroIncompDf) {
-    // 1H,13C,MS are good
-    if (isQcpGood(ansHnmr) && isQcpGood(ansCnmr) && isQcpGood(ansMs)
-        && isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs)
-    ) {
-      if (isQcpGood(ansIr)) return 10;
-      if (isOnlyPrc(ansIr)) return 8;
-      return 7;
-    }
-    // ONE only processed
-    if (isMorePrc(ansHnmr) && isMorePrc(ansCnmr) && isOnlyPrc(ansMs)) {
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansHnmr) && isQcpGood(ansCnmr) && isQcpGood(ansIr)) return 9; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansHnmr) && isQcpGood(ansCnmr)) return 8; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansCnmr) && isQcpGood(ansIr)) return 7; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansCnmr)) return 6; // eslint-disable-line
-      return 0;
-    }
-    if (isOnlyPrc(ansHnmr) && isMorePrc(ansCnmr) && isMorePrc(ansMs)) {
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansCnmr) && isQcpGood(ansMs) && isQcpGood(ansIr)) return 7; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansCnmr) && isQcpGood(ansMs)) return 6; // eslint-disable-line
-      return 0;
-    }
-    if (isMorePrc(ansHnmr) && isOnlyPrc(ansCnmr) && isMorePrc(ansMs)) {
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansHnmr) && isQcpGood(ansMs) && isQcpGood(ansIr)) return 7; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansHnmr) && isQcpGood(ansMs)) return 6; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansMs) && isQcpGood(ansIr)) return 5; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansMs)) return 4; // eslint-disable-line
-      return 0;
-    }
-    // TWO only processed
-    if (isOnlyPrc(ansHnmr) && isOnlyPrc(ansCnmr) && isMorePrc(ansMs)) {
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansMs) && isQcpGood(ansIr)) return 3; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansMs)) return 2; // eslint-disable-line
-      return 0;
-    }
-    if (isOnlyPrc(ansHnmr) && isMorePrc(ansCnmr && isOnlyPrc(ansMs))) {
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansCnmr) && isQcpGood(ansIr)) return 3; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansCnmr)) return 2; // eslint-disable-line
-      return 0;
-    }
-    if (isMorePrc(ansHnmr) && isOnlyPrc(ansCnmr) && isOnlyPrc(ansMs)) {
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansHnmr) && isQcpGood(ansIr)) return 3; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansHnmr)) return 2; // eslint-disable-line
-      return 0;
-    }
-    // THREE only processed
-    if (isOnlyPrc(ansHnmr) && isOnlyPrc(ansCnmr) && isOnlyPrc(ansMs)) {
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs) && isQcpGood(ansIr)) return 3; // eslint-disable-line
-      if (isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs)) return 2; // eslint-disable-line
-      return 0;
-    }
-  }
+  const isOneDavFail = !isDavGood(ansHnmr) || !isDavGood(ansCnmr) || !isDavGood(ansMs);
+  const isAllQckGood = isQckGood(ansHnmr) && isQckGood(ansCnmr) && isQckGood(ansMs);
+  const isQcpGoodBothHnmrCnmr = isQcpGood(ansHnmr) && isQcpGood(ansCnmr);
+  const isQcpGoodBothMsIr = isQcpGood(ansMs) && isQcpGood(ansIr);
+  const isQcpGoodHnmrOrCnmr = isQcpGood(ansHnmr) || isQcpGood(ansCnmr);
+  const isQcpGoodMsOrIr = isQcpGood(ansMs) || isQcpGood(ansIr);
+
+  if (isOneDavFail) return 'nonZeroDisabled';
+  if (!isDavGood(ansIr)
+    && isAllQckGood
+  ) return -2;
+  if (!isDavGood(ansIr)) return -4;
+
+  if (isAllQckGood
+    && isQcpGoodBothHnmrCnmr && isQcpGoodBothMsIr
+  ) return 10;
+
+  if (isAllQckGood
+    && isQcpGoodBothHnmrCnmr && isQcpGoodMsOrIr
+  ) return 9;
+
+  if (isAllQckGood
+    && isQcpGoodBothHnmrCnmr
+  ) return 8;
+
+  if (isAllQckGood
+    && isQcpGoodHnmrOrCnmr && isQcpGoodBothMsIr
+  ) return 7;
+
+  if (isAllQckGood
+    && isQcpGoodHnmrOrCnmr && isQcpGoodMsOrIr
+  ) return 6;
+
+  if (isAllQckGood
+    && isQcpGoodHnmrOrCnmr
+  ) return 5;
+
+  if (isAllQckGood
+    && isQcpGoodBothMsIr
+  ) return 4;
+
+  if (isAllQckGood
+    && isQcpGoodMsOrIr
+  ) return 3;
+
+  if (isAllQckGood) return 2;
+
   return 0;
 };
 

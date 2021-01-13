@@ -346,8 +346,8 @@ module AttachmentJcampProcess
 
   def auto_infer_n_clear_json(spc_type, is_regen)
     case spc_type
-    when '13C'
-      infer_spectrum({ layout: '13C' })
+    # when '13C'
+    #   infer_spectrum({ layout: '13C' })
     when 'INFRARED'
       infer_spectrum({ layout: 'IR' })
     when 'MS'
