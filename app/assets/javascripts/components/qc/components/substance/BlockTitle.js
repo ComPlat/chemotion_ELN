@@ -3,9 +3,9 @@ import { Tooltip, OverlayTrigger } from 'react-bootstrap';
 
 const infoTp = (
   <Tooltip id="tp-qc-info" className="card-qc">
-    <p>ChemSpectra (0.4.17)</p>
-    <p>NMRShiftDB (2.0.1)</p>
-    <p>ChemSpectraDeepIr (0.4.17)</p>
+    <p>ChemSpectra (0.10)</p>
+    <p>NMRShiftDB (2.0)</p>
+    <p>ChemSpectraDeepIr (0.10)</p>
   </Tooltip>
 );
 

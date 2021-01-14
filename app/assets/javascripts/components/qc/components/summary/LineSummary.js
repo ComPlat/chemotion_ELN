@@ -35,20 +35,21 @@ const LineTitle = () => (
   </div>
 );
 
-const statusLabel = (status) => {
-  if (status === undefined) return <BadgeNotAvailable />;
-  return status ? <BadgeSuccess /> : <BadgeFail />;
-};
+const statusLabel = status => status ? <BadgeSuccess /> : <BadgeFail />;
+// (status) => {
+//   if (status === undefined) return <BadgeNotAvailable />;
+//   return status ? <BadgeSuccess /> : <BadgeFail />;
+// };
 
 const LineQcp = ({
   ansHnmr, ansCnmr, ansMs, ansIr,
 }) => (
   <div className="card-qcsum">
     <span className="qc-title">Data Evaluation</span>
-    <span>{ statusLabel(ansHnmr.conclusionOwn) }</span>
-    <span>{ statusLabel(ansCnmr.conclusionOwn) }</span>
-    <span>{ statusLabel(ansMs.conclusionOwn) }</span>
-    <span>{ statusLabel(ansIr.conclusionOwn) }</span>
+    <span>{ statusLabel(ansHnmr.qcp.ansMac && ansHnmr.qcp.ansOwn) }</span>
+    <span>{ statusLabel(ansCnmr.qcp.ansMac && ansCnmr.qcp.ansOwn) }</span>
+    <span>{ statusLabel(ansMs.qcp.matchMass) }</span>
+    <span>{ statusLabel(ansIr.qcp.ansMac80 && ansIr.qcp.ansOwn80 && ansIr.qcp.ansMacF90 && ansIr.qcp.ansOwnF90) }</span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>

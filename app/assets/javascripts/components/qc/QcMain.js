@@ -64,7 +64,8 @@ class QcMain extends Component {
       .map(i => (i.sId === sample.id ? i : null))
       .filter(r => r != null)[0];
     if (!infer) return null;
-    const { curation = 2 } = profile;
+    let curation = profile ? profile.curation : 2;
+    if (curation === null) { curation = 2 }
     return (
       <QcContent
         sample={sample}

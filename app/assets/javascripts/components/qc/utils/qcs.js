@@ -37,7 +37,7 @@ const buildQcs = (sample, infer) => {
     const { ops } = content;
     const inferO = extractInfer(ai, files);
     const { type } = inferO;
-    if (type === 'ms' || kind === 'Mass') {
+    if (type === 'ms' || (kind && kind.includes('(MS)'))) {
       msQc = Object.assign({}, msQc, inferO, { ops, exist: true, type: 'Mass' });
     } else if (type === 'nmr;13C;1d' || (kind && kind.includes('13C NMR'))) {
       cnmrQc = Object.assign({}, cnmrQc, inferO, { ops, exist: true, type: '13C NMR' });
