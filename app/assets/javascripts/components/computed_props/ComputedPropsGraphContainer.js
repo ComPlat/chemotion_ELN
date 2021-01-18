@@ -206,6 +206,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
 
     const data = graphData.filter(dat => dat.props).map(dat => ({
       name: dat.name,
+      svgPath: dat.svgPath,
       x: _.get(dat, `props.${xAxisType}`, dat.props.lumo),
       y: _.get(dat, `props.${yAxisType}`, dat.props.mean_abs_potential),
     }));

@@ -4,9 +4,15 @@ import {
   XYPlot, HorizontalGridLines, VerticalGridLines,
   XAxis, YAxis, Hint, DiscreteColorLegend, MarkSeries,
 } from 'react-vis';
+import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
 import Highlight from './Highlight';
 import CustomAxisLabel from './CustomAxisLabel';
+
+const previewStyle = {
+  background: 'white',
+  width: '200px'
+};
 
 export default class ComputedPropsGraph extends React.Component {
   constructor(props) {
@@ -14,6 +20,7 @@ export default class ComputedPropsGraph extends React.Component {
 
     this.state = {
       hintValue: null,
+      svgPath: null,
       lastDrawLocation: null,
     };
 
@@ -22,11 +29,12 @@ export default class ComputedPropsGraph extends React.Component {
   }
 
   setHint(value) {
-    this.setState({ hintValue: value });
+    const { svgPath, ...hintValue } = value;
+    this.setState({ hintValue, svgPath });
   }
 
   removeHint() {
-    this.setState({ hintValue: null });
+    this.setState({ hintValue: null, svgPath: null });
   }
 
   render() {
@@ -38,7 +46,7 @@ export default class ComputedPropsGraph extends React.Component {
 
     const refData = referencePoints.filter(ref => ref.x && ref.y);
 
-    const { hintValue, lastDrawLocation } = this.state;
+    const { hintValue, svgPath, lastDrawLocation } = this.state;
 
     const xAxisLabel = xAxis.label || 'LUMO';
     const yAxisLabel = yAxis.label || 'ESP';
@@ -48,11 +56,6 @@ export default class ComputedPropsGraph extends React.Component {
     if (lastDrawLocation) {
       xDomain = [lastDrawLocation.left, lastDrawLocation.right];
       yDomain = [lastDrawLocation.bottom, lastDrawLocation.top];
-    }
-
-    let hintTooltip = null;
-    if (hintValue) {
-      hintTooltip = <Hint value={hintValue} />;
     }
 
     const dataInfo = {
@@ -95,7 +98,32 @@ export default class ComputedPropsGraph extends React.Component {
               onValueMouseOut={this.removeHint}
               color={refInfo.color}
             />
-            {hintTooltip}
+            {hintValue && (
+              <Hint value={hintValue}>
+                <div className="rv-hint__content" style={previewStyle}>
+                  <div>
+                    <SvgFileZoomPan
+                      svgPath={svgPath}
+                      duration={300}
+                      resize
+                    />
+                  </div>
+                  <div className="rv-hint__content">
+                    {Object.keys(hintValue).map(key => (
+                      <div key={`rv-hint${key}`}>
+                        <span className="rv-hint__title">
+                          {key}
+                        </span>
+                        {': '}
+                        <span className="rv-hint__value">
+                          {hintValue[key]}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Hint>
+            )}
             <CustomAxisLabel title={`${xAxisLabel} (${xAxis.unit})`} xAxis />
             <CustomAxisLabel title={`${yAxisLabel} (${yAxis.unit})`} />
           </XYPlot>

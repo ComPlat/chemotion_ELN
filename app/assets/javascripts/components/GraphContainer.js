@@ -57,7 +57,11 @@ export default class GraphContainer extends React.Component {
       const cprops = s.molecule_computed_props.sort((a, b) => (
         a.updated_at - b.updated_at
       ));
-      const cprop = { name: s.short_label, props: cprops[cprops.length - 1] };
+      const cprop = {
+        name: s.short_label,
+        svgPath: `/images/samples/${s.sample_svg_file}`,
+        props: cprops[cprops.length - 1]
+      };
       selectedComputedProps.push(cprop);
     });
 
