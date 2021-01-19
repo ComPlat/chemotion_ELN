@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
-import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
+import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import InboxActions from '../actions/InboxActions';
 import DragDropItemTypes from '../DragDropItemTypes';
 import Utils from '../utils/Functions';
@@ -17,22 +17,16 @@ const collectSource = (connect, monitor) => ({
   isDragging: monitor.isDragging()
 });
 
+const handleAttachmentDownload = attachment => Utils.downloadFile({
+  contents: `/api/v1/attachments/${attachment && attachment.id}`, name: attachment && attachment.filename
+});
+
 class AttachmentContainer extends Component {
   constructor(props) {
     super(props);
     this.state = {
       deletingTooltip: false,
-    }
-  }
-
-  deleteAttachment(attachment){
-    if(confirm('Are you sure?')) {
-      InboxActions.deleteAttachment(attachment)
-    }
-  }
-
-  handleAttachmentDownload(attachment) {
-    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+    };
   }
 
   toggleTooltip() {
@@ -41,13 +35,18 @@ class AttachmentContainer extends Component {
 
   render() {
     const { connectDragSource, sourceType, attachment } = this.props;
-    if(sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
+    if (sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
       return null;
     }
+
     const textStyle = {
-      display: "block", whiteSpace: "nowrap", overflow: "hidden",
-      textOverflow: "ellipsis", maxWidth: "100%", cursor: 'move'
-    }
+      display: 'block',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '100%',
+      cursor: 'move'
+    };
 
     const trash = (
       <span>
@@ -71,25 +70,48 @@ class AttachmentContainer extends Component {
         ) : null}
       </span>
     );
+
+    const filenameTooltip = (
+      <Tooltip
+        id="filename_tooltip"
+        className="tooltip"
+        style={{ maxWidth: '100%' }}
+      >
+        <p>
+          {attachment.filename}
+        </p>
+      </Tooltip>);
+
     return connectDragSource(
       <div style={textStyle}>
         &nbsp;&nbsp;
         {trash}
         &nbsp;&nbsp;
-        <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: "pointer"}}></i>&nbsp;&nbsp;&nbsp;
-        <span  className='text-info fa fa-arrows'>
-          &nbsp; {attachment.filename}
-        </span>
+        <i className="fa fa-download" onClick={() => handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />
+        &nbsp;&nbsp;&nbsp;
+        <OverlayTrigger placement="top" overlay={filenameTooltip} >
+          <span
+            className="text-info"
+            style={{ maxWidth: '100%' }}
+          >
+            {attachment.filename}
+          </span>
+        </OverlayTrigger>
       </div>,
       { dropEffect: 'move' }
     );
   }
 }
 
-export default DragSource(props => props.sourceType, dataSource,
-  collectSource)(AttachmentContainer);
+export default DragSource(
+  props => props.sourceType,
+  dataSource,
+  collectSource
+)(AttachmentContainer);
 
 AttachmentContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired
+  isDragging: PropTypes.bool.isRequired,
+  attachment: PropTypes.object,
+  sourceType: PropTypes.string
 };
