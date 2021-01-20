@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import InboxActions from '../actions/InboxActions';
 import DragDropItemTypes from '../DragDropItemTypes';
 import Utils from '../utils/Functions';
+
+import MoveToAnalysisButton from './MoveToAnalysisButton';
 
 const dataSource = {
   beginDrag(props) {
@@ -29,12 +32,13 @@ class AttachmentContainer extends Component {
     };
   }
 
+
   toggleTooltip() {
     this.setState(prevState => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
   }
 
   render() {
-    const { connectDragSource, sourceType, attachment } = this.props;
+    const { connectDragSource, sourceType, attachment, largerInbox } = this.props;
     if (sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
       return null;
     }
@@ -43,10 +47,15 @@ class AttachmentContainer extends Component {
       display: 'block',
       whiteSpace: 'nowrap',
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
+      textOverflow: 'clip',
       maxWidth: '100%',
       cursor: 'move'
     };
+
+    if (largerInbox === true) {
+      textStyle.marginTop = '6px';
+      textStyle.marginBottom = '6px';
+    }
 
     const trash = (
       <span>
@@ -59,12 +68,16 @@ class AttachmentContainer extends Component {
                 bsStyle="danger"
                 bsSize="xsmall"
                 onClick={() => InboxActions.deleteAttachment(attachment)}
-              >Yes</Button>
+              >
+                Yes
+              </Button>
               <Button
                 bsStyle="warning"
                 bsSize="xsmall"
                 onClick={() => this.toggleTooltip()}
-              >No</Button>
+              >
+                No
+              </Button>
             </ButtonGroup>
           </Tooltip>
         ) : null}
@@ -84,19 +97,26 @@ class AttachmentContainer extends Component {
 
     return connectDragSource(
       <div style={textStyle}>
-        &nbsp;&nbsp;
-        {trash}
-        &nbsp;&nbsp;
+        &nbsp;&nbsp;{trash}&nbsp;
         <i className="fa fa-download" onClick={() => handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />
-        &nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;
+        {largerInbox ? (
+          <MoveToAnalysisButton
+            attachmentId={attachment.id}
+            largerInbox={largerInbox}
+          />
+          ) : null }
         <OverlayTrigger placement="top" overlay={filenameTooltip} >
           <span
-            className="text-info"
+            className="text-info fa fa-arrows"
             style={{ maxWidth: '100%' }}
           >
-            {attachment.filename}
+            &nbsp; {attachment.filename}
           </span>
         </OverlayTrigger>
+        <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
+          {moment(attachment.created_at).format('DD.MM.YYYY HH:mm') }
+        </span>
       </div>,
       { dropEffect: 'move' }
     );
@@ -113,5 +133,10 @@ AttachmentContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
   isDragging: PropTypes.bool.isRequired,
   attachment: PropTypes.object,
-  sourceType: PropTypes.string
+  sourceType: PropTypes.string,
+  largerInbox: PropTypes.bool
+};
+
+AttachmentContainer.defaultProps = {
+  largerInbox: false
 };
