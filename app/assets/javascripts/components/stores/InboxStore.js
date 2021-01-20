@@ -1,12 +1,11 @@
+import _ from 'lodash';
 import alt from '../alt';
 import InboxActions from '../actions/InboxActions';
 import ElementActions from '../actions/ElementActions';
 import DetailActions from '../actions/DetailActions';
 import ElementStore from './ElementStore';
-import _ from 'lodash'
 
 class InboxStore {
-
   constructor() {
     this.state = {
       inbox: {},
@@ -41,7 +40,7 @@ class InboxStore {
       handleClose: DetailActions.close,
       handleConfirmDelete: DetailActions.confirmDelete,
       handleDeleteElement: ElementActions.deleteElementsByUIState
-    })
+    });
   }
 
   handleFetchInbox(result) {
@@ -55,31 +54,31 @@ class InboxStore {
   }
 
   handleRemoveAttachmentFromList(attachment) {
-    let inbox = this.state.inbox
+    const { inbox } = this.state;
 
-    inbox.children.forEach(device_box => {
-      device_box.children.forEach(dataset => {
-        var index = dataset.attachments.indexOf(attachment)
-        if (index != -1){
-            dataset.attachments.splice(index, 1)
-            this.state.cache.push(attachment)
+    inbox.children.forEach((deviceBox) => {
+      deviceBox.children.forEach((dataset) => {
+        const index = dataset.attachments.indexOf(attachment);
+        if (index !== -1) {
+          dataset.attachments.splice(index, 1);
+          this.state.cache.push(attachment);
         }
-      })
-    })
-    this.setState(inbox)
+      });
+    });
+    this.setState(inbox);
     this.countAttachments();
   }
 
   handleRemoveUnlinkedAttachmentFromList(attachment) {
-    let inbox = this.state.inbox
+    const { inbox } = this.state;
 
-    var index = inbox.unlinked_attachments.indexOf(attachment)
-    if (index != -1){
-      inbox.unlinked_attachments.splice(index, 1)
-      this.state.cache.push(attachment)
+    const index = inbox.unlinked_attachments.indexOf(attachment);
+    if (index !== -1) {
+      inbox.unlinked_attachments.splice(index, 1);
+      this.state.cache.push(attachment);
     }
 
-    this.setState(inbox)
+    this.setState(inbox);
     this.countAttachments();
   }
 
