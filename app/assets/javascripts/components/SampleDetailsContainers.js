@@ -97,7 +97,7 @@ export default class SampleDetailsContainers extends Component {
   buildEmptyAnalyContainer() {
     const newContainer = Container.buildEmpty();
     newContainer.container_type = "analysis";
-    newContainer.extended_metadata.content = { "ops": [{ "insert": "" }] };
+    newContainer.extended_metadata.content = { ops: [{ insert: '\n' }] };
     return newContainer;
   }
 
