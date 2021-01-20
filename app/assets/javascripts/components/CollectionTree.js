@@ -327,6 +327,12 @@ export default class CollectionTree extends React.Component {
               this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
             }
             &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshInbox()} />
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullInbox">Fullscreen Inbox</Tooltip>}>
+              <Button style={{ position: 'absolute', right: 0 }} bsSize="xsmall" onClick={() => this.handleUploadButton()}>
+                <i className="fa fa-expand" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+
           </div>
 
         </div>
