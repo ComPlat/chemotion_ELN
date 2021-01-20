@@ -66,7 +66,8 @@ export default class GenericElDetails extends Component {
           newProps[key].fields[idx].value = genericEl.properties[key].fields[curIdx].value;
           if (newProps[key].fields[idx].type === 'system-defined') {
             const units = genUnits(newProps[key].fields[idx].option_layers);
-            newProps[key].fields[idx].value_system = units.find(u => u.key === genericEl.properties[key].fields[curIdx].value_system) || units[0].key;
+            const vs = units.find(u => u.key === genericEl.properties[key].fields[curIdx].value_system);
+            newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
           }
         }
       });
