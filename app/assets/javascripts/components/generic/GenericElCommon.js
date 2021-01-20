@@ -263,37 +263,35 @@ GenPropertiesLayerSearchCriteria.defaultProps = {
 };
 
 const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout = []) => {
-  const filterLayers = filter(layers, l => l.condition == null || l.condition.trim().length === 0) || [];
-  const sortedLayers = sortBy(filterLayers, l => l.position) || [];
+  const sortedLayers = sortBy(layers, l => l.position) || [];
   sortedLayers.forEach((layer) => {
-    const ig = (
-      <GenPropertiesLayer
-        key={layer.key}
-        layer={layer}
-        onChange={funcChange}
-        selectOptions={options}
-        onClick={funcClick}
-      />
-    );
-    layout.push(ig);
-  });
-
-  const filterConLayers = filter(layers, l => l.condition && l.condition.trim().length > 0) || [];
-  const sortedConLayers = sortBy(filterConLayers, l => l.position) || [];
-  sortedConLayers.forEach((layerProps) => {
-    const arr = layerProps.condition.split(',');
-    if (arr.length >= 3) {
-      const specific = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
-      if (specific === arr[2] && arr[2].trim()) {
-        const igs = (
-          <GenPropertiesLayer
-            layer={layerProps}
-            onChange={funcChange}
-            selectOptions={options}
-            onClick={funcClick}
-          />
-        );
-        layout.push(igs);
+    console.log(layer.condition);
+    if (layer.condition == null || layer.condition.trim().length === 0) {
+      const ig = (
+        <GenPropertiesLayer
+          key={layer.key}
+          layer={layer}
+          onChange={funcChange}
+          selectOptions={options}
+          onClick={funcClick}
+        />
+      );
+      layout.push(ig);
+    } else if (layer.condition && layer.condition.trim().length > 0) {
+      const arr = layer.condition.split(',');
+      if (arr.length >= 3) {
+        const specific = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
+        if (specific === arr[2] && arr[2].trim()) {
+          const igs = (
+            <GenPropertiesLayer
+              layer={layer}
+              onChange={funcChange}
+              selectOptions={options}
+              onClick={funcClick}
+            />
+          );
+          layout.push(igs);
+        }
       }
     }
   });

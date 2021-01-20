@@ -10,7 +10,7 @@ import UIActions from '../actions/UIActions';
 import UIStore from '../stores/UIStore';
 import ConfirmClose from '../common/ConfirmClose';
 import GenericElDetailsContainers from './GenericElDetailsContainers';
-import { GenProperties, GenPropertiesLayer } from './GenericElCommon';
+import { GenProperties, GenPropertiesLayer, LayersLayout } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
 import CopyElementModal from '../common/CopyElementModal';
 import { notification, genUnits } from '../../admin/generic/Utils';
@@ -139,45 +139,15 @@ export default class GenericElDetails extends Component {
       genericEl.element_klass.properties_template.select_options) || {};
     const defaultName = <GenProperties label="name" value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
     options.push(defaultName);
-    const filterLayers = filter(
+
+    const layersLayout = LayersLayout(
       genericEl.properties,
-      l => l.condition == null || l.condition.trim().length === 0
-    ) || [];
-    const sortedLayers = sortBy(filterLayers, l => l.position) || [];
-    sortedLayers.forEach((layerProps) => {
-      const ig = (
-        <GenPropertiesLayer
-          layer={layerProps}
-          onChange={this.handleInputChange}
-          selectOptions={selectOptions}
-          onClick={this.handleUnitClick}
-        />
-      );
-      options.push(ig);
-    });
-    const filterConLayers = filter(
-      genericEl.properties,
-      l => l.condition && l.condition.trim().length > 0
-    ) || [];
-    const sortedConLayers = sortBy(filterConLayers, l => l.position) || [];
-    sortedConLayers.forEach((layerProps) => {
-      const arr = layerProps.condition.split(',');
-      if (arr.length >= 3) {
-        const specific = genericEl.properties[`${arr[0].trim()}`] && genericEl.properties[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && genericEl.properties[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
-        if (specific === arr[2] && arr[2].trim()) {
-          const igs = (
-            <GenPropertiesLayer
-              layer={layerProps}
-              onChange={this.handleInputChange}
-              selectOptions={selectOptions}
-              onClick={this.handleUnitClick}
-            />
-          );
-          options.push(igs);
-        }
-      }
-    });
-    return (<div style={{ margin: '15px' }}>{options}</div>);
+      selectOptions || {},
+      this.handleInputChange,
+      this.handleUnitClick,
+      options
+    );
+    return (<div style={{ margin: '15px' }}>{layersLayout}</div>);
   }
 
   propertiesTab(ind) {
