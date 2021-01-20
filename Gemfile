@@ -95,7 +95,6 @@ gem 'rack-cors', :require => 'rack/cors'
 gem 'grape-swagger-rails'
 
 gem "rdkit_chem", git: "https://github.com/CamAnNguyen/rdkit_chem"
-# gem "rdkit_chem", git: "https://github.com/megorei/rdkit_chem.git", branch: 'fix-macos-installation'
 
 gem 'api-pagination'
 

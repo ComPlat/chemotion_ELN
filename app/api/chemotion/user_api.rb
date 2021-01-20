@@ -117,7 +117,7 @@ module Chemotion
         end
       end
 
-      namespace :qrycurrentdevices do
+      namespace :queryCurrentDevices do
         desc 'fetch devices of current user'
         get do
           data = [current_user.devices + current_user.groups.map(&:devices)].flatten.uniq

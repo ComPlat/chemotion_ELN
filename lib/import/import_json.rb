@@ -93,7 +93,7 @@ class Import::ImportJson
     @collection_id = arg[:collection_id]
     @new_data = {}
     @new_attachments = {}
-    @log = { 'reactions' => {}, 'samples' => {} }
+    @log = { 'reactions' => {}, 'samples' => {}, 'research_plans' => {} }
     @force_uuid = arg[:force_uuid]
     find_collection
     find_collection_all
@@ -107,6 +107,7 @@ class Import::ImportJson
     end
     import_reactions
     import_samples
+    import_research_plans
     # File.write("log_#{Time.now.to_i}.json", JSON.pretty_generate(@log))
   end
 
@@ -165,8 +166,52 @@ class Import::ImportJson
     end
   end
 
+  def import_research_plans
+    return unless collections?
+    attribute_names = filter_attributes(ResearchPlan)
+    research_plans.each do |key, el|
+      research_plan_metadata = el['research_plan_metadata']
+      analyses = el['analyses']
+      attribs = el.slice(*attribute_names).merge(
+        created_by: user_id,
+        collections_research_plans_attributes: [
+          { collection_id: collection.id },
+          { collection_id: all_collection.id }
+        ]
+      )
+      research_plan = create_element(key, attribs, ResearchPlan, 'research_plan', [])
+      import_research_plan_metadata(research_plan, research_plan_metadata)
+      import_research_plan_analyses(research_plan, analyses)
+    end
+  end
+
+  def import_research_plan_metadata(research_plan, research_plan_metadata)
+    return unless research_plan_metadata
+
+    attribute_names = filter_attributes(ResearchPlanMetadata)
+    attributes = research_plan_metadata.slice(*attribute_names)
+
+    metadata = ResearchPlanMetadata.find_or_create_by!(research_plan_id: research_plan.id)
+    metadata.update_attributes!(attributes)
+  end
+
+  def import_research_plan_analyses(research_plan, research_plan_analyses)
+    return unless research_plan_analyses
+
+    attribute_names = filter_attributes(Container)
+
+    analyses = Container.find_by(parent_id: research_plan.container.id)
+    Container.where(parent_id: analyses.id).destroy_all
+
+    research_plan_analyses.each do |research_plan_analysis|
+      attributes = research_plan_analysis.slice(*attribute_names).merge(parent_id: analyses.id)
+
+      Container.create!(attributes)
+    end
+  end
+
   def map_data_uuids(obj)
-    %w[reactions samples].each do |method|
+    %w[reactions samples research_plans].each do |method|
       send(method).each_key do |uuid|
         obj[method][uuid] = {}
       end
@@ -291,8 +336,14 @@ class Import::ImportJson
       attributes += %w[residues_attributes elemental_compositions_attributes molecule_name_attributes]
     # when 'Reaction'
     #   attributes -= ['reaction_svg_file']
+    when 'ResearchPlan'
+    when 'ResearchPlanMetadata'
+      attributes -= %w[research_plan_id]
+    when 'Container'
+      attributes -= %w[parent_id]
+      attributes += %w[status content datasets]
     end
-    attributes
+    attributes.uniq
   end
 
   def add_to_reaction(klass, el, new_el)
@@ -316,6 +367,10 @@ class Import::ImportJson
 
   def samples
     data && data['samples'] || {}
+  end
+
+  def research_plans
+    data && data['research_plans'] || {}
   end
 
   def analyses

@@ -32,6 +32,8 @@ class ResearchPlan < ActiveRecord::Base
   has_many :attachments, as: :attachable
 
   before_destroy :delete_attachment
+  accepts_nested_attributes_for :collections_research_plans
+
 
   unless Dir.exists?(path = Rails.root.to_s + '/public/images/research_plans')
     Dir.mkdir path

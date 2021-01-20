@@ -117,7 +117,7 @@ export default class UsersFetcher {
   }
 
   static fetchCurrentDevices() {
-    const promise = fetch('/api/v1/groups/qrycurrentdevices', {
+    const promise = fetch('/api/v1/groups/queryCurrentDevices', {
       credentials: 'same-origin'
     })
       .then(response => response.json()).then(json => json).catch((errorMessage) => {
