@@ -6,7 +6,7 @@ import uuid from 'uuid';
 import { sortBy } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
-import { genUnit, genUnits } from '../../admin/generic/Utils';
+import { genUnit, genUnits, genUnitSup } from '../../admin/generic/Utils';
 
 const GenPropertiesText = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
@@ -121,7 +121,7 @@ const GenPropertiesSystemDefined = (opt) => {
         />
         <InputGroup.Button>
           <Button disabled={opt.readOnly} active onClick={opt.onClick} bsStyle="success">
-            {genUnit(opt.option_layers, opt.value_system).label || ''}
+            {genUnitSup(genUnit(opt.option_layers, opt.value_system).label) || ''}
           </Button>
         </InputGroup.Button>
       </InputGroup>

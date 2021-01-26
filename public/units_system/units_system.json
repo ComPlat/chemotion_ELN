@@ -92,6 +92,140 @@
         { "key": "mg_l", "label": "mg/L" },
         { "key": "g_l", "label": "g/L" }
       ]
+    },
+    {
+      "type": "numeric",
+      "field": "molarity",
+      "label": "Chem. concentration (Molarity)",
+      "default": "",
+      "position": 8,
+      "placeholder": "Please input molarity",
+      "units": [
+        { "key": "mol_l", "label": "mol/L (M)" },
+        { "key": "mmol_l", "label": "mmol/L (mM)" },
+        { "key": "nmol_l", "label": "nmol/L (nM)" },
+        { "key": "pmol_l", "label": "pmol/L (pM)" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "pressure",
+      "label": "Pressure",
+      "default": "",
+      "position": 9,
+      "placeholder": "Please input pressure",
+      "units": [
+        { "key": "atm", "label": "atm" },
+        { "key": "pa", "label": "Pa" },
+        { "key": "torr", "label": "Torr" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "speed",
+      "label": "Speed",
+      "default": "",
+      "position": 10,
+      "placeholder": "Please input speed",
+      "units": [
+        { "key": "cm_s", "label": "cm/s" },
+        { "key": "mm_s", "label": "mm/s" },
+        { "key": "cm_h", "label": "cm/h" },
+        { "key": "mm_h", "label": "mm/h" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "surface",
+      "label": "Surface",
+      "default": "",
+      "position": 11,
+      "placeholder": "Please input surface",
+      "units": [
+        { "key": "a_2", "label": "A<sup>2</sup>" },
+        { "key": "mm_2", "label": "mm<sup>2</sup>" },
+        { "key": "cm_2", "label": "cm<sup>2</sup>" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "chem_distances",
+      "label": "Chem. distances",
+      "default": "",
+      "position": 12,
+      "placeholder": "Please input Chem. distances",
+      "units": [
+        { "key": "angstrom", "label": "Å" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "molecular_weight",
+      "label": "Molecular weight",
+      "default": "",
+      "position": 13,
+      "placeholder": "Please input Molecular weight",
+      "units": [
+        { "key": "g_mol", "label": "g/mol" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "agitation",
+      "label": "Agitation",
+      "default": "",
+      "position": 14,
+      "placeholder": "Please input Agitation",
+      "units": [
+        { "key": "rpm", "label": "rpm" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "enzyme_activity",
+      "label": "Enzyme activity",
+      "default": "",
+      "position": 15,
+      "placeholder": "Please input Enzyme activity",
+      "units": [
+        { "key": "u_l", "label": "U/L" },
+        { "key": "u_ml", "label": "U/mL" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "turnover_number",
+      "label": "Turnover number",
+      "default": "",
+      "position": 16,
+      "placeholder": "Please input Turnover number",
+      "units": [
+        { "key": "1_s", "label": "1/s" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "reaction_rate",
+      "label": "Reaction rate",
+      "default": "",
+      "position": 17,
+      "placeholder": "Please input Reaction rate",
+      "units": [
+        { "key": "mol_lmin", "label": "mol/Lmin" },
+        { "key": "mol_lsec", "label": "mol/Ls" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "amount_enzyme",
+      "label": "Amount enzyme as nmol/min",
+      "default": "",
+      "position": 18,
+      "placeholder": "Please input amount enzyme as nmol/min",
+      "units": [
+        { "key": "u", "label": "U" },
+        { "key": "mu", "label": "mU" }
+      ]
     }
   ]
 }
