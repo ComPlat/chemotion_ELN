@@ -150,7 +150,7 @@ export default class GenericElDetails extends Component {
     const selectOptions = (genericEl && genericEl.element_klass &&
       genericEl.element_klass.properties_template &&
       genericEl.element_klass.properties_template.select_options) || {};
-    const defaultName = <GenProperties label="name" value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
+    const defaultName = <GenProperties label="name" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
     options.push(defaultName);
 
     const layersLayout = LayersLayout(

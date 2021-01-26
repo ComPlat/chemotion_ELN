@@ -48,6 +48,13 @@ const SegmentTabs = (element, onChange, init = 0) => {
   let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
   segmentKlasses = segmentKlasses.filter(s => s.element_klass.name === element.type);
   segmentKlasses.forEach((klass) => {
+    console.log(klass);
+    const ttl = (
+      <Tooltip id="tooltip">
+        {klass.desc}
+      </Tooltip>
+    );
+
     const idx = findIndex(element.segments, o => o.segment_klass_id === klass.id);
     let segment = {};
     if (idx > -1) {
@@ -55,8 +62,9 @@ const SegmentTabs = (element, onChange, init = 0) => {
     } else {
       segment = Segment.buildEmpty(cloneDeep(klass));
     }
+    const title = (<OverlayTrigger placement="bottom" delayShow={1000} overlay={ttl}><div>{klass.label}</div></OverlayTrigger>);
     result.push((() => (
-      <Tab eventKey={init + klass.id} key={init + klass.id} title={klass.label} >
+      <Tab eventKey={init + klass.id} key={init + klass.id} title={title} >
         <SegmentDetails
           segment={segment}
           klass={klass}

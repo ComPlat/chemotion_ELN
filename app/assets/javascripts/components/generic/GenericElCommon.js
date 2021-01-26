@@ -11,9 +11,13 @@ import { genUnit, genUnits } from '../../admin/generic/Utils';
 const GenPropertiesText = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
+  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
+
   return (
     <FormGroup className="text_generic_properties">
-      <ControlLabel>{opt.label}</ControlLabel>
+      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+        <ControlLabel>{opt.label}</ControlLabel>
+      </OverlayTrigger>
       <FormControl
         type="text"
         value={opt.value}
@@ -50,9 +54,13 @@ const GenPropertiesSelect = (opt) => {
   const options = opt.options.map(op => ({ value: op.key, name: op.key, label: op.label }));
   let className = opt.isEditable ? 'select_generic_properties_editable' : 'select_generic_properties_readonly';
   className = opt.isRequired && opt.isEditable ? 'select_generic_properties_required' : className;
+  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
+
   return (
     <FormGroup>
-      <ControlLabel>{opt.label}</ControlLabel>
+      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+        <ControlLabel>{opt.label}</ControlLabel>
+      </OverlayTrigger>
       <Select
         name={opt.field}
         multi={false}
@@ -69,9 +77,13 @@ const GenPropertiesSelect = (opt) => {
 const GenPropertiesNumber = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
+  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
+
   return (
     <FormGroup>
-      <ControlLabel>{opt.label}</ControlLabel>
+      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+        <ControlLabel>{opt.label}</ControlLabel>
+      </OverlayTrigger>
       <FormControl
         type="number"
         value={opt.value}
@@ -89,9 +101,13 @@ const GenPropertiesNumber = (opt) => {
 const GenPropertiesSystemDefined = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
+  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
+
   return (
     <FormGroup>
-      <ControlLabel>{opt.label}</ControlLabel>
+      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+        <ControlLabel>{opt.label}</ControlLabel>
+      </OverlayTrigger>
       <InputGroup>
         <FormControl
           type="number"
@@ -115,9 +131,13 @@ const GenPropertiesSystemDefined = (opt) => {
 
 const GenPropertiesDrop = (opt) => {
   const className = opt.isRequired ? 'drop_generic_properties field_required' : 'drop_generic_properties';
+  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
+
   return (
     <FormGroup>
-      <ControlLabel>{opt.label}</ControlLabel>
+      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+        <ControlLabel>{opt.label}</ControlLabel>
+      </OverlayTrigger>
       <FormControl.Static style={{ paddingBottom: '0px' }}>
         <div className={className}>
           <GenericElDropTarget
@@ -186,6 +206,7 @@ class GenPropertiesLayer extends Component {
           <GenProperties
             label={f.label}
             value={f.value || ''}
+            description={f.description || ''}
             type={f.type || 'text'}
             field={f.field || 'field'}
             options={(selectOptions && selectOptions[f.option_layers]) || []}

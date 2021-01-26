@@ -131,6 +131,17 @@ class ElementField extends Component {
                     />
                   </Col>
                 </FormGroup>
+                <FormGroup controlId={`frmCtrlFieldInfo_${uuid.v4()}`}>
+                  <Col componentClass={ControlLabel} sm={3}>Hover Information22</Col>
+                  <Col sm={9}>
+                    <FormControl
+                      type="text"
+                      name="f_description"
+                      defaultValue={f.description}
+                      onChange={event => this.handleChange(event, f.description, f.field, this.props.layerKey, 'description', 'text')}
+                    />
+                  </Col>
+                </FormGroup>
                 <FormGroup controlId={`frmCtrlFieldType_${uuid.v4()}`}>
                   <Col componentClass={ControlLabel} sm={3}>Type</Col>
                   <Col sm={9}>

@@ -375,6 +375,9 @@ export default class GenericElementAdmin extends React.Component {
         case 'label':
           fobj.label = value;
           break;
+        case 'description':
+          fobj.description = value;
+          break;
         case 'type':
           fobj.type = value;
           break;
