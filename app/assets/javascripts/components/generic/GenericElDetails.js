@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Button, ButtonToolbar, ListGroupItem, Tabs, Tab, ListGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { findIndex, sortBy, filter } from 'lodash';
+import { findIndex } from 'lodash';
 import DetailActions from '../actions/DetailActions';
 import LoadingActions from '../actions/LoadingActions';
 import ElementActions from '../actions/ElementActions';
@@ -10,7 +10,7 @@ import UIActions from '../actions/UIActions';
 import UIStore from '../stores/UIStore';
 import ConfirmClose from '../common/ConfirmClose';
 import GenericElDetailsContainers from './GenericElDetailsContainers';
-import { GenProperties, GenPropertiesLayer, LayersLayout } from './GenericElCommon';
+import { GenProperties, LayersLayout } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
 import CopyElementModal from '../common/CopyElementModal';
 import { notification, genUnits } from '../../admin/generic/Utils';
@@ -63,10 +63,21 @@ export default class GenericElDetails extends Component {
       (newLayer.fields || []).forEach((f, idx) => {
         const curIdx = findIndex(curFields, o => o.field === f.field);
         if (curIdx >= 0) {
-          newProps[key].fields[idx].value = genericEl.properties[key].fields[curIdx].value;
+          const curVal = genericEl.properties[key].fields[curIdx].value;
+          const curType = typeof curVal;
+          if (newProps[key].fields[idx].type === 'text') {
+            newProps[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
+          }
+          if (newProps[key].fields[idx].type === 'integer') {
+            newProps[key].fields[idx].value = (curType === 'undefined' || curType === 'boolean' || isNaN(curVal)) ? 0 : parseInt(curVal, 10);
+          }
+          if (newProps[key].fields[idx].type === 'checkbox') {
+            newProps[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
+          }
           if (newProps[key].fields[idx].type === 'system-defined') {
             const units = genUnits(newProps[key].fields[idx].option_layers);
-            const vs = units.find(u => u.key === genericEl.properties[key].fields[curIdx].value_system);
+            const vs = units.find(u =>
+              u.key === genericEl.properties[key].fields[curIdx].value_system);
             newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
           }
         }
@@ -105,6 +116,8 @@ export default class GenericElDetails extends Component {
       ({ value } = event);
     } else if (type.startsWith('drag')) {
       value = event;
+    } else if (type === 'checkbox') {
+      value = event.target.checked;
     } else {
       ({ value } = event.target);
     }

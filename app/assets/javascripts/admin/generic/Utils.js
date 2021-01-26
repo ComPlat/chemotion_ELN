@@ -6,6 +6,11 @@ import uuid from 'uuid';
 import NotificationActions from '../../components/actions/NotificationActions';
 import UserStore from '../../components/stores/UserStore';
 
+const toBool = (val) => {
+  const valLower = String(val).toLowerCase();
+  return !(!valLower || valLower === 'false' || valLower === '0');
+};
+
 const genUnitsSystem = () => {
   const unitsSystem = (UserStore.getState() && UserStore.getState().unitsSystem) || {};
   return (unitsSystem.fields || []);
@@ -143,5 +148,5 @@ ButtonConfirm.defaultProps = {
 
 export {
   ButtonTooltip, ButtonConfirm,
-  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit
+  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit, toBool
 };

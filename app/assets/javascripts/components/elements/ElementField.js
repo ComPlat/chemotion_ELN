@@ -6,7 +6,7 @@ import uuid from 'uuid';
 import { ButtonTooltip } from '../../admin/generic/Utils';
 import AdminFetcher from '../fetchers/AdminFetcher';
 
-const ElementFieldTypes = [{ value: 'integer', name: 'integer', label: 'Integer' }, { value: 'text', name: 'text', label: 'Text' }, { value: 'select', name: 'select', label: 'Select' }];
+const ElementFieldTypes = [{ value: 'integer', name: 'integer', label: 'Integer' }, { value: 'text', name: 'text', label: 'Text' }, { value: 'select', name: 'select', label: 'Select' }, { value: 'checkbox', name: 'checkbox', label: 'Checkbox' }];
 class ElementField extends Component {
   constructor(props) {
     super(props);

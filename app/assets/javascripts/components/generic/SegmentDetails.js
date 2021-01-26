@@ -6,7 +6,7 @@ import UserStore from '../stores/UserStore';
 import { LayersLayout } from './GenericElCommon';
 import Segment from '../models/Segment';
 import MatrixCheck from '../common/MatrixCheck';
-import { genUnits } from '../../admin/generic/Utils';
+import { genUnits, toBool } from '../../admin/generic/Utils';
 
 const addSegmentTabs = (element, onChange, contentMap) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -81,6 +81,9 @@ class SegmentDetails extends Component {
     const { properties } = segment;
     let value = '';
     switch (type) {
+      case 'checkbox':
+        value = event.target.checked;
+        break;
       case 'select':
         ({ value } = event);
         break;
@@ -119,10 +122,21 @@ class SegmentDetails extends Component {
       (newLayer.fields || []).forEach((f, idx) => {
         const curIdx = findIndex(curFields, o => o.field === f.field);
         if (curIdx >= 0) {
-          newProps[key].fields[idx].value = segment.properties[key].fields[curIdx].value;
+          const curVal = segment.properties[key].fields[curIdx].value;
+          const curType = typeof curVal;
+          if (newProps[key].fields[idx].type === 'text') {
+            newProps[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
+          }
+          if (newProps[key].fields[idx].type === 'integer') {
+            newProps[key].fields[idx].value = (curType === 'undefined' || curType === 'boolean' || isNaN(curVal)) ? 0 : parseInt(curVal, 10);
+          }
+          if (newProps[key].fields[idx].type === 'checkbox') {
+            newProps[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
+          }
           if (newProps[key].fields[idx].type === 'system-defined') {
             const units = genUnits(newProps[key].fields[idx].option_layers);
-            const vs = units.find(u => u.key === segment.properties[key].fields[curIdx].value_system);
+            const vs = units.find(u =>
+              u.key === segment.properties[key].fields[curIdx].value_system);
             newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
           }
         }

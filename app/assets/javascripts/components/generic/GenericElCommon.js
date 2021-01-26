@@ -1,9 +1,9 @@
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Col, ControlLabel, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row, InputGroup } from 'react-bootstrap';
+import { Panel, Checkbox, Col, ControlLabel, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
-import { sortBy, filter } from 'lodash';
+import { sortBy } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnits } from '../../admin/generic/Utils';
@@ -23,6 +23,25 @@ const GenPropertiesText = (opt) => {
         required={opt.isRequired}
         placeholder={opt.placeholder}
       />
+    </FormGroup>
+  );
+};
+
+const GenPropertiesCheckbox = (opt) => {
+  let className = opt.isEditable ? 'select_generic_properties_editable' : 'select_generic_properties_readonly';
+  className = opt.isRequired && opt.isEditable ? 'select_generic_properties_required' : className;
+  return (
+    <FormGroup>
+      <Checkbox
+        inline
+        name={opt.field}
+        checked={opt.value}
+        onChange={opt.onChange}
+        className={className}
+        disabled={opt.readOnly}
+      >
+        <FormControl.Static>{opt.label}</FormControl.Static>
+      </Checkbox>
     </FormGroup>
   );
 };
@@ -119,6 +138,8 @@ const GenProperties = (opt) => {
   const type = fieldProps.type.split('_');
   if (opt.isSearchCriteria && type[0] === 'drag') type[0] = 'text';
   switch (type[0]) {
+    case 'checkbox':
+      return GenPropertiesCheckbox(fieldProps);
     case 'select':
       return GenPropertiesSelect(fieldProps);
     case 'drag':
@@ -265,7 +286,6 @@ GenPropertiesLayerSearchCriteria.defaultProps = {
 const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout = []) => {
   const sortedLayers = sortBy(layers, l => l.position) || [];
   sortedLayers.forEach((layer) => {
-    console.log(layer.condition);
     if (layer.condition == null || layer.condition.trim().length === 0) {
       const ig = (
         <GenPropertiesLayer
