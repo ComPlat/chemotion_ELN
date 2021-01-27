@@ -87,6 +87,11 @@ gem 'grape-entity'
 gem 'hashie-forbidden_attributes'
 gem 'kaminari'
 gem 'kaminari-grape'
+gem 'grape-swagger-entity', '~> 0.3'
+gem 'grape-swagger-representable', '~> 0.2'
+gem 'grape-swagger'
+gem 'rack-cors', :require => 'rack/cors'
+gem 'grape-swagger-rails'
 
 gem "rdkit_chem", git: "https://github.com/CamAnNguyen/rdkit_chem"
 

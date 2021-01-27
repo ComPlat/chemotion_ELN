@@ -62,6 +62,10 @@ Rails.application.routes.draw do
 
   mount API => '/'
 
+  if Rails.env.development?
+    mount GrapeSwaggerRails::Engine => '/swagger_doc' 
+  end
+
   root to: redirect('home')
 
   get 'test', to: 'pages#test'
