@@ -57,8 +57,11 @@ building:
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-add ~/.ssh/id_rsa
-        echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        #echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        ssh-keyscan git.scc.kit.edu >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
+        echo "$SSH_CONFIG" > ~/.ssh/config
+        chmod 600 ~/.ssh/config
       fi
     - if test ! -d "node_modules"; then mv /home/gitlab-runner/shared/node_modules .; fi
     - cp config/database.yml.gitlab config/database.yml
@@ -69,7 +72,7 @@ building:
   script:
     - /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"
     - /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
-    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && bundle exec rake db:test:prepare"
+    # - /bin/bash -l -c "source ~/.rvm/scripts/rvm && bundle exec rake db:test:prepare"
   after_script:
     # - ls -la ~/shared/bundle/
     - if test -d "vendor/bundle"; then mv vendor/bundle ~/shared/vendor.bak; fi
@@ -97,7 +100,7 @@ testjs:
     - .before_scripting
   stage: unit
   script:
-    - /bin/bash -l -c "source ~/.rvm/scripts/rvm &&  source ~/.nvm/nvm.sh && nvm use && bundle exec rake db:test:prepare && npm test"
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && source ~/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare && npm test"
   except:
     variables:
     - $CI_COMMIT_MESSAGE =~ /skip[ _-]unitjs/i
@@ -109,7 +112,7 @@ testacceptance:
     - .before_scripting
   stage: acceptance
   script:
-    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && bundle exec rake db:test:prepare  && bundle exec rspec spec/features"
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rspec spec/features"
   except:
     variables:
     - $CI_COMMIT_MESSAGE =~ /skip[ _-]acceptance/i
