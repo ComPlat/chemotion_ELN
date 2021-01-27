@@ -250,7 +250,7 @@ module Chemotion
           # return the response "as is" and set the content type and the filename
           env['api.format'] = :binary
           content_type 'application/vnd.ms-excel'
-          header['Content-Disposition'] = 'attachment; filename=\"Table.xlsx\"'
+          header['Content-Disposition'] = 'attachment; filename="Table.xlsx"'
 
           export = Export::ExportResearchPlanTable.new
           export.generate_sheet(field['value']['columns'], field['value']['rows'])
