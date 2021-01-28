@@ -308,7 +308,7 @@ description="seeding common reagents "
 if [ "${PART_82:-}" ]; then
   sharpi "$description"
   src='source ~/.nvm/nvm.sh && source ~/.rvm/scripts/rvm '
-  sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rake data:ver_20180205000000_reagent_seeds"
+  sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rake db:seed"
   green "done $description\n"
 else
   yellow "skip $description\n"
