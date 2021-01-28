@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## This is a script to install a production ready chemotion_ELN server
-## with NGINX/PASSENGER/RAILS/POSTGRESQL on a Ubuntu 18.04 machine
+## with NGINX/PASSENGER/RAILS/POSTGRESQL on a Ubuntu 18.04 or 20.04 machine
 ## Could work on another debian but passenger install (part 2)
 ## should be edited accordingly
 
@@ -10,7 +10,6 @@ set -euo pipefail
 ############################################
 ############# VARIABLES ####################
 
-## CHEMOTION ELN GIT REPOSITORY
 REPO='https://git.scc.kit.edu/complat/chemotion_ELN_server'
 BRANCH=development
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
@@ -21,7 +20,7 @@ PROD=production
 # PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.5.8
+RUBY_VERSION=2.6.6 # 2.5 recommended for bionic
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
@@ -29,17 +28,23 @@ NVM_VERSION='v0.35.3'
 NODE_VERSION=12.18.3
 NPM_VERSION=6.14.6
 
+APP_NAME=chemotion_ELN # used for naming directories and files
+
 ## TMP DIR (has to be acccesible to install and PROD user)
-TMP_DIR=/tmp/chemotion_stage
+TMP_DIR=/tmp/${APP_NAME}_stage
 
 ## INSTALLATION DIRECTORY
-PROD_DIR=/var/www/chemotion_ELN
+PROD_DIR=/var/www/${APP_NAME}
+
 ## APPLICATION PORT
 PORT=4001
 
+## NGINX config filename
+NGINX_CONF=${APP_NAME,,}_nossl
+
 ## POSTGRESQL DB
-DB_ROLE=chemotion_prod
-DB_NAME=chemotion_prod
+DB_ROLE=${APP_NAME,,}_prod # lowercase name
+DB_NAME=${APP_NAME,,}_prod # lowercase name
 DB_PW=$(openssl rand -base64 8 | sed 's~/~~g')
 DB_HOST=localhost
 DB_PORT=5432
@@ -47,7 +52,7 @@ DB_PORT=5432
 NCPU=$(grep -c ^processor /proc/cpuinfo)
 
 ## Pandoc version https://github.com/jgm/pandoc/releases
-PANDOC_VERSION=2.9.2
+PANDOC_VERSION=2.10.1
 
 ############################################
 ######### INSTALLATION PARTS TO RUN  #######
@@ -67,7 +72,7 @@ PART_7='prepare production app directories and config'
 PART_71='reset DB pw'
 PART_8='prepare first deploy and deploy application code'
 PART_81='seed common ketcher templates'
-# PART_82='seed common reagents (~ 1h)'
+PART_82='seed common reagents'
 PART_9='prepare boot start and log rotation'
 PART_10='configure UFW'
 PART_11='configure NGINX'
@@ -78,6 +83,19 @@ PART_11='configure NGINX'
 #### INSTALLATION SCRIPT STARTS HERE #######
 ############################################
 ############################################
+
+## supported Distribution Version  
+. /etc/lsb-release
+# DISTRIB_ID=Ubuntu
+# DISTRIB_RELEASE=20.04
+# DISTRIB_CODENAME=focal
+# DISTRIB_DESCRIPTION="Ubuntu 20.04.1 LTS"
+V18='bionic'
+V20='focal'
+# if [ "$DISTRIB_CODENAME" = "$V18" ]; then
+#   RUBY_VERSION=2.5.8  
+# fi
+
 
 GRE='\033[0;32m'
 YEL='\033[0;33m'
@@ -114,6 +132,14 @@ rm_tmp_repo() {
 
 trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
+if [ "$DISTRIB_CODENAME" = "$V18" ] || [ "$DISTRIB_CODENAME" = "$V20" ]; then
+  sharpi "Running installation for $DISTRIB_DESCRIPTION "
+else 
+  error "The installation for your distribution ($DISTRIB_DESCRIPTION) has not been tested"
+fi
+
+
+
 
 ############################################
 ############################################
@@ -140,7 +166,7 @@ if [ "${PART_1:-}" ]; then
   # sudo add-apt-repository -y  ppa:inkscape.dev/stable
   sudo apt-get -y update
   sudo apt-get -y install ca-certificates apt-transport-https git curl dirmngr gnupg gnupg2 \
-    autoconf automake bison libffi-dev libgdbm-dev libncurses5-dev \
+    autoconf automake bison libffi-dev libgdbm-dev libncurses5-dev openssh-server \
     libyaml-dev sqlite3 libgmp-dev libreadline-dev libssl-dev \
     postgresql postgresql-client postgresql-contrib libpq-dev \
     g++ imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
@@ -193,12 +219,12 @@ description='installing passenger'
 
 if [ "${PART_2:-}" ]; then
   sharpi "$description"
-  ## https://www.phusionpassenger.com/library/install/nginx/install/oss/bionic/
+  ## https://www.phusionpassenger.com/library/install/nginx/install/oss/$DISTRIB_CODENAME/
 
   # sudo apt-get install -y dirmngr gnupg
   sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
   sudo apt-get install -y apt-transport-https ca-certificates
-  sudo sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger bionic main > /etc/apt/sources.list.d/passenger.list'
+  sudo sh -c "echo deb https://oss-binaries.phusionpassenger.com/apt/passenger $DISTRIB_CODENAME main > /etc/apt/sources.list.d/passenger.list"
   sudo apt-get update
   sudo apt-get install -y libnginx-mod-http-passenger
   if [ ! -f /etc/nginx/modules-enabled/50-mod-http-passenger.conf ]; then
@@ -446,7 +472,7 @@ if [ "${PART_81:-}" ]; then
   sharpi "$description"
   src='source ~/.nvm/nvm.sh && source ~/.rvm/scripts/rvm '
   sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rake ketcherails:import:common_templates"
-  sudo rm -rf /var/www/chemotion_ELN/current/public/images/ketcherails/icons/original/*
+  sudo rm -rf $PROD_DIR/current/public/images/ketcherails/icons/original/*
   sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rails r 'MakeKetcherailsSprites.perform_now'"
   green "done $description\n"
 else
@@ -527,8 +553,8 @@ EOL
     fi
   fi
 
-sharpi 'setting logrotate conf /etc/logrotate.d/chemotion_ELN'
-  echo | sudo tee /etc/logrotate.d/chemotion_ELN <<LOGR || true
+sharpi "setting logrotate conf /etc/logrotate.d/${APP_NAME}"
+  echo | sudo tee /etc/logrotate.d/$APP_NAME <<LOGR || true
 $PROD_DIR/shared/log/*.log {
   weekly
   missingok
@@ -606,16 +632,17 @@ NGINXCONFIG
 NGINXCONFIG
   sharpi "create nginx config\n"
 
-  echo "$nginx_config_1" | sudo tee /etc/nginx/sites-available/chemotion_prod_no_ssl
-  echo "$nginx_config_2" | sudo tee -a /etc/nginx/sites-available/chemotion_prod_no_ssl
+
+  echo "$nginx_config_1" | sudo tee /etc/nginx/sites-available/$NGINX_CONF
+  echo "$nginx_config_2" | sudo tee -a /etc/nginx/sites-available/$NGINX_CONF
 
   if [ -f  /etc/nginx/sites-enabled/default ]; then
     sudo rm /etc/nginx/sites-enabled/default
   fi
-  if [ -f  /etc/nginx/sites-enabled/chemotion_prod_no_ssl ]; then
-    sudo rm /etc/nginx/sites-enabled/chemotion_prod_no_ssl
+  if [ -f  /etc/nginx/sites-enabled/$NGINX_CONF ]; then
+    sudo rm /etc/nginx/sites-enabled/$NGINX_CONF
   fi
-  sudo ln -s /etc/nginx/sites-available/chemotion_prod_no_ssl /etc/nginx/sites-enabled/.
+  sudo ln -s /etc/nginx/sites-available/$NGINX_CONF /etc/nginx/sites-enabled/.
   sharpi "test nginx config"
   sudo nginx -t -c /etc/nginx/nginx.conf
   sharpi "restart nginx"

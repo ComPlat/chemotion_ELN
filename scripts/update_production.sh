@@ -17,7 +17,7 @@ PROD=production
 PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.5.8
+RUBY_VERSION=2.6.6
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
@@ -25,27 +25,29 @@ NVM_VERSION='v0.35.3'
 NODE_VERSION=12.18.3
 NPM_VERSION=6.14.6
 
+## default naming of directories and files
+APP_NAME=chemotion_ELN 
+
 ## TMP DIR (has to be acccesible to install and PROD user)
-TMP_DIR=/tmp/chemotion_stage
+TMP_DIR=/tmp/${APP_NAME}_stage
 
 ## INSTALLATION DIRECTORY
+PROD_DIR=/var/www/${APP_NAME}
 
-PROD_DIR=/var/www/chemotion_ELN
 ## APPLICATION PORT
 PORT=4001
-
-NCPU=$(grep -c ^processor /proc/cpuinfo)
-
-## Pandoc version https://github.com/jgm/pandoc/releases
-PANDOC_VERSION=2.9.2
 
 ## next line is to run a backup (will be saved in PROD_DIR/shared/backup/deploy).
 DEPLOY_BACKUP="before 'deploy:migrate', 'deploy:backup'"
 
-# NGINX config filename at /etc/nginx/sites-available/
-NGINX_CONFIG=chemotion_prod_no_ssl
+## NGINX config filename at /etc/nginx/sites-available/
+NGINX_CONF=${APP_NAME,,}_prod_no_ssl
+NGINX_CONF=chemotion_prod_no_ssl
 
+NCPU=$(grep -c ^processor /proc/cpuinfo)
 
+## Pandoc version https://github.com/jgm/pandoc/releases
+PANDOC_VERSION=2.10.1
 
 ############################################
 ######### UPDATE PARTS TO RUN ##############
@@ -60,7 +62,7 @@ PART_4='update rvm and ruby'
 PART_5='update nvm and npm'
 PART_8='prepare first deploy and deploy application code'
 #PART_81='seed common ketcher templates'
-#PART_82='seed common reagents (~ 1h)'
+#PART_82='seed common reagents' 
 
 
 ############################################
@@ -292,7 +294,7 @@ if [ "${PART_81:-}" ]; then
   sharpi "$description"
   src='source ~/.nvm/nvm.sh && source ~/.rvm/scripts/rvm '
   sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rake ketcherails:import:common_templates"
-  sudo rm -rf /var/www/chemotion_ELN/current/public/images/ketcherails/icons/original/*
+  sudo rm -rf $PROD_DIR/current/public/images/ketcherails/icons/original/*
   sudo -H -u $PROD bash -c "$src && cd $PROD_DIR/current && RAILS_ENV=production bundle exec rails r 'MakeKetcherailsSprites.perform_now'"
   green "done $description\n"
 else
@@ -322,7 +324,7 @@ description="upd nginx config with new ruby version"
 if [ "${PART_4:-}" ]; then
 
   # update RUBY_VERSION in NGINX config
-  sudo sed -i.bak "s~ *passenger_ruby .*~        passenger_ruby $PROD_HOME/.rvm/wrappers/ruby-$RUBY_VERSION/ruby;~" /etc/nginx/sites-available/$NGINX_CONFIG
+  sudo sed -i.bak "s~ *passenger_ruby .*~        passenger_ruby $PROD_HOME/.rvm/wrappers/ruby-$RUBY_VERSION/ruby;~" /etc/nginx/sites-available/$NGINX_CONF
 
   sharpi "test nginx config"
   sudo nginx -t -c /etc/nginx/nginx.conf
