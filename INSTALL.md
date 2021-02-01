@@ -2,16 +2,10 @@
 
 ## On a Ubuntu server
 
-copy the installation script on a ubuntu server 18.04 (could work with another deb)
+copy the installation script on a ubuntu server 18.04 or 20.04 (could work with another deb)
 
 ```
-curl -o chemotion_ELN_install.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/install_production_bionic.sh
-```
-
-or, for Ubuntu 20.04:
-
-```
-curl -o chemotion_ELN_install.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/install_production_focal.sh
+curl -o chemotion_ELN_install.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/install_production.sh
 ```
 
 
@@ -42,20 +36,14 @@ An admin account should have been created (email: eln-admin@kit.edu, pw: PleaseC
 To update the application code for such an installation, use the update script:
 
 ```
-curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/update_production_bionic.sh
-```
-
-or, if using focal:
-
-```
-curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/update_production_focal.sh
+curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/update_production.sh
 ```
 
 
 If needed, edit the file  (change the variables or comments out parts to disable), then
 
 ```
-chmod 700 chemotion_ELN_update.sh`
+chmod 700 chemotion_ELN_update.sh 
 
 sudo ./chemotion_ELN_update.sh
 ```
