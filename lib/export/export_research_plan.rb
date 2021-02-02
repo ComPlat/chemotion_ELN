@@ -23,9 +23,12 @@ module Export
             :rows => field['value']['rows']
           }
         when 'ketcher'
+          output_file = Tempfile.new(['output', ".png"])
+          Reporter::Img::Conv.by_inkscape("public/images/research_plans/#{field['value']['svg_file']}", output_file.path, 'png')
+
           @fields << {
             :type => field['type'],
-            :src => "/images/research_plans/#{field['value']['svg_file']}"
+            :src =>  output_file.path
           }
         when 'image'
           @fields << {
