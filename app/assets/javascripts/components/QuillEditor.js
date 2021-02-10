@@ -192,7 +192,13 @@ export default class QuillEditor extends React.Component {
               />
             );
           } else if (Array.isArray(elementValue)) {
-            const options = elementValue.map(e => <option value={e} key={`opt_${e}`} />);
+            const options = elementValue.map(function(e){
+              if(e == false){
+                return <option value="" key="" />
+              } 
+              
+              return <option value={e} key={`opt_${e}`} />
+            });
             return (
               <select
                 className={`ql-${elementName}`}
