@@ -8,6 +8,7 @@ import ResearchPlanDetailsFieldTableContextMenu from './ResearchPlanDetailsField
 import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal';
 import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import uniqueId from 'react-html-id';
 
 const { ContextMenuTrigger } = Menu;
 
@@ -51,6 +52,8 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       },
       selection: {}
     };
+
+    uniqueId.enableUniqueIds(this)
 
     document.addEventListener('copy', this.handleCopy.bind(this));
     document.addEventListener('paste', this.handlePaste.bind(this));
@@ -314,7 +317,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             onCellDeSelected={this.handleCellDeSelected.bind(this)}
             onColumnResize={this.handleColumnResize.bind(this)}
             contextMenu={
-              <ResearchPlanDetailsFieldTableContextMenu
+              <ResearchPlanDetailsFieldTableContextMenu id=  {this.nextUniqueId()}
                 onColumnInsertLeft={(event, { idx }) => this.handleColumnNameModalShow('insert', idx)}
                 onColumnInsertRight={(event, { idx }) => this.handleColumnNameModalShow('insert', idx + 1)}
                 onColumnRename={(event, { idx }) => this.handleColumnNameModalShow('rename', idx)}
