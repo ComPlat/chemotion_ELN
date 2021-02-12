@@ -84,6 +84,6 @@ export default class Element {
 
   // Default empty quill-delta
   static quillDefault() {
-    return { "ops": [{ "insert": "" }] }
+    return { ops: [{ insert: '\n' }] };
   }
 }

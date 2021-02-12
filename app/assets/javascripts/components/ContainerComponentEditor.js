@@ -158,7 +158,7 @@ export default class ContainerComponentEditor extends React.Component {
     });
 
     const { container, readOnly } = this.props;
-    const value = container.extended_metadata.content || {};
+    const value = container.extended_metadata.content;
     const autoFormatIcon = <span className="fa fa-magic" />;
     const templateCreatorPopover = (
       <Popover
