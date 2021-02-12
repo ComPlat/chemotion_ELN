@@ -16,7 +16,7 @@ set :bundle_jobs, 4 # parallel bundler
 
 set :nvm_type, :user
 set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip || 'v12.16.1'
-set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip || '6.13.7'
+set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip || '6.14.11'
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('bundle')
 # Default value for :format is :pretty
@@ -116,7 +116,7 @@ namespace :deploy do
   task :npm_install_npm do
     on roles :app do
       execute <<~SH
-        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == "#{fetch(:npm_version)}" ]] && echo "npm already installed" || npm install -g npm
+        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == "#{fetch(:npm_version)}" ]] && echo "npm already installed" || npm install -g npm@#{fetch(:npm_version)}
       SH
       # source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
     end
