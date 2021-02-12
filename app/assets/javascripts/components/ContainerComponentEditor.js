@@ -232,7 +232,7 @@ export default class ContainerComponentEditor extends React.Component {
             overlay={templateCreatorPopover}
             onHide={this.onCloseTemplateCreator}
           >
-            <span className="ql-formats">
+            <span className="ql-formats" style={{ display: 'none' }}>
               <button className="ql-editTemplate">
                 <span className="fa fa-cog" />
               </button>
