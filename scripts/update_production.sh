@@ -30,15 +30,13 @@ APP_NAME=chemotion_ELN
 
 ## TMP DIR (has to be acccesible to install and PROD user)
 TMP_DIR=/tmp/${APP_NAME}_stage
+deploy_conf_example=$TMP_DIR/config/deploy/server.rb.example
 
 ## INSTALLATION DIRECTORY
 PROD_DIR=/var/www/${APP_NAME}
 
 ## APPLICATION PORT
 PORT=4001
-
-## next line is to run a backup (will be saved in PROD_DIR/shared/backup/deploy).
-DEPLOY_BACKUP="before 'deploy:migrate', 'deploy:backup'"
 
 ## NGINX config filename at /etc/nginx/sites-available/
 NGINX_CONF=${APP_NAME,,}_prod_no_ssl
@@ -144,7 +142,6 @@ if [ "${PART_1:-}" ]; then
     libnspr4 libnss3 libpango1.0-0 libxss1  \
     xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
     tzdata python-dev libsqlite3-dev libboost-all-dev p7zip-full \
-    nginx \
     ufw \
     ranger htop \
     --fix-missing
@@ -185,8 +182,11 @@ description="installing rvm and ruby $RUBY_VERSION"
 
 if [ "${PART_4:-}" ]; then
   sharpi "$description"
-#  sudo -H -u $PROD bash -c 'gpg2 --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB'
-  sudo -H -u $PROD bash -c 'gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB'
+  if sudo -H -u $PROD bash -c 'gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB' ; then
+    green 'gpg key installed'
+  else
+    sudo -H -u $PROD bash -c 'gpg2 --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB'
+  fi
   sudo -H -u $PROD bash -c "curl -sSL https://get.rvm.io | bash -s stable --ruby=$RUBY_VERSION --auto-dotfiles"
   sudo -H -u $PROD bash -c "source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && gem install bundler -v $BUNDLER_VERSION "
 
@@ -249,33 +249,18 @@ if [ "${PART_8:-}" ]; then
   localkey=$(sudo cat $PROD_HOME/.ssh/id_rsa.pub)
   sudo -H -u $PROD bash -c  "if [ -z \"\$(grep \"$localkey\" $PROD_HOME/.ssh/authorized_keys )\" ]; then echo $localkey | tee -a $PROD_HOME/.ssh/authorized_keys; fi;"
 
-
   sharpi "prepare config"
+  
+  local_deploy_conf=$TMP_DIR/config/deploy/local_deploy.rb
+  sudo cp $deploy_conf_example $local_deploy_conf
+  sed -i "s/user =.*/user ='$PROD'/" $local_deploy_conf
+  sed -i "s/server_addr =.*/server_addr = 'localhost'/" $local_deploy_conf
+  sed -i "s~set :repo_url,.*~set :repo_url, 'file://$TMP_REPO_DIR'~" $local_deploy_conf
+  sed -i "s/set :branch,.*/set :branch, '$BRANCH'/" $local_deploy_conf
+  sed -i "s/set :npm_version,.*/set :npm_version, '$NPM_VERSION'/" $local_deploy_conf
+  sed -i "s~set :deploy_to,.*~set :deploy_to, '$PROD_DIR'~" $local_deploy_conf
 
-  read -d '' deploy_config <<CONFIG || true
-user = '$PROD'
-set :repo_url, 'file:///$TMP_REPO_DIR'
-set :branch, '$BRANCH'
-${DEPLOY_BACKUP:-}
-server 'localhost', user: user, roles: %w{app web db}
-puts %w(publickey)
-set :npm_version, '$NPM_VERSION'
-set :ssh_options, { forward_agent: true, auth_methods: %w(publickey) }
-#set :pty, false
-set :linked_files, fetch(:linked_files, []).push(
-  '.ruby-version' #, '.ruby-gemset'
-  #'Gemfile.plugin'
-)
-set :deploy_to, '$PROD_DIR'
-set :user, user
-set :bundle_path, nil
-#set :bundle_without, %w{}.join(' ')
-set :bundle_flags, '--frozen --deployment ' #--quiet
-set :log_file, 'log/cap-server_local.log'
-CONFIG
-
-  echo "$deploy_config" | sudo tee $TMP_DIR/config/deploy/local_deploy.rb
-  sudo chown $PROD:$PROD $TMP_DIR/config/deploy/local_deploy.rb
+  sudo chown $PROD:$PROD $local_deploy_conf
 
   sharpi 'starting capistrano deploy task'
   sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && cap local_deploy deploy --"

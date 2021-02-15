@@ -48,9 +48,21 @@ chmod 700 chemotion_ELN_update.sh
 sudo ./chemotion_ELN_update.sh
 ```
 
+## Using Windows Subsytem for Linux 2
+
+The instalation script works with Ubuntu 20 under WSL2.
+
+NB: 
+
+- openssh-server should be reinstalled.
+- services (postgres, nginx) needs to be started manually.
+- UFW should not be used and disabled.
+
 
 
 ## Using Docker
+
+
 
 This is a setup for a 'pseudo' production stage using passenger and aimed for user testing.
 (For the development environment, change 'RAILS_ENV' to 'development' in docker-compose.yml)
@@ -74,33 +86,24 @@ This is a setup for a 'pseudo' production stage using passenger and aimed for us
 
 # Basic Development Setup
 
-* Copy `config/database.yml.example` to `config/database.yml` and enter your database connection information.
-* Copy `config/storage.yml.example` to `config/storage.yml` and enter your database connection information.
-* Copy `.ruby-gemset.example` to `.ruby-gemset`.
+## Ubuntu native or under WSL-2
+
+See the scripts/install_development.sh for guidance or run it. Application should be all set up and ready to run. 
+
+When using WLS-2:
+-  postgres service needs to be started (```sudo service postgresql start ```)
+-  you may want to move the application code somewhere to /mnt/... 
+-  bind the WSL ip address  when starting the rails s (`rails s -b ip.ad.dr.ess`)
+
+
+## Application Setup Notes
+
+* config/database.yml and config/storage.yml are needed to start the application.
 * Copy `.ruby-version.example` to `.ruby-version`. (Skip this step if you want to use Docker)
-* Reload directory to create rvm gemset.
-
-## Application Setup
-* Execute `bundle install`.
-* Execute `rake db:reset` (this creates and seeds the database).
-
-## Environment variables
-
-Production
-
-* `cp .env.production{.example,}  # optionally enter SFTP credentials`
-
-## Configure Data Collection
-
-* copy the config example file and edit the entries
-
-* create device entries and configure their profiles
-
-`cp db/datacollectors.yml.example db/datacollectors.yml`
+* Environment variables: see the corresponding .env files
 
 
-## Deployment notes
-
+### Resetting the db:
 If you like to reset the database, you have to execute the following commands (under the assumption your production database is called `chemotion`)
 
 ```
@@ -125,7 +128,7 @@ RAILS_ENV=production bundle exec rake db:migrate db:seed
 
 ## JS Setup & Testing
 
-* Install `nvm`: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/0.34.0/install.sh | bash` (see https://github.com/nvm-sh/nvm#installation)
+* Install `nvm`: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/0.35.0/install.sh | bash` (see https://github.com/nvm-sh/nvm#installation)
   or for OSX: `brew install nvm && echo "source $(brew --prefix nvm)/nvm.sh" >> ~/.profile`
 * Execute `nvm install 10.15.3`
 * Execute `npm install -g npm@6.11.3`
