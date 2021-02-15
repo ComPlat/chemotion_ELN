@@ -56,7 +56,7 @@ export default class UnsortedBox extends React.Component {
       :
     <div />;
 
-    const folderClass = visible ? 'fa fa-folder-open' : 'fa fa-folder';
+    const folderClass = `fa fa-folder${visible ? '-open' : ''}`;
 
     const uploadModal = (
       <UnsortedDatasetModal

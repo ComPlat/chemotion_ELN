@@ -60,7 +60,7 @@ export default class DeviceBox extends React.Component {
             ) : null
           }
           <i
-            className={`fa fa-folder${visible ? '-open' : null}`}
+            className={`fa fa-folder${visible ? '-open' : ''}`}
             aria-hidden="true"
             onClick={() => this.setState({ visible: !visible })}
           > {device_box.name}</i>
