@@ -22,7 +22,7 @@ class AttachmentContainer extends Component {
     super(props);
     this.state = {
       deletingTooltip: false,
-    }
+    };
   }
 
   deleteAttachment(attachment){
@@ -40,13 +40,22 @@ class AttachmentContainer extends Component {
   }
 
   render() {
-    const { connectDragSource, sourceType, attachment } = this.props;
-    if(sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
+    const { connectDragSource, sourceType, attachment, largerInbox } = this.props;
+    if (sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
       return null;
     }
     const textStyle = {
-      display: "block", whiteSpace: "nowrap", overflow: "hidden",
-      textOverflow: "ellipsis", maxWidth: "100%", cursor: 'move'
+      display: 'block',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '100%',
+      cursor: 'move'
+    };
+
+    if (largerInbox === true) {
+      textStyle.marginTop = '6px';
+      textStyle.marginBottom = '6px';
     }
 
     const trash = (
@@ -86,10 +95,15 @@ class AttachmentContainer extends Component {
   }
 }
 
-export default DragSource(props => props.sourceType, dataSource,
-  collectSource)(AttachmentContainer);
+export default DragSource(props =>
+  props.sourceType, dataSource, collectSource)(AttachmentContainer);
 
 AttachmentContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired
+  isDragging: PropTypes.bool.isRequired,
+  largerInbox: PropTypes.bool
+};
+
+AttachmentContainer.defaultProps = {
+  largerInbox: false
 };

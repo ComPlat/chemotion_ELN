@@ -85,7 +85,7 @@ export default class InboxModal extends React.Component {
       });
       boxes = inbox.children.map((deviceBox) => {
         return (
-          <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} />
+          <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} largerInbox />
         );
       });
     }

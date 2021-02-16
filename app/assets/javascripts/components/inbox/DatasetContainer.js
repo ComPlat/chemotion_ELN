@@ -55,26 +55,33 @@ class DatasetContainer extends Component {
   }
 
   render() {
-    const { connectDragSource, sourceType, dataset } = this.props;
+    const { connectDragSource, sourceType, dataset, largerInbox } = this.props;
 
     if (sourceType === DragDropItemTypes.DATASET) {
-      const { visible, deletingTooltip } = this.state
+      const { visible, deletingTooltip } = this.state;
       const attachments = dataset.attachments.map(attachment => (
         <AttachmentContainer
           key={`attach_${attachment.id}`}
           sourceType={DragDropItemTypes.DATA}
           attachment={attachment}
+          largerInbox={largerInbox}
         />
       ));
       const attCount = this.attachmentCount();
       const textStyle = {
-        display: "block",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        maxWidth: "100%",
+        display: 'block',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '100%',
         cursor: 'move'
+      };
+
+      if (largerInbox === true) {
+        textStyle.marginTop = '8x';
+        textStyle.marginBottom = '8px';
       }
+
       const trash = this.props.cache.length === this.props.cache.length // Set it as always show
         ? (
           <span>
@@ -87,12 +94,16 @@ class DatasetContainer extends Component {
                     bsStyle="danger"
                     bsSize="xsmall"
                     onClick={() => this.confirmDeleteDataset()}
-                  >Yes</Button>
+                  >
+                    Yes
+                  </Button>
                   <Button
                     bsStyle="warning"
                     bsSize="xsmall"
                     onClick={() => this.toggleTooltip()}
-                  >No</Button>
+                  >
+                    No
+                  </Button>
                 </ButtonGroup>
               </Tooltip>
             ) : null}
@@ -107,7 +118,8 @@ class DatasetContainer extends Component {
                 className={`fa fa-folder${visible ? '-open' : null}`}
                 onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
                 style={{ cursor: "pointer" }}
-              >&nbsp; {dataset.name}</i>
+              >&nbsp; {dataset.name}
+              </i>
             </span>
           </div>
           <div>{visible ? attachments : null}</div>
@@ -120,10 +132,15 @@ class DatasetContainer extends Component {
   }
 }
 
-export default DragSource(props => props.sourceType, dataSource,
-  collectSource)(DatasetContainer);
+export default DragSource(props => props.sourceType, dataSource, collectSource)(DatasetContainer);
 
 DatasetContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired
+  isDragging: PropTypes.bool.isRequired,
+  sourceType: PropTypes.objectOf.isRequired,
+  largerInbox: PropTypes.bool
+};
+
+DatasetContainer.defaultProps = {
+  largerInbox: false
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import DatasetContainer from './DatasetContainer';
 import DragDropItemTypes from '../DragDropItemTypes';
@@ -11,15 +12,15 @@ export default class DeviceBox extends React.Component {
     super(props);
     this.state = {
       visible: false
-    }
+    };
   }
 
   deleteDeviceBox(deviceBox) {
     InboxActions.deleteContainer(deviceBox);
-  }
+  };
 
   render() {
-    const { device_box } = this.props;
+    const { device_box, largerInbox } = this.props;
     const { visible } = this.state;
     const cache = InboxStore.getState().cache;
 
@@ -28,24 +29,25 @@ export default class DeviceBox extends React.Component {
     });
 
     const datasets = device_box.children.map((dataset) => {
-      return(
+      return (
         <DatasetContainer
           key={`dataset_${dataset.id}`}
           sourceType={DragDropItemTypes.DATASET}
           dataset={dataset}
           cache={cache}
+          largerInbox={largerInbox}
         />
-      )
-    })
+      );
+    });
 
     const textStyle = {
-      display: "block",
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      maxWidth: "100%",
+      display: 'block',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '100%',
       cursor: 'move'
-    }
+    };
 
     return (
       <div className="tree-view">
@@ -56,17 +58,28 @@ export default class DeviceBox extends React.Component {
                 className="fa fa-trash-o"
                 onClick={() => this.deleteDeviceBox(device_box)}
                 style={{ cursor: "pointer" }}
-              >&nbsp;&nbsp;</i>
+              >&nbsp;&nbsp;
+              </i>
             ) : null
           }
           <i
             className={`fa fa-folder${visible ? '-open' : ''}`}
             aria-hidden="true"
             onClick={() => this.setState({ visible: !visible })}
-          > {device_box.name}</i>
+          > {device_box.name}
+          </i>
         </div>
         <div>{visible ? datasets : null}</div>
       </div>
-    )
+    );
   }
 }
+
+DeviceBox.propTypes = {
+  device_box: PropTypes.objectOf.isRequired,
+  largerInbox: PropTypes.bool
+};
+
+DeviceBox.defaultProps = {
+  largerInbox: false
+};
