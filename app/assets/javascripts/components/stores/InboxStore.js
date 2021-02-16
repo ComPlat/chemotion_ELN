@@ -11,10 +11,12 @@ class InboxStore {
       inbox: {},
       cache: [],
       deleteEl: null,
-      numberOfAttachments: 0
+      numberOfAttachments: 0,
+      inboxModalVisible: false
     };
 
     this.bindListeners({
+      handleToggleInboxModal: InboxActions.toggleInboxModal,
       handleFetchInbox: InboxActions.fetchInbox,
       handleFetchInboxCount: InboxActions.fetchInboxCount,
       handleRemoveAttachmentFromList: InboxActions.removeAttachmentFromList,
@@ -41,6 +43,12 @@ class InboxStore {
       handleConfirmDelete: DetailActions.confirmDelete,
       handleDeleteElement: ElementActions.deleteElementsByUIState
     });
+  }
+
+  handleToggleInboxModal() {
+    const { inboxModalVisible } = this.state;
+    this.setState({ inboxModalVisible: !inboxModalVisible });
+    this.emitChange();
   }
 
   handleFetchInbox(result) {

@@ -61,6 +61,7 @@
     "react-dnd-html5-backend": "^2.6.0",
     "react-dom": "16.5.2",
     "react-dom-factories": "^1.0.0",
+    "react-draggable": "^4.4.3",
     "react-dropzone": "^3.6.0",
     "react-inlinesvg": "0.8.1",
     "react-input-autosize": "1.1.0",

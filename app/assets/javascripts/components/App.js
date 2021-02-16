@@ -17,6 +17,7 @@ import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import KeyboardActions from './actions/KeyboardActions';
 import UIStore from './stores/UIStore';
+import InboxModal from './inbox/InboxModal';
 
 class App extends Component {
   constructor(props) {
@@ -92,6 +93,7 @@ class App extends Component {
   }
 
   render() {
+    const { showCollectionTree } = this.state;
     return (
       <Grid fluid>
         <Row className="card-navigation">
@@ -105,6 +107,7 @@ class App extends Component {
           <Notifications />
           <LoadingModal />
         </Row>
+        <InboxModal showCollectionTree={showCollectionTree} />
       </Grid>
     );
   }

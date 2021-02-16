@@ -1,7 +1,7 @@
 import alt from '../alt';
 import InboxFetcher from '../fetchers/InboxFetcher';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher'
-import ContainerFetcher from '../fetchers/ContainerFetcher'
+import AttachmentFetcher from '../fetchers/AttachmentFetcher';
+import ContainerFetcher from '../fetchers/ContainerFetcher';
 
 class InboxActions {
   deleteContainerLinkUnselected(params) {
@@ -11,6 +11,10 @@ class InboxActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       }); };
+  }
+
+  toggleInboxModal() {
+    return null
   }
 
   fetchInbox() {
