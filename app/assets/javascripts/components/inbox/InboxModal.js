@@ -70,11 +70,9 @@ export default class InboxModal extends React.Component {
       inbox.children.sort((a, b) => {
         if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
       });
-      boxes = inbox.children.map((deviceBox) => {
-        return (
-          <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} largerInbox />
-        );
-      });
+      boxes = inbox.children.map(deviceBox => (
+        <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} largerInbox />
+      ));
     }
 
     return (
@@ -92,8 +90,7 @@ export default class InboxModal extends React.Component {
     // const inboxState = InboxStore.getState();
 
     const { showCollectionTree } = this.props;
-    const { visible } = this.state;
-    let { inboxVisible, inbox } = this.state;
+    const { visible, inboxVisible } = this.state;
 
     const extraDiv = [];
     for (let j = 0; j < Xdiv.count; j += 1) {
@@ -140,8 +137,8 @@ export default class InboxModal extends React.Component {
               <Panel.Body>
                 <div>
                   <div className="tree-view">
-                    <div className="title" style={{ backgroundColor: 'white' }}>
-                      <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Inbox &nbsp;</i>
+                    <div className="title" style={{ backgroundColor: 'white', display: inboxVisible ? 'none' : '' }}>
+                      <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Fetch Inbox &nbsp;</i>
                     </div>
 
                   </div>
