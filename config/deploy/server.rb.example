@@ -1,10 +1,25 @@
-server 'my-server.example.com', user: 'dev', roles: %w{app web db}
+user = 'production'
+server_addr = 'localhost'
 
-set :ssh_options, {
-  forward_agent: false,
-  auth_methods: %w(publickey)
-}
+set :repo_url, 'https://git.scc.kit.edu/ComPlat/chemotion_ELN.git'
+set :branch, 'development'
 
-set :deploy_to, '/home/dev/path/to/deploy'
-set :user, 'dev'
-set :tmp_dir, '/home/dev/tmp_dir'
+# before 'deploy:migrate', 'deploy:backup'
+
+server server_addr, user: user, roles: %w{app web db}
+puts %w(publickey)
+
+set :ssh_options, { forward_agent: true, auth_methods: %w(publickey) }
+# set :pty, false
+set :linked_files, fetch(:linked_files, []).push(
+  '.ruby-version'
+  # '.ruby-gemset',
+)
+
+set :npm_version, '6.14.11'
+set :deploy_to, '/var/www/chemotion_ELN'
+set :user, user
+set :bundle_path, nil
+#set :bundle_without, %w{}.join(' ')
+set :bundle_flags, '--frozen --deployment ' #--quiet
+set :log_file, 'log/capistrano.log'

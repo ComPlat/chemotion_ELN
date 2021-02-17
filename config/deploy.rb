@@ -34,8 +34,8 @@ set :log_file, 'log/capistrano.log'
 set :linked_files, fetch(:linked_files, []).push(
   'config/database.yml',
   'config/storage.yml',
+  'config/user_props.yml',
   # 'config/datacollectors.yml',
-  # 'config/datamailcollector.yml',
   'config/secrets.yml',
   # 'config/spectra.yml',
   '.env'
