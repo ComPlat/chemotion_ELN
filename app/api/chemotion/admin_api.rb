@@ -204,7 +204,6 @@ module Chemotion
         post do
           attributes = declared(params, include_missing: false)
           new_obj = User.create!(attributes)
-          new_obj.profile.update!(data: {})
           status 201
         rescue ActiveRecord::RecordInvalid => e
           { error: e.message }
