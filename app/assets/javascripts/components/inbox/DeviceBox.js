@@ -7,7 +7,6 @@ import InboxActions from '../actions/InboxActions';
 import InboxStore from '../stores/InboxStore';
 
 export default class DeviceBox extends React.Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -17,7 +16,7 @@ export default class DeviceBox extends React.Component {
 
   deleteDeviceBox(deviceBox) {
     InboxActions.deleteContainer(deviceBox);
-  };
+  }
 
   render() {
     const { device_box, largerInbox } = this.props;
@@ -57,7 +56,7 @@ export default class DeviceBox extends React.Component {
               <i
                 className="fa fa-trash-o"
                 onClick={() => this.deleteDeviceBox(device_box)}
-                style={{ cursor: "pointer" }}
+                style={{ cursor: 'pointer' }}
               >&nbsp;&nbsp;
               </i>
             ) : null

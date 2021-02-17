@@ -2,9 +2,6 @@ import React from 'react';
 import Draggable from 'react-draggable';
 import { Badge, Button, Panel, Glyphicon } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-// import ElementActions from '../actions/ElementActions';
-// import DetailActions from '../actions/DetailActions';
-// import DeviceManagement from '../DeviceManagement';
 import InboxStore from '../stores/InboxStore';
 import InboxActions from '../actions/InboxActions';
 import LoadingActions from '../actions/LoadingActions';
@@ -18,19 +15,9 @@ export default class InboxModal extends React.Component {
   constructor(props) {
     super(props);
 
-    // const collecState = CollectionStore.getState();
     const inboxState = InboxStore.getState();
 
     this.state = {
-      // unsharedRoots: collecState.unsharedRoots,
-      // sharedRoots: collecState.sharedRoots,
-      // remoteRoots: collecState.remoteRoots,
-      // lockedRoots: collecState.lockedRoots,
-      // syncInRoots: collecState.syncInRoots,
-      // ownCollectionVisible: true,
-      // sharedWithCollectionVisible: false,
-      // sharedToCollectionVisible: false,
-      // syncCollectionVisible: false,
       inbox: inboxState.inbox,
       inboxVisible: false,
       numberOfAttachments: inboxState.numberOfAttachments,
@@ -94,7 +81,7 @@ export default class InboxModal extends React.Component {
       <div className="tree-view">
         {boxes}
         {inbox.unlinked_attachments
-          ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
+          ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} largerInbox />
           : ''
         }
       </div>
@@ -169,7 +156,7 @@ export default class InboxModal extends React.Component {
 
       );
     }
-    return 0;
+    return null;
   }
 }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 
 import AttachmentContainer from './AttachmentContainer';
@@ -41,7 +42,7 @@ export default class UnsortedBox extends React.Component {
   }
 
   render() {
-    const { unsorted_box } = this.props;
+    const { unsorted_box, largerInbox } = this.props;
     const { visible, modal } = this.state;
 
     const attachments = visible ? unsorted_box.map((attachment) => {
@@ -50,6 +51,7 @@ export default class UnsortedBox extends React.Component {
           key={`attach_${attachment.id}`}
           sourceType={DragDropItemTypes.UNLINKED_DATA}
           attachment={attachment}
+          largerInbox={largerInbox}
         />
       );
     })
@@ -90,3 +92,12 @@ export default class UnsortedBox extends React.Component {
     );
   }
 }
+
+UnsortedBox.propTypes = {
+  unsorted_box: PropTypes.objectOf.isRequired,
+  largerInbox: PropTypes.bool
+};
+
+UnsortedBox.defaultProps = {
+  largerInbox: false
+};

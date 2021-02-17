@@ -78,8 +78,8 @@ class DatasetContainer extends Component {
       };
 
       if (largerInbox === true) {
-        textStyle.marginTop = '8x';
-        textStyle.marginBottom = '8px';
+        textStyle.marginTop = '6px';
+        textStyle.marginBottom = '6px';
       }
 
       const trash = this.props.cache.length === this.props.cache.length // Set it as always show
@@ -115,9 +115,9 @@ class DatasetContainer extends Component {
             <span className="text-info fa fa-arrows">
               &nbsp;{trash}
               <i
-                className={`fa fa-folder${visible ? '-open' : null}`}
+                className={`fa fa-folder${visible ? '-open' : ''}`}
                 onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
-                style={{ cursor: "pointer" }}
+                style={{ cursor: 'pointer' }}
               >&nbsp; {dataset.name}
               </i>
             </span>

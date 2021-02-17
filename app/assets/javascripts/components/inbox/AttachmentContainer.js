@@ -69,12 +69,16 @@ class AttachmentContainer extends Component {
                 bsStyle="danger"
                 bsSize="xsmall"
                 onClick={() => InboxActions.deleteAttachment(attachment)}
-              >Yes</Button>
+              >
+                Yes
+              </Button>
               <Button
                 bsStyle="warning"
                 bsSize="xsmall"
                 onClick={() => this.toggleTooltip()}
-              >No</Button>
+              >
+                No
+              </Button>
             </ButtonGroup>
           </Tooltip>
         ) : null}
@@ -85,8 +89,8 @@ class AttachmentContainer extends Component {
         &nbsp;&nbsp;
         {trash}
         &nbsp;&nbsp;
-        <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: "pointer"}}></i>&nbsp;&nbsp;&nbsp;
-        <span  className='text-info fa fa-arrows'>
+        <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />&nbsp;&nbsp;&nbsp;
+        <span className="text-info fa fa-arrows">
           &nbsp; {attachment.filename}
         </span>
       </div>,
