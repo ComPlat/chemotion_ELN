@@ -113,16 +113,17 @@ class DatasetContainer extends Component {
       return connectDragSource(
         <div>
           <div style={textStyle}>
-            <span className="text-info fa fa-arrows">
-              &nbsp;{trash}
-              <i
-                className={`fa fa-folder${visible ? '-open' : ''}`}
-                onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
-                style={{ cursor: 'pointer' }}
-              >&nbsp; {dataset.name}
-              </i>
-            </span>
-            <span className="text-info" style={{ float: 'right' }} display={largerInbox ? '' : 'none'}>
+            &nbsp;{trash}&nbsp;
+            <i
+              className={`fa fa-folder${visible ? '-open' : ''}`}
+              onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
+              style={{ cursor: 'pointer' }}
+            >&nbsp;&nbsp;
+              <span className="text-info fa fa-arrows">
+                &nbsp; {dataset.name}
+              </span>
+            </i>
+            <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
               {moment(dataset.created_at).format('DD.MM.YYYY HH:mm') }
             </span>
           </div>
