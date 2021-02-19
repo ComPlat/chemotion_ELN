@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
 import AttachmentContainer from './AttachmentContainer';
@@ -120,6 +121,9 @@ class DatasetContainer extends Component {
                 style={{ cursor: 'pointer' }}
               >&nbsp; {dataset.name}
               </i>
+            </span>
+            <span className="text-info" style={{ float: 'right' }} display={largerInbox ? '' : 'none'}>
+              {moment(dataset.created_at).format('DD.MM.YYYY HH:mm') }
             </span>
           </div>
           <div>{visible ? attachments : null}</div>

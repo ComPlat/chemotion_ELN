@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
 import InboxActions from '../actions/InboxActions';
@@ -92,6 +93,9 @@ class AttachmentContainer extends Component {
         <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />&nbsp;&nbsp;&nbsp;
         <span className="text-info fa fa-arrows">
           &nbsp; {attachment.filename}
+        </span>
+        <span className="text-info" style={{ float: 'right' }} display={largerInbox ? '' : 'none'}>
+          {moment(attachment.created_at).format('DD.MM.YYYY HH:mm') }
         </span>
       </div>,
       { dropEffect: 'move' }
