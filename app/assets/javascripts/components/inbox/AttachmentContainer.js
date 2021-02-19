@@ -87,14 +87,12 @@ class AttachmentContainer extends Component {
     );
     return connectDragSource(
       <div style={textStyle}>
-        &nbsp;&nbsp;
-        {trash}
-        &nbsp;&nbsp;
-        <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;{trash}&nbsp;
+        <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />&nbsp;&nbsp;
         <span className="text-info fa fa-arrows">
           &nbsp; {attachment.filename}
         </span>
-        <span className="text-info" style={{ float: 'right' }} display={largerInbox ? '' : 'none'}>
+        <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
           {moment(attachment.created_at).format('DD.MM.YYYY HH:mm') }
         </span>
       </div>,
