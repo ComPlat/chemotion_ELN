@@ -49,7 +49,7 @@ class AttachmentContainer extends Component {
       display: 'block',
       whiteSpace: 'nowrap',
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
+      textOverflow: 'clip',
       maxWidth: '100%',
       cursor: 'move'
     };
