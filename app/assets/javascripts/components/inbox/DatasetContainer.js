@@ -137,7 +137,7 @@ export default DragSource(props => props.sourceType, dataSource, collectSource)(
 DatasetContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
   isDragging: PropTypes.bool.isRequired,
-  sourceType: PropTypes.objectOf.isRequired,
+  sourceType: PropTypes.string.isRequired,
   largerInbox: PropTypes.bool
 };
 

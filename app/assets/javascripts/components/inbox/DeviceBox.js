@@ -75,7 +75,7 @@ export default class DeviceBox extends React.Component {
 }
 
 DeviceBox.propTypes = {
-  device_box: PropTypes.objectOf.isRequired,
+  device_box: PropTypes.object.isRequired,
   largerInbox: PropTypes.bool
 };
 

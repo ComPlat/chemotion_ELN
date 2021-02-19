@@ -94,7 +94,7 @@ export default class UnsortedBox extends React.Component {
 }
 
 UnsortedBox.propTypes = {
-  unsorted_box: PropTypes.objectOf.isRequired,
+  unsorted_box: PropTypes.array.isRequired,
   largerInbox: PropTypes.bool
 };
 
