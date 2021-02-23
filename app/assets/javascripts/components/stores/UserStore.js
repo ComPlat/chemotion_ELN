@@ -72,6 +72,7 @@ class UserStore {
     this.state.currentTab = tab
     this.state.currentType = type
   }
+
   handleFetchNoVNCDevices(devices) {
     if (devices) { this.state.devices = devices; }
   }
