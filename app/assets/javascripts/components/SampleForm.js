@@ -387,6 +387,7 @@ export default class SampleForm extends React.Component {
     const polyDisabled = isPolymer || isDisabled;
     const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
     const densityBlocked = isDisabled ? true : !molarityBlocked;
+    const { enableSampleDecoupled } = this.props;
 
     return (
       <Table responsive className="sample-form">
@@ -402,9 +403,11 @@ export default class SampleForm extends React.Component {
                 <div style={{ width: '15%' }} className="top-secret-checkbox">
                   {this.topSecretCheckbox(sample)}
                 </div>
-                <div style={{ width: '15%' }} className="decoupled-checkbox">
-                  {this.decoupledCheckbox(sample)}
-                </div>
+                {
+                  enableSampleDecoupled ? (
+                    <div style={{ width: '15%' }} className="decoupled-checkbox">{this.decoupledCheckbox(sample)}</div>
+                  ) : null
+                }
               </div>
             </td>
           </tr>
@@ -454,7 +457,9 @@ export default class SampleForm extends React.Component {
             </td>
           </tr>
 
-          <tr>
+          {/* comment 'Optical rotation' ... 'Private notes' out temporarily */}
+
+          {/* <tr>
             <td>
               {
                 this.textInput(sample, 'xref_optical_rotation', 'Optical rotation')
@@ -489,7 +494,7 @@ export default class SampleForm extends React.Component {
                 />
               </FormGroup>
             </td>
-          </tr>
+          </tr> */}
 
           <tr>
             {
@@ -532,5 +537,8 @@ export default class SampleForm extends React.Component {
 SampleForm.propTypes = {
   sample: PropTypes.object,
   parent: PropTypes.object,
-  customizableField: PropTypes.func.isRequired
+  customizableField: PropTypes.func.isRequired,
+  enableSampleDecoupled: PropTypes.bool
 };
+
+SampleForm.defaultProps = { enableSampleDecoupled: false };

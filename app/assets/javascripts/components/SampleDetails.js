@@ -98,6 +98,7 @@ export default class SampleDetails extends React.Component {
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
+    this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -853,7 +854,8 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem>
           <SampleForm sample={sample}
                       parent={this}
-                      customizableField={this.customizableField} />
+                      customizableField={this.customizableField}
+                      enableSampleDecoupled={this.enableSampleDecoupled} />
         </ListGroupItem>
           <EditUserLabels element={sample} />
           {this.elementalPropertiesItem(sample)}
