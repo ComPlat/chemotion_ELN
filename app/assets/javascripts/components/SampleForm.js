@@ -50,6 +50,10 @@ export default class SampleForm extends React.Component {
     this.setState({ molarityBlocked: true });
   }
 
+  handleMolecularMassChanged(mass) {
+    this.props.sample.setMolecularMass(mass);
+  }
+
   showStructureEditor() {
     this.props.parent.setState({
       showStructureEditor: true,
@@ -237,13 +241,14 @@ export default class SampleForm extends React.Component {
 
   handleFieldChanged(field, e) {
     const { sample } = this.props;
-
     if (/amount/.test(field)) {
       this.handleAmountChanged(e);
     } else if (/molarity/.test(field)) {
       this.handleMolarityChanged(e);
     } else if (/density/.test(field)) {
       this.handleDensityChanged(e);
+    } else if (/molecular_mass/.test(field)) {
+      this.handleMolecularMassChanged(e);
     } else if (/^xref_/.test(field)) {
       const key = field.split('xref_')[1];
       sample.xref[key] = e;
@@ -432,7 +437,7 @@ export default class SampleForm extends React.Component {
           { sample.decoupled &&
             <tr>
               {
-                this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled, '', densityBlocked)
+                this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
               }
               <td colSpan="3">
                 {

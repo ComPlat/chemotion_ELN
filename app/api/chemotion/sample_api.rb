@@ -290,7 +290,7 @@ module Chemotion
         optional :molecule_name_id, type: Integer
         requires :container, type: Hash
         optional :user_labels, type: Array
-        optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?'
+        optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         #use :root_container_params
@@ -394,7 +394,7 @@ module Chemotion
         optional :molecule_name_id, type: Integer
         optional :molecule_id, type: Integer
         requires :container, type: Hash
-        optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?'
+        optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
       end

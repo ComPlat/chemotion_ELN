@@ -9,6 +9,7 @@ class OSample < OpenStruct
       ) unless prop_value.blank?
     end
     data[:elemental_compositions_attributes].each { |i| i.delete(:description)} if data[:elemental_compositions_attributes]
+    data[:show_label] = false if data[:show_label].blank?
     super
   end
 

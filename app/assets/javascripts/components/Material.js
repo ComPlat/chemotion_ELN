@@ -436,7 +436,8 @@ class Material extends Component {
     const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
     const mol = material.amount_mol;
     //const concn = mol / reaction.solventVolume;
-    const mw = material.molecule && material.molecule.molecular_weight
+    const mw = material.decoupled ?
+      (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
 
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';

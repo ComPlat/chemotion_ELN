@@ -217,8 +217,7 @@ class Reaction < ActiveRecord::Base
         paths[prop] = collection.map do |reactions_sample|
           sample = reactions_sample.sample
           params = [
-            sample.sample_svg_file,
-            sample.molecule.molecule_svg_file
+            svg_path(sample.sample_svg_file, sample.molecule.molecule_svg_file)
           ]
 
           params[0] = sample.svg_text_path if reactions_sample.show_label

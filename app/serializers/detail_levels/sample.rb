@@ -19,7 +19,7 @@ class DetailLevels::Sample
   def level0_attributes
     [
       :id, :type, :is_restricted, :external_label, :code_log,
-      :can_update, :can_copy, :can_publish
+      :can_update, :can_copy, :can_publish, :decoupled, :molecular_mass, :sum_formula
     ]
   end
 

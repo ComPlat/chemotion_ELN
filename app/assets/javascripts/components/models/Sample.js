@@ -548,6 +548,10 @@ export default class Sample extends Element {
     this.molarity_value = 0;
   }
 
+  setMolecularMass(mass) {
+    this.molecular_mass = mass.value;
+  }
+
   setUserLabels(userLabels) {
     this.user_labels = userLabels;
   }

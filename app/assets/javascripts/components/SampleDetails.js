@@ -821,8 +821,8 @@ export default class SampleDetails extends React.Component {
     if (!show) return false;
     return (
       <ListGroupItem>
-        {this.moleculeInchi(sample)}
-        {this.moleculeCanoSmiles(sample)}
+        {sample.decoupled ? null : this.moleculeInchi(sample)}
+        {sample.decoupled ? null : this.moleculeCanoSmiles(sample)}
         {this.moleculeMolfile(sample)}
         {this.moleculeCas()}
       </ListGroupItem>
