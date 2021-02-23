@@ -322,7 +322,7 @@ const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout 
       const arr = layer.condition.split(',');
       if (arr.length >= 3) {
         const specific = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
-        if (specific === arr[2] && arr[2].trim()) {
+        if ((specific && specific.toString()) === (arr[2] && arr[2].toString().trim())) {
           const igs = (
             <GenPropertiesLayer
               layer={layer}
