@@ -141,3 +141,7 @@ tags.temp
 .vscode/*
 
 spec/examples.txt
+
+# ignore vendor files
+vendor/cache/*
+.idea/*
