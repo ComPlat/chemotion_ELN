@@ -319,20 +319,30 @@ const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout 
       );
       layout.push(ig);
     } else if (layer.condition && layer.condition.trim().length > 0) {
-      const arr = layer.condition.split(',');
-      if (arr.length >= 3) {
-        const specific = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
-        if ((specific && specific.toString()) === (arr[2] && arr[2].toString().trim())) {
-          const igs = (
-            <GenPropertiesLayer
-              layer={layer}
-              onChange={funcChange}
-              selectOptions={options}
-              onClick={funcClick}
-            />
-          );
-          layout.push(igs);
+      const conditions = layer.condition.split(';');
+      let showLayer = false;
+
+      for (let i = 0; i < conditions.length; i++) {
+        const arr = conditions[i].split(',');
+        if (arr.length >= 3) {
+          const specific = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
+          if ((specific && specific.toString()) === (arr[2] && arr[2].toString().trim())) {
+            showLayer = true;
+            break;
+          }
         }
+      }
+
+      if (showLayer === true) {
+        const igs = (
+          <GenPropertiesLayer
+            layer={layer}
+            onChange={funcChange}
+            selectOptions={options}
+            onClick={funcClick}
+          />
+        );
+        layout.push(igs);
       }
     }
   });
