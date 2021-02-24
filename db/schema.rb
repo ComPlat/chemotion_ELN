@@ -681,6 +681,17 @@ ActiveRecord::Schema.define(version: 2021_08_16_113952) do
     t.index ["predictable_type", "predictable_id"], name: "index_predictions_on_predictable_type_and_predictable_id"
   end
 
+  create_table "private_notes", force: :cascade do |t|
+    t.string "content"
+    t.integer "created_by", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "noteable_id"
+    t.string "noteable_type"
+    t.index ["created_by"], name: "index_private_note_on_user"
+    t.index ["noteable_type", "noteable_id"], name: "index_private_notes_on_noteable_type_and_noteable_id"
+  end
+
   create_table "profiles", id: :serial, force: :cascade do |t|
     t.boolean "show_external_name", default: false
     t.integer "user_id", null: false

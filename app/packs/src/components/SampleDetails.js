@@ -331,10 +331,12 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(new Sample(sample), closeView)
       }
     }
+
     if (sample.is_new || closeView) {
       DetailActions.close(sample, true);
     }
     sample.updateChecksum();
+    
   }
 
   structureEditorButton(isDisabled) {
