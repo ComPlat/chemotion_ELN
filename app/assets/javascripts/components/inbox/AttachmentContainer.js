@@ -7,6 +7,8 @@ import InboxActions from '../actions/InboxActions';
 import DragDropItemTypes from '../DragDropItemTypes';
 import Utils from '../utils/Functions';
 
+import MoveToAnalysisButton from './MoveToAnalysisButton';
+
 const dataSource = {
   beginDrag(props) {
     return props;
@@ -85,10 +87,17 @@ class AttachmentContainer extends Component {
         ) : null}
       </span>
     );
+
     return connectDragSource(
       <div style={textStyle}>
         &nbsp;&nbsp;{trash}&nbsp;
         <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />&nbsp;&nbsp;
+        {largerInbox ? (
+          <MoveToAnalysisButton
+            attachmentId={attachment.id}
+            largerInbox={largerInbox}
+          />
+          ) : null }
         <span className="text-info fa fa-arrows">
           &nbsp; {attachment.filename}
         </span>
