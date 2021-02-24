@@ -34,7 +34,7 @@ development:
 
   # Allowlist of dir paths for local data collection
   :localcollectors:
-    - :path: '<%= Rails.root.join('tmp', 'datacollector') %>
+    - :path: '<%= Rails.root.join(*%w[tmp datacollector]).to_s %>'
 
 production:
   :services:
