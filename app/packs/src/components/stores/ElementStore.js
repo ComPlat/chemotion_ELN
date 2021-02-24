@@ -204,6 +204,9 @@ class ElementStore {
       handlefetchResearchPlanById: ElementActions.fetchResearchPlanById,
       handleCreateResearchPlan: ElementActions.createResearchPlan,
 
+      handleCreatePrivateNote: ElementActions.createPrivateNote,
+      handleUpdatePrivateNote: ElementActions.updatePrivateNote,
+
       // FIXME ElementStore listens to UIActions?
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
@@ -1302,6 +1305,18 @@ class ElementStore {
 
   // End of DetailStore
   /////////////////////
+
+
+  // -- Private Note --
+  handleCreatePrivateNote(note) {
+    this.state.currentElement.private_note = note
+    this.changeCurrentElement(this.state.currentElement)
+  }
+
+  handleUpdatePrivateNote(note) {
+    this.state.currentElement.private_note = note
+    this.changeCurrentElement(this.state.currentElement)
+  }
 }
 
 export default alt.createStore(ElementStore, 'ElementStore');
