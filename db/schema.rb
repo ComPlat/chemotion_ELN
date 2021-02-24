@@ -421,6 +421,15 @@ ActiveRecord::Schema.define(version: 2020_12_01_051854) do
     t.integer "include_ids", default: [], array: true
     t.integer "exclude_ids", default: [], array: true
     t.jsonb "configs", default: {}, null: false
+  end
+
+  create_table "matrices", force: :cascade do |t|
+    t.string   "name",                        null: false
+    t.boolean  "enabled",     default: false
+    t.string   "label"
+    t.integer  "include_ids", default: [],                 array: true
+    t.integer  "exclude_ids", default: [],                 array: true
+    t.jsonb    "configs",     default: {},    null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -761,7 +770,7 @@ ActiveRecord::Schema.define(version: 2020_12_01_051854) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.integer "sign_in_count", default: 0, null: false
+    t.integer  "sign_in_count",                     default: 0,                                                                                       null: false
     t.datetime "current_sign_in_at"
     t.datetime "last_sign_in_at"
     t.inet "current_sign_in_ip"
@@ -1007,20 +1016,24 @@ ActiveRecord::Schema.define(version: 2020_12_01_051854) do
       	if in_user_ids is null then
           update users u set matrix = (
       	    select coalesce(sum(2^mx.id),0) from (
-      		    select distinct m1.* from matrices m1, users u1, users_groups ug1
+      		    select distinct m1.* from matrices m1, users u1
+      				left join users_groups ug1 on ug1.user_id = u1.id
       		      where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
       	      except
-      		    select distinct m2.* from matrices m2, users u2, users_groups ug2
+      		    select distinct m2.* from matrices m2, users u2
+      				left join users_groups ug2 on ug2.user_id = u2.id
       		      where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
       	    ) mx
           );
       	else
-      		  update users u set updated_at = now(), matrix = (
+      		  update users u set matrix = (
       		  	select coalesce(sum(2^mx.id),0) from (
-      			   select distinct m1.* from matrices m1, users u1, users_groups ug1
+      			   select distinct m1.* from matrices m1, users u1
+      				 left join users_groups ug1 on ug1.user_id = u1.id
       			     where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
       			   except
-      			   select distinct m2.* from matrices m2, users u2, users_groups ug2
+      			   select distinct m2.* from matrices m2, users u2
+      				 left join users_groups ug2 on ug2.user_id = u2.id
       			     where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
       			  ) mx
       		  ) where ((in_user_ids) @> array[u.id]) or (u.id in (select ug3.user_id from users_groups ug3 where (in_user_ids) @> array[ug3.group_id]));

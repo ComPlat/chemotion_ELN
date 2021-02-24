@@ -8,7 +8,7 @@
 #  deleted_at         :datetime
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
-#  data               :jsonb
+#  data               :jsonb            not null
 #  curation           :integer          default(2)
 #
 # Indexes
