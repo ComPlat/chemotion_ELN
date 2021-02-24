@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20201201051854) do
+ActiveRecord::Schema.define(version: 2020_12_01_051854) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -192,15 +192,10 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.integer "creator", default: 0
     t.integer "sample_id", default: 0
     t.jsonb "tddft", default: {}
-    t.float    "mean_abs_potential", default: 0.0
-    t.integer  "creator",            default: 0
-    t.integer  "sample_id",          default: 0
-    t.jsonb    "tddft",              default: {}
-    t.string   "task_id"
+    t.string "task_id"
     t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_computed_props_on_deleted_at"
   end
-
-  add_index "computed_props", ["deleted_at"], name: "index_computed_props_on_deleted_at", using: :btree
 
   create_table "container_hierarchies", id: false, force: :cascade do |t|
     t.integer "ancestor_id", null: false
@@ -402,125 +397,14 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.integer "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "litype"
     t.index ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature"
     t.index ["literature_id", "element_type", "element_id"], name: "index_on_literature"
   end
 
-  create_table "ketcherails_amino_acids", force: :cascade do |t|
-    t.integer  "moderated_by"
-    t.integer  "suggested_by"
-    t.string   "name",                          null: false
-    t.text     "molfile",                       null: false
-    t.integer  "aid",               default: 1, null: false
-    t.integer  "aid2",              default: 1, null: false
-    t.integer  "bid",               default: 1, null: false
-    t.string   "icon_path"
-    t.string   "sprite_class"
-    t.string   "status"
-    t.text     "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at",                    null: false
-    t.datetime "updated_at",                    null: false
-    t.string   "icon_file_name"
-    t.string   "icon_content_type"
-    t.integer  "icon_file_size"
-    t.datetime "icon_updated_at"
-  end
-
-  add_index "ketcherails_amino_acids", ["moderated_by"], name: "index_ketcherails_amino_acids_on_moderated_by", using: :btree
-  add_index "ketcherails_amino_acids", ["name"], name: "index_ketcherails_amino_acids_on_name", using: :btree
-  add_index "ketcherails_amino_acids", ["suggested_by"], name: "index_ketcherails_amino_acids_on_suggested_by", using: :btree
-
-  create_table "ketcherails_atom_abbreviations", force: :cascade do |t|
-    t.integer  "moderated_by"
-    t.integer  "suggested_by"
-    t.string   "name",                          null: false
-    t.text     "molfile",                       null: false
-    t.integer  "aid",               default: 1, null: false
-    t.integer  "bid",               default: 1, null: false
-    t.string   "icon_path"
-    t.string   "sprite_class"
-    t.string   "status"
-    t.text     "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at",                    null: false
-    t.datetime "updated_at",                    null: false
-    t.string   "icon_file_name"
-    t.string   "icon_content_type"
-    t.integer  "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.string   "rtl_name"
-  end
-
-  add_index "ketcherails_atom_abbreviations", ["moderated_by"], name: "index_ketcherails_atom_abbreviations_on_moderated_by", using: :btree
-  add_index "ketcherails_atom_abbreviations", ["name"], name: "index_ketcherails_atom_abbreviations_on_name", using: :btree
-  add_index "ketcherails_atom_abbreviations", ["suggested_by"], name: "index_ketcherails_atom_abbreviations_on_suggested_by", using: :btree
-
-  create_table "ketcherails_common_templates", force: :cascade do |t|
-    t.integer  "moderated_by"
-    t.integer  "suggested_by"
-    t.string   "name",                 null: false
-    t.text     "molfile",              null: false
-    t.string   "icon_path"
-    t.string   "sprite_class"
-    t.text     "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.integer  "template_category_id"
-    t.string   "status"
-    t.string   "icon_file_name"
-    t.string   "icon_content_type"
-    t.integer  "icon_file_size"
-    t.datetime "icon_updated_at"
-  end
-
-  add_index "ketcherails_common_templates", ["moderated_by"], name: "index_ketcherails_common_templates_on_moderated_by", using: :btree
-  add_index "ketcherails_common_templates", ["name"], name: "index_ketcherails_common_templates_on_name", using: :btree
-  add_index "ketcherails_common_templates", ["suggested_by"], name: "index_ketcherails_common_templates_on_suggested_by", using: :btree
-
-  create_table "ketcherails_custom_templates", force: :cascade do |t|
-    t.integer  "user_id",      null: false
-    t.string   "name",         null: false
-    t.text     "molfile",      null: false
-    t.string   "icon_path"
-    t.string   "sprite_class"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
-
-  add_index "ketcherails_custom_templates", ["user_id"], name: "index_ketcherails_custom_templates_on_user_id", using: :btree
-
-  create_table "ketcherails_template_categories", force: :cascade do |t|
-    t.string   "name",              null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.string   "icon_file_name"
-    t.string   "icon_content_type"
-    t.integer  "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.string   "sprite_class"
-  end
-
-  create_table "literals", force: :cascade do |t|
-    t.integer  "literature_id"
-    t.integer  "element_id"
-    t.string   "element_type",  limit: 40
-    t.string   "category",      limit: 40
-    t.integer  "user_id"
-    t.datetime "created_at",               null: false
-    t.datetime "updated_at",               null: false
-    t.string   "litype"
-    t.index ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature", using: :btree
-    t.index ["literature_id", "element_type", "element_id"], name: "index_on_literature", using: :btree
-  end
-
-  create_table "literatures", force: :cascade do |t|
-    t.string   "title"
-    t.string   "url"
+  create_table "literatures", id: :serial, force: :cascade do |t|
+    t.string "title"
+    t.string "url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
@@ -841,32 +725,6 @@ ActiveRecord::Schema.define(version: 20201201051854) do
     t.string "fake_ancestry"
     t.integer "researchplan_detail_level", default: 10
     t.string "label"
-  end
-
-  create_table "user_labels", force: :cascade do |t|
-    t.integer  "user_id"
-    t.string   "title",                     null: false
-    t.string   "description"
-    t.string   "color",                     null: false
-    t.integer  "access_level", default: 0
-    t.integer  "position",     default: 10
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-  end
-
-  create_table "sync_collections_users", force: :cascade do |t|
-    t.integer  "user_id"
-    t.integer  "collection_id"
-    t.integer  "shared_by_id"
-    t.integer  "permission_level",          default: 0
-    t.integer  "sample_detail_level",       default: 0
-    t.integer  "reaction_detail_level",     default: 0
-    t.integer  "wellplate_detail_level",    default: 0
-    t.integer  "screen_detail_level",       default: 0
-    t.string   "fake_ancestry"
-    t.integer  "researchplan_detail_level", default: 10
-    t.string   "label"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
@@ -898,9 +756,9 @@ ActiveRecord::Schema.define(version: 20201201051854) do
   end
 
   create_table "users", id: :serial, force: :cascade do |t|
-    t.string   "email",                             default: "",                                                                                      null: false
-    t.string   "encrypted_password",                default: "",                                                                                      null: false
-    t.string   "reset_password_token"
+    t.string "email", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
     t.integer "sign_in_count", default: 0, null: false
@@ -1124,6 +982,21 @@ ActiveRecord::Schema.define(version: 20201201051854) do
       	end case;
       	return in_message_id;
       end;$function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
   SQL
   create_function :generate_users_matrix, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
