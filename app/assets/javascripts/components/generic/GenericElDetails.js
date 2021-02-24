@@ -113,7 +113,7 @@ export default class GenericElDetails extends Component {
     const { properties } = genericEl;
     let value = '';
     if (type === 'select') {
-      ({ value } = event);
+      value = event ? event.value : null;
     } else if (type.startsWith('drag')) {
       value = event;
     } else if (type === 'checkbox') {

@@ -62,6 +62,7 @@ const GenPropertiesSelect = (opt) => {
         <ControlLabel>{opt.label}</ControlLabel>
       </OverlayTrigger>
       <Select
+        isClearable
         name={opt.field}
         multi={false}
         options={options}

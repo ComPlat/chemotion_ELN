@@ -93,7 +93,7 @@ class SegmentDetails extends Component {
         value = event.target.checked;
         break;
       case 'select':
-        ({ value } = event);
+        value = event ? event.value : null;
         break;
       case 'integer':
         ({ value } = event.target);
