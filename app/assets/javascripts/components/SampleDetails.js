@@ -62,6 +62,17 @@ import MatrixCheck from './common/MatrixCheck';
 
 const MWPrecision = 6;
 
+const decoupleCheck = (sample) => {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
+    NotificationActions.add({
+      title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
+    });
+    LoadingActions.stop();
+    return false;
+  }
+  return true;
+};
+
 const rangeCheck = (field, sample) => {
   if (sample[`${field}_lowerbound`] && sample[`${field}_lowerbound`] !== ''
     && sample[`${field}_upperbound`] && sample[`${field}_upperbound`] !== ''
@@ -111,10 +122,11 @@ export default class SampleDetails extends React.Component {
     this.toggleInchi = this.toggleInchi.bind(this);
     this.fetchQcWhenNeeded = this.fetchQcWhenNeeded.bind(this);
     this.customizableField = this.customizableField.bind(this);
+    this.decoupleMolecule = this.decoupleMolecule.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || nextProps.sample.molfile.length === 0)) {
+    if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))) {
       this.setState({
         smileReadonly: false,
       });
@@ -225,6 +237,20 @@ export default class SampleDetails extends React.Component {
       });
   }
 
+  decoupleMolecule() {
+    const { sample } = this.state;
+    MoleculesFetcher.decouple(sample.molfile, sample.sample_svg_file, sample.decoupled)
+      .then((result) => {
+        sample.molecule = result;
+        sample.molecule_id = result.id;
+        this.setState({
+          sample, smileReadonly: true, pageMessage: result.ob_log
+        });
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   handleStructureEditorSave(molfile, svg_file = null, config = null) {
     const { sample } = this.state;
     sample.molfile = molfile;
@@ -234,7 +260,7 @@ export default class SampleDetails extends React.Component {
     // this.updateMolecule(molfile, svg_file, smiles);
     if (!smiles || smiles === '') {
       this.setState({ loadingMolecule: true });
-      MoleculesFetcher.fetchByMolfile(molfile, svg_file)
+      MoleculesFetcher.fetchByMolfile(molfile, svg_file, sample.decoupled)
         .then((result) => {
           sample.molecule = result;
           sample.molecule_id = result.id;
@@ -271,6 +297,7 @@ export default class SampleDetails extends React.Component {
   handleSubmit(closeView = false) {
     LoadingActions.start();
     const { sample } = this.state;
+    if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
@@ -855,7 +882,8 @@ export default class SampleDetails extends React.Component {
           <SampleForm sample={sample}
                       parent={this}
                       customizableField={this.customizableField}
-                      enableSampleDecoupled={this.enableSampleDecoupled} />
+                      enableSampleDecoupled={this.enableSampleDecoupled}
+                      decoupleMolecule={this.decoupleMolecule} />
         </ListGroupItem>
           <EditUserLabels element={sample} />
           {this.elementalPropertiesItem(sample)}

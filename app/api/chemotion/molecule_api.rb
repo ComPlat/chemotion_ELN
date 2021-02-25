@@ -127,14 +127,40 @@ module Chemotion
         end
       end
 
-      desc "Return molecule by Molfile"
+      namespace :decouple do
+        desc 'decouple from molecule'
+        params do
+          requires :molfile, type: String, desc: 'molfile'
+          requires :svg_name, type: String, desc: 'original svg filename'
+          requires :decoupled, type: Boolean, desc: 'decouple from molecule'
+        end
+
+        post do
+          molfile = params[:molfile]
+          svg_name = params[:svg_name]
+          decoupled = params[:decoupled]
+
+          if decoupled
+            molecule = Molecule.find_or_create_dummy
+            ob = ''
+          else
+            molecule = Molecule.find_or_create_by_molfile(molfile)
+            ob = molecule&.ob_log
+          end
+          molecule.attributes.merge(temp_svg: svg_name, ob_log: ob)
+        end
+      end
+
+      desc 'Return molecule by Molfile'
       params do
-        requires :molfile, type: String, desc: "Molecule molfile"
-        optional :svg_file, type: String, desc: "Molecule svg file"
+        requires :molfile, type: String, desc: 'Molecule molfile'
+        optional :svg_file, type: String, desc: 'Molecule svg file'
+        requires :decoupled, type: Boolean, desc: 'decouple from molecule'
       end
       post do
         svg = params[:svg_file]
         molfile = params[:molfile]
+        decoupled = params[:decoupled]
 
         # write temporary SVG
         processor = Ketcherails::SVGProcessor.new svg
@@ -150,9 +176,14 @@ module Chemotion
         svg_file.write(svg)
         svg_file.close
 
-        molecule = Molecule.find_or_create_by_molfile(molfile)
-        ob = molecule.ob_log
-        molecule.attributes.merge({ temp_svg: svg_file_name, ob_log: ob })
+        if decoupled
+          molecule = Molecule.find_or_create_dummy
+          ob = ''
+        else
+          molecule = Molecule.find_or_create_by_molfile(molfile)
+          ob = molecule&.ob_log
+        end
+        molecule.attributes.merge(temp_svg: svg_file_name, ob_log: ob)
       end
 
       desc "return CAS of the molecule"

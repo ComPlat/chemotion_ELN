@@ -36,7 +36,7 @@ module UnitConvertable
     end
 
     if m
-      val * 1000
+      (val || 0) * 1000
     else
       val
     end

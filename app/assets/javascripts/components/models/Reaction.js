@@ -693,7 +693,7 @@ export default class Reaction extends Element {
 
   toggleShowLabelForSample(sampleID) {
     const sample = this.sampleById(sampleID);
-    sample.show_label = !sample.show_label;
+    sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
   }
 
   _setAsReferenceMaterial(sample) {

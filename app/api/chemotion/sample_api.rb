@@ -399,7 +399,7 @@ module Chemotion
         optional :sum_formula, type: String
       end
       post do
-
+        molecule_id = params[:decoupled] ? Molecule.find_or_create_dummy&.id : params[:molecule_id]
         attributes = {
           name: params[:name],
           short_label: params[:short_label],
@@ -415,7 +415,7 @@ module Chemotion
           solvent: params[:solvent],
           location: params[:location],
           molfile: params[:molfile],
-          molecule_id: params[:molecule_id],
+          molecule_id: molecule_id,
           sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
           density: params[:density],

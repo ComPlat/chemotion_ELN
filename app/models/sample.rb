@@ -71,7 +71,7 @@ class Sample < ActiveRecord::Base
   ]
 
   # search scopes for exact matching
-  pg_search_scope :search_by_sum_formula, associated_against: {
+  pg_search_scope :search_by_sum_formula,  against: :sum_formula, associated_against: {
     molecule: :sum_formular
   }
 
@@ -462,6 +462,7 @@ private
   end
 
   def check_molfile_polymer_section
+    return if decoupled
     return unless self.molfile.include? 'R#'
 
     lines = self.molfile.lines

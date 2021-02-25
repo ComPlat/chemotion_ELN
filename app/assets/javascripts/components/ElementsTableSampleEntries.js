@@ -147,28 +147,34 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
     >
-      <td colSpan="2" style={{ position: 'relative ' }} >
-        {svgPreview(showPreviews, sample)}
-        <div style={{ position: 'absolute', right: '3px', top: '14px' }} >
-          <OverlayTrigger placement="bottom" overlay={overlayToggle} >
-            <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }} >
-              <i className={`glyphicon ${showIndicator}`} />
-            </span>
-          </OverlayTrigger>
-        </div>
-        <div style={{ paddingLeft: 5, wordWrap: 'break-word' }} >
-          <h4><SampleName sample={sample} /></h4>
-        </div>
-        <div style={{ position: 'absolute', top: '10px', right: '25px', float: 'right' }} >
-          <ChemrepoLabels chemrepoId={sample.molecule.chem_repo && sample.molecule.chem_repo.id} />
-          {tdExtraContents.map(e => e)}
-          <PubchemLabels element={sample} />
-        </div>
-        <div style={{ position: 'absolute', bottom: '10px', right: '25px', float: 'right' }} >
-          <ComputedPropLabel cprops={sample.molecule_computed_props} />
-        </div>
-      </td>
-      {dragColumn(sample, showDragColumn, DragDropItemTypes.MOLECULE, targetType)}
+      { sample.decoupled ?
+        (<td colSpan="3" style={{ position: 'relative ' }} ><div><h4>(moleculeless sample)</h4></div></td>) :
+        (
+          <td colSpan="2" style={{ position: 'relative ' }} >
+            {svgPreview(showPreviews, sample)}
+            <div style={{ position: 'absolute', right: '3px', top: '14px' }} >
+              <OverlayTrigger placement="bottom" overlay={overlayToggle} >
+                <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }} >
+                  <i className={`glyphicon ${showIndicator}`} />
+                </span>
+              </OverlayTrigger>
+            </div>
+            <div style={{ paddingLeft: 5, wordWrap: 'break-word' }} >
+              <h4><SampleName sample={sample} /></h4>
+            </div>
+            <div style={{ position: 'absolute', top: '10px', right: '25px', float: 'right' }} >
+              <ChemrepoLabels chemrepoId={sample.molecule.chem_repo && sample.molecule.chem_repo.id} />
+              {tdExtraContents.map(e => e)}
+              <PubchemLabels element={sample} />
+            </div>
+            <div style={{ position: 'absolute', bottom: '10px', right: '25px', float: 'right' }} >
+              <ComputedPropLabel cprops={sample.molecule_computed_props} />
+            </div>
+          </td>
+        )
+      }
+      {sample.decoupled ?
+        null : dragColumn(sample, showDragColumn, DragDropItemTypes.MOLECULE, targetType)}
     </tr>
   );
 }

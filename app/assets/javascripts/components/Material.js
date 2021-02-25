@@ -196,7 +196,7 @@ class Material extends Component {
     );
   }
 
-  materialShowLabel(material, style = { padding: '5px 4px', width: '18px' }) {
+  materialShowLabel(material, style = { padding: '5px 4px' }) {
     return (
       <Button
         active
@@ -620,7 +620,7 @@ class Material extends Component {
     );
   }
 
-  switchTargetReal(isTarget, style = { padding: '5px 4px', width: '18px' }) {
+  switchTargetReal(isTarget, style = { padding: '5px 4px' }) {
     return (
       <Button
         disabled={!permitOn(this.props.reaction)}

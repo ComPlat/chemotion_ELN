@@ -293,7 +293,7 @@ export default class Sample extends Element {
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule && this.molecule.serialize(),
-      molecule_id: this.molecule && this.molecule.id,
+      molecule_id: this.molecule && (this.molecule.id === '_none_' ? null : this.molecule.id),
       molecule_name_id: this.molecule_name && this.molecule_name.value,
       sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
@@ -780,7 +780,7 @@ export default class Sample extends Element {
 
   get molecule_formula() {
     if (this.decoupled) {
-      return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : false;
+      return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : '';
     }
 
     return this.molecule && this.molecule.sum_formular;
@@ -871,7 +871,7 @@ export default class Sample extends Element {
 
 
   get isValid(){
-    return (this && this.molfile &&
+    return (this && ((this.molfile && !this.decoupled) || this.decoupled) &&
             !this.error_loading && !this.error_polymer_type);
   }
 
@@ -924,7 +924,7 @@ export default class Sample extends Element {
       equivalent: this.equivalent,
       position: this.position,
       reference: this.reference || false,
-      show_label: this.show_label || false,
+      show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
       coefficient: this.coefficient,
     };

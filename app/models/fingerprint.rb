@@ -123,6 +123,8 @@ class Fingerprint < ActiveRecord::Base
     end
 
     def find_or_create_by_molfile(molfile)
+      return unless molfile.present?
+
       molfile = standardized_molfile(molfile)
       fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
 
@@ -168,6 +170,7 @@ class Fingerprint < ActiveRecord::Base
   # Self-generate num_set_bits if zero?
   def check_num_set_bits
     return unless num_set_bits.zero?
+
     self.num_set_bits = vector_bin.reduce(0) { |sum, v| sum + v.count('1') }
   end
 

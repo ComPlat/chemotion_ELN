@@ -28,7 +28,7 @@ export default class ModalExport extends React.Component {
           {value: "solvent", text: "solvent", checked: false},
           {value: "location", text: "location", checked: false},
           {value: "is_top_secret", text: "is top secret?", checked: false},
-          {value: "decoupled", text: "decoupled?", checked: false},
+          {value: "decoupled", text: "is decoupled?", checked: false},
           {value: "molecular_mass", text: "molecular mass (decoupled)", checked: false},
           {value: "sum_formula", text: "sum formula (decoupled)", checked: false},
         //  {value: "ancestry", text: "ancestry", checked: false},

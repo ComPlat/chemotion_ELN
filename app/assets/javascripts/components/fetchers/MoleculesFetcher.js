@@ -1,104 +1,61 @@
 import 'whatwg-fetch';
 
 export default class MoleculesFetcher {
-  static fetchByMolfile(molfile, svg_file) {
-    let promise = fetch('/api/v1/molecules', {
+  static fetchByMolfile(molfile, svgfile, decoupled = false) {
+    return fetch('/api/v1/molecules', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        molfile: molfile,
-        svg_file: svg_file
+        molfile, svg_file: svgfile, decoupled
       })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    }).then(response => response.json()).then(json => json)
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static fetchBySmi(smi, svgfile, molfile) {
-    const promise = fetch('/api/v1/molecules/smiles', {
+    return fetch('/api/v1/molecules/smiles', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        smiles: smi,
-        svg_file: svgfile,
-        layout: molfile
+        smiles: smi, svg_file: svgfile, layout: molfile
       })
-    }).then(response => response.json()).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    }).then(response => response.json()).then(json => json)
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static fetchCas(inchikey) {
-    let promise = fetch(`/api/v1/molecules/cas?inchikey=${inchikey}`, {
-        credentials: 'same-origin'
-      })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json
-      }).catch((errorMessage) => {
-        console.log(errorMessage)
-      })
-
-    return promise
+    return fetch(`/api/v1/molecules/cas?inchikey=${inchikey}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json)
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static updateNames(inchikey, newMolName = '') {
-    const promise = fetch(`/api/v1/molecules/names?inchikey=${inchikey}` +
+    return fetch(`/api/v1/molecules/names?inchikey=${inchikey}` +
       `&new_name=${escape(newMolName)}`, {
       credentials: 'same-origin',
-    }).then(response => response.json())
-      .then(json => json.molecules)
+    }).then(response => response.json()).then(json => json.molecules)
       .catch(errorMessage => console.log(errorMessage));
-
-    return promise;
   }
 
   static computePropsFromSmiles(sampleId) {
-    const promise = fetch('/api/v1/molecules/compute', {
+    return fetch('/api/v1/molecules/compute', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ sampleId })
-    }).then(response => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    }).then(response => response.json())
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static getByInChiKey(inchikey) {
     return fetch('/api/v1/molecules/inchikey', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        inchikey
-      })
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inchikey })
     }).then(response => response.json())
       .catch(errorMessage => console.log(errorMessage));
   }
@@ -106,64 +63,52 @@ export default class MoleculesFetcher {
   static renewSVGFile(id, svgFile, isChemdraw = false) {
     return fetch('/api/v1/molecules/svg', {
       credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, svg_file: svgFile, is_chemdraw: isChemdraw })
     }).then(response => response.json())
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static updateMolfileSVG(molecule) {
     return fetch('/api/v1/molecules/editor', {
       credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        id: molecule.id,
-        molfile: molecule.molfile,
-        svg_file: molecule.molecule_svg_file
+        id: molecule.id, molfile: molecule.molfile, svg_file: molecule.molecule_svg_file
       })
     }).then(response => response.json())
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static deleteMoleculeName(params) {
     return fetch('/api/v1/molecules/delete_name', {
       credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     }).then(response => response.json())
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static saveMoleculeName(params) {
     return fetch('/api/v1/molecules/save_name', {
       credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     }).then(response => response.json())
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
+  static decouple(molfile, svgfile, decoupled = false) {
+    return fetch('/api/v1/molecules/decouple', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ molfile, svg_name: svgfile, decoupled })
+    }).then(response => response.json()).then(json => json)
+      .catch(errorMessage => console.log(errorMessage));
   }
 }

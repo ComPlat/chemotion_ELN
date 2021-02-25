@@ -260,8 +260,9 @@ export default class SampleForm extends React.Component {
     }
 
     sample.formulaChanged = this.formulaChanged();
-
-    this.props.parent.setState({ sample });
+    if (field === 'decoupled' && sample.molfile && sample.molfile !== '') {
+      this.props.parent.setState({ sample }, this.props.decoupleMolecule);
+    } else { this.props.parent.setState({ sample }); }
   }
 
   textInput(sample, field, label, disabled = false) {
@@ -387,7 +388,7 @@ export default class SampleForm extends React.Component {
 
   render() {
     const sample = this.props.sample || {};
-    const isPolymer = sample.molfile.indexOf(' R# ') !== -1;
+    const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
     const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
@@ -543,7 +544,8 @@ SampleForm.propTypes = {
   sample: PropTypes.object,
   parent: PropTypes.object,
   customizableField: PropTypes.func.isRequired,
-  enableSampleDecoupled: PropTypes.bool
+  enableSampleDecoupled: PropTypes.bool,
+  decoupleMolecule: PropTypes.func.isRequired
 };
 
 SampleForm.defaultProps = { enableSampleDecoupled: false };
