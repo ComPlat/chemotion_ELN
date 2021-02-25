@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_01_051854) do
+ActiveRecord::Schema.define(version: 2021_02_17_164124) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -421,15 +421,6 @@ ActiveRecord::Schema.define(version: 2020_12_01_051854) do
     t.integer "include_ids", default: [], array: true
     t.integer "exclude_ids", default: [], array: true
     t.jsonb "configs", default: {}, null: false
-  end
-
-  create_table "matrices", force: :cascade do |t|
-    t.string   "name",                        null: false
-    t.boolean  "enabled",     default: false
-    t.string   "label"
-    t.integer  "include_ids", default: [],                 array: true
-    t.integer  "exclude_ids", default: [],                 array: true
-    t.jsonb    "configs",     default: {},    null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -534,7 +525,7 @@ ActiveRecord::Schema.define(version: 2020_12_01_051854) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "data"
+    t.jsonb "data", default: "{}", null: false
     t.integer "curation", default: 2
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
@@ -770,7 +761,7 @@ ActiveRecord::Schema.define(version: 2020_12_01_051854) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.integer  "sign_in_count",                     default: 0,                                                                                       null: false
+    t.integer "sign_in_count", default: 0, null: false
     t.datetime "current_sign_in_at"
     t.datetime "last_sign_in_at"
     t.inet "current_sign_in_ip"
@@ -1067,7 +1058,7 @@ ActiveRecord::Schema.define(version: 2020_12_01_051854) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
