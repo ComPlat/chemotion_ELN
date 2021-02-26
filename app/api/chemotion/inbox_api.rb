@@ -2,7 +2,7 @@ module Chemotion
   class InboxAPI < Grape::API
     resource :inbox do
       resource :samples do
-        desc 'search samples from user by '
+        desc 'search samples from user by'
         params do
           requires :search_string, type: String, desc: 'Search String'
         end
@@ -13,6 +13,15 @@ module Chemotion
           Sample.by_name(params[:search_string]).select do |s|
             (s.collection_ids & collection_ids).present?
           end
+        end
+
+        desc 'assign analyses to sample'
+        params do
+          optional :analyses_id, type: Integer, desc: 'Analyses ID'
+        end
+        post ':sample_id' do
+          {}
+          # byebug
         end
       end
     end

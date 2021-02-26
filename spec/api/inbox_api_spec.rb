@@ -15,7 +15,6 @@ describe Chemotion::InboxAPI do
       let(:sample_1) { create(:sample, name: 'JB-R581-A') }
       let(:sample_2) { create(:sample, name: 'JB-R23-A') }
       let(:sample_3) { create(:sample, name: 'JB-R23-B') }
-      let(:params) { { search_string: 'R23' } }
 
       before do
         CollectionsSample.create!(sample: sample_1, collection: collection)
@@ -24,10 +23,24 @@ describe Chemotion::InboxAPI do
       end
 
       describe 'get samples by sample name' do
+        let(:params) { { search_string: 'R23' } }
+
         before { get '/api/v1/inbox/samples', params }
 
         it 'return fitting samples' do
           expect(JSON.parse(response.body)['samples'].size).to eq(2)
+        end
+      end
+
+      # /api/v1/inbox/samples/:sample_id?analyses_id=:analyses_id
+      describe 'assign analyses to to sample' do
+        let(:params) { { analyses_id: 123 } }
+
+        before { post "/api/v1/inbox/samples/#{sample_2.id}", params }
+
+        it 'return fitting samples' do
+          # byebug
+          expect(JSON.parse(response.body)).to eql({})
         end
       end
     end
