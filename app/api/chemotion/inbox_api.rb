@@ -4,13 +4,15 @@ module Chemotion
       resource :samples do
         desc 'search samples from user by '
         params do
-          optional :search_string, type: String, desc: 'Search String'
+          requires :search_string, type: String, desc: 'Search String'
         end
         get do
-          # params[:search_string]
           # Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
-
-          Sample.limit(10)
+          collection_ids =
+            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).map(&:id)
+          Sample.by_name(params[:search_string]).select do |s|
+            (s.collection_ids & collection_ids).present?
+          end
         end
       end
     end

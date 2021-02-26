@@ -13,13 +13,15 @@ describe Chemotion::InboxAPI do
     describe 'xxxx' do
       context 'xxxx' do
         let(:collection) { create(:collection, user_id: user.id) }
-        let(:sample_1) { create(:sample, name: '') }
-        let(:sample_2) { create(:sample, name: '') }
-        let(:params) { { search_string: 'abc' } }
+        let(:sample_1) { create(:sample, name: 'JB-R581-A') }
+        let(:sample_2) { create(:sample, name: 'JB-R23-A') }
+        let(:sample_3) { create(:sample, name: 'JB-R23-B') }
+        let(:params) { { search_string: 'R23' } }
 
         before do
           CollectionsSample.create!(sample: sample_1, collection: collection)
           CollectionsSample.create!(sample: sample_2, collection: collection)
+          CollectionsSample.create!(sample: sample_3, collection: collection)
         end
 
         describe 'xxxx' do
