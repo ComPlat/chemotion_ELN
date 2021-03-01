@@ -400,7 +400,7 @@ export default class ReactionDetailsScheme extends Component {
   checkMassMolecule(referenceM, updatedS) {
     let errorMsg;
     let mFull;
-    const mwb = updatedS.molecule.molecular_weight;
+    const mwb = updatedS.decoupled ? (updatedS.molecular_mass || 0) : updatedS.molecule.molecular_weight;
 
     // mass check apply to 'polymers' only
     if (!updatedS.contains_residues) {
@@ -410,7 +410,7 @@ export default class ReactionDetailsScheme extends Component {
         'by 100% conversion! Please check your data.';
       }
     } else {
-      const mwa = referenceM.molecule.molecular_weight;
+      const mwa = referenceM.decoupled ? (referenceM.molecular_mass || 0) : referenceM.molecule.molecular_weight;
       const deltaM = mwb - mwa;
       const massA = referenceM.amount_g;
       mFull = massA + (referenceM.amount_mol * deltaM);
