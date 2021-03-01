@@ -102,8 +102,9 @@ class AttachmentContainer extends Component {
         &nbsp;&nbsp;
         {largerInbox ? (
           <MoveToAnalysisButton
-            attachmentId={attachment.id}
+            attachment={attachment}
             largerInbox={largerInbox}
+            sourceType={sourceType}
           />
           ) : null }
         <OverlayTrigger placement="top" overlay={filenameTooltip} >
@@ -130,13 +131,14 @@ export default DragSource(
 )(AttachmentContainer);
 
 AttachmentContainer.propTypes = {
+  attachment: PropTypes.object.isRequired,
   connectDragSource: PropTypes.func.isRequired,
   isDragging: PropTypes.bool.isRequired,
-  attachment: PropTypes.object,
+  largerInbox: PropTypes.bool,
   sourceType: PropTypes.string,
-  largerInbox: PropTypes.bool
 };
 
 AttachmentContainer.defaultProps = {
-  largerInbox: false
+  largerInbox: false,
+  sourceType: ''
 };

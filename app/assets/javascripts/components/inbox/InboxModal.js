@@ -87,8 +87,6 @@ export default class InboxModal extends React.Component {
   }
 
   render() {
-    // const inboxState = InboxStore.getState();
-
     const { showCollectionTree } = this.props;
     const { visible, inboxVisible } = this.state;
 

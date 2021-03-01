@@ -1,32 +1,37 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
-// import InboxActions from '../actions/InboxActions';
+import { Button, Tooltip } from 'react-bootstrap';
+import InboxFetcher from '../fetchers/InboxFetcher';
+import InboxActions from '../actions/InboxActions';
+import DragDropItemTypes from '../DragDropItemTypes';
 
 export default class MoveToAnalysisButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       showTooltip: false,
-      matchingAnalyses: [
-        { id: 1, title: 'Subject', fieldName: 'subject' },
-        { id: 2, title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
-        { id: 3, title: 'Related Identifier', fieldName: 'related_identifier' },
-        { id: 4, title: 'Description', fieldName: 'description' }
-      ]
+      loading: false,
+      matchingAnalyses: []
     };
   }
 
-  fetchMatchingData() {
+  fetchMatchingSamples() {
+    this.setState({ loading: true });
     const { attachment } = this.props;
 
-    console.log(`fetchMatchingData: ${attachment}`);
+    InboxFetcher.fetchMatchingSamples(attachment.filename)
+      .then((result) => {
+        this.setState({ matchingAnalyses: result.samples, loading: false });
+      }).catch((errorMessage) => {
+        this.setState({ loading: false });
+        console.log(errorMessage);
+      });
   }
 
   toggleTooltip() {
     const { showTooltip } = this.state;
-    if (showTooltip === false) {
-      this.fetchMatchingData();
+    if (showTooltip === false && this.matchingAnalysesCount() === 0) {
+      this.fetchMatchingSamples();
     }
 
     this.setState(prevState => ({ ...prevState, showTooltip: !prevState.showTooltip }));
@@ -36,40 +41,66 @@ export default class MoveToAnalysisButton extends React.Component {
     return (this.state.matchingAnalyses && this.state.matchingAnalyses.length) || 0;
   }
 
-  moveToAnalysis(id) {
-    console.log(`moveToAnalysis: ${id}`);
+  removeAttachment() {
+    const { attachment, sourceType } = this.props;
+
+    switch (sourceType) {
+      default:
+        return false;
+      case DragDropItemTypes.DATA:
+        InboxActions.removeAttachmentFromList(attachment);
+        break;
+      case DragDropItemTypes.UNLINKED_DATA:
+        InboxActions.removeUnlinkedAttachmentFromList(attachment);
+        break;
+    }
+
+    return true;
+  }
+
+
+  moveToAnalysis(sampleId, attachmentId) {
+    InboxFetcher.assignToAnalysis(sampleId, attachmentId)
+      .then(() => {
+        this.removeAttachment();
+      }).catch((errorMessage) => {
+        this.setState({ loading: false });
+        console.log(errorMessage);
+      });
     this.toggleTooltip();
   }
 
   renderAnalysesButtons() {
-    const { matchingAnalyses } = this.state;
+    const { loading, matchingAnalyses } = this.state;
+    const { attachment } = this.props;
 
     if (this.matchingAnalysesCount() === 0) {
-      return (
-        <div>No matching Samples found<br /></div>
-      );
+      if (loading === true) {
+        return (<div><i className="fa fa-refresh fa-spin" />&nbsp;loading...<br /></div>);
+      }
+      return (<div>No matching Samples found.<br /></div>);
     }
 
     return (
       <div>
-        Move to Analysis:<br />
-        { matchingAnalyses.map(element => (
-          this.renderMoveButton(element)
+        Move to Sample:<br />
+        { matchingAnalyses.map(sample => (
+          this.renderMoveButton(attachment, sample)
           )) }
       </div>
     );
   }
 
-  renderMoveButton(element) {
+  renderMoveButton(attachment, sample) {
     return (
-      <div align="left" key={`btn_${element.id}`}>
+      <div align="left" key={`btn_${sample.id}`}>
         <Button
           bsStyle="success"
           bsSize="small"
-          onClick={() => this.moveToAnalysis(element.id)}
+          onClick={() => this.moveToAnalysis(sample.id, attachment.id)}
         >
           <i className="fa fa-arrow-circle-right" aria-hidden="true" />&nbsp;
-          {element.title}
+          {sample.short_label} {sample.name}
         </Button>
         <br />
       </div>
@@ -77,7 +108,6 @@ export default class MoveToAnalysisButton extends React.Component {
   }
 
   render() {
-    const { connectDragSource, sourceType, attachment, attachmentId, largerInbox } = this.props;
     const { showTooltip } = this.state;
 
     const abortButton = (
@@ -108,11 +138,10 @@ export default class MoveToAnalysisButton extends React.Component {
 }
 
 MoveToAnalysisButton.propTypes = {
-  // connectDragSource: PropTypes.func.isRequired,
-  // largerInbox: PropTypes.bool,
-  attachmentId: PropTypes.number.isRequired
+  attachment: PropTypes.object.isRequired,
+  sourceType: PropTypes.string
 };
 
 MoveToAnalysisButton.defaultProps = {
-  // largerInbox: false
+  sourceType: ''
 };

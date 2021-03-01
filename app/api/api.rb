@@ -84,7 +84,7 @@ class API < Grape::API
   end
 
   before do
-    # authenticate! unless is_public_request?
+    authenticate! unless is_public_request?
   end
 
   # desc: whitelisted tables and columns for advanced_search
