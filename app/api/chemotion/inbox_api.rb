@@ -7,10 +7,15 @@ module Chemotion
           requires :search_string, type: String, desc: 'Search String'
         end
         get do
+          search_string = params[:search_string]
+          search_string.chomp!(File.extname(search_string))
+          search_string.sub!(/-[A-Z]$/, '')
+          search_string.sub!(/^[a-zA-Z0-9]+-/, '')
+
           # Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
           collection_ids =
             Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).map(&:id)
-          Sample.by_name(params[:search_string]).select do |s|
+          Sample.by_name(search_string).select do |s|
             (s.collection_ids & collection_ids).present?
           end
         end

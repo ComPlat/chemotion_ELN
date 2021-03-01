@@ -11,4 +11,17 @@ export default class InboxFetcher {
 
     return promise;
   }
+
+  static fetchMatchingSamples(searchString) {
+    const promise = fetch(`/api/v1/inbox/samples?search_string=${searchString}`, {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
 }

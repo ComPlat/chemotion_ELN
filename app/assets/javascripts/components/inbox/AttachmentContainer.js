@@ -94,7 +94,7 @@ class AttachmentContainer extends Component {
         <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />&nbsp;&nbsp;
         {largerInbox ? (
           <MoveToAnalysisButton
-            attachmentId={attachment.id}
+            attachment={attachment}
             largerInbox={largerInbox}
           />
           ) : null }
@@ -116,6 +116,7 @@ export default DragSource(props =>
 AttachmentContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
   isDragging: PropTypes.bool.isRequired,
+  attachment: PropTypes.object.isRequired,
   largerInbox: PropTypes.bool
 };
 

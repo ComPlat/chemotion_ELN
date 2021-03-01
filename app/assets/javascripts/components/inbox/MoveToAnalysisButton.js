@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, Tooltip } from 'react-bootstrap';
+import InboxFetcher from '../fetchers/InboxFetcher';
 // import InboxActions from '../actions/InboxActions';
 
 export default class MoveToAnalysisButton extends React.Component {
@@ -8,25 +9,35 @@ export default class MoveToAnalysisButton extends React.Component {
     super(props);
     this.state = {
       showTooltip: false,
-      matchingAnalyses: [
-        { id: 1, title: 'Subject', fieldName: 'subject' },
-        { id: 2, title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
-        { id: 3, title: 'Related Identifier', fieldName: 'related_identifier' },
-        { id: 4, title: 'Description', fieldName: 'description' }
-      ]
+      loading: false,
+      matchingAnalyses: []
     };
   }
 
-  fetchMatchingData() {
+  // getAnalysisIdentifier(filename) {
+  //   const firstIndex = filename.indexOf('-');
+  //   const filenameWithoutPrefix = (firstIndex === -1 ? filename : filename.substr(firstIndex+1, filename.length-1));
+  //   const lastIndex = filenameWithoutPrefix.lastIndexOf('.');
+  //   return (lastIndex === -1 ? filenameWithoutPrefix : filenameWithoutPrefix.substr(0, lastIndex));
+  // };
+
+  fetchMatchingSamples() {
+    this.setState({ loading: true });
     const { attachment } = this.props;
 
-    console.log(`fetchMatchingData: ${attachment}`);
+    InboxFetcher.fetchMatchingSamples(attachment.filename)
+      .then((result) => {
+        this.setState({ matchingAnalyses: result.samples, loading: false });
+      }).catch((errorMessage) => {
+        this.setState({ loading: false });
+        console.log(errorMessage);
+      });
   }
 
   toggleTooltip() {
     const { showTooltip } = this.state;
-    if (showTooltip === false) {
-      this.fetchMatchingData();
+    if (showTooltip === false && this.matchingAnalysesCount() === 0) {
+      this.fetchMatchingSamples();
     }
 
     this.setState(prevState => ({ ...prevState, showTooltip: !prevState.showTooltip }));
@@ -42,12 +53,13 @@ export default class MoveToAnalysisButton extends React.Component {
   }
 
   renderAnalysesButtons() {
-    const { matchingAnalyses } = this.state;
+    const { loading, matchingAnalyses } = this.state;
 
     if (this.matchingAnalysesCount() === 0) {
-      return (
-        <div>No matching Samples found<br /></div>
-      );
+      if (loading === true) {
+        return (<div><i className="fa fa-refresh fa-spin" />&nbsp;loading...<br /></div>);
+      }
+      return (<div>No matching Samples found.<br /></div>);
     }
 
     return (
@@ -69,7 +81,7 @@ export default class MoveToAnalysisButton extends React.Component {
           onClick={() => this.moveToAnalysis(element.id)}
         >
           <i className="fa fa-arrow-circle-right" aria-hidden="true" />&nbsp;
-          {element.title}
+          {element.name}
         </Button>
         <br />
       </div>
@@ -77,7 +89,7 @@ export default class MoveToAnalysisButton extends React.Component {
   }
 
   render() {
-    const { connectDragSource, sourceType, attachment, attachmentId, largerInbox } = this.props;
+    // const { connectDragSource, sourceType, attachment, attachmentId, largerInbox } = this.props;
     const { showTooltip } = this.state;
 
     const abortButton = (
@@ -110,7 +122,7 @@ export default class MoveToAnalysisButton extends React.Component {
 MoveToAnalysisButton.propTypes = {
   // connectDragSource: PropTypes.func.isRequired,
   // largerInbox: PropTypes.bool,
-  attachmentId: PropTypes.number.isRequired
+  attachment: PropTypes.object.isRequired
 };
 
 MoveToAnalysisButton.defaultProps = {
