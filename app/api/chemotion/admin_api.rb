@@ -867,6 +867,24 @@ module Chemotion
           end
         end
       end
+
+      resource :jobs do
+        desc 'list queued delayed jobs'
+        get do
+          present Delayed::Job.select('id, queue, handler, run_at, failed_at, attempts, priority, last_error'), with: Entities::JobEntity
+        end
+
+        namespace :restart do
+          desc 'restart single (failed) job'
+          params do
+            requires :id, type: Integer, desc: 'delayed job id'
+          end
+
+          put do
+            Delayed::Job.find(params[:id]).update_columns(run_at: 1.minutes.from_now, failed_at: nil)
+          end
+        end
+      end
     end
   end
 end
