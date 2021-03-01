@@ -17,6 +17,8 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import PrintCodeButton from './common/PrintCodeButton';
 import ConfirmClose from './common/ConfirmClose'
+import Immutable from 'immutable';
+import ElementDetailSortTab from './ElementDetailSortTab';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -25,8 +27,11 @@ export default class ScreenDetails extends Component {
     this.state = {
       screen,
       activeTab: UIStore.getState().screen.activeTab,
+      visible: Immutable.List(),
+      hidden: Immutable.List(),
     }
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
   }
 
   onUIStoreChange(state) {
@@ -243,6 +248,42 @@ export default class ScreenDetails extends Component {
     })
   }
 
+  renderTabContents(screen) {
+    let {
+      visible, hidden
+    } = this.state
+    
+
+    const tabContents = []
+    for (let i = 0; i < visible.size; i++) {
+      let value = visible.get(i)
+      if (value === 'properties') {
+        const tabContent = (
+          <Tab eventKey={i} title={'Properties'}>
+              {this.propertiesFields(screen)}
+            </Tab>
+        )
+        tabContents.push(tabContent)
+      }
+      else {
+        const tabContent = (
+          <Tab eventKey={i} title={'Analyses'}>
+              <ScreenDetailsContainers
+                screen={screen}
+                parent={this}
+              />
+          </Tab>
+        )
+        tabContents.push(tabContent)
+      }
+    }
+    return tabContents
+  }
+
+  onTabPositionChanged(visible, hidden) {
+    this.setState({visible, hidden})
+  }
+
   render() {
     const {screen} = this.state;
 
@@ -253,17 +294,10 @@ export default class ScreenDetails extends Component {
         className="eln-panel-detail">
         <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
         <Panel.Body>
+          <ElementDetailSortTab type={'screen'} onTabPositionChanged={this.onTabPositionChanged}/>
           <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
              id="screen-detail-tab">
-            <Tab eventKey={0} title={'Properties'}>
-              {this.propertiesFields(screen)}
-            </Tab>
-            <Tab eventKey={1} title={'Analyses'}>
-              <ScreenDetailsContainers
-                screen={screen}
-                parent={this}
-              />
-            </Tab>
+            {this.renderTabContents(screen)}
           </Tabs>
 
           <ButtonToolbar>

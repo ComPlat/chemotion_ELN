@@ -42,6 +42,7 @@ export default class TabLayoutContainer extends React.Component {
 
   render() {
     let {visible, hidden} = this.state
+    let {isElementDetails} = this.props
     let moveLayout = this.moveLayout
 
     return (
@@ -50,12 +51,14 @@ export default class TabLayoutContainer extends React.Component {
         {visible.map(function(e, index) {
           return (<TabLayoutCell key={index + "_visible"} cell={e}
                                  isHidden={false} index={index}
-                                 moveLayout={moveLayout}/>)
+                                 moveLayout={moveLayout}
+                                 isElementDetails={isElementDetails}/>)
         })}
         {hidden.map(function(e, index) {
           return (<TabLayoutCell key={index + "_hidden"} cell={e}
                                  isHidden={true} index={index}
-                                 moveLayout={moveLayout}/>)
+                                 moveLayout={moveLayout}
+                                 isElementDetails={isElementDetails}/>)
         })}
       </tr></tbody>
       </table>

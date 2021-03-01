@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Well, Panel, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row
+  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row, Popover
 } from 'react-bootstrap';
 import LoadingActions from './actions/LoadingActions';
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -17,6 +17,8 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import ConfirmClose from './common/ConfirmClose';
 import ExportSamplesBtn from './ExportSamplesBtn';
+import Immutable from 'immutable';
+import ElementDetailSortTab from './ElementDetailSortTab';
 
 const cols = 12;
 
@@ -27,9 +29,12 @@ export default class WellplateDetails extends Component {
     this.state = {
       wellplate,
       activeTab: UIStore.getState().wellplate.activeTab,
-      showWellplate: true
+      showWellplate: true,
+      visible: Immutable.List(),
+      hidden: Immutable.List(),
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
   }
 
   componentDidMount() {
@@ -110,6 +115,8 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
     const datetp = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
+    
+    
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
@@ -135,20 +142,21 @@ export default class WellplateDetails extends Component {
     );
   }
 
-  render() {
-    const { wellplate, activeTab, showWellplate } = this.state;
+  renderTabContents() {
+    let {
+      visible, hidden, wellplate, activeTab, showWellplate
+    } = this.state
     const {
       wells, name, size, description
     } = wellplate;
-    const submitLabel = wellplate.isNew ? 'Create' : 'Save';
-    const exportButton = (wellplate && wellplate.isNew) ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
     const properties = { name, size, description };
-    return (
-      <Panel bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
-        <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
-        <Panel.Body>
-          <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)} id="wellplateDetailsTab">
-            <Tab eventKey={0} title="Designer">
+
+    const tabContents = []
+    for (let i = 0; i < visible.size; i++) {
+      let value = visible.get(i)
+      if (value === 'designer') {
+        const tabContent = (
+          <Tab eventKey={i} title="Designer">
               <Row className="wellplate-detail">
                 <Col md={10}>
                   <Well>
@@ -163,29 +171,71 @@ export default class WellplateDetails extends Component {
                   </Well>
                 </Col>
               </Row>
-            </Tab>
-            <Tab eventKey={1} title="List">
+          </Tab>
+        )
+        tabContents.push(tabContent)
+      }
+      else if (value === 'list') {
+        const tabContent = (
+          <Tab eventKey={i} title="List">
               <Well>
                 <WellplateList
                   wells={wells}
                   handleWellsChange={w => this.handleWellsChange(w)}
                 />
               </Well>
-            </Tab>
-            <Tab eventKey={2} title="Properties">
+          </Tab>
+        )
+        tabContents.push(tabContent)
+      }
+      else if (value === 'properties') {
+        const tabContent = (
+          <Tab eventKey={i} title="Properties">
               <WellplateProperties
                 {...properties}
                 changeProperties={c => this.handleChangeProperties(c)}
               />
-            </Tab>
-            <Tab eventKey={3} title="Analyses">
+          </Tab>
+        )
+        tabContents.push(tabContent)
+      }
+      else {
+        const tabContent = (
+          <Tab eventKey={i} title="Analyses">
               <ListGroupItem style={{ paddingBottom: 20 }}>
                 <WellplateDetailsContainers
                   wellplate={wellplate}
                   parent={this}
                 />
               </ListGroupItem>
-            </Tab>
+          </Tab>
+        )
+        tabContents.push(tabContent)
+      }
+    }
+    return tabContents
+  }
+
+  onTabPositionChanged(visible, hidden) {
+    this.setState({visible, hidden})
+  }
+
+  render() {
+    const { wellplate, activeTab, showWellplate } = this.state;
+    const {
+      wells, name, size, description
+    } = wellplate;
+    const submitLabel = wellplate.isNew ? 'Create' : 'Save';
+    const exportButton = (wellplate && wellplate.isNew) ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
+    const properties = { name, size, description };
+
+    return (
+      <Panel bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
+        <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
+        <Panel.Body>
+          <ElementDetailSortTab type={'wellplate'} onTabPositionChanged={this.onTabPositionChanged}/>
+          <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)} id="wellplateDetailsTab">
+            {this.renderTabContents()}
           </Tabs>
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>
