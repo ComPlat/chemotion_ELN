@@ -119,6 +119,11 @@ class Import::ImportSdf
             properties = process_molfile_opt_data(molfile)
             sample.validate_stereo('abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'])
 
+            sample.target_amount_value = properties['TARGET_AMOUNT'] unless properties['TARGET_AMOUNT'].blank?
+            sample.target_amount_unit = properties['TARGET_UNIT'] unless properties['TARGET_UNIT'].blank?
+            sample.real_amount_value = properties['REAL_AMOUNT'] unless properties['REAL_AMOUNT'].blank?
+            sample.real_amount_unit = properties['REAL_UNIT'] unless properties['REAL_UNIT'].blank?
+
             sample.collections << Collection.find(collection_id)
             sample.collections << Collection.get_all_collection_for_user(current_user_id)
             sample.save!
