@@ -12,7 +12,7 @@ module Chemotion
       end
       put :sample do
         template = current_user.sample_text_template
-        template.update!(data: params)
+        template.update!(data: params['data'])
       end
 
       get :reaction do
@@ -25,7 +25,7 @@ module Chemotion
       end
       put :reaction do
         template = current_user.reaction_text_template
-        template.update!(data: params)
+        template.update!(data: params['data'])
       end
 
       get :wellplate do
@@ -38,7 +38,7 @@ module Chemotion
       end
       put :wellplate do
         template = current_user.wellplate_text_template
-        template.update!(data: params)
+        template.update!(data: params['data'])
       end
 
       get :screen do
@@ -51,7 +51,7 @@ module Chemotion
       end
       put :screen do
         template = current_user.screen_text_template
-        template.update!(data: params)
+        template.update!(data: params['data'])
       end
 
       get :research_plan do
@@ -64,7 +64,7 @@ module Chemotion
       end
       put :research_plan do
         template = current_user.research_plan_text_template
-        template.update!(data: params)
+        template.update!(data: params['data'])
       end
 
       get :reaction_description do
@@ -77,7 +77,7 @@ module Chemotion
       end
       put :reaction_description do
         template = current_user.reaction_description_text_template
-        template.update!(data: params)
+        template.update!(data: params['data'])
       end
 
       desc 'Get predefined templates with paging'
@@ -87,7 +87,7 @@ module Chemotion
 
       desc 'Get predefined templates by name'
       get :by_name do
-        PredefinedTextTemplate.where(name: params["name"])
+        PredefinedTextTemplate.where(name: params['name'])
       end
 
       delete :by_name do

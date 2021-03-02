@@ -38,7 +38,6 @@ module Chemotion
             optional :graph_templates, type: Array[Hash]
             optional :cur_template_idx, type: Integer
           end
-          optional :macros, type: Hash
         end
         optional :show_external_name, type: Boolean
       end
@@ -50,7 +49,6 @@ module Chemotion
           data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name]
         }
-        new_profile[:data][:macros] = declared_params[:data][:macros] || {}
         current_user.profile.update!(**new_profile) &&
           new_profile || error!('profile update failed', 500)
       end

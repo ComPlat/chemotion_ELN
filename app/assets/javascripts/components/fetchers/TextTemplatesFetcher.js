@@ -29,7 +29,7 @@ export default class TextTemplatesFetcher {
   }
 
   static fetchPredefinedTemplateByNames(names) {
-    const params = names.map(n => `name[]=${n}`).join('&');
+    const params = names.map(n => `name[]=${encodeURIComponent(n)}`).join('&');
 
     return fetch(`/api/v1/text_templates/by_name?${params}`, {
       credentials: 'same-origin',
@@ -47,7 +47,7 @@ export default class TextTemplatesFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(template)
+      body: JSON.stringify({ data: template })
     }).then(response => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
