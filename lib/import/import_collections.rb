@@ -131,17 +131,17 @@ module Import
       @data.fetch('Sample', {}).each do |uuid, fields|
         # look for the molecule_name
         molecule_name_uuid = fields.fetch('molecule_name_id')
-        molecule_name_name = @data.fetch('MoleculeName').fetch(molecule_name_uuid).fetch('name')
+        molecule_name_name = @data.fetch('MoleculeName').fetch(molecule_name_uuid).fetch('name') if molecule_name_uuid.present?
 
         # look for the molecule for this sample and add the molecule name
         # neither the Molecule or the MoleculeName are created if they already exist
         molfile = fields.fetch('molfile')
-        molecule = Molecule.find_or_create_by_molfile(molfile)
-        molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
+        molecule = fields.fetch('decoupled') ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
+        molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id) unless fields.fetch('decoupled')
 
         # get the molecule_name from the list of molecule names in molecule
         # this seems a bit cumbersome, but fits in with the methods of Molecule and MoleculeName
-        molecule_name = molecule.molecule_names.find_by(name: molecule_name_name)
+        molecule_name = molecule.molecule_names.find_by(name: molecule_name_name) unless fields.fetch('decoupled')
 
         # create the sample
         sample = Sample.create!(fields.slice(
@@ -166,7 +166,10 @@ module Import
           'xref',
           'stereo',
           'created_at',
-          'updated_at'
+          'updated_at',
+          'decoupled',
+          'molecular_mass',
+          'sum_formula'
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
@@ -176,7 +179,8 @@ module Import
           sample_svg_file: fetch_image('samples', fields.fetch('sample_svg_file')),
           parent: fetch_ancestry('Sample', fields.fetch('ancestry')),
           melting_point: fetch_bound(fields.fetch('melting_point')),
-          boiling_point: fetch_bound(fields.fetch('boiling_point'))
+          boiling_point: fetch_bound(fields.fetch('boiling_point')),
+          molecule_id: molecule&.id
         ))
 
         # for same sample_svg_file case

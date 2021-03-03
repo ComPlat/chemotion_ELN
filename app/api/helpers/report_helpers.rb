@@ -479,9 +479,9 @@ module ReportHelpers
         updated_at: ['s.updated_at', nil, 0],
         # deleted_at: ['wp.deleted_at', nil, 10],
         molecule_name: ['mn."name"', '"molecule name"', 1],
-        decoupled: ['s.decoupled', '"decoupled"', 0],
+        decoupled: ['s.decoupled', '"molecule-less"', 0],
         molecular_mass: ['s.molecular_mass', '"molecular mass"', 0],
-        sum_formula: ['s.sum_formula', '"sum formula"', 0]
+        sum_formula: ['s.sum_formula', '"molecular sum formula"', 0]
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -559,7 +559,7 @@ module ReportHelpers
     }.freeze
 
   # desc: concatenate columns to be queried
-  def build_column_query(sel, user_id=0, attrs = EXP_MAP_ATTR)
+  def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
     selection = []
     attrs.keys.each do |table|
       sel.symbolize_keys.fetch(table, []).each do |col|

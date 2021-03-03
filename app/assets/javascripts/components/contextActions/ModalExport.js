@@ -28,9 +28,6 @@ export default class ModalExport extends React.Component {
           {value: "solvent", text: "solvent", checked: false},
           {value: "location", text: "location", checked: false},
           {value: "is_top_secret", text: "is top secret?", checked: false},
-          {value: "decoupled", text: "is decoupled?", checked: false},
-          {value: "molecular_mass", text: "molecular mass (decoupled)", checked: false},
-          {value: "sum_formula", text: "sum formula (decoupled)", checked: false},
         //  {value: "ancestry", text: "ancestry", checked: false},
           {value: "imported_readout", text: "imported readout", checked: false},
         //  {value: "identifier", text: "identifier", checked: false},
@@ -236,10 +233,12 @@ export default class ModalExport extends React.Component {
 }
 
 const exportSelections = (uiState, userState, columns, e) => {
+  const columnsParam = columns;
+  columnsParam.sample = columns.sample.concat(['decoupled', 'molecular_mass', 'sum_formula']);
   ReportsFetcher.createDownloadFile({
     exportType: e,
     uiState: filterUIState(uiState),
-    columns: columns
+    columns: columnsParam
   });
 }
 

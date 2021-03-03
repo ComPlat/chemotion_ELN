@@ -54,7 +54,7 @@ class DetailLevels::Sample
   end
 
   def report_level0_attributes
-    []
+    [:decoupled, :molecular_mass, :sum_formula]
   end
 
   def report_level1_attributes
