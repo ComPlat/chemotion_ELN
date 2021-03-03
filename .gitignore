@@ -145,3 +145,6 @@ spec/examples.txt
 # ignore vendor files
 vendor/cache/*
 .idea/*
+
+# Ignore master key for decrypting credentials and more.
+/config/master.key
