@@ -59,9 +59,8 @@ export default class ReactionDetailsScheme extends Component {
       } else {
         splitSample = srcSample.buildChild();
       }
-      splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
     }
-
+    splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
     if (tagGroup == 'solvents') {
       splitSample.reference = false;
     }
