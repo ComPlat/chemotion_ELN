@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_02_17_164124) do
+ActiveRecord::Schema.define(version: 2021_03_04_105610) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -191,7 +191,7 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
     t.float "mean_abs_potential", default: 0.0
     t.integer "creator", default: 0
     t.integer "sample_id", default: 0
-    t.jsonb "tddft", default: {}
+    t.jsonb "tddft", default: "{}"
     t.string "task_id"
     t.datetime "deleted_at"
     t.index ["deleted_at"], name: "index_computed_props_on_deleted_at"
@@ -420,7 +420,7 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
     t.string "label"
     t.integer "include_ids", default: [], array: true
     t.integer "exclude_ids", default: [], array: true
-    t.jsonb "configs", default: {}, null: false
+    t.jsonb "configs", default: "{}", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -510,9 +510,9 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
   end
 
   create_table "predictions", id: :serial, force: :cascade do |t|
-    t.integer "predictable_id"
     t.string "predictable_type"
-    t.jsonb "decision", default: {}, null: false
+    t.integer "predictable_id"
+    t.jsonb "decision", default: "{}", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["decision"], name: "index_predictions_on_decision", using: :gin
@@ -594,9 +594,9 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "template", default: "standard"
-    t.text "mol_serials", default: "--- []\n"
-    t.text "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
-    t.text "prd_atts", default: "--- []\n"
+    t.text "mol_serials", default: [], array: true
+    t.text "prd_atts", default: "[]"
+    t.json "si_reaction_settings", default: {"Name"=>true, "CAS"=>true, "Formula"=>true, "Smiles"=>true, "InCHI"=>true, "Molecular Mass"=>true, "Exact Mass"=>true, "EA"=>true}
     t.index ["author_id"], name: "index_reports_on_author_id"
     t.index ["file_name"], name: "index_reports_on_file_name"
   end
@@ -669,7 +669,7 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
     t.numrange "melting_point"
     t.numrange "boiling_point"
     t.integer "fingerprint_id"
-    t.jsonb "xref", default: {}
+    t.jsonb "xref", default: "{}"
     t.float "molarity_value", default: 0.0
     t.string "molarity_unit", default: "M"
     t.integer "molecule_name_id"
