@@ -20,13 +20,19 @@ module Chemotion
           end
         end
 
-        desc 'assign analyses to sample'
+        desc 'assign attachment to sample'
         params do
-          optional :analyses_id, type: Integer, desc: 'Analyses ID'
+          optional :attachment_id, type: Integer, desc: 'Sample ID'
         end
         post ':sample_id' do
-          {}
-          # byebug
+          analyses_container = Sample.find(params[:sample_id]).container.children.find_by(container_type: "analyses")
+          attachment = Attachment.find(params[:attachment_id])
+          dataset = attachment.attachable
+
+          new_analysis_container = analyses_container.children.create(container_type: 'analysis', name: dataset.name)
+          dataset.update_attributes!(parent_id: new_analysis_container.id, container_type: 'dataset')
+
+          dataset
         end
       end
     end

@@ -33,14 +33,17 @@ describe Chemotion::InboxAPI do
       end
 
       # /api/v1/inbox/samples/:sample_id?analyses_id=:analyses_id
-      describe 'assign analyses to to sample' do
-        let(:params) { { analyses_id: 123 } }
+      describe 'assign attachment to to sample' do
+        let(:inbox_container) { create(:inbox_container_with_attachments) }
+        let(:attachment) { inbox_container.attachments.first }
+        let(:params) { { attachment_id: attachment.id } }
 
         before { post "/api/v1/inbox/samples/#{sample_2.id}", params }
 
-        it 'return fitting samples' do
-          # byebug
-          expect(JSON.parse(response.body)).to eql({})
+        it 'return moved samples' do
+          expect(JSON.parse(response.body)["container"]["id"]).to eq(inbox_container.id)
+          expect(JSON.parse(response.body)["container"]["container_type"]).to eq('dataset')
+          expect(JSON.parse(response.body)["container"]["attachments"].count).to eq(inbox_container.attachments.count)
         end
       end
     end
