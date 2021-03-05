@@ -6,7 +6,7 @@ import UserStore from '../stores/UserStore';
 import { LayersLayout } from './GenericElCommon';
 import Segment from '../models/Segment';
 import MatrixCheck from '../common/MatrixCheck';
-import { genUnits, toBool } from '../../admin/generic/Utils';
+import { genUnits, toBool, unitConversion } from '../../admin/generic/Utils';
 
 const addSegmentTabs = (element, onChange, contentMap) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -48,7 +48,6 @@ const SegmentTabs = (element, onChange, init = 0) => {
   let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
   segmentKlasses = segmentKlasses.filter(s => s.element_klass.name === element.type);
   segmentKlasses.forEach((klass) => {
-    console.log(klass);
     const ttl = (
       <Tooltip id="tooltip">
         {klass.desc}
@@ -115,7 +114,9 @@ class SegmentDetails extends Component {
   handleUnitClick(layer, obj) {
     const { segment } = this.props;
     const { properties } = segment;
+    const newVal = unitConversion(obj.option_layers, obj.value_system, obj.value);
     properties[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
+    properties[`${layer}`].fields.find(e => e.field === obj.field).value = newVal;
     segment.properties = properties;
     segment.changed = true;
     this.props.onChange(segment);

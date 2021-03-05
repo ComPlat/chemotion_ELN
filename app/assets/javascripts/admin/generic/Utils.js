@@ -3,6 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip, Popover } from 'react-bootstrap';
 import uuid from 'uuid';
+import { findIndex } from 'lodash';
 import NotificationActions from '../../components/actions/NotificationActions';
 import UserStore from '../../components/stores/UserStore';
 
@@ -30,6 +31,41 @@ const genUnits = (field) => {
 const genUnit = (field, key) => {
   const units = genUnits(field);
   return units.find(u => u.key === key) || {};
+};
+
+
+const convertTemp = (key, val) => {
+  switch (key) {
+    case 'F':
+      return ((parseFloat(val) * 1.8) + 32).toFixed(2);
+    case 'K':
+      return ((parseFloat(val) + 459.67) * 5 / 9).toFixed(2);
+    case 'C':
+      return (parseFloat(val) - 273.15).toFixed(2);
+    default:
+      return val;
+  }
+};
+
+const unitConversion = (field, key, val) => {
+  if (typeof val === 'undefined' || val == null || val === 0) {
+    return val;
+  }
+  if (field == 'temperature') {
+    return convertTemp(key, val);
+  }
+  const units = genUnits(field);
+  if (units.length <= 1) {
+    return val;
+  }
+  const idx = findIndex(units, u => u.key === key);
+  if (idx === -1) {
+    return val;
+  }
+  const pIdx = idx === 0 ? (units.length) : idx;
+  const pre = (units[pIdx - 1] && units[pIdx - 1].nm) || 1;
+  const curr = (units[idx] && units[idx].nm) || 1;
+  return parseFloat(val) * (curr / pre);
 };
 
 const notification = props =>
@@ -154,6 +190,6 @@ ButtonConfirm.defaultProps = {
 
 export {
   ButtonTooltip, ButtonConfirm,
-  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit, toBool,
+  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit, unitConversion, toBool,
   genUnitSup
 };

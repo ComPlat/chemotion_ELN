@@ -13,7 +13,7 @@ import GenericElDetailsContainers from './GenericElDetailsContainers';
 import { GenProperties, LayersLayout } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
 import CopyElementModal from '../common/CopyElementModal';
-import { notification, genUnits } from '../../admin/generic/Utils';
+import { notification, genUnits, unitConversion } from '../../admin/generic/Utils';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -139,7 +139,9 @@ export default class GenericElDetails extends Component {
   handleUnitClick(layer, obj) {
     const { genericEl } = this.state;
     const { properties } = genericEl;
+    const newVal = unitConversion(obj.option_layers, obj.value_system, obj.value);
     properties[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
+    properties[`${layer}`].fields.find(e => e.field === obj.field).value = newVal;
     genericEl.properties = properties;
     genericEl.changed = true;
     this.handleGenericElChanged(genericEl);

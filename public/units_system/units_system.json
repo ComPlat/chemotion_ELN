@@ -32,10 +32,10 @@
       "position": 3,
       "placeholder": "Please input volume",
       "units": [
-        { "key": "l", "label": "l" },
-        { "key": "ml", "label": "ml" },
-        { "key": "ul", "label": "µl" },
-        { "key": "nl", "label": "nl" }
+        { "key": "l", "label": "l", "nm": 1 },
+        { "key": "ml", "label": "ml", "nm": 1000 },
+        { "key": "ul", "label": "µl", "nm": 1000000},
+        { "key": "nl", "label": "nl", "nm": 1000000000 }
       ]
     },
     {
@@ -46,9 +46,9 @@
       "position": 4,
       "placeholder": "Please input mass",
       "units": [
-        { "key": "g", "label": "g" },
-        { "key": "mg", "label": "mg" },
-        { "key": "ug", "label": "µg" }
+        { "key": "g", "label": "g", "nm": 1 },
+        { "key": "mg", "label": "mg", "nm": 1000 },
+        { "key": "ug", "label": "µg", "nm": 1000000 }
       ]
     },
     {
@@ -59,11 +59,11 @@
       "position": 5,
       "placeholder": "Please input length",
       "units": [
-        { "key": "pm", "label": "pm" },
-        { "key": "nm", "label": "nm" },
-        { "key": "mm", "label": "mm" },
-        { "key": "cm", "label": "cm" },
-        { "key": "m", "label": "m" }
+        { "key": "pm", "label": "pm", "nm": 100000 },
+        { "key": "nm", "label": "nm", "nm": 10000 },
+        { "key": "mm", "label": "mm", "nm": 1000 },
+        { "key": "cm", "label": "cm", "nm": 100 },
+        { "key": "m", "label": "m", "nm": 1  }
       ]
     },
     {
@@ -74,10 +74,10 @@
       "position": 6,
       "placeholder": "Please input duration",
       "units": [
-        { "key": "d", "label": "day(s)" },
-        { "key": "h", "label": "hour(s)" },
-        { "key": "min", "label": "min(s)" },
-        { "key": "s", "label": "sec(s)" }
+        { "key": "d", "label": "day(s)", "nm": 1 },
+        { "key": "h", "label": "hour(s)", "nm": 24 },
+        { "key": "min", "label": "min(s)", "nm": 1440 },
+        { "key": "s", "label": "sec(s)", "nm": 86400 }
       ]
     },
     {
@@ -88,9 +88,9 @@
       "position": 7,
       "placeholder": "Please input concentration",
       "units": [
-        { "key": "ng_l", "label": "ng/L" },
-        { "key": "mg_l", "label": "mg/L" },
-        { "key": "g_l", "label": "g/L" }
+        { "key": "ng_l", "label": "ng/L", "nm": 1000000 },
+        { "key": "mg_l", "label": "mg/L", "nm": 1000 },
+        { "key": "g_l", "label": "g/L", "nm": 1 }
       ]
     },
     {
@@ -101,10 +101,10 @@
       "position": 8,
       "placeholder": "Please input molarity",
       "units": [
-        { "key": "mol_l", "label": "mol/L (M)" },
-        { "key": "mmol_l", "label": "mmol/L (mM)" },
-        { "key": "nmol_l", "label": "nmol/L (nM)" },
-        { "key": "pmol_l", "label": "pmol/L (pM)" }
+        { "key": "mol_l", "label": "mol/L (M)", "nm": 1 },
+        { "key": "mmol_l", "label": "mmol/L (mM)", "nm": 1000 },
+        { "key": "nmol_l", "label": "nmol/L (nM)", "nm": 1000000 },
+        { "key": "pmol_l", "label": "pmol/L (pM)", "nm": 1000000000 }
       ]
     },
     {
@@ -115,9 +115,9 @@
       "position": 9,
       "placeholder": "Please input pressure",
       "units": [
-        { "key": "atm", "label": "atm" },
-        { "key": "pa", "label": "Pa" },
-        { "key": "torr", "label": "Torr" }
+        { "key": "atm", "label": "atm", "nm": 1 },
+        { "key": "pa", "label": "Pa", "nm": 101325 },
+        { "key": "torr", "label": "Torr", "nm": 760 }
       ]
     },
     {
@@ -128,10 +128,10 @@
       "position": 10,
       "placeholder": "Please input speed",
       "units": [
-        { "key": "cm_s", "label": "cm/s" },
-        { "key": "mm_s", "label": "mm/s" },
-        { "key": "cm_h", "label": "cm/h" },
-        { "key": "mm_h", "label": "mm/h" }
+        { "key": "cm_s", "label": "cm/s", "nm": 1 },
+        { "key": "mm_s", "label": "mm/s", "nm": 10 },
+        { "key": "cm_h", "label": "cm/h", "nm": 3600 },
+        { "key": "mm_h", "label": "mm/h", "nm": 36000 }
       ]
     },
     {
@@ -188,8 +188,8 @@
       "position": 15,
       "placeholder": "Please input Enzyme activity",
       "units": [
-        { "key": "u_l", "label": "U/L" },
-        { "key": "u_ml", "label": "U/mL" }
+        { "key": "u_l", "label": "U/L", "nm": 1 },
+        { "key": "u_ml", "label": "U/mL", "nm": 1000 }
       ]
     },
     {
@@ -211,8 +211,8 @@
       "position": 17,
       "placeholder": "Please input Reaction rate",
       "units": [
-        { "key": "mol_lmin", "label": "mol/Lmin" },
-        { "key": "mol_lsec", "label": "mol/Ls" }
+        { "key": "mol_lmin", "label": "mol/Lmin", "nm": 1 },
+        { "key": "mol_lsec", "label": "mol/Ls", "nm": 60 }
       ]
     },
     {
