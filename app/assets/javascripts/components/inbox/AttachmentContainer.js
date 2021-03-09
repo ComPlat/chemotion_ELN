@@ -96,6 +96,7 @@ class AttachmentContainer extends Component {
           <MoveToAnalysisButton
             attachment={attachment}
             largerInbox={largerInbox}
+            sourceType={sourceType}
           />
           ) : null }
         <span className="text-info fa fa-arrows">
@@ -114,12 +115,14 @@ export default DragSource(props =>
   props.sourceType, dataSource, collectSource)(AttachmentContainer);
 
 AttachmentContainer.propTypes = {
-  connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired,
   attachment: PropTypes.object.isRequired,
-  largerInbox: PropTypes.bool
+  connectDragSource: PropTypes.func.isRequired,
+  largerInbox: PropTypes.bool,
+  isDragging: PropTypes.bool.isRequired,
+  sourceType: PropTypes.string
 };
 
 AttachmentContainer.defaultProps = {
-  largerInbox: false
+  largerInbox: false,
+  sourceType: ''
 };
