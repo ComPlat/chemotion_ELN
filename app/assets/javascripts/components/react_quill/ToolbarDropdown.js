@@ -10,7 +10,7 @@ const dropdownSvg = (
   </svg>
 );
 
-export default class QuillToolbarDropdown extends React.Component {
+export default class ToolbarDropdown extends React.Component {
   constructor(props) {
     super(props);
 
@@ -82,8 +82,7 @@ export default class QuillToolbarDropdown extends React.Component {
         <span
           className="ql-picker-item"
           key={`mi_${v}`}
-          eventKey={v}
-          dataValue={v}
+          value={v}
           onClick={onClick}
         >
           {k}
@@ -118,14 +117,14 @@ export default class QuillToolbarDropdown extends React.Component {
   }
 }
 
-QuillToolbarDropdown.propTypes = {
+ToolbarDropdown.propTypes = {
   label: PropTypes.string,
   // eslint-disable-next-line react/forbid-prop-types
   items: PropTypes.object,
   onSelect: PropTypes.func,
 };
 
-QuillToolbarDropdown.defaultProps = {
+ToolbarDropdown.defaultProps = {
   label: '',
   items: {},
   onSelect: null,

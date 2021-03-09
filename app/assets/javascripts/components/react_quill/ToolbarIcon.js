@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-export default class QuillDynamicToolbarIcon extends React.Component {
+export default class ToolbarIcon extends React.Component {
   constructor(props) {
     super(props);
 
@@ -40,7 +40,7 @@ export default class QuillDynamicToolbarIcon extends React.Component {
   }
 }
 
-QuillDynamicToolbarIcon.propTypes = {
+ToolbarIcon.propTypes = {
   icon: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.element
@@ -48,7 +48,7 @@ QuillDynamicToolbarIcon.propTypes = {
   onClick: PropTypes.func
 };
 
-QuillDynamicToolbarIcon.defaultProps = {
+ToolbarIcon.defaultProps = {
   icon: <span />,
   onClick: null
 };

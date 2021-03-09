@@ -79,7 +79,6 @@ export default class ReactQuill extends React.Component {
     this.setEditorContents = this.setEditorContents.bind(this);
     this.setEditorReadOnly = this.setEditorReadOnly.bind(this);
     this.setEditorSelection = this.setEditorSelection.bind(this);
-    this.setEditingArea = this.setEditingArea.bind(this);
 
     this.createEditor = this.createEditor.bind(this);
     this.destroyEditor = this.destroyEditor.bind(this);
@@ -291,11 +290,6 @@ export default class ReactQuill extends React.Component {
       editor.enable();
     }
   }
-  /* eslint-enable class-methods-use-this */
-
-  setEditingArea(area) {
-    this.editingArea = area;
-  }
 
   hookEditor(editor) {
     // Expose the editor on change events via a weaker, unprivileged proxy
@@ -420,7 +414,9 @@ export default class ReactQuill extends React.Component {
 
     const properties = {
       key: generation,
-      ref: instance => this.setEditingArea(instance)
+      ref: (instance) => {
+        this.editingArea = instance;
+      }
     };
 
     if (React.Children.count(children)) {

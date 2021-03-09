@@ -13,6 +13,8 @@ import SpectraActions from '../actions/SpectraActions';
 import LoadingActions from '../actions/LoadingActions';
 import ViewSpectra from '../ViewSpectra';
 
+import TextTemplateActions from '../actions/TextTemplateActions';
+
 const SpectraEditorBtn = ({
   element, spcInfo, hasJcamp, hasChemSpectra,
   toggleSpectraModal, confirmRegenerate,
@@ -93,6 +95,10 @@ export default class ResearchPlanDetailsContainers extends Component {
     this.handleRemove = this.handleRemove.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
+  }
+
+  componentDidMount() {
+    TextTemplateActions.fetchTextTemplates('researchPlan');
   }
 
   handleChange() {
@@ -332,6 +338,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                     </Panel.Heading>
                     <Panel.Body collapsible>
                       <ContainerComponent
+                        templateType="researchPlan"
                         readOnly={readOnly}
                         disabled={readOnly}
                         container={container}

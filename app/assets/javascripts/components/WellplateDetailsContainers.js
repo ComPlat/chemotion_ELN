@@ -5,6 +5,8 @@ import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton'
 
+import TextTemplateActions from './actions/TextTemplateActions';
+
 export default class WellplateDetailsContainers extends Component {
   constructor(props) {
     super();
@@ -13,6 +15,10 @@ export default class WellplateDetailsContainers extends Component {
       wellplate,
       activeContainer: 0
     };
+  }
+
+  componentDidMount() {
+    TextTemplateActions.fetchTextTemplates('wellplate');
   }
 
   componentWillReceiveProps(nextProps) {
@@ -126,6 +132,7 @@ export default class WellplateDetailsContainers extends Component {
                   <Panel.Heading>{containerHeader(container)}</Panel.Heading>
                   <Panel.Body collapsible="true">
                     <ContainerComponent
+                      templateType="wellplate"
                       readOnly={readOnly}
                       container={container}
                       onChange={container => this.handleChange(container)}

@@ -6,8 +6,12 @@ import UIStore from './stores/UIStore';
 import ArrayUtils from './utils/ArrayUtils';
 import { reOrderArr } from './utils/DndControl';
 import ViewSpectra from './ViewSpectra';
-import { RndNotAvailable, RndNoAnalyses, RndOrder,
-  RndEdit } from './SampleDetailsContainersCom';
+import {
+  RndNotAvailable, RndNoAnalyses,
+  RndOrder, RndEdit
+} from './SampleDetailsContainersCom';
+
+import TextTemplateActions from './actions/TextTemplateActions';
 
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
@@ -34,6 +38,7 @@ export default class SampleDetailsContainers extends Component {
 
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange);
+    TextTemplateActions.fetchTextTemplates('sample');
   }
 
   // componentWillReceiveProps(nextProps) {
@@ -244,8 +249,12 @@ export default class SampleDetailsContainers extends Component {
 }
 
 SampleDetailsContainers.propTypes = {
-  readOnly: PropTypes.bool.isRequired,
+  readOnly: PropTypes.bool,
   sample: PropTypes.object.isRequired,
   handleSampleChanged: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
 };
+
+SampleDetailsContainers.defaultProps = {
+  readOnly: false
+}

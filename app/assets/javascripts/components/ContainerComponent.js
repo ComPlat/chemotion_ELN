@@ -1,44 +1,44 @@
 import React, { Component } from 'react';
+import { Map } from 'immutable';
 import PropTypes from 'prop-types';
 import {
-  Button,
   Col,
   FormControl,
   FormGroup,
   ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
+
+import TextTemplateStore from './stores/TextTemplateStore';
+import TextTemplateActions from './actions/TextTemplateActions';
+
 import ContainerDatasets from './ContainerDatasets';
 import QuillViewer from './QuillViewer';
 import OlsTreeSelect from './OlsComponent';
 import { confirmOptions } from './staticDropdownOptions/options';
 
-import ContainerComponentEditor from './ContainerComponentEditor';
-
-import UserStore from './stores/UserStore';
-import UserActions from './actions/UserActions';
+import AnalysisEditor from './AnalysisEditor';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
     super();
 
-    const { container } = props;
-    let userMacros = {};
-    const userProfile = UserStore.getState().profile;
-    if (userProfile && userProfile.data) {
-      userMacros = userProfile.data.macros || {};
-    }
-    this.state = { container, userMacros };
+    const { container, templateType } = props;
+    const textTemplate = TextTemplateStore.getState()[templateType] || Map();
+    this.state = {
+      container,
+      textTemplate: textTemplate.toJS()
+    };
 
     this.onChange = this.onChange.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
-    this.updateUserMacros = this.updateUserMacros.bind(this);
+    this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
-    this.handleProfileChange = this.handleProfileChange.bind(this);
+    this.handleTemplateChange = this.handleTemplateChange.bind(this);
   }
 
   componentDidMount() {
-    UserStore.listen(this.handleProfileChange);
+    TextTemplateStore.listen(this.handleTemplateChange);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -48,20 +48,18 @@ export default class ContainerComponent extends Component {
   }
 
   componentWillUnmount() {
-    UserStore.unlisten(this.handleProfileChange);
+    TextTemplateStore.unlisten(this.handleTemplateChange);
   }
 
   onChange(container) {
     this.props.onChange(container);
   }
 
-  handleProfileChange() {
-    let userMacros = {};
-    const userProfile = UserStore.getState().profile;
-    if (userProfile && userProfile.data) {
-      userMacros = userProfile.data.macros || {};
-    }
-    this.setState({ userMacros });
+  handleTemplateChange() {
+    const { templateType } = this.props;
+
+    const textTemplate = TextTemplateStore.getState()[templateType];
+    this.setState({ textTemplate: textTemplate.toJS() });
   }
 
   handleInputChange(type, ev) {
@@ -99,30 +97,29 @@ export default class ContainerComponent extends Component {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  updateUserMacros(userMacros) {
-    const userProfile = UserStore.getState().profile;
-    userProfile.data.macros = userMacros;
-    UserActions.updateUserProfile(userProfile);
-    this.setState({ userMacros });
+  updateTextTemplates(textTemplate) {
+    const { templateType } = this.props;
+    TextTemplateActions.updateTextTemplates(templateType, textTemplate);
   }
 
   render() {
-    const { container, userMacros } = this.state;
+    const { container, textTemplate } = this.state;
     const { readOnly, disabled } = this.props;
 
     let quill = (<span />);
+    const { content } = container.extended_metadata;
     if (readOnly || disabled) {
       quill = (
         <QuillViewer value={container.extended_metadata.content} />
       );
     } else {
       quill = (
-        <ContainerComponentEditor
+        <AnalysisEditor
           height="120px"
-          macros={userMacros}
-          onChange={this.handleInputChange.bind(this, 'content')}
-          container={container}
-          updateUserMacros={this.updateUserMacros}
+          template={textTemplate}
+          analysis={container}
+          updateTextTemplates={this.updateTextTemplates}
+          onChangeContent={this.handleInputChange.bind(this, 'content')}
         />
       );
     }
@@ -193,6 +190,7 @@ export default class ContainerComponent extends Component {
 }
 
 ContainerComponent.propTypes = {
+  templateType: PropTypes.string,
   onChange: PropTypes.func,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
