@@ -216,7 +216,7 @@ ActiveRecord::Schema.define(version: 2021_03_04_105610) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
+    t.index ["ancestry"], name: "index_containers_on_ancestry"
   end
 
   create_table "delayed_jobs", id: :serial, force: :cascade do |t|
@@ -502,8 +502,8 @@ ActiveRecord::Schema.define(version: 2021_03_04_105610) do
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
-    t.integer "searchable_id"
     t.string "searchable_type"
+    t.integer "searchable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
@@ -525,7 +525,7 @@ ActiveRecord::Schema.define(version: 2021_03_04_105610) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "data", default: "{}", null: false
+    t.jsonb "data", default: {}, null: false
     t.integer "curation", default: 2
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
@@ -544,7 +544,7 @@ ActiveRecord::Schema.define(version: 2021_03_04_105610) do
     t.string "tlc_solvents"
     t.text "tlc_description"
     t.string "rf_value"
-    t.jsonb "temperature", default: {"data"=>[], "userText"=>"", "valueUnit"=>"°C"}
+    t.jsonb "temperature", default: "{\"valueUnit\": \"°C\",\"userText\": \"\", \"data\": []}"
     t.string "status"
     t.string "reaction_svg_file"
     t.string "solvent"
