@@ -97,6 +97,17 @@ export default class GenericElDetails extends Component {
       return false;
     }
     LoadingActions.start();
+    genericEl.name = genericEl.name.trim();
+    (Object.keys(genericEl.properties) || {}).forEach((key) => {
+      genericEl.properties[key].fields = (genericEl.properties[key].fields || []).map((f) => {
+        const field = f;
+        if (field.type === 'text' && typeof field.value !== 'undefined' && field.value != null) {
+          field.value = field.value.trim();
+        }
+        return (field);
+      });
+    });
+
     if (genericEl && genericEl.isNew) {
       ElementActions.createGenericEl(genericEl);
     } else {
@@ -121,7 +132,6 @@ export default class GenericElDetails extends Component {
     } else {
       ({ value } = event.target);
     }
-    if (typeof value === 'string') value = value.trim();
     if (field === 'name' && layer === '') {
       genericEl.name = value;
     } else {

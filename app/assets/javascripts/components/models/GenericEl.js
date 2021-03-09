@@ -145,7 +145,6 @@ export default class GenericEl extends Element {
     const specificValue = (typeof specific !== 'undefined' && specific !== null) ? specific.value : null;
     if (specificValue) {
       const vaildSpecificLayer = this.properties[specificValue].fields.filter(f => f.required && (!f.value || f.value.trim() === '')).length < 1;
-      console.log(`vaildSpecificLayer: ${vaildSpecificLayer}`);
       return validName && vaildFieldsDrag && vaildFields && vaildSpecificLayer;
     }
     return validName && vaildFieldsDrag && vaildFields;
