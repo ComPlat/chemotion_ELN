@@ -41,9 +41,8 @@ describe Chemotion::InboxAPI do
         before { post "/api/v1/inbox/samples/#{sample_2.id}", params }
 
         it 'return moved samples' do
-          expect(JSON.parse(response.body)["container"]["id"]).to eq(inbox_container.id)
           expect(JSON.parse(response.body)["container"]["container_type"]).to eq('dataset')
-          expect(JSON.parse(response.body)["container"]["attachments"].count).to eq(inbox_container.attachments.count)
+          expect(JSON.parse(response.body)["container"]["attachments"].count).to eq(1)
         end
       end
     end

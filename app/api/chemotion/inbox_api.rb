@@ -27,11 +27,11 @@ module Chemotion
         post ':sample_id' do
           analyses_container = Sample.find(params[:sample_id]).container.children.find_by(container_type: "analyses")
           attachment = Attachment.find(params[:attachment_id])
-          dataset = attachment.attachable
+          analysis_name = attachment.filename.chomp!(File.extname(attachment.filename))
 
-          new_analysis_container = analyses_container.children.create(container_type: 'analysis', name: dataset.name)
-          dataset.update_attributes!(parent_id: new_analysis_container.id, container_type: 'dataset')
-
+          new_analysis_container = analyses_container.children.create(container_type: 'analysis', name: analysis_name)
+          dataset = new_analysis_container.children.create(parent_id: new_analysis_container.id, container_type: 'dataset', name: analysis_name)
+          attachment.update_attributes!(attachable: dataset)
           dataset
         end
       end
