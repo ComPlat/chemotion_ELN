@@ -21,15 +21,15 @@ module Export
       sheet = @xfile.workbook.add_worksheet(name: table.to_s) # do |sheet|
       grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
       sheet.add_row(@headers, style: grey) # Add header
-      sample_style = sheet.styles.add_style(b: true, fg_color: 'CEECF5', bg_color: 'FF777777', border: { style: :thick, color: 'FF777777', edges: [:bottom] })
-      s_idx = @headers.find_index('molecular sum formula')
-      (0..s_idx).each do |idx| # end of styling the header of sample information
-        sheet.rows[0].cells[idx].style = sample_style
+      decoupled_style = sheet.styles.add_style(b: true, fg_color: 'CEECF5', bg_color: 'FF777777', border: { style: :thick, color: 'FF777777', edges: [:bottom] })
+      ['decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)'].each do |e|
+        s_idx = @headers.find_index(e)
+        sheet.rows[0].cells[s_idx].style = decoupled_style
       end
       image_width = DEFAULT_ROW_WIDTH
       row_height = DEFAULT_ROW_HEIGHT
       row_image_width = DEFAULT_ROW_WIDTH
-      decouple_idx = @headers.find_index('molecule-less')
+      decouple_idx = @headers.find_index('decoupled')
       samples.each_with_index do |sample, row|
         filtered_sample = filter_with_permission_and_detail_level(sample)
         if @image_index && (svg_path = filtered_sample[@image_index].presence)

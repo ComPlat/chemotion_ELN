@@ -1,14 +1,12 @@
 import 'whatwg-fetch';
 
 export default class MoleculesFetcher {
-  static fetchByMolfile(molfile, svgfile, decoupled = false) {
+  static fetchByMolfile(molfile, svgfile) {
     return fetch('/api/v1/molecules', {
       credentials: 'same-origin',
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        molfile, svg_file: svgfile, decoupled
-      })
+      body: JSON.stringify({ molfile, svg_file: svgfile })
     }).then(response => response.json()).then(json => json)
       .catch(errorMessage => console.log(errorMessage));
   }

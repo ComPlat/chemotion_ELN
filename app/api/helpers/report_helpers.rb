@@ -206,7 +206,7 @@ module ReportHelpers
     <<~SQL
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
-      , res.residue_type, s.molfile_version
+      , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , #{columns}
       from (
@@ -347,7 +347,7 @@ module ReportHelpers
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_wp
-      , res.residue_type, s.molfile_version
+      , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , #{columns}
       from (
@@ -403,7 +403,7 @@ module ReportHelpers
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_r
-      , res.residue_type, s.molfile_version
+      , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       -- , r_s.type as "type"
       -- , r_s.position
@@ -478,10 +478,7 @@ module ReportHelpers
         created_at: ['s.created_at', nil, 0],
         updated_at: ['s.updated_at', nil, 0],
         # deleted_at: ['wp.deleted_at', nil, 10],
-        molecule_name: ['mn."name"', '"molecule name"', 1],
-        decoupled: ['s.decoupled', '"molecule-less"', 0],
-        molecular_mass: ['s.molecular_mass', '"molecular mass"', 0],
-        sum_formula: ['s.sum_formula', '"molecular sum formula"', 0]
+        molecule_name: ['mn."name"', '"molecule name"', 1]
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],

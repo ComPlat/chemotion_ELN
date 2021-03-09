@@ -260,8 +260,13 @@ export default class SampleForm extends React.Component {
     }
 
     sample.formulaChanged = this.formulaChanged();
-    if (field === 'decoupled' && sample.molfile && sample.molfile !== '') {
-      this.props.parent.setState({ sample }, this.props.decoupleMolecule);
+
+    if (field === 'decoupled') {
+      if (!sample[field] && ((sample.molfile || '') === '')) {
+        this.props.parent.setState({ sample });
+      } else {
+        this.props.parent.setState({ sample }, this.props.decoupleMolecule);
+      }
     } else { this.props.parent.setState({ sample }); }
   }
 

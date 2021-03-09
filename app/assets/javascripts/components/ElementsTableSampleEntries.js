@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { Table, Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
-import Immutable from 'immutable';
+import { Table, Button, Tooltip, OverlayTrigger, Label } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 
@@ -21,7 +20,6 @@ import KeyboardStore from './stores/KeyboardStore';
 import DragDropItemTypes from './DragDropItemTypes';
 import SampleName from './common/SampleName';
 import XMolHeadCont from './extra/ElementsTableSampleEntriesXMolHeadCont';
-import Sample from './models/Sample';
 import { sampleShowOrNew } from './routesUtils';
 import SvgWithPopover from './common/SvgWithPopover';
 import { ShowUserLabels } from './UserLabels';
@@ -104,6 +102,13 @@ XvialIcon.defaultProps = {
   label: ''
 };
 
+const showDecoupledIcon = sample => (sample.decoupled ? (
+  <div className="decoupled-icon" onClick={e => e.stopPropagation()}>
+    <OverlayTrigger placement="top" overlay={<Tooltip id="tip_decoupled_icon">is decoupled from molecule</Tooltip>}>
+      <Label><i className="fa fa-chain-broken" aria-hidden="true" /></Label>
+    </OverlayTrigger>
+  </div>) : null);
+
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>;
 
 const svgPreview = (showPreviews, sample) => (
@@ -147,8 +152,8 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
     >
-      { sample.decoupled ?
-        (<td colSpan="3" style={{ position: 'relative ' }} ><div><h4>(moleculeless sample)</h4></div></td>) :
+      { sample.molecule && sample.molecule.inchikey === 'DUMMY' ?
+        (<td colSpan="3" style={{ position: 'relative ' }} ><div><h4>(No-structure sample)</h4></div></td>) :
         (
           <td colSpan="2" style={{ position: 'relative ' }} >
             {svgPreview(showPreviews, sample)}
@@ -173,7 +178,7 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
           </td>
         )
       }
-      {sample.decoupled ?
+      {sample.molecule && sample.molecule.inchikey === 'DUMMY' ?
         null : dragColumn(sample, showDragColumn, DragDropItemTypes.MOLECULE, targetType)}
     </tr>
   );
@@ -349,6 +354,7 @@ export default class ElementsTableSampleEntries extends Component {
           >
             {sample.title(selected)}
             <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
+              {showDecoupledIcon(sample)}
               <ShowUserLabels element={sample} />
               <XvialIcon label={sample.external_label} />
               <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />

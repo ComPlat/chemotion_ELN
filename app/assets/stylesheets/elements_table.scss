@@ -37,6 +37,13 @@ th.drag {
   margin-top: 11px;
 }
 
+.decoupled-icon span {
+  border: 1px solid grey;
+  background-color: white;
+  color: black;
+  cursor: auto;
+}
+
 .collection-label {
   display: inline-block;
   cursor: pointer;

@@ -130,17 +130,16 @@ module Chemotion
       namespace :decouple do
         desc 'decouple from molecule'
         params do
-          requires :molfile, type: String, desc: 'molfile'
-          requires :svg_name, type: String, desc: 'original svg filename'
+          optional :molfile, type: String, desc: 'molfile'
+          optional :svg_name, type: String, desc: 'original svg filename'
           requires :decoupled, type: Boolean, desc: 'decouple from molecule'
         end
-
         post do
           molfile = params[:molfile]
           svg_name = params[:svg_name]
           decoupled = params[:decoupled]
 
-          if decoupled
+          if decoupled && molfile.blank?
             molecule = Molecule.find_or_create_dummy
             ob = ''
           else
@@ -155,12 +154,10 @@ module Chemotion
       params do
         requires :molfile, type: String, desc: 'Molecule molfile'
         optional :svg_file, type: String, desc: 'Molecule svg file'
-        requires :decoupled, type: Boolean, desc: 'decouple from molecule'
       end
       post do
         svg = params[:svg_file]
         molfile = params[:molfile]
-        decoupled = params[:decoupled]
 
         # write temporary SVG
         processor = Ketcherails::SVGProcessor.new svg
@@ -176,13 +173,8 @@ module Chemotion
         svg_file.write(svg)
         svg_file.close
 
-        if decoupled
-          molecule = Molecule.find_or_create_dummy
-          ob = ''
-        else
-          molecule = Molecule.find_or_create_by_molfile(molfile)
-          ob = molecule&.ob_log
-        end
+        molecule = Molecule.find_or_create_by_molfile(molfile)
+        ob = molecule&.ob_log
         molecule.attributes.merge(temp_svg: svg_file_name, ob_log: ob)
       end
 

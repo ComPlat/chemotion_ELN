@@ -10,7 +10,7 @@ module Export
       'sample external label', 'sample name', 'target amount', 'target unit',
       'real amount', 'real unit', 'description', 'purity', 'solvent', 'location',
       'secret', 'short label', 'density', 'melting pt', 'boiling pt', 'created_at',
-      'updated_at', 'MW', 'user_labels', 'molecule-less', 'molecular mass', 'molecular sum formula'
+      'updated_at', 'MW', 'user_labels', 'decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)'
     ].freeze
 
     # allowed sample/molecule headers for sample detail level 10

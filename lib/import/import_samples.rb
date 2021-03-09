@@ -66,7 +66,7 @@ class Import::ImportSamples
   def insert_rows
     (2..xlsx.last_row).each do |i|
       row = Hash[[header, xlsx.row(i)].transpose]
-      next unless has_structure(row) || row['molecule-less'] == 'Yes'
+      next unless has_structure(row) || row['decoupled'] == 'Yes'
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
@@ -77,7 +77,9 @@ class Import::ImportSamples
     ActiveRecord::Base.transaction do
       rows.map.with_index do |row, i|
         begin
-          if row['molecule-less'] == 'No'
+          if row['decoupled'] == 'Yes' && !has_structure(row)
+            molecule = Molecule.find_or_create_dummy
+          else
             # If molfile and smiles (Canonical smiles) is both present
             #  Double check the rows
             if has_molfile(row) && has_smiles(row)
@@ -95,8 +97,6 @@ class Import::ImportSamples
               unprocessable_count += 1
               next
             end
-          else
-            molecule = Molecule.find_or_create_dummy
           end
           sample_save(row, molfile, molecule)
         rescue

@@ -63,6 +63,13 @@ import MatrixCheck from './common/MatrixCheck';
 const MWPrecision = 6;
 
 const decoupleCheck = (sample) => {
+  if (sample.decoupled && sample.sum_formula.trim() === '') {
+    NotificationActions.add({
+      title: 'Error on Sample creation', message: 'Sum formula is required!', level: 'error', position: 'tc'
+    });
+    LoadingActions.stop();
+    return false;
+  }
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
     NotificationActions.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
@@ -260,7 +267,7 @@ export default class SampleDetails extends React.Component {
     // this.updateMolecule(molfile, svg_file, smiles);
     if (!smiles || smiles === '') {
       this.setState({ loadingMolecule: true });
-      MoleculesFetcher.fetchByMolfile(molfile, svg_file, sample.decoupled)
+      MoleculesFetcher.fetchByMolfile(molfile, svg_file)
         .then((result) => {
           sample.molecule = result;
           sample.molecule_id = result.id;
