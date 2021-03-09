@@ -9,6 +9,7 @@ import { ElementField } from '../components/elements/ElementField';
 import LoadingActions from '../components/actions/LoadingActions';
 import AttrNewModal from './generic/AttrNewModal';
 import AttrEditModal from './generic/AttrEditModal';
+import AttrCopyModal from './generic/AttrCopyModal';
 import TemplateJsonModal from './generic/TemplateJsonModal';
 import LayerAttrEditModal from './generic/LayerAttrEditModal';
 import LayerAttrNewModal from './generic/LayerAttrNewModal';
@@ -43,6 +44,7 @@ export default class SegmentElementAdmin extends React.Component {
       showAddSelect: false,
       showNewKlass: false,
       showEditKlass: false,
+      showCopyKlass: false,
       showJson: false
     };
 
@@ -57,6 +59,7 @@ export default class SegmentElementAdmin extends React.Component {
     this.editLayer = this.editLayer.bind(this);
     this.newKlass = this.newKlass.bind(this);
     this.editKlass = this.editKlass.bind(this);
+    this.copyKlass = this.copyKlass.bind(this);
     this.newField = this.newField.bind(this);
     this.newOption = this.newOption.bind(this);
     this.handleSelectClose = this.handleSelectClose.bind(this);
@@ -64,6 +67,7 @@ export default class SegmentElementAdmin extends React.Component {
     this.handleLayerClose = this.handleLayerClose.bind(this);
     this.handleNewKlassClose = this.handleNewKlassClose.bind(this);
     this.handleKlassClose = this.handleKlassClose.bind(this);
+    this.handleCopyKlassClose = this.handleCopyKlassClose.bind(this);
     this.handleCreateLayer = this.handleCreateLayer.bind(this);
     this.handleUpdateLayer = this.handleUpdateLayer.bind(this);
     this.handleCreateKlass = this.handleCreateKlass.bind(this);
@@ -118,6 +122,10 @@ export default class SegmentElementAdmin extends React.Component {
 
   editKlass(element) {
     this.setState({ showEditKlass: true, element });
+  }
+
+  copyKlass(element) {
+    this.setState({ showCopyKlass: true, element });
   }
 
   onInputNewField(e) {
@@ -189,6 +197,10 @@ export default class SegmentElementAdmin extends React.Component {
     this.setState({ showEditKlass: false });
   }
 
+  handleCopyKlassClose() {
+    this.setState({ showCopyKlass: false });
+  }
+
   handleSelectClose() {
     this.setState({ showAddSelect: false });
   }
@@ -236,6 +248,7 @@ export default class SegmentElementAdmin extends React.Component {
         } else {
           notification({ title: 'Create Segment successfully', lvl: 'info', msg: 'Created successfully' });
           this.handleNewKlassClose();
+          this.handleCopyKlassClose();
           this.fetchElements();
         }
       }).catch((errorMessage) => {
@@ -283,6 +296,7 @@ export default class SegmentElementAdmin extends React.Component {
         } else {
           notification({ title: `Klass [${element.name}]`, lvl: 'info', msg: 'Deleted successfully' });
           this.handleKlassClose();
+          this.fetchElements();
         }
       });
   }
@@ -714,6 +728,8 @@ export default class SegmentElementAdmin extends React.Component {
         <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
           <td>{idx + 1}</td>
           <td width="12%">
+            <ButtonTooltip bs="success" tip="copy to ..." fa="fa fa-clone" element={e} fnClick={this.copyKlass} />
+            &nbsp;
             <ButtonTooltip tip="Edit Segment attributes" fnClick={this.editKlass} element={e} />
             &nbsp;
           </td>
@@ -804,6 +820,13 @@ export default class SegmentElementAdmin extends React.Component {
             fnDelete={this.handleDeleteKlass}
             fnActivate={this.handleActivateKlass}
             fnUpdate={this.handleUpdateKlass}
+          />
+          <AttrCopyModal
+            content="Segment"
+            showModal={this.state.showCopyKlass}
+            element={this.state.element}
+            fnClose={this.handleCopyKlassClose}
+            fnCopy={this.handleCreateKlass}
           />
         </div>
         <LoadingModal />

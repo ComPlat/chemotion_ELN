@@ -132,7 +132,7 @@ class ElementField extends Component {
                   </Col>
                 </FormGroup>
                 <FormGroup controlId={`frmCtrlFieldInfo_${uuid.v4()}`}>
-                  <Col componentClass={ControlLabel} sm={3}>Hover Information22</Col>
+                  <Col componentClass={ControlLabel} sm={3}>Hover Info</Col>
                   <Col sm={9}>
                     <FormControl
                       type="text"

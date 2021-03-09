@@ -318,6 +318,7 @@ module Chemotion
           requires :klass_prefix, type: String, desc: 'Element Klass Short Label Prefix'
           optional :icon_name, type: String, desc: 'Element Klass Icon Name'
           optional :desc, type: String, desc: 'Element Klass Desc'
+          optional :properties_template, type: Hash, desc: 'Element Klass properties template'
         end
         post do
           template = {
@@ -328,7 +329,7 @@ module Chemotion
             }
           }
           attributes = declared(params, include_missing: false)
-          attributes[:properties_template] = template
+          attributes[:properties_template] = template unless attributes[:properties_template].present?
           attributes[:created_by] = current_user.id
           new_klass = ElementKlass.create!(attributes)
           new_klass.save
@@ -417,6 +418,7 @@ module Chemotion
           requires :element_klass, type: Integer, desc: 'Element Klass Id'
           optional :desc, type: String, desc: 'Segment Klass Desc'
           optional :place, type: String, desc: 'Segment Klass Place'
+          optional :properties_template, type: Hash, desc: 'Element Klass properties template'
         end
         after_validation do
           @klass = ElementKlass.find(params[:element_klass])
@@ -429,8 +431,8 @@ module Chemotion
           rescue StandardError
             place = 100
           end
-          template = { layers: {}, select_options: {} }
           attributes = declared(params, include_missing: false)
+          template = attributes[:properties_template].present? ? attributes[:properties_template] : { layers: {}, select_options: {} }
           attributes.merge!(properties_template: template, element_klass: @klass, created_by: current_user.id, place: place)
           SegmentKlass.create!(attributes)
         rescue ActiveRecord::RecordInvalid => e
