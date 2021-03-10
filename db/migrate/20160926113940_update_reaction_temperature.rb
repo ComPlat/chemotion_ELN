@@ -9,7 +9,7 @@ class UpdateReactionTemperature < ActiveRecord::Migration[4.2]
       "valueUnit" => "°C",
       "userText" => "",
       "data" => []
-    }
+    }.to_s
     change_column :reactions, :temperature, :text, default: d
     Reaction.reset_column_information
 
