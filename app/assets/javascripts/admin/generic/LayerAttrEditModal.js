@@ -13,6 +13,8 @@ export default class LayerAttrEditModal extends Component {
     const { layer, fnUpdate } = this.props;
     const updates = {
       label: this.formRef.current.lf_label.value.trim(),
+      color: this.formRef.current.lf_color.value.trim(),
+      style: this.formRef.current.lf_style.value.trim(),
       cols: parseInt(this.formRef.current.lf_cols.value.trim() || 1, 10),
       position: parseInt(this.formRef.current.lf_position.value.trim() || 100, 10),
       condition: this.formRef.current.lf_condition.value.trim()

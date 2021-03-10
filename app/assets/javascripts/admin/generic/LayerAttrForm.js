@@ -47,6 +47,30 @@ export default class LayerAttrForm extends Component {
             E.g. my_layer,my_field,1000
           </div>
         </FormGroup>
+        <FormGroup controlId="formControlLayerColor">
+          <InputGroup>
+            <InputGroup.Addon>Header color</InputGroup.Addon>
+            <FormControl componentClass="select" defaultValue={layer.color} inputRef={(ref) => { this.lf_color = ref; }} >
+              <option value="default">none</option>
+              <option value="success">Green</option>
+              <option value="warning">Yellow</option>
+              <option value="primary">Blue</option>
+              <option value="info">Light Blue</option>
+              <option value="danger">Red</option>
+            </FormControl>
+          </InputGroup>
+        </FormGroup>
+        <FormGroup controlId="formCtlHeaderStyle">
+          <InputGroup>
+            <InputGroup.Addon>Style Option</InputGroup.Addon>
+            <FormControl componentClass="select" defaultValue={layer.style} inputRef={(ref) => { this.lf_style = ref; }} >
+              <option value="panel_generic_heading">bold</option>
+              <option value="panel_generic_heading_bu">bold/underline</option>
+              <option value="panel_generic_heading_bui">bold/underline/italic</option>
+            </FormControl>
+          </InputGroup>
+        </FormGroup>
+
       </Form>
     );
   }

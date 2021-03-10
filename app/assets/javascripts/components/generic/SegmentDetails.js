@@ -170,7 +170,7 @@ class SegmentDetails extends Component {
     const { segment, klass } = this.props;
     return (
       <Panel className="panel-detail">
-        <Panel.Body>
+        <Panel.Body style={{ position: 'relative', minHeight: 260, overflowY: 'unset' }}>
           {this.elementalPropertiesItem(segment, klass)}
           <ButtonToolbar className="pull-right">
             <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>

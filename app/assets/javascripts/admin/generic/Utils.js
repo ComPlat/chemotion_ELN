@@ -89,10 +89,6 @@ const validateLayerInput = (layer) => {
     notification({ title: `Layer [${layer.key}]`, lvl: 'error', msg: 'This Name is invalid, please try a different one.' });
     return false;
   }
-  if (layer.label === '') {
-    notification({ title: `Layer [${layer.key}]`, lvl: 'error', msg: 'Please input Display name.' });
-    return false;
-  }
   if (parseInt((layer.cols || 1), 10) < 1) {
     notification({ title: `Layer [${layer.key}]`, lvl: 'error', msg: 'The minimun of Column per Row is 1, please input a different one.' });
     return false;

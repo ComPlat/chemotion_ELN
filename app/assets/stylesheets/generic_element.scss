@@ -33,14 +33,35 @@ $colo-bs-primary: #337ab7;
   box-shadow: unset !important;
   margin-bottom: unset !important;
   font-size: small;
-  .panel-heading .panel-title {
+  .panel-title {
     font-weight: bold;
-  }
+    }
   .default_style {
     font-size: 14px;
     line-height: normal;
-  }
+    }
 }
+
+.panel_generic_properties_body {
+  padding-left: unset !important;
+  padding-right: unset !important;
+}
+
+.panel_generic_heading {
+  font-weight: bold;
+}
+
+.panel_generic_heading_bu {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.panel_generic_heading_bui {
+  font-weight: bold;
+  text-decoration: underline;
+  font-style: italic;
+}
+
 
 .text_generic_properties {
   .editable {

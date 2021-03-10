@@ -11,13 +11,15 @@ import { genUnit, genUnits, genUnitSup } from '../../admin/generic/Utils';
 const GenPropertiesText = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
-  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
+  const fieldHeader = opt.label === '' ? (<span />) : (
+    <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+      <ControlLabel>{opt.label}</ControlLabel>
+    </OverlayTrigger>
+  );
 
   return (
     <FormGroup className="text_generic_properties">
-      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
-        <ControlLabel>{opt.label}</ControlLabel>
-      </OverlayTrigger>
+      {fieldHeader}
       <FormControl
         type="text"
         value={opt.value}
@@ -54,15 +56,14 @@ const GenPropertiesSelect = (opt) => {
   const options = opt.options.map(op => ({ value: op.key, name: op.key, label: op.label }));
   let className = opt.isEditable ? 'select_generic_properties_editable' : 'select_generic_properties_readonly';
   className = opt.isRequired && opt.isEditable ? 'select_generic_properties_required' : className;
-  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
-
   return (
     <FormGroup>
-      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+      <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
         <ControlLabel>{opt.label}</ControlLabel>
       </OverlayTrigger>
       <Select
         isClearable
+        menuContainerStyle={{ position: 'absolute' }}
         name={opt.field}
         multi={false}
         options={options}
@@ -78,11 +79,9 @@ const GenPropertiesSelect = (opt) => {
 const GenPropertiesNumber = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
-  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
-
   return (
     <FormGroup>
-      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+      <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
         <ControlLabel>{opt.label}</ControlLabel>
       </OverlayTrigger>
       <FormControl
@@ -102,11 +101,10 @@ const GenPropertiesNumber = (opt) => {
 const GenPropertiesSystemDefined = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
-  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
 
   return (
     <FormGroup>
-      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+      <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
         <ControlLabel>{opt.label}</ControlLabel>
       </OverlayTrigger>
       <InputGroup>
@@ -132,16 +130,15 @@ const GenPropertiesSystemDefined = (opt) => {
 
 const GenPropertiesDrop = (opt) => {
   const className = opt.isRequired ? 'drop_generic_properties field_required' : 'drop_generic_properties';
-  const disKlaz = (typeof opt.description == 'undefined' || opt.description == null || opt.description.trim().length == 0) ? 'manual' : ['hover', 'focus'];
-
   return (
     <FormGroup>
-      <OverlayTrigger placement="top" trigger={disKlaz} delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
+      <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
         <ControlLabel>{opt.label}</ControlLabel>
       </OverlayTrigger>
       <FormControl.Static style={{ paddingBottom: '0px' }}>
         <div className={className}>
           <GenericElDropTarget
+            key={uuid.v4()}
             opt={opt}
             onDrop={opt.onChange}
           />
@@ -232,13 +229,18 @@ class GenPropertiesLayer extends Component {
   }
 
   render() {
+    const bs = this.props.layer.color ? this.props.layer.color : 'default';
+    const cl = this.props.layer.style ? this.props.layer.style : 'panel_generic_heading';
+    const panelHeader = this.props.layer.label == '' ? (<span />) : (
+      <Panel.Heading className={cl} >
+        <Panel.Title toggle>{this.props.layer.label}</Panel.Title>
+      </Panel.Heading>
+    );
     return (
-      <Panel className="panel_generic_properties" defaultExpanded>
-        <Panel.Heading>
-          <Panel.Title toggle>{this.props.layer.label}</Panel.Title>
-        </Panel.Heading>
+      <Panel bsStyle={bs} className="panel_generic_properties" defaultExpanded>
+        {panelHeader}
         <Panel.Collapse>
-          <Panel.Body>{this.views()}</Panel.Body>
+          <Panel.Body className="panel_generic_properties_body">{this.views()}</Panel.Body>
         </Panel.Collapse>
       </Panel>
     );
@@ -337,6 +339,7 @@ const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout 
       if (showLayer === true) {
         const igs = (
           <GenPropertiesLayer
+            key={layer.key}
             layer={layer}
             onChange={funcChange}
             selectOptions={options}

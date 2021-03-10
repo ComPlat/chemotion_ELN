@@ -13,7 +13,7 @@ import GenericElDetailsContainers from './GenericElDetailsContainers';
 import { GenProperties, LayersLayout } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
 import CopyElementModal from '../common/CopyElementModal';
-import { notification, genUnits, unitConversion } from '../../admin/generic/Utils';
+import { notification, genUnits, toBool, unitConversion } from '../../admin/generic/Utils';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -162,7 +162,7 @@ export default class GenericElDetails extends Component {
     const selectOptions = (genericEl && genericEl.element_klass &&
       genericEl.element_klass.properties_template &&
       genericEl.element_klass.properties_template.select_options) || {};
-    const defaultName = <GenProperties label="name" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
+    const defaultName = <GenProperties key={`GenProp_${genericEl.name}`} label="" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
     options.push(defaultName);
 
     const layersLayout = LayersLayout(
@@ -172,7 +172,7 @@ export default class GenericElDetails extends Component {
       this.handleUnitClick,
       options
     );
-    return (<div style={{ margin: '15px' }}>{layersLayout}</div>);
+    return (<div style={{ marginTop: '5px' }}>{layersLayout}</div>);
   }
 
   propertiesTab(ind) {
