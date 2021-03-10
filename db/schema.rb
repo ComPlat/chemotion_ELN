@@ -203,7 +203,7 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.float "mean_abs_potential", default: 0.0
     t.integer "creator", default: 0
     t.integer "sample_id", default: 0
-    t.jsonb "tddft", default: {}
+    t.jsonb "tddft", default: "{}"
     t.string "task_id"
     t.datetime "deleted_at"
     t.index ["deleted_at"], name: "index_computed_props_on_deleted_at"
@@ -582,7 +582,7 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.string "label"
     t.integer "include_ids", default: [], array: true
     t.integer "exclude_ids", default: [], array: true
-    t.jsonb "configs", default: {}, null: false
+    t.jsonb "configs", default: "{}", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -684,9 +684,9 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
   end
 
   create_table "predictions", id: :serial, force: :cascade do |t|
-    t.integer "predictable_id"
     t.string "predictable_type"
-    t.jsonb "decision", default: {}, null: false
+    t.integer "predictable_id"
+    t.jsonb "decision", default: "{}", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["decision"], name: "index_predictions_on_decision", using: :gin
@@ -892,7 +892,7 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.numrange "melting_point"
     t.numrange "boiling_point"
     t.integer "fingerprint_id"
-    t.jsonb "xref", default: {}
+    t.jsonb "xref", default: "{}"
     t.float "molarity_value", default: 0.0
     t.string "molarity_unit", default: "M"
     t.integer "molecule_name_id"
