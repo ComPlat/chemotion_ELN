@@ -79,10 +79,12 @@ M  END
     ca_smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
 
     c.set_out_format 'inchi'
-    inchi = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+    return_values = Inchi::ExtraInchiReturnValues.new
+
+    format == 'mol' ? (inchi = Inchi::molfileToInchi(mf, return_values, '-LooseTSACheck -Polymers -FoldCRU -NPZz -SAtZZ -LargeMolecules')) : (inchi = c.write_string(m, false).to_s.gsub(/\n/, "").strip)
 
     c.set_out_format 'inchikey'
-    inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+    format == 'mol' ? (inchikey = Inchi::InchiToInchiKey(inchi)) : (inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip)
 
     unless format == 'mol'
       c.set_out_format 'mol'
@@ -121,16 +123,9 @@ M  END
   end
 
   def self.inchikey_from_molfile molfile
-    c = OpenBabel::OBConversion.new
-    c.set_in_format 'mol'
-
-    m = OpenBabel::OBMol.new
-    c.read_string m, molfile
-
-    c.set_out_format 'inchikey'
-    inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip
-
-    return inchikey
+    return_values = Inchi::ExtraInchiReturnValues.new
+    inchi = Inchi::molfileToInchi(molfile, return_values, '-Polymers -FoldCRU -NPZz -SAtZZ -LargeMolecules')
+    inchikey = Inchi::InchiToInchiKey(inchi)
   end
 
   def self.molfile_from_cano_smiles(cano_smiles)
