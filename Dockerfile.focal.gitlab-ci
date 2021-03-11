@@ -6,11 +6,16 @@ RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
 RUN apt-get install -yqq bash ca-certificates wget apt-transport-https git \
       imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
       build-essential nodejs sudo postgresql-client libappindicator1 swig \
-      fonts-liberation xvfb gconf-service libasound2 libgconf-2-4 cmake \
+      xvfb gconf-service libasound2 libgconf-2-4 cmake \
       libnspr4 libnss3 libpango1.0-0 libxss1 xdg-utils tzdata libpq-dev \
-      gtk2-engines-pixbuf xfonts-cyrillic xfonts-100dpi xfonts-75dpi \
-      xfonts-base xfonts-scalable unzip openssh-client \
-      python-dev libsqlite3-dev libboost-all-dev p7zip-full
+      gtk2-engines-pixbuf \
+      unzip openssh-client \
+      python-dev libsqlite3-dev libboost-all-dev p7zip-full \
+      xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
+      fonts-crosextra-caladea fonts-crosextra-carlito \
+      fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
+      fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
+      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic 
 RUN  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
     && apt-get update -yqqq && apt-get -y install google-chrome-stable \
@@ -48,9 +53,10 @@ COPY Gemfile.lock /home/gitlab-runner/
 COPY package.json /home/gitlab-runner/
 COPY package-lock.json /home/gitlab-runner/
 RUN sudo chmod 666 Gemfile.lock
+RUN sudo chmod 666 package-lock.json
 RUN echo $(ls -1 .)
 
-RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 12.18.3 && npm install -g npm@6.14.6 && npm install"
+RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 12.21.0 && npm install -g npm@7.6.2 && npm install"
 RUN echo $(ls -1 shared/node_modules)
 RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && rvm install 2.6.6 && gem install bundler -v 1.17.3 && bundle install --path shared/bundle"
 # RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && chromedriver-update"
