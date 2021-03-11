@@ -1,5 +1,5 @@
 sudo: required
-dist: bionic
+dist: focal
 language: ruby
 cache:
   bundler: true
@@ -7,7 +7,7 @@ cache:
     - node_modules
     - tmp/cache/assets/test/sprockets
 rvm:
-  - 2.5.5
+  - 2.6.6
 before_install:
   - export CHROME_BIN=/usr/bin/google-chrome
   - export DISPLAY=:99.0
@@ -15,7 +15,7 @@ before_install:
   - sudo apt-get install -y libappindicator1 fonts-liberation libeigen3-dev swig
   - wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
   - sudo dpkg -i google-chrome*.deb
-  - nvm install 10.15.3
+  - nvm install 12.21.0
   - npm install npm -g
   - npm install
 before_script:
@@ -23,7 +23,7 @@ before_script:
   - cp config/storage.yml.example config/storage.yml
   - psql -c 'create database travis_ci_test;' -U postgres
 addons:
-  postgresql: "10"
+  postgresql: "12"
 services:
   - postgresql
 script:

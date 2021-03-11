@@ -60,6 +60,8 @@ M  END"
           post '/api/v1/molecules', molfile: molfile
           m = Molecule.find_by(molfile: molfile)
           expect(m).not_to be_nil
+	  mw = params.delete(:molecular_weight)
+	  expect(m.attributes['molecular_weight'].round(5)).to eq(mw)
           params.each do |k, v|
             expect(m.attributes.symbolize_keys[k]).to eq(v)
           end
