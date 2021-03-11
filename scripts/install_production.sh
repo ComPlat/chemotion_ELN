@@ -86,14 +86,11 @@ PART_11='configure NGINX'
 ############################################
 
 ## supported Distribution Version  
-. /etc/lsb-release
-# DISTRIB_ID=Ubuntu
-# DISTRIB_RELEASE=20.04
-# DISTRIB_CODENAME=focal
-# DISTRIB_DESCRIPTION="Ubuntu 20.04.1 LTS"
+. /etc/os-release
 V18='bionic'
 V20='focal'
-# if [ "$DISTRIB_CODENAME" = "$V18" ]; then
+V10='buster'
+# if [ "$VERSION_CODENAME" = "$V18" ]; then
 #   RUBY_VERSION=2.5.8  
 # fi
 
@@ -140,10 +137,10 @@ rm_tmp_repo() {
 
 trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
-if [ "$DISTRIB_CODENAME" = "$V18" ] || [ "$DISTRIB_CODENAME" = "$V20" ]; then
-  sharpi "Running installation for $DISTRIB_DESCRIPTION "
+if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V18" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
+  sharpi "Running installation for $PRETTY_NAME "
 else 
-  error "The installation for your distribution ($DISTRIB_DESCRIPTION) has not been tested"
+  error "The installation for your distribution ($PRETTY_NAME) has not been tested"
 fi
 
 
@@ -229,12 +226,12 @@ description='installing nginx and  passenger'
 
 if [ "${PART_2:-}" ]; then
   sharpi "$description"
-  ## https://www.phusionpassenger.com/library/install/nginx/install/oss/$DISTRIB_CODENAME/
+  ## https://www.phusionpassenger.com/library/install/nginx/install/oss/$VERSION_CODENAME/
 
   # sudo apt-get install -y dirmngr gnupg
   sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
   sudo apt-get install -y nginx apt-transport-https ca-certificates
-  sudo sh -c "echo deb https://oss-binaries.phusionpassenger.com/apt/passenger $DISTRIB_CODENAME main > /etc/apt/sources.list.d/passenger.list"
+  sudo sh -c "echo deb https://oss-binaries.phusionpassenger.com/apt/passenger $VERSION_CODENAME main > /etc/apt/sources.list.d/passenger.list"
   sudo apt-get update
   sudo apt-get install -y libnginx-mod-http-passenger
   if [ ! -f /etc/nginx/modules-enabled/50-mod-http-passenger.conf ]; then

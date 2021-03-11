@@ -4,7 +4,7 @@
 
 Server requirement: the installation can fail if not enough memory is available. A minimum of 3GB memory is recommended.
 
-copy the installation script on a ubuntu server 18.04 or 20.04 (could work with another deb)
+copy the installation script on a ubuntu server 18.04 or 20.04 (also works with debian buster)
 
 ```
 curl -o chemotion_ELN_install.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/install_production.sh
