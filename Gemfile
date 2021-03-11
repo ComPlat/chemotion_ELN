@@ -48,6 +48,8 @@ gem 'haml-rails', '~> 1.0'
 gem 'hashie-forbidden_attributes'
 gem 'httparty'
 
+gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
+
 gem 'jbuilder', '~> 2.0'
 gem 'jquery-rails'
 gem 'jwt'
