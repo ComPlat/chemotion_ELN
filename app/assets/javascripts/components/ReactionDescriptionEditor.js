@@ -25,8 +25,6 @@ export default class ReactionDescriptionEditor extends React.Component {
   constructor(props) {
     super(props);
 
-    this.reactQuillRef = React.createRef();
-
     const templateStore = TextTemplateStore.getState();
     const { predefinedTemplateNames, fetchedPredefinedTemplates } = templateStore;
     const fetchedTemplates = fetchedPredefinedTemplates.toJS();
@@ -141,7 +139,8 @@ export default class ReactionDescriptionEditor extends React.Component {
 
   render() {
     const { predefinedTemplateNames, fetchedPredefinedTemplates } = this.state;
-    const { template, readOnly, value } = this.props;
+    const { template, readOnly, value, reactQuillRef } = this.props;
+    this.reactQuillRef = reactQuillRef;
 
     const templateCreatorPopover = (
       <Popover
@@ -162,7 +161,7 @@ export default class ReactionDescriptionEditor extends React.Component {
         theme="snow"
         formats={toolbarOptions}
         style={{ height: '120px' }}
-        ref={this.reactQuillRef}
+        ref={reactQuillRef}
         onChange={this.debouncedQuillOnChange}
         value={value}
         readOnly={readOnly}
@@ -199,6 +198,7 @@ ReactionDescriptionEditor.propTypes = {
   readOnly: PropTypes.bool,
   onChange: PropTypes.func,
   updateTextTemplates: PropTypes.func,
+  reactQuillRef: PropTypes.object
 };
 
 ReactionDescriptionEditor.defaultProps = {
@@ -206,5 +206,6 @@ ReactionDescriptionEditor.defaultProps = {
   template: {},
   value: {},
   onChange: null,
-  updateTextTemplates: null
+  updateTextTemplates: null,
+  reactQuillRef: {}
 };

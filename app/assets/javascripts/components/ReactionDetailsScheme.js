@@ -40,7 +40,7 @@ export default class ReactionDetailsScheme extends Component {
       reactionDescTemplate: textTemplate.toJS()
     };
 
-    this.quillref = React.createRef();
+    this.reactQuillRef = React.createRef();
     this.additionQuillRef = React.createRef();
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
@@ -292,7 +292,7 @@ export default class ReactionDetailsScheme extends Component {
 
   addSampleTo(e, type) {
     const { paragraph } = e;
-    let quillEditor = this.quillref.current.editor;
+    let quillEditor = this.reactQuillRef.current.editor;
     if (type === 'observation') quillEditor = this.additionQuillRef.current.editor;
     const range = quillEditor.getSelection();
     if (range) {
@@ -844,6 +844,7 @@ export default class ReactionDetailsScheme extends Component {
                       permitOn(reaction) ?
                         <ReactionDescriptionEditor
                           height="100%"
+                          reactQuillRef = {this.reactQuillRef}
                           template={reactionDescTemplate}
                           value={reaction.description}
                           updateTextTemplates={this.updateTextTemplates}
