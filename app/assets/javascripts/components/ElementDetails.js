@@ -205,8 +205,8 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       default:
-        if (el && el.klassType == 'GenericEl' && el.type != null) {
-          return <GenericElDetails genericEl={el} />;
+        if (el && el.klassType === 'GenericEl' && el.type != null) {
+          return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
         }
         return (
           <div style={{ textAlign: 'center' }}>
@@ -229,7 +229,7 @@ export default class ElementDetails extends Component {
     const focusing = elKey === this.state.activeKey;
 
     let iconElement = (<i className={`icon-${el.type}`} />);
-    
+
     const tab = tabInfoHash[el.type] || {};
     const title = tab.title || el.title();
     if (tab.iconEl) { iconElement = tab.iconEl; }

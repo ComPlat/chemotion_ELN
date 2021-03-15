@@ -216,6 +216,11 @@ export default class GenericElDetails extends Component {
         </OverlayTrigger>
         <ConfirmClose el={genericEl} />
         {copyBtn}
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="tip_fullscreen_btn">FullScreen</Tooltip>}>
+          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.props.toggleFullScreen()}>
+            <i className="fa fa-expand" aria-hidden="true" />
+          </Button>
+        </OverlayTrigger>
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="saveScreen">Save</Tooltip>}
@@ -276,6 +281,7 @@ export default class GenericElDetails extends Component {
 
 GenericElDetails.propTypes = {
   genericEl: PropTypes.object,
+  toggleFullScreen: PropTypes.func.isRequired
 };
 
 GenericElDetails.defaultProps = {
