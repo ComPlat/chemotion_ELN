@@ -59,7 +59,7 @@ class ElementField extends Component {
     const { unitsSystem } = this.props;
     const unitConfig = (unitsSystem.fields || []).map(_c =>
       ({ value: _c.field, name: _c.label, label: _c.label }));
-    let typeOpts = this.props.genericType === 'Element' ? ElementFieldTypes.concat([{ value: 'drag_molecule', name: 'drag_molecule', label: 'DragMolecule' }]) : ElementFieldTypes;
+    let typeOpts = this.props.genericType === 'Element' ? ElementFieldTypes.concat([{ value: 'drag_molecule', name: 'drag_molecule', label: 'DragMolecule' }, { value: 'drag_sample', name: 'drag_sample', label: 'DragSample' }]) : ElementFieldTypes;
     typeOpts = typeOpts.concat([{ value: 'system-defined', name: 'system-defined', label: 'System-Defined' }]);
     const skipRequired = this.props.genericType === 'Segment' ? { display: 'none' } : {};
     const f = this.props.field;

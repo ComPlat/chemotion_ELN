@@ -291,6 +291,17 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.string   "short_label"
   end
 
+  create_table "elements_samples", force: :cascade do |t|
+    t.integer  "element_id"
+    t.integer  "sample_id"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "elements_samples", ["element_id"], name: "index_elements_samples_on_element_id", using: :btree
+  add_index "elements_samples", ["sample_id"], name: "index_elements_samples_on_sample_id", using: :btree
 
   create_table "segment_klasses", force: :cascade do |t|
     t.integer  "element_klass_id"

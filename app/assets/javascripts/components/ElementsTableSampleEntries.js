@@ -53,7 +53,7 @@ const targets = {
 };
 
 const isCurrEleDropType = (sourceType, targetType) => {
-  if (sourceType == 'molecule' && !['wellplate', 'sample', 'device', 'research_plan'].includes(targetType)) {
+  if ((sourceType == 'molecule' || sourceType == 'sample') && !['wellplate', 'device', 'research_plan'].includes(targetType)) {
     return sourceType && targetType;
   }
   return sourceType && targetType && targets[sourceType].includes(targetType);

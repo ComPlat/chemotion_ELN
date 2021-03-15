@@ -6,6 +6,7 @@ import { findIndex } from 'lodash';
 import DetailActions from '../actions/DetailActions';
 import LoadingActions from '../actions/LoadingActions';
 import ElementActions from '../actions/ElementActions';
+import ElementStore from '../stores/ElementStore';
 import UIActions from '../actions/UIActions';
 import UIStore from '../stores/UIStore';
 import ConfirmClose from '../common/ConfirmClose';
@@ -22,6 +23,7 @@ export default class GenericElDetails extends Component {
       genericEl: props.genericEl,
     };
     this.onChangeUI = this.onChangeUI.bind(this);
+    this.onChangeElement = this.onChangeElement.bind(this);
     this.handleReload = this.handleReload.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleUnitClick = this.handleUnitClick.bind(this);
@@ -29,10 +31,19 @@ export default class GenericElDetails extends Component {
 
   componentDidMount() {
     UIStore.listen(this.onChangeUI);
+    ElementStore.listen(this.onChangeElement);
   }
 
   componentWillUnmount() {
     UIStore.unlisten(this.onChangeUI);
+    ElementStore.unlisten(this.onChangeElement);
+  }
+  onChangeElement(state) {
+    if (state.currentElement) {
+      if (state.currentElement !== this.state.genericEl) {
+        this.setState({ genericEl: state.currentElement });
+      }
+    }
   }
 
   onChangeUI(state) {
@@ -73,6 +84,12 @@ export default class GenericElDetails extends Component {
           }
           if (newProps[key].fields[idx].type === 'checkbox') {
             newProps[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
+          }
+          console.log(newProps[key].fields[idx].type);
+          console.log(genericEl.properties[key].fields[curIdx].type);
+          if ((newProps[key].fields[idx].type === 'drag_sample' && genericEl.properties[key].fields[curIdx].type === 'drag_sample')
+          || (newProps[key].fields[idx].type === 'drag_molecule' && genericEl.properties[key].fields[curIdx].type === 'drag_molecule')) {
+            if (typeof curVal !== 'undefined') newProps[key].fields[idx].value = curVal;
           }
           if (newProps[key].fields[idx].type === 'system-defined') {
             const units = genUnits(newProps[key].fields[idx].option_layers);

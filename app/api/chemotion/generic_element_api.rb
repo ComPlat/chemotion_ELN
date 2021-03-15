@@ -4,6 +4,7 @@ module Chemotion
     helpers ContainerHelpers
     helpers ParamsHelpers
     helpers CollectionHelpers
+    helpers SampleAssociationHelpers
 
     resource :generic_elements do
       namespace :klass do
@@ -145,6 +146,8 @@ module Chemotion
       end
       post do
         klass = params[:element_klass] || {}
+        collection = Collection.find(params[:collection_id])
+
         attributes = {
           name: params[:name],
           element_klass_id: klass[:id],
@@ -154,13 +157,12 @@ module Chemotion
         element = Element.create(attributes)
         #element_klass = ElementKlass.find(params[:klass][:id]);
 
-        element.container = update_datamodel(params[:container])
-        element.save!
-
-        collection = Collection.find(params[:collection_id])
         CollectionsElement.create(element: element, collection: collection, element_type: klass[:name])
         CollectionsElement.create(element: element, collection: Collection.get_all_collection_for_user(current_user.id), element_type: klass[:name])
 
+        element.properties = update_sample_association(element, params[:properties], current_user)
+        element.container = update_datamodel(params[:container])
+        element.save!
         element
       end
 
@@ -177,15 +179,19 @@ module Chemotion
         end
 
         put do
-          update_datamodel(params[:container]);
-          params.delete(:container);
+          element = Element.find(params[:id])
+
+          update_datamodel(params[:container])
+          properties = update_sample_association(element, params[:properties], current_user)
+
+          params.delete(:container)
+          params.delete(:properties)
 
           attributes = declared(params, include_missing: false)
-
-          element = Element.find(params[:id])
+          attributes["properties"] = properties
           element.update(attributes)
 
-          {element: ElementPermissionProxy.new(current_user, element, user_ids).serialized}
+          { element: ElementPermissionProxy.new(current_user, element, user_ids).serialized }
         end
       end
 

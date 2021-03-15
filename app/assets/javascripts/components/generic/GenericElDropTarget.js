@@ -2,12 +2,32 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import { DropTarget } from 'react-dnd';
+import Aviator from 'aviator';
 import { Tooltip, OverlayTrigger } from 'react-bootstrap';
+import UIStore from '../stores/UIStore';
+
+const handleSampleClick = (type, id) => {
+  const { currentCollection, isSync } = UIStore.getState();
+  if (!isNaN(id)) type += `/${id}`;
+  const collectionUrl = `${currentCollection.id}/${type}`;
+  Aviator.navigate(isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`);
+};
+
 
 const show = (opt, iconClass) => {
   if (opt.value && opt.value.el_id) {
     if (opt.value.el_type === 'molecule') {
       return <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{opt.value.el_label}</div></OverlayTrigger>;
+    } else if (opt.value.el_type === 'sample') {
+      let label = opt.value.el_label;
+      if (opt.value.is_new !== true) {
+        label = (
+          <a role="link" tabIndex={0} onClick={() => handleSampleClick(opt.value.el_type, opt.value.el_id)} style={{ cursor: 'pointer' }}>
+            <span className="reaction-material-link">{label}</span>
+          </a>
+        );
+      }
+      return <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{label}</div></OverlayTrigger>;
     }
     return <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{opt.value.el_label}</div></OverlayTrigger>;
   }
@@ -23,9 +43,18 @@ const source = (type, props) => {
         el_label: props.molecule_name_label,
         el_tip: props.molecule_name_label,
       };
+    case 'sample':
+      return {
+        el_id: props.id,
+        is_new: true,
+        el_type: 'sample',
+        el_label: props.short_label,
+        el_tip: props.short_label,
+      };
     default:
       return {
         el_id: props.id,
+        is_new: true,
         el_type: props.type,
         el_label: props.short_label,
         el_tip: props.short_label,

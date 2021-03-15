@@ -35,6 +35,7 @@ class Element < ActiveRecord::Base
   belongs_to :element_klass
   has_many :collections_elements, dependent: :destroy
   has_many :collections, through: :collections_elements
+  has_many :samples, through: :elements_samples, source: :sample
 
   has_one :container, :as => :containable
 
@@ -45,6 +46,11 @@ class Element < ActiveRecord::Base
 
   before_create :auto_set_short_label
   after_create :update_counter
+
+
+  def self.get_associated_samples(element_ids)
+    ElementsSample.where(element_id: element_ids).pluck(:sample_id)
+  end
 
   def analyses
     container ? container.analyses : []
