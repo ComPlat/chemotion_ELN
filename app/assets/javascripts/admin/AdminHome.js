@@ -83,39 +83,17 @@ class AdminHome extends React.Component {
       <div>
         <Col className="small-col collec-tree">
           <Nav bsStyle="pills" stacked activeKey={pageIndex} onSelect={this.handleSelect}>
-            <NavItem eventKey={0}>
-              Dashboard
-            </NavItem>
-            <NavItem eventKey={1}>
-              User Management
-            </NavItem>
-            <NavItem eventKey={2}>
-              Message Publish
-            </NavItem>
-            <NavItem eventKey={3}>
-              Data Collector
-            </NavItem>
-            <NavItem eventKey={4}>
-              Groups &amp; Devices
-            </NavItem>
-            <NavItem eventKey={5}>
-              Load OLS Terms
-            </NavItem>
-            <NavItem eventKey={6}>
-              NoVNC Settings
-            </NavItem>
-            <NavItem eventKey={7}>
-              UI features
-            </NavItem>
-            <NavItem eventKey={8}>
-              Text Templates
-            </NavItem>
-            <NavItem eventKey={9}>
-              Generic Elements
-            </NavItem>
-            <NavItem eventKey={10}>
-              Segment Elements
-            </NavItem>
+            <NavItem eventKey={0}>Dashboard</NavItem>
+            <NavItem eventKey={1}>User Management</NavItem>
+            <NavItem eventKey={2}>Message Publish</NavItem>
+            <NavItem eventKey={3}>Data Collector</NavItem>
+            <NavItem eventKey={4}>Groups &amp; Devices</NavItem>
+            <NavItem eventKey={5}>Load OLS Terms</NavItem>
+            <NavItem eventKey={6}>NoVNC Settings</NavItem>
+            <NavItem eventKey={7}>UI features</NavItem>
+            <NavItem eventKey={8}>Text Templates</NavItem>
+            <NavItem eventKey={9}>Generic Elements (BETA)</NavItem>
+            <NavItem eventKey={10}>Segment Elements (BETA)</NavItem>
           </Nav>
         </Col>
       </div>
@@ -184,7 +162,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
- 
+
   renderTextTemplates() {
     const { contentClassName } = this.state;
     return (

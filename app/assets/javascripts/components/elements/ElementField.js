@@ -1,31 +1,19 @@
+/* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
 import { ButtonTooltip } from '../../admin/generic/Utils';
-import AdminFetcher from '../fetchers/AdminFetcher';
 
 const ElementFieldTypes = [{ value: 'integer', name: 'integer', label: 'Integer' }, { value: 'text', name: 'text', label: 'Text' }, { value: 'select', name: 'select', label: 'Select' }, { value: 'checkbox', name: 'checkbox', label: 'Checkbox' }];
 class ElementField extends Component {
   constructor(props) {
     super(props);
-    this.state = { unitsSystem: [] };
     this.handleChange = this.handleChange.bind(this);
     this.handleDrop = this.handleDrop.bind(this);
     this.handelDelete = this.handelDelete.bind(this);
     this.handleMove = this.handleMove.bind(this);
-    this.fetchConfigs = this.fetchConfigs.bind(this);
-  }
-
-  componentDidMount() {
-    this.fetchConfigs();
-  }
-
-  fetchConfigs() {
-    AdminFetcher.fetchUnitsSystem().then((result) => {
-      this.setState({ unitsSystem: result });
-    });
   }
 
   handleChange(e, orig, fe, lk, fc, tp) {
@@ -68,13 +56,14 @@ class ElementField extends Component {
   }
 
   renderComponent() {
-    const { unitsSystem } = this.state;
+    const { unitsSystem } = this.props;
     const unitConfig = (unitsSystem.fields || []).map(_c =>
       ({ value: _c.field, name: _c.label, label: _c.label }));
     let typeOpts = this.props.genericType === 'Element' ? ElementFieldTypes.concat([{ value: 'drag_molecule', name: 'drag_molecule', label: 'DragMolecule' }]) : ElementFieldTypes;
     typeOpts = typeOpts.concat([{ value: 'system-defined', name: 'system-defined', label: 'System-Defined' }]);
     const skipRequired = this.props.genericType === 'Segment' ? { display: 'none' } : {};
     const f = this.props.field;
+    const preUnit = unitConfig.length > 0 ? unitConfig[0].value : '';
     const selectOptions = (f.type === 'select' || f.type === 'system-defined') ? (
       <FormGroup controlId="formControlFieldType">
         <Col componentClass={ControlLabel} sm={3}>{f.type === 'select' ? 'Options' : <span />}</Col>
@@ -84,7 +73,7 @@ class ElementField extends Component {
             name={f.field}
             multi={false}
             options={f.type === 'select' ? this.props.select_options : unitConfig}
-            value={f.option_layers}
+            value={f.option_layers || (f.type === 'select' ? '' : preUnit)}
             onChange={event => this.handleChange(event, f.option_layers, f.field, this.props.layerKey, 'option_layers', f.type)}
           />
         </Col>
@@ -203,7 +192,6 @@ class ElementField extends Component {
 ElementField.propTypes = {
   genericType: PropTypes.string, // PropTypes.arrayOf(PropTypes.object),
   layerKey: PropTypes.string.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
   select_options: PropTypes.array.isRequired,
   position: PropTypes.number.isRequired,
   field: PropTypes.shape({
@@ -215,10 +203,9 @@ ElementField.propTypes = {
   onMove: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
+  unitsSystem: PropTypes.object
 };
 
-ElementField.defaultProps = {
-  genericType: 'Element'
-};
+ElementField.defaultProps = { genericType: 'Element', unitsSystem: [] };
 
 export { ElementField, ElementFieldTypes };

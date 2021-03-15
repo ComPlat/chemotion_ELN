@@ -47,6 +47,7 @@ export default class GenericElementAdmin extends React.Component {
       newOptionKey: '',
       layerKey: '',
       selectOptions: [],
+      unitsSystem: {},
       showPropModal: false,
       showNewLayer: false,
       showEditLayer: false,
@@ -91,18 +92,134 @@ export default class GenericElementAdmin extends React.Component {
     this.showJsonModal = this.showJsonModal.bind(this);
     this.hideJsonModal = this.hideJsonModal.bind(this);
     this.handleUpdateJson = this.handleUpdateJson.bind(this);
+    this.fetchConfigs = this.fetchConfigs.bind(this);
   }
 
   componentDidMount() {
     this.fetchElements();
+    this.fetchConfigs();
   }
 
   componentWillUnmount() {
     this.clipboard.destroy();
   }
 
-  handlePropClose() {
-    this.setState({ showPropModal: false });
+  onOptionInputChange(event, selectKey, optionKey) {
+    const { element } = this.state;
+    const options = (element &&
+      element.properties_template && element.properties_template.select_options[selectKey]);
+    const idx = findIndex(options, o => o.key === optionKey);
+    const op = {};
+    op.key = optionKey;
+    op.label = event.target.value;
+    options.splice(idx, 1, op);
+    this.setState({ element });
+  }
+
+
+  onFieldDrop(e) {
+    const { element } = this.state;
+    const sourceKey = e.sourceTag.layerKey;
+    const targetKey = e.targetTag.layerKey;
+    const sourceLayer = element.properties_template.layers[sourceKey];
+    const targetLayer = element.properties_template.layers[targetKey];
+
+    if (sourceLayer && targetLayer) {
+      e.sourceTag.field.position = e.targetTag.field.position - 1;
+      const { fields } = element.properties_template.layers[sourceKey];
+      const idx = findIndex(fields, o => o.field === e.sourceTag.field.field);
+      fields.splice(idx, 1, e.sourceTag.field);
+      element.properties_template.layers[sourceKey].fields = fields;
+      this.setState({ element });
+    }
+  }
+
+  onFieldMove(l, f, isUp) {
+    const { element } = this.state;
+    const layer = (element && element.properties_template && element.properties_template.layers[l]);
+    const { fields } = layer;
+    const idx = findIndex(fields, o => o.field === f);
+    if (idx >= 0 && isUp === true) {
+      const curObj = fields[idx];
+      curObj.position -= 1;
+      const preObj = fields[idx - 1];
+      preObj.position += 1;
+      fields[idx] = preObj;
+      fields[idx - 1] = curObj;
+    } else if (idx < (fields.length - 1) && isUp === false) {
+      const curObj = fields[idx];
+      curObj.position += 1;
+      const nexObj = fields[idx + 1];
+      nexObj.position -= 1;
+      fields[idx] = nexObj;
+      fields[idx + 1] = curObj;
+    }
+    element.properties_template.layers[l].fields = fields;
+    this.setState({ element });
+  }
+
+  onFieldInputChange(event, orig, fe, lk, fc, tp) {
+    const { element } = this.state;
+    let value = '';
+    if (tp === 'select' || tp === 'system-defined') {
+      ({ value } = event);
+    } else if (tp && tp.startsWith('drag')) {
+      value = event;
+    } else {
+      ({ value } = event.target);
+    }
+    let fobj = null;
+    const layer = (element && element.properties_template
+      && element.properties_template.layers[lk]);
+    const { fields } = layer;
+    if (layer != null) {
+      const fobjs = filter(fields, o => o.field === fe);
+      if (fobjs && fobjs.length > 0) {
+        fobj = fobjs[0];
+      }
+    }
+    if (layer != null && fobj != null) {
+      switch (fc) {
+        case 'label':
+          fobj.label = value;
+          break;
+        case 'description':
+          fobj.description = value;
+          break;
+        case 'type':
+          fobj.type = value;
+          break;
+        case 'required':
+          fobj.required = !orig;
+          break;
+        case 'position':
+          fobj.position = value;
+          break;
+        case 'field':
+          fobj.field = value;
+          break;
+        case 'placeholder':
+          fobj.placeholder = value;
+          break;
+        case 'option_layers':
+          fobj.option_layers = value;
+          break;
+        default:
+          break;
+      }
+      const idx = findIndex(fields, o => o.field === fe);
+      fields.splice(idx, 1, fobj);
+      element.properties_template.layers[lk].fields = fields;
+      this.setState({ element });
+    }
+  }
+
+  onInputNewField(e) {
+    this.setState({ newFieldKey: e.target.value });
+  }
+
+  onInputNewOption(e) {
+    this.setState({ newOptionKey: e.target.value });
   }
 
   addLayer() {
@@ -135,14 +252,6 @@ export default class GenericElementAdmin extends React.Component {
 
   copyKlass(element) {
     this.setState({ showCopyKlass: true, element });
-  }
-
-  onInputNewField(e) {
-    this.setState({ newFieldKey: e.target.value });
-  }
-
-  onInputNewOption(e) {
-    this.setState({ newOptionKey: e.target.value });
   }
 
   newField(layerKey) {
@@ -320,115 +429,12 @@ export default class GenericElementAdmin extends React.Component {
     this.handleSubmit();
   }
 
-  onFieldDrop(e) {
-    const { element } = this.state;
-    const sourceKey = e.sourceTag.layerKey;
-    const targetKey = e.targetTag.layerKey;
-    const sourceLayer = element.properties_template.layers[sourceKey];
-    const targetLayer = element.properties_template.layers[targetKey];
-
-    if (sourceLayer && targetLayer) {
-      e.sourceTag.field.position = e.targetTag.field.position - 1;
-      const { fields } = element.properties_template.layers[sourceKey];
-      const idx = findIndex(fields, o => o.field === e.sourceTag.field.field);
-      fields.splice(idx, 1, e.sourceTag.field);
-      element.properties_template.layers[sourceKey].fields = fields;
-      this.setState({ element });
-    }
+  fetchConfigs() {
+    AdminFetcher.fetchUnitsSystem().then((result) => { this.setState({ unitsSystem: result }); });
   }
 
-  onFieldMove(l, f, isUp) {
-    const { element } = this.state;
-    const layer = (element && element.properties_template && element.properties_template.layers[l]);
-    const { fields } = layer;
-    const idx = findIndex(fields, o => o.field === f);
-    if (idx >= 0 && isUp === true) {
-      const curObj = fields[idx];
-      curObj.position -= 1;
-      const preObj = fields[idx - 1];
-      preObj.position += 1;
-      fields[idx] = preObj;
-      fields[idx - 1] = curObj;
-    } else if (idx < (fields.length - 1) && isUp === false) {
-      const curObj = fields[idx];
-      curObj.position += 1;
-      const nexObj = fields[idx + 1];
-      nexObj.position -= 1;
-      fields[idx] = nexObj;
-      fields[idx + 1] = curObj;
-    }
-    element.properties_template.layers[l].fields = fields;
-    this.setState({ element });
-  }
-
-  onFieldInputChange(event, orig, fe, lk, fc, tp) {
-    const { element } = this.state;
-
-    let value = '';
-    if (tp === 'select' || tp === 'system-defined') {
-      ({ value } = event);
-    } else if (tp && tp.startsWith('drag')) {
-      value = event;
-    } else {
-      ({ value } = event.target);
-    }
-    let fobj = null;
-    const layer = (element && element.properties_template
-      && element.properties_template.layers[lk]);
-    const { fields } = layer;
-    if (layer != null) {
-      const fobjs = filter(fields, o => o.field === fe);
-      if (fobjs && fobjs.length > 0) {
-        fobj = fobjs[0];
-      }
-    }
-
-    if (layer != null && fobj != null) {
-      switch (fc) {
-        case 'label':
-          fobj.label = value;
-          break;
-        case 'description':
-          fobj.description = value;
-          break;
-        case 'type':
-          fobj.type = value;
-          break;
-        case 'required':
-          fobj.required = !orig;
-          break;
-        case 'position':
-          fobj.position = value;
-          break;
-        case 'field':
-          fobj.field = value;
-          break;
-        case 'placeholder':
-          fobj.placeholder = value;
-          break;
-        case 'option_layers':
-          fobj.option_layers = value;
-          break;
-        default:
-          break;
-      }
-      const idx = findIndex(fields, o => o.field === fe);
-      fields.splice(idx, 1, fobj);
-      element.properties_template.layers[lk].fields = fields;
-      this.setState({ element });
-    }
-  }
-
-  onOptionInputChange(event, selectKey, optionKey) {
-    const { element } = this.state;
-    const options = (element &&
-      element.properties_template && element.properties_template.select_options[selectKey]);
-    const idx = findIndex(options, o => o.key === optionKey);
-    const op = {};
-    op.key = optionKey;
-    op.label = event.target.value;
-    options.splice(idx, 1, op);
-    this.setState({ element });
+  handlePropClose() {
+    this.setState({ showPropModal: false });
   }
 
   handlePropShow(element) {
@@ -453,15 +459,14 @@ export default class GenericElementAdmin extends React.Component {
 
   handleSubmit() {
     LoadingActions.start();
-    const { element } = this.state;
+    const { element, unitsSystem } = this.state;
     Object.keys(element.properties_template.layers).forEach((key) => {
       const layer = element.properties_template.layers[key];
       const sortedFields = sortBy(((layer && layer.fields) || []), l => l.position);
-
       (sortedFields || []).forEach((f, idx) => {
         f.position = (idx + 1);
+        if (f.type === 'system-defined') { f.option_layers = f.option_layers || unitsSystem.fields[0].field; }
       });
-
       element.properties_template.layers[key].fields = sortedFields;
     });
 
@@ -596,7 +601,6 @@ export default class GenericElementAdmin extends React.Component {
       selects.push(snode);
     });
 
-
     return (
       <div>
         <Panel>
@@ -619,10 +623,9 @@ export default class GenericElementAdmin extends React.Component {
   }
 
   renderProperties() {
-    const { element, selectOptions } = this.state;
+    const { element, selectOptions, unitsSystem } = this.state;
     const layers = [];
     const sortedLayers = sortBy(element.properties_template.layers, l => l.position);
-
     (sortedLayers || []).forEach((layer) => {
       const layerKey = `${layer.key}`;
       const fields = ((layer && layer.fields) || []).map((f, idx) => (
@@ -636,6 +639,7 @@ export default class GenericElementAdmin extends React.Component {
           onMove={(l, fe, isUp) => this.onFieldMove(l, fe, isUp)}
           onDelete={(delStr, delKey, delRoot) => this.confirmDelete(delStr, delKey, delRoot)}
           onChange={(e, orig, fe, lk, fc, tp) => this.onFieldInputChange(e, orig, fe, lk, fc, tp)}
+          unitsSystem={unitsSystem}
         />
       )) || [];
 
