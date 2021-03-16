@@ -5,12 +5,12 @@
 #  id               :integer          not null, primary key
 #  name             :string
 #  element_klass_id :integer
+#  short_label      :string
 #  properties       :jsonb
 #  created_by       :integer
 #  created_at       :datetime
 #  updated_at       :datetime
 #  deleted_at       :datetime
-#  short_label      :string
 #
 
 # Generic Element

@@ -7,15 +7,15 @@
 #  label               :string
 #  desc                :string
 #  icon_name           :string
+#  is_active           :boolean          default(TRUE), not null
+#  klass_prefix        :string           default("E"), not null
+#  is_generic          :boolean          default(TRUE), not null
+#  place               :integer          default(100), not null
 #  properties_template :jsonb
 #  created_by          :integer
 #  created_at          :datetime
 #  updated_at          :datetime
 #  deleted_at          :datetime
-#  is_active           :boolean          default(TRUE), not null
-#  klass_prefix        :string           default("E"), not null
-#  is_generic          :boolean          default(TRUE), not null
-#  place               :integer          default(100), not null
 #
 
 class ElementKlass < ActiveRecord::Base
