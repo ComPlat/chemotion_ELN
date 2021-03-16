@@ -51,7 +51,8 @@ export default class LayerAttrForm extends Component {
           <InputGroup>
             <InputGroup.Addon>Header color</InputGroup.Addon>
             <FormControl componentClass="select" defaultValue={layer.color} inputRef={(ref) => { this.lf_color = ref; }} >
-              <option value="default">none</option>
+              <option value="none">none</option>
+              <option value="default">Grey</option>
               <option value="success">Green</option>
               <option value="warning">Yellow</option>
               <option value="primary">Blue</option>

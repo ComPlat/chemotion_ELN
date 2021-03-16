@@ -162,7 +162,7 @@ export default class GenericElDetails extends Component {
     const selectOptions = (genericEl && genericEl.element_klass &&
       genericEl.element_klass.properties_template &&
       genericEl.element_klass.properties_template.select_options) || {};
-    const defaultName = <GenProperties key={`GenProp_${genericEl.name}`} label="" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
+    const defaultName = <GenProperties label="" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
     options.push(defaultName);
 
     const layersLayout = LayersLayout(
@@ -172,7 +172,7 @@ export default class GenericElDetails extends Component {
       this.handleUnitClick,
       options
     );
-    return (<div style={{ marginTop: '5px' }}>{layersLayout}</div>);
+    return (<div style={{ marginTop: '10px' }}>{layersLayout}</div>);
   }
 
   propertiesTab(ind) {
