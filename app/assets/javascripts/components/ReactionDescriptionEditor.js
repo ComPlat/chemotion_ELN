@@ -42,7 +42,7 @@ export default class ReactionDescriptionEditor extends React.Component {
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
     this.quillOnChange = this.quillOnChange.bind(this);
-    this.debouncedQuillOnChange = _.debounce(this.quillOnChange, 300);
+    //this.debouncedQuillOnChange = _.debounce(this.quillOnChange, 300);
   }
 
   componentDidMount() {
@@ -162,7 +162,7 @@ export default class ReactionDescriptionEditor extends React.Component {
         formats={toolbarOptions}
         style={{ height: '100%' }}
         ref={this.reactQuillRef}
-        onChange={this.debouncedQuillOnChange}
+        onChange={this.quillOnChange}
         value={value}
         readOnly={readOnly}
       >
