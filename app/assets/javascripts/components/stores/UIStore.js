@@ -82,8 +82,6 @@ class UIStore {
     //   };
     // });
 
-    console.log(this.state);
-
     this.bindListeners({
       handleInitialize: UIActions.initialize,
       handleSelectTab: UIActions.selectTab,
@@ -226,7 +224,6 @@ class UIStore {
   }
 
   handleUncheckWholeSelection() {
-    console.log(this.state.klasses);
     this.handleUncheckAllElements({ type: 'sample', range: 'all' });
     this.handleUncheckAllElements({ type: 'screen', range: 'all' });
     this.handleUncheckAllElements({ type: 'reaction', range: 'all' });

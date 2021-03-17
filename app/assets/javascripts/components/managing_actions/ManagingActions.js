@@ -47,19 +47,18 @@ const upState = (state) => {
     }
   };
 
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+  // const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  //  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
 
-    // eslint-disable-next-line no-unused-expressions
-    klasses && klasses.forEach((klass) => {
-      stateObj[`${klass}`] = {
-        checkedAll: state[`${klass}`] ? state[`${klass}`].checkedAll : false,
-        checkedIds: state[`${klass}`] ? state[`${klass}`].checkedIds : List(),
-        uncheckedIds: state[`${klass}`] ? state[`${klass}`].uncheckedIds : List(),
-      };
-    });
-  }
-
+  // eslint-disable-next-line no-unused-expressions
+  klasses && klasses.forEach((klass) => {
+    stateObj[`${klass}`] = {
+      checkedAll: state[`${klass}`] ? state[`${klass}`].checkedAll : false,
+      checkedIds: state[`${klass}`] ? state[`${klass}`].checkedIds : List(),
+      uncheckedIds: state[`${klass}`] ? state[`${klass}`].uncheckedIds : List(),
+    };
+  });
+  //  }
 
   return (stateObj);
 };
@@ -68,7 +67,6 @@ export default class ManagingActions extends React.Component {
   constructor(props) {
     super(props);
     const { currentUser, genericEls } = UserStore.getState();
-    //console.log(genericEls);
     this.state = {
       currentUser,
       currentCollection: { id: 0 },
@@ -132,7 +130,6 @@ export default class ManagingActions extends React.Component {
         currentUser: state.currentUser,
       });
     }
-    //console.log(state.genericEls);
     if (typeof state.genericEls !== 'undefined' && state.genericEls !== null) {
       this.setState({
         genericEls: state.genericEls

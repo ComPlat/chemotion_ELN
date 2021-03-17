@@ -594,12 +594,11 @@ class ElementStore {
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
 
-        const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+        const { currentUser, genericEls } = UserStore.getState();
         if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-          const klasses = UIStore.getState();
-
           // eslint-disable-next-line no-unused-expressions
-          klasses && klasses.forEach((klass) => {
+          const genericNames = (genericEls.map(el => el.name)) || [];
+          genericNames.forEach((klass) => {
             if (layout[`${klass}`] && layout[`${klass}`] > 0) { this.handleRefreshElements(klass); }
           });
         }
@@ -1012,7 +1011,6 @@ class ElementStore {
       const params = { page, per_page, fromDate, toDate, productOnly, name: type };
       const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
       let fn = `fetch${fnName}ByCollectionId`;
-      //const { currentType } = UserStore.getState();
       const allowedActions = [
         'fetchSamplesByCollectionId',
         'fetchReactionsByCollectionId',
