@@ -12,8 +12,9 @@ export default class ResearchPlanDetailsBody extends Component {
       body, disabled, onChange, onDrop, onAdd, onDelete, onExport, update, edit
     } = this.props;
 
-    const fields = body.map((field, index) =>
-      (<Field
+    let tableIndex = 0;
+    const fields = body.map((field, index) =>{
+      let item = (<Field
         key={field.id}
         field={field}
         index={index}
@@ -24,7 +25,13 @@ export default class ResearchPlanDetailsBody extends Component {
         onExport={onExport.bind(this)}
         update={update}
         edit={edit}
-      />));
+        tableIndex={tableIndex}
+      />)
+
+      if(field.type === 'table') tableIndex++;
+
+      return item;
+    });
 
     let className = 'research-plan-body';
     let bodyFooter;

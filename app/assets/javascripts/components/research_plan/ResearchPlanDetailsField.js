@@ -14,7 +14,7 @@ import ResearchPlanDetailsFieldReaction from './ResearchPlanDetailsFieldReaction
 export default class ResearchPlanDetailsField extends Component {
   render() {
     const {
-      field, index, disabled, onChange, onDrop, onDelete, onExport, update, edit
+      field, index, disabled, onChange, onDrop, onDelete, onExport, update, edit, tableIndex
     } = this.props;
     let label;
     let component;
@@ -67,6 +67,7 @@ export default class ResearchPlanDetailsField extends Component {
             onExport={onExport}
             update={update}
             edit={edit}
+            tableIndex={tableIndex}
           />);
         break;
       case 'sample':

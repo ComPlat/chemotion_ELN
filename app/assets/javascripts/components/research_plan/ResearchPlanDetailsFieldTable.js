@@ -293,10 +293,10 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   renderEdit() {
-    const { field, onExport } = this.props;
+    const { field, onExport, tableIndex  } = this.props;
     const { rows, columns } = field.value;
     const { columnNameModal, schemaModal } = this.state;
-    const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[0];
+    const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[tableIndex];
 
     return (
       <div>
@@ -317,7 +317,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             onCellDeSelected={this.handleCellDeSelected.bind(this)}
             onColumnResize={this.handleColumnResize.bind(this)}
             contextMenu={
-              <ResearchPlanDetailsFieldTableContextMenu id=  {this.nextUniqueId()}
+              <ResearchPlanDetailsFieldTableContextMenu id={this.nextUniqueId()}
                 onColumnInsertLeft={(event, { idx }) => this.handleColumnNameModalShow('insert', idx)}
                 onColumnInsertRight={(event, { idx }) => this.handleColumnNameModalShow('insert', idx + 1)}
                 onColumnRename={(event, { idx }) => this.handleColumnNameModalShow('rename', idx)}
