@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 import { differenceBy, concat } from 'lodash';
 import GenericEl from '../models/GenericEl';
+import Sample from '../models/Sample';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
 
@@ -15,25 +16,6 @@ export default class GenericElsFetcher {
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'generic_elements', GenericEl);
-  }
-
-  static search(criteria) {
-    const promise = () => fetch('/api/v1/generic_elements/search/', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(criteria)
-    }).then(response => (response.json())
-      .then((json) => {
-        const result = { ...json };
-        result[`${criteria.genericElName}s`].elements = result[`${criteria.genericElName}s`].elements.map(r => (new GenericEl(r)));
-        return result;
-      }))
-      .catch((errorMessage) => { console.log(errorMessage); });
-    return promise();
   }
 
   static fetchById(id) {

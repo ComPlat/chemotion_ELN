@@ -4,7 +4,7 @@ import {
   Form, FormControl, Radio, Grid, Row, Col
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-
+import { findIndex } from 'lodash';
 import AutoCompleteInput from './AutoCompleteInput';
 import StructureEditorModal from '../structure_editor/StructureEditorModal';
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
@@ -79,32 +79,38 @@ export default class Search extends React.Component {
       });
   }
 
-  genericElSearch(geEl=null) {
-    console.log(geEl);
+  genericElSearch() {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
     const { genericEl } = this.state;
-    console.log(genericEl.search_name);
-    const criteria = {
+
+
+    const selection = {
+      elementType: this.state.elementType,
+      searchName: genericEl.search_name,
+      searchShowLabel: genericEl.search_short_label,
+      genericElName: genericEl.name,
+      search_by_method: genericEl.name,
+      genericElProperties: genericEl.properties,
+      searchProperties: genericEl.search_properties,
+      page_size: uiState.number_of_results
+    };
+
+    UIActions.setSearchSelection(selection);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+      selection,
+      genericElName: genericEl.name,
       collectionId,
       isSync,
-      search_by_method: 'MOF',
-      genericElName: genericEl.name,
-      searchName: genericEl.search_name,
-      searchProperties: genericEl.search_properties,
-      genericElProperties: genericEl.properties,
-      elementType: this.state.elementType,
-      page_size: uiState.number_of_results,
-    };
-    UIActions.setSearchSelection(criteria);
-    ElementActions.fetchGenericElByCriteria(criteria);
-    this.hideGenericElCriteria();
+    });
+    this.setState({ showGenericElCriteria: false });
   }
 
   handleClearSearchSelection() {
     const { currentCollection, isSync } = UIStore.getState();
+    this.setState({ elementType: 'all' })
     currentCollection['clearSearch'] = true;
     isSync ? UIActions.selectSyncCollection(currentCollection)
       : UIActions.selectCollection(currentCollection);
@@ -128,12 +134,13 @@ export default class Search extends React.Component {
 
   hideGenericElCriteria() {
     this.setState({ showGenericElCriteria: false });
+    this.handleClearSearchSelection();
   }
 
   handleElementSelection(event, element = null) {
     if (event.startsWith('elements-')) {
       this.showGenericElCriteria();
-      this.setState({ elementType: event, genericEl: element });
+      this.setState({ elementType: 'elements', genericEl: element });
     } else {
       this.setState({ elementType: event });
     }
@@ -188,13 +195,13 @@ export default class Search extends React.Component {
     menu.push(<MenuItem key="divider-generic" divider />);
 
     const genericEls = UserStore.getState().genericEls || [];
+    const profile = UserStore.getState().profile || {};
 
     genericEls.forEach((el) => {
-      menu.push(
-        <MenuItem key={`menu-el-${el.name}`} onSelect={() => this.handleElementSelection(`elements-${el.name}`, el)}>
-          {el.label}
-        </MenuItem>
-      );
+      const idx = profile.data && profile.data.layout && profile.data.layout[el.name];
+      if (idx >= 0) {
+        menu.push(<MenuItem key={`menu-el-${el.name}`} onSelect={() => this.handleElementSelection(`elements-${el.name}`, el)}>{el.label}</MenuItem>);
+      }
     });
 
     return menu;
@@ -263,12 +270,18 @@ export default class Search extends React.Component {
       }
     };
 
+    const searchIcon = (elementType) => {
+      if (elementType === 'all') return 'All';
+      if (['samples', 'reactions', 'screens', 'wellplates'].includes(elementType.toLowerCase())) return (<i className={`icon-${elementType.toLowerCase().slice(0, -1)}`} />);
+      if (this.state.genericEl) return (<i className={this.state.genericEl.icon_name} />);
+      return elementType;
+    }
+
     const innerDropdown = (
       <DropdownButton
         className={customClass}
         id="search-inner-dropdown"
-        title={this.state.elementType === 'all' ? 'All' :
-        <i className={`icon-${this.state.elementType.toLowerCase().slice(0, -1)}`} />}
+        title={searchIcon(this.state.elementType)}
         style={{ width: '50px' }}
       >
         {this.renderMenuItems()}

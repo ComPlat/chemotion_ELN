@@ -101,7 +101,6 @@ const GenPropertiesNumber = (opt) => {
 const GenPropertiesSystemDefined = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
-
   return (
     <FormGroup>
       <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
@@ -268,6 +267,7 @@ class GenPropertiesLayerSearchCriteria extends Component {
     const { cols, fields, key } = layer;
     const col = 12 / (cols || 1);
     const vs = fields.map((f) => {
+      const unit = genUnits(f.option_layers)[0] || {};
       return (
         <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col}>
           <GenPropertiesSearch
@@ -277,6 +277,8 @@ class GenPropertiesLayerSearchCriteria extends Component {
             field={f.field || 'field'}
             options={(selectOptions && selectOptions[f.option_layers]) || []}
             onChange={event => this.handleChange(event, f.field, key, f.type)}
+            option_layers={f.option_layers}
+            value_system={f.value_system || unit.key}
             isEditable
             readOnly={false}
             isRequired={false}
@@ -328,7 +330,8 @@ const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout 
       for (let i = 0; i < conditions.length; i++) {
         const arr = conditions[i].split(',');
         if (arr.length >= 3) {
-          const specific = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
+          const specificObj = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`);
+          const specific = specificObj && specificObj.value;
           if ((specific && specific.toString()) === (arr[2] && arr[2].toString().trim())) {
             showLayer = true;
             break;

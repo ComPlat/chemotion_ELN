@@ -16,7 +16,7 @@ module Chemotion
             # polymer_type
           #]
           optional :elementType, type: String, values: %w[
-            All Samples Reactions Wellplates Screens all samples reactions wellplates screens
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -135,6 +135,28 @@ module Chemotion
         scope
       end
 
+      def elements_search(c_id = @c_id, dl = @dl)
+        collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(c_id)
+        element_scope = Element.joins(:collections_elements).where('collections_elements.collection_id = ? and collections_elements.element_type = (?)', collection.id, params[:selection][:genericElName])
+        element_scope = element_scope.where("name like (?)", "%#{params[:selection][:searchName]}%") if params[:selection][:searchName].present?
+        element_scope = element_scope.where("short_label like (?)", "%#{params[:selection][:searchShowLabel]}%") if params[:selection][:searchShowLabel].present?
+        if params[:selection][:searchProperties].present?
+          params[:selection][:searchProperties] && params[:selection][:searchProperties][:layers] && params[:selection][:searchProperties][:layers].keys.each do |lk|
+            layer = params[:selection][:searchProperties][:layers][lk]
+            qs = layer[:fields].select{ |f| f[:value].present? }
+            qs.each do |f|
+              if f[:type] == "checkbox"
+                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value] }] } }
+              else
+                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value].to_s }] } }
+              end
+              element_scope = element_scope.where("properties @> ?", query.to_json)
+            end
+          end
+        end
+        element_scope
+      end
+
       def serialize_samples samples, page, search_method, molecule_sort
         return { data: [], size: 0 } if samples.empty?
         samples_size = samples.size
@@ -205,7 +227,6 @@ module Chemotion
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
-        element_list = elements.fetch(:elements, [])
         samples_data = serialize_samples(samples, page, search_by_method, molecule_sort)
         serialized_samples = samples_data[:data]
         samples_size = samples_data[:size]
@@ -238,14 +259,7 @@ module Chemotion
           ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys
         }
 
-        ids = Kaminari.paginate_array(element_list).page(page).per(page_size)
-        serialized_elements = Element.includes(
-          collections: :sync_collections_users
-        ).find(ids).map{ |s|
-          ElementSerializer.new(s).serializable_hash.deep_symbolize_keys
-        }
-
-        {
+        result = {
           samples: {
             elements: serialized_samples,
             totalElements: samples_size,
@@ -277,8 +291,16 @@ module Chemotion
             pages: pages(screens.size),
             perPage: page_size,
             ids: screens
-          },
-          genericEls: {
+          }
+        }
+
+        klasses = ElementKlass.where(is_active: true, is_generic: true)
+        klasses.each do |klass|
+          element_list = Element.where(id: elements.fetch(:elements, []), element_klass_id: klass.id).pluck :id
+          ids = Kaminari.paginate_array(element_list).page(page).per(page_size)
+          serialized_elements = Element.includes(collections: :sync_collections_users).find(ids).map{ |s| ElementSerializer.new(s).serializable_hash.deep_symbolize_keys }
+
+          result["#{klass.name}s"] = {
             elements: serialized_elements,
             totalElements: element_list.size,
             page: page,
@@ -286,7 +308,8 @@ module Chemotion
             perPage: page_size,
             ids: element_list
           }
-        }
+        end
+        result
       end
 
       # Generate search query
@@ -325,7 +348,7 @@ module Chemotion
           Wellplate.by_collection_id(c_id).search_by(search_method, arg)
         when 'screen_name'
           Screen.by_collection_id(c_id).search_by(search_method, arg)
-        when 'substring'         
+        when 'substring'
           # NB we'll have to split the content of the pg_search_document into
           # MW + external_label (dl_s = 0) and the other info only available
           # from dl_s > 0. For now one can use the suggested search instead.
@@ -338,6 +361,8 @@ module Chemotion
           sample_structure_search
         when 'advanced'
           advanced_search(c_id)
+        when 'elements'
+          elements_search(c_id)
         end
 
         if search_method == 'advanced' && molecule_sort == false
@@ -386,6 +411,9 @@ module Chemotion
           ).uniq
           elements[:wellplates] = user_wellplates.by_sample_ids(scope&.map(&:id)).uniq.pluck(:id)
           elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
+          elements[:elements] = (
+            user_elements.by_sample_ids(scope&.map(&:id)).pluck(:id)
+          ).uniq
         when Reaction
           elements[:reactions] = scope&.pluck(:id)
           elements[:samples] = user_samples.by_reaction_ids(scope&.map(&:id)).pluck(:id).uniq
@@ -407,6 +435,8 @@ module Chemotion
           ).uniq.pluck(:id)
         when Element
           elements[:elements] = scope&.pluck(:id)
+          sids = ElementsSample.where(element_id: elements[:elements]).pluck :sample_id
+          elements[:samples] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
         when AllElementSearch::Results
           # TODO check this samples_ids + molecules_ids ????
           elements[:samples] = (scope&.samples_ids + scope&.molecules_ids)
@@ -431,6 +461,29 @@ module Chemotion
     end
 
     resource :search do
+      namespace :elements do
+        desc "Return all matched elements and associations for substring query"
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          scope = elements_search(@c_id)
+          return unless scope
+          elements_ids = elements_by_scope(scope)
+
+          serialization_by_elements_and_page(
+            elements_ids,
+            params[:page],
+            params[:molecule_sort]
+          )
+        end
+      end
+
       namespace :all do
         desc "Return all matched elements and associations for substring query"
         params do

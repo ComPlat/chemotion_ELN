@@ -8,6 +8,7 @@ import NotificationActions from '../../components/actions/NotificationActions';
 import UserStore from '../../components/stores/UserStore';
 
 const genUnitSup = (val) => {
+  if (typeof val === 'undefined' || val === null) return '';
   const supVal = val.match(/<sup[^>]*>([^<]+)<\/sup>/);
   if (supVal) return <span>{val.substring(0, supVal.index)}<sup>{supVal[1]}</sup></span>;
   return val;

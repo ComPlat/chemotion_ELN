@@ -17,7 +17,6 @@ module SampleAssociationHelpers
       field_samples.each do |field|
         idx = properties[key]['fields'].index(field)
         next unless properties.dig(key, 'fields', idx, 'value', 'is_new') == true
-byebug
         sid = field.dig('value', 'el_id')
         subsample = split_sample(sid, element.collections, current_user) unless sid.nil?
         next if subsample.nil?

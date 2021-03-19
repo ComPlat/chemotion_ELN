@@ -33,11 +33,15 @@ class Element < ActiveRecord::Base
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_klass_id_short_label, ->(klass_id, short_label) { where('element_klass_id = ? and short_label ILIKE ?', klass_id, "%#{sanitize_sql_like(short_label)}%") }
+  scope :by_sample_ids, ->(ids) { joins(:elements_samples).where('sample_id IN (?)', ids) }
+  scope :by_klass_id, ->(klass_id) { where('element_klass_id = ? ', klass_id) }
 
   belongs_to :element_klass
+
   has_many :collections_elements, dependent: :destroy
   has_many :collections, through: :collections_elements
   has_many :attachments, as: :attachable
+  has_many :elements_samples, dependent: :destroy
   has_many :samples, through: :elements_samples, source: :sample
   has_one :container, :as => :containable
 

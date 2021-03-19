@@ -145,7 +145,6 @@ class ElementStore {
       handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
-      handleFetchGenericElByCriteria: ElementActions.fetchGenericElByCriteria,
 
       handleFetchGenericElsByCollectionId: ElementActions.fetchGenericElsByCollectionId,
       handleFetchGenericElById: ElementActions.fetchGenericElById,
@@ -487,32 +486,7 @@ class ElementStore {
 
   handleFetchBasedOnSearchSelection(result) {
     Object.keys(result).forEach((key) => {
-      console.log(key);
-      console.log(result[key]);
-      if (key == 'genericEls') {
-        const { klasses } = UIStore.getState();
-
-        // eslint-disable-next-line no-unused-expressions
-        klasses && klasses.forEach((klass) => {
-          const els = filter(result[key].elements, o => o.type == klass);
-          const elIds = els.map(el => el.id);
-
-          this.state.elements[`${klass}s`] = {
-            elements: els,
-            ids: elIds,
-            page: result[key].page,
-            pages: result[key].pages,
-            perPage: result[key].perPage,
-            totalElements: els.length
-          };
-          //result[key].elements.filter(u => u.type == klass);
-          //filter(result[key].elements, o => o.type == klass);
-        });
-
-        //this.state.elements['mofs'] = result[key];
-      } else {
-        this.state.elements[key] = result[key];
-      }
+      this.state.elements[key] = result[key];
     });
   }
 
@@ -520,10 +494,6 @@ class ElementStore {
     Object.keys(result).forEach((key) => {
       this.state.elements[key] = result[key];
     });
-  }
-
-  handleFetchGenericElByCriteria(result) {
-    this.state.elements.mofs = result.mofs.elements;
   }
 
   // -- Elements --

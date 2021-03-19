@@ -85,9 +85,6 @@ export default class AutoCompleteInput extends React.Component {
     if(!valueBeforeFocus) {
       newState.valueBeforeFocus = value
     }
-    console.log(suggestions);
-    console.log(newFocus);
-
     newState.value = suggestions[newFocus].name
 
     if (!isString(newState.value)) {
@@ -128,7 +125,6 @@ export default class AutoCompleteInput extends React.Component {
     let debounced = debounce(this.props.suggestions, 200)
     debounced(value).then(result => {
       let newState = {}
-      console.log(result);
       if(result.length > 0) {
         newState.suggestions = result
         newState.showSuggestions = show
@@ -226,11 +222,8 @@ export default class AutoCompleteInput extends React.Component {
       showSuggestions: false,
       valueBeforeFocus: null
     })
-    console.log(value);
-    console.log(suggestions);
-    console.log(suggestionFocus);
 
-    if (!isString(value)) { 
+    if (!isString(value)) {
       value = value.name;
       this.setState({ value });
     }
@@ -247,21 +240,15 @@ export default class AutoCompleteInput extends React.Component {
       return 0
     }
 
-    console.log(suggestions);
-    console.log(value);
-
     let selection = {name: value, search_by_method: 'substring'}
     if (suggestions && suggestionFocus != null && suggestions[suggestionFocus]) {
       let selectedSuggestion = suggestions[suggestionFocus]
-      console.log(selectedSuggestion)
-      let selectedName = selectedSuggestion.name
+      let selectedName = selectedSuggestion.name;
 
-      if (!isString(selectedName)) { 
+      if (!isString(selectedName)) {
         selectedName = selectedName.name;
       }
 
-      console.log(this.state.value);
-      console.log(selectedName);
       if (selectedName && selectedName.trim() != '' && this.state.value == selectedName)
         if (selectedSuggestion.search_by_method == 'element_short_label') {
           selection = {name: selectedSuggestion.name.name, search_by_method: `element_short_label_${selectedSuggestion.name.klass}`}

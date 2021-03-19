@@ -1,15 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Row, Col } from 'react-bootstrap';
-import { sortBy, filter } from 'lodash';
+import { sortBy } from 'lodash';
 import { GenProperties, GenPropertiesLayerSearchCriteria } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
 
 const buildCriteria = (props) => {
   const { genericEl } = props;
-  console.log(genericEl);
   if (!genericEl) return (<span />);
-  const options = [];
+  const layout = [];
   const defaultName = (
     <Row>
       <Col md={6}>
@@ -21,46 +20,54 @@ const buildCriteria = (props) => {
     </Row>
   );
 
-  options.push(defaultName);
+  layout.push(defaultName);
 
-  const filterLayers = filter(genericEl.properties_template.layers, l => l.condition == null || l.condition.trim().length === 0) || [];
-  const sortedLayers = sortBy(filterLayers, l => l.position) || [];
-  sortedLayers.forEach((layerProps) => {
-    const ig = (
-      <GenPropertiesLayerSearchCriteria
-        layer={layerProps}
-        onChange={props.onChange}
-        selectOptions={genericEl.properties_template.select_options || {}}
-      />
-    );
-    options.push(ig);
-  });
-  //const specific = genericEl.properties.type_layer && genericEl.properties.type_layer.fields.find(e => e.field === 'mof_method').value;
+  const { layers } = genericEl.properties_template;
+  const sortedLayers = sortBy(genericEl.properties_template.layers, l => l.position) || [];
 
-  const filterConLayers = filter(genericEl.properties_template.layers, l => l.condition && l.condition.trim().length > 0) || [];
-  const sortedConLayers = sortBy(filterConLayers, l => l.position) || [];
+  sortedLayers.forEach((layer) => {
+    if (layer.condition == null || layer.condition.trim().length === 0) {
+      const ig = (
+        <GenPropertiesLayerSearchCriteria
+          layer={layer}
+          onChange={props.onChange}
+          selectOptions={genericEl.properties_template.select_options || {}}
+        />
+      );
+      layout.push(ig);
+    } else if (layer.condition && layer.condition.trim().length > 0) {
+      const conditions = layer.condition.split(';');
+      let showLayer = false;
 
-  sortedConLayers.forEach((layerProps) => {
-    const arr = layerProps.condition.split(',');
-    if (arr.length >= 3) {
-      const specific = genericEl.properties_template.layers[`${arr[0].trim()}`] && genericEl.properties_template.layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`).value;
+      // eslint-disable-next-line no-plusplus
+      for (let i = 0; i < conditions.length; i++) {
+        const arr = conditions[i].split(',');
+        if (arr.length >= 3) {
+          const specificObj = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`);
+          const specific = specificObj && specificObj.value;
+          if ((specific && specific.toString()) === (arr[2] && arr[2].toString().trim())) {
+            showLayer = true;
+            break;
+          }
+        }
+      }
 
-      if (specific == arr[2] && arr[2].trim()) {
+      if (showLayer === true) {
         const igs = (
           <GenPropertiesLayerSearchCriteria
-            layer={layerProps}
+            layer={layer}
             onChange={props.onChange}
             selectOptions={genericEl.properties_template.select_options || {}}
           />
         );
-        options.push(igs);
+        layout.push(igs);
       }
     }
   });
 
   return (
     <div style={{ margin: '15px' }}>
-      {options}
+      {layout}
     </div>
   );
 };
@@ -91,13 +98,17 @@ export default class GenericElCriteria extends Component {
     const { properties_template } = genericEl;
     let value = '';
     if (type === 'select') {
-      ({ value } = event);
+      value = event ? event.value : null;
+    } else if (type === 'checkbox') {
+      value = event.target.checked;
     } else {
       ({ value } = event.target);
     }
     if (typeof value === 'string') value = value.trim();
     if (field === 'search_name' && layer === '') {
       genericEl.search_name = value;
+    } else if (field === 'search_short_label' && layer === '') {
+      genericEl.search_short_label = value;
     } else {
       properties_template.layers[`${layer}`].fields.find(e => e.field === field).value = value;
     }
@@ -113,7 +124,6 @@ export default class GenericElCriteria extends Component {
   }
   render() {
     const { genericEl } = this.state;
-    console.log(genericEl);
     return (
       <div className="search_criteria_mof">
         <div className="modal_body">
@@ -123,7 +133,8 @@ export default class GenericElCriteria extends Component {
           <Button bsStyle="warning" onClick={this.props.onHide}>
             Close
           </Button>
-          <Button bsStyle="primary" disabled onClick={this.onSearch}>
+          &nbsp;
+          <Button bsStyle="primary" onClick={this.onSearch}>
             Search
           </Button>&nbsp;
         </div>

@@ -109,6 +109,7 @@ export default class AttachmentFetcher {
   }
 
   static getFileListfrom(container) {
+    if (container == null) return [];
     const allFiles = [];
     this.filterAllAttachments(allFiles, container.children);
     return allFiles

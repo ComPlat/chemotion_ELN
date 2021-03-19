@@ -174,7 +174,6 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(params) {
-    console.log(params);
     let uid;
     NotificationActions.add({
       title: "Searching ...",
@@ -182,42 +181,15 @@ class ElementActions {
       position: "tc",
       onAdd: function(notificationObject) { uid = notificationObject.uid; }
     });
-    if (params && params.selection && params.selection.search_by_method && params.selection.search_by_method.startsWith("1sselement_short_label")) {
-      return (dispatch) => {
-        GenericElsFetcher.search(params)
-          .then((result) => {
-            dispatch(result);
-            NotificationActions.removeByUid(uid);
-          }).catch((errorMessage) => { console.log(errorMessage); });
-      };
-    } else {
-      return (dispatch) => {
-        SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
-          .then((result) => {
-            dispatch(result);
-            NotificationActions.removeByUid(uid);
-          }).catch((errorMessage) => { console.log(errorMessage); });
-      };
-    }
-
-  }
-
-  fetchGenericElByCriteria(criteria) {
-    console.log(criteria);
-    let uid = "search_generic_elements";
-    NotificationActions.add({
-      title: "Searching ...",
-      level: "info",
-      position: "tc",
-      uid,
-    });
     return (dispatch) => {
-      GenericElsFetcher.search(criteria)
+      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
         .then((result) => {
           dispatch(result);
           NotificationActions.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
+
+
   }
 
   // -- Collections --
