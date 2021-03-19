@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import { differenceBy, concat } from 'lodash';
 import GenericEl from '../models/GenericEl';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
@@ -41,6 +42,7 @@ export default class GenericElsFetcher {
     })
       .then(response => response.json()).then((json) => {
         const genericEl = new GenericEl(json.element);
+        genericEl.attachments = json.attachments;
         if (json.error) {
           genericEl.type = null; // `${id}:error:GenericEl ${id} is not accessible!`;
         }
@@ -52,6 +54,8 @@ export default class GenericElsFetcher {
   }
 
   static updateOrCreate(genericEl, action = 'create') {
+    const newFiles = (genericEl.attachments || []).filter(a => a.is_new && !a.is_deleted);
+    const delFiles = (genericEl.attachments || []).filter(a => !a.is_new && a.is_deleted);
     const files = AttachmentFetcher.getFileListfrom(genericEl.container);
     const method = action === 'create' ? 'post' : 'put';
     const api = action === 'create' ? '/api/v1/generic_elements/' : `/api/v1/generic_elements/${genericEl.id}`;
@@ -61,7 +65,17 @@ export default class GenericElsFetcher {
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(genericEl.serialize())
     }).then(response => response.json())
-      .then(json => new GenericEl(json.element)).catch((errorMessage) => {
+      .then((json) => {
+        if (newFiles.length <= 0 && delFiles.length <= 0) { return new GenericEl(json.element); }
+        return AttachmentFetcher.updateAttachables(newFiles, 'Element', json.element.id, delFiles)()
+          .then(() => {
+            const result = differenceBy(json.element.attachments, delFiles, 'id');
+            const newEl = new GenericEl(json.element);
+            newEl.attachments = concat(result, newFiles);
+            return new GenericEl(newEl);
+          });
+      })
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
     if (files.length > 0) return AttachmentFetcher.uploadFiles(files)().then(() => promise());

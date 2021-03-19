@@ -17,7 +17,8 @@ export default class GenericEl extends Element {
       properties: template.layers,
       element_klass: klass,
       can_copy: false,
-      properties_template: []
+      properties_template: [],
+      attachments: []
     });
   }
 
@@ -31,6 +32,7 @@ export default class GenericEl extends Element {
       properties: this.properties,
       //select_options: this.select_options,
       container: this.container,
+      attachments: this.attachments,
     });
   }
 

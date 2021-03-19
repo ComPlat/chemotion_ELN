@@ -7,26 +7,17 @@ import EditorFetcher from '../fetchers/EditorFetcher';
 import ImageModal from '../common/ImageModal';
 import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
 import { previewAttachmentImage } from './../utils/imageHelper';
+import Utils from '../utils/Functions';
+import NotificationActions from '../actions/NotificationActions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
-const imageStyle = { position: 'absolute', width: 60, height: 60 };
+const defaultImgStyle = { position: 'absolute', width: 60, height: 60 };
 
-export default class ResearchPlanDetailsAttachments extends Component {
+export default class GenericAttachments extends Component {
   constructor(props) {
     super(props);
-    const {
-      attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
-    } = props;
-    this.state = {
-      onDrop,
-      onDelete,
-      onUndoDelete,
-      onDownload,
-      onEdit,
-      attachmentEditor: false,
-      extension: null,
-    };
+    this.state = { attachmentEditor: false, extension: null };
     this.editorInitial = this.editorInitial.bind(this);
   }
 
@@ -37,99 +28,78 @@ export default class ResearchPlanDetailsAttachments extends Component {
   editorInitial() {
     EditorFetcher.initial()
       .then((result) => {
-        this.setState({
-          attachmentEditor: result.installed,
-          extension: result.ext
-        });
+        this.setState({ attachmentEditor: result.installed, extension: result.ext });
       });
   }
 
   documentType(filename) {
     const { extension } = this.state;
-
     const ext = last(filename.split('.'));
     const docType = findKey(extension, o => o.includes(ext));
-
-    if (typeof (docType) === 'undefined' || !docType) {
-      return null;
-    }
-
+    if (typeof (docType) === 'undefined' || !docType) { return null; }
     return docType;
   }
 
-  handleEdit(attachment) {
-    const { onEdit } = this.state;
+  handleEdit(att) {
+    const { onEdit } = this.props;
+    const attachment = att;
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
-
     EditorFetcher.startEditing({ attachment_id: attachment.id })
       .then((result) => {
         if (result.token) {
           const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
           window.open(url, '_blank');
-
           attachment.aasm_state = 'oo_editing';
           attachment.updated_at = new Date();
-
           onEdit(attachment);
         } else {
-          alert('Unauthorized to edit this file.');
+          // alert('Unauthorized to edit this file.');
+          NotificationActions.add({ message: 'Unauthorized to edit this file.', level: 'error', position: 'tc' });
         }
       });
   }
 
   renderRemoveAttachmentButton(attachment) {
-    const { onDelete } = this.state;
-
+    const { onDelete, readOnly } = this.props;
     return (
-      <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => onDelete(attachment)} disabled={this.props.readOnly}>
+      <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => onDelete(attachment, true)} disabled={readOnly}>
         <i className="fa fa-trash-o" aria-hidden="true" />
       </Button>
     );
   }
 
   renderListGroupItem(attachment) {
-    const {
-      attachmentEditor, extension, onUndoDelete, onDownload
-    } = this.state;
-
+    const { attachmentEditor, extension } = this.state;
+    const { onDelete } = this.props;
     const updateTime = new Date(attachment.updated_at);
     updateTime.setTime(updateTime.getTime() + (15 * 60 * 1000));
-
-    const hasPop = false;
-    const fetchNeeded = false;
     const fetchId = attachment.id;
-
     const previewImg = previewAttachmentImage(attachment);
+    let imgStyle = { ...defaultImgStyle, cursor: 'pointer' };
+    let hasPop = true;
+    let fetchNeeded = true;
+    if (previewImg.includes('/images/wild_card/not_available.svg')) {
+      imgStyle = defaultImgStyle;
+      hasPop = false;
+      fetchNeeded = false;
+    }
     const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
-
     const docType = this.documentType(attachment.filename);
     const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
-    const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
-
+    const styleEditor = !attachmentEditor || docType === null ? 'none' : '';
     if (attachment.is_deleted) {
       return (
         <div>
           <Row>
-            <Col md={1} />
-            <Col md={9}>
-              <strike>{attachment.filename}</strike>
-            </Col>
+            <Col md={1} /><Col md={9}><strike>{attachment.filename}</strike></Col>
             <Col md={2}>
-              <Button
-                bsSize="xsmall"
-                bsStyle="danger"
-                className="button-right"
-                onClick={() => onUndoDelete(attachment)}
-              >
-                <i className="fa fa-undo" aria-hidden="true" />
-              </Button>
+              <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => onDelete(attachment, false)}><i className="fa fa-undo" aria-hidden="true" /></Button>
             </Col>
           </Row>
         </div>
       );
     }
-
     return (
       <div>
         <Row>
@@ -137,16 +107,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
             <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
               <div className="preview" style={{ width: '60px', height: '60px' }} >
                 <ImageModal
-                  imageStyle={imageStyle}
+                  imageStyle={imgStyle}
                   hasPop={hasPop}
-                  preivewObject={{
-                    src: previewImg
-                  }}
+                  preivewObject={{ src: previewImg }}
                   popObject={{
-                    title: attachment.filename,
-                    src: previewImg,
-                    fetchNeeded,
-                    fetchId
+                    title: attachment.filename, src: previewImg, fetchNeeded, fetchId
                   }}
                 />
               </div>
@@ -162,20 +127,13 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 bsSize="xsmall"
                 className="button-right"
                 bsStyle="primary"
-                onClick={() => onDownload(attachment)}
+                onClick={() => Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename })}
               >
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
             <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))} >
-              <Button
-                style={{ display: styleEditorBtn }}
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="success"
-                disabled={editDisable}
-                onClick={() => this.handleEdit(attachment)}
-              >
+              <Button style={{ display: styleEditor }} bsSize="xsmall" className="button-right" bsStyle="success" disabled={editDisable} onClick={() => this.handleEdit(attachment)}>
                 <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
               </Button>
             </OverlayTrigger>
@@ -199,21 +157,15 @@ export default class ResearchPlanDetailsAttachments extends Component {
       );
     }
     return (
-      <div>
-        There are currently no Datasets.<br />
-      </div>
+      <div>There are currently no Datasets.<br /></div>
     );
   }
 
   renderDropzone() {
-    const { onDrop } = this.state;
-
+    const { onDrop } = this.props;
     return (
       <div className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}>
-        <Dropzone
-          onDrop={files => onDrop(files)}
-          className="zone"
-        >
+        <Dropzone onDrop={files => onDrop(files)} className="zone">
           Drop Files, or Click to Select.
         </Dropzone>
       </div>
@@ -235,16 +187,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 }
 
-ResearchPlanDetailsAttachments.propTypes = {
-  attachments: PropTypes.array,
+GenericAttachments.propTypes = {
+  attachments: PropTypes.arrayOf(PropTypes.object),
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
-  onUndoDelete: PropTypes.func.isRequired,
-  onDownload: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired
 };
 
-ResearchPlanDetailsAttachments.defaultProps = {
-  attachments: []
-};
+GenericAttachments.defaultProps = { attachments: [] };

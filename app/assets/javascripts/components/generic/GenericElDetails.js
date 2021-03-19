@@ -13,8 +13,10 @@ import ConfirmClose from '../common/ConfirmClose';
 import GenericElDetailsContainers from './GenericElDetailsContainers';
 import { GenProperties, LayersLayout } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
+import Attachment from '../models/Attachment';
 import CopyElementModal from '../common/CopyElementModal';
 import { notification, genUnits, toBool, unitConversion } from '../../admin/generic/Utils';
+import GenericAttachments from './GenericAttachments';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -27,6 +29,9 @@ export default class GenericElDetails extends Component {
     this.handleReload = this.handleReload.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleUnitClick = this.handleUnitClick.bind(this);
+    this.handleAttachmentDrop = this.handleAttachmentDrop.bind(this);
+    this.handleAttachmentDelete = this.handleAttachmentDelete.bind(this);
+    this.handleAttachmentEdit = this.handleAttachmentEdit.bind(this);
   }
 
   componentDidMount() {
@@ -174,6 +179,30 @@ export default class GenericElDetails extends Component {
     this.handleGenericElChanged(genericEl);
   }
 
+  handleAttachmentDrop(files) {
+    const { genericEl } = this.state;
+    files.map(file => genericEl.attachments.push(Attachment.fromFile(file)));
+    genericEl.changed = true;
+    this.handleGenericElChanged(genericEl);
+  }
+
+  handleAttachmentDelete(attachment, isDelete = true) {
+    const { genericEl } = this.state;
+    const index = genericEl.attachments.indexOf(attachment);
+    genericEl.attachments[index].is_deleted = isDelete;
+    genericEl.changed = true;
+    this.handleGenericElChanged(genericEl);
+  }
+
+  handleAttachmentEdit(attachment) {
+    const { genericEl } = this.state;
+    genericEl.attachments.map((currentAttachment) => {
+      if (currentAttachment.id === attachment.id) return attachment;
+    });
+    genericEl.changed = true;
+    this.handleGenericElChanged(genericEl);
+  }
+
   elementalPropertiesItem(genericEl) {
     const options = [];
     const selectOptions = (genericEl && genericEl.element_klass &&
@@ -209,6 +238,23 @@ export default class GenericElDetails extends Component {
           <GenericElDetailsContainers
             genericEl={genericEl}
             parent={this}
+            readOnly={false}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
+  attachmentsTab(ind) {
+    const { genericEl } = this.state;
+    return (
+      <Tab eventKey={ind} title="Attachments" key={`Attachment_${genericEl.id}`}>
+        <ListGroupItem style={{ paddingBottom: 20 }}>
+          <GenericAttachments
+            attachments={genericEl.attachments}
+            onDrop={this.handleAttachmentDrop}
+            onDelete={this.handleAttachmentDelete}
+            onEdit={this.handleAttachmentEdit}
             readOnly={false}
           />
         </ListGroupItem>
@@ -262,6 +308,7 @@ export default class GenericElDetails extends Component {
     const tabContents = [
       i => this.propertiesTab(i),
       i => this.containersTab(i),
+      i => this.attachmentsTab(i),
     ];
 
     return (

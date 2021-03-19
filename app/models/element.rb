@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: elements
@@ -24,7 +26,7 @@ class Element < ActiveRecord::Base
 
   multisearchable against: %i[name short_label]
 
-  pg_search_scope :search_by_substring, against: %i[name short_label], using: { trigram: { threshold: 0.0001 }}
+  pg_search_scope :search_by_substring, against: %i[name short_label], using: { trigram: { threshold: 0.0001 } }
 
   attr_accessor :can_copy
 
@@ -35,8 +37,8 @@ class Element < ActiveRecord::Base
   belongs_to :element_klass
   has_many :collections_elements, dependent: :destroy
   has_many :collections, through: :collections_elements
+  has_many :attachments, as: :attachable
   has_many :samples, through: :elements_samples, source: :sample
-
   has_one :container, :as => :containable
 
   accepts_nested_attributes_for :collections_elements
@@ -46,6 +48,11 @@ class Element < ActiveRecord::Base
 
   before_create :auto_set_short_label
   after_create :update_counter
+  before_destroy :delete_attachment
+
+  def attachments
+    Attachment.where(attachable_id: self.id, attachable_type: 'Element')
+  end
 
 
   def self.get_associated_samples(element_ids)
@@ -69,5 +76,17 @@ class Element < ActiveRecord::Base
 
   def update_counter
     creator.increment_counter element_klass.name
+  end
+
+  private
+
+  def delete_attachment
+    if Rails.env.production?
+      attachments.each do |attachment|
+        attachment.delay(run_at: 96.hours.from_now, queue: 'attachment_deletion').destroy!
+      end
+    else
+      attachments.each(&:destroy!)
+    end
   end
 end

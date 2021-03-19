@@ -132,7 +132,10 @@ module Chemotion
 
         get do
           element = Element.find(params[:id])
-          {element: ElementPermissionProxy.new(current_user, element, user_ids).serialized }
+          {
+            element: ElementPermissionProxy.new(current_user, element, user_ids).serialized,
+            attachments: Entities::AttachmentEntity.represent(element.attachments)
+          }
         end
       end
 

@@ -6,11 +6,6 @@ import { stopEvent } from '../utils/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
-const defaultImageStyle = {
-  style: {
-    cursor: 'default'
-  }
-};
 
 export default class ImageModal extends Component {
   constructor(props) {
@@ -83,7 +78,7 @@ export default class ImageModal extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     if (this.state.numOfPages == nextState.numOfPages
       && this.state.numOfPages != 0
-      && this.state.pageIndex == nextState.pageIndex 
+      && this.state.pageIndex == nextState.pageIndex
       && this.state.showModal == nextState.showModal) {
       return false;
     }
@@ -103,16 +98,16 @@ export default class ImageModal extends Component {
     this.changePage(1);
   }
   render() {
-    const { hasPop, preivewObject, popObject } = this.props;
+    const { hasPop, preivewObject, popObject, imageStyle } = this.props;
     const { pageIndex, numOfPages } = this.state;
     if (!hasPop) {
-      return (<div className="preview-table"><img src={preivewObject.src} alt="" {...this.props.imageStyle || defaultImageStyle} /></div>);
+      return (<div className="preview-table"><img src={preivewObject.src} alt="" style={{ cursor: 'default', ...imageStyle }} /></div>);
     }
 
     return (
       <div>
         <div className="preview-table" onClick={this.handleModalShow}>
-          <img src={preivewObject.src} alt="" style={{ cursor: 'pointer' }} />
+          <img src={preivewObject.src} alt="" style={{ cursor: 'pointer', ...imageStyle }} />
         </div>
         <Modal show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
           <Modal.Header closeButton>
@@ -179,6 +174,6 @@ ImageModal.propTypes = {
     title: PropTypes.string,
     src: PropTypes.string,
     fetchNeeded: PropTypes.bool,
-    fetchId: PropTypes.number,
+    fetchId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
 };
