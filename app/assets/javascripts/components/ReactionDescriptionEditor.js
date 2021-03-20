@@ -61,6 +61,10 @@ export default class ReactionDescriptionEditor extends React.Component {
     this.fetchPredefinedTemplates(namesToFetch);
   }
 
+  componentWillUnmount() {
+    TextTemplateStore.unlisten(this.onChangeTemplateStore);
+  }
+
   onChangeTemplateStore(state) {
     const { predefinedTemplateNames, fetchedPredefinedTemplates } = state;
     const { fetchedNames } = this.state;

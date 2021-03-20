@@ -97,7 +97,6 @@ export default class SampleDetails extends React.Component {
       showInchikey: false,
       pageMessage: null,
       visible: Immutable.List(),
-      hidden: Immutable.List(),
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -1081,97 +1080,50 @@ export default class SampleDetails extends React.Component {
     return (<div />);
   }
 
-  renderTabContents() {
-    let {
-      visible, hidden, sample
-    } = this.state
-
-    const tabContents = []
-    for (let i = 0; i < visible.size; i++) {
-      let value = visible.get(i)
-      if (value === 'properties') {
-        const tabContent = this.samplePropertiesTab(i)
-        tabContents.push(tabContent)
-      }
-      else if (value === 'analyses') {
-        const tabContent = this.sampleContainerTab(i)
-        tabContents.push(tabContent)
-      }
-      else if (value === 'literature') {
-        const tabContent = this.sampleLiteratureTab(i)
-        tabContents.push(tabContent)
-      }
-      else if (value === 'results') {
-        const tabContent = this.sampleImportReadoutTab(i)
-        tabContents.push(tabContent)
-      }
-      else if (value === 'qc_curation') {
-        const tabContent = this.qualityCheckTab(i)
-        tabContents.push(tabContent)
-      }
-      else if (value === 'computed_props') {
-        const tabContent = this.moleculeComputedProps(i)
-        tabContents.push(tabContent)
-      }
-      else if (value.includes('_xtab_')) {
-        const tmpArr = value.split('_xtab_')
-        const position = tmpArr[0]
-        const title = XTabs[`title${position}`];
-        const NoName = XTabs[`content${position}`];
-        if (NoName !== undefined) {
-          const tabContent = (
-            <Tab eventKey={i} key={i} title={title} >
-              <ListGroupItem>
-                <NoName sample={sample} />
-              </ListGroupItem>
-            </Tab>
-          )
-          tabContents.push(tabContent)
-        }
-      }
-    }
-    return tabContents
-  }
-
-  onTabPositionChanged(visible, hidden) {
-    this.setState({visible, hidden})
+  onTabPositionChanged(visible) {
+    this.setState({ visible })
   }
 
   render() {
     const sample = this.state.sample || {};
-    // const tabContents = [
-    //   i => this.samplePropertiesTab(i),
-    //   i => this.sampleContainerTab(i),
-    //   i => this.sampleLiteratureTab(i),
-    //   i => this.sampleImportReadoutTab(i),
-    //   i => this.moleculeComputedProps(i),
-    //   i => this.qualityCheckTab(i),
-    // ];
-    let tabContents = this.renderTabContents()
-    // const moleculeComputedTab = this.moleculeComputedProps(tabContents.length)
-    // tabContents.push(moleculeComputedTab)
+    const { visible } = this.state;
+    const tabContentsMap = {
+      properties: this.samplePropertiesTab('properties'),
+      analyses: this.sampleContainerTab('analyses'),
+      literature: this.sampleLiteratureTab('literature'),
+      results: this.sampleImportReadoutTab('results'),
+      qc_curation: this.qualityCheckTab('qc_curation'),
+    };
 
-    // const offset = tabContents.length;
-    // for (let j = 0; j < XTabs.count; j += 1) {
-    //   if (XTabs[`on${j}`](sample)) {
-    //     const NoName = XTabs[`content${j}`];
-        // const tabItem = (
-        //   <Tab eventKey={offset + j} key={offset + j} title={XTabs[`title${j}`]} >
-        //      <ListGroupItem style={{ paddingBottom: 20 }} >
-        //        <NoName sample={sample} />
-        //      </ListGroupItem>
-        //    </Tab>
-        // )
-    //     tabContents.push(tabItem)
-    //     // tabContents.push((() => (
-    //     //   <Tab eventKey={offset + j} key={offset + j} title={XTabs[`title${j}`]} >
-    //     //     <ListGroupItem style={{ paddingBottom: 20 }} >
-    //     //       <NoName sample={sample} />
-    //     //     </ListGroupItem>
-    //     //   </Tab>
-    //     // )));
-    //   }
-    // }
+    if (this.enableComputedProps) {
+      tabContentsMap.computed_props = this.moleculeComputedProps('computed_props');
+    }
+
+    const tabTitlesMap = {
+      qc_curation: 'qc curation',
+      computed_props: 'computed props'
+    }
+
+    for (let j = 0; j < XTabs.count; j += 1) {
+      if (XTabs[`on${j}`](sample)) {
+        const NoName = XTabs[`content${j}`];
+        tabContentsMap[`xtab_${j}`] = (
+          <Tab eventKey={`xtab_${j}`} key={`xtab_${j}`} title={XTabs[`title${j}`]} >
+            <ListGroupItem style={{ paddingBottom: 20 }} >
+              <NoName sample={sample} />
+            </ListGroupItem>
+          </Tab>
+        );
+        tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
+      }
+    }
+
+    const tabContents = [];
+    visible.forEach((value) => {
+      const tabContent = tabContentsMap[value];
+      if (tabContent) { tabContents.push(tabContent); }
+    });
+
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
       <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
@@ -1191,6 +1143,8 @@ export default class SampleDetails extends React.Component {
       </Alert>
     ) : null;
 
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
+
     return (
       <Panel
         className="eln-panel-detail"
@@ -1200,11 +1154,15 @@ export default class SampleDetails extends React.Component {
         <Panel.Body>
           {this.sampleInfo(sample)}
           <ListGroup>
-          <ElementDetailSortTab xtabs={XTabs} type={'sample'} enableComputedProps={this.enableComputedProps} onTabPositionChanged={this.onTabPositionChanged}/>
-          <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
-            {/* {tabContents.map((e, i) => e(i))} */}
-            {tabContents}
-          </Tabs>
+            <ElementDetailSortTab
+              type="sample"
+              availableTabs={Object.keys(tabContentsMap)}
+              tabTitles={tabTitlesMap}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+              {tabContents}
+            </Tabs>
           </ListGroup>
           {this.sampleFooter()}
           {this.structureEditorModal(sample)}

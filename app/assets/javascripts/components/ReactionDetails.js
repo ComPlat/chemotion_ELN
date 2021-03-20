@@ -48,7 +48,6 @@ export default class ReactionDetails extends Component {
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       visible: Immutable.List(),
-      hidden: Immutable.List(),
     };
 
     // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
@@ -94,14 +93,13 @@ export default class ReactionDetails extends Component {
     const nextReaction = nextProps.reaction;
     const nextActiveTab = nextState.activeTab;
     const nextVisible = nextState.visible;
-    const nextHidden = nextState.hidden;
-    const { reaction, activeTab, visible, hidden } = this.state;
+    const { reaction, activeTab, visible } = this.state;
     return (
       nextReaction.id !== reaction.id ||
       nextReaction.updated_at !== reaction.updated_at ||
       nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
       !!nextReaction.changed || !!nextReaction.editedSample ||
-      nextActiveTab !== activeTab || nextVisible !== visible || nextHidden !== hidden
+      nextActiveTab !== activeTab || nextVisible !== visible
     );
   }
 
@@ -299,7 +297,7 @@ export default class ReactionDetails extends Component {
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
-    
+
 
     return (
       <div>
@@ -380,113 +378,100 @@ export default class ReactionDetails extends Component {
     })
   }
 
-  renderTabContents(reaction) {
-    let {
-      visible, hidden
-    } = this.state
-
-    const tabContents = []
-    for (let i = 0; i < visible.size; i++) {
-      let value = visible.get(i)
-      if (value === 'scheme') {
-        const tabContent = (
-          <Tab eventKey={i} title={'Scheme'}>
-              <ReactionDetailsScheme
-                reaction={reaction}
-                onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
-                onInputChange={(type, event) => this.handleInputChange(type, event)}
-                />
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else if (value === 'properties') {
-        const tabContent = (
-          <Tab eventKey={i} title={'Properties'}>
-              <ReactionDetailsProperties
-                reaction={reaction}
-                onReactionChange={reaction => this.handleReactionChange(reaction)}
-                onInputChange={(type, event) => this.handleInputChange(type, event)}
-                key={reaction.checksum}
-                />
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else if (value === 'references') {
-        const tabContent = (
-          <Tab eventKey={i} title={'References'}>
-              <ReactionDetailsLiteratures
-                element={reaction}
-                literatures={reaction.isNew === true ? reaction.literatures : null}
-                onElementChange={reaction => this.handleReactionChange(reaction)}
-              />
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else if (value === 'analyses') {
-        const tabContent = (
-          <Tab eventKey={i} title={'Analyses'}>
-                {this.productData(reaction)}
-            </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else if (value.includes('_xtab_')) {
-        const tmpArr = value.split('_xtab_')
-        const title = tmpArr[1] || ''
-        const position = tmpArr[0]
-        const NoName = XTabs[`content${position}`];
-        const tabContent = (
-          <Tab eventKey={i} key={i} title={title} >
-             <ListGroupItem>
-               <NoName reaction={reaction} />
-             </ListGroupItem>
-           </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else {
-        const tabContent = (
-          <Tab eventKey={i} title="Green Chemistry">
-              <GreenChemistry
-                reaction={reaction}
-                onReactionChange={this.handleReactionChange}
-              />
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-    }
-    return tabContents
-  }
-
-  onTabPositionChanged(visible, hidden) {
-    this.setState({visible, hidden})
+  onTabPositionChanged(visible) {
+    this.setState({visible})
   }
 
   render() {
     const {reaction} = this.state;
+    const { visible } = this.state;
+    const tabContentsMap = {
+      scheme: (
+        <Tab eventKey="scheme" title="Scheme"  key={`scheme_${reaction.id}`}>
+          <ReactionDetailsScheme
+            reaction={reaction}
+            onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+            onInputChange={(type, event) => this.handleInputChange(type, event)}
+            />
+        </Tab>
+      ),
+      properties: (
+        <Tab eventKey="properties" title="Properties" key={`properties_${reaction.id}`}>
+          <ReactionDetailsProperties
+            reaction={reaction}
+            onReactionChange={r => this.handleReactionChange(r)}
+            onInputChange={(type, event) => this.handleInputChange(type, event)}
+            key={reaction.checksum}
+          />
+        </Tab>
+      ),
+      references: (
+        <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
+          <ReactionDetailsLiteratures
+            element={reaction}
+            literatures={reaction.isNew === true ? reaction.literatures : null}
+            onElementChange={r => this.handleReactionChange(r)}
+          />
+        </Tab>
+      ),
+      analyses: (
+        <Tab eventKey="analyses" title="Analyses" key={`analyses_${reaction.id}`}>
+          {this.productData(reaction)}
+        </Tab>
+      ),
+      green_chemistry: (
+        <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
+          <GreenChemistry
+            reaction={reaction}
+            onReactionChange={this.handleReactionChange}
+          />
+        </Tab>
+      )
+    };
+
+    const tabTitlesMap = {
+      green_chemistry: 'Green Chemistry'
+    }
+
+
+    for (let j = 0; j < XTabs.count; j += 1) {
+      if (XTabs[`on${j}`](reaction)) {
+        const NoName = XTabs[`content${j}`];
+        tabContentsMap[`xtab_${j}`] = (
+          <Tab eventKey={`xtab_${j}`} key={`xtab_${j}`} title={XTabs[`title${j}`]} >
+            <ListGroupItem style={{ paddingBottom: 20 }} >
+              <NoName reaction={reaction} />
+            </ListGroupItem>
+          </Tab>
+        );
+	tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
+      }
+    }
+
+    const tabContents = [];
+    visible.forEach((value) => {
+      const tabContent = tabContentsMap[value];
+      if (tabContent) { tabContents.push(tabContent); }
+    });
 
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
-    // let extraTabs =[];
-    // for (let j=0;j < XTabs.count;j++){
-    //   if (XTabs['on'+j](reaction)){extraTabs.push((i)=>this.extraTab(i))}
-    // }
 
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
     return (
       <Panel className="eln-panel-detail"
              bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
         <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
         <Panel.Body>
           {this.reactionSVG(reaction)}
-          <ElementDetailSortTab xtabs={XTabs} type={'reaction'} onTabPositionChanged={this.onTabPositionChanged}/>
-          <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect.bind(this)}
-             id="reaction-detail-tab">
-            {this.renderTabContents(reaction)}
-            {/* {extraTabs.map((e,i)=>e(i))} */}
+          <ElementDetailSortTab
+            type="reaction"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab">
+            {tabContents}
           </Tabs>
           <hr/>
           <ButtonToolbar>

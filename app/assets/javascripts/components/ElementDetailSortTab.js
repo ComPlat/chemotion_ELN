@@ -8,7 +8,6 @@ import Immutable from 'immutable';
 import _ from 'lodash';
 import UserStore from './stores/UserStore';
 import UserActions from './actions/UserActions';
-import ArrayUtils from './utils/ArrayUtils';
 import TabLayoutContainer from './TabLayoutContainer';
 
 const getNodeText = (node) => {
@@ -24,6 +23,38 @@ const getNodeText = (node) => {
   }
   return '';
 };
+
+const getArrayFromLayout = (layout, availableTabs) => {
+  const layoutKeys = Object.keys(layout);
+  const enabled = availableTabs.filter(val => layoutKeys.includes(val));
+  const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
+  const visible = [];
+  const hidden = [];
+
+  enabled.forEach((key) => {
+    const order = layout[key];
+    if (order < 0) { hidden[Math.abs(order)] = key; }
+    if (order > 0) { visible[order] = key; }
+  });
+
+  leftover.forEach(key => hidden.push(key));
+
+  let first = null;
+  if (visible.length === 0) {
+    first = hidden.filter(n => n !== undefined)[0];
+    if (first) {
+      visible.push(first);
+    }
+  }
+  if (hidden.length === 0) {
+    hidden.push('hidden');
+  }
+  return {
+    visible: Immutable.List(visible.filter(n => n !== undefined)),
+    hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
+  };
+};
+
 
 export default class ElementDetailSortTab extends Component {
   constructor(props) {
@@ -50,71 +81,13 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onChangeUser(state) {
-    let visible = '';
-    let hidden = '';
+    const layout = (state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]) || {};
+    const { visible, hidden } = getArrayFromLayout(layout, this.props.availableTabs);
 
-    if (typeof (state.profile) !== 'undefined' && state.profile &&
-            typeof (state.profile.data) !== 'undefined' && state.profile.data) {
-      let layout = {};
-      if (this.type === 'research_plan') {
-        layout = state.profile.data.layout_detail_research_plan;
-      } else if (this.type === 'sample') {
-        layout = state.profile.data.layout_detail_sample;
-      } else if (this.type === 'reaction') {
-        layout = state.profile.data.layout_detail_reaction;
-      } else if (this.type === 'screen') {
-        layout = state.profile.data.layout_detail_screen;
-      } else if (this.type === 'wellplate') {
-        layout = state.profile.data.layout_detail_wellplate;
-      }
-
-      visible = this.getArrayFromLayout(layout, true);
-      hidden = this.getArrayFromLayout(layout, false);
-    }
-    if (hidden.size === 0) {
-      hidden = ArrayUtils.pushUniq(hidden, 'hidden');
-    }
-
-    this.setState({
-      visible,
-      hidden
-    });
-
-    this.props.onTabPositionChanged(visible, hidden);
-  }
-
-
-  getArrayFromLayout(layout, isVisible) {
-    let array = Immutable.List();
-
-    const { xtabs } = this.props;
-    if (xtabs) {
-      for (let j = 0; j < xtabs.count; j += 1) {
-        const title = `${j}_xtab_${getNodeText(xtabs[`title${j}`])}`;
-        if (!layout[title]) {
-          layout[title] = 100 + j;
-        }
-      }
-    }
-
-    const { enableComputedProps } = this.props;
-    if (enableComputedProps !== undefined) {
-      if (enableComputedProps && !layout.computed_props) {
-        layout.computed_props = 200;
-      }
-    }
-
-    Object.keys(layout).forEach((key) => {
-      const order = layout[key];
-      if (isVisible && order < 0) { return; }
-      if (!isVisible && order > 0) { return; }
-
-      array = array.set(Math.abs(order), key);
-    });
-
-    array = array.filter(n => n !== undefined);
-
-    return array;
+    this.setState(
+      { visible, hidden },
+      () => this.props.onTabPositionChanged(visible)
+    );
   }
 
   handleOnLayoutChanged() {
@@ -126,26 +99,14 @@ export default class ElementDetailSortTab extends Component {
     const layout = {};
 
     visible.forEach((value, index) => {
-      layout[value] = (index + 1).toString();
+      layout[value] = (index + 1);
     });
-    hidden.forEach((value, index) => {
-      if (value !== 'hidden') layout[value] = (-index - 1).toString();
+    hidden.filter(val => val !== 'hidden').forEach((value, index) => {
+      layout[value] = (-index - 1);
     });
 
     const userProfile = UserStore.getState().profile;
-
-    let layoutName = '';
-    if (this.type === 'research_plan') {
-      layoutName = 'data.layout_detail_research_plan';
-    } else if (this.type === 'sample') {
-      layoutName = 'data.layout_detail_sample';
-    } else if (this.type === 'reaction') {
-      layoutName = 'data.layout_detail_reaction';
-    } else if (this.type === 'screen') {
-      layoutName = 'data.layout_detail_screen';
-    } else if (this.type === 'wellplate') {
-      layoutName = 'data.layout_detail_wellplate';
-    }
+    const layoutName = `data.layout_detail_${this.type}`;
     _.set(userProfile, layoutName, layout);
     UserActions.updateUserProfile(userProfile);
   }
@@ -166,6 +127,7 @@ export default class ElementDetailSortTab extends Component {
             <TabLayoutContainer
               visible={visible}
               hidden={hidden}
+              tabTitles={this.props.tabTitles}
               isElementDetails
               ref={(n) => { this.layout = n; }}
             />
@@ -191,4 +153,6 @@ export default class ElementDetailSortTab extends Component {
 
 ElementDetailSortTab.propTypes = {
   onTabPositionChanged: PropTypes.func,
+  availableTabs: PropTypes.arrayOf(PropTypes.string),
+  tabTitles: PropTypes.object
 };

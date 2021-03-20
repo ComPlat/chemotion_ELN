@@ -31,7 +31,6 @@ export default class WellplateDetails extends Component {
       activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
       visible: Immutable.List(),
-      hidden: Immutable.List(),
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
@@ -108,15 +107,15 @@ export default class WellplateDetails extends Component {
 
   handleTabChange(eventKey) {
     const showWellplate = (eventKey === 0);
-    this.setState((previousState) => { return { ...previousState, activeTab: eventKey, showWellplate }; });
+    this.setState(previousState => ({ ...previousState, activeTab: eventKey, showWellplate }));
     UIActions.selectTab({ tabKey: eventKey, type: 'wellplate' });
   }
 
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
     const datetp = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
-    
-    
+
+
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
@@ -142,86 +141,14 @@ export default class WellplateDetails extends Component {
     );
   }
 
-  renderTabContents() {
-    let {
-      visible, hidden, wellplate, activeTab, showWellplate
-    } = this.state
-    const {
-      wells, name, size, description
-    } = wellplate;
-    const properties = { name, size, description };
-
-    const tabContents = []
-    for (let i = 0; i < visible.size; i++) {
-      let value = visible.get(i)
-      if (value === 'designer') {
-        const tabContent = (
-          <Tab eventKey={i} title="Designer">
-              <Row className="wellplate-detail">
-                <Col md={10}>
-                  <Well>
-                    <Wellplate
-                      show={showWellplate}
-                      size={size}
-                      wells={wells}
-                      handleWellsChange={w => this.handleWellsChange(w)}
-                      cols={cols}
-                      width={60}
-                    />
-                  </Well>
-                </Col>
-              </Row>
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else if (value === 'list') {
-        const tabContent = (
-          <Tab eventKey={i} title="List">
-              <Well>
-                <WellplateList
-                  wells={wells}
-                  handleWellsChange={w => this.handleWellsChange(w)}
-                />
-              </Well>
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else if (value === 'properties') {
-        const tabContent = (
-          <Tab eventKey={i} title="Properties">
-              <WellplateProperties
-                {...properties}
-                changeProperties={c => this.handleChangeProperties(c)}
-              />
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else {
-        const tabContent = (
-          <Tab eventKey={i} title="Analyses">
-              <ListGroupItem style={{ paddingBottom: 20 }}>
-                <WellplateDetailsContainers
-                  wellplate={wellplate}
-                  parent={this}
-                />
-              </ListGroupItem>
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-    }
-    return tabContents
-  }
-
-  onTabPositionChanged(visible, hidden) {
-    this.setState({visible, hidden})
+  onTabPositionChanged(visible) {
+    this.setState({visible})
   }
 
   render() {
-    const { wellplate, activeTab, showWellplate } = this.state;
+    const {
+      wellplate, showWellplate, visible
+    } = this.state;
     const {
       wells, name, size, description
     } = wellplate;
@@ -229,13 +156,79 @@ export default class WellplateDetails extends Component {
     const exportButton = (wellplate && wellplate.isNew) ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
     const properties = { name, size, description };
 
+
+    const tabContentsMap = {
+      designer: (
+        <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
+          <Row className="wellplate-detail">
+            <Col md={10}>
+              <Well>
+                <Wellplate
+                  show={showWellplate}
+                  size={size}
+                  wells={wells}
+                  handleWellsChange={w => this.handleWellsChange(w)}
+                  cols={cols}
+                  width={60}
+                />
+              </Well>
+            </Col>
+          </Row>
+        </Tab>
+      ),
+      list: (
+        <Tab eventKey="list" title="List" key={`list_${wellplate.id}`}>
+          <Well>
+            <WellplateList
+              wells={wells}
+              handleWellsChange={w => this.handleWellsChange(w)}
+            />
+          </Well>
+        </Tab>
+      ),
+      properties: (
+        <Tab eventKey="properties" title="Properties" key={`properties_${wellplate.id}`}>
+          <WellplateProperties
+            {...properties}
+            changeProperties={c => this.handleChangeProperties(c)}
+          />
+        </Tab>
+      ),
+      analyses: (
+        <Tab eventKey="analyses" title="Analyses" key={`analyses_${wellplate.id}`}>
+          <ListGroupItem style={{ paddingBottom: 20 }}>
+            <WellplateDetailsContainers
+              wellplate={wellplate}
+              parent={this}
+            />
+          </ListGroupItem>
+        </Tab>
+      ),
+    };
+
+    const tabTitlesMap = {
+    }
+
+    const tabContents = [];
+    visible.forEach((value) => {
+      const tabContent = tabContentsMap[value];
+      if (tabContent) { tabContents.push(tabContent); }
+    });
+
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
+
     return (
       <Panel bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
         <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
         <Panel.Body>
-          <ElementDetailSortTab type={'wellplate'} onTabPositionChanged={this.onTabPositionChanged}/>
+          <ElementDetailSortTab
+            type="wellplate"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
           <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)} id="wellplateDetailsTab">
-            {this.renderTabContents()}
+            {tabContents}
           </Tabs>
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>

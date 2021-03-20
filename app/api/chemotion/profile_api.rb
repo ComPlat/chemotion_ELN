@@ -1,4 +1,18 @@
 module Chemotion
+
+  class ProfileLayoutHash < Grape::Validations::Base
+    def validate_param!(attr_name, params)
+      fail Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+         message: "has too many entries" if  params[attr_name].keys.size > 30
+      params[attr_name].each do |key, val|
+        fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+          message: "has wrong structure") unless key.to_s =~ /\A[\w \-]+\Z/
+        fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+          message: "has wrong structure") unless val.to_s =~ /\d+/
+      end
+    end
+  end
+
   class ProfileAPI < Grape::API
     resource :profiles do
       desc "Return the profile of the current_user"
@@ -12,36 +26,6 @@ module Chemotion
           'screen' => 4,
           'research_plan' => 5
         }) if (data['layout'].nil?)
-        data.merge!(layout_detail_research_plan: {
-          'research_plan' => 1,
-          'analyses' => 2,
-          'attachments' => 3,
-          'literature' => 4
-        }) if (data['layout_detail_research_plan'].nil?)
-        data.merge!(layout_detail_reaction: {
-          'scheme' => 1,
-          'properties' => 2,
-          'references' => 3,
-          'analyses' => 4,
-          'green_chemistry' => 5
-        }) if (data['layout_detail_reaction'].nil?)
-        data.merge!(layout_detail_sample: {
-          'properties' => 1,
-          'analyses' => 2,
-          'literature' => 3,
-          'results' => 4,
-          'qc_curation' => 5
-        }) if (data['layout_detail_sample'].nil?)
-        data.merge!(layout_detail_wellplate: {
-          'designer' => 1,
-          'list' => 2,
-          'properties' => 3,
-          'analyses' => 4
-        }) if (data['layout_detail_wellplate'].nil?)
-        data.merge!(layout_detail_screen: {
-          'properties' => 1,
-          'analyses' => 2
-        }) if (data['layout_detail_screen'].nil?)
         {
           data: data,
           show_external_name: profile.show_external_name,
@@ -59,34 +43,11 @@ module Chemotion
             optional :research_plan, type: Integer
             optional :wellplate, type: Integer
           end
-          optional :layout_detail_research_plan, type: Hash
-          # optional :layout_detail_research_plan, type: Hash do
-          #   optional :research_plan, type: Integer
-          #   optional :analyses, type: Integer
-          #   optional :attachments, type: Integer
-          #   optional :literature, type: Integer
-          # end
-          optional :layout_detail_reaction, type: Hash
-          # optional :layout_detail_reaction, type: Hash do
-          #   optional :scheme, type: Integer
-          #   optional :properties, type: Integer
-          #   optional :references, type: Integer
-          #   optional :analyses, type: Integer
-          #   optional :green_chemistry, type: Integer
-          # end
-          optional :layout_detail_sample, type: Hash
-          optional :layout_detail_wellplate, type: Hash
-          # optional :layout_detail_wellplate, type: Hash do
-          #   optional :designer, type: Integer
-          #   optional :list, type: Integer
-          #   optional :properties, type: Integer
-          #   optional :analyses, type: Integer
-          # end
-          optional :layout_detail_screen, type: Hash
-          # optional :layout_detail_screen, type: Hash do
-          #   optional :properties, type: Integer
-          #   optional :analyses, type: Integer
-          # end
+          optional :layout_detail_research_plan, type: Hash, profile_layout_hash: true
+          optional :layout_detail_reaction, type: Hash, profile_layout_hash: true
+          optional :layout_detail_sample, type: Hash, profile_layout_hash: true
+          optional :layout_detail_wellplate, type: Hash, profile_layout_hash: true
+          optional :layout_detail_screen, type: Hash, profile_layout_hash: true
           optional :export_selection, type: Hash do
             optional :sample, type: Array[Boolean]
             optional :reaction, type: Array[Boolean]

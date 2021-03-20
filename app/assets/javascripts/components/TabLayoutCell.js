@@ -24,18 +24,13 @@ class TabLayoutCell extends Component {
   }
 
   render() {
-    const {connectDragSource, sourceType, isHidden, cell, connectDropTarget, isElementDetails} = this.props;
+    const {connectDragSource, sourceType, isHidden, cell, connectDropTarget, isElementDetails, title} = this.props;
 
     const styleObj = {
       fontSize: 12,
       color: "#000000",
       textAlign: "center",
       wordWrap: "break-word"
-    }
-
-    let title = cell
-    if (cell.includes('_xtab_')) {
-      title = cell.split('_xtab_')[1]
     }
 
     let layoutCell = (

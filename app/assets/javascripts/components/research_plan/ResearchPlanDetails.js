@@ -26,7 +26,6 @@ export default class ResearchPlanDetails extends Component {
       researchPlan,
       update: false,
       visible: Immutable.List(),
-      hidden: Immutable.List(),
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -329,85 +328,78 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  renderTabContents(researchPlan, update) {
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  render() {
+    const { researchPlan, update, visible } = this.state;
+
     let btnMode = <Button bsSize="xs" bsStyle="success" onClick={() => this.handleSwitchMode('edit')}>click to edit</Button>;
     if (researchPlan.mode !== 'view') {
       btnMode = <Button bsSize="xs" bsStyle="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;
     }
-    let {
-      visible, hidden
-    } = this.state
 
-    const tabContents = []
-    for (let i = 0; i < visible.size; i++) {
-      let value = visible.get(i)
-      if (value === 'research_plan') {
-        const tabContent = (
-          <Tab eventKey={i} title="Research plan">
-            <div style={{ margin: '5px 0px 5px 5px' }}>
-              {btnMode}
-            </div>
-            {this.renderResearchPlanMain(researchPlan, update)}
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else if (value === 'analyses') {
-        const tabContent = (
-          <Tab eventKey={i} title="Analyses">
-            {this.renderAnalysesTab(researchPlan)}
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else if (value === 'attachments') {
-        const tabContent = (
-          <Tab eventKey={i} title="Attachments">
-            {this.renderAttachmentsTab(researchPlan)}
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-      else {
-        const tabContent = (
-          <Tab eventKey={i} title="Literature">
-            <ResearchPlansLiteratures element={researchPlan} />
-          </Tab>
-        )
-        tabContents.push(tabContent)
-      }
-    }
+    const tabContentsMap = {
+      research_plan: (
+        <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>
+          <div style={{ margin: '5px 0px 5px 5px' }}>
+            {btnMode}
+          </div>
+          {this.renderResearchPlanMain(researchPlan, update)}
+        </Tab>
+      ),
+      analyses: (
+        <Tab eventKey="analyses" title="Analyses" key={`analyses_${researchPlan.id}`}>
+          {this.renderAnalysesTab(researchPlan)}
+        </Tab>
+      ),
+      attachments: (
+        <Tab eventKey="attachments" title="Attachments" key={`attachments_${researchPlan.id}`}>
+          {this.renderAttachmentsTab(researchPlan)}
+        </Tab>
+      ),
+      literature: (
+        <Tab eventKey="literature" title="Literature" key={`lit_${researchPlan.id}`}>
+          <ResearchPlansLiteratures element={researchPlan} />
+        </Tab>
+      ),
+    };
 
-    return tabContents
-  }
+    const tabTitlesMap = {
+      research_plan: 'Research Plan',
+      analyses: 'Analyses',
+      attachments: 'Attachments',
+      literature: 'Literature',
+    };
 
-  onTabPositionChanged(visible, hidden) {
-    this.setState({visible, hidden})
-  }
+    const tabContents = [];
+    visible.forEach((value) => {
+      const tabContent = tabContentsMap[value];
+      if (tabContent) { tabContents.push(tabContent); }
+    });
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
-  renderPanelBody(researchPlan, update) {
-    return (
-      <Panel.Body>
-        <ElementDetailSortTab type={'research_plan'} onTabPositionChanged={this.onTabPositionChanged}/>
-        <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
-          {this.renderTabContents(researchPlan, update)}
-        </Tabs>
-        <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
-          {
-            researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
-          }
-        </ButtonToolbar>
-      </Panel.Body>
-    );
-  }
-
-  render() {
-    const { researchPlan, update } = this.state;
     return (
       <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">
         {this.renderPanelHeading(researchPlan)}
-        {this.renderPanelBody(researchPlan, update)}
+        <Panel.Body>
+          <ElementDetailSortTab
+            type="research_plan"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
+            {tabContents}
+          </Tabs>
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
+            {
+              researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
+            }
+          </ButtonToolbar>
+        </Panel.Body>
       </Panel>
     );
   }
