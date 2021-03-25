@@ -128,13 +128,13 @@ module Chemotion
           cp = ComputedProp.find(params[:compute_id])
           return if cp.nil?
 
-          cp.status = params[:code]
+          cp.status = params[:code]&.downcase
 
           ComputedProp.from_raw(cp.id, params[:data])
 
           Message.create_msg_notification(
             channel_subject: Channel::COMPUTED_PROPS_NOTIFICATION, message_from: cp.creator,
-            data_args: { sample_id: cp.sample_id, status: 'finished'}, cprop: ComputedProp.find(cp.id),
+            data_args: { sample_id: cp.sample_id, status: params[:code]&.downcase }, cprop: ComputedProp.find(cp.id),
             level: 'success'
           )
         end
