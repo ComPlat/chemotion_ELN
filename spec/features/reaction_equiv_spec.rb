@@ -28,7 +28,7 @@ describe 'Reaction Equiv Spec' do
   let!(:mr2) { create(:molecule, molecular_weight: 330.2360496) }
 
   let(:material) { create(:sample, name: 'Material', target_amount_value: 7.15, collections: user.collections, molecule: m1) }
-  let(:reactant1) { create(:sample, name: 'Reactant1', target_amount_value: 5.435, collections: user.collections) }
+  let(:reactant1) { create(:sample, name: 'Reactant1', target_amount_value: 7.15, collections: user.collections, molecule: m1) }
   let(:reactant2) { create(:sample, name: 'Reactant2', target_amount_value: 3.123, collections: user.collections) }
   let(:solvent) { create(:sample, name: 'Solvent', collections: user.collections) }
   let(:product) { create(:sample, name: 'Product', real_amount_value: 4.671, collections: user.collections, molecule: m2) }
@@ -65,7 +65,7 @@ describe 'Reaction Equiv Spec' do
     end
 
     it 'change material amount', js: true do
-      material_new_amount = 5000
+      material_new_amount = 4000
       find('.tree-view', text: 'chemotion.net').click
       first('i.icon-reaction').click
       first('i.c-bs-success').click
@@ -81,7 +81,7 @@ describe 'Reaction Equiv Spec' do
       material_field.click
       reactants_field.click
       reactants_new_amount = reactants_field.value.to_i
-      expect_result = material_new_amount / material.molecule.molecular_weight * 2
+      expect_result = material_new_amount / material.molecule.molecular_weight
       expect_result *= reactant1.molecule.molecular_weight
       expect(reactants_new_amount).to eq(expect_result.to_i)
     end
