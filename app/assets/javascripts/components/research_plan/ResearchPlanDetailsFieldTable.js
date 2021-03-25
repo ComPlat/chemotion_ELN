@@ -9,6 +9,7 @@ import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsF
 import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import uniqueId from 'react-html-id';
+import CustomTextEditor from '../common/CustomTextEditor';
 
 const { ContextMenuTrigger } = Menu;
 
@@ -76,7 +77,8 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       name: columnName,
       editable: true,
       resizable: true,
-      width: 200
+      width: 200,
+      editor: CustomTextEditor
     };
   }
 
