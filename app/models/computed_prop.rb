@@ -44,6 +44,7 @@ class ComputedProp < ActiveRecord::Base
     failure
     retry
     revoked
+    completed
   ]
 
   def self.parse_single(line_arr, target_str)
