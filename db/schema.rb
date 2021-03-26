@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20201216153122) do
+ActiveRecord::Schema.define(version: 20210217164124) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -554,7 +554,7 @@ ActiveRecord::Schema.define(version: 20201216153122) do
     t.datetime "deleted_at"
     t.datetime "created_at",                         null: false
     t.datetime "updated_at",                         null: false
-    t.jsonb    "data"
+    t.jsonb    "data",               default: {},    null: false
     t.integer  "curation",           default: 2
   end
 
@@ -775,6 +775,20 @@ ActiveRecord::Schema.define(version: 20201216153122) do
   add_index "sync_collections_users", ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree
   add_index "sync_collections_users", ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id", using: :btree
   add_index "sync_collections_users", ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry", using: :btree
+
+  create_table "text_templates", force: :cascade do |t|
+    t.string   "type"
+    t.integer  "user_id",                 null: false
+    t.jsonb    "data",       default: {}
+    t.datetime "deleted_at"
+    t.datetime "created_at",              null: false
+    t.datetime "updated_at",              null: false
+    t.string   "name"
+  end
+
+  add_index "text_templates", ["deleted_at"], name: "index_text_templates_on_deleted_at", using: :btree
+  add_index "text_templates", ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)", using: :btree
+  add_index "text_templates", ["user_id"], name: "index_text_templates_on_user_id", using: :btree
 
   create_table "user_affiliations", force: :cascade do |t|
     t.integer  "user_id"

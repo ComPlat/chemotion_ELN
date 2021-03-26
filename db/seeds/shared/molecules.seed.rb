@@ -18,6 +18,8 @@ mol_svgs_path = File.join(Rails.root, 'public', 'images', 'molecules')
 mol_array = JSON.parse(File.read(seed_mols_path))
 
 mol_array.each do |mol|
+  next unless Molecule.find_by(inchikey: mol['inchikey']).nil?
+
   molecule = Molecule.create(
     inchikey: mol['inchikey'],
     inchistring: mol['inchistring'],

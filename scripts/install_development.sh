@@ -24,8 +24,8 @@ BUNDLER_VERSION=1.17.3
 
 ## NODEJS
 NVM_VERSION='v0.35.3'
-NODE_VERSION=12.18.3
-NPM_VERSION=6.14.6
+NODE_VERSION=12.21.0
+NPM_VERSION=7.6.2
 
 APP_NAME=chemotion_ELN # used for naming directories and files
 
@@ -77,14 +77,11 @@ PART_9='log-rotation'
 ############################################
 
 ## supported Distribution Version  
-. /etc/lsb-release
-# DISTRIB_ID=Ubuntu
-# DISTRIB_RELEASE=20.04
-# DISTRIB_CODENAME=focal
-# DISTRIB_DESCRIPTION="Ubuntu 20.04.1 LTS"
+. /etc/os-release
 V18='bionic'
 V20='focal'
-# if [ "$DISTRIB_CODENAME" = "$V18" ]; then
+V10='buster'
+# if [ "$VERSION_CODENAME" = "$V18" ]; then
 #   RUBY_VERSION=2.5.8  
 # fi
 
@@ -92,18 +89,26 @@ V20='focal'
 GRE='\033[0;32m'
 YEL='\033[0;33m'
 RED='\033[0;31m'
+BLU='\033[0;36m'
 NOC='\033[0m'
 
+SECONDS=0
+elapsed_time(){
+  duration=$SECONDS
+  printf "${BLU}%03d:%02d${NOC}"  $(($duration / 60)) $(($duration % 60))
+}
+
+
 red() {
-  printf "${RED}${1:-}${NOC}\n"
+  printf "$(elapsed_time) ${RED}${1:-}${NOC}\n"
 }
 
 yellow() {
-  printf "${YEL}${1:-}${NOC}\n"
+  printf "$(elapsed_time) ${YEL}${1:-}${NOC}\n"
 }
 
 green() {
-  printf "${GRE}${1:-}${NOC}\n"
+  printf "$(elapsed_time) ${GRE}${1:-}${NOC}\n"
 }
 
 sharpi() {
@@ -124,10 +129,10 @@ rm_tmp_repo() {
 
 trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
-if [ "$DISTRIB_CODENAME" = "$V18" ] || [ "$DISTRIB_CODENAME" = "$V20" ]; then
-  sharpi "Running installation for $DISTRIB_DESCRIPTION "
+if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V18" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
+  sharpi "Running installation for $PRETTY_NAME "
 else 
-  error "The installation for your distribution ($DISTRIB_DESCRIPTION) has not been tested"
+  error "The installation for your distribution ($PRETTY_NAME) has not been tested"
 fi
 
 
@@ -159,19 +164,22 @@ if [ "${PART_1:-}" ]; then
   sudo apt-get -y update
   sudo apt-get -y install ca-certificates apt-transport-https git curl dirmngr gnupg gnupg2 \
     autoconf automake bison libffi-dev libgdbm-dev libncurses5-dev openssh-server \
+    g++ swig cmake libeigen3-dev \
+    gconf-service libgconf-2-4 \
+    libxslt-dev libxml2-dev \
     libyaml-dev sqlite3 libgmp-dev libreadline-dev libssl-dev \
     postgresql postgresql-client postgresql-contrib libpq-dev \
-    g++ imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
-    inkscape  \
-    swig cmake libeigen3-dev \
-    libxslt-dev libxml2-dev \
+    imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
     libsass-dev \
-    fonts-liberation gconf-service libgconf-2-4 \
     libnspr4 libnss3 libpango1.0-0 libxss1  \
-    xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
     tzdata python-dev libsqlite3-dev libboost-all-dev p7zip-full \
-    ufw \
-    ranger htop \
+    ufw ranger htop \
+    inkscape pandoc \
+    xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
+    fonts-crosextra-caladea fonts-crosextra-carlito \
+    fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
+    fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
+    fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic \
     --fix-missing
 
   green "done $description\n"

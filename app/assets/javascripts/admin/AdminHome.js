@@ -11,6 +11,7 @@ import DataCollector from './DataCollector';
 import OlsTerms from './OlsTerms';
 import NovncSettings from './NovncSettings';
 import MatrixManagement from './MatrixManagement';
+import TextTemplateContainer from './text_templates/TextTemplateContainer';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -57,7 +58,10 @@ class AdminHome extends React.Component {
       return this.renderNovncSettings();
     } else if (pageIndex === 7) {
       return this.renderMatrix();
+    } else if (pageIndex === 8) {
+      return this.renderTextTemplates();
     }
+
     return (<div />);
   }
 
@@ -66,6 +70,7 @@ class AdminHome extends React.Component {
     if (!showTree) {
       return <div />;
     }
+
     return (
       <div>
         <Col className="small-col collec-tree">
@@ -94,6 +99,9 @@ class AdminHome extends React.Component {
             <NavItem eventKey={7}>
               UI features
             </NavItem>
+            <NavItem eventKey={8}>
+              Text Templates
+            </NavItem>
           </Nav>
         </Col>
       </div>
@@ -108,6 +116,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
   renderUserManagement() {
     const { contentClassName } = this.state;
     return (
@@ -116,6 +125,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
   renderMessagePublish() {
     const { contentClassName } = this.state;
     return (
@@ -124,6 +134,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
   renderDataCollector() {
     const { contentClassName } = this.state;
     return (
@@ -132,6 +143,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
   renderGroupMgnt() {
     const { contentClassName } = this.state;
     return (
@@ -140,6 +152,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
   renderOlsTerms() {
     const { contentClassName } = this.state;
     return (
@@ -148,6 +161,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
   renderNovncSettings() {
     const { contentClassName } = this.state;
     return (
@@ -156,11 +170,21 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
   renderMatrix() {
     const { contentClassName } = this.state;
     return (
       <Col className={contentClassName} >
         <MatrixManagement />
+      </Col>
+    );
+  }
+
+  renderTextTemplates() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <TextTemplateContainer />
       </Col>
     );
   }
@@ -184,6 +208,7 @@ class AdminHome extends React.Component {
     );
   }
 }
+
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('AdminHome');
   if (domElement) { ReactDOM.render(<AdminHome />, domElement); }
