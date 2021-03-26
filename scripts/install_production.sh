@@ -85,13 +85,13 @@ PART_11='configure NGINX'
 ############################################
 ############################################
 
-## supported Distribution Version  
+## supported Distribution Version
 . /etc/os-release
 V18='bionic'
 V20='focal'
 V10='buster'
 # if [ "$VERSION_CODENAME" = "$V18" ]; then
-#   RUBY_VERSION=2.5.8  
+#   RUBY_VERSION=2.5.8
 # fi
 
 GRE='\033[0;32m'
@@ -139,7 +139,7 @@ trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
 if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V18" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
   sharpi "Running installation for $PRETTY_NAME "
-else 
+else
   error "The installation for your distribution ($PRETTY_NAME) has not been tested"
 fi
 
@@ -381,7 +381,7 @@ EOL
 echo | sudo tee $pwd/config/storage.yml <<EOL || true
 production:
   :primary_store: 'local'
-  :secundary_store: ''
+  :secondary_store: ''
   :stores:
     :tmp:
       :data_folder: 'tmp/uploads/production/'
