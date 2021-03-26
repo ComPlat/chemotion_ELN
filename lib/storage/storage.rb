@@ -1,5 +1,5 @@
 class Storage
-  attr_reader :attachment, :primary_store, :secundary_store
+  attr_reader :attachment, :primary_store, :secondary_store
   class << self
     def new_store(attach)
       storage_klass(attach).new(attach)
