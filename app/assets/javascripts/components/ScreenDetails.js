@@ -17,6 +17,8 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import PrintCodeButton from './common/PrintCodeButton';
 import ConfirmClose from './common/ConfirmClose'
+import Immutable from 'immutable';
+import ElementDetailSortTab from './ElementDetailSortTab';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -25,8 +27,10 @@ export default class ScreenDetails extends Component {
     this.state = {
       screen,
       activeTab: UIStore.getState().screen.activeTab,
+      visible: Immutable.List(),
     }
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
   }
 
   onUIStoreChange(state) {
@@ -243,29 +247,56 @@ export default class ScreenDetails extends Component {
     })
   }
 
+  onTabPositionChanged(visible) {
+    this.setState({visible})
+  }
+
   render() {
-    const {screen} = this.state;
+    const { screen, visible } = this.state;
 
     const submitLabel = screen.isNew ? "Create" : "Save";
+
+    const tabContentsMap = {
+      properties: (
+        <Tab eventKey="properties" title="Properties" key={`properties_${screen.id}`}>
+          {this.propertiesFields(screen)}
+        </Tab>
+      ),
+      analyses: (
+        <Tab eventKey="analyses" title="Analyses" key={`analyses_${screen.id}`}>
+          <ScreenDetailsContainers
+            screen={screen}
+            parent={this}
+          />
+        </Tab>
+      ),
+    };
+
+    const tabTitlesMap = {
+    };
+
+    const tabContents = [];
+    visible.forEach((value) => {
+      const tabContent = tabContentsMap[value];
+      if (tabContent) { tabContents.push(tabContent); }
+    });
+
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
       <Panel bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
         className="eln-panel-detail">
         <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
         <Panel.Body>
-          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
-             id="screen-detail-tab">
-            <Tab eventKey={0} title={'Properties'}>
-              {this.propertiesFields(screen)}
-            </Tab>
-            <Tab eventKey={1} title={'Analyses'}>
-              <ScreenDetailsContainers
-                screen={screen}
-                parent={this}
-              />
-            </Tab>
+          <ElementDetailSortTab
+            type="screen"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
+             {tabContents}
           </Tabs>
-
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>

@@ -59,6 +59,9 @@ import CopyElementModal from './common/CopyElementModal';
 import NotificationActions from './actions/NotificationActions';
 import MatrixCheck from './common/MatrixCheck';
 
+import Immutable from 'immutable';
+import ElementDetailSortTab from './ElementDetailSortTab';
+
 const MWPrecision = 6;
 
 const rangeCheck = (field, sample) => {
@@ -92,7 +95,8 @@ export default class SampleDetails extends React.Component {
       smileReadonly: !props.sample.isNew,
       quickCreator: false,
       showInchikey: false,
-      pageMessage: null
+      pageMessage: null,
+      visible: Immutable.List(),
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -109,6 +113,8 @@ export default class SampleDetails extends React.Component {
     this.toggleInchi = this.toggleInchi.bind(this);
     this.fetchQcWhenNeeded = this.fetchQcWhenNeeded.bind(this);
     this.customizableField = this.customizableField.bind(this);
+
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
   }
 
   componentWillReceiveProps(nextProps) {
@@ -414,6 +420,7 @@ export default class SampleDetails extends React.Component {
       <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
     );
 
+
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
@@ -456,7 +463,6 @@ export default class SampleDetails extends React.Component {
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
         <ShowUserLabels element={sample} />
-
       </div>
     )
   }
@@ -1074,30 +1080,50 @@ export default class SampleDetails extends React.Component {
     return (<div />);
   }
 
+  onTabPositionChanged(visible) {
+    this.setState({ visible })
+  }
+
   render() {
     const sample = this.state.sample || {};
-    const tabContents = [
-      i => this.samplePropertiesTab(i),
-      i => this.sampleContainerTab(i),
-      i => this.sampleLiteratureTab(i),
-      i => this.sampleImportReadoutTab(i),
-      i => this.moleculeComputedProps(i),
-      i => this.qualityCheckTab(i),
-    ];
+    const { visible } = this.state;
+    const tabContentsMap = {
+      properties: this.samplePropertiesTab('properties'),
+      analyses: this.sampleContainerTab('analyses'),
+      literature: this.sampleLiteratureTab('literature'),
+      results: this.sampleImportReadoutTab('results'),
+      qc_curation: this.qualityCheckTab('qc_curation'),
+    };
 
-    const offset = tabContents.length;
+    if (this.enableComputedProps) {
+      tabContentsMap.computed_props = this.moleculeComputedProps('computed_props');
+    }
+
+    const tabTitlesMap = {
+      qc_curation: 'qc curation',
+      computed_props: 'computed props'
+    }
+
     for (let j = 0; j < XTabs.count; j += 1) {
       if (XTabs[`on${j}`](sample)) {
         const NoName = XTabs[`content${j}`];
-        tabContents.push((() => (
-          <Tab eventKey={offset + j} key={offset + j} title={XTabs[`title${j}`]} >
+        tabContentsMap[`xtab_${j}`] = (
+          <Tab eventKey={`xtab_${j}`} key={`xtab_${j}`} title={XTabs[`title${j}`]} >
             <ListGroupItem style={{ paddingBottom: 20 }} >
               <NoName sample={sample} />
             </ListGroupItem>
           </Tab>
-        )));
+        );
+        tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
       }
     }
+
+    const tabContents = [];
+    visible.forEach((value) => {
+      const tabContent = tabContentsMap[value];
+      if (tabContent) { tabContents.push(tabContent); }
+    });
+
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
       <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
@@ -1117,6 +1143,8 @@ export default class SampleDetails extends React.Component {
       </Alert>
     ) : null;
 
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
+
     return (
       <Panel
         className="eln-panel-detail"
@@ -1126,9 +1154,15 @@ export default class SampleDetails extends React.Component {
         <Panel.Body>
           {this.sampleInfo(sample)}
           <ListGroup>
-          <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
-            {tabContents.map((e, i) => e(i))}
-          </Tabs>
+            <ElementDetailSortTab
+              type="sample"
+              availableTabs={Object.keys(tabContentsMap)}
+              tabTitles={tabTitlesMap}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+              {tabContents}
+            </Tabs>
           </ListGroup>
           {this.sampleFooter()}
           {this.structureEditorModal(sample)}

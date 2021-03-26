@@ -15,6 +15,8 @@ import ResearchPlanDetailsAttachments from './ResearchPlanDetailsAttachments';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
+import Immutable from 'immutable';
+import ElementDetailSortTab from '../ElementDetailSortTab';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -22,7 +24,8 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = props;
     this.state = {
       researchPlan,
-      update: false
+      update: false,
+      visible: Immutable.List(),
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -31,6 +34,7 @@ export default class ResearchPlanDetails extends Component {
     this.handleBodyChange = this.handleBodyChange.bind(this);
     this.handleBodyAdd = this.handleBodyAdd.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -324,46 +328,78 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  renderPanelBody(researchPlan, update) {
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  render() {
+    const { researchPlan, update, visible } = this.state;
+
     let btnMode = <Button bsSize="xs" bsStyle="success" onClick={() => this.handleSwitchMode('edit')}>click to edit</Button>;
     if (researchPlan.mode !== 'view') {
       btnMode = <Button bsSize="xs" bsStyle="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;
     }
-    return (
-      <Panel.Body>
-        <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
-          <Tab eventKey={0} title="Research plan">
-            <div style={{ margin: '5px 0px 5px 5px' }}>
-              {btnMode}
-            </div>
-            {this.renderResearchPlanMain(researchPlan, update)}
-          </Tab>
-          <Tab eventKey={1} title="Analyses">
-            {this.renderAnalysesTab(researchPlan)}
-          </Tab>
-          <Tab eventKey={2} title="Attachments">
-            {this.renderAttachmentsTab(researchPlan)}
-          </Tab>
-          <Tab eventKey={3} title="Literature">
-            <ResearchPlansLiteratures element={researchPlan} />
-          </Tab>
-        </Tabs>
-        <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
-          {
-            researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
-          }
-        </ButtonToolbar>
-      </Panel.Body>
-    );
-  }
 
-  render() {
-    const { researchPlan, update } = this.state;
+    const tabContentsMap = {
+      research_plan: (
+        <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>
+          <div style={{ margin: '5px 0px 5px 5px' }}>
+            {btnMode}
+          </div>
+          {this.renderResearchPlanMain(researchPlan, update)}
+        </Tab>
+      ),
+      analyses: (
+        <Tab eventKey="analyses" title="Analyses" key={`analyses_${researchPlan.id}`}>
+          {this.renderAnalysesTab(researchPlan)}
+        </Tab>
+      ),
+      attachments: (
+        <Tab eventKey="attachments" title="Attachments" key={`attachments_${researchPlan.id}`}>
+          {this.renderAttachmentsTab(researchPlan)}
+        </Tab>
+      ),
+      literature: (
+        <Tab eventKey="literature" title="Literature" key={`lit_${researchPlan.id}`}>
+          <ResearchPlansLiteratures element={researchPlan} />
+        </Tab>
+      ),
+    };
+
+    const tabTitlesMap = {
+      research_plan: 'Research Plan',
+      analyses: 'Analyses',
+      attachments: 'Attachments',
+      literature: 'Literature',
+    };
+
+    const tabContents = [];
+    visible.forEach((value) => {
+      const tabContent = tabContentsMap[value];
+      if (tabContent) { tabContents.push(tabContent); }
+    });
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
+
     return (
       <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">
         {this.renderPanelHeading(researchPlan)}
-        {this.renderPanelBody(researchPlan, update)}
+        <Panel.Body>
+          <ElementDetailSortTab
+            type="research_plan"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
+            {tabContents}
+          </Tabs>
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
+            {
+              researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
+            }
+          </ButtonToolbar>
+        </Panel.Body>
       </Panel>
     );
   }

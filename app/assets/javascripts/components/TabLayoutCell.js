@@ -24,11 +24,21 @@ class TabLayoutCell extends Component {
   }
 
   render() {
-    const {connectDragSource, sourceType, isHidden, cell, connectDropTarget} = this.props;
+    const {connectDragSource, sourceType, isHidden, cell, connectDropTarget, isElementDetails, title} = this.props;
+
+    const styleObj = {
+      fontSize: 12,
+      color: "#000000",
+      textAlign: "center",
+      wordWrap: "break-word"
+    }
 
     let layoutCell = (
       <td className={isHidden ? "hidden-layout" : "" }>
-        <div><i className={"icon-" + cell }/></div>
+        {
+          isElementDetails ? (<div><i style={styleObj}>{title}</i></div>) : (<div><i className={"icon-" + cell }/></div>)
+        }
+        
       </td>
     )
 

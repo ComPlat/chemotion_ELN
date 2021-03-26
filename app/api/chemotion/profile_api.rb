@@ -1,4 +1,18 @@
 module Chemotion
+
+  class ProfileLayoutHash < Grape::Validations::Base
+    def validate_param!(attr_name, params)
+      fail Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+         message: "has too many entries" if  params[attr_name].keys.size > 30
+      params[attr_name].each do |key, val|
+        fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+          message: "has wrong structure") unless key.to_s =~ /\A[\w \-]+\Z/
+        fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+          message: "has wrong structure") unless val.to_s =~ /\d+/
+      end
+    end
+  end
+
   class ProfileAPI < Grape::API
     resource :profiles do
       desc "Return the profile of the current_user"
@@ -29,6 +43,11 @@ module Chemotion
             optional :research_plan, type: Integer
             optional :wellplate, type: Integer
           end
+          optional :layout_detail_research_plan, type: Hash, profile_layout_hash: true
+          optional :layout_detail_reaction, type: Hash, profile_layout_hash: true
+          optional :layout_detail_sample, type: Hash, profile_layout_hash: true
+          optional :layout_detail_wellplate, type: Hash, profile_layout_hash: true
+          optional :layout_detail_screen, type: Hash, profile_layout_hash: true
           optional :export_selection, type: Hash do
             optional :sample, type: Array[Boolean]
             optional :reaction, type: Array[Boolean]
