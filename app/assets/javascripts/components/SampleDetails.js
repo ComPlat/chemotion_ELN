@@ -59,6 +59,7 @@ import { EditUserLabels, ShowUserLabels } from './UserLabels';
 import CopyElementModal from './common/CopyElementModal';
 import NotificationActions from './actions/NotificationActions';
 import MatrixCheck from './common/MatrixCheck';
+import AttachmentFetcher from './fetchers/AttachmentFetcher';
 
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
@@ -111,11 +112,11 @@ export default class SampleDetails extends React.Component {
       qrCodeSVG: "",
       isCasLoading: false,
       showMolfileModal: false,
-      smileReadonly: !props.sample.isNew,
-      quickCreator: false,
+      smileReadonly: !props.sample.isNew,quickCreator: false,
       showInchikey: false,
       pageMessage: null,
       visible: Immutable.List(),
+      startExport: false,
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -1048,9 +1049,23 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  handleExportAnalyses(sample) {
+    this.setState({ startExport: true });
+    AttachmentFetcher.downloadZipBySample(sample.id)
+      .then(() => { this.setState({ startExport: false }); })
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+
   sampleFooter() {
-    const { sample } = this.state;
+    const { sample, startExport } = this.state;
     const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
+    const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
+    const downloadAnalysesBtn = (sample.isNew || !hasAnalyses) ? null : (
+      <Button bsStyle="info" disabled={!this.sampleIsValid() } onClick={() => this.handleExportAnalyses(sample)}>
+        Download Analysis {startExport ? <span>&nbsp;<i className="fa fa-spin fa-spinner" /></span> : null}
+      </Button>
+    );
 
     let saveAndCloseBtn = belongToReaction && !sample.isNew
                             ?
@@ -1064,6 +1079,7 @@ export default class SampleDetails extends React.Component {
         </Button>
         {this.saveBtn(sample)}
         {saveAndCloseBtn}
+        {downloadAnalysesBtn}
       </ButtonToolbar>
     )
   }
