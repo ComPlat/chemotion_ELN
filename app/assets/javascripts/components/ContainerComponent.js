@@ -27,7 +27,7 @@ export default class ContainerComponent extends Component {
     const textTemplate = TextTemplateStore.getState()[templateType] || Map();
     this.state = {
       container,
-      textTemplate: textTemplate.toJS()
+      textTemplate: textTemplate && textTemplate.toJS()
     };
 
     this.onChange = this.onChange.bind(this);
@@ -59,7 +59,7 @@ export default class ContainerComponent extends Component {
     const { templateType } = this.props;
 
     const textTemplate = TextTemplateStore.getState()[templateType];
-    this.setState({ textTemplate: textTemplate.toJS() });
+    this.setState({ textTemplate: textTemplate && textTemplate.toJS() });
   }
 
   handleInputChange(type, ev) {

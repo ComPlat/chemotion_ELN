@@ -32,10 +32,10 @@ export default class AnalysisEditor extends React.Component {
 
     const templateStore = TextTemplateStore.getState();
     const { predefinedTemplateNames, fetchedPredefinedTemplates } = templateStore;
-    const fetchedTemplates = fetchedPredefinedTemplates.toJS();
+    const fetchedTemplates = fetchedPredefinedTemplates && fetchedPredefinedTemplates.toJS();
     this.state = {
       fetchedNames: Object.keys(fetchedTemplates),
-      predefinedTemplateNames: predefinedTemplateNames.toJS(),
+      predefinedTemplateNames: predefinedTemplateNames && predefinedTemplateNames.toJS(),
       fetchedPredefinedTemplates
     };
 
@@ -53,7 +53,6 @@ export default class AnalysisEditor extends React.Component {
 
   componentDidMount() {
     TextTemplateStore.listen(this.onChangeTemplateStore);
-
     TextTemplateActions.fetchPredefinedTemplateNames();
 
     const { template } = this.props;
@@ -74,13 +73,13 @@ export default class AnalysisEditor extends React.Component {
   onChangeTemplateStore(state) {
     const { predefinedTemplateNames, fetchedPredefinedTemplates } = state;
     const { fetchedNames } = this.state;
-    const fetchedTemplates = fetchedPredefinedTemplates.toJS();
+    const fetchedTemplates = (fetchedPredefinedTemplates && fetchedPredefinedTemplates.toJS()) || Map();
 
     const templateStoreFetched = Object.keys(fetchedTemplates);
     const fetched = [...new Set(fetchedNames.concat(templateStoreFetched))];
     this.setState({
       fetchedNames: fetched,
-      predefinedTemplateNames: predefinedTemplateNames.toJS(),
+      predefinedTemplateNames: predefinedTemplateNames && predefinedTemplateNames.toJS(),
       fetchedPredefinedTemplates: fetchedTemplates
     });
   }

@@ -2,82 +2,34 @@
 module Chemotion
   class TextTemplateAPI < Grape::API
     resource :text_templates do
-      get :sample do
-        template = current_user.sample_text_template
-        { sample: template.nil? ? {} : template.data }
+      DEF_ELS = %w[research_plan screen wellplate reaction sample reaction_description].freeze
+
+      params do
+        requires :type, type: String, desc: 'element type'
+      end
+      get :by_type do
+        template = DEF_ELS.include?(params[:type]) ? current_user.send(params[:type] + '_text_template') : ElementTextTemplate.where(user_id: current_user.id, name: params[:type])&.first
+        { "#{params[:type]}": template.nil? ? {} : template.data }
       end
 
       params do
-        requires :data, type: Hash, desc: "Text template details"
+        requires :type, type: String, desc: 'element type'
+        requires :data, type: Hash, desc: 'Text template details'
       end
-      put :sample do
-        template = current_user.sample_text_template
-        template.update!(data: params['data'])
-      end
-
-      get :reaction do
-        template = current_user.reaction_text_template
-        { reaction: template.nil? ? {} : template.data }
-      end
-
-      params do
-        requires :data, type: Hash, desc: "Text template details"
-      end
-      put :reaction do
-        template = current_user.reaction_text_template
-        template.update!(data: params['data'])
-      end
-
-      get :wellplate do
-        template = current_user.wellplate_text_template
-        { wellplate: template.nil? ? {} : template.data }
-      end
-
-      params do
-        requires :data, type: Hash, desc: "Text template details"
-      end
-      put :wellplate do
-        template = current_user.wellplate_text_template
-        template.update!(data: params['data'])
-      end
-
-      get :screen do
-        template = current_user.screen_text_template
-        { screen: template.nil? ? {} : template.data }
-      end
-
-      params do
-        requires :data, type: Hash, desc: "Text template details"
-      end
-      put :screen do
-        template = current_user.screen_text_template
-        template.update!(data: params['data'])
-      end
-
-      get :research_plan do
-        template = current_user.research_plan_text_template
-        { research_plan: template.nil? ? {} : template.data }
-      end
-
-      params do
-        requires :data, type: Hash, desc: "Text template details"
-      end
-      put :research_plan do
-        template = current_user.research_plan_text_template
-        template.update!(data: params['data'])
-      end
-
-      get :reaction_description do
-        template = current_user.reaction_description_text_template
-        { reaction_description: template.nil? ? {} : template.data }
-      end
-
-      params do
-        requires :data, type: Hash, desc: "Text template details"
-      end
-      put :reaction_description do
-        template = current_user.reaction_description_text_template
-        template.update!(data: params['data'])
+      put :update do
+        if DEF_ELS.include?(params[:type])
+          template = current_user.send(params[:type] + '_text_template')
+          template.update!(data: params['data'])
+        else
+          template = ElementTextTemplate.where(user_id: current_user.id, name: params[:type])&.first
+          if template.nil?
+            template = ElementTextTemplate.new
+            template.name = params[:type]
+            template.user_id = current_user.id
+          end
+          template.data = params['data']
+          template.save!
+        end
       end
 
       desc 'Get predefined templates with paging'

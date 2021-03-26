@@ -87,6 +87,7 @@ class User < ActiveRecord::Base
   has_one :screen_text_template, dependent: :destroy
   has_one :wellplate_text_template, dependent: :destroy
   has_one :research_plan_text_template, dependent: :destroy
+  has_many :element_text_templates, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations
 

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Button } from 'react-bootstrap';
 import Container from '../models/Container';
 import ContainerComponent from '../ContainerComponent';
-import PrintCodeButton from '../common/PrintCodeButton';
+import TextTemplateActions from '../actions/TextTemplateActions';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {
@@ -15,10 +15,14 @@ export default class GenericElDetailsContainers extends Component {
     };
   }
 
+  componentDidMount() {
+    TextTemplateActions.fetchTextTemplates(this.props.genericEl.type);
+  }
+
   componentWillReceiveProps(nextProps) {
     this.setState({
       genericEl: nextProps.genericEl
-    })
+    });
   }
 
   handleChange() {
@@ -125,6 +129,7 @@ export default class GenericElDetailsContainers extends Component {
                       <Panel.Heading>{containerHeader(container)}</Panel.Heading>
                       <Panel.Body collapsible="true">
                         <ContainerComponent
+                          templateType={genericEl.type}
                           readOnly={readOnly}
                           container={container}
                           onChange={c => this.handleChange(c)}
