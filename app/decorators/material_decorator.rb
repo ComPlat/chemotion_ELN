@@ -14,6 +14,7 @@ class MaterialDecorator
       m = Material.new(reaction_material.sample.attributes)
       rma = reaction_materials_attributes[reaction_material.sample_id] || {}
       m.reference = rma['reference']
+      m.show_label = rma['show_label']
       m.equivalent = rma['equivalent']
       m.position = rma['position']
       m.waste = rma['waste']

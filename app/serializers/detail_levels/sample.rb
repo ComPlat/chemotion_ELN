@@ -9,7 +9,8 @@ class DetailLevels::Sample
       :sample_svg_file, :density, :boiling_point, :melting_point, :stereo,
       :reaction_description, :container, :pubchem_tag, :xref, :code_log, :metrics,
       :can_update, :can_copy, :can_publish, :molecule_name_hash, # :molecule_computed_props,
-      :showed_name
+      :showed_name, :decoupled,
+      :molecular_mass, :sum_formula
     ]
   end
 
@@ -18,7 +19,7 @@ class DetailLevels::Sample
   def level0_attributes
     [
       :id, :type, :is_restricted, :external_label, :code_log,
-      :can_update, :can_copy, :can_publish
+      :can_update, :can_copy, :can_publish, :decoupled, :molecular_mass, :sum_formula
     ]
   end
 
@@ -53,7 +54,7 @@ class DetailLevels::Sample
   end
 
   def report_level0_attributes
-    []
+    [:decoupled, :molecular_mass, :sum_formula]
   end
 
   def report_level1_attributes

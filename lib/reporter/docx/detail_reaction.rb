@@ -270,7 +270,7 @@ module Reporter
           name: s.name,
           iupac_name: s.molecule_name_hash[:label].presence || m[:iupac_name],
           short_label: s.name.presence || s.external_label.presence || s.short_label.presence,
-          formular: m[:sum_formular],
+          formular: s.decoupled ? s.sum_formula : m[:sum_formular],
           mol_w: valid_digit(m[:molecular_weight], digit),
           mass: valid_digit(mass, digit),
           vol: valid_digit(vol, digit),

@@ -290,6 +290,9 @@ module Chemotion
         optional :molecule_name_id, type: Integer
         requires :container, type: Hash
         optional :user_labels, type: Array
+        optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
+        optional :molecular_mass, type: Float
+        optional :sum_formula, type: String
         #use :root_container_params
       end
 
@@ -391,9 +394,12 @@ module Chemotion
         optional :molecule_name_id, type: Integer
         optional :molecule_id, type: Integer
         requires :container, type: Hash
+        optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
+        optional :molecular_mass, type: Float
+        optional :sum_formula, type: String
       end
       post do
-
+        molecule_id = params[:decoupled] && params[:molfile].blank? ? Molecule.find_or_create_dummy&.id : params[:molecule_id]
         attributes = {
           name: params[:name],
           short_label: params[:short_label],
@@ -409,7 +415,7 @@ module Chemotion
           solvent: params[:solvent],
           location: params[:location],
           molfile: params[:molfile],
-          molecule_id: params[:molecule_id],
+          molecule_id: molecule_id,
           sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
           density: params[:density],
@@ -418,7 +424,10 @@ module Chemotion
           created_by: current_user.id,
           xref: params[:xref],
           stereo: params[:stereo],
-          molecule_name_id: params[:molecule_name_id]
+          molecule_name_id: params[:molecule_name_id],
+          decoupled: params[:decoupled],
+          molecular_mass: params[:molecular_mass],
+          sum_formula: params[:sum_formula]
         }
 
         boiling_point_lowerbound = params['boiling_point_lowerbound'].blank? ? -Float::INFINITY : params['boiling_point_lowerbound']

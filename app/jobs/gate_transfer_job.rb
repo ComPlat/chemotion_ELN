@@ -32,7 +32,9 @@ class GateTransferJob < ActiveJob::Base
     @collection = Collection.find(id)
     all_reaction_ids = CollectionsReaction.where(collection_id: id).pluck(:reaction_id)
     reaction_sample_ids = Reaction.get_associated_samples(all_reaction_ids)
-    all_sample_ids = CollectionsSample.where(collection_id: id).pluck(:sample_id) - reaction_sample_ids
+    dec_ids = ReactionsSample.where(reaction_id: all_reaction_ids).joins(:sample).where('samples.decoupled = true').pluck(:reaction_id)
+    all_reaction_ids -= dec_ids
+    all_sample_ids = CollectionsSample.where(collection_id: id).joins(:sample).where('samples.decoupled = false').pluck(:sample_id) - reaction_sample_ids
 
     return true if all_reaction_ids.empty? && all_sample_ids.empty?
 

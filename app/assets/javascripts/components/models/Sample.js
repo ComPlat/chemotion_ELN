@@ -183,7 +183,11 @@ export default class Sample extends Element {
       container: Container.init(),
       can_update: true,
       can_copy: false,
-      stereo: Sample.defaultStereo()
+      stereo: Sample.defaultStereo(),
+      decoupled: false,
+      molecular_mass: 0,
+      sum_formula: '',
+      xref: {}
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -289,7 +293,7 @@ export default class Sample extends Element {
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule && this.molecule.serialize(),
-      molecule_id: this.molecule && this.molecule.id,
+      molecule_id: this.molecule && (this.molecule.id === '_none_' ? null : this.molecule.id),
       molecule_name_id: this.molecule_name && this.molecule_name.value,
       sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
@@ -308,7 +312,10 @@ export default class Sample extends Element {
       container: this.container,
       xref: this.xref,
       stereo: this.stereo,
-      user_labels: this.user_labels || []
+      user_labels: this.user_labels || [],
+      decoupled: this.decoupled,
+      molecular_mass: this.molecular_mass,
+      sum_formula: this.sum_formula
     });
 
     return serialized;
@@ -419,7 +426,7 @@ export default class Sample extends Element {
   }
 
   get preferred_label() {
-    return this._external_label || this.molecule.iupac_name || this.molecule.sum_formular;
+    return this._external_label || this.molecule.iupac_name || this.molecule_formula;
   }
 
   showedName() {
@@ -539,6 +546,10 @@ export default class Sample extends Element {
   setDensity(density) {
     this.density = density.value;
     this.molarity_value = 0;
+  }
+
+  setMolecularMass(mass) {
+    this.molecular_mass = mass.value;
   }
 
   setUserLabels(userLabels) {
@@ -756,14 +767,22 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
+    if (this.decoupled) {
+      return this.molecular_mass;
+    }
+
     return this.molecule && this.molecule.molecular_weight;
   }
 
   get molecule_exact_molecular_weight() {
-    return this.molecule && this.molecule.exact_molecular_weight;
+    return !this.decoupled && this.molecule && this.molecule.exact_molecular_weight;
   }
 
   get molecule_formula() {
+    if (this.decoupled) {
+      return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : '';
+    }
+
     return this.molecule && this.molecule.sum_formular;
   }
 
@@ -801,12 +820,15 @@ export default class Sample extends Element {
   }
 
   get concat_formula() {
-    // TODO Workaround, need to check how can molecule is null
-    if (!this.molecule) { return ''; }
-    if(this.contains_residues) {
-      return (this.molecule.sum_formular || '') + this.polymer_formula;
+    if (!this.molecule_formula) {
+      return '';
     }
-    return (this.molecule.sum_formular || '');
+
+    if (this.contains_residues) {
+      return this.molecule_formula + this.polymer_formula;
+    }
+
+    return this.molecule_formula;
   }
 
   get polymer_type() {
@@ -849,21 +871,28 @@ export default class Sample extends Element {
 
 
   get isValid(){
-    return (this && this.molfile &&
+    return (this && ((this.molfile && !this.decoupled) || this.decoupled) &&
             !this.error_loading && !this.error_polymer_type);
   }
 
   get svgPath() {
-    if (this.sample_svg_file){
-      if(this.sample_svg_file === '***')
-        return `/images/wild_card/no_image_180.svg`
-      else
-        return `/images/samples/${this.sample_svg_file}`;
-    } else {
-      return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+    if (this.show_label) {
+      return `svg_text/${this.labelText}`
     }
+
+    if (this.sample_svg_file) {
+      if (this.sample_svg_file === '***') {
+        return `/images/wild_card/no_image_180.svg`
+      }
+      return `/images/samples/${this.sample_svg_file}`;
+    }
+    return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
   }
   //todo: have a dedicated Material Sample subclass
+
+  get labelText() {
+    return this.name || this.molecule_formula || this.molecule.iupac_name;
+  }
 
   set equivalent(equivalent) {
     this._equivalent = equivalent;
@@ -895,6 +924,7 @@ export default class Sample extends Element {
       equivalent: this.equivalent,
       position: this.position,
       reference: this.reference || false,
+      show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
       coefficient: this.coefficient,
     };

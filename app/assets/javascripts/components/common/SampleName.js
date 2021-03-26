@@ -4,8 +4,7 @@ import ClipboardCopyText from './ClipboardCopyText';
 
 
 const SampleName = ({ sample }) => {
-  const { sum_formular } = sample._molecule;
-  const { contains_residues, polymer_type } = sample;
+  const { contains_residues, polymer_type, molecule_formula } = sample;
   const moleculeName = sample.showedName();
 
   let stereo = '';
@@ -21,7 +20,7 @@ const SampleName = ({ sample }) => {
     stereo = stereoInfo === '' ? '' : ` - ${stereoInfo}`;
   }
 
-  const sumFormulaCom = <Formula formula={sum_formular} customText={stereo} />;
+  const sumFormulaCom = <Formula formula={molecule_formula} customText={stereo} />;
 
   if (contains_residues) {
     const polymerName = `${polymer_type.charAt(0).toUpperCase()}${polymer_type.slice(1)}`.replace('_', '-');
@@ -29,7 +28,7 @@ const SampleName = ({ sample }) => {
       <div>
         <p>
           {polymerName}
-          <ClipboardCopyText text={sumFormulaCom} clipText={`${polymerName} - ${sum_formular}`} />
+          <ClipboardCopyText text={sumFormulaCom} clipText={`${polymerName} - ${molecule_formula}`} />
         </p>
         <p><ClipboardCopyText text={moleculeName} /></p>
       </div>
@@ -38,7 +37,7 @@ const SampleName = ({ sample }) => {
 
   return (
     <div>
-      <p><ClipboardCopyText text={sumFormulaCom} clipText={sum_formular} /></p>
+      <p><ClipboardCopyText text={sumFormulaCom} clipText={molecule_formula} /></p>
       <p style={{ wordBreak: 'break-all' }}><ClipboardCopyText text={moleculeName} /></p>
     </div>
   );

@@ -13,6 +13,7 @@ import Barcode from 'react-barcode';
 import Select from 'react-select';
 import { _, cloneDeep } from 'lodash';
 import uuid from 'uuid';
+import classNames from 'classnames';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -64,6 +65,24 @@ import ElementDetailSortTab from './ElementDetailSortTab';
 
 const MWPrecision = 6;
 
+const decoupleCheck = (sample) => {
+  if (sample.decoupled && sample.sum_formula.trim() === '') {
+    NotificationActions.add({
+      title: 'Error on Sample creation', message: 'Sum formula is required!', level: 'error', position: 'tc'
+    });
+    LoadingActions.stop();
+    return false;
+  }
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
+    NotificationActions.add({
+      title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
+    });
+    LoadingActions.stop();
+    return false;
+  }
+  return true;
+};
+
 const rangeCheck = (field, sample) => {
   if (sample[`${field}_lowerbound`] && sample[`${field}_lowerbound`] !== ''
     && sample[`${field}_upperbound`] && sample[`${field}_upperbound`] !== ''
@@ -101,6 +120,7 @@ export default class SampleDetails extends React.Component {
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
+    this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -113,12 +133,12 @@ export default class SampleDetails extends React.Component {
     this.toggleInchi = this.toggleInchi.bind(this);
     this.fetchQcWhenNeeded = this.fetchQcWhenNeeded.bind(this);
     this.customizableField = this.customizableField.bind(this);
-
+    this.decoupleMolecule = this.decoupleMolecule.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || nextProps.sample.molfile.length === 0)) {
+    if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))) {
       this.setState({
         smileReadonly: false,
       });
@@ -229,6 +249,20 @@ export default class SampleDetails extends React.Component {
       });
   }
 
+  decoupleMolecule() {
+    const { sample } = this.state;
+    MoleculesFetcher.decouple(sample.molfile, sample.sample_svg_file, sample.decoupled)
+      .then((result) => {
+        sample.molecule = result;
+        sample.molecule_id = result.id;
+        this.setState({
+          sample, smileReadonly: true, pageMessage: result.ob_log
+        });
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   handleStructureEditorSave(molfile, svg_file = null, config = null) {
     const { sample } = this.state;
     sample.molfile = molfile;
@@ -275,6 +309,7 @@ export default class SampleDetails extends React.Component {
   handleSubmit(closeView = false) {
     LoadingActions.start();
     const { sample } = this.state;
+    if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
@@ -695,8 +730,16 @@ export default class SampleDetails extends React.Component {
 
   customizableField() {
     const { xref } = this.state.sample;
-    const customKeys = cloneDeep(xref || {});
-    delete customKeys.cas;
+    const {
+      cas,
+      optical_rotation,
+      rfvalue,
+      rfsovents,
+      supplier,
+      private_notes,
+      ...customKeys
+    } = cloneDeep(xref || {});
+
     if (Object.keys(customKeys).length === 0) return null;
     return (
       Object.keys(customKeys).map(key => (
@@ -765,8 +808,7 @@ export default class SampleDetails extends React.Component {
                           materialGroup={materialGroup}/>
         </ListGroupItem>
       )
-    else
-      return (
+    return (
         <ListGroupItem className="ea-section">
           <Row>
             <Col md={6}>
@@ -781,27 +823,31 @@ export default class SampleDetails extends React.Component {
 
   elementalPropertiesItem(sample) {
     // avoid empty ListGroupItem
-    if(!sample.molecule.sum_formular)
+    if (!sample.molecule_formula) {
       return false;
+    }
 
-    let show = this.state.showElementalComposition;
-    let materialGroup = this.state.materialGroup;
+    const { showElementalComposition, materialGroup } = this.state;
 
-    return(
+    return (
       <div width="100%" className="polymer-section">
         {this.elementalPropertiesItemHeader(sample)}
 
-        {this.elementalPropertiesItemContent(sample, materialGroup, show)}
+        {this.elementalPropertiesItemContent(sample, materialGroup, showElementalComposition)}
       </div>
-    )
-
+    );
   }
 
-  chemicalIdentifiersItemHeader() {
+  chemicalIdentifiersItemHeader(sample) {
     return (
       <ListGroupItem onClick={() => this.handleChemIdentSectionToggle()}>
         <Col className="padding-right chem-identifiers-header" md={6}>
           <b>Chemical identifiers</b>
+          { sample.decoupled &&
+            <span className="text-danger">
+              &nbsp;[decoupled]
+            </span>
+          }
         </Col>
         <div className="col-md-6">
           <ToggleSection show={this.state.showChemicalIdentifiers} />
@@ -814,8 +860,8 @@ export default class SampleDetails extends React.Component {
     if (!show) return false;
     return (
       <ListGroupItem>
-        {this.moleculeInchi(sample)}
-        {this.moleculeCanoSmiles(sample)}
+        {sample.decoupled ? null : this.moleculeInchi(sample)}
+        {sample.decoupled ? null : this.moleculeCanoSmiles(sample)}
         {this.moleculeMolfile(sample)}
         {this.moleculeCas()}
       </ListGroupItem>
@@ -825,8 +871,14 @@ export default class SampleDetails extends React.Component {
   chemicalIdentifiersItem(sample) {
     const show = this.state.showChemicalIdentifiers;
     return (
-      <div width="100%" className="chem-identifiers-section">
-        {this.chemicalIdentifiersItemHeader()}
+      <div
+        width="100%"
+        className={classNames({
+          'chem-identifiers-section': true,
+          decoupled: sample.decoupled
+        })}
+      >
+        {this.chemicalIdentifiersItemHeader(sample)}
         {this.chemicalIdentifiersItemContent(sample, show)}
       </div>
     );
@@ -841,7 +893,9 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem>
           <SampleForm sample={sample}
                       parent={this}
-                      customizableField={this.customizableField} />
+                      customizableField={this.customizableField}
+                      enableSampleDecoupled={this.enableSampleDecoupled}
+                      decoupleMolecule={this.decoupleMolecule} />
         </ListGroupItem>
           <EditUserLabels element={sample} />
           {this.elementalPropertiesItem(sample)}

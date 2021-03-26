@@ -12,6 +12,7 @@
 #  deleted_at  :datetime
 #  waste       :boolean          default(FALSE)
 #  coefficient :float            default(1.0)
+#  show_label  :boolean          default(FALSE), not null
 #
 # Indexes
 #
@@ -27,11 +28,11 @@ class ReactionsSample < ActiveRecord::Base
   include ReactionSampleCollections
 
   def self.get_samples(reaction_ids)
-    self.where(reaction_id: reaction_ids).pluck(:sample_id).compact.uniq
+    where(reaction_id: reaction_ids).pluck(:sample_id).compact.uniq
   end
 
-  def self.get_reactions samples_ids
-    self.where(sample_id: samples_ids).pluck(:reaction_id).compact.uniq
+  def self.get_reactions(samples_ids)
+    where(sample_id: samples_ids).pluck(:reaction_id).compact.uniq
   end
 end
 

@@ -606,6 +606,7 @@ ActiveRecord::Schema.define(version: 20210217164124) do
     t.datetime "deleted_at"
     t.boolean  "waste",       default: false
     t.float    "coefficient", default: 1.0
+    t.boolean  "show_label",  default: false, null: false
   end
 
   add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
@@ -711,6 +712,9 @@ ActiveRecord::Schema.define(version: 20210217164124) do
     t.string   "molfile_version",     limit: 20
     t.jsonb    "stereo"
     t.string   "metrics",                        default: "mmm"
+    t.boolean  "decoupled",                      default: false, null: false
+    t.float    "molecular_mass"
+    t.string   "sum_formula"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree

@@ -105,6 +105,7 @@ const GeneralMaterialGroup = ({
   let headers = {
     ref: 'Ref',
     group: 'Starting materials',
+    show_label: 'L/S',
     tr: 'T/R',
     mass: 'Mass',
     amount: 'Amount',
@@ -177,8 +178,8 @@ const GeneralMaterialGroup = ({
           <col style={{ width: '4%' }} />
           <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
           <col style={{ width: '4%' }} />
-          <col style={{ width: '3%' }} />
-          <col style={{ width: '10%' }} />
+          <col style={{ width: '2%' }} />
+          <col style={{ width: '2%' }} />
           <col style={{ width: showLoadingColumn ? '9%' : '10%' }} />
           <col style={{ width: showLoadingColumn ? '11%' : '12%' }} />
           { showLoadingColumn && <col style={{ width: '11%' }} /> }
@@ -191,6 +192,7 @@ const GeneralMaterialGroup = ({
             <th>{headers.group}</th>
             { isReactants && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th> }
             { !isReactants && <th>{refTHead}</th> }
+            <th>{headers.show_label}</th>
             { !isReactants && <th>{headers.tr}</th> }
             { !isReactants && <th>{headers.amount}</th> }
             { !isReactants && <th /> }
