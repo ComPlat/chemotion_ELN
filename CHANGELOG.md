@@ -1,6 +1,22 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.7.1]
+> 2021-03-26
+
+* Features
+  * sorting of tabs in Element-detail Panel (Sample, Reaction,...)  
+
+* Fix
+  * mimemagic gem updated due to previous version forced retirement 
+  * research-plan table: cell focus input
+  * slow opening of reaction panel: rm debounce
+
+
+## [v0.7.0]
+> 2021-03-15
+
+
 ## [v0.6.0]
 > 2019-12-16
 
