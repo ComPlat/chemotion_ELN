@@ -74,6 +74,17 @@
     },
     {
       "type": "numeric",
+      "field": "conductivity",
+      "label": "Conductivity",
+      "default": "",
+      "position": 66,
+      "placeholder": "Please input conductivity",
+      "units": [
+        { "key": "s_m", "label": "S/m", "nm": 1 }
+      ]
+    },
+    {
+      "type": "numeric",
       "field": "degree",
       "label": "Degree",
       "default": "",

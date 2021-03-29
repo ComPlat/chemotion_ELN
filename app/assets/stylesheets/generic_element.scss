@@ -47,17 +47,22 @@ $colo-bs-primary: #337ab7;
   padding-right: unset !important;
 }
 
-.panel_generic_heading {
+@mixin generic_panel_header {
   font-weight: bold;
+  padding: 10px 0px !important;
+}
+
+.panel_generic_heading {
+  @include generic_panel_header;
 }
 
 .panel_generic_heading_bu {
-  font-weight: bold;
+  @include generic_panel_header;
   text-decoration: underline;
 }
 
 .panel_generic_heading_bui {
-  font-weight: bold;
+  @include generic_panel_header;
   text-decoration: underline;
   font-style: italic;
 }
