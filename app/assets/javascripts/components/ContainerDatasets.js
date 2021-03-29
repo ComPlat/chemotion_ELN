@@ -116,6 +116,7 @@ export default class ContainerDatasets extends Component {
     const {disabled} = this.props;
 
     if(container.children.length > 0) {
+      const kind = container.extended_metadata && container.extended_metadata.kind;
       return (
         <div>
           <Well style={{minHeight: 70, padding: 5, paddingBottom: 31}}>
@@ -124,6 +125,7 @@ export default class ContainerDatasets extends Component {
                 return (
                   <ListGroupItem key={key}>
                     <ContainerDatasetField
+                      kind={kind}
                       dataset_container={dataset_container}
                       onChange={() => this.handleChange(dataset_container)}
                       handleRemove={() => this.handleRemove(dataset_container)}
@@ -144,10 +146,12 @@ export default class ContainerDatasets extends Component {
           </Well>
           <ContainerDatasetModal
             onHide={() => this.handleModalHide()}
-            onChange = {dataset_container => this.handleChange(dataset_container)}
+            onChange={dataset_container => this.handleChange(dataset_container)}
+            kind={kind}
             show={modal.show}
             readOnly={this.props.readOnly}
             dataset_container={modal.dataset_container}
+            analysisContainer={modal.analysisContainer}
             disabled={disabled}
             />
         </div>

@@ -247,6 +247,28 @@ ActiveRecord::Schema.define(version: 20210416075103) do
 
   add_index "containers", ["containable_type", "containable_id"], name: "index_containers_on_containable", using: :btree
 
+  create_table "dataset_klasses", force: :cascade do |t|
+    t.string   "ols_term_id",                                                        null: false
+    t.string   "label",                                                              null: false
+    t.string   "desc"
+    t.jsonb    "properties_template", default: {"layers"=>{}, "select_options"=>{}}, null: false
+    t.boolean  "is_active",           default: false,                                null: false
+    t.integer  "place",               default: 100,                                  null: false
+    t.integer  "created_by",                                                         null: false
+    t.datetime "created_at",                                                         null: false
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  create_table "datasets", force: :cascade do |t|
+    t.integer  "dataset_klass_id"
+    t.string   "element_type"
+    t.integer  "element_id"
+    t.jsonb    "properties"
+    t.datetime "created_at",       null: false
+    t.datetime "updated_at"
+  end
+
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
     t.integer  "attempts",   default: 0, null: false

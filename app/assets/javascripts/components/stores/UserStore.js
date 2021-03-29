@@ -16,6 +16,7 @@ class UserStore {
       labels: [],
       genericEls: [],
       segmentKlasses: [],
+      dsKlasses: [],
       unitsSystem: {}
     };
 
@@ -30,6 +31,7 @@ class UserStore {
       handleUpdateUserProfile: UserActions.updateUserProfile,
       handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
       handleSegementKlasses: UserActions.fetchSegmentKlasses,
+      handleDatasetKlasses: UserActions.fetchDatasetKlasses,
       handleUnitsSystem: UserActions.fetchUnitsSystem
     });
   }
@@ -88,6 +90,10 @@ class UserStore {
 
   handleSegementKlasses(result) {
     this.state.segmentKlasses = result.klass;
+  }
+
+  handleDatasetKlasses(result) {
+    this.state.dsKlasses = result.klass;
   }
 
   handleUnitsSystem(result) {

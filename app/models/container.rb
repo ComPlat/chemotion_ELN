@@ -21,10 +21,13 @@
 
 class Container < ActiveRecord::Base
   include ElementCodes
+  include Datasetable
+
   belongs_to :containable, polymorphic: true
   has_many :attachments, as: :attachable
   # TODO: dependent destroy for attachments should be implemented when attachment get paranoidized instead of this DJ
   before_destroy :delete_attachment
+  before_destroy :destroy_datasetable
   has_closure_tree
 
   scope :analyses_for_root, ->(root_id) {

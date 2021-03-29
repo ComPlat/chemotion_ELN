@@ -6,6 +6,10 @@ import uuid from 'uuid';
 import { findIndex } from 'lodash';
 import NotificationActions from '../../components/actions/NotificationActions';
 import UserStore from '../../components/stores/UserStore';
+import MatrixCheck from '../../components/common/MatrixCheck';
+
+const absOlsTermId = val => (val || '').split('|')[0].trim();
+const absOlsTermLabel = val => val.replace(absOlsTermId(val), '').replace('|', '').trim();
 
 const genUnitSup = (val) => {
   if (typeof val === 'undefined' || val === null) return '';
@@ -24,10 +28,7 @@ const genUnitsSystem = () => {
   return (unitsSystem.fields || []);
 };
 
-const genUnits = (field) => {
-  // const unitsSystem = (UserStore.getState() && UserStore.getState().unitsSystem) || {};
-  return (genUnitsSystem().find(u => u.field === field) || {}).units || [];
-};
+const genUnits = field => (genUnitsSystem().find(u => u.field === field) || {}).units || [];
 
 const genUnit = (field, key) => {
   const units = genUnits(field);
@@ -40,7 +41,7 @@ const convertTemp = (key, val) => {
     case 'F':
       return ((parseFloat(val) * 1.8) + 32).toFixed(2);
     case 'K':
-      return ((parseFloat(val) + 459.67) * 5 / 9).toFixed(2);
+      return (((parseFloat(val) + 459.67) * 5) / 9).toFixed(2);
     case 'C':
       return (parseFloat(val) - 273.15).toFixed(2);
     default:
@@ -52,7 +53,7 @@ const unitConversion = (field, key, val) => {
   if (typeof val === 'undefined' || val == null || val === 0) {
     return val;
   }
-  if (field == 'temperature') {
+  if (field === 'temperature') {
     return convertTemp(key, val);
   }
   const units = genUnits(field);
@@ -198,8 +199,20 @@ FieldLabel.propTypes = {
   label: PropTypes.string.isRequired, desc: PropTypes.string.isRequired
 };
 
+const GenericDSMisType = () => {
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  if (MatrixCheck(currentUser.matrix, 'genericDataset')) {
+    return (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip">Type (Chemical Methods Ontology) has been changed. <br />Please review this Dataset content.</Tooltip>}>
+        <span style={{ color: 'red' }}><i className="fa fa-exclamation-triangle" />&nbsp;</span>
+      </OverlayTrigger>
+    );
+  }
+  return null;
+};
+
 export {
-  ButtonTooltip, ButtonConfirm, FieldLabel,
-  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit, unitConversion, toBool,
-  genUnitSup
+  ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel,
+  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
+  unitConversion, toBool, genUnitSup, absOlsTermId, absOlsTermLabel
 };

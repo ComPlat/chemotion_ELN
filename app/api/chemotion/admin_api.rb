@@ -521,6 +521,48 @@ module Chemotion
         end
       end
 
+      namespace :list_dataset_klass do
+        desc 'list Generic Dataset Klass'
+        params do
+          optional :is_active, type: Boolean, desc: 'Active or Inactive Dataset'
+        end
+        get do
+          list = DatasetKlass.where(is_active: params[:is_active]) if params[:is_active].present?
+          list = DatasetKlass.all unless params[:is_active].present?
+          present list.sort_by(&:place), with: Entities::DatasetKlassEntity, root: 'klass'
+        end
+      end
+
+      namespace :de_active_dataset_klass do
+        desc 'activate or inactive Generic Dataset Klass'
+        params do
+          requires :id, type: Integer, desc: 'Dataset Klass ID'
+          requires :is_active, type: Boolean, desc: 'Active or Inactive Dataset'
+        end
+        after_validation do
+          @dataset = DatasetKlass.find(params[:id])
+          error!('Dataset is invalid. Please re-select.', 500) if @dataset.nil?
+        end
+        post do
+          @dataset&.update!(is_active: params[:is_active])
+        end
+      end
+
+      namespace :update_dataset_template do
+        desc 'update Generic Dataset Properties Template'
+        params do
+          requires :id, type: Integer, desc: 'Dataset Klass ID'
+          requires :properties_template, type: Hash
+        end
+        after_validation do
+          @dataset = DatasetKlass.find(params[:id])
+          error!('Dataset is invalid. Please re-select.', 500) if @dataset.nil?
+        end
+        post do
+          @dataset&.update!(properties_template: params[:properties_template])
+        end
+      end
+
       resource :group_device do
         namespace :list do
           desc 'fetch groups'

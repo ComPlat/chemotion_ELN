@@ -61,7 +61,7 @@ class ElementField extends Component {
       ({ value: _c.field, name: _c.label, label: _c.label }));
     let typeOpts = this.props.genericType === 'Element' ? ElementFieldTypes.concat([{ value: 'drag_molecule', name: 'drag_molecule', label: 'DragMolecule' }, { value: 'drag_sample', name: 'drag_sample', label: 'DragSample' }]) : ElementFieldTypes;
     typeOpts = typeOpts.concat([{ value: 'system-defined', name: 'system-defined', label: 'System-Defined' }]);
-    const skipRequired = this.props.genericType === 'Segment' ? { display: 'none' } : {};
+    const skipRequired = ['Segment', 'Dataset'].includes(this.props.genericType) ? { display: 'none' } : {};
     const f = this.props.field;
     const preUnit = unitConfig.length > 0 ? unitConfig[0].value : '';
     const selectOptions = (f.type === 'select' || f.type === 'system-defined') ? (

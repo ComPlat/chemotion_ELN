@@ -5,6 +5,7 @@ import { DropTarget } from 'react-dnd';
 import InboxActions from './actions/InboxActions';
 import DragDropItemTypes from './DragDropItemTypes';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
+import { GenericDSMisType, absOlsTermId } from '../admin/generic/Utils';
 
 const dataTarget = {
   canDrop(props, monitor) {
@@ -81,9 +82,8 @@ class ContainerDatasetField extends Component{
     }
 
   render() {
-    const {connectDropTarget, isOver, canDrop, dataset_container, handleUndo,
+    const {connectDropTarget, isOver, canDrop, dataset_container, handleUndo, kind,
             handleModalOpen, disabled} = this.props;
-
     if(dataset_container.is_deleted){
       return (
         <div><strike>{dataset_container.name}</strike>
@@ -103,6 +103,7 @@ class ContainerDatasetField extends Component{
     }else{
       return connectDropTarget(
         <div>
+          {dataset_container.dataset && dataset_container.dataset.klass_ols !== absOlsTermId(kind) ? <GenericDSMisType /> : null}
         <a style={{cursor: 'pointer'}} onClick={() => handleModalOpen(dataset_container)}>
           {dataset_container.name || 'new'}
         </a>

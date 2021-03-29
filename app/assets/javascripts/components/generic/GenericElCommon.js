@@ -218,12 +218,14 @@ class GenPropertiesLayer extends Component {
       </Panel.Heading>
     );
     return (
-      <Panel bsStyle={bs} className="panel_generic_properties" defaultExpanded>
-        {panelHeader}
-        <Panel.Collapse>
-          <Panel.Body className="panel_generic_properties_body">{this.views()}</Panel.Body>
-        </Panel.Collapse>
-      </Panel>
+      <PanelGroup accordion id="accordion_generic_layer" defaultActiveKey="1" style={{ marginBottom: '0px' }}>
+        <Panel bsStyle={bs} className="panel_generic_properties" eventKey="1">
+          {panelHeader}
+          <Panel.Collapse>
+            <Panel.Body className="panel_generic_properties_body">{this.views()}</Panel.Body>
+          </Panel.Collapse>
+        </Panel>
+      </PanelGroup>
     );
   }
 }

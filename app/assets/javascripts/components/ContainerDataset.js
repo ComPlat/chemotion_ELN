@@ -2,17 +2,21 @@ import React, { Component } from 'react';
 import { Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, Overlay } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
+import { findIndex, cloneDeep } from 'lodash';
+
 import Utils from './utils/Functions';
 
 import Attachment from './models/Attachment';
 import SamplesFetcher from './fetchers/SamplesFetcher';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
 import Container from './models/Container';
-
+import UserStore from './stores/UserStore';
+import GenericDS from './models/GenericDS';
+import GenericDSDetails from './generic/GenericDSDetails';
+import { absOlsTermId } from '../admin/generic/Utils';
 import InboxActions from './actions/InboxActions';
 import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
 import ChildOverlay from './managing_actions/ChildOverlay';
-import { callbackify } from 'util';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -26,6 +30,7 @@ export default class ContainerDataset extends Component {
     };
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
   }
 
   componentDidMount() {
@@ -64,6 +69,9 @@ export default class ContainerDataset extends Component {
         break;
       case 'description':
         dataset_container.description = value;
+        break;
+      case 'dataset':
+        dataset_container.dataset = value;
         break;
     }
     this.setState({dataset_container});
@@ -371,8 +379,7 @@ export default class ContainerDataset extends Component {
 
   render() {
     const { dataset_container, showInstruments } = this.state;
-    const { readOnly, disabled } = this.props;
-
+    const { readOnly, disabled, kind } = this.props;
     const overlayAttributes = {
       style: {
         position: 'absolute',
@@ -381,6 +388,17 @@ export default class ContainerDataset extends Component {
         marginLeft: 17
       }
     };
+    const termId = absOlsTermId(kind);
+    const klasses = (UserStore.getState() && UserStore.getState().dsKlasses) || [];
+    let klass = {};
+    const idx = findIndex(klasses, o => o.ols_term_id === termId);
+    if (idx > -1) { klass = klasses[idx]; }
+
+    if (dataset_container.dataset && dataset_container.dataset.id) {
+      dataset_container.dataset = dataset_container.dataset;
+    } else if (klass.ols_term_id !== undefined) {
+      dataset_container.dataset = GenericDS.buildEmpty(cloneDeep(klass), dataset_container.id);
+    }
 
     return (
       <Row>
@@ -431,6 +449,12 @@ export default class ContainerDataset extends Component {
               className="desc"
             />
           </FormGroup>
+          <GenericDSDetails
+            kind={kind}
+            genericDS={dataset_container.dataset}
+            klass={klass}
+            onChange={this.handleInputChange}
+          />
         </Col>
         <Col md={6} className="col-full">
           <label>Attachments</label>

@@ -34,7 +34,7 @@ class ContainerSerializer < ActiveModel::Serializer
         att.content_type = att.content_type || MimeMagic.by_path(att.filename)&.type
         att.for_container? && att.attachable_id == container.id
       end
-      {
+      j_s = {
         id: container.id,
         name: container.name,
         attachments: current_attachments,
@@ -44,6 +44,9 @@ class ContainerSerializer < ActiveModel::Serializer
         extended_metadata: get_extended_metadata(container),
         preview_img: preview_img(container)
       }
+      gds = Dataset.find_by(element_type: 'Container', element_id: container.id)
+      j_s['dataset'] = Entities::DatasetEntity.represent(gds) if gds.present?
+      j_s
     end
   end
 

@@ -1,6 +1,7 @@
 import alt from '../alt';
 import UsersFetcher from '../fetchers/UsersFetcher';
 import SegmentsFetcher from '../fetchers/SegmentsFetcher';
+import GenericDSsFetcher from '../fetchers/GenericDSsFetcher';
 
 import cookie from 'react-cookie'
 import DocumentHelper from '../utils/DocumentHelper';
@@ -103,6 +104,17 @@ class UserActions {
   fetchSegmentKlasses() {
     return (dispatch) => {
       SegmentsFetcher.fetchKlass()
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchDatasetKlasses() {
+    return (dispatch) => {
+      GenericDSsFetcher.fetchKlass()
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {

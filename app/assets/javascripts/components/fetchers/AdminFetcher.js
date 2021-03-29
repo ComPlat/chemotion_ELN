@@ -4,9 +4,7 @@ import BaseFetcher from './BaseFetcher';
 export default class AdminFetcher {
   static fetchUnitsSystem() {
     return fetch('/units_system/units_system.json', {
-      credentials: 'same-origin',
-      cache: 'no-store',
-      headers: { 'cache-control': 'no-cache' }
+      credentials: 'same-origin', cache: 'no-store', headers: { 'cache-control': 'no-cache' }
     }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -341,5 +339,18 @@ export default class AdminFetcher {
   static listSegmentKlass(params = {}) {
     const api = params.is_active === undefined ? '/api/v1/admin/list_segment_klass.json' : `/api/v1/admin/list_segment_klass.json?is_active=${params.is_active}`;
     return this.exec(api, 'GET');
+  }
+
+  static listDatasetKlass(params = {}) {
+    const api = params.is_active === undefined ? '/api/v1/admin/list_dataset_klass.json' : `/api/v1/admin/list_dataset_klass.json?is_active=${params.is_active}`;
+    return this.exec(api, 'GET');
+  }
+
+  static deActiveDatasetKlass(params) {
+    return this.genericKlass(params, 'de_active_dataset_klass');
+  }
+
+  static updateDatasetTemplate(params) {
+    return this.genericKlass(params, 'update_dataset_template');
   }
 }

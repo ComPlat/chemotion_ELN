@@ -2,7 +2,6 @@ module ContainerHelpers
   extend Grape::API::Helpers
 
   def update_datamodel(container)
-
 #TODO check this logic, not sure this is still needed + containable_type should not be null
     if container[:is_new]
       root_container = Container.create(
@@ -61,6 +60,14 @@ module ContainerHelpers
       end
 
       create_or_update_attachments(container, child[:attachments]) if child[:attachments]
+
+      if child[:container_type] == 'dataset' && child[:dataset].present? && child[:dataset]["changed"]
+        klass_id = child[:dataset]['dataset_klass_id']
+        properties = child[:dataset]['properties']
+        container.save_dataset(dataset_klass_id: klass_id, properties: properties)
+      end
+      container.destroy_datasetable if child[:container_type] == 'dataset' && child[:dataset].blank?
+
       create_or_update_containers(child[:children], container)
     end
   end

@@ -66,7 +66,6 @@ export default class Sample extends Element {
     }
 
     newSample.filterElementalComposition();
-    console.log(sample.segments);
     newSample.segments = _.cloneDeep(sample.segments);
 
     return newSample;

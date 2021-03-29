@@ -16,6 +16,7 @@ import MatrixManagement from './MatrixManagement';
 import TextTemplateContainer from './text_templates/TextTemplateContainer';
 import GenericElementAdmin from './GenericElementAdmin';
 import SegmentElementAdmin from './SegmentElementAdmin';
+import DatasetElementAdmin from './DatasetElementAdmin';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -68,6 +69,8 @@ class AdminHome extends React.Component {
       return this.renderContent(<GenericElementAdmin />);
     } else if (pageIndex === 10) {
       return this.renderContent(<SegmentElementAdmin />);
+    } else if (pageIndex === 11) {
+      return this.renderContent(<DatasetElementAdmin />);
     }
 
     return (<div />);
@@ -93,7 +96,8 @@ class AdminHome extends React.Component {
             <NavItem eventKey={7}>UI features</NavItem>
             <NavItem eventKey={8}>Text Templates</NavItem>
             <NavItem eventKey={9}>Generic Elements (BETA)</NavItem>
-            <NavItem eventKey={10}>Segment Elements (BETA)</NavItem>
+            <NavItem eventKey={10}>Generic Segment (BETA)</NavItem>
+            <NavItem eventKey={11}>Generic Dataset (BETA)</NavItem>
           </Nav>
         </Col>
       </div>
