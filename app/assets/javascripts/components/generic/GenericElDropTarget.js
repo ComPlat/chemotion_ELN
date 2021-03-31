@@ -20,16 +20,15 @@ const show = (opt, iconClass) => {
         <img src={opt.value.el_svg} style={{ height: '26vh', width: '26vh' }} alt="" />
       </Popover>
     );
-    if (opt.value.el_type === 'molecule') {
-      return opt.value.el_svg && opt.value.el_svg !== '' ? (
-        <div style={{ display: 'flex' }}>
-          <OverlayTrigger trigger={['hover']} placement="left" rootClose onHide={null} overlay={pop}>
-            <span className={`icon-${iconClass} indicator`} />
-          </OverlayTrigger>&nbsp;<span className="data" style={{ alignSelf: 'center', width: '100%' }}>{opt.value.el_label}</span>
-        </div>
-      ) : (<OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{opt.value.el_label}</div></OverlayTrigger>);
-    } else if (opt.value.el_type === 'sample') {
-      let label = opt.value.el_label;
+    let label = opt.value.el_label;
+    const simg = (path, tip, txt) => ((path && path !== '') ? (
+      <div className="s-img">
+        <OverlayTrigger trigger={['hover']} placement="left" rootClose onHide={null} overlay={pop}>
+          <img src={path} alt="" />
+        </OverlayTrigger>&nbsp;<span className="data">{txt}</span>
+      </div>
+    ) : (<OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{tip}</Tooltip>}><div className="data">{txt}</div></OverlayTrigger>));
+    if (opt.value.el_type === 'sample') {
       if (opt.value.is_new !== true) {
         label = (
           <a role="link" onClick={() => handleSampleClick(opt.value.el_type, opt.value.el_id)} style={{ cursor: 'pointer' }}>
@@ -37,15 +36,8 @@ const show = (opt, iconClass) => {
           </a>
         );
       }
-      return opt.value.el_svg && opt.value.el_svg !== '' ? (
-        <div style={{ display: 'flex' }}>
-          <OverlayTrigger trigger={['hover']} placement="left" rootClose onHide={null} overlay={pop}>
-            <span className={`icon-${iconClass} indicator`} />
-          </OverlayTrigger>&nbsp;<span className="data" style={{ alignSelf: 'center', width: '100%' }}>{label}</span>
-        </div>
-      ) : (<OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{label}</div></OverlayTrigger>);
     }
-    return <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{opt.value.el_label}</div></OverlayTrigger>;
+    return simg(opt.value.el_svg, opt.value.el_tip, label);
   }
   return (<span className={`icon-${iconClass} indicator`} />);
 };

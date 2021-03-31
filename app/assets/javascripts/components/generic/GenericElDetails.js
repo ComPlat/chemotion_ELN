@@ -22,7 +22,7 @@ export default class GenericElDetails extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      genericEl: props.genericEl,
+      genericEl: props.genericEl, activeTab: 0
     };
     this.onChangeUI = this.onChangeUI.bind(this);
     this.onChangeElement = this.onChangeElement.bind(this);

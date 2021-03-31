@@ -136,11 +136,7 @@ const GenPropertiesDrop = (opt) => {
       </OverlayTrigger>
       <FormControl.Static style={{ paddingBottom: '0px' }}>
         <div className={className}>
-          <GenericElDropTarget
-            key={uuid.v4()}
-            opt={opt}
-            onDrop={opt.onChange}
-          />
+          <GenericElDropTarget opt={opt} onDrop={opt.onChange} />
           <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>remove</Tooltip>}>
             <Button className="btn_del" bsStyle="danger" bsSize="xsmall" onClick={() => opt.onChange({})} ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
           </OverlayTrigger>
@@ -230,7 +226,7 @@ class GenPropertiesLayer extends Component {
   render() {
     const bs = this.props.layer.color ? this.props.layer.color : 'default';
     const cl = this.props.layer.style ? this.props.layer.style : 'panel_generic_heading';
-    const panelHeader = this.props.layer.label == '' ? (<span />) : (
+    const panelHeader = this.props.layer.label === '' ? (<span />) : (
       <Panel.Heading className={cl} >
         <Panel.Title toggle>{this.props.layer.label}</Panel.Title>
       </Panel.Heading>
