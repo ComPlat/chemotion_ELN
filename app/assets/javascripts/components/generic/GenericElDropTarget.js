@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
-import { Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger, Popover } from 'react-bootstrap';
 import UIStore from '../stores/UIStore';
 
 const handleSampleClick = (type, id) => {
@@ -13,21 +13,37 @@ const handleSampleClick = (type, id) => {
   Aviator.navigate(isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`);
 };
 
-
 const show = (opt, iconClass) => {
   if (opt.value && opt.value.el_id) {
+    const pop = (
+      <Popover id="popover-svg" title={opt.value.el_tip} style={{ maxWidth: 'none', maxHeight: 'none' }}>
+        <img src={opt.value.el_svg} style={{ height: '26vh', width: '26vh' }} alt="" />
+      </Popover>
+    );
     if (opt.value.el_type === 'molecule') {
-      return <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{opt.value.el_label}</div></OverlayTrigger>;
+      return opt.value.el_svg && opt.value.el_svg !== '' ? (
+        <div style={{ display: 'flex' }}>
+          <OverlayTrigger trigger={['hover']} placement="left" rootClose onHide={null} overlay={pop}>
+            <span className={`icon-${iconClass} indicator`} />
+          </OverlayTrigger>&nbsp;<span className="data" style={{ alignSelf: 'center', width: '100%' }}>{opt.value.el_label}</span>
+        </div>
+      ) : (<OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{opt.value.el_label}</div></OverlayTrigger>);
     } else if (opt.value.el_type === 'sample') {
       let label = opt.value.el_label;
       if (opt.value.is_new !== true) {
         label = (
-          <a role="link" tabIndex={0} onClick={() => handleSampleClick(opt.value.el_type, opt.value.el_id)} style={{ cursor: 'pointer' }}>
+          <a role="link" onClick={() => handleSampleClick(opt.value.el_type, opt.value.el_id)} style={{ cursor: 'pointer' }}>
             <span className="reaction-material-link">{label}</span>
           </a>
         );
       }
-      return <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{label}</div></OverlayTrigger>;
+      return opt.value.el_svg && opt.value.el_svg !== '' ? (
+        <div style={{ display: 'flex' }}>
+          <OverlayTrigger trigger={['hover']} placement="left" rootClose onHide={null} overlay={pop}>
+            <span className={`icon-${iconClass} indicator`} />
+          </OverlayTrigger>&nbsp;<span className="data" style={{ alignSelf: 'center', width: '100%' }}>{label}</span>
+        </div>
+      ) : (<OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{label}</div></OverlayTrigger>);
     }
     return <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{opt.value.el_tip}</Tooltip>}><div className="data">{opt.value.el_label}</div></OverlayTrigger>;
   }

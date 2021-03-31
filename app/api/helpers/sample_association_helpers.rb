@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# Helper for associated sample
 module SampleAssociationHelpers
   extend Grape::API::Helpers
 
@@ -17,6 +20,7 @@ module SampleAssociationHelpers
       field_samples.each do |field|
         idx = properties[key]['fields'].index(field)
         next unless properties.dig(key, 'fields', idx, 'value', 'is_new') == true
+
         sid = field.dig('value', 'el_id')
         subsample = split_sample(sid, element.collections, current_user) unless sid.nil?
         next if subsample.nil?
@@ -32,4 +36,4 @@ module SampleAssociationHelpers
     ElementsSample.where(element_id: element.id).where.not(sample_id: sds).destroy_all unless sds.empty?
     properties
   end
-end #module
+end

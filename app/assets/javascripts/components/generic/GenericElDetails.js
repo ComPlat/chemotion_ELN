@@ -43,9 +43,10 @@ export default class GenericElDetails extends Component {
     UIStore.unlisten(this.onChangeUI);
     ElementStore.unlisten(this.onChangeElement);
   }
+
   onChangeElement(state) {
     if (state.currentElement) {
-      if (state.currentElement !== this.state.genericEl) {
+      if (state.currentElement !== this.state.genericEl && (state.currentElement.klassType === 'GenericEl' && state.currentElement.type != null)) {
         this.setState({ genericEl: state.currentElement });
       }
     }
