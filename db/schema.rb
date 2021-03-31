@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_03_140000) do
+ActiveRecord::Schema.define(version: 20210331221122) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -235,10 +235,41 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.index ["priority", "run_at"], name: "delayed_jobs_priority"
   end
 
-  create_table "element_tags", id: :serial, force: :cascade do |t|
-    t.string "taggable_type"
-    t.integer "taggable_id"
-    t.jsonb "taggable_data"
+  add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
+
+  create_table "device_metadata", force: :cascade do |t|
+    t.integer  "device_id"
+    t.string   "doi"
+    t.string   "url"
+    t.string   "landing_page"
+    t.string   "name"
+    t.string   "type"
+    t.string   "description"
+    t.string   "publisher"
+    t.integer  "publication_year"
+    t.jsonb    "manufacturers"
+    t.jsonb    "owners"
+    t.jsonb    "dates"
+    t.datetime "created_at",                                null: false
+    t.datetime "updated_at",                                null: false
+    t.datetime "deleted_at"
+    t.integer  "doi_sequence"
+    t.string   "data_cite_prefix"
+    t.datetime "data_cite_created_at"
+    t.datetime "data_cite_updated_at"
+    t.integer  "data_cite_version"
+    t.jsonb    "data_cite_last_response", default: {}
+    t.string   "data_cite_state",         default: "draft"
+    t.string   "data_cite_creator_name"
+  end
+
+  add_index "device_metadata", ["deleted_at"], name: "index_device_metadata_on_deleted_at", using: :btree
+  add_index "device_metadata", ["device_id"], name: "index_device_metadata_on_device_id", using: :btree
+
+  create_table "element_tags", force: :cascade do |t|
+    t.string   "taggable_type"
+    t.integer  "taggable_id"
+    t.jsonb    "taggable_data"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["taggable_id"], name: "index_element_tags_on_taggable_id"
@@ -414,13 +445,15 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.index ["deleted_at"], name: "index_literatures_on_deleted_at"
   end
 
-  create_table "matrices", id: :serial, force: :cascade do |t|
-    t.string "name", null: false
-    t.boolean "enabled", default: false
-    t.string "label"
-    t.integer "include_ids", default: [], array: true
-    t.integer "exclude_ids", default: [], array: true
-    t.jsonb "configs", default: {}, null: false
+  add_index "literatures", ["deleted_at"], name: "index_literatures_on_deleted_at", using: :btree
+
+  create_table "matrices", force: :cascade do |t|
+    t.string   "name",                        null: false
+    t.boolean  "enabled",     default: false
+    t.string   "label"
+    t.integer  "include_ids", default: [],                 array: true
+    t.integer  "exclude_ids", default: [],                 array: true
+    t.jsonb    "configs",     default: {},    null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -614,10 +647,52 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.index ["user_id"], name: "index_reports_users_on_user_id"
   end
 
-  create_table "research_plan_table_schemas", id: :serial, force: :cascade do |t|
-    t.string "name"
-    t.jsonb "value"
-    t.integer "created_by", null: false
+  add_index "reports_users", ["deleted_at"], name: "index_reports_users_on_deleted_at", using: :btree
+  add_index "reports_users", ["report_id"], name: "index_reports_users_on_report_id", using: :btree
+  add_index "reports_users", ["user_id"], name: "index_reports_users_on_user_id", using: :btree
+
+  create_table "research_plan_metadata", force: :cascade do |t|
+    t.integer  "research_plan_id"
+    t.string   "doi"
+    t.string   "url"
+    t.string   "landing_page"
+    t.string   "title"
+    t.string   "type"
+    t.jsonb    "description"
+    t.string   "publisher"
+    t.integer  "publication_year"
+    t.jsonb    "dates"
+    t.datetime "created_at",                                null: false
+    t.datetime "updated_at",                                null: false
+    t.datetime "deleted_at"
+    t.string   "data_cite_prefix"
+    t.datetime "data_cite_created_at"
+    t.datetime "data_cite_updated_at"
+    t.integer  "data_cite_version"
+    t.jsonb    "data_cite_last_response", default: {}
+    t.string   "data_cite_state",         default: "draft"
+    t.string   "data_cite_creator_name"
+    t.text     "creator"
+    t.text     "affiliation"
+    t.text     "contributor"
+    t.string   "language"
+    t.text     "rights"
+    t.string   "format"
+    t.string   "version"
+    t.jsonb    "geo_location"
+    t.jsonb    "funding_reference"
+    t.text     "subject"
+    t.jsonb    "alternate_identifier"
+    t.jsonb    "related_identifier"
+  end
+
+  add_index "research_plan_metadata", ["deleted_at"], name: "index_research_plan_metadata_on_deleted_at", using: :btree
+  add_index "research_plan_metadata", ["research_plan_id"], name: "index_research_plan_metadata_on_research_plan_id", using: :btree
+
+  create_table "research_plan_table_schemas", force: :cascade do |t|
+    t.string   "name"
+    t.jsonb    "value"
+    t.integer  "created_by", null: false
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -629,16 +704,18 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "body"
+    t.jsonb    "body"
+    t.integer  "screen_id"
   end
 
-  create_table "residues", id: :serial, force: :cascade do |t|
-    t.integer "sample_id"
-    t.string "residue_type"
-    t.hstore "custom_info"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["sample_id"], name: "index_residues_on_sample_id"
+  add_index "research_plans", ["screen_id"], name: "index_research_plans_on_screen_id", using: :btree
+
+  create_table "residues", force: :cascade do |t|
+    t.integer  "sample_id"
+    t.string   "residue_type"
+    t.hstore   "custom_info"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
   end
 
   create_table "samples", id: :serial, force: :cascade do |t|
@@ -717,41 +794,20 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.index ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true
   end
 
-  create_table "sync_collections_users", id: :serial, force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "collection_id"
-    t.integer "shared_by_id"
-    t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 0
-    t.integer "reaction_detail_level", default: 0
-    t.integer "wellplate_detail_level", default: 0
-    t.integer "screen_detail_level", default: 0
-    t.string "fake_ancestry"
-    t.integer "researchplan_detail_level", default: 10
-    t.string "label"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
-    t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
-    t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
-  end
+  add_index "subscriptions", ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true, using: :btree
 
-  create_table "text_templates", id: :serial, force: :cascade do |t|
-    t.string "type"
-    t.integer "user_id", null: false
-    t.jsonb "data", default: {}
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "name"
-    t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
-    t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
-    t.index ["user_id"], name: "index_text_templates_on_user_id"
-  end
-
-  create_table "user_affiliations", id: :serial, force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "affiliation_id"
+  create_table "sync_collections_users", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "collection_id"
+    t.integer  "shared_by_id"
+    t.integer  "permission_level",          default: 0
+    t.integer  "sample_detail_level",       default: 0
+    t.integer  "reaction_detail_level",     default: 0
+    t.integer  "wellplate_detail_level",    default: 0
+    t.integer  "screen_detail_level",       default: 0
+    t.string   "fake_ancestry"
+    t.integer  "researchplan_detail_level", default: 10
+    t.string   "label"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -772,10 +828,22 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.datetime "deleted_at"
   end
 
-  create_table "users", id: :serial, force: :cascade do |t|
-    t.string "email", default: "", null: false
-    t.string "encrypted_password", default: "", null: false
-    t.string "reset_password_token"
+  create_table "user_labels", force: :cascade do |t|
+    t.integer  "user_id"
+    t.string   "title",                     null: false
+    t.string   "description"
+    t.string   "color",                     null: false
+    t.integer  "access_level", default: 0
+    t.integer  "position",     default: 10
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.string   "email",                             default: "",                                                                                      null: false
+    t.string   "encrypted_password",                default: "",                                                                                      null: false
+    t.string   "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
     t.integer "sign_in_count", default: 0, null: false
@@ -857,6 +925,7 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
   end
 
   add_foreign_key "literals", "literatures"
+  add_foreign_key "research_plans", "screens"
 
   create_function :user_instrument, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
@@ -1073,25 +1142,26 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
       end
       $function$
   SQL
+  create_function :labels_by_user_sample, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
+  SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
       CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
 
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
-  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,
@@ -1134,5 +1204,19 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
       channels,
       users
     WHERE ((channels.id = messages.channel_id) AND (messages.id = notifications.message_id) AND (users.id = messages.created_by));
+  SQL
+  create_view "v_samples_collections", sql_definition: <<-SQL
+      SELECT cols.id AS cols_id,
+      cols.user_id AS cols_user_id,
+      cols.sample_detail_level AS cols_sample_detail_level,
+      cols.wellplate_detail_level AS cols_wellplate_detail_level,
+      cols.shared_by_id AS cols_shared_by_id,
+      cols.is_shared AS cols_is_shared,
+      samples.id AS sams_id,
+      samples.name AS sams_name
+     FROM ((collections cols
+       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
+       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
+    WHERE (cols.deleted_at IS NULL);
   SQL
 end

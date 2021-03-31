@@ -5,9 +5,10 @@ require 'rails_helper'
 RSpec.describe Screen, type: :model do
   let(:collection) { create(:collection) }
   let(:wellplate)  { create(:wellplate) }
+  let(:research_plan) { create(:research_plan) }
   let(:screen) { create(:screen) }
   let(:sc2) do
-    create(:screen, collections: [collection], wellplates: [wellplate])
+    create(:screen, collections: [collection], wellplates: [wellplate], research_plans: [research_plan])
   end
 
   describe 'creation' do
@@ -22,6 +23,12 @@ RSpec.describe Screen, type: :model do
       expect(screen.code_log.id).to match(
         /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
       )
+    end
+
+    it 'has proper associations' do
+      expect(sc2.wellplates.first).to eq(wellplate)
+      expect(sc2.collections.first).to eq(collection)
+      expect(sc2.research_plans.first).to eq(research_plan)
     end
   end
 

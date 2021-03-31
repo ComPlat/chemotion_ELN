@@ -9,6 +9,15 @@
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #  body       :jsonb
+#  screen_id  :integer
+#
+# Indexes
+#
+#  index_research_plans_on_screen_id  (screen_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (screen_id => screens.id)
 #
 
 class ResearchPlan < ApplicationRecord
