@@ -24,10 +24,13 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v2
+      # pwd: /home/runner/work/chemotion_ELN/chemotion_ELN
       - name: paths
         if: env.PATHS == 'true'
         run: |
-            pwd
+             mkdir public/ .bundle/ vendor/bundle/ node_modules/
+             mv ~/shared/bundle/ ~/shared/bundle.bak/
+             mv vendor/bundle/  ~/shared/
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.6
