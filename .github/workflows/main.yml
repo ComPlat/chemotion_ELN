@@ -27,8 +27,7 @@ jobs:
       - name: paths
         if: env.PATHS == 'true'
         run: |
-            sudo apt-get install tree 
-            tree .a 
+            pwd
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.6
