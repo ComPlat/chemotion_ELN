@@ -44,7 +44,11 @@ jobs:
       - name: ruby unit test
         if: env.RUBY_UNIT == 'true'
         run: |
-            cd /home/runner/shared/bundle/ruby/2.6.0/bundler/gems/
+            cd /home/runner/shared/bundle/ruby/2.6.0/bundler/gems/rdkit_chem-cf8a3890c5aa
+            ls -a
+            cd /home/runner/shared/bundle/ruby/2.6.0/bundler/gems/rdkit_chem-cf8a3890c5aa/rdkit_chem
+            ls -a
+            cd /home/runner/shared/bundle/ruby/2.6.0/bundler/gems/rdkit_chem-cf8a3890c5aa/rdkit_chem/lib
             ls -a
             RAILS_ENV=test bundle exec rake db:schema:load --trace
 
