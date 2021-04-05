@@ -28,11 +28,11 @@ jobs:
         run: |
             /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"
             /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
-        if: BUILD
+        if: $BUILD
       - name: ruby unit test
         env:
           RUBY_UNIT: true;
         run: |
             RAILS_ENV=test bundle exec rake db:schema:load
-        if: RUBY_UNIT
+        if: $RUBY_UNIT
 
