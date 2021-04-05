@@ -36,6 +36,11 @@ module Chemotion
 
     config.active_job.queue_adapter = :delayed_job
 
+    # copy favicon if not present in app
+    favicon_example_file = Rails.public_path.join('favicon.ico.example')
+    favicon_file = Rails.public_path.join('favicon.ico')
+    `cp #{favicon_example_file} #{favicon_file}` unless File.exist?(favicon_file)
+
     # Chemotion Plugin configuration
 
     # list of registered plugins (from the plugins group of the Gemfile):
@@ -56,7 +61,7 @@ module Chemotion
         pack_path = Rails.root.join('package.json')
 	plugin_pack_path = File.join(plugin_path, 'package.json')
 	`rm #{plugin_pack_path}` if File.exist?(plugin_pack_path)
-        `ln -s #{pack_path} #{plugin_pack_path}`				
+        `ln -s #{pack_path} #{plugin_pack_path}`
       end
 
       # Extra module import/export mapping for each registered plugin
