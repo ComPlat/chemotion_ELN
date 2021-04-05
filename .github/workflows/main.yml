@@ -17,18 +17,23 @@ jobs:
     runs-on: ubuntu-latest
     env:
        # define which steps to run
+       PATHS: ${{ true }}
        BUILD: ${{ false }}
-       RUBY_UNIT: ${{ true }}
+       RUBY_UNIT: ${{ false }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v2
+      - name: paths
+        if: env.PATHS == 'true'
+        run: |
+            echo ls
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.6
-          bundler: 1.17.3
+          # bundler: 1.17.3
           #bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-      - run: bundle install -j 3 --path ~/shared/bundle
+      - run: gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle 
       - name: build  
         if: env.BUILD == 'true'
         run: |
