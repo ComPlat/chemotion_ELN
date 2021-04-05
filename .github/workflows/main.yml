@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
        #RUBY_UNIT: 'true'
-       RUBY_UNIT: ${{ true }}
+       RUBY_UNIT: ${{ false }}
     # define which steps to run
 
     # Steps represent a sequence of tasks that will be executed as part of the job
