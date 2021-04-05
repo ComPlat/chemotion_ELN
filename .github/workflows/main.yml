@@ -36,5 +36,5 @@ jobs:
         run: |
             echo $RUBY_UNIT
             RAILS_ENV=test bundle exec rake db:schema:load
-        if: $RUBY_UNIT == true
+        #if: $RUBY_UNIT == true
 
