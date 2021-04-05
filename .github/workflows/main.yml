@@ -33,7 +33,7 @@ jobs:
           #  /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
         #if: $BUILD == 'true'
       - name: ruby unit test
-        if: $RUBY_UNIT == 'true'
+        if: env.RUBY_UNIT == 'true'
         run: |
             echo $RUBY_UNIT
             RAILS_ENV=test bundle exec rake db:schema:load
