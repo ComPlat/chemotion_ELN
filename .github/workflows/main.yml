@@ -17,21 +17,21 @@ jobs:
   test:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    env:
+       RUBY_UNIT: true;
     # define which steps to run
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v2
-      - name: build      
-        env: 
-          BUILD: false;
-        run: |
-            /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"
-            /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
+      #- name: build      
+       # env: 
+        #  BUILD: false;
+        #run: |
+         #   /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"
+          #  /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
         #if: $BUILD == 'true'
       - name: ruby unit test
-        env:
-          RUBY_UNIT: true;
         run: |
             echo $RUBY_UNIT
             RAILS_ENV=test bundle exec rake db:schema:load
