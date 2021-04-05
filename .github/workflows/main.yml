@@ -12,8 +12,6 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
-    
   test:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -21,15 +19,14 @@ jobs:
        # define which steps to run
        BUILD: ${{ true }}
        RUBY_UNIT: ${{ true }}
-    
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v2
-      - name: build      
+      - name: build  
+        if: env.BUILD == 'true'
         run: |
             gem install bundler -v 1.17.3
-        if: $BUILD == 'true'
       - name: ruby unit test
         if: env.RUBY_UNIT == 'true'
         run: |
