@@ -17,12 +17,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
        # define which steps to run
-       BUILD: ${{ true }}
+       BUILD: ${{ false }}
        RUBY_UNIT: ${{ true }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: build  
         if: env.BUILD == 'true'
         run: |
