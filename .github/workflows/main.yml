@@ -1,8 +1,5 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
-# Controls when the action will run. 
 on:
   # Triggers the workflow on push or pull request events but only for the development branch
   push:
@@ -15,10 +12,15 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
+
+    
   test:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    # define which steps to run
+    env: 
+      BUILD: false;
+      RUBY_UNIT: true;
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -27,5 +29,9 @@ jobs:
         run: |
             /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"
             /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
-      #- name: ruby unit test
+        if: BUILD
+      - name: ruby unit test
+        run: |
+            RAILS_ENV=test bundle exec rake db:schema:load
+        if: RUBY_UNIT
 
