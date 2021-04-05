@@ -39,7 +39,8 @@ jobs:
           #bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: manual install rdkit_chem
         run: |
-             gem install rdkit_chem -v 2020.04.30.1
+             gem install rdkit_chem
+             bundle update rdkit_chem
       - name: build  
         if: env.BUILD == 'true'
         run: |
