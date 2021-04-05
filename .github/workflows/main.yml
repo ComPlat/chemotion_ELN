@@ -28,7 +28,7 @@ jobs:
       - name: paths
         if: env.PATHS == 'true'
         run: |
-             mkdir public/ .bundle/ vendor/bundle/ node_modules/
+             mkdir .bundle/ vendor/bundle/ node_modules/
              mv ~/shared/bundle/ ~/shared/bundle.bak/
              mv vendor/bundle/  ~/shared/
       - uses: ruby/setup-ruby@v1
