@@ -33,11 +33,10 @@ jobs:
           ruby-version: 2.6
           # bundler: 1.17.3
           #bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-      - run: gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle 
       - name: build  
         if: env.BUILD == 'true'
         run: |
-            gem install bundler -v 1.17.3
+             gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle 
       - name: ruby unit test
         if: env.RUBY_UNIT == 'true'
         run: |
