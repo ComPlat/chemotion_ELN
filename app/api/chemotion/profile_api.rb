@@ -47,13 +47,7 @@ module Chemotion
       desc 'update user profile'
       params do
         optional :data, type: Hash do
-          optional :layout, type: Hash do
-            optional :sample, type: Integer
-            optional :reaction, type: Integer
-            optional :screen, type: Integer
-            optional :research_plan, type: Integer
-            optional :wellplate, type: Integer
-          end
+          optional :layout, type: Hash, profile_layout_hash: true 
           optional :layout_detail_research_plan, type: Hash, profile_layout_hash: true
           optional :layout_detail_reaction, type: Hash, profile_layout_hash: true
           optional :layout_detail_sample, type: Hash, profile_layout_hash: true
