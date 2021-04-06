@@ -2,6 +2,7 @@ class ScreenSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Screen.new.base_attributes
 
   has_many :wellplates
+  has_many :research_plans
   has_one :container, serializer: ContainerSerializer
   has_one :tag
 
@@ -37,5 +38,11 @@ class ScreenSerializer::Level10 < ScreenSerializer
 
   def wellplates
     object.wellplates.map{ |s| "WellplateSerializer::Level#{@nested_dl[:wellplate]}".constantize.new(s, @nested_dl).serializable_hash }
+  end
+
+  def research_plans
+    # TODO: set proper detail level
+    # object.research_plans.map{ |s| "ResearchPlanSerializer::Level#{@nested_dl[:research_plan]}".constantize.new(s, @nested_dl).serializable_hash }
+    object.research_plans.map{ |s| "ResearchPlanSerializer::Level#{@nested_dl[:wellplate]}".constantize.new(s, @nested_dl).serializable_hash }
   end
 end

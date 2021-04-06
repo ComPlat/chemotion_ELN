@@ -62,6 +62,7 @@ class ElementPermissionProxy
 
   def nested_details_levels_for_element
     nested_detail_levels = {}
+    # TODO: set detail_levels for research_plans
     c = @collections.map { |c| [c.sample_detail_level, c.wellplate_detail_level] } || []
     sc= @sync_collections.map { |sc| [sc.sample_detail_level, sc.wellplate_detail_level] } || []
     s_dl,w_dl= 0,0
