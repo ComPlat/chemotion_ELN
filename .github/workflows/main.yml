@@ -42,12 +42,10 @@ jobs:
        # run: |
         #     gem install rdkit_chem
          #    bundle update rdkit_chem
-      - name: build  
+      - name: build 
         if: env.BUILD == 'true'
         run: |
-             gem install bundler -v 1.17.3 --no-document && bundle install -j 10 --path ~/shared/bundle
-             nvm use && npm install
-             gem list
+             npm install
       # new
       - name: after_script
         run: |
@@ -64,6 +62,7 @@ jobs:
       - name: js unit test
         if: env.JS_UNIT == 'true'
         run: |
-            nvm use && RAILS_ENV=test bundle exec rake db:test:prepare && npm test
+            npm test
+            
             
 
