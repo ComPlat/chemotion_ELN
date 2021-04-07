@@ -62,10 +62,9 @@ class ElementPermissionProxy
 
   def nested_details_levels_for_element
     nested_detail_levels = {}
-    # TODO: set detail_levels for research_plans
-    c = @collections.map { |c| [c.sample_detail_level, c.wellplate_detail_level] } || []
-    sc= @sync_collections.map { |sc| [sc.sample_detail_level, sc.wellplate_detail_level] } || []
-    s_dl,w_dl= 0,0
+    c = @collections.map { |c| [c.sample_detail_level, c.wellplate_detail_level, c.researchplan_detail_level] } || []
+    sc= @sync_collections.map { |sc| [sc.sample_detail_level, sc.wellplate_detail_level, sc.researchplan_detail_level] } || []
+    s_dl, w_dl, rp_dl= 0, 0, 0
     if element.is_a?(Sample)
       nested_detail_levels[:sample] = @dl
       nested_detail_levels[:wellplate] = (
@@ -76,8 +75,9 @@ class ElementPermissionProxy
       (c+sc).each do |dls|
         s_dl < dls[0] && (s_dl = dls[0])
         w_dl < dls[1] && (w_dl = dls[1])
+        rp_dl < dls[2] && (rp_dl = dls[2])
       end
-      nested_detail_levels[:sample], nested_detail_levels[:wellplate] = s_dl, w_dl
+      nested_detail_levels[:sample], nested_detail_levels[:wellplate], nested_detail_levels[:research_plan] = s_dl, w_dl, rp_dl
     end
     nested_detail_levels
   end

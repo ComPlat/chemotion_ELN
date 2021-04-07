@@ -41,8 +41,6 @@ class ScreenSerializer::Level10 < ScreenSerializer
   end
 
   def research_plans
-    # TODO: set proper detail level
-    # object.research_plans.map{ |s| "ResearchPlanSerializer::Level#{@nested_dl[:research_plan]}".constantize.new(s, @nested_dl).serializable_hash }
-    object.research_plans.map{ |s| "ResearchPlanSerializer::Level#{@nested_dl[:wellplate]}".constantize.new(s, @nested_dl).serializable_hash }
+    object.research_plans.map{ |s| "ResearchPlanSerializer::Level#{@nested_dl[:research_plan]}".constantize.new(s, @nested_dl).serializable_hash }
   end
 end
