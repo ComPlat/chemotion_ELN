@@ -1,5 +1,5 @@
 import base64 from 'base-64';
-import { FN } from 'react-spectra-editor';
+import { FN } from '@complat/react-spectra-editor';
 
 import alt from '../alt';
 import SpectraActions from '../actions/SpectraActions';
