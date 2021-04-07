@@ -62,7 +62,7 @@ jobs:
       - name: js unit test
         if: env.JS_UNIT == 'true'
         run: |
-            npm test
+            RAILS_ENV=test bundle exec rake db:test:prepare && npm test
             
             
 
