@@ -83,15 +83,13 @@ RSpec.describe Reaction, type: :model do
   end
 
   describe 'create private note' do
-    let(:note_1) { create(:private_note) }
-    let(:reaction) do
-      create(
-        :reaction, private_notes: [note_1]
-      )
+    let(:reaction) { create(:reaction) }
+    let(:note_1) do
+      create(:private_note, content: 'Note 1', noteable_id: reaction.id, noteable_type: 'Reaction')
     end
 
-    before do 
-      note_1.content = 'Note 1'
+    before do
+      reaction.update(private_notes: [note_1])
     end
 
     it 'is possible to create a valid private note' do
@@ -104,6 +102,26 @@ RSpec.describe Reaction, type: :model do
         expect(n.content).to eq note_1.content
       end
     end
-    
+  end
+  describe 'create private note' do
+    let(:reaction) { create(:reaction) }
+
+    let(:note_1) { create(:private_note, content: 'Note 1', noteable_id: reaction.id, noteable_type: 'Reaction') }
+
+    before do
+      reaction.update(private_notes: [note_1])
+    end
+
+    it 'is possible to create a valid private note' do
+      expect(reaction.private_notes).not_to be_nil
+    end
+
+    context 'is content valid' do
+      let(:n) { reaction.private_notes[0] }
+      it 'is content valid' do
+        expect(n.content).to eq note_1.content
+      end
+    end
+
   end
 end

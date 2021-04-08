@@ -19,5 +19,6 @@
 class PrivateNote < ActiveRecord::Base
   belongs_to :noteable, polymorphic: true
   belongs_to :user
-    
+
+  validates :noteable, presence: true
 end
