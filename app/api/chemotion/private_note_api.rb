@@ -2,7 +2,7 @@ module Chemotion
   class PrivateNoteAPI < Grape::API
     include Grape::Kaminari
     helpers ParamsHelpers
-        
+
     resource :private_notes do
       desc "Return private note by id"
       params do
@@ -11,14 +11,10 @@ module Chemotion
 
       route_param :id do
 
-        before do
-          error!('401 Unauthorized', 401) unless current_user
-        end
-
         get do
           note = PrivateNote.find(params[:id])
           if note.created_by == current_user.id
-            {note: note}
+            present note, with: Entities::PrivateNoteEntity, root: 'note'
           else
             error!('401 Unauthorized', 401)
           end
@@ -31,13 +27,13 @@ module Chemotion
         requires :noteable_type, type: String
       end
 
-      before do
-        error!('401 Unauthorized', 401) unless current_user
-      end
-
-      post do
+      get do
         note = PrivateNote.find_by(noteable_id: params[:noteable_id], noteable_type: params[:noteable_type])
-        {note: note}
+        if note && note.created_by == current_user.id
+          present note, with: Entities::PrivateNoteEntity, root: 'note'
+        else
+          error!('401 Unauthorized', 401)
+        end
       end
 
       resource :create do
@@ -46,10 +42,6 @@ module Chemotion
           requires :content, type: String
           optional :noteable_id, type: Integer
           optional :noteable_type, type: String
-        end
-
-        before do
-          error!('401 Unauthorized', 401) unless current_user
         end
 
         post do
@@ -62,7 +54,7 @@ module Chemotion
           note = PrivateNote.new(attributes)
           note.save!
 
-          {note: note}
+          present note, with: Entities::PrivateNoteEntity, root: 'note'
         end
       end
 
@@ -74,20 +66,17 @@ module Chemotion
         optional :noteable_type, type: String
       end
       route_param :id do
-        before do
-          unless current_user.nil?
-            @note = PrivateNote.find(params[:id])
-            error!('401 Unauthorized', 401) unless @note.created_by == current_user.id
-          else
-            error!('401 Unauthorized', 401)
-          end
+        after_validation do
+          @note = PrivateNote.find(params[:id])
+          error!("404 Private note with given id not found", 404) if @note.nil?
+          error!('401 Unauthorized', 401) unless @note.created_by == current_user.id
         end
 
         put do
           attributes = declared(params, include_missing: false)
           @note.update!(attributes)
 
-          {note: @note}
+          present @note, with: Entities::PrivateNoteEntity, root: 'note'
         end
       end
 
@@ -96,13 +85,10 @@ module Chemotion
         requires :id, type: Integer, desc: "Private note id"
       end
       route_param :id do
-        before do
-          unless current_user.nil?
-            @note = PrivateNote.find(params[:id])
-            error!('401 Unauthorized', 401) unless @note.created_by == current_user.id
-          else
-            error!('401 Unauthorized', 401)
-          end
+        after_validation do
+          @note = PrivateNote.find(params[:id])
+          error!("404 Private note with given id not found", 404) if @note.nil?
+          error!('401 Unauthorized', 401) unless @note.created_by == current_user.id
         end
 
         delete do

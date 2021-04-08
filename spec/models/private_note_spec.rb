@@ -2,7 +2,8 @@ require 'rails_helper'
 
 RSpec.describe PrivateNote, type: :model do
   describe 'creation' do
-    let(:private_note) { create(:private_note) }
+    let(:reaction) { create(:reaction) }
+    let(:private_note) { create(:private_note, noteable: reaction) }
 
     it 'is possible to create a valid private note' do
       expect(private_note.valid?).to be(true)
