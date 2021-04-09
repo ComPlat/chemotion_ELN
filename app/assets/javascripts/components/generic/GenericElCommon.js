@@ -1,22 +1,18 @@
+/* eslint-disable react/forbid-prop-types */
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Checkbox, Col, ControlLabel, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row, InputGroup } from 'react-bootstrap';
+import { Panel, Checkbox, Col, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
 import { sortBy } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
-import { genUnit, genUnits, genUnitSup } from '../../admin/generic/Utils';
+import { genUnit, genUnits, genUnitSup, FieldLabel } from '../../admin/generic/Utils';
 
 const GenPropertiesText = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
-  const fieldHeader = opt.label === '' ? (<span />) : (
-    <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
-      <ControlLabel>{opt.label}</ControlLabel>
-    </OverlayTrigger>
-  );
-
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup className="text_generic_properties">
       {fieldHeader}
@@ -33,34 +29,27 @@ const GenPropertiesText = (opt) => {
   );
 };
 
-const GenPropertiesCheckbox = (opt) => {
-  let className = opt.isEditable ? 'select_generic_properties_editable' : 'select_generic_properties_readonly';
-  className = opt.isRequired && opt.isEditable ? 'select_generic_properties_required' : className;
-  return (
-    <FormGroup>
-      <Checkbox
-        inline
-        name={opt.field}
-        checked={opt.value}
-        onChange={opt.onChange}
-        className={className}
-        disabled={opt.readOnly}
-      >
-        <FormControl.Static>{opt.label}</FormControl.Static>
-      </Checkbox>
-    </FormGroup>
-  );
-};
+const GenPropertiesCheckbox = opt => (
+  <FormGroup>
+    <Checkbox
+      name={opt.field}
+      checked={opt.value}
+      onChange={opt.onChange}
+      disabled={opt.readOnly}
+    >
+      <FormControl.Static>{opt.label}</FormControl.Static>
+    </Checkbox>
+  </FormGroup>
+);
 
 const GenPropertiesSelect = (opt) => {
   const options = opt.options.map(op => ({ value: op.key, name: op.key, label: op.label }));
   let className = opt.isEditable ? 'select_generic_properties_editable' : 'select_generic_properties_readonly';
   className = opt.isRequired && opt.isEditable ? 'select_generic_properties_required' : className;
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
-      <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
-        <ControlLabel>{opt.label}</ControlLabel>
-      </OverlayTrigger>
+      {fieldHeader}
       <Select
         isClearable
         menuContainerStyle={{ position: 'absolute' }}
@@ -79,11 +68,10 @@ const GenPropertiesSelect = (opt) => {
 const GenPropertiesNumber = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
-      <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
-        <ControlLabel>{opt.label}</ControlLabel>
-      </OverlayTrigger>
+      {fieldHeader}
       <FormControl
         type="number"
         value={opt.value}
@@ -101,11 +89,10 @@ const GenPropertiesNumber = (opt) => {
 const GenPropertiesSystemDefined = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
-      <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
-        <ControlLabel>{opt.label}</ControlLabel>
-      </OverlayTrigger>
+      {fieldHeader}
       <InputGroup>
         <FormControl
           type="number"
@@ -129,11 +116,10 @@ const GenPropertiesSystemDefined = (opt) => {
 
 const GenPropertiesDrop = (opt) => {
   const className = opt.isRequired ? 'drop_generic_properties field_required' : 'drop_generic_properties';
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
-      <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{opt.description }</Tooltip>}>
-        <ControlLabel>{opt.label}</ControlLabel>
-      </OverlayTrigger>
+      {fieldHeader}
       <FormControl.Static style={{ paddingBottom: '0px' }}>
         <div className={className}>
           <GenericElDropTarget opt={opt} onDrop={opt.onChange} />
@@ -323,7 +309,7 @@ const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout 
       const conditions = layer.condition.split(';');
       let showLayer = false;
 
-      for (let i = 0; i < conditions.length; i++) {
+      for (let i = 0; i < conditions.length; i += 1) {
         const arr = conditions[i].split(',');
         if (arr.length >= 3) {
           const specificObj = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`);

@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, OverlayTrigger, Tooltip, Popover } from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip, Popover, ControlLabel } from 'react-bootstrap';
 import uuid from 'uuid';
 import { findIndex } from 'lodash';
 import NotificationActions from '../../components/actions/NotificationActions';
@@ -185,8 +185,21 @@ ButtonConfirm.defaultProps = {
   bs: 'danger', size: 'xs', place: 'right', fa: 'fa-trash-o', disabled: false
 };
 
+const FieldLabel = (props) => {
+  const { label, desc } = props;
+  return desc === '' ? <ControlLabel>{label}</ControlLabel> : (
+    <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{desc}</Tooltip>}>
+      <ControlLabel>{label}</ControlLabel>
+    </OverlayTrigger>
+  );
+};
+
+FieldLabel.propTypes = {
+  label: PropTypes.string.isRequired, desc: PropTypes.string.isRequired
+};
+
 export {
-  ButtonTooltip, ButtonConfirm,
+  ButtonTooltip, ButtonConfirm, FieldLabel,
   validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit, unitConversion, toBool,
   genUnitSup
 };
