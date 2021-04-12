@@ -2,6 +2,7 @@ import { isEmpty, filter } from 'lodash';
 import Element from './Element';
 import Container from './Container';
 import UserStore from '../stores/UserStore';
+import Segment from './Segment';
 
 export default class GenericEl extends Element {
 
@@ -18,7 +19,8 @@ export default class GenericEl extends Element {
       element_klass: klass,
       can_copy: false,
       properties_template: [],
-      attachments: []
+      attachments: [],
+      segments: []
     });
   }
 
@@ -33,6 +35,7 @@ export default class GenericEl extends Element {
       //select_options: this.select_options,
       container: this.container,
       attachments: this.attachments,
+      segments: this.segments.map(s => s.serialize())
     });
   }
 
@@ -120,6 +123,14 @@ export default class GenericEl extends Element {
 
   set element_klass_id(element_klass_id) {
     this._element_klass_id = element_klass_id;
+  }
+
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
   }
 
   title() {

@@ -13,8 +13,7 @@ export default class SegmentAttrForm extends Component {
   componentDidMount() {
     AdminFetcher.fetchElementKlasses()
       .then((result) => {
-        const klassOptions = result.klass.filter(k => !k.is_generic)
-          .sort((a, b) => a.place - b.place)
+        const klassOptions = result.klass.sort((a, b) => a.place - b.place)
           .map(k => (<option key={uuid.v4()} value={k.id}>{k.label}</option>));
         this.setState({ klassOptions });
       });

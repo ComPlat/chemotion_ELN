@@ -23,6 +23,7 @@ class Element < ActiveRecord::Base
   include Collectable
   include AnalysisCodes
   include Taggable
+  include Segmentable
 
   multisearchable against: %i[name short_label]
 

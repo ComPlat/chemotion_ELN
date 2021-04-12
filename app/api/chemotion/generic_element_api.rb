@@ -107,6 +107,7 @@ module Chemotion
         optional :properties, type: Hash
         optional :collection_id, type: Integer
         requires :container, type: Hash
+        optional :segments, type: Array, desc: 'Segments'
       end
       post do
         klass = params[:element_klass] || {}
@@ -118,6 +119,7 @@ module Chemotion
           properties: params[:properties],
           created_by: current_user.id
         }
+
         element = Element.create(attributes)
         #element_klass = ElementKlass.find(params[:klass][:id]);
 
@@ -127,6 +129,7 @@ module Chemotion
         element.properties = update_sample_association(element, params[:properties], current_user)
         element.container = update_datamodel(params[:container])
         element.save!
+        element.save_segments(segments: params[:segments], current_user_id: current_user.id)
         element
       end
 
@@ -136,6 +139,7 @@ module Chemotion
         optional :name, type: String
         optional :properties, type: Hash
         requires :container, type: Hash
+        optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
         before do
@@ -151,9 +155,10 @@ module Chemotion
           params.delete(:container)
           params.delete(:properties)
 
-          attributes = declared(params, include_missing: false)
-          attributes["properties"] = properties
+          attributes = declared(params.except(:segments), include_missing: false)
+          attributes['properties'] = properties
           element.update(attributes)
+          element.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
           { element: ElementPermissionProxy.new(current_user, element, user_ids).serialized }
         end

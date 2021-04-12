@@ -6,6 +6,7 @@ class ElementSerializer < ActiveModel::Serializer
 
   has_one :container, serializer: ContainerSerializer
   has_one :element_klass
+  has_many :segments
 
   def created_at
     object.created_at.strftime('%d.%m.%Y, %H:%M')

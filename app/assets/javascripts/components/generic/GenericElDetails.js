@@ -17,6 +17,7 @@ import Attachment from '../models/Attachment';
 import CopyElementModal from '../common/CopyElementModal';
 import { notification, genUnits, toBool, unitConversion } from '../../admin/generic/Utils';
 import GenericAttachments from './GenericAttachments';
+import { SegmentTabs } from './SegmentDetails';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -32,6 +33,7 @@ export default class GenericElDetails extends Component {
     this.handleAttachmentDrop = this.handleAttachmentDrop.bind(this);
     this.handleAttachmentDelete = this.handleAttachmentDelete.bind(this);
     this.handleAttachmentEdit = this.handleAttachmentEdit.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   componentDidMount() {
@@ -204,6 +206,16 @@ export default class GenericElDetails extends Component {
     this.handleGenericElChanged(genericEl);
   }
 
+  handleSegmentsChange(se) {
+    const { genericEl } = this.state;
+    const { segments } = genericEl;
+    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    genericEl.segments = segments;
+    genericEl.changed = true;
+    this.setState({ genericEl });
+  }
+
   elementalPropertiesItem(genericEl) {
     const options = [];
     const selectOptions = (genericEl && genericEl.element_klass &&
@@ -306,11 +318,16 @@ export default class GenericElDetails extends Component {
   render() {
     const { genericEl } = this.state;
     const submitLabel = (genericEl && genericEl.isNew) ? 'Create' : 'Save';
-    const tabContents = [
+
+    let tabContents = [
       i => this.propertiesTab(i),
       i => this.containersTab(i),
       i => this.attachmentsTab(i),
     ];
+
+    const tablen = tabContents.length;
+    const segTabs = SegmentTabs(genericEl, this.handleSegmentsChange, tablen);
+    tabContents = tabContents.concat(segTabs);
 
     return (
       <Panel
