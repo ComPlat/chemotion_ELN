@@ -5,7 +5,7 @@ import BaseFetcher from './BaseFetcher';
 
 export default class ScreensFetcher {
   static fetchById(id) {
-    const promise = fetch(`/api/v1/screens${id}.json`, {
+    const promise = fetch(`/api/v1/screens/${id}.json`, {
       credentials: 'same-origin'
     })
       .then(response => response.json())
