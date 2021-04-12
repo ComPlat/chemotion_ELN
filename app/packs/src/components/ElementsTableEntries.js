@@ -85,6 +85,7 @@ export default class ElementsTableEntries extends Component {
     return (currentElement && currentElement.id == element.id);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   isCurrEleDropType(type) {
     const { currentElement } = ElementStore.getState();
     const targets = {
@@ -92,8 +93,9 @@ export default class ElementsTableEntries extends Component {
       reaction: ['research_plan'],
       wellplate: ['screen'],
       generalProcedure: ['reaction'],
+      research_plan: ['screen']
     };
-    return type && currentElement && targets[type].includes(currentElement.type)
+    return type && currentElement && targets[type].includes(currentElement.type);
   }
 
   showDetails(element) {
@@ -129,6 +131,8 @@ export default class ElementsTableEntries extends Component {
       el.type === 'reaction' && this.isCurrEleDropType('reaction');
     const isDropForGP = el.type === 'reaction' && el.role === 'gp' &&
       this.isCurrEleDropType('generalProcedure');
+    const isDropForScreen =
+      el.type === 'research_plan' && this.isCurrEleDropType('research_plan');
 
     if (isDropForSample) {
       sourceType = DragDropItemTypes.SAMPLE;
@@ -138,18 +142,20 @@ export default class ElementsTableEntries extends Component {
       sourceType = DragDropItemTypes.REACTION;
     } else if (isDropForGP) {
       sourceType = DragDropItemTypes.GENERALPROCEDURE;
+    } else if (isDropForScreen) {
+      sourceType = DragDropItemTypes.RESEARCH_PLAN;
     }
     return sourceType;
   }
 
   topSecretIcon(element) {
-    if (element.type == 'sample' && element.is_top_secret == true) {
+    if (element.type === 'sample' && element.is_top_secret === true) {
       const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
-          <i className="fa fa-user-secret"></i>
+          <i className="fa fa-user-secret" />
         </OverlayTrigger>
-      )
+      );
     }
   }
 
