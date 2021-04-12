@@ -8,22 +8,17 @@ import { wellplateShowOrNew } from './routesUtils';
 import QuillViewer from './QuillViewer';
 
 const target = {
-  drop(props, monitor){
-    const {dropWellplate} = props;
+  drop(props, monitor) {
+    const { dropWellplate } = props;
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
-    if (itemType == 'wellplate') {
+    if (itemType === 'wellplate') {
       dropWellplate(item.element);
     }
   },
-  canDrop(props, monitor){
-    const item = monitor.getItem();
+  canDrop(props, monitor) {
     const itemType = monitor.getItemType();
-    if (itemType == 'wellplate') {
-      return true;
-    } else {
-      return false;
-    }
+    return (itemType === 'wellplate');
   }
 };
 
@@ -34,16 +29,18 @@ const collect = (connect, monitor) => ({
 });
 
 class ScreenWellplates extends Component {
+  // eslint-disable-next-line class-methods-use-this
   handleWellplateClick(wellplate) {
-    const {currentCollection,isSync} = UIStore.getState();
-    const wellplateID = wellplate.id
+    const { currentCollection, isSync } = UIStore.getState();
+    const wellplateID = wellplate.id;
     const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
     Aviator.navigate(uri, { silent: true });
     wellplateShowOrNew({ params: { wellplateID } });
   }
 
   render() {
-    const {wellplates, isOver, canDrop, connectDropTarget, deleteWellplate} = this.props;
+    // eslint-disable-next-line object-curly-newline
+    const { wellplates, isOver, canDrop, connectDropTarget, deleteWellplate } = this.props;
     const style = { padding: 10 };
     if (isOver && canDrop) {
       style.borderStyle = 'dashed';
@@ -54,37 +51,42 @@ class ScreenWellplates extends Component {
     return connectDropTarget(
       <div style={style}>
         <table width="100%">
-          <thead><tr>
-            <th width="45%">Name</th>
-            <th width="50%">Description</th>
-            <th width="5%"></th>
-          </tr></thead>
+          <thead>
+            <tr>
+              <th width="45%">Name</th>
+              <th width="50%">Description</th>
+              <th width="5%" />
+            </tr>
+          </thead>
           <tbody>
-            {wellplates.map((wellplate, key) => {
-              return (
-                <tr key={key} style={{height: "80px", verticalAlign: 'middle'}}>
-                  <td>
-                    <a onClick={() => this.handleWellplateClick(wellplate)}
-                       style={{cursor: 'pointer'}}>
-                      {wellplate.name}
-                    </a>
-                  </td>
-                  <td>
-                    <QuillViewer
-                      value={wellplate.description}
-                      theme="bubble"
-                      height="44px"
-                    />
-                  </td>
-                  <td style={{verticalAlign: 'middle'}}>
-                    <Button bsStyle="danger" style={{marginLeft: "10px"}}
-                            onClick={() => deleteWellplate(wellplate)}>
-                      <i className="fa fa-trash-o"></i>
-                    </Button>
-                  </td>
-                </tr>
-              )
-            })}
+            {wellplates.map(wellplate => (
+              <tr key={wellplate.id} style={{ height: '80px', verticalAlign: 'middle' }}>
+                <td>
+                  <a
+                    onClick={() => this.handleWellplateClick(wellplate)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {wellplate.name}
+                  </a>
+                </td>
+                <td>
+                  <QuillViewer
+                    value={wellplate.description}
+                    theme="bubble"
+                    height="44px"
+                  />
+                </td>
+                <td style={{ verticalAlign: 'middle' }}>
+                  <Button
+                    bsStyle="danger"
+                    style={{ marginLeft: '10px' }}
+                    onClick={() => deleteWellplate(wellplate)}
+                  >
+                    <i className="fa fa-trash-o" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -95,7 +97,10 @@ class ScreenWellplates extends Component {
 export default DropTarget(DragDropItemTypes.WELLPLATE, target, collect)(ScreenWellplates);
 
 ScreenWellplates.propTypes = {
-  wellplates: PropTypes.array.isRequired,
+  wellplates: PropTypes.arrayOf(PropTypes.object).isRequired,
   deleteWellplate: PropTypes.func.isRequired,
-  dropWellplate: PropTypes.func.isRequired
+  dropWellplate: PropTypes.func.isRequired,
+  isOver: PropTypes.bool.isRequired,
+  canDrop: PropTypes.bool.isRequired,
+  connectDropTarget: PropTypes.func.isRequired
 };
