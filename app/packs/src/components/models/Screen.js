@@ -3,42 +3,44 @@ import Wellplate from './Wellplate';
 import Container from './Container';
 
 export default class Screen extends Element {
-  static buildEmpty(collection_id) {
-    let description_default = {
-      "ops": [{ "insert": "" }]
-    }
+  static buildEmpty(collectionID) {
+    const descriptionDefault = {
+      ops: [{ insert: '' }]
+    };
 
     return new Screen({
-      collection_id: collection_id,
+      collection_id: collectionID,
       type: 'screen',
       name: 'New Screen',
       collaborator: '',
       requirements: '',
       conditions: '',
       result: '',
-      description: description_default,
+      description: descriptionDefault,
       wellplates: [],
+      research_plans: [],
       container: Container.init(),
-    })
+    });
   }
 
-  static buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id) {
-    let description_default = {
-      "ops": [{ "insert": "" }]
-    }
+  static buildFromWellplatesAndCollectionId(clipboardWellplates, collectionID) {
+    const descriptionDefault = {
+      ops: [{ insert: '' }]
+    };
 
     return new Screen({
-      collection_id: collection_id,
+      collection_id: collectionID,
       type: 'screen',
       name: 'New Screen with Wellplates',
       collaborator: '',
       requirements: '',
       conditions: '',
       result: '',
-      description: description_default,
+      description: descriptionDefault,
       wellplates: clipboardWellplates,
+      research_plans: [],
       container: Container.init(),
-    })
+    });
   }
 
   serialize() {
@@ -49,9 +51,10 @@ export default class Screen extends Element {
       conditions: this.conditions,
       requirements: this.requirements,
       description: this.description,
-      wellplate_ids: this.wellplate_ids,
+      wellplate_ids: this.wellplateIDs,
+      research_plan_ids: this.researchPlanIDs,
       container: this.container,
-    })
+    });
   }
 
   get name() {
@@ -110,8 +113,12 @@ export default class Screen extends Element {
     this._wellplates = wellplates.map(w => new Wellplate(w));
   }
 
-  get wellplate_ids() {
+  get wellplateIDs() {
     return this._wellplates.map(w => w.id);
+  }
+
+  get researchPlanIDs() {
+    return this.research_plans.map(rp => rp.id);
   }
 
   title() {

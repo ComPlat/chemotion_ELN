@@ -77,6 +77,7 @@ module Chemotion
         optional :result, type: String
         optional :description, type: Hash
         requires :wellplate_ids, type: Array
+        requires :research_plan_ids, type: Array
         requires :container, type: Hash
       end
       route_param :id do
@@ -119,6 +120,7 @@ module Chemotion
         optional :description, type: Hash
         optional :collection_id, type: Integer
         requires :wellplate_ids, type: Array
+        requires :research_plan_ids, type: Array
         requires :container, type: Hash
       end
       post do
@@ -128,7 +130,8 @@ module Chemotion
           requirements: params[:requirements],
           conditions: params[:conditions],
           result: params[:result],
-          description: params[:description]
+          description: params[:description],
+          research_plan_ids: params[:research_plan_ids]
         }
 
         screen = Screen.create(attributes)
