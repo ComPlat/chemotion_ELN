@@ -8,8 +8,11 @@ import Immutable from 'immutable';
 // import StickyDiv from 'react-stickydiv';
 import { unionBy } from 'lodash';
 
+import Screen from './models/Screen';
+
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ScreenWellplates from './ScreenWellplates';
+import ScreenResearchPlans from './ScreenResearchPlans';
 import QuillEditor from './QuillEditor';
 import ScreenDetailsContainers from './ScreenDetailsContainers';
 import ElementActions from './actions/ElementActions';
@@ -69,41 +72,38 @@ export default class ScreenDetails extends Component {
   }
 
   handleInputChange(type, event) {
-    const { screen } = this.state;
-    const value = event.target.value;
-    switch (type) {
-      case 'name':
-        screen.name = value;
-        break;
-      case 'requirements':
-        screen.requirements = value;
-        break;
-      case 'collaborator':
-        screen.collaborator = value;
-        break;
-      case 'conditions':
-        screen.conditions = value;
-        break;
-      case 'result':
-        screen.result = value;
-        break;
-      case 'description':
-        screen.description = value;
-        break;
+    const types = ['name', 'requirements', 'collaborator', 'conditions', 'result', 'description'];
+    if (types.indexOf(type) !== -1) {
+      const { screen } = this.state;
+      const { value } = event.target;
+
+      screen[type] = value;
+      this.setState({ screen });
     }
-    this.setState({
-      screen
-    });
+  }
+
+  handleScreenChanged(screen) {
+    this.setState({ screen });
+  }
+
+  dropResearchPlan(researchPlan) {
+    const { screen } = this.state;
+    screen.research_plans = unionBy(screen.research_plans, [researchPlan], 'id');
+    this.forceUpdate();
+  }
+
+  deleteResearchPlan(researchPlan) {
+    const { screen } = this.state;
+    const researchPlanIndex = screen.research_plans.indexOf(researchPlan);
+    screen.research_plans.splice(researchPlanIndex, 1);
+
+    this.setState({ screen });
   }
 
   dropWellplate(wellplate) {
     const { screen } = this.state;
     screen.wellplates = unionBy(screen.wellplates, [wellplate], 'id');
     this.forceUpdate();
-  }
-
-  handleScreenChanged(screen) {
-    this.setState({ screen });
   }
 
   deleteWellplate(wellplate) {
@@ -266,7 +266,7 @@ export default class ScreenDetails extends Component {
   }
 
   onTabPositionChanged(visible) {
-    this.setState({visible})
+    this.setState({ visible });
   }
 
   render() {
@@ -289,14 +289,12 @@ export default class ScreenDetails extends Component {
         </Tab>
       ),
       researchPlans: (
-        <Tab eventKey={2} title="ResearchPlans">
-          { screen.research_plans.map((researchPlan, key) => (
-            researchPlan.name
-            )) }
-          {/* <ResearchPlansDetailsContainers
-            screen={screen}
-            parent={this}
-          /> */}
+        <Tab eventKey="researchPlans" title="Research Plans" key={`analyses_${screen.id}`}>
+          <ScreenResearchPlans
+            researchPlans={screen.research_plans}
+            dropResearchPlan={researchPlan => this.dropResearchPlan(researchPlan)}
+            deleteResearchPlan={researchPlan => this.deleteResearchPlan(researchPlan)}
+          />
         </Tab>
       )
     };
@@ -339,6 +337,6 @@ export default class ScreenDetails extends Component {
 }
 
 ScreenDetails.propTypes = {
-  screen: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
+  screen: PropTypes.instanceOf(Screen).isRequired,
+  toggleFullScreen: PropTypes.func.isRequired,
 };
