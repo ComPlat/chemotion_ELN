@@ -15,6 +15,15 @@ module Tagging
       'ReactionsSolventSample', 'ReactionsReactantSample'
       args = { reaction_tag: reaction_id }
       element = 'sample'
+    when 'Well'
+      args = { wellplate_tag: wellplate_id }
+      element = 'sample'
+    when 'ElementsSample'
+      el = Element.find_by(id: element_id)
+      return if el.nil?
+
+      args = deleted_at.nil? ? { element_tag: { "type": el.element_klass.name, "id": element_id } } : { element_tag: {} }
+      element = 'sample'
     when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample',
       'CollectionsScreen', 'CollectionsResearchPlan'
       args = { collection_tag: true }

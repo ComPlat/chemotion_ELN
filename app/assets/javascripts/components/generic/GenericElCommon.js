@@ -2,12 +2,13 @@
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Checkbox, Col, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row, InputGroup } from 'react-bootstrap';
+import { Panel, Checkbox, Col, PanelGroup, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row, InputGroup, Radio } from 'react-bootstrap';
 import uuid from 'uuid';
 import { sortBy } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnits, genUnitSup, FieldLabel } from '../../admin/generic/Utils';
+import { ContinuousColorLegend } from 'react-vis';
 
 const GenPropertiesText = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
@@ -116,10 +117,22 @@ const GenPropertiesSystemDefined = (opt) => {
 
 const GenPropertiesDrop = (opt) => {
   const className = opt.isRequired ? 'drop_generic_properties field_required' : 'drop_generic_properties';
+
+  let createOpt = null;
+  if (opt.value.is_new == true) {
+    createOpt = (
+      <span>
+        <Radio name={`dropS_${opt.value.el_id}`} disabled={opt.value.isAssoc == true} checked={opt.value.cr_opt == 0} onChange={() => opt.onChange({ ...opt.value, cr_opt: 0 })} inline>Current</Radio>{' '}
+        <Radio name={`dropS_${opt.value.el_id}`} checked={opt.value.cr_opt == 1} onChange={() => opt.onChange({ ...opt.value, cr_opt: 1 })} inline>Split</Radio>{' '}
+        <Radio name={`dropS_${opt.value.el_id}`} checked={opt.value.cr_opt == 2} onChange={() => opt.onChange({ ...opt.value, cr_opt: 2 })} inline>Copy</Radio>
+      </span>
+    );
+  }
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
+
   return (
     <FormGroup>
-      {fieldHeader}
+      {fieldHeader}{createOpt}
       <FormControl.Static style={{ paddingBottom: '0px' }}>
         <div className={className}>
           <GenericElDropTarget opt={opt} onDrop={opt.onChange} />
@@ -172,7 +185,7 @@ class GenPropertiesLayer extends Component {
   }
 
   views() {
-    const { layer, selectOptions } = this.props;
+    const { layer, selectOptions, id } = this.props;
     const { cols, fields, key } = layer;
     const col = Math.floor(12 / (cols || 1));
     const perRow = 12 / col;
@@ -183,6 +196,8 @@ class GenPropertiesLayer extends Component {
       const eachCol = (
         <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col}>
           <GenProperties
+            id={id}
+            layer={key}
             label={f.label}
             value={f.value || ''}
             description={f.description || ''}
@@ -231,6 +246,7 @@ class GenPropertiesLayer extends Component {
 }
 
 GenPropertiesLayer.propTypes = {
+  id: PropTypes.number,
   layer: PropTypes.object,
   selectOptions: PropTypes.object,
   onChange: PropTypes.func.isRequired,
@@ -238,6 +254,7 @@ GenPropertiesLayer.propTypes = {
 };
 
 GenPropertiesLayer.defaultProps = {
+  id: 0,
   selectOptions: {}, onClick: () => {}
 };
 
@@ -293,12 +310,13 @@ GenPropertiesLayerSearchCriteria.defaultProps = {
   selectOptions: {}
 };
 
-const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout = []) => {
+const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout = [], id = 0) => {
   const sortedLayers = sortBy(layers, l => l.position) || [];
   sortedLayers.forEach((layer) => {
     if (layer.condition == null || layer.condition.trim().length === 0) {
       const ig = (
         <GenPropertiesLayer
+          id={id}
           key={layer.key}
           layer={layer}
           onChange={funcChange}

@@ -444,6 +444,27 @@ class ElementActions {
     }
   }
 
+  tryFetchWellplateById(id) {
+    return (dispatch) => {
+      WellplatesFetcher.fetchById(id)
+                      .then((result) => {
+                        dispatch(result)
+                      }).catch((errorMessage) => {
+                        console.log(errorMessage)
+                      })
+    }
+  }
+
+  tryFetchGenericElById(id) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchById(id)
+                      .then((result) => {
+                        dispatch(result)
+                      }).catch((errorMessage) => {
+                        console.log(errorMessage)
+                      })
+    }
+  }
   closeWarning() {
     return null
   }

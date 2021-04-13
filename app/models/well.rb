@@ -25,6 +25,8 @@ class Well < ActiveRecord::Base
   belongs_to :wellplate
   belongs_to :sample
 
+  include Tagging
+
   def self.get_samples_in_wellplates(wellplate_ids)
     where(wellplate_id: wellplate_ids).pluck(:sample_id).compact.uniq
   end

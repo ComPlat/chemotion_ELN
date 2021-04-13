@@ -7,6 +7,8 @@ import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementReactionLabels from './ElementReactionLabels';
+import ElementWellplateLabels from './ElementWellplateLabels';
+import GenericElementLabels from './generic/GenericElementLabels';
 import PubchemLabels from './PubchemLabels';
 import ChemrepoLabels from './ChemrepoLabels';
 import ComputedPropLabel from './computed_props/ComputedPropLabel';
@@ -363,6 +365,8 @@ export default class ElementsTableSampleEntries extends Component {
               <ShowUserLabels element={sample} />
               <XvialIcon label={sample.external_label} />
               <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+              <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
+              <GenericElementLabels element={sample} key={`${sample.id}_element`} />
               <ElementCollectionLabels element={sample} key={`${sample.id}`} />
               <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
               <TopSecretIcon element={sample} />

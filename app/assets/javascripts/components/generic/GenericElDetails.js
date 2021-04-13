@@ -146,6 +146,11 @@ export default class GenericElDetails extends Component {
 
   handleInputChange(event, field, layer, type = 'text') {
     const { genericEl } = this.state;
+    console.log(event);
+    console.log(field);
+    console.log(layer);
+    console.log(type);
+
     const { properties } = genericEl;
     let value = '';
     if (type === 'select') {
@@ -229,7 +234,8 @@ export default class GenericElDetails extends Component {
       selectOptions || {},
       this.handleInputChange,
       this.handleUnitClick,
-      options
+      options,
+      genericEl.id || 0
     );
     return (<div style={{ marginTop: '10px' }}>{layersLayout}</div>);
   }

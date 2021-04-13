@@ -14,6 +14,7 @@ const handleSampleClick = (type, id) => {
 };
 
 const show = (opt, iconClass) => {
+  //let creationType
   if (opt.value && opt.value.el_id) {
     const pop = (
       <Popover id="popover-svg" title={opt.value.el_tip} style={{ maxWidth: 'none', maxHeight: 'none' }}>
@@ -42,7 +43,15 @@ const show = (opt, iconClass) => {
   return (<span className={`icon-${iconClass} indicator`} />);
 };
 
-const source = (type, props) => {
+const source = (type, props, id) => {
+  let isAssoc = false;
+  const taggable = (props && props.tag && props.tag.taggable_data) || {};
+  if (taggable.element && taggable.element.id === id) {
+    isAssoc = false;
+  } else {
+    isAssoc = !!(taggable.reaction_id || taggable.wellplate_id || taggable.element);
+  }
+
   switch (type) {
     case 'molecule':
       return {
@@ -55,6 +64,8 @@ const source = (type, props) => {
       return {
         el_id: props.id,
         is_new: true,
+        cr_opt: isAssoc == true ? 1 : 0,
+        isAssoc,
         el_type: 'sample',
         el_label: props.short_label,
         el_tip: props.short_label,
@@ -63,6 +74,7 @@ const source = (type, props) => {
       return {
         el_id: props.id,
         is_new: true,
+        cr_opt: 0,
         el_type: props.type,
         el_label: props.short_label,
         el_tip: props.short_label,
@@ -72,8 +84,9 @@ const source = (type, props) => {
 
 const dropTarget = {
   drop(targetProps, monitor) {
+    console.log(targetProps);
     const sourceProps = monitor.getItem().element;
-    const sourceTag = source(targetProps.opt.type.split('_')[1], sourceProps);
+    const sourceTag = source(targetProps.opt.type.split('_')[1], sourceProps, targetProps.opt.id);
     targetProps.onDrop(sourceTag);
   },
   canDrop(targetProps, monitor) {

@@ -175,7 +175,11 @@ class ElementStore {
       handleChangeSorting: ElementActions.changeSorting,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
-      handleTryFetchReactionById: ElementActions.tryFetchReactionById,
+      handleTryFetchById: [
+        ElementActions.tryFetchReactionById,
+        ElementActions.tryFetchWellplateById,
+        ElementActions.tryFetchGenericElById
+      ],
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -854,7 +858,8 @@ class ElementStore {
     });
   }
 
-  handleTryFetchReactionById(result) {
+  handleTryFetchById(result) {
+    console.log(result);
     if (result.hasOwnProperty("error")) {
       this.state.elementWarning = true
     } else {

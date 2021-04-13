@@ -21,4 +21,6 @@ class ElementsSample < ActiveRecord::Base
   acts_as_paranoid
   belongs_to :element
   belongs_to :sample
+
+  include Tagging
 end

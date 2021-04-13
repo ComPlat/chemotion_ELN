@@ -3,7 +3,6 @@ import Wellplate from '../models/Wellplate';
 import UIStore from '../stores/UIStore';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
-
 export default class WellplatesFetcher {
   static fetchById(id) {
     let promise = fetch('/api/v1/wellplates/' + id + '.json', {

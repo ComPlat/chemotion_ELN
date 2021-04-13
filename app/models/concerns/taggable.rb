@@ -21,6 +21,8 @@ module Taggable
     return if tag.destroyed?
     data = tag.taggable_data || {}
     data['reaction_id'] = args[:reaction_tag] if args[:reaction_tag]
+    data['wellplate_id'] = args[:wellplate_tag] if args[:wellplate_tag]
+    data['element'] = args[:element_tag] if args[:element_tag]
     data['pubchem_cid'] = pubchem_tag if args[:pubchem_tag]
     data['analyses'] = analyses_tag if args[:analyses_tag]
     data['collection_labels'] = collection_tag if args[:collection_tag]
