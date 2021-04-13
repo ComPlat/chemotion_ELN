@@ -14,7 +14,7 @@ import TemplateJsonModal from './generic/TemplateJsonModal';
 import LayerAttrEditModal from './generic/LayerAttrEditModal';
 import LayerAttrNewModal from './generic/LayerAttrNewModal';
 import SelectAttrNewModal from './generic/SelectAttrNewModal';
-import { ButtonTooltip, validateLayerInput, validateSelectList, notification } from '../admin/generic/Utils';
+import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit } from '../admin/generic/Utils';
 
 const validateKlass = klass => (/\b[a-z]{3,5}\b/g.test(klass));
 const validateInput = (element) => {
@@ -465,7 +465,7 @@ export default class GenericElementAdmin extends React.Component {
       const sortedFields = sortBy(((layer && layer.fields) || []), l => l.position);
       (sortedFields || []).forEach((f, idx) => {
         f.position = (idx + 1);
-        if (f.type === 'system-defined') { f.option_layers = f.option_layers || unitsSystem.fields[0].field; }
+        if (f.type === 'system-defined') { f.option_layers = reUnit(unitsSystem, f.option_layers); }
       });
       element.properties_template.layers[key].fields = sortedFields;
     });

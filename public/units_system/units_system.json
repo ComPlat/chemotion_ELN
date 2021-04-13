@@ -17,7 +17,7 @@
       "label": "Agitation",
       "default": "",
       "position": 20,
-      "placeholder": "Please input Agitation",
+      "placeholder": "Please input agitation",
       "units": [
         { "key": "rpm", "label": "rpm" }
       ]
@@ -110,6 +110,19 @@
     },
     {
       "type": "numeric",
+      "field": "elastic_modulus",
+      "label": "Elastic modulus",
+      "default": "",
+      "position": 86,
+      "placeholder": "Please input Elastic modulus",
+      "units": [
+        { "key": "m_pa", "label": "MPa", "nm": 1 },
+        { "key": "k_pa", "label": "kPa", "nm": 1000 },
+        { "key": "pa", "label": "Pa", "nm": 1000000 }
+      ]
+    },
+    {
+      "type": "numeric",
       "field": "enzyme_activity",
       "label": "Enzyme activity",
       "default": "",
@@ -130,6 +143,17 @@
       "units": [
         { "key": "hz", "label": "Hz", "nm": 1000 },
         { "key": "khz", "label": "kHz", "nm": 1 }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "heating_rate",
+      "label": "Heating rate",
+      "default": "",
+      "position": 106,
+      "placeholder": "Please input heating rate",
+      "units": [
+        { "key": "k_min", "label": "K/min", "nm": 1 }
       ]
     },
     {
@@ -162,6 +186,18 @@
     },
     {
       "type": "numeric",
+      "field": "mass_molecule",
+      "label": "Mass of molecule",
+      "default": "",
+      "position": 126,
+      "placeholder": "Please input mass of molecule",
+      "units": [
+        { "key": "dalton", "label": "D", "nm": 1000 },
+        { "key": "kilo_dalton", "label": "kD", "nm": 1 }
+      ]
+    },
+    {
+      "type": "numeric",
       "field": "molecular_weight",
       "label": "Molecular weight",
       "default": "",
@@ -169,6 +205,17 @@
       "placeholder": "Please input Molecular weight",
       "units": [
         { "key": "g_mol", "label": "g/mol" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "percentage",
+      "label": "Percentage",
+      "default": "",
+      "position": 136,
+      "placeholder": "Please input percentage",
+      "units": [
+        { "key": "p", "label": "%", "nm": 1 }
       ]
     },
     {
@@ -245,6 +292,17 @@
       "placeholder": "Please input Turnover number",
       "units": [
         { "key": "1_s", "label": "1/s" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "viscosity",
+      "label": "Viscosity",
+      "default": "",
+      "position": 200,
+      "placeholder": "Please input viscosity",
+      "units": [
+        { "key": "ml_g", "label": "mL/g", "nm": 1 }
       ]
     },
     {

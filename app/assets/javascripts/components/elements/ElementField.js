@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
-import { ButtonTooltip } from '../../admin/generic/Utils';
+import { ButtonTooltip, genUnitSup } from '../../admin/generic/Utils';
 
 const ElementFieldTypes = [{ value: 'integer', name: 'integer', label: 'Integer' }, { value: 'text', name: 'text', label: 'Text' }, { value: 'select', name: 'select', label: 'Select' }, { value: 'checkbox', name: 'checkbox', label: 'Checkbox' }];
 class ElementField extends Component {
@@ -17,6 +17,7 @@ class ElementField extends Component {
   }
 
   handleChange(e, orig, fe, lk, fc, tp) {
+    if ((tp === 'select' || tp === 'system-defined') && e === null) { return; }
     this.props.onChange(e, orig, fe, lk, fc, tp);
   }
   handleMove(element) {
@@ -30,6 +31,21 @@ class ElementField extends Component {
 
   handleDrop(e) {
     this.props.onDrop(e);
+  }
+
+  availableUnits(val) {
+    const { unitsSystem } = this.props;
+    const us = (unitsSystem.fields || []).find(e => e.field === val);
+    if (us === undefined) return null;
+    const tbl = us.units.map(e => (<div key={uuid.v4()}>{genUnitSup(e.label)}<br /></div>));
+    const popover = (
+      <Popover id="popover-positioned-scrolling-left"><b><u>available units</u></b><br />{tbl}</Popover>
+    );
+    return (
+      <OverlayTrigger animation placement="top" root trigger={['hover', 'focus', 'click']} overlay={popover}>
+        <Button bsSize="xs"><i className="fa fa-table" aria-hidden="true" /></Button>
+      </OverlayTrigger>
+    );
   }
 
   renderDeleteButton(delStr, delKey, delRoot) {
@@ -63,19 +79,23 @@ class ElementField extends Component {
     typeOpts = typeOpts.concat([{ value: 'system-defined', name: 'system-defined', label: 'System-Defined' }]);
     const skipRequired = ['Segment', 'Dataset'].includes(this.props.genericType) ? { display: 'none' } : {};
     const f = this.props.field;
-    const preUnit = unitConfig.length > 0 ? unitConfig[0].value : '';
     const selectOptions = (f.type === 'select' || f.type === 'system-defined') ? (
       <FormGroup controlId="formControlFieldType">
         <Col componentClass={ControlLabel} sm={3}>{f.type === 'select' ? 'Options' : <span />}</Col>
         <Col sm={9}>
-          <Select
-            className="drop-up"
-            name={f.field}
-            multi={false}
-            options={f.type === 'select' ? this.props.select_options : unitConfig}
-            value={f.option_layers || (f.type === 'select' ? '' : preUnit)}
-            onChange={event => this.handleChange(event, f.option_layers, f.field, this.props.layerKey, 'option_layers', f.type)}
-          />
+          <div style={{ display: 'flex' }}>
+            <span style={{ width: '100%' }}>
+              <Select
+                className="drop-up"
+                name={f.field}
+                multi={false}
+                options={f.type === 'select' ? this.props.select_options : unitConfig}
+                value={f.option_layers || ''}
+                onChange={event => this.handleChange(event, f.option_layers, f.field, this.props.layerKey, 'option_layers', f.type)}
+              />
+            </span>
+            {f.type === 'select' ? null : this.availableUnits(f.option_layers)}
+          </div>
         </Col>
       </FormGroup>)
       : (<div />);

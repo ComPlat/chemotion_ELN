@@ -35,6 +35,13 @@ const genUnit = (field, key) => {
   return units.find(u => u.key === key) || {};
 };
 
+const reUnit = (unitsSystem, optionLayers) => {
+  const uniFileds = (unitsSystem.fields || []);
+  const uniObj = uniFileds.find(fiel => fiel.field === optionLayers);
+  const defaultUnit = ((uniObj && uniObj.field) || '');
+  const preUnit = uniFileds.length > 0 ? uniFileds[0].field : '';
+  return defaultUnit === '' ? preUnit : defaultUnit;
+};
 
 const convertTemp = (key, val) => {
   switch (key) {
@@ -214,5 +221,5 @@ const GenericDSMisType = () => {
 export {
   ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel,
   validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
-  unitConversion, toBool, genUnitSup, absOlsTermId, absOlsTermLabel
+  unitConversion, toBool, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit
 };
