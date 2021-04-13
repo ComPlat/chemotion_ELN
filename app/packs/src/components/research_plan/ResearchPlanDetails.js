@@ -11,6 +11,7 @@ import Attachment from '../models/Attachment';
 import Utils from '../utils/Functions';
 import LoadingActions from '../actions/LoadingActions';
 import ConfirmClose from '../common/ConfirmClose';
+import ResearchPlan from '../models/ResearchPlan';
 import ResearchPlanDetailsAttachments from './ResearchPlanDetailsAttachments';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
@@ -132,7 +133,7 @@ export default class ResearchPlanDetails extends Component {
   handleAttachmentDrop(files) {
     const { researchPlan } = this.state;
     researchPlan.changed = true;
-    files.map((file) => {
+    files.forEach((file) => {
       const attachment = Attachment.fromFile(file);
       researchPlan.attachments.push(attachment);
     });
@@ -276,7 +277,12 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          <ResearchPlanDetailsContainers handleSubmit={this.handleSubmit} researchPlan={researchPlan} readOnly={false} parent={this} />
+          <ResearchPlanDetailsContainers
+            handleSubmit={this.handleSubmit}
+            researchPlan={researchPlan}
+            readOnly={false}
+            parent={this}
+          />
         </ListGroupItem>
       </ListGroup>
     );
@@ -406,6 +412,6 @@ export default class ResearchPlanDetails extends Component {
 }
 
 ResearchPlanDetails.propTypes = {
-  researchPlan: PropTypes.object.isRequired,
+  researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
   toggleFullScreen: PropTypes.func.isRequired,
 };
