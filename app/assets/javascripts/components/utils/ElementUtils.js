@@ -110,9 +110,9 @@ const atomCountInNMRDescription = (nmrStr) => {
     return acc;
   }, 0);
   const missed = countHWithinBracket(phraseArr[1]);
-  if (missed) { return missed + count; }
+  if (missed) { return parseFloat((missed + count).toFixed(5)); }
 
-  return count;
+  return parseFloat(count.toFixed(5));
 };
 
 const atomCountCInNMRDescription = (cNmrStr) => {
