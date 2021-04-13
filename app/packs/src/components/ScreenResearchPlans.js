@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
+import Aviator from 'aviator';
 import DragDropItemTypes from './DragDropItemTypes';
 import UIStore from './stores/UIStore';
-// import { wellplateShowOrNew } from './routesUtils';
+import { researchPlanShowOrNew } from './routesUtils';
 import QuillViewer from './QuillViewer';
 
 const target = {
@@ -33,9 +34,9 @@ class ScreenResearchPlans extends Component {
   handleResearchPlanClick(researchPlan) {
     const { currentCollection, isSync } = UIStore.getState();
     const researchPlanID = researchPlan.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/researchPlan/${researchPlanID}`;
+    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
     Aviator.navigate(uri, { silent: true });
-    // researchPlanShowOrNew({ params: { researchPlanID } });
+    researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
   }
 
   render() {
