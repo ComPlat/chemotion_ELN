@@ -3,10 +3,11 @@
 require 'rails_helper'
 
 RSpec.describe Wellplate, type: :model do
+  let!(:user)       { create(:user) }
   let!(:collection) { create(:collection) }
   let!(:screen)     { create(:screen, collections: [collection]) }
   let!(:wellplate)  do
-    create(:wellplate, collections: [collection], screens: [screen])
+    create(:wellplate, collections: [collection], screens: [screen], creator: user)
   end
   let!(:sample)     { create(:sample, collections: [collection]) }
   let!(:well)       do
@@ -26,6 +27,7 @@ RSpec.describe Wellplate, type: :model do
       ).not_to be_nil
       expect(wellplate.wells.pluck(:id)).to include(well.id)
       expect(wellplate.samples.pluck(:id)).to include(sample.id)
+      expect(wellplate.creator.id).to eql(user.id)
       expect(
         collection.collections_wellplates.find_by(wellplate_id: wellplate.id)
       ).not_to be_nil
@@ -36,6 +38,10 @@ RSpec.describe Wellplate, type: :model do
       expect(wellplate.code_log.id).to match(
         /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
       )
+    end
+
+    it 'has a ShortLabel' do
+      expect(wellplate.short_label).to eq("#{user.name_abbreviation}-WP1")
     end
   end
 

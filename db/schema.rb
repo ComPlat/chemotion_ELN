@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210331221122) do
+ActiveRecord::Schema.define(version: 20210413163755) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -907,6 +907,8 @@ ActiveRecord::Schema.define(version: 20210331221122) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.index ["deleted_at"], name: "index_wellplates_on_deleted_at"
+    t.string   "short_label"
+    t.integer  "created_by"
   end
 
   create_table "wells", id: :serial, force: :cascade do |t|
