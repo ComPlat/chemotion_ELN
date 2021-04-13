@@ -48,7 +48,7 @@ export default class ScreensFetcher {
   }
 
   static create(screen) {
-    const files = AttachmentFetcher.getFileListfrom(screen.container)
+    const files = AttachmentFetcher.getFileListfrom(screen.container);
 
     const promise = () => fetch('/api/v1/screens/', {
       credentials: 'same-origin',
