@@ -145,3 +145,11 @@ tags.temp
 .vscode/*
 
 spec/examples.txt
+
+
+# yarn / pack
+/public/packs
+/public/packs-test
+/yarn-error.log
+yarn-debug.log*
+
