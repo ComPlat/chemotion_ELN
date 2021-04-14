@@ -82,6 +82,17 @@ GIT
     thumbnailer (0.2.0)
 
 GIT
+  remote: https://github.com/rails/webpacker
+  revision: 032c2d11a3758035305fe34e6795ab133128ee32
+  branch: master
+  specs:
+    webpacker (6.0.0.beta.7)
+      activesupport (>= 5.2)
+      rack-proxy (>= 0.6.1)
+      railties (>= 5.2)
+      semantic_range (>= 2.3.0)
+
+GIT
   remote: https://github.com/randym/axlsx
   revision: c593a08b2a929dac7aa8dc418b55e26b4c49dc34
   specs:
@@ -466,6 +477,8 @@ GEM
       rack (~> 2.0)
     rack-cors (1.1.1)
       rack (>= 2.0.0)
+    rack-proxy (0.7.0)
+      rack
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
     rails (5.2.4.4)
@@ -582,6 +595,7 @@ GEM
     selenium-webdriver (3.142.4)
       childprocess (>= 0.5, < 3.0)
       rubyzip (~> 1.2, >= 1.2.2)
+    semantic_range (3.0.0)
     sexp_processor (4.15.1)
     sixarm_ruby_unaccent (1.2.0)
     slackistrano (3.8.4)
@@ -779,6 +793,7 @@ DEPENDENCIES
   web-console (~> 2.0)
   webdrivers (~> 4.1.2)
   webmock
+  webpacker!
   whenever
   yaml_db
 
