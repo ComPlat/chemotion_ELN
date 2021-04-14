@@ -658,7 +658,6 @@ ActiveRecord::Schema.define(version: 20210413163755) do
     t.string   "landing_page"
     t.string   "title"
     t.string   "type"
-    t.jsonb    "description"
     t.string   "publisher"
     t.integer  "publication_year"
     t.jsonb    "dates"
@@ -672,6 +671,7 @@ ActiveRecord::Schema.define(version: 20210413163755) do
     t.jsonb    "data_cite_last_response", default: {}
     t.string   "data_cite_state",         default: "draft"
     t.string   "data_cite_creator_name"
+    t.jsonb    "description"
     t.text     "creator"
     t.text     "affiliation"
     t.text     "contributor"
@@ -908,7 +908,6 @@ ActiveRecord::Schema.define(version: 20210413163755) do
     t.datetime "deleted_at"
     t.index ["deleted_at"], name: "index_wellplates_on_deleted_at"
     t.string   "short_label"
-    t.integer  "created_by"
   end
 
   create_table "wells", id: :serial, force: :cascade do |t|
@@ -929,20 +928,6 @@ ActiveRecord::Schema.define(version: 20210413163755) do
   add_foreign_key "literals", "literatures"
   add_foreign_key "research_plans", "screens"
 
-  create_function :user_instrument, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
-       RETURNS TABLE(instrument text)
-       LANGUAGE sql
-      AS $function$
-         select distinct extended_metadata -> 'instrument' as instrument from containers c
-         where c.container_type='dataset' and c.id in
-         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-         order by extended_metadata -> 'instrument' limit 10
-       $function$
-  SQL
   create_function :collection_shared_names, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
@@ -956,45 +941,6 @@ ActiveRecord::Schema.define(version: 20210413163755) do
        WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
        group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
        ) as result
-       $function$
-  SQL
-  create_function :user_ids, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-          select $1 as id
-          union
-          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-         and users.type in ('Group') and users_groups.user_id = $1)
-        $function$
-  SQL
-  create_function :user_as_json, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-         select row_to_json(result) from (
-           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           from users where id = $1
-         ) as result
-       $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-         begin
-          if (in_user_id = in_current_user_id) then
-            return null;
-          else
-            return (select row_to_json(result) from (
-            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-            from users where id = $1
-            ) as result);
-          end if;
-          end;
        $function$
   SQL
   create_function :detail_level_for_sample, sql_definition: <<-SQL
@@ -1029,16 +975,6 @@ ActiveRecord::Schema.define(version: 20210413163755) do
 
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
-  SQL
-  create_function :group_user_ids, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
   SQL
   create_function :generate_notifications, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.generate_notifications(in_channel_id integer, in_message_id integer, in_user_id integer, in_user_ids integer[])
@@ -1121,6 +1057,48 @@ ActiveRecord::Schema.define(version: 20210413163755) do
       end
       $function$
   SQL
+  create_function :group_user_ids, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select id from users where type='Person' and id= $1
+             union
+             select user_id from users_groups where group_id = $1
+      $function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+         begin
+          if (in_user_id = in_current_user_id) then
+            return null;
+          else
+            return (select row_to_json(result) from (
+            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+            from users where id = $1
+            ) as result);
+          end if;
+          end;
+       $function$
+  SQL
   create_function :update_users_matrix, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
@@ -1144,19 +1122,40 @@ ActiveRecord::Schema.define(version: 20210413163755) do
       end
       $function$
   SQL
-  create_function :labels_by_user_sample, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
+  create_function :user_as_json, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
+       RETURNS json
        LANGUAGE sql
       AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+         select row_to_json(result) from (
+           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           from users where id = $1
+         ) as result
+       $function$
+  SQL
+  create_function :user_ids, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+          select $1 as id
+          union
+          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+         and users.type in ('Group') and users_groups.user_id = $1)
+        $function$
+  SQL
+  create_function :user_instrument, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
+       RETURNS TABLE(instrument text)
+       LANGUAGE sql
+      AS $function$
+         select distinct extended_metadata -> 'instrument' as instrument from containers c
+         where c.container_type='dataset' and c.id in
+         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+         order by extended_metadata -> 'instrument' limit 10
        $function$
   SQL
 
