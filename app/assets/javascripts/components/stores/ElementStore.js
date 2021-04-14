@@ -859,7 +859,6 @@ class ElementStore {
   }
 
   handleTryFetchById(result) {
-    console.log(result);
     if (result.hasOwnProperty("error")) {
       this.state.elementWarning = true
     } else {
