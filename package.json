@@ -12,6 +12,7 @@
     "@complat/chem-spectra-client": "^0.10.12",
     "@complat/react-spectra-editor": "^0.10.12",
     "@novnc/novnc": "^1.2.0",
+    "@rails/webpacker": "https://github.com/rails/webpacker.git",
     "acorn": "^5.7.0",
     "ag-grid-community": "^25.1.0",
     "ag-grid-react": "^25.1.0",
@@ -138,5 +139,11 @@
   "license": "MIT",
   "engines": {
     "node": "14.16.0"
-  }
+  },
+  "babel": {
+    "presets": ["./node_modules/@rails/webpacker/package/babel/preset.js"]
+  },
+  "browserslist": [
+    "defaults"
+  ]
 }

@@ -26,6 +26,7 @@ BUNDLER_VERSION=1.17.3
 NVM_VERSION='v0.38.0'
 NODE_VERSION=14.16.0
 NPM_VERSION=7.11.1
+YARN_VERSION=1.22.10
 
 APP_NAME=chemotion_ELN # used for naming directories and files
 
