@@ -59,7 +59,8 @@ module Chemotion
       end
 
       # Extra module import/export mapping for each registered plugin
-      extra_dir = Rails.root.join('app', 'assets', 'javascripts', 'components', 'extra')
+      # extra_dir = Rails.root.join('app', 'assets', 'javascripts', 'components', 'extra')
+      extra_dir = Rails.root.join('app', 'packs', 'src', 'components', 'extra')
       !File.directory?(extra_dir) && FileUtils.mkdir_p(extra_dir)
 
       module_config_json = JSON.parse(File.read(Rails.root.join('config', 'module_config.json')))
@@ -113,10 +114,10 @@ module Chemotion
       end
     end
 
-    config.browserify_rails.commandline_options = ' -t [ babelify --presets [ @babel/preset-env  @babel/preset-react ] --plugins [ @babel/plugin-proposal-object-rest-spread ] ] '
+#    config.browserify_rails.commandline_options = ' -t [ babelify --presets [ @babel/preset-env  @babel/preset-react ] --plugins [ @babel/plugin-proposal-object-rest-spread ] ] '
     # Environments in which to generate source maps
     # The default is none
-    config.browserify_rails.source_map_environments << 'development'
+#    config.browserify_rails.source_map_environments << 'development'
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers

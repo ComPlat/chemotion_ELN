@@ -94,7 +94,6 @@
     "uglify-js": "~3.10.3",
     "uglifyify": "^5.0.2",
     "uuid": "^3.3.2",
-    "webpack": "^5.11.0",
     "whatwg-fetch": "2.0.3",
     "xlsx": "^0.12.9",
     "yarn": "^1.22.10"
