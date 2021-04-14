@@ -997,6 +997,7 @@ class ElementStore {
         ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
       } else {
         ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
       }
     }
   }

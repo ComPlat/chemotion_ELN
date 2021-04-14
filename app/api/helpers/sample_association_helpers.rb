@@ -56,7 +56,7 @@ module SampleAssociationHelpers
         ElementsSample.find_or_create_by(element_id: element.id, sample_id: subsample.id)
       end
     end
-    ElementsSample.where(element_id: element.id).where.not(sample_id: sds).destroy_all unless sds.empty?
+    ElementsSample.where(element_id: element.id).where.not(sample_id: sds)&.destroy_all
     properties
   end
 end
