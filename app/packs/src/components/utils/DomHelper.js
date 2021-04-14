@@ -8,4 +8,4 @@ const stopEvent = (e) => {
   e.preventDefault();
 };
 
-module.exports = { stopBubble, stopEvent };
+export { stopBubble, stopEvent };

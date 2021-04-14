@@ -218,7 +218,7 @@ const markdownToDelta = (md) => {
   return delta;
 };
 
-module.exports = {
+export {
   deltaToMarkdown,
   markdownToDelta
 };
