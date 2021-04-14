@@ -103,9 +103,10 @@ $colo-bs-primary: #337ab7;
 
 .drop_generic_properties {
   display: flex;
+  align-items: center;
   .target {
     height: 100%;
-    width: 80%;
+    width: 100%;
     margin: 0px 10px 0px 10px;
     display: inline-block;
     .indicator {
@@ -151,6 +152,12 @@ $colo-bs-primary: #337ab7;
   .btn_del {
     float: right;
     align-self: center;
+  }
+  .sample_radios {
+    font-size: xx-small;
+    line-height: 2;
+    display: inline-flex;
+    padding-right: 5px;
   }
 }
 

@@ -119,26 +119,35 @@ const GenPropertiesDrop = (opt) => {
   const className = opt.isRequired ? 'drop_generic_properties field_required' : 'drop_generic_properties';
 
   let createOpt = null;
-  if (opt.value.is_new == true) {
+  if (opt.value.is_new === true) {
     createOpt = (
-      <span>
-        <Radio name={`dropS_${opt.value.el_id}`} disabled={opt.value.isAssoc == true} checked={opt.value.cr_opt == 0} onChange={() => opt.onChange({ ...opt.value, cr_opt: 0 })} inline>Current</Radio>{' '}
-        <Radio name={`dropS_${opt.value.el_id}`} checked={opt.value.cr_opt == 1} onChange={() => opt.onChange({ ...opt.value, cr_opt: 1 })} inline>Split</Radio>{' '}
-        <Radio name={`dropS_${opt.value.el_id}`} checked={opt.value.cr_opt == 2} onChange={() => opt.onChange({ ...opt.value, cr_opt: 2 })} inline>Copy</Radio>
-      </span>
+      <div className="sample_radios">
+        <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>associate with this sample</Tooltip>}>
+          <Radio name={`dropS_${opt.value.el_id}`} disabled={opt.value.isAssoc === true} checked={opt.value.cr_opt === 0} onChange={() => opt.onChange({ ...opt.value, cr_opt: 0 })} inline>Current</Radio>
+        </OverlayTrigger>
+        <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>split from the sample first and then associate with it</Tooltip>}>
+          <Radio name={`dropS_${opt.value.el_id}`} checked={opt.value.cr_opt === 1} onChange={() => opt.onChange({ ...opt.value, cr_opt: 1 })} inline>Split</Radio>
+        </OverlayTrigger>
+        <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>duplicate the sample first and then associate with it</Tooltip>}>
+          <Radio name={`dropS_${opt.value.el_id}`} checked={opt.value.cr_opt === 2} onChange={() => opt.onChange({ ...opt.value, cr_opt: 2 })} inline>Copy</Radio>
+        </OverlayTrigger>
+      </div>
     );
   }
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
 
   return (
     <FormGroup>
-      {fieldHeader}{createOpt}
+      {fieldHeader}
       <FormControl.Static style={{ paddingBottom: '0px' }}>
         <div className={className}>
           <GenericElDropTarget opt={opt} onDrop={opt.onChange} />
-          <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>remove</Tooltip>}>
-            <Button className="btn_del" bsStyle="danger" bsSize="xsmall" onClick={() => opt.onChange({})} ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
-          </OverlayTrigger>
+          {createOpt}
+          <div>
+            <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>remove</Tooltip>}>
+              <Button className="btn_del" bsStyle="danger" bsSize="xsmall" onClick={() => opt.onChange({})} ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
+            </OverlayTrigger>
+          </div>
         </div>
       </FormControl.Static>
     </FormGroup>

@@ -93,8 +93,6 @@ export default class GenericElDetails extends Component {
           if (newProps[key].fields[idx].type === 'checkbox') {
             newProps[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
           }
-          console.log(newProps[key].fields[idx].type);
-          console.log(genericEl.properties[key].fields[curIdx].type);
           if ((newProps[key].fields[idx].type === 'drag_sample' && genericEl.properties[key].fields[curIdx].type === 'drag_sample')
           || (newProps[key].fields[idx].type === 'drag_molecule' && genericEl.properties[key].fields[curIdx].type === 'drag_molecule')) {
             if (typeof curVal !== 'undefined') newProps[key].fields[idx].value = curVal;
@@ -146,11 +144,6 @@ export default class GenericElDetails extends Component {
 
   handleInputChange(event, field, layer, type = 'text') {
     const { genericEl } = this.state;
-    console.log(event);
-    console.log(field);
-    console.log(layer);
-    console.log(type);
-
     const { properties } = genericEl;
     let value = '';
     if (type === 'select') {

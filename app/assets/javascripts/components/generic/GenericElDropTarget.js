@@ -14,7 +14,7 @@ const handleSampleClick = (type, id) => {
 };
 
 const show = (opt, iconClass) => {
-  //let creationType
+  // let creationType
   if (opt.value && opt.value.el_id) {
     const pop = (
       <Popover id="popover-svg" title={opt.value.el_tip} style={{ maxWidth: 'none', maxHeight: 'none' }}>
@@ -84,7 +84,6 @@ const source = (type, props, id) => {
 
 const dropTarget = {
   drop(targetProps, monitor) {
-    console.log(targetProps);
     const sourceProps = monitor.getItem().element;
     const sourceTag = source(targetProps.opt.type.split('_')[1], sourceProps, targetProps.opt.id);
     targetProps.onDrop(sourceTag);
@@ -103,10 +102,7 @@ const dropCollect = (connect, monitor) => ({
 class GenericElDropTarget extends Component {
   render() {
     const {
-      connectDropTarget,
-      isOver,
-      canDrop,
-      opt
+      connectDropTarget, isOver, canDrop, opt
     } = this.props;
     const iconClass = (opt.dndItems && opt.dndItems[0] === 'molecule' ? 'sample' : opt.dndItems[0]);
     const className = `target${isOver ? ' is-over' : ''}${canDrop ? ' can-drop' : ''}`;
