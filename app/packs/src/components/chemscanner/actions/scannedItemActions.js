@@ -24,9 +24,9 @@ export const selectReaction = (id, fileUid, cdUid) => ({
   type: types.SELECT_REACTION, id, fileUid, cdUid
 });
 
-export const setResin = (id, fileUid, cdUid, atomId) => ({
-  type: types.SET_RESIN, id, fileUid, cdUid, atomId
-});
+//export const setResin = (id, fileUid, cdUid, atomId) => ({
+//  type: types.SET_RESIN, id, fileUid, cdUid, atomId
+//});
 
 export const toggleResinInReaction = (fileUid, cdUid, rId, molId, atomId) => ({
   type: types.TOGGLE_RESIN_IN_REACTION, fileUid, cdUid, rId, molId, atomId

@@ -12,7 +12,7 @@ const searchAndReplace = (md, pattern, regexReplace) => {
   return md;
 };
 
-module.exports = {
+export {
   searchAndReplace,
 };
 

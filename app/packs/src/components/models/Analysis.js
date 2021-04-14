@@ -1,5 +1,5 @@
 import Element from './Element';
-import Dataset from './Dataset';
+// import Dataset from './Dataset';
 
 export default class Analysis extends Element {
   static buildEmpty() {

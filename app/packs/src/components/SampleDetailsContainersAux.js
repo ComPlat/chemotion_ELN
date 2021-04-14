@@ -344,4 +344,4 @@ const HeaderNormal = ({
   );
 };
 
-module.exports = { HeaderDeleted, HeaderNormal, AnalysisModeBtn };
+export { HeaderDeleted, HeaderNormal, AnalysisModeBtn };

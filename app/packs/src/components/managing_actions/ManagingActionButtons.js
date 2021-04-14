@@ -88,4 +88,4 @@ ShareButton.defaultProps = {
   onClick: () => null,
 };
 
-module.exports = { MoveOrAssignButton, ShareButton, RemoveOrDeleteButton };
+export { MoveOrAssignButton, ShareButton, RemoveOrDeleteButton };

@@ -464,7 +464,7 @@ const instrumentText = (analysis) => {
   return ` Instrument: ${ttlIns.length}/${analysis.children.length}`;
 };
 
-module.exports = {
+export {
   rfValueFormat,
   hNmrCheckMsg,
   cNmrCheckMsg,
