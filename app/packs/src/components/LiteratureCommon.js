@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, FormControl } from 'react-bootstrap';
 import Immutable from 'immutable';
-import Cite from 'citation-js';
+const CiteCore = require('@citation-js/core');
 import Select from 'react-select';
 import Literature from './models/Literature';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
@@ -96,7 +96,7 @@ const literatureContent = (literature, onlyText) => {
       indexData = indexData.substr(0, indexData.lastIndexOf(','));
       litBibtex = litBibtex.replace(indexData, indexData.replace(/[^a-zA-Z0-9\-_]/g, ''));
     }
-    const citation = new Cite(litBibtex);
+    const citation = new CiteCore.Cite(litBibtex);
     if (onlyText) {
       content = citation.format('bibliography', {
         format: 'text',
@@ -146,7 +146,6 @@ const CitationUserRow = ({ literature, userId }) => (
     &nbsp;
     {(typeof literature.litype == 'undefined' || literature.litype == null || literature.litype == '') ? '' : `, type: ${literature.litype}`}
   </span>
-  
 );
 
 CitationUserRow.propTypes = {

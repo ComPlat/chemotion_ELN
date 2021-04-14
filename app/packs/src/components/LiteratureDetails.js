@@ -15,7 +15,9 @@ import {
   Tooltip
 } from 'react-bootstrap';
 import Immutable from 'immutable';
-import Cite from 'citation-js';
+
+const  CiteCore = require('@citation-js/core');
+
 import {
   uniqBy
 } from 'lodash';
@@ -333,9 +335,9 @@ export default class LiteratureDetails extends Component {
   fetchDOIMetadata() {
     const { doi } = this.state.literature;
     NotificationActions.removeByUid('literature');
-    Cite.inputAsync(sanitizeDoi(doi)).then((json) => {
+    CiteCore.Cite.async(sanitizeDoi(doi)).then((json) => {
       if (json[0]) {
-        const citation = new Cite(json[0]);
+        const citation = new CiteCore.Cite(json[0]);
         const { title, year } = json[0];
         this.setState(prevState => ({
           ...prevState,

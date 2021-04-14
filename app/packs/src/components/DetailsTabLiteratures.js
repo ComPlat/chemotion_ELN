@@ -13,7 +13,6 @@ import {
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
-import Cite from 'citation-js';
 import {
   Citation,
   CitationUserRow,
@@ -278,10 +277,10 @@ export default class DetailsTabLiteratures extends Component {
   fetchDOIMetadata(doi) {
     NotificationActions.removeByUid('literature');
     LoadingActions.start();
-    Cite.inputAsync(sanitizeDoi(doi)).then((json) => {
+    CiteCore.Cite.async(sanitizeDoi(doi)).then((json) => {
       LoadingActions.stop();
       if (json[0]) {
-        const citation = new Cite(json[0]);
+        const citation = new CiteCore.Cite(json[0]);
         const { title, year } = json[0];
         this.setState(prevState => ({
           ...prevState,
@@ -310,7 +309,7 @@ export default class DetailsTabLiteratures extends Component {
     CiteCore.Cite.async(isbn).then((json) => {
       LoadingActions.stop();
       if (json.data && json.data.length > 0) {
-        const citation = new Cite(json.data);
+        const citation = new CiteCore.Cite(json.data);
         this.setState(prevState => ({
           ...prevState,
           literature: {
