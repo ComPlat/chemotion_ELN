@@ -18,4 +18,4 @@ const metPref = {
 
 const metPreConv = (value, fromMP, toMP) => (metPref[fromMP] / metPref[toMP]) * value;
 
-module.exports = { metPreConv, metPrefSymbols };
+export { metPreConv, metPrefSymbols };

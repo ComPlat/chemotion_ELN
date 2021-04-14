@@ -139,4 +139,4 @@ const RndEdit = ({
   );
 };
 
-module.exports = { RndNotAvailable, RndNoAnalyses, RndOrder, RndEdit };
+export { RndNotAvailable, RndNoAnalyses, RndOrder, RndEdit };

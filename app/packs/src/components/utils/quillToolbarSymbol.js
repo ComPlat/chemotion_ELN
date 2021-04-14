@@ -658,7 +658,7 @@ const defaultMacroDropdown = {
   ]
 };
 
-module.exports = {
+export {
   reactionToolbarSymbol,
   sampleAnalysesContentSymbol,
   SpectraOps,

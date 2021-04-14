@@ -9,4 +9,4 @@ const solventsTL = [
   { 'NEt<sub>3</sub>': 'cyclohexane/ethyl acetate 20:1 + 1% NEt₃' },
 ];
 
-module.exports = { solventsTL, observationPurification };
+export { solventsTL, observationPurification };

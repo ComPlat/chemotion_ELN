@@ -6,7 +6,7 @@ import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 import rXr from './extra/routesXroutes';
-import routesUtils from './routesUtils';
+import * as routesUtils from './routesUtils';
 
 const allRoutes = (r) => {
   let rts = { ...r };

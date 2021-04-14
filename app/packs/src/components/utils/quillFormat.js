@@ -73,7 +73,7 @@ const mapValueToGroupRegex = (content, matchedGroup) => {
   return newContent;
 };
 
-module.exports = {
+export {
   contentToText,
   keepSupSub,
   rmDeltaRedundantSpaceBreak,

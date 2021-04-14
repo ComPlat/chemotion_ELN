@@ -100,7 +100,7 @@ const CapitalizeFirstLetter = (str) => {
   return str
 };
 
-module.exports = {
+export {
   UpdateSelectedObjs, GetTypeIds, UserSerial, OrderPreviewObjs, LoadPreviewIds,
   CapitalizeFirstLetter,
 };

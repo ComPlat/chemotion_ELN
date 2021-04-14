@@ -44,4 +44,4 @@ const correctPrefix = (input, precision) => {
   return `${validDigit(input * 1000000, precision)} \u03BC`;
 };
 
-module.exports = { fixDigit, validDigit, correctPrefix };
+export { fixDigit, validDigit, correctPrefix };

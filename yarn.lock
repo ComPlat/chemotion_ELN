@@ -307,7 +307,7 @@
     "@babel/helper-remap-async-to-generator" "^7.13.0"
     "@babel/plugin-syntax-async-generators" "^7.8.4"
 
-"@babel/plugin-proposal-class-properties@^7.10.4", "@babel/plugin-proposal-class-properties@^7.12.1", "@babel/plugin-proposal-class-properties@^7.13.0":
+"@babel/plugin-proposal-class-properties@^7.12.1", "@babel/plugin-proposal-class-properties@^7.13.0":
   version "7.13.0"
   resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-class-properties/-/plugin-proposal-class-properties-7.13.0.tgz#146376000b94efd001e57a40a88a525afaab9f37"
   integrity sha512-KnTDjFNC1g+45ka0myZNvSBFLhNCLN+GeGYLDEA8Oq7MZ6yMgfLoIRh86GRT0FjtJhZw8JyUskP9uvj5pHM9Zg==
@@ -1407,9 +1407,15 @@
     node-gyp "^7.1.0"
     read-package-json-fast "^2.0.1"
 
-"@rails/webpacker@https://github.com/rails/webpacker.git":
+"@rails/ujs@^6.1.3-1":
+  version "6.1.3-1"
+  resolved "https://registry.yarnpkg.com/@rails/ujs/-/ujs-6.1.3-1.tgz#c25ca8473a40298ecab7b0020214e77c0e6f5188"
+  integrity sha512-mygePdimLMOQ2nr9YclG1UIyKgaNfb2dMhsjhTs18j6DvlKR9VRz1j/Mbd2E7VL7HX7hlMBD1cltDrQsTZPjEw==
+
+"@rails/webpacker@^6.0.0-beta.6":
   version "6.0.0-beta.6"
-  resolved "https://github.com/rails/webpacker.git#7ed1c08e79c17680636fa99e6bb095ec1fbc8008"
+  resolved "https://registry.yarnpkg.com/@rails/webpacker/-/webpacker-6.0.0-beta.6.tgz#180d3297d466168b15a0bc089f5de8c4977a00c3"
+  integrity sha512-rM99yqoBwSZtH4KgWtG1mIZaNQFAPYR/eI+8/COXkbA0taEd0vmAZ70TkLT+gxFenrjLHW32v0/42HEKICzO/w==
   dependencies:
     "@babel/core" "^7.12.9"
     "@babel/plugin-proposal-class-properties" "^7.12.1"
@@ -5599,6 +5605,14 @@ file-entry-cache@^2.0.0:
     flat-cache "^1.2.1"
     object-assign "^4.0.1"
 
+file-loader@^6.0.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/file-loader/-/file-loader-6.2.0.tgz#baef7cf8e1840df325e4390b4484879480eebe4d"
+  integrity sha512-qo3glqyTa61Ytg4u73GultjHGjdRyig3tG6lPtyX/jOEJvHif9uB0/OCI2Kif6ctF3caQTW2G5gym21oAsI4pw==
+  dependencies:
+    loader-utils "^2.0.0"
+    schema-utils "^3.0.0"
+
 file-selector@^0.1.8:
   version "0.1.19"
   resolved "https://registry.yarnpkg.com/file-selector/-/file-selector-0.1.19.tgz#8ecc9d069a6f544f2e4a096b64a8052e70ec8abf"
@@ -9115,10 +9129,10 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-pdfjs-dist@2.5.207:
-  version "2.5.207"
-  resolved "https://registry.yarnpkg.com/pdfjs-dist/-/pdfjs-dist-2.5.207.tgz#b5e8c19627be64269cd3fb6df3eaaf45ddffe7b6"
-  integrity sha512-xGDUhnCYPfHy+unMXCLCJtlpZaaZ17Ew3WIL0tnSgKFUZXHAPD49GO9xScyszSsQMoutNDgRb+rfBXIaX/lJbw==
+pdfjs-dist@2.6.347:
+  version "2.6.347"
+  resolved "https://registry.yarnpkg.com/pdfjs-dist/-/pdfjs-dist-2.6.347.tgz#f257ed66e83be900cd0fd28524a2187fb9e25cd5"
+  integrity sha512-QC+h7hG2su9v/nU1wEI3SnpPIrqJODL7GTDFvR74ANKGq1AFJW16PH8VWnhpiTi9YcLSFV9xLeWSgq+ckHLdVQ==
 
 performance-now@^0.2.0:
   version "0.2.0"
@@ -10256,19 +10270,19 @@ react-overlays@^0.8.0:
     react-transition-group "^2.2.0"
     warning "^3.0.0"
 
-react-pdf@^5.0.0:
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/react-pdf/-/react-pdf-5.2.0.tgz#a0c3b8fb953eb3aaad58d7cb35aba2dc71a0cc9e"
-  integrity sha512-/vl+fzurHzz1o1knGSnLzFu1lL/1yb67JSE3WSX3bC/ioL/j34q5WiJbxK2D61Og0RZe6CNy9rve6JyB+sfHCw==
+react-pdf@^5.3.0-beta:
+  version "5.3.0-beta.3"
+  resolved "https://registry.yarnpkg.com/react-pdf/-/react-pdf-5.3.0-beta.3.tgz#00153d85b5e14cac65f6cdf2abf82489b9f83153"
+  integrity sha512-XpGk4OnE6f2COSrpl4EIgSz9UNsA7mtyj6gWMcsSIXkJ2zUo2O6w8xwiqZ1MKzHf/z4H1nWCPf0YOd/E0JRDqQ==
   dependencies:
     "@babel/runtime" "^7.0.0"
+    file-loader "^6.0.0"
     make-cancellable-promise "^1.0.0"
     make-event-props "^1.1.0"
     merge-class-names "^1.1.1"
     merge-refs "^1.0.0"
-    pdfjs-dist "2.5.207"
+    pdfjs-dist "2.6.347"
     prop-types "^15.6.2"
-    worker-loader "^3.0.0"
 
 react-popper@^0.9.1:
   version "0.9.5"
@@ -12916,14 +12930,6 @@ word-wrap@~1.2.3:
   resolved "https://registry.yarnpkg.com/word-wrap/-/word-wrap-1.2.3.tgz#610636f6b1f703891bd34771ccb17fb93b47079c"
   integrity sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==
 
-worker-loader@^3.0.0:
-  version "3.0.8"
-  resolved "https://registry.yarnpkg.com/worker-loader/-/worker-loader-3.0.8.tgz#5fc5cda4a3d3163d9c274a4e3a811ce8b60dbb37"
-  integrity sha512-XQyQkIFeRVC7f7uRhFdNMe/iJOdO6zxAaR3EWbDp45v3mDhrTi+++oswKNxShUNjPC/1xUp5DB29YKLhFo129g==
-  dependencies:
-    loader-utils "^2.0.0"
-    schema-utils "^3.0.0"
-
 workerpool@6.1.0:
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/workerpool/-/workerpool-6.1.0.tgz#a8e038b4c94569596852de7a8ea4228eefdeb37b"
@@ -13152,6 +13158,11 @@ yargs@^15.4.1:
     which-module "^2.0.0"
     y18n "^4.0.0"
     yargs-parser "^18.1.2"
+
+yarn@^1.22.10:
+  version "1.22.10"
+  resolved "https://registry.yarnpkg.com/yarn/-/yarn-1.22.10.tgz#c99daa06257c80f8fa2c3f1490724e394c26b18c"
+  integrity sha512-IanQGI9RRPAN87VGTF7zs2uxkSyQSrSPsju0COgbsKQOOXr5LtcVPeyXWgwVa0ywG3d8dg6kSYKGBuYK021qeA==
 
 yeast@0.1.2:
   version "0.1.2"

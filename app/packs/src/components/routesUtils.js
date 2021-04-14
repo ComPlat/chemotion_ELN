@@ -191,7 +191,7 @@ const elementShowOrNew = (e) => {
   return null;
 };
 
-module.exports = {
+export {
   collectionShow,
   scollectionShow,
   collectionShowCollectionManagement,

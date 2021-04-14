@@ -24,4 +24,4 @@ const reOrderArr = (sourceTagEl, targetTagEl, criteria, arr = []) => {
   return newArr;
 }
 
-module.exports = { reOrderArr, isEqId };
+export { reOrderArr, isEqId };
