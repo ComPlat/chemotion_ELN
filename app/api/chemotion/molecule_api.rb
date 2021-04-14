@@ -127,10 +127,33 @@ module Chemotion
         end
       end
 
-      desc "Return molecule by Molfile"
+      namespace :decouple do
+        desc 'decouple from molecule'
+        params do
+          optional :molfile, type: String, desc: 'molfile'
+          optional :svg_name, type: String, desc: 'original svg filename'
+          requires :decoupled, type: Boolean, desc: 'decouple from molecule'
+        end
+        post do
+          molfile = params[:molfile]
+          svg_name = params[:svg_name]
+          decoupled = params[:decoupled]
+
+          if decoupled && molfile.blank?
+            molecule = Molecule.find_or_create_dummy
+            ob = ''
+          else
+            molecule = Molecule.find_or_create_by_molfile(molfile)
+            ob = molecule&.ob_log
+          end
+          molecule.attributes.merge(temp_svg: svg_name, ob_log: ob)
+        end
+      end
+
+      desc 'Return molecule by Molfile'
       params do
-        requires :molfile, type: String, desc: "Molecule molfile"
-        optional :svg_file, type: String, desc: "Molecule svg file"
+        requires :molfile, type: String, desc: 'Molecule molfile'
+        optional :svg_file, type: String, desc: 'Molecule svg file'
       end
       post do
         svg = params[:svg_file]
@@ -151,8 +174,8 @@ module Chemotion
         svg_file.close
 
         molecule = Molecule.find_or_create_by_molfile(molfile)
-        ob = molecule.ob_log
-        molecule.attributes.merge({ temp_svg: svg_file_name, ob_log: ob })
+        ob = molecule&.ob_log
+        molecule.attributes.merge(temp_svg: svg_file_name, ob_log: ob)
       end
 
       desc "return CAS of the molecule"

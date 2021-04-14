@@ -1,6 +1,6 @@
 development:
   :primary_store: 'local'
-  :secundary_store: ''
+  :secondary_store: ''
   :stores:
     :tmp:
       :data_folder: 'tmp/uploads/development'
@@ -28,7 +28,7 @@ development:
 
 test:
   :primary_store: 'local'
-  :secundary_store: ''
+  :secondary_store: ''
   :stores:
     :tmp:
       :data_folder: 'tmp/test/uploads/tmp/'
@@ -39,7 +39,7 @@ test:
 
 production:
   :primary_store: 'local'
-  :secundary_store: ''
+  :secondary_store: ''
   :stores:
     :tmp:
       :data_folder: 'tmp/test/uploads/tmp/'

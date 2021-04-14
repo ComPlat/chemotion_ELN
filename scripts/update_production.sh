@@ -22,8 +22,8 @@ BUNDLER_VERSION=1.17.3
 
 ## NODEJS
 NVM_VERSION='v0.35.3'
-NODE_VERSION=12.18.3
-NPM_VERSION=6.14.6
+NODE_VERSION=12.21.0
+NPM_VERSION=7.6.2
 
 ## default naming of directories and files
 APP_NAME=chemotion_ELN 

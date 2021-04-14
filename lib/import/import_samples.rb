@@ -66,8 +66,9 @@ class Import::ImportSamples
   def insert_rows
     (2..xlsx.last_row).each do |i|
       row = Hash[[header, xlsx.row(i)].transpose]
-      next unless has_structure(row)
-      rows << row.each_pair{|k,v| v && row[k] = v.to_s }
+      next unless has_structure(row) || row['decoupled'] == 'Yes'
+
+      rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
   end
 
@@ -76,32 +77,34 @@ class Import::ImportSamples
     ActiveRecord::Base.transaction do
       rows.map.with_index do |row, i|
         begin
-          # If molfile and smiles (Canonical smiles) is both present
-          #  Double check the rows
-          if has_molfile(row) && has_smiles(row)
-            molfile, go_to_next = get_data_from_molfile_and_smiles(row)
-            next if go_to_next
-          end
+          if row['decoupled'] == 'Yes' && !has_structure(row)
+            molecule = Molecule.find_or_create_dummy
+          else
+            # If molfile and smiles (Canonical smiles) is both present
+            #  Double check the rows
+            if has_molfile(row) && has_smiles(row)
+              molfile, go_to_next = get_data_from_molfile_and_smiles(row)
+              next if go_to_next
+            end
 
-          if has_molfile(row)
-            molfile, molecule = get_data_from_molfile(row)
-          elsif has_smiles(row)
-            molfile, molecule, go_to_next = get_data_from_smiles(row)
-            next if go_to_next
+            if has_molfile(row)
+              molfile, molecule = get_data_from_molfile(row)
+            elsif has_smiles(row)
+              molfile, molecule, go_to_next = get_data_from_smiles(row)
+              next if go_to_next
+            end
+            if molecule_not_exist(molecule)
+              unprocessable_count += 1
+              next
+            end
           end
-
-          if molecule_not_exist(molecule)
-            unprocessable_count += 1
-            next
-          end
-
           sample_save(row, molfile, molecule)
         rescue
           unprocessable_count += 1
           @unprocessable << { row: row, index: i }
         end
       end
-      raise "More than 1 row can not be processed" if unprocessable_count > 0
+      raise 'More than 1 row can not be processed' if unprocessable_count.positive?
     end
   end
 
@@ -193,6 +196,7 @@ class Import::ImportSamples
 
       sample[db_column] = row[field]
       sample[db_column] = '' if %w[description solvent location external_label].include?(db_column) && row[field].nil?
+      sample[db_column] = row[field] == 'Yes' if %w[decoupled].include?(db_column)
     end
     sample.validate_stereo(stereo)
     sample.collections << Collection.find(collection_id)

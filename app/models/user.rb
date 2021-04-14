@@ -80,6 +80,14 @@ class User < ApplicationRecord
 
   has_many :computed_props
 
+  has_many :text_templates, dependent: :destroy
+  has_one :sample_text_template, dependent: :destroy
+  has_one :reaction_text_template, dependent: :destroy
+  has_one :reaction_description_text_template, dependent: :destroy
+  has_one :screen_text_template, dependent: :destroy
+  has_one :wellplate_text_template, dependent: :destroy
+  has_one :research_plan_text_template, dependent: :destroy
+
   accepts_nested_attributes_for :affiliations
 
   validates_presence_of :first_name, :last_name, allow_blank: false
@@ -102,6 +110,7 @@ class User < ApplicationRecord
 
   after_create :create_chemotion_public_collection
   after_create :create_all_collection, :has_profile
+  after_create :new_user_text_template
   after_create :update_matrix
   before_destroy :delete_data
 
@@ -303,6 +312,17 @@ class User < ApplicationRecord
     log_error 'Error on update_matrix'
   end
 
+  def create_text_template
+    TextTemplate.types.keys.each do |type|
+      klass = type.to_s.constantize
+      template = klass.new
+      template.user_id = id
+      template.data = klass.default_templates
+      template.save!
+    end
+  end
+
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:
@@ -312,6 +332,10 @@ class User < ApplicationRecord
   # - delete it
   def create_all_collection
     Collection.create(user: self, label: 'All', is_locked: true, position: 0)
+  end
+
+  def new_user_text_template
+    create_text_template
   end
 
   def create_chemotion_public_collection

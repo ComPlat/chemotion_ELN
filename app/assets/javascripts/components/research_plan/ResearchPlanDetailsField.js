@@ -10,11 +10,12 @@ import ResearchPlanDetailsFieldImage from './ResearchPlanDetailsFieldImage';
 import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from './ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from './ResearchPlanDetailsFieldReaction';
+import CustomTextEditor from '../common/CustomTextEditor';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
     const {
-      field, index, disabled, onChange, onDrop, onDelete, onExport, update, edit
+      field, index, disabled, onChange, onDrop, onDelete, onExport, update, edit, tableIndex
     } = this.props;
     let label;
     let component;
@@ -56,6 +57,10 @@ export default class ResearchPlanDetailsField extends Component {
           />);
         break;
       case 'table':
+        field.value.columns.forEach((item)=> {
+          item.editor = CustomTextEditor
+          return item;
+        });
         label = 'Table';
         component =
           (<ResearchPlanDetailsFieldTable
@@ -67,6 +72,7 @@ export default class ResearchPlanDetailsField extends Component {
             onExport={onExport}
             update={update}
             edit={edit}
+            tableIndex={tableIndex}
           />);
         break;
       case 'sample':

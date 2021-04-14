@@ -78,6 +78,18 @@ RSpec.configure do |config|
       .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'text/json' })
       .to_return(status: 200, body: '', headers: {})
 
+    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/YMWUJEATGCHHMB-UHFFFAOYSA-N/record/JSON')
+      .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'text/json' })
+      .to_return(status: 200, body: '', headers: {})
+    
+    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/UHOVQNZJYSORNB-UHFFFAOYSA-N/record/JSON')
+      .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'text/json' })
+      .to_return(status: 200, body: '', headers: {})
+      
+    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/PNNRZXFUPQQZSO-UHFFFAOYSA-N/record/JSON')
+      .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'text/json' })
+      .to_return(status: 200, body: '', headers: {})
+
     stub_request(:post, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/record/JSON')
       .with(headers: { 'Content-Type' => 'text/json' }, body: { 'inchikey' => 'RDHQFKQIGNGIED-UHFFFAOYSA-N,RDHQFKQIGNGIED-UHFFFAOYSA-O' })
       .to_return(

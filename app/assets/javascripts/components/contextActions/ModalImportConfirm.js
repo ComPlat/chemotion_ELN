@@ -140,7 +140,6 @@ export default class ModalImportConfirm extends React.Component {
         filtered_mapped_keys[field] = e
       }
     })
-
     let processRows = rows.map(row=>{
       if (row.checked){
         let newRow = {
@@ -152,10 +151,11 @@ export default class ModalImportConfirm extends React.Component {
           newRow[e] = mapped_keys[e].multiple ? k.map(f=>{return(f+"\n"+row[f]+"\n")}).join("\n")
            : row[k]
         })
+        newRow['decoupled'] = row['MOLECULE-LESS'] || 'f'
         return newRow
       }
     })
-
+    filtered_mapped_keys['decoupled'] = "MOLECULE-LESS"
     let params = {
       currentCollectionId: collection_id,
       rows: processRows,

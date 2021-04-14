@@ -13,6 +13,7 @@ class OSample < OpenStruct
     end
 
     data["elemental_compositions_attributes"].each { |i| i.delete("description") } if data["elemental_compositions_attributes"]
+    data['show_label'] = false if data['show_label'].blank?
     super
   end
 
@@ -42,7 +43,6 @@ module ReactionHelpers
 
   def update_materials_for_reaction(reaction, material_attributes, current_user)
     collections = reaction.collections
-
     materials = OpenStruct.new(material_attributes)
     materials = {
       starting_material: Array(material_attributes['starting_materials']).map{|m| OSample.new(m)},
@@ -89,7 +89,7 @@ module ReactionHelpers
             else
               attributes = sample.to_h.except(
                 :id, :is_new, :is_split, :reference, :equivalent, :position,
-                :type, :molecule, :collection_id, :short_label, :waste, :coefficient, :user_labels,
+                :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
                 :boiling_point_lowerbound, :boiling_point_upperbound,
                 :melting_point_lowerbound, :melting_point_upperbound
               ).merge(created_by: current_user.id,
@@ -125,6 +125,7 @@ module ReactionHelpers
               reaction_id: reaction.id,
               equivalent: sample.equivalent,
               reference: sample.reference,
+              show_label: sample.show_label,
               waste: sample.waste,
               coefficient: sample.coefficient,
               position: sample.position,
@@ -164,6 +165,7 @@ module ReactionHelpers
                 reaction_id: reaction.id,
                 equivalent: sample.equivalent,
                 reference: sample.reference,
+                show_label: sample.show_label,
                 waste: sample.waste,
                 coefficient: sample.coefficient,
                 position: sample.position,
@@ -177,6 +179,7 @@ module ReactionHelpers
                 reaction_id: reaction.id,
                 equivalent: sample.equivalent,
                 reference: sample.reference,
+                show_label: sample.show_label,
                 waste: sample.waste,
                 coefficient: sample.coefficient,
                 position: sample.position,

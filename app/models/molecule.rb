@@ -75,6 +75,10 @@ class Molecule < ApplicationRecord
     joins(:samples).joins("inner join wells w on w.sample_id = samples.id" ).uniq
   }
 
+  def self.find_or_create_dummy
+    molecule = Molecule.find_or_create_by(inchikey: 'DUMMY')
+  end
+
   def self.find_or_create_by_molfile(molfile, **babel_info)
     unless babel_info && babel_info[:inchikey]
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
@@ -207,6 +211,8 @@ class Molecule < ApplicationRecord
   end
 
   def create_molecule_names
+    return if inchikey == 'DUMMY'
+
     if names.present?
       names.each do |nm|
         molecule_names.create(name: nm, description: 'iupac_name')

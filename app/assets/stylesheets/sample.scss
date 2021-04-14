@@ -59,7 +59,8 @@
   }
 }
 
-.sample-form {
+.sample-form,
+.additional-form {
   margin-bottom: 0px !important;
 
   // .table > tbody > tr > td {
@@ -103,7 +104,8 @@
     }
   }
 
-  .top-secret-checkbox {
+  .top-secret-checkbox,
+  .decoupled-checkbox {
     margin-top: 22px;
     float: right;
   }

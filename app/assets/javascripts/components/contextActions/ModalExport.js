@@ -1,11 +1,38 @@
 import React from 'react';
-import {Button, ButtonToolbar, Input,
-        DropdownButton, MenuItem} from 'react-bootstrap';
+import { Button, ButtonToolbar, DropdownButton, MenuItem } from 'react-bootstrap';
 import CheckBoxs from '../common/CheckBoxs';
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
 import ReportsFetcher from './../fetchers/ReportsFetcher';
-import Utils from '../utils/Functions';
+
+const filterUIState = (uiState) => {
+  const {
+    currentCollection, sample, reaction, wellplate, isSync
+  } = uiState;
+  return {
+    sample: {
+      checkedIds: sample.checkedIds.toArray(),
+      uncheckedIds: sample.uncheckedIds.toArray(),
+      checkedAll: sample.checkedAll,
+    },
+    reaction: {
+      checkedIds: reaction.checkedIds.toArray(),
+      uncheckedIds: reaction.uncheckedIds.toArray(),
+      checkedAll: reaction.checkedAll,
+    },
+    wellplate: {
+      checkedIds: wellplate.checkedIds.toArray(),
+      uncheckedIds: wellplate.uncheckedIds.toArray(),
+      checkedAll: wellplate.checkedAll,
+    },
+    currentCollection: currentCollection.id,
+    isSync,
+  };
+};
+
+const exportSelections = (uiState, userState, columns, e) => {
+  ReportsFetcher.createDownloadFile({ exportType: e, uiState: filterUIState(uiState), columns });
+};
 
 export default class ModalExport extends React.Component {
   constructor(props) {
@@ -229,36 +256,5 @@ export default class ModalExport extends React.Component {
         {this.buttonBar()}
       </div>
     )
-  }
-}
-
-const exportSelections = (uiState, userState, columns, e) => {
-  ReportsFetcher.createDownloadFile({
-    exportType: e,
-    uiState: filterUIState(uiState),
-    columns: columns
-  });
-}
-
-const filterUIState = (uiState) => {
-  const { currentCollection, sample, reaction, wellplate, isSync } = uiState;
-  return {
-    sample: {
-      checkedIds: sample.checkedIds.toArray(),
-      uncheckedIds: sample.uncheckedIds.toArray(),
-      checkedAll: sample.checkedAll,
-    },
-    reaction: {
-      checkedIds: reaction.checkedIds.toArray(),
-      uncheckedIds: reaction.uncheckedIds.toArray(),
-      checkedAll: reaction.checkedAll,
-    },
-    wellplate: {
-      checkedIds: wellplate.checkedIds.toArray(),
-      uncheckedIds: wellplate.uncheckedIds.toArray(),
-      checkedAll: wellplate.checkedAll,
-    },
-    currentCollection: currentCollection.id,
-    isSync: isSync,
   }
 }

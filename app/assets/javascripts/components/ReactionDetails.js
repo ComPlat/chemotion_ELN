@@ -29,6 +29,14 @@ import { rfValueFormat } from './utils/ElementUtils';
 import ExportSamplesBtn from './ExportSamplesBtn';
 import CopyElementModal from './common/CopyElementModal';
 import { permitOn } from './common/uis';
+import UserStore from './stores/UserStore'
+import UserActions from './actions/UserActions';
+import Immutable from 'immutable';
+import ElementDetailSortTab from './ElementDetailSortTab';
+import ArrayUtils from './utils/ArrayUtils';
+import KeyboardActions from './actions/KeyboardActions';
+import TabLayoutContainer from './TabLayoutContainer';
+import _ from 'lodash';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -39,6 +47,7 @@ export default class ReactionDetails extends Component {
       reaction: reaction,
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
+      visible: Immutable.List(),
     };
 
     // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
@@ -49,6 +58,7 @@ export default class ReactionDetails extends Component {
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleReactionChange = this.handleReactionChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
   }
 
   onUIStoreChange(state) {
@@ -82,13 +92,14 @@ export default class ReactionDetails extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const nextReaction = nextProps.reaction;
     const nextActiveTab = nextState.activeTab;
-    const { reaction, activeTab } = this.state;
+    const nextVisible = nextState.visible;
+    const { reaction, activeTab, visible } = this.state;
     return (
       nextReaction.id !== reaction.id ||
       nextReaction.updated_at !== reaction.updated_at ||
       nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
       !!nextReaction.changed || !!nextReaction.editedSample ||
-      nextActiveTab !== activeTab
+      nextActiveTab !== activeTab || nextVisible !== visible
     );
   }
 
@@ -286,6 +297,8 @@ export default class ReactionDetails extends Component {
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
+
+
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
@@ -365,56 +378,100 @@ export default class ReactionDetails extends Component {
     })
   }
 
+  onTabPositionChanged(visible) {
+    this.setState({visible})
+  }
+
   render() {
     const {reaction} = this.state;
+    const { visible } = this.state;
+    const tabContentsMap = {
+      scheme: (
+        <Tab eventKey="scheme" title="Scheme"  key={`scheme_${reaction.id}`}>
+          <ReactionDetailsScheme
+            reaction={reaction}
+            onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+            onInputChange={(type, event) => this.handleInputChange(type, event)}
+            />
+        </Tab>
+      ),
+      properties: (
+        <Tab eventKey="properties" title="Properties" key={`properties_${reaction.id}`}>
+          <ReactionDetailsProperties
+            reaction={reaction}
+            onReactionChange={r => this.handleReactionChange(r)}
+            onInputChange={(type, event) => this.handleInputChange(type, event)}
+            key={reaction.checksum}
+          />
+        </Tab>
+      ),
+      references: (
+        <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
+          <ReactionDetailsLiteratures
+            element={reaction}
+            literatures={reaction.isNew === true ? reaction.literatures : null}
+            onElementChange={r => this.handleReactionChange(r)}
+          />
+        </Tab>
+      ),
+      analyses: (
+        <Tab eventKey="analyses" title="Analyses" key={`analyses_${reaction.id}`}>
+          {this.productData(reaction)}
+        </Tab>
+      ),
+      green_chemistry: (
+        <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
+          <GreenChemistry
+            reaction={reaction}
+            onReactionChange={this.handleReactionChange}
+          />
+        </Tab>
+      )
+    };
+
+    const tabTitlesMap = {
+      green_chemistry: 'Green Chemistry'
+    }
+
+
+    for (let j = 0; j < XTabs.count; j += 1) {
+      if (XTabs[`on${j}`](reaction)) {
+        const NoName = XTabs[`content${j}`];
+        tabContentsMap[`xtab_${j}`] = (
+          <Tab eventKey={`xtab_${j}`} key={`xtab_${j}`} title={XTabs[`title${j}`]} >
+            <ListGroupItem style={{ paddingBottom: 20 }} >
+              <NoName reaction={reaction} />
+            </ListGroupItem>
+          </Tab>
+        );
+	tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
+      }
+    }
+
+    const tabContents = [];
+    visible.forEach((value) => {
+      const tabContent = tabContentsMap[value];
+      if (tabContent) { tabContents.push(tabContent); }
+    });
 
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
-    let extraTabs =[];
-    for (let j=0;j < XTabs.count;j++){
-      if (XTabs['on'+j](reaction)){extraTabs.push((i)=>this.extraTab(i))}
-    }
 
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
     return (
       <Panel className="eln-panel-detail"
              bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
         <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
         <Panel.Body>
           {this.reactionSVG(reaction)}
-          <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect.bind(this)}
-             id="reaction-detail-tab">
-            <Tab eventKey={0} title={'Scheme'}>
-              <ReactionDetailsScheme
-                reaction={reaction}
-                onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
-                onInputChange={(type, event) => this.handleInputChange(type, event)}
-                />
-            </Tab>
-            <Tab eventKey={1} title={'Properties'}>
-              <ReactionDetailsProperties
-                reaction={reaction}
-                onReactionChange={reaction => this.handleReactionChange(reaction)}
-                onInputChange={(type, event) => this.handleInputChange(type, event)}
-                key={reaction.checksum}
-                />
-            </Tab>
-            <Tab eventKey={2} title={'References'}>
-              <ReactionDetailsLiteratures
-                element={reaction}
-                literatures={reaction.isNew === true ? reaction.literatures : null}
-                onElementChange={reaction => this.handleReactionChange(reaction)}
-              />
-            </Tab>
-            <Tab eventKey={3} title={'Analyses'}>
-                {this.productData(reaction)}
-            </Tab>
-            <Tab eventKey={4} title="Green Chemistry">
-              <GreenChemistry
-                reaction={reaction}
-                onReactionChange={this.handleReactionChange}
-              />
-            </Tab>
-            {extraTabs.map((e,i)=>e(i))}
+          <ElementDetailSortTab
+            type="reaction"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab">
+            {tabContents}
           </Tabs>
           <hr/>
           <ButtonToolbar>

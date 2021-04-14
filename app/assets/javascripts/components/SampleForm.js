@@ -16,6 +16,7 @@ export default class SampleForm extends React.Component {
     this.state = {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
+      moleculeFormulaWas: props.sample.molecule_formula,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -31,6 +32,10 @@ export default class SampleForm extends React.Component {
     this.setState({ isMolNameLoading: false });
   }
 
+  formulaChanged() {
+    return this.props.sample.molecule_formula !== this.state.moleculeFormulaWas;
+  }
+
   handleAmountChanged(amount) {
     this.props.sample.setAmount(amount);
   }
@@ -43,6 +48,10 @@ export default class SampleForm extends React.Component {
   handleDensityChanged(density) {
     this.props.sample.setDensity(density);
     this.setState({ molarityBlocked: true });
+  }
+
+  handleMolecularMassChanged(mass) {
+    this.props.sample.setMolecularMass(mass);
   }
 
   showStructureEditor() {
@@ -70,9 +79,25 @@ export default class SampleForm extends React.Component {
         <Checkbox
           inputRef={(ref) => { this.topSecretInput = ref; }}
           checked={sample.is_top_secret}
-          onChange={e => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
+          onChange={e => this.handleFieldChanged('is_top_secret', e.target.checked)}
         >
           Top secret
+        </Checkbox>
+      );
+    }
+
+    return (<span />);
+  }
+
+  decoupledCheckbox(sample) {
+    if (sample.can_update) {
+      return (
+        <Checkbox
+          inputRef={(ref) => { this.decoupledInput = ref; }}
+          checked={sample.decoupled}
+          onChange={e => this.handleFieldChanged('decoupled', e.target.checked)}
+        >
+          Decoupled
         </Checkbox>
       );
     }
@@ -214,13 +239,19 @@ export default class SampleForm extends React.Component {
     this.props.parent.setState({ sample });
   }
 
-  handleFieldChanged(sample, field, e) {
+  handleFieldChanged(field, e) {
+    const { sample } = this.props;
     if (/amount/.test(field)) {
       this.handleAmountChanged(e);
     } else if (/molarity/.test(field)) {
       this.handleMolarityChanged(e);
     } else if (/density/.test(field)) {
       this.handleDensityChanged(e);
+    } else if (/molecular_mass/.test(field)) {
+      this.handleMolecularMassChanged(e);
+    } else if (/^xref_/.test(field)) {
+      const key = field.split('xref_')[1];
+      sample.xref[key] = e;
     } else if (e && e.value) {
       // for numeric inputs
       sample[field] = e.value;
@@ -228,7 +259,15 @@ export default class SampleForm extends React.Component {
       sample[field] = e;
     }
 
-    this.props.parent.setState({ sample });
+    sample.formulaChanged = this.formulaChanged();
+
+    if (field === 'decoupled') {
+      if (!sample[field] && ((sample.molfile || '') === '')) {
+        this.props.parent.setState({ sample });
+      } else {
+        this.props.parent.setState({ sample }, this.props.decoupleMolecule);
+      }
+    } else { this.props.parent.setState({ sample }); }
   }
 
   textInput(sample, field, label, disabled = false) {
@@ -238,8 +277,8 @@ export default class SampleForm extends React.Component {
         <FormControl
           id={`txinput_${field}`}
           type="text"
-          value={sample[field] || ''}
-          onChange={(e) => {this.handleFieldChanged(sample, field, e.target.value)}}
+          value={(/^xref_/.test(field) ? sample.xref[field.split('xref_')[1]] : sample[field]) || ''}
+          onChange={(e) => { this.handleFieldChanged(field, e.target.value); }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update}
         />
@@ -258,7 +297,7 @@ export default class SampleForm extends React.Component {
         options={solventOptions}
         value={sample.solvent}
         disabled={!sample.can_update}
-        onChange={(e) => this.handleFieldChanged(sample, 'solvent', e)}
+        onChange={(e) => this.handleFieldChanged('solvent', e)}
       />
     );
   }
@@ -291,7 +330,7 @@ export default class SampleForm extends React.Component {
           disabled={disabled}
           block={block}
           bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
-          onChange={e => this.handleFieldChanged(sample, field, e)}
+          onChange={e => this.handleFieldChanged(field, e)}
         />
       </td>
     );
@@ -344,7 +383,7 @@ export default class SampleForm extends React.Component {
           ref={(input) => { this.descriptionInput = input; }}
           placeholder={sample.description}
           value={sample.description || ''}
-          onChange={e => this.handleFieldChanged(sample, 'description', e.target.value)}
+          onChange={e => this.handleFieldChanged('description', e.target.value)}
           rows={2}
           disabled={!sample.can_update}
         />
@@ -354,11 +393,12 @@ export default class SampleForm extends React.Component {
 
   render() {
     const sample = this.props.sample || {};
-    const isPolymer = sample.molfile.indexOf(' R# ') !== -1;
+    const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
     const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
     const densityBlocked = isDisabled ? true : !molarityBlocked;
+    const { enableSampleDecoupled } = this.props;
 
     return (
       <Table responsive className="sample-form">
@@ -374,6 +414,11 @@ export default class SampleForm extends React.Component {
                 <div style={{ width: '15%' }} className="top-secret-checkbox">
                   {this.topSecretCheckbox(sample)}
                 </div>
+                {
+                  enableSampleDecoupled ? (
+                    <div style={{ width: '15%' }} className="decoupled-checkbox">{this.decoupledCheckbox(sample)}</div>
+                  ) : null
+                }
               </div>
             </td>
           </tr>
@@ -395,6 +440,19 @@ export default class SampleForm extends React.Component {
             </td>
           </tr>
 
+          { sample.decoupled &&
+            <tr>
+              {
+                this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
+              }
+              <td colSpan="3">
+                {
+                  this.textInput(sample, 'sum_formula', 'Sum formula')
+                }
+              </td>
+            </tr>
+          }
+
           <tr className="visible-hd">
             {this.sampleAmount(sample)}
             <td>
@@ -409,6 +467,45 @@ export default class SampleForm extends React.Component {
               />
             </td>
           </tr>
+
+          {/* comment 'Optical rotation' ... 'Private notes' out temporarily */}
+
+          {/* <tr>
+            <td>
+              {
+                this.textInput(sample, 'xref_optical_rotation', 'Optical rotation')
+              }
+            </td>
+            <td>
+              {
+                this.textInput(sample, 'xref_rfvalue', 'Rf-Value')
+              }
+            </td>
+            <td>
+              {
+                this.textInput(sample, 'xref_rfsovents', 'Rf-Sovents')
+              }
+            </td>
+            <td>
+              {
+                this.textInput(sample, 'xref_supplier', 'Supplier')
+              }
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="4">
+              <FormGroup>
+                <ControlLabel>Private notes</ControlLabel>
+                <FormControl
+                  componentClass="textarea"
+                  value={sample.xref.private_notes || ''}
+                  onChange={e => this.handleFieldChanged('xref_private_notes', e.target.value)}
+                  rows={2}
+                  disabled={!sample.can_update}
+                />
+              </FormGroup>
+            </td>
+          </tr> */}
 
           <tr>
             {
@@ -451,5 +548,9 @@ export default class SampleForm extends React.Component {
 SampleForm.propTypes = {
   sample: PropTypes.object,
   parent: PropTypes.object,
-  customizableField: PropTypes.func.isRequired
+  customizableField: PropTypes.func.isRequired,
+  enableSampleDecoupled: PropTypes.bool,
+  decoupleMolecule: PropTypes.func.isRequired
 };
+
+SampleForm.defaultProps = { enableSampleDecoupled: false };

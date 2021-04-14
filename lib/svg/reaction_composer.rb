@@ -392,14 +392,41 @@ module SVG
 
     def inner_file_content(svg_path)
       file = @rails_path ? "#{Rails.public_path}#{svg_path}" : svg_path
-      if !File.directory?(file)
-        doc = Nokogiri::XML(File.open(file))
-        if svg_path.include?('/samples')
-          doc.at_css('svg')
-        else
-          doc.at_css('g svg')
-        end
+      return svg_text(svg_path) if svg_path.start_with?('svg_text/')
+
+      return if File.directory?(file)
+
+      doc = Nokogiri::XML(File.open(file))
+      if svg_path.include?('/samples')
+        doc.at_css('svg')
+      else
+        doc.at_css('g svg')
       end
+    end
+
+    def svg_text(path)
+      text = path.split(%r{^svg_text\/})[1]
+      text = text[0, 56] + '...' if text.length > 60
+      text_lines = text.scan(/.{1,20}/).map do |text_line|
+        "<tspan x=\"0\" dy=\"1.2em\">#{text_line}</tspan>"
+      end
+
+      content = <<~HEREDOC
+        <?xml version="1.0"?>
+        <svg xmlns="http://www.w3.org/2000/svg" height="80.00161338000004" version="1.1" width="138.56508078000002" style="overflow: hidden; position: relative;" viewBox="0 0 100 100">
+          <g transform="translate(-15, 0)">
+            <text x="10" alignment-baseline="central" y="#{(40 - text_lines.size * 10)}" font-size="1em">
+              #{text_lines.join}
+            </text>
+          </g>
+        </svg>
+      HEREDOC
+
+      text_file = Tempfile.new
+      text_file.write content
+      text_file.close
+
+      Nokogiri::XML(File.open(text_file.path)).at_css('svg')
     end
 
     def compose_solvents_below_arrow(solvent_group, options = {})

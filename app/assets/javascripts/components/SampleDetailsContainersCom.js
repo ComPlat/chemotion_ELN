@@ -2,8 +2,11 @@ import React from 'react';
 import { PanelGroup, Panel } from 'react-bootstrap';
 import ContainerComponent from './ContainerComponent';
 import ContainerRow from './SampleDetailsContainersDnd';
-import { HeaderDeleted, HeaderNormal,
-  AnalysisModeBtn } from './SampleDetailsContainersAux';
+import {
+  HeaderDeleted,
+  HeaderNormal,
+  AnalysisModeBtn
+} from './SampleDetailsContainersAux';
 
 const RndNotAvailable = () => (
   <div>
@@ -57,6 +60,8 @@ const RndOrder = ({
   );
 };
 
+const panelOnSelect = () => {};
+
 const RndEdit = ({
   sample, mode, handleRemove, handleSubmit, handleAccordionOpen,
   toggleAddToReport, toggleMode, activeAnalysis, orderContainers, readOnly,
@@ -90,7 +95,13 @@ const RndEdit = ({
   return (
     <div>
       <p>{AnalysisModeBtn(mode, toggleMode, isDisabled)}{addButton()}</p>
-      <PanelGroup id="editable-analysis-list" defaultActiveKey={0} activeKey={activeAnalysis} accordion>
+      <PanelGroup
+        id="editable-analysis-list"
+        defaultActiveKey={0}
+        activeKey={activeAnalysis}
+        onSelect={panelOnSelect}
+        accordion
+      >
         {orderContainers.map((container, i) => {
           const id = container.id || `fake_${i}`;
           if (container.is_deleted) {
@@ -109,14 +120,15 @@ const RndEdit = ({
               eventKey={id}
               key={`${id}CRowEdit`}
             >
-            <Panel.Heading>{headerNormalFunc(container, id)}</Panel.Heading>
-            <Panel.Body collapsible>
-              <ContainerComponent
-                readOnly={readOnly}
-                container={container}
-                disabled={isDisabled}
-                onChange={handleChange}
-              />
+              <Panel.Heading>{headerNormalFunc(container, id)}</Panel.Heading>
+              <Panel.Body collapsible>
+                <ContainerComponent
+                  templateType="sample"
+                  readOnly={readOnly}
+                  container={container}
+                  disabled={isDisabled}
+                  onChange={handleChange}
+                />
               </Panel.Body>
             </Panel>
           );

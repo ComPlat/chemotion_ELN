@@ -57,7 +57,7 @@ class ElementalComposition < ApplicationRecord
       end
       self.loading = new_amount / amount * 1000.0
     else
-      return unless mf = sample.molecule.sum_formular
+      return unless mf = sample.molecule_sum_formular
       return unless pf = residue.custom_info['formula']
 
       self.loading = Chemotion::Calculations.get_loading mf, pf, self.data

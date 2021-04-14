@@ -14,7 +14,7 @@
 #  ip                 :float            default(0.0)
 #  ea                 :float            default(0.0)
 #  dipol_debye        :float            default(0.0)
-#  status             :integer          default("not_computed")
+#  status             :integer          default("pending")
 #  data               :jsonb
 #  created_at         :datetime
 #  updated_at         :datetime
@@ -44,6 +44,7 @@ class ComputedProp < ApplicationRecord
     failure
     retry
     revoked
+    completed
   ]
 
   def self.parse_single(line_arr, target_str)

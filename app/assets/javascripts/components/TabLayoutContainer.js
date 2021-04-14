@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import Immutable from 'immutable';
 
 import ArrayUtils from './utils/ArrayUtils';
@@ -41,7 +42,8 @@ export default class TabLayoutContainer extends React.Component {
   }
 
   render() {
-    let {visible, hidden} = this.state
+    const { visible, hidden } = this.state
+    const { isElementDetails, tabTitles } = this.props
     let moveLayout = this.moveLayout
 
     return (
@@ -50,15 +52,28 @@ export default class TabLayoutContainer extends React.Component {
         {visible.map(function(e, index) {
           return (<TabLayoutCell key={index + "_visible"} cell={e}
                                  isHidden={false} index={index}
-                                 moveLayout={moveLayout}/>)
+                                 moveLayout={moveLayout}
+                                 title={tabTitles[e] || e}
+                                 isElementDetails={isElementDetails}/>)
         })}
         {hidden.map(function(e, index) {
           return (<TabLayoutCell key={index + "_hidden"} cell={e}
                                  isHidden={true} index={index}
-                                 moveLayout={moveLayout}/>)
+                                 moveLayout={moveLayout}
+                                 title={tabTitles[e] || e}	 
+                                 isElementDetails={isElementDetails}/>)
         })}
       </tr></tbody>
       </table>
     )
   }
 }
+
+TabLayoutContainer.propTypes = {
+  tabTitles: PropTypes.object,
+}
+
+TabLayoutContainer.defaultProps = {
+  tabTitles: {},
+}
+

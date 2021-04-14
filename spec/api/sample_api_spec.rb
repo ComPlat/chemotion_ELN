@@ -502,5 +502,73 @@ describe Chemotion::SampleAPI do
         end
       end
     end
+
+    describe 'import sample from xlsx to collection' do
+      context 'with valid parameters' do
+        let(:c) { create(:collection, user_id: user.id) }
+        let(:params) do
+          {
+            currentCollectionId: c.id,
+            file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.xlsx'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+          }
+        end
+
+        before do
+          post(
+            '/api/v1/samples/import/', params,
+            'HTTP_ACCEPT' => '*/*',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          )
+        end
+
+        it 'is able to import new samples' do
+          expect(
+            JSON.parse(response.body)['data'].collect do |e|
+              [e['id'], e['name']]
+            end
+          ).to match_array(
+            Sample.pluck(:id, :name)
+          )
+
+          expect(
+            JSON.parse(response.body)['data'].count
+          ).to eq 3
+        end
+      end
+    end
+
+    describe 'import sample from sdf to collection' do
+      context 'with valid parameters' do
+        let(:c) { create(:collection, user_id: user.id) }
+        let(:params) do
+          {
+            currentCollectionId: c.id,
+            file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.sdf'), 'chemical/x-mdl-sdfile')
+          }
+        end
+
+        before do
+          post(
+            '/api/v1/samples/import/', params,
+            'HTTP_ACCEPT' => '*/*',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          )
+        end
+
+        it 'is able to import new samples' do
+          expect(
+            JSON.parse(response.body)['message']
+          ).to eq "This file contains 2 Molecules.\n2 Molecules processed. "
+
+          expect(
+            JSON.parse(response.body)['sdf']
+          ).to be true
+
+          expect(
+            JSON.parse(response.body)['data'].count
+          ).to eq 2
+        end
+      end
+    end
   end
 end

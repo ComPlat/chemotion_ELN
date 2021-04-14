@@ -24,8 +24,8 @@ BUNDLER_VERSION=1.17.3
 
 ## NODEJS
 NVM_VERSION='v0.35.3'
-NODE_VERSION=12.18.3
-NPM_VERSION=6.14.6
+NODE_VERSION=12.21.0
+NPM_VERSION=7.6.2
 
 APP_NAME=chemotion_ELN # used for naming directories and files
 
@@ -77,14 +77,11 @@ PART_9='log-rotation'
 ############################################
 
 ## supported Distribution Version  
-. /etc/lsb-release
-# DISTRIB_ID=Ubuntu
-# DISTRIB_RELEASE=20.04
-# DISTRIB_CODENAME=focal
-# DISTRIB_DESCRIPTION="Ubuntu 20.04.1 LTS"
+. /etc/os-release
 V18='bionic'
 V20='focal'
-# if [ "$DISTRIB_CODENAME" = "$V18" ]; then
+V10='buster'
+# if [ "$VERSION_CODENAME" = "$V18" ]; then
 #   RUBY_VERSION=2.5.8  
 # fi
 
@@ -132,10 +129,10 @@ rm_tmp_repo() {
 
 trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
-if [ "$DISTRIB_CODENAME" = "$V18" ] || [ "$DISTRIB_CODENAME" = "$V20" ]; then
-  sharpi "Running installation for $DISTRIB_DESCRIPTION "
+if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V18" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
+  sharpi "Running installation for $PRETTY_NAME "
 else 
-  error "The installation for your distribution ($DISTRIB_DESCRIPTION) has not been tested"
+  error "The installation for your distribution ($PRETTY_NAME) has not been tested"
 fi
 
 

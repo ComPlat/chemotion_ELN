@@ -39,7 +39,13 @@ module Chemotion
 
         search_by_field = proc do |klass, field, qry|
           scope = d_for.call klass
-          scope.send("by_#{field}", qry).page(1).per(page_size).pluck(field).uniq
+          collection = scope.send("by_#{field}", qry).page(1).per(page_size)
+
+          if klass.columns_hash.key?(field.to_s)
+            collection.pluck(field).uniq
+          else
+            collection.map(&field).uniq
+          end
         end
 
         qry = params[:query]
@@ -52,7 +58,7 @@ module Chemotion
           polymer_type = dl_s.positive? && d_for.call(Sample)
                                                 .by_residues_custom_info('polymer_type', qry)
                                                 .pluck("residues.custom_info -> 'polymer_type'").uniq || []
-          sum_formula = dl_s.positive? && search_by_field.call(Molecule, :sum_formular, qry) || []
+          sum_formula = dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry) || []
           iupac_name = dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry) || []
           inchistring = dl_s.positive? && search_by_field.call(Molecule, :inchistring, qry) || []
           inchikey = dl_s.positive? && search_by_field.call(Molecule, :inchikey, qry) || []
@@ -116,7 +122,7 @@ module Chemotion
           polymer_type = dl_s.positive? && d_for.call(Sample)
                                                 .by_residues_custom_info('polymer_type', qry)
                                                 .pluck("residues.custom_info -> 'polymer_type'").uniq || []
-          sum_formula = dl_s.positive? && search_by_field.call(Molecule, :sum_formular, qry) || []
+          sum_formula = dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry) || []
           iupac_name = dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry) || []
           inchistring = dl_s.positive? && search_by_field.call(Molecule, :inchistring, qry) || []
           inchikey = dl_s.positive? && search_by_field.call(Molecule, :inchikey, qry) || []

@@ -30,10 +30,16 @@ module Reporter
 
       def load_svg_paths
         paths = {}
-        paths[:starting_materials] = obj.starting_materials.map { |m| m[:get_svg_path] }.compact
-        paths[:reactants] = obj.reactants.map { |m| m[:get_svg_path] }.compact
+        svg_text_path = Proc.new do |s|
+          text = (s[:name].presence || s[:sum_formula].presence || s[:molecule][:iupac_name]) || ''
+          "svg_text/#{text}"
+        end
+
+        paths[:starting_materials] = obj.starting_materials.map { |m| m[:show_label] == true ? svg_text_path.call(m) : m[:get_svg_path] }.compact
+        paths[:reactants] = obj.reactants.map { |m| m[:show_label] == true ? svg_text_path.call(m) : m[:get_svg_path] }.compact
         paths[:products] = obj.products.map do |p|
-          [p[:get_svg_path], p[:equivalent]] if p[:get_svg_path].present?
+          svg = p[:show_label] == true ? svg_text_path.call(p) : p[:get_svg_path]
+          [svg, p[:equivalent]] if svg.present?
         end.compact
         @materials_svg_paths = paths
       end

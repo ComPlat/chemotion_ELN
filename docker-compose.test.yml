@@ -1,0 +1,46 @@
+version: '2'
+
+services:
+  # bundle:
+  #   image: busybox
+  #   volumes:
+  #     - /bundle
+
+  db_data:
+    image: busybox
+    volumes:
+      - /var/lib/postgresql
+
+  postgres:
+    image: 'postgres:10.10'
+    environment:
+      POSTGRES_PASSWORD: 3x4mpl3
+
+  sftp:
+    image: atmoz/sftp
+    ports:
+      - "2222:22"
+    command: sftp_test:sftp_test:::uploads
+
+  app:
+    build: .
+    image: complat/chemotion_eln
+    depends_on:
+      - postgres
+    command:
+      ["./run.sh", "postgres"]
+    volumes:
+      - .:/home/app/chemotion_ELN
+      # - /home/app/chemotion_ELN/node_modules
+    volumes_from:
+      - db_data
+    ports:
+      - "3000:3000"
+    links:
+      - sftp
+    environment:
+      RAILS_ENV: test
+      DOCKER: 'true'
+      DATABASE_URL: postgres://postgres:3x4mpl3@postgres:5432/chemotion_test
+      PGPASSWORD: 3x4mpl3
+      SECRET_KEY_BASE: my_s3cr3t_k3y

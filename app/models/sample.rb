@@ -38,6 +38,9 @@
 #  molfile_version     :string(20)
 #  stereo              :jsonb
 #  metrics             :string           default("mmm")
+#  decoupled           :boolean          default(FALSE), not null
+#  molecular_mass      :float
+#  sum_formula         :string
 #
 # Indexes
 #
@@ -68,7 +71,7 @@ class Sample < ApplicationRecord
   ]
 
   # search scopes for exact matching
-  pg_search_scope :search_by_sum_formula, associated_against: {
+  pg_search_scope :search_by_sum_formula,  against: :sum_formula, associated_against: {
     molecule: :sum_formular
   }
 
@@ -103,6 +106,11 @@ class Sample < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_molecule_sum_formular, ->(query) {
+    decoupled_collection = where(decoupled: true).where('sum_formula ILIKE ?', "%#{sanitize_sql_like(query)}%")
+    coupled_collection = where(decoupled: false).joins(:molecule).where('molecules.sum_formular ILIKE ?', "%#{sanitize_sql_like(query)}%")
+    where(id: decoupled_collection + coupled_collection)
+  }
   scope :with_reactions, -> {
     joins(:reactions_samples)
   }
@@ -114,7 +122,7 @@ class Sample < ApplicationRecord
   scope :by_reaction_product_ids,  ->(ids) { joins(:reactions_product_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
-  scope :by_reaction_ids,  ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_ids,          ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
 
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
@@ -206,7 +214,7 @@ class Sample < ApplicationRecord
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
 
   def molecule_sum_formular
-    self.molecule ? self.molecule.sum_formular : ''
+    (decoupled? ? sum_formula : molecule&.sum_formular) || ''
   end
 
   def molecule_iupac_name
@@ -316,6 +324,11 @@ class Sample < ApplicationRecord
     end
   end
 
+  def svg_text_path
+    text = name.presence || molecule_sum_formular.presence || molecule.iupac_name
+    "svg_text/#{text}"
+  end
+
   def loading
     self.residues[0] && self.residues[0].custom_info['loading'].to_f
   end
@@ -342,19 +355,19 @@ class Sample < ApplicationRecord
 
   def init_elemental_compositions
     residue = self.residues[0]
-    return unless (m_formula = (self.molecule && self.molecule.sum_formular))
+    return unless molecule_sum_formular.present?
 
     if residue.present? && self.molfile.include?(' R# ') # case when residue will be deleted
       p_formula = residue.custom_info['formula']
       p_loading = residue.custom_info['loading'].try(:to_d)
 
       if (loading_full = residue.custom_info['loading_full_conv'])
-        d = Chemotion::Calculations.get_composition(m_formula, p_formula, loading_full.to_f)
+        d = Chemotion::Calculations.get_composition(molecule_sum_formular, p_formula, loading_full.to_f)
         set_elem_composition_data 'full_conv', d, loading_full
       end
 
       if p_formula.present?
-        d = Chemotion::Calculations.get_composition(m_formula, p_formula, (p_loading || 0.0))
+        d = Chemotion::Calculations.get_composition(molecule_sum_formular, p_formula, (p_loading || 0.0))
         # if it is reaction product then loading has been calculated
         l_type = if residue['custom_info']['loading_type'] == 'mass_diff'
                    'mass_diff'
@@ -369,7 +382,7 @@ class Sample < ApplicationRecord
         {}
       end
     else
-      d = Chemotion::Calculations.get_composition(m_formula)
+      d = Chemotion::Calculations.get_composition(molecule_sum_formular)
 
       set_elem_composition_data 'formula', d
     end
@@ -449,6 +462,7 @@ private
   end
 
   def check_molfile_polymer_section
+    return if decoupled
     return unless self.molfile.include? 'R#'
 
     lines = self.molfile.lines

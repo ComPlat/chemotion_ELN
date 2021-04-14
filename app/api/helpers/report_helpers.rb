@@ -206,7 +206,7 @@ module ReportHelpers
     <<~SQL
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
-      , res.residue_type, s.molfile_version
+      , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , #{columns}
       from (
@@ -347,7 +347,7 @@ module ReportHelpers
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_wp
-      , res.residue_type, s.molfile_version
+      , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , #{columns}
       from (
@@ -403,7 +403,7 @@ module ReportHelpers
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_r
-      , res.residue_type, s.molfile_version
+      , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       -- , r_s.type as "type"
       -- , r_s.position
@@ -556,7 +556,7 @@ module ReportHelpers
     }.freeze
 
   # desc: concatenate columns to be queried
-  def build_column_query(sel, user_id=0, attrs = EXP_MAP_ATTR)
+  def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
     selection = []
     attrs.keys.each do |table|
       sel.symbolize_keys.fetch(table, []).each do |col|

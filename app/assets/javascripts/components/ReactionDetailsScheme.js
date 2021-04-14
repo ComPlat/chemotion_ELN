@@ -12,23 +12,40 @@ import Reaction from './models/Reaction';
 import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import ReactionDetailsPurification from './ReactionDetailsPurification';
-import QuillEditor from './QuillEditor';
+
 import QuillViewer from './QuillViewer';
-import NotificationActions from './actions/NotificationActions';
-import { reactionToolbarSymbol } from './utils/quillToolbarSymbol';
+import ReactionDescriptionEditor from './ReactionDescriptionEditor';
+
 import GeneralProcedureDnd from './GeneralProcedureDnD';
 import { rolesOptions, conditionsOptions } from './staticDropdownOptions/options';
 import OlsTreeSelect from './OlsComponent';
 import ReactionDetailsDuration from './ReactionDetailsDuration';
 import { permitOn } from './common/uis';
 
+import NotificationActions from './actions/NotificationActions';
+import TextTemplateActions from './actions/TextTemplateActions';
+import TextTemplateStore from './stores/TextTemplateStore';
+
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
+
     const { reaction } = props;
-    this.state = { reaction, lockEquivColumn: false, cCon: false };
-    this.quillref = React.createRef();
+
+    const textTemplate = TextTemplateStore.getState().reactionDescription;
+    this.state = {
+      reaction,
+      lockEquivColumn: false,
+      cCon: false,
+      reactionDescTemplate: textTemplate.toJS()
+    };
+
+    this.reactQuillRef = React.createRef();
     this.additionQuillRef = React.createRef();
+
+    this.handleTemplateChange = this.handleTemplateChange.bind(this);
+
+    this.onReactionChange = this.onReactionChange.bind(this);
     this.onChangeRole = this.onChangeRole.bind(this);
     this.renderRole = this.renderRole.bind(this);
     this.addSampleTo = this.addSampleTo.bind(this);
@@ -36,12 +53,34 @@ export default class ReactionDetailsScheme extends Component {
     this.dropSample = this.dropSample.bind(this);
     this.switchEquiv = this.switchEquiv.bind(this);
     this.handleOnConditionSelect = this.handleOnConditionSelect.bind(this);
+    this.updateTextTemplates = this.updateTextTemplates.bind(this);
+  }
+
+  componentDidMount() {
+    TextTemplateStore.listen(this.handleTemplateChange);
+
+    TextTemplateActions.fetchTextTemplates('reaction');
+    TextTemplateActions.fetchTextTemplates('reactionDescription');
   }
 
   componentWillReceiveProps(nextProps) {
-    const {reaction} = this.state;
-    const nextReaction = nextProps.reaction;
-    this.setState({ reaction: nextReaction });
+    const { reaction } = nextProps;
+    this.setState({ reaction });
+  }
+
+  componentWillUnmount() {
+    TextTemplateStore.unlisten(this.handleTemplateChange);
+  }
+
+  handleTemplateChange(state) {
+    this.setState({
+      reactionDescTemplate: state.reactionDescription.toJS()
+    });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  updateTextTemplates(textTemplate) {
+    TextTemplateActions.updateTextTemplates('reactionDescription', textTemplate);
   }
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
@@ -60,7 +99,7 @@ export default class ReactionDetailsScheme extends Component {
         splitSample = srcSample.buildChild();
       }
     }
-
+    splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
     if (tagGroup == 'solvents') {
       splitSample.reference = false;
     }
@@ -205,6 +244,11 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForReferenceChange(changeEvent)
         );
         break;
+      case 'showLabelChanged':
+        this.onReactionChange(
+          this.updatedReactionForShowLabelChange(changeEvent)
+        );
+        break;
       case 'amountChanged':
         this.onReactionChange(
           this.updatedReactionForAmountChange(changeEvent)
@@ -253,7 +297,7 @@ export default class ReactionDetailsScheme extends Component {
 
   addSampleTo(e, type) {
     const { paragraph } = e;
-    let quillEditor = this.quillref.current.editor;
+    let quillEditor = this.reactQuillRef.current.editor;
     if (type === 'observation') quillEditor = this.additionQuillRef.current.editor;
     const range = quillEditor.getSelection();
     if (range) {
@@ -290,6 +334,17 @@ export default class ReactionDetailsScheme extends Component {
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
+  }
+
+  updatedReactionForShowLabelChange(changeEvent) {
+    const { sampleID, value } = changeEvent;
+    const { reaction } = this.state;
+    const sample = reaction.sampleById(sampleID);
+
+    reaction.toggleShowLabelForSample(sampleID);
+    this.onReactionChange(reaction, { schemaChanged: true });
+
+    return this.updatedReactionWithSample(this.updatedSamplesForShowLabelChange.bind(this), sample);
   }
 
   updatedReactionForAmountChange(changeEvent) {
@@ -383,7 +438,7 @@ export default class ReactionDetailsScheme extends Component {
   checkMassMolecule(referenceM, updatedS) {
     let errorMsg;
     let mFull;
-    const mwb = updatedS.molecule.molecular_weight;
+    const mwb = updatedS.decoupled ? (updatedS.molecular_mass || 0) : updatedS.molecule.molecular_weight;
 
     // mass check apply to 'polymers' only
     if (!updatedS.contains_residues) {
@@ -393,7 +448,7 @@ export default class ReactionDetailsScheme extends Component {
         'by 100% conversion! Please check your data.';
       }
     } else {
-      const mwa = referenceM.molecule.molecular_weight;
+      const mwa = referenceM.decoupled ? (referenceM.molecular_mass || 0) : referenceM.molecule.molecular_weight;
       const deltaM = mwb - mwa;
       const massA = referenceM.amount_g;
       mFull = massA + (referenceM.amount_mol * deltaM);
@@ -563,6 +618,10 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
+  updatedSamplesForShowLabelChange(samples, referenceMaterial) {
+    return samples;
+  }
+
   updatedSamplesForReferenceChange(samples, referenceMaterial) {
     return samples.map((sample) => {
       if (sample.id === referenceMaterial.id) {
@@ -625,7 +684,11 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   render() {
-    const { reaction, lockEquivColumn } = this.state;
+    const {
+      reaction,
+      lockEquivColumn,
+      reactionDescTemplate
+    } = this.state;
     const minPadding = { padding: '1px 2px 2px 0px' };
     if (reaction.editedSample !== undefined) {
       if (reaction.editedSample.amountType === 'target') {
@@ -799,13 +862,13 @@ export default class ReactionDetailsScheme extends Component {
                   <div className="quill-resize">
                     {
                       permitOn(reaction) ?
-                        <QuillEditor
-                          disabled={!permitOn(reaction)}
+                        <ReactionDescriptionEditor
                           height="100%"
-                          ref={this.quillref}
+                          reactQuillRef = {this.reactQuillRef}
+                          template={reactionDescTemplate}
                           value={reaction.description}
+                          updateTextTemplates={this.updateTextTemplates}
                           onChange={event => this.props.onInputChange('description', event)}
-                          toolbarSymbol={reactionToolbarSymbol}
                         /> : <QuillViewer value={reaction.description} />
                     }
                   </div>

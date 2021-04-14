@@ -53,13 +53,16 @@ M  END"
             names: ['cubane']
           }
         end
+        let!(:decoupled) { false }
 
         it 'is able to find or create a molecule by molfile' do
           m = Molecule.find_by(molfile: molfile)
           expect(m).to be_nil
-          post '/api/v1/molecules', params: { molfile: molfile }
+          post '/api/v1/molecules', params: { molfile: molfile, decoupled: false }
           m = Molecule.find_by(molfile: molfile)
           expect(m).not_to be_nil
+	  mw = params.delete(:molecular_weight)
+	  expect(m.attributes['molecular_weight'].round(5)).to eq(mw)
           params.each do |k, v|
             expect(m.attributes.symbolize_keys[k]).to eq(v)
           end

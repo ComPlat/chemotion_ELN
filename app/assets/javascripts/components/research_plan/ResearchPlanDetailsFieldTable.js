@@ -9,6 +9,7 @@ import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsF
 import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import uniqueId from 'react-html-id';
+import CustomTextEditor from '../common/CustomTextEditor';
 
 const { ContextMenuTrigger } = Menu;
 
@@ -76,7 +77,8 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       name: columnName,
       editable: true,
       resizable: true,
-      width: 200
+      width: 200,
+      editor: CustomTextEditor
     };
   }
 
@@ -293,10 +295,10 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   renderEdit() {
-    const { field, onExport } = this.props;
+    const { field, onExport, tableIndex  } = this.props;
     const { rows, columns } = field.value;
     const { columnNameModal, schemaModal } = this.state;
-    const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[0];
+    const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[tableIndex];
 
     return (
       <div>
@@ -317,7 +319,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             onCellDeSelected={this.handleCellDeSelected.bind(this)}
             onColumnResize={this.handleColumnResize.bind(this)}
             contextMenu={
-              <ResearchPlanDetailsFieldTableContextMenu id=  {this.nextUniqueId()}
+              <ResearchPlanDetailsFieldTableContextMenu id={this.nextUniqueId()}
                 onColumnInsertLeft={(event, { idx }) => this.handleColumnNameModalShow('insert', idx)}
                 onColumnInsertRight={(event, { idx }) => this.handleColumnNameModalShow('insert', idx + 1)}
                 onColumnRename={(event, { idx }) => this.handleColumnNameModalShow('rename', idx)}

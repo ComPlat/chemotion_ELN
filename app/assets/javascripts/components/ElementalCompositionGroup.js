@@ -55,26 +55,27 @@ export default class ElementalCompositionGroup extends React.Component {
     }
 
     const custom = sample.can_update
-      ? <ElementalCompositionCustom
+      ? (<ElementalCompositionCustom
           handleElementalChanged={(el) => this.handleElementalChanged(el)}
           elemental_composition={el_composition_custom}
           hideLoading={!sample.contains_residues}
           concat_formula={sample.concat_formula}
-          key={'elem_composition_found'}/>
+          key={'elem_composition_found'} />)
       : null;
 
-    if (!sample.molecule.sum_formular) {
+    if (!sample.molecule_formula) {
       return false;
-    } else {
-      let label = sample.contains_residues ? <label>Elemental composition</label> : false
-
-      return (
-        <div>
-          {label}
-          {data}
-          {custom}
-        </div>
-      )
     }
+
+    const label = sample.contains_residues ? <label>Elemental composition</label> : false
+
+    return (
+      <div>
+        {label}
+        {data}
+        {custom}
+      </div>
+    )
+
   }
 }

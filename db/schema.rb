@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_02_17_164124) do
+ActiveRecord::Schema.define(version: 2021_03_03_140000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -575,6 +575,7 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
     t.datetime "deleted_at"
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
+    t.boolean "show_label", default: false, null: false
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -676,6 +677,9 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
     t.string "molfile_version", limit: 20
     t.jsonb "stereo"
     t.string "metrics", default: "mmm"
+    t.boolean "decoupled", default: false, null: false
+    t.float "molecular_mass"
+    t.string "sum_formula"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
@@ -730,6 +734,19 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
     t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
+  end
+
+  create_table "text_templates", id: :serial, force: :cascade do |t|
+    t.string "type"
+    t.integer "user_id", null: false
+    t.string "name"
+    t.jsonb "data", default: {}
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
+    t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
+    t.index ["user_id"], name: "index_text_templates_on_user_id"
   end
 
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
@@ -1058,7 +1075,7 @@ ActiveRecord::Schema.define(version: 2021_02_17_164124) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
