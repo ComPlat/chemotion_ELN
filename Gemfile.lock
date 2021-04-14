@@ -51,13 +51,6 @@ GIT
       rubyzip (>= 1.1)
 
 GIT
-  remote: https://github.com/MiniProfiler/rack-mini-profiler
-  revision: 08ad0c798f40588586c5b841491481fefd847b1c
-  specs:
-    rack-mini-profiler (1.0.2)
-      rack (>= 1.2.0)
-
-GIT
   remote: https://github.com/fl9/fun_sftp.git
   revision: 24edb517e0196c83fe21f6b229c76841fe7ab2ca
   branch: allow-port-option
@@ -80,6 +73,17 @@ GIT
   revision: 4935ef8836d097f22c7b6402978a93956fa5ed64
   specs:
     thumbnailer (0.2.0)
+
+GIT
+  remote: https://github.com/rails/webpacker
+  revision: f1b06c7fd5bc4b7fc7128742d1078466b94af71f
+  branch: master
+  specs:
+    webpacker (6.0.0.beta.6)
+      activesupport (>= 5.2)
+      rack-proxy (>= 0.6.1)
+      railties (>= 5.2)
+      semantic_range (>= 2.3.0)
 
 GIT
   remote: https://github.com/randym/axlsx
@@ -176,7 +180,7 @@ GEM
       latex-decode (~> 0.0)
     binding_of_caller (0.8.0)
       debug_inspector (>= 0.0.1)
-    bootsnap (1.5.1)
+    bootsnap (1.7.3)
       msgpack (~> 1.0)
     bootstrap-kaminari-views (0.0.5)
       kaminari (>= 0.13)
@@ -403,9 +407,9 @@ GEM
       nokogiri (~> 1)
       rake
     mini_mime (1.0.2)
-    mini_portile2 (2.5.0)
+    mini_portile2 (2.4.0)
     minitest (5.14.2)
-    msgpack (1.3.3)
+    msgpack (1.4.2)
     multi_json (1.13.1)
     multi_xml (0.6.0)
     multipart-post (2.1.0)
@@ -467,6 +471,8 @@ GEM
       rack (~> 2.0)
     rack-cors (1.0.6)
       rack (>= 1.6.0)
+    rack-proxy (0.6.5)
+      rack
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
     rails (5.2.4.4)
@@ -583,6 +589,7 @@ GEM
     selenium-webdriver (3.142.4)
       childprocess (>= 0.5, < 3.0)
       rubyzip (~> 1.2, >= 1.2.2)
+    semantic_range (3.0.0)
     sexp_processor (4.15.1)
     sixarm_ruby_unaccent (1.2.0)
     slackistrano (3.8.4)
@@ -744,7 +751,6 @@ DEPENDENCIES
   pundit
   rack (~> 2.0.0)
   rack-cors
-  rack-mini-profiler!
   rails (~> 5.2.0)
   rdkit_chem!
   rinchi-gem (= 1.0.1)!
@@ -779,6 +785,7 @@ DEPENDENCIES
   web-console (~> 2.0)
   webdrivers (~> 4.1.2)
   webmock
+  webpacker!
   whenever
   yaml_db
 

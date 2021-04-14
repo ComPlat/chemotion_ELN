@@ -94,7 +94,8 @@ gem 'thumbnailer', git: 'https://github.com/merlin-p/thumbnailer.git'
 gem 'turbo-sprockets-rails4'
 
 gem 'uglifier', '>= 4.0.0'
-
+#gem 'webpacker', '~> 6.0.0.beta.6'
+gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
 
 gem 'yaml_db'
@@ -114,7 +115,7 @@ group :development do
 
   gem 'memory_profiler'
 
-  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
+#  gem 'rack-mini-profiler', '~>2.3.1', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
   gem 'rubocop'             , require: false
   gem 'rubocop-performance' , require: false
   gem 'rubocop-rspec'       , require: false
