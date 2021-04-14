@@ -13,6 +13,5 @@
 //= require jquery
 //= require jquery_ujs
 //= require autocomplete.min
-//= require components
 //= require bootstrap
 //= require pages
