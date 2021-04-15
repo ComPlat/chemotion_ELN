@@ -191,7 +191,7 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.float "mean_abs_potential", default: 0.0
     t.integer "creator", default: 0
     t.integer "sample_id", default: 0
-    t.jsonb "tddft", default: "{}"
+    t.jsonb "tddft", default: {}
     t.string "task_id"
     t.datetime "deleted_at"
     t.index ["deleted_at"], name: "index_computed_props_on_deleted_at"
@@ -420,7 +420,7 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.string "label"
     t.integer "include_ids", default: [], array: true
     t.integer "exclude_ids", default: [], array: true
-    t.jsonb "configs", default: "{}", null: false
+    t.jsonb "configs", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -502,17 +502,17 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
-    t.string "searchable_type"
     t.integer "searchable_id"
+    t.string "searchable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
   create_table "predictions", id: :serial, force: :cascade do |t|
-    t.string "predictable_type"
     t.integer "predictable_id"
-    t.jsonb "decision", default: "{}", null: false
+    t.string "predictable_type"
+    t.jsonb "decision", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["decision"], name: "index_predictions_on_decision", using: :gin
@@ -544,7 +544,7 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.string "tlc_solvents"
     t.text "tlc_description"
     t.string "rf_value"
-    t.jsonb "temperature", default: "{\"valueUnit\": \"°C\",\"userText\": \"\", \"data\": []}"
+    t.jsonb "temperature", default: {"data"=>[], "userText"=>"", "valueUnit"=>"°C"}
     t.string "status"
     t.string "reaction_svg_file"
     t.string "solvent"
@@ -595,9 +595,9 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "template", default: "standard"
-    t.text "mol_serials", default: [], array: true
-    t.text "si_reaction_settings", default: "{\"Name\"=>true, \"CAS\"=>true, \"Formula\"=>true, \"Smiles\"=>true, \"InCHI\"=>true, \"Molecular Mass\"=>true, \"Exact Mass\"=>true, \"EA\"=>true}"
-    t.text "prd_atts", default: [], array: true
+    t.text "mol_serials", default: "--- []\n"
+    t.text "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
+    t.text "prd_atts", default: "--- []\n"
     t.index ["author_id"], name: "index_reports_on_author_id"
     t.index ["file_name"], name: "index_reports_on_file_name"
   end
@@ -670,7 +670,7 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
     t.numrange "melting_point"
     t.numrange "boiling_point"
     t.integer "fingerprint_id"
-    t.jsonb "xref", default: "{}"
+    t.jsonb "xref", default: {}
     t.float "molarity_value", default: 0.0
     t.string "molarity_unit", default: "M"
     t.integer "molecule_name_id"
@@ -739,11 +739,11 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
   create_table "text_templates", id: :serial, force: :cascade do |t|
     t.string "type"
     t.integer "user_id", null: false
-    t.string "name"
     t.jsonb "data", default: {}
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name"
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"
@@ -1075,7 +1075,7 @@ ActiveRecord::Schema.define(version: 2021_03_03_140000) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
