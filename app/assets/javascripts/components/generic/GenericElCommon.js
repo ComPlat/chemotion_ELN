@@ -4,10 +4,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Checkbox, Col, PanelGroup, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Row, InputGroup, Radio } from 'react-bootstrap';
 import uuid from 'uuid';
-import { sortBy } from 'lodash';
+import { sortBy, filter } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
-import { genUnit, genUnits, genUnitSup, FieldLabel } from '../../admin/generic/Utils';
+import { genUnit, genUnits, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
 import { ContinuousColorLegend } from 'react-vis';
 
 const GenPropertiesText = (opt) => {
@@ -61,6 +61,55 @@ const GenPropertiesSelect = (opt) => {
         onChange={opt.onChange}
         className={className}
         disabled={opt.readOnly}
+      />
+    </FormGroup>
+  );
+};
+
+const GenPropertiesCalculate = (opt) => {
+  const { fields } = opt.layer;
+  let showVal = 0;
+  let showTxt = null;
+  let newFormula = opt.formula;
+
+  const calFields = filter(fields, o => (o.type === 'integer' || o.type === 'system-defined'));
+  const regF = /[a-zA-Z]+/gm;
+  // eslint-disable-next-line max-len
+  const varFields = opt.formula.match(regF) ? opt.formula.match(regF).sort((a, b) => b.length - a.length) : [];
+
+  varFields.forEach((fi) => {
+    const tmpField = calFields.find(e => e.field === fi);
+    if (typeof tmpField === 'undefined' || tmpField == null) {
+      newFormula = newFormula.replace(fi, 0);
+    } else {
+      newFormula = (tmpField.type === 'system-defined') ? newFormula.replace(fi, parseFloat(unitConvToBase(tmpField) || 0)) : newFormula.replace(fi, parseFloat(tmpField.value || 0));
+    }
+  });
+
+  if (opt.type === 'formula-field') {
+    try {
+      showVal = eval(newFormula);
+      showTxt = !isNaN(showVal) ? parseFloat(showVal.toFixed(5)) : 0;
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        showTxt = e.message;
+      }
+    }
+  }
+
+  const fieldHeader = opt.label === '' ? null : (<FieldLabel label={opt.label} desc={opt.description} />);
+  return (
+    <FormGroup>
+      {fieldHeader}
+      <FormControl
+        type="text"
+        value={showTxt}
+        onChange={opt.onChange}
+        className="readonly"
+        readOnly="readonly"
+        required={false}
+        placeholder={opt.placeholder}
+        min={0}
       />
     </FormGroup>
   );
@@ -161,6 +210,8 @@ const GenProperties = (opt) => {
   switch (type[0]) {
     case 'checkbox':
       return GenPropertiesCheckbox(fieldProps);
+    case 'formula-field':
+      return GenPropertiesCalculate(fieldProps);
     case 'select':
       return GenPropertiesSelect(fieldProps);
     case 'drag':
@@ -206,12 +257,13 @@ class GenPropertiesLayer extends Component {
         <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col}>
           <GenProperties
             id={id}
-            layer={key}
+            layer={layer}
             label={f.label}
             value={f.value || ''}
             description={f.description || ''}
             type={f.type || 'text'}
             field={f.field || 'field'}
+            formula={f.formula || ''}
             options={(selectOptions && selectOptions[f.option_layers]) || []}
             onChange={event => this.handleChange(event, f.field, key, f.type)}
             isEditable

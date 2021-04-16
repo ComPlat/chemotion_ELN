@@ -184,6 +184,9 @@ export default class SegmentElementAdmin extends React.Component {
         case 'required':
           fobj.required = !orig;
           break;
+        case 'formula':
+          fobj.formula = value;
+          break;
         case 'position':
           fobj.position = value;
           break;

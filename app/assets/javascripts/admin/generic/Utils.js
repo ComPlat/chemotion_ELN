@@ -56,6 +56,16 @@ const convertTemp = (key, val) => {
   }
 };
 
+const unitConvToBase = (field = {}) => {
+  const units = genUnits(field.option_layers);
+  if (units.length <= 1) {
+    return field.value;
+  }
+  const idx = findIndex(units, u => u.key === field.value_system);
+  if (idx <= 0) return field.value;
+  return ((field.value * units[0].nm) / ((units[idx] && units[idx].nm) || 1) || 0);
+}
+
 const unitConversion = (field, key, val) => {
   if (typeof val === 'undefined' || val == null || val === 0) {
     return val;
@@ -220,6 +230,6 @@ const GenericDSMisType = () => {
 
 export {
   ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel,
-  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
+  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit, unitConvToBase,
   unitConversion, toBool, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit
 };

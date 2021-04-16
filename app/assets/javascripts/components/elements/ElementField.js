@@ -77,8 +77,27 @@ class ElementField extends Component {
       ({ value: _c.field, name: _c.label, label: _c.label }));
     let typeOpts = this.props.genericType === 'Element' ? ElementFieldTypes.concat([{ value: 'drag_molecule', name: 'drag_molecule', label: 'DragMolecule' }, { value: 'drag_sample', name: 'drag_sample', label: 'DragSample' }]) : ElementFieldTypes;
     typeOpts = typeOpts.concat([{ value: 'system-defined', name: 'system-defined', label: 'System-Defined' }]);
+    typeOpts = typeOpts.concat([{ value: 'formula-field', name: 'formula-field', label: 'Formula-Field' }]);
     const skipRequired = ['Segment', 'Dataset'].includes(this.props.genericType) ? { display: 'none' } : {};
     const f = this.props.field;
+    const formulaField = (f.type === 'formula-field') ? (
+      <FormGroup controlId="formControlFieldType">
+        <Col componentClass={ControlLabel} sm={3}>Formula</Col>
+        <Col sm={9}>
+          <div style={{ display: 'flex' }}>
+            <span style={{ width: '100%' }}>
+              <FormControl
+                type="text"
+                name="f_label"
+                defaultValue={f.formula}
+                onChange={event => this.handleChange(event, f.label, f.field, this.props.layerKey, 'formula', 'text')}
+              />
+            </span>
+            {f.type === 'select' ? null : this.availableUnits(f.option_layers)}
+          </div>
+        </Col>
+      </FormGroup>)
+      : (<div />);
     const selectOptions = (f.type === 'select' || f.type === 'system-defined') ? (
       <FormGroup controlId="formControlFieldType">
         <Col componentClass={ControlLabel} sm={3}>{f.type === 'select' ? 'Options' : <span />}</Col>
@@ -165,6 +184,7 @@ class ElementField extends Component {
                   </Col>
                 </FormGroup>
                 { selectOptions }
+                { formulaField }
                 <FormGroup controlId={`frmCtrlFieldRequired_${uuid.v4()}`} style={skipRequired}>
                   <Col componentClass={ControlLabel} sm={3}>
                     Required
