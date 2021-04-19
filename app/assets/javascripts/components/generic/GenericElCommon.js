@@ -171,9 +171,9 @@ const GenPropertiesInputGroup = (opt) => {
     if (e.type === 'label') { return fLab(e); } return fTxt(e);
   });
   return (
-    <FormGroup style={{ marginBottom: 'unset', display: 'inline-table' }}>
+    <FormGroup>
       {fieldHeader}
-      <InputGroup style={{ display: 'inline-flex' }}>
+      <InputGroup style={{ display: 'flex' }}>
         {subs}
       </InputGroup>
     </FormGroup>
