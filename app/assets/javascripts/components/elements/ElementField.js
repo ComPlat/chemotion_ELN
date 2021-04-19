@@ -5,8 +5,27 @@ import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigge
 import Select from 'react-select';
 import uuid from 'uuid';
 import { ButtonTooltip, genUnitSup } from '../../admin/generic/Utils';
+import GroupFields from './GroupFields';
 
-const ElementFieldTypes = [{ value: 'integer', name: 'integer', label: 'Integer' }, { value: 'text', name: 'text', label: 'Text' }, { value: 'select', name: 'select', label: 'Select' }, { value: 'checkbox', name: 'checkbox', label: 'Checkbox' }];
+const BaseFieldTypes = [
+  { value: 'integer', name: 'integer', label: 'Integer' },
+  { value: 'text', name: 'text', label: 'Text' },
+  { value: 'select', name: 'select', label: 'Select' },
+  { value: 'checkbox', name: 'checkbox', label: 'Checkbox' },
+  { value: 'system-defined', name: 'system-defined', label: 'System-Defined' },
+  { value: 'formula-field', name: 'formula-field', label: 'Formula-Field' },
+];
+
+const ElementFieldTypes = [
+  { value: 'drag_molecule', name: 'drag_molecule', label: 'Drag Molecule' },
+  { value: 'drag_sample', name: 'drag_sample', label: 'Drag Sample' },
+  { value: 'input-group', name: 'input-group', label: 'Input Group' }
+];
+
+const SegmentFieldTypes = [
+  { value: 'input-group', name: 'input-group', label: 'Input Group' }
+];
+
 class ElementField extends Component {
   constructor(props) {
     super(props);
@@ -14,12 +33,18 @@ class ElementField extends Component {
     this.handleDrop = this.handleDrop.bind(this);
     this.handelDelete = this.handelDelete.bind(this);
     this.handleMove = this.handleMove.bind(this);
+    this.updSubField = this.updSubField.bind(this);
+  }
+
+  updSubField(layerKey, field, cb) {
+    this.props.onFieldSubFieldChange(layerKey, field, cb);
   }
 
   handleChange(e, orig, fe, lk, fc, tp) {
     if ((tp === 'select' || tp === 'system-defined') && e === null) { return; }
     this.props.onChange(e, orig, fe, lk, fc, tp);
   }
+
   handleMove(element) {
     const { l, f, isUp } = element;
     this.props.onMove(l, f, isUp);
@@ -71,14 +96,39 @@ class ElementField extends Component {
     );
   }
 
+  renderTextFieldGroup(f, label, field) {
+    return (
+      <FormGroup controlId={`frmCtrlFid_${this.props.layerKey}_${f.field}_${field}`}>
+        <Col componentClass={ControlLabel} sm={3}>{label}</Col>
+        <Col sm={9}>
+          <FormControl
+            type="text"
+            name={`f_${field}`}
+            defaultValue={f[field]}
+            disabled={field === 'field'}
+            onChange={event => this.handleChange(event, f[field], f.field, this.props.layerKey, field, 'text')}
+          />
+        </Col>
+      </FormGroup>
+    );
+  }
+
   renderComponent() {
-    const { unitsSystem } = this.props;
+    const { unitsSystem, layerKey, genericType } = this.props;
     const unitConfig = (unitsSystem.fields || []).map(_c =>
       ({ value: _c.field, name: _c.label, label: _c.label }));
-    let typeOpts = this.props.genericType === 'Element' ? ElementFieldTypes.concat([{ value: 'drag_molecule', name: 'drag_molecule', label: 'DragMolecule' }, { value: 'drag_sample', name: 'drag_sample', label: 'DragSample' }]) : ElementFieldTypes;
-    typeOpts = typeOpts.concat([{ value: 'system-defined', name: 'system-defined', label: 'System-Defined' }]);
-    typeOpts = typeOpts.concat([{ value: 'formula-field', name: 'formula-field', label: 'Formula-Field' }]);
-    const skipRequired = ['Segment', 'Dataset'].includes(this.props.genericType) ? { display: 'none' } : {};
+    let typeOpts = BaseFieldTypes;
+    switch (genericType) {
+      case 'Element':
+        typeOpts = BaseFieldTypes.concat(ElementFieldTypes);
+        break;
+      case 'Segment':
+        typeOpts = BaseFieldTypes.concat(SegmentFieldTypes);
+        break;
+      default:
+        typeOpts = BaseFieldTypes;
+    }
+    typeOpts.sort((a, b) => a.value.localeCompare(b.value));
     const f = this.props.field;
     const formulaField = (f.type === 'formula-field') ? (
       <FormGroup controlId="formControlFieldType">
@@ -110,7 +160,7 @@ class ElementField extends Component {
                 multi={false}
                 options={f.type === 'select' ? this.props.select_options : unitConfig}
                 value={f.option_layers || ''}
-                onChange={event => this.handleChange(event, f.option_layers, f.field, this.props.layerKey, 'option_layers', f.type)}
+                onChange={event => this.handleChange(event, f.option_layers, f.field, layerKey, 'option_layers', f.type)}
               />
             </span>
             {f.type === 'select' ? null : this.availableUnits(f.option_layers)}
@@ -118,7 +168,15 @@ class ElementField extends Component {
         </Col>
       </FormGroup>)
       : (<div />);
-
+    const skipRequired = ['Segment', 'Dataset'].includes(this.props.genericType) || !['integer', 'text'].includes(f.type) ? { display: 'none' } : {};
+    const groupOptions = f.type === 'input-group' ? (
+      <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
+        <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
+        <Col sm={9}>
+          <GroupFields layerKey={layerKey} field={f} updSub={this.updSubField} />
+        </Col>
+      </FormGroup>
+    ) : null;
     return (
       <div>
         <Panel>
@@ -128,64 +186,38 @@ class ElementField extends Component {
               {f.field}
             </Panel.Title>
             <ButtonGroup bsSize="xsmall">
-              <ButtonTooltip tip="Move Up" fnClick={this.handleMove} element={{ l: this.props.layerKey, f: f.field, isUp: true }} fa="fa-arrow-up" place="top" bs="default" disabled={this.props.position === 1} />
-              <ButtonTooltip tip="Move Down" fnClick={this.handleMove} element={{ l: this.props.layerKey, f: f.field, isUp: false }} fa="fa-arrow-down" place="top" bs="default" />
-              {this.renderDeleteButton('Field', f.field, this.props.layerKey)}
+              <ButtonTooltip tip="Move Up" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: true }} fa="fa-arrow-up" place="top" bs="default" disabled={this.props.position === 1} />
+              <ButtonTooltip tip="Move Down" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: false }} fa="fa-arrow-down" place="top" bs="default" />
+              {this.renderDeleteButton('Field', f.field, layerKey)}
             </ButtonGroup>
           </Panel.Heading>
           <Panel.Collapse>
             <Panel.Body>
               <Form horizontal className="default_style">
-                <FormGroup controlId={`frmCtrlField_${uuid.v4()}`}>
-                  <Col componentClass={ControlLabel} sm={3}>Field Name</Col>
-                  <Col sm={9}>
-                    <FormControl
-                      type="text"
-                      name="f_field"
-                      defaultValue={f.field}
-                      disabled={!f.isNew}
-                      onChange={event => this.handleChange(event, f.field, f.field, this.props.layerKey, 'field', 'text')}
-                    />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId={`frmCtrlFieldLabel_${uuid.v4()}`}>
-                  <Col componentClass={ControlLabel} sm={3}>Display Name</Col>
-                  <Col sm={9}>
-                    <FormControl
-                      type="text"
-                      name="f_label"
-                      defaultValue={f.label}
-                      onChange={event => this.handleChange(event, f.label, f.field, this.props.layerKey, 'label', 'text')}
-                    />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId={`frmCtrlFieldInfo_${uuid.v4()}`}>
-                  <Col componentClass={ControlLabel} sm={3}>Hover Info</Col>
-                  <Col sm={9}>
-                    <FormControl
-                      type="text"
-                      name="f_description"
-                      defaultValue={f.description}
-                      onChange={event => this.handleChange(event, f.description, f.field, this.props.layerKey, 'description', 'text')}
-                    />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId={`frmCtrlFieldType_${uuid.v4()}`}>
+                {this.renderTextFieldGroup(f, 'Field Name', 'field')}
+                {this.renderTextFieldGroup(f, 'Display Name', 'label')}
+                {this.renderTextFieldGroup(f, 'Hover Info', 'description')}
+                <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_type`}>
                   <Col componentClass={ControlLabel} sm={3}>Type</Col>
                   <Col sm={9}>
-                    <Select
-                      className="drop-up"
-                      name={f.field}
-                      multi={false}
-                      options={typeOpts}
-                      value={f.type}
-                      onChange={event => this.handleChange(event, f.type, f.field, this.props.layerKey, 'type', 'select')}
-                    />
+                    <div style={{ display: 'flex' }}>
+                      <span style={{ width: '100%' }}>
+                        <Select
+                          className="drop-up"
+                          name={f.field}
+                          multi={false}
+                          options={typeOpts}
+                          value={f.type}
+                          onChange={event => this.handleChange(event, f.type, f.field, layerKey, 'type', 'select')}
+                        />
+                      </span>
+                    </div>
                   </Col>
                 </FormGroup>
+                { groupOptions }
                 { selectOptions }
                 { formulaField }
-                <FormGroup controlId={`frmCtrlFieldRequired_${uuid.v4()}`} style={skipRequired}>
+                <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_required`} style={skipRequired}>
                   <Col componentClass={ControlLabel} sm={3}>
                     Required
                   </Col>
@@ -193,23 +225,11 @@ class ElementField extends Component {
                     <Checkbox
                       inputRef={(m) => { this.accessLevelInput = m; }}
                       checked={f.required}
-                      onChange={event => this.handleChange(event, f.required, f.field, this.props.layerKey, 'required', 'checkbox')}
+                      onChange={event => this.handleChange(event, f.required, f.field, layerKey, 'required', 'checkbox')}
                     />
                   </Col>
                 </FormGroup>
-                <FormGroup controlId={`frmCtrlFieldPlaceholder_${uuid.v4()}`} style={skipRequired}>
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Placeholder
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl
-                      type="text"
-                      name="f_placeholder"
-                      defaultValue={f.placeholder}
-                      onChange={event => this.handleChange(event, f.placeholder, f.field, this.props.layerKey, 'placeholder', 'text')}
-                    />
-                  </Col>
-                </FormGroup>
+                {['integer', 'text'].includes(f.type) ? this.renderTextFieldGroup(f, 'Placeholder', 'placeholder') : null}
               </Form>
             </Panel.Body>
           </Panel.Collapse>
@@ -218,15 +238,7 @@ class ElementField extends Component {
     );
   }
 
-  render() {
-    return (
-      <Col md={12}>
-        <Col md={12} sm={12}>
-          {this.renderComponent()}
-        </Col>
-      </Col>
-    );
-  }
+  render() { return <Col md={12}>{this.renderComponent()}</Col>; }
 }
 
 ElementField.propTypes = {
@@ -243,7 +255,8 @@ ElementField.propTypes = {
   onMove: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
-  unitsSystem: PropTypes.object
+  unitsSystem: PropTypes.object,
+  onFieldSubFieldChange: PropTypes.func.isRequired
 };
 
 ElementField.defaultProps = { genericType: 'Element', unitsSystem: [] };

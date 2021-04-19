@@ -79,8 +79,21 @@ class SegmentDetails extends Component {
   constructor(props) {
     super(props);
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleSubChange = this.handleSubChange.bind(this);
     this.handleUnitClick = this.handleUnitClick.bind(this);
     this.handleReload = this.handleReload.bind(this);
+  }
+
+  handleSubChange(layer, obj) {
+    const { segment } = this.props;
+    const { properties } = segment;
+    const subFields = properties[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
+    const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
+    subFields.splice(idxSub, 1, obj.sub);
+    properties[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
+    segment.properties = properties;
+    segment.changed = true;
+    this.props.onChange(segment);
   }
 
   handleInputChange(event, field, layer, type = 'text') {
@@ -148,6 +161,29 @@ class SegmentDetails extends Component {
               u.key === segment.properties[key].fields[curIdx].value_system);
             newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
           }
+          if (newProps[key].fields[idx].type === 'input-group') {
+            if (segment.properties[key].fields[curIdx].type !== newProps[key].fields[idx].type) {
+              newProps[key].fields[idx].value = undefined;
+            } else {
+              const nSubs = newProps[key].fields[idx].sub_fields || [];
+              const cSubs = segment.properties[key].fields[curIdx].sub_fields;
+              const exSubs = [];
+              if (nSubs.length < 1 || cSubs < 1) {
+                newProps[key].fields[idx].value = undefined;
+              } else {
+                nSubs.forEach((nSub) => {
+                  const hitSub = cSubs.find(c => c.id === nSub.id);
+                  if (nSub.type === 'label') { exSubs.push(nSub); }
+                  if (nSub.type === 'text') { exSubs.push({ ...nSub, value: hitSub.value.toString() }); }
+                  if (nSub.type === 'integer') {
+                    const parse = parseInt(hitSub.value, 10);
+                    exSubs.push({ ...nSub, value: Number.isNaN(parse) ? 0 : parse });
+                  }
+                });
+              }
+              newProps[key].fields[idx].sub_fields = exSubs;
+            }
+          }
         }
       });
     });
@@ -161,6 +197,7 @@ class SegmentDetails extends Component {
       segment.properties,
       klass.properties_template.select_options || {},
       this.handleInputChange,
+      this.handleSubChange,
       this.handleUnitClick
     );
     return (<div style={{ margin: '5px' }}>{layersLayout}</div>);

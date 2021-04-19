@@ -8,7 +8,6 @@ import { sortBy, filter } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnits, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
-import { ContinuousColorLegend } from 'react-vis';
 
 const GenPropertiesText = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
@@ -164,6 +163,23 @@ const GenPropertiesSystemDefined = (opt) => {
   );
 };
 
+const GenPropertiesInputGroup = (opt) => {
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
+  const fLab = e => <div className="form-control" style={{ backgroundColor: 'lightgray', width: 'unset', whiteSpace: 'nowrap' }}>{e.value}</div>;
+  const fTxt = e => <FormControl key={e.id} type="text" name={e.id} value={e.value} onChange={o => opt.onSubChange(o, e.id, opt.f_obj)} />;
+  const subs = opt.f_obj.sub_fields.map((e) => {
+    if (e.type === 'label') { return fLab(e); } return fTxt(e);
+  });
+  return (
+    <FormGroup style={{ marginBottom: 'unset', display: 'inline-table' }}>
+      {fieldHeader}
+      <InputGroup style={{ display: 'inline-flex' }}>
+        {subs}
+      </InputGroup>
+    </FormGroup>
+  );
+};
+
 const GenPropertiesDrop = (opt) => {
   const className = opt.isRequired ? 'drop_generic_properties field_required' : 'drop_generic_properties';
 
@@ -221,6 +237,8 @@ const GenProperties = (opt) => {
       return GenPropertiesNumber(fieldProps);
     case 'system-defined':
       return GenPropertiesSystemDefined(fieldProps);
+    case 'input-group':
+      return GenPropertiesInputGroup(fieldProps);
     default:
       return GenPropertiesText(fieldProps);
   }
@@ -229,9 +247,21 @@ const GenProperties = (opt) => {
 const GenPropertiesSearch = opt => GenProperties({ ...opt, isSearchCriteria: true });
 
 class GenPropertiesLayer extends Component {
+  constructor(props) {
+    super(props);
+    this.handleSubChange = this.handleSubChange.bind(this);
+  }
   // event, field, layer, type
   handleChange(e, f, k, t) {
     this.props.onChange(e, f, k, t);
+  }
+
+  handleSubChange(e, id, f) {
+    const sub = f.sub_fields.find(m => m.id === id);
+    sub.value = e.target.value;
+    const { layer } = this.props;
+    const obj = { f, sub };
+    this.props.onSubChange(layer.key, obj);
   }
 
   // event, field, key of layer, field object, value, unitsSystem
@@ -258,6 +288,7 @@ class GenPropertiesLayer extends Component {
           <GenProperties
             id={id}
             layer={layer}
+            f_obj={f}
             label={f.label}
             value={f.value || ''}
             description={f.description || ''}
@@ -266,6 +297,7 @@ class GenPropertiesLayer extends Component {
             formula={f.formula || ''}
             options={(selectOptions && selectOptions[f.option_layers]) || []}
             onChange={event => this.handleChange(event, f.field, key, f.type)}
+            onSubChange={this.handleSubChange}
             isEditable
             readOnly={false}
             isRequired={f.required || false}
@@ -311,6 +343,7 @@ GenPropertiesLayer.propTypes = {
   layer: PropTypes.object,
   selectOptions: PropTypes.object,
   onChange: PropTypes.func.isRequired,
+  onSubChange: PropTypes.func.isRequired,
   onClick: PropTypes.func
 };
 
@@ -371,7 +404,7 @@ GenPropertiesLayerSearchCriteria.defaultProps = {
   selectOptions: {}
 };
 
-const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout = [], id = 0) => {
+const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, funcClick = () => {}, layout = [], id = 0) => {
   const sortedLayers = sortBy(layers, l => l.position) || [];
   sortedLayers.forEach((layer) => {
     if (layer.condition == null || layer.condition.trim().length === 0) {
@@ -381,6 +414,7 @@ const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout 
           key={layer.key}
           layer={layer}
           onChange={funcChange}
+          onSubChange={funcSubChange}
           selectOptions={options}
           onClick={funcClick}
         />
@@ -408,6 +442,7 @@ const LayersLayout = (layers, options, funcChange, funcClick = () => {}, layout 
             key={layer.key}
             layer={layer}
             onChange={funcChange}
+            onSubChange={funcSubChange}
             selectOptions={options}
             onClick={funcClick}
           />

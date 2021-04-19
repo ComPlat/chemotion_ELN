@@ -84,6 +84,7 @@ export default class SegmentElementAdmin extends React.Component {
     this.hideJsonModal = this.hideJsonModal.bind(this);
     this.handleUpdateJson = this.handleUpdateJson.bind(this);
     this.fetchConfigs = this.fetchConfigs.bind(this);
+    this.onFieldSubFieldChange = this.onFieldSubFieldChange.bind(this);
   }
 
   componentDidMount() {
@@ -146,6 +147,22 @@ export default class SegmentElementAdmin extends React.Component {
     }
     element.properties_template.layers[l].fields = fields;
     this.setState({ element });
+  }
+
+  onFieldSubFieldChange(lk, f, cb) {
+    const { element } = this.state;
+    const layer = (element && element.properties_template
+      && element.properties_template.layers[lk]);
+    const { fields } = layer;
+    if (layer != null) {
+      const fobj = (fields || []).find(o => o.field === f.field);
+      if (Object.keys(fobj).length > 0) {
+        const idx = (fields || []).findIndex(o => o.field === f.field);
+        fields.splice(idx, 1, f);
+        element.properties_template.layers[lk].fields = fields;
+        this.setState({ element }, cb);
+      }
+    }
   }
 
   onFieldInputChange(event, orig, fe, lk, fc, tp) {
@@ -461,6 +478,8 @@ export default class SegmentElementAdmin extends React.Component {
       (sortedFields || []).forEach((f, idx) => {
         f.position = (idx + 1);
         if (f.type === 'system-defined') { f.option_layers = reUnit(unitsSystem, f.option_layers); }
+        f.required = false;
+        if (f.type !== 'input-group') { f.sub_fields = []; }
       });
       element.properties_template.layers[key].fields = sortedFields;
     });
@@ -547,7 +566,7 @@ export default class SegmentElementAdmin extends React.Component {
       const soptions = element.properties_template.select_options[key] || [];
       const options = soptions.map(f => (
         <div key={`${f.key}_${key}`} style={{ marginTop: '10px' }}>
-          <FormGroup bsSize="sm" controlId={`frmCtrlSelectOption_${f.key}`}>
+          <FormGroup bsSize="sm" controlId={`frmCtrlSelectOption_${f.key}_${key}`}>
             <InputGroup>
               <InputGroup.Addon>{f.key}</InputGroup.Addon>
               <FormControl
@@ -642,6 +661,7 @@ export default class SegmentElementAdmin extends React.Component {
           onDelete={(delStr, delKey, delRoot) => this.confirmDelete(delStr, delKey, delRoot)}
           onChange={(e, orig, fe, lk, fc, tp) => this.onFieldInputChange(e, orig, fe, lk, fc, tp)}
           unitsSystem={unitsSystem}
+          onFieldSubFieldChange={this.onFieldSubFieldChange}
         />
       )) || [];
 
@@ -675,7 +695,7 @@ export default class SegmentElementAdmin extends React.Component {
             </div>
           </Panel.Heading>
           <Panel.Collapse>
-            <Panel.Body>
+            <Panel.Body style={{ padding: '15px 0px 15px 0px' }}>
               {fields}
             </Panel.Body>
           </Panel.Collapse>

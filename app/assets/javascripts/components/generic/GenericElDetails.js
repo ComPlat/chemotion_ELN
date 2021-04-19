@@ -29,6 +29,7 @@ export default class GenericElDetails extends Component {
     this.onChangeElement = this.onChangeElement.bind(this);
     this.handleReload = this.handleReload.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleSubChange = this.handleSubChange.bind(this);
     this.handleUnitClick = this.handleUnitClick.bind(this);
     this.handleAttachmentDrop = this.handleAttachmentDrop.bind(this);
     this.handleAttachmentDelete = this.handleAttachmentDelete.bind(this);
@@ -103,9 +104,33 @@ export default class GenericElDetails extends Component {
               u.key === genericEl.properties[key].fields[curIdx].value_system);
             newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
           }
+          if (newProps[key].fields[idx].type === 'input-group') {
+            if (genericEl.properties[key].fields[curIdx].type !== newProps[key].fields[idx].type) {
+              newProps[key].fields[idx].value = undefined;
+            } else {
+              const nSubs = newProps[key].fields[idx].sub_fields || [];
+              const cSubs = genericEl.properties[key].fields[curIdx].sub_fields;
+              const exSubs = [];
+              if (nSubs.length < 1 || cSubs < 1) {
+                newProps[key].fields[idx].value = undefined;
+              } else {
+                nSubs.forEach((nSub) => {
+                  const hitSub = cSubs.find(c => c.id === nSub.id) || {};
+                  if (nSub.type === 'label') { exSubs.push(nSub); }
+                  if (nSub.type === 'text') { exSubs.push({ ...nSub, value: (hitSub.value || '').toString() }); }
+                  if (nSub.type === 'integer') {
+                    const parse = parseInt((hitSub.value || ''), 10);
+                    exSubs.push({ ...nSub, value: Number.isNaN(parse) ? 0 : parse });
+                  }
+                });
+              }
+              newProps[key].fields[idx].sub_fields = exSubs;
+            }
+          }
         }
       });
     });
+    genericEl.changed = true;
     genericEl.properties = newProps;
     this.setState({ genericEl });
   }
@@ -140,6 +165,18 @@ export default class GenericElDetails extends Component {
       DetailActions.close(genericEl, true);
     }
     return true;
+  }
+
+  handleSubChange(layer, obj) {
+    const { genericEl } = this.state;
+    const { properties } = genericEl;
+    const subFields = properties[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
+    const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
+    subFields.splice(idxSub, 1, obj.sub);
+    properties[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
+    genericEl.properties = properties;
+    genericEl.changed = true;
+    this.handleGenericElChanged(genericEl);
   }
 
   handleInputChange(event, field, layer, type = 'text') {
@@ -226,6 +263,7 @@ export default class GenericElDetails extends Component {
       genericEl.properties,
       selectOptions || {},
       this.handleInputChange,
+      this.handleSubChange,
       this.handleUnitClick,
       options,
       genericEl.id || 0
