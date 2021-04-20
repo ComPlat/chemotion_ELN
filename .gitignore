@@ -73,6 +73,8 @@
 !/public/images/wild_card/
 !/public/images/ghs/
 
+/public/favicon.ico
+
 /public/ontologies/*
 !/public/ontologies/.keep
 !/public/ontologies/chmo.default.edited.json
