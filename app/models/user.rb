@@ -226,10 +226,8 @@ class User < ActiveRecord::Base
         data['chmo'] = result['ols_terms']
         data['is_templates_moderator'] = false
         data['molecule_editor'] = false
+        self.profile.update_columns(data: data)
       end
-
-      layout = Rails.configuration.respond_to?(:profile_default) ? (Rails.configuration.profile_default&.layout || {}) : {}
-      self.profile.update_columns(data: data.merge(layout))
     end
   end
 

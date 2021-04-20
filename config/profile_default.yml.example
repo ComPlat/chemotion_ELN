@@ -1,5 +1,11 @@
 development:
   :layout:
+    :layout:
+      :sample: 1
+      :reaction: 2
+      :wellplate: 3
+      :screen: 4
+      :research_plan: 5
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -21,13 +27,13 @@ development:
       :results:
         5
     :layout_detail_reaction:
-      :properties:
-        1
-      :analyses:
-        2
-      :references:
-        3
       :scheme:
+        1
+      :properties:
+        2
+      :analyses:
+        3
+      :references:
         4
       :green_chemistry:
         5
@@ -48,6 +54,12 @@ development:
 
 production:
   :layout:
+    :layout:
+      :sample: 1
+      :reaction: 2
+      :wellplate: 3
+      :screen: 4
+      :research_plan: 5
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -69,13 +81,13 @@ production:
       :results:
         5
     :layout_detail_reaction:
-      :properties:
-        1
-      :analyses:
-        2
-      :references:
-        3
       :scheme:
+        1
+      :properties:
+        2
+      :analyses:
+        3
+      :references:
         4
       :green_chemistry:
         5
