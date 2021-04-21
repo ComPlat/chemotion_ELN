@@ -197,3 +197,14 @@ $colo-bs-primary: #337ab7;
   font-weight: lighter !important;
   .g-ds-title { text-decoration: underline; font-weight: 700; line-height: 1.5; }
 }
+
+.g_input_group {
+  padding: 6px 6px !important;
+}
+
+.g_input_group_label {
+  background-color: lightgray !important;
+  width: unset !important;
+  white-space: nowrap !important;
+  padding: 6px 6px !important;
+}

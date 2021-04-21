@@ -146,7 +146,7 @@ class SegmentDetails extends Component {
         if (curIdx >= 0) {
           const curVal = segment.properties[key].fields[curIdx].value;
           const curType = typeof curVal;
-          if (newProps[key].fields[idx].type === 'text') {
+          if (['select', 'text'].includes(newProps[key].fields[idx].type)) {
             newProps[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
           }
           if (newProps[key].fields[idx].type === 'integer') {
@@ -175,8 +175,8 @@ class SegmentDetails extends Component {
                   const hitSub = cSubs.find(c => c.id === nSub.id);
                   if (nSub.type === 'label') { exSubs.push(nSub); }
                   if (nSub.type === 'text') { exSubs.push({ ...nSub, value: hitSub.value.toString() }); }
-                  if (nSub.type === 'integer') {
-                    const parse = parseInt(hitSub.value, 10);
+                  if (nSub.type === 'number') {
+                    const parse = Number((hitSub.value || ''));
                     exSubs.push({ ...nSub, value: Number.isNaN(parse) ? 0 : parse });
                   }
                 });

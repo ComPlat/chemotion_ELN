@@ -165,8 +165,8 @@ const GenPropertiesSystemDefined = (opt) => {
 
 const GenPropertiesInputGroup = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
-  const fLab = e => <div className="form-control" style={{ backgroundColor: 'lightgray', width: 'unset', whiteSpace: 'nowrap' }}>{e.value}</div>;
-  const fTxt = e => <FormControl key={e.id} type="text" name={e.id} value={e.value} onChange={o => opt.onSubChange(o, e.id, opt.f_obj)} />;
+  const fLab = e => <div className="form-control g_input_group_label">{e.value}</div>;
+  const fTxt = e => <FormControl className="g_input_group" key={e.id} type={e.type} name={e.id} value={e.value} onChange={o => opt.onSubChange(o, e.id, opt.f_obj)} />;
   const subs = opt.f_obj.sub_fields.map((e) => {
     if (e.type === 'label') { return fLab(e); } return fTxt(e);
   });

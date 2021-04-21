@@ -29,7 +29,7 @@ const TypeSelect = ({ selType, node }) => (
   <FormGroup bsSize="small" style={{ marginRight: '-10px', marginLeft: '-10px' }}>
     <FormControl componentClass="select" placeholder="select the type" onChange={e => selType(e, node)} defaultValue={node.data.type}>
       <option value="label">label</option>
-      <option value="integer">integer</option>
+      <option value="number">number</option>
       <option value="text">text</option>
     </FormControl>
   </FormGroup>
@@ -157,6 +157,7 @@ export default class GroupFields extends React.Component {
             onGridReady={this.onGridReady}
             rowData={sub}
             singleClickEdit
+            stopEditingWhenGridLosesFocus
           />
         </div>
       </div>
