@@ -19,13 +19,11 @@ module Chemotion
       get do
         profile = current_user.profile
         data = profile.data || {}
-        data.merge!(layout: {
-          'sample' => 1,
-          'reaction' => 2,
-          'wellplate' => 3,
-          'screen' => 4,
-          'research_plan' => 5
-        }) if (data['layout'].nil?)
+        layout = Rails.configuration.respond_to?(:profile_default) ? (Rails.configuration.profile_default&.layout || {}) : {}
+
+        layout.keys&.each do |ll|
+          data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
+        end
         {
           data: data,
           show_external_name: profile.show_external_name,

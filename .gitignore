@@ -141,3 +141,4 @@ backup/weekly_backup
 tags
 tags.temp
 .vscode/*
+config/profile_default.yml
