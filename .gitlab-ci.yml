@@ -29,6 +29,7 @@ variables:
     - mv vendor/bundle/  ~/shared/
     - cp config/database.yml.gitlab config/database.yml
     - cp -f config/storage.yml.example config/storage.yml
+    - cp -f config/profile_default.yml.example config/profile_default.yml
     - touch config/datacollectors.yml
 
 stages:
@@ -66,6 +67,7 @@ building:
     - if test ! -d "node_modules"; then mv /home/gitlab-runner/shared/node_modules .; fi
     - cp config/database.yml.gitlab config/database.yml
     - cp -f config/storage.yml.example config/storage.yml
+    - cp -f config/profile_default.yml.example config/profile_default.yml
     - echo "$DOTENV" > .env
     - touch config/datacollectors.yml
     # - ls node_modules
