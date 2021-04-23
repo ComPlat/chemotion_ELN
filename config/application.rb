@@ -114,6 +114,17 @@ module Chemotion
       end
     end
 
+### Fix import version (mac)
+src1 = Rails.root.join('node_modules', '@citation-js', 'core', 'lib-mjs', 'util', 'fetchFile.js')
+src2 = Rails.root.join('node_modules/@citation-js/core/lib-mjs/index.js')
+if File.exist?(src1)
+  `sed -i ".bak" "s|import { version } from '../../package.json';|import pkg from '../../package.json';const { version } = pkg.version;|" #{src1}`
+end
+if File.exist?(src2)
+  `sed -i ".bak" "s|import { version } from '../package.json';|import pkg from '../package.json';const { version } = pkg.version;|" #{src2}`
+end
+
+
 #    config.browserify_rails.commandline_options = ' -t [ babelify --presets [ @babel/preset-env  @babel/preset-react ] --plugins [ @babel/plugin-proposal-object-rest-spread ] ] '
     # Environments in which to generate source maps
     # The default is none
