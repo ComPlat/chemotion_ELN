@@ -145,7 +145,7 @@ module Chemotion
             layer = params[:selection][:searchProperties][:layers][lk]
             qs = layer[:fields].select{ |f| f[:value].present? }
             qs.each do |f|
-              if f[:type] == "checkbox"
+              if f[:type] == "checkbox" || f[:type] == "integer" || f[:type] == "system-defined"
                 query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value] }] } }
               else
                 query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value].to_s }] } }

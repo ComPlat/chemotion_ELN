@@ -185,53 +185,30 @@ export default class GenericElementAdmin extends React.Component {
     } else {
       ({ value } = event.target);
     }
-    let fobj = null;
+
     const layer = (element && element.properties_template
       && element.properties_template.layers[lk]);
+    if (typeof layer === 'undefined' || layer == null) return;
+
     const { fields } = layer;
-    if (layer != null) {
-      const fobjs = filter(fields, o => o.field === fe);
-      if (fobjs && fobjs.length > 0) {
-        fobj = fobjs[0];
-      }
+
+    if (fields == null || fields.length === 0) return;
+
+    const fobj = fields.find(e => e.field === fe);
+    if (Object.keys(fobj).length === 0) return;
+
+    switch (fc) {
+      case 'required':
+        fobj.required = !orig;
+        break;
+      default:
+        fobj[`${fc}`] = value;
+        break;
     }
-    if (layer != null && fobj != null) {
-      switch (fc) {
-        case 'label':
-          fobj.label = value;
-          break;
-        case 'description':
-          fobj.description = value;
-          break;
-        case 'type':
-          fobj.type = value;
-          break;
-        case 'required':
-          fobj.required = !orig;
-          break;
-        case 'formula':
-          fobj.formula = value;
-          break;
-        case 'position':
-          fobj.position = value;
-          break;
-        case 'field':
-          fobj.field = value;
-          break;
-        case 'placeholder':
-          fobj.placeholder = value;
-          break;
-        case 'option_layers':
-          fobj.option_layers = value;
-          break;
-        default:
-          break;
-      }
-      const idx = findIndex(fields, o => o.field === fe);
-      fields.splice(idx, 1, fobj);
-      element.properties_template.layers[lk].fields = fields;
-      this.setState({ element });
-    }
+    const idx = findIndex(fields, o => o.field === fe);
+    fields.splice(idx, 1, fobj);
+    element.properties_template.layers[lk].fields = fields;
+    this.setState({ element });
   }
 
   onInputNewField(e) {
