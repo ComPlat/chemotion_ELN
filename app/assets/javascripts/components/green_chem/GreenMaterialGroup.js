@@ -50,7 +50,6 @@ function MaterialNameWithIupac({ group, node }) {
 
 function WasteCheckbox({ node, toggleWaste }) {
   const material = node.data;
-
   return (
     <div className="waste-chkbx">
       <Checkbox
@@ -98,7 +97,7 @@ export default class GreenMaterialGroup extends React.Component {
   toggleWaste(material) {
     const { materials, onChange } = this.props;
     material.waste = !(material.waste || false);
-
+    this.api.refreshCells();
     onChange();
   }
 
