@@ -4,13 +4,32 @@ import Container from './Container';
 
 const uuidv4 = require('uuid/v4');
 
-const columns = ['a', 'b', 'c', 'd', 'e', 'f'].map(columnName => ({
-  key: columnName,
-  name: columnName,
-  editable: true,
-  resizable: true,
-  width: 130
-}));
+const columns = [
+  {
+    headerName: 'a',
+    field: 'a',
+  },
+  {
+    headerName: 'b',
+    field: 'b',
+  },
+  {
+    headerName: 'c',
+    field: 'c',
+  },
+  {
+    headerName: 'd',
+    field: 'd',
+  },
+  {
+    headerName: 'e',
+    field: 'e',
+  },
+  {
+    headerName: 'f',
+    field: 'f',
+  }
+];
 
 
 export default class ResearchPlan extends Element {
@@ -81,13 +100,13 @@ export default class ResearchPlan extends Element {
             columns,
             rows: [
               {
-                a: '1', b: '', c: '', d: '', e: '', f: ''
+                a: '', b: '', c: '', d: '', e: '', f: ''
               },
               {
-                a: '1', b: '', c: '', d: '', e: '', f: ''
+                a: '', b: '', c: '', d: '', e: '', f: ''
               },
               {
-                a: '1', b: '', c: '', d: '', e: '', f: ''
+                a: '', b: '', c: '', d: '', e: '', f: ''
               },
             ]
           }

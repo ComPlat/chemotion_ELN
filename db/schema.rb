@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210217164124) do
+ActiveRecord::Schema.define(version: 20210303140000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -779,11 +779,11 @@ ActiveRecord::Schema.define(version: 20210217164124) do
   create_table "text_templates", force: :cascade do |t|
     t.string   "type"
     t.integer  "user_id",                 null: false
+    t.string   "name"
     t.jsonb    "data",       default: {}
     t.datetime "deleted_at"
     t.datetime "created_at",              null: false
     t.datetime "updated_at",              null: false
-    t.string   "name"
   end
 
   add_index "text_templates", ["deleted_at"], name: "index_text_templates_on_deleted_at", using: :btree

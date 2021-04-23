@@ -11,10 +11,10 @@ module Export
 
     def generate_sheet(columns, rows)
       @xfile.workbook.add_worksheet(:name => "Pie Chart") do |sheet|
-        sheet.add_row columns.map {|column| column['name']}
+        sheet.add_row columns.map {|column| column['headerName']}
 
         rows.each do |row|
-          sheet.add_row columns.map {|column| row[column['key']]}
+          sheet.add_row columns.map {|column| row[column['field']]}
         end
       end
     end

@@ -41,7 +41,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
           <tr key={index}>
             <td>{schema.name}</td>
             <td>
-              {schema.value.columns.map(column => column.name).join(', ')}
+              {schema.value.columns.map(column => column.headerName).join(', ')}
             </td>
             <td>
               {schema.value.rows.length}
