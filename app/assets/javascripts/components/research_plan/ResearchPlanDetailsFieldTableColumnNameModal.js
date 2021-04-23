@@ -17,7 +17,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
 
       let columnNameValue = '';
       if (modal.action === 'rename') {
-        columnNameValue = columns[modal.idx].name;
+        columnNameValue = columns.find(o => o.colId === modal.colId).headerName;
       }
 
       this.setState({
@@ -34,7 +34,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   handleSubmit() {
     const { columns, onSubmit } = this.props;
     const { columnNameValue } = this.state;
-    const keys = columns.map(column => column.key);
+    const keys = columns.map(column => column.headerName);
 
     if (!columnNameValue) {
       this.setState({ columnNameError: 'Please give a column name.' });

@@ -12,12 +12,12 @@
         %thead
           %tr
             - field[:columns].each do |column|
-              %th= column['name']
+              %th= column['headerName']
         %tbody
           - field[:rows].each do |row|
             %tr
               - field[:columns].each do |column|
-                %td= row[column['key']]
+                %td= row[column['colId']]
 
   - when 'ketcher'
     %div

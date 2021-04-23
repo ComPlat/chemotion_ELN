@@ -1,0 +1,17 @@
+.custom-context{
+    border: solid 1px #ccc;
+    display: inline-block;
+    margin: 5px;
+    background: #FFF;
+    color: #000;
+    font-family: sans-serif;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .custom-context-item{
+    border-bottom: dotted 1px #ccc;
+    padding: 5px 25px;
+  }
+  .custom-context-item-last{
+    padding: 5px 25px;
+  }

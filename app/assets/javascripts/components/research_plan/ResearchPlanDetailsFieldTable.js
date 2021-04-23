@@ -8,35 +8,15 @@ import ResearchPlanDetailsFieldTableContextMenu from './ResearchPlanDetailsField
 import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal';
 import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import { AgGridReact } from 'ag-grid-react';
+import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 import uniqueId from 'react-html-id';
 import CustomTextEditor from '../common/CustomTextEditor';
-
-const { ContextMenuTrigger } = Menu;
 
 // regexp to parse tap separated paste from the clipboard
 const defaultParsePaste = str => (
   str.split(/\r\n|\n|\r/).map(row => row.split('\t'))
 );
-
-// Monkey path for ReactDataGrid
-// see https://github.com/adazzle/react-data-grid/issues/1416#issuecomment-445488607
-// this works for react-data-grid 6.1.0, hopefully it will be fixed in the future
-class FixedReactDataGrid extends DataGrid {
-  componentDidMount() {
-    this._mounted = true;
-    window.addEventListener('resize', this.metricsUpdated);
-    if (this.props.cellRangeSelection) {
-      this.grid.addEventListener('mouseup', this.onWindowMouseUp);
-    }
-    this.metricsUpdated();
-  }
-
-  componentWillUnmount() {
-    this._mounted = false;
-    window.removeEventListener('resize', this.metricsUpdated);
-    this.grid.removeEventListener('mouseup', this.onWindowMouseUp);
-  }
-}
 
 export default class ResearchPlanDetailsFieldTable extends Component {
 
@@ -46,23 +26,26 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       update: this.props.update,
       columnNameModal: {
         show: false,
-        idx: null
+        colId: null
       },
       schemaModal: {
         show: false
       },
-      selection: {}
+      selection: {},
+      gridApi: {},
+      columnApi: {},
+      columnClicked: null,
+      rowClicked: null,
+      isDisable: true
     };
 
     uniqueId.enableUniqueIds(this)
+
 
     document.addEventListener('copy', this.handleCopy.bind(this));
     document.addEventListener('paste', this.handlePaste.bind(this));
 
     this.ref = React.createRef();
-
-    this.handleCellSelected = this.handleCellSelected.bind(this);
-    this.handleCellDeSelected = this.handleCellDeSelected.bind(this);
   }
 
   componentDidUpdate() {
@@ -86,49 +69,23 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     return [];
   }
 
-  handleEdit(event) {
-    const { fromRow, toRow, updated } = event;
-    const { field, onChange } = this.props;
-
-    for (let i = fromRow; i <= toRow; i++) {
-      field.value.rows[i] = { ...field.value.rows[i], ...updated };
-    }
-
-    onChange(field.value, field.id);
-  }
-
-  handleRangeSelection(event) {
-    this.setState({ selection: {
-      topLeft: event.topLeft,
-      bottomRight: event.bottomRight
-    }});
-  }
-
-  handleCellSelected(event) {
-    this.setState({ selected: event });
-  }
-
-  handleCellDeSelected(event) {
-    this.setState({ selected: {} });
-  }
-
-  handleColumnNameModalShow(action, idx) {
+  handleColumnNameModalShow(action, colId) {
     this.setState({
       columnNameModal: {
         show: true,
         action,
-        idx
+        colId
       }
     });
   }
 
   handleColumnNameModalSubmit(columnName) {
-    const { action, idx } = this.state.columnNameModal;
+    const { action, colId } = this.state.columnNameModal;
 
     if (action === 'insert') {
-      this.handleColumnInsert(idx, columnName);
+      this.handleColumnInsert(columnName);
     } else if (action === 'rename') {
-      this.handleColumnRename(idx, columnName);
+      this.handleColumnRename(colId, columnName);
     }
 
     this.handleColumnNameModalHide();
@@ -144,32 +101,34 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
   }
 
-  handleColumnInsert(columnIdx, columnName) {
+  handleColumnInsert(columnName) {
     const { field, onChange } = this.props;
-    const columns = field.value.columns.slice();
-    columns.splice(columnIdx, 0, this.buildColumn(columnName));
-    field.value.columns = columns;
+    const { gridApi, columnApi } = this.state
+
+    let columnDefs = gridApi.getColumnDefs();
+    columnDefs.push({
+      headerName: columnName,
+      field: columnName,
+    });
+    gridApi.setColumnDefs(columnDefs);
+    field.value.columns = gridApi.getColumnDefs();
+    field.value.columnStates = columnApi.getColumnState();
+
     onChange(field.value, field.id);
   }
 
-  handleColumnRename(columnIdx, columnName) {
+  handleColumnRename(colId, columnName) {
     const { field, onChange } = this.props;
-    const columns = field.value.columns.slice();
-    const rows = field.value.rows.slice();
-    const oldColumnName = columns[columnIdx]['key'];
-    const column = Object.assign({}, columns[columnIdx], {
-      key: columnName,
-      name: columnName
-    });
-    columns.splice(columnIdx, 1, column);
-    field.value.columns = columns;
+    const { gridApi, columnApi } = this.state
 
-    for (let i = 0; i < rows.length; i++) {
-      rows[i][columnName] = rows[i][oldColumnName];
-      delete rows[i][oldColumnName];
-    }
+    let columnDefs = gridApi.getColumnDefs();
+    let columnChange = columnDefs.find(o => o.colId === colId);
+    columnChange.headerName = columnName;
+    gridApi.setColumnDefs(columnDefs);
+    field.value.columns = gridApi.getColumnDefs();
+    field.value.columnStates = columnApi.getColumnState();
 
-    onChange({ columns, rows }, field.id);
+    onChange(field.value, field.id);
   }
 
   handleColumnResize(columnIdx, width) {
@@ -294,53 +253,224 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     return this.props.field.value.rows[idx];
   }
 
+
+  cellValueChanged = () => {
+    const { field, onChange } = this.props;
+    const { gridApi, columnApi } = this.state
+
+    let rowData = [];
+    gridApi.forEachNode(node => rowData.push(node.data));
+    field.value.rows = rowData
+    field.value.columns = gridApi.getColumnDefs();
+    field.value.columnStates = columnApi.getColumnState();
+
+    onChange(field.value, field.id);
+  }
+
+  onGridReady = (params) => {
+    this.setState({
+      gridApi: params.api,
+      columnApi: params.columnApi
+    });
+
+    const { field } = this.props;
+    params.columnApi.setColumnState(field.value.columnStates);
+  }
+
+  onSaveGridColumnState(params) {
+    const { field, onChange } = this.props;
+    const { gridApi, columnApi } = this.state
+
+    field.value.columns = gridApi.getColumnDefs();
+    field.value.columnStates = columnApi.getColumnState();
+
+    onChange(field.value, field.id);
+  }
+
+  onSaveGridRow() {
+    const { field, onChange } = this.props;
+    const { gridApi } = this.state
+
+    let rowData = [];
+    gridApi.forEachNode(node => rowData.push(node.data));
+    field.value.rows = rowData
+
+    onChange(field.value, field.id);
+  }
+
+  addNewColumn() {
+    const { field, onChange } = this.props;
+    const { gridApi, columnApi } = this.state
+
+    let columnDefs = gridApi.getColumnDefs();
+    let columnName = this.nextUniqueId();
+    columnDefs.push({
+      headerName: columnName,
+      field: columnName,
+    });
+    gridApi.setColumnDefs(columnDefs);
+    field.value.columns = gridApi.getColumnDefs();
+    field.value.columnStates = columnApi.getColumnState();
+
+    onChange(field.value, field.id);
+  }
+
+  addNewRow() {
+    const { field, onChange } = this.props;
+    const { gridApi } = this.state
+
+    gridApi.applyTransaction({
+      add: [{}],
+    });
+
+    let rowData = [];
+    gridApi.forEachNode(node => rowData.push(node.data));
+    field.value.rows = rowData
+
+    onChange(field.value, field.id);
+  }
+
+  removeThisRow() {
+    const { field, onChange } = this.props;
+    const { gridApi, rowClicked } = this.state
+    if (rowClicked) {
+      let rowData = [];
+      gridApi.forEachNode(node => {
+        rowData.push(node.data);
+      });
+      gridApi.applyTransaction({ remove: [rowClicked] });
+
+      rowData = rowData.filter(function (value, index, arr) {
+        return value !== rowClicked;
+      });
+      field.value.rows = rowData
+
+      onChange(field.value, field.id);
+    }
+  }
+
+  removeThisColumn() {
+    const { field, onChange } = this.props;
+    const { gridApi, columnApi, columnClicked } = this.state
+    if (columnClicked) {
+      let columnDefs = gridApi.getColumnDefs();
+      columnDefs = columnDefs.filter(function (value, index, arr) {
+        return value.colId !== columnClicked;
+      });
+
+      gridApi.setColumnDefs(columnDefs);
+      field.value.columns = gridApi.getColumnDefs();
+      field.value.columnStates = columnApi.getColumnState();
+
+      onChange(field.value, field.id);
+    }
+  }
+
+  onCellContextMenu(params) {
+    this.setState({ columnClicked: params.column.colId, rowClicked: params.data });
+  }
+
+  handleRenameClick() {
+    const { columnClicked } = this.state;
+    if (columnClicked) {
+      this.handleColumnNameModalShow('rename', columnClicked);
+    }
+  }
+
+  handleInsertColumnClick() {
+    const { columnClicked } = this.state;
+    if (columnClicked) {
+      this.handleColumnNameModalShow('insert', columnClicked);
+    }
+  }
+
+  onCellMouseOver() {
+    this.setState({ isDisable: false });
+  }
+
+  onCellMouseOut() {
+    this.setState({ isDisable: true });
+  }
+
+  onHide() {
+    this.setState({ columnClicked: null, rowClicked: null });
+  }
+
   renderEdit() {
-    const { field, onExport, tableIndex  } = this.props;
+    const { field, onExport } = this.props;
     const { rows, columns } = field.value;
-    const { columnNameModal, schemaModal } = this.state;
-    const editorPortalTarget = document.getElementsByClassName('react-grid-Viewport')[tableIndex];
+    const { columnNameModal, schemaModal, isDisable } = this.state;
+
+    let contextMenuId = this.nextUniqueId();
+    const defaultColDef = {
+      resizable: true,
+      rowDrag: true,
+      sortable: true,
+      editable: true,
+      cellEditor: 'agTextCellEditor',
+      cellClass: 'cell-figure',
+    };
 
     return (
       <div>
-        <div className="research-plan-table-grid">
-          <FixedReactDataGrid
-            ref={this.ref}
-            columns={columns}
-            rowGetter={this.rowGetter.bind(this)}
-            rowsCount={rows.length}
-            minHeight={272}
-            onGridRowsUpdated={event => this.handleEdit(event)}
-            enableCellSelect={true}
-            editorPortalTarget={editorPortalTarget}
-            cellRangeSelection={{
-              onComplete: this.handleRangeSelection.bind(this),
-            }}
-            onCellSelected={this.handleCellSelected.bind(this)}
-            onCellDeSelected={this.handleCellDeSelected.bind(this)}
-            onColumnResize={this.handleColumnResize.bind(this)}
-            contextMenu={
-              <ResearchPlanDetailsFieldTableContextMenu id={this.nextUniqueId()}
-                onColumnInsertLeft={(event, { idx }) => this.handleColumnNameModalShow('insert', idx)}
-                onColumnInsertRight={(event, { idx }) => this.handleColumnNameModalShow('insert', idx + 1)}
-                onColumnRename={(event, { idx }) => this.handleColumnNameModalShow('rename', idx)}
-                onColumnDelete={(event, { idx }) => this.handleColumnDelete(idx)}
-                onRowInsertAbove={(event, { rowIdx }) => this.handleRowInsert(rowIdx)}
-                onRowInsertBelow={(event, { rowIdx }) => this.handleRowInsert(rowIdx + 1)}
-                onRowDelete={(event, { rowIdx }) => this.handleRowDelete(rowIdx)}
+        <div className='research-plan-table-grid'>
+          <div id='myGrid' className='ag-theme-alpine'>
+            <ContextMenuTrigger id={contextMenuId} disable={isDisable}>
+              <AgGridReact
+                defaultColDef={defaultColDef}
+                columnDefs={columns}
+                rowData={rows}
+                domLayout='autoHeight'
+                onGridReady={this.onGridReady}
+                onCellEditingStopped={this.cellValueChanged}
+                rowDragManaged={true}
+                animateRows={true}
+                singleClickEdit={true}
+                stopEditingWhenGridLosesFocus={true}
+                rowHeight='37'
+                onSortChanged={this.onSaveGridColumnState.bind(this)}
+                onColumnResized={this.onSaveGridColumnState.bind(this)}
+                onColumnMoved={this.onSaveGridColumnState.bind(this)}
+                onCellMouseOver={this.onCellMouseOver.bind(this)}
+                onCellMouseOut={this.onCellMouseOut.bind(this)}
+                onRowDragEnd={this.onSaveGridRow.bind(this)}
+                onCellContextMenu={this.onCellContextMenu.bind(this)}
+                enableMultiRowDragging={true}
+                rowSelection='multiple'
+                suppressDragLeaveHidesColumns={true}
               />
-            }
-            RowsContainer={ContextMenuTrigger}
-          />
+            </ContextMenuTrigger>
+            <ContextMenu id={contextMenuId} onHide={this.onHide.bind(this)}>
+              <MenuItem onClick={this.handleRenameClick.bind(this)}>
+                Rename column
+            </MenuItem>
+              <MenuItem divider />
+              <MenuItem onClick={this.handleInsertColumnClick.bind(this)}>
+                Add new column
+            </MenuItem>
+              <MenuItem onClick={this.addNewRow.bind(this)}>
+                Add new row
+            </MenuItem>
+              <MenuItem divider />
+              <MenuItem onClick={this.removeThisColumn.bind(this)}>
+                Remove this column
+            </MenuItem>
+              <MenuItem onClick={this.removeThisRow.bind(this)}>
+                Remove this row
+            </MenuItem>
+            </ContextMenu>
+          </div>
         </div>
-        <div className="research-plan-table-toolbar">
+
+        <div className='research-plan-table-toolbar'>
           <Row>
             <Col xs={3}>
-              <Button bsSize="xsmall" onClick={this.handleSchemaModalShow.bind(this)}>
+              <Button bsSize='xsmall' onClick={this.handleSchemaModalShow.bind(this)}>
                 Table schemas
               </Button>
             </Col>
             <Col xs={3} xsOffset={6}>
-              <Button bsSize="xsmall" onClick={() => onExport(field)}>
+              <Button bsSize='xsmall' onClick={() => onExport(field)}>
                 Export as Excel
               </Button>
             </Col>
@@ -366,12 +496,12 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const { columns, rows } = field.value;
 
     const th = columns.map((column) => {
-      return <th key={column.key}>{column.name}</th>;
+      return <th key={column.colId}>{column.headerName}</th>;
     });
 
     const tr = rows.map((row, index) => {
       const td = columns.map((column) => {
-        return <td key={column.key}>{row[column.key]}</td>;
+        return <td style={{ 'height': '37px' }} key={column.colId}>{row[column.colId]}</td>;
       });
       return (
         <tr key={index}>
@@ -381,7 +511,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
 
     return (
-      <table className="table table-bordered">
+      <table className='table table-bordered'>
         <thead>
           <tr>
             {th}
