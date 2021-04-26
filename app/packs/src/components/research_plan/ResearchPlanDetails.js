@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem } from 'react-bootstrap';
+import Immutable from 'immutable';
 import ElementCollectionLabels from '../ElementCollectionLabels';
 import UIActions from '../actions/UIActions';
 import ElementActions from '../actions/ElementActions';
@@ -16,7 +17,6 @@ import ResearchPlanDetailsAttachments from './ResearchPlanDetailsAttachments';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
-import Immutable from 'immutable';
 import ElementDetailSortTab from '../ElementDetailSortTab';
 
 export default class ResearchPlanDetails extends Component {
@@ -41,6 +41,10 @@ export default class ResearchPlanDetails extends Component {
   componentWillReceiveProps(nextProps) {
     const { researchPlan } = nextProps;
     this.setState({ researchPlan });
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
   }
 
   toggleFullScreen() {
@@ -155,8 +159,8 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  handleAttachmentDownload(attachment) {
-      Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+  handleAttachmentDownload(attachment) { // eslint-disable-line class-methods-use-this
+    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
   }
 
   handleAttachmentEdit(attachment) {
@@ -218,7 +222,7 @@ export default class ResearchPlanDetails extends Component {
       this.renderResearchPlanTab(researchPlan, update);
   }
 
-  renderResearchPlanTab(researchPlan, update) {
+  renderResearchPlanTab(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
     const { name, body, changed } = researchPlan;
     return (
       <ListGroup fill="true">
@@ -244,9 +248,9 @@ export default class ResearchPlanDetails extends Component {
         </ListGroupItem>
       </ListGroup>
     );
-  }
+  } /* eslint-enable */
 
-  renderPropertiesTab(researchPlan, update) {
+  renderPropertiesTab(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
     const { name, body } = researchPlan;
     return (
       <ListGroup fill="true">
@@ -271,7 +275,7 @@ export default class ResearchPlanDetails extends Component {
         </ListGroupItem>
       </ListGroup>
     );
-  }
+  } /* eslint-enable */
 
   renderAnalysesTab(researchPlan) {
     return (
@@ -288,7 +292,7 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  renderAttachmentsTab(researchPlan) {
+  renderAttachmentsTab(researchPlan) { /* eslint-disable react/jsx-no-bind */
     const { attachments } = researchPlan;
     return (
       <ListGroup fill="true">
@@ -305,7 +309,7 @@ export default class ResearchPlanDetails extends Component {
         </ListGroupItem>
       </ListGroup>
     );
-  }
+  } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
@@ -332,10 +336,6 @@ export default class ResearchPlanDetails extends Component {
         </OverlayTrigger>
       </Panel.Heading>
     );
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
   }
 
   render() {
@@ -384,7 +384,6 @@ export default class ResearchPlanDetails extends Component {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
     });
-    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
       <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">
