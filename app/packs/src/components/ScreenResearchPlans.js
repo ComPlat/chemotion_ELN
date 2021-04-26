@@ -42,56 +42,48 @@ class ScreenResearchPlans extends Component {
   render() {
     // eslint-disable-next-line object-curly-newline
     const { researchPlans, isOver, canDrop, connectDropTarget, deleteResearchPlan } = this.props;
-    const style = { padding: 10 };
-    if (isOver && canDrop) {
-      style.borderStyle = 'dashed';
+    const style = {
+      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px'
+    };
+    if (isOver) {
       style.borderColor = '#337ab7';
-    } else if (canDrop) {
-      style.borderStyle = 'dashed';
     }
+
+    // eslint-disable-next-line function-paren-newline
     return connectDropTarget(
-      <div style={style}>
-        <table width="100%">
-          <thead>
-            <tr>
-              <th width="45%">Name</th>
-              <th width="50%">Description</th>
-              <th width="5%" />
-            </tr>
-          </thead>
-          <tbody>
-            {researchPlans.map(researchPlan => (
-              <tr key={researchPlan.id} style={{ height: '80px', verticalAlign: 'middle' }}>
-                <td>
-                  <a
-                    onClick={() => this.handleResearchPlanClick(researchPlan)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {researchPlan.name}
-                  </a>
-                </td>
-                <td>
-                  <QuillViewer
-                    value={researchPlan.description}
-                    theme="bubble"
-                    height="44px"
-                  />
-                </td>
-                <td style={{ verticalAlign: 'middle' }}>
-                  <Button
-                    bsStyle="danger"
-                    style={{ marginLeft: '10px' }}
-                    onClick={() => deleteResearchPlan(researchPlan)}
-                  >
-                    <i className="fa fa-trash-o" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
+      <div>
+        <div style={style}>
+          Drop Research Plan here to add.
+        </div>
+        {researchPlans.map(researchPlan => (
+          <tr key={researchPlan.id} style={{ height: '80px', verticalAlign: 'middle' }}>
+            <td>
+              <a
+                onClick={() => this.handleResearchPlanClick(researchPlan)}
+                style={{ cursor: 'pointer' }}
+              >
+                {researchPlan.name}
+              </a>
+            </td>
+            <td>
+              <QuillViewer
+                value={researchPlan.description}
+                theme="bubble"
+                height="44px"
+              />
+            </td>
+            <td style={{ verticalAlign: 'middle' }}>
+              <Button
+                bsStyle="danger"
+                style={{ marginLeft: '10px' }}
+                onClick={() => deleteResearchPlan(researchPlan)}
+              >
+                <i className="fa fa-trash-o" />
+              </Button>
+            </td>
+          </tr>
+        ))}
+      </div>);
   }
 }
 
