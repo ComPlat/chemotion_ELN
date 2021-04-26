@@ -1,10 +1,10 @@
 {
   "data": {
-    "id": "10.80826/device-test-3",
+    "id": "prefix/device-test-3",
     "type": "dois",
     "attributes": {
-      "doi": "10.80826/device-test-3",
-      "prefix": "10.80826",
+      "doi": "prefix/device-test-3",
+      "prefix": "prefix",
       "suffix": "device-test-3",
       "identifiers": [],
       "alternateIdentifiers": [],
@@ -40,7 +40,7 @@
       "geoLocations": [],
       "fundingReferences": [],
       "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlc291cmNlIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiIHhtbG5zPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCIgeHNpOnNjaGVtYUxvY2F0aW9uPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCBodHRwOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00L21ldGFkYXRhLnhzZCI+CiAgPGlkZW50aWZpZXIgaWRlbnRpZmllclR5cGU9IkRPSSI+MTAuODA4MjYvREVWSUNFLVRFU1QtMzwvaWRlbnRpZmllcj4KICA8Y3JlYXRvcnMvPgogIDx0aXRsZXM+CiAgICA8dGl0bGU+RGV2aWNlIE1ldGFkYXRhPC90aXRsZT4KICA8L3RpdGxlcz4KICA8cHVibGlzaGVyPkNoZW1vdGlvbjwvcHVibGlzaGVyPgogIDxwdWJsaWNhdGlvblllYXI+MjAyMDwvcHVibGljYXRpb25ZZWFyPgogIDxkYXRlcz4KICAgIDxkYXRlIGRhdGVUeXBlPSJDb21taXNzaW9uZWQiPjIwMjAtMTEtMTE8L2RhdGU+CiAgPC9kYXRlcz4KICA8c2l6ZXMvPgogIDxmb3JtYXRzLz4KICA8dmVyc2lvbi8+CiAgPGRlc2NyaXB0aW9ucz4KICAgIDxkZXNjcmlwdGlvbiBkZXNjcmlwdGlvblR5cGU9IkFic3RyYWN0Ij5NZXRhZGF0YSBmb3IgZGV2aWNlPC9kZXNjcmlwdGlvbj4KICA8L2Rlc2NyaXB0aW9ucz4KPC9yZXNvdXJjZT4K",
-      "url": "https://the-device-page.org/10.80826/device-test-3",
+      "url": "https://the-device-page.org/prefix/device-test-3",
       "contentUrl": null,
       "metadataVersion": 1,
       "schemaVersion": "http://datacite.org/schema/kernel-4",
@@ -49,7 +49,7 @@
       "state": "draft",
       "reason": null,
       "landingPage": {
-        "url": "https://the-content-page.org/10.80826/device-test-3"
+        "url": "https://the-content-page.org/prefix/device-test-3"
       },
       "viewCount": 0,
       "viewsOverTime": [],
@@ -76,7 +76,7 @@
       },
       "media": {
         "data": {
-          "id": "10.80826/device-test-3",
+          "id": "prefix/device-test-3",
           "type": "media"
         }
       },

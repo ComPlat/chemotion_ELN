@@ -1,10 +1,10 @@
 {
   "data": {
-    "id": "10.80826/device-test-3",
+    "id": "prefix/device-test-3",
     "type": "dois",
     "attributes": {
-      "doi": "10.80826/device-test-3",
-      "prefix": "10.80826",
+      "doi": "prefix/device-test-3",
+      "prefix": "prefix",
       "suffix": "device-test-3",
       "identifiers": [],
       "alternateIdentifiers": [],
@@ -65,7 +65,7 @@
       },
       "media": {
         "data": {
-          "id": "10.80826/device-test-3",
+          "id": "prefix/device-test-3",
           "type": "media"
         }
       },

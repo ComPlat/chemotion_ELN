@@ -45,20 +45,20 @@ describe Chemotion::AdminAPI do
     let(:device) { create(:device, device_metadata: device_metadata) }
 
     let(:device_metadata) do
-      create(:device_metadata, data_cite_prefix: '10.80826', doi: '10.80826/DEVICE-3')
+      create(:device_metadata, data_cite_prefix: ENV['DATA_CITE_PREFIX'], doi: "#{ENV['DATA_CITE_PREFIX']}/DEVICE-3")
     end
 
     before do
       device
 
-      stub_request(:get, 'https://api.test.datacite.org/dois/10.80826/DEVICE-3')
+      stub_request(:get, "https://api.test.datacite.org/dois/#{ENV['DATA_CITE_PREFIX']}/DEVICE-3")
         .to_return(status: 200,
                    body: File.read(
                      Rails.root.join('spec/fixtures/data_cite/get_doi_response.json')
                    ),
                    headers: { 'Content-Type' => 'application/json' })
 
-      stub_request(:put, 'https://api.test.datacite.org/dois/10.80826/DEVICE-3')
+      stub_request(:put, "https://api.test.datacite.org/dois/#{ENV['DATA_CITE_PREFIX']}/DEVICE-3")
         .to_return(status: 200,
                    body: File.read(
                      Rails.root.join('spec/fixtures/data_cite/update_doi_response.json')
@@ -111,7 +111,8 @@ describe Chemotion::AdminAPI do
         end
 
         it 'Creates device metadata' do
-          new_doi_from_data_cite = '10.80826/DEVICE-1'
+          new_doi_from_data_cite = "#{ENV['DATA_CITE_PREFIX']}/DEVICE-1"
+          #new_doi_from_data_cite = '10.12345/DEVICE-XXXXXXXXXXX'
           expect(device.device_metadata.doi).to eql(new_doi_from_data_cite)
 
           attributes = params.merge(doi: new_doi_from_data_cite).deep_stringify_keys
@@ -146,7 +147,8 @@ describe Chemotion::AdminAPI do
       end
 
       it 'Updates device metadata' do
-        new_doi_from_data_cite = '10.80826/DEVICE-1'
+        new_doi_from_data_cite = "#{ENV['DATA_CITE_PREFIX']}/DEVICE-1"
+        #new_doi_from_data_cite = '10.12345/DEVICE-XXXXXXXXXXX'
         expect(device.device_metadata.doi).to eql(new_doi_from_data_cite)
 
         attributes = update_params.merge(doi: new_doi_from_data_cite).deep_stringify_keys

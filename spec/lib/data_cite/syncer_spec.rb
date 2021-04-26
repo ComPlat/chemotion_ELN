@@ -7,8 +7,8 @@ describe DataCite::Syncer do
 
   let(:device) { create(:device, device_metadata: device_metadata) }
   let(:device_metadata) { create(:device_metadata, doi: doi, data_cite_prefix: data_cite_prefix) }
-  let(:doi) { '10.80826/device-test-3' }
-  let(:data_cite_prefix) { '10.80826' }
+  let(:doi) { "#{ENV['DATA_CITE_PREFIX']}/device-test-3" }
+  let(:data_cite_prefix) { ENV['DATA_CITE_PREFIX'] }
 
   describe '#find_and_create_at_chemotion!' do
     let(:device_metadata) do
@@ -29,7 +29,7 @@ describe DataCite::Syncer do
         syncer.find_and_create_at_chemotion!
 
         expect(syncer.converter.chemotion_metadata).to have_attributes(
-          doi: '10.80826/DEVICE-1',
+          doi: "#{ENV['DATA_CITE_PREFIX']}/DEVICE-1",
           data_cite_prefix: data_cite_prefix,
           name: nil,
           publisher: nil,
@@ -115,7 +115,6 @@ describe DataCite::Syncer do
           title: device_metadata.name,
           publisher: device_metadata.publisher,
           description: device_metadata.description,
-          publication_year: device_metadata.publication_year,
           url: device.device_metadata.url,
           landing_page_url: device.device_metadata.landing_page
         )
@@ -154,7 +153,6 @@ describe DataCite::Syncer do
           title: device_metadata.name,
           publisher: device_metadata.publisher,
           description: device_metadata.description,
-          publication_year: device_metadata.publication_year,
           url: device.device_metadata.url,
           landing_page_url: device.device_metadata.landing_page
         )
