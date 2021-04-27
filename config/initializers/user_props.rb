@@ -1,4 +1,7 @@
 begin
+  unless File.exist?(user_config = Rails.root.join('config', 'user_props.yml'))
+    FileUtils.cp(Rails.root.join('config', 'user_props.yml.example'), user_config )
+  end
   user_props_config = Rails.application.config_for :user_props
 
   Rails.application.configure do

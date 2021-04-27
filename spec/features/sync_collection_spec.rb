@@ -30,7 +30,7 @@ describe 'Sync Collection Test' do
     find_by_id('create-split-button').click
     find_by_id('create-reaction-button').click
     source = first('span.dnd-arrow-enable')
-    scheme_tab = find_by_id('reaction-detail-tab-pane-0')
+    scheme_tab = find_by_id('reaction-detail-tab-pane-scheme')
     target1 = scheme_tab.find_all('span.glyphicon-plus')[0]
     source.drag_to(target1)
     target2 = scheme_tab.find_all('span.glyphicon-plus')[2]

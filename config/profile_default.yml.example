@@ -105,3 +105,57 @@ production:
         1
       :analyses:
         2
+
+test:
+  :layout:
+    :layout:
+      :sample: 1
+      :reaction: 2
+      :wellplate: 3
+      :screen: 4
+      :research_plan: 5
+    :layout_detail_research_plan:
+      :research_plan:
+        1
+      :analyses:
+        2
+      :literature:
+        3
+      :attachments:
+        4
+    :layout_detail_sample:
+      :properties:
+        1
+      :analyses:
+        2
+      :qc_curation:
+        3
+      :literature:
+        4
+      :results:
+        5
+    :layout_detail_reaction:
+      :scheme:
+        1
+      :properties:
+        2
+      :analyses:
+        3
+      :references:
+        4
+      :green_chemistry:
+        5
+    :layout_detail_wellplate:
+      :properties:
+        1
+      :analyses:
+        2
+      :designer:
+        3
+      :list:
+        4
+    :layout_detail_screen:
+      :properties:
+        1
+      :analyses:
+        2
