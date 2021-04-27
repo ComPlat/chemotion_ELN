@@ -41,10 +41,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
     uniqueId.enableUniqueIds(this)
 
-
-    document.addEventListener('copy', this.handleCopy.bind(this));
-    document.addEventListener('paste', this.handlePaste.bind(this));
-
     this.ref = React.createRef();
   }
 
@@ -155,60 +151,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const { field, onChange } = this.props;
     field.value.rows.splice(rowIdx, 1);
     onChange(field.value, field.id);
-  }
-
-  handlePaste(event) {
-    if (this.ref.current.grid.contains(document.activeElement)) {
-      event.preventDefault();
-
-      const { field, onChange } = this.props;
-      const { selected } = this.state;
-
-      const newRows = [];
-      const pasteData = defaultParsePaste(event.clipboardData.getData('text/plain'));
-
-      const colIdx = selected.idx;
-      const rowIdx = selected.rowIdx;
-
-      pasteData.forEach((row) => {
-        const rowData = {};
-        // Merge the values from pasting and the keys from the columns
-        field.value.columns.slice(colIdx, colIdx + row.length).forEach((col, j) => {
-          // Create the key-value pair for the row
-          rowData[col.key] = row[j];
-        });
-        // Push the new row to the changes
-        newRows.push(rowData);
-      });
-
-      for (let i = 0; i < newRows.length; i++) {
-        if (rowIdx + i < field.value.rows.length) {
-          field.value.rows[rowIdx + i] = { ...field.value.rows[rowIdx + i], ...newRows[i] };
-        }
-      }
-
-      onChange(field.value, field.id);
-    }
-  }
-
-  handleCopy(event) {
-    if (this.ref.current.grid.contains(document.activeElement)) {
-      event.preventDefault();
-
-      const { columns } = this.props.field.value;
-      const { selection } = this.state;
-
-      // Loop through each row
-      const text = range(selection.topLeft.rowIdx, selection.bottomRight.rowIdx + 1).map(
-        // Loop through each column
-        rowIdx => columns.slice(selection.topLeft.idx, selection.bottomRight.idx + 1).map(
-          // Grab the row values and make a text string
-          col => this.rowGetter(rowIdx)[col.key],
-        ).join('\t'),
-      ).join('\n');
-
-      event.clipboardData.setData('text/plain', text);
-    }
   }
 
   handleSchemaModalShow() {
@@ -325,6 +267,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
     let rowData = [];
     gridApi.forEachNode(node => rowData.push(node.data));
+    field.value.columns = gridApi.getColumnDefs();
     field.value.rows = rowData
 
     onChange(field.value, field.id);
@@ -333,20 +276,18 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   removeThisRow() {
     const { field, onChange } = this.props;
     const { gridApi, rowClicked } = this.state
-    if (rowClicked) {
-      let rowData = [];
-      gridApi.forEachNode(node => {
-        rowData.push(node.data);
-      });
-      gridApi.applyTransaction({ remove: [rowClicked] });
+    let rowData = [];
+    gridApi.forEachNodeAfterFilterAndSort(node => {
+      rowData.push(node.data);
+    });
+    gridApi.applyTransaction({ remove: [rowData[rowClicked]] });
 
-      rowData = rowData.filter(function (value, index, arr) {
-        return value !== rowClicked;
-      });
-      field.value.rows = rowData
+    rowData = rowData.filter(function (value, index, arr) {
+      return index !== rowClicked;
+    });
+    field.value.rows = rowData
 
-      onChange(field.value, field.id);
-    }
+    onChange(field.value, field.id);
   }
 
   removeThisColumn() {
@@ -367,7 +308,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   onCellContextMenu(params) {
-    this.setState({ columnClicked: params.column.colId, rowClicked: params.data });
+    this.setState({ columnClicked: params.column.colId, rowClicked: params.rowIndex });
   }
 
   handleRenameClick() {
@@ -375,6 +316,56 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     if (columnClicked) {
       this.handleColumnNameModalShow('rename', columnClicked);
     }
+  }
+
+  handlePaste(event) {
+    const { field, onChange } = this.props;
+    const { gridApi, columnApi, columnClicked, rowClicked } = this.state;
+    onChange(field.value, field.id);
+
+    navigator.clipboard.readText()
+      .then(data => {
+        let lines = data.split(/\n/);
+        let cellData = [];
+        lines.forEach(element => {
+          cellData.push(element.split('\t'));
+        });
+
+
+        let columns = columnApi.getAllColumns();
+        let rowData = [];
+        gridApi.forEachNodeAfterFilterAndSort(node => {
+          rowData.push(node.data);
+        });
+
+        let rowIndex = 0;
+        for (let i = 0; i < rowData.length; i++) {
+          let row = [];
+          let startUpdate = false;
+          if (i >= rowClicked) {
+            let columnIndex = 0;
+            for (let j = 0; j < columns.length; j++) {
+              const element = columns[j];
+              if (startUpdate || element.colId === columnClicked) {
+                startUpdate = true;
+                rowData[i][element.colId] = cellData[rowIndex][columnIndex];
+                columnIndex++;
+              }
+            }
+            rowIndex++;
+          }
+        }
+
+        gridApi.applyTransaction({
+          update: rowData,
+        });
+
+        field.value.rows = rowData
+        onChange(field.value, field.id);
+      })
+      .catch(err => {
+        console.error('Failed to read clipboard contents: ', err);
+      });
   }
 
   handleInsertColumnClick() {
@@ -390,10 +381,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
   onCellMouseOut() {
     this.setState({ isDisable: true });
-  }
-
-  onHide() {
-    this.setState({ columnClicked: null, rowClicked: null });
   }
 
   renderEdit() {
@@ -440,7 +427,10 @@ export default class ResearchPlanDetailsFieldTable extends Component {
                 suppressDragLeaveHidesColumns={true}
               />
             </ContextMenuTrigger>
-            <ContextMenu id={contextMenuId} onHide={this.onHide.bind(this)}>
+            <ContextMenu id={contextMenuId}>
+              <MenuItem onClick={this.handlePaste.bind(this)}>
+                Paste
+            </MenuItem>
               <MenuItem onClick={this.handleRenameClick.bind(this)}>
                 Rename column
             </MenuItem>
