@@ -30,8 +30,7 @@ const collect = (connect, monitor) => ({
 });
 
 class ScreenResearchPlans extends Component {
-  // eslint-disable-next-line class-methods-use-this
-  handleResearchPlanClick(researchPlan) {
+  handleResearchPlanClick(researchPlan) { // eslint-disable-line class-methods-use-this
     const { currentCollection, isSync } = UIStore.getState();
     const researchPlanID = researchPlan.id;
     const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
@@ -39,22 +38,30 @@ class ScreenResearchPlans extends Component {
     researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
   }
 
-  render() {
-    // eslint-disable-next-line object-curly-newline
-    const { researchPlans, isOver, canDrop, connectDropTarget, deleteResearchPlan } = this.props;
+  renderDropZone() {
+    const { isOver, connectDropTarget } = this.props;
     const style = {
-      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px'
+      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px', marginBottom: '6px'
     };
     if (isOver) {
       style.borderColor = '#337ab7';
     }
 
-    // eslint-disable-next-line function-paren-newline
-    return connectDropTarget(
+    return connectDropTarget( // eslint-disable-line function-paren-newline
+      <div style={style}>
+        Drop Research Plan here to add.
+      </div>);
+  }
+
+
+  render() {
+    // eslint-disable-next-line object-curly-newline
+    const { researchPlans, deleteResearchPlan } = this.props;
+
+    return (
       <div>
-        <div style={style}>
-          Drop Research Plan here to add.
-        </div>
+        {this.renderDropZone()}
+
         {researchPlans.map(researchPlan => (
           <tr key={researchPlan.id} style={{ height: '80px', verticalAlign: 'middle' }}>
             <td>
