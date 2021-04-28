@@ -8,26 +8,32 @@ const columns = [
   {
     headerName: 'a',
     field: 'a',
+    colId: 'a'
   },
   {
     headerName: 'b',
     field: 'b',
+    colId: 'b'
   },
   {
     headerName: 'c',
     field: 'c',
+    colId: 'c'
   },
   {
     headerName: 'd',
     field: 'd',
+    colId: 'd'
   },
   {
     headerName: 'e',
     field: 'e',
+    colId: 'e'
   },
   {
     headerName: 'f',
     field: 'f',
+    colId: 'f'
   }
 ];
 
