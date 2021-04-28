@@ -54,7 +54,7 @@ COPY package-lock.json /home/gitlab-runner/
 RUN sudo chmod 666 Gemfile.lock
 RUN sudo chmod 666 package-lock.json
 
-RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 12 && nvm use 12 && npm install -g npm && npm install"
+RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 12.22.1 && nvm use 12.22.1 && npm install -g npm && npm install"
 RUN echo $(ls -1 shared/node_modules)
 RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && rvm install 2.6.6 && gem install bundler -v 1.17.3 && bundle install --path shared/bundle"
 # RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && chromedriver-update"

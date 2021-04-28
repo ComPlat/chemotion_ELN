@@ -39,8 +39,8 @@ ADD . $APP_HOME
 
 RUN /bin/bash -c 'bundle install'
 RUN /bin/bash -c 'source /usr/local/nvm/nvm.sh;\
-  nvm install 12.18.3;\
-  nvm use 12.18.3;\
+  nvm install 12.22.1;\
+  nvm use 12.22.1;\
   npm install'
 
 RUN echo '[ -s /usr/local/nvm/nvm.sh ] && . /usr/local/nvm/nvm.sh' >> /home/app/.bashrc

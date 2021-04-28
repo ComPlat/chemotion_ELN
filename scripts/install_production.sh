@@ -24,9 +24,9 @@ RUBY_VERSION=2.6.6 # 2.5 recommended for bionic
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
-NVM_VERSION='v0.35.3'
-NODE_VERSION=12.21.0
-NPM_VERSION=7.6.2
+NVM_VERSION='v0.38.0'
+NODE_VERSION=12.22.1
+NPM_VERSION=7.11.1
 
 APP_NAME=chemotion_ELN # used for naming directories and files
 
