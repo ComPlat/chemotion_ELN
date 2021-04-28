@@ -6,7 +6,7 @@ if File.exist? Rails.root.join('config', 'inference.yml')
   inference_config = Rails.application.config_for :inference
 else
   begin
-    inference_config = Matrice.find_by(name: 'reactionPrediction')&.configs&.symbolize_keys || {}
+    inference_config = ActiveRecord::Base.connection.table_exists?('matrices') ? (Matrice.find_by(name: 'reactionPrediction')&.configs&.symbolize_keys || {}) : {}
   rescue ActiveRecord::StatementInvalid, PG::ConnectionBad, PG::UndefinedTable
   end
 end

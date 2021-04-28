@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 begin
-  compute_config = Matrice.find_by(name: 'computedProp')&.configs || {}
+  compute_config = ActiveRecord::Base.connection.table_exists?('matrices') ? (Matrice.find_by(name: 'computedProp')&.configs || {}) : {}
 rescue ActiveRecord::StatementInvalid, PG::ConnectionBad, PG::UndefinedTable
   compute_config = {}
 ensure
