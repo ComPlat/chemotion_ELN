@@ -1,5 +1,5 @@
 import React from 'react';
-import { SpectraEditor, FN } from 'react-spectra-editor';
+import { SpectraEditor, FN } from '@complat/react-spectra-editor';
 import { Modal, Well, Button } from 'react-bootstrap';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
@@ -46,6 +46,7 @@ class ViewSpectra extends React.Component {
     this.getSpcInfo = this.getSpcInfo.bind(this);
     this.getQDescVal = this.getQDescVal.bind(this);
     this.buildOthers = this.buildOthers.bind(this);
+    this.onSpectraDescriptionChanged = this.onSpectraDescriptionChanged.bind(this);
   }
 
   componentDidMount() {
@@ -550,6 +551,8 @@ class ViewSpectra extends React.Component {
               forecast={forecast}
               molSvg={sample.svgPath}
               descriptions={descriptions}
+              canChangeDescription={true}
+              onDescriptionChanged={this.onSpectraDescriptionChanged}
             />
         }
       </Modal.Body>
@@ -590,6 +593,20 @@ class ViewSpectra extends React.Component {
         </Button>
       </div>
     );
+  }
+
+  onSpectraDescriptionChanged(value) {
+    const { spcInfos, spcIdx } = this.state;
+    const sis = spcInfos.filter(x => x.idx === spcIdx);
+    const si = sis.length > 0 ? sis[0] : spcInfos[0];
+    const {sample} = this.props
+    sample.analysesContainers().forEach((ae) => {
+      if (ae.id !== si.idAe) return;
+      ae.children.forEach((ai) => {
+        if (ai.id !== si.idAi) return;
+        ai.extended_metadata.content.ops =value.ops;
+      });
+    });
   }
 
   render() {
