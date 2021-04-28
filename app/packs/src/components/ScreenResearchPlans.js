@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+// import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import DragDropItemTypes from './DragDropItemTypes';
 import UIStore from './stores/UIStore';
 import { researchPlanShowOrNew } from './routesUtils';
-import QuillViewer from './QuillViewer';
+// import QuillViewer from './QuillViewer';
+import ResearchPlan from './models/ResearchPlan';
+import EmbeddedResearchPlanDetails from './research_plan/EmbeddedResearchPlanDetails';
 
 const target = {
   drop(props, monitor) {
@@ -63,32 +65,10 @@ class ScreenResearchPlans extends Component {
         {this.renderDropZone()}
 
         {researchPlans.map(researchPlan => (
-          <tr key={researchPlan.id} style={{ height: '80px', verticalAlign: 'middle' }}>
-            <td>
-              <a
-                onClick={() => this.handleResearchPlanClick(researchPlan)}
-                style={{ cursor: 'pointer' }}
-              >
-                {researchPlan.name}
-              </a>
-            </td>
-            <td>
-              <QuillViewer
-                value={researchPlan.description}
-                theme="bubble"
-                height="44px"
-              />
-            </td>
-            <td style={{ verticalAlign: 'middle' }}>
-              <Button
-                bsStyle="danger"
-                style={{ marginLeft: '10px' }}
-                onClick={() => deleteResearchPlan(researchPlan)}
-              >
-                <i className="fa fa-trash-o" />
-              </Button>
-            </td>
-          </tr>
+          <EmbeddedResearchPlanDetails
+            key={`${researchPlan.name}-${researchPlan.id}`}
+            researchPlan={new ResearchPlan(researchPlan)}
+          />
         ))}
       </div>);
   }
