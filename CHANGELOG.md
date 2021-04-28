@@ -1,6 +1,22 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.8.0]
+> 2021-04-28
+
+* Features
+  * option to decouple sample from molfile defined molecule - enable user custom MW input (Admin has to enable the feature)
+  * research-plan table: switch to using ag-grid - enable moving  row/columns with d-n-d
+  * nmr_sim ELN plugin installed by default
+
+* Fix
+  * Add configurable default profile for Element-Detail tab sortings 
+  * slow opening of reaction panel: rm debounce
+  * green-chemistry: fix checkbox rerendering in table cell
+  * Analytics atom count scenari
+  * default favicon if none present
+
+
 ## [v0.7.1]
 > 2021-03-26
 
