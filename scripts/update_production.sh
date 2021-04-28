@@ -8,8 +8,8 @@ set -euo pipefail
 ############# VARIABLES ####################
 
 ## CHEMOTION ELN GIT REPOSITORY
-REPO='https://git.scc.kit.edu/complat/chemotion_ELN_server'
-BRANCH=development
+REPO='https://github.com/ComPlat/chemotion_ELN.git'
+BRANCH='v0.7.1'
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
