@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:focal
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -44,9 +44,8 @@ RUN cat ~/.bash_profile
 RUN mkdir -p shared/bundle/ruby
 RUN mkdir -p shared/node_modules
 RUN ln -s shared/node_modules node_modules
-RUN echo $(ls -1 .)
 
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 
 COPY Gemfile /home/gitlab-runner/
 COPY Gemfile.lock /home/gitlab-runner/
@@ -54,9 +53,8 @@ COPY package.json /home/gitlab-runner/
 COPY package-lock.json /home/gitlab-runner/
 RUN sudo chmod 666 Gemfile.lock
 RUN sudo chmod 666 package-lock.json
-RUN echo $(ls -1 .)
 
-RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 12.21.0 && npm install -g npm@7.6.2 && npm install"
+RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 12 && nvm use 12 && npm install -g npm && npm install"
 RUN echo $(ls -1 shared/node_modules)
 RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && rvm install 2.6.6 && gem install bundler -v 1.17.3 && bundle install --path shared/bundle"
 # RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && chromedriver-update"
