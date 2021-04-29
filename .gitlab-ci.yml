@@ -90,7 +90,7 @@ testrb:
   stage: unit
   script:
     # - ln -s /home/gitlab-runner/shared/bundle vendor/bundle
-    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
   except:
     variables:
     - $CI_COMMIT_MESSAGE =~ /skip[ _-]unitrb/i

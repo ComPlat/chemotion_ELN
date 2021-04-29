@@ -67,7 +67,7 @@ describe 'Sync Collection Test' do
     find_all('span.glyphicon-plus')[0].click
     find_by_id('tree-id-sync_test').click
     update_reaction
-    expect(page).not_to have_content('Close this window')
+    expect(page).not_to have_content('Close this window', wait: 5)
   end
 
   it 'Sync collection with read permission', js: true do
