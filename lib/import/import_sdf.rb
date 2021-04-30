@@ -150,7 +150,7 @@ class Import::ImportSdf
     babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
 
     babel_info_array.map.with_index do |babel_info, i|
-      if babel_info[:inchikey]
+      if babel_info[:inchikey].present?
         mf = molfiles[i]
         m = Molecule.find_or_create_by_molfile(mf, babel_info)
         process_molfile_opt_data(mf).merge(
