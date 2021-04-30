@@ -1,13 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
-import Immutable from 'immutable';
+import { Panel, ListGroup, ListGroupItem, Button, Tooltip, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
+// import Immutable from 'immutable';
 import ElementCollectionLabels from '../ElementCollectionLabels';
 import ElementActions from '../actions/ElementActions';
-import DetailActions from '../actions/DetailActions';
+// import DetailActions from '../actions/DetailActions';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import LoadingActions from '../actions/LoadingActions';
-import ConfirmClose from '../common/ConfirmClose';
 import ResearchPlan from '../models/ResearchPlan';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
@@ -51,25 +50,14 @@ export default class ResearchPlanDetails extends Component {
   }
 
   // handle functions
-
   handleSubmit() {
     const { researchPlan } = this.state;
     LoadingActions.start();
 
-    if (researchPlan.isNew) {
-      ElementActions.createResearchPlan(researchPlan);
-    } else {
-      ElementActions.updateResearchPlan(researchPlan);
-    }
-
-    if (researchPlan.is_new) {
-      const force = true;
-      DetailActions.close(researchPlan, force);
-    }
+    ElementActions.updateEmbeddedResearchPlan(researchPlan);
   }
 
   // handle name actions
-
   handleNameChange(value) {
     const { researchPlan } = this.state;
     researchPlan.changed = true;
@@ -78,7 +66,6 @@ export default class ResearchPlanDetails extends Component {
   }
 
   // handle body actions
-
   handleBodyChange(value, id) {
     const { researchPlan } = this.state;
     const index = researchPlan.body.findIndex(field => field.id === id);
@@ -120,7 +107,6 @@ export default class ResearchPlanDetails extends Component {
   }
 
   // render functions
-
   renderExportButton(disabled) {
     return (
       <Dropdown
@@ -182,6 +168,7 @@ export default class ResearchPlanDetails extends Component {
   } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
+    const { deleteResearchPlan } = this.props;
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
 
     return (
@@ -193,8 +180,12 @@ export default class ResearchPlanDetails extends Component {
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={researchPlan} placement="right" />
-        <ConfirmClose el={researchPlan} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}>
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={() => deleteResearchPlan(researchPlan.id)}>
+            <i className="fa fa-trash-o" aria-hidden="true" />
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
@@ -227,4 +218,5 @@ export default class ResearchPlanDetails extends Component {
 
 ResearchPlanDetails.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
+  deleteResearchPlan: PropTypes.func.isRequired,
 };

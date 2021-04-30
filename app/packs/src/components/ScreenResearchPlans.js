@@ -1,12 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-// import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import DragDropItemTypes from './DragDropItemTypes';
 import UIStore from './stores/UIStore';
 import { researchPlanShowOrNew } from './routesUtils';
-// import QuillViewer from './QuillViewer';
 import ResearchPlan from './models/ResearchPlan';
 import EmbeddedResearchPlanDetails from './research_plan/EmbeddedResearchPlanDetails';
 
@@ -57,7 +55,6 @@ class ScreenResearchPlans extends Component {
 
 
   render() {
-    // eslint-disable-next-line object-curly-newline
     const { researchPlans, deleteResearchPlan } = this.props;
 
     return (
@@ -68,6 +65,7 @@ class ScreenResearchPlans extends Component {
           <EmbeddedResearchPlanDetails
             key={`${researchPlan.name}-${researchPlan.id}`}
             researchPlan={new ResearchPlan(researchPlan)}
+            deleteResearchPlan={deleteResearchPlan}
           />
         ))}
       </div>);
@@ -76,11 +74,11 @@ class ScreenResearchPlans extends Component {
 
 export default DropTarget(DragDropItemTypes.RESEARCH_PLAN, target, collect)(ScreenResearchPlans);
 
-ScreenResearchPlans.propTypes = {
+ScreenResearchPlans.propTypes = { /* eslint-disable react/no-unused-prop-types */
   researchPlans: PropTypes.arrayOf(PropTypes.object).isRequired,
   deleteResearchPlan: PropTypes.func.isRequired,
   dropResearchPlan: PropTypes.func.isRequired,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired
-};
+}; /* eslint-enable */

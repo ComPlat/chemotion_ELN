@@ -96,9 +96,9 @@ export default class ScreenDetails extends Component {
     this.forceUpdate();
   }
 
-  deleteResearchPlan(researchPlan) {
+  deleteResearchPlan(researchPlanID) {
     const { screen } = this.state;
-    const researchPlanIndex = screen.research_plans.indexOf(researchPlan);
+    const researchPlanIndex = screen.research_plans.findIndex(rp => rp.id === researchPlanID);
     screen.research_plans.splice(researchPlanIndex, 1);
 
     this.setState({ screen });
