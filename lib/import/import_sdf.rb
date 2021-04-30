@@ -5,6 +5,7 @@ class Import::ImportSdf
                :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys
 
   SIZE_LIMIT = 40 # MB
+  MOLFILE_BLOCK_END_LINE = 'M  END'
 
   def initialize(args)
     @raw_data = args[:raw_data] || []
@@ -30,7 +31,7 @@ class Import::ImportSdf
     if file_path
       size = File.size(file_path)
       if size.to_f < SIZE_LIMIT * 10**6
-        @raw_data = File.read(file_path).split(/\${4}\r?\n/)
+        @raw_data = File.binread(file_path).encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/\${4}\r?\n/)
       else
         @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
       end
@@ -51,7 +52,7 @@ class Import::ImportSdf
     n = batch_size - 1
     inchikeys = []
     @processed_mol = []
-    data = raw_data.dup
+    data = raw_data.dup 
     until data.empty?
       batch = data.slice!(0..n)
       molecules = find_or_create_by_molfiles(batch)
@@ -102,14 +103,15 @@ class Import::ImportSdf
             next unless row
 
             molfile = row['molfile']
-            babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+            san_molfile = sanitize_molfile(molfile)
+            babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(san_molfile)
             inchikey = babel_info[:inchikey]
             is_partial = babel_info[:is_partial]
             next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
 
             sample = Sample.new(
               created_by: current_user_id,
-              molfile: molfile,
+              molfile: san_molfile,
               molfile_version: babel_info[:molfile_version],
               molecule_id: molecule.id
             )
@@ -170,5 +172,11 @@ class Import::ImportSdf
       @custom_data_keys[k] = true
       [k, value.strip]
     end]
+  end
+
+  def sanitize_molfile(mf)
+#TODO check for residue polymer thingy
+    mf.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
+
   end
 end
