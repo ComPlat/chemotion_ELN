@@ -982,7 +982,7 @@ export default class SampleDetails extends React.Component {
       <Tab
         eventKey={ind}
         title={title}
-        key
+        key={key}
       >
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <ComputedPropsContainer sample={sample} />

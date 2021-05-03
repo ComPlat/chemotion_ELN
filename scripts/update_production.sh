@@ -8,8 +8,8 @@ set -euo pipefail
 ############# VARIABLES ####################
 
 ## CHEMOTION ELN GIT REPOSITORY
-REPO='https://git.scc.kit.edu/complat/chemotion_ELN_server'
-BRANCH=development
+REPO='https://github.com/ComPlat/chemotion_ELN.git'
+BRANCH='v0.7.1'
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -21,9 +21,9 @@ RUBY_VERSION=2.6.6
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
-NVM_VERSION='v0.35.3'
-NODE_VERSION=12.21.0
-NPM_VERSION=7.6.2
+NVM_VERSION='v0.38.0'
+NODE_VERSION=12.22.1
+NPM_VERSION=7.11.1
 
 ## default naming of directories and files
 APP_NAME=chemotion_ELN 

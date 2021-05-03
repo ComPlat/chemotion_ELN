@@ -35,6 +35,14 @@ GIT
       sprite-factory (= 1.7.1)
 
 GIT
+  remote: https://github.com/ComPlat/nmr_sim
+  revision: e2f91776aafd8eb1fa9d88c8ec2291b02201f222
+  ref: e2f91776aafd8eb1fa9d88c8ec2291b02201f222
+  specs:
+    nmr_sim (0.0.3)
+      rails (~> 4.2)
+
+GIT
   remote: https://github.com/ComPlat/openbabel-gem.git
   revision: 3e25548fd95c2ac83c7fb5d9544ed2cf6ae1344b
   branch: hot-fix-svg
@@ -716,6 +724,7 @@ DEPENDENCIES
   meta_request
   net-sftp
   net-ssh
+  nmr_sim!
   nokogiri
   openbabel (= 2.4.90.3)!
   pandoc-ruby

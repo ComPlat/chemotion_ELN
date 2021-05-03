@@ -16,7 +16,7 @@ set :linked_files, fetch(:linked_files, []).push(
   # '.ruby-gemset',
 )
 
-set :npm_version, '7.6.2'
+set :npm_version, '7.11.1'
 set :deploy_to, '/var/www/chemotion_ELN'
 set :user, user
 set :bundle_path, nil

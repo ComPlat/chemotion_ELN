@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210303140000) do
+ActiveRecord::Schema.define(version: 20210416075103) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -498,6 +498,19 @@ ActiveRecord::Schema.define(version: 20210303140000) do
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
   add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
+
+  create_table "nmr_sim_nmr_simulations", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.text     "path_1h"
+    t.text     "path_13c"
+    t.text     "source"
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "nmr_sim_nmr_simulations", ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at", using: :btree
+  add_index "nmr_sim_nmr_simulations", ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true, using: :btree
 
   create_table "notifications", force: :cascade do |t|
     t.integer  "message_id"
@@ -1121,7 +1134,7 @@ ActiveRecord::Schema.define(version: 20210303140000) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL

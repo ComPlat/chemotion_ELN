@@ -32,11 +32,9 @@ describe 'Create and update Reaction' do
     source.drag_to(target2)
     find_field('reaction_name').set('reaction A').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
-    expect(page).to have_content('reaction A')
-
+    expect(page).to have_content('reaction A', wait: 5)
     find_field('reaction_name').set('reaction B').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
-    expect(page).to have_content('reaction B')
-
+    expect(page).to have_content('reaction B', wait: 5)
   end
 end

@@ -28,10 +28,13 @@ Copyright (C) 2015-current  Nicole Jung (nicole.jung(at)kit.edu) of the Karlsruh
 
 
 
-## Install
+## Installation
 
 see [INSTALL.md][INSTALL]
 
+## User Documentation
+
+see online ![docs](https://www.chemotion.net/chemotionsaurus/docs/eln/about)
 
 ## Code Status
 
