@@ -9,7 +9,7 @@ set -euo pipefail
 
 ## CHEMOTION ELN GIT REPOSITORY
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH='v0.7.1'
+BRANCH='v0.8.0'
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
