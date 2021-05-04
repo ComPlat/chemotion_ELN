@@ -574,6 +574,10 @@ class ElementActions {
       });};
   }
 
+  updateEmbeddedResearchPlan(params) {
+    return (dispatch) => { dispatch(params); };
+  }
+
   generateEmptyResearchPlan(collection_id) {
     return ResearchPlan.buildEmpty(collection_id);
   }

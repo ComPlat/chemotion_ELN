@@ -237,8 +237,9 @@ class ElementStore {
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan
       ],
+      handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
-    })
+    });
   }
 
   handleFetchAllDevices(devices) {
@@ -1074,6 +1075,10 @@ class ElementStore {
     }
 
     return true;
+  }
+
+  handleUpdateEmbeddedResearchPlan() {
+    this.handleRefreshElements('research_plan');
   }
 
   synchronizeElements(previous) {

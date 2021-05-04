@@ -55,7 +55,9 @@ class ScreenResearchPlans extends Component {
 
 
   render() {
-    const { researchPlans, deleteResearchPlan } = this.props;
+    const {
+      researchPlans, deleteResearchPlan, updateResearchPlan, saveResearchPlan
+    } = this.props;
 
     return (
       <div>
@@ -66,6 +68,8 @@ class ScreenResearchPlans extends Component {
             key={`${researchPlan.name}-${researchPlan.id}`}
             researchPlan={new ResearchPlan(researchPlan)}
             deleteResearchPlan={deleteResearchPlan}
+            updateResearchPlan={updateResearchPlan}
+            saveResearchPlan={saveResearchPlan}
           />
         ))}
       </div>);
@@ -77,6 +81,8 @@ export default DropTarget(DragDropItemTypes.RESEARCH_PLAN, target, collect)(Scre
 ScreenResearchPlans.propTypes = { /* eslint-disable react/no-unused-prop-types */
   researchPlans: PropTypes.arrayOf(PropTypes.object).isRequired,
   deleteResearchPlan: PropTypes.func.isRequired,
+  updateResearchPlan: PropTypes.func.isRequired,
+  saveResearchPlan: PropTypes.func.isRequired,
   dropResearchPlan: PropTypes.func.isRequired,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,

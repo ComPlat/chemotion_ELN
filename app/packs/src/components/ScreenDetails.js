@@ -22,6 +22,8 @@ import UIActions from './actions/UIActions';
 import PrintCodeButton from './common/PrintCodeButton';
 import ConfirmClose from './common/ConfirmClose';
 import ElementDetailSortTab from './ElementDetailSortTab';
+import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher';
+import LoadingActions from './actions/LoadingActions';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -102,6 +104,26 @@ export default class ScreenDetails extends Component {
     screen.research_plans.splice(researchPlanIndex, 1);
 
     this.setState({ screen });
+  }
+
+  updateResearchPlan(researchPlan) {
+    const { screen } = this.state;
+    const researchPlanIndex = screen.research_plans.findIndex(rp => rp.id === researchPlan.id);
+    screen.research_plans[researchPlanIndex] = researchPlan;
+  }
+
+  saveResearchPlan(researchPlan) {
+    const { screen } = this.state;
+    LoadingActions.start();
+
+    ResearchPlansFetcher.update(researchPlan)
+      .then((result) => {
+        const researchPlanIndex = screen.research_plans.findIndex(rp => rp.id === researchPlan.id);
+        screen.research_plans[researchPlanIndex] = result;
+        ElementActions.updateEmbeddedResearchPlan(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   dropWellplate(wellplate) {
@@ -294,6 +316,8 @@ export default class ScreenDetails extends Component {
             researchPlans={screen.research_plans}
             dropResearchPlan={researchPlan => this.dropResearchPlan(researchPlan)}
             deleteResearchPlan={researchPlan => this.deleteResearchPlan(researchPlan)}
+            updateResearchPlan={researchPlan => this.updateResearchPlan(researchPlan)}
+            saveResearchPlan={researchPlan => this.saveResearchPlan(researchPlan)}
           />
         </Tab>
       )

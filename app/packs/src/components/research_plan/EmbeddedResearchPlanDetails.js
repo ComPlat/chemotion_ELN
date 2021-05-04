@@ -11,7 +11,7 @@ import ResearchPlan from '../models/ResearchPlan';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
 
-export default class ResearchPlanDetails extends Component {
+export default class EmbeddedResearchPlanDetails extends Component {
   constructor(props) {
     super(props);
     const { researchPlan } = props;
@@ -25,13 +25,12 @@ export default class ResearchPlanDetails extends Component {
     this.handleNameChange = this.handleNameChange.bind(this);
     this.handleBodyChange = this.handleBodyChange.bind(this);
     this.handleBodyAdd = this.handleBodyAdd.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
     let { researchPlan } = nextProps;
-    const rResearchPlan = new ResearchPlan(researchPlan);
     if (!(researchPlan instanceof ResearchPlan)) {
+      const rResearchPlan = new ResearchPlan(researchPlan);
       researchPlan = rResearchPlan;
     }
     this.setState({ researchPlan });
@@ -47,14 +46,7 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = this.state;
     researchPlan.mode = mode;
     this.setState({ researchPlan });
-  }
-
-  // handle functions
-  handleSubmit() {
-    const { researchPlan } = this.state;
-    LoadingActions.start();
-
-    ElementActions.updateEmbeddedResearchPlan(researchPlan);
+    this.handleUpdateResearchPlan();
   }
 
   // handle name actions
@@ -63,6 +55,7 @@ export default class ResearchPlanDetails extends Component {
     researchPlan.changed = true;
     researchPlan.name = value;
     this.setState({ researchPlan });
+    this.handleUpdateResearchPlan();
   }
 
   // handle body actions
@@ -94,6 +87,12 @@ export default class ResearchPlanDetails extends Component {
     researchPlan.body.splice(index, 1);
     researchPlan.changed = true;
     this.setState({ researchPlan });
+  }
+
+  handleUpdateResearchPlan() {
+    const { researchPlan } = this.state;
+    const { updateResearchPlan } = this.props;
+    updateResearchPlan(researchPlan);
   }
 
   handleExport(exportFormat) {
@@ -168,7 +167,7 @@ export default class ResearchPlanDetails extends Component {
   } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
-    const { deleteResearchPlan } = this.props;
+    const { deleteResearchPlan, saveResearchPlan } = this.props;
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
 
     return (
@@ -186,7 +185,7 @@ export default class ResearchPlanDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => saveResearchPlan(researchPlan)} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -216,7 +215,9 @@ export default class ResearchPlanDetails extends Component {
   }
 }
 
-ResearchPlanDetails.propTypes = {
+EmbeddedResearchPlanDetails.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
+  updateResearchPlan: PropTypes.func.isRequired,
+  saveResearchPlan: PropTypes.func.isRequired,
   deleteResearchPlan: PropTypes.func.isRequired,
 };
