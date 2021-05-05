@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, ListGroup, ListGroupItem, Button, Tooltip, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
+import { Panel, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
 import ElementCollectionLabels from '../ElementCollectionLabels';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import ResearchPlan from '../models/ResearchPlan';
@@ -15,7 +15,8 @@ export default class EmbeddedResearchPlanDetails extends Component {
     this.state = {
       researchPlan,
       update: false,
-      expanded: false
+      expanded: false,
+      confirmClose: false,
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -168,6 +169,26 @@ export default class EmbeddedResearchPlanDetails extends Component {
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
     const expandIconClass = this.state.expanded ? 'fa fa-compress' : 'fa fa-expand';
 
+    const popover = (
+      <Tooltip placement="left" className="in" id="tooltip-bottom">
+        Remove {researchPlan.name} from Screen?<br />
+        <ButtonGroup>
+          <Button
+            bsStyle="danger"
+            bsSize="xsmall"
+            onClick={() => deleteResearchPlan(researchPlan.id)}
+          >Yes
+          </Button>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            onClick={() => this.setState({ confirmClose: false })}
+          >No
+          </Button>
+        </ButtonGroup>
+      </Tooltip>
+    );
+
     return (
       <Panel.Heading>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
@@ -178,16 +199,25 @@ export default class EmbeddedResearchPlanDetails extends Component {
         </OverlayTrigger>
         <ElementCollectionLabels element={researchPlan} placement="right" />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={() => deleteResearchPlan(researchPlan.id)}>
+          <Button ref={(button) => { this.target = button; }} bsStyle="danger" bsSize="xsmall" className="button-right" onClick={() => this.setState({ confirmClose: !this.state.confirmClose })}>
             <i className="fa fa-trash-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
+        <Overlay
+          rootClose
+          target={this.target}
+          show={this.state.confirmClose}
+          placement="bottom"
+          onHide={() => this.setState({ confirmClose: false })}
+        >
+          { popover }
+        </Overlay>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => saveResearchPlan(researchPlan)} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="expand_research_plan">Show/hide Research Plan</Tooltip>}>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="expand_research_plan">Show/hide Research Plan details</Tooltip>}>
           <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.setState({ expanded: !this.state.expanded })}>
             <i className={expandIconClass} aria-hidden="true" />
           </Button>
