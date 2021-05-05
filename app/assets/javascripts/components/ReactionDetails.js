@@ -111,13 +111,10 @@ export default class ReactionDetails extends Component {
       products: reaction.products.map(material => [material.svgPath, material.equivalent])
     };
 
-    const solvents = reaction.solvents.map(s => {
-      let name = s.preferred_label
-      if(name.length > 20) {
-        return name.substring(0, 20).concat('...')
-      }
-      return name
-    }).filter(s => s)
+    const solvents = reaction.solvents.map((s) => {
+      const name = s.preferred_label;
+      return name;
+    }).filter(s => s);
 
     const solventsArray = solvents.length !== 0 ? solvents : [reaction.solvent]
     let temperature = reaction.temperature_display

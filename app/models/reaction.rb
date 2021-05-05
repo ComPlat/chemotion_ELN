@@ -249,7 +249,7 @@ class Reaction < ActiveRecord::Base
   end
 
   def solvents_in_svg
-    names = solvents.map{ |s| s.preferred_tag }
+    names = solvents.map{ |s| s.preferred_label }
     return names && names.length > 0 ? names : [solvent]
   end
 
