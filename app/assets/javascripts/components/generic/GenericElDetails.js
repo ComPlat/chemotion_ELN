@@ -15,7 +15,7 @@ import { GenProperties, LayersLayout } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
 import Attachment from '../models/Attachment';
 import CopyElementModal from '../common/CopyElementModal';
-import { notification, genUnits, toBool, unitConversion } from '../../admin/generic/Utils';
+import { notification, genUnits, toBool, toNum, unitConversion } from '../../admin/generic/Utils';
 import GenericAttachments from './GenericAttachments';
 import { SegmentTabs } from './SegmentDetails';
 
@@ -103,6 +103,7 @@ export default class GenericElDetails extends Component {
             const vs = units.find(u =>
               u.key === genericEl.properties[key].fields[curIdx].value_system);
             newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
+            newProps[key].fields[idx].value = toNum(curVal);
           }
           if (newProps[key].fields[idx].type === 'input-group') {
             if (genericEl.properties[key].fields[curIdx].type !== newProps[key].fields[idx].type) {
@@ -111,17 +112,18 @@ export default class GenericElDetails extends Component {
               const nSubs = newProps[key].fields[idx].sub_fields || [];
               const cSubs = genericEl.properties[key].fields[curIdx].sub_fields;
               const exSubs = [];
-              if (nSubs.length < 1 || cSubs < 1) {
+              if (nSubs.length < 1 || cSubs.length < 1) {
                 newProps[key].fields[idx].value = undefined;
               } else {
                 nSubs.forEach((nSub) => {
                   const hitSub = cSubs.find(c => c.id === nSub.id) || {};
                   if (nSub.type === 'label') { exSubs.push(nSub); }
-                  if (nSub.type === 'text') { exSubs.push({ ...nSub, value: (hitSub.value || '').toString() }); }
-                  if (nSub.type === 'number') {
-                    const parse = Number((hitSub.value || ''));
-                    exSubs.push({ ...nSub, value: Number.isNaN(parse) ? 0 : parse });
+                  if (nSub.type === 'text') {
+                    if (hitSub.type === 'label') {
+                      exSubs.push(nSub);
+                    } else { exSubs.push({ ...nSub, value: (hitSub.value || '').toString() }); }
                   }
+                  if (nSub.type === 'number') { exSubs.push({ ...nSub, value: toNum(hitSub.value) }); }
                 });
               }
               newProps[key].fields[idx].sub_fields = exSubs;

@@ -6,7 +6,7 @@ import { Panel, Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-boo
 import UserStore from '../stores/UserStore';
 import { LayersLayout } from './GenericElCommon';
 import MatrixCheck from '../common/MatrixCheck';
-import { genUnits, toBool, unitConversion, absOlsTermLabel } from '../../admin/generic/Utils';
+import { genUnits, toBool, toNum, unitConversion, absOlsTermLabel } from '../../admin/generic/Utils';
 
 class GenericDSDetails extends Component {
   constructor(props) {
@@ -81,6 +81,7 @@ class GenericDSDetails extends Component {
               const vs = units.find(u =>
                 u.key === genericDS.properties[key].fields[curIdx].value_system);
               newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
+              newProps[key].fields[idx].value = toNum(curVal);
             }
           }
         });

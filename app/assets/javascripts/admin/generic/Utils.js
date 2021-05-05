@@ -10,6 +10,10 @@ import MatrixCheck from '../../components/common/MatrixCheck';
 
 const absOlsTermId = val => (val || '').split('|')[0].trim();
 const absOlsTermLabel = val => val.replace(absOlsTermId(val), '').replace('|', '').trim();
+const toNum = (val) => {
+  const parse = Number((val || ''));
+  return Number.isNaN(parse) ? 0 : parse;
+};
 
 const genUnitSup = (val) => {
   if (typeof val === 'undefined' || val === null) return '';
@@ -172,7 +176,7 @@ const ButtonConfirm = (props) => {
       {msg} <br />
       <div className="btn-toolbar">
         <Button bsSize="xsmall" bsStyle="danger" aria-hidden="true" onClick={() => fnClick(delStr, delKey, delRoot)}>
-        Yes
+          Yes
         </Button><span>&nbsp;&nbsp;</span>
         <Button bsSize="xsmall" bsStyle="warning">No</Button>
       </div>
@@ -230,6 +234,6 @@ const GenericDSMisType = () => {
 
 export {
   ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel,
-  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit, unitConvToBase,
-  unitConversion, toBool, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit
+  validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
+  unitConvToBase, unitConversion, toBool, toNum, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit
 };
