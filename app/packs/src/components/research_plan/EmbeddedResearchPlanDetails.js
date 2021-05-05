@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
+import Aviator from 'aviator';
+import UIStore from '../stores/UIStore';
+import { researchPlanShowOrNew } from '../routesUtils';
 import ElementCollectionLabels from '../ElementCollectionLabels';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import ResearchPlan from '../models/ResearchPlan';
@@ -101,6 +104,14 @@ export default class EmbeddedResearchPlanDetails extends Component {
   handleExportField(field) {
     const { researchPlan } = this.props;
     ResearchPlansFetcher.exportTable(researchPlan, field);
+  }
+
+  openResearchPlan() {
+    const { currentCollection, isSync } = UIStore.getState();
+    const researchPlanID = this.state.researchPlan.id;
+    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
+    Aviator.navigate(uri, { silent: true });
+    researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
   }
 
   // render functions
@@ -215,6 +226,11 @@ export default class EmbeddedResearchPlanDetails extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => saveResearchPlan(researchPlan)} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
             <i className="fa fa-floppy-o" aria-hidden="true" />
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="open_research_plan">Open Research Plan in Tab</Tooltip>}>
+          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.openResearchPlan()}>
+            <i className="fa fa-window-maximize" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="expand_research_plan">Show/hide Research Plan details</Tooltip>}>
