@@ -12,6 +12,7 @@ gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
 gem 'bibtex-ruby'
 gem 'bootsnap'
 gem 'bootstrap-sass', '~> 3.4.1'
+gem 'charlock_holmes'
 
 # gem 'chem_scanner', git: 'git@git.scc.kit.edu:ComPlat/chem_scanner.git'
 gem 'chem_scanner', git: 'https://github.com/complat/chem_scanner.git'
