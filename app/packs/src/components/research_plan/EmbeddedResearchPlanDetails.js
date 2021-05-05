@@ -1,12 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, Button, Tooltip, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
-// import Immutable from 'immutable';
 import ElementCollectionLabels from '../ElementCollectionLabels';
-import ElementActions from '../actions/ElementActions';
-// import DetailActions from '../actions/DetailActions';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
-import LoadingActions from '../actions/LoadingActions';
 import ResearchPlan from '../models/ResearchPlan';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
@@ -19,6 +15,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
     this.state = {
       researchPlan,
       update: false,
+      expanded: false
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -169,6 +166,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
   renderPanelHeading(researchPlan) {
     const { deleteResearchPlan, saveResearchPlan } = this.props;
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
+    const expandIconClass = this.state.expanded ? 'fa fa-compress' : 'fa fa-expand';
 
     return (
       <Panel.Heading>
@@ -189,6 +187,11 @@ export default class EmbeddedResearchPlanDetails extends Component {
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="expand_research_plan">Show/hide Research Plan</Tooltip>}>
+          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.setState({ expanded: !this.state.expanded })}>
+            <i className={expandIconClass} aria-hidden="true" />
+          </Button>
+        </OverlayTrigger>
       </Panel.Heading>
     );
   }
@@ -202,14 +205,16 @@ export default class EmbeddedResearchPlanDetails extends Component {
     }
 
     return (
-      <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">
+      <Panel expanded={this.state.expanded} onToggle={() => {}} bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">
         {this.renderPanelHeading(researchPlan)}
-        <Panel.Body>
-          <div style={{ margin: '5px 0px 5px 5px' }}>
-            {btnMode}
-          </div>
-          {this.renderResearchPlanMain(researchPlan, update)}
-        </Panel.Body>
+        <Panel.Collapse>
+          <Panel.Body>
+            <div style={{ margin: '5px 0px 5px 5px' }}>
+              {btnMode}
+            </div>
+            {this.renderResearchPlanMain(researchPlan, update)}
+          </Panel.Body>
+        </Panel.Collapse>
       </Panel>
     );
   }
