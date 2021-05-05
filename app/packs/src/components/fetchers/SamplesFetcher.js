@@ -164,7 +164,6 @@ export default class SamplesFetcher {
   }
 
   static importSamplesFromFileConfirm(params) {
-
     let promise = fetch('/api/v1/samples/confirm_import/', {
       credentials: 'same-origin',
       method: 'post',
@@ -178,8 +177,16 @@ export default class SamplesFetcher {
         mapped_keys: params.mapped_keys,
       })
     }).then((response) => {
-      return response.json()
+      return response.json();
     }).then((json) => {
+      for (let i = 0; i < json.error_messages.length; i++) {
+        NotificationActions.add({
+          message: json.error_messages[i],
+          level: 'error',
+          autoDismiss: 10
+        });
+      };
+
       return json;
     }).catch((errorMessage) => {
       console.log(errorMessage);

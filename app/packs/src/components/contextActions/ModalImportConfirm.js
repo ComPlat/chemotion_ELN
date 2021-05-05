@@ -205,7 +205,8 @@ export default class ModalImportConfirm extends React.Component {
           defaultColDef: {
             editable:  false,
             filter: 'number',
-            width: 250,
+            width: 300,
+            resizable: true 
           },
         }
 

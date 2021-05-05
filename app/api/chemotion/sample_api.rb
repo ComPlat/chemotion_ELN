@@ -74,6 +74,17 @@ module Chemotion
                 name: {field: "name", displayName: "Name"},
                 external_label: {field: "external_label", displayName: "External label"},
                 purity: {field: "purity", displayName: "Purity"},
+
+                molecule_name: { field: 'molecule_name', displayName: 'Molecule Name' },
+                short_label: { field: 'short_label', displayName: 'Short Label' },
+                real_amount: { field: 'real_amount', displayName: 'Real Amount' },
+                real_amount_unit: { field: 'real_amount_unit', displayName: 'Real Amount Unit' },
+                target_amount: { field: 'target_amount', displayName: 'Target Amount' },
+                target_amount_unit: { field: 'target_amount_unit', displayName: 'Target Amount Unit' },
+                molarity: { field: 'molarity', displayName: 'Molarity' },
+                density: { field: 'density', displayName: 'Density' },
+                melting_point: { field: 'melting_point', displayName: 'Melting Point' },
+                boiling_point: { field: 'boiling_point', displayName: 'Boiling Point' },
               },
               current_user_id: current_user.id)
             sdf_import.find_or_create_mol_by_batch
@@ -109,11 +120,11 @@ module Chemotion
             current_user_id: current_user.id,
             rows: params[:rows],
             mapped_keys: params[:mapped_keys]
-
           )
+
           sdf_import.create_samples
           return {
-            sdf: true, message: sdf_import.message, status: sdf_import.status,
+            sdf: true, message: sdf_import.message, status: sdf_import.status, error_messages: sdf_import.error_messages
           }
         end
       end
@@ -188,7 +199,7 @@ module Chemotion
         reset_pagination_page(scope)
         sample_serializer_selector =
           if own_collection
-            ->(s) { SampleListSerializer::Level10.new(s, 10).serializable_hash }
+            ->(s) { Entities::SampleEntity::Level10.represent(s) }
           else
             lambda do |s|
               ElementListPermissionProxy.new(current_user, s, user_ids).serialized
@@ -387,7 +398,7 @@ module Chemotion
         requires :description, type: String, desc: "Sample description"
         requires :purity, type: Float, desc: "Sample purity"
         # requires :solvent, type: String, desc: "Sample solvent"
-        optional :solvent, type: Array[Hash], desc: "Sample solvent" 
+        optional :solvent, type: Array[Hash], desc: "Sample solvent"
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
