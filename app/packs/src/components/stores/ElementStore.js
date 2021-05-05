@@ -27,6 +27,7 @@ import DeviceSample from '../models/DeviceSample';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import ScreensFetcher from '../fetchers/ScreensFetcher';
 import ModalImportConfirm from '../contextActions/ModalImportConfirm';
 
 import { extraThing } from '../utils/Functions';
@@ -1038,6 +1039,21 @@ class ElementStore {
     this.UpdateResearchPlanAttaches(updatedResearchPlan);
   }
 
+  UpdateScreen(updatedScreen) {
+    const { selecteds } = this.state;
+    ScreensFetcher.fetchById(updatedScreen.id)
+      .then((result) => {
+        this.changeCurrentElement(result);
+        const index = this.elementIndex(selecteds, result);
+        const newSelecteds = this.updateElement(result, index);
+        this.setState({ selecteds: newSelecteds });
+      });
+  }
+
+  handleUpdateScreen(updatedScreen) {
+    this.UpdateScreen(updatedScreen);
+  }
+
   handleUpdateMoleculeNames(updatedSample) {
     this.UpdateMolecule(updatedSample);
   }
@@ -1060,6 +1076,7 @@ class ElementStore {
       case 'screen':
         fetchOls('screen');
         this.handleRefreshElements('screen');
+        this.handleUpdateScreen(updatedElement);
         break;
       case 'research_plan':
         this.handleRefreshElements('research_plan');

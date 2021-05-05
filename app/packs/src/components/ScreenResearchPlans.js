@@ -41,11 +41,9 @@ class ScreenResearchPlans extends Component {
   renderDropZone() {
     const { isOver, connectDropTarget } = this.props;
     const style = {
-      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px', marginBottom: '6px'
+      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px', marginBottom: '8px'
     };
-    if (isOver) {
-      style.borderColor = '#337ab7';
-    }
+    if (isOver) { style.borderColor = '#337ab7'; }
 
     return connectDropTarget( // eslint-disable-line function-paren-newline
       <div style={style}>
