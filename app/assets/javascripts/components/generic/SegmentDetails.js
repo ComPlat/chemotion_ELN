@@ -146,7 +146,7 @@ class SegmentDetails extends Component {
         if (curIdx >= 0) {
           const curVal = segment.properties[key].fields[curIdx].value;
           const curType = typeof curVal;
-          if (['select', 'text'].includes(newProps[key].fields[idx].type)) {
+          if (['select', 'text', 'textarea'].includes(newProps[key].fields[idx].type)) {
             newProps[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
           }
           if (newProps[key].fields[idx].type === 'integer') {

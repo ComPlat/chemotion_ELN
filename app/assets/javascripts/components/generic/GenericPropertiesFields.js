@@ -6,6 +6,26 @@ import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
 
+const GenPropertiesTextArea = (opt) => {
+  let className = opt.isEditable ? 'editable' : 'readonly';
+  className = opt.isRequired && opt.isEditable ? 'required' : className;
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
+  return (
+    <FormGroup className="text_generic_properties">
+      {fieldHeader}
+      <FormControl
+        componentClass="textarea"
+        value={opt.value}
+        onChange={opt.onChange}
+        className={className}
+        readOnly={opt.readOnly}
+        required={opt.isRequired}
+        placeholder={opt.placeholder}
+      />
+    </FormGroup>
+  );
+};
+
 const GenPropertiesText = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
@@ -224,5 +244,6 @@ export {
   GenPropertiesNumber,
   GenPropertiesSystemDefined,
   GenPropertiesInputGroup,
-  GenPropertiesDrop
+  GenPropertiesDrop,
+  GenPropertiesTextArea
 };

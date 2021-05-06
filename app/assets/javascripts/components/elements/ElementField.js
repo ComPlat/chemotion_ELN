@@ -10,6 +10,7 @@ import GroupFields from './GroupFields';
 const BaseFieldTypes = [
   { value: 'integer', name: 'integer', label: 'Integer' },
   { value: 'text', name: 'text', label: 'Text' },
+  { value: 'textarea', name: 'textarea', label: 'Text area' },
   { value: 'select', name: 'select', label: 'Select' },
   { value: 'checkbox', name: 'checkbox', label: 'Checkbox' },
   { value: 'system-defined', name: 'system-defined', label: 'System-Defined' },

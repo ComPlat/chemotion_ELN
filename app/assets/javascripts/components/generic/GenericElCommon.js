@@ -13,7 +13,8 @@ import {
   GenPropertiesNumber,
   GenPropertiesSystemDefined,
   GenPropertiesInputGroup,
-  GenPropertiesDrop
+  GenPropertiesDrop,
+  GenPropertiesTextArea
 } from './GenericPropertiesFields';
 
 const GenProperties = (opt) => {
@@ -36,6 +37,8 @@ const GenProperties = (opt) => {
       return GenPropertiesSystemDefined(fieldProps);
     case 'input-group':
       return GenPropertiesInputGroup(fieldProps);
+    case 'textarea':
+      return GenPropertiesTextArea(fieldProps);
     default:
       return GenPropertiesText(fieldProps);
   }
