@@ -374,6 +374,7 @@ class ViewSpectra extends React.Component {
 
   getPeaksByLayou(peaks, layout, multiplicity) {
     if (['IR'].indexOf(layout) >= 0) return peaks;
+    if (['13C'].indexOf(layout) >= 0) return FN.CarbonFeatures(peaks, multiplicity);
 
     const { stack, shift } = multiplicity;
     const nmrMpyCenters = stack.map((stk) => {
