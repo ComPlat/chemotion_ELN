@@ -247,6 +247,8 @@ module SVG
 
     def init_arrow_width
       @arrow_width = num_reactants * ARROW_LENGTH_SCALE + ARROW_LENGTH_BASE
+      scl = (((solvents || []) + (conditions || '').split("\n"))&.max_by(&:length)&.length || 1) * 10
+      @arrow_width = [@arrow_width, scl].max
     end
 
     def init_svg
@@ -256,24 +258,12 @@ module SVG
 
     def solvents_lines
       groups = solvents.each_slice(num_solvents_per_line).to_a
-      groups.map do |g|
-        solvents_string(g)
-      end.map{ |k| k.join('  /  ') } unless solvents.empty?
+      groups.map { |k| k.join('  /  ') } unless solvents.empty?
     end
 
     def num_solvents_per_line
       reactants_size = reactants.size.positive? ? reactants.size : 1
       reactants_size > 3 ? 3 : reactants_size
-    end
-
-    def solvents_string(group)
-      group.map do |j|
-        if j && j.size > SOLVENT_LENGTH_LIMIT
-          j && "#{j[0..SOLVENT_LENGTH_LIMIT - 1]}.."
-        elsif j
-          j
-        end
-      end
     end
 
     def template_it
@@ -513,7 +503,7 @@ module SVG
       scaled_group_width = (group_width * scale).round
 
       if options[:arrow_width]
-        @arrow_width = [scaled_group_width, 50].max + 80
+        @arrow_width = [([scaled_group_width, 50].max + 80), @arrow_width].max
         gvba[2] += arrow_width
       else
         gvba[2] += scaled_group_width
