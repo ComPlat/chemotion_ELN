@@ -63,8 +63,6 @@ class Wellplate < ApplicationRecord
   scope :by_sample_ids, -> (ids) { joins(:samples).where('samples.id in (?)', ids) }
   scope :by_screen_ids, -> (ids) { joins(:screens).where('screens.id in (?)', ids) }
 
-  belongs_to :creator, foreign_key: :created_by, class_name: 'User'
-
   has_many :collections_wellplates, dependent: :destroy
   has_many :collections, through: :collections_wellplates
 
@@ -74,6 +72,9 @@ class Wellplate < ApplicationRecord
 
   has_many :screens_wellplates, dependent: :destroy
   has_many :screens, through: :screens_wellplates
+
+  has_many :research_plans_wellplates, dependent: :destroy
+  has_many :research_plans, through: :research_plans_wellplates
 
   has_many :sync_collections_users, through: :collections
 

@@ -48,7 +48,9 @@ class Screen < ApplicationRecord
 
   has_many :screens_wellplates, dependent: :destroy
   has_many :wellplates, through: :screens_wellplates
-  has_many :research_plans
+
+  has_many :research_plans_screens, dependent: :destroy
+  has_many :research_plans, through: :research_plans_screens
 
   has_one :container, :as => :containable
 

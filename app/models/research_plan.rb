@@ -9,15 +9,6 @@
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #  body       :jsonb
-#  screen_id  :integer
-#
-# Indexes
-#
-#  index_research_plans_on_screen_id  (screen_id)
-#
-# Foreign Keys
-#
-#  fk_rails_...  (screen_id => screens.id)
 #
 
 class ResearchPlan < ApplicationRecord
@@ -37,6 +28,12 @@ class ResearchPlan < ApplicationRecord
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
   has_many :attachments, as: :attachable
+
+  has_many :research_plans_wellplates, dependent: :destroy
+  has_many :wellplates, through: :research_plans_wellplates
+
+  has_many :research_plans_screens, dependent: :destroy
+  has_many :screens, through: :research_plans_screens
 
   before_destroy :delete_attachment
 
