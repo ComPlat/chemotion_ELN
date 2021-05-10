@@ -8,6 +8,17 @@ import NotificationActions from '../../components/actions/NotificationActions';
 import UserStore from '../../components/stores/UserStore';
 import MatrixCheck from '../../components/common/MatrixCheck';
 
+class GenericDummy {
+  constructor() {
+    this.type = 'dummy';
+    this.field = uuid.v1();
+    this.position = 100;
+    this.label = '';
+    this.default = '';
+    this.required = false;
+  }
+}
+
 const absOlsTermId = val => (val || '').split('|')[0].trim();
 const absOlsTermLabel = val => val.replace(absOlsTermId(val), '').replace('|', '').trim();
 const toNum = (val) => {
@@ -68,7 +79,7 @@ const unitConvToBase = (field = {}) => {
   const idx = findIndex(units, u => u.key === field.value_system);
   if (idx <= 0) return field.value;
   return ((field.value * units[0].nm) / ((units[idx] && units[idx].nm) || 1) || 0);
-}
+};
 
 const unitConversion = (field, key, val) => {
   if (typeof val === 'undefined' || val == null || val === 0) {
@@ -233,7 +244,7 @@ const GenericDSMisType = () => {
 };
 
 export {
-  ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel,
+  ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel, GenericDummy,
   validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
   unitConvToBase, unitConversion, toBool, toNum, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit
 };

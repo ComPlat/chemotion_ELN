@@ -6,15 +6,9 @@ import { Panel, Col, PanelGroup, Row } from 'react-bootstrap';
 import { sortBy } from 'lodash';
 import { genUnits } from '../../admin/generic/Utils';
 import {
-  GenPropertiesText,
-  GenPropertiesCheckbox,
-  GenPropertiesSelect,
-  GenPropertiesCalculate,
-  GenPropertiesNumber,
-  GenPropertiesSystemDefined,
-  GenPropertiesInputGroup,
-  GenPropertiesDrop,
-  GenPropertiesTextArea
+  GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
+  GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
+  GenPropertiesTextArea, GenDummy
 } from './GenericPropertiesFields';
 
 const GenProperties = (opt) => {
@@ -39,6 +33,8 @@ const GenProperties = (opt) => {
       return GenPropertiesInputGroup(fieldProps);
     case 'textarea':
       return GenPropertiesTextArea(fieldProps);
+    case 'dummy':
+      return GenDummy();
     default:
       return GenPropertiesText(fieldProps);
   }

@@ -69,6 +69,11 @@ $colo-bs-primary: #337ab7;
 
 
 .text_generic_properties {
+  .dummy {
+    background-color: unset !important;
+    border: unset !important;
+    box-shadow: unset !important;
+  }
   .editable {
     background-color: $color-editable;
   }

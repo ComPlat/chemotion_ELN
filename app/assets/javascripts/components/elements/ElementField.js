@@ -34,6 +34,7 @@ class ElementField extends Component {
     this.handleDrop = this.handleDrop.bind(this);
     this.handelDelete = this.handelDelete.bind(this);
     this.handleMove = this.handleMove.bind(this);
+    this.handleAddDummy = this.handleAddDummy.bind(this);
     this.updSubField = this.updSubField.bind(this);
   }
 
@@ -49,6 +50,10 @@ class ElementField extends Component {
   handleMove(element) {
     const { l, f, isUp } = element;
     this.props.onMove(l, f, isUp);
+  }
+
+  handleAddDummy(element) {
+    this.props.onDummyAdd(element);
   }
 
   handelDelete(delStr, delKey, delRoot) {
@@ -81,10 +86,10 @@ class ElementField extends Component {
         {msg} <br />
         <div className="btn-toolbar">
           <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handelDelete(delStr, delKey, delRoot)}>
-          Yes
+            Yes
           </Button><span>&nbsp;&nbsp;</span>
           <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
-          No
+            No
           </Button>
         </div>
       </Popover>
@@ -94,6 +99,15 @@ class ElementField extends Component {
       <OverlayTrigger animation placement="top" root trigger="focus" overlay={popover}>
         <Button bsSize="xs" bsStyle="danger" ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
       </OverlayTrigger>
+    );
+  }
+
+  renderDummyFieldGroup(f) {
+    return (
+      <FormGroup controlId={`frmCtrlFid_${this.props.layerKey}_${f.field}`}>
+        <Col componentClass={ControlLabel} sm={3}>{`(${f.type})`}</Col>
+        <Col sm={9}><FormControl type="text" name={`f_${f.field}`} defaultValue={`${f.type},  an invisible entry (${f.field})`} disabled /></Col>
+      </FormGroup>
     );
   }
 
@@ -184,52 +198,60 @@ class ElementField extends Component {
           <Panel.Heading className="template_panel_heading">
             <Panel.Title toggle>
               {this.props.position}&nbsp;
-              {f.field}
+              {['dummy'].includes(f.type) ? '(dummy field)' : f.field}
             </Panel.Title>
             <ButtonGroup bsSize="xsmall">
               <ButtonTooltip tip="Move Up" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: true }} fa="fa-arrow-up" place="top" bs="default" disabled={this.props.position === 1} />
               <ButtonTooltip tip="Move Down" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: false }} fa="fa-arrow-down" place="top" bs="default" />
               {this.renderDeleteButton('Field', f.field, layerKey)}
+              <ButtonTooltip tip="Add Dummy field" fnClick={this.handleAddDummy} element={{ l: layerKey, f: f.field }} fa="fa-plus-circle" place="top" bs="info" />
             </ButtonGroup>
           </Panel.Heading>
           <Panel.Collapse>
             <Panel.Body>
               <Form horizontal className="default_style">
-                {this.renderTextFieldGroup(f, 'Field Name', 'field')}
-                {this.renderTextFieldGroup(f, 'Display Name', 'label')}
-                {this.renderTextFieldGroup(f, 'Hover Info', 'description')}
-                <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_type`}>
-                  <Col componentClass={ControlLabel} sm={3}>Type</Col>
-                  <Col sm={9}>
-                    <div style={{ display: 'flex' }}>
-                      <span style={{ width: '100%' }}>
-                        <Select
-                          className="drop-up"
-                          name={f.field}
-                          multi={false}
-                          options={typeOpts}
-                          value={f.type}
-                          onChange={event => this.handleChange(event, f.type, f.field, layerKey, 'type', 'select')}
-                        />
-                      </span>
-                    </div>
-                  </Col>
-                </FormGroup>
+                {['dummy'].includes(f.type) ? this.renderDummyFieldGroup(f) : null}
+                {!['dummy'].includes(f.type) ? this.renderTextFieldGroup(f, 'Field Name', 'field') : null}
+                {!['dummy'].includes(f.type) ? this.renderTextFieldGroup(f, 'Display Name', 'label') : null}
+                {!['dummy'].includes(f.type) ? this.renderTextFieldGroup(f, 'Hover Info', 'description') : null}
+                {
+                  ['dummy'].includes(f.type) ? null : (
+                    <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_type`}>
+                      <Col componentClass={ControlLabel} sm={3}>Type</Col>
+                      <Col sm={9}>
+                        <div style={{ display: 'flex' }}>
+                          <span style={{ width: '100%' }}>
+                            <Select
+                              className="drop-up"
+                              name={f.field}
+                              multi={false}
+                              options={typeOpts}
+                              value={f.type}
+                              onChange={event => this.handleChange(event, f.type, f.field, layerKey, 'type', 'select')}
+                            />
+                          </span>
+                        </div>
+                      </Col>
+                    </FormGroup>)
+                  }
                 { groupOptions }
                 { selectOptions }
                 { formulaField }
-                <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_required`} style={skipRequired}>
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Required
-                  </Col>
-                  <Col sm={9}>
-                    <Checkbox
-                      inputRef={(m) => { this.accessLevelInput = m; }}
-                      checked={f.required}
-                      onChange={event => this.handleChange(event, f.required, f.field, layerKey, 'required', 'checkbox')}
-                    />
-                  </Col>
-                </FormGroup>
+                {
+                  ['dummy'].includes(f.type) ? null : (
+                    <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_required`} style={skipRequired}>
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Required
+                      </Col>
+                      <Col sm={9}>
+                        <Checkbox
+                          inputRef={(m) => { this.accessLevelInput = m; }}
+                          checked={f.required}
+                          onChange={event => this.handleChange(event, f.required, f.field, layerKey, 'required', 'checkbox')}
+                        />
+                      </Col>
+                    </FormGroup>)
+                }
                 {['integer', 'text'].includes(f.type) ? this.renderTextFieldGroup(f, 'Placeholder', 'placeholder') : null}
               </Form>
             </Panel.Body>
@@ -257,7 +279,8 @@ ElementField.propTypes = {
   onDelete: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   unitsSystem: PropTypes.object,
-  onFieldSubFieldChange: PropTypes.func.isRequired
+  onFieldSubFieldChange: PropTypes.func.isRequired,
+  onDummyAdd: PropTypes.func.isRequired,
 };
 
 ElementField.defaultProps = { genericType: 'Element', unitsSystem: [] };

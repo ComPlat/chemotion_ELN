@@ -6,6 +6,12 @@ import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
 
+const GenDummy = () => (
+  <FormGroup className="text_generic_properties">
+    <FormControl type="text" className="dummy" readOnly />
+  </FormGroup>
+);
+
 const GenPropertiesTextArea = (opt) => {
   let className = opt.isEditable ? 'editable' : 'readonly';
   className = opt.isRequired && opt.isEditable ? 'required' : className;
@@ -237,13 +243,7 @@ const GenPropertiesDrop = (opt) => {
 };
 
 export {
-  GenPropertiesText,
-  GenPropertiesCheckbox,
-  GenPropertiesSelect,
-  GenPropertiesCalculate,
-  GenPropertiesNumber,
-  GenPropertiesSystemDefined,
-  GenPropertiesInputGroup,
-  GenPropertiesDrop,
-  GenPropertiesTextArea
+  GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
+  GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
+  GenPropertiesTextArea, GenDummy
 };

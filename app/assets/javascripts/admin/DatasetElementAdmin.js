@@ -11,7 +11,7 @@ import TemplateJsonModal from './generic/TemplateJsonModal';
 import LayerAttrEditModal from './generic/LayerAttrEditModal';
 import LayerAttrNewModal from './generic/LayerAttrNewModal';
 import SelectAttrNewModal from './generic/SelectAttrNewModal';
-import { ButtonTooltip, validateLayerInput, validateSelectList, notification } from '../admin/generic/Utils';
+import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
 
 export default class DatasetElementAdmin extends React.Component {
   constructor(props) {
@@ -47,6 +47,7 @@ export default class DatasetElementAdmin extends React.Component {
     this.handleCreateLayer = this.handleCreateLayer.bind(this);
     this.handleUpdateLayer = this.handleUpdateLayer.bind(this);
     this.handleAddSelect = this.handleAddSelect.bind(this);
+    this.onDummyAdd = this.onDummyAdd.bind(this);
     this.onFieldDrop = this.onFieldDrop.bind(this);
     this.onFieldMove = this.onFieldMove.bind(this);
     this.onFieldInputChange = this.onFieldInputChange.bind(this);
@@ -79,6 +80,19 @@ export default class DatasetElementAdmin extends React.Component {
     this.setState({ element });
   }
 
+  onDummyAdd(e) {
+    const { element } = this.state;
+    const layer = (element && element.properties_template
+      && element.properties_template.layers[e.l]);
+    let { fields } = layer || {};
+    fields = fields || [];
+    let idx = fields.findIndex(o => o.field === e.f);
+    if (idx === -1 && fields.length > 0) idx = fields.length - 1;
+    fields.splice(idx + 1, 0, new GenericDummy());
+    element.properties_template.layers[e.l].fields = fields;
+    this.setState({ element });
+  }
+
   onFieldDrop(e) {
     const { element } = this.state;
     const sourceKey = e.sourceTag.layerKey;
@@ -101,14 +115,14 @@ export default class DatasetElementAdmin extends React.Component {
     const layer = (element && element.properties_template && element.properties_template.layers[l]);
     const { fields } = layer;
     const idx = findIndex(fields, o => o.field === f);
-    if (idx >= 0 && isUp === true) {
+    if (idx >= 0 && isUp) {
       const curObj = fields[idx];
       curObj.position -= 1;
       const preObj = fields[idx - 1];
       preObj.position += 1;
       fields[idx] = preObj;
       fields[idx - 1] = curObj;
-    } else if (idx < (fields.length - 1) && isUp === false) {
+    } else if (idx < (fields.length - 1) && !isUp) {
       const curObj = fields[idx];
       curObj.position += 1;
       const nexObj = fields[idx + 1];
@@ -231,18 +245,17 @@ export default class DatasetElementAdmin extends React.Component {
     this.setState({ showJson: false });
   }
 
-  editLayer(layerKey) {
-    this.setState({ showEditLayer: true, layerKey });
+  editLayer(e) {
+    this.setState({ showEditLayer: true, layerKey: e.layerKey });
   }
 
-  newField(layerKey) {
+  newField(e) {
     const { element, newFieldKey } = this.state;
-
     if (newFieldKey === null || newFieldKey.trim().length === 0) {
       notification({ title: 'Add new field', lvl: 'error', msg: 'please input field name first!' });
       return;
     }
-
+    const { layerKey } = e;
     const layer = element && element.properties_template
       && element.properties_template.layers[layerKey];
     const fields = layer.fields || [];
@@ -254,7 +267,6 @@ export default class DatasetElementAdmin extends React.Component {
     const newField = {
       type: 'text', field: newFieldKey, position: 100, label: newFieldKey, default: ''
     };
-
     fields.push(newField);
     element.properties_template.layers[layerKey].fields = fields;
     this.setState({ layerKey, element });
@@ -345,11 +357,15 @@ export default class DatasetElementAdmin extends React.Component {
     const { element, unitsSystem } = this.state;
     Object.keys(element.properties_template.layers).forEach((key) => {
       const layer = element.properties_template.layers[key];
-      const sortedFields = sortBy(((layer && layer.fields) || []), l => l.position);
+      let sortedFields = (layer && layer.fields) || [];
       (sortedFields || []).forEach((f, idx) => {
-        f.position = (idx + 1);
-        if (f.type === 'system-defined') { f.option_layers = f.option_layers || unitsSystem.fields[0].field; }
+        const fd = f;
+        fd.position = (idx + 1);
+        if (fd.type === 'system-defined') { fd.option_layers = reUnit(unitsSystem, fd.option_layers); }
+        fd.required = false;
+        return fd;
       });
+      sortedFields = sortBy(sortedFields, l => l.position);
       element.properties_template.layers[key].fields = sortedFields;
     });
 
@@ -405,7 +421,7 @@ export default class DatasetElementAdmin extends React.Component {
         {msg} <br />
         <div className="btn-toolbar">
           <Button bsSize="xsmall" bsStyle="danger" aria-hidden="true" onClick={() => this.confirmDelete(delStr, delKey, delRoot)}>
-          Yes
+            Yes
           </Button><span>&nbsp;&nbsp;</span>
           <Button bsSize="xsmall" bsStyle="warning">No</Button>
         </div>
@@ -494,7 +510,6 @@ export default class DatasetElementAdmin extends React.Component {
     const { element, selectOptions, unitsSystem } = this.state;
     const layers = [];
     const sortedLayers = sortBy(element.properties_template.layers, l => l.position);
-
     (sortedLayers || []).forEach((layer) => {
       const layerKey = `${layer.key}`;
       const fields = ((layer && layer.fields) || []).map((f, idx) => (
@@ -510,6 +525,7 @@ export default class DatasetElementAdmin extends React.Component {
           onDelete={(delStr, delKey, delRoot) => this.confirmDelete(delStr, delKey, delRoot)}
           onChange={(e, orig, fe, lk, fc, tp) => this.onFieldInputChange(e, orig, fe, lk, fc, tp)}
           unitsSystem={unitsSystem}
+          onDummyAdd={this.onDummyAdd}
         />
       )) || [];
 
@@ -522,6 +538,10 @@ export default class DatasetElementAdmin extends React.Component {
             <div>
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
+                  <InputGroup.Button>
+                    <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" bs="success" size="sm" />
+                    {this.renderDeleteButton('Layer', layerKey, null)}
+                  </InputGroup.Button>
                   <FormControl
                     type="text"
                     name="nf_newfield"
@@ -530,13 +550,8 @@ export default class DatasetElementAdmin extends React.Component {
                     bsSize="sm"
                   />
                   <InputGroup.Button>
-                    <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new field</Tooltip>}>
-                      <Button bsStyle="primary" bsSize="sm" onClick={() => this.newField(layerKey)}><i className="fa fa-plus-circle" aria-hidden="true" /></Button>
-                    </OverlayTrigger>
-                    <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Edit Layer: {layer.label}</Tooltip>}>
-                      <Button bsStyle="success" bsSize="sm" onClick={() => this.editLayer(layerKey)}><i className="fa fa-pencil" aria-hidden="true" /></Button>
-                    </OverlayTrigger>
-                    {this.renderDeleteButton('Layer', layerKey, null)}
+                    <ButtonTooltip tip="Add new field" fnClick={this.newField} element={{ layerKey }} fa="fa-plus-circle" place="top" bs="primary" size="sm" />
+                    <ButtonTooltip tip="Add Dummy field" fnClick={this.onDummyAdd} element={{ l: layerKey, f: null }} fa="fa-plus-circle" place="top" bs="info" size="sm" />
                   </InputGroup.Button>
                 </InputGroup>
               </FormGroup>
@@ -634,7 +649,6 @@ export default class DatasetElementAdmin extends React.Component {
     const { element, layerKey } = this.state;
     const layer = (element && element.properties_template
       && element.properties_template.layers[layerKey]) || {};
-
     return (
       <div>
         <div className="list-container-bottom">
