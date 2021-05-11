@@ -73,14 +73,15 @@ class GenPropertiesLayer extends Component {
   views() {
     const { layer, selectOptions, id } = this.props;
     const { cols, fields, key } = layer;
-    const col = Math.floor(12 / (cols || 1));
-    const perRow = 12 / col;
+    const perRow = cols || 1;
+    const col = Math.floor(12 / perRow);
+    const klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
     const vs = [];
     let op = [];
     fields.forEach((f, i) => {
       const unit = genUnits(f.option_layers)[0] || {};
       const eachCol = (
-        <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col}>
+        <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col} className={klaz}>
           <GenProperties
             id={id}
             layer={layer}
@@ -105,7 +106,7 @@ class GenPropertiesLayer extends Component {
         </Col>
       );
       op.push(eachCol);
-      if (((i + 1) % perRow === 0) || ((i + 1) % perRow !== 0 && fields.length === (i + 1))) {
+      if (((i + 1) % perRow === 0) || (fields.length === (i + 1))) {
         vs.push(<Row key={`prop_row_${key}_${f.priority}_${f.field}`}>{op}</Row>);
         op = [];
       }

@@ -27,7 +27,14 @@ export default class LayerAttrForm extends Component {
         <FormGroup controlId="formControlLayerCols">
           <InputGroup>
             <InputGroup.Addon>Columns per row</InputGroup.Addon>
-            <FormControl type="number" defaultValue={layer.cols} inputRef={(ref) => { this.lf_cols = ref; }} min={1} />
+            <FormControl componentClass="select" defaultValue={layer.cols || 1} inputRef={(ref) => { this.lf_cols = ref; }} >
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+              <option value={4}>4</option>
+              <option value={5}>5</option>
+              <option value={6}>6</option>
+            </FormControl>
           </InputGroup>
         </FormGroup>
         <FormGroup controlId="formControlLayerPosition">

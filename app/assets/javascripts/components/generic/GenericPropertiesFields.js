@@ -69,6 +69,7 @@ const GenPropertiesSelect = (opt) => {
   const options = opt.options.map(op => ({ value: op.key, name: op.key, label: op.label }));
   let className = opt.isEditable ? 'select_generic_properties_editable' : 'select_generic_properties_readonly';
   className = opt.isRequired && opt.isEditable ? 'select_generic_properties_required' : className;
+  className = `${className} status-select`;
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
