@@ -143,9 +143,12 @@ module Chemotion
         if params[:selection][:searchProperties].present?
           params[:selection][:searchProperties] && params[:selection][:searchProperties][:layers] && params[:selection][:searchProperties][:layers].keys.each do |lk|
             layer = params[:selection][:searchProperties][:layers][lk]
-            qs = layer[:fields].select{ |f| f[:value].present? }
+            qs = layer[:fields].select{ |f| f[:value].present? || f[:type] == "input-group" }
             qs.each do |f|
-              if f[:type] == "checkbox" || f[:type] == "integer" || f[:type] == "system-defined"
+              if f[:type] == "input-group"
+                sfs = f[:sub_fields].map{ |e| { "id": e[:id], "value": e[:value] } }
+                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "sub_fields": sfs }] } } if sfs.length > 0
+              elsif f[:type] == "checkbox" || f[:type] == "integer" || f[:type] == "system-defined"
                 query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value] }] } }
               else
                 query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value].to_s }] } }

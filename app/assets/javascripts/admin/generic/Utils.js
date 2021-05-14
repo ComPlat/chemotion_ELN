@@ -220,16 +220,15 @@ ButtonConfirm.defaultProps = {
 
 const FieldLabel = (props) => {
   const { label, desc } = props;
-  return desc === '' ? <ControlLabel>{label}</ControlLabel> : (
+  return (desc && desc !== '') ? (
     <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{desc}</Tooltip>}>
       <ControlLabel>{label}</ControlLabel>
     </OverlayTrigger>
-  );
+  ) : <ControlLabel>{label}</ControlLabel>;
 };
 
-FieldLabel.propTypes = {
-  label: PropTypes.string.isRequired, desc: PropTypes.string.isRequired
-};
+FieldLabel.propTypes = { label: PropTypes.string.isRequired, desc: PropTypes.string };
+FieldLabel.defaultProps = { desc: '' };
 
 const GenericDSMisType = () => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -243,8 +242,27 @@ const GenericDSMisType = () => {
   return null;
 };
 
+const clsInputGroup = (el) => {
+  if (!el) return el;
+  const genericEl = el;
+  const { layers } = genericEl.properties_template;
+  const keys = Object.keys(layers);
+  keys.forEach((key) => {
+    const layer = layers[key];
+    layer.fields.filter(e => e.type === 'input-group')
+      .forEach((e) => {
+        e.sub_fields.forEach((s) => {
+          const ff = s;
+          if (ff.type === 'text') { ff.value = ''; }
+        });
+      });
+  });
+  return genericEl;
+};
+
 export {
   ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel, GenericDummy,
   validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
-  unitConvToBase, unitConversion, toBool, toNum, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit
+  unitConvToBase, unitConversion, toBool, toNum, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit,
+  clsInputGroup
 };

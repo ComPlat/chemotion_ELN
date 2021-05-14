@@ -4,7 +4,7 @@ import 'whatwg-fetch';
 export default class UsersFetcher {
   static fetchElementKlasses(genericOnly = true) {
     let api = '/api/v1/generic_elements/klasses.json';
-    if (genericOnly == true) {
+    if (genericOnly) {
       api = '/api/v1/generic_elements/klasses.json?generic_only=true';
     }
     return fetch(api, {
@@ -16,7 +16,7 @@ export default class UsersFetcher {
 
   static fetchElementKlassNames(genericOnly = true) {
     let api = '/api/v1/public/element_klasses_name.json';
-    if (genericOnly == true) {
+    if (genericOnly) {
       api = '/api/v1/public/element_klasses_name.json?generic_only=true';
     }
 

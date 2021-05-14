@@ -189,7 +189,7 @@ const GenPropertiesSystemDefined = (opt) => {
 
 const GenPropertiesInputGroup = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
-  const fLab = e => <div className="form-control g_input_group_label">{e.value}</div>;
+  const fLab = e => <div key={uuid.v4()} className="form-control g_input_group_label">{e.value}</div>;
   const fTxt = e => <FormControl className="g_input_group" key={e.id} type={e.type} name={e.id} value={e.value} onChange={o => opt.onSubChange(o, e.id, opt.f_obj)} />;
   const subs = opt.f_obj && opt.f_obj.sub_fields.map((e) => {
     if (e.type === 'label') { return fLab(e); } return fTxt(e);

@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Row, Col } from 'react-bootstrap';
@@ -30,6 +31,7 @@ const buildCriteria = (props) => {
       const ig = (
         <GenPropertiesLayerSearchCriteria
           layer={layer}
+          onSubChange={props.onSubChange}
           onChange={props.onChange}
           selectOptions={genericEl.properties_template.select_options || {}}
         />
@@ -56,6 +58,7 @@ const buildCriteria = (props) => {
         const igs = (
           <GenPropertiesLayerSearchCriteria
             layer={layer}
+            onSubChange={props.onSubChange}
             onChange={props.onChange}
             selectOptions={genericEl.properties_template.select_options || {}}
           />
@@ -66,20 +69,16 @@ const buildCriteria = (props) => {
   });
 
   return (
-    <div style={{ margin: '15px' }}>
-      {layout}
-    </div>
+    <div style={{ margin: '15px' }}>{layout}</div>
   );
 };
 
 buildCriteria.propTypes = {
-  genericEl: PropTypes.instanceOf(GenericEl),
-  onChange: PropTypes.func,
+  genericEl: PropTypes.instanceOf(GenericEl), onChange: PropTypes.func, onSubChange: PropTypes.func
 };
 
 buildCriteria.defaultProps = {
-  genericEl: null,
-  onChange: () => {}
+  genericEl: null, onChange: () => {}, onSubChange: () => {}
 };
 
 export default class GenericElCriteria extends Component {
@@ -88,9 +87,21 @@ export default class GenericElCriteria extends Component {
     this.state = {
       genericEl: props.genericEl,
     };
-
+    this.onSubChange = this.onSubChange.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onSearch = this.onSearch.bind(this);
+  }
+
+  onSubChange(layer, obj) {
+    const { genericEl } = this.state;
+    const { properties_template } = genericEl;
+    const subFields = properties_template.layers[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
+    const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
+    subFields.splice(idxSub, 1, obj.sub);
+    properties_template.layers[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
+    genericEl.search_properties = properties_template;
+    genericEl.changed = true;
+    this.setState({ genericEl });
   }
 
   onChange(event, field, layer, type = 'text') {
@@ -122,12 +133,13 @@ export default class GenericElCriteria extends Component {
     const { genericEl } = this.state;
     this.props.onSearch(genericEl);
   }
+
   render() {
     const { genericEl } = this.state;
     return (
       <div className="search_criteria_mof">
         <div className="modal_body">
-          {buildCriteria({ genericEl, onChange: this.onChange })}
+          {buildCriteria({ genericEl, onChange: this.onChange, onSubChange: this.onSubChange })}
         </div>
         <div className="btn_footer">
           <Button bsStyle="warning" onClick={this.props.onHide}>
@@ -144,7 +156,7 @@ export default class GenericElCriteria extends Component {
 }
 
 GenericElCriteria.propTypes = {
-  genericEl: PropTypes.instanceOf(GenericEl),
+  genericEl: PropTypes.object,
   onHide: PropTypes.func,
   onSearch: PropTypes.func,
 };

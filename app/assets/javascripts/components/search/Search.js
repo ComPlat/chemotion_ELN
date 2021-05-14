@@ -4,7 +4,6 @@ import {
   Form, FormControl, Radio, Grid, Row, Col
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import { findIndex } from 'lodash';
 import AutoCompleteInput from './AutoCompleteInput';
 import StructureEditorModal from '../structure_editor/StructureEditorModal';
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
@@ -14,6 +13,7 @@ import UIActions from '../actions/UIActions';
 import UserStore from '../stores/UserStore';
 import GenericElCriteriaModal from '../generic/GenericElCriteriaModal';
 import GenericElCriteria from '../generic/GenericElCriteria';
+import { clsInputGroup } from '../../admin/generic/Utils';
 
 export default class Search extends React.Component {
   constructor(props) {
@@ -291,7 +291,7 @@ export default class Search extends React.Component {
     const mofProps = {
       show: this.state.showGenericElCriteria,
       type: this.state.elementType,
-      component: <GenericElCriteria genericEl={this.state.genericEl} onHide={this.hideGenericElCriteria} onSearch={this.genericElSearch} />,
+      component: <GenericElCriteria genericEl={clsInputGroup(this.state.genericEl)} onHide={this.hideGenericElCriteria} onSearch={this.genericElSearch} />,
       title: `Please input your search criteria for ${this.state.elementType}`,
       onHide: this.hideGenericElCriteria
     };

@@ -152,25 +152,44 @@ GenPropertiesLayer.defaultProps = {
 };
 
 class GenPropertiesLayerSearchCriteria extends Component {
+  constructor(props) {
+    super(props);
+    this.handleSubChange = this.handleSubChange.bind(this);
+  }
+
   handleChange(e, f, k, t) {
     this.props.onChange(e, f, k, t);
+  }
+
+  handleSubChange(e, id, f) {
+    const sub = f.sub_fields.find(m => m.id === id);
+    sub.value = e.target.value;
+    const { layer } = this.props;
+    const obj = { f, sub };
+    this.props.onSubChange(layer.key, obj);
   }
 
   views() {
     const { layer, selectOptions } = this.props;
     const { cols, fields, key } = layer;
-    const col = 12 / (cols || 1);
-    const vs = fields.map((f) => {
+    const perRow = cols || 1;
+    const col = Math.floor(12 / perRow);
+    const klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
+    const vs = [];
+    let op = [];
+    fields.forEach((f, i) => {
       const unit = genUnits(f.option_layers)[0] || {};
-      return (
-        <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col}>
+      const eCol = (
+        <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col} className={klaz}>
           <GenPropertiesSearch
+            f_obj={f}
             label={f.label}
             value={f.value || ''}
             type={f.type || 'text'}
             field={f.field || 'field'}
             options={(selectOptions && selectOptions[f.option_layers]) || []}
             onChange={event => this.handleChange(event, f.field, key, f.type)}
+            onSubChange={this.handleSubChange}
             option_layers={f.option_layers}
             value_system={f.value_system || unit.key}
             isEditable
@@ -179,6 +198,11 @@ class GenPropertiesLayerSearchCriteria extends Component {
           />
         </Col>
       );
+      op.push(eCol);
+      if (((i + 1) % perRow === 0) || (fields.length === (i + 1))) {
+        vs.push(<Row key={`prop_row_${key}_${f.priority}_${f.field}`}>{op}</Row>);
+        op = [];
+      }
     });
     return vs;
   }
@@ -197,6 +221,7 @@ GenPropertiesLayerSearchCriteria.propTypes = {
   // eslint-disable-next-line react/require-default-props
   layer: PropTypes.object,
   selectOptions: PropTypes.object,
+  onSubChange: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
 };
 
