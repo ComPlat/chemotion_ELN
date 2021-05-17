@@ -12,6 +12,7 @@
 #  readout      :string
 #  additive     :string
 #  deleted_at   :datetime
+#  readouts     :jsonb
 #
 # Indexes
 #
