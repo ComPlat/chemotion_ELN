@@ -4,6 +4,7 @@ import {
   Well, Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger, Col, Row, Popover
 } from 'react-bootstrap';
+import Immutable from 'immutable';
 import LoadingActions from './actions/LoadingActions';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
@@ -17,7 +18,6 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import ConfirmClose from './common/ConfirmClose';
 import ExportSamplesBtn from './ExportSamplesBtn';
-import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
 
 const cols = 12;
@@ -33,7 +33,7 @@ export default class WellplateDetails extends Component {
       visible: Immutable.List(),
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
   }
 
   componentDidMount() {
@@ -60,6 +60,10 @@ export default class WellplateDetails extends Component {
         activeTab: state.wellplate.activeTab
       });
     }
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
   }
 
   handleSubmit() {
@@ -141,10 +145,6 @@ export default class WellplateDetails extends Component {
     );
   }
 
-  onTabPositionChanged(visible) {
-    this.setState({visible})
-  }
-
   render() {
     const {
       wellplate, showWellplate, visible
@@ -152,6 +152,7 @@ export default class WellplateDetails extends Component {
     const {
       wells, name, size, description
     } = wellplate;
+    const readoutTitles = wellplate.readout_titles;
     const submitLabel = wellplate.isNew ? 'Create' : 'Save';
     const exportButton = (wellplate && wellplate.isNew) ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
     const properties = { name, size, description };
@@ -166,6 +167,7 @@ export default class WellplateDetails extends Component {
                 <Wellplate
                   show={showWellplate}
                   size={size}
+                  readoutTitles={readoutTitles}
                   wells={wells}
                   handleWellsChange={w => this.handleWellsChange(w)}
                   cols={cols}
@@ -207,7 +209,7 @@ export default class WellplateDetails extends Component {
     };
 
     const tabTitlesMap = {
-    }
+    };
 
     const tabContents = [];
     visible.forEach((value) => {
