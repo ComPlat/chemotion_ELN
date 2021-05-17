@@ -112,7 +112,8 @@ export default class SampleDetails extends React.Component {
       qrCodeSVG: "",
       isCasLoading: false,
       showMolfileModal: false,
-      smileReadonly: !props.sample.isNew,quickCreator: false,
+      smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined') || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
+      quickCreator: false,
       showInchikey: false,
       pageMessage: null,
       visible: Immutable.List(),
@@ -139,7 +140,8 @@ export default class SampleDetails extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))) {
+    if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))
+        || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey == 'DUMMY')) {
       this.setState({
         smileReadonly: false,
       });
@@ -257,7 +259,7 @@ export default class SampleDetails extends React.Component {
         sample.molecule = result;
         sample.molecule_id = result.id;
         this.setState({
-          sample, smileReadonly: true, pageMessage: result.ob_log
+          sample, pageMessage: result.ob_log
         });
       }).catch((errorMessage) => {
         console.log(errorMessage);
@@ -861,8 +863,8 @@ export default class SampleDetails extends React.Component {
     if (!show) return false;
     return (
       <ListGroupItem>
-        {sample.decoupled ? null : this.moleculeInchi(sample)}
-        {sample.decoupled ? null : this.moleculeCanoSmiles(sample)}
+        {this.moleculeInchi(sample)}
+        {this.moleculeCanoSmiles(sample)}
         {this.moleculeMolfile(sample)}
         {this.moleculeCas()}
       </ListGroupItem>
