@@ -33,7 +33,7 @@ module Usecases::Wellplates::WellplateUpdater
         Well.create(
           wellplate_id: wellplate.id,
           sample_id: sample_id,
-          readout: well[:readout],
+          readouts: well[:readouts],
           additive: well[:additive],
           position_x: well[:position][:x],
           position_y: well[:position][:y]
@@ -41,7 +41,7 @@ module Usecases::Wellplates::WellplateUpdater
       else
         Well.find(well[:id]).update(
           sample_id: sample_id,
-          readout: well[:readout],
+          readouts: well[:readouts],
           additive: well[:additive],
           position_x: well[:position][:x],
           position_y: well[:position][:y]

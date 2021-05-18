@@ -119,7 +119,7 @@ class Wellplate < ApplicationRecord
       subwell = Well.create!(
           wellplate_id: subwellplate.id,
           sample_id: subsample_id,
-          readout: w.readout,
+          readouts: w.readouts,
           additive: w.additive,
           position_x: w.position_x,
           position_y: w.position_y,

@@ -5,9 +5,9 @@ export default class Well extends Element {
   serialize() {
     return super.serialize({
       position: this.position,
-      readout: this.readout,
+      readouts: this.readouts,
       sample: this.sample && new Sample(this.sample).serialize()
-    })
+    });
   }
 
   set sample(sample) {
@@ -17,6 +17,4 @@ export default class Well extends Element {
   get sample() {
     return this._sample;
   }
-
-
 }
