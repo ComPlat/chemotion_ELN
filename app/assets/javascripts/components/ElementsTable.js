@@ -321,7 +321,7 @@ export default class ElementsTable extends React.Component {
           <DatePicker
             selected={toDate}
             placeholderText="To"
-            popperPlacement="left-start"
+            popperPlacement="bottom-start"
             onChange={this.setToDate}
             isClearable
             dateFormat="DD-MM-YY"
