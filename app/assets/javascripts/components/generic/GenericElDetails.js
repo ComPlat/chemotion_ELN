@@ -85,7 +85,7 @@ export default class GenericElDetails extends Component {
         if (curIdx >= 0) {
           const curVal = genericEl.properties[key].fields[curIdx].value;
           const curType = typeof curVal;
-          if (['select', 'text', 'textarea'].includes(newProps[key].fields[idx].type)) {
+          if (['select', 'text', 'textarea', 'formula-field'].includes(newProps[key].fields[idx].type)) {
             newProps[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
           }
           if (newProps[key].fields[idx].type === 'integer') {
@@ -191,6 +191,12 @@ export default class GenericElDetails extends Component {
       value = event;
     } else if (type === 'checkbox') {
       value = event.target.checked;
+    } else if (type === 'formula-field') {
+      if (event.target) {
+        ({ value } = event.target);
+      } else {
+        value = event;
+      }
     } else {
       ({ value } = event.target);
     }

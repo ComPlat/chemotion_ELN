@@ -124,16 +124,36 @@ const GenPropertiesCalculate = (opt) => {
   return (
     <FormGroup>
       {fieldHeader}
-      <FormControl
-        type="text"
-        value={showTxt}
-        onChange={opt.onChange}
-        className="readonly"
-        readOnly="readonly"
-        required={false}
-        placeholder={opt.placeholder}
-        min={0}
-      />
+      <InputGroup>
+        <FormControl
+          type="text"
+          value={showTxt}
+          onChange={opt.onChange}
+          className="readonly"
+          readOnly="readonly"
+          required={false}
+          placeholder={opt.placeholder}
+          min={0}
+        />
+        <InputGroup.Button>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="update_calculation_field">adjust</Tooltip>}
+          >
+            <Button active className="clipboardBtn" onClick={() => opt.onChange(showTxt)}>
+              <i className="fa fa-arrow-right" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+        </InputGroup.Button>
+        <FormControl
+          type="text"
+          value={opt.value}
+          onChange={opt.onChange}
+          required={false}
+          placeholder={opt.placeholder}
+          min={0}
+        />
+      </InputGroup>
     </FormGroup>
   );
 };
