@@ -45,25 +45,21 @@ class GenericElements < ActiveRecord::Migration
       add_index :collections_elements, :deleted_at
     end
 
+    add_column :element_klasses, :is_active, :boolean, null: false, default: true unless column_exists? :element_klasses, :is_active
+    add_column :element_klasses, :klass_prefix, :string, null: false, default: 'E' unless column_exists? :element_klasses, :klass_prefix
+    add_column :element_klasses, :is_generic, :boolean, null: false, default: true unless column_exists? :element_klasses, :is_generic
+    add_column :element_klasses, :place, :integer, null: false, default: 100 unless column_exists? :element_klasses, :place
+    add_column :elements, :short_label, :string unless column_exists? :elements, :short_label
     add_column :collections, :element_detail_level, :integer, default: 10 unless column_exists? :collections, :element_detail_level
     add_column :sync_collections_users, :element_detail_level, :integer, default: 10 unless column_exists? :sync_collections_users, :element_detail_level
 
-    Matrice.create(name: 'genericElement', enabled: false, label: 'genericElement', include_ids: [], exclude_ids: []) if Matrice.find_by(name: 'genericElement').nil?
-
-    API::ELEMENTS.reverse.each_with_index do |element, idx|
-      klass = ElementKlass.find_or_create_by(name: element)
-      attributes = { label: element.titleize, desc: "ELN #{element.titleize}", icon_name: "icon-#{element}", klass_prefix: '', properties_template: {}, is_generic: false, place: idx }
-      klass&.update(attributes)
-    end
   end
 
   def self.down
     drop_table :element_klasses if table_exists? :element_klasses
     drop_table :elements if table_exists? :elements
     drop_table :collections_elements if table_exists? :collections_elements
-
     remove_column :collections, :element_detail_level if column_exists? :collections, :element_detail_level
     remove_column :sync_collections_users, :element_detail_level if column_exists? :sync_collections_users, :element_detail_level
-    Matrice.find_by(name: 'genericElement')&.really_destroy!
   end
 end
