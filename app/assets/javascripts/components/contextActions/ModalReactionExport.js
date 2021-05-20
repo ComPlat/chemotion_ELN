@@ -76,22 +76,24 @@ const exportSelections = (uiState, userState, e) => {
 }
 
 const filterUIState = (uiState) =>{
-  const { currentCollection, sample, reaction, wellplate, isSync } = uiState;
+  const { currentCollection, elements, isSync } = uiState;
   return {
-    sample: {
-      checkedIds: sample.checkedIds.toArray(),
-      uncheckedIds: sample.uncheckedIds.toArray(),
-      checkedAll: sample.checkedAll,
-    },
-    reaction: {
-      checkedIds: reaction.checkedIds.toArray(),
-      uncheckedIds: reaction.uncheckedIds.toArray(),
-      checkedAll: reaction.checkedAll,
-    },
-    wellplate: {
-      checkedIds: wellplate.checkedIds.toArray(),
-      uncheckedIds: wellplate.uncheckedIds.toArray(),
-      checkedAll: wellplate.checkedAll,
+    elements: {
+      sample: {
+        checkedIds: elements['sample'].checkedIds.toArray(),
+        uncheckedIds: elements['sample'].uncheckedIds.toArray(),
+        checkedAll: elements['sample'].checkedAll,
+      },
+      reaction: {
+        checkedIds: elements['reaction'].checkedIds.toArray(),
+        uncheckedIds: elements['reaction'].uncheckedIds.toArray(),
+        checkedAll: elements['reaction'].checkedAll,
+      },
+      wellplate: {
+        checkedIds: elements['wellplate'].checkedIds.toArray(),
+        uncheckedIds: elements['wellplate'].uncheckedIds.toArray(),
+        checkedAll: elements['wellplate'].checkedAll,
+      }
     },
     currentCollection: currentCollection.id,
     isSync: isSync,

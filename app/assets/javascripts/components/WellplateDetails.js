@@ -4,6 +4,7 @@ import {
   Well, Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger, Col, Row, Popover
 } from 'react-bootstrap';
+import { findIndex } from 'lodash';
 import LoadingActions from './actions/LoadingActions';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
@@ -19,6 +20,7 @@ import ConfirmClose from './common/ConfirmClose';
 import ExportSamplesBtn from './ExportSamplesBtn';
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
+import { addSegmentTabs } from './generic/SegmentDetails';
 
 const cols = 12;
 
@@ -33,7 +35,8 @@ export default class WellplateDetails extends Component {
       visible: Immutable.List(),
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   componentDidMount() {
@@ -60,6 +63,16 @@ export default class WellplateDetails extends Component {
         activeTab: state.wellplate.activeTab
       });
     }
+  }
+
+  handleSegmentsChange(se) {
+    const { wellplate } = this.state;
+    const { segments } = wellplate;
+    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    wellplate.segments = segments;
+    wellplate.changed = true;
+    this.setState({ wellplate });
   }
 
   handleSubmit() {
@@ -208,6 +221,7 @@ export default class WellplateDetails extends Component {
 
     const tabTitlesMap = {
     }
+    addSegmentTabs(wellplate, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
     visible.forEach((value) => {

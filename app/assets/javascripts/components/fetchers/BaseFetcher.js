@@ -56,10 +56,11 @@ export default class BaseFetcher {
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}` +
               `collection_id=${id}&page=${page}&per_page=${perPage}&` +
               `${fromDate}${toDate}${filterCreatedAt}`;
-    const sampleQuery = type === 'samples' ?
+    let addQuery = type === 'samples' ?
       `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`
       : '';
-    return fetch(api.concat(sampleQuery), {
+    addQuery = type === 'generic_elements' ? `&el_type=${queryParams.name}` : '';
+    return fetch(api.concat(addQuery), {
       credentials: 'same-origin'
     }).then(response => (
       response.json().then(json => ({

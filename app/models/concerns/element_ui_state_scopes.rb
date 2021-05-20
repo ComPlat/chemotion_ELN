@@ -5,6 +5,7 @@ module ElementUIStateScopes
     scope :by_ui_state, ->(ui_state) {
       # see ui_state_params in api/helpers/params_helpers.rb
       # map legacy params
+      return none if ui_state.nil?
       checked_all = ui_state[:checkedAll] || ui_state[:all]
       checked_ids = ui_state[:checkedIds].presence || ui_state[:included_ids]
 

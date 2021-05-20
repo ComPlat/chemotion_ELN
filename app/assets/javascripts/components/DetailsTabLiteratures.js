@@ -339,7 +339,7 @@ export default class DetailsTabLiteratures extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          <CitationTable rows={literatures} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser.id} />
+          <CitationTable rows={literatures} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser && currentUser.id} />
         </ListGroupItem>
         <ListGroupItem>
           <Row>

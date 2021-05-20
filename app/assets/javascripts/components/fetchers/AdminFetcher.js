@@ -1,6 +1,15 @@
 import 'whatwg-fetch';
+import BaseFetcher from './BaseFetcher';
 
 export default class AdminFetcher {
+  static fetchUnitsSystem() {
+    return fetch('/units_system/units_system.json', {
+      credentials: 'same-origin', cache: 'no-store', headers: { 'cache-control': 'no-cache' }
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static fetchLocalCollector() {
     return fetch('/api/v1/admin/listLocalCollector/all.json', {
       credentials: 'same-origin'
@@ -269,5 +278,79 @@ export default class AdminFetcher {
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static exec(path, method) {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: path, requestMethod: method, jsonTranformation: json => json
+    });
+  }
+
+  static genericKlass(params, path) {
+    return BaseFetcher.withBodyData({
+      apiEndpoint: `/api/v1/admin/${path}/`, requestMethod: 'POST', bodyData: params, jsonTranformation: json => json
+    });
+  }
+
+  static fetchElementKlasses() {
+    return this.exec('/api/v1/generic_elements/klasses_all.json', 'GET');
+  }
+
+  static updateGElTemplates(params) {
+    return this.genericKlass(params, 'update_element_template');
+  }
+
+  static createElementKlass(params) {
+    return this.genericKlass(params, 'create_element_klass');
+  }
+
+  static updateElementKlass(params) {
+    return this.genericKlass(params, 'update_element_klass');
+  }
+
+  static activeInActiveElementKlass(params) {
+    return this.genericKlass(params, 'de_active_element_klass');
+  }
+
+  static deleteElementKlass(params) {
+    return this.genericKlass(params, 'delete_element_klass');
+  }
+
+  static createSegmentKlass(params) {
+    return this.genericKlass(params, 'create_segment_klass');
+  }
+
+  static updateSegmentKlass(params) {
+    return this.genericKlass(params, 'update_segment_klass');
+  }
+
+  static deActiveSegmentKlass(params) {
+    return this.genericKlass(params, 'de_active_segment_klass');
+  }
+
+  static updateSegmentTemplate(params) {
+    return this.genericKlass(params, 'update_segment_template');
+  }
+
+  static deleteSegmentKlass(id) {
+    return this.exec(`/api/v1/admin/delete_segment_klass/${id}`, 'DELETE');
+  }
+
+  static listSegmentKlass(params = {}) {
+    const api = params.is_active === undefined ? '/api/v1/admin/list_segment_klass.json' : `/api/v1/admin/list_segment_klass.json?is_active=${params.is_active}`;
+    return this.exec(api, 'GET');
+  }
+
+  static listDatasetKlass(params = {}) {
+    const api = params.is_active === undefined ? '/api/v1/admin/list_dataset_klass.json' : `/api/v1/admin/list_dataset_klass.json?is_active=${params.is_active}`;
+    return this.exec(api, 'GET');
+  }
+
+  static deActiveDatasetKlass(params) {
+    return this.genericKlass(params, 'de_active_dataset_klass');
+  }
+
+  static updateDatasetTemplate(params) {
+    return this.genericKlass(params, 'update_dataset_template');
   }
 }

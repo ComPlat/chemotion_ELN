@@ -17,6 +17,8 @@ class LoadingStore {
           ReportActions.clone,
           ReportActions.updateCheckedTags,
           ReportActions.loadRreview,
+          ElementActions.createGenericEl,
+          ElementActions.updateGenericEl,
           ElementActions.createSampleForReaction,
           ElementActions.updateSampleForReaction,
           ElementActions.updateSampleForWellplate,

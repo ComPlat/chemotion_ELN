@@ -38,6 +38,10 @@ class App extends Component {
     UserActions.fetchOlsChmo();
     UserActions.fetchProfile();
     UserActions.fetchUserLabels();
+    UserActions.fetchGenericEls();
+    UserActions.fetchSegmentKlasses();
+    UserActions.fetchDatasetKlasses();
+    UserActions.fetchUnitsSystem();
     UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);
   }
@@ -49,6 +53,10 @@ class App extends Component {
   handleUiStoreChange(state) {
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });
+    }
+
+    if (this.state.klasses !== state.klasses) {
+      this.setState({ klasses: state.klasses });
     }
   }
 

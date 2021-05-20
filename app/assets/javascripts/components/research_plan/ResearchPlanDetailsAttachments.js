@@ -10,13 +10,7 @@ import { previewAttachmentImage } from './../utils/imageHelper';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
-const imageStyle = {
-  style: {
-    position: 'absolute',
-    width: 60,
-    height: 60
-  }
-};
+const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {

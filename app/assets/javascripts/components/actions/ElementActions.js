@@ -16,7 +16,9 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ContainerFetcher from '../fetchers/ContainerFetcher';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 
+import GenericEl from '../models/GenericEl';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
@@ -186,9 +188,66 @@ class ElementActions {
           NotificationActions.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
+
+
   }
 
   // -- Collections --
+
+  fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch({ result, type: elementType });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  generateEmptyGenericEl(collection_id, type) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchElementKlass(type)
+    .then((result) => {
+      dispatch(GenericEl.buildEmpty(collection_id, result.klass));
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  };
+  }
+
+  fetchGenericElById(id, type) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchById(id)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  createGenericEl(params) {
+    return (dispatch) => {
+      GenericElsFetcher.create(params)
+      .then(result => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  updateGenericEl(params) {
+    return (dispatch) => {
+      GenericElsFetcher.update(params)
+      .then(result => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
 
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
       moleculeSort = false) {
@@ -385,6 +444,27 @@ class ElementActions {
     }
   }
 
+  tryFetchWellplateById(id) {
+    return (dispatch) => {
+      WellplatesFetcher.fetchById(id)
+                      .then((result) => {
+                        dispatch(result)
+                      }).catch((errorMessage) => {
+                        console.log(errorMessage)
+                      })
+    }
+  }
+
+  tryFetchGenericElById(id) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchById(id)
+                      .then((result) => {
+                        dispatch(result)
+                      }).catch((errorMessage) => {
+                        console.log(errorMessage)
+                      })
+    }
+  }
   closeWarning() {
     return null
   }
@@ -419,8 +499,17 @@ class ElementActions {
   }
 
   copyReaction(reaction, colId) {
+    return (dispatch) => { ReactionsFetcher.fetchById(reaction.id)
+      .then((result) => {
+        dispatch({ reaction: result, colId: colId });
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  copyElement(element, colId) {
     return (
-      { reaction: reaction, colId: colId }
+      { element: element, colId: colId }
     )
   }
 

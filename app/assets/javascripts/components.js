@@ -8,6 +8,7 @@ var ChemScanner = require('./components/chemscanner/ChemScanner');
 var ChemSpectra = require('./components/chemspectra/ChemSpectra');
 var ChemSpectraEditor = require('./components/chemspectra/ChemSpectraEditor');
 var MoleculeModerator = require('./components/MoleculeModerator');
+var UserCounter = require('./components/elements/UserCounter');
 var App = require('./components/App');
 
 //= require_self

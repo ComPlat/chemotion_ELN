@@ -295,6 +295,274 @@ module Chemotion
         end
       end
 
+      namespace :update_element_template do
+        desc 'update Generic Element Properties Template'
+        params do
+          requires :id, type: Integer, desc: 'Element Klass ID'
+          optional :label, type: String, desc: 'Element Klass Label'
+          requires :properties_template, type: Hash
+        end
+        post do
+          klass = ElementKlass.find(params[:id])
+          klass.properties_template = params[:properties_template]
+          klass.save!
+          klass
+        end
+      end
+
+      namespace :create_element_klass do
+        desc 'create Generic Element Properties Template'
+        params do
+          requires :name, type: String, desc: 'Element Klass Name'
+          requires :label, type: String, desc: 'Element Klass Label'
+          requires :klass_prefix, type: String, desc: 'Element Klass Short Label Prefix'
+          optional :icon_name, type: String, desc: 'Element Klass Icon Name'
+          optional :desc, type: String, desc: 'Element Klass Desc'
+          optional :properties_template, type: Hash, desc: 'Element Klass properties template'
+        end
+        post do
+          template = {
+            layers:
+            {
+            },
+            select_options: {
+            }
+          }
+          attributes = declared(params, include_missing: false)
+          attributes[:properties_template] = template unless attributes[:properties_template].present?
+          attributes[:created_by] = current_user.id
+          new_klass = ElementKlass.create!(attributes)
+          new_klass.save
+
+          klass_names_file = Rails.root.join('config', 'klasses.json')
+          klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
+          File.write(klass_names_file, klasses)
+
+          status 201
+        rescue ActiveRecord::RecordInvalid => e
+          { error: e.message }
+        end
+      end
+
+      namespace :update_element_klass do
+        desc 'update Generic Element Klass'
+        params do
+          requires :id, type: Integer, desc: 'Element Klass ID'
+          optional :label, type: String, desc: 'Element Klass Label'
+          optional :klass_prefix, type: String, desc: 'Element Klass Short Label Prefix'
+          optional :icon_name, type: String, desc: 'Element Klass Icon Name'
+          optional :desc, type: String, desc: 'Element Klass Desc'
+          optional :place, type: String, desc: 'Element Klass Place'
+        end
+        post do
+          place = params[:place]
+          begin
+            place = place.to_i if place.present? && place.to_i == place.to_f
+          rescue StandardError
+            place = 100
+          end
+          klass = ElementKlass.find(params[:id])
+          klass.label = params[:label] if params[:label].present?
+          klass.klass_prefix = params[:klass_prefix] if params[:klass_prefix].present?
+          klass.icon_name = params[:icon_name] if params[:icon_name].present?
+          klass.desc = params[:desc] if params[:desc].present?
+          klass.place = place
+          klass.save!
+          klass
+        end
+      end
+
+      namespace :de_active_element_klass do
+        desc 'activate or inactive Generic Element Klass'
+        params do
+          requires :klass_id, type: Integer, desc: 'Element Klass ID'
+          requires :is_active, type: Boolean, desc: 'Active or Inactive Klass'
+        end
+        post do
+          klass = ElementKlass.find(params[:klass_id])
+          klass&.update!(is_active: params[:is_active])
+
+          klass_dir = File.join(Rails.root, 'data')
+          !File.directory?(klass_dir) && FileUtils.mkdir_p(klass_dir)
+          klass_names_file = File.join(klass_dir, 'klasses.json')
+          klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
+          File.write(klass_names_file, klasses)
+
+          klass
+        end
+      end
+
+      namespace :delete_element_klass do
+        desc 'delete Generic Element Klass'
+        params do
+          requires :klass_id, type: Integer, desc: 'Element Klass ID'
+        end
+        post do
+          klass = ElementKlass.find(params[:klass_id])
+          klass&.destroy!
+
+          klass_dir = File.join(Rails.root, 'data')
+          !File.directory?(klass_dir) && FileUtils.mkdir_p(klass_dir)
+          klass_names_file = File.join(klass_dir, 'klasses.json')
+          klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
+          File.write(klass_names_file, klasses)
+
+          status 201
+        end
+      end
+
+      namespace :create_segment_klass do
+        desc 'create Generic Segment Klass'
+        params do
+          requires :label, type: String, desc: 'Segment Klass Label'
+          requires :element_klass, type: Integer, desc: 'Element Klass Id'
+          optional :desc, type: String, desc: 'Segment Klass Desc'
+          optional :place, type: String, desc: 'Segment Klass Place'
+          optional :properties_template, type: Hash, desc: 'Element Klass properties template'
+        end
+        after_validation do
+          @klass = ElementKlass.find(params[:element_klass])
+          error!('Klass is invalid. Please re-select.', 500) if @klass.nil?
+        end
+        post do
+          place = params[:place]
+          begin
+            place = place.to_i if place.present? && place.to_i == place.to_f
+          rescue StandardError
+            place = 100
+          end
+          attributes = declared(params, include_missing: false)
+          template = attributes[:properties_template].present? ? attributes[:properties_template] : { layers: {}, select_options: {} }
+          attributes.merge!(properties_template: template, element_klass: @klass, created_by: current_user.id, place: place)
+          SegmentKlass.create!(attributes)
+        rescue ActiveRecord::RecordInvalid => e
+          { error: e.message }
+        end
+      end
+
+      namespace :update_segment_klass do
+        desc 'update Generic Segment Klass'
+        params do
+          requires :id, type: Integer, desc: 'Segment Klass ID'
+          optional :label, type: String, desc: 'Segment Klass Label'
+          optional :desc, type: String, desc: 'Segment Klass Desc'
+          optional :place, type: String, desc: 'Segment Klass Place'
+        end
+        after_validation do
+          @segment = SegmentKlass.find(params[:id])
+          error!('Segment is invalid. Please re-select.', 500) if @segment.nil?
+        end
+        post do
+          place = params[:place]
+          begin
+            place = place.to_i if place.present? && place.to_i == place.to_f
+          rescue StandardError
+            place = 100
+          end
+          attributes = declared(params, include_missing: false)
+          attributes.delete(:id)
+          attributes[:place] = place
+          @segment&.update!(attributes)
+        end
+      end
+
+      namespace :de_active_segment_klass do
+        desc 'activate or inactive Generic Segment Klass'
+        params do
+          requires :id, type: Integer, desc: 'Segment Klass ID'
+          requires :is_active, type: Boolean, desc: 'Active or Inactive Segment'
+        end
+        after_validation do
+          @segment = SegmentKlass.find(params[:id])
+          error!('Segment is invalid. Please re-select.', 500) if @segment.nil?
+        end
+        post do
+          @segment&.update!(is_active: params[:is_active])
+        end
+      end
+
+      namespace :list_segment_klass do
+        desc 'list Generic Segment Klass'
+        params do
+          optional :is_active, type: Boolean, desc: 'Active or Inactive Segment'
+        end
+        get do
+          list = SegmentKlass.where(is_active: params[:is_active]) if params[:is_active].present?
+          list = SegmentKlass.all unless params[:is_active].present?
+          present list.sort_by(&:place), with: Entities::SegmentKlassEntity, root: 'klass'
+        end
+      end
+
+      namespace :update_segment_template do
+        desc 'update Generic Segment Properties Template'
+        params do
+          requires :id, type: Integer, desc: 'Segment Klass ID'
+          requires :properties_template, type: Hash
+        end
+        after_validation do
+          @segment = SegmentKlass.find(params[:id])
+          error!('Segment is invalid. Please re-select.', 500) if @segment.nil?
+        end
+        post do
+          @segment&.update!(properties_template: params[:properties_template])
+        end
+      end
+
+      namespace :delete_segment_klass do
+        desc 'delete Generic Segment Klass'
+        route_param :id do
+          before do
+            @segment = SegmentKlass.find(params[:id])
+            error!('401 Unauthorized', 401) unless @segment&.created_by == current_user.id
+          end
+          delete do
+            @segment&.destroy!
+          end
+        end
+      end
+
+      namespace :list_dataset_klass do
+        desc 'list Generic Dataset Klass'
+        params do
+          optional :is_active, type: Boolean, desc: 'Active or Inactive Dataset'
+        end
+        get do
+          list = DatasetKlass.where(is_active: params[:is_active]) if params[:is_active].present?
+          list = DatasetKlass.all unless params[:is_active].present?
+          present list.sort_by(&:place), with: Entities::DatasetKlassEntity, root: 'klass'
+        end
+      end
+
+      namespace :de_active_dataset_klass do
+        desc 'activate or inactive Generic Dataset Klass'
+        params do
+          requires :id, type: Integer, desc: 'Dataset Klass ID'
+          requires :is_active, type: Boolean, desc: 'Active or Inactive Dataset'
+        end
+        after_validation do
+          @dataset = DatasetKlass.find(params[:id])
+          error!('Dataset is invalid. Please re-select.', 500) if @dataset.nil?
+        end
+        post do
+          @dataset&.update!(is_active: params[:is_active])
+        end
+      end
+
+      namespace :update_dataset_template do
+        desc 'update Generic Dataset Properties Template'
+        params do
+          requires :id, type: Integer, desc: 'Dataset Klass ID'
+          requires :properties_template, type: Hash
+        end
+        after_validation do
+          @dataset = DatasetKlass.find(params[:id])
+          error!('Dataset is invalid. Please re-select.', 500) if @dataset.nil?
+        end
+        post do
+          @dataset&.update!(properties_template: params[:properties_template])
+        end
+      end
+
       resource :group_device do
         namespace :list do
           desc 'fetch groups'
@@ -499,7 +767,7 @@ module Chemotion
               matrice.update!(configs: params[:configs])
               status 201
             rescue ActiveRecord::RecordInvalid => e
-              Rails.logger.error ["update_json", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+              Rails.logger.error ['update_json', e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
               { error: e.message }
             end
           end

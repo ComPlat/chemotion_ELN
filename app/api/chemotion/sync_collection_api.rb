@@ -51,6 +51,7 @@ module Chemotion
                                     sync_collections_users.id, collections.label, collections.shared_by_id,collections.is_locked,
                                     sync_collections_users.reaction_detail_level, sync_collections_users.sample_detail_level,
                                     sync_collections_users.screen_detail_level, sync_collections_users.wellplate_detail_level,
+                                    sync_collections_users.element_detail_level,
                                     user_as_json(collections.user_id) as temp_sharer,
                                     sync_collections_users.fake_ancestry as ancestry, sync_collections_users.permission_level,
                                     user_as_json(sync_collections_users.user_id) as temp_user
@@ -67,7 +68,7 @@ module Chemotion
                                <<~SQL
                                  id, user_id, label, ancestry, shared_by_id, permission_level,is_locked,
                                  shared_user_as_json(collections.user_id,#{current_user.id}) as shared_to,
-                                 reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level,
+                                 reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level,
                                  user_as_json(collections.shared_by_id) as shared_by
                                SQL
                              ).as_json
@@ -85,6 +86,7 @@ module Chemotion
           requires :reaction_detail_level, type: Integer
           requires :wellplate_detail_level, type: Integer
           requires :screen_detail_level, type: Integer
+          requires :element_detail_level, type: Integer
         end
       end
 
@@ -101,6 +103,7 @@ module Chemotion
           requires :reaction_detail_level, type: Integer
           requires :wellplate_detail_level, type: Integer
           requires :screen_detail_level, type: Integer
+          requires :element_detail_level, type: Integer
         end
         requires :user_ids, type: Array
         requires :id, type: Integer

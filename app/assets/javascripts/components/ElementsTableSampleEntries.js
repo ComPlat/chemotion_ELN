@@ -7,6 +7,8 @@ import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementReactionLabels from './ElementReactionLabels';
+import ElementWellplateLabels from './ElementWellplateLabels';
+import GenericElementLabels from './generic/GenericElementLabels';
 import PubchemLabels from './PubchemLabels';
 import ChemrepoLabels from './ChemrepoLabels';
 import ComputedPropLabel from './computed_props/ComputedPropLabel';
@@ -14,6 +16,7 @@ import ArrayUtils from './utils/ArrayUtils';
 import ElementContainer from './ElementContainer';
 
 import UIStore from './stores/UIStore';
+import UserStore from './stores/UserStore';
 import ElementStore from './stores/ElementStore';
 import KeyboardStore from './stores/KeyboardStore';
 
@@ -51,8 +54,12 @@ const targets = {
   molecule: ['reaction'],
 };
 
-const isCurrEleDropType = (sourceType, targetType) =>
-  sourceType && targetType && targets[sourceType].includes(targetType);
+const isCurrEleDropType = (sourceType, targetType) => {
+  if ((sourceType == 'molecule' || sourceType == 'sample') && !['wellplate', 'device', 'research_plan'].includes(targetType)) {
+    return sourceType && targetType;
+  }
+  return sourceType && targetType && targets[sourceType].includes(targetType);
+};
 
 const dragColumn = (element, showDragColumn, sourceType, targetType) => {
   if (showDragColumn) {
@@ -358,6 +365,8 @@ export default class ElementsTableSampleEntries extends Component {
               <ShowUserLabels element={sample} />
               <XvialIcon label={sample.external_label} />
               <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+              <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
+              <GenericElementLabels element={sample} key={`${sample.id}_element`} />
               <ElementCollectionLabels element={sample} key={`${sample.id}`} />
               <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
               <TopSecretIcon element={sample} />

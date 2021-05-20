@@ -21,6 +21,9 @@ module Entities
     expose :wellplate_detail_level do |obj|
         obj['wellplate_detail_level']
     end
+    expose :element_detail_level do |obj|
+        obj['element_detail_level']
+    end
     expose :permission_level do |obj|
         obj['permission_level']
     end

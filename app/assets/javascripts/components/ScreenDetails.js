@@ -5,7 +5,7 @@ import {
   ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab
 } from 'react-bootstrap';
 import StickyDiv from 'react-stickydiv';
-import { unionBy } from 'lodash';
+import { unionBy, findIndex } from 'lodash';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ScreenWellplates from './ScreenWellplates';
@@ -16,9 +16,10 @@ import DetailActions from './actions/DetailActions';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import PrintCodeButton from './common/PrintCodeButton';
-import ConfirmClose from './common/ConfirmClose'
+import ConfirmClose from './common/ConfirmClose';
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
+import { addSegmentTabs } from './generic/SegmentDetails';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -30,7 +31,8 @@ export default class ScreenDetails extends Component {
       visible: Immutable.List(),
     }
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.onTabPositionChanged = this.onTabPositionChanged.bind(this)
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   onUIStoreChange(state) {
@@ -93,6 +95,16 @@ export default class ScreenDetails extends Component {
     this.setState({
       screen: screen
     });
+  }
+
+  handleSegmentsChange(se) {
+    const { screen } = this.state;
+    const { segments } = screen;
+    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    screen.segments = segments;
+    screen.changed = true;
+    this.setState({ screen });
   }
 
   dropWellplate(wellplate) {
@@ -253,8 +265,7 @@ export default class ScreenDetails extends Component {
 
   render() {
     const { screen, visible } = this.state;
-
-    const submitLabel = screen.isNew ? "Create" : "Save";
+    const submitLabel = screen.isNew ? 'Create' : 'Save';
 
     const tabContentsMap = {
       properties: (
@@ -274,6 +285,8 @@ export default class ScreenDetails extends Component {
 
     const tabTitlesMap = {
     };
+
+    addSegmentTabs(screen, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
     visible.forEach((value) => {

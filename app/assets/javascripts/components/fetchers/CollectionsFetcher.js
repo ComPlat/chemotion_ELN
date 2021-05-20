@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 import BaseFetcher from './BaseFetcher';
 import NotificationActions from '../actions/NotificationActions';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 import { downloadBlob } from '../utils/FetcherHelper';
 
 export default class CollectionsFetcher {
@@ -11,6 +12,18 @@ export default class CollectionsFetcher {
       method: 'POST'
     })
 
+    return promise;
+  }
+
+  static fetchGenericEls() {
+    const promise = fetch('/api/v1/collections/locked.json', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     return promise;
   }
 

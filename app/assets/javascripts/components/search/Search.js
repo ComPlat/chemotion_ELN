@@ -4,7 +4,6 @@ import {
   Form, FormControl, Radio, Grid, Row, Col
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-
 import AutoCompleteInput from './AutoCompleteInput';
 import StructureEditorModal from '../structure_editor/StructureEditorModal';
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
@@ -12,6 +11,9 @@ import ElementActions from '../actions/ElementActions';
 import UIStore from '../stores/UIStore';
 import UIActions from '../actions/UIActions';
 import UserStore from '../stores/UserStore';
+import GenericElCriteriaModal from '../generic/GenericElCriteriaModal';
+import GenericElCriteria from '../generic/GenericElCriteria';
+import { clsInputGroup } from '../../admin/generic/Utils';
 
 export default class Search extends React.Component {
   constructor(props) {
@@ -21,10 +23,14 @@ export default class Search extends React.Component {
       showStructureEditor: false,
       queryMolfile: null,
       searchType: 'similar',
-      tanimotoThreshold: 0.7
+      tanimotoThreshold: 0.7,
+      showGenericElCriteria: false,
+      genericEl: null
     };
     this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
+    this.hideGenericElCriteria = this.hideGenericElCriteria.bind(this);
+    this.genericElSearch = this.genericElSearch.bind(this);
   }
 
   handleSelectionChange(selection) {
@@ -73,8 +79,38 @@ export default class Search extends React.Component {
       });
   }
 
+  genericElSearch() {
+    const uiState = UIStore.getState();
+    const { currentCollection } = uiState;
+    const collectionId = currentCollection ? currentCollection.id : null;
+    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const { genericEl } = this.state;
+
+
+    const selection = {
+      elementType: this.state.elementType,
+      searchName: genericEl.search_name,
+      searchShowLabel: genericEl.search_short_label,
+      genericElName: genericEl.name,
+      search_by_method: genericEl.name,
+      genericElProperties: genericEl.properties,
+      searchProperties: genericEl.search_properties,
+      page_size: uiState.number_of_results
+    };
+
+    UIActions.setSearchSelection(selection);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+      selection,
+      genericElName: genericEl.name,
+      collectionId,
+      isSync,
+    });
+    this.setState({ showGenericElCriteria: false });
+  }
+
   handleClearSearchSelection() {
     const { currentCollection, isSync } = UIStore.getState();
+    this.setState({ elementType: 'all' })
     currentCollection['clearSearch'] = true;
     isSync ? UIActions.selectSyncCollection(currentCollection)
       : UIActions.selectCollection(currentCollection);
@@ -92,9 +128,22 @@ export default class Search extends React.Component {
     this.setState({ showStructureEditor: false });
   }
 
+  showGenericElCriteria() {
+    this.setState({ showGenericElCriteria: true });
+  }
 
-  handleElementSelection(event) {
-    this.setState({ elementType: event });
+  hideGenericElCriteria() {
+    this.setState({ showGenericElCriteria: false });
+    this.handleClearSearchSelection();
+  }
+
+  handleElementSelection(event, element = null) {
+    if (event.startsWith('elements-')) {
+      this.showGenericElCriteria();
+      this.setState({ elementType: 'elements', genericEl: element });
+    } else {
+      this.setState({ elementType: event });
+    }
   }
 
   handleStructureEditorSave(molfile) {
@@ -125,10 +174,10 @@ export default class Search extends React.Component {
 
   renderMenuItems() {
     const elements = [
-      "All",
-      "Samples", "Reactions",
-      "Wellplates", "Screens"
-    ]
+      'All',
+      'Samples', 'Reactions',
+      'Wellplates', 'Screens'
+    ];
 
     const menu = elements.map(element => (
       <MenuItem key={element} onSelect={() => this.handleElementSelection(element.toLowerCase())}>
@@ -142,6 +191,18 @@ export default class Search extends React.Component {
         Advanced Search
       </MenuItem>
     );
+
+    menu.push(<MenuItem key="divider-generic" divider />);
+
+    const genericEls = UserStore.getState().genericEls || [];
+    const profile = UserStore.getState().profile || {};
+
+    genericEls.forEach((el) => {
+      const idx = profile.data && profile.data.layout && profile.data.layout[el.name];
+      if (idx >= 0) {
+        menu.push(<MenuItem key={`menu-el-${el.name}`} onSelect={() => this.handleElementSelection(`elements-${el.name}`, el)}>{el.label}</MenuItem>);
+      }
+    });
 
     return menu;
   }
@@ -209,17 +270,31 @@ export default class Search extends React.Component {
       }
     };
 
+    const searchIcon = (elementType) => {
+      if (elementType === 'all') return 'All';
+      if (['samples', 'reactions', 'screens', 'wellplates'].includes(elementType.toLowerCase())) return (<i className={`icon-${elementType.toLowerCase().slice(0, -1)}`} />);
+      if (this.state.genericEl) return (<i className={this.state.genericEl.icon_name} />);
+      return elementType;
+    }
+
     const innerDropdown = (
       <DropdownButton
         className={customClass}
         id="search-inner-dropdown"
-        title={this.state.elementType === 'all' ? 'All' :
-        <i className={`icon-${this.state.elementType.toLowerCase().slice(0, -1)}`} />}
+        title={searchIcon(this.state.elementType)}
         style={{ width: '50px' }}
       >
         {this.renderMenuItems()}
       </DropdownButton>
     );
+
+    const mofProps = {
+      show: this.state.showGenericElCriteria,
+      type: this.state.elementType,
+      component: <GenericElCriteria genericEl={clsInputGroup(this.state.genericEl)} onHide={this.hideGenericElCriteria} onSearch={this.genericElSearch} />,
+      title: `Please input your search criteria for ${this.state.elementType}`,
+      onHide: this.hideGenericElCriteria
+    };
 
     return (
       <div className="chemotion-search">
@@ -244,6 +319,9 @@ export default class Search extends React.Component {
             buttonAfter={buttonAfter}
           />
         </div>
+        {
+          this.state.showGenericElCriteria ? <GenericElCriteriaModal {...mofProps} /> : <div />
+        }
       </div>
     );
   }

@@ -11,9 +11,11 @@ module Chemotion
       get 'initialize' do
         sconfig = Rails.configuration.try(:spectra).try(:url)
         m_config = Rails.root.join('config', 'matrices.json')
+        k_config = Rails.root.join('config', 'klasses.json')
         {
           has_chem_spectra: sconfig.present?,
-          matrices: File.exist?(m_config) ? JSON.parse(File.read(m_config)) : {}
+          matrices: File.exist?(m_config) ? JSON.parse(File.read(m_config)) : {},
+          klasses: File.exist?(k_config) ? JSON.parse(File.read(k_config)) : []
         }
       end
     end

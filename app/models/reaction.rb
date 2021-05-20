@@ -50,6 +50,7 @@ class Reaction < ActiveRecord::Base
   include ElementCodes
   include Taggable
   include ReactionRinchi
+  include Segmentable
 
   serialize :description, Hash
   serialize :observation, Hash

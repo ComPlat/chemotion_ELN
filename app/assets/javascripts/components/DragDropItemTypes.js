@@ -14,4 +14,5 @@ export default {
   DATASET: 'dataset',
   CONTAINER: 'container',
   GENERALPROCEDURE: 'generalProcedure',
+  ELEMENT_FIELD: 'element_field'
 };

@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap';
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
 import AdminNavigation from './AdminNavigation';
 import Notifications from '../components/Notifications';
 import AdminDashboard from './AdminDashboard';
@@ -12,6 +14,9 @@ import OlsTerms from './OlsTerms';
 import NovncSettings from './NovncSettings';
 import MatrixManagement from './MatrixManagement';
 import TextTemplateContainer from './text_templates/TextTemplateContainer';
+import GenericElementAdmin from './GenericElementAdmin';
+import SegmentElementAdmin from './SegmentElementAdmin';
+import DatasetElementAdmin from './DatasetElementAdmin';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -57,9 +62,15 @@ class AdminHome extends React.Component {
     } else if (pageIndex === 6) {
       return this.renderNovncSettings();
     } else if (pageIndex === 7) {
-      return this.renderMatrix();
+      return this.renderContent(<MatrixManagement />);
     } else if (pageIndex === 8) {
       return this.renderTextTemplates();
+    } else if (pageIndex === 9) {
+      return this.renderContent(<GenericElementAdmin />);
+    } else if (pageIndex === 10) {
+      return this.renderContent(<SegmentElementAdmin />);
+    } else if (pageIndex === 11) {
+      return this.renderContent(<DatasetElementAdmin />);
     }
 
     return (<div />);
@@ -75,33 +86,18 @@ class AdminHome extends React.Component {
       <div>
         <Col className="small-col collec-tree">
           <Nav bsStyle="pills" stacked activeKey={pageIndex} onSelect={this.handleSelect}>
-            <NavItem eventKey={0}>
-              Dashboard
-            </NavItem>
-            <NavItem eventKey={1}>
-              User Management
-            </NavItem>
-            <NavItem eventKey={2}>
-              Message Publish
-            </NavItem>
-            <NavItem eventKey={3}>
-              Data Collector
-            </NavItem>
-            <NavItem eventKey={4}>
-              Groups & Devices
-            </NavItem>
-            <NavItem eventKey={5}>
-              Load OLS Terms
-            </NavItem>
-            <NavItem eventKey={6}>
-              NoVNC Settings
-            </NavItem>
-            <NavItem eventKey={7}>
-              UI features
-            </NavItem>
-            <NavItem eventKey={8}>
-              Text Templates
-            </NavItem>
+            <NavItem eventKey={0}>Dashboard</NavItem>
+            <NavItem eventKey={1}>User Management</NavItem>
+            <NavItem eventKey={2}>Message Publish</NavItem>
+            <NavItem eventKey={3}>Data Collector</NavItem>
+            <NavItem eventKey={4}>Groups &amp; Devices</NavItem>
+            <NavItem eventKey={5}>Load OLS Terms</NavItem>
+            <NavItem eventKey={6}>NoVNC Settings</NavItem>
+            <NavItem eventKey={7}>UI features</NavItem>
+            <NavItem eventKey={8}>Text Templates</NavItem>
+            <NavItem eventKey={9}>Generic Elements (BETA)</NavItem>
+            <NavItem eventKey={10}>Generic Segment (BETA)</NavItem>
+            <NavItem eventKey={11}>Generic Dataset (BETA)</NavItem>
           </Nav>
         </Col>
       </div>
@@ -171,20 +167,20 @@ class AdminHome extends React.Component {
     );
   }
 
-  renderMatrix() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <MatrixManagement />
-      </Col>
-    );
-  }
-
   renderTextTemplates() {
     const { contentClassName } = this.state;
     return (
       <Col className={contentClassName} >
         <TextTemplateContainer />
+      </Col>
+    );
+  }
+
+  renderContent(component) {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        {component}
       </Col>
     );
   }
@@ -209,7 +205,9 @@ class AdminHome extends React.Component {
   }
 }
 
+const AdminHomeWithDnD = DragDropContext(HTML5Backend)(AdminHome);
+
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('AdminHome');
-  if (domElement) { ReactDOM.render(<AdminHome />, domElement); }
+  if (domElement) { ReactDOM.render(<AdminHomeWithDnD />, domElement); }
 });

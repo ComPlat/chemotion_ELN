@@ -17,7 +17,7 @@ import classnames from 'classnames';
 import XTdCont from './extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from './routesUtils';
 import SvgWithPopover from './common/SvgWithPopover';
-
+import UserStore from './stores/UserStore';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -105,6 +105,12 @@ export default class ElementsTableEntries extends Component {
     Aviator.navigate(uri, { silent: true });
     const e = { type, params: { collectionID: currentCollection.id } };
     e.params[`${type}ID`] = id;
+
+    const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
+    if (genericEls.find(el => el.name == type)) {
+      e.klassType = 'GenericEl';
+    }
+
     elementShowOrNew(e)
   }
 
@@ -324,6 +330,7 @@ export default class ElementsTableEntries extends Component {
       <Table className="elements" bordered hover style={{borderTop: 0}}>
         <tbody>
         {elements.map((element, index) => {
+          //console.log(element);
           const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
           let style = {};
           if (this.isElementSelected(element) ||

@@ -16,7 +16,7 @@ export default class ContainerDatasetModal extends Component {
 
   render() {
     const {
-      show, dataset_container, onHide, onChange, readOnly, disabled
+      show, dataset_container, onHide, onChange, readOnly, disabled, kind
     } = this.props;
     if (show) {
       return (
@@ -37,6 +37,7 @@ export default class ContainerDatasetModal extends Component {
               ref={this.datasetInput}
               readOnly={readOnly}
               dataset_container={dataset_container}
+              kind={kind}
               onModalHide={() => onHide()}
               onChange={dataset_container => onChange(dataset_container)}
             />

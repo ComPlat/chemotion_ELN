@@ -26,6 +26,7 @@ class TextTemplate < ActiveRecord::Base
     ScreenTextTemplate
     ResearchPlanTextTemplate
     ReactionDescriptionTextTemplate
+    ElementTextTemplate
   )
 
   belongs_to :user
@@ -58,6 +59,8 @@ class ScreenTextTemplate < TextTemplate
 end
 
 class ResearchPlanTextTemplate < TextTemplate
+end
+class ElementTextTemplate < TextTemplate
 end
 
 class PredefinedTextTemplate < TextTemplate

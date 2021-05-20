@@ -11,7 +11,7 @@ import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
 import UserStore from './stores/UserStore';
 
-export default class CreateButton extends React.Component {
+export default class ElementsTableSettings extends React.Component {
   constructor(props) {
     super(props);
 
@@ -106,10 +106,10 @@ export default class CreateButton extends React.Component {
     const layout = {}
 
     visible.forEach((value, index) => {
-      layout[value] = (index + 1).toString()
+      layout[value] = (index + 1)
     })
     hidden.forEach((value, index) => {
-      if (value !== 'hidden') layout[value] = (- index - 1).toString()
+      if (value !== 'hidden') layout[value] = (- index - 1)
     })
 
     const userProfile = UserStore.getState().profile;
@@ -122,6 +122,8 @@ export default class CreateButton extends React.Component {
       visible, hidden, currentType,
       tableSchemePreviews, showSampleExternalName
     } = this.state
+
+    const wd = 35 + ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
 
     let sampleSettings = (<span />)
     if (currentType == "sample" || currentType == "reaction") {
@@ -145,12 +147,11 @@ export default class CreateButton extends React.Component {
         </div>
       )
     }
-
     let popoverSettings = (
       <Popover
         className="collection-overlay"
         id="popover-layout"
-        style={{ maxWidth: 'none', width: '335px' }}
+        style={{ maxWidth: 'none', width: `${wd}px` }}
       >
         <div>
           <h3 className="popover-title">Table Layout</h3>

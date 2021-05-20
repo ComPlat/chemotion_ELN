@@ -19,7 +19,7 @@ module Chemotion
       get 'current' do
         present current_user, with: Entities::UserEntity, root: 'user'
       end
-
+      
       desc 'list user labels'
       get 'list_labels' do
         labels = UserLabel.where('user_id = ? or access_level >= 1', current_user.id)
@@ -51,6 +51,19 @@ module Chemotion
           else
             UserLabel.create!(attr)
           end
+        end
+      end
+
+      namespace :update_counter do
+        desc 'create or update user labels'
+        params do
+          optional :type, type: String
+          optional :counter, type: Integer
+        end
+        put do
+          counters = current_user.counters
+          counters[params[:type]] = params[:counter]
+          current_user.update(counters: counters)
         end
       end
 

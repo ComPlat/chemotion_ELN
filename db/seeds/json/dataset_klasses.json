@@ -1,0 +1,52 @@
+{
+  "chmo": [
+    {
+      "id": "CHMO:0000593",
+      "label": "1H nuclear magnetic resonance spectroscopy",
+      "position": 10,
+      "synonym": "1H NMR"
+    },
+    {
+      "id": "CHMO:0000595",
+      "label": "13C nuclear magnetic resonance spectroscopy",
+      "position": 20,
+      "synonym": "13C NMR"
+    },
+    {
+      "id": "CHMO:0000470",
+      "label": "mass spectrometry",
+      "position": 30,
+      "synonym": "MS"
+    },
+    {
+      "id": "CHMO:0001075",
+      "label": "elemental analysis",
+      "position": 40,
+      "synonym": "EA"
+    },
+    {
+      "id": "CHMO:0000497",
+      "label": "gas chromatography-mass spectrometry",
+      "position": 50,
+      "synonym": "GCMS"
+    },
+    {
+      "id": "CHMO:0001009",
+      "label": "high-performance liquid chromatography",
+      "position": 60,
+      "synonym": "HPLC"
+    },
+    {
+      "id": "CHMO:0000630",
+      "label": "infrared absorption spectroscopy",
+      "position": 70,
+      "synonym": "IR"
+    },
+    {
+      "id": "CHMO:0001007",
+      "label": "thin-layer chromatography",
+      "position": 80,
+      "synonym": "TLC"
+    }
+  ]
+}

@@ -87,6 +87,7 @@ class User < ActiveRecord::Base
   has_one :screen_text_template, dependent: :destroy
   has_one :wellplate_text_template, dependent: :destroy
   has_one :research_plan_text_template, dependent: :destroy
+  has_many :element_text_templates, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations
 
@@ -226,6 +227,13 @@ class User < ActiveRecord::Base
         data['chmo'] = result['ols_terms']
         data['is_templates_moderator'] = false
         data['molecule_editor'] = false
+        data.merge!(layout: {
+          'sample' => 1,
+          'reaction' => 2,
+          'wellplate' => 3,
+          'screen' => 4,
+          'research_plan' => 5
+        }) if (data['layout'].nil?)
         self.profile.update_columns(data: data)
       end
     end

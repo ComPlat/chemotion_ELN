@@ -31,6 +31,7 @@ variables:
     - cp -f config/storage.yml.example config/storage.yml
     - cp -f config/profile_default.yml.example config/profile_default.yml
     - touch config/datacollectors.yml
+    - touch config/klasses.json
 
 stages:
   - build
@@ -70,6 +71,7 @@ building:
     - cp -f config/profile_default.yml.example config/profile_default.yml
     - echo "$DOTENV" > .env
     - touch config/datacollectors.yml
+    - touch config/klasses.json
     # - ls node_modules
   script:
     - /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"

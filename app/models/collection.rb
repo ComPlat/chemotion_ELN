@@ -20,6 +20,7 @@
 #  deleted_at                :datetime
 #  is_synchronized           :boolean          default(FALSE), not null
 #  researchplan_detail_level :integer          default(10)
+#  element_detail_level      :integer          default(10)
 #
 # Indexes
 #
@@ -38,12 +39,14 @@ class Collection < ActiveRecord::Base
   has_many :collections_wellplates, dependent: :destroy
   has_many :collections_screens, dependent: :destroy
   has_many :collections_research_plans, dependent: :destroy
+  has_many :collections_elements, dependent: :destroy
 
   has_many :samples, through: :collections_samples
   has_many :reactions, through: :collections_reactions
   has_many :wellplates, through: :collections_wellplates
   has_many :screens, through: :collections_screens
   has_many :research_plans, through: :collections_research_plans
+  has_many :elements, through: :collections_elements
 
   has_many :sync_collections_users,  foreign_key: :collection_id, dependent: :destroy
   has_many :shared_users, through: :sync_collections_users, source: :user

@@ -21,6 +21,9 @@ module Entities
     expose :wellplate_detail_level do |obj|
         obj['wellplate_detail_level']
     end
+    expose :element_detail_level do |obj|
+        obj['element_detail_level']
+    end
     expose :sync_collections_users do |obj|
         Entities::SharedUserEntity.represent obj['shared_names']
     end

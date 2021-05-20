@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem } from 'react-bootstrap';
+import { findIndex } from 'lodash';
 import ElementCollectionLabels from '../ElementCollectionLabels';
 import UIActions from '../actions/UIActions';
 import ElementActions from '../actions/ElementActions';
@@ -17,6 +18,7 @@ import ResearchPlanDetailsName from './ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
 import Immutable from 'immutable';
 import ElementDetailSortTab from '../ElementDetailSortTab';
+import { addSegmentTabs } from '../generic/SegmentDetails';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -35,6 +37,7 @@ export default class ResearchPlanDetails extends Component {
     this.handleBodyAdd = this.handleBodyAdd.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -51,6 +54,16 @@ export default class ResearchPlanDetails extends Component {
 
   handleResearchPlanChange(el) {
     const researchPlan = el;
+    researchPlan.changed = true;
+    this.setState({ researchPlan });
+  }
+
+  handleSegmentsChange(se) {
+    const { researchPlan } = this.state;
+    const { segments } = researchPlan;
+    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    researchPlan.segments = segments;
     researchPlan.changed = true;
     this.setState({ researchPlan });
   }
@@ -80,7 +93,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   handleSelect(eventKey) {
-    UIActions.selectTab({ tabKey: eventKey, type: 'screen' });
+    UIActions.selectTab({ tabKey: eventKey, type: 'research_plan' });
     this.setState({
       activeTab: eventKey
     });
@@ -372,6 +385,7 @@ export default class ResearchPlanDetails extends Component {
       attachments: 'Attachments',
       literature: 'Literature',
     };
+    addSegmentTabs(researchPlan, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
     visible.forEach((value) => {

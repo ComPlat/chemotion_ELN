@@ -11,6 +11,7 @@ import Sample from './Sample';
 import Container from './Container';
 
 import UserStore from '../stores/UserStore';
+import Segment from './Segment';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -171,6 +172,7 @@ export default class Reaction extends Element {
       temperature: this.temperature,
       timestamp_start: this.timestamp_start,
       timestamp_stop: this.timestamp_stop,
+      segments: this.segments.map(s => s.serialize())
     });
   }
 
@@ -837,5 +839,13 @@ export default class Reaction extends Element {
         break;
     }
     return name;
+  }
+
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
   }
 }

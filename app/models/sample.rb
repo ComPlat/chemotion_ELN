@@ -37,6 +37,7 @@
 #  molecule_name_id    :integer
 #  molfile_version     :string(20)
 #  stereo              :jsonb
+#  mol_rdkit           :string
 #  metrics             :string           default("mmm")
 #  decoupled           :boolean          default(FALSE), not null
 #  molecular_mass      :float
@@ -60,6 +61,7 @@ class Sample < ActiveRecord::Base
   include AnalysisCodes
   include UnitConvertable
   include Taggable
+  include Segmentable
 
   STEREO_ABS = ['any', 'rac', 'meso', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)'].freeze
   STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para', 'cis', 'trans', 'fac', 'mer'].freeze
@@ -171,6 +173,7 @@ class Sample < ActiveRecord::Base
   has_many :reactions_reactant_samples, dependent: :destroy
   has_many :reactions_solvent_samples, dependent: :destroy
   has_many :reactions_product_samples, dependent: :destroy
+  has_many :elements_samples, dependent: :destroy
 
   has_many :reactions, through: :reactions_samples
   has_many :reactions_as_starting_material, through: :reactions_starting_material_samples, source: :reaction

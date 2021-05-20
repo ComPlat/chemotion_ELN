@@ -14,6 +14,8 @@ class ElementListPermissionProxy < ElementPermissionProxy
       ScreenListSerializer
     when ResearchPlan
       ResearchPlanListSerializer
+    when Element
+      ElementListSerializer
     end
   end
 end

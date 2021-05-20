@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import {FormGroup,InputGroup,FormControl, Overlay, ListGroup, ListGroupItem}
   from 'react-bootstrap';
 import debounce from 'es6-promise-debounce';
+import { isString } from 'lodash';
 
 import KeyboardActions from '../actions/KeyboardActions';
 import KeyboardStore from '../stores/KeyboardStore';
@@ -85,6 +86,11 @@ export default class AutoCompleteInput extends React.Component {
       newState.valueBeforeFocus = value
     }
     newState.value = suggestions[newFocus].name
+
+    if (!isString(newState.value)) {
+      newState.value = suggestions[newFocus].name.name;
+    }
+
     newState.suggestionFocus = newFocus
     ReactDOM.findDOMNode(this.refs['suggestion_' + sF])
             .classList.remove('active')
@@ -217,6 +223,11 @@ export default class AutoCompleteInput extends React.Component {
       valueBeforeFocus: null
     })
 
+    if (!isString(value)) {
+      value = value.name;
+      this.setState({ value });
+    }
+
     if (!value || value.trim() === '') {
       this.setState({
         value: ''
@@ -232,9 +243,18 @@ export default class AutoCompleteInput extends React.Component {
     let selection = {name: value, search_by_method: 'substring'}
     if (suggestions && suggestionFocus != null && suggestions[suggestionFocus]) {
       let selectedSuggestion = suggestions[suggestionFocus]
-      let selectedName = selectedSuggestion.name
+      let selectedName = selectedSuggestion.name;
+
+      if (!isString(selectedName)) {
+        selectedName = selectedName.name;
+      }
+
       if (selectedName && selectedName.trim() != '' && this.state.value == selectedName)
-        selection = selectedSuggestion
+        if (selectedSuggestion.search_by_method == 'element_short_label') {
+          selection = {name: selectedSuggestion.name.name, search_by_method: `element_short_label_${selectedSuggestion.name.klass}`}
+        } else {
+          selection = selectedSuggestion
+        }
     }
 
     clearTimeout(timeoutReference)
@@ -270,7 +290,8 @@ export default class AutoCompleteInput extends React.Component {
       cano_smiles : {icon: 'icon-sample', label: 'Canonical Smiles'},
       sum_formula : {icon: 'icon-sample', label: 'Sum Formula'},
       requirements : {icon: 'icon-screen', label: 'Requirement'},
-      conditions : {icon: 'icon-screen', label: 'Condition'}
+      conditions : {icon: 'icon-screen', label: 'Condition'},
+      element_short_label: {icon: 'icon-element', label: 'Element Short Label'}
     }
     if(suggestions) {
       return (
@@ -279,14 +300,24 @@ export default class AutoCompleteInput extends React.Component {
             let suggestionType = types[suggestion.search_by_method]
             let icon = suggestionType ? suggestionType.icon : ""
             let typeLabel = suggestionType ? suggestionType.label : ""
+            let name = '';
 
             // Remove first "InchI" string in suggestion list
-            let inchiString = 'InChI='
-            let inchiMatch = suggestion.name.substring(0, inchiString.length)
+            let inchiString = 'InChI=';
+            let inchiMatch = '';
 
-            if (inchiMatch==inchiString) {
-              suggestion.name = suggestion.name.replace(inchiString, "")
+            if (suggestion.search_by_method == 'element_short_label') {
+              icon = suggestion.name.icon;
+              typeLabel = suggestion.name.label;
+              name = suggestion.name.name;
+            } else {
+              name = suggestion.name;
+              inchiMatch = suggestion.name.substring(0, inchiString.length)
+              if (inchiMatch==inchiString) {
+                suggestion.name = suggestion.name.replace(inchiString, "")
+              }
             }
+
 
             return (
               <ListGroupItem
@@ -294,7 +325,7 @@ export default class AutoCompleteInput extends React.Component {
                 onMouseEnter={() => this.focusSuggestion(index)}
                 key={'suggestion_' + index}
                 ref={'suggestion_' + index}
-                header={suggestion.name}
+                header={name}
                 className="list-group-item-wrap"
               >
                 <i className={icon} style={{marginRight: 2}}></i>

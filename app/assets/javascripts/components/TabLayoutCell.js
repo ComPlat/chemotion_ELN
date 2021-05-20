@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { findDOMNode } from 'react-dom';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
+import UserStore from './stores/UserStore';
 
 import DragDropItemTypes from './DragDropItemTypes';
 
@@ -24,7 +25,9 @@ class TabLayoutCell extends Component {
   }
 
   render() {
-    const {connectDragSource, sourceType, isHidden, cell, connectDropTarget, isElementDetails, title} = this.props;
+    const { 
+      connectDragSource, sourceType, isHidden, cell, connectDropTarget, isElementDetails, title
+    } = this.props;
 
     const styleObj = {
       fontSize: 12,
@@ -32,13 +35,20 @@ class TabLayoutCell extends Component {
       textAlign: "center",
       wordWrap: "break-word"
     }
+    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    let iconCell = `icon-${cell}`;
 
-    let layoutCell = (
+    if (!constEls.includes(cell)) {
+      const genericEls = UserStore.getState().genericEls || [];
+      const genericEl = (genericEls && genericEls.find(el => el.name == cell)) || {};
+      iconCell = `${genericEl.icon_name}`;
+    }
+
+    const layoutCell = (
       <td className={isHidden ? "hidden-layout" : "" }>
         {
-          isElementDetails ? (<div><i style={styleObj}>{title}</i></div>) : (<div><i className={"icon-" + cell }/></div>)
+          isElementDetails ? (<div><i style={styleObj}>{title}</i></div>) : (<div><i className={iconCell}/></div>)
         }
-        
       </td>
     )
 

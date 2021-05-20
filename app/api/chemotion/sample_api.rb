@@ -281,6 +281,7 @@ module Chemotion
         optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
         optional :melting_point_lowerbound, type: Float, desc: 'lower bound of sample melting point'
         optional :residues, type: Array
+        optional :segments, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
         optional :stereo, type: Hash do
@@ -310,6 +311,7 @@ module Chemotion
 
           update_element_labels(@sample,attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
+          attributes.delete(:segments)
 
           # otherwise ActiveRecord::UnknownAttributeError appears
           attributes[:elemental_compositions].each do |i|
@@ -336,6 +338,16 @@ module Chemotion
           attributes.delete(:melting_point_upperbound)
 
           @sample.update!(attributes)
+          @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
+
+          # params[:segments].each do |seg|
+          #   segment = Segment.find_by(element_type: Sample.name, element_id: @sample.id, segment_klass_id: seg["segment_klass_id"])
+          #   if segment.present?
+          #     segment.update!(properties: seg["properties"])
+          #   else
+          #     Segment.create!(segment_klass_id: seg["segment_klass_id"], element_type: Sample.name, element_id: @sample.id, properties: seg["properties"], created_by: current_user.id)
+          #   end
+          # end
 
           #save to profile
           kinds = @sample.container&.analyses&.pluck("extended_metadata->'kind'")
@@ -385,6 +397,7 @@ module Chemotion
         optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
         optional :melting_point_lowerbound, type: Float, desc: 'lower bound of sample melting point'
         optional :residues, type: Array
+        optional :segments, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
         optional :stereo, type: Hash do
@@ -455,6 +468,7 @@ module Chemotion
             "#{prop}_attributes".to_sym => prop_value
           ) unless prop_value.blank?
         end
+        attributes.delete(:segments)
 
         sample = Sample.new(attributes)
 
@@ -467,8 +481,17 @@ module Chemotion
         sample.collections << all_coll
 
         sample.container = update_datamodel(params[:container])
-
         sample.save!
+
+        sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
+        # params[:segments].each do |seg|
+        #   segment = Segment.find_by(element_type: Sample.name, element_id: @sample.id, segment_klass_id: seg["segment_klass_id"])
+        #   if segment.present?
+        #     segment.update!(properties: seg["properties"])
+        #   else
+        #     Segment.create!(segment_klass_id: seg["segment_klass_id"], element_type: Sample.name, element_id: @sample.id, properties: seg["properties"], created_by: current_user.id)
+        #   end
+        # end
 
         #save to profile
         kinds = sample.container&.analyses&.pluck("extended_metadata->'kind'")

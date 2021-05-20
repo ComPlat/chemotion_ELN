@@ -16,7 +16,7 @@ module Chemotion
             # polymer_type
           #]
           optional :elementType, type: String, values: %w[
-            All Samples Reactions Wellplates Screens all samples reactions wellplates screens
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -135,6 +135,31 @@ module Chemotion
         scope
       end
 
+      def elements_search(c_id = @c_id, dl = @dl)
+        collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(c_id)
+        element_scope = Element.joins(:collections_elements).where('collections_elements.collection_id = ? and collections_elements.element_type = (?)', collection.id, params[:selection][:genericElName])
+        element_scope = element_scope.where("name like (?)", "%#{params[:selection][:searchName]}%") if params[:selection][:searchName].present?
+        element_scope = element_scope.where("short_label like (?)", "%#{params[:selection][:searchShowLabel]}%") if params[:selection][:searchShowLabel].present?
+        if params[:selection][:searchProperties].present?
+          params[:selection][:searchProperties] && params[:selection][:searchProperties][:layers] && params[:selection][:searchProperties][:layers].keys.each do |lk|
+            layer = params[:selection][:searchProperties][:layers][lk]
+            qs = layer[:fields].select{ |f| f[:value].present? || f[:type] == "input-group" }
+            qs.each do |f|
+              if f[:type] == "input-group"
+                sfs = f[:sub_fields].map{ |e| { "id": e[:id], "value": e[:value] } }
+                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "sub_fields": sfs }] } } if sfs.length > 0
+              elsif f[:type] == "checkbox" || f[:type] == "integer" || f[:type] == "system-defined"
+                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value] }] } }
+              else
+                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value].to_s }] } }
+              end
+              element_scope = element_scope.where("properties @> ?", query.to_json)
+            end
+          end
+        end
+        element_scope
+      end
+
       def serialize_samples samples, page, search_method, molecule_sort
         return { data: [], size: 0 } if samples.empty?
         samples_size = samples.size
@@ -237,7 +262,7 @@ module Chemotion
           ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys
         }
 
-        {
+        result = {
           samples: {
             elements: serialized_samples,
             totalElements: samples_size,
@@ -271,6 +296,23 @@ module Chemotion
             ids: screens
           }
         }
+
+        klasses = ElementKlass.where(is_active: true, is_generic: true)
+        klasses.each do |klass|
+          element_list = Element.where(id: elements.fetch(:elements, []), element_klass_id: klass.id).pluck :id
+          ids = Kaminari.paginate_array(element_list).page(page).per(page_size)
+          serialized_elements = Element.includes(collections: :sync_collections_users).find(ids).map{ |s| ElementSerializer.new(s).serializable_hash.deep_symbolize_keys }
+
+          result["#{klass.name}s"] = {
+            elements: serialized_elements,
+            totalElements: element_list.size,
+            page: page,
+            pages: pages(element_list.size),
+            perPage: page_size,
+            ids: element_list
+          }
+        end
+        result
       end
 
       # Generate search query
@@ -322,6 +364,8 @@ module Chemotion
           sample_structure_search
         when 'advanced'
           advanced_search(c_id)
+        when 'elements'
+          elements_search(c_id)
         end
 
         if search_method == 'advanced' && molecule_sort == false
@@ -338,14 +382,15 @@ module Chemotion
                       .order(
                         "LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"
                       ).order('molecules.sum_formular')
+        elsif search_by_method.start_with?("element_short_label_")
+          klass = ElementKlass.find_by(name: search_by_method.sub("element_short_label_",""))
+          return Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
         end
-
         return scope
       end
 
       def elements_by_scope(scope, collection_id = @c_id)
         elements = {}
-
         user_samples = Sample.by_collection_id(collection_id)
           .includes(molecule: :tag)
         user_reactions = Reaction.by_collection_id(collection_id).includes(
@@ -359,6 +404,8 @@ module Chemotion
           wells: :sample
         )
         user_screens = Screen.by_collection_id(collection_id)
+
+        user_elements = Element.by_collection_id(collection_id)
         case scope&.first
         when Sample
           elements[:samples] = scope&.pluck(:id)
@@ -367,6 +414,9 @@ module Chemotion
           ).uniq
           elements[:wellplates] = user_wellplates.by_sample_ids(scope&.map(&:id)).uniq.pluck(:id)
           elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
+          elements[:elements] = (
+            user_elements.by_sample_ids(scope&.map(&:id)).pluck(:id)
+          ).uniq
         when Reaction
           elements[:reactions] = scope&.pluck(:id)
           elements[:samples] = user_samples.by_reaction_ids(scope&.map(&:id)).pluck(:id).uniq
@@ -386,10 +436,13 @@ module Chemotion
           elements[:reactions] = (
             user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
           ).uniq.pluck(:id)
+        when Element
+          elements[:elements] = scope&.pluck(:id)
+          sids = ElementsSample.where(element_id: elements[:elements]).pluck :sample_id
+          elements[:samples] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
         when AllElementSearch::Results
           # TODO check this samples_ids + molecules_ids ????
           elements[:samples] = (scope&.samples_ids + scope&.molecules_ids)
-
           elements[:reactions] = (
             scope&.reactions_ids +
             user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
@@ -404,13 +457,36 @@ module Chemotion
             scope&.screens_ids +
             user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
           ).uniq
+          elements[:elements] = (scope&.element_ids).uniq
         end
-
         elements
       end
     end
 
     resource :search do
+      namespace :elements do
+        desc "Return all matched elements and associations for substring query"
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          scope = elements_search(@c_id)
+          return unless scope
+          elements_ids = elements_by_scope(scope)
+
+          serialization_by_elements_and_page(
+            elements_ids,
+            params[:page],
+            params[:molecule_sort]
+          )
+        end
+      end
+
       namespace :all do
         desc "Return all matched elements and associations for substring query"
         params do
@@ -424,7 +500,6 @@ module Chemotion
         post do
           scope = search_elements(@c_id, @dl)
           return unless scope
-
           elements_ids = elements_by_scope(scope)
 
           serialization_by_elements_and_page(
