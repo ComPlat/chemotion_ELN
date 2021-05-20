@@ -104,6 +104,13 @@ class SegmentDetails extends Component {
       case 'checkbox':
         value = event.target.checked;
         break;
+      case 'formula-field':
+        if (event.target) {
+          ({ value } = event.target);
+        } else {
+          value = event;
+        }
+        break;
       case 'select':
         value = event ? event.value : null;
         break;

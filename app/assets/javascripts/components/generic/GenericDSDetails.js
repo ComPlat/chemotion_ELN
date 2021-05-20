@@ -27,6 +27,13 @@ class GenericDSDetails extends Component {
       case 'select':
         value = event ? event.value : null;
         break;
+      case 'formula-field':
+        if (event.target) {
+          ({ value } = event.target);
+        } else {
+          value = event;
+        }
+        break;
       case 'integer':
         ({ value } = event.target);
         value = Math.trunc(value);
