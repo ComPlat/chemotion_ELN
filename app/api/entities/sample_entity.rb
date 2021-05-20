@@ -1,6 +1,6 @@
 module Entities
   class SampleEntity < Entities::SampleAttrEntity
-    expose :molecule
+    expose :molecule, using: Entities::MoleculeEntity
     expose :container, using: Entities::ContainerEntity
     expose :tag
     expose :segments
