@@ -5,11 +5,8 @@ import debounce from 'es6-promise-debounce';
 import { findIndex, cloneDeep } from 'lodash';
 
 import Utils from './utils/Functions';
-
 import Attachment from './models/Attachment';
-import SamplesFetcher from './fetchers/SamplesFetcher';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
-import Container from './models/Container';
 import UserStore from './stores/UserStore';
 import GenericDS from './models/GenericDS';
 import GenericDSDetails from './generic/GenericDSDetails';
@@ -40,8 +37,8 @@ export default class ContainerDataset extends Component {
   createAttachmentPreviews(dataset_container) {
     const { attachments } = dataset_container;
     let updatedAttachments = attachments.map((attachment) => {
-      return attachment.thumb ? AttachmentFetcher.fetchThumbnail({id: attachment.id}).then((result) => {
-        if(result != null) {
+      return attachment.thumb ? AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then((result) => {
+        if (result != null) {
           attachment.preview = `data:image/png;base64,${result}`;
         }
         return attachment;
@@ -57,9 +54,9 @@ export default class ContainerDataset extends Component {
     });
   }
 
- handleInputChange(type, event) {
-    const {dataset_container} = this.state;
-    const {value} = event.target;
+  handleInputChange(type, event) {
+    const { dataset_container } = this.state;
+    const { value } = event.target;
     switch(type) {
       case 'name':
         dataset_container.name = value;
@@ -74,50 +71,44 @@ export default class ContainerDataset extends Component {
         dataset_container.dataset = value;
         break;
     }
-    this.setState({dataset_container});
+    this.setState({ dataset_container });
   }
 
-
   handleFileDrop(files) {
-    const {dataset_container} = this.state;
-
+    const { dataset_container } = this.state;
     let attachments = files.map(f => Attachment.fromFile(f))
     let first_attach = dataset_container.attachments.length == 0
     dataset_container.attachments = dataset_container.attachments.concat(attachments)
-
     if (first_attach) {
-      let attachment_list = dataset_container.attachments
-      let attach_name = attachment_list[attachment_list.length - 1].filename
-      let splitted = attach_name.split(".")
-      if (splitted.length>1) {
-        splitted.splice(-1, 1)
-        attach_name = splitted.join(".")
+      let attachment_list = dataset_container.attachments;
+      let attach_name = attachment_list[attachment_list.length - 1].filename;
+      let splitted = attach_name.split('.');
+      if (splitted.length > 1) {
+        splitted.splice(-1, 1);
+        attach_name = splitted.join('.');
       }
-      dataset_container.name = attach_name
+      dataset_container.name = attach_name;
     }
-
-    this.setState({dataset_container});
+    this.setState({ dataset_container });
   }
 
   handleAttachmentDownload(attachment) {
-      Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
   }
 
   handleAttachmentRemove(attachment) {
-    const {dataset_container} = this.state;
+    const { dataset_container } = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
-
     dataset_container.attachments[index].is_deleted = true;
-    this.setState({dataset_container});
+    this.setState({ dataset_container });
   }
 
   handleAttachmentBackToInbox(attachment) {
-    const {onChange} = this.props;
-    const {dataset_container} = this.state;
+    const { onChange } = this.props;
+    const { dataset_container } = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
-
-    if(index != -1){
-      InboxActions.backToInbox(attachment)
+    if (index != -1) {
+      InboxActions.backToInbox(attachment);
       dataset_container.attachments.splice(index, 1);
       onChange(dataset_container);
     }
@@ -139,26 +130,20 @@ export default class ContainerDataset extends Component {
   }
 
   listGroupItem(attachment) {
-    const {disabled} = this.props;
+    const { disabled } = this.props;
+    const preview = (attachment.preview ? (<tr><td rowSpan="2" width="128"><img src={attachment.preview} alt="" /></td></tr>) : (
+      <tr><td rowSpan="2" width="128"><img style={{ width: '128px', display: 'block' }} alt="" /></td></tr>
+    ));
     if (attachment.is_deleted) {
       return (
         <Table className="borderless" style={{ marginBottom: 'unset' }}>
           <tbody>
-            <tr>
-              <td rowSpan="2" width="128">
-                <img src={attachment.preview} alt="" />
-              </td>
-            </tr>
+            {preview}
             <tr>
               <td style={{ verticalAlign: 'middle' }}>
                 <strike>{attachment.filename}</strike><br />
-                <Button
-                  bsSize="xsmall"
-                  bsStyle="danger"
-                  onClick={() => this.handleUndo(attachment)}
-                  disabled={disabled}
-                >
-                  <i className="fa fa-undo" />
+                <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(attachment)} disabled={disabled}>
+                  <i className="fa fa-undo" aria-hidden="true" />
                 </Button>
               </td>
             </tr>
@@ -169,11 +154,7 @@ export default class ContainerDataset extends Component {
     return (
       <Table className="borderless" style={{ marginBottom: 'unset' }}>
         <tbody>
-          <tr>
-            <td rowSpan="2" width="128">
-              <img src={attachment.preview} alt="" />
-            </td>
-          </tr>
+          {preview}
           <tr>
             <td style={{ verticalAlign: 'middle' }}>
               <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
@@ -213,35 +194,36 @@ export default class ContainerDataset extends Component {
   }
 
   removeAttachmentButton(attachment) {
-    const {readOnly, disabled} = this.props;
-    if(!readOnly && !disabled) {
+    const { readOnly, disabled } = this.props;
+    if (!readOnly && !disabled) {
       return (
         <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
-          <i className="fa fa-trash-o"></i>
+          <i className="fa fa-trash-o" />
         </Button>
       );
     }
   }
-  attachmentBackToInboxButton(attachment) {
-    const {readOnly} = this.props;
 
-    if(!readOnly && !attachment.is_new) {
+  attachmentBackToInboxButton(attachment) {
+    const { readOnly } = this.props;
+    if (!readOnly && !attachment.is_new) {
       return (
         <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentBackToInbox(attachment)}>
-          <i className="fa fa-backward"></i>
+          <i className="fa fa-backward" />
         </Button>
       );
     }
   }
+
   dropzone() {
     const {readOnly, disabled} = this.props;
-    if(!readOnly && !disabled) {
+    if (!readOnly && !disabled) {
       return (
         <Dropzone
           onDrop={files => this.handleFileDrop(files)}
-          style={{height: 50, width: '100%', border: '3px dashed lightgray'}}
-          >
-          <div style={{textAlign: 'center', paddingTop: 12, color: 'gray'}}>
+          style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
+        >
+          <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
             Drop Files, or Click to Select.
           </div>
         </Dropzone>
@@ -258,12 +240,12 @@ export default class ContainerDataset extends Component {
       instruments: null,
       valueBeforeFocus: null,
       error: ''
-    })
+    });
     dataset_container.extended_metadata['instrument'] = '';
   }
 
   doneInstrumentTyping() {
-    const { value } = this.state
+    const { value } = this.state;
     if (!value) {
       this.resetInstrumentComponent();
     } else {
@@ -297,23 +279,19 @@ export default class ContainerDataset extends Component {
       return;
     }
     if (timeoutReference) {
-      clearTimeout(timeoutReference)
+      clearTimeout(timeoutReference);
     }
     this.setState({
       value,
       timeoutReference: setTimeout(function(){
                                     doneInstrumentTyping()
                                   }, this.timeout)
-    })
-    this.handleInputChange('instrument', event)
+    });
+    this.handleInputChange('instrument', event);
   }
 
   selectInstrument() {
-    const {
-      dataset_container,
-      timeoutReference,
-      value
-    } = this.state;
+    const { dataset_container, timeoutReference, value } = this.state;
 
     this.setState({
       showInstruments: false,
@@ -322,7 +300,7 @@ export default class ContainerDataset extends Component {
 
     if (!value || value.trim() === '') {
       this.setState({ value: '' });
-      return 0
+      return 0;
     }
     dataset_container.extended_metadata.instrument = value;
     clearTimeout(timeoutReference);
@@ -333,14 +311,14 @@ export default class ContainerDataset extends Component {
     const { instruments, valueBeforeFocus } = this.state;
     const newState = {}
     if (!valueBeforeFocus) {
-      newState.valueBeforeFocus = instruments[newFocus].name
+      newState.valueBeforeFocus = instruments[newFocus].name;
     }
-    newState.value = instruments[newFocus].name
+    newState.value = instruments[newFocus].name;
     this.setState(newState);
   }
 
   abortAutoSelection() {
-    const { valueBeforeFocus } = this.state
+    const { valueBeforeFocus } = this.state;
     this.setState({
       value: valueBeforeFocus,
       valueBeforeFocus: null,
@@ -348,10 +326,7 @@ export default class ContainerDataset extends Component {
   }
 
   renderInstruments() {
-    const {
-      instruments,
-      error
-    } = this.state
+    const { instruments, error } = this.state;
 
     if (instruments) {
       return (
@@ -368,13 +343,11 @@ export default class ContainerDataset extends Component {
             )
           })}
         </div>
-      )
+      );
     } else if (error) {
-      return <ListGroupItem>{error}</ListGroupItem>
+      return <ListGroupItem>{error}</ListGroupItem>;
     }
-    return (
-      <div />
-    )
+    return (<div />);
   }
 
   render() {
@@ -382,10 +355,7 @@ export default class ContainerDataset extends Component {
     const { readOnly, disabled, kind } = this.props;
     const overlayAttributes = {
       style: {
-        position: 'absolute',
-        width: 300,
-        marginTop: 144,
-        marginLeft: 17
+        position: 'absolute', width: 300, marginTop: 144, marginLeft: 17
       }
     };
     const termId = absOlsTermId(kind);
@@ -418,8 +388,7 @@ export default class ContainerDataset extends Component {
               type="text"
               value={dataset_container.extended_metadata['instrument'] || ''}
               disabled={readOnly || disabled}
-              onChange={event => this.handleInstrumentValueChange(event,
-                this.doneInstrumentTyping)}
+              onChange={event => this.handleInstrumentValueChange(event, this.doneInstrumentTyping)}
               ref={(input) => { this.autoComplete = input; }}
               autoComplete="off"
             />
@@ -446,7 +415,7 @@ export default class ContainerDataset extends Component {
               value={dataset_container.description || ''}
               disabled={readOnly || disabled}
               onChange={event => this.handleInputChange('description', event)}
-              className="desc"
+              rows={4}
             />
           </FormGroup>
           <GenericDSDetails
