@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Well, Panel, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row, Popover
+  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import LoadingActions from './actions/LoadingActions';
@@ -93,6 +93,22 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
+  handleAddReadout() {
+    const { wellplate } = this.state;
+    wellplate.wells.forEach((well) => {
+      well.readouts.push({ title: '', value: '', unit: '' });
+    });
+    this.setState({ wellplate });
+  }
+
+  handleRemoveReadout(index) {
+    const { wellplate } = this.state;
+    wellplate.wells.forEach((well) => {
+      well.readouts.splice(index, 1);
+    });
+    this.setState({ wellplate });
+  }
+
   handleChangeProperties(change) {
     const { wellplate } = this.state;
     const { type, value } = change;
@@ -102,6 +118,9 @@ export default class WellplateDetails extends Component {
         break;
       case 'description':
         wellplate.description = value;
+        break;
+      case 'readoutTitles':
+        wellplate.readout_titles = value;
         break;
       default:
         break;
@@ -155,7 +174,9 @@ export default class WellplateDetails extends Component {
     const readoutTitles = wellplate.readout_titles;
     const submitLabel = wellplate.isNew ? 'Create' : 'Save';
     const exportButton = (wellplate && wellplate.isNew) ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
-    const properties = { name, size, description };
+    const properties = {
+      name, size, description, readoutTitles
+    };
 
 
     const tabContentsMap = {
@@ -194,6 +215,8 @@ export default class WellplateDetails extends Component {
           <WellplateProperties
             {...properties}
             changeProperties={c => this.handleChangeProperties(c)}
+            handleAddReadout={c => this.handleAddReadout(c)}
+            handleRemoveReadout={c => this.handleRemoveReadout(c)}
           />
         </Tab>
       ),
@@ -250,5 +273,5 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.object.isRequired,
-  toggleFullScreen: PropTypes.func,
+  toggleFullScreen: PropTypes.func.isRequired,
 };

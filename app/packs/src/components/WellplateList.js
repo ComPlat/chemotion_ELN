@@ -15,7 +15,7 @@ export default class WellplateList extends Component {
   renderReadoutHeaders() {
     const { readoutTitles } = this.props;
     return (
-      readoutTitles.map((title) => {
+      readoutTitles && readoutTitles.map((title) => {
         const key = title.id;
         return (
           [

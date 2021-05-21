@@ -16,6 +16,7 @@ module Chemotion
             optional :size, type: Integer
             optional :description, type: Hash
             optional :wells, type: Array
+            optional :readout_titles, type: Array
             optional :collection_id, type: Integer
           end
         end
@@ -124,6 +125,7 @@ module Chemotion
         optional :size, type: Integer
         optional :description, type: Hash
         optional :wells, type: Array
+        optional :readout_titles, type: Array
         requires :container, type: Hash
       end
       route_param :id do
@@ -151,6 +153,7 @@ module Chemotion
         optional :size, type: Integer
         optional :description, type: Hash
         optional :wells, type: Array
+        optional :readout_titles, type: Array
         optional :collection_id, type: Integer
         requires :container, type: Hash
       end

@@ -19,7 +19,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
       researchPlan,
       update: false,
       expanded: false,
-      confirmClose: false,
+      confirmRemove: false,
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -193,7 +193,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
           <Button
             bsStyle="warning"
             bsSize="xsmall"
-            onClick={() => this.setState({ confirmClose: false })}
+            onClick={() => this.setState({ confirmRemove: false })}
           >No
           </Button>
         </ButtonGroup>
@@ -210,16 +210,16 @@ export default class EmbeddedResearchPlanDetails extends Component {
         </OverlayTrigger>
         <ElementCollectionLabels element={researchPlan} placement="right" />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}>
-          <Button ref={(button) => { this.target = button; }} bsStyle="danger" bsSize="xsmall" className="button-right" onClick={() => this.setState({ confirmClose: !this.state.confirmClose })}>
+          <Button ref={(button) => { this.target = button; }} bsStyle="danger" bsSize="xsmall" className="button-right" onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}>
             <i className="fa fa-trash-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
         <Overlay
           rootClose
           target={this.target}
-          show={this.state.confirmClose}
+          show={this.state.confirmRemove}
           placement="bottom"
-          onHide={() => this.setState({ confirmClose: false })}
+          onHide={() => this.setState({ confirmRemove: false })}
         >
           { popover }
         </Overlay>
