@@ -66,11 +66,9 @@ export default class WellplateProperties extends Component {
             </td>
           </tr>
           <tr>
-            <td>
+            <td colSpan={2}>
               <ControlLabel>Readout Titles</ControlLabel>
-            </td>
-            <td>
-              <Button className="button-right" bsStyle="success" bsSize="xsmall" onClick={() => this.addReadoutTitle()}>
+              <Button className="button-right" bsStyle="success" bsSize="small" onClick={() => this.addReadoutTitle()}>
                 <i className="fa fa-plus" />
               </Button>
             </td>
@@ -78,9 +76,10 @@ export default class WellplateProperties extends Component {
           {readoutTitles && readoutTitles.map((readoutTitle, index) => (
             // eslint-disable-next-line react/no-array-index-key
             <tr key={index}>
+              {/* TODO: why does colSpan={2} not work here? */}
               <td>
                 <FormGroup>
-                  <InputGroup >
+                  <InputGroup>
                     <FormControl
                       type="text"
                       value={readoutTitle}
@@ -114,7 +113,7 @@ export default class WellplateProperties extends Component {
   }
 }
 
-WellplateProperties.propTypes = {
+WellplateProperties.propTypes = { /* eslint-disable react/forbid-prop-types */
   changeProperties: PropTypes.func.isRequired,
   handleAddReadout: PropTypes.func.isRequired,
   handleRemoveReadout: PropTypes.func.isRequired,

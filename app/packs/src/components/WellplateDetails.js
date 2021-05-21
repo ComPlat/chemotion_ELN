@@ -271,7 +271,7 @@ export default class WellplateDetails extends Component {
   }
 }
 
-WellplateDetails.propTypes = {
+WellplateDetails.propTypes = { /* eslint-disable react/forbid-prop-types */
   wellplate: PropTypes.object.isRequired,
   toggleFullScreen: PropTypes.func.isRequired,
 };
