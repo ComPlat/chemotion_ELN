@@ -3,7 +3,7 @@ module Entities
     expose :molecule, using: Entities::MoleculeEntity
     expose :container, using: Entities::ContainerEntity
     expose :tag
-    expose :segments
+    expose :segments, using: Entities::SegmentEntity
     expose :residues
     expose :elemental_compositions, using: Entities::ElementalCompositionEntity
 
