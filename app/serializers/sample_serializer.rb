@@ -1,7 +1,7 @@
 class SampleSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Sample.new.base_attributes
 
-  has_one :molecule
+  has_one :molecule, :serializer => MoleculeListSerializer
   has_one :container, :serializer => ContainerSerializer
   has_one :tag
 
