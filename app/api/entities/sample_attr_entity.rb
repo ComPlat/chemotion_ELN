@@ -63,5 +63,9 @@ module Entities
       false
     end
 
+    def solvent
+      JSON.load object.solvent
+    end
+
   end
 end

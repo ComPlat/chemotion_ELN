@@ -2,13 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
-  Table, Glyphicon
+  Table, Glyphicon, Tabs, Tab
 } from 'react-bootstrap';
 import Select from 'react-select';
 import DetailActions from './actions/DetailActions';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import TextRangeWithAddon from './TextRangeWithAddon';
 import { solventOptions } from './staticDropdownOptions/options';
+import SampleDetailsSolvents from './SampleDetailsSolvents';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -26,6 +27,7 @@ export default class SampleForm extends React.Component {
     this.addMolName = this.addMolName.bind(this);
     this.showStructureEditor = this.showStructureEditor.bind(this);
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
+    this.handleSolventChanged = this.handleSolventChanged.bind(this);
   }
 
   componentWillReceiveProps() {
@@ -52,6 +54,10 @@ export default class SampleForm extends React.Component {
 
   handleMolecularMassChanged(mass) {
     this.props.sample.setMolecularMass(mass);
+  }
+
+  handleSolventChanged(sample) {
+    this.props.parent.setState({ sample });
   }
 
   showStructureEditor() {
@@ -336,6 +342,31 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  numInputWithoutTable(sample, field, unit, prefixes, precision, label, ref = '',
+    disabled = false, title = '', block = false, notApplicable = false) {
+    if (sample.contains_residues && unit === 'l') return false;
+    const value = !isNaN(sample[field]) ? sample[field] : null;
+
+    const mpx = unit === 'l' ? prefixes[1] : unit === 'mol' ? prefixes[2] : prefixes[0];
+    return (
+      <NumeralInputWithUnitsCompo
+        key={field + sample.id.toString()}
+        value={notApplicable ? 'N/A' : value}
+        unit={unit}
+        label={label}
+        ref={ref}
+        metricPrefix={mpx}
+        metricPrefixes={prefixes}
+        precision={precision}
+        title={title}
+        disabled={disabled}
+        block={block}
+        bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
+        onChange={e => this.handleFieldChanged(field, e)}
+      />
+    );
+  }
+
   sampleAmount(sample) {
     const content = [];
     const isDisabled = !sample.can_update;
@@ -426,16 +457,16 @@ export default class SampleForm extends React.Component {
           <tr>
             <td colSpan="4">
               <div className="name-form">
-                <div style={{ width: '30%' }}>
+                <div style={{ width: '50%' }}>
                   {this.textInput(sample, 'name', 'Name')}
                 </div>
-                <div style={{ width: '30%' }}>
+                <div style={{ width: '50%' }}>
                   {this.textInput(sample, 'external_label', 'External label')}
                 </div>
-                <div style={{ width: '40%' }}>
+                {/* <div style={{ width: '40%' }}>
                   <label htmlFor="solventInput">Solvent</label>
                   {this.sampleSolvent(sample)}
-                </div>
+                </div> */}
               </div>
             </td>
           </tr>
@@ -508,7 +539,39 @@ export default class SampleForm extends React.Component {
           </tr> */}
 
           <tr>
-            {
+            <td colSpan="4">
+              <div className="name-form">
+                <Tabs style={{ width: '40%' }} id="tab-density-molarity" defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}>
+                  <Tab eventKey="density" title="Density">
+                    {
+                      this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+                    }
+                  </Tab>
+                  <Tab eventKey="molarity" title="Molarity">
+                    {
+                      this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+                    }
+                  </Tab>
+                </Tabs>
+                <div style={{ width: '30%' }}>
+                  {
+                    this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity', '', isDisabled)
+                  }
+                </div>
+                <div style={{ width: '30%' }}>
+                  <TextRangeWithAddon
+                    field="melting_point"
+                    label="Melting point"
+                    addon="°C"
+                    value={sample.melting_point_display}
+                    disabled={polyDisabled}
+                    onChange={this.handleRangeChanged}
+                    tipOnText="Use space-separated value to input a Temperature range"
+                  />
+                </div>
+              </div>
+            </td>
+            {/* {
               this.numInput(sample, 'density', 'g/ml', ['n'], 5, 'Density', '', polyDisabled, '', densityBlocked, isPolymer)
             }
             {
@@ -527,6 +590,15 @@ export default class SampleForm extends React.Component {
                 onChange={this.handleRangeChanged}
                 tipOnText="Use space-separated value to input a Temperature range"
               />
+            </td> */}
+
+          </tr>
+
+          <tr>
+            <td colSpan="4">
+              <SampleDetailsSolvents
+               sample={sample}
+               onChange={this.handleSolventChanged}/>
             </td>
           </tr>
 

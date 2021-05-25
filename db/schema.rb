@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210416075103) do
+ActiveRecord::Schema.define(version: 20210604232803) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -852,7 +852,7 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.integer  "molecule_id"
     t.binary   "molfile"
     t.float    "purity",                         default: 1.0
-    t.string   "solvent",                        default: ""
+    t.string   "deprecated_solvent",             default: ""
     t.string   "impurities",                     default: ""
     t.string   "location",                       default: ""
     t.boolean  "is_top_secret",                  default: false
@@ -881,6 +881,7 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.boolean  "decoupled",                      default: false, null: false
     t.float    "molecular_mass"
     t.string   "sum_formula"
+    t.string   "solvent"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
