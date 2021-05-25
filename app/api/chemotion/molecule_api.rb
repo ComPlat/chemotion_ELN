@@ -175,7 +175,7 @@ module Chemotion
 
         molecule = Molecule.find_or_create_by_molfile(molfile)
         ob = molecule&.ob_log
-        molecule.attributes.merge(temp_svg: svg_file_name, ob_log: ob)
+        molecule&.attributes&.merge(temp_svg: svg_file_name, ob_log: ob)
       end
 
       desc "return CAS of the molecule"
@@ -218,7 +218,7 @@ module Chemotion
       end
       post :inchikey do
         molecule = Molecule.find_by(inchikey: params[:inchikey])
-        present molecule, with: Entities::MoleculeNamesEntity, root: 'molecule'
+        present molecule, with: Entities::MoleculeEntity, root: 'molecule'
       rescue StandardError => e
         return {}
       end
