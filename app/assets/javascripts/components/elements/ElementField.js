@@ -97,7 +97,7 @@ class ElementField extends Component {
 
     return (
       <OverlayTrigger animation placement="top" root trigger="focus" overlay={popover}>
-        <Button bsSize="xs" bsStyle="danger" ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
+        <Button bsSize="xs" ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
       </OverlayTrigger>
     );
   }
@@ -201,10 +201,10 @@ class ElementField extends Component {
               {['dummy'].includes(f.type) ? '(dummy field)' : f.field}
             </Panel.Title>
             <ButtonGroup bsSize="xsmall">
-              <ButtonTooltip tip="Move Up" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: true }} fa="fa-arrow-up" place="top" bs="default" disabled={this.props.position === 1} />
-              <ButtonTooltip tip="Move Down" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: false }} fa="fa-arrow-down" place="top" bs="default" />
+              <ButtonTooltip tip="Move Up" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: true }} fa="fa-arrow-up" place="top" disabled={this.props.position === 1} />
+              <ButtonTooltip tip="Move Down" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: false }} fa="fa-arrow-down" place="top" />
               {this.renderDeleteButton('Field', f.field, layerKey)}
-              <ButtonTooltip tip="Add Dummy field" fnClick={this.handleAddDummy} element={{ l: layerKey, f: f.field }} fa="fa-plus-circle" place="top" bs="info" />
+              <ButtonTooltip tip="Add Dummy field" fnClick={this.handleAddDummy} element={{ l: layerKey, f: f.field }} fa="fa fa-plus" place="top" />
             </ButtonGroup>
           </Panel.Heading>
           <Panel.Collapse>

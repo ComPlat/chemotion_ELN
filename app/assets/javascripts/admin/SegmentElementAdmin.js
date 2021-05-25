@@ -541,7 +541,7 @@ export default class SegmentElementAdmin extends React.Component {
 
     return (
       <OverlayTrigger animation placement="top" root trigger="focus" overlay={popover}>
-        <Button bsSize="sm" bsStyle="danger" >
+        <Button bsSize="sm" >
           <i className="fa fa-trash-o" aria-hidden="true" />
         </Button>
       </OverlayTrigger>
@@ -591,7 +591,7 @@ export default class SegmentElementAdmin extends React.Component {
                   />
                   <InputGroup.Button>
                     <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new option</Tooltip>}>
-                      <Button bsStyle="primary" bsSize="sm" onClick={() => this.newOption(key)}><i className="fa fa-plus-circle" aria-hidden="true" /></Button>
+                      <Button bsSize="sm" onClick={() => this.newOption(key)}><i className="fa fa-plus" aria-hidden="true" /></Button>
                     </OverlayTrigger>
                     {this.renderDeleteButton('Select', key, null)}
                   </InputGroup.Button>
@@ -616,7 +616,7 @@ export default class SegmentElementAdmin extends React.Component {
             <Panel.Title>
               Select Lists
               <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new select list</Tooltip>}>
-                <Button className="button-right" bsSize="xs" bsStyle="success" onClick={() => this.addSelection()}>Add new select list&nbsp;<i className="fa fa-plus-circle" aria-hidden="true" /></Button>
+                <Button className="button-right" bsSize="xs" onClick={() => this.addSelection()}>Add new select list&nbsp;<i className="fa fa-plus" aria-hidden="true" /></Button>
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
@@ -665,7 +665,7 @@ export default class SegmentElementAdmin extends React.Component {
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
                   <InputGroup.Button>
-                    <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" bs="success" size="sm" />
+                    <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" size="sm" />
                     {this.renderDeleteButton('Layer', layerKey, null)}
                   </InputGroup.Button>
                   <FormControl
@@ -676,8 +676,8 @@ export default class SegmentElementAdmin extends React.Component {
                     bsSize="sm"
                   />
                   <InputGroup.Button>
-                    <ButtonTooltip tip="Add new field" fnClick={this.newField} element={{ layerKey }} fa="fa-plus-circle" place="top" bs="primary" size="sm" />
-                    <ButtonTooltip tip="Add Dummy field" fnClick={this.onDummyAdd} element={{ l: layerKey, f: null }} fa="fa-plus-circle" place="top" bs="info" size="sm" />
+                    <ButtonTooltip tip="Add new field" fnClick={this.newField} element={{ layerKey }} fa="fa fa-plus" place="top" size="sm" />
+                    <ButtonTooltip tip="Add Dummy field" fnClick={this.onDummyAdd} element={{ l: layerKey, f: null }} fa="fa fa-plus-circle" place="top" size="sm" />
                   </InputGroup.Button>
                 </InputGroup>
               </FormGroup>
@@ -700,7 +700,7 @@ export default class SegmentElementAdmin extends React.Component {
             <Panel.Title>
               Layers
               <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new layer</Tooltip>}>
-                <Button className="button-right" bsSize="xs" bsStyle="success" onClick={() => this.addLayer()}>Add new layer&nbsp;<i className="fa fa-plus-circle" aria-hidden="true" /></Button>
+                <Button className="button-right" bsSize="xs" onClick={() => this.addLayer()}>Add new layer&nbsp;<i className="fa fa-plus" aria-hidden="true" /></Button>
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
@@ -743,7 +743,7 @@ export default class SegmentElementAdmin extends React.Component {
         <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
           <td>{idx + 1}</td>
           <td width="12%">
-            <ButtonTooltip bs="success" tip="copy to ..." fa="fa fa-clone" element={e} fnClick={this.copyKlass} />
+            <ButtonTooltip tip="copy to ..." fa="fa fa-clone" element={e} fnClick={this.copyKlass} />
             &nbsp;
             <ButtonTooltip tip="Edit Segment attributes" fnClick={this.editKlass} element={e} />
             &nbsp;
@@ -757,7 +757,7 @@ export default class SegmentElementAdmin extends React.Component {
           </td>
           <td>
             <ButtonTooltip tip="Edit Segment template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
-            <ButtonTooltip tip="Edit Segment template in JSON format" fnClick={this.showJsonModal} element={e} bs="default" fa="fa-file-code-o" />
+            <ButtonTooltip tip="Edit Segment template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" />
           </td>
           <td>{e.element_klass.label}&nbsp;<i className={e.element_klass.icon_name} /></td>
         </tr>
@@ -792,7 +792,7 @@ export default class SegmentElementAdmin extends React.Component {
     return (
       <div>
         <Button bsStyle="primary" bsSize="small" onClick={() => this.newKlass()}>
-          New Segment&nbsp;<i className="fa fa-plus-circle" aria-hidden="true" />
+          New Segment&nbsp;<i className="fa fa-plus" aria-hidden="true" />
         </Button>
         &nbsp;
         <br />
