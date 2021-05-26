@@ -1,6 +1,17 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.9.0]
+> 2021-05-26
+
+* Features
+  * Decoupled sample: molfile-less sample creation
+  * Generic-element/segment (Beta): customizable data structure
+
+* Fix
+  * serialization of sdf-imported molecules with improper file encoding
+
+
 ## [v0.8.0]
 > 2021-04-28
 
