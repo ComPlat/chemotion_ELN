@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
+import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import DragDropItemTypes from './DragDropItemTypes';
 import UIStore from './stores/UIStore';
 import { wellplateShowOrNew } from './routesUtils';
 import QuillViewer from './QuillViewer';
+// import Wellplate from './models/Wellplate';
 
 const target = {
   drop(props, monitor) {
@@ -29,9 +30,8 @@ const collect = (connect, monitor) => ({
   canDrop: monitor.canDrop()
 });
 
-class ScreenWellplates extends Component {
-  // eslint-disable-next-line class-methods-use-this
-  handleWellplateClick(wellplate) {
+class ResearchPlanWellplates extends Component {
+  handleWellplateClick(wellplate) { // eslint-disable-line class-methods-use-this
     const { currentCollection, isSync } = UIStore.getState();
     const wellplateID = wellplate.id;
     const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
@@ -39,18 +39,27 @@ class ScreenWellplates extends Component {
     wellplateShowOrNew({ params: { wellplateID } });
   }
 
-  render() {
-    // eslint-disable-next-line object-curly-newline
-    const { wellplates, isOver, canDrop, connectDropTarget, deleteWellplate } = this.props;
-    const style = { padding: 10 };
-    if (isOver && canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderColor = '#337ab7';
-    } else if (canDrop) {
-      style.borderStyle = 'dashed';
-    }
-    return connectDropTarget(
+  renderDropZone() {
+    const { isOver, connectDropTarget } = this.props;
+    const style = {
+      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px', marginBottom: '8px'
+    };
+    if (isOver) { style.borderColor = '#337ab7'; }
+
+    return connectDropTarget( // eslint-disable-line function-paren-newline
       <div style={style}>
+        Drop Wellplate here to add.
+      </div>);
+  }
+
+
+  render() {
+    const { wellplates, deleteWellplate } = this.props;
+
+    return (
+      <div>
+        {this.renderDropZone()}
+
         <table width="100%">
           <thead>
             <tr>
@@ -60,7 +69,10 @@ class ScreenWellplates extends Component {
             </tr>
           </thead>
           <tbody>
-            {wellplates.map(wellplate => (
+            {wellplates && wellplates.map(wellplate => (
+              // <div key={wellplate.id}>
+              //   {wellplate.name}<br />
+              // </div>
               <tr key={wellplate.id} style={{ height: '80px', verticalAlign: 'middle' }}>
                 <td>
                   <a
@@ -90,18 +102,19 @@ class ScreenWellplates extends Component {
             ))}
           </tbody>
         </table>
-      </div>
-    );
+      </div>);
   }
 }
 
-export default DropTarget(DragDropItemTypes.WELLPLATE, target, collect)(ScreenWellplates);
+export default DropTarget(DragDropItemTypes.WELLPLATE, target, collect)(ResearchPlanWellplates);
 
-ScreenWellplates.propTypes = {
+ResearchPlanWellplates.propTypes = { /* eslint-disable react/no-unused-prop-types */
   wellplates: PropTypes.arrayOf(PropTypes.object).isRequired,
   deleteWellplate: PropTypes.func.isRequired,
+  // updateWellplate: PropTypes.func.isRequired,
+  // saveWellplate: PropTypes.func.isRequired,
   dropWellplate: PropTypes.func.isRequired,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired
-};
+}; /* eslint-enable */

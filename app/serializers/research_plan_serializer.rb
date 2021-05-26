@@ -3,6 +3,7 @@ class ResearchPlanSerializer < ActiveModel::Serializer
   attributes *DetailLevels::ResearchPlan.new.base_attributes
 
   has_one :container, :serializer => ContainerSerializer
+  has_many :wellplates, :serializer => WellplateSerializer
 
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
@@ -18,6 +19,11 @@ class ResearchPlanSerializer < ActiveModel::Serializer
   def is_restricted
     false
   end
+
+  # TODO: fix detail levels
+  # def wellplates
+  #   object.wellplates.map { |s| "WellplateSerializer::Level#{@nested_dl[:wellplate]}".constantize.new(s, @nested_dl).serializable_hash }
+  # end
 
   class Level0 < ActiveModel::Serializer
     include ResearchPlanLevelSerializable

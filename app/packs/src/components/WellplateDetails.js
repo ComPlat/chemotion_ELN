@@ -178,7 +178,6 @@ export default class WellplateDetails extends Component {
       name, size, description, readoutTitles
     };
 
-
     const tabContentsMap = {
       designer: (
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>

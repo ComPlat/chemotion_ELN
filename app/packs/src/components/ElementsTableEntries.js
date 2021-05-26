@@ -91,7 +91,7 @@ export default class ElementsTableEntries extends Component {
     const targets = {
       sample: ['reaction', 'wellplate'],
       reaction: ['research_plan'],
-      wellplate: ['screen'],
+      wellplate: ['screen', 'research_plan'],
       generalProcedure: ['reaction'],
       research_plan: ['screen']
     };
