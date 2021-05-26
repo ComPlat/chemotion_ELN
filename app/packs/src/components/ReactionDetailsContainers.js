@@ -4,6 +4,7 @@ import {
   PanelGroup,
   Panel,
   Button,
+  OverlayTrigger, SplitButton, ButtonGroup, MenuItem, Tooltip
 } from 'react-bootstrap';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
@@ -14,6 +15,11 @@ import { hNmrCount, cNmrCount, instrumentText } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import { chmoConversions } from './OlsComponent';
 import { previewContainerImage } from './utils/imageHelper';
+import { JcampIds, BuildSpcInfos } from './utils/SpectraHelper';
+import UIStore from './stores/UIStore';
+import SpectraActions from './actions/SpectraActions';
+import LoadingActions from './actions/LoadingActions';
+import ViewSpectra from './ViewSpectra';
 
 import TextTemplateActions from './actions/TextTemplateActions';
 
@@ -35,6 +41,72 @@ const nmrMsg = (reaction, container) => {
   }
 };
 
+const SpectraEditorBtn = ({
+  element, spcInfo, hasJcamp, hasChemSpectra,
+  toggleSpectraModal, confirmRegenerate,
+}) => (
+  <OverlayTrigger
+    placement="bottom"
+    delayShow={500}
+    overlay={<Tooltip id="spectra">Spectra Editor {!spcInfo ? ': Reprocess' : ''}</Tooltip>}
+  >{spcInfo ? (
+    <ButtonGroup className="button-right">
+      <SplitButton
+        id="spectra-editor-split-button"
+        pullRight
+        bsStyle="info"
+        bsSize="xsmall"
+        title={<i className="fa fa-area-chart" />}
+        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+        onClick={toggleSpectraModal}
+        disabled={!spcInfo || !hasChemSpectra}
+      >
+        <MenuItem
+          id="regenerate-spectra"
+          key="regenerate-spectra"
+          onSelect={(eventKey, event) => {
+            event.stopPropagation();
+            confirmRegenerate(event);
+          }}
+          disabled={!hasJcamp || !element.can_update}
+        >
+          <i className="fa fa-refresh" /> Reprocess
+        </MenuItem>
+      </SplitButton>
+    </ButtonGroup>
+  ) : (
+    <Button
+      bsStyle="warning"
+      bsSize="xsmall"
+      className="button-right"
+      onClick={confirmRegenerate}
+      disabled={false}
+    >
+      <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
+    </Button>
+    )}
+  </OverlayTrigger>
+);
+
+SpectraEditorBtn.propTypes = {
+  element: PropTypes.object,
+  hasJcamp: PropTypes.bool,
+  spcInfo: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.bool,
+  ]),
+  hasChemSpectra: PropTypes.bool,
+  toggleSpectraModal: PropTypes.func.isRequired,
+  confirmRegenerate: PropTypes.func.isRequired,
+};
+
+SpectraEditorBtn.defaultProps = {
+  hasJcamp: false,
+  spcInfo: false,
+  element: {},
+  hasChemSpectra: false,
+};
+
 export default class ReactionDetailsContainers extends Component {
   constructor(props) {
     super();
@@ -50,6 +122,7 @@ export default class ReactionDetailsContainers extends Component {
     this.handleUndo = this.handleUndo.bind(this);
     this.handleOnClickRemove = this.handleOnClickRemove.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
+    this.handleSpChange = this.handleSpChange.bind(this);
   }
 
   componentDidMount() {
@@ -66,6 +139,11 @@ export default class ReactionDetailsContainers extends Component {
     const { reaction } = this.state;
 
     this.props.parent.handleReactionChange(reaction);
+  }
+
+  handleSpChange(reaction, cb) {
+    this.props.parent.handleReactionChange(reaction);
+    cb();
   }
 
   handleUndo(container) {
@@ -105,6 +183,24 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   headerBtnGroup(container, reaction, readOnly) {
+    const jcampIds = JcampIds(container);
+    const hasJcamp = jcampIds.orig.length > 0;
+    const confirmRegenerate = (e) => {
+      e.stopPropagation();
+      if (confirm('Regenerate spectra?')) {
+        LoadingActions.start();
+        SpectraActions.Regenerate(jcampIds, this.handleChange);
+      }
+    };
+    const spcInfo = BuildSpcInfos(reaction, container);
+    const { hasChemSpectra } = UIStore.getState();
+    const toggleSpectraModal = (e) => {
+      e.stopPropagation();
+      SpectraActions.ToggleModal();
+      SpectraActions.LoadSpectra.defer(spcInfo);
+    };
+
+
     return (
       <div className="upper-btn">
         <Button
@@ -117,6 +213,14 @@ export default class ReactionDetailsContainers extends Component {
           <i className="fa fa-trash" />
         </Button>
         <PrintCodeButton element={reaction} analyses={[container]} ident={container.id} />
+        <SpectraEditorBtn
+          element={reaction}
+          hasJcamp={hasJcamp}
+          spcInfo={spcInfo}
+          hasChemSpectra={hasChemSpectra}
+          toggleSpectraModal={toggleSpectraModal}
+          confirmRegenerate={confirmRegenerate}
+        />
       </div>
     );
   };
@@ -280,6 +384,11 @@ export default class ReactionDetailsContainers extends Component {
                         container={container}
                         onChange={this.handleChange.bind(this, container)}
                       />
+                      <ViewSpectra
+                        sample={reaction}
+                        handleSampleChanged={this.handleSpChange}
+                        handleSubmit={this.props.handleSubmit}
+                      />
                     </Panel.Body>
                   </Panel>
                 );
@@ -311,4 +420,5 @@ export default class ReactionDetailsContainers extends Component {
 ReactionDetailsContainers.propTypes = {
   readOnly: PropTypes.bool,
   parent: PropTypes.object,
+  handleSubmit: PropTypes.func
 };
