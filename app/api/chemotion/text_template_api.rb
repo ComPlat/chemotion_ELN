@@ -2,7 +2,7 @@
 module Chemotion
   class TextTemplateAPI < Grape::API
     resource :text_templates do
-      DEF_ELS = %w[research_plan screen wellplate reaction sample reaction_description].freeze
+      DEF_ELS ||= %w[research_plan screen wellplate reaction sample reaction_description].freeze
 
       params do
         requires :type, type: String, desc: 'element type'
