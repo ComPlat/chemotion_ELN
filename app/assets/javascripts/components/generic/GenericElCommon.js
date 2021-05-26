@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Col, PanelGroup, Row } from 'react-bootstrap';
 import { sortBy } from 'lodash';
-import { genUnits } from '../../admin/generic/Utils';
+import { genUnits, unitConversion } from '../../admin/generic/Utils';
 import {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
@@ -56,7 +56,15 @@ class GenPropertiesLayer extends Component {
 
   handleSubChange(e, id, f) {
     const sub = f.sub_fields.find(m => m.id === id);
-    sub.value = e.target.value;
+    if (e.type === 'system-defined') {
+      const units = genUnits(e.option_layers);
+      let uIdx = units.findIndex(u => u.key === e.value_system);
+      if (uIdx < units.length - 1) uIdx += 1; else uIdx = 0;
+      sub.value_system = units.length > 0 ? units[uIdx].key : '';
+      sub.value = unitConversion(e.option_layers, sub.value_system, e.value);
+    } else {
+      sub.value = e.target.value;
+    }
     const { layer } = this.props;
     const obj = { f, sub };
     this.props.onSubChange(layer.key, obj);
@@ -148,7 +156,7 @@ GenPropertiesLayer.propTypes = {
   onChange: PropTypes.func.isRequired,
   onSubChange: PropTypes.func.isRequired,
   onClick: PropTypes.func,
-  layers: PropTypes.arrayOf(PropTypes.object).isRequired
+  layers: PropTypes.object.isRequired
 };
 
 GenPropertiesLayer.defaultProps = {
@@ -169,7 +177,15 @@ class GenPropertiesLayerSearchCriteria extends Component {
 
   handleSubChange(e, id, f) {
     const sub = f.sub_fields.find(m => m.id === id);
-    sub.value = e.target.value;
+    if (e.type === 'system-defined') {
+      const units = genUnits(e.option_layers);
+      let uIdx = units.findIndex(u => u.key === e.value_system);
+      if (uIdx < units.length - 1) uIdx += 1; else uIdx = 0;
+      sub.value_system = units.length > 0 ? units[uIdx].key : '';
+      sub.value = unitConversion(e.option_layers, sub.value_system, e.value);
+    } else {
+      sub.value = e.target.value;
+    }
     const { layer } = this.props;
     const obj = { f, sub };
     this.props.onSubChange(layer.key, obj);

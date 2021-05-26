@@ -240,8 +240,18 @@ const GenPropertiesInputGroup = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   const fLab = e => <div key={uuid.v4()} className="form-control g_input_group_label">{e.value}</div>;
   const fTxt = e => <FormControl className="g_input_group" key={e.id} type={e.type} name={e.id} value={e.value} onChange={o => opt.onSubChange(o, e.id, opt.f_obj)} />;
-  const subs = opt.f_obj && opt.f_obj.sub_fields.map((e) => {
-    if (e.type === 'label') { return fLab(e); } return fTxt(e);
+  const fUnit = e => (
+    <span className="input-group" style={{ width: '100%' }}>
+      <FormControl key={e.id} type="number" name={e.id} value={e.value} onChange={o => opt.onSubChange(o, e.id, opt.f_obj)} min={1} />
+      <InputGroup.Button>
+        <Button active onClick={() => opt.onSubChange(e, e.id, opt.f_obj)} bsStyle="success">
+          {genUnitSup(genUnit(e.option_layers, e.value_system).label) || ''}
+        </Button>
+      </InputGroup.Button>
+    </span>
+  );
+  const subs = opt.f_obj && opt.f_obj.sub_fields && opt.f_obj.sub_fields.map((e) => {
+    if (e.type === 'label') { return fLab(e); } if (e.type === 'system-defined') { return fUnit(e); } return fTxt(e);
   });
   return (
     <FormGroup>

@@ -191,7 +191,7 @@ class ElementField extends Component {
       <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
         <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
         <Col sm={9}>
-          <GroupFields layerKey={layerKey} field={f} updSub={this.updSubField} />
+          <GroupFields layerKey={layerKey} field={f} updSub={this.updSubField} unitsFields={(unitsSystem.fields || [])} />
         </Col>
       </FormGroup>
     ) : null;
@@ -215,7 +215,7 @@ class ElementField extends Component {
               <ButtonTooltip tip="Move Up" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: true }} fa="fa-arrow-up" place="top" disabled={this.props.position === 1} />
               <ButtonTooltip tip="Move Down" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: false }} fa="fa-arrow-down" place="top" />
               {this.renderDeleteButton('Field', f.field, layerKey)}
-              <ButtonTooltip tip="Add Dummy field" fnClick={this.handleAddDummy} element={{ l: layerKey, f: f.field }} fa="fa fa-plus" place="top" />
+              <ButtonTooltip tip="Add Dummy field" fnClick={this.handleAddDummy} element={{ l: layerKey, f: f.field }} fa="fa fa-plus-circle" place="top" />
             </ButtonGroup>
           </Panel.Heading>
           <Panel.Collapse>
