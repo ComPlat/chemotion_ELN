@@ -477,6 +477,7 @@ export default class GenericElementAdmin extends React.Component {
         if (fd.type === 'system-defined') { fd.option_layers = reUnit(unitsSystem, fd.option_layers); }
         fd.required = ['integer', 'text'].includes(fd.type) ? fd.required : false;
         if (fd.type !== 'input-group') { fd.sub_fields = []; }
+        if (fd.type !== 'text-formula') { fd.text_sub_fields = []; }
         return fd;
       });
       sortedFields = sortBy(sortedFields, l => l.position);
@@ -584,6 +585,9 @@ export default class GenericElementAdmin extends React.Component {
             <div>
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
+                  <InputGroup.Button>
+                    {this.renderDeleteButton('Select', key, null)}
+                  </InputGroup.Button>
                   <FormControl
                     type="text"
                     name="input_newOption"
@@ -595,7 +599,6 @@ export default class GenericElementAdmin extends React.Component {
                     <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new option</Tooltip>}>
                       <Button bsStyle="primary" bsSize="sm" onClick={() => this.newOption(key)}><i className="fa fa-plus-circle" aria-hidden="true" /></Button>
                     </OverlayTrigger>
-                    {this.renderDeleteButton('Select', key, null)}
                   </InputGroup.Button>
                 </InputGroup>
               </FormGroup>
@@ -652,6 +655,7 @@ export default class GenericElementAdmin extends React.Component {
           unitsSystem={unitsSystem}
           onFieldSubFieldChange={this.onFieldSubFieldChange}
           onDummyAdd={this.onDummyAdd}
+          allLayers={sortedLayers}
         />
       )) || [];
 

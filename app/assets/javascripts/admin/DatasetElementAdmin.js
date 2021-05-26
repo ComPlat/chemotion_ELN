@@ -466,6 +466,9 @@ export default class DatasetElementAdmin extends React.Component {
             <div>
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
+                  <InputGroup.Button>
+                    {this.renderDeleteButton('Select', key, null)}
+                  </InputGroup.Button>
                   <FormControl
                     type="text"
                     name="input_newOption"
@@ -477,7 +480,6 @@ export default class DatasetElementAdmin extends React.Component {
                     <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new option</Tooltip>}>
                       <Button bsStyle="primary" bsSize="sm" onClick={() => this.newOption(key)}><i className="fa fa-plus-circle" aria-hidden="true" /></Button>
                     </OverlayTrigger>
-                    {this.renderDeleteButton('Select', key, null)}
                   </InputGroup.Button>
                 </InputGroup>
               </FormGroup>
@@ -526,6 +528,7 @@ export default class DatasetElementAdmin extends React.Component {
           onChange={(e, orig, fe, lk, fc, tp) => this.onFieldInputChange(e, orig, fe, lk, fc, tp)}
           unitsSystem={unitsSystem}
           onDummyAdd={this.onDummyAdd}
+          allLayers={sortedLayers}
         />
       )) || [];
 

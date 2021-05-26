@@ -8,7 +8,7 @@ import { genUnits } from '../../admin/generic/Utils';
 import {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
-  GenPropertiesTextArea, GenDummy
+  GenPropertiesTextArea, GenDummy, GenTextFormula
 } from './GenericPropertiesFields';
 
 const GenProperties = (opt) => {
@@ -35,6 +35,8 @@ const GenProperties = (opt) => {
       return GenPropertiesTextArea(fieldProps);
     case 'dummy':
       return GenDummy();
+    case 'text-formula':
+      return GenTextFormula(fieldProps);
     default:
       return GenPropertiesText(fieldProps);
   }
@@ -71,7 +73,7 @@ class GenPropertiesLayer extends Component {
   }
 
   views() {
-    const { layer, selectOptions, id } = this.props;
+    const { layer, selectOptions, id, layers } = this.props;
     const { cols, fields, key } = layer;
     const perRow = cols || 1;
     const col = Math.floor(12 / perRow);
@@ -83,6 +85,7 @@ class GenPropertiesLayer extends Component {
       const eachCol = (
         <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col} className={klaz}>
           <GenProperties
+            layers={layers}
             id={id}
             layer={layer}
             f_obj={f}
@@ -242,6 +245,7 @@ const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, fun
           onSubChange={funcSubChange}
           selectOptions={options}
           onClick={funcClick}
+          layers={layers}
         />
       );
       layout.push(ig);
@@ -270,6 +274,7 @@ const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, fun
             onSubChange={funcSubChange}
             selectOptions={options}
             onClick={funcClick}
+            layers={layers}
           />
         );
         layout.push(igs);

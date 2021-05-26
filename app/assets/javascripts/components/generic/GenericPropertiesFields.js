@@ -6,6 +6,33 @@ import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
 
+const GenTextFormula = (opt) => {
+  const { layers } = opt;
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
+  const subs = [];
+  (opt.f_obj && opt.f_obj.text_sub_fields).map((e) => {
+    const { layer, field, separator } = e;
+    if (field && field !== '') {
+      const fd = ((layers[layer] || {}).fields || [])
+        .find(f => f.field === field);
+      if (fd && fd.value && fd.value !== '') { subs.push(fd.value); subs.push(separator); }
+    }
+    return true;
+  });
+  return (
+    <FormGroup className="text_generic_properties">
+      {fieldHeader}
+      <FormControl
+        type="text"
+        value={subs.join('')}
+        className="readonly"
+        readOnly
+        required={false}
+      />
+    </FormGroup>
+  );
+};
+
 const GenDummy = () => (
   <FormGroup className="text_generic_properties">
     <FormControl type="text" className="dummy" readOnly />
@@ -268,5 +295,5 @@ const GenPropertiesDrop = (opt) => {
 export {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
-  GenPropertiesTextArea, GenDummy
+  GenPropertiesTextArea, GenDummy, GenTextFormula
 };
