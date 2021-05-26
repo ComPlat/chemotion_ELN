@@ -152,6 +152,15 @@ const ButtonTooltip = (props) => {
     size, bs, fnClick, element, place, fa, disabled, txt
   } = props;
   const content = txt ? (<span>{txt}&nbsp;</span>) : '';
+  if (bs === '') {
+    return (
+      <OverlayTrigger placement={place} overlay={tip} >
+        <Button bsSize={size} onClick={() => fnClick(element)} disabled={disabled}>
+          {content}<i className={`fa ${fa}`} aria-hidden="true" />
+        </Button>
+      </OverlayTrigger>
+    );
+  }
   return (
     <OverlayTrigger placement={place} overlay={tip} >
       <Button bsSize={size} bsStyle={bs} onClick={() => fnClick(element)} disabled={disabled}>
@@ -174,7 +183,7 @@ ButtonTooltip.propTypes = {
 };
 
 ButtonTooltip.defaultProps = {
-  bs: 'info', size: 'xs', place: 'right', fa: 'fa-pencil-square-o', disabled: false, txt: null
+  bs: '', size: 'xs', place: 'right', fa: 'fa-pencil-square-o', disabled: false, txt: null
 };
 
 const ButtonConfirm = (props) => {

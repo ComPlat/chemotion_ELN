@@ -430,7 +430,7 @@ export default class DatasetElementAdmin extends React.Component {
 
     return (
       <OverlayTrigger animation placement="top" root trigger="focus" overlay={popover}>
-        <Button bsSize="sm" bsStyle="danger" ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
+        <Button bsSize="sm" ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
       </OverlayTrigger>
     );
   }
@@ -478,7 +478,7 @@ export default class DatasetElementAdmin extends React.Component {
                   />
                   <InputGroup.Button>
                     <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new option</Tooltip>}>
-                      <Button bsStyle="primary" bsSize="sm" onClick={() => this.newOption(key)}><i className="fa fa-plus-circle" aria-hidden="true" /></Button>
+                      <Button bsSize="sm" onClick={() => this.newOption(key)}><i className="fa fa-plus" aria-hidden="true" /></Button>
                     </OverlayTrigger>
                   </InputGroup.Button>
                 </InputGroup>
@@ -498,7 +498,7 @@ export default class DatasetElementAdmin extends React.Component {
             <Panel.Title>
               Select Lists
               <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new select list</Tooltip>}>
-                <Button className="button-right" bsSize="xs" bsStyle="success" onClick={() => this.addSelection()}>Add new select list&nbsp;<i className="fa fa-plus-circle" aria-hidden="true" /></Button>
+                <Button className="button-right" bsSize="xs" onClick={() => this.addSelection()}>Add new select list&nbsp;<i className="fa fa-plus" aria-hidden="true" /></Button>
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
@@ -542,7 +542,7 @@ export default class DatasetElementAdmin extends React.Component {
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
                   <InputGroup.Button>
-                    <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" bs="success" size="sm" />
+                    <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" size="sm" />
                     {this.renderDeleteButton('Layer', layerKey, null)}
                   </InputGroup.Button>
                   <FormControl
@@ -553,8 +553,8 @@ export default class DatasetElementAdmin extends React.Component {
                     bsSize="sm"
                   />
                   <InputGroup.Button>
-                    <ButtonTooltip tip="Add new field" fnClick={this.newField} element={{ layerKey }} fa="fa-plus-circle" place="top" bs="primary" size="sm" />
-                    <ButtonTooltip tip="Add Dummy field" fnClick={this.onDummyAdd} element={{ l: layerKey, f: null }} fa="fa-plus-circle" place="top" bs="info" size="sm" />
+                    <ButtonTooltip tip="Add new field" fnClick={this.newField} element={{ layerKey }} fa="fa fa-plus" place="top" size="sm" />
+                    <ButtonTooltip tip="Add Dummy field" fnClick={this.onDummyAdd} element={{ l: layerKey, f: null }} fa="fa fa-plus-circle" place="top" size="sm" />
                   </InputGroup.Button>
                 </InputGroup>
               </FormGroup>
@@ -573,7 +573,7 @@ export default class DatasetElementAdmin extends React.Component {
             <Panel.Title>
               Layers
               <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new layer</Tooltip>}>
-                <Button className="button-right" bsSize="xs" bsStyle="success" onClick={() => this.addLayer()}>Add new layer&nbsp;<i className="fa fa-plus-circle" aria-hidden="true" /></Button>
+                <Button className="button-right" bsSize="xs" onClick={() => this.addLayer()}>Add new layer&nbsp;<i className="fa fa-plus" aria-hidden="true" /></Button>
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
@@ -598,7 +598,7 @@ export default class DatasetElementAdmin extends React.Component {
           </td>
           <td>
             <ButtonTooltip tip="Edit Dataset template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
-            <ButtonTooltip tip="Edit Dataset template in JSON format" fnClick={this.showJsonModal} element={e} bs="default" fa="fa-file-code-o" />
+            <ButtonTooltip tip="Edit Dataset template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" />
           </td>
         </tr>
       </tbody>
