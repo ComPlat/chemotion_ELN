@@ -470,6 +470,7 @@ export default class SegmentElementAdmin extends React.Component {
         if (fd.type === 'system-defined') { fd.option_layers = reUnit(unitsSystem, fd.option_layers); }
         fd.required = false;
         if (fd.type !== 'input-group') { fd.sub_fields = []; }
+        if (fd.type !== 'text-formula') { fd.text_sub_fields = []; }
         return fd;
       });
       sortedFields = sortBy(sortedFields, l => l.position);
@@ -576,12 +577,13 @@ export default class SegmentElementAdmin extends React.Component {
       const snode = (
         <Panel className="panel_generic_properties" defaultExpanded key={`select_options_${key}`} >
           <Panel.Heading className="template_panel_heading">
-            <Panel.Title toggle>
-              {key}
-            </Panel.Title>
+            <Panel.Title toggle>{key}</Panel.Title>
             <div>
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
+                  <InputGroup.Button>
+                    {this.renderDeleteButton('Select', key, null)}
+                  </InputGroup.Button>
                   <FormControl
                     type="text"
                     name="input_newOption"
@@ -593,7 +595,6 @@ export default class SegmentElementAdmin extends React.Component {
                     <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new option</Tooltip>}>
                       <Button bsStyle="primary" bsSize="sm" onClick={() => this.newOption(key)}><i className="fa fa-plus-circle" aria-hidden="true" /></Button>
                     </OverlayTrigger>
-                    {this.renderDeleteButton('Select', key, null)}
                   </InputGroup.Button>
                 </InputGroup>
               </FormGroup>
@@ -652,6 +653,7 @@ export default class SegmentElementAdmin extends React.Component {
           unitsSystem={unitsSystem}
           onFieldSubFieldChange={this.onFieldSubFieldChange}
           onDummyAdd={this.onDummyAdd}
+          allLayers={sortedLayers}
         />
       )) || [];
 

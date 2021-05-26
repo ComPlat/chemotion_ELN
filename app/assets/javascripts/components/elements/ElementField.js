@@ -6,6 +6,7 @@ import Select from 'react-select';
 import uuid from 'uuid';
 import { ButtonTooltip, genUnitSup } from '../../admin/generic/Utils';
 import GroupFields from './GroupFields';
+import TextFormula from '../generic/TextFormula';
 
 const BaseFieldTypes = [
   { value: 'integer', name: 'integer', label: 'Integer' },
@@ -20,11 +21,13 @@ const BaseFieldTypes = [
 const ElementFieldTypes = [
   { value: 'drag_molecule', name: 'drag_molecule', label: 'Drag Molecule' },
   { value: 'drag_sample', name: 'drag_sample', label: 'Drag Sample' },
-  { value: 'input-group', name: 'input-group', label: 'Input Group' }
+  { value: 'input-group', name: 'input-group', label: 'Input Group' },
+  { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
 ];
 
 const SegmentFieldTypes = [
-  { value: 'input-group', name: 'input-group', label: 'Input Group' }
+  { value: 'input-group', name: 'input-group', label: 'Input Group' },
+  { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
 ];
 
 class ElementField extends Component {
@@ -129,7 +132,7 @@ class ElementField extends Component {
   }
 
   renderComponent() {
-    const { unitsSystem, layerKey, genericType } = this.props;
+    const { unitsSystem, layerKey, genericType, allLayers } = this.props;
     const unitConfig = (unitsSystem.fields || []).map(_c =>
       ({ value: _c.field, name: _c.label, label: _c.label }));
     let typeOpts = BaseFieldTypes;
@@ -158,7 +161,6 @@ class ElementField extends Component {
                 onChange={event => this.handleChange(event, f.label, f.field, this.props.layerKey, 'formula', 'text')}
               />
             </span>
-            {f.type === 'select' ? null : this.availableUnits(f.option_layers)}
           </div>
         </Col>
       </FormGroup>)
@@ -184,11 +186,19 @@ class ElementField extends Component {
       </FormGroup>)
       : (<div />);
     const skipRequired = ['Segment', 'Dataset'].includes(this.props.genericType) || !['integer', 'text'].includes(f.type) ? { display: 'none' } : {};
-    const groupOptions = f.type === 'input-group' ? (
+    const groupOptions = ['input-group'].includes(f.type) ? (
       <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
         <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
         <Col sm={9}>
           <GroupFields layerKey={layerKey} field={f} updSub={this.updSubField} />
+        </Col>
+      </FormGroup>
+    ) : null;
+    const textFormula = ['text-formula'].includes(f.type) ? (
+      <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_text_sub_fields`}>
+        <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
+        <Col sm={9}>
+          <TextFormula layerKey={layerKey} field={f} updSub={this.updSubField} allLayers={allLayers} />
         </Col>
       </FormGroup>
     ) : null;
@@ -237,6 +247,7 @@ class ElementField extends Component {
                 { groupOptions }
                 { selectOptions }
                 { formulaField }
+                { textFormula }
                 {
                   ['dummy'].includes(f.type) ? null : (
                     <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_required`} style={skipRequired}>
