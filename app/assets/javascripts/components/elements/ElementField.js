@@ -28,6 +28,7 @@ const ElementFieldTypes = [
 const SegmentFieldTypes = [
   { value: 'input-group', name: 'input-group', label: 'Input Group' },
   { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
+  { value: 'drag_molecule', name: 'drag_molecule', label: 'Drag Molecule' },
 ];
 
 class ElementField extends Component {

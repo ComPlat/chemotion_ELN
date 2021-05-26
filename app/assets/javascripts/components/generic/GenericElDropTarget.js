@@ -16,8 +16,12 @@ const handleSampleClick = (type, id) => {
 const show = (opt, iconClass) => {
   // let creationType
   if (opt.value && opt.value.el_id) {
+    const tips = opt.value.el_tip && opt.value.el_tip.split('@@');
+    const tip1 = (tips && tips.length >= 1 && tips[0]) || '';
+    const tip2 = (tips && tips.length >= 2 && tips[1]) || '';
+    const tit = (<div>{tip1}<br />{tip2}</div>);
     const pop = (
-      <Popover id="popover-svg" title={opt.value.el_tip} style={{ maxWidth: 'none', maxHeight: 'none' }}>
+      <Popover id="popover-svg" title={tit} style={{ maxWidth: 'none', maxHeight: 'none' }}>
         <img src={opt.value.el_svg} style={{ height: '26vh', width: '26vh' }} alt="" />
       </Popover>
     );
@@ -28,7 +32,7 @@ const show = (opt, iconClass) => {
           <img src={path} alt="" />
         </OverlayTrigger>&nbsp;<span className="data">{txt}</span>
       </div>
-    ) : (<OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{tip}</Tooltip>}><div className="data">{txt}</div></OverlayTrigger>));
+    ) : (<OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>{tip1}<br />{tip2}</Tooltip>}><div className="data">{txt}</div></OverlayTrigger>));
     if (opt.value.el_type === 'sample') {
       if (opt.value.is_new !== true) {
         label = (
@@ -58,7 +62,7 @@ const source = (type, props, id) => {
         el_id: props.molecule.id,
         el_type: 'molecule',
         el_label: props.molecule_name_label,
-        el_tip: props.molecule_name_label,
+        el_tip: `${props.molecule.inchikey}@@${props.molecule.cano_smiles}`,
       };
     case 'sample':
       return {
