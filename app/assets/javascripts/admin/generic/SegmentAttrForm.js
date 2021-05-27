@@ -26,7 +26,7 @@ export default class SegmentAttrForm extends Component {
       <Form horizontal className="input-form">
         <FormGroup controlId="formControlLabel">
           <InputGroup>
-            <InputGroup.Addon>Label</InputGroup.Addon>
+            <InputGroup.Addon>Segment Label</InputGroup.Addon>
             <FormControl type="text" defaultValue={element.label} inputRef={(ref) => { this.k_label = ref; }} />
           </InputGroup>
         </FormGroup>
@@ -38,16 +38,10 @@ export default class SegmentAttrForm extends Component {
         </FormGroup>
         <FormGroup controlId="formControlAssignKlass">
           <InputGroup>
-            <InputGroup.Addon>Assign to Klass</InputGroup.Addon>
+            <InputGroup.Addon>Assign to Element</InputGroup.Addon>
             <FormControl componentClass="select" value={element.element_klass && element.element_klass.id} inputRef={(ref) => { this.k_klass = ref; }} disabled={!editable} readOnly={!editable}>
               {klassOptions}
             </FormControl>
-          </InputGroup>
-        </FormGroup>
-        <FormGroup controlId="formControlSegmentPlace">
-          <InputGroup>
-            <InputGroup.Addon>Sequential position</InputGroup.Addon>
-            <FormControl type="number" defaultValue={element.place || 100} inputRef={(ref) => { this.k_place = ref; }} min={1} />
           </InputGroup>
         </FormGroup>
       </Form>

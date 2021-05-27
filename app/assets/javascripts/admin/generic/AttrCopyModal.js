@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Form, FormGroup, Modal, Button, OverlayTrigger } from 'react-bootstrap';
-import { Content, TipActive, TipInActive, TipDelete } from './AttrForm';
+import { Form, FormGroup, Modal, Button } from 'react-bootstrap';
+import { Content } from './AttrForm';
 
 export default class AttrCopyModal extends Component {
   constructor(props) {
@@ -17,20 +17,18 @@ export default class AttrCopyModal extends Component {
           label: this.formRef.current.k_label.value.trim(),
           desc: this.formRef.current.k_desc.value.trim(),
           element_klass: this.formRef.current.k_klass.value,
-          place: this.formRef.current.k_place.value,
           properties_template: element.properties_template
         };
         fnCopy(copy);
         break;
       }
-      case 'Klass': {
+      case 'Element': {
         const copy = {
           name: this.formRef.current.k_name.value.trim(),
           label: this.formRef.current.k_label.value.trim(),
           klass_prefix: this.formRef.current.k_prefix.value.trim(),
           icon_name: this.formRef.current.k_iconname.value.trim(),
           desc: this.formRef.current.k_desc.value.trim(),
-          place: this.formRef.current.k_place.value,
           properties_template: element.properties_template
         };
         fnCopy(copy);
@@ -51,7 +49,6 @@ export default class AttrCopyModal extends Component {
       klass_prefix: element.klass_prefix,
       icon_name: element.icon_name,
       desc: element.desc,
-      place: element.place,
       properties_template: element.properties_template
     };
 
@@ -62,7 +59,7 @@ export default class AttrCopyModal extends Component {
         </Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
-            <Content ref={this.formRef} content={content} element={copy} editable />;
+            <Content ref={this.formRef} content={content} element={copy} editable />
             <Form horizontal>
               <FormGroup>
                 &nbsp;

@@ -2,7 +2,7 @@ import React from 'react';
 import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
-import { findIndex, filter, sortBy } from 'lodash';
+import { findIndex, filter, sortBy, orderBy } from 'lodash';
 import LoadingModal from '../components/common/LoadingModal';
 import AdminFetcher from '../components/fetchers/AdminFetcher';
 import { ElementField } from '../components/elements/ElementField';
@@ -18,11 +18,11 @@ import { ButtonTooltip, validateLayerInput, validateSelectList, notification, re
 
 const validateInput = (element) => {
   if (element.klass_element === '') {
-    notification({ title: 'Create Segment Error', lvl: 'error', msg: 'Please select Klass.' });
+    notification({ title: 'Create Segment Error', lvl: 'error', msg: 'Please select Element.' });
     return false;
   }
   if (element.label === '') {
-    notification({ title: 'Create Segment Error', lvl: 'error', msg: 'Please input Label.' });
+    notification({ title: 'Create Segment Error', lvl: 'error', msg: 'Please input Segment Label.' });
     return false;
   }
   return true;
@@ -417,7 +417,7 @@ export default class SegmentElementAdmin extends React.Component {
         if (result.error) {
           notification({ title: 'Delete Segment fail', lvl: 'error', msg: result.error });
         } else {
-          notification({ title: `Klass [${element.name}]`, lvl: 'info', msg: 'Deleted successfully' });
+          notification({ title: `Segment [${element.name}]`, lvl: 'info', msg: 'Deleted successfully' });
           this.handleKlassClose();
           this.fetchElements();
         }
@@ -740,7 +740,8 @@ export default class SegmentElementAdmin extends React.Component {
 
   renderList() {
     const { elements } = this.state;
-    const tbody = elements && elements.map((e, idx) => (
+    const els = orderBy(elements, ['is_active', 'label'], ['desc', 'asc']);
+    const tbody = els && els.map((e, idx) => (
       <tbody key={`tbody_${e.id}`}>
         <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
           <td>{idx + 1}</td>
@@ -773,11 +774,11 @@ export default class SegmentElementAdmin extends React.Component {
               <tr style={{ backgroundColor: '#ddd' }}>
                 <th width="4%">#</th>
                 <th width="8%">Actions</th>
-                <th width="10%">Segment</th>
+                <th width="10%">Segment Label</th>
                 <th width="30%">Description</th>
                 <th width="8%">Active</th>
-                <th width="24%">Template</th>
-                <th width="10%">Belongs to</th>
+                <th width="10%">Template</th>
+                <th width="24%">Belongs to</th>
               </tr>
             </thead>
             { tbody }

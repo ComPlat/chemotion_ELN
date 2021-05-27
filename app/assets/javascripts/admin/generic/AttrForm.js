@@ -11,7 +11,7 @@ const Content = React.forwardRef((props, ref) => {
   switch (props.content) {
     case 'Segment':
       return <SegmentAttrForm ref={ref} element={props.element} editable={props.editable} />;
-    case 'Klass':
+    case 'Element':
       return <KlassAttrForm ref={ref} element={props.element} editable={props.editable} />;
     default:
       return <div>No content</div>;

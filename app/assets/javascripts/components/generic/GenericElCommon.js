@@ -73,7 +73,9 @@ class GenPropertiesLayer extends Component {
   }
 
   views() {
-    const { layer, selectOptions, id, layers } = this.props;
+    const {
+      layer, selectOptions, id, layers
+    } = this.props;
     const { cols, fields, key } = layer;
     const perRow = cols || 1;
     const col = Math.floor(12 / perRow);
@@ -145,7 +147,8 @@ GenPropertiesLayer.propTypes = {
   selectOptions: PropTypes.object,
   onChange: PropTypes.func.isRequired,
   onSubChange: PropTypes.func.isRequired,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
+  layers: PropTypes.arrayOf(PropTypes.object).isRequired
 };
 
 GenPropertiesLayer.defaultProps = {
@@ -173,7 +176,7 @@ class GenPropertiesLayerSearchCriteria extends Component {
   }
 
   views() {
-    const { layer, selectOptions } = this.props;
+    const { layer, selectOptions, layers } = this.props;
     const { cols, fields, key } = layer;
     const perRow = cols || 1;
     const col = Math.floor(12 / perRow);
@@ -198,6 +201,7 @@ class GenPropertiesLayerSearchCriteria extends Component {
             isEditable
             readOnly={false}
             isRequired={false}
+            layers={layers}
           />
         </Col>
       );
@@ -226,6 +230,7 @@ GenPropertiesLayerSearchCriteria.propTypes = {
   selectOptions: PropTypes.object,
   onSubChange: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
+  layers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
 GenPropertiesLayerSearchCriteria.defaultProps = {
