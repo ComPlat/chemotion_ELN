@@ -17,7 +17,7 @@ describe 'Collection management' do
       find('div.take-ownership-btn').click
 
       # press Add(plus) button to add collection
-      find('div.root-actions').find(:xpath, '..').all('button')[1].click
+      find('div.root-actions').find(:xpath, '..').all('button')[0].click
 
       # input collection name
       factory_collection_name = 'Hello Collection'

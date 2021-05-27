@@ -27,6 +27,7 @@ export default class MyCollections extends React.Component {
         action: null,
         collection: {},
         selectUsers: true,
+        isChange: false
       }
     }
 
@@ -56,7 +57,8 @@ export default class MyCollections extends React.Component {
 
   handleChange(tree) {
     this.setState({
-      tree: tree
+      tree: tree,
+      isChange: true
     });
   }
 
@@ -109,12 +111,10 @@ export default class MyCollections extends React.Component {
 
   actions(node) {
     if(node.id == -1) {
+      const { isChange } = this.state;
       return (
         <div className="root-actions">
-          <Button id="my-collections-update-btn" bsSize="xsmall" bsStyle="warning"
-            onClick={this.bulkUpdate.bind(this)}>
-            Update
-          </Button>
+          { isChange && <Button id="my-collections-update-btn" bsSize="xsmall" bsStyle="warning" onClick={this.bulkUpdate.bind(this)}> Save </Button> }
           {this.addButton(node)}
         </div>
       )
