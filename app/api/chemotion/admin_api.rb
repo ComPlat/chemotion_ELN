@@ -417,7 +417,7 @@ module Chemotion
           requires :label, type: String, desc: 'Segment Klass Label'
           requires :element_klass, type: Integer, desc: 'Element Klass Id'
           optional :desc, type: String, desc: 'Segment Klass Desc'
-          optional :place, type: String, desc: 'Segment Klass Place'
+          optional :place, type: String, desc: 'Segment Klass Place', default: '100'
           optional :properties_template, type: Hash, desc: 'Element Klass properties template'
         end
         after_validation do
@@ -446,7 +446,7 @@ module Chemotion
           requires :id, type: Integer, desc: 'Segment Klass ID'
           optional :label, type: String, desc: 'Segment Klass Label'
           optional :desc, type: String, desc: 'Segment Klass Desc'
-          optional :place, type: String, desc: 'Segment Klass Place'
+          optional :place, type: String, desc: 'Segment Klass Place', default: '100'
         end
         after_validation do
           @segment = SegmentKlass.find(params[:id])

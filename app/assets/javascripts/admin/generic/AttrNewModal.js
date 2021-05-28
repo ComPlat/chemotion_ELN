@@ -16,20 +16,18 @@ export default class AttrNewModal extends Component {
         const element = {
           label: this.formRef.current.k_label.value.trim(),
           desc: this.formRef.current.k_desc.value.trim(),
-          element_klass: this.formRef.current.k_klass.value,
-          place: this.formRef.current.k_place.value,
+          element_klass: this.formRef.current.k_klass.value
         };
         fnCreate(element);
         break;
       }
-      case 'Klass': {
+      case 'Element': {
         const element = {
           name: this.formRef.current.k_name.value.trim(),
           label: this.formRef.current.k_label.value.trim(),
           klass_prefix: this.formRef.current.k_prefix.value.trim(),
           icon_name: this.formRef.current.k_iconname.value.trim(),
-          desc: this.formRef.current.k_desc.value.trim(),
-          place: this.formRef.current.k_place.value
+          desc: this.formRef.current.k_desc.value.trim()
         };
         fnCreate(element);
         break;
@@ -46,7 +44,7 @@ export default class AttrNewModal extends Component {
         <Modal.Header closeButton><Modal.Title>{`New ${content}`}</Modal.Title></Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
-            <Content ref={this.formRef} content={content} element={{}} editable />;
+            <Content ref={this.formRef} content={content} element={{}} editable />
             <Form horizontal>
               <FormGroup>
                 <Button bsStyle="primary" onClick={() => this.handleCreate()}>Create&nbsp;<i className="fa fa-save" aria-hidden="true" /></Button>

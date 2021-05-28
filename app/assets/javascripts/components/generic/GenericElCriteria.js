@@ -34,6 +34,7 @@ const buildCriteria = (props) => {
           onSubChange={props.onSubChange}
           onChange={props.onChange}
           selectOptions={genericEl.properties_template.select_options || {}}
+          layers={sortedLayers}
         />
       );
       layout.push(ig);
@@ -61,6 +62,7 @@ const buildCriteria = (props) => {
             onSubChange={props.onSubChange}
             onChange={props.onChange}
             selectOptions={genericEl.properties_template.select_options || {}}
+            layers={sortedLayers}
           />
         );
         layout.push(igs);

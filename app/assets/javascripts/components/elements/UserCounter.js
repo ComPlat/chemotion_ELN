@@ -88,7 +88,7 @@ export default class UserCounter extends Component {
         <Panel.Heading><Panel.Title>Element Counter</Panel.Title></Panel.Heading>
         <Panel.Body>
           <Row>
-            <Col sm={2}><b><u>Klass Label</u></b></Col>
+            <Col sm={2}><b><u>Element Label</u></b></Col>
             <Col sm={1}><b><u>Prefix</u></b></Col>
             <Col sm={3}><b><u>Counter starts at</u></b></Col>
             <Col sm={2}><b><u>Next Label</u></b></Col>

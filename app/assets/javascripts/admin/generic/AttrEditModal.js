@@ -15,19 +15,17 @@ export default class AttrEditModal extends Component {
       case 'Segment': {
         const updates = {
           label: this.formRef.current.k_label.value.trim(),
-          desc: this.formRef.current.k_desc.value.trim(),
-          place: this.formRef.current.k_place.value
+          desc: this.formRef.current.k_desc.value.trim()
         };
         fnUpdate(element, updates);
         break;
       }
-      case 'Klass': {
+      case 'Element': {
         const updates = {
           label: this.formRef.current.k_label.value.trim(),
           klass_prefix: this.formRef.current.k_prefix.value.trim(),
           icon_name: this.formRef.current.k_iconname.value.trim(),
-          desc: this.formRef.current.k_desc.value.trim(),
-          place: this.formRef.current.k_place.value
+          desc: this.formRef.current.k_desc.value.trim()
         };
         fnUpdate(element, updates);
         break;
@@ -48,7 +46,7 @@ export default class AttrEditModal extends Component {
         </Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
-            <Content ref={this.formRef} content={content} element={element} editable={false} />;
+            <Content ref={this.formRef} content={content} element={element} editable={false} />
             <Form horizontal>
               <FormGroup>
                 <OverlayTrigger placement="bottom" overlay={TipDelete(content)} >
