@@ -3,10 +3,15 @@ import CollectionStore from './stores/CollectionStore';
 import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
+import UserStore from './stores/UserStore';
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
   UserActions.fetchCurrentUser();
+  const { profile } = UserStore.getState();
+  if (!profile) {
+    UserActions.fetchProfile();
+  }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
   const collectionId = e.params['collectionID'];
@@ -47,6 +52,10 @@ const collectionShowCollectionManagement = () => {
 const scollectionShow = (e) => {
   UIActions.showElements();
   UserActions.fetchCurrentUser();
+  const { profile } = UserStore.getState();
+  if (!profile) {
+    UserActions.fetchProfile();
+  }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
   const collectionId = e.params['collectionID'];
