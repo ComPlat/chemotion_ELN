@@ -1,3 +1,4 @@
+import React from 'react';
 import Element from './Element';
 import Well from './Well';
 import Container from './Container';
@@ -105,6 +106,10 @@ export default class Wellplate extends Element {
   }
 
   title() {
-    return this.name;
+    return (
+      <span>
+        <span>{this.short_label}</span>
+        <span>{`  ${this.name}`}</span>
+      </span>);
   }
 }

@@ -24,9 +24,7 @@
 class Well < ApplicationRecord
   acts_as_paranoid
   belongs_to :wellplate
-  belongs_to :sample
-
-  # TODO: fix validator for sample
+  belongs_to :sample, optional: true
 
   def self.get_samples_in_wellplates(wellplate_ids)
     where(wellplate_id: wellplate_ids).pluck(:sample_id).compact.uniq
