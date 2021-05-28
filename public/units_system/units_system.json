@@ -6,7 +6,7 @@
       "label": "Acceleration",
       "default": "",
       "position": 10,
-      "placeholder": "Please input acceleration",
+      "placeholder": "acceleration",
       "units": [
         { "key": "mm_s2", "label": "mm/s<sup>2</sup>" }
       ]
@@ -17,7 +17,7 @@
       "label": "Agitation",
       "default": "",
       "position": 20,
-      "placeholder": "Please input agitation",
+      "placeholder": "agitation",
       "units": [
         { "key": "rpm", "label": "rpm" }
       ]
@@ -28,7 +28,7 @@
       "label": "Amount enzyme as nmol/min",
       "default": "",
       "position": 30,
-      "placeholder": "Please input amount enzyme as nmol/min",
+      "placeholder": "amount enzyme as nmol/min",
       "units": [
         { "key": "u", "label": "U" },
         { "key": "mu", "label": "mU" }
@@ -40,7 +40,7 @@
       "label": "Chem. concentration (Molarity)",
       "default": "",
       "position": 40,
-      "placeholder": "Please input molarity",
+      "placeholder": "molarity",
       "units": [
         { "key": "mol_l", "label": "mol/L (M)", "nm": 1 },
         { "key": "mmol_l", "label": "mmol/L (mM)", "nm": 1000 },
@@ -54,7 +54,7 @@
       "label": "Chem. distances",
       "default": "",
       "position": 50,
-      "placeholder": "Please input Chem. distances",
+      "placeholder": "Chem. distances",
       "units": [
         { "key": "angstrom", "label": "Å" }
       ]
@@ -65,7 +65,7 @@
       "label": "Concentration",
       "default": "",
       "position": 60,
-      "placeholder": "Please input concentration",
+      "placeholder": "concentration",
       "units": [
         { "key": "ng_l", "label": "ng/L", "nm": 1000000 },
         { "key": "mg_l", "label": "mg/L", "nm": 1000 },
@@ -78,7 +78,7 @@
       "label": "Conductivity",
       "default": "",
       "position": 66,
-      "placeholder": "Please input conductivity",
+      "placeholder": "conductivity",
       "units": [
         { "key": "s_m", "label": "S/m", "nm": 1 }
       ]
@@ -89,9 +89,21 @@
       "label": "Degree",
       "default": "",
       "position": 70,
-      "placeholder": "Please input degree",
+      "placeholder": "degree",
       "units": [
         { "key": "degree", "label": "°" }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "density",
+      "label": "Density",
+      "default": "",
+      "position": 75,
+      "placeholder": "density",
+      "units": [
+        { "key": "g_cm3", "label": "g/cm<sup>3</sup>", "nm": 1 },
+        { "key": "kg_l", "label": "kg/l", "nm": 1 }
       ]
     },
     {
@@ -100,7 +112,7 @@
       "label": "Duration",
       "default": "",
       "position": 80,
-      "placeholder": "Please input duration",
+      "placeholder": "duration",
       "units": [
         { "key": "d", "label": "day(s)", "nm": 1 },
         { "key": "h", "label": "hour(s)", "nm": 24 },
@@ -114,7 +126,7 @@
       "label": "Elastic modulus",
       "default": "",
       "position": 86,
-      "placeholder": "Please input Elastic modulus",
+      "placeholder": "Elastic modulus",
       "units": [
         { "key": "m_pa", "label": "MPa", "nm": 1 },
         { "key": "k_pa", "label": "kPa", "nm": 1000 },
@@ -127,7 +139,7 @@
       "label": "Enzyme activity",
       "default": "",
       "position": 90,
-      "placeholder": "Please input Enzyme activity",
+      "placeholder": "Enzyme activity",
       "units": [
         { "key": "u_l", "label": "U/L", "nm": 1 },
         { "key": "u_ml", "label": "U/mL", "nm": 1000 }
@@ -139,7 +151,7 @@
       "label": "Frequency",
       "default": "",
       "position": 100,
-      "placeholder": "Please input frequency",
+      "placeholder": "frequency",
       "units": [
         { "key": "hz", "label": "Hz", "nm": 1000 },
         { "key": "khz", "label": "kHz", "nm": 1 }
@@ -151,7 +163,7 @@
       "label": "Heating rate",
       "default": "",
       "position": 106,
-      "placeholder": "Please input heating rate",
+      "placeholder": "heating rate",
       "units": [
         { "key": "k_min", "label": "K/min", "nm": 1 }
       ]
@@ -162,7 +174,7 @@
       "label": "Length",
       "default": "",
       "position": 110,
-      "placeholder": "Please input length",
+      "placeholder": "length",
       "units": [
         { "key": "pm", "label": "pm", "nm": 100000 },
         { "key": "nm", "label": "nm", "nm": 10000 },
@@ -177,7 +189,7 @@
       "label": "Mass",
       "default": "",
       "position": 120,
-      "placeholder": "Please input mass",
+      "placeholder": "mass",
       "units": [
         { "key": "g", "label": "g", "nm": 1 },
         { "key": "mg", "label": "mg", "nm": 1000 },
@@ -190,7 +202,7 @@
       "label": "Mass of molecule",
       "default": "",
       "position": 126,
-      "placeholder": "Please input mass of molecule",
+      "placeholder": "mass of molecule",
       "units": [
         { "key": "dalton", "label": "D", "nm": 1000 },
         { "key": "kilo_dalton", "label": "kD", "nm": 1 }
@@ -202,7 +214,7 @@
       "label": "Molecular weight",
       "default": "",
       "position": 130,
-      "placeholder": "Please input Molecular weight",
+      "placeholder": "Molecular weight",
       "units": [
         { "key": "g_mol", "label": "g/mol" }
       ]
@@ -213,7 +225,7 @@
       "label": "Percentage",
       "default": "",
       "position": 136,
-      "placeholder": "Please input percentage",
+      "placeholder": "percentage",
       "units": [
         { "key": "p", "label": "%", "nm": 1 }
       ]
@@ -224,7 +236,7 @@
       "label": "Pressure",
       "default": "",
       "position": 140,
-      "placeholder": "Please input pressure",
+      "placeholder": "pressure",
       "units": [
         { "key": "atm", "label": "atm", "nm": 1 },
         { "key": "pa", "label": "Pa", "nm": 101325 },
@@ -237,7 +249,7 @@
       "label": "Reaction rate",
       "default": "",
       "position": 150,
-      "placeholder": "Please input Reaction rate",
+      "placeholder": "Reaction rate",
       "units": [
         { "key": "mol_lmin", "label": "mol/Lmin", "nm": 1 },
         { "key": "mol_lsec", "label": "mol/Ls", "nm": 60 }
@@ -245,11 +257,22 @@
     },
     {
       "type": "numeric",
+      "field": "specific_volume",
+      "label": "Specific Volume",
+      "default": "",
+      "position": 160,
+      "placeholder": "Specific Volume",
+      "units": [
+        { "key": "cm3_g", "label": "cm<sup>3</sup>/g", "nm": 1 }
+      ]
+    },
+    {
+      "type": "numeric",
       "field": "speed",
       "label": "Speed",
       "default": "",
-      "position": 160,
-      "placeholder": "Please input speed",
+      "position": 165,
+      "placeholder": "speed",
       "units": [
         { "key": "cm_s", "label": "cm/s", "nm": 1 },
         { "key": "mm_s", "label": "mm/s", "nm": 10 },
@@ -263,7 +286,7 @@
       "label": "Surface",
       "default": "",
       "position": 170,
-      "placeholder": "Please input surface",
+      "placeholder": "surface",
       "units": [
         { "key": "a_2", "label": "A<sup>2</sup>" },
         { "key": "mm_2", "label": "mm<sup>2</sup>" },
@@ -276,7 +299,7 @@
       "label": "Temperature",
       "default": "",
       "position": 180,
-      "placeholder": "Please input temperature",
+      "placeholder": "temperature",
       "units": [
         { "key": "C", "label": "°C" },
         { "key": "F", "label": "°F" },
@@ -289,7 +312,7 @@
       "label": "Turnover number",
       "default": "",
       "position": 190,
-      "placeholder": "Please input Turnover number",
+      "placeholder": "Turnover number",
       "units": [
         { "key": "1_s", "label": "1/s" }
       ]
@@ -297,12 +320,24 @@
     {
       "type": "numeric",
       "field": "viscosity",
-      "label": "Viscosity",
+      "label": "Dynamic Viscosity",
       "default": "",
       "position": 200,
-      "placeholder": "Please input viscosity",
+      "placeholder": "Dynamic Viscosity",
       "units": [
-        { "key": "ml_g", "label": "mL/g", "nm": 1 }
+        { "key": "pa", "label": "Pa", "nm": 1 },
+        { "key": "mpa", "label": "mPa", "nm": 1000 }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "kinematic_viscosity",
+      "label": "Kinematic Viscosity",
+      "default": "",
+      "position": 205,
+      "placeholder": "Kinematic Viscosity",
+      "units": [
+        { "key": "m2_s", "label": "m<sup>2</sup>/s", "nm": 1 }
       ]
     },
     {
@@ -311,7 +346,7 @@
       "label": "Voltage",
       "default": "",
       "position": 200,
-      "placeholder": "Please input voltage",
+      "placeholder": "voltage",
       "units": [
         { "key": "mv", "label": "mV", "nm": 1000 },
         { "key": "v", "label": "V", "nm": 1 }
@@ -323,7 +358,7 @@
       "label": "Volumes",
       "default": "",
       "position": 210,
-      "placeholder": "Please input volume",
+      "placeholder": "volume",
       "units": [
         { "key": "l", "label": "l", "nm": 1 },
         { "key": "ml", "label": "ml", "nm": 1000 },
