@@ -1,8 +1,9 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
-import { Tooltip, OverlayTrigger, Table, Popover } from 'react-bootstrap';
-import { filter } from 'lodash';
-import ElementContainer from './ElementContainer'
+import { Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
+import classnames from 'classnames';
+
+import ElementContainer from './ElementContainer';
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
@@ -13,7 +14,6 @@ import ElementStore from './stores/ElementStore';
 import KeyboardStore from './stores/KeyboardStore';
 
 import DragDropItemTypes from './DragDropItemTypes';
-import classnames from 'classnames';
 import XTdCont from './extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from './routesUtils';
 import SvgWithPopover from './common/SvgWithPopover';
@@ -21,10 +21,10 @@ import SvgWithPopover from './common/SvgWithPopover';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       keyboardElementIndex: null
-    }
+    };
 
     this.entriesOnKeyDown = this.entriesOnKeyDown.bind(this)
   }
@@ -39,7 +39,7 @@ export default class ElementsTableEntries extends Component {
 
   entriesOnKeyDown(state) {
     let context = state.context
-    const {elements} = this.props;
+    const { elements } = this.props;
 
     if (elements[0] == null || context != elements[0].type)
       return false
@@ -323,32 +323,36 @@ export default class ElementsTableEntries extends Component {
   }
 
   render() {
-    const {elements} = this.props;
-    let {keyboardElementIndex} = this.state
+    const { elements } = this.props;
+    const { keyboardElementIndex } = this.state;
 
     return (
-      <Table className="elements" bordered hover style={{borderTop: 0}}>
+      <Table className="elements" bordered hover style={{ borderTop: 0 }}>
         <tbody>
-        {elements.map((element, index) => {
-          const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
-          let style = {};
-          if (this.isElementSelected(element) ||
-             (keyboardElementIndex != null && keyboardElementIndex == index)) {
-            style = {
-            color: '#000',
-            background: '#ddd',
-            border: '4px solid #337ab7'
+          {elements.map((element, index) => {
+            const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name: '';
+            let style = {};
+            if (this.isElementSelected(element) ||
+              (keyboardElementIndex != null && keyboardElementIndex === index)) {
+              style = {
+              color: '#000',
+              background: '#ddd',
+              border: '4px solid #337ab7'
+              };
             }
-          }
 
-          return (
-            <tr key={index} style={style}>
-              <td width="30px">
-                <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
-              </td>
-              <td onClick={e => this.showDetails(element)} style={{ cursor: 'pointer' }} width={element.type === 'research_plan' ? '280px': 'unset'}>
-                <div>
-                  {
+            return (
+              <tr key={index} style={style}>
+                <td width="30px">
+                  <ElementCheckbox
+                    element={element}
+                    key={element.id}
+                    checked={this.isElementChecked(element)}
+                  /><br />
+                </td>
+                <td onClick={e => this.showDetails(element)} style={{ cursor: 'pointer' }} width={element.type === 'research_plan' ? '280px': 'unset'}>
+                  <div>
+                    {
                       <SvgWithPopover
                         hasPop={['reaction'].includes(element.type)}
                         preivewObject={{
@@ -360,24 +364,25 @@ export default class ElementsTableEntries extends Component {
                           title: (element.type === 'reaction' && element.short_label) || '',
                           src: element.svgPath,
                           height: '26vh',
-                          width: '52vw' }}
+                          width: '52vw'
+                        }}
                       />
-                  }
-                  {this.reactionStatus(element)}
-                  {' '}
-                  {this.reactionRole(element)}
-                  <br/>
-                  {sampleMoleculeName}
-                  <ElementCollectionLabels element={element} key={element.id}/>
-                  {this.sampleAnalysesLabels(element)}
-                  {this.topSecretIcon(element)}
-                </div>
-              </td>
-              {this.previewColumn(element)}
-              {this.dragColumn(element)}
-            </tr>
-          )
-        })}
+                    }
+                    {this.reactionStatus(element)}
+                    {' '}
+                    {this.reactionRole(element)}
+                    <br />
+                    {sampleMoleculeName}
+                    <ElementCollectionLabels element={element} key={element.id}/>
+                    {this.sampleAnalysesLabels(element)}
+                    {this.topSecretIcon(element)}
+                  </div>
+                </td>
+                {this.previewColumn(element)}
+                {this.dragColumn(element)}
+              </tr>
+            );
+          })}
         </tbody>
       </Table>
     );

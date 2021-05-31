@@ -5,7 +5,7 @@ import Container from './Container';
 
 export default class Wellplate extends Element {
   constructor(args) {
-    super(args)
+    super(args);
     this.wells = this.initWellsWithPosition(this.wells, 96);
     this._checksum = this.checksum();
   }
@@ -85,7 +85,7 @@ export default class Wellplate extends Element {
   initWellsWithPosition(wells, size) {
     const placeholdersCount = size - wells.length;
     const placeholders = Array(placeholdersCount).fill({});
-    let allWells = wells.concat(placeholders);
+    const allWells = wells.concat(placeholders);
     return allWells.map((well, i) => this.initWellWithPositionByIndex(well, i));
   }
 
