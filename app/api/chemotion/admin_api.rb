@@ -513,7 +513,6 @@ module Chemotion
         route_param :id do
           before do
             @segment = SegmentKlass.find(params[:id])
-            error!('401 Unauthorized', 401) unless @segment&.created_by == current_user.id
           end
           delete do
             @segment&.destroy!

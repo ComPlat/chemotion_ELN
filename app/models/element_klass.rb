@@ -20,7 +20,7 @@
 
 class ElementKlass < ActiveRecord::Base
   acts_as_paranoid
-  has_many :elements
+  has_many :elements, dependent: :destroy
   has_many :segment_klasses
 
   def self.gen_klasses_json

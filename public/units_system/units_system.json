@@ -325,8 +325,8 @@
       "position": 200,
       "placeholder": "Dynamic Viscosity",
       "units": [
-        { "key": "pa", "label": "Pa", "nm": 1 },
-        { "key": "mpa", "label": "mPa", "nm": 1000 }
+        { "key": "pas", "label": "Pas", "nm": 1 },
+        { "key": "mpas", "label": "mPas", "nm": 1000 }
       ]
     },
     {
