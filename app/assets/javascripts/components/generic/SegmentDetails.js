@@ -12,7 +12,7 @@ const addSegmentTabs = (element, onChange, contentMap) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   if (!MatrixCheck(currentUser.matrix, 'segment')) return [];
   let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
-  segmentKlasses = segmentKlasses.filter(s => s.element_klass.name === element.type);
+  segmentKlasses = segmentKlasses.filter(s => s.element_klass && s.element_klass.name === element.type);
   segmentKlasses.forEach((klass) => {
     const ttl = (
       <Tooltip id="tooltip">
@@ -46,7 +46,7 @@ const SegmentTabs = (element, onChange, init = 0) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   if (!MatrixCheck(currentUser.matrix, 'segment')) return [];
   let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
-  segmentKlasses = segmentKlasses.filter(s => s.element_klass.name === element.type);
+  segmentKlasses = segmentKlasses.filter(s => s.element_klass && s.element_klass.name === element.type);
   segmentKlasses.forEach((klass) => {
     const ttl = (
       <Tooltip id="tooltip">
