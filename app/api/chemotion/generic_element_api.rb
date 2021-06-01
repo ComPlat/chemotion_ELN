@@ -51,22 +51,20 @@ module Chemotion
       get do
         scope = if params[:collection_id]
           begin
-            collection_id = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
-              .find(params[:collection_id])&.id
-            element_ids = CollectionsElement.get_elements_by_collection_type(collection_id, params[:el_type])
-            elements = Element.where(id: element_ids)
+            collection_id = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).find(params[:collection_id])&.id
+            Element.joins(:element_klass, :collections_elements).where('element_klasses.name = ? and collections_elements.collection_id = ?', params[:el_type], collection_id)
           rescue ActiveRecord::RecordNotFound
             Element.none
           end
         elsif params[:sync_collection_id]
           begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
-              .collection.elements
+            collection_id = current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection&.id
+            Element.joins(:element_klass, :collections_elements).where('element_klasses.name = ? and collections_elements.collection_id = (?)', params[:el_type], collection_id)
           rescue ActiveRecord::RecordNotFound
             Element.none
           end
         else
-          Element.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
+          Element.none
         end.includes(:tag, collections: :sync_collections_users).order("created_at DESC")
 
         from = params[:from_date]
