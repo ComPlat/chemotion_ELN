@@ -1,7 +1,10 @@
-import Element from './Element';
+import uuid from 'uuid';
 
-export default class GenericSubField extends Element {
-  static buildEmpty() {
-    return new GenericSubField({ type: 'text', value: '' });
+export default class GenericSubField {
+  constructor(args) {
+    Object.assign(this, args);
+    if (!this.id) { this.id = GenericSubField.buildID(); }
   }
+
+  static buildID() { return uuid.v1(); }
 }

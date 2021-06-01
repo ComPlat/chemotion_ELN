@@ -110,9 +110,9 @@ export default class GenericElDetails extends Component {
               newProps[key].fields[idx].value = undefined;
             } else {
               const nSubs = newProps[key].fields[idx].sub_fields || [];
-              const cSubs = genericEl.properties[key].fields[curIdx].sub_fields;
+              const cSubs = genericEl.properties[key].fields[curIdx].sub_fields || [];
               const exSubs = [];
-              if (nSubs.length < 1 || cSubs.length < 1) {
+              if (nSubs.length < 1) {
                 newProps[key].fields[idx].value = undefined;
               } else {
                 nSubs.forEach((nSub) => {
@@ -123,7 +123,7 @@ export default class GenericElDetails extends Component {
                       exSubs.push(nSub);
                     } else { exSubs.push({ ...nSub, value: (hitSub.value || '').toString() }); }
                   }
-                  if (nSub.type === 'number') { exSubs.push({ ...nSub, value: toNum(hitSub.value) }); }
+                  if (['number', 'system-defined'].includes(nSub.type)) { exSubs.push({ ...nSub, value: toNum(hitSub.value) }); }
                 });
               }
               newProps[key].fields[idx].sub_fields = exSubs;

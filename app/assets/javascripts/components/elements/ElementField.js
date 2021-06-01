@@ -191,7 +191,7 @@ class ElementField extends Component {
       <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
         <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
         <Col sm={9}>
-          <GroupFields layerKey={layerKey} field={f} updSub={this.updSubField} />
+          <GroupFields layerKey={layerKey} field={f} updSub={this.updSubField} unitsFields={(unitsSystem.fields || [])} />
         </Col>
       </FormGroup>
     ) : null;
