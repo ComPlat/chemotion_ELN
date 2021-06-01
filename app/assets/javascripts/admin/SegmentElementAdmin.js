@@ -10,6 +10,7 @@ import LoadingActions from '../components/actions/LoadingActions';
 import AttrNewModal from './generic/AttrNewModal';
 import AttrEditModal from './generic/AttrEditModal';
 import AttrCopyModal from './generic/AttrCopyModal';
+import FieldCondEditModal from './generic/FieldCondEditModal';
 import TemplateJsonModal from './generic/TemplateJsonModal';
 import LayerAttrEditModal from './generic/LayerAttrEditModal';
 import LayerAttrNewModal from './generic/LayerAttrNewModal';
@@ -46,6 +47,7 @@ export default class SegmentElementAdmin extends React.Component {
       showNewKlass: false,
       showEditKlass: false,
       showCopyKlass: false,
+      showFieldCond: false,
       showJson: false
     };
 
@@ -79,12 +81,15 @@ export default class SegmentElementAdmin extends React.Component {
     this.onDummyAdd = this.onDummyAdd.bind(this);
     this.onFieldDrop = this.onFieldDrop.bind(this);
     this.onFieldMove = this.onFieldMove.bind(this);
+    this.onShowFieldCond = this.onShowFieldCond.bind(this);
+    this.handleFieldCondClose = this.handleFieldCondClose.bind(this);
     this.onFieldInputChange = this.onFieldInputChange.bind(this);
     this.onOptionInputChange = this.onOptionInputChange.bind(this);
     this.showJsonModal = this.showJsonModal.bind(this);
     this.hideJsonModal = this.hideJsonModal.bind(this);
     this.handleUpdateJson = this.handleUpdateJson.bind(this);
     this.fetchConfigs = this.fetchConfigs.bind(this);
+    this.handleCond = this.handleCond.bind(this);
     this.onFieldSubFieldChange = this.onFieldSubFieldChange.bind(this);
   }
 
@@ -120,6 +125,11 @@ export default class SegmentElementAdmin extends React.Component {
     fields.splice(idx + 1, 0, new GenericDummy());
     element.properties_template.layers[e.l].fields = fields;
     this.setState({ element });
+  }
+
+  onShowFieldCond(field, lk) {
+    const { element } = this.state;
+    this.setState({ showFieldCond: true, fieldObj: field, layerKey: lk });
   }
 
   onFieldDrop(e) {
@@ -228,6 +238,15 @@ export default class SegmentElementAdmin extends React.Component {
   handlePropClose() {
     this.setState({ showPropModal: false });
   }
+
+  handleFieldCondClose() {
+    this.setState({ showFieldCond: false });
+  }
+
+  handleCond(lk) {
+    this.onShowFieldCond(null, lk);
+  }
+
 
   addLayer() {
     this.setState({ showNewLayer: true });
@@ -653,9 +672,15 @@ export default class SegmentElementAdmin extends React.Component {
           unitsSystem={unitsSystem}
           onFieldSubFieldChange={this.onFieldSubFieldChange}
           onDummyAdd={this.onDummyAdd}
+          onShowFieldCond={(field, lk) => this.onShowFieldCond(field, lk)}
           allLayers={sortedLayers}
         />
       )) || [];
+
+      const hasCond = (layer && layer.cond_fields && layer.cond_fields.length > 0) || false;
+      const btnCond = hasCond ?
+        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} bs="warning" element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />) :
+        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />);
 
       const node = (
         <Panel className="panel_generic_properties" defaultExpanded key={`idxLayer_${layerKey}`}>
@@ -667,6 +692,7 @@ export default class SegmentElementAdmin extends React.Component {
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
                   <InputGroup.Button>
+                    {btnCond}
                     <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" size="sm" />
                     {this.renderDeleteButton('Layer', layerKey, null)}
                   </InputGroup.Button>
@@ -792,6 +818,9 @@ export default class SegmentElementAdmin extends React.Component {
     const { element, layerKey } = this.state;
     const layer = (element && element.properties_template
       && element.properties_template.layers[layerKey]) || {};
+
+    const sortedLayers = (element && element.properties_template && element.properties_template.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
+
     return (
       <div>
         <Button bsStyle="primary" bsSize="small" onClick={() => this.newKlass()}>
@@ -838,6 +867,18 @@ export default class SegmentElementAdmin extends React.Component {
             fnDelete={this.handleDeleteKlass}
             fnActivate={this.handleActivateKlass}
             fnUpdate={this.handleUpdateKlass}
+          />
+          <FieldCondEditModal
+            showModal={this.state.showFieldCond}
+            layer={layer}
+            allLayers={sortedLayers}
+            layerKey={this.state.layerKey}
+            updSub={this.updSubField}
+            updLayer={this.updLayerSubField}
+            field={this.state.fieldObj}
+            element={this.state.element}
+            fnClose={this.handleFieldCondClose}
+            fnUpdate={this.handleUpdateLayer}
           />
           <AttrCopyModal
             content="Segment"

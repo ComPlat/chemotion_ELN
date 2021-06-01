@@ -43,17 +43,6 @@ export default class LayerAttrForm extends Component {
             <FormControl type="number" defaultValue={layer.position} inputRef={(ref) => { this.lf_position = ref; }} min={1} />
           </InputGroup>
         </FormGroup>
-        <FormGroup controlId="formControlLayerCondition">
-          <InputGroup>
-            <InputGroup.Addon>Restriction</InputGroup.Addon>
-            <FormControl type="text" defaultValue={layer.condition} inputRef={(ref) => { this.lf_condition = ref; }} />
-          </InputGroup>
-          <div className="help">
-            Set layer present conditions<br />
-            Restriction should be in the format as &apos;layer name, field name, field value&apos;<br />
-            E.g. my_layer,my_field,1000
-          </div>
-        </FormGroup>
         <FormGroup controlId="formControlLayerColor">
           <InputGroup>
             <InputGroup.Addon>Header color</InputGroup.Addon>

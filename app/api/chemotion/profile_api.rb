@@ -34,7 +34,11 @@ module Chemotion
             end
           end
           new_layout = new_layout.select { |e| available_elments.include?(e) }
-          data[:layout] = new_layout.sort_by { |_k, v| v }.to_h
+          sorted_layout = {}
+          new_layout.select { |_k, v| v > 0 }.sort_by { |_k, v| v }.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
+          new_layout.select { |_k, v| v < 0 }.sort_by { |_k, v| -v }.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
+
+          data[:layout] = sorted_layout
         end
 
         {
@@ -47,7 +51,7 @@ module Chemotion
       desc 'update user profile'
       params do
         optional :data, type: Hash do
-          optional :layout, type: Hash, profile_layout_hash: true 
+          optional :layout, type: Hash, profile_layout_hash: true
           optional :layout_detail_research_plan, type: Hash, profile_layout_hash: true
           optional :layout_detail_reaction, type: Hash, profile_layout_hash: true
           optional :layout_detail_sample, type: Hash, profile_layout_hash: true

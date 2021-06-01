@@ -10,6 +10,7 @@ import LoadingActions from '../components/actions/LoadingActions';
 import TemplateJsonModal from './generic/TemplateJsonModal';
 import LayerAttrEditModal from './generic/LayerAttrEditModal';
 import LayerAttrNewModal from './generic/LayerAttrNewModal';
+import FieldCondEditModal from './generic/FieldCondEditModal';
 import SelectAttrNewModal from './generic/SelectAttrNewModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
 
@@ -27,6 +28,7 @@ export default class DatasetElementAdmin extends React.Component {
       showPropModal: false,
       showNewLayer: false,
       showEditLayer: false,
+      showCopyKlass: false,
       showAddSelect: false,
       showJson: false
     };
@@ -55,6 +57,9 @@ export default class DatasetElementAdmin extends React.Component {
     this.showJsonModal = this.showJsonModal.bind(this);
     this.hideJsonModal = this.hideJsonModal.bind(this);
     this.handleUpdateJson = this.handleUpdateJson.bind(this);
+    this.onShowFieldCond = this.onShowFieldCond.bind(this);
+    this.handleFieldCondClose = this.handleFieldCondClose.bind(this);
+    this.handleCond = this.handleCond.bind(this);
     this.fetchConfigs = this.fetchConfigs.bind(this);
     this.handleDeActive = this.handleDeActive.bind(this);
   }
@@ -91,6 +96,11 @@ export default class DatasetElementAdmin extends React.Component {
     fields.splice(idx + 1, 0, new GenericDummy());
     element.properties_template.layers[e.l].fields = fields;
     this.setState({ element });
+  }
+
+  onShowFieldCond(field, lk) {
+    const { element } = this.state;
+    this.setState({ showFieldCond: true, fieldObj: field, layerKey: lk });
   }
 
   onFieldDrop(e) {
@@ -227,6 +237,14 @@ export default class DatasetElementAdmin extends React.Component {
 
   handlePropClose() {
     this.setState({ showPropModal: false });
+  }
+
+  handleFieldCondClose() {
+    this.setState({ showFieldCond: false });
+  }
+
+  handleCond(lk) {
+    this.onShowFieldCond(null, lk);
   }
 
   addLayer() {
@@ -528,9 +546,14 @@ export default class DatasetElementAdmin extends React.Component {
           onChange={(e, orig, fe, lk, fc, tp) => this.onFieldInputChange(e, orig, fe, lk, fc, tp)}
           unitsSystem={unitsSystem}
           onDummyAdd={this.onDummyAdd}
+          onShowFieldCond={(field, lk) => this.onShowFieldCond(field, lk)}
           allLayers={sortedLayers}
         />
       )) || [];
+      const hasCond = (layer && layer.cond_fields && layer.cond_fields.length > 0) || false;
+      const btnCond = hasCond ?
+        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} bs="warning" element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />) :
+        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />);
 
       const node = (
         <Panel className="panel_generic_properties" defaultExpanded key={`idxLayer_${layerKey}`}>
@@ -542,6 +565,7 @@ export default class DatasetElementAdmin extends React.Component {
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
                   <InputGroup.Button>
+                    {btnCond}
                     <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" size="sm" />
                     {this.renderDeleteButton('Layer', layerKey, null)}
                   </InputGroup.Button>
@@ -652,6 +676,8 @@ export default class DatasetElementAdmin extends React.Component {
     const { element, layerKey } = this.state;
     const layer = (element && element.properties_template
       && element.properties_template.layers[layerKey]) || {};
+    const sortedLayers = (element && element.properties_template && element.properties_template.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
+
     return (
       <div>
         <div className="list-container-bottom">
@@ -671,6 +697,18 @@ export default class DatasetElementAdmin extends React.Component {
             showModal={this.state.showEditLayer}
             layer={layer}
             fnClose={this.handleLayerClose}
+            fnUpdate={this.handleUpdateLayer}
+          />
+          <FieldCondEditModal
+            showModal={this.state.showFieldCond}
+            layer={layer}
+            allLayers={sortedLayers}
+            layerKey={this.state.layerKey}
+            updSub={this.updSubField}
+            updLayer={this.updLayerSubField}
+            field={this.state.fieldObj}
+            element={this.state.element}
+            fnClose={this.handleFieldCondClose}
             fnUpdate={this.handleUpdateLayer}
           />
           <TemplateJsonModal

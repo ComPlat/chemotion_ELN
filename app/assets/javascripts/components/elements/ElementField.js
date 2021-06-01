@@ -39,6 +39,7 @@ class ElementField extends Component {
     this.handelDelete = this.handelDelete.bind(this);
     this.handleMove = this.handleMove.bind(this);
     this.handleAddDummy = this.handleAddDummy.bind(this);
+    this.handleCond = this.handleCond.bind(this);
     this.updSubField = this.updSubField.bind(this);
   }
 
@@ -58,6 +59,11 @@ class ElementField extends Component {
 
   handleAddDummy(element) {
     this.props.onDummyAdd(element);
+  }
+
+  handleCond(field, lk) {
+    this.props.onShowFieldCond(field, lk);
+    //this.setState({ showFieldRestriction: true, element: element });
   }
 
   handelDelete(delStr, delKey, delRoot) {
@@ -149,6 +155,10 @@ class ElementField extends Component {
     }
     typeOpts.sort((a, b) => a.value.localeCompare(b.value));
     const f = this.props.field;
+    const hasCond = (f && f.cond_fields && f.cond_fields.length > 0) || false;
+    const btnCond = hasCond ?
+      (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(f, layerKey)} bs="warning" element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />) :
+      (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(f, layerKey)} element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />)
     const formulaField = (f.type === 'formula-field') ? (
       <FormGroup controlId="formControlFieldType">
         <Col componentClass={ControlLabel} sm={3}>Formula</Col>
@@ -212,6 +222,7 @@ class ElementField extends Component {
               {['dummy'].includes(f.type) ? '(dummy field)' : f.field}
             </Panel.Title>
             <ButtonGroup bsSize="xsmall">
+              {btnCond}
               <ButtonTooltip tip="Move Up" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: true }} fa="fa-arrow-up" place="top" disabled={this.props.position === 1} />
               <ButtonTooltip tip="Move Down" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: false }} fa="fa-arrow-down" place="top" />
               {this.renderDeleteButton('Field', f.field, layerKey)}
@@ -293,6 +304,7 @@ ElementField.propTypes = {
   unitsSystem: PropTypes.object,
   onFieldSubFieldChange: PropTypes.func.isRequired,
   onDummyAdd: PropTypes.func.isRequired,
+  onShowFieldCond: PropTypes.func.isRequired,
 };
 
 ElementField.defaultProps = { genericType: 'Element', unitsSystem: [] };

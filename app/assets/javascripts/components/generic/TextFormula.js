@@ -34,7 +34,25 @@ export default class TextFormula extends React.Component {
     this.selField = this.selField.bind(this);
     this.refresh = this.refresh.bind(this);
     this.onCellValueChanged = this.onCellValueChanged.bind(this);
-    this.columnDefs = [
+
+  }
+
+  componentDidUpdate(prevProps) {
+    const { field, allLayers } = this.props;
+    const sub = field.text_sub_fields || [];
+    if (this.props.allLayers !== prevProps.allLayers) {
+      const columnDefs = this.gridApi.getColumnDefs();
+      columnDefs.find(c => c.field === 'layer').cellRendererParams.allLayers = allLayers;
+      columnDefs.find(c => c.field === 'field').cellRendererParams.allLayers = allLayers;
+      this.gridApi.setColumnDefs(columnDefs);
+    }
+    this.gridApi.setRowData(sub);
+  }
+
+  onGridReady(e) {
+    this.gridApi = e.api;
+    this.gridColumnApi = e.columnApi;
+    const columnDefs = [
       {
         rowDrag: true,
         resizable: true,
@@ -51,7 +69,7 @@ export default class TextFormula extends React.Component {
         minWidth: 150,
         width: 150,
         cellRendererFramework: LayerSelect,
-        cellRendererParams: { allLayers: props.allLayers, selLayer: this.selLayer },
+        cellRendererParams: { allLayers: this.props.allLayers, selLayer: this.selLayer },
       },
       {
         headerName: 'Field (type: text)',
@@ -59,7 +77,7 @@ export default class TextFormula extends React.Component {
         editable: false,
         minWidth: 250,
         cellRendererFramework: FieldSelect,
-        cellRendererParams: { allLayers: props.allLayers, selField: this.selField },
+        cellRendererParams: { allLayers: this.props.allLayers, selField: this.selField, types: ['text'] },
       },
       {
         headerName: 'Separator',
@@ -82,17 +100,7 @@ export default class TextFormula extends React.Component {
         width: 35,
       },
     ];
-  }
-
-  componentDidUpdate() {
-    const { field } = this.props;
-    const sub = field.text_sub_fields || [];
-    this.gridApi.setRowData(sub);
-  }
-
-  onGridReady(e) {
-    this.gridApi = e.api;
-    this.gridColumnApi = e.columnApi;
+    this.gridApi.setColumnDefs(columnDefs);
     this.autoSizeAll();
   }
 
@@ -169,7 +177,7 @@ export default class TextFormula extends React.Component {
           <div style={{ width: '100%', height: '100%' }} className="ag-theme-balham">
             <AgGridReact
               enableColResize
-              columnDefs={this.columnDefs}
+              //columnDefs={this.columnDefs}
               rowSelection="single"
               onGridReady={this.onGridReady}
               rowData={sub}
