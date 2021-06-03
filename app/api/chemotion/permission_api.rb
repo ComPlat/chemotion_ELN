@@ -30,7 +30,6 @@ module Chemotion
             end
             has_sel[element] = sel[element].present?
           end
-
           is_top_secret = has_sel['sample'] ? sel['sample'].pluck(:is_top_secret).any? : false
           is_top_secret = is_top_secret || (has_sel['reaction'] ? sel['reaction'].lazy.flat_map(&:samples).map(&:is_top_secret).any? : false)
           is_top_secret = is_top_secret || (has_sel['wellplate'] ? sel['wellplate'].lazy.flat_map(&:samples).map(&:is_top_secret).any? : false)
@@ -38,20 +37,18 @@ module Chemotion
 
           deletion_allowed = true
           sharing_allowed = true
-
           if (params[:currentCollection][:is_sync_to_me] || params[:currentCollection][:is_shared])
-            deletion_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, has_sel['sample']).destroy? : true
-            deletion_allowed = deletion_allowed && (has_sel['reaction'] ? ElementsPolicy.new(current_user, has_sel['reaction']).destroy? : true)
-            deletion_allowed = deletion_allowed && (has_sel['wellplate'] ? ElementsPolicy.new(current_user, has_sel['wellplate']).destroy? : true)
-            deletion_allowed = deletion_allowed && (has_sel['screen'] ? ElementsPolicy.new(current_user, has_sel['screen']).destroy? : true)
-
+            deletion_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).destroy? : true
+            deletion_allowed = deletion_allowed && (has_sel['reaction'] ? ElementsPolicy.new(current_user, sel['reaction']).destroy? : true)
+            deletion_allowed = deletion_allowed && (has_sel['wellplate'] ? ElementsPolicy.new(current_user, sel['wellplate']).destroy? : true)
+            deletion_allowed = deletion_allowed && (has_sel['screen'] ? ElementsPolicy.new(current_user, sel['screen']).destroy? : true)
             if deletion_allowed
               sharing_allowed = true
             else
-              sharing_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, has_sel['sample']).share? : true
-              sharing_allowed = sharing_allowed && has_sel['reaction'] ? ElementsPolicy.new(current_user, has_sel['reaction']).share? : true
-              sharing_allowed = sharing_allowed && has_sel['wellplate'] ? ElementsPolicy.new(current_user, has_sel['wellplate']).share? : true
-              sharing_allowed = sharing_allowed && has_sel['screen'] ? ElementsPolicy.new(current_user, has_sel['screen']).share? : true
+              sharing_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).share? : true
+              sharing_allowed = sharing_allowed && has_sel['reaction'] ? ElementsPolicy.new(current_user, sel['reaction']).share? : true
+              sharing_allowed = sharing_allowed && has_sel['wellplate'] ? ElementsPolicy.new(current_user, sel['wellplate']).share? : true
+              sharing_allowed = sharing_allowed && has_sel['screen'] ? ElementsPolicy.new(current_user, sel['screen']).share? : true
             end
           end
           { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed, is_top_secret: is_top_secret }
