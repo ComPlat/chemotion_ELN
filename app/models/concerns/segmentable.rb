@@ -2,7 +2,7 @@
 module Segmentable
   extend ActiveSupport::Concern
   included do
-    has_many :segments, as: :element
+    has_many :segments, as: :element, dependent: :destroy
   end
 
   def save_segments(**args)

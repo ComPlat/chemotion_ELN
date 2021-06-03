@@ -21,7 +21,7 @@
 class ElementKlass < ActiveRecord::Base
   acts_as_paranoid
   has_many :elements, dependent: :destroy
-  has_many :segment_klasses
+  has_many :segment_klasses, dependent: :destroy
 
   def self.gen_klasses_json
     klasses = where(is_active: true, is_generic: true).order('place')&.pluck(:name) || []

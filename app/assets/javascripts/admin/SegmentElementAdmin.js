@@ -762,7 +762,7 @@ export default class SegmentElementAdmin extends React.Component {
             <ButtonTooltip tip="Edit Segment template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
             <ButtonTooltip tip="Edit Segment template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" />
           </td>
-          <td>{e.element_klass.label}&nbsp;<i className={e.element_klass.icon_name} /></td>
+          <td>{e.element_klass && e.element_klass.label}&nbsp;<i className={e.element_klass && e.element_klass.icon_name} /></td>
         </tr>
       </tbody>
     ));

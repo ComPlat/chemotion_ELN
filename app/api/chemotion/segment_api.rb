@@ -9,8 +9,8 @@ module Chemotion
           optional :element, type: String, desc: "Klass Element, e.g. Sample, Reaction, Mof,..."
         end
         get do
-          list = SegmentKlass.where(klass_element: params[:element], is_active: true) if params[:element].present?
-          list = SegmentKlass.where(is_active: true) unless params[:element].present?
+          list = SegmentKlass.joins(:element_klass).where(klass_element: params[:element], is_active: true) if params[:element].present?
+          list = SegmentKlass.joins(:element_klass).where(is_active: true) unless params[:element].present?
           present list.sort_by(&:place), with: Entities::SegmentKlassEntity, root: 'klass'
         end
       end
