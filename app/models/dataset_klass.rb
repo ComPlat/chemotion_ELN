@@ -27,7 +27,7 @@ class DatasetKlass < ActiveRecord::Base
     seeds['chmo'].each do |term|
       next if DatasetKlass.where(ols_term_id: term['id']).count.positive?
 
-      attributes = { ols_term_id: term['id'], label: "#{term['label']} (#{term['synonym']})", desc: "#{term['label']} (#{term['synonym']})", place: term['position'], created_by: Admin.first.id }
+      attributes = { ols_term_id: term['id'], label: "#{term['label']} (#{term['synonym']})", desc: "#{term['label']} (#{term['synonym']})", place: term['position'], created_by: Admin.first&.id || 0 }
       DatasetKlass.create!(attributes)
     end
     true

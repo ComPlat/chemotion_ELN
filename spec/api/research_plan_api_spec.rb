@@ -51,8 +51,7 @@ describe Chemotion::ResearchPlanAPI do
         )
         expect(first_rp['research_plan_metadata']).to include(
           'id' => research_plan_metadata.id,
-          'doi' => research_plan_metadata.doi,
-          'name' => research_plan_metadata.name
+          'doi' => research_plan_metadata.doi
         )
       end
     end
