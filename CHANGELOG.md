@@ -1,6 +1,13 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.9.1]
+> 2021-06-04
+
+* Fix
+  * sync/share deletion permission
+  * Admin: segment deletion 
+
 ## [v0.9.0]
 > 2021-05-26
 
