@@ -64,7 +64,7 @@ describe Chemotion::ResearchPlanMetadataAPI do
         before do
           research_plan
 
-          post '/api/v1/research_plan_metadata', params
+          post '/api/v1/research_plan_metadata', params: params
         end
 
         it 'Creates research plan metadata' do

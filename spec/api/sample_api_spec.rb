@@ -521,9 +521,12 @@ describe Chemotion::SampleAPI do
 
         before do
           post(
-            '/api/v1/samples/import/', params,
-            'HTTP_ACCEPT' => '*/*',
-            'CONTENT_TYPE' => 'multipart/form-data'
+            '/api/v1/samples/import/', 
+            params: params,
+            headers: { 
+              'HTTP_ACCEPT' => '*/*',
+              'CONTENT_TYPE' => 'multipart/form-data'
+           }
           )
         end
 
@@ -556,9 +559,12 @@ describe Chemotion::SampleAPI do
 
         before do
           post(
-            '/api/v1/samples/import/', params,
-            'HTTP_ACCEPT' => '*/*',
-            'CONTENT_TYPE' => 'multipart/form-data'
+            '/api/v1/samples/import/',
+            params: params,
+            headers: {
+              'HTTP_ACCEPT' => '*/*',
+              'CONTENT_TYPE' => 'multipart/form-data'
+            }
           )
         end
 
