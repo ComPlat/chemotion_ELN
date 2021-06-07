@@ -18,7 +18,7 @@
 #
 
 # Generic Element
-class Element < ActiveRecord::Base
+class Element < ApplicationRecord
   acts_as_paranoid
   include PgSearch
   include ElementUIStateScopes

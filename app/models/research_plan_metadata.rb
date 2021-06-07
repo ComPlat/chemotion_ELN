@@ -43,7 +43,7 @@
 #
 
 
-class ResearchPlanMetadata < ActiveRecord::Base
+class ResearchPlanMetadata < ApplicationRecord
   self.inheritance_column = nil
   acts_as_paranoid
   DATA_CITE_PREFIX = ENV['DATA_CITE_PREFIX']

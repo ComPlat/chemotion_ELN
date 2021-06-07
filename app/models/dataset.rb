@@ -14,10 +14,9 @@
 #  deleted_at       :datetime
 #
 
-class Dataset < ActiveRecord::Base
+class Dataset < ApplicationRecord
   acts_as_paranoid
   include GenericRevisions
-
   belongs_to :dataset_klass
   belongs_to :element, polymorphic: true
 end

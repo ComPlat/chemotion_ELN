@@ -21,7 +21,7 @@
 #  released_at         :datetime
 #
 
-class ElementKlass < ActiveRecord::Base
+class ElementKlass < ApplicationRecord
   acts_as_paranoid
   include GenericKlassRevisions
   has_many :elements, dependent: :destroy

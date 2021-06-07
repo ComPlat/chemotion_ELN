@@ -19,7 +19,7 @@
 #  properties_release  :jsonb
 #  released_at         :datetime
 #
-class DatasetKlass < ActiveRecord::Base
+class DatasetKlass < ApplicationRecord
   acts_as_paranoid
   include GenericKlassRevisions
   has_many :datasets, dependent: :destroy

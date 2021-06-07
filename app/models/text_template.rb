@@ -18,7 +18,7 @@
 #  index_text_templates_on_user_id     (user_id)
 #
 
-class TextTemplate < ActiveRecord::Base
+class TextTemplate < ApplicationRecord
   enum type: %i(
     SampleTextTemplate
     ReactionTextTemplate
