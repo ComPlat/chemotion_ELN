@@ -45,7 +45,7 @@ curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN
 If needed, edit the file  (change the variables or comments out parts to disable), then
 
 ```
-chmod 700 chemotion_ELN_update.sh 
+chmod 700 chemotion_ELN_update.sh
 
 sudo ./chemotion_ELN_update.sh
 ```
@@ -54,7 +54,7 @@ sudo ./chemotion_ELN_update.sh
 
 The instalation script works with Ubuntu 20 under WSL2.
 
-NB: 
+NB:
 
 - openssh-server should be reinstalled.
 - services (postgres, nginx) needs to be started manually.
@@ -72,11 +72,11 @@ see online ![docs](https://www.chemotion.net/chemotionsaurus/docs/eln/docker_ins
 
 ## Ubuntu native or under WSL-2
 
-See the scripts/install_development.sh for guidance or run it. Application should be all set up and ready to run. 
+See the scripts/install_development.sh for guidance or run it. Application should be all set up and ready to run.
 
 When using WLS-2:
 -  postgres service needs to be started (```sudo service postgresql start ```)
--  you may want to move the application code somewhere to /mnt/... 
+-  you may want to move the application code somewhere to /mnt/...
 -  bind the WSL ip address  when starting the rails s (`rails s -b ip.ad.dr.ess`)
 
 

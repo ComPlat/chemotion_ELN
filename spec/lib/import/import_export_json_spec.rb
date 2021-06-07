@@ -68,22 +68,70 @@ RSpec.describe 'ImportSdf' do
     )
   end
 
-  before do
-    u1.save!
-    u2.save!
-    c1.save!
-    c2.save!
-    s0.save!
-    s1.save!
-    s2.save!
-    s3.save!
-    s4.save!
-    mn.save!
-    s0.update!(molecule_name_id: mn.id)
-    rxn.save!
+  describe 'import/export research plan' do
+    let(:research_plan) { build(:research_plan, creator: u1, collections: [c1]) }
+    let(:research_plan_metadata) { create(:research_plan_metadata) }
+    let(:ignored_attributes) { %w[id research_plan_id created_at updated_at parent_id] }
+
+    let(:first_metadata) { c1.research_plans.first.research_plan_metadata.attributes.except(*ignored_attributes) }
+    let(:second_metadata) { c2.research_plans.first.research_plan_metadata.attributes.except(*ignored_attributes) }
+
+    let(:first_analyses) { c1.research_plans.first.analyses.map { |a| a.attributes.except(*ignored_attributes) } }
+    let(:second_analyses) { c2.research_plans.first.analyses.map { |a| a.attributes.except(*ignored_attributes) } }
+
+    before do
+      research_plan.research_plan_metadata = research_plan_metadata
+      research_plan.save!
+
+      analyses = Container.find_by(parent_id: research_plan.container.id)
+
+      Container.create!(parent: analyses,
+                        container_type: 'analysis',
+                        name: 'new',
+                        description: 'analysis description',
+                        extended_metadata: {
+                          'kind' => 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)',
+                          'status' => 'Confirmed',
+                          'datasets' => [],
+                          'content' => '{"ops": [{"insert": "analysis contents"}]}'
+                        })
+
+      export = Export::ExportJson.new(collection_id: c1.id, research_plan_ids: [research_plan.id]).export.to_json
+      import = Import::ImportJson.new(collection_id: c2.id, data: export, user_id: u2.id).import
+
+    end
+
+    it 'copies the research plan' do
+      expect(c2.research_plans.count).to be(1)
+      expect(c2.research_plans.map(&:collections).flatten.size).to be(2)
+      expect(c2.research_plans.first.body).to eq(c1.research_plans.first.body)
+    end
+
+    it 'copies metadata' do
+      expect(first_metadata).to eq(second_metadata)
+    end
+
+    it 'copies analyses' do
+      expect(first_analyses).to eq(second_analyses)
+    end
   end
 
   context 'without uuid lock, ' do
+    before do
+      u1.save!
+      u2.save!
+      c1.save!
+      c2.save!
+      s0.save!
+      s1.save!
+      s2.save!
+      s3.save!
+      s4.save!
+      mn.save!
+      s0.update!(molecule_name_id: mn.id)
+      rxn.save!
+    end
+
     context 'only 1 sample, no analyses, ' do
       before do
         json = Export::ExportJson.new(

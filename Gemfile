@@ -30,6 +30,7 @@ gem 'sys-filesystem'
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 
 gem 'bibtex-ruby'
+# gem 'bolognese'
 
 # state machine
 gem 'aasm'

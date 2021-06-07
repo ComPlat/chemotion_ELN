@@ -117,6 +117,26 @@ module Chemotion
         end
       end
 
+      namespace :queryCurrentDevices do
+        desc 'fetch devices of current user'
+        get do
+          data = [current_user.devices + current_user.groups.map(&:devices)].flatten.uniq
+          present data, with: Entities::DeviceEntity, root: 'currentDevices'
+        end
+      end
+
+      namespace :deviceMetadata do
+        desc 'Get deviceMetadata by device id'
+        params do
+          requires :device_id, type: Integer, desc: 'device id'
+        end
+        route_param :device_id do
+          get do
+            present DeviceMetadata.find_by(device_id: params[:device_id]), with: Entities::DeviceMetadataEntity, root: 'device_metadata'
+          end
+        end
+      end
+
       namespace :upd do
         desc 'update a group of persons'
         params do
