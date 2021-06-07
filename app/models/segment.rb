@@ -15,7 +15,7 @@
 #  klass_uuid       :string
 #
 
-class Segment < ActiveRecord::Base
+class Segment < ApplicationRecord
   acts_as_paranoid
   include GenericRevisions
 

@@ -16,7 +16,7 @@
 #  index_collections_elements_on_element_id_and_collection_id  (element_id,collection_id) UNIQUE
 #
 
-class CollectionsElement < ActiveRecord::Base
+class CollectionsElement < ApplicationRecord
     acts_as_paranoid
     belongs_to :collection
     belongs_to :element

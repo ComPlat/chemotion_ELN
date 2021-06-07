@@ -33,7 +33,7 @@
 #  index_device_metadata_on_device_id   (device_id)
 #
 
-class DeviceMetadata < ActiveRecord::Base
+class DeviceMetadata < ApplicationRecord
   self.inheritance_column = nil
   acts_as_paranoid
   DATA_CITE_PREFIX = ENV['DATA_CITE_PREFIX']

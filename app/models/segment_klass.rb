@@ -18,7 +18,7 @@
 #  released_at         :datetime
 #
 
-class SegmentKlass < ActiveRecord::Base
+class SegmentKlass < ApplicationRecord
   acts_as_paranoid
   include GenericKlassRevisions
   belongs_to :element_klass

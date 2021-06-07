@@ -17,7 +17,7 @@
 #
 
 
-class ElementsSample < ActiveRecord::Base
+class ElementsSample < ApplicationRecord
   acts_as_paranoid
   belongs_to :element
   belongs_to :sample
