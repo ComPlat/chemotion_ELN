@@ -37,13 +37,13 @@ const buildQcs = (sample, infer) => {
     const { ops } = content;
     const inferO = extractInfer(ai, files);
     const { type } = inferO;
-    if (type === 'ms' || (kind && kind.includes('(MS)'))) {
+    if ((!type || type === 'ms') && (kind && kind.includes('(MS)'))) {
       msQc = Object.assign({}, msQc, inferO, { ops, exist: true, type: 'Mass' });
-    } else if (type === 'nmr;13C;1d' || (kind && kind.includes('13C NMR'))) {
+    } else if ((!type || type === 'nmr;13C;1d') && (kind && kind.includes('13C NMR'))) {
       cnmrQc = Object.assign({}, cnmrQc, inferO, { ops, exist: true, type: '13C NMR' });
-    } else if (type === 'nmr;1H;1d' || (kind && kind.includes('1H NMR'))) {
+    } else if ((!type || type === 'nmr;1H;1d') && (kind && kind.includes('1H NMR'))) {
       hnmrQc = Object.assign({}, hnmrQc, inferO, { ops, exist: true, type: '1H NMR' });
-    } else if (type === 'ir' || kind === 'IR') {
+    } else if ((!type || type === 'ir') && (kind && kind.includes('(IR)'))) {
       irQc = Object.assign({}, irQc, inferO, { ops, exist: true, type: 'IR' });
     }
   });
