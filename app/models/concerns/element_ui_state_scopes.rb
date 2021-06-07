@@ -6,10 +6,12 @@ module ElementUIStateScopes
       # see ui_state_params in api/helpers/params_helpers.rb
       # map legacy params
       return none if ui_state.nil?
+
       checked_all = ui_state[:checkedAll] || ui_state[:all]
       checked_ids = ui_state[:checkedIds].presence || ui_state[:included_ids]
 
       return none unless checked_all || checked_ids.present?
+
       unchecked_ids = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
       checked_all ? where.not(id: unchecked_ids) : where(id: checked_ids)
     }
@@ -24,7 +26,7 @@ module ElementUIStateScopes
 
       if (all)
         excluded_ids = ui_state.fetch(:excluded_ids, [])
-        collection_id == 'all' ? where.not(id: excluded_ids).uniq : by_collection_id(collection_id.to_i).where.not(id: excluded_ids).distinct
+        collection_id == 'all' ? where.not(id: excluded_ids).distinct : by_collection_id(collection_id.to_i).where.not(id: excluded_ids).distinct
       else
         included_ids = ui_state.fetch(:included_ids, [])
         where(id: included_ids).distinct
@@ -39,12 +41,11 @@ module ElementUIStateScopes
       if (all)
         excluded_ids = ui_state.fetch(:excluded_ids, [])
         result = collection_elements.where.not({element_label => excluded_ids})
-        result.pluck(element_label).uniq
       else
-        included_ids = ui_state.fetch(:included_ids,[])
+        included_ids = ui_state.fetch(:included_ids, [])
         result = collection_elements.where({element_label => included_ids})
-        result.pluck(element_label).uniq
       end
+      result.pluck(element_label).uniq
     end
 
     # TODO cleanup coercion in API
