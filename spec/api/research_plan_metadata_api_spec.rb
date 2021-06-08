@@ -14,7 +14,7 @@ describe Chemotion::ResearchPlanMetadataAPI do
       context 'with appropriate permissions' do
         let!(:c) { create(:collection, user_id: user.id) }
         let(:research_plan) { create(:research_plan) }
-        let(:research_plan_metadata) { create(:research_plan_metadata) }
+        let(:research_plan_metadata) { create(:research_plan_metadata, research_plan: research_plan) }
 
         before do
           research_plan.research_plan_metadata = research_plan_metadata

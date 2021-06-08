@@ -70,7 +70,7 @@ RSpec.describe 'ImportSdf' do
 
   describe 'import/export research plan' do
     let(:research_plan) { build(:research_plan, creator: u1, collections: [c1]) }
-    let(:research_plan_metadata) { create(:research_plan_metadata) }
+    let(:research_plan_metadata) { create(:research_plan_metadata, research_plan: research_plan) }
     let(:ignored_attributes) { %w[id research_plan_id created_at updated_at parent_id] }
 
     let(:first_metadata) { c1.research_plans.first.research_plan_metadata.attributes.except(*ignored_attributes) }

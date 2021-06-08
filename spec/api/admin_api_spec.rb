@@ -42,10 +42,10 @@ describe Chemotion::AdminAPI do
   end
 
   describe 'PUT /api/v1/admin/deviceMetadata/DEVICE_ID/sync_to_data_cite' do
-    let(:device) { create(:device, device_metadata: device_metadata) }
+    let(:device) { create(:device) }
 
     let(:device_metadata) do
-      create(:device_metadata, data_cite_prefix: ENV['DATA_CITE_PREFIX'], doi: "#{ENV['DATA_CITE_PREFIX']}/DEVICE-3")
+      create(:device_metadata, data_cite_prefix: ENV['DATA_CITE_PREFIX'], doi: "#{ENV['DATA_CITE_PREFIX']}/DEVICE-3", device: device)
     end
 
     before do
@@ -107,7 +107,7 @@ describe Chemotion::AdminAPI do
             .to_return(status: 404,
                        headers: { 'Content-Type' => 'application/json' })
 
-          post '/api/v1/admin/deviceMetadata', params
+          post '/api/v1/admin/deviceMetadata', params: params, as: :json
         end
 
         it 'Creates device metadata' do
@@ -142,8 +142,8 @@ describe Chemotion::AdminAPI do
           .to_return(status: 404,
                      headers: { 'Content-Type' => 'application/json' })
 
-        post '/api/v1/admin/deviceMetadata', params
-        post '/api/v1/admin/deviceMetadata', update_params
+        post '/api/v1/admin/deviceMetadata', params: params
+        post '/api/v1/admin/deviceMetadata', params: update_params
       end
 
       it 'Updates device metadata' do
