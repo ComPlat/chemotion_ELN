@@ -1,4 +1,4 @@
-class ChangeResearchPlanTableStructure < ActiveRecord::Migration
+class ChangeResearchPlanTableStructure < ActiveRecord::Migration[4.2]
   class ResearchPlan < ActiveRecord::Base
   end
 

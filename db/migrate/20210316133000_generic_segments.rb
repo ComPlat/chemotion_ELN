@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic segments
-class GenericSegments < ActiveRecord::Migration
+class GenericSegments < ActiveRecord::Migration[4.2]
   def self.up
     unless table_exists? :segment_klasses
       create_table :segment_klasses do |t|

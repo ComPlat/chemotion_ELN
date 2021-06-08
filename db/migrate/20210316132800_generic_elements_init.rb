@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic elements
-class GenericElementsInit < ActiveRecord::Migration
+class GenericElementsInit < ActiveRecord::Migration[4.2]
   class ElementKlass < ActiveRecord::Base
   end
 

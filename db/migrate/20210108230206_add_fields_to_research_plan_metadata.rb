@@ -1,4 +1,4 @@
-class AddFieldsToResearchPlanMetadata < ActiveRecord::Migration
+class AddFieldsToResearchPlanMetadata < ActiveRecord::Migration[4.2]
   def change
     rename_column :research_plan_metadata, :name, :title
     remove_column :research_plan_metadata, :description, :string

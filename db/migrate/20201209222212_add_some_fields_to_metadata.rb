@@ -1,4 +1,4 @@
-class AddSomeFieldsToMetadata < ActiveRecord::Migration
+class AddSomeFieldsToMetadata < ActiveRecord::Migration[4.2]
   def change
     add_column :device_metadata, :doi_sequence, :integer
     add_column :device_metadata, :data_cite_prefix, :string

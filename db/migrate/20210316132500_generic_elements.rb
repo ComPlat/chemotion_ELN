@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic elements
-class GenericElements < ActiveRecord::Migration
+class GenericElements < ActiveRecord::Migration[4.2]
   def self.up
     unless table_exists? :element_klasses
       create_table :element_klasses do |t|

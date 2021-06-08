@@ -1,4 +1,4 @@
-class CreateResearchPlanMetadata < ActiveRecord::Migration
+class CreateResearchPlanMetadata < ActiveRecord::Migration[4.2]
   def up
     create_table :research_plan_metadata do |t|
       t.integer :research_plan_id

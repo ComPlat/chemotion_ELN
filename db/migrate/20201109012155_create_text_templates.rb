@@ -1,4 +1,4 @@
-class CreateTextTemplates < ActiveRecord::Migration
+class CreateTextTemplates < ActiveRecord::Migration[4.2]
   def up
     create_table :text_templates do |t|
       t.column :type, :string
