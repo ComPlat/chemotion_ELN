@@ -1,4 +1,4 @@
-class CreateElementsSamples < ActiveRecord::Migration
+class CreateElementsSamples < ActiveRecord::Migration[4.2]
   def change
     unless table_exists? :elements_samples
       create_table :elements_samples do |t|

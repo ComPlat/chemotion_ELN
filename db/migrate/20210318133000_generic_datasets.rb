@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic segments
-class GenericDatasets < ActiveRecord::Migration
+class GenericDatasets < ActiveRecord::Migration[4.2]
   def self.up
     unless table_exists? :dataset_klasses
       create_table :dataset_klasses do |t|

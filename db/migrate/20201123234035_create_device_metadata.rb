@@ -1,4 +1,4 @@
-class CreateDeviceMetadata < ActiveRecord::Migration
+class CreateDeviceMetadata < ActiveRecord::Migration[4.2]
   def up
     create_table :device_metadata do |t|
       t.integer :device_id
