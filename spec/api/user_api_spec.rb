@@ -175,7 +175,7 @@ describe Chemotion::UserAPI do
       end
 
       before do
-        put "/api/v1/groups/upd/#{g3.id}", params: params
+        put "/api/v1/groups/upd/#{g3.id}", params: params, as: :json
       end
 
       it 'Deletes a group of persons' do
@@ -193,7 +193,7 @@ describe Chemotion::UserAPI do
       end
 
       before do
-        put "/api/v1/groups/upd/#{g4.id}", params: params
+        put "/api/v1/groups/upd/#{g4.id}", params: params, as: :json
       end
 
       it 'Does not update a group of persons' do

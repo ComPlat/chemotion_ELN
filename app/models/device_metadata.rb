@@ -39,7 +39,7 @@ class DeviceMetadata < ApplicationRecord
   DATA_CITE_PREFIX = ENV['DATA_CITE_PREFIX']
   DATA_CITE_DEVICE_PREFIX = ENV['DATA_CITE_DEVICE_PREFIX']
 
-  belongs_to :device
+  belongs_to :device, optional: true
 
   validates :doi, uniqueness: true, if: -> { doi.present? }
   validates :doi_sequence, uniqueness: true, if: -> { doi_sequence.present? }
