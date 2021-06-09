@@ -203,7 +203,7 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.float "mean_abs_potential", default: 0.0
     t.integer "creator", default: 0
     t.integer "sample_id", default: 0
-    t.jsonb "tddft", default: "{}"
+    t.jsonb "tddft", default: {}
     t.string "task_id"
     t.datetime "deleted_at"
     t.index ["deleted_at"], name: "index_computed_props_on_deleted_at"
@@ -582,7 +582,7 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.string "label"
     t.integer "include_ids", default: [], array: true
     t.integer "exclude_ids", default: [], array: true
-    t.jsonb "configs", default: "{}", null: false
+    t.jsonb "configs", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -636,18 +636,6 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true
   end
 
-  create_table "nmr_sim_nmr_simulations", id: :serial, force: :cascade do |t|
-    t.integer "molecule_id"
-    t.text "path_1h"
-    t.text "path_13c"
-    t.text "source"
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at"
-    t.index ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true
-  end
-
   create_table "notifications", id: :serial, force: :cascade do |t|
     t.integer "message_id"
     t.integer "user_id"
@@ -676,8 +664,8 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
-    t.integer "searchable_id"
     t.string "searchable_type"
+    t.integer "searchable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
@@ -686,7 +674,7 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
   create_table "predictions", id: :serial, force: :cascade do |t|
     t.string "predictable_type"
     t.integer "predictable_id"
-    t.jsonb "decision", default: "{}", null: false
+    t.jsonb "decision", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["decision"], name: "index_predictions_on_decision", using: :gin
@@ -892,7 +880,7 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.numrange "melting_point"
     t.numrange "boiling_point"
     t.integer "fingerprint_id"
-    t.jsonb "xref", default: "{}"
+    t.jsonb "xref", default: {}
     t.float "molarity_value", default: 0.0
     t.string "molarity_unit", default: "M"
     t.integer "molecule_name_id"

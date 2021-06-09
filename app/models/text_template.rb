@@ -38,7 +38,7 @@ class TextTemplate < ApplicationRecord
 
   def self.default_templates
     def_names = {}
-    name.to_s.constantize::DEFAULT_TEMPLATES.each { |k, v| def_names[k] = PredefinedTextTemplate.where(name: v).pluck(:name)  }
+    name.to_s.constantize::DEFAULT_TEMPLATES.each { |k, v| def_names[k] = PredefinedTextTemplate.where(name: v).pluck(:name) }
     def_names
   end
 end
@@ -69,13 +69,15 @@ class PredefinedTextTemplate < TextTemplate
     predefined_templates = JSON.parse(File.read(predefined_template_seeds_path))
 
     predefined_templates.each do |template|
-      next if PredefinedTextTemplate.where(name: template['name']).count.positive?
+      next if TextTemplate.where(name: template['name'], type: 'PredefinedTextTemplate').count.positive?
 
-      text_template = PredefinedTextTemplate.new
-      text_template.name = template.delete('name')
-      text_template.data = template
-      text_template.user_id = Admin.first.id
-      text_template.save!
+      template_name = template.delete('name')
+      TextTemplate.create!(
+        type: 'PredefinedTextTemplate',
+        name: template_name,
+        data: template,
+        user_id: Admin.first&.id
+      )
     end
   end
 end
