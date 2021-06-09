@@ -15,6 +15,31 @@ const GenProperties = (opt) => {
   const fieldProps = { ...opt, dndItems: [] };
   const type = fieldProps.type.split('_');
   if (opt.isSearchCriteria && type[0] === 'drag') type[0] = 'text';
+
+  let showField = true;
+  if (opt.f_obj && opt.f_obj.cond_fields && opt.f_obj.cond_fields.length > 0) {
+    showField = false;
+    for (let i = 0; i < opt.f_obj.cond_fields.length; i += 1) {
+      const cond = opt.f_obj.cond_fields[i] || {};
+      const { layer, field, value } = cond;
+      if (field && field !== '') {
+        const fd = ((opt.layers[layer] || {}).fields || []).find(f => f.field === field) || {};
+        if (fd.type === 'checkbox' && ((['false', 'no', 'f', '0'].includes((value || '').trim().toLowerCase()) && (typeof (fd && fd.value) === 'undefined' || fd.value === false)) ||
+        (['true', 'yes', 't', '1'].includes((value || '').trim().toLowerCase()) && (typeof (fd && fd.value) !== 'undefined' && fd.value === true)))) {
+          showField = true;
+          break;
+        } else if (['text', 'select'].includes(fd && fd.type) && (typeof (fd && fd.value) !== 'undefined' && ((fd && fd.value) || '').trim() == (value || '').trim())) {
+          showField = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (showField === false) {
+    type[0] = 'dummy';
+  }
+
   switch (type[0]) {
     case 'checkbox':
       return GenPropertiesCheckbox(fieldProps);
@@ -256,7 +281,7 @@ GenPropertiesLayerSearchCriteria.defaultProps = {
 const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, funcClick = () => {}, layout = [], id = 0) => {
   const sortedLayers = sortBy(layers, l => l.position) || [];
   sortedLayers.forEach((layer) => {
-    if (layer.condition == null || layer.condition.trim().length === 0) {
+    if (typeof layer.cond_fields === 'undefined' || layer.cond_fields == null || layer.cond_fields.length === 0) {
       const ig = (
         <GenPropertiesLayer
           id={id}
@@ -270,19 +295,19 @@ const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, fun
         />
       );
       layout.push(ig);
-    } else if (layer.condition && layer.condition.trim().length > 0) {
-      const conditions = layer.condition.split(';');
+    } else if (layer.cond_fields && layer.cond_fields.length > 0) {
       let showLayer = false;
 
-      for (let i = 0; i < conditions.length; i += 1) {
-        const arr = conditions[i].split(',');
-        if (arr.length >= 3) {
-          const specificObj = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`);
-          const specific = specificObj && specificObj.value;
-          if ((specific && specific.toString()) === (arr[2] && arr[2].toString().trim())) {
-            showLayer = true;
-            break;
-          }
+      for (let i = 0; i < layer.cond_fields.length; i += 1) {
+        const cond = layer.cond_fields[i] || {};
+        const fd = ((layers[cond.layer] || {}).fields || []).find(f => f.field === cond.field) || {};
+        if (fd.type === 'checkbox' && ((['false', 'no', 'f', '0'].includes((cond.value || '').trim().toLowerCase()) && (typeof (fd && fd.value) === 'undefined' || fd.value === false)) ||
+        (['true', 'yes', 't', '1'].includes((cond.value || '').trim().toLowerCase()) && (typeof fd.value !== 'undefined' && fd.value === true)))) {
+          showLayer = true;
+          break;
+        } else if (['text', 'select'].includes(fd.type) && (typeof (fd && fd.value) !== 'undefined' && fd.value.trim() == (cond.value || '').trim())) {
+          showLayer = true;
+          break;
         }
       }
 

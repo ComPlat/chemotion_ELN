@@ -15,8 +15,7 @@ export default class LayerAttrNewModal extends Component {
       key: this.formRef.current.lf_layerKey.value.trim(),
       label: this.formRef.current.lf_label.value.trim(),
       cols: parseInt(this.formRef.current.lf_cols.value.trim() || 1, 10),
-      position: parseInt(this.formRef.current.lf_position.value.trim() || 100, 10),
-      condition: this.formRef.current.lf_condition.value.trim()
+      position: parseInt(this.formRef.current.lf_position.value.trim() || 100, 10)
     };
     fnCreate(layer);
   }
