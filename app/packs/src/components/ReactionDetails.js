@@ -4,7 +4,7 @@ import {
   Col, Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
-import SvgFileZoomPan from 'react-svg-file-zoom-pan';
+import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
@@ -261,13 +261,13 @@ export default class ReactionDetails extends Component {
     if(!reaction.svgPath) {
       return false;
     } else {
+      const svgProps = reaction.svgPath.includes('.svg') ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
       return (
-        <Col md={12}>
-          <SvgFileZoomPan svgPath={reaction.svgPath}
-                          duration={300}
-                          resize={true} />
-        </Col>
-      )
+        <SvgFileZoomPan 
+          duration={300}
+          resize={true}
+          {...svgProps} 
+        />)
     }
   }
 
