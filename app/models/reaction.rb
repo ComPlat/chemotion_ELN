@@ -239,6 +239,9 @@ class Reaction < ApplicationRecord
         Rails.logger.info('**** SVG::ReactionComposer failed ***')
       end
     end
+
+    file_path = "#{Rails.root}/public/images/reactions/#{reaction_svg_file_was}" if reaction_svg_file_changed?
+    File.delete(file_path) if reaction_svg_file_changed? && reaction_svg_file_was.present? && File.exist?(file_path)
   end
 
   def svg_path(sample_svg, molecule_svg)

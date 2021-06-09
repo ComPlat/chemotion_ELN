@@ -19,8 +19,7 @@ module Chemotion
                                                     duration: params[:duration],
                                                     conditions: params[:conditions],
                                                     show_yield: true)
-        filename = composer.compose_reaction_svg_and_save temp: true
-        { reaction_svg: filename }
+        { reaction_svg: composer.compose_reaction_svg }
       end
     end
   end
