@@ -19,16 +19,6 @@
 #
 
 class TextTemplate < ApplicationRecord
-  enum type: %i(
-    SampleTextTemplate
-    ReactionTextTemplate
-    WellplateTextTemplate
-    ScreenTextTemplate
-    ResearchPlanTextTemplate
-    ReactionDescriptionTextTemplate
-    ElementTextTemplate
-  )
-
   belongs_to :user
 
   DEFAULT_TEMPLATES = {
