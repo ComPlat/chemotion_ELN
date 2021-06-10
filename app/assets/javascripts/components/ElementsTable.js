@@ -304,7 +304,7 @@ export default class ElementsTable extends React.Component {
     const dateIcon = <i className={`fa ${btnIcon}`} />;
 
     const headerRight = (
-      <div className="header-right">
+      <div className="header-right" style={{paddingRight: '25px'}}>
         <OverlayTrigger placement="top" overlay={inchiTooltip}>
           <button style={{ border: 'none' }} onClick={this.changeDateFilter} >
             {dateIcon}
@@ -324,7 +324,7 @@ export default class ElementsTable extends React.Component {
           <DatePicker
             selected={toDate}
             placeholderText="To"
-            popperPlacement="bottom-start"
+            popperPlacement="bottom"
             onChange={this.setToDate}
             isClearable
             dateFormat="DD-MM-YY"
