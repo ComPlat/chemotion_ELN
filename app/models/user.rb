@@ -321,7 +321,7 @@ class User < ApplicationRecord
   end
 
   def create_text_template
-    TextTemplate.types.keys.each do |type|
+    API::TEXT_TEMPLATE.each do |type|
       klass = type.to_s.constantize
       template = klass.new
       template.user_id = id

@@ -95,6 +95,8 @@ class API < Grape::API
 
   ELEMENTS = %w[research_plan screen wellplate reaction sample]
 
+  TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate ]
+
   mount Chemotion::LiteratureAPI
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
