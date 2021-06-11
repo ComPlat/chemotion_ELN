@@ -389,4 +389,27 @@ export default class AdminFetcher {
   static updateDatasetTemplate(params) {
     return this.genericKlass(params, 'update_dataset_template');
   }
+
+  static fetchJobs() {
+    return fetch('/api/v1/admin/jobs', {
+      credentials: 'same-origin',
+      method: 'GET',
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.error(errorMessage); });
+  }
+
+  static restartJob(id) {
+    return fetch('/api/v1/admin/jobs/restart/', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(id)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.error(errorMessage); });
+  }
 }
