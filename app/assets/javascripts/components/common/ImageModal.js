@@ -35,40 +35,10 @@ export default class ImageModal extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.popObject.fetchNeeded) {
-      if (this.props.popObject.fetchId !== prevProps.popObject.fetchId) {
-        this.fetchImage();
-      }
+    if (this.props.popObject.fetchNeeded &&
+      (this.props.popObject.fetchId !== prevProps.popObject.fetchId)) {
+      this.fetchImage();
     }
-  }
-
-  fetchImage() {
-    AttachmentFetcher.fetchImageAttachment({ id: this.props.popObject.fetchId })
-      .then((result) => {
-        if (result.data != null) {
-          this.setState({ fetchSrc: result.data });
-          if (result.type === "application/pdf") {
-            this.setState({ isPdf: true });
-          }
-          else {
-            this.setState({ isPdf: false });
-          }
-        }
-      });
-  }
-
-  handleModalClose(e) {
-    stopEvent(e);
-    this.setState({ showModal: false });
-  }
-
-  handleModalShow(e) {
-    stopEvent(e);
-    this.setState({ showModal: true });
-  }
-
-  handleImageError() {
-    this.setState({ fetchSrc: this.props.preivewObject.src });
   }
 
   onDocumentLoadSuccess(numPages) {
@@ -97,17 +67,41 @@ export default class ImageModal extends Component {
   nextPage() {
     this.changePage(1);
   }
+
+  fetchImage() {
+    AttachmentFetcher.fetchImageAttachment({ id: this.props.popObject.fetchId })
+      .then((result) => {
+        if (result.data != null) { this.setState({ fetchSrc: result.data, isPdf: (result.type === 'application/pdf') }); }
+      });
+  }
+
+  handleModalClose(e) {
+    stopEvent(e);
+    this.setState({ showModal: false });
+  }
+
+  handleModalShow(e) {
+    stopEvent(e);
+    this.setState({ showModal: true });
+  }
+
+  handleImageError() {
+    this.setState({ fetchSrc: this.props.preivewObject.src });
+  }
+
   render() {
-    const { hasPop, preivewObject, popObject, imageStyle } = this.props;
+    const {
+      hasPop, preivewObject, popObject, imageStyle
+    } = this.props;
     const { pageIndex, numOfPages } = this.state;
     if (!hasPop) {
-      return (<div className="preview-table"><img src={preivewObject.src} alt="" style={{ cursor: 'default', ...imageStyle }} /></div>);
+      return (<div className="preview-table"><img src={`${preivewObject.src}?${new Date().getTime()}`} alt="" style={{ cursor: 'default', ...imageStyle }} /></div>);
     }
 
     return (
       <div>
         <div className="preview-table" onClick={this.handleModalShow}>
-          <img src={preivewObject.src} alt="" style={{ cursor: 'pointer', ...imageStyle }} />
+          <img src={`${preivewObject.src}?${new Date().getTime()}`} alt="" style={{ cursor: 'pointer', ...imageStyle }} />
         </div>
         <Modal show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
           <Modal.Header closeButton>
@@ -130,30 +124,18 @@ export default class ImageModal extends Component {
                     onClick={() => this.previousPage()}
                   >
                     Previous
-        </button>
+                  </button>
                   <button
                     type="button"
                     disabled={pageIndex >= numOfPages}
                     onClick={() => this.nextPage()}
                   >
                     Next
-        </button>
+                  </button>
                 </div>
               </div>
               :
-              <img
-                src={this.state.fetchSrc}
-                style={{
-                  display: 'block',
-                  maxHeight: '100%',
-                  maxWidth: '100%',
-                }}
-                alt=""
-                onError={this.handleImageError}
-              />}
-
-
-
+              <img src={this.state.fetchSrc} style={{ display: 'block', maxHeight: '100%', maxWidth: '100%' }} alt="" onError={this.handleImageError} />}
           </Modal.Body>
           <Modal.Footer>
             <Button bsStyle="primary" onClick={this.handleModalClose} className="pull-left">Close</Button>

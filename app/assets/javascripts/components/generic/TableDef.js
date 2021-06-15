@@ -2,46 +2,12 @@
 import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Button, FormGroup, FormControl } from 'react-bootstrap';
 import GenericSubField from '../models/GenericSubField';
-import SystemSelect from '../generic/SystemSelect';
+import { AddRowBtn, DelRowBtn } from './GridBtn';
+import TypeSelect from './TypeSelect';
+import SystemDefinedRenderer from './SystemDefinedRenderer';
 
-const AddRowBtn = ({ addRow }) => (
-  <Button onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>
-);
-
-AddRowBtn.propTypes = { addRow: PropTypes.func.isRequired };
-
-const DelRowBtn = ({ delRow, node }) => {
-  const { data } = node;
-  const btnClick = () => {
-    delRow(data);
-  };
-  return (<Button onClick={btnClick} bsSize="xsmall"><i className="fa fa-times" aria-hidden="true" /></Button>);
-};
-
-DelRowBtn.propTypes = { delRow: PropTypes.func.isRequired, node: PropTypes.object.isRequired };
-
-const TypeSelect = ({ selType, node }) => (
-  <FormGroup bsSize="small" style={{ marginRight: '-10px', marginLeft: '-10px' }}>
-    <FormControl componentClass="select" placeholder="select the type" onChange={e => selType(e, node)} defaultValue={node.data.type}>
-      <option value="label">label</option>
-      <option value="number">number</option>
-      <option value="text">text</option>
-      <option value="system-defined">System-Defined</option>
-    </FormControl>
-  </FormGroup>
-);
-
-TypeSelect.propTypes = { selType: PropTypes.func.isRequired, node: PropTypes.object.isRequired };
-
-const SystemDefinedRenderer = (props) => {
-  const { unitConfig, node, selDefined } = props;
-  if (node.data.type === 'system-defined') return <SystemSelect unitConfig={unitConfig} selDefined={selDefined} node={node} />;
-  return node.data.value || null;
-};
-
-export default class GroupFields extends React.Component {
+export default class TableDef extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -64,13 +30,21 @@ export default class GroupFields extends React.Component {
         width: 50,
       },
       {
-        headerName: 'Data Type',
+        headerName: 'Column Heading',
+        field: 'col_name',
+        editable: true,
+        minWidth: 150,
+        width: 150,
+        onCellValueChanged: this.onCellValueChanged
+      },
+      {
+        headerName: 'Column Type',
         field: 'type',
         editable: false,
         minWidth: 150,
         width: 150,
         cellRendererFramework: TypeSelect,
-        cellRendererParams: { selType: this.selType },
+        cellRendererParams: { all: ['text', 'system-defined'].map(e => ({ key: e, val: e, lab: e })), selType: this.selType },
       },
       {
         headerName: 'Default Value',
@@ -140,7 +114,7 @@ export default class GroupFields extends React.Component {
   }
 
   addRow() {
-    const newSub = new GenericSubField({ type: 'text', value: '' });
+    const newSub = new GenericSubField({ col_name: '', type: 'text', value: '' });
     const idx = this.gridApi.getDisplayedRowCount();
     this.gridApi.applyTransaction({ add: [newSub], addIndex: idx });
     this.refresh();
@@ -191,8 +165,8 @@ export default class GroupFields extends React.Component {
     return (
       <div>
         <div style={{ fontSize: '10px' }}>
-          <b>Input Group: </b>
-          define the fields which are grouped together and display as one field;<br />
+          <b>Table: </b>
+          define a table with the column type as label(display only), text or system-defined;<br />
           note: &#39;System-Defined&#39; represents the Unit field which
           has one input field and one unit converter.
         </div>
@@ -214,7 +188,7 @@ export default class GroupFields extends React.Component {
   }
 }
 
-GroupFields.propTypes = {
+TableDef.propTypes = {
   layerKey: PropTypes.string.isRequired,
   field: PropTypes.object.isRequired,
   updSub: PropTypes.func.isRequired,
