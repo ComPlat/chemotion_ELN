@@ -18,6 +18,7 @@ import GenericElementAdmin from './GenericElementAdmin';
 import SegmentElementAdmin from './SegmentElementAdmin';
 import DatasetElementAdmin from './DatasetElementAdmin';
 import DelayedJobs from './DelayedJobs';
+import TemplateManagement from './TemplateManagement';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -72,6 +73,8 @@ class AdminHome extends React.Component {
       return this.renderContent(<SegmentElementAdmin />);
     } else if (pageIndex === 11) {
       return this.renderContent(<DatasetElementAdmin />);
+    } else if (pageIndex === 12) {
+      return this.renderTemplateManagement();
     } else if (pageIndex === 13) {
       return this.renderDelayedJobs();
     }
@@ -101,6 +104,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={9}>Generic Elements (BETA)</NavItem>
             <NavItem eventKey={10}>Generic Segment (BETA)</NavItem>
             <NavItem eventKey={11}>Generic Dataset (BETA)</NavItem>
+            <NavItem eventKey={12}>Report-template Management</NavItem>
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
           </Nav>
         </Col>
@@ -188,6 +192,7 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
   renderDelayedJobs() {
     const { contentClassName } = this.state;
     return (
@@ -196,6 +201,16 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
+  renderTemplateManagement() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <TemplateManagement />
+      </Col>
+    );
+  }
+
   render() {
     return (
       <div>

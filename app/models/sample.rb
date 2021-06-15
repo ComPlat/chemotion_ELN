@@ -37,7 +37,6 @@
 #  molecule_name_id    :integer
 #  molfile_version     :string(20)
 #  stereo              :jsonb
-#  mol_rdkit           :string
 #  metrics             :string           default("mmm")
 #  decoupled           :boolean          default(FALSE), not null
 #  molecular_mass      :float

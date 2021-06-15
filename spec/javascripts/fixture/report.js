@@ -52,11 +52,12 @@ const originalState = {
   fileDescription: '',
   activeKey: 0,
   processings: [],
-  template: 'standard',
   selMolSerials: [],
   attThumbNails: [],
   prdAtts: [],
   previewObjs: [],
+  template: {},
+  templateOpts: [],
 };
 
 export { originalState, splSettings, rxnSettings, configs };
