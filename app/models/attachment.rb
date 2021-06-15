@@ -50,7 +50,8 @@ class Attachment < ActiveRecord::Base
   after_destroy :delete_file_and_thumbnail
 
   belongs_to :attachable, polymorphic: true
-
+  has_one :report_template
+  
   scope :where_research_plan, lambda { |c_id|
     where(attachable_id: c_id, attachable_type: 'ResearchPlan')
   }
@@ -61,6 +62,10 @@ class Attachment < ActiveRecord::Base
 
   scope :where_report, lambda { |r_id|
     where(attachable_id: r_id, attachable_type: 'Report')
+  }
+
+  scope :where_template, lambda { 
+    where(attachable_type: 'Template')
   }
 
   def copy(**args)
@@ -123,6 +128,10 @@ class Attachment < ActiveRecord::Base
 
   def for_report?
     attachable_type == 'Report'
+  end
+
+  def for_template?
+    attachable_type == 'Template'
   end
 
   def research_plan_id

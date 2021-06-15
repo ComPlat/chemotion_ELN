@@ -1,7 +1,8 @@
 import alt from '../alt';
 import UIFetcher from '../fetchers/UIFetcher';
 import ReportsFetcher from '../fetchers/ReportsFetcher';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
+import AttachmentFetcher from '../fetchers/ReportTemplateFetcher';
+import ReportTemplateFetcher from '../fetchers/ReportTemplateFetcher';
 import _ from 'lodash';
 import { GetTypeIds, LoadPreviewIds } from '../utils/ReportHelper';
 
@@ -48,7 +49,8 @@ class ReportActions {
   }
 
   generateReport(report) {
-    return (dispatch) => { ReportsFetcher.create(report)
+    return (dispatch) => {
+      ReportsFetcher.create(report)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -62,12 +64,13 @@ class ReportActions {
     return dTags;
   }
 
-  move({sourceTag, targetTag}) {
-    return {sourceTag, targetTag};
+  move({ sourceTag, targetTag }) {
+    return { sourceTag, targetTag };
   }
 
   getArchives() {
-    return (dispatch) => { ReportsFetcher.fetchArchives()
+    return (dispatch) => {
+      ReportsFetcher.fetchArchives()
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -77,7 +80,8 @@ class ReportActions {
   }
 
   updateProcessQueue(oriQueue) {
-    return (dispatch) => { ReportsFetcher.fetchDownloadable(oriQueue)
+    return (dispatch) => {
+      ReportsFetcher.fetchDownloadable(oriQueue)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -153,6 +157,17 @@ class ReportActions {
     };
   }
 
+  fetchTemplates() {
+    return (dispatch) => {
+      ReportTemplateFetcher.fetchTemplates()
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   updateCheckedTags({ uiState, reportState }) {
     const { sample, reaction, currentCollection } = uiState;
     const { selectedObjTags, defaultObjTags } = reportState;
@@ -175,17 +190,18 @@ class ReportActions {
     if (elementAdded) {
       return (dispatch) => {
         UIFetcher.loadReport({
-          sample, reaction, currentCollection, selectedTags: selectedObjTags, },
+          sample, reaction, currentCollection, selectedTags: selectedObjTags,
+        },
           'lists',
         ).then((result) => {
-            const newTags = {
-              sampleIds: result.samples.map(e => e.id),
-              reactionIds: result.reactions.map(e => e.id)
-            };
-            dispatch({ newTags, newObjs: result });
-          }).catch((errorMessage) => {
-            console.log(errorMessage);
-          });
+          const newTags = {
+            sampleIds: result.samples.map(e => e.id),
+            reactionIds: result.reactions.map(e => e.id)
+          };
+          dispatch({ newTags, newObjs: result });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
       };
     } else if (elementSubs) {
       return (dispatch) => {

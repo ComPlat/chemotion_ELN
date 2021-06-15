@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: reports
@@ -20,11 +22,13 @@
 #  mol_serials          :text             default([])
 #  si_reaction_settings :text             default({:Name=>true, :CAS=>true, :Formula=>true, :Smiles=>true, :InCHI=>true, :"Molecular Mass"=>true, :"Exact Mass"=>true, :EA=>true})
 #  prd_atts             :text             default([])
+#  report_templates_id  :integer
 #
 # Indexes
 #
-#  index_reports_on_author_id  (author_id)
-#  index_reports_on_file_name  (file_name)
+#  index_reports_on_author_id            (author_id)
+#  index_reports_on_file_name            (file_name)
+#  index_reports_on_report_templates_id  (report_templates_id)
 #
 
 class Report < ActiveRecord::Base
@@ -41,6 +45,7 @@ class Report < ActiveRecord::Base
   has_many :reports_users
   has_many :users, through: :reports_users
   has_many :attachments, as: :attachable
+  belongs_to :report_templates
 
   default_scope { includes(:reports_users) }
 
@@ -49,7 +54,19 @@ class Report < ActiveRecord::Base
 
   def create_docx
     template = self.template
-    tpl_path = self.class.template_path(template)
+
+    if report_templates_id
+      report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
+      template = report_template.report_type
+      tpl_path = if report_template.attachment
+                   report_template.attachment.store.path
+                 else
+                   report_template.report_type
+                 end
+    else
+      template = self.class.template_path(template)
+      tpl_path = self.class.template_path(template)
+    end
     case template
     when 'spectrum'
       Reporter::WorkerSpectrum.new(
@@ -81,10 +98,10 @@ class Report < ActiveRecord::Base
       ).process
     end
   end
-  handle_asynchronously :create_docx, :run_at => Proc.new { 30.seconds.from_now }
+  handle_asynchronously :create_docx, run_at: proc { 30.seconds.from_now }
 
   def queue_name
-    "report_#{self.id}"
+    "report_#{id}"
   end
 
   def self.create_reaction_docx(current_user, user_ids, params)
@@ -99,24 +116,24 @@ class Report < ActiveRecord::Base
     content = Reporter::Docx::Document.new(objs: [r_hash]).convert
     tpl_path = template_path(params[:template])
     file = Sablon.template(tpl_path)
-                  .render_to_string(merge(current_user,
-                                          content,
-                                          all_spl_settings,
-                                          all_rxn_settings,
-                                          all_configs))
+                 .render_to_string(merge(current_user,
+                                         content,
+                                         all_spl_settings,
+                                         all_rxn_settings,
+                                         all_configs))
   end
 
   def self.docx_file_name(template)
-    now = Time.now.strftime("%Y-%m-%dT%H-%M-%S")
+    now = Time.now.strftime('%Y-%m-%dT%H-%M-%S')
     case template
-      when "supporting_information"
-        "Supporting_Information_#{now}.docx"
-      when "supporting_information_std_rxn"
-        "Supporting_Information_Standard_Reaction_#{now}.docx"
-      when "single_reaction"
-        "ELN_Reaction_#{now}.docx"
-      else
-        "ELN_Report_#{now}.docx"
+    when 'supporting_information'
+      "Supporting_Information_#{now}.docx"
+    when 'supporting_information_std_rxn'
+      "Supporting_Information_Standard_Reaction_#{now}.docx"
+    when 'single_reaction'
+      "ELN_Reaction_#{now}.docx"
+    else
+      "ELN_Report_#{now}.docx"
     end
   end
 
@@ -124,7 +141,7 @@ class Report < ActiveRecord::Base
     case template
     when 'supporting_information'
       Rails.root.join('lib', 'template', 'Supporting_information.docx')
-    when "supporting_information_std_rxn"
+    when 'supporting_information_std_rxn'
       Rails.root.join('lib', 'template', 'Supporting_information.docx')
     when 'spectrum'
       Rails.root.join('lib', 'template', 'Spectra.docx')
@@ -139,7 +156,7 @@ class Report < ActiveRecord::Base
 
   def self.merge(current_user, contents, spl_settings, rxn_settings, configs)
     {
-      date: Time.now.strftime("%d.%m.%Y"),
+      date: Time.now.strftime('%d.%m.%Y'),
       author: "#{current_user.first_name} #{current_user.last_name}",
       spl_settings: spl_settings,
       rxn_settings: rxn_settings,
@@ -153,7 +170,7 @@ class Report < ActiveRecord::Base
       diagram: true,
       collection: true,
       analyses: true,
-      reaction_description: true,
+      reaction_description: true
     }
   end
 
@@ -167,14 +184,14 @@ class Report < ActiveRecord::Base
       tlc: true,
       observation: true,
       analysis: true,
-      literature: true,
+      literature: true
     }
   end
 
   def self.all_configs
     {
       page_break: true,
-      whole_diagram: true,
+      whole_diagram: true
     }
   end
 
@@ -184,7 +201,7 @@ class Report < ActiveRecord::Base
   end
 
   def delete_job
-    job = Delayed::Job.find_by(queue: "report_#{self.id}")
-    job.delete if job
+    job = Delayed::Job.find_by(queue: "report_#{id}")
+    job&.delete
   end
 end

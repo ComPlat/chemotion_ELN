@@ -117,7 +117,7 @@ const rxlPreviews = ({ previewObjs, molSerials }) => (
 );
 
 const previewsContent = (props) => {
-  switch (props.template) {
+  switch (props.template.value) {
     case 'standard':
       return stdPreviews(props);
     case 'spectrum':
@@ -131,7 +131,7 @@ const previewsContent = (props) => {
     case 'rxn_list_html':
       return rxlPreviews(props);
     default:
-      return null;
+      return stdPreviews(props);
   }
 };
 

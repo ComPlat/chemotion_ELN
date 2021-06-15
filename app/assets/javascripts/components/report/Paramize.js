@@ -38,7 +38,7 @@ const paramize = (state) => {
     imgFormat,
     fileName,
     fileDescription,
-    template,
+    templateId: template.id,
     molSerials: JSON.stringify(selMolSerials),
   };
 

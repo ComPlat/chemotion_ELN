@@ -53,7 +53,7 @@ const spcSerials = props => suiSerials(props);
 const rxlSerials = props => suiSerials(props);
 
 const Serials = (props) => {
-  switch (props.template) {
+  switch (props.template.value) {
     case 'standard':
       return stdSerials();
     case 'spectrum':
@@ -66,7 +66,7 @@ const Serials = (props) => {
     case 'rxn_list_html':
       return rxlSerials(props);
     default:
-      return null;
+      return stdSerials();
   }
 };
 

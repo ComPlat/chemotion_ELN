@@ -33,6 +33,7 @@ export default class ReportContainer extends Component {
     const uiState = UIStore.getState();
     this.onChangeUI(uiState);
     ReportActions.getArchives.defer();
+    ReportActions.fetchTemplates.defer();
   }
 
   componentWillUnmount() {
@@ -110,13 +111,19 @@ export default class ReportContainer extends Component {
   render() {
     const {
       splSettings, checkedAllSplSettings, archives, activeKey,
-      rxnSettings, checkedAllRxnSettings, imgFormat, fileName, template,
+      rxnSettings, checkedAllRxnSettings, imgFormat, fileName,
       configs, checkedAllConfigs, selectedObjs, selMolSerials,
       siRxnSettings, checkedAllSiRxnSettings, fileDescription,
-      prdAtts, attThumbNails, previewObjs,
+      prdAtts, attThumbNails, previewObjs, templateOpts
     } = this.state;
-    const archivesTitle = this.archivesTitle();
 
+    let { template } = this.state;
+    if (templateOpts.length > 0 &&  template && typeof template != 'object') {
+      let templateOpt = templateOpts.find(x => x.id == template || x.value == template);
+      template =  { id: templateOpt.id, label: templateOpt.name, value: templateOpt.report_type };
+    }
+
+    const archivesTitle = this.archivesTitle();
     return (
       <Panel
         bsStyle="default"
@@ -136,6 +143,7 @@ export default class ReportContainer extends Component {
               checkedAllConfigs={checkedAllConfigs}
               template={template}
               handleTemplateChanged={this.handleTemplateChanged}
+              options = {templateOpts}
             />
           </Tab>
           <Tab eventKey={1} title="Setting">
