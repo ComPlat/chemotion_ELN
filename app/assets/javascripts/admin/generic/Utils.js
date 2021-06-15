@@ -88,7 +88,7 @@ const unitConvToBase = (field = {}) => {
 };
 
 const unitConversion = (field, key, val) => {
-  if (typeof val === 'undefined' || val == null || val === 0) {
+  if (typeof val === 'undefined' || val == null || val === 0 || val === '') {
     return val;
   }
   if (field === 'temperature') {
@@ -105,7 +105,7 @@ const unitConversion = (field, key, val) => {
   const pIdx = idx === 0 ? (units.length) : idx;
   const pre = (units[pIdx - 1] && units[pIdx - 1].nm) || 1;
   const curr = (units[idx] && units[idx].nm) || 1;
-  return parseFloat(val) * (curr / pre);
+  return parseFloat((parseFloat(val) * (curr / pre)).toFixed(5));
 };
 
 const notification = props =>

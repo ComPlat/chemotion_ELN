@@ -217,3 +217,29 @@ $colo-bs-primary: #337ab7;
 .g_col_w {
   width: 20% !important;
 }
+
+.generic_grid {
+  display: block;
+  > div {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+}
+
+@mixin generic_grid_cell {
+  width: 100%;
+  margin: 6px 0px 6px 6px;
+  text-align: center;
+  line-height: 15px;
+  align-self: center;
+}
+
+.generic_grid_header {
+  @include generic_grid_cell;
+  font-weight: bolder;
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.generic_grid_row {
+  @include generic_grid_cell;
+}

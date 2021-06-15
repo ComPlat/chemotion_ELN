@@ -1,12 +1,13 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
+import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
 import { ButtonTooltip, genUnitSup } from '../../admin/generic/Utils';
 import GroupFields from './GroupFields';
 import TextFormula from '../generic/TextFormula';
+import TableDef from '../generic/TableDef';
 
 const BaseFieldTypes = [
   { value: 'integer', name: 'integer', label: 'Integer' },
@@ -23,12 +24,14 @@ const ElementFieldTypes = [
   { value: 'drag_sample', name: 'drag_sample', label: 'Drag Sample' },
   { value: 'input-group', name: 'input-group', label: 'Input Group' },
   { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
+  { value: 'table', name: 'table', label: 'Table' },
 ];
 
 const SegmentFieldTypes = [
   { value: 'input-group', name: 'input-group', label: 'Input Group' },
   { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
   { value: 'drag_molecule', name: 'drag_molecule', label: 'Drag Molecule' },
+  { value: 'table', name: 'table', label: 'Table' },
 ];
 
 class ElementField extends Component {
@@ -205,6 +208,24 @@ class ElementField extends Component {
         </Col>
       </FormGroup>
     ) : null;
+    const tableOptions = ['table'].includes(f.type) ? (
+      <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
+        <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
+        <Col sm={9}>
+          <TableDef layerKey={layerKey} field={f} updSub={this.updSubField} unitsFields={(unitsSystem.fields || [])} />
+          <InputGroup>
+            <InputGroup.Addon>Tables per row</InputGroup.Addon>
+            <FormControl componentClass="select" defaultValue={f.cols || 1} onChange={event => this.handleChange(event, f.cols, f.field, layerKey, 'cols', f.cols)} >
+              <option value={0}>-</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+              <option value={4}>4</option>
+            </FormControl>
+          </InputGroup>
+        </Col>
+      </FormGroup>
+    ) : null;
     const textFormula = ['text-formula'].includes(f.type) ? (
       <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_text_sub_fields`}>
         <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
@@ -257,6 +278,7 @@ class ElementField extends Component {
                     </FormGroup>)
                   }
                 { groupOptions }
+                { tableOptions }
                 { selectOptions }
                 { formulaField }
                 { textFormula }
@@ -268,7 +290,6 @@ class ElementField extends Component {
                       </Col>
                       <Col sm={9}>
                         <Checkbox
-                          inputRef={(m) => { this.accessLevelInput = m; }}
                           checked={f.required}
                           onChange={event => this.handleChange(event, f.required, f.field, layerKey, 'required', 'checkbox')}
                         />

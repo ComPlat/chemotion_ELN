@@ -7,6 +7,7 @@ import { LayersLayout } from './GenericElCommon';
 import Segment from '../models/Segment';
 import MatrixCheck from '../common/MatrixCheck';
 import { genUnits, toBool, toNum, unitConversion } from '../../admin/generic/Utils';
+import { organizeSubValues } from '../../admin/generic/collate';
 
 const addSegmentTabs = (element, onChange, contentMap) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -84,13 +85,16 @@ class SegmentDetails extends Component {
     this.handleReload = this.handleReload.bind(this);
   }
 
-  handleSubChange(layer, obj) {
+  handleSubChange(layer, obj, valueOnly = false) {
     const { segment } = this.props;
     const { properties } = segment;
-    const subFields = properties[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
-    const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
-    subFields.splice(idxSub, 1, obj.sub);
-    properties[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
+    if (!valueOnly) {
+      const subFields = properties[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
+      const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
+      subFields.splice(idxSub, 1, obj.sub);
+      properties[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
+    }
+    properties[`${layer}`].fields.find(e => e.field === obj.f.field).sub_values = obj.f.sub_values || [];
     segment.properties = properties;
     segment.changed = true;
     this.props.onChange(segment);
@@ -190,10 +194,24 @@ class SegmentDetails extends Component {
                       exSubs.push(nSub);
                     } else { exSubs.push({ ...nSub, value: (hitSub.value || '').toString() }); }
                   }
-                  if (['number', 'system-defined'].includes(nSub.type)) { exSubs.push({ ...nSub, value: toNum(hitSub.value) }); }
+
+                  if (['number', 'system-defined'].includes(nSub.type)) {
+                    if (nSub.option_layers === hitSub.option_layers) {
+                      exSubs.push({ ...nSub, value: toNum(hitSub.value), value_system: hitSub.value_system });
+                    } else {
+                      exSubs.push({ ...nSub, value: toNum(hitSub.value) });
+                    }
+                  }
                 });
               }
               newProps[key].fields[idx].sub_fields = exSubs;
+            }
+          }
+          if (newProps[key].fields[idx].type === 'table') {
+            if (segment.properties[key].fields[curIdx].type !== newProps[key].fields[idx].type) {
+              newProps[key].fields[idx].sub_values = [];
+            } else {
+              newProps[key].fields[idx].sub_values = organizeSubValues(newProps[key].fields[idx], segment.properties[key].fields[curIdx]);
             }
           }
         }

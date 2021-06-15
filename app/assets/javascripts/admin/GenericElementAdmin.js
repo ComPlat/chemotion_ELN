@@ -509,7 +509,7 @@ export default class GenericElementAdmin extends React.Component {
         fd.position = (idx + 1);
         if (fd.type === 'system-defined') { fd.option_layers = reUnit(unitsSystem, fd.option_layers); }
         fd.required = ['integer', 'text'].includes(fd.type) ? fd.required : false;
-        if (fd.type !== 'input-group') { fd.sub_fields = []; }
+        fd.sub_fields = ['input-group', 'table'].includes(fd.type) ? fd.sub_fields : [];
         if (fd.type !== 'text-formula') { fd.text_sub_fields = []; }
         return fd;
       });

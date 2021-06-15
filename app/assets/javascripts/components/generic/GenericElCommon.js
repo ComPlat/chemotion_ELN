@@ -1,14 +1,15 @@
+/* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Col, PanelGroup, Row } from 'react-bootstrap';
+import { Panel, Col, PanelGroup, Row, FormGroup, FormControl } from 'react-bootstrap';
 import { sortBy } from 'lodash';
 import { genUnits, unitConversion } from '../../admin/generic/Utils';
 import {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
-  GenPropertiesTextArea, GenDummy, GenTextFormula
+  GenPropertiesTextArea, GenDummy, GenTextFormula, GenPropertiesTable
 } from './GenericPropertiesFields';
 
 const GenProperties = (opt) => {
@@ -60,6 +61,8 @@ const GenProperties = (opt) => {
       return GenPropertiesTextArea(fieldProps);
     case 'dummy':
       return GenDummy();
+    case 'table':
+      return GenPropertiesTable(fieldProps);
     case 'text-formula':
       return GenTextFormula(fieldProps);
     default:
@@ -74,28 +77,29 @@ class GenPropertiesLayer extends Component {
     super(props);
     this.handleSubChange = this.handleSubChange.bind(this);
   }
-  // event, field, layer, type
+
   handleChange(e, f, k, t) {
     this.props.onChange(e, f, k, t);
   }
 
-  handleSubChange(e, id, f) {
+  handleSubChange(e, id, f, valueOnly = false) {
     const sub = f.sub_fields.find(m => m.id === id);
-    if (e.type === 'system-defined') {
-      const units = genUnits(e.option_layers);
-      let uIdx = units.findIndex(u => u.key === e.value_system);
-      if (uIdx < units.length - 1) uIdx += 1; else uIdx = 0;
-      sub.value_system = units.length > 0 ? units[uIdx].key : '';
-      sub.value = unitConversion(e.option_layers, sub.value_system, e.value);
-    } else {
-      sub.value = e.target.value;
+    if (!valueOnly) {
+      if (e.type === 'system-defined') {
+        const units = genUnits(e.option_layers);
+        let uIdx = units.findIndex(u => u.key === e.value_system);
+        if (uIdx < units.length - 1) uIdx += 1; else uIdx = 0;
+        sub.value_system = units.length > 0 ? units[uIdx].key : '';
+        sub.value = unitConversion(e.option_layers, sub.value_system, e.value);
+      } else {
+        sub.value = e.target.value;
+      }
     }
     const { layer } = this.props;
     const obj = { f, sub };
-    this.props.onSubChange(layer.key, obj);
+    this.props.onSubChange(layer.key, obj, valueOnly);
   }
 
-  // event, field, key of layer, field object, value, unitsSystem
   handleClick(keyLayer, obj, val) {
     const units = genUnits(obj.option_layers);
     let uIdx = units.findIndex(e => e.key === val);
@@ -111,14 +115,35 @@ class GenPropertiesLayer extends Component {
     } = this.props;
     const { cols, fields, key } = layer;
     const perRow = cols || 1;
+    let counter = 0;
     const col = Math.floor(12 / perRow);
-    const klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
+    let klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
     const vs = [];
     let op = [];
     fields.forEach((f, i) => {
+      const tabCol = (f.cols || 1) * 1;
       const unit = genUnits(f.option_layers)[0] || {};
+      const rCol = (f.type === 'table' && tabCol !== 0) ? 12 / (tabCol || 1) : col;
+      if (f.type === 'table' && tabCol !== 0) klaz = '';
+
+      counter += rCol;
+
+      if (counter > 12) {
+        const dumCol = 12 - (counter - rCol);
+        counter = rCol;
+        op.push((
+          <Col md={dumCol} lg={dumCol}>
+            <FormGroup className="text_generic_properties">
+              <FormControl type="text" className="dummy" readOnly />
+            </FormGroup>
+          </Col>));
+        vs.push(<Row>{op}</Row>);
+        op = [];
+      }
+      counter = counter === 12 ? 0 : counter;
+
       const eachCol = (
-        <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col} className={klaz}>
+        <Col key={`prop_${key}_${f.priority}_${f.field}`} md={rCol} lg={rCol} className={klaz}>
           <GenProperties
             layers={layers}
             id={id}
@@ -144,8 +169,8 @@ class GenPropertiesLayer extends Component {
         </Col>
       );
       op.push(eachCol);
-      if (((i + 1) % perRow === 0) || (fields.length === (i + 1))) {
-        vs.push(<Row key={`prop_row_${key}_${f.priority}_${f.field}`}>{op}</Row>);
+      if ((counter === 12 || counter === 0) || (fields.length === (i + 1))) {
+        vs.push(<Row>{op}</Row>);
         op = [];
       }
     });
@@ -174,8 +199,7 @@ class GenPropertiesLayer extends Component {
 }
 
 GenPropertiesLayer.propTypes = {
-  id: PropTypes.number,
-  // eslint-disable-next-line react/require-default-props
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   layer: PropTypes.object,
   selectOptions: PropTypes.object,
   onChange: PropTypes.func.isRequired,
@@ -266,7 +290,6 @@ class GenPropertiesLayerSearchCriteria extends Component {
 }
 
 GenPropertiesLayerSearchCriteria.propTypes = {
-  // eslint-disable-next-line react/require-default-props
   layer: PropTypes.object,
   selectOptions: PropTypes.object,
   onSubChange: PropTypes.func.isRequired,

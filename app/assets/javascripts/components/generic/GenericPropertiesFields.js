@@ -5,6 +5,7 @@ import { filter } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
+import TableRecord from './TableRecord';
 
 const GenTextFormula = (opt) => {
   const { layers } = opt;
@@ -236,6 +237,16 @@ const GenPropertiesSystemDefined = (opt) => {
   );
 };
 
+const GenPropertiesTable = (opt) => {
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
+  return (
+    <FormGroup>
+      {fieldHeader}
+      <TableRecord key={`grid_${opt.f_obj.field}`} opt={opt} />
+    </FormGroup>
+  );
+};
+
 const GenPropertiesInputGroup = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   const fLab = e => <div key={uuid.v4()} className="form-control g_input_group_label">{e.value}</div>;
@@ -305,5 +316,5 @@ const GenPropertiesDrop = (opt) => {
 export {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
-  GenPropertiesTextArea, GenDummy, GenTextFormula
+  GenPropertiesTextArea, GenDummy, GenTextFormula, GenPropertiesTable
 };

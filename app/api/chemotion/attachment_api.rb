@@ -146,7 +146,7 @@ module Chemotion
             @sample = Sample.find(params[:sample_id])
             if (element = @sample)
               can_read = ElementPolicy.new(current_user, element).read?
-              can_dwnld = can_read && 
+              can_dwnld = can_read &&
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif @attachment

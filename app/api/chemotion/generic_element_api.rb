@@ -158,7 +158,10 @@ module Chemotion
           element.update(attributes)
           element.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-          { element: ElementPermissionProxy.new(current_user, element, user_ids).serialized }
+          {
+            element: ElementPermissionProxy.new(current_user, element, user_ids).serialized,
+            attachments: Entities::AttachmentEntity.represent(element.attachments)
+          }
         end
       end
 
