@@ -358,11 +358,19 @@ module Chemotion
           requires :id, type: Integer, desc: 'Element Klass ID'
           optional :label, type: String, desc: 'Element Klass Label'
           requires :properties_template, type: Hash
+          optional :is_release, type: Boolean, default: false
         end
         post do
           klass = ElementKlass.find(params[:id])
-          klass.properties_template = params[:properties_template]
+          uuid = SecureRandom.uuid
+          properties = params[:properties_template]
+          properties['uuid'] = uuid
+          properties['eln'] = Chemotion::Application.config.version
+          properties['klass'] = 'ElementKlass'
+          klass.properties_template = properties
           klass.save!
+          klass.reload
+          klass.create_klasses_revision(current_user.id) if params[:is_release] == true
           klass
         end
       end
@@ -378,19 +386,22 @@ module Chemotion
           optional :properties_template, type: Hash, desc: 'Element Klass properties template'
         end
         post do
-          template = {
-            layers:
-            {
-            },
-            select_options: {
-            }
-          }
+          uuid = SecureRandom.uuid
+          template = { uuid: uuid, layers: {}, select_options: {} }
           attributes = declared(params, include_missing: false)
+          attributes[:properties_template]['uuid'] = uuid if attributes[:properties_template].present?
           attributes[:properties_template] = template unless attributes[:properties_template].present?
+          attributes[:properties_template]['eln'] = Chemotion::Application.config.version if attributes[:properties_template].present?
+          attributes[:properties_template]['klass'] = 'ElementKlass' if attributes[:properties_template].present?
+          attributes[:is_active] = false
+          attributes[:uuid] = uuid
+          attributes[:released_at] = DateTime.now
+          attributes[:properties_release] = attributes[:properties_template]
           attributes[:created_by] = current_user.id
-          new_klass = ElementKlass.create!(attributes)
-          new_klass.save
 
+          new_klass = ElementKlass.create!(attributes)
+          new_klass.reload
+          new_klass.create_klasses_revision(current_user.id)
           klass_names_file = Rails.root.join('config', 'klasses.json')
           klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
           File.write(klass_names_file, klasses)
@@ -488,10 +499,21 @@ module Chemotion
           rescue StandardError
             place = 100
           end
+
+          uuid = SecureRandom.uuid
+          template = { uuid: uuid, layers: {}, select_options: {} }
           attributes = declared(params, include_missing: false)
-          template = attributes[:properties_template].present? ? attributes[:properties_template] : { layers: {}, select_options: {} }
+          attributes[:properties_template]['uuid'] = uuid if attributes[:properties_template].present?
+          template = attributes[:properties_template].present? ? attributes[:properties_template] : template
+          template['eln'] = Chemotion::Application.config.version
+          template['klass'] = 'SegmentKlass'
           attributes.merge!(properties_template: template, element_klass: @klass, created_by: current_user.id, place: place)
-          SegmentKlass.create!(attributes)
+          attributes[:uuid] = uuid
+          attributes[:released_at] = DateTime.now
+          attributes[:properties_release] = attributes[:properties_template]
+          klass = SegmentKlass.create!(attributes)
+          klass.reload
+          klass.create_klasses_revision(current_user.id)
         rescue ActiveRecord::RecordInvalid => e
           { error: e.message }
         end
@@ -538,6 +560,19 @@ module Chemotion
         end
       end
 
+      namespace :klass_revisions do
+        desc 'list Generic Element Revisions'
+        params do
+          requires :id, type: Integer, desc: 'Generic Element Klass Id'
+          requires :klass, type: String, desc: 'Klass', values: %w[ElementKlass SegmentKlass DatasetKlass]
+        end
+        get do
+          klass = params[:klass].constantize.find_by(id: params[:id])
+          list = klass.send("#{params[:klass].underscore}es_revisions") unless klass.nil?
+          present list.sort_by(&:released_at).reverse, with: Entities::KlassRevisionEntity, root: 'revisions'
+        end
+      end
+
       namespace :list_segment_klass do
         desc 'list Generic Segment Klass'
         params do
@@ -555,13 +590,24 @@ module Chemotion
         params do
           requires :id, type: Integer, desc: 'Segment Klass ID'
           requires :properties_template, type: Hash
+          optional :is_release, type: Boolean, default: false
         end
         after_validation do
           @segment = SegmentKlass.find(params[:id])
           error!('Segment is invalid. Please re-select.', 500) if @segment.nil?
         end
         post do
-          @segment&.update!(properties_template: params[:properties_template])
+          uuid = SecureRandom.uuid
+          properties = params[:properties_template]
+          properties['uuid'] = uuid
+          properties['eln'] = Chemotion::Application.config.version
+          properties['klass'] = @segment.class.name
+
+          @segment.properties_template = properties
+          @segment.save!
+          @segment.reload
+          @segment.create_klasses_revision(current_user.id) if params[:is_release] == true
+          @segment
         end
       end
 
@@ -574,6 +620,23 @@ module Chemotion
           delete do
             @segment&.destroy!
           end
+        end
+      end
+
+      namespace :delete_klass_revision do
+        desc 'delete Generic Element Klass'
+        params do
+          requires :id, type: Integer, desc: 'Revision ID'
+          requires :klass_id, type: Integer, desc: 'Klass ID'
+          requires :klass, type: String, desc: 'Klass', values: %w[ElementKlass SegmentKlass DatasetKlass]
+        end
+        post do
+          revision = "#{params[:klass]}esRevision".constantize.find(params[:id])
+          klass = params[:klass].constantize.find_by(id: params[:klass_id]) unless revision.nil?
+          error!('Revision is invalid.', 404) if revision.nil?
+          error!('Can not delete the active revision.', 405) if revision.uuid == klass.uuid
+          revision&.destroy!
+          status 201
         end
       end
 
@@ -609,13 +672,23 @@ module Chemotion
         params do
           requires :id, type: Integer, desc: 'Dataset Klass ID'
           requires :properties_template, type: Hash
+          optional :is_release, type: Boolean, default: false
         end
         after_validation do
-          @dataset = DatasetKlass.find(params[:id])
-          error!('Dataset is invalid. Please re-select.', 500) if @dataset.nil?
+          @klass = DatasetKlass.find(params[:id])
+          error!('Dataset is invalid. Please re-select.', 500) if @klass.nil?
         end
         post do
-          @dataset&.update!(properties_template: params[:properties_template])
+          uuid = SecureRandom.uuid
+          properties = params[:properties_template]
+          properties['uuid'] = uuid
+          properties['eln'] = Chemotion::Application.config.version
+          properties['klass'] = @klass.class.name
+          @klass.properties_template = properties
+          @klass.save!
+          @klass.reload
+          @klass.create_klasses_revision(current_user.id) if params[:is_release] == true
+          @klass
         end
       end
 

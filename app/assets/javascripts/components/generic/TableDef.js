@@ -19,6 +19,7 @@ export default class TableDef extends React.Component {
     this.addRow = this.addRow.bind(this);
     this.selType = this.selType.bind(this);
     this.selDefined = this.selDefined.bind(this);
+    this.selMolAttr = this.selMolAttr.bind(this);
     this.refresh = this.refresh.bind(this);
     this.onCellValueChanged = this.onCellValueChanged.bind(this);
     this.columnDefs = [
@@ -44,15 +45,15 @@ export default class TableDef extends React.Component {
         minWidth: 150,
         width: 150,
         cellRendererFramework: TypeSelect,
-        cellRendererParams: { all: ['text', 'system-defined'].map(e => ({ key: e, val: e, lab: e })), selType: this.selType },
+        cellRendererParams: { all: ['drag_molecule', 'text', 'system-defined'].map(e => ({ key: e, val: e, lab: e })), selType: this.selType },
       },
       {
         headerName: 'Default Value',
         field: 'value',
-        editable: (e) => { if (e.data.type === 'system-defined') return false; return true; },
-        minWidth: 250,
+        editable: (e) => { if (['drag_molecule', 'system-defined'].includes(e.data.type)) return false; return true; },
+        minWidth: 350,
         cellRenderer: 'systemDefinedRenderer',
-        cellRendererParams: { unitConfig: this.state.unitConfig, selDefined: this.selDefined },
+        cellRendererParams: { unitConfig: this.state.unitConfig, selDefined: this.selDefined, selMolAttr: this.selMolAttr },
         onCellValueChanged: this.onCellValueChanged
       },
       {
@@ -142,6 +143,22 @@ export default class TableDef extends React.Component {
     updSub(layerKey, field, () => {});
   }
 
+  selMolAttr(val, chk, node) {
+    const { data } = node;
+    const search = new RegExp(`${val};`, 'gi');
+    if (chk) {
+      data.value = data.value.concat(`${val};`);
+    } else {
+      data.value = data.value.replace(search, '');
+    }
+    const { updSub, layerKey, field } = this.props;
+    const rows = [];
+    this.gridApi.forEachNode((nd) => { rows.push(nd.data); });
+    field.sub_fields = rows;
+    this.gridApi.setRowData(rows);
+    updSub(layerKey, field, () => {});
+  }
+
   selDefined(e, node) {
     const { data } = node;
     if (e.target.value === data.option_layers) { return; }
@@ -172,6 +189,7 @@ export default class TableDef extends React.Component {
         </div>
         <div style={{ width: '100%', height: '100%' }} className="ag-theme-balham">
           <AgGridReact
+            defaultColDef={{ resizable: true }}
             enableColResize
             columnDefs={this.columnDefs}
             rowSelection="single"

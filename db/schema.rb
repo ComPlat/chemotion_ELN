@@ -256,7 +256,24 @@ ActiveRecord::Schema.define(version: 20210604232803) do
     t.datetime "created_at",                                                         null: false
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string   "uuid"
+    t.jsonb    "properties_release",  default: {}
+    t.datetime "released_at"
   end
+
+  create_table "dataset_klasses_revisions", force: :cascade do |t|
+    t.integer  "dataset_klass_id"
+    t.string   "uuid"
+    t.jsonb    "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer  "released_by"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "dataset_klasses_revisions", ["dataset_klass_id"], name: "index_dataset_klasses_revisions_on_dataset_klass_id", using: :btree
 
   create_table "datasets", force: :cascade do |t|
     t.integer  "dataset_klass_id"
@@ -265,7 +282,23 @@ ActiveRecord::Schema.define(version: 20210604232803) do
     t.jsonb    "properties"
     t.datetime "created_at",       null: false
     t.datetime "updated_at"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+    t.datetime "deleted_at"
   end
+
+  create_table "datasets_revisions", force: :cascade do |t|
+    t.integer  "dataset_id"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+    t.jsonb    "properties", default: {}
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "datasets_revisions", ["dataset_id"], name: "index_datasets_revisions_on_dataset_id", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -318,16 +351,33 @@ ActiveRecord::Schema.define(version: 20210604232803) do
     t.string   "label"
     t.string   "desc"
     t.string   "icon_name"
-    t.boolean  "is_active",           default: true, null: false
-    t.string   "klass_prefix",        default: "E",  null: false
-    t.boolean  "is_generic",          default: true, null: false
-    t.integer  "place",               default: 100,  null: false
     t.jsonb    "properties_template"
     t.integer  "created_by"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.boolean  "is_active",           default: true, null: false
+    t.string   "klass_prefix",        default: "E",  null: false
+    t.boolean  "is_generic",          default: true, null: false
+    t.integer  "place",               default: 100,  null: false
+    t.string   "uuid"
+    t.jsonb    "properties_release",  default: {}
+    t.datetime "released_at"
   end
+
+  create_table "element_klasses_revisions", force: :cascade do |t|
+    t.integer  "element_klass_id"
+    t.string   "uuid"
+    t.jsonb    "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer  "released_by"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "element_klasses_revisions", ["element_klass_id"], name: "index_element_klasses_revisions_on_element_klass_id", using: :btree
 
   create_table "element_tags", force: :cascade do |t|
     t.string   "taggable_type"
@@ -353,13 +403,29 @@ ActiveRecord::Schema.define(version: 20210604232803) do
   create_table "elements", force: :cascade do |t|
     t.string   "name"
     t.integer  "element_klass_id"
-    t.string   "short_label"
     t.jsonb    "properties"
     t.integer  "created_by"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string   "short_label"
+    t.string   "uuid"
+    t.string   "klass_uuid"
   end
+
+  create_table "elements_revisions", force: :cascade do |t|
+    t.integer  "element_id"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+    t.string   "name"
+    t.jsonb    "properties", default: {}
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "elements_revisions", ["element_id"], name: "index_elements_revisions_on_element_id", using: :btree
 
   create_table "elements_samples", force: :cascade do |t|
     t.integer  "element_id"
@@ -925,7 +991,24 @@ ActiveRecord::Schema.define(version: 20210604232803) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string   "uuid"
+    t.jsonb    "properties_release",  default: {}
+    t.datetime "released_at"
   end
+
+  create_table "segment_klasses_revisions", force: :cascade do |t|
+    t.integer  "segment_klass_id"
+    t.string   "uuid"
+    t.jsonb    "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer  "released_by"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "segment_klasses_revisions", ["segment_klass_id"], name: "index_segment_klasses_revisions_on_segment_klass_id", using: :btree
 
   create_table "segments", force: :cascade do |t|
     t.integer  "segment_klass_id"
@@ -936,7 +1019,22 @@ ActiveRecord::Schema.define(version: 20210604232803) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string   "uuid"
+    t.string   "klass_uuid"
   end
+
+  create_table "segments_revisions", force: :cascade do |t|
+    t.integer  "segment_id"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+    t.jsonb    "properties", default: {}
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "segments_revisions", ["segment_id"], name: "index_segments_revisions_on_segment_id", using: :btree
 
   create_table "subscriptions", force: :cascade do |t|
     t.integer  "channel_id"

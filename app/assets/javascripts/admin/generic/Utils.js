@@ -19,6 +19,22 @@ class GenericDummy {
   }
 }
 
+const inputEventVal = (event, type) => {
+  if (type === 'select') {
+    return event ? event.value : null;
+  } else if (type.startsWith('drag')) {
+    return event;
+  } else if (type === 'checkbox') {
+    return event.target.checked;
+  } else if (type === 'formula-field') {
+    if (event.target) {
+      return event.target.value;
+    }
+    return event;
+  }
+  return event.target.value;
+};
+
 const absOlsTermId = val => (val || '').split('|')[0].trim();
 const absOlsTermLabel = val => val.replace(absOlsTermId(val), '').replace('|', '').trim();
 const toNum = (val) => {
@@ -116,6 +132,7 @@ const notification = props =>
       level: props.lvl,
       position: 'tc',
       dismissible: 'button',
+      autoDismiss: props.autoDismiss || 5,
       uid: props.uid || uuid.v4()
     })
   );
@@ -178,7 +195,7 @@ const ButtonTooltip = (props) => {
 
 ButtonTooltip.propTypes = {
   tip: PropTypes.string.isRequired,
-  element: PropTypes.object.isRequired,
+  element: PropTypes.object,
   fnClick: PropTypes.func.isRequired,
   bs: PropTypes.string,
   size: PropTypes.string,
@@ -189,19 +206,18 @@ ButtonTooltip.propTypes = {
 };
 
 ButtonTooltip.defaultProps = {
-  bs: '', size: 'xs', place: 'right', fa: 'fa-pencil-square-o', disabled: false, txt: null
+  bs: '', size: 'xs', place: 'right', fa: 'fa-pencil-square-o', disabled: false, txt: null, element: {}
 };
 
 const ButtonConfirm = (props) => {
   const {
-    msg, size, bs, fnClick, element, place, fa, disabled
+    msg, size, bs, fnClick, fnParams, place, fa, disabled
   } = props;
-  const { delStr, delKey, delRoot } = element;
   const popover = (
     <Popover id="popover-button-confirm">
       {msg} <br />
       <div className="btn-toolbar">
-        <Button bsSize="xsmall" bsStyle="danger" aria-hidden="true" onClick={() => fnClick(delStr, delKey, delRoot)}>
+        <Button bsSize="xsmall" bsStyle="danger" aria-hidden="true" onClick={() => fnClick(fnParams)}>
           Yes
         </Button><span>&nbsp;&nbsp;</span>
         <Button bsSize="xsmall" bsStyle="warning">No</Button>
@@ -220,7 +236,7 @@ const ButtonConfirm = (props) => {
 
 ButtonConfirm.propTypes = {
   msg: PropTypes.string.isRequired,
-  element: PropTypes.object.isRequired,
+  fnParams: PropTypes.object.isRequired,
   fnClick: PropTypes.func.isRequired,
   bs: PropTypes.string,
   size: PropTypes.string,
@@ -275,9 +291,11 @@ const clsInputGroup = (el) => {
   return genericEl;
 };
 
+const molOptions = [{ label: 'InChiKey', value: 'inchikey' }, { label: 'SMILES', value: 'smiles' }, { label: 'IUPAC', value: 'iupac' }, { label: 'Mass', value: 'molecular_weight' }];
+
 export {
   ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel, GenericDummy,
   validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
   unitConvToBase, unitConversion, toBool, toNum, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit,
-  clsInputGroup
+  clsInputGroup, inputEventVal, molOptions
 };

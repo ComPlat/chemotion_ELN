@@ -32,16 +32,16 @@ module SampleAssociationHelpers
 
   def update_sample_association(element, properties, current_user)
     sds = []
-    properties.keys.each do |key|
-      layer = properties[key]
+    properties['layers'].keys.each do |key|
+      layer = properties['layers'][key]
       field_samples = layer['fields'].select { |ss| ss['type'] == 'drag_sample' }
       field_samples.each do |field|
-        idx = properties[key]['fields'].index(field)
+        idx = properties['layers'][key]['fields'].index(field)
         sid = field.dig('value', 'el_id')
         next if sid.blank?
 
-        sds << sid unless properties.dig(key, 'fields', idx, 'value', 'is_new') == true
-        next unless properties.dig(key, 'fields', idx, 'value', 'is_new') == true
+        sds << sid unless properties.dig('layers', key, 'fields', idx, 'value', 'is_new') == true
+        next unless properties.dig('layers', key, 'fields', idx, 'value', 'is_new') == true
 
         cr_opt = field.dig('value', 'cr_opt')
 
@@ -49,10 +49,10 @@ module SampleAssociationHelpers
         next if subsample.nil?
 
         sds << subsample.id
-        properties[key]['fields'][idx]['value']['el_id'] = subsample.id
-        properties[key]['fields'][idx]['value']['el_label'] = subsample.short_label
-        properties[key]['fields'][idx]['value']['el_tip'] = subsample.short_label
-        properties[key]['fields'][idx]['value']['is_new'] = false
+        properties['layers'][key]['fields'][idx]['value']['el_id'] = subsample.id
+        properties['layers'][key]['fields'][idx]['value']['el_label'] = subsample.short_label
+        properties['layers'][key]['fields'][idx]['value']['el_tip'] = subsample.short_label
+        properties['layers'][key]['fields'][idx]['value']['is_new'] = false
         ElementsSample.find_or_create_by(element_id: element.id, sample_id: subsample.id)
       end
     end

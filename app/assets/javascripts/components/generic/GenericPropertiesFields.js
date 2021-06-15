@@ -14,9 +14,18 @@ const GenTextFormula = (opt) => {
   (opt.f_obj && opt.f_obj.text_sub_fields).map((e) => {
     const { layer, field, separator } = e;
     if (field && field !== '') {
-      const fd = ((layers[layer] || {}).fields || [])
-        .find(f => f.field === field);
-      if (fd && fd.value && fd.value !== '') { subs.push(fd.value); subs.push(separator); }
+      if (field.includes('[@@]')) {
+        const fds = field.split('[@@]');
+        if (fds && fds.length === 2) {
+          const fdt = ((layers[layer] || {}).fields || []).find(f => f.field === fds[0] && f.type === 'table');
+          ((fdt && fdt.sub_values) || []).forEach((svv) => {
+            if (svv && svv[fds[1]] && svv[fds[1]] !== '') { subs.push(svv[fds[1]]); subs.push(separator); }
+          });
+        }
+      } else {
+        const fd = ((layers[layer] || {}).fields || []).find(f => f.field === field);
+        if (fd && fd.value && fd.value !== '') { subs.push(fd.value); subs.push(separator); }
+      }
     }
     return true;
   });

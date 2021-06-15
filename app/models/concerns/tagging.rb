@@ -24,7 +24,7 @@ module Tagging
 
       args = deleted_at.nil? ? { element_tag: { "type": el.element_klass.name, "id": element_id } } : { element_tag: {} }
       element = 'sample'
-    when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample',
+    when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample', 'CollectionsElement',
       'CollectionsScreen', 'CollectionsResearchPlan'
       args = { collection_tag: true }
       element = klass[11..-1].underscore

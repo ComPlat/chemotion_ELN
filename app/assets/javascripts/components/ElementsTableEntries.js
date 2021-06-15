@@ -192,7 +192,6 @@ export default class ElementsTableEntries extends Component {
 
     const {showPreviews} = UIStore.getState();
     const clickToShowDetails = e => this.showDetails(element);
-
     if (showPreviews && (element.type == 'reaction')) {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
@@ -330,7 +329,6 @@ export default class ElementsTableEntries extends Component {
       <Table className="elements" bordered hover style={{borderTop: 0}}>
         <tbody>
         {elements.map((element, index) => {
-          //console.log(element);
           const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
           let style = {};
           if (this.isElementSelected(element) ||

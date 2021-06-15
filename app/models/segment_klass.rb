@@ -13,12 +13,17 @@
 #  created_at          :datetime
 #  updated_at          :datetime
 #  deleted_at          :datetime
+#  uuid                :string
+#  properties_release  :jsonb
+#  released_at         :datetime
 #
 
 class SegmentKlass < ActiveRecord::Base
   acts_as_paranoid
-  has_many :segments, dependent: :destroy
+  include GenericKlassRevisions
   belongs_to :element_klass
+  has_many :segments, dependent: :destroy
+  has_many :segment_klasses_revisions, dependent: :destroy
 
   def self.gen_klasses_json
     klasses = where(is_active: true)&.pluck(:name) || []

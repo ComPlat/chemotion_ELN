@@ -15,10 +15,15 @@
 #  created_at          :datetime         not null
 #  updated_at          :datetime
 #  deleted_at          :datetime
+#  uuid                :string
+#  properties_release  :jsonb
+#  released_at         :datetime
 #
 class DatasetKlass < ActiveRecord::Base
   acts_as_paranoid
+  include GenericKlassRevisions
   has_many :datasets, dependent: :destroy
+  has_many :dataset_klasses_revisions, dependent: :destroy
 
   def self.init_seeds
     seeds_path = File.join(Rails.root, 'db', 'seeds', 'json', 'dataset_klasses.json')

@@ -45,7 +45,7 @@ export default class TextFormula extends React.Component {
       columnDefs.find(c => c.field === 'field').cellRendererParams.allLayers = allLayers;
       this.gridApi.setColumnDefs(columnDefs);
     }
-    this.gridApi.setRowData(sub);
+    this.gridApi && this.gridApi.setRowData(sub);
   }
 
   onGridReady(e) {
@@ -76,7 +76,7 @@ export default class TextFormula extends React.Component {
         editable: false,
         minWidth: 250,
         cellRendererFramework: FieldSelect,
-        cellRendererParams: { allLayers: this.props.allLayers, selField: this.selField, types: ['text'] },
+        cellRendererParams: { allLayers: this.props.allLayers, selField: this.selField, types: ['text'], tableText: true },
       },
       {
         headerName: 'Separator',

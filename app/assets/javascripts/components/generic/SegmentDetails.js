@@ -6,8 +6,10 @@ import UserStore from '../stores/UserStore';
 import { LayersLayout } from './GenericElCommon';
 import Segment from '../models/Segment';
 import MatrixCheck from '../common/MatrixCheck';
-import { genUnits, toBool, toNum, unitConversion } from '../../admin/generic/Utils';
+import { notification, genUnits, toBool, toNum, unitConversion } from '../../admin/generic/Utils';
 import { organizeSubValues } from '../../admin/generic/collate';
+import PreviewModal from './PreviewModal';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 
 const addSegmentTabs = (element, onChange, contentMap) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -79,22 +81,25 @@ const SegmentTabs = (element, onChange, init = 0) => {
 class SegmentDetails extends Component {
   constructor(props) {
     super(props);
+    this.state = { showHistory: false };
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSubChange = this.handleSubChange.bind(this);
     this.handleUnitClick = this.handleUnitClick.bind(this);
     this.handleReload = this.handleReload.bind(this);
+    this.handleRetriveRevision = this.handleRetriveRevision.bind(this);
+    this.handleDelRevision = this.handleDelRevision.bind(this);
   }
 
   handleSubChange(layer, obj, valueOnly = false) {
     const { segment } = this.props;
     const { properties } = segment;
     if (!valueOnly) {
-      const subFields = properties[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
+      const subFields = properties.layers[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
       const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
       subFields.splice(idxSub, 1, obj.sub);
-      properties[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
+      properties.layers[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
     }
-    properties[`${layer}`].fields.find(e => e.field === obj.f.field).sub_values = obj.f.sub_values || [];
+    properties.layers[`${layer}`].fields.find(e => e.field === obj.f.field).sub_values = obj.f.sub_values || [];
     segment.properties = properties;
     segment.changed = true;
     this.props.onChange(segment);
@@ -128,10 +133,10 @@ class SegmentDetails extends Component {
       default:
         ({ value } = event.target);
     }
-    properties[`${layer}`].fields.find(e => e.field === field).value = value;
-    if (type === 'system-defined' && (!properties[`${layer}`].fields.find(e => e.field === field).value_system || properties[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
-      const opt = properties[`${layer}`].fields.find(e => e.field === field).option_layers;
-      properties[`${layer}`].fields.find(e => e.field === field).value_system = genUnits(opt)[0].key;
+    properties.layers[`${layer}`].fields.find(e => e.field === field).value = value;
+    if (type === 'system-defined' && (!properties.layers[`${layer}`].fields.find(e => e.field === field).value_system || properties.layers[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
+      const opt = properties.layers[`${layer}`].fields.find(e => e.field === field).option_layers;
+      properties.layers[`${layer}`].fields.find(e => e.field === field).value_system = genUnits(opt)[0].key;
     }
     segment.properties = properties;
     segment.changed = true;
@@ -142,8 +147,8 @@ class SegmentDetails extends Component {
     const { segment } = this.props;
     const { properties } = segment;
     const newVal = unitConversion(obj.option_layers, obj.value_system, obj.value);
-    properties[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
-    properties[`${layer}`].fields.find(e => e.field === obj.field).value = newVal;
+    properties.layers[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
+    properties.layers[`${layer}`].fields.find(e => e.field === obj.field).value = newVal;
     segment.properties = properties;
     segment.changed = true;
     this.props.onChange(segment);
@@ -151,40 +156,41 @@ class SegmentDetails extends Component {
 
   handleReload() {
     const { klass, segment } = this.props;
-    const newProps = cloneDeep(klass.properties_template.layers);
-    Object.keys(newProps).forEach((key) => {
-      const newLayer = newProps[key] || {};
-      const curFields = (segment.properties[key] && segment.properties[key].fields) || [];
+    const newProps = cloneDeep(klass.properties_release);
+    newProps.klass_uuid = klass.uuid;
+    Object.keys(newProps.layers).forEach((key) => {
+      const newLayer = newProps.layers[key] || {};
+      const curFields = (segment.properties.layers[key] && segment.properties.layers[key].fields) || [];
       (newLayer.fields || []).forEach((f, idx) => {
         const curIdx = findIndex(curFields, o => o.field === f.field);
         if (curIdx >= 0) {
-          const curVal = segment.properties[key].fields[curIdx].value;
+          const curVal = segment.properties.layers[key].fields[curIdx].value;
           const curType = typeof curVal;
-          if (['select', 'text', 'textarea', 'formula-field'].includes(newProps[key].fields[idx].type)) {
-            newProps[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
+          if (['select', 'text', 'textarea', 'formula-field'].includes(newProps.layers[key].fields[idx].type)) {
+            newProps.layers[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
           }
-          if (newProps[key].fields[idx].type === 'integer') {
-            newProps[key].fields[idx].value = (curType === 'undefined' || curType === 'boolean' || isNaN(curVal)) ? 0 : parseInt(curVal, 10);
+          if (newProps.layers[key].fields[idx].type === 'integer') {
+            newProps.layers[key].fields[idx].value = (curType === 'undefined' || curType === 'boolean' || isNaN(curVal)) ? 0 : parseInt(curVal, 10);
           }
-          if (newProps[key].fields[idx].type === 'checkbox') {
-            newProps[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
+          if (newProps.layers[key].fields[idx].type === 'checkbox') {
+            newProps.layers[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
           }
-          if (newProps[key].fields[idx].type === 'system-defined') {
-            const units = genUnits(newProps[key].fields[idx].option_layers);
+          if (newProps.layers[key].fields[idx].type === 'system-defined') {
+            const units = genUnits(newProps.layers[key].fields[idx].option_layers);
             const vs = units.find(u =>
-              u.key === segment.properties[key].fields[curIdx].value_system);
-            newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
-            newProps[key].fields[idx].value = toNum(curVal);
+              u.key === segment.properties.layers[key].fields[curIdx].value_system);
+            newProps.layers[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
+            newProps.layers[key].fields[idx].value = toNum(curVal);
           }
-          if (newProps[key].fields[idx].type === 'input-group') {
-            if (segment.properties[key].fields[curIdx].type !== newProps[key].fields[idx].type) {
-              newProps[key].fields[idx].value = undefined;
+          if (newProps.layers[key].fields[idx].type === 'input-group') {
+            if (segment.properties.layers[key].fields[curIdx].type !== newProps.layers[key].fields[idx].type) {
+              newProps.layers[key].fields[idx].value = undefined;
             } else {
-              const nSubs = newProps[key].fields[idx].sub_fields || [];
-              const cSubs = segment.properties[key].fields[curIdx].sub_fields || [];
+              const nSubs = newProps.layers[key].fields[idx].sub_fields || [];
+              const cSubs = segment.properties.layers[key].fields[curIdx].sub_fields || [];
               const exSubs = [];
               if (nSubs.length < 1) {
-                newProps[key].fields[idx].value = undefined;
+                newProps.layers[key].fields[idx].value = undefined;
               } else {
                 nSubs.forEach((nSub) => {
                   const hitSub = cSubs.find(c => c.id === nSub.id) || {};
@@ -204,14 +210,14 @@ class SegmentDetails extends Component {
                   }
                 });
               }
-              newProps[key].fields[idx].sub_fields = exSubs;
+              newProps.layers[key].fields[idx].sub_fields = exSubs;
             }
           }
-          if (newProps[key].fields[idx].type === 'table') {
-            if (segment.properties[key].fields[curIdx].type !== newProps[key].fields[idx].type) {
-              newProps[key].fields[idx].sub_values = [];
+          if (newProps.layers[key].fields[idx].type === 'table') {
+            if (segment.properties.layers[key].fields[curIdx].type !== newProps.layers[key].fields[idx].type) {
+              newProps.layers[key].fields[idx].sub_values = [];
             } else {
-              newProps[key].fields[idx].sub_values = organizeSubValues(newProps[key].fields[idx], segment.properties[key].fields[curIdx]);
+              newProps.layers[key].fields[idx].sub_values = organizeSubValues(newProps.layers[key].fields[idx], segment.properties.layers[key].fields[curIdx]);
             }
           }
         }
@@ -222,10 +228,29 @@ class SegmentDetails extends Component {
     this.props.onChange(segment);
   }
 
-  elementalPropertiesItem(segment, klass) {
+  handleRetriveRevision(revision, cb) {
+    const { segment } = this.props;
+    segment.properties = revision;
+    segment.changed = true;
+    this.setState({ showHistory: false }, this.props.onChange(segment));
+  }
+
+  handleDelRevision(params, cb) {
+    const { segment } = this.props;
+    GenericElsFetcher.deleteRevisions({ id: params.id, element_id: segment.id, klass: 'Segment' })
+      .then((response) => {
+        if (response.error) {
+          notification({ title: 'Delete Revision', lvl: 'error', msg: response.error });
+        } else {
+          cb();
+        }
+      });
+  }
+
+  elementalPropertiesItem(segment) {
     const layersLayout = LayersLayout(
-      segment.properties,
-      klass.properties_template.select_options || {},
+      segment.properties.layers,
+      segment.properties.select_options || {},
       this.handleInputChange,
       this.handleSubChange,
       this.handleUnitClick
@@ -234,18 +259,38 @@ class SegmentDetails extends Component {
   }
 
   render() {
-    const { segment, klass } = this.props;
+    const { segment } = this.props;
+    const hisBtn = segment.is_new ? null : (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_history">click to view the history</Tooltip>}>
+        <Button bsSize="xsmall" className="generic_btn_default" onClick={() => this.setState({ showHistory: true })}><i className="fa fa-book" aria-hidden="true" />&nbsp;History</Button>
+      </OverlayTrigger>
+    );
+    const hisModal = segment.is_new ? null : (
+      <PreviewModal
+        showModal={this.state.showHistory || false}
+        fnClose={() => this.setState({ showHistory: false })}
+        fnRetrive={this.handleRetriveRevision}
+        fnDelete={this.handleDelRevision}
+        element={segment}
+        fetcher={GenericElsFetcher}
+        fetcherFn="fetchSegmentRevisions"
+      />
+    );
     return (
-      <Panel className="panel-detail">
-        <Panel.Body style={{ position: 'relative', minHeight: 260, overflowY: 'unset' }}>
-          {this.elementalPropertiesItem(segment, klass)}
-          <ButtonToolbar className="pull-right">
-            <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>
-              <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleReload()}>Reload</Button>
-            </OverlayTrigger>
-          </ButtonToolbar>
-        </Panel.Body>
-      </Panel>
+      <div>
+        <ButtonToolbar style={{ margin: '5px 0px' }}>
+          <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>
+            <Button bsSize="xsmall" bsStyle="primary" onClick={() => this.handleReload()}><i className="fa fa-refresh" aria-hidden="true" />&nbsp;Reload</Button>
+          </OverlayTrigger>
+          {hisBtn}
+        </ButtonToolbar>
+        <Panel>
+          <Panel.Body style={{ position: 'relative', minHeight: 260, overflowY: 'unset' }}>
+            {this.elementalPropertiesItem(segment)}
+          </Panel.Body>
+        </Panel>
+        {hisModal}
+      </div>
     );
   }
 }

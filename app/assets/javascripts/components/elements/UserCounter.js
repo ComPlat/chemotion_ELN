@@ -55,7 +55,6 @@ export default class UserCounter extends Component {
   fetchKlasses() {
     AdminFetcher.fetchElementKlasses()
       .then((result) => {
-        console.log(result.klass);
         const genericEntities = result && result.klass.filter(u => u.is_generic === true);
         this.setState({ klasses: genericEntities || [] });
       });
@@ -63,9 +62,7 @@ export default class UserCounter extends Component {
 
   render() {
     const { currentUser, klasses } = this.state;
-
-    console.log(klasses);
-    const counterBody = klasses.map((klass) => {
+    const counterBody = (klasses || []).filter(k => k.is_active === true).map((klass) => {
       const counter = parseInt((currentUser && currentUser.counters[klass.name]) || 0, 10);
       const nextNum = `${currentUser && currentUser.initials}-${klass.klass_prefix}${counter + 1}`;
       return (

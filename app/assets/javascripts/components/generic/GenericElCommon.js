@@ -3,7 +3,7 @@
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Col, PanelGroup, Row, FormGroup, FormControl } from 'react-bootstrap';
+import { Panel, Col, PanelGroup, Row } from 'react-bootstrap';
 import { sortBy } from 'lodash';
 import { genUnits, unitConversion } from '../../admin/generic/Utils';
 import {
@@ -12,19 +12,15 @@ import {
   GenPropertiesTextArea, GenDummy, GenTextFormula, GenPropertiesTable
 } from './GenericPropertiesFields';
 
-const GenProperties = (opt) => {
-  const fieldProps = { ...opt, dndItems: [] };
-  const type = fieldProps.type.split('_');
-  if (opt.isSearchCriteria && type[0] === 'drag') type[0] = 'text';
-
+const ShowProperties = (fObj, layers) => {
   let showField = true;
-  if (opt.f_obj && opt.f_obj.cond_fields && opt.f_obj.cond_fields.length > 0) {
+  if (fObj && fObj.cond_fields && fObj.cond_fields.length > 0) {
     showField = false;
-    for (let i = 0; i < opt.f_obj.cond_fields.length; i += 1) {
-      const cond = opt.f_obj.cond_fields[i] || {};
+    for (let i = 0; i < fObj.cond_fields.length; i += 1) {
+      const cond = fObj.cond_fields[i] || {};
       const { layer, field, value } = cond;
       if (field && field !== '') {
-        const fd = ((opt.layers[layer] || {}).fields || []).find(f => f.field === field) || {};
+        const fd = ((layers[layer] || {}).fields || []).find(f => f.field === field) || {};
         if (fd.type === 'checkbox' && ((['false', 'no', 'f', '0'].includes((value || '').trim().toLowerCase()) && (typeof (fd && fd.value) === 'undefined' || fd.value === false)) ||
         (['true', 'yes', 't', '1'].includes((value || '').trim().toLowerCase()) && (typeof (fd && fd.value) !== 'undefined' && fd.value === true)))) {
           showField = true;
@@ -36,10 +32,13 @@ const GenProperties = (opt) => {
       }
     }
   }
+  return showField;
+};
 
-  if (showField === false) {
-    type[0] = 'dummy';
-  }
+const GenProperties = (opt) => {
+  const fieldProps = { ...opt, dndItems: [] };
+  const type = fieldProps.type.split('_');
+  if (opt.isSearchCriteria && type[0] === 'drag') type[0] = 'text';
 
   switch (type[0]) {
     case 'checkbox':
@@ -115,70 +114,66 @@ class GenPropertiesLayer extends Component {
     } = this.props;
     const { cols, fields, key } = layer;
     const perRow = cols || 1;
-    let counter = 0;
     const col = Math.floor(12 / perRow);
-    let klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
+    const klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
     const vs = [];
     let op = [];
-    fields.forEach((f, i) => {
-      const tabCol = (f.cols || 1) * 1;
-      const unit = genUnits(f.option_layers)[0] || {};
-      const rCol = (f.type === 'table' && tabCol !== 0) ? 12 / (tabCol || 1) : col;
-      if (f.type === 'table' && tabCol !== 0) klaz = '';
+    let newRow = 0;
+    (fields || []).forEach((f, i) => {
+      if (ShowProperties(f, layers)) {
+        const unit = genUnits(f.option_layers)[0] || {};
+        const tabCol = (f.cols || 1) * 1;
+        const rCol = (f.type === 'table') ? (12 / (tabCol || 1)) : col;
+        newRow = (f.type === 'table') ? newRow += (perRow / (tabCol || 1)) : newRow += 1;
 
-      counter += rCol;
+        if (newRow > perRow) {
+          vs.push(<Row>{op}</Row>);
+          op = [];
+          newRow = (f.type === 'table') ? newRow = (perRow / (tabCol || 1)) : newRow = 1;
+        }
 
-      if (counter > 12) {
-        const dumCol = 12 - (counter - rCol);
-        counter = rCol;
-        op.push((
-          <Col md={dumCol} lg={dumCol}>
-            <FormGroup className="text_generic_properties">
-              <FormControl type="text" className="dummy" readOnly />
-            </FormGroup>
-          </Col>));
-        vs.push(<Row>{op}</Row>);
-        op = [];
-      }
-      counter = counter === 12 ? 0 : counter;
-
-      const eachCol = (
-        <Col key={`prop_${key}_${f.priority}_${f.field}`} md={rCol} lg={rCol} className={klaz}>
-          <GenProperties
-            layers={layers}
-            id={id}
-            layer={layer}
-            f_obj={f}
-            label={f.label}
-            value={f.value || ''}
-            description={f.description || ''}
-            type={f.type || 'text'}
-            field={f.field || 'field'}
-            formula={f.formula || ''}
-            options={(selectOptions && selectOptions[f.option_layers]) || []}
-            onChange={event => this.handleChange(event, f.field, key, f.type)}
-            onSubChange={this.handleSubChange}
-            isEditable
-            readOnly={false}
-            isRequired={f.required || false}
-            placeholder={f.placeholder || ''}
-            option_layers={f.option_layers}
-            value_system={f.value_system || unit.key}
-            onClick={() => this.handleClick(key, f, (f.value_system || unit.key))}
-          />
-        </Col>
-      );
-      op.push(eachCol);
-      if ((counter === 12 || counter === 0) || (fields.length === (i + 1))) {
-        vs.push(<Row>{op}</Row>);
-        op = [];
+        const eachCol = (
+          <Col key={`prop_${key}_${f.priority}_${f.field}`} md={rCol} lg={rCol} className={f.type === 'table' ? '' : klaz}>
+            <GenProperties
+              layers={layers}
+              id={id}
+              layer={layer}
+              f_obj={f}
+              label={f.label}
+              value={f.value || ''}
+              description={f.description || ''}
+              type={f.type || 'text'}
+              field={f.field || 'field'}
+              formula={f.formula || ''}
+              options={(selectOptions && selectOptions[f.option_layers] && selectOptions[f.option_layers].options) || []}
+              onChange={event => this.handleChange(event, f.field, key, f.type)}
+              onSubChange={this.handleSubChange}
+              isEditable
+              readOnly={false}
+              isRequired={f.required || false}
+              placeholder={f.placeholder || ''}
+              option_layers={f.option_layers}
+              value_system={f.value_system || unit.key}
+              onClick={() => this.handleClick(key, f, (f.value_system || unit.key))}
+            />
+          </Col>
+        );
+        op.push(eachCol);
+        if (newRow % perRow === 0) newRow = 0;
+        if ((newRow === 0) || (fields.length === (i + 1))) {
+          vs.push(<Row>{op}</Row>);
+          op = [];
+        }
       }
     });
+
     return vs;
   }
 
   render() {
-    const bs = this.props.layer.color ? this.props.layer.color : 'default';
+    let bs = this.props.layer.color ? this.props.layer.color : 'default';
+    const noneKlass = bs === 'none' ? 'generic_panel_none' : '';
+    if (bs === 'none') bs = 'default';
     const cl = this.props.layer.style ? this.props.layer.style : 'panel_generic_heading';
     const panelHeader = this.props.layer.label === '' ? (<span />) : (
       <Panel.Heading className={cl} >
@@ -187,7 +182,7 @@ class GenPropertiesLayer extends Component {
     );
     return (
       <PanelGroup accordion id="accordion_generic_layer" defaultActiveKey="1" style={{ marginBottom: '0px' }}>
-        <Panel bsStyle={bs} className="panel_generic_properties" eventKey="1">
+        <Panel bsStyle={bs} className={`panel_generic_properties ${noneKlass}`} eventKey="1">
           {panelHeader}
           <Panel.Collapse>
             <Panel.Body className="panel_generic_properties_body">{this.views()}</Panel.Body>
@@ -248,7 +243,7 @@ class GenPropertiesLayerSearchCriteria extends Component {
     const klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
     const vs = [];
     let op = [];
-    fields.forEach((f, i) => {
+    (fields || []).forEach((f, i) => {
       const unit = genUnits(f.option_layers)[0] || {};
       const eCol = (
         <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col} className={klaz}>
@@ -258,7 +253,7 @@ class GenPropertiesLayerSearchCriteria extends Component {
             value={f.value || ''}
             type={f.type || 'text'}
             field={f.field || 'field'}
-            options={(selectOptions && selectOptions[f.option_layers]) || []}
+            options={(selectOptions && selectOptions[f.option_layers] && selectOptions[f.option_layers].options) || []}
             onChange={event => this.handleChange(event, f.field, key, f.type)}
             onSubChange={this.handleSubChange}
             option_layers={f.option_layers}
@@ -328,7 +323,7 @@ const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, fun
         (['true', 'yes', 't', '1'].includes((cond.value || '').trim().toLowerCase()) && (typeof fd.value !== 'undefined' && fd.value === true)))) {
           showLayer = true;
           break;
-        } else if (['text', 'select'].includes(fd.type) && (typeof (fd && fd.value) !== 'undefined' && fd.value.trim() == (cond.value || '').trim())) {
+        } else if (['text', 'select'].includes(fd.type) && (typeof (fd && fd.value) !== 'undefined' && (fd.value || '').trim() == (cond.value || '').trim())) {
           showLayer = true;
           break;
         }
