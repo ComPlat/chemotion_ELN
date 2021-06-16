@@ -113,6 +113,17 @@
   .Select-menu-outer {
     z-index: 5;
   }
+
+  .nav-tabs{ 
+    font-size: 13px;
+    font-weight: 700;
+
+    li {
+      a {
+        padding: 0 10px 5px 10px;
+      }
+    }
+  }
 }
 
 .label--bold {

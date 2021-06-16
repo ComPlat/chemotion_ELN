@@ -236,10 +236,10 @@ module Chemotion
         end
 
         get do
-          sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
+          sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
 
-          var_detail_level = db_exec_detail_level_for_sample(current_user.id, sample.id);
+          var_detail_level = db_exec_detail_level_for_sample(current_user.id, sample.id)
           nested_detail_levels = {}
           nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
           nested_detail_levels[:wellplate] = [ var_detail_level[0]['detail_level_wellplate'].to_i ]
@@ -266,7 +266,7 @@ module Chemotion
         optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         optional :description, type: String, desc: "Sample description"
         optional :purity, type: Float, desc: "Sample purity"
-        optional :solvent, type: String, desc: "Sample solvent"
+        optional :solvent, type: Array[Hash], desc: "Sample solvent"
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
@@ -305,9 +305,10 @@ module Chemotion
         end
         put do
           attributes = declared(params, include_missing: false)
+          attributes[:solvent] = params[:solvent].to_json
 
-          update_datamodel(attributes[:container]);
-          attributes.delete(:container);
+          update_datamodel(attributes[:container])
+          attributes.delete(:container)
 
           update_element_labels(@sample,attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
@@ -384,7 +385,8 @@ module Chemotion
         optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         requires :description, type: String, desc: "Sample description"
         requires :purity, type: Float, desc: "Sample purity"
-        requires :solvent, type: String, desc: "Sample solvent"
+        # requires :solvent, type: String, desc: "Sample solvent"
+        optional :solvent, type: Array[Hash], desc: "Sample solvent" 
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
@@ -425,7 +427,7 @@ module Chemotion
           molarity_unit: params[:molarity_unit],
           description: params[:description],
           purity: params[:purity],
-          solvent: params[:solvent],
+          solvent: params[:solvent].to_json,
           location: params[:location],
           molfile: params[:molfile],
           molecule_id: molecule_id,

@@ -22,6 +22,10 @@ module SampleLevelSerializable
     def is_restricted
       true
     end
+
+    def solvent
+      JSON.load object.solvent
+    end
   end
 
   class_methods do

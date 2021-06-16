@@ -12,7 +12,7 @@
 #  molecule_id         :integer
 #  molfile             :binary
 #  purity              :float            default(1.0)
-#  solvent             :string           default("")
+#  deprecated_solvent  :string           default("")
 #  impurities          :string           default("")
 #  location            :string           default("")
 #  is_top_secret       :boolean          default(FALSE)
@@ -41,6 +41,7 @@
 #  decoupled           :boolean          default(FALSE), not null
 #  molecular_mass      :float
 #  sum_formula         :string
+#  solvent             :string
 #
 # Indexes
 #
