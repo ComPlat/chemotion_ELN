@@ -109,7 +109,7 @@ export default class GenericAttachments extends Component {
                 <ImageModal
                   imageStyle={imgStyle}
                   hasPop={hasPop}
-                  preivewObject={{ src: previewImg }}
+                  previewObject={{ src: previewImg }}
                   popObject={{
                     title: attachment.filename, src: previewImg, fetchNeeded, fetchId
                   }}

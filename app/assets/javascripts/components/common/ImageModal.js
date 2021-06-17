@@ -86,22 +86,22 @@ export default class ImageModal extends Component {
   }
 
   handleImageError() {
-    this.setState({ fetchSrc: this.props.preivewObject.src });
+    this.setState({ fetchSrc: this.props.previewObject.src });
   }
 
   render() {
     const {
-      hasPop, preivewObject, popObject, imageStyle
+      hasPop, previewObject, popObject, imageStyle
     } = this.props;
     const { pageIndex, numOfPages } = this.state;
     if (!hasPop) {
-      return (<div className="preview-table"><img src={`${preivewObject.src}?${new Date().getTime()}`} alt="" style={{ cursor: 'default', ...imageStyle }} /></div>);
+      return (<div className="preview-table"><img src={previewObject.src} alt="" style={{ cursor: 'default', ...imageStyle }} /></div>);
     }
 
     return (
       <div>
         <div className="preview-table" onClick={this.handleModalShow}>
-          <img src={`${preivewObject.src}?${new Date().getTime()}`} alt="" style={{ cursor: 'pointer', ...imageStyle }} />
+          <img src={previewObject.src} alt="" style={{ cursor: 'pointer', ...imageStyle }} />
         </div>
         <Modal show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
           <Modal.Header closeButton>
@@ -149,7 +149,7 @@ export default class ImageModal extends Component {
 ImageModal.propTypes = {
   imageStyle: PropTypes.object,
   hasPop: PropTypes.bool.isRequired,
-  preivewObject: PropTypes.shape({
+  previewObject: PropTypes.shape({
     src: PropTypes.string,
   }).isRequired,
   popObject: PropTypes.shape({

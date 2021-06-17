@@ -352,7 +352,7 @@ export default class ElementsTableEntries extends Component {
                   {
                       <SvgWithPopover
                         hasPop={['reaction'].includes(element.type)}
-                        preivewObject={{
+                        previewObject={{
                           txtOnly: element.title(),
                           isSVG: true,
                           src: element.svgPath

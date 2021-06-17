@@ -124,7 +124,7 @@ const svgPreview = (showPreviews, sample) => (
       showPreviews
         ? <SvgWithPopover
           hasPop
-          preivewObject={{
+          previewObject={{
             txtOnly: '',
             isSVG: true,
             src: sample.svgPath
