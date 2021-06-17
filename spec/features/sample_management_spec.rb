@@ -72,6 +72,7 @@ describe 'Sample management' do
         end
       end
 
+      find('a#tab-density-molarity-tab-density').click
       density_tab = find('div#tab-density-molarity-pane-density')
       density_value = density_tab.first('span.input-group').find_all('input').first.value
       expect(density_value.to_f).to eq(sample['density'])
