@@ -29,7 +29,7 @@ export default class SvgWithPopover extends Component {
     if (previewObj === '') {
       previewObj = (
         previewObject.isSVG ?
-          <SVG src={previewObject.src} className="molecule" key={preivewObject.src} />
+          <SVG src={previewObject.src} className="molecule" key={previewObject.src} />
           :
           <img src={previewObject.src} alt="" />
       );
