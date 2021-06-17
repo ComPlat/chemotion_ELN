@@ -139,7 +139,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 <ImageModal
                   imageStyle={imageStyle}
                   hasPop={hasPop}
-                  preivewObject={{
+                  previewObject={{
                     src: previewImg
                   }}
                   popObject={{

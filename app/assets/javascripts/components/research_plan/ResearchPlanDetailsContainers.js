@@ -243,7 +243,7 @@ export default class ResearchPlanDetailsContainers extends Component {
           <div className="preview">
             <ImageModal
               hasPop={hasPop}
-              preivewObject={{
+              previewObject={{
                 src: previewImg
               }}
               popObject={{
