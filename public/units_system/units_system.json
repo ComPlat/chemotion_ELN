@@ -82,6 +82,19 @@
       "units": [
         { "key": "s_m", "label": "S/m", "nm": 1 }
       ]
+    },{
+      "type": "numeric",
+      "field": "current",
+      "label": "Current",
+      "default": "",
+      "position": 60,
+      "placeholder": "Current",
+      "units": [
+        { "key": "A", "label": "A", "nm": 1 },
+        { "key": "mA", "label": "mA", "nm": 1000 },
+        { "key": "uA", "label": "µA", "nm": 1000000},
+        { "key": "nA", "label": "nA", "nm": 1000000000 }
+      ]
     },
     {
       "type": "numeric",
@@ -135,6 +148,17 @@
     },
     {
       "type": "numeric",
+      "field": "electric_field",
+      "label": "Electric field",
+      "default": "",
+      "position": 86,
+      "placeholder": "Electric field",
+      "units": [
+        { "key": "v_m", "label": "V/m", "nm": 1 }
+      ]
+    },
+    {
+      "type": "numeric",
       "field": "enzyme_activity",
       "label": "Enzyme activity",
       "default": "",
@@ -181,6 +205,17 @@
         { "key": "mm", "label": "mm", "nm": 1000 },
         { "key": "cm", "label": "cm", "nm": 100 },
         { "key": "m", "label": "m", "nm": 1  }
+      ]
+    },
+    {
+      "type": "numeric",
+      "field": "magnetic_flux_density",
+      "label": "Magnetic flux density/inductivity",
+      "default": "",
+      "position": 120,
+      "placeholder": "",
+      "units": [
+        { "key": "T", "label": "T", "nm": 1 }
       ]
     },
     {
