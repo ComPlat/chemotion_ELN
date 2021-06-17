@@ -119,7 +119,7 @@ export default class ReportContainer extends Component {
 
     let { template } = this.state;
     if (templateOpts.length > 0 &&  template && typeof template != 'object') {
-      let templateOpt = templateOpts.find(x => x.id == template || x.value == template);
+      let templateOpt = templateOpts.find(x => x.id == template || x.report_type == template);
       template =  { id: templateOpt.id, label: templateOpt.name, value: templateOpt.report_type };
     }
 
