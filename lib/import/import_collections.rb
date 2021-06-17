@@ -363,16 +363,14 @@ module Import
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
           'description',
-          'sdf_file',
-          'svg_file',
+          'body',
           'created_at',
           'updated_at'
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
             'Collection', 'CollectionsResearchPlan', 'research_plan_id', 'collection_id', uuid
-          ),
-          svg_file: fetch_image('research_plans', fields.fetch('svg_file'))
+          )
         ))
 
         # add reaction to the @instances map
