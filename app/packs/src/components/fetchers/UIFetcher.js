@@ -53,4 +53,17 @@ export default class UIFetcher {
       })
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static fetchNMRDisplayerHost() {
+    return fetch('/api/v1/chemspectra/nmr_displayer/host_name', {
+      credentials: 'same-origin',
+      method: 'GET',
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
 }

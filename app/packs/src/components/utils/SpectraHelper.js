@@ -54,6 +54,32 @@ const extractJcampFiles = (container) => {
   return files;
 };
 
+const extractJcampWithFailedFiles = (container) => {
+  let files = [];
+  container.children.forEach((dt) => {
+    dt.attachments.forEach((att) => {
+      try {
+        const fns = att.filename.split('.');
+        const ext = fns[fns.length - 1];
+        const isJcamp = acceptables.indexOf(ext.toLowerCase()) >= 0;
+        const isApp = [
+          'idle', 'queueing', 'done',
+          'backup', 'image','non_jcamp',
+        ].indexOf(att.aasm_state) < 0;
+        if (isJcamp && isApp) {
+          const file = Object.assign({}, att, {
+            idDt: dt.id,
+          });
+          files = [...files, file];
+        }
+      } catch (err) {
+        // just ignore
+      }
+    });
+  });
+  return files;
+};
+
 const extractAnalysesId = (sample, container) => {
   let idAe = null;
   sample && sample.analysesContainers().forEach((ae) => {
@@ -85,4 +111,23 @@ const BuildSpcInfos = (sample, container) => {
   ));
 };
 
-export { BuildSpcInfos, JcampIds }; // eslint-disable-line
+const BuildSpcInfosForNMRDisplayer = (sample, container) => {
+  if (!sample || !container) return [];
+  const files = extractJcampWithFailedFiles(container);
+  if (files.length < 1) return [];
+  const idAe = extractAnalysesId(sample, container);
+  return files.map(file => (
+    {
+      value: null,
+      label: file.filename,
+      title: sample.short_label,
+      idSp: sample.id,
+      idAe,
+      idAi: container.id,
+      idDt: file.idDt,
+      idx: file.id,
+    }
+  ));
+};
+
+export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds }; // eslint-disable-line

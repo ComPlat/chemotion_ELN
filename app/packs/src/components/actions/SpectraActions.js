@@ -94,6 +94,26 @@ class SpectraActions {
         });
     };
   }
+
+  ToggleModalNMRDisplayer() {
+    return null;
+  }
+
+  LoadSpectraForNMRDisplayer(spcInfos) {
+    const idxs = spcInfos && spcInfos.map(si => si.idx);
+    if (idxs.length === 0) {
+      return null;
+    }
+
+    return (dispatch) => {
+      AttachmentFetcher.fetchJcampFilesForNMRDisplayer(idxs)
+        .then((fetchedFiles) => {
+          dispatch({ fetchedFiles, spcInfos });
+        }).catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+        });
+    };
+  }
 }
 
 export default alt.createActions(SpectraActions);

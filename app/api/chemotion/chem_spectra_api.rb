@@ -72,6 +72,14 @@ module Chemotion
       rescue
         { status: false }
       end
+
+      def raw_file(att)
+        begin
+          Base64.encode64(att.read_file)
+        rescue
+          nil
+        end
+      end
     end
 
     resource :chemspectra do # rubocop:disable BlockLength
@@ -183,6 +191,47 @@ module Chemotion
 
           content_type('application/json')
           { smi: m[:smiles], mass: m[:mass], svg: m[:svg], status: true }
+        end
+      end
+
+      resource :nmr_displayer do
+        desc 'Return url of nmrdisplayer'
+        route_param :host_name do
+          get do
+            protocol = Rails.configuration.spectra.nmrdisplayer[:protocol]
+            url = Rails.configuration.spectra.nmrdisplayer[:url]
+            port = Rails.configuration.spectra.nmrdisplayer[:port]
+            { protocol: protocol, url: url, port: port}
+          end
+        end
+
+        desc 'Return absolute paths of files'
+        params do
+          requires :ids, type: Array[Integer]
+        end
+        post 'files' do
+          files = params[:ids].map do |a_id|
+            att = Attachment.find(a_id)
+            can_dwnld = if att
+              element = att.container.root.containable
+              can_read = ElementPolicy.new(current_user, element).read?
+              can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+            end
+            can_dwnld ? raw_file(att) : nil
+          end
+          { files: files }
+        end
+
+        desc 'Return content of jcamp'
+        params do
+          requires :jcamp_id, type: Array[Integer]
+        end
+        route_param :jcamp_id do
+          get do
+            att = Attachment.find(params[:jcamp_id]).first
+            jcamp = raw_file(att)
+            { jcamp: jcamp }
+          end
         end
       end
     end

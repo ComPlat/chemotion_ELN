@@ -6,6 +6,7 @@ import UIStore from './stores/UIStore';
 import ArrayUtils from './utils/ArrayUtils';
 import { reOrderArr } from './utils/DndControl';
 import ViewSpectra from './ViewSpectra';
+import NMRDisplayer from './nmr_displayer/NMRDisplayer';
 import {
   RndNotAvailable, RndNoAnalyses,
   RndOrder, RndEdit
@@ -237,6 +238,11 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
+          <NMRDisplayer
+            sample={sample}
+            handleSampleChanged={handleSampleChanged}
+          />
+          
         </div>
       );
     }

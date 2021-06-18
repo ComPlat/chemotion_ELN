@@ -10,7 +10,7 @@ import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
 import LoadingActions from './actions/LoadingActions';
-import { BuildSpcInfos, JcampIds } from './utils/SpectraHelper';
+import { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds } from './utils/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import UIStore from './stores/UIStore';
@@ -58,7 +58,7 @@ const qCheckMsg = (sample, container) => {
 
 const SpectraEditorBtn = ({
   sample, spcInfos, hasJcamp, hasChemSpectra,
-  toggleSpectraModal, confirmRegenerate,
+  toggleSpectraModal, confirmRegenerate, toggleNMRDisplayerModal
 }) => (
   <OverlayTrigger
     placement="bottom"
@@ -87,18 +87,49 @@ const SpectraEditorBtn = ({
         >
           <i className="fa fa-refresh" /> Reprocess
         </MenuItem>
+        <MenuItem
+          id="menu_nmr_displayer"
+          key="nmr_displayer"
+          onSelect={(eventKey, event) => {
+            toggleNMRDisplayerModal(event)
+          }}
+        >
+          <i className="fa fa-area-chart" /> Process with NMRium
+        </MenuItem>
       </SplitButton>
     </ButtonGroup>
   ) : (
-    <Button
-      bsStyle="warning"
-      bsSize="xsmall"
-      className="button-right"
-      onClick={confirmRegenerate}
-      disabled={!hasJcamp || !sample.can_update || !hasChemSpectra}
-    >
-      <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
-    </Button>
+    <ButtonGroup className="button-right">
+      <SplitButton
+        id="spectra-editor-split-button"
+        pullRight
+        bsStyle="warning"
+        bsSize="xsmall"
+        title={<i><i className="fa fa-area-chart"/> <i className="fa fa-refresh"/></i>}
+        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+        onClick={confirmRegenerate}
+        disabled={!hasJcamp || !sample.can_update || !hasChemSpectra}
+      >
+        <MenuItem
+          id="menu_nmr_displayer"
+          key="nmr_displayer"
+          onSelect={(eventKey, event) => {
+            toggleNMRDisplayerModal(event)
+          }}
+        >
+          <i className="fa fa-area-chart" /> Process with NMRium
+        </MenuItem>
+      </SplitButton>
+    </ButtonGroup>
+    // <Button
+    //   bsStyle="warning"
+    //   bsSize="xsmall"
+    //   className="button-right"
+    //   onClick={confirmRegenerate}
+    //   disabled={!hasJcamp || !sample.can_update || !hasChemSpectra}
+    // >
+    //   <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
+    // </Button>
   )}
   </OverlayTrigger>
 );
@@ -110,6 +141,7 @@ SpectraEditorBtn.propTypes = {
   hasChemSpectra: PropTypes.bool,
   toggleSpectraModal: PropTypes.func.isRequired,
   confirmRegenerate: PropTypes.func.isRequired,
+  toggleNMRDisplayerModal: PropTypes.func.isRequired,
 };
 
 SpectraEditorBtn.defaultProps = {
@@ -222,6 +254,14 @@ const headerBtnGroup = (
     SpectraActions.LoadSpectra.defer(spcInfos); // going to fetch files base on spcInfos
   };
 
+  //process open NMRium
+  const toggleNMRDisplayerModal = (e) => {
+    const spcInfosForNMRDisplayer = BuildSpcInfosForNMRDisplayer(sample, container);
+    e.stopPropagation();
+    SpectraActions.ToggleModalNMRDisplayer();
+    SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
+  }
+
   const jcampIds = JcampIds(container);
   const hasJcamp = jcampIds.orig.length > 0;
   const confirmRegenerate = (e) => {
@@ -256,6 +296,7 @@ const headerBtnGroup = (
         hasChemSpectra={hasChemSpectra}
         toggleSpectraModal={toggleSpectraModal}
         confirmRegenerate={confirmRegenerate}
+        toggleNMRDisplayerModal={toggleNMRDisplayerModal}
       />
       <span
         className="button-right add-to-report"

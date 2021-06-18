@@ -18,6 +18,7 @@ class SpectraStore {
     this.fetched = false;
     this.writing = false;
     this.others = [];
+    this.showModalNMRDisplayer = false;
 
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
@@ -30,6 +31,8 @@ class SpectraStore {
       handleWriteStop: SpectraActions.WriteStop,
       handleSelectIdx: SpectraActions.SelectIdx,
       handleAddOthers: SpectraActions.AddOthers,
+      handleToggleModalNMRDisplayer: SpectraActions.ToggleModalNMRDisplayer,
+      handleLoadSpectraForNMRDisplayer: SpectraActions.LoadSpectraForNMRDisplayer,
     });
   }
 
@@ -157,6 +160,26 @@ class SpectraStore {
     const jcampData = FN.ExtractJcamp(origData);
     this.setState({ others: [jcampData] });
   }
+
+  handleToggleModalNMRDisplayer() {
+    this.setState({
+      spcMetas: [],
+      spcInfos: [],
+      showModalNMRDisplayer: !this.showModalNMRDisplayer,
+      fetched: false,
+      others: [],
+    })
+  }
+
+  handleLoadSpectraForNMRDisplayer({ fetchedFiles, spcInfos }) {
+    this.setState({
+      spcInfos,
+      fetchedFiles,
+      fetched: true,
+    });
+  }
+
+  
 }
 
 export default alt.createStore(SpectraStore, 'SpectraStore');
