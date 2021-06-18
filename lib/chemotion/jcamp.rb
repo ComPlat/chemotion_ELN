@@ -293,3 +293,45 @@ module Chemotion
     end
   end
 end
+
+# Chemotion module
+module Chemotion
+  # process NMRium files
+  module Jcamp
+    # CreateFromNMRium module
+    module CreateFromNMRium
+      include HTTParty
+
+      def self.convert_nmrium_data(path)
+        response = nil
+        url = Rails.configuration.spectra.url
+        port = Rails.configuration.spectra.port
+        begin
+          File.open(path, 'r') do |f|
+            response = HTTParty.post(
+              "http://#{url}:#{port}/nmrium",
+              body: {
+                multipart: true,
+                file: f
+              }
+            )
+          end
+        rescue => error
+          response = nil
+        end
+        
+        response
+      end
+
+      def self.jcamp_from_nmrium(path)
+        rsp = convert_nmrium_data(path)
+        unless rsp.nil? || rsp.code != 200
+          tmp_jcamp = Util.generate_tmp_file(rsp.body.to_s)
+          tmp_jcamp
+        else
+          nil
+        end
+      end
+    end
+  end
+end

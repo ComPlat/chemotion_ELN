@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
+
 import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { reOrderArr } from 'src/utilities/DndControl';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+
+import NMRDisplayer from 'src/components/nmr_displayer/NMRDisplayer';
 import {
   RndNotAvailable, RndNoAnalyses,
   RndOrder, RndEdit
@@ -238,6 +241,11 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
+          <NMRDisplayer
+            sample={sample}
+            handleSampleChanged={handleSampleChanged}
+          />
+          
         </div>
       );
     }
