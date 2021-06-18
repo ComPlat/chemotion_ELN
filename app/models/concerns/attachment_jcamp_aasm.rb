@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
-  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip].freeze
+  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip nmrium].freeze
 
   extend ActiveSupport::Concern
 
@@ -102,6 +102,9 @@ module AttachmentJcampAasm
     typname, extname = extension_parts
     return if peaked? || edited?
 
+    # is_nmrium = %w[nmrium].include?(extname)
+    # return generate_spectrum_from_nmrium() if is_nmrium
+
     return unless FILE_EXT_SPECTRA.include?(extname.downcase)
 
     is_peak_edit = %w[peak edit].include?(typname)
@@ -162,6 +165,10 @@ module AttachmentJcampProcess
     generate_att(csv_tmp, addon, to_edit, 'csv')
   end
 
+  def generate_nmrium_att(nmrium_tmp, addon, to_edit = false)
+    generate_att(nmrium_tmp, addon, to_edit, 'nmrium')
+  end
+
   def build_params(params = {})
     _, extname = extension_parts
     params[:mass] = 0.0
@@ -197,9 +204,13 @@ module AttachmentJcampProcess
   def create_process(is_regen)
     params = build_params
 
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
+    if params[:ext] == 'nmrium'
+      generate_spectrum_from_nmrium()
+    end
 
-    check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
+
+    check_invalid_molfile(invalid_molfile)
 
     if spc_type == 'bagit'
       jcamp_att = nil
@@ -234,6 +245,13 @@ module AttachmentJcampProcess
       tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
       tmp_files_to_be_deleted.push(*arr_img)
 
+      unless arr_nmrium.nil? || arr_nmrium.length == 0
+        curr_tmp_nmrium = arr_nmrium[0]
+        nmrium_att = generate_nmrium_att(curr_tmp_nmrium, '')
+        tmp_files_to_be_deleted.push(*arr_nmrium)
+        # delete_related_csv(nmrium_att)
+      end
+
       set_done
       delete_tmps(tmp_files_to_be_deleted)
       delete_related_imgs(img_att)
@@ -245,9 +263,9 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
 
-    check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
+    check_invalid_molfile(invalid_molfile)
 
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
     jcamp_att.update_prediction(params, spc_type, is_regen)
@@ -262,6 +280,13 @@ module AttachmentJcampProcess
       delete_related_csv(csv_att)
     end
 
+    unless arr_nmrium.nil? || arr_nmrium.length == 0
+      curr_tmp_nmrium = arr_nmrium[0]
+      nmrium_att = generate_nmrium_att(curr_tmp_nmrium, '', false)
+      tmp_files_to_be_deleted.push(*arr_nmrium)
+      delete_related_csv(nmrium_att)
+    end
+
     set_backup
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att)
@@ -269,8 +294,8 @@ module AttachmentJcampProcess
     jcamp_att
   end
 
-  def check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
-    if tmp_img.nil? && spc_type.nil? && tmp_jcamp['invalid_molfile'] == true
+  def check_invalid_molfile(invalid_molfile=false)
+    if invalid_molfile == true
       # add message when invalid molfile
       Message.create_msg_notification(
         channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
@@ -281,7 +306,10 @@ module AttachmentJcampProcess
   end
 
   def generate_spectrum_data(params, is_regen)
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = Tempfile.create('molfile') do |t_molfile|
+    if params[:ext] == 'nmrium'
+      return
+    end
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = Tempfile.create('molfile') do |t_molfile|
       if attachable&.root_element.is_a?(Sample)
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind
@@ -296,6 +324,20 @@ module AttachmentJcampProcess
     is_create ? create_process(is_regen) : edit_process(is_regen, params)
   rescue StandardError => e
     set_failure
+    Rails.logger.info('**** Jcamp Peaks Generation fails ***')
+    Rails.logger.error(e)
+  end
+
+  def generate_spectrum_from_nmrium()
+    tmp_jcamp = Chemotion::Jcamp::CreateFromNMRium.jcamp_from_nmrium(abs_path)
+    jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
+    
+    tmp_files_to_be_deleted = [tmp_jcamp]
+    delete_tmps(tmp_files_to_be_deleted)
+    delete_related_edited_jcamp(jcamp_att)
+    jcamp_att
+  rescue StandardError => e
+    # set_failure
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
     Rails.logger.error(e)
   end
@@ -364,6 +406,36 @@ module AttachmentJcampProcess
         att.csv? &&
           att.id != csv_att.id &&
           valid_name == fname_wo_ext(att)
+      )
+      att.delete if is_delete
+    end
+  end
+
+  def delete_related_nmrium(nmrium_att)
+    return unless nmrium_att
+
+    atts = Attachment.where(attachable_id: attachable_id)
+    valid_name = fname_wo_ext(self)
+    atts.each do |att|
+      is_delete = (
+        att.csv? &&
+          att.id != csv_att.id &&
+          valid_name == fname_wo_ext(att)
+      )
+      att.delete if is_delete
+    end
+  end
+
+  def delete_related_edited_jcamp(jcamp_att)
+    return unless jcamp_att
+
+    atts = Attachment.where(attachable_id: jcamp_att.attachable_id)
+    valid_name = fname_wo_ext(self)
+    atts.each do |att|
+      is_delete = (
+        att.edited? &&
+          att.id != jcamp_att.id &&
+          valid_name == att.filename_parts[0]
       )
       att.delete if is_delete
     end

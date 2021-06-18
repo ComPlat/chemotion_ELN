@@ -1,3 +1,5 @@
+import base64 from 'base-64';
+
 const getFileName = (response) => {
   const disposition = response.headers.get('Content-Disposition');
 
@@ -23,4 +25,14 @@ const downloadBlob = (file_name, blob) => {
   window.URL.revokeObjectURL(url);
 };
 
-export { getFileName, downloadBlob };
+const parseBase64ToArrayBuffer = (encodedData) => {
+  const decodedData = base64.decode(encodedData);
+  const bufferLength = decodedData.length;
+  let bytesArray = new Uint8Array(bufferLength);
+  for (let i = 0; i < bufferLength; i++) {
+    bytesArray[i] = decodedData.charCodeAt(i);
+  }
+  return bytesArray.buffer;
+};
+
+export { getFileName, downloadBlob, parseBase64ToArrayBuffer };
