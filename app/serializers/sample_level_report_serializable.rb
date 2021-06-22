@@ -33,7 +33,7 @@ module SampleLevelReportSerializable
       restricted_attributes.each do |attr|
         define_method(attr) do
           case attr
-          when :analyses, :residues, :elemental_compositions, :reactions
+          when :analyses, :residues, :elemental_compositions, :reactions, :solvent
             []
           when :_contains_residues
             false

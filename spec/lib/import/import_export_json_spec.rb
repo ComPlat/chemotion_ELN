@@ -36,7 +36,7 @@ RSpec.describe 'ImportSdf' do
   let(:s2) do
     build(
       :sample, created_by: u1.id, name: 'Solvent', molfile: mf,
-               collections: [c1]
+               collections: [c1], solvent: [{:label=>'Acetone', :smiles=>'CC(C)=O', :ratio=>'100'}].to_json
     )
   end
   let(:s3) do
@@ -170,6 +170,58 @@ RSpec.describe 'ImportSdf' do
         expect(@rxn.solvents.find_by(name: s2.name)).not_to be_nil
         expect(@rxn.reactants.find_by(name: s3.name)).not_to be_nil
         expect(@rxn.products.find_by(name: s4.name)).not_to be_nil
+      end
+    end
+
+    context 'Sample with new solvent' do
+      before do
+        json = Export::ExportJson.new(
+          collection_id: c1.id, sample_ids: [s2.id]
+        ).export.to_json
+        imp = Import::ImportJson.new(
+          collection_id: c2.id, data: json, user_id: u2.id
+        ).import
+      end
+
+      it 'imports the exported sample' do
+        expect(c2.samples).not_to be_empty
+        expected_sample = c2.samples.find_by(name: s2.name)
+        expect(expected_sample).not_to be_nil
+        # solvents = [{ 'label' => 'Acetone', 'smiles' => 'CC(C)=O', 'ratio' => '100' }]
+        expect(expected_sample['solvent'][0]).to include(
+          'label' => 'Acetone',
+          'smiles' => 'CC(C)=O',
+          'ratio' => '100'
+        )
+      end
+    end
+
+    context 'Sample with old solvent' do
+      before do
+        export_json = Export::ExportJson.new(
+          collection_id: c1.id, sample_ids: [s2.id]
+        ).export.to_json
+
+        data = JSON.parse(export_json)
+        data['samples'].values[0]['solvent'] = 'Acetone'
+        json = data.to_json
+        imp = Import::ImportJson.new(
+          collection_id: c2.id, data: json, user_id: u2.id
+        ).import
+      end
+
+      it 'imports the exported sample' do
+        expect(c2.samples).not_to be_empty
+        expected_sample = c2.samples.find_by(name: s2.name)
+        expect(expected_sample).not_to be_nil
+        solvents = [{ label: 'Acetone', smiles: 'CC(C)=O', ratio: '100' }]
+        solvent = JSON.parse(expected_sample['solvent'].to_json)
+
+        expect(expected_sample['solvent'][0]).to include(
+          'label' => 'Acetone',
+          'smiles' => 'CC(C)=O',
+          'ratio' => '100'
+        )
       end
     end
   end

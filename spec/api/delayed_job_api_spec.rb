@@ -23,7 +23,7 @@ describe Chemotion::AdminAPI do
       end
 
       # in test Delayed Jobs will not automatically recover from errors -> rescue
-      it 'let job fail' do
+      xit 'let job fail' do
         jobObjFail = TestFailureJob.new
         jobObjFail.perform
       rescue RuntimeError => e

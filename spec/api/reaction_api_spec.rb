@@ -354,7 +354,7 @@ describe Chemotion::ReactionAPI do
               'reactants' => [
                 'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336',
                 'name' => 'Copied Sample',
-                'solvent' => 'solvent1',
+                'solvent' => [{:label=>'Acetone', :smiles=>'CC(C)=O', :ratio=>'100'}].to_json,
                 'target_amount_unit' => 'mg',
                 'target_amount_value' => 86.09596,
                 'parent_id' => sample_1.id,
@@ -402,7 +402,7 @@ describe Chemotion::ReactionAPI do
             'name' => 'Copied Sample',
             'target_amount_value' => 86.09596,
             'target_amount_unit' => 'mg',
-            'solvent' => 'solvent1'
+            'solvent' => [{ 'label' => 'Acetone', 'smiles' => 'CC(C)=O', 'ratio' => '100' }]
           )
           reactant_association = r.reactions_reactant_samples
                                   .find_by(sample_id: reactant.id)
