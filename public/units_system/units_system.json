@@ -171,6 +171,19 @@
     },
     {
       "type": "numeric",
+      "field": "flow_rate",
+      "label": "Flow rate",
+      "default": "",
+      "position": 100,
+      "placeholder": "Flow rate",
+      "units": [
+        { "key": "ul_min", "label": "µl/min", "nm": 1000000 },
+        { "key": "ml_min", "label": "ml/min", "nm": 1000 },
+        { "key": "l_m", "label": "l/m", "nm": 1 }
+      ]
+    },
+    {
+      "type": "numeric",
       "field": "frequency",
       "label": "Frequency",
       "default": "",
