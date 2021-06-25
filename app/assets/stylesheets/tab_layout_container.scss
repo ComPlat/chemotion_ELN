@@ -4,8 +4,14 @@ table.layout-container {
     color: #337ab7;
     border: 1px solid #ddd;
     div {
-      text-align: center;
-      width: 50px;
+      width: auto;
+      min-width: 80px;
+      
+      height: 80px;      
+      
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
   }
 
