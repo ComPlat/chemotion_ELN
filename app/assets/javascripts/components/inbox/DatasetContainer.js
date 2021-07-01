@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
 import AttachmentContainer from './AttachmentContainer';
@@ -55,26 +56,33 @@ class DatasetContainer extends Component {
   }
 
   render() {
-    const { connectDragSource, sourceType, dataset } = this.props;
+    const { connectDragSource, sourceType, dataset, largerInbox } = this.props;
 
     if (sourceType === DragDropItemTypes.DATASET) {
-      const { visible, deletingTooltip } = this.state
+      const { visible, deletingTooltip } = this.state;
       const attachments = dataset.attachments.map(attachment => (
         <AttachmentContainer
           key={`attach_${attachment.id}`}
           sourceType={DragDropItemTypes.DATA}
           attachment={attachment}
+          largerInbox={largerInbox}
         />
       ));
       const attCount = this.attachmentCount();
       const textStyle = {
-        display: "block",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        maxWidth: "100%",
+        display: 'block',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'clip',
+        maxWidth: '100%',
         cursor: 'move'
+      };
+
+      if (largerInbox === true) {
+        textStyle.marginTop = '6px';
+        textStyle.marginBottom = '6px';
       }
+
       const trash = this.props.cache.length === this.props.cache.length // Set it as always show
         ? (
           <span>
@@ -87,12 +95,16 @@ class DatasetContainer extends Component {
                     bsStyle="danger"
                     bsSize="xsmall"
                     onClick={() => this.confirmDeleteDataset()}
-                  >Yes</Button>
+                  >
+                    Yes
+                  </Button>
                   <Button
                     bsStyle="warning"
                     bsSize="xsmall"
                     onClick={() => this.toggleTooltip()}
-                  >No</Button>
+                  >
+                    No
+                  </Button>
                 </ButtonGroup>
               </Tooltip>
             ) : null}
@@ -101,13 +113,18 @@ class DatasetContainer extends Component {
       return connectDragSource(
         <div>
           <div style={textStyle}>
-            <span className="text-info fa fa-arrows">
-              &nbsp;{trash}
-              <i
-                className={`fa fa-folder${visible ? '-open' : null}`}
-                onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
-                style={{ cursor: "pointer" }}
-              >&nbsp; {dataset.name}</i>
+            &nbsp;{trash}&nbsp;
+            <i
+              className={`fa fa-folder${visible ? '-open' : ''}`}
+              onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
+              style={{ cursor: 'pointer' }}
+            >&nbsp;&nbsp;
+              <span className="text-info fa fa-arrows">
+                &nbsp; {dataset.name}
+              </span>
+            </i>
+            <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
+              {moment(dataset.created_at).format('DD.MM.YYYY HH:mm') }
             </span>
           </div>
           <div>{visible ? attachments : null}</div>
@@ -120,10 +137,15 @@ class DatasetContainer extends Component {
   }
 }
 
-export default DragSource(props => props.sourceType, dataSource,
-  collectSource)(DatasetContainer);
+export default DragSource(props => props.sourceType, dataSource, collectSource)(DatasetContainer);
 
 DatasetContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired
+  isDragging: PropTypes.bool.isRequired,
+  sourceType: PropTypes.string.isRequired,
+  largerInbox: PropTypes.bool
+};
+
+DatasetContainer.defaultProps = {
+  largerInbox: false
 };
