@@ -38,11 +38,18 @@ describe Chemotion::InboxAPI do
         let(:attachment) { inbox_container.attachments.first }
         let(:params) { { attachment_id: attachment.id } }
 
-        before { post "/api/v1/inbox/samples/#{sample_2.id}", params }
+        before do
+          attachment.update_columns(created_for: user.id)
+        end
 
-        it 'return moved samples' do
-          expect(JSON.parse(response.body)["container"]["container_type"]).to eq('dataset')
-          expect(JSON.parse(response.body)["container"]["attachments"].count).to eq(1)
+        describe 'post attachment' do
+          before { post "/api/v1/inbox/samples/#{sample_2.id}", params }
+
+          it 'return moved samples' do
+            puts response.body
+            expect(JSON.parse(response.body)['container']['container_type']).to eq('dataset')
+            expect(JSON.parse(response.body)['container']['attachments'].count).to eq(1)
+          end
         end
       end
     end
