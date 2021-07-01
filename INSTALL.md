@@ -64,7 +64,7 @@ NB:
 
 ## Using Docker
 
-see online ![docs](https://www.chemotion.net/chemotionsaurus/docs/eln/docker_installation)
+see online [docs](https://www.chemotion.net/chemotionsaurus/docs/eln/docker_installation)
 
 
 
