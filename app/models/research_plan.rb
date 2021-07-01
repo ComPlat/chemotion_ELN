@@ -63,6 +63,16 @@ class ResearchPlan < ActiveRecord::Base
     self.container ? self.container.analyses : Container.none
   end
 
+  def svg_files
+    fields = body.select { |field| field['type'] == 'ketcher' }
+    svg_files = []
+    fields.each do |field|
+      svg_files << field['value']['svg_file']
+    end
+
+    svg_files
+  end
+
   private
   def delete_attachment
     if Rails.env.production?
