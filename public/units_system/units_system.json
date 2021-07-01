@@ -159,6 +159,18 @@
     },
     {
       "type": "numeric",
+      "field": "energy",
+      "label": "Energy",
+      "default": "",
+      "position": 88,
+      "placeholder": "Joule",
+      "units": [
+        { "key": "j", "label": "J", "nm": 1000 },
+        { "key": "k_j", "label": "kJ", "nm": 1 }
+      ]
+    },
+    {
+      "type": "numeric",
       "field": "enzyme_activity",
       "label": "Enzyme activity",
       "default": "",
