@@ -20,6 +20,8 @@ const setCell = (columnDef, rowValue) => {
           </InputGroup.Button>
         </InputGroup>
       );
+    case 'drag_molecule':
+      return (cellRenderer({ ...cellParams, node: { data: rowValue } }));
     default:
       return <span />;
   }
@@ -27,38 +29,38 @@ const setCell = (columnDef, rowValue) => {
 
 const ColumnHeader = (columnDefs) => {
   const ch = [];
-  const h = (col) => {
+  const h = (col, idx) => {
     const {
       width, headerName, headerComponent, headerParams
     } = col;
     const colCss = {};
     if (width) { Object.assign(colCss, { width }); }
     return (
-      <div key={`column_header_${col.colId || col.field}`} className="generic_grid_header" style={colCss}>
+      <div key={`column_header_${col.colId || col.field}_${idx}`} className="generic_grid_header" style={colCss}>
         {headerComponent ? headerComponent(headerParams) : null}
-        {headerName}
+        <div style={colCss}>{headerName}</div>
       </div>
     );
   };
-  columnDefs.forEach(col => ch.push(h(col)));
+  columnDefs.forEach((col, idx) => ch.push(h(col, idx)));
   return (<div className="generic_grid" style={{ borderBottom: '1px solid #ccc' }}><div>{ch}</div></div>);
 };
 
 const ColumnRow = (columnDefs, rowValue) => {
   const ch = [];
-  const h = (col, val) => {
+  const h = (col, val, idx) => {
     const {
       field, width, cellParams, cellRenderer
     } = col;
     const colCss = {};
     if (width) { Object.assign(colCss, { width }); }
     return (
-      <div key={`column_row_${val.id}_${col.colId || col.field}`} className="generic_grid_row" style={colCss}>
+      <div key={`column_row_${val.id}_${col.colId || col.field}_${idx}`} className="generic_grid_row" style={colCss}>
         {field ? (setCell(col, val) || '') : (cellRenderer({ ...cellParams, node: { data: val } }) || '')}
       </div>
     );
   };
-  columnDefs.forEach(col => ch.push(h(col, rowValue)));
+  columnDefs.forEach((col, idx) => ch.push(h(col, rowValue, idx)));
   return (<div key={`column_row_${rowValue.id}`} className="generic_grid"><div>{ch}</div></div>);
 };
 

@@ -7,12 +7,14 @@
 #  id               :integer          not null, primary key
 #  name             :string
 #  element_klass_id :integer
-#  short_label      :string
 #  properties       :jsonb
 #  created_by       :integer
 #  created_at       :datetime
 #  updated_at       :datetime
 #  deleted_at       :datetime
+#  short_label      :string
+#  uuid             :string
+#  klass_uuid       :string
 #
 
 # Generic Element
@@ -24,6 +26,7 @@ class Element < ActiveRecord::Base
   include AnalysisCodes
   include Taggable
   include Segmentable
+  include GenericRevisions
 
   multisearchable against: %i[name short_label]
 
@@ -39,12 +42,13 @@ class Element < ActiveRecord::Base
 
   belongs_to :element_klass
 
-  has_many :collections_elements, dependent: :destroy
+  has_many :collections_elements,  inverse_of: :element, dependent: :destroy
   has_many :collections, through: :collections_elements
   has_many :attachments, as: :attachable
   has_many :elements_samples, dependent: :destroy
   has_many :samples, through: :elements_samples, source: :sample
   has_one :container, :as => :containable
+  has_many :elements_revisions, dependent: :destroy
 
   accepts_nested_attributes_for :collections_elements
 

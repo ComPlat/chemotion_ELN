@@ -7,7 +7,7 @@ import Segment from './Segment';
 export default class GenericEl extends Element {
 
   static buildEmpty(collection_id, klass) {
-    const template = (klass && klass.properties_template) || {};
+    const template = (klass && klass.properties_release) || {};
     return new GenericEl({
       collection_id,
       type: klass.name,
@@ -15,10 +15,10 @@ export default class GenericEl extends Element {
       short_label: GenericEl.buildNewShortLabel(klass),
       name: `New ${klass.label}`,
       container: Container.init(),
-      properties: template.layers,
+      properties: template,
       element_klass: klass,
       can_copy: false,
-      properties_template: [],
+      properties_release: [],
       attachments: [],
       segments: []
     });
@@ -32,7 +32,6 @@ export default class GenericEl extends Element {
       element_klass: this.element_klass,
       element_klass_id: this._element_klass_id,
       properties: this.properties,
-      //select_options: this.select_options,
       container: this.container,
       attachments: this.attachments,
       segments: this.segments.map(s => s.serialize())
@@ -48,7 +47,6 @@ export default class GenericEl extends Element {
 
   buildCopy(params = {}) {
     const copy = super.buildCopy();
-    console.log(copy);
     Object.assign(copy, params);
     copy.short_label = GenericEl.buildNewShortLabel(copy.element_klass);
     copy.can_update = true;
@@ -93,8 +91,6 @@ export default class GenericEl extends Element {
 
   get klassName() {
     return this._klass_name;
-    //console.log(this.element_klass);
-    //return this.element_klass.name;
   }
   set klassName(klassName) {
     this._klass_name = klassName;
@@ -107,14 +103,6 @@ export default class GenericEl extends Element {
 
   set properties(properties) {
     this._properties = properties;
-  }
-
-  get select_options() {
-    return this._select_options;
-  }
-
-  set select_options(select_options) {
-    this._select_options = select_options;
   }
 
   get element_klass_id() {
@@ -143,7 +131,7 @@ export default class GenericEl extends Element {
 
   isValidated() {
     const validName = !!(this.name && this.name.trim() !== '');
-    const layers = filter(this.properties, l => l.parent == null || l.parent.trim().length === 0) || [];
+    const layers = filter(this.properties && this.properties.layers, l => l.parent == null || l.parent.trim().length === 0) || [];
 
     // required fileds, draggable only
     const fieldsDrag = layers.flatMap(l => l.fields).filter(f => f.required && f.type.includes('drag_'));
@@ -153,13 +141,6 @@ export default class GenericEl extends Element {
     const fields = layers.flatMap(l => l.fields).filter(f => f.required && !f.type.includes('drag_'));
     const vaildFields = fields.length === fields.filter(f => f.value && f.value.trim() !== '').length;
 
-    // hard-code for now, wait for new attribute
-    const specific = this.properties.type_layer && this.properties.type_layer.fields.find(e => e.field === 'mof_method');
-    const specificValue = (typeof specific !== 'undefined' && specific !== null) ? specific.value : null;
-    if (specificValue) {
-      const vaildSpecificLayer = this.properties[specificValue].fields.filter(f => f.required && (!f.value || f.value.trim() === '')).length < 1;
-      return validName && vaildFieldsDrag && vaildFields && vaildSpecificLayer;
-    }
     return validName && vaildFieldsDrag && vaildFields;
   }
 }

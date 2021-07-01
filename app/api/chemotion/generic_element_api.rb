@@ -1,4 +1,6 @@
+# frozen_string_literal: true
 module Chemotion
+  # Generic Element API
   class GenericElementAPI < Grape::API
     include Grape::Kaminari
     helpers ContainerHelpers
@@ -8,9 +10,9 @@ module Chemotion
 
     resource :generic_elements do
       namespace :klass do
-        desc "get klass info"
+        desc 'get klass info'
         params do
-          requires :name, type: String, desc: "element klass name"
+          requires :name, type: String, desc: 'element klass name'
         end
         get do
           ek = ElementKlass.find_by(name: params[:name])
@@ -19,9 +21,9 @@ module Chemotion
       end
 
       namespace :klasses do
-        desc "get klasses"
+        desc 'get klasses'
         params do
-          optional :generic_only, type: Boolean, desc: "list generic element only"
+          optional :generic_only, type: Boolean, desc: 'list generic element only'
         end
         get do
           list = ElementKlass.where(is_active: true, is_generic: true).order('place') if params[:generic_only].present? && params[:generic_only] == true
@@ -30,8 +32,49 @@ module Chemotion
         end
       end
 
+      namespace :element_revisions do
+        desc 'list Generic Element Revisions'
+        params do
+          requires :id, type: Integer, desc: 'Generic Element Id'
+        end
+        get do
+          klass = Element.find(params[:id])
+          list = klass.elements_revisions unless klass.nil?
+          present list&.sort_by(&:created_at).reverse, with: Entities::ElementRevisionEntity, root: 'revisions'
+        end
+      end
+
+      namespace :delete_revision do
+        desc 'list Generic Element Revisions'
+        params do
+          requires :id, type: Integer, desc: 'Revision Id'
+          requires :element_id, type: Integer, desc: 'Element ID'
+          requires :klass, type: String, desc: 'Klass', values: %w[Element Segment Dataset]
+        end
+        post do
+          revision = "#{params[:klass]}sRevision".constantize.find(params[:id])
+          element = params[:klass].constantize.find_by(id: params[:element_id]) unless revision.nil?
+          error!('Revision is invalid.', 404) if revision.nil?
+          error!('Can not delete the active revision.', 405) if revision.uuid == element.uuid
+          revision&.destroy!
+          status 201
+        end
+      end
+
+      namespace :segment_revisions do
+        desc 'list Generic Element Revisions'
+        params do
+          optional :id, type: Integer, desc: 'Generic Element Id'
+        end
+        get do
+          klass = Segment.find(params[:id])
+          list = klass.segments_revisions unless klass.nil?
+          present list&.sort_by(&:created_at).reverse, with: Entities::SegmentRevisionEntity, root: 'revisions'
+        end
+      end
+
       namespace :klasses_all do
-        desc "get all klasses for admin function"
+        desc 'get all klasses for admin function'
         get do
           list = ElementKlass.all.sort_by { |e| e.place }
           present list, with: Entities::ElementKlassEntity, root: 'klass'
@@ -50,22 +93,22 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
         scope = if params[:collection_id]
-          begin
-            collection_id = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).find(params[:collection_id])&.id
-            Element.joins(:element_klass, :collections_elements).where('element_klasses.name = ? and collections_elements.collection_id = ?', params[:el_type], collection_id)
-          rescue ActiveRecord::RecordNotFound
-            Element.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            collection_id = current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection&.id
-            Element.joins(:element_klass, :collections_elements).where('element_klasses.name = ? and collections_elements.collection_id = (?)', params[:el_type], collection_id)
-          rescue ActiveRecord::RecordNotFound
-            Element.none
-          end
-        else
-          Element.none
-        end.includes(:tag, collections: :sync_collections_users).order("created_at DESC")
+                  begin
+                    collection_id = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(params[:collection_id])&.id
+                    Element.joins(:element_klass, :collections_elements).where('element_klasses.name = ? and collections_elements.collection_id = ?', params[:el_type], collection_id)
+                  rescue ActiveRecord::RecordNotFound
+                    Element.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    collection_id = current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection&.id
+                    Element.joins(:element_klass, :collections_elements).where('element_klasses.name = ? and collections_elements.collection_id = (?)', params[:el_type], collection_id)
+                  rescue ActiveRecord::RecordNotFound
+                    Element.none
+                  end
+                else
+                  Element.none
+                end.includes(:tag, collections: :sync_collections_users).order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -77,12 +120,12 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
       end
 
-      desc "Return serialized element by id"
+      desc 'Return serialized element by id'
       params do
-        requires :id, type: Integer, desc: "Element id"
+        requires :id, type: Integer, desc: 'Element id'
       end
       route_param :id do
         before do
@@ -98,7 +141,7 @@ module Chemotion
         end
       end
 
-      desc "Create a element"
+      desc 'Create a element'
       params do
         requires :element_klass, type: Hash
         requires :name, type: String
@@ -109,20 +152,29 @@ module Chemotion
       end
       post do
         klass = params[:element_klass] || {}
-        collection = Collection.find(params[:collection_id])
-
+        uuid = SecureRandom.uuid
+        params[:properties]['uuid'] = uuid
+        params[:properties]['klass_uuid'] = klass[:uuid]
+        params[:properties]['eln'] = Chemotion::Application.config.version
+        params[:properties]['klass'] = 'Element'
         attributes = {
           name: params[:name],
           element_klass_id: klass[:id],
+          uuid: uuid,
+          klass_uuid: klass[:uuid],
           properties: params[:properties],
           created_by: current_user.id
         }
+        element = Element.new(attributes)
 
-        element = Element.create(attributes)
-        #element_klass = ElementKlass.find(params[:klass][:id]);
+        if params[:collection_id]
+          collection = current_user.collections.find(params[:collection_id])
+          element.collections << collection
+        end
 
-        CollectionsElement.create(element: element, collection: collection, element_type: klass[:name])
-        CollectionsElement.create(element: element, collection: Collection.get_all_collection_for_user(current_user.id), element_type: klass[:name])
+        all_coll = Collection.get_all_collection_for_user(current_user.id)
+        element.collections << all_coll
+        element.save!
 
         element.properties = update_sample_association(element, params[:properties], current_user)
         element.container = update_datamodel(params[:container])
@@ -131,9 +183,9 @@ module Chemotion
         element
       end
 
-      desc "Update element by id"
+      desc 'Update element by id'
       params do
-        requires :id, type: Integer, desc: "element id"
+        requires :id, type: Integer, desc: 'element id'
         optional :name, type: String
         optional :properties, type: Hash
         requires :container, type: Hash
@@ -149,22 +201,29 @@ module Chemotion
 
           update_datamodel(params[:container])
           properties = update_sample_association(element, params[:properties], current_user)
-
           params.delete(:container)
           params.delete(:properties)
 
           attributes = declared(params.except(:segments), include_missing: false)
-          attributes['properties'] = properties
-          element.update(attributes)
-          element.save_segments(segments: params[:segments], current_user_id: current_user.id)
+          properties['eln'] = Chemotion::Application.config.version if properties['eln'] != Chemotion::Application.config.version
+          if element.klass_uuid != properties['klass_uuid'] || element.properties != properties || element.name != params[:name]
+            properties['klass'] = 'Element'
+            uuid = SecureRandom.uuid
+            properties['uuid'] = uuid
+            attributes['properties'] = properties
+            attributes['properties']['uuid'] = uuid
+            attributes['uuid'] = uuid
+            attributes['klass_uuid'] = properties['klass_uuid']
 
+            element.update(attributes)
+          end
+          element.save_segments(segments: params[:segments], current_user_id: current_user.id)
           {
             element: ElementPermissionProxy.new(current_user, element, user_ids).serialized,
             attachments: Entities::AttachmentEntity.represent(element.attachments)
           }
         end
       end
-
     end
   end
 end

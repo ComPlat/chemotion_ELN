@@ -68,4 +68,24 @@ export default class GenericElsFetcher {
   static create(genericEl) {
     return this.updateOrCreate(genericEl, 'create');
   }
+
+  static fetchElementRevisions(id) {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/generic_elements/element_revisions.json?id=${id}`, requestMethod: 'GET', jsonTranformation: json => json
+    });
+  }
+
+  static deleteRevisions(params) {
+    return BaseFetcher.withBodyData({
+      apiEndpoint: '/api/v1/generic_elements/delete_revision', requestMethod: 'POST', bodyData: params, jsonTranformation: json => json
+    });
+
+  }
+
+  static fetchSegmentRevisions(id) {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/generic_elements/segment_revisions.json?id=${id}`, requestMethod: 'GET', jsonTranformation: json => json
+    });
+  }
+
 }

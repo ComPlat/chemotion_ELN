@@ -37,8 +37,17 @@ module Chemotion
           sorted_layout = {}
           new_layout.select { |_k, v| v > 0 }.sort_by { |_k, v| v }.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
           new_layout.select { |_k, v| v < 0 }.sort_by { |_k, v| -v }.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
-
           data[:layout] = sorted_layout
+        end
+
+        data.keys&.each do |dt|
+          sorted_layout = {}
+          next if dt[0..6] != 'layout_'
+
+          old_layout = data[dt]
+          old_layout&.select { |_k, v| v > 0 }.sort_by { |_k, v| v }.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
+          old_layout&.select { |_k, v| v < 0 }.sort_by { |_k, v| -v }.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
+          data[dt] = sorted_layout
         end
 
         {

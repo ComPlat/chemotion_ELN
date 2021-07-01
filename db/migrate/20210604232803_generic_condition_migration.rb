@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Generic condition migration
 class GenericConditionMigration < ActiveRecord::Migration
   class ElementKlass < ActiveRecord::Base
   end
@@ -11,7 +12,6 @@ class GenericConditionMigration < ActiveRecord::Migration
   end
 
   def change
-
     ElementKlass.where(is_generic: true).each do |ek|
       pt = ek.properties_template
       layers = pt && pt['layers']
@@ -24,7 +24,7 @@ class GenericConditionMigration < ActiveRecord::Migration
             next if cols.length != 3
 
             obj = { 'id': SecureRandom.uuid, 'layer': cols[0], 'field': cols[1], 'value': cols[2] }
-            pt['layers'][key]['cond_fields'] = pt['layers'][key]['cond_fields'] || [];
+            pt['layers'][key]['cond_fields'] = pt['layers'][key]['cond_fields'] || []
             pt['layers'][key]['cond_fields'].push(obj.as_json)
           end
           pt['layers'][key].delete('condition')
@@ -44,7 +44,7 @@ class GenericConditionMigration < ActiveRecord::Migration
             next if cols.length != 3
 
             obj = { 'id': SecureRandom.uuid, 'layer': cols[0], 'field': cols[1], 'value': cols[2] }
-            pt[key]['cond_fields'] = pt[key]['cond_fields'] || [];
+            pt[key]['cond_fields'] = pt[key]['cond_fields'] || []
             pt[key]['cond_fields'].push(obj.as_json)
           end
           pt[key].delete('condition')
@@ -52,7 +52,6 @@ class GenericConditionMigration < ActiveRecord::Migration
         el.update!(properties: pt)
       end
     end
-
     SegmentKlass.find_each do |ek|
       pt = ek.properties_template
       layers = pt && pt['layers']
@@ -65,7 +64,7 @@ class GenericConditionMigration < ActiveRecord::Migration
             next if cols.length != 3
 
             obj = { 'id': SecureRandom.uuid, 'layer': cols[0], 'field': cols[1], 'value': cols[2] }
-            pt['layers'][key]['cond_fields'] = pt['layers'][key]['cond_fields'] || [];
+            pt['layers'][key]['cond_fields'] = pt['layers'][key]['cond_fields'] || []
             pt['layers'][key]['cond_fields'].push(obj.as_json)
           end
           pt['layers'][key].delete('condition')
@@ -85,7 +84,7 @@ class GenericConditionMigration < ActiveRecord::Migration
             next if cols.length != 3
 
             obj = { 'id': SecureRandom.uuid, 'layer': cols[0], 'field': cols[1], 'value': cols[2] }
-            pt[key]['cond_fields'] = pt[key]['cond_fields'] || [];
+            pt[key]['cond_fields'] = pt[key]['cond_fields'] || []
             pt[key]['cond_fields'].push(obj.as_json)
           end
           pt[key].delete('condition')

@@ -7,7 +7,9 @@ import GenericSubField from '../models/GenericSubField';
 import { AddRowBtn, DelRowBtn } from './GridBtn';
 import { ColumnHeader, ColumnRow, NoRow } from './GridEntry';
 import UConverterRenderer from './UConverterRenderer';
-import { genUnits, unitConversion } from '../../admin/generic/Utils';
+import { genUnits, unitConversion, molOptions } from '../../admin/generic/Utils';
+import DropRenderer from './DropRenderer';
+import DropMolRenderer from './DropMolRenderer';
 
 export default class TableRecord extends React.Component {
   constructor(props) {
@@ -16,6 +18,7 @@ export default class TableRecord extends React.Component {
     this.addRow = this.addRow.bind(this);
     this.onCellChange = this.onCellChange.bind(this);
     this.onUnitClick = this.onUnitClick.bind(this);
+    this.onDrop = this.onDrop.bind(this);
     this.getColumns = this.getColumns.bind(this);
   }
 
@@ -56,13 +59,26 @@ export default class TableRecord extends React.Component {
     opt.onSubChange(subField, subField.id, opt.f_obj, true);
   }
 
+  onDrop(targetProps, targetOpt) {
+    const { opt } = this.props;
+    const subField = targetOpt.sField;
+    const subVals = opt.f_obj.sub_values || [];
+    const subVal = subVals.find(s => s.id === targetOpt.data.id);
+    subVal[subField.id] = { value: targetProps };
+    const idx = subVals.findIndex(s => s.id === targetOpt.data.id);
+    subVals.splice(idx, 1, subVal);
+    opt.f_obj.sub_values = subVals;
+    opt.onSubChange(subField, subField.id, opt.f_obj, true);
+  }
+
   getColumns() {
     const { opt } = this.props;
-    const columnDefs = [];
-    opt.f_obj.sub_fields.forEach((sF) => {
+    let columnDefs = [];
+    (opt.f_obj.sub_fields || []).forEach((sF) => {
       let colDef = {
         type: sF.type, headerName: sF.col_name, field: sF.id
       };
+      const colDefExt = [];
       if (sF.type === 'text') {
         colDef = Object.assign({}, colDef, {
           editable: true, onCellChange: this.onCellChange
@@ -74,7 +90,24 @@ export default class TableRecord extends React.Component {
           cellRenderer: UConverterRenderer, cellParams, onCellChange: this.onCellChange
         });
       }
+      if (sF.type === 'drag_molecule') {
+        const cellParams = { sField: sF, opt, onChange: this.onDrop };
+        colDef = Object.assign({}, colDef, {
+          cellRenderer: DropRenderer, cellParams, onCellChange: this.onCellChange, width: '5vw'
+        });
+        const conf = ((sF.value || '').split(';') || []);
+        conf.forEach((c) => {
+          const molOpt = molOptions.find(m => m.value === c);
+          if (molOpt) {
+            const ext = {
+              colId: c, editable: false, type: 'text', headerName: molOpt.label, cellRenderer: DropMolRenderer, cellParams: { molOpt, sField: sF }
+            };
+            colDefExt.push(ext);
+          }
+        });
+      }
       columnDefs.push(colDef);
+      if (colDefExt.length > 0) columnDefs = columnDefs.concat(colDefExt);
     });
     const act = {
       type: 'button',

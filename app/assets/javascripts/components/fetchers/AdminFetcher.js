@@ -368,8 +368,12 @@ export default class AdminFetcher {
     return this.genericKlass(params, 'update_segment_template');
   }
 
-  static deleteSegmentKlass(id) {
-    return this.exec(`/api/v1/admin/delete_segment_klass/${id}`, 'DELETE');
+  static deleteKlassRevision(params) {
+    return this.genericKlass(params, 'delete_klass_revision');
+  }
+
+  static deleteGenericRevision(id) {
+    return this.exec(`/api/v1/admin/delete_generic_revision/${id}`, 'DELETE');
   }
 
   static listSegmentKlass(params = {}) {
@@ -411,5 +415,9 @@ export default class AdminFetcher {
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.error(errorMessage); });
+  }
+
+  static fetchKlassRevisions(id, klass) {
+    return this.exec(`/api/v1/admin/klass_revisions.json?id=${id}&klass=${klass}`, 'GET');
   }
 }

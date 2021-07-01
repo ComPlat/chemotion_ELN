@@ -22,16 +22,24 @@ const collateValues = (currentFields, previousFields, previousValues) => {
       if (newSub[preKey] === undefined || preKey === 'id') return;
       const curr = currentFields.find(f => f.id === preKey);
       const prev = previousFields.find(f => f.id === preKey);
+      if (curr.type === 'drag_molecule') {
+        if (['text', 'system-defined'].includes(prev.type)) {
+          newSub[preKey] = { value: undefined };
+        }
+      }
       if (curr.type === 'text') {
         if (prev.type === 'system-defined') {
           newSub[preKey] = newSub[preKey].value;
+        }
+        if (prev.type === 'drag_molecule') {
+          newSub[preKey] = '';
         }
       }
       if (curr.type === 'system-defined') {
         if (prev.type === 'system-defined' && (curr.option_layers !== prev.option_layers)) {
           newSub[preKey].value_system = curr.value_system;
         }
-        if (prev.type === 'text') {
+        if (['text', 'drag_molecule'].includes(prev.type)) {
           newSub[preKey] = { value: '', value_system: curr.value_system };
         }
         newSub[preKey].value =

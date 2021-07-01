@@ -14,7 +14,6 @@ const handleSampleClick = (type, id) => {
 };
 
 const show = (opt, iconClass) => {
-  // let creationType
   if (opt.value && opt.value.el_id) {
     const tips = opt.value.el_tip && opt.value.el_tip.split('@@');
     const tip1 = (tips && tips.length >= 1 && tips[0]) || '';

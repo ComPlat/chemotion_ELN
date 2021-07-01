@@ -168,7 +168,7 @@ export default class FieldCondEditModal extends Component {
 
   render() {
     const {
-      content, element, showModal, fnClose, layer, layerKey, field, allLayers
+      element, showModal, fnClose, layer, layerKey, field, allLayers
     } = this.props;
 
     const sub = (field == null ? layer.cond_fields : field.cond_fields) || [];
@@ -214,16 +214,13 @@ export default class FieldCondEditModal extends Component {
 }
 
 FieldCondEditModal.propTypes = {
-  content: PropTypes.string.isRequired,
-  allLayers: PropTypes.arrayOf(PropTypes.object),
-  field: PropTypes.object,
   showModal: PropTypes.bool.isRequired,
-  element: PropTypes.object.isRequired,
   layer: PropTypes.object.isRequired,
-  fnClose: PropTypes.func.isRequired,
-  fnDelete: PropTypes.func.isRequired,
+  allLayers: PropTypes.arrayOf(PropTypes.object),
+  layerKey: PropTypes.string.isRequired,
   updSub: PropTypes.func.isRequired,
   updLayer: PropTypes.func.isRequired,
-  fnActivate: PropTypes.func.isRequired,
-  fnUpdate: PropTypes.func.isRequired,
+  field: PropTypes.object,
+  element: PropTypes.object.isRequired,
+  fnClose: PropTypes.func.isRequired,
 };

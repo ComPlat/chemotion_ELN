@@ -41,10 +41,10 @@ class GenericDSDetails extends Component {
       default:
         ({ value } = event.target);
     }
-    properties[`${layer}`].fields.find(e => e.field === field).value = value;
-    if (type === 'system-defined' && (!properties[`${layer}`].fields.find(e => e.field === field).value_system || properties[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
-      const opt = properties[`${layer}`].fields.find(e => e.field === field).option_layers;
-      properties[`${layer}`].fields.find(e => e.field === field).value_system = genUnits(opt)[0].key;
+    properties.layers[`${layer}`].fields.find(e => e.field === field).value = value;
+    if (type === 'system-defined' && (!properties.layers[`${layer}`].fields.find(e => e.field === field).value_system || properties.layers[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
+      const opt = properties.layers[`${layer}`].fields.find(e => e.field === field).option_layers;
+      properties.layers[`${layer}`].fields.find(e => e.field === field).value_system = genUnits(opt)[0].key;
     }
     genericDS.properties = properties;
     genericDS.changed = true;
@@ -55,8 +55,8 @@ class GenericDSDetails extends Component {
     const { genericDS } = this.props;
     const { properties } = genericDS;
     const newVal = unitConversion(obj.option_layers, obj.value_system, obj.value);
-    properties[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
-    properties[`${layer}`].fields.find(e => e.field === obj.field).value = newVal;
+    properties.layers[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
+    properties.layers[`${layer}`].fields.find(e => e.field === obj.field).value = newVal;
     genericDS.properties = properties;
     genericDS.changed = true;
     this.props.onChange('dataset', { target: { value: genericDS } });
@@ -64,31 +64,32 @@ class GenericDSDetails extends Component {
 
   handleReload() {
     const { klass, genericDS } = this.props;
-    if (klass.properties_template) {
-      const newProps = cloneDeep(klass.properties_template.layers);
-      Object.keys(newProps).forEach((key) => {
-        const newLayer = newProps[key] || {};
-        const curFields = (genericDS.properties[key] && genericDS.properties[key].fields) || [];
+    if (klass.properties_release) {
+      const newProps = cloneDeep(klass.properties_release);
+      newProps.klass_uuid = klass.uuid;
+      Object.keys(newProps.layers).forEach((key) => {
+        const newLayer = newProps.layers[key] || {};
+        const curFields = (genericDS.properties.layers[key] && genericDS.properties.layers[key].fields) || [];
         (newLayer.fields || []).forEach((f, idx) => {
           const curIdx = findIndex(curFields, o => o.field === f.field);
           if (curIdx >= 0) {
-            const curVal = genericDS.properties[key].fields[curIdx].value;
+            const curVal = genericDS.properties.layers[key].fields[curIdx].value;
             const curType = typeof curVal;
-            if (['select', 'text', 'textarea', 'formula-field'].includes(newProps[key].fields[idx].type)) {
-              newProps[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
+            if (['select', 'text', 'textarea', 'formula-field'].includes(newProps.layers[key].fields[idx].type)) {
+              newProps.layers[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
             }
-            if (newProps[key].fields[idx].type === 'integer') {
-              newProps[key].fields[idx].value = (curType === 'undefined' || curType === 'boolean' || isNaN(curVal)) ? 0 : parseInt(curVal, 10);
+            if (newProps.layers[key].fields[idx].type === 'integer') {
+              newProps.layers[key].fields[idx].value = (curType === 'undefined' || curType === 'boolean' || isNaN(curVal)) ? 0 : parseInt(curVal, 10);
             }
-            if (newProps[key].fields[idx].type === 'checkbox') {
-              newProps[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
+            if (newProps.layers[key].fields[idx].type === 'checkbox') {
+              newProps.layers[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
             }
-            if (newProps[key].fields[idx].type === 'system-defined') {
-              const units = genUnits(newProps[key].fields[idx].option_layers);
+            if (newProps.layers[key].fields[idx].type === 'system-defined') {
+              const units = genUnits(newProps.layers[key].fields[idx].option_layers);
               const vs = units.find(u =>
-                u.key === genericDS.properties[key].fields[curIdx].value_system);
-              newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
-              newProps[key].fields[idx].value = toNum(curVal);
+                u.key === genericDS.properties.layers[key].fields[curIdx].value_system);
+              newProps.layers[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
+              newProps.layers[key].fields[idx].value = toNum(curVal);
             }
           }
         });
@@ -106,8 +107,8 @@ class GenericDSDetails extends Component {
 
   elementalPropertiesItem(genericDS, klass) {
     const layersLayout = LayersLayout(
-      genericDS.properties,
-      (klass.properties_template && klass.properties_template.select_options) || {},
+      genericDS.properties.layers,
+      (klass.properties_release && klass.properties_release.select_options) || {},
       this.handleInputChange,
       this.handleUnitClick
     );
