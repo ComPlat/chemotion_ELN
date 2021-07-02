@@ -157,6 +157,14 @@ class Import::ImportJson
         attribs['molecule_name_attributes'].slice!('name', 'description', 'user_id')
         attribs['molecule_name_attributes']['user_id'] = user_id if attribs['molecule_name_attributes']['user_id']
       end
+
+      options = Chemotion::SampleConst.solvents_smiles_options
+      solvent_value = el.slice('solvent')['solvent']
+      if solvent_value.is_a? String
+        solvent = options.find { |s| s[:label].include?(solvent_value) }
+        attribs['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }] if solvent.present?
+      end
+
       attribs['residues_attributes'] ||=  []
       new_el = create_element(el['uuid'], attribs, Sample, 'sample', el['literatures'])
       next unless new_el

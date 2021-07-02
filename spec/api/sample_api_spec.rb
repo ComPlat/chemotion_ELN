@@ -331,7 +331,7 @@ describe Chemotion::SampleAPI do
             expect(s.attributes.symbolize_keys[k]).to eq(v) unless k.to_s.include? 'bound'
           end
          
-          expect(s.attributes.symbolize_keys[:solvent]).to eq('[]')
+          expect(s.attributes.symbolize_keys[:solvent]).to eq([])
         end
 
         it 'sets the creator' do
@@ -528,6 +528,7 @@ describe Chemotion::SampleAPI do
         end
 
         it 'is able to import new samples' do
+          # puts response.body
           expect(
             JSON.parse(response.body)['data'].collect do |e|
               [e['id'], e['name']]

@@ -41,7 +41,8 @@
 #  decoupled           :boolean          default(FALSE), not null
 #  molecular_mass      :float
 #  sum_formula         :string
-#  solvent             :string
+#  solvent_old         :string
+#  solvent             :jsonb
 #
 # Indexes
 #

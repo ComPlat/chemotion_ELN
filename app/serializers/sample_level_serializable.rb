@@ -24,7 +24,7 @@ module SampleLevelSerializable
     end
 
     def solvent
-      JSON.load object.solvent
+      object.solvent
     end
   end
 
@@ -33,7 +33,7 @@ module SampleLevelSerializable
       (DetailLevels::Sample.new.base_attributes - DetailLevels::Sample.new.public_send("level#{level}_attributes")).each do |attr|
         define_method(attr) do
           case attr
-          when :analyses, :residues, :elemental_compositions, :molecule_computed_props
+          when :analyses, :residues, :elemental_compositions, :molecule_computed_props, :solvent
             []
           when :_contains_residues
             false

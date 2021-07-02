@@ -17,7 +17,7 @@ module SampleLevelListSerializable
       DetailLevels::Sample.new.list_removed_attributes.each do |attr|
         define_method(attr) do
           case attr
-          when :analyses, :residues, :elemental_compositions
+          when :analyses, :residues, :elemental_compositions, :solvent
             []
           when :_contains_residues
             false
