@@ -8,7 +8,7 @@ const DropRenderer = (props) => {
   const {
     opt, sField, onChange, node
   } = props;
-  if (sField.type !== 'drag_molecule') return null;
+  if (!['drag_molecule', 'drag_sample'].includes(sField.type)) return null;
   const { data } = node;
   opt.dndItems = [sField.type.split('_')[1]];
   opt.sField = sField;

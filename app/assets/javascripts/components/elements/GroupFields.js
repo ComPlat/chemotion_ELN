@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { Button, FormGroup, FormControl } from 'react-bootstrap';
 import GenericSubField from '../models/GenericSubField';
-import SystemSelect from '../generic/SystemSelect';
+import DefinedRenderer from '../generic/DefinedRenderer';
 
 const AddRowBtn = ({ addRow }) => (
   <Button onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>
@@ -34,12 +34,6 @@ const TypeSelect = ({ selType, node }) => (
 );
 
 TypeSelect.propTypes = { selType: PropTypes.func.isRequired, node: PropTypes.object.isRequired };
-
-const SystemDefinedRenderer = (props) => {
-  const { unitConfig, node, selDefined } = props;
-  if (node.data.type === 'system-defined') return <SystemSelect unitConfig={unitConfig} selDefined={selDefined} node={node} />;
-  return node.data.value || null;
-};
 
 export default class GroupFields extends React.Component {
   constructor(props) {
@@ -109,7 +103,7 @@ export default class GroupFields extends React.Component {
       },
     ];
     this.frameworkComponents = {
-      systemDefinedRenderer: SystemDefinedRenderer
+      systemDefinedRenderer: DefinedRenderer
     };
   }
 

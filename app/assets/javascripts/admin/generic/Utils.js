@@ -292,10 +292,11 @@ const clsInputGroup = (el) => {
 };
 
 const molOptions = [{ label: 'InChiKey', value: 'inchikey' }, { label: 'SMILES', value: 'smiles' }, { label: 'IUPAC', value: 'iupac' }, { label: 'Mass', value: 'molecular_weight' }];
+const samOptions = [{ label: 'Name', value: 'name' }, { label: 'Ext. Label', value: 'external_label' }, { label: 'Mass', value: 'molecular_weight' }];
 
 export {
   ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel, GenericDummy,
   validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
   unitConvToBase, unitConversion, toBool, toNum, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit,
-  clsInputGroup, inputEventVal, molOptions
+  clsInputGroup, inputEventVal, molOptions, samOptions
 };

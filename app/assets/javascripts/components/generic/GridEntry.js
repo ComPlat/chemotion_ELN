@@ -21,6 +21,7 @@ const setCell = (columnDef, rowValue) => {
         </InputGroup>
       );
     case 'drag_molecule':
+    case 'drag_sample':
       return (cellRenderer({ ...cellParams, node: { data: rowValue } }));
     default:
       return <span />;
@@ -34,7 +35,7 @@ const ColumnHeader = (columnDefs) => {
       width, headerName, headerComponent, headerParams
     } = col;
     const colCss = {};
-    if (width) { Object.assign(colCss, { width }); }
+    if (width) { Object.assign(colCss, { width, minWidth: width }); }
     return (
       <div key={`column_header_${col.colId || col.field}_${idx}`} className="generic_grid_header" style={colCss}>
         {headerComponent ? headerComponent(headerParams) : null}
@@ -53,7 +54,7 @@ const ColumnRow = (columnDefs, rowValue) => {
       field, width, cellParams, cellRenderer
     } = col;
     const colCss = {};
-    if (width) { Object.assign(colCss, { width }); }
+    if (width) { Object.assign(colCss, { width, minWidth: width }); }
     return (
       <div key={`column_row_${val.id}_${col.colId || col.field}_${idx}`} className="generic_grid_row" style={colCss}>
         {field ? (setCell(col, val) || '') : (cellRenderer({ ...cellParams, node: { data: val } }) || '')}
