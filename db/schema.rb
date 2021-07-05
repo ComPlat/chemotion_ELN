@@ -10,12 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210617132532) do
+ActiveRecord::Schema.define(version: 2021_06_24_180000) do
 
   # These are extensions that must be enabled in order to support this database
-  enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
+  enable_extension "pg_trgm"
+  enable_extension "plpgsql"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -242,6 +242,22 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "created_at", null: false
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "uuid"
+    t.jsonb "properties_release", default: {}
+    t.datetime "released_at"
+  end
+
+  create_table "dataset_klasses_revisions", id: :serial, force: :cascade do |t|
+    t.integer "dataset_klass_id"
+    t.string "uuid"
+    t.jsonb "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer "released_by"
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.index ["dataset_klass_id"], name: "index_dataset_klasses_revisions_on_dataset_klass_id"
   end
 
   create_table "datasets", id: :serial, force: :cascade do |t|
@@ -251,6 +267,21 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.jsonb "properties"
     t.datetime "created_at", null: false
     t.datetime "updated_at"
+    t.string "uuid"
+    t.string "klass_uuid"
+    t.datetime "deleted_at"
+  end
+
+  create_table "datasets_revisions", id: :serial, force: :cascade do |t|
+    t.integer "dataset_id"
+    t.string "uuid"
+    t.string "klass_uuid"
+    t.jsonb "properties", default: {}
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.index ["dataset_id"], name: "index_datasets_revisions_on_dataset_id"
   end
 
   create_table "delayed_jobs", id: :serial, force: :cascade do |t|
@@ -311,6 +342,22 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "uuid"
+    t.jsonb "properties_release", default: {}
+    t.datetime "released_at"
+  end
+
+  create_table "element_klasses_revisions", id: :serial, force: :cascade do |t|
+    t.integer "element_klass_id"
+    t.string "uuid"
+    t.jsonb "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer "released_by"
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.index ["element_klass_id"], name: "index_element_klasses_revisions_on_element_klass_id"
   end
 
   create_table "element_tags", id: :serial, force: :cascade do |t|
@@ -341,6 +388,21 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "uuid"
+    t.string "klass_uuid"
+  end
+
+  create_table "elements_revisions", id: :serial, force: :cascade do |t|
+    t.integer "element_id"
+    t.string "uuid"
+    t.string "klass_uuid"
+    t.string "name"
+    t.jsonb "properties", default: {}
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.index ["element_id"], name: "index_elements_revisions_on_element_id"
   end
 
   create_table "elements_samples", id: :serial, force: :cascade do |t|
@@ -692,6 +754,15 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
 
+  create_table "report_templates", id: :serial, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "report_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "attachment_id"
+    t.index ["attachment_id"], name: "index_report_templates_on_attachment_id"
+  end
+
   create_table "reports", id: :serial, force: :cascade do |t|
     t.integer "author_id"
     t.string "file_name"
@@ -710,8 +781,10 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.text "mol_serials", default: "--- []\n"
     t.text "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
     t.text "prd_atts", default: "--- []\n"
+    t.integer "report_templates_id"
     t.index ["author_id"], name: "index_reports_on_author_id"
     t.index ["file_name"], name: "index_reports_on_file_name"
+    t.index ["report_templates_id"], name: "index_reports_on_report_templates_id"
   end
 
   create_table "reports_users", id: :serial, force: :cascade do |t|
@@ -800,7 +873,7 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.integer "molecule_id"
     t.binary "molfile"
     t.float "purity", default: 1.0
-    t.string "solvent", default: ""
+    t.string "deprecated_solvent", default: ""
     t.string "impurities", default: ""
     t.string "location", default: ""
     t.boolean "is_top_secret", default: false
@@ -829,6 +902,7 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.boolean "decoupled", default: false, null: false
     t.float "molecular_mass"
     t.string "sum_formula"
+    t.jsonb "solvent"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
@@ -869,6 +943,22 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "uuid"
+    t.jsonb "properties_release", default: {}
+    t.datetime "released_at"
+  end
+
+  create_table "segment_klasses_revisions", id: :serial, force: :cascade do |t|
+    t.integer "segment_klass_id"
+    t.string "uuid"
+    t.jsonb "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer "released_by"
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.index ["segment_klass_id"], name: "index_segment_klasses_revisions_on_segment_klass_id"
   end
 
   create_table "segments", id: :serial, force: :cascade do |t|
@@ -880,6 +970,20 @@ ActiveRecord::Schema.define(version: 20210617132532) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "uuid"
+    t.string "klass_uuid"
+  end
+
+  create_table "segments_revisions", id: :serial, force: :cascade do |t|
+    t.integer "segment_id"
+    t.string "uuid"
+    t.string "klass_uuid"
+    t.jsonb "properties", default: {}
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.index ["segment_id"], name: "index_segments_revisions_on_segment_id"
   end
 
   create_table "subscriptions", id: :serial, force: :cascade do |t|

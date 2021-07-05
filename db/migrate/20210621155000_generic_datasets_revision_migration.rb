@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic datasets revision migration
-class GenericDatasetsRevisionMigration < ActiveRecord::Migration
+class GenericDatasetsRevisionMigration < ActiveRecord::Migration[4.2]
   # DatasetKlass
   class DatasetKlass < ActiveRecord::Base
     DatasetKlass.reset_column_information

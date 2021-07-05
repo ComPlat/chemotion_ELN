@@ -1,4 +1,4 @@
-class ChangeDataTypeForSolvent < ActiveRecord::Migration
+class ChangeDataTypeForSolvent < ActiveRecord::Migration[4.2]
   def change
     rename_column :samples, :solvent, :solvent_old
     add_column :samples, :solvent, :jsonb

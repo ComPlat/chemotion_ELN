@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic elements revision migration
-class GenericElementsRevisionMigration < ActiveRecord::Migration
+class GenericElementsRevisionMigration < ActiveRecord::Migration[4.2]
   # ElementKlass
   class ElementKlass < ActiveRecord::Base
     ElementKlass.reset_column_information

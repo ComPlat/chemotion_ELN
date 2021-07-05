@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Generic condition migration
-class GenericConditionMigration < ActiveRecord::Migration
+class GenericConditionMigration < ActiveRecord::Migration[4.2]
   class ElementKlass < ActiveRecord::Base
   end
   class Element < ActiveRecord::Base

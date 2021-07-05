@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic segments revision
-class GenericSegmentsRevision < ActiveRecord::Migration
+class GenericSegmentsRevision < ActiveRecord::Migration[4.2]
   class SegmentKlass < ActiveRecord::Base
   end
   def self.up

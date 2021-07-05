@@ -18,7 +18,7 @@
 #  index_element_klasses_revisions_on_element_klass_id  (element_klass_id)
 #
 
-class ElementKlassesRevision < ActiveRecord::Base
+class ElementKlassesRevision < ApplicationRecord
   acts_as_paranoid
   has_one :element_klass
 end

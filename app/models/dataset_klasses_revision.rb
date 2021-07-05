@@ -18,7 +18,7 @@
 #  index_dataset_klasses_revisions_on_dataset_klass_id  (dataset_klass_id)
 #
 
-class DatasetKlassesRevision < ActiveRecord::Base
+class DatasetKlassesRevision < ApplicationRecord
   acts_as_paranoid
   has_one :dataset_klass
 
