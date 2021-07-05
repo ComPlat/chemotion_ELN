@@ -49,7 +49,7 @@ class ResearchPlanMetadata < ApplicationRecord
   DATA_CITE_PREFIX = ENV['DATA_CITE_PREFIX']
   DATA_CITE_RESEARCH_PLAN_PREFIX = ENV['DATA_CITE_RESEARCH_PLAN_PREFIX']
 
-  belongs_to :research_plan
+  belongs_to :research_plan, optional: true
 
   # TODO: decide how to handle DOI uniqueness
   # validates :doi, uniqueness: true, if: -> { doi.present? }

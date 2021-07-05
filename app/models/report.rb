@@ -45,7 +45,7 @@ class Report < ApplicationRecord
   has_many :reports_users
   has_many :users, through: :reports_users
   has_many :attachments, as: :attachable
-  belongs_to :report_templates
+  belongs_to :report_templates, optional: true
 
   default_scope { includes(:reports_users) }
 
