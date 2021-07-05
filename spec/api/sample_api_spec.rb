@@ -394,7 +394,8 @@ describe Chemotion::SampleAPI do
           }
         end
 
-        it 'should be able to delete samples when "all" is false' do
+        # NB: deprecated api 
+        xit 'should be able to delete samples when "all" is false' do
           sample_ids = [sample_1.id, sample_2.id]
           array = Sample.where(id: sample_ids).to_a
           expect(array).to match_array([sample_1, sample_2])
@@ -419,7 +420,7 @@ describe Chemotion::SampleAPI do
           expect(a).to match_array([])
         end
 
-        it 'should be able to delete samples when "all" is false' do
+        xit 'should be able to delete samples when "all" is true' do
           sample_ids = [sample_1.id, sample_2.id]
           array = Sample.where(id: sample_ids).to_a
           expect(array).to match_array([sample_1, sample_2])

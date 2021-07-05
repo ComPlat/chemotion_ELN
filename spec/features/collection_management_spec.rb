@@ -11,24 +11,27 @@ describe 'Collection management' do
     sign_in(user)
   end
 
-  describe 'Createa an unshared collection' do
+  describe 'Create an unshared collection' do
     it 'create an unshared collection', js: true do
       # press Collections button (on the left-side tree view)
       find('div.take-ownership-btn').click
 
       # press Add(plus) button to add collection
       find('div.root-actions').find(:xpath, '..').all('button')[0].click
-
       # input collection name
       factory_collection_name = 'Hello Collection'
-      new_collection = find("div#collection-management-tab-pane-0 input[value='New Collection']:last-of-type")
+
+      new_collection = find('input.collection-label.form-control:last-of-type')
       new_collection.click
       new_collection.set(factory_collection_name)
 
-      # press Update button to save
-      find('div.root-actions').find(:xpath, '..').all('button')[0].click
+      #find('div.root-actions').find(:xpath, '..').all('button')[0].click
 
-      # except
+      # find update button to save changes 
+      find('button#my-collections-update-btn.btn.btn-xs.btn-warning').click
+
+      expect(page).to have_content(factory_collection_name)
+      page.refresh
       expect(find('.tree-view', text: factory_collection_name).text).to eq(factory_collection_name)
     end
   end
@@ -41,14 +44,16 @@ describe 'Collection management' do
 
       factory_collection_name = collection.label
 
-      # except before deletion
+      # expect before deletion to have content
       expect(page).to have_content(factory_collection_name)
 
       # press Delete button to delete the collection
-      find("div#collection-management-tab-pane-0 button[class='btn btn-xs btn-danger']:last-of-type").click
+      first("div.actions.btn-group [class='btn btn-xs btn-danger']:last-of-type").click
 
+      #find('div.root-actions').find(:xpath, '..').all('button')[0].click
+      
       # press Update button to save
-      find('div.root-actions').find(:xpath, '..').all('button')[0].click
+      find('button#my-collections-update-btn.btn.btn-xs.btn-warning').click
 
       # except after deletion
       expect(page).not_to have_content(factory_collection_name)
