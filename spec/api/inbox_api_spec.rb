@@ -23,11 +23,11 @@ describe Chemotion::InboxAPI do
       end
 
       describe 'get samples by sample name' do
-        let(:params) { { search_string: 'R23' } }
+        let(:search_string) { 'R23' }
 
-        before { get '/api/v1/inbox/samples', params: params, as: :json }
+        before { get "/api/v1/inbox/samples?search_string=#{search_string}" }
 
-        it 'return fitting samples' do
+        it 'return fitting samples' do 
           expect(JSON.parse(response.body)['samples'].size).to eq(2)
         end
       end

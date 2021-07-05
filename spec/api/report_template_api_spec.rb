@@ -137,7 +137,6 @@ describe Chemotion::ReportTemplateAPI do
         post(
           '/api/v1/report_templates',
           params: params,
-          as: :json,
           headers: {
             'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
             'CONTENT_TYPE' => 'multipart/form-data'
