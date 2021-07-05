@@ -396,7 +396,7 @@ describe Chemotion::ReactionAPI do
           )
         end
 
-        it 'createds a copied sample' do
+        it 'creates a copied sample' do
           reactant = r.reactants.last
           expect(reactant.attributes).to include(
             'name' => 'Copied Sample',

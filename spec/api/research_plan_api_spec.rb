@@ -36,7 +36,7 @@ describe Chemotion::ResearchPlanAPI do
       let(:rp) { create(:research_plan) }
       let!(:research_plan_metadata) { create(:research_plan_metadata) }
 
-      before do
+   before do
         rp.research_plan_metadata = research_plan_metadata
         CollectionsResearchPlan.create!(research_plan: rp, collection: c)
       end
@@ -50,8 +50,8 @@ describe Chemotion::ResearchPlanAPI do
           'name' => rp.name
         )
         expect(first_rp['research_plan_metadata']).to include(
-          'id' => research_plan_metadata.id,
-          'doi' => research_plan_metadata.doi
+            'id' => research_plan_metadata.id,
+            'doi' => research_plan_metadata.doi
         )
       end
     end

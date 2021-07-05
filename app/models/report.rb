@@ -19,9 +19,9 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  template             :string           default("standard")
-#  mol_serials          :text             default([])
+#  mol_serials          :text             default("--- []\n")
 #  si_reaction_settings :text             default({:Name=>true, :CAS=>true, :Formula=>true, :Smiles=>true, :InCHI=>true, :"Molecular Mass"=>true, :"Exact Mass"=>true, :EA=>true})
-#  prd_atts             :text             default([])
+#  prd_atts             :text             default("--- []\n")
 #  report_templates_id  :integer
 #
 # Indexes

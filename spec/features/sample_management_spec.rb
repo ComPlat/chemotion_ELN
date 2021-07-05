@@ -68,7 +68,7 @@ describe 'Sample management' do
             end
           expect(value.to_f).to eq(sample[field].to_f)
         else
-          expect(value).to eq(sample[field])
+          expect(value.to_f).to eq(sample[field].to_f)
         end
       end
 
