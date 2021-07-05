@@ -18,6 +18,10 @@ class GenericElementsRevisionMigration < ActiveRecord::Migration
       properties['uuid'] = uuid
       properties['eln'] = Chemotion::Application.config.version
       properties['klass'] = 'ElementKlass'
+      select_options = properties['select_options']
+      select_options&.map { |k, v| select_options[k] = { desc: k, options: v } }
+      properties['select_options'] = select_options || {}
+
       attributes = {
         uuid: uuid,
         released_at: DateTime.now,
@@ -50,6 +54,7 @@ class GenericElementsRevisionMigration < ActiveRecord::Migration
       new_prop['klass'] = 'Element'
       new_prop['layers'] = el.properties || {}
       new_prop['select_options'] = klass.properties_release['select_options'] || {}
+
       attributes = {
         properties: new_prop,
         uuid: uuid,
