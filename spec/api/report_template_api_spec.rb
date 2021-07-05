@@ -42,9 +42,12 @@ describe Chemotion::ReportTemplateAPI do
           file: :template_upload
         }
         post(
-          '/api/v1/report_templates', params.to_json,
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'multipart/form-data'
+          '/api/v1/report_templates',
+          params: params.to_json,
+          headers: {
+            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          }
         )
       end
 
@@ -59,8 +62,10 @@ describe Chemotion::ReportTemplateAPI do
       before do
         delete(
           "/api/v1/report_templates/#{report_template1.id}",
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'multipart/form-data'
+          headers: {
+            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          }
         )
       end
 
@@ -73,11 +78,12 @@ describe Chemotion::ReportTemplateAPI do
 
     describe 'GET /api/v1/report_templates/{id}' do
       before do
-       
         get(
           "/api/v1/report_templates/#{report_template1.id}",
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'multipart/form-data'
+          headers: {
+            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          }
         )
       end
 
@@ -95,9 +101,12 @@ describe Chemotion::ReportTemplateAPI do
           report_type: 'Report template type',
         }
         put(
-          "/api/v1/report_templates/#{report_template1.id}", params.to_json,
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'multipart/form-data'
+          "/api/v1/report_templates/#{report_template1.id}",
+          params: params.to_json,
+          headers: {
+            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          }
         )
       end
 
@@ -126,9 +135,13 @@ describe Chemotion::ReportTemplateAPI do
           report_type: 'Report template type'
         }
         post(
-          '/api/v1/report_templates', params,
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'multipart/form-data'
+          '/api/v1/report_templates',
+          params: params,
+          as: :json,
+          headers: {
+            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          }
         )
       end
 
@@ -144,8 +157,10 @@ describe Chemotion::ReportTemplateAPI do
       before do
         delete(
           "/api/v1/report_templates/#{report_template1.id}",
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'multipart/form-data'
+          headers: {
+            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          }
         )
       end
 
@@ -160,8 +175,10 @@ describe Chemotion::ReportTemplateAPI do
       before do
         get(
           "/api/v1/report_templates/#{report_template1.id}",
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'multipart/form-data'
+          headers: {
+            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          }
         )
       end
 
@@ -179,9 +196,12 @@ describe Chemotion::ReportTemplateAPI do
           report_type: 'Report template type'
         }
         put(
-          "/api/v1/report_templates/#{report_template1.id}", params,
-          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-          'CONTENT_TYPE' => 'multipart/form-data'
+          "/api/v1/report_templates/#{report_template1.id}", 
+          params: params,
+          headers: {
+            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT_TYPE' => 'multipart/form-data'
+          }
         )
       end
 
