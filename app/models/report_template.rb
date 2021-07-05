@@ -21,7 +21,7 @@
 #
 
 class ReportTemplate < ApplicationRecord
-  belongs_to :attachment, foreign_key: :attachment_id, class_name: 'Attachment', dependent: :destroy
+  belongs_to :attachment, foreign_key: :attachment_id, class_name: 'Attachment', dependent: :destroy, optional: true
   accepts_nested_attributes_for :attachment
 
   validates :name, :report_type, presence: true
