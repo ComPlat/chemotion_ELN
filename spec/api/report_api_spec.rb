@@ -104,7 +104,8 @@ describe Chemotion::ReportAPI do
       context 'with V2000 molfile contains no dollar sign' do
         before do
           params[:uiState][:sample][:checkedIds] = [sample_1.id]
-          post('/api/v1/reports/export_samples_from_selections',
+          post(
+            '/api/v1/reports/export_samples_from_selections',
             params: params.to_json,
             headers: { 'CONTENT_TYPE' => 'application/json' }
           )
@@ -124,7 +125,8 @@ describe Chemotion::ReportAPI do
       context 'with V2000 molfile contains dollar sign' do
         before do
           params[:uiState][:sample][:checkedIds] = [sample_2.id]
-          post('/api/v1/reports/export_samples_from_selections',
+          post(
+            '/api/v1/reports/export_samples_from_selections',
             params: params.to_json,
             headers: { 'CONTENT_TYPE' => 'application/json' }
           )
@@ -219,8 +221,9 @@ describe Chemotion::ReportAPI do
             created_at updated_at molfile
           ]
         }
-        post('/api/v1/reports/export_samples_from_selections',
-           params: params.to_json,
+        post(
+           '/api/v1/reports/export_samples_from_selections',
+           params: params.to_json, 
            headers: {
              'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
              'CONTENT_TYPE' => 'application/json'

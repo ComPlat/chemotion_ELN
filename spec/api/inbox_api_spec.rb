@@ -25,7 +25,7 @@ describe Chemotion::InboxAPI do
       describe 'get samples by sample name' do
         let(:params) { { search_string: 'R23' } }
 
-        before { get '/api/v1/inbox/samples', params }
+        before { get '/api/v1/inbox/samples', params: params, as: :json }
 
         it 'return fitting samples' do
           expect(JSON.parse(response.body)['samples'].size).to eq(2)
@@ -43,7 +43,7 @@ describe Chemotion::InboxAPI do
         end
 
         describe 'post attachment' do
-          before { post "/api/v1/inbox/samples/#{sample_2.id}", params }
+          before { post "/api/v1/inbox/samples/#{sample_2.id}", params: params, as: :json }
 
           it 'return moved samples' do
             puts response.body
