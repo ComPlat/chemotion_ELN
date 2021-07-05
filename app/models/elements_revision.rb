@@ -18,7 +18,7 @@
 #  index_elements_revisions_on_element_id  (element_id)
 #
 
-class ElementsRevision < ActiveRecord::Base
+class ElementsRevision < ApplicationRecord
   acts_as_paranoid
   has_one :element
 

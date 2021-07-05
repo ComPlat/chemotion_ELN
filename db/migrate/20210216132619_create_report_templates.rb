@@ -1,4 +1,4 @@
-class CreateReportTemplates < ActiveRecord::Migration
+class CreateReportTemplates < ActiveRecord::Migration[4.2]
   def change
     create_table :report_templates do |t|
       t.string :name

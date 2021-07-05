@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic segments revision migration
-class GenericSegmentsRevisionMigration < ActiveRecord::Migration
+class GenericSegmentsRevisionMigration < ActiveRecord::Migration[4.2]
   # SegmentKlass
   class SegmentKlass < ActiveRecord::Base
     SegmentKlass.reset_column_information

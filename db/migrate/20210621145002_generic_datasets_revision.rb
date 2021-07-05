@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic dataset revision
-class GenericDatasetsRevision < ActiveRecord::Migration
+class GenericDatasetsRevision < ActiveRecord::Migration[4.2]
   class DatasetKlass < ActiveRecord::Base
   end
   def self.up

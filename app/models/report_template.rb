@@ -20,7 +20,7 @@
 #  fk_rails_...  (attachment_id => attachments.id)
 #
 
-class ReportTemplate < ActiveRecord::Base
+class ReportTemplate < ApplicationRecord
   belongs_to :attachment, foreign_key: :attachment_id, class_name: 'Attachment', dependent: :destroy
   accepts_nested_attributes_for :attachment
 

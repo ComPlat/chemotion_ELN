@@ -402,7 +402,7 @@ describe Chemotion::SampleAPI do
           CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
           s = Sample.find_by(id: sample_3.id)
           expect(s).not_to be_nil
-          delete '/api/v1/samples', params: { ui_state: params_all_false }
+          delete '/api/v1/samples', params: { ui_state: params_all_false }, as: :json
           s = Sample.find_by(id: sample_3.id)
           expect(s).not_to be_nil
           array = Sample.where(id: sample_ids).to_a
@@ -427,7 +427,7 @@ describe Chemotion::SampleAPI do
           CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
           s = Sample.find_by(id: sample_3.id)
           expect(s).not_to be_nil
-          delete '/api/v1/samples', params: { ui_state: params_all_true }
+          delete '/api/v1/samples', params: { ui_state: params_all_true }, as: :json
           s = Sample.find_by(id: sample_3.id)
           expect(s).not_to be_nil
           array = Sample.where(id: sample_ids).to_a

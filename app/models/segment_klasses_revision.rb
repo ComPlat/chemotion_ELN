@@ -18,7 +18,7 @@
 #  index_segment_klasses_revisions_on_segment_klass_id  (segment_klass_id)
 #
 
-class SegmentKlassesRevision < ActiveRecord::Base
+class SegmentKlassesRevision < ApplicationRecord
   acts_as_paranoid
   has_one :segment_klass
 

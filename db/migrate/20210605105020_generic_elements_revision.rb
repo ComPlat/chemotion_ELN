@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Create generic elements revisions
-class GenericElementsRevision < ActiveRecord::Migration
+class GenericElementsRevision < ActiveRecord::Migration[4.2]
   class ElementKlass < ActiveRecord::Base
   end
   def self.up
