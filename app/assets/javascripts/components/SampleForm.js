@@ -268,6 +268,9 @@ export default class SampleForm extends React.Component {
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
+      if (sample[field] && (sample.sum_formula || '').trim() === '') {
+        sample.sum_formula = 'undefined structure';
+      }
       if (!sample[field] && ((sample.molfile || '') === '')) {
         this.props.parent.setState({ sample });
       } else {
