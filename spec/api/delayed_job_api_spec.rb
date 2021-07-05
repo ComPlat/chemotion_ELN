@@ -33,7 +33,7 @@ describe Chemotion::AdminAPI do
       end
 
       it 'restart (failed) job' do
-        put '/api/v1/admin/jobs/restart', { id: Delayed::Job.select(:id).where(queue: 'test') }
+        put '/api/v1/admin/jobs/restart', params: { id: Delayed::Job.select(:id).where(queue: 'test') }
       rescue RuntimeError => e
         expect(response.status).to eq 200
       end
