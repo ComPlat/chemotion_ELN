@@ -4,7 +4,7 @@ import Enzyme, { shallow } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import sinon from 'sinon';
 
-import SpinnerPencilIcon from '../../../app/assets/javascripts/components/common/SpinnerPencilIcon';
+import SpinnerPencilIcon from '../../../app/packs/src/components/common/SpinnerPencilIcon';
 
 Enzyme.configure({ adapter: new Adapter() });
 
