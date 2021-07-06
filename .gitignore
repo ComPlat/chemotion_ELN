@@ -146,6 +146,8 @@ tags.temp
 
 spec/examples.txt
 
+# Ignore master key for decrypting credentials and more.
+/config/master.key
 
 # yarn / pack
 /public/packs
