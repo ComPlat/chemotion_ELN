@@ -636,18 +636,6 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true
   end
 
-  create_table "nmr_sim_nmr_simulations", id: :serial, force: :cascade do |t|
-    t.integer "molecule_id"
-    t.text "path_1h"
-    t.text "path_13c"
-    t.text "source"
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at"
-    t.index ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true
-  end
-
   create_table "notifications", id: :serial, force: :cascade do |t|
     t.integer "message_id"
     t.integer "user_id"
@@ -676,16 +664,16 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
-    t.integer "searchable_id"
     t.string "searchable_type"
+    t.integer "searchable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
   create_table "predictions", id: :serial, force: :cascade do |t|
-    t.integer "predictable_id"
     t.string "predictable_type"
+    t.integer "predictable_id"
     t.jsonb "decision", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -779,7 +767,7 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
     t.datetime "updated_at", null: false
     t.string "template", default: "standard"
     t.text "mol_serials", default: "--- []\n"
-    t.text "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
+    t.text "si_reaction_settings", default: "---\nName: true\nCAS: true\nFormula: true\nSmiles: true\nInCHI: true\nMolecular Mass: true\nExact Mass: true\nEA: true\n"
     t.text "prd_atts", default: "--- []\n"
     t.integer "report_templates_id"
     t.index ["author_id"], name: "index_reports_on_author_id"
@@ -1017,11 +1005,11 @@ ActiveRecord::Schema.define(version: 2021_06_24_180000) do
   create_table "text_templates", id: :serial, force: :cascade do |t|
     t.string "type"
     t.integer "user_id", null: false
+    t.string "name"
     t.jsonb "data", default: {}
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "name"
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"
