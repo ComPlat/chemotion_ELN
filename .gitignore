@@ -131,6 +131,7 @@
 #config generated files
 aliasifyConfig.js
 /app/assets/javascripts/components/extra/*
+/app/packs/src/components/extra/*
 
 # Backups folder
 backup/deploy_backup
