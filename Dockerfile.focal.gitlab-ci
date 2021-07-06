@@ -3,7 +3,7 @@ FROM ubuntu:focal
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
-RUN apt-get install -yqq bash ca-certificates wget apt-transport-https git \
+RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
       imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
       build-essential nodejs sudo postgresql-client libappindicator1 swig \
       xvfb gconf-service libasound2 libgconf-2-4 cmake \
@@ -34,7 +34,8 @@ RUN useradd -ms /bin/bash gitlab-runner \
 USER gitlab-runner
 WORKDIR /home/gitlab-runner
 
-RUN gpg2 --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB \
+#RUN gpg2 --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB \
+RUN gpg --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB \
     && \curl -sSL https://get.rvm.io | bash -s stable \
     && echo "source ~/.rvm/scripts/rvm" >> ~/.bashrc \
     && echo 'if [ -f ~/.bashrc ]; then \n  source ~/.bashrc\nfi' > ~/.bash_profile
@@ -50,11 +51,12 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | b
 COPY Gemfile /home/gitlab-runner/
 COPY Gemfile.lock /home/gitlab-runner/
 COPY package.json /home/gitlab-runner/
-COPY package-lock.json /home/gitlab-runner/
+#COPY package-lock.json /home/gitlab-runner/
+COPY yarn.lock /home/gitlab-runner/
 RUN sudo chmod 666 Gemfile.lock
-RUN sudo chmod 666 package-lock.json
+RUN sudo chmod 666 yarn.lock
 
-RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 12.22.1 && nvm use 12.22.1 && npm install -g npm && npm install"
+RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 14.16.0 && nvm use 14.16.0 && npm install -g npm && npm install -g yarn && yarn install"
 RUN echo $(ls -1 shared/node_modules)
 RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && rvm install 2.6.6 && gem install bundler -v 1.17.3 && bundle install --path shared/bundle"
 # RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && chromedriver-update"
