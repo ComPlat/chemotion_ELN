@@ -305,7 +305,8 @@ module Chemotion
         end
         put do
           attributes = declared(params, include_missing: false)
-          attributes[:solvent] = params[:solvent].to_json
+          # attributes[:solvent] = params[:solvent].to_json
+          attributes[:solvent] = params[:solvent]
 
           update_datamodel(attributes[:container])
           attributes.delete(:container)
@@ -427,7 +428,7 @@ module Chemotion
           molarity_unit: params[:molarity_unit],
           description: params[:description],
           purity: params[:purity],
-          solvent: params[:solvent].to_json,
+          solvent: params[:solvent],
           location: params[:location],
           molfile: params[:molfile],
           molecule_id: molecule_id,

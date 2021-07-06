@@ -158,11 +158,10 @@ class Import::ImportJson
         attribs['molecule_name_attributes']['user_id'] = user_id if attribs['molecule_name_attributes']['user_id']
       end
 
-      options = Chemotion::SampleConst.solvents_smiles_options
       solvent_value = el.slice('solvent')['solvent']
       if solvent_value.is_a? String
-        solvent = options.find { |s| s[:label].include?(solvent_value) }
-        attribs['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }] if solvent.present?
+        solvent_value = process_sample_solvent(solvent_value)
+        attribs['solvent'] = solvent_value
       end
 
       attribs['residues_attributes'] ||=  []
@@ -174,8 +173,22 @@ class Import::ImportJson
     end
   end
 
+  def process_sample_solvent(val)
+    parsed_solv = JSON.parse(val)
+    return nil unless parsed_solv.is_a?(Array)
+
+    parsed_solv
+  rescue JSON::ParserError, TypeError
+    options = Chemotion::SampleConst.solvents_smiles_options
+    solvent = options.find { |s| s[:label].include?(val) }
+    return nil unless solvent.present?
+
+    [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }]
+  end
+
   def import_research_plans
     return unless collections?
+
     attribute_names = filter_attributes(ResearchPlan)
     research_plans.each do |key, el|
       research_plan_metadata = el['research_plan_metadata']
