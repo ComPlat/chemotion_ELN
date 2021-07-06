@@ -9,7 +9,7 @@ class AddSiRxnSettingsToReport < ActiveRecord::Migration[4.2]
       "Molecular Mass" => true,
       "Exact Mass" => true,
       "EA" => true
-    }.to_s
+    }.to_yaml
     add_column :reports, :si_reaction_settings, :text, default: default_value
   end
 end
