@@ -13,7 +13,7 @@ module Entities
     end
 
     def released_at
-      object.released_at.strftime('%d.%m.%Y, %H:%M')
+      object.released_at&.strftime('%d.%m.%Y, %H:%M')
     end
   end
 end
