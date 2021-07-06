@@ -3,7 +3,7 @@ import { describe, it } from 'mocha';
 
 import {
   fixDigit, validDigit, correctPrefix,
-} from '../../../app/assets/javascripts/components/utils/MathUtils';
+} from '../../../app/packs/src/components/utils/MathUtils';
 
 describe('fixDigit', () => {
   it('return number with correct precisons', () => {

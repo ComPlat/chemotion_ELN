@@ -3,7 +3,7 @@ import Delta from 'quill-delta';
 
 import {
   deltaToMarkdown, markdownToDelta
-} from '../../../app/assets/javascripts/components/utils/deltaMarkdownConverter';
+} from '../../../app/packs/src/components/utils/deltaMarkdownConverter';
 
 describe('Delta to Markdown converter', () => {
   it('should convert inline characters', () => {
