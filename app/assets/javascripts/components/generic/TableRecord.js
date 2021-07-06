@@ -7,9 +7,11 @@ import GenericSubField from '../models/GenericSubField';
 import { AddRowBtn, DelRowBtn } from './GridBtn';
 import { ColumnHeader, ColumnRow, NoRow } from './GridEntry';
 import UConverterRenderer from './UConverterRenderer';
-import { genUnits, unitConversion, molOptions } from '../../admin/generic/Utils';
+import { genUnits, unitConversion, molOptions, samOptions } from '../../admin/generic/Utils';
 import DropRenderer from './DropRenderer';
-import DropMolRenderer from './DropMolRenderer';
+import DropTextRenderer from './DropTextRenderer';
+import DropLinkRenderer from './DropLinkRenderer';
+import SampOption from './SamOption';
 
 export default class TableRecord extends React.Component {
   constructor(props) {
@@ -19,6 +21,7 @@ export default class TableRecord extends React.Component {
     this.onCellChange = this.onCellChange.bind(this);
     this.onUnitClick = this.onUnitClick.bind(this);
     this.onDrop = this.onDrop.bind(this);
+    this.onChk = this.onChk.bind(this);
     this.getColumns = this.getColumns.bind(this);
   }
 
@@ -71,8 +74,22 @@ export default class TableRecord extends React.Component {
     opt.onSubChange(subField, subField.id, opt.f_obj, true);
   }
 
+  onChk(params) {
+    const { node, subField, crOpt } = params;
+    const { opt } = this.props;
+    const subVals = opt.f_obj.sub_values || [];
+    const subVal = subVals.find(s => s.id === node.data.id);
+    node.data[subField.id].value.cr_opt = crOpt;
+    subVal[subField.id] = { value: node.data[subField.id].value };
+    const idx = subVals.findIndex(s => s.id === node.data.id);
+    subVals.splice(idx, 1, subVal);
+    opt.f_obj.sub_values = subVals;
+    opt.onSubChange(subField, subField.id, opt.f_obj, true);
+  }
+
   getColumns() {
     const { opt } = this.props;
+    const sValues = (opt.f_obj.sub_values || []);
     let columnDefs = [];
     (opt.f_obj.sub_fields || []).forEach((sF) => {
       let colDef = {
@@ -97,10 +114,35 @@ export default class TableRecord extends React.Component {
         });
         const conf = ((sF.value || '').split(';') || []);
         conf.forEach((c) => {
-          const molOpt = molOptions.find(m => m.value === c);
-          if (molOpt) {
+          const attr = molOptions.find(m => m.value === c);
+          if (attr) {
             const ext = {
-              colId: c, editable: false, type: 'text', headerName: molOpt.label, cellRenderer: DropMolRenderer, cellParams: { molOpt, sField: sF }
+              colId: c, editable: false, type: 'text', headerName: attr.label, cellRenderer: DropTextRenderer, cellParams: { attr, sField: sF }
+            };
+            colDefExt.push(ext);
+          }
+        });
+      }
+      if (sF.type === 'drag_sample') {
+        const sOpt = sValues.filter(o => o[sF.id] && o[sF.id].value && o[sF.id].value.is_new);
+        const cellParams = { sField: sF, opt, onChange: this.onDrop };
+        colDef = Object.assign({}, colDef, {
+          cellRenderer: DropRenderer, cellParams, onCellChange: this.onCellChange, width: '5vw'
+        });
+        const addOption = {
+          colId: 'sam_option', editable: false, type: 'text', headerName: '', cellRenderer: SampOption, cellParams: { sField: sF, onChange: this.onChk }, width: '3vw'
+        };
+        if (sOpt.length > 0) colDefExt.push(addOption);
+        const addLink = {
+          colId: 'sam_link', editable: false, type: 'text', headerName: 'Short label', cellRenderer: DropLinkRenderer, cellParams: { sField: sF }, width: '5vw'
+        };
+        colDefExt.push(addLink);
+        const conf = ((sF.value || '').split(';') || []);
+        conf.forEach((c) => {
+          const attr = samOptions.find(m => m.value === c);
+          if (attr) {
+            const ext = {
+              colId: c, editable: false, type: 'text', headerName: attr.label, cellRenderer: DropTextRenderer, cellParams: { attr, sField: sF }
             };
             colDefExt.push(ext);
           }

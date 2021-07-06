@@ -23,7 +23,7 @@ const collateValues = (currentFields, previousFields, previousValues) => {
       const curr = currentFields.find(f => f.id === preKey);
       const prev = previousFields.find(f => f.id === preKey);
       if (curr.type === 'drag_molecule') {
-        if (['text', 'system-defined'].includes(prev.type)) {
+        if (['text', 'system-defined', 'drag_sample'].includes(prev.type)) {
           newSub[preKey] = { value: undefined };
         }
       }
@@ -31,7 +31,7 @@ const collateValues = (currentFields, previousFields, previousValues) => {
         if (prev.type === 'system-defined') {
           newSub[preKey] = newSub[preKey].value;
         }
-        if (prev.type === 'drag_molecule') {
+        if (['drag_molecule', 'drag_sample'].includes(prev.type)) {
           newSub[preKey] = '';
         }
       }
@@ -39,7 +39,7 @@ const collateValues = (currentFields, previousFields, previousValues) => {
         if (prev.type === 'system-defined' && (curr.option_layers !== prev.option_layers)) {
           newSub[preKey].value_system = curr.value_system;
         }
-        if (['text', 'drag_molecule'].includes(prev.type)) {
+        if (['text', 'drag_molecule', 'drag_sample'].includes(prev.type)) {
           newSub[preKey] = { value: '', value_system: curr.value_system };
         }
         newSub[preKey].value =

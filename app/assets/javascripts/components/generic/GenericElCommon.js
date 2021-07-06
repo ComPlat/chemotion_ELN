@@ -119,6 +119,7 @@ class GenPropertiesLayer extends Component {
     const vs = [];
     let op = [];
     let newRow = 0;
+    let rowId = 1;
     (fields || []).forEach((f, i) => {
       if (ShowProperties(f, layers)) {
         const unit = genUnits(f.option_layers)[0] || {};
@@ -127,14 +128,15 @@ class GenPropertiesLayer extends Component {
         newRow = (f.type === 'table') ? newRow += (perRow / (tabCol || 1)) : newRow += 1;
 
         if (newRow > perRow) {
-          vs.push(<Row>{op}</Row>);
+          vs.push(<Row key={rowId}>{op}</Row>);
+          rowId += 1;
           op = [];
           newRow = (f.type === 'table') ? newRow = (perRow / (tabCol || 1)) : newRow = 1;
         }
-
         const eachCol = (
           <Col key={`prop_${key}_${f.priority}_${f.field}`} md={rCol} lg={rCol} className={f.type === 'table' ? '' : klaz}>
             <GenProperties
+              key={`${id}_${layer}_${f.field}_GenPropertiesLayer`}
               layers={layers}
               id={id}
               layer={layer}
@@ -161,7 +163,8 @@ class GenPropertiesLayer extends Component {
         op.push(eachCol);
         if (newRow % perRow === 0) newRow = 0;
         if ((newRow === 0) || (fields.length === (i + 1))) {
-          vs.push(<Row>{op}</Row>);
+          vs.push(<Row key={rowId}>{op}</Row>);
+          rowId += 1;
           op = [];
         }
       }
@@ -332,6 +335,7 @@ const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, fun
       if (showLayer === true) {
         const igs = (
           <GenPropertiesLayer
+            id={id}
             key={layer.key}
             layer={layer}
             onChange={funcChange}

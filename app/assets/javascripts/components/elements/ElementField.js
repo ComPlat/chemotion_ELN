@@ -199,7 +199,7 @@ class ElementField extends Component {
         </Col>
       </FormGroup>)
       : (<div />);
-    const skipRequired = ['Segment', 'Dataset'].includes(this.props.genericType) || !['integer', 'text'].includes(f.type) ? { display: 'none' } : {};
+    const skipRequired = ['Segment', 'Dataset'].includes(genericType) || !['integer', 'text'].includes(f.type) ? { display: 'none' } : {};
     const groupOptions = ['input-group'].includes(f.type) ? (
       <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
         <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
@@ -212,7 +212,7 @@ class ElementField extends Component {
       <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
         <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
         <Col sm={9}>
-          <TableDef layerKey={layerKey} field={f} updSub={this.updSubField} unitsFields={(unitsSystem.fields || [])} />
+          <TableDef genericType={genericType} layerKey={layerKey} field={f} updSub={this.updSubField} unitsFields={(unitsSystem.fields || [])} />
           <InputGroup>
             <InputGroup.Addon>Tables per row</InputGroup.Addon>
             <FormControl componentClass="select" defaultValue={f.cols || 1} onChange={event => this.handleChange(event, f.cols, f.field, layerKey, 'cols', f.cols)} >

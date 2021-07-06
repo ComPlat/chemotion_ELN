@@ -5,7 +5,7 @@ import React from 'react';
 import GenericSubField from '../models/GenericSubField';
 import { AddRowBtn, DelRowBtn } from './GridBtn';
 import TypeSelect from './TypeSelect';
-import SystemDefinedRenderer from './SystemDefinedRenderer';
+import DefinedRenderer from './DefinedRenderer';
 
 export default class TableDef extends React.Component {
   constructor(props) {
@@ -19,9 +19,10 @@ export default class TableDef extends React.Component {
     this.addRow = this.addRow.bind(this);
     this.selType = this.selType.bind(this);
     this.selDefined = this.selDefined.bind(this);
-    this.selMolAttr = this.selMolAttr.bind(this);
+    this.chkAttr = this.chkAttr.bind(this);
     this.refresh = this.refresh.bind(this);
     this.onCellValueChanged = this.onCellValueChanged.bind(this);
+    this.tblType = props.genericType === 'Element' ? ['drag_molecule', 'drag_sample', 'text', 'system-defined'] : ['drag_molecule', 'text', 'system-defined'];
     this.columnDefs = [
       {
         headerName: 'Id',
@@ -45,15 +46,15 @@ export default class TableDef extends React.Component {
         minWidth: 150,
         width: 150,
         cellRendererFramework: TypeSelect,
-        cellRendererParams: { all: ['drag_molecule', 'text', 'system-defined'].map(e => ({ key: e, val: e, lab: e })), selType: this.selType },
+        cellRendererParams: { all: this.tblType.map(e => ({ key: e, val: e, lab: e })), selType: this.selType },
       },
       {
         headerName: 'Default Value',
         field: 'value',
-        editable: (e) => { if (['drag_molecule', 'system-defined'].includes(e.data.type)) return false; return true; },
+        editable: (e) => { if (['drag_molecule', 'drag_sample', 'system-defined'].includes(e.data.type)) return false; return true; },
         minWidth: 350,
-        cellRenderer: 'systemDefinedRenderer',
-        cellRendererParams: { unitConfig: this.state.unitConfig, selDefined: this.selDefined, selMolAttr: this.selMolAttr },
+        cellRenderer: 'definedRenderer',
+        cellRendererParams: { unitConfig: this.state.unitConfig, selDefined: this.selDefined, chkAttr: this.chkAttr },
         onCellValueChanged: this.onCellValueChanged
       },
       {
@@ -84,7 +85,7 @@ export default class TableDef extends React.Component {
       },
     ];
     this.frameworkComponents = {
-      systemDefinedRenderer: SystemDefinedRenderer
+      definedRenderer: DefinedRenderer
     };
   }
 
@@ -143,7 +144,7 @@ export default class TableDef extends React.Component {
     updSub(layerKey, field, () => {});
   }
 
-  selMolAttr(val, chk, node) {
+  chkAttr(val, chk, node) {
     const { data } = node;
     const search = new RegExp(`${val};`, 'gi');
     if (chk) {
@@ -183,9 +184,11 @@ export default class TableDef extends React.Component {
       <div>
         <div style={{ fontSize: '10px' }}>
           <b>Table: </b>
-          define a table with the column type as label(display only), text or system-defined;<br />
-          note: &#39;System-Defined&#39; represents the Unit field which
-          has one input field and one unit converter.
+          define a table with the column type as <b>drag_molecule, drag_sample(only available</b>
+          <b> for generic element), text or system-defined</b>;<br />
+          note: <b>drag_sample</b> stands for Sample and contains at least its image and
+          short label information; <b>system-defined</b> represents the unit field, which
+          has an input field and a unit converter.
         </div>
         <div style={{ width: '100%', height: '100%' }} className="ag-theme-balham">
           <AgGridReact
@@ -207,6 +210,7 @@ export default class TableDef extends React.Component {
 }
 
 TableDef.propTypes = {
+  genericType: PropTypes.string.isRequired,
   layerKey: PropTypes.string.isRequired,
   field: PropTypes.object.isRequired,
   updSub: PropTypes.func.isRequired,

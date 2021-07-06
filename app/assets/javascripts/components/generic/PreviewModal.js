@@ -17,7 +17,7 @@ export default class PreviewModal extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { element, showModal } = this.props;
-    if ((showModal !== prevProps.showModal && showModal) || (element !== prevProps.element)) {
+    if ((showModal !== prevProps.showModal && showModal) || (element.id !== prevProps.element.id)) {
       this.fetchRevisions();
     }
   }
@@ -29,7 +29,6 @@ export default class PreviewModal extends React.Component {
   fetchRevisions() {
     const { fetcher, fetcherFn, element } = this.props;
     fetcher[fetcherFn](element.id).then((result) => {
-      // note: element and segment have no released_at, use created_at instead
       (result.revisions || []).map(r => Object.assign(r, { released_at: r.created_at }));
       this.setState({ revisions: result.revisions });
     });

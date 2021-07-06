@@ -315,8 +315,9 @@ $color-default: #777;
   .target {
     .s-img {
       position: relative;
+      border: 1px solid transparent;
       img {
-        height: 100%;
+        height: 4vw;
         width: 4vw;
       }
       .del_btn {
@@ -324,6 +325,14 @@ $color-default: #777;
         top: 0%;
         left: 0%;
       }
+      .link_btn {
+        position: absolute;
+        bottom: 0%;
+        left: 0%;
+      }
+    }
+    .s-img:hover {
+      border: 1px solid $colo-selected-border;
     }
     .data {
       font-size: unset;
@@ -347,4 +356,15 @@ $color-default: #777;
 
 .generic_grid_img {
   border: $color-readonly solid thin;
+}
+
+.generic_sam_options {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  font-size: x-small;
+  .radio {
+    margin-top: unset;
+    margin-bottom: unset;
+  }
 }
