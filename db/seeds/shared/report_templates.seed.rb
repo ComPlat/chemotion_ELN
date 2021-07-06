@@ -1,10 +1,16 @@
 DIR = Rails.root.join('lib', 'template').to_s
 USER_ID = User.first.id
+TEMPLATE_LIST = [
+  [ "Standard.docx", "Standard", "standard" ],
+  [ "Supporting_information.docx", "Supporting Information", "supporting_information" ],
+  [ "Supporting_information.docx", "Supporting Information - Standard Reaction", "supporting_information_std_rxn" ],
+  [ "Spectra.docx", "Supporting Information - Spectra", "spectrum" ],
+  [ nil, "Supporting Information - Reaction List (.xlsx)", "rxn_list_xlsx" ],
+  [ nil, "Supporting Information - Reaction List (.csv)", "rxn_list_csv" ],
+  [ "rxn_list.html.erb", "Supporting Information - Reaction List (.html)", "rxn_list_html" ]
+]
 
-# def create_collector_folders 
-#     FileUtils.mkdir_p(DIR) unless File.directory?(DIR)
-# end
-def creat_template(file_name, template_name, template_type)
+def create_template(file_name, template_name, template_type)
   if(file_name)
     attachment = Attachment.create!(
       filename: file_name,
@@ -28,15 +34,6 @@ def creat_template(file_name, template_name, template_type)
   end
 end
 
-def create_report_templates
-  creat_template("Standard.docx", "Standard", "standard")
-  creat_template("Supporting_information.docx", "Supporting Information", "supporting_information")
-  creat_template("Supporting_information.docx", "Supporting Information - Standard Reaction", "supporting_information_std_rxn")
-  creat_template("Spectra.docx", "Supporting Information - Spectra", "spectrum")
-  creat_template(nil, "Supporting Information - Reaction List (.xlsx)", "rxn_list_xlsx")
-  creat_template(nil, "Supporting Information - Reaction List (.csv)", "rxn_list_csv")
-  creat_template("rxn_list.html.erb", "Supporting Information - Reaction List (.html)", "rxn_list_html")
+TEMPLATE_LIST.each do |templ|
+  ReportTemplate.find_by(name: templ[1]) || create_template(*templ)
 end
-
-
-create_report_templates
