@@ -1,4 +1,4 @@
-image: "complat/complat-ubuntu-runner:development-5"
+image: "complat/complat-ubuntu-runner:development-5.1"
 
 services:
   - postgres:12-alpine
@@ -75,7 +75,8 @@ building:
     # - ls node_modules
   script:
     - /bin/bash -l -c "source ~/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ~/shared/bundle"
-    - /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install"
+    - /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && npm install yarn -g"
+    - /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm use && yarn install"
     # - /bin/bash -l -c "source ~/.rvm/scripts/rvm && bundle exec rake db:test:prepare"
   after_script:
     # - ls -la ~/shared/bundle/
@@ -116,7 +117,7 @@ testacceptance:
     - .before_scripting
   stage: acceptance
   script:
-    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rspec spec/features"
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rake assets:precompile  && bundle exec rspec spec/features"
   except:
     variables:
     - $CI_COMMIT_MESSAGE =~ /skip[ _-]acceptance/i
