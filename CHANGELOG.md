@@ -1,6 +1,24 @@
 
 # Chemotion_ELN Changelog
 
+## [v1.0.0-alpha]
+> 2021-07-07
+
+* Update
+  * upd to rails 5 - webpack
+
+
+## [v0.10.0]
+> 2021-07-07
+
+* Features
+  *
+
+
+* Fix
+  * 
+  * 
+
 ## [v0.9.1]
 > 2021-06-04
 
