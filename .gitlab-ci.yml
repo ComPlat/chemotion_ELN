@@ -117,7 +117,7 @@ testacceptance:
     - .before_scripting
   stage: acceptance
   script:
-    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rake assets:precompile  && bundle exec rspec spec/features"
+    - /bin/bash -l -c "source ~/.rvm/scripts/rvm && source ~/.nvm/nvm.sh && nvm use  && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rake assets:precompile  && bundle exec rspec spec/features"
   except:
     variables:
     - $CI_COMMIT_MESSAGE =~ /skip[ _-]acceptance/i
