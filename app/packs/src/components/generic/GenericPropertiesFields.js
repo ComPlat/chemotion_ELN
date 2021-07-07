@@ -1,12 +1,15 @@
 import React from 'react';
-import { Checkbox, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, InputGroup, Radio } from 'react-bootstrap';
+import { Checkbox, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, InputGroup, Radio, Modal, ListGroup, ListGroupItem, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import { filter } from 'lodash';
 import Select from 'react-select';
+import Dropzone from 'react-dropzone';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
 import TableRecord from './TableRecord';
+import Utils from '../utils/Functions';
 
+const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const GenTextFormula = (opt) => {
   const { layers } = opt;
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
@@ -65,6 +68,65 @@ const GenPropertiesTextArea = (opt) => {
         required={opt.isRequired}
         placeholder={opt.placeholder}
       />
+    </FormGroup>
+  );
+};
+
+const renderListGroupItem = (opt, attachment) => {
+  const delBtn = (
+    <Button bsSize="xsmall" id={attachment.uid} className="button-right" onClick={() => opt.onChange({ ...opt.value, action: 'd', uid: attachment.uid })}>
+      <i className="fa fa-times" aria-hidden="true" />
+    </Button>
+  );
+  const filename = attachment.aid ? (<a onClick={() => Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.aid}`, name: attachment.filename })} style={{ cursor: 'pointer' }}>{attachment.filename}</a>) : attachment.filename;
+  return (
+    <div className="generic_grid">
+      <div>
+        <div>{delBtn}</div>
+        <div className="generic_grid_row">{filename}</div>
+        <div className="generic_grid_row">
+          <FormGroup bsSize="small">
+            <FormControl
+              type="text"
+              value={attachment.label || ''}
+              onChange={e => opt.onChange({
+                ...opt.value, action: 'l', uid: attachment.uid, val: e
+              })}
+            />
+          </FormGroup>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const GenPropertiesUpload = (opt) => {
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
+  const attachments = (opt.value && opt.value.files) || [];
+  if (opt.isSearchCriteria) return (<div>(This is an upload)</div>);
+
+  return (
+    <FormGroup className="text_generic_properties">
+      {fieldHeader}
+      <FormControl.Static style={{ paddingBottom: '0px' }}>
+        <Dropzone
+          id="dropzone"
+          onDrop={e => opt.onChange({
+            ...opt.value, action: 'f', val: e
+          })}
+          style={{ height: 30, width: '100%', border: '3px dashed lightgray' }}>
+          <div style={{ textAlign: 'center', paddingTop: 6, color: 'gray' }}>
+            Drop File, or Click to Select.
+          </div>
+        </Dropzone>
+      </FormControl.Static>
+      <ListGroup>
+        {attachments.map(attachment => (
+          <ListGroupItem key={attachment.id} className="generic_files">
+            {renderListGroupItem(opt, attachment)}
+          </ListGroupItem>
+          ))}
+      </ListGroup>
     </FormGroup>
   );
 };
@@ -325,5 +387,5 @@ const GenPropertiesDrop = (opt) => {
 export {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
-  GenPropertiesTextArea, GenDummy, GenTextFormula, GenPropertiesTable
+  GenPropertiesTextArea, GenDummy, GenPropertiesUpload, GenTextFormula, GenPropertiesTable
 };

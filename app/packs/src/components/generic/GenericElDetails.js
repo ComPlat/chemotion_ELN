@@ -11,7 +11,7 @@ import UIActions from '../actions/UIActions';
 import UIStore from '../stores/UIStore';
 import ConfirmClose from '../common/ConfirmClose';
 import GenericElDetailsContainers from './GenericElDetailsContainers';
-import { GenProperties, LayersLayout } from './GenericElCommon';
+import { GenProperties, LayersLayout, UploadInputChange } from './GenericElCommon';
 import GenericEl from '../models/GenericEl';
 import Attachment from '../models/Attachment';
 import CopyElementModal from '../common/CopyElementModal';
@@ -149,15 +149,23 @@ export default class GenericElDetails extends Component {
                     } else { exSubs.push({ ...nSub, value: (hitSub.value || '').toString() }); }
                   }
                   if (['number', 'system-defined'].includes(nSub.type)) {
+                    const nvl = (typeof hitSub.value === 'undefined' || hitSub.value == null || hitSub.value.length === 0) ? '' : toNum(hitSub.value);
                     if (nSub.option_layers === hitSub.option_layers) {
-                      exSubs.push({ ...nSub, value: toNum(hitSub.value), value_system: hitSub.value_system });
+                      exSubs.push({ ...nSub, value: nvl, value_system: hitSub.value_system });
                     } else {
-                      exSubs.push({ ...nSub, value: toNum(hitSub.value) });
+                      exSubs.push({ ...nSub, value: nvl });
                     }
                   }
                 });
               }
               newProps.layers[key].fields[idx].sub_fields = exSubs;
+            }
+          }
+          if (newProps.layers[key].fields[idx].type === 'upload') {
+            if (genericEl.properties.layers[key].fields[curIdx].type === newProps.layers[key].fields[idx].type) {
+              newProps.layers[key].fields[idx].value = genericEl.properties.layers[key].fields[curIdx].value;
+            } else {
+              newProps.layers[key].fields[idx].value = {};
             }
           }
           if (newProps.layers[key].fields[idx].type === 'table') {
@@ -231,6 +239,14 @@ export default class GenericElDetails extends Component {
       value = event;
     } else if (type === 'checkbox') {
       value = event.target.checked;
+    } else if (type === 'upload') {
+      const vals = UploadInputChange(properties, event, field, layer);
+      value = vals[0];
+      if (vals[1].length > 0) genericEl.files = (genericEl.files || []).concat(vals[1]);
+      if (vals.length > 2) {
+        const fileIdx = findIndex((genericEl.files || []), o => o.uid === event.uid);
+        if (fileIdx >= 0 && genericEl.files && genericEl.files.length > 0) genericEl.files.splice(fileIdx, 1);
+      }
     } else if (type === 'formula-field') {
       if (event.target) {
         ({ value } = event.target);
@@ -312,13 +328,16 @@ export default class GenericElDetails extends Component {
         <Button bsSize="xsmall" className="generic_btn_default" onClick={() => this.setState({ showHistory: true })}><i className="fa fa-book" aria-hidden="true" />&nbsp;History</Button>
       </OverlayTrigger>
     );
+    const reloadBtn = (genericEl && (typeof genericEl.klass_uuid === 'undefined' || genericEl.klass_uuid === genericEl.element_klass.uuid || genericEl.is_new)) ? null : (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>
+        <Button bsSize="xsmall" bsStyle="primary" onClick={() => this.handleReload()}><i className="fa fa-refresh" aria-hidden="true" />&nbsp;Reload</Button>
+      </OverlayTrigger>
+    );
     return (
       <div>
         <div>
           <ButtonToolbar style={{ margin: '5px 0px' }}>
-            <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>
-              <Button bsSize="xsmall" bsStyle="primary" onClick={() => this.handleReload()}><i className="fa fa-refresh" aria-hidden="true" />&nbsp;Reload</Button>
-            </OverlayTrigger>
+            {reloadBtn}
             {hisBtn}
           </ButtonToolbar>
         </div>

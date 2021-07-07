@@ -8,7 +8,8 @@ export default class Segment extends Element {
       properties: template,
       select_options: template.select_options || {},
       segment_klass: klass,
-      properties_release: []
+      properties_release: [],
+      files: []
     });
   }
 
@@ -18,6 +19,7 @@ export default class Segment extends Element {
       segment_klass: this.segment_klass,
       segment_klass_id: this.segment_klass_id,
       properties: this.properties,
+      files: this.files
     });
   }
 

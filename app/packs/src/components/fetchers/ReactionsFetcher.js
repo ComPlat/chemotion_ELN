@@ -8,6 +8,7 @@ import UIStore from '../stores/UIStore';
 import NotificationActions from '../actions/NotificationActions';
 import AttachmentFetcher from './AttachmentFetcher';
 import Literature from '../models/Literature';
+import GenericElsFetcher from './GenericElsFetcher';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -52,17 +53,16 @@ export default class ReactionsFetcher {
       credentials: 'same-origin',
       method,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(reaction.serialize())
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return new Reaction(json.reaction);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then(response => response.json())
+      .then(json => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
+        .then(() => this.fetchById(json.reaction.id))).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
 
     if (allFiles.length > 0) {
       return AttachmentFetcher.uploadFiles(allFiles)().then(() => promise());

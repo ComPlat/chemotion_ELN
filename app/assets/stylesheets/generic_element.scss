@@ -368,3 +368,14 @@ $color-default: #777;
     margin-bottom: unset;
   }
 }
+
+.generic_files {
+  padding: 0px 5px !important;
+  > div > div > div {
+    text-align: left;
+    align-self: center;
+    .form-group {
+      margin-bottom: 0px;
+    }
+  }
+}
