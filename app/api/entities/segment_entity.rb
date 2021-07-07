@@ -4,7 +4,7 @@
 module Entities
   # Segment entity
   class SegmentEntity < Grape::Entity
-    expose :id, :segment_klass_id, :element_type, :element_id, :properties
+    expose :id, :segment_klass_id, :element_type, :element_id, :properties, :uuid, :klass_uuid
 
     def properties
       return unless object.respond_to? :properties

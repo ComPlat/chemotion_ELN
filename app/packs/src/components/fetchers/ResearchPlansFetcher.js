@@ -3,6 +3,7 @@ import _ from 'lodash';
 import ResearchPlan from '../models/ResearchPlan';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
+import GenericElsFetcher from './GenericElsFetcher';
 
 import { getFileName, downloadBlob } from '../utils/FetcherHelper'
 
@@ -32,7 +33,6 @@ export default class ResearchPlansFetcher {
   }
 
   static create(researchPlan) {
-    const files = (researchPlan.attachments || []).filter(a => a.is_new && !a.is_deleted);
     const promise = fetch('/api/v1/research_plans/', {
       credentials: 'same-origin',
       method: 'post',
@@ -41,15 +41,8 @@ export default class ResearchPlansFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(researchPlan.serialize())
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      if (files.length <= 0) {
-        return new ResearchPlan(json.research_plan);
-      }
-      return AttachmentFetcher.updateAttachables(files, 'ResearchPlan', json.research_plan.id, [])()
-        .then(() => new ResearchPlan(json.research_plan));
-    }).catch((errorMessage) => {
+    }).then(response => response.json()).then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
+      .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
       console.log(errorMessage);
     });
     return promise;
@@ -57,8 +50,6 @@ export default class ResearchPlansFetcher {
 
   static update(researchPlan) {
     const containerFiles = AttachmentFetcher.getFileListfrom(researchPlan.container);
-    const newFiles = (researchPlan.attachments || []).filter(a => a.is_new && !a.is_deleted);
-    const delFiles = (researchPlan.attachments || []).filter(a => !a.is_new && a.is_deleted);
     const promise = () => fetch(`/api/v1/research_plans/${researchPlan.id}`, {
       credentials: 'same-origin',
       method: 'put',
@@ -67,20 +58,8 @@ export default class ResearchPlansFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(researchPlan.serialize())
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      if (newFiles.length <= 0 && delFiles.length <= 0) {
-        return new ResearchPlan(json.research_plan);
-      }
-      return AttachmentFetcher.updateAttachables(newFiles, 'ResearchPlan', json.research_plan.id, delFiles)()
-        .then(() => {
-          const result = _.differenceBy(json.research_plan.attachments, delFiles, 'id');
-          const newResearchPlan = new ResearchPlan(json.research_plan);
-          newResearchPlan.attachments = _.concat(result, newFiles);
-          return new ResearchPlan(newResearchPlan);
-        });
-    }).catch((errorMessage) => {
+    }).then(response => response.json()).then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
+      .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
       console.log(errorMessage);
     });
     if (containerFiles.length > 0) {

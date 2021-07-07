@@ -35,8 +35,7 @@ GIT
 
 GIT
   remote: https://github.com/complat/ketcher-rails.git
-  revision: 1dbb0514f2edc600ecf5f3b963a3116155a7c577
-  ref: 1dbb0514f2edc600ecf5f3b963a3116155a7c577
+  revision: e9562bc9770bdacbb6c4efa036aa054147c9b213
   specs:
     ketcherails (0.1.12)
       active_model_serializers (< 0.10.0)
@@ -297,6 +296,7 @@ GEM
     flamegraph (0.9.5)
     font-awesome-rails (4.7.0.5)
       railties (>= 3.2, < 6.1)
+    foreman (0.86.0)
     fx (0.3.1)
       activerecord (>= 4.0.0)
       railties (>= 4.0.0)
@@ -715,6 +715,7 @@ DEPENDENCIES
   fast_stack
   flamegraph
   font-awesome-rails
+  foreman (~> 0.86.0)
   fun_sftp!
   fx
   gitlab-styles
@@ -735,7 +736,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  ketcherails (~> 0.1.11)!
+  ketcherails!
   launchy (~> 2.4.3)
   listen
   memory_profiler

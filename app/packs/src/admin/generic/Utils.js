@@ -32,7 +32,7 @@ const inputEventVal = (event, type) => {
     }
     return event;
   }
-  return event.target.value;
+  return event.target && event.target.value;
 };
 
 const absOlsTermId = val => (val || '').split('|')[0].trim();

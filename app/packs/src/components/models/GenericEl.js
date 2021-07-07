@@ -20,6 +20,7 @@ export default class GenericEl extends Element {
       can_copy: false,
       properties_release: [],
       attachments: [],
+      files: [],
       segments: []
     });
   }
@@ -34,6 +35,7 @@ export default class GenericEl extends Element {
       properties: this.properties,
       container: this.container,
       attachments: this.attachments,
+      files: this.files,
       segments: this.segments.map(s => s.serialize())
     });
   }

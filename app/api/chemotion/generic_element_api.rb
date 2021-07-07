@@ -7,6 +7,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers SampleAssociationHelpers
+    helpers GenericHelpers
 
     resource :generic_elements do
       namespace :klass do
@@ -70,6 +71,34 @@ module Chemotion
           klass = Segment.find(params[:id])
           list = klass.segments_revisions unless klass.nil?
           present list&.sort_by(&:created_at).reverse, with: Entities::SegmentRevisionEntity, root: 'revisions'
+        end
+      end
+
+      namespace :upload_generics_files do
+        desc 'upload generic files'
+        params do
+          requires :att_id, type: Integer, desc: 'Element Id'
+          requires :att_type, type: String, desc: 'Element Type'
+        end
+
+        after_validation do
+          el = params[:att_type].constantize.find_by(id: params[:att_id])
+          error!('401 Unauthorized', 401) if el.nil?
+
+          policy_updatable = ElementPolicy.new(current_user, el).update?
+          error!('401 Unauthorized', 401) unless policy_updatable
+        end
+        post do
+          attach_ary = []
+          att_ary = create_uploads('Element', params[:att_id], params[:elfiles], params[:elInfo], current_user.id) if params[:elfiles].present? && params[:elInfo].present?
+          (attach_ary << att_ary).flatten! unless att_ary&.empty?
+          att_ary = create_uploads('Segment', params[:att_id], params[:sefiles], params[:seInfo], current_user.id) if params[:sefiles].present? && params[:seInfo].present?
+          (attach_ary << att_ary).flatten! unless att_ary&.empty?
+          att_ary = create_attachments(params[:attfiles], params[:delfiles], params[:att_type], params[:att_id], current_user.id) if params[:attfiles].present? || params[:delfiles].present?
+          (attach_ary << att_ary).flatten! unless att_ary&.empty?
+          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(attach_ary) unless attach_ary.empty?
+          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) unless attach_ary.empty?
+          true
         end
       end
 

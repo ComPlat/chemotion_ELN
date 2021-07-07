@@ -4,13 +4,47 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Col, PanelGroup, Row } from 'react-bootstrap';
-import { sortBy } from 'lodash';
+import { sortBy, findIndex } from 'lodash';
+import uuid from 'uuid';
 import { genUnits, unitConversion } from '../../admin/generic/Utils';
+import Attachment from '../models/Attachment';
 import {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
-  GenPropertiesTextArea, GenDummy, GenTextFormula, GenPropertiesTable
+  GenPropertiesTextArea, GenPropertiesUpload, GenDummy, GenTextFormula, GenPropertiesTable
 } from './GenericPropertiesFields';
+
+const UploadInputChange = (properties, event, field, layer) => {
+  const files = [];
+  const fieldObj = properties.layers[`${layer}`].fields.find(e => e.field === field) || {};
+  const value = fieldObj.value || {};
+  switch (event.action) {
+    case 'l': {
+      const valIdx = findIndex((value.files || []), o => o.uid === event.uid);
+      const label = event && event.val && event.val.target && event.val.target.value;
+      if (value.files[valIdx] && label) value.files[valIdx].label = label;
+      break;
+    }
+    case 'f': {
+      (event.val || []).forEach((file) => {
+        const uid = uuid.v4();
+        if (typeof value.files === 'undefined' || value.files === null) value.files = [];
+        value.files.push({ uid, filename: file.name });
+        files.push({ uid, filename: file.name, file: Attachment.fromFile(file) });
+      });
+      break;
+    }
+    case 'd': {
+      const valIdx = findIndex((value.files || []), o => o.uid === event.uid);
+      if (valIdx >= 0 && value.files && value.files.length > 0) value.files.splice(valIdx, 1);
+      return [value, files, event.uid];
+    }
+    default:
+      console.log(event);
+  }
+  return [value, files];
+};
+
 
 const ShowProperties = (fObj, layers) => {
   let showField = true;
@@ -58,6 +92,8 @@ const GenProperties = (opt) => {
       return GenPropertiesInputGroup(fieldProps);
     case 'textarea':
       return GenPropertiesTextArea(fieldProps);
+    case 'upload':
+      return GenPropertiesUpload(fieldProps);
     case 'dummy':
       return GenDummy();
     case 'table':
@@ -167,9 +203,12 @@ class GenPropertiesLayer extends Component {
           rowId += 1;
           op = [];
         }
+      } else if (fields.length === (i + 1)) {
+        vs.push(<Row key={rowId}>{op}</Row>);
+        rowId += 1;
+        op = [];
       }
     });
-
     return vs;
   }
 
@@ -356,6 +395,7 @@ const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, fun
 export {
   LayersLayout,
   GenProperties,
+  UploadInputChange,
   GenPropertiesLayer,
   GenPropertiesLayerSearchCriteria,
 };

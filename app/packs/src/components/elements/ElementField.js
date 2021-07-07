@@ -25,6 +25,7 @@ const ElementFieldTypes = [
   { value: 'input-group', name: 'input-group', label: 'Input Group' },
   { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
   { value: 'table', name: 'table', label: 'Table' },
+  { value: 'upload', name: 'upload', label: 'Upload' },
 ];
 
 const SegmentFieldTypes = [
@@ -32,6 +33,7 @@ const SegmentFieldTypes = [
   { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
   { value: 'drag_molecule', name: 'drag_molecule', label: 'Drag Molecule' },
   { value: 'table', name: 'table', label: 'Table' },
+  { value: 'upload', name: 'upload', label: 'Upload' },
 ];
 
 class ElementField extends Component {

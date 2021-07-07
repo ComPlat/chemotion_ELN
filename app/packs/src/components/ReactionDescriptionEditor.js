@@ -56,9 +56,6 @@ export default class ReactionDescriptionEditor extends React.Component {
   }
 
   componentWillReceiveProps(newProps) {
-    const { template } = newProps;
-    const namesToFetch = Object.values(template).flat();
-    this.fetchPredefinedTemplates(namesToFetch);
   }
 
   componentWillUnmount() {
