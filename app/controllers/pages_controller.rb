@@ -11,7 +11,9 @@ class PagesController < ApplicationController
 
   def docx; end
 
-  def welcome; end
+  def welcome; 
+    flash.clear  
+  end
 
   def editor; end
 
@@ -47,7 +49,7 @@ class PagesController < ApplicationController
   end
 
   def affiliations
-
+    #flash.discard    
   end
 
   def create_affiliation
