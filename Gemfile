@@ -85,6 +85,7 @@ gem 'sablon', git: 'https://github.com/ComPlat/sablon'
 gem 'sassc-rails', '~> 2.1.2'
 gem 'scenic'
 gem 'schmooze'
+gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master'
 gem 'swot', git: 'https://github.com/leereilly/swot.git', branch: 'master', ref: 'bfe392b4cd52f62fbc1d83156020275719783dd1'
 gem 'sys-filesystem'
 
@@ -120,7 +121,7 @@ group :development do
   gem 'rubocop-rspec', require: false
 
   gem 'slackistrano'
-  gem 'stackprof'     # For Ruby MRI 2.1+
+  gem 'stackprof' # For Ruby MRI 2.1+
 
   gem 'web-console', '~> 2.0'
 end

@@ -1,6 +1,9 @@
 require 'barby'
 require 'barby/barcode/code_128'
 require 'barby/barcode/qr_code'
+require 'barby/barcode/data_matrix'
+require 'rubygems'
+require 'semacode'
 require 'barby/outputter/svg_outputter'
 require "prawn/measurement_extensions"
 
@@ -18,6 +21,8 @@ class CodePdf < Prawn::Document
       qr_code(element, size)
       bar_code_label(element, size, type)
       bar_code(element, size)
+      data_matrix_label(element, size, type)
+      data_matrix(element, size)
       stroke_bounds
     end
   end
@@ -27,11 +32,11 @@ class CodePdf < Prawn::Document
     def page_size(size)
       case size
       when "small"
-        [25.4.mm, 28.mm]
+        [25.4.mm, 37.mm]
       when "big"
-        [36.mm, 32.mm]
+        [36.mm, 50.mm]
       else
-        [25.4.mm, 28.mm]
+        [25.4.mm, 37.mm]
       end
     end
 
@@ -110,6 +115,45 @@ class CodePdf < Prawn::Document
     def bar_code(element, size)
       outputter = outputter(Barby::Code128C.new(element.code_log.value_sm))
       svg outputter.to_svg(bar_code_options(size)), bar_code_options(size)
+    end
+
+    # data matrix and options
+    def data_matrix_label_options(size)
+      case size
+      when 'small'
+        {
+          text: { at: [6.mm + 8, 26.mm], size: 5, width: 20.mm, height: 5.4.mm }
+        }
+      when 'big'
+        {
+          text: { at: [10.mm + 8, 32.mm], size: 5, width: 20.mm, height: 5.4.mm }
+        }
+      else
+        {
+          text: { at: [6.mm + 8, 26.mm], size: 5, width: 20.mm, height: 5.4.mm }
+        }
+      end
+    end
+
+    def data_matrix_label(element, size, type)
+      text = "#{type.capitalize} ID: #{element.id}\n#{element.name}"
+      text_box text, data_matrix_label_options(size)[:text]
+    end
+
+    def data_matrix_options(size)
+      case size
+      when "small"
+        { height: 6.mm, width: 6.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 26.mm] }
+      when "big"
+        { height: 10.mm, width: 10.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 32.mm] }
+      else
+        { height: 6.mm, width: 6.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 26.mm] }
+      end
+    end
+
+    def data_matrix(element, size)
+      outputter = outputter(Barby::DataMatrix.new(element.code_log.value))
+      svg outputter.to_svg(data_matrix_options(size)), data_matrix_options(size)
     end
 
     def outputter(code)

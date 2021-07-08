@@ -4,7 +4,7 @@ require 'rails_helper'
 
 describe 'Sample management' do
   let!(:user)    { create(:person) }
-  let(:solvent) { { label: "MeOD-d4", smiles: nil, ratio: "100" } }
+  let(:solvent) { { label: 'MeOD-d4', smiles: nil, ratio: '100' } }
   let(:sample) { create(:sample, creator: user, solvent: [solvent], collections: user.collections) }
 
   before do

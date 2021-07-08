@@ -95,6 +95,14 @@ GIT
       nokogiri (~> 1.8, >= 1.8.2)
       rubyzip (~> 1.2, >= 1.2.1)
 
+GIT
+  remote: https://github.com/toretore/semacode.git
+  revision: 4e31e0b79a1a63c98f2560359c1c6a527b00bacc
+  branch: master
+  specs:
+    semacode (0.7.5)
+      rake (>= 0.7.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -763,6 +771,7 @@ DEPENDENCIES
   sassc-rails (~> 2.1.2)
   scenic
   schmooze
+  semacode!
   slackistrano
   spring
   stackprof
