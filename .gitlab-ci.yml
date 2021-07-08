@@ -72,8 +72,8 @@ building:
     - touch config/datacollectors.yml
     - touch config/klasses.json
   script:
-    - /bin/bash -l -c "bundle list"
     - /bin/bash -l -c "bundle install"
+    - /bin/bash -l -c "bundle list"
     - /bin/bash -l -c "yarn install"
     - /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:migrate  db:test:prepare"
 
