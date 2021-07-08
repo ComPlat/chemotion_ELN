@@ -9,7 +9,9 @@ set -euo pipefail
 ############################################
 ############# VARIABLES ####################
 
-REPO='https://github.com/ComPlat/chemotion_ELN.git'
+source "./versions.env"
+
+REPO=${CHEMOTION_REPO}
 BRANCH=development
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
@@ -17,15 +19,6 @@ TMP_REPO_DIR="/tmp/${BRANCH}.git"
 PROD=chemotion
 ## PROD HOME set in part 3
 # PROD_HOME=$(eval echo "~$PROD")
-
-## RUBY
-RUBY_VERSION=2.6.6 # 2.5 recommended for bionic
-BUNDLER_VERSION=1.17.3
-
-## NODEJS
-NVM_VERSION='v0.38.0'
-NODE_VERSION=12.22.1
-NPM_VERSION=7.11.1
 
 APP_NAME=chemotion_ELN # used for naming directories and files
 
@@ -46,9 +39,6 @@ DB_HOST=localhost
 DB_PORT=5432
 
 NCPU=$(grep -c ^processor /proc/cpuinfo)
-
-## Pandoc version https://github.com/jgm/pandoc/releases
-PANDOC_VERSION=2.10.1
 
 ############################################
 ######### INSTALLATION PARTS TO RUN  #######

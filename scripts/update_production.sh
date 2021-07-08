@@ -7,23 +7,16 @@ set -euo pipefail
 ############################################
 ############# VARIABLES ####################
 
+source "./versions.env"
+
 ## CHEMOTION ELN GIT REPOSITORY
-REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH='v0.9.1'
+REPO=${CHEMOTION_REPO}
+BRANCH=${CHEMOTION_LATEST_VERSION}
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
 PROD=production
 PROD_HOME=$(eval echo "~$PROD")
-
-## RUBY
-RUBY_VERSION=2.6.6
-BUNDLER_VERSION=1.17.3
-
-## NODEJS
-NVM_VERSION='v0.38.0'
-NODE_VERSION=12.22.1
-NPM_VERSION=7.11.1
 
 ## default naming of directories and files
 APP_NAME=chemotion_ELN 
@@ -43,9 +36,6 @@ NGINX_CONF=${APP_NAME,,}_prod_no_ssl
 NGINX_CONF=chemotion_prod_no_ssl
 
 NCPU=$(grep -c ^processor /proc/cpuinfo)
-
-## Pandoc version https://github.com/jgm/pandoc/releases
-PANDOC_VERSION=2.10.1
 
 ############################################
 ######### UPDATE PARTS TO RUN ##############
