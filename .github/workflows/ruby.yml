@@ -19,6 +19,10 @@ jobs:
     # container:
     #   image: azul/zulu-openjdk-alpine:8-jre
     steps:
+      - uses: shrink/actions-docker-extract@v1
+        with:
+          image: complat/complat-ubuntu-runner:0.10.20
+          path: /app/.
       - name: docker
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
@@ -26,7 +30,7 @@ jobs:
             # docker exec -i $(docker run -it -d maipy/github_actions:0) bash
             #cd ${{ github.workspace }}
             whoami
-            rvm list
+            #rvm list
             pwd
             ls -la
             #java -version
