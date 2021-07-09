@@ -12,7 +12,7 @@ jobs:
     container: 
       image: maipy/github_actions:0
       volumes:
-        - .:/${{ github.workspace }}
+        - ${PWD}/:${{ github.workspace }}
     # container:
     #   image: azul/zulu-openjdk-alpine:8-jre
     steps:
