@@ -17,6 +17,7 @@ jobs:
         run: |
             pwd
             cd /github/home
+            pwd
             # find -name "Gemfile"
-            ls
+            ls -la
         #working-directory: /github/home
