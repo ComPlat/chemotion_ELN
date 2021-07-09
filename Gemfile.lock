@@ -35,8 +35,7 @@ GIT
 
 GIT
   remote: https://github.com/complat/ketcher-rails.git
-  revision: 1dbb0514f2edc600ecf5f3b963a3116155a7c577
-  ref: 1dbb0514f2edc600ecf5f3b963a3116155a7c577
+  revision: e9562bc9770bdacbb6c4efa036aa054147c9b213
   specs:
     ketcherails (0.1.12)
       active_model_serializers (< 0.10.0)
@@ -738,7 +737,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  ketcherails (~> 0.1.11)!
+  ketcherails!
   launchy (~> 2.4.3)
   listen
   memory_profiler
