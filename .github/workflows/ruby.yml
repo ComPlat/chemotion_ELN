@@ -24,10 +24,10 @@ jobs:
         run: |
             # docker pull maipy/github_actions:0
             # docker exec -i $(docker run -it -d maipy/github_actions:0) bash
-            cd ${{ github.workspace }}
+            #cd ${{ github.workspace }}
+            whoami
             pwd
             ls -la
-            whoami
             #java -version
             # cd /github/home
             # pwd
