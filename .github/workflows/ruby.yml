@@ -22,7 +22,7 @@ jobs:
       - uses: shrink/actions-docker-extract@v1
         with:
           image: complat/complat-ubuntu-runner:0.10.20
-          path: /app/.
+          path: /home/gitlab-runner
       - name: docker
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
