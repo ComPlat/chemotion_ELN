@@ -19,4 +19,8 @@ jobs:
             pwd
             # find -name "Gemfile"
             ls -la
+            echo "DOCKER IMAGES"
+            docker images
+            echo "DOKCER CONTAINERS"
+            docker ps -a
         #working-directory: /github/home
