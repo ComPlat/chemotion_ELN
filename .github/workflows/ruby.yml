@@ -8,18 +8,20 @@ on:
 
 jobs:
   docker:
-    container: 
-      image: maipy/github_actions:0
+    # container: 
+    #   image: maipy/github_actions:0
     runs-on: ubuntu-latest
     steps:
       - name: docker
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
+            docker pull maipy/github_actions:0
+            docker exec -i $(docker run -it -d maipy/github_actions:0) bash
             pwd
             ls -la
-            cd /github/home
-            pwd
-            ls -la
+            # cd /github/home
+            # pwd
+            # ls -la
             # echo "DOCKER IMAGES"
             # docker images
             # echo "DOCKER CONTAINERS"
