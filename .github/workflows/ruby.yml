@@ -21,6 +21,7 @@ jobs:
             # docker exec -i $(docker run -it -d maipy/github_actions:0) bash
             pwd
             ls -la
+            java -version
             # cd /github/home
             # pwd
             # ls -la
