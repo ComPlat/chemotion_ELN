@@ -8,12 +8,11 @@ on:
 
 jobs:
   docker:
-    container: 
-      image: maipy/github_actions:0
+    container: maipy/github_actions:0
     runs-on: ubuntu-latest
     steps:
       - name: docker
-       # uses: docker://complat/complat-ubuntu-runner:0.10.20
+      # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
             pwd
             cd /github/home
