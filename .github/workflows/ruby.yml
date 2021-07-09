@@ -1,4 +1,4 @@
-name: ruby
+name: ELN GitHub Actions 3
 
 on:
   push:
@@ -9,11 +9,12 @@ on:
 jobs:
   docker:
     container: 
-      image: complat/complat-ubuntu-runner:0.10.20
+      image: complat/complat-ubuntu-runner:0.12.20
     runs-on: ubuntu-latest
     steps:
       - name: docker
        # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
+            pwd
             ls
-        working-directory: /github/home
+        #working-directory: /github/home
