@@ -9,8 +9,8 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
-    container: 
-      image: maipy/github_actions:0
+    # container: 
+    #   image: maipy/github_actions:0
     # container:
     #   image: azul/zulu-openjdk-alpine:8-jre
     steps:
