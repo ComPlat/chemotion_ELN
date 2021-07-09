@@ -9,8 +9,10 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
-    # container: 
-    #   image: maipy/github_actions:0
+    container: 
+      image: maipy/github_actions:0
+      volumes:
+        - .:/${{ github.workspace }}
     # container:
     #   image: azul/zulu-openjdk-alpine:8-jre
     steps:
@@ -19,6 +21,7 @@ jobs:
         run: |
             # docker pull maipy/github_actions:0
             # docker exec -i $(docker run -it -d maipy/github_actions:0) bash
+            cd ${{ github.workspace }}
             pwd
             ls -la
             whoami
