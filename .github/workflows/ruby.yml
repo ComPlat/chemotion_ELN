@@ -11,12 +11,14 @@ jobs:
     # container: 
     #   image: maipy/github_actions:0
     runs-on: ubuntu-latest
+    container:
+      image: azul/zulu-openjdk-alpine:8-jre
     steps:
       - name: docker
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
-            docker pull maipy/github_actions:0
-            docker exec -i $(docker run -it -d maipy/github_actions:0) bash
+            # docker pull maipy/github_actions:0
+            # docker exec -i $(docker run -it -d maipy/github_actions:0) bash
             pwd
             ls -la
             # cd /github/home
