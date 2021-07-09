@@ -10,9 +10,10 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     container: 
-      image: maipy/github_actions:0
+      image: complat/complat-ubuntu-runner:0.10.20
+      # image: maipy/github_actions:0
       volumes:
-        - ${PWD}/:${{ github.workspace }}
+        - /home/gitlab-runner:${{ github.workspace }}
     # container:
     #   image: azul/zulu-openjdk-alpine:8-jre
     steps:
