@@ -8,19 +8,20 @@ on:
 
 jobs:
   docker:
-    #container: maipy/github_actions:0
+    container: 
+      image: maipy/github_actions:0
     runs-on: ubuntu-latest
     steps:
       - name: docker
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
             pwd
-            #cd /github/home
-            #pwd
-            # find -name "Gemfile"
             ls -la
-            echo "DOCKER IMAGES"
-            docker images
-            echo "DOCKER CONTAINERS"
-            docker ps -a
+            cd /github/home
+            pwd
+            ls -la
+            # echo "DOCKER IMAGES"
+            # docker images
+            # echo "DOCKER CONTAINERS"
+            # docker ps -a
         #working-directory: /github/home
