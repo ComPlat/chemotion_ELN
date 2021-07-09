@@ -11,9 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     container: 
       image: complat/complat-ubuntu-runner:0.10.20
+      options: -v /home/gitlab-runner
       # image: maipy/github_actions:0
-      volumes:
-        - /home/gitlab-runner
+      # volumes:
+      #   - /home/gitlab-runner
         # - ${{ github.workspace }}:/home/gitlab-runner
     # container:
     #   image: azul/zulu-openjdk-alpine:8-jre
