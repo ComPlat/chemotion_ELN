@@ -21,8 +21,8 @@ jobs:
         with:
           # name: test
           # path:  gitlab-runner/Gemfile
-          name: docker_files
-          path: /home/gitlab-runner/shared/bundle/
+          name: bundle
+          path: gitlab-runner/shared/bundle/
 
   docker_container:
     runs-on: ubuntu-latest
@@ -40,7 +40,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v2
         with:
-          name: docker_files
+          name: bundle
           path: .
       - name: docker
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
