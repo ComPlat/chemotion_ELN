@@ -22,7 +22,7 @@ jobs:
           # name: test
           # path:  gitlab-runner/Gemfile
           name: docker_files
-          path: ./shared/bundle/
+          path: /home/gitlab-runner/shared/bundle/
 
   docker_container:
     runs-on: ubuntu-latest
