@@ -13,7 +13,7 @@ jobs:
       image: complat/complat-ubuntu-runner:0.10.20
       # image: maipy/github_actions:0
       volumes:
-        - .:/home/gitlab-runner
+        - /home/gitlab-runner
         # - ${{ github.workspace }}:/home/gitlab-runner
     # container:
     #   image: azul/zulu-openjdk-alpine:8-jre
