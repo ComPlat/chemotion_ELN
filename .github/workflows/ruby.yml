@@ -28,7 +28,7 @@ jobs:
             whoami
             pwd
             echo "HOME"
-            $HOME
+            #$HOME
             cd ~
             pwd
             ls -la
