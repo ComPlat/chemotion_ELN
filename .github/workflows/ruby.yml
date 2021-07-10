@@ -7,26 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  docker_cp:
-    runs-on: ubuntu-latest
-    steps:
-      - name: docker cp
-        run: |
-            docker pull complat/complat-ubuntu-runner:0.10.20
-            docker cp $(docker run -it -d complat/complat-ubuntu-runner:0.10.20):/home/gitlab-runner .
-            pwd
-            ls
-      - name: Upload Docker artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          # name: test
-          # path:  gitlab-runner/Gemfile
-          name: bundle
-          path: gitlab-runner/shared/bundle/
 
   docker_container:
     runs-on: ubuntu-latest
-    needs: docker_cp
     container: 
       image: complat/complat-ubuntu-runner:0.10.20
       #options: -v "/home/gitlab-runner":"/__w/chemotion_ELN/chemotion_ELN"
@@ -37,11 +20,6 @@ jobs:
     # container:
     #   image: azul/zulu-openjdk-alpine:8-jre
     steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: bundle
-          path: .
       - name: docker
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
@@ -50,6 +28,8 @@ jobs:
             #cd ${{ github.workspace }}
             whoami
             pwd
+            wget --no-verbose -O gitlab-runner https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
+            tar -xf gitlab-runner
             ls -la
             #java -version
             # cd /github/home
