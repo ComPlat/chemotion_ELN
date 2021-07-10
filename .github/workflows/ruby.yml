@@ -27,11 +27,11 @@ jobs:
             #cd ${{ github.workspace }}
             whoami
             pwd
-            echo "HOME"
-            #$HOME
-            cd ~
-            pwd
-            ls -la
+            # echo "HOME"
+            # #$HOME
+            # cd ~
+            # pwd
+            # ls -la
             # java -version
             # which java
             # cd /usr/lib/jvm/zulu16-ca-amd64
