@@ -11,7 +11,7 @@ jobs:
   docker_container:
     runs-on: ubuntu-latest
     container: 
-      container: complat/complat-ubuntu-runner:0.10.20
+      image: complat/complat-ubuntu-runner:0.10.20
       options: --mount type=bind,source="./",target=/github/workspace
       #options: -v "/home/gitlab-runner":"/__w/chemotion_ELN/chemotion_ELN"
       # image: maipy/github_actions:0
