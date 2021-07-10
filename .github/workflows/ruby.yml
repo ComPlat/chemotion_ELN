@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     container: 
       image: complat/complat-ubuntu-runner:0.10.20
-      options: --mount type=bind,source="./",target=/github/workspace
+      options: --mount type=bind,source=/home/gitlab-runner,target=/github/workspace
       #options: -v "/home/gitlab-runner":"/__w/chemotion_ELN/chemotion_ELN"
       # image: maipy/github_actions:0
       # volumes:
