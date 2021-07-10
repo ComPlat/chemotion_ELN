@@ -37,8 +37,9 @@ jobs:
             # cd /usr/lib/jvm/zulu16-ca-amd64
             # ls -la
             sudo wget --no-verbose -O gitlab-runner-1 https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
+            # TODO
             sudo tar -xf gitlab-runner-1
-            sudo mv -r gitlab-runner/* ~
+            sudo mv /gitlab-runner/* ~
             echo "FULL HOME"
             cd ~
             pwd
