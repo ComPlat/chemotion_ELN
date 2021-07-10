@@ -12,14 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     container: 
       image: complat/complat-ubuntu-runner:0.10.20
-      options: --mount type=bind,source=/,target=/__w/chemotion_ELN/chemotion_ELN
+      #options: --mount type=bind,source=/,target=/__w/chemotion_ELN/chemotion_ELN
       #options: -v "/home/gitlab-runner":"/__w/chemotion_ELN/chemotion_ELN"
       # image: maipy/github_actions:0
       # volumes:
       #   - /home/gitlab-runner
         # - ${{ github.workspace }}:/home/gitlab-runner
     # container:
-    #   image: azul/zulu-openjdk-alpine:8-jre
+      image: azul/zulu-openjdk-alpine:8-jre
     steps:
       - name: docker
         shell: bash
@@ -28,17 +28,19 @@ jobs:
             #cd ${{ github.workspace }}
             whoami
             pwd
+            java -version
+            which java
+            cd /usr/lib/jvm/zulu16-ca-amd64
             # ls -la
             # sudo wget --no-verbose -O gitlab-runner-1 https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
             # sudo tar -xf gitlab-runner-1
             #sudo ls -la
-            echo "HOME"
-            cd home
-            pwd
-            ls -la
-            # cd gitlab-runner
+            # echo "HOME"
+            # cd home
+            # pwd
             # ls -la
-            #java -version
+            # cd gitlab-runner
+            # ls -la            
             # cd /github/home
             # pwd
             # ls -la
