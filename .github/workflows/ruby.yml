@@ -29,9 +29,9 @@ jobs:
             #cd ${{ github.workspace }}
             whoami
             pwd
-            sudo wget --no-verbose -O gitlab-runner https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
-            tar -xf gitlab-runner
-            ls -la
+            # sudo wget --no-verbose -O gitlab-runner https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
+            # tar -xf gitlab-runner
+            sudo ls -la
             #java -version
             # cd /github/home
             # pwd
