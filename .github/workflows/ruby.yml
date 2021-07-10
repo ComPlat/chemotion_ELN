@@ -38,8 +38,8 @@ jobs:
             # ls -la
             sudo wget --no-verbose -O gitlab-runner-1 https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
             sudo tar -xf gitlab-runner-1
-            sudo cp -r gitlab-runner/* ~
-            echo "FULLL HOME"
+            sudo mv -r gitlab-runner/* ~
+            echo "FULL HOME"
             cd ~
             pwd
             ls -la
