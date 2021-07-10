@@ -22,7 +22,7 @@ jobs:
       image: azul/zulu-openjdk-alpine:8-jre
     steps:
       - name: docker
-        shell: bash
+        #shell: bash
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
             #cd ${{ github.workspace }}
