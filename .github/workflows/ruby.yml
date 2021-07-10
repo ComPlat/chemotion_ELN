@@ -32,6 +32,8 @@ jobs:
             # sudo wget --no-verbose -O gitlab-runner-1 https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
             # sudo tar -xf gitlab-runner-1
             sudo ls -la
+            cd home
+            ls -la
             # cd gitlab-runner
             # ls -la
             #java -version
