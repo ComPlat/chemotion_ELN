@@ -21,6 +21,7 @@ jobs:
     #   image: azul/zulu-openjdk-alpine:8-jre
     steps:
       - name: docker
+        shell: bash
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
             # docker pull maipy/github_actions:0
@@ -28,7 +29,7 @@ jobs:
             #cd ${{ github.workspace }}
             whoami
             pwd
-            wget --no-verbose -O gitlab-runner https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
+            sudo wget --no-verbose -O gitlab-runner https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
             tar -xf gitlab-runner
             ls -la
             #java -version
