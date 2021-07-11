@@ -38,11 +38,12 @@ jobs:
             which psql
             psql --version
             /etc/init.d/postgresql status
+            /etc/init.d/postgresql start
             #service postgresql 12 main status
             #echo "SUDOERS"
             #sudo cat /etc/sudoers
             #pg_ctlcluster 12 main status
-            #psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
+            psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
             # sudo -Hu postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
             # whoami
