@@ -30,6 +30,9 @@ jobs:
       - name: git clone
         working-directory: /github/home
         run: |
+            echo "BEFORE CLONE"
+            pwd 
+            ls -la
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             echo "ALLL FILES?"
             whoami
