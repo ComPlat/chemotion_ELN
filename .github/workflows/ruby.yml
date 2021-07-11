@@ -31,19 +31,20 @@ jobs:
         working-directory: /home/gitlab-runner
         run: |
             whoami
-            sudo apt-get -y update -qq
-            sudo apt-get -y install postgresql postgresql-contrib libpq-dev
+            # sudo apt-get -y update -qq
+            # sudo apt-get -y install postgresql postgresql-contrib libpq-dev
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             echo "POSTGRES"
             which psql
             psql --version
-            /etc/init.d/postgresql status
-            /etc/init.d/postgresql start
-            #service postgresql 12 main status
+            echo "RAM"
+            free -g
+            #/etc/init.d/postgresql status
+            # error 3
+            #/etc/init.d/postgresql start
             #echo "SUDOERS"
             #sudo cat /etc/sudoers
-            #pg_ctlcluster 12 main status
-            psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
+            #psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
             # sudo -Hu postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
             # whoami
