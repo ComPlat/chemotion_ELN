@@ -10,8 +10,8 @@ jobs:
 
   docker_container:
     runs-on: ubuntu-latest
-    container: 
-      image: complat/complat-ubuntu-runner:0.10.20
+    # container: 
+    #   image: complat/complat-ubuntu-runner:0.12.20
       #options: --mount type=bind,source=/,target=/__w/chemotion_ELN/chemotion_ELN
       #options: -v "/home/gitlab-runner":"/__w/chemotion_ELN/chemotion_ELN"
       # image: maipy/github_actions:0
@@ -25,8 +25,10 @@ jobs:
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
             #cd ${{ github.workspace }}
-            cd /github/home
+            #cd /github/home
             whoami
+            docker exec -i $(docker run -it -d complat/complat-ubuntu-runner:0.12.20) bash
+            ls -la
             /usr/bin/docker images
             /usr/bin/docker ps -a
             # sudo pwd
