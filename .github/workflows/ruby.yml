@@ -30,16 +30,16 @@ jobs:
       - name: git clone
         working-directory: /home/gitlab-runner
         run: |
-            #cd /home/gitlab-runner
+            whoami
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             echo "POSTGRES"
             which psql
             psql --version
-            echo "SUDOERS"
-            sudo cat /etc/sudoers
-            #postgres pg_ctlcluster 12 main status
+            #echo "SUDOERS"
+            #sudo cat /etc/sudoers
+            pg_ctlcluster 12 main status
             #psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
-            #sudo -u postgres pg_ctlcluster 12 main status
+            sudo -Hu postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
             # whoami
             # pwd 
