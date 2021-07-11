@@ -28,9 +28,9 @@ jobs:
       #     repository: ComPlat/chemotion_ELN
       #     path: /github/home
       - name: git clone
-        # working-directory: /github/gitlab-runner
+        working-directory: /home/gitlab-runner
         run: |
-            cd /github/gitlab-runner
+            #cd /home/gitlab-runner
             echo "BEFORE CLONE"
             pwd 
             ls -la
