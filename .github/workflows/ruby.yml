@@ -10,10 +10,10 @@ jobs:
 
   docker_container:
     runs-on: ubuntu-latest
-    container: 
-      image: complat/complat-ubuntu-runner:0.12.20
-      #options: --mount type=bind,source=/,target=/__w/chemotion_ELN/chemotion_ELN
-      options: --mount type=bind, source=/home/gitlab-runner, target=/home/runner/work/chemotion_ELN/chemotion_ELN
+    # container: 
+    #   image: complat/complat-ubuntu-runner:0.12.20
+    #   #options: --mount type=bind,source=/,target=/__w/chemotion_ELN/chemotion_ELN
+    #   options: --mount type=bind, source=/home/gitlab-runner, target=/home/runner/work/chemotion_ELN/chemotion_ELN
       # image: maipy/github_actions:0
       # volumes:
       #   - /home/gitlab-runner
@@ -21,13 +21,16 @@ jobs:
       #image: azul/zulu-openjdk-alpine:8-jre
     steps:
       - name: docker
-        shell: bash
+        #shell: bash
       # uses: docker://complat/complat-ubuntu-runner:0.10.20
         run: |
             #cd ${{ github.workspace }}
             #cd /github/home
-            #docker exec -i $(docker run --name complat -it -d --mount type=bind,source="$(pwd)",target="$(pwd)" complat/complat-ubuntu-runner:0.12.20) bash
+            docker exec -i $(docker run --name complat -it -d --mount type=bind,source="$(pwd)",target="$(pwd)" complat/complat-ubuntu-runner:0.12.20) bash
             whoami
+            pwd
+            ls -la
+            cd ..
             pwd
             ls -la
             # /usr/bin/docker images
