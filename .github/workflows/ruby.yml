@@ -33,7 +33,9 @@ jobs:
             #cd /home/gitlab-runner
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             echo "POSTGRES"
-            sudo -u postgres pg_ctlcluster 12 main status
+            which psql
+            psql --version
+            #sudo -u postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
             # whoami
             # pwd 
