@@ -13,7 +13,7 @@ jobs:
     # container: 
     #   image: complat/complat-ubuntu-runner:0.12.20
       #options: --mount type=bind,source=/,target=/__w/chemotion_ELN/chemotion_ELN
-      #options: -v "/home/gitlab-runner":"/__w/chemotion_ELN/chemotion_ELN"
+      options: ---mount "/home/gitlab-runner":"/home/runner/work/chemotion_ELN/chemotion_ELN"
       # image: maipy/github_actions:0
       # volumes:
       #   - /home/gitlab-runner
@@ -26,13 +26,13 @@ jobs:
         run: |
             #cd ${{ github.workspace }}
             #cd /github/home
-            docker exec -i $(docker run --name complat -it -d --mount type=bind,source="$(pwd)",target="$(pwd)" complat/complat-ubuntu-runner:0.12.20) bash
+            #docker exec -i $(docker run --name complat -it -d --mount type=bind,source="$(pwd)",target="$(pwd)" complat/complat-ubuntu-runner:0.12.20) bash
             whoami
             pwd
             ls -la
-            /usr/bin/docker images
-            /usr/bin/docker ps -a
-            docker logs complat
+            # /usr/bin/docker images
+            # /usr/bin/docker ps -a
+            # docker logs complat
             # sudo pwd
             # sudo ls -la
             # echo "HOME"
