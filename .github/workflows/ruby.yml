@@ -39,7 +39,8 @@ jobs:
             #sudo cat /etc/sudoers
             pg_ctlcluster 12 main status
             #psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
-            sudo -Hu postgres pg_ctlcluster 12 main status
+            service postgresql 12 main status
+            # sudo -Hu postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
             # whoami
             # pwd 
