@@ -25,8 +25,9 @@ jobs:
           --health-timeout 5s 
           --health-retries 5
     steps:
-      - name: git clone
+      - name: git clone + postgres
         working-directory: /home/gitlab-runner
+        # TODO rm?
         env:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
@@ -48,13 +49,13 @@ jobs:
             psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE chemotion_test OWNER chemotion_test;"
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
-            # which psql
-            # psql --version
-            # # echo "RAM"
-            # # free -g
-            # #/etc/init.d/postgresql status
-            # # error 3
-            # #/etc/init.d/postgresql start
-            # #echo "SUDOERS"
-            # #sudo cat /etc/sudoers
-            # # sudo -Hu postgres pg_ctlcluster 12 main status
+
+      - name: npm test
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            whoami
+            echo "RAKE DB"
+            source ~/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare 
+            echo "NPM TEST"
+            source ~/.nvm/nvm.sh && nvm use && npm test
+
