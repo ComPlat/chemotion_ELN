@@ -31,11 +31,10 @@ jobs:
         working-directory: /home/gitlab-runner
         run: |
             #cd /home/gitlab-runner
-            echo "BEFORE CLONE"
-            pwd 
-            ls -la
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
-            echo "ALLL FILES?"
-            whoami
-            pwd 
-            ls -la
+            echo "POSTGRES"
+            sudo -u postgres pg_ctlcluster 12 main status
+            # echo "ALLL FILES?"
+            # whoami
+            # pwd 
+            # ls -la
