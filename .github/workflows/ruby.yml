@@ -27,11 +27,15 @@ jobs:
     steps:
       - name: git clone
         working-directory: /home/gitlab-runner
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
         run: |
             whoami
             # sudo apt-get -y update -qq
             # sudo apt-get -y install postgresql postgresql-contrib libpq-dev
-            sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+            # TODO
+            #sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             echo "POSTGRES"
             which psql
             psql --version
