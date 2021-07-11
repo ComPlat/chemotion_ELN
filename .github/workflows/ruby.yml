@@ -11,11 +11,11 @@ jobs:
   docker_container:
     runs-on: ubuntu-latest
     container: 
-      # image: complat/complat-ubuntu-runner:0.12.20
+      image: complat/complat-ubuntu-runner:0.12.20
     #   #options: --mount type=bind,source=/,target=/__w/chemotion_ELN/chemotion_ELN
       #options: --mount type=bind, source=/home/gitlab-runner, target=/home/runner/work/chemotion_ELN/chemotion_ELN
-      options: -v "/__w/chemotion_ELN/chemotion_ELN":"/home/gitlab-runner"
-      image: maipy/github_actions:xs
+      #options: -v "/__w/chemotion_ELN/chemotion_ELN":"/home/gitlab-runner"
+      #image: maipy/github_actions:xs
       # volumes:
       #   - /home/gitlab-runner
         # - ${{ github.workspace }}:/home/gitlab-runner
@@ -30,8 +30,8 @@ jobs:
             #docker exec -i $(docker run --name complat -it -d --mount type=bind,source="$(pwd)",target="$(pwd)" complat/complat-ubuntu-runner:0.12.20) bash
             whoami
             #cd /var/lib/docker/volumes
-            pwd
-            ls -la
+            # pwd
+            # ls -la
             # /usr/bin/docker images
             # /usr/bin/docker ps -a
             # docker logs complat
@@ -46,10 +46,12 @@ jobs:
             # which java
             # cd /usr/lib/jvm/zulu16-ca-amd64
             # ls -la
-            #sudo wget --no-verbose -O gitlab-runner-1 https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
+            sudo mkdir /home/gitlab-runner
+            cd /home/gitlab-runner
+            sudo wget --no-verbose -O gitlab-runner-1 https://bwsyncandshare.kit.edu/s/pSKZc34PBKZY57B/download
             # TODO just copy dotfiles to HOME
-            # sudo tar -xf gitlab-runner-1
-            # ls -la
+            sudo tar -xf gitlab-runner-1
+            ls -la
             # sudo mv gitlab-runner/* ~
             # echo "FULL HOME"
             # cd ~
