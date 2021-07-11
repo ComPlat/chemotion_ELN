@@ -35,7 +35,8 @@ jobs:
             echo "POSTGRES"
             which psql
             psql --version
-            psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
+            postgres pg_ctlcluster 12 main status
+            #psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
             #sudo -u postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
             # whoami
