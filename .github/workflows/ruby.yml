@@ -30,7 +30,7 @@ jobs:
             whoami
             #cd /var/lib/docker/volumes
             pwd
-            sudo ls -la
+            ls -la
             # /usr/bin/docker images
             # /usr/bin/docker ps -a
             # docker logs complat
