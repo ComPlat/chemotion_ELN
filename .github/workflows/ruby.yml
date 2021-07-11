@@ -44,6 +44,9 @@ jobs:
             sudo touch klasses.json
             echo "POSTGRES"
             psql -d postgresql://postgres:postgres@postgres/postgres -c "\du"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE chemotion_test LOGIN CREATEDB SUPERUSER PASSWORD '123456'"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE chemotion_test OWNER chemotion_test;"
+            psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
             # which psql
             # psql --version
