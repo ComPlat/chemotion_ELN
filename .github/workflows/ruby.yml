@@ -26,11 +26,12 @@ jobs:
         run: |
             #cd ${{ github.workspace }}
             #cd /github/home
+            docker exec -i $(docker run --name complat -it -d -v "$(pwd)":"/home/gitlab-runner" complat/complat-ubuntu-runner:0.12.20) bash
             whoami
-            docker exec -i $(docker run -it -d -v "$(pwd)":"/home/gitlab-runner" complat/complat-ubuntu-runner:0.12.20) bash
             ls -la
             /usr/bin/docker images
             /usr/bin/docker ps -a
+            docker logs complat
             # sudo pwd
             # sudo ls -la
             # echo "HOME"
@@ -55,6 +56,4 @@ jobs:
             # cd gitlab-runner
             # ls -la            
             # cd /github/home
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
         #working-directory: /github/home
