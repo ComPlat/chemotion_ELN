@@ -12,18 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     container: 
       image: complat/complat-ubuntu-runner:0.12.20
-        services:
-    postgres:
-      image: postgres
-      ports:
-        - 5432:5432
-      env:
-        POSTGRES_PASSWORD: postgres
-      options: >-
-        --health-cmd pg_isready 
-        --health-interval 10s 
-        --health-timeout 5s 
-        --health-retries 5
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
     steps:
       - name: git clone
         working-directory: /home/gitlab-runner
