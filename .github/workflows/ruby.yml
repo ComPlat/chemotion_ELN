@@ -21,25 +21,16 @@ jobs:
         # - ${{ github.workspace }}:/home/gitlab-runner
       #image: azul/zulu-openjdk-alpine:8-jre
     steps:
-      # - name: docker
-      #   #shell: bash
-      # # uses: docker://complat/complat-ubuntu-runner:0.10.20
-      #   run: |
-      #       #cd ${{ github.workspace }}
-      #       #cd /github/home
-      #       #docker exec -i $(docker run --name complat -it -d --mount type=bind,source="$(pwd)",target="$(pwd)" complat/complat-ubuntu-runner:0.12.20) bash
-      #       whoami
-
-        #working-directory: /github/home
       # first checkout, before working dir is removed
-      - name: checkout
-        uses: actions/checkout@v2
-        with:
-          repository: ComPlat/chemotion_ELN
-          path: /github/home
-      - name: change config files
+      # - name: checkout
+      #   uses: actions/checkout@v2
+      #   with:
+      #     repository: ComPlat/chemotion_ELN
+      #     path: /github/home
+      - name: git clone
         working-directory: /github/home
         run: |
+            git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             echo "ALLL FILES?"
             pwd 
             ls -la
