@@ -43,6 +43,7 @@ jobs:
             sudo cp -f profile_default.yml.example profile_default.yml
             sudo touch klasses.json
             echo "POSTGRES"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "\du"
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
             # which psql
             # psql --version
@@ -53,5 +54,4 @@ jobs:
             # #/etc/init.d/postgresql start
             # #echo "SUDOERS"
             # #sudo cat /etc/sudoers
-            psql -d postgresql://postgres:postgres@postgres/postgres -c "\du"
             # # sudo -Hu postgres pg_ctlcluster 12 main status
