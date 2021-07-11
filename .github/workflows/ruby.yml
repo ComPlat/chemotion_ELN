@@ -37,11 +37,11 @@ jobs:
             whoami
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             cd chemotion_ELN/config
-            cp database.yml.gitlab database.yml
-            cp -f storage.yml.example storage.yml
-            touch datacollectors.yml
-            cp -f profile_default.yml.example profile_default.yml
-            touch klasses.json
+            sudo cp database.yml.gitlab database.yml
+            sudo cp -f storage.yml.example storage.yml
+            sudo touch datacollectors.yml
+            sudo cp -f profile_default.yml.example profile_default.yml
+            sudo touch klasses.json
             echo "POSTGRES"
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
             # which psql
