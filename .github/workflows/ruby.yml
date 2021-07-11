@@ -28,11 +28,9 @@ jobs:
             #cd /github/home
             docker exec -i $(docker run --name complat -it -d --mount type=bind,source="$(pwd)",target="$(pwd)" complat/complat-ubuntu-runner:0.12.20) bash
             whoami
+            cd /var/lib/docker/volumes
             pwd
-            ls -la
-            cd ..
-            pwd
-            ls -la
+            sudo ls -la
             # /usr/bin/docker images
             # /usr/bin/docker ps -a
             # docker logs complat
