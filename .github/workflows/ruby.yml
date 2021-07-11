@@ -36,7 +36,7 @@ jobs:
         run: |
             whoami
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
-            cd config
+            cd chemotion_ELN/config
             cp database.yml.gitlab database.yml
             cp -f storage.yml.example storage.yml
             touch datacollectors.yml
