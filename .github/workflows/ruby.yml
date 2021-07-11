@@ -46,7 +46,7 @@ jobs:
             #/etc/init.d/postgresql start
             #echo "SUDOERS"
             #sudo cat /etc/sudoers
-            psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "\du"
             # sudo -Hu postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
             # whoami
