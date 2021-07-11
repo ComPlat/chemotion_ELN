@@ -12,21 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     container: 
       image: complat/complat-ubuntu-runner:0.12.20
-    #   #options: --mount type=bind,source=/,target=/__w/chemotion_ELN/chemotion_ELN
-      #options: --mount type=bind, source=/home/gitlab-runner, target=/home/runner/work/chemotion_ELN/chemotion_ELN
-      #options: -v "/__w/chemotion_ELN/chemotion_ELN":"/home/gitlab-runner"
-      #image: maipy/github_actions:xs
-      # volumes:
-      #   - /home/gitlab-runner
-        # - ${{ github.workspace }}:/home/gitlab-runner
-      #image: azul/zulu-openjdk-alpine:8-jre
+        services:
+    postgres:
+      image: postgres
+      ports:
+        - 5432:5432
+      env:
+        POSTGRES_PASSWORD: postgres
+      options: >-
+        --health-cmd pg_isready 
+        --health-interval 10s 
+        --health-timeout 5s 
+        --health-retries 5
     steps:
-      # first checkout, before working dir is removed
-      # - name: checkout
-      #   uses: actions/checkout@v2
-      #   with:
-      #     repository: ComPlat/chemotion_ELN
-      #     path: /github/home
       - name: git clone
         working-directory: /home/gitlab-runner
         run: |
@@ -37,14 +35,14 @@ jobs:
             echo "POSTGRES"
             which psql
             psql --version
-            echo "RAM"
-            free -g
+            # echo "RAM"
+            # free -g
             #/etc/init.d/postgresql status
             # error 3
             #/etc/init.d/postgresql start
             #echo "SUDOERS"
             #sudo cat /etc/sudoers
-            #psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
+            psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
             # sudo -Hu postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
             # whoami
