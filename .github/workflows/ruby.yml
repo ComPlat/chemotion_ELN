@@ -37,7 +37,8 @@ jobs:
             echo "POSTGRES"
             which psql
             psql --version
-            service postgresql 12 main status
+            /etc/init.d/postgresql status
+            #service postgresql 12 main status
             #echo "SUDOERS"
             #sudo cat /etc/sudoers
             #pg_ctlcluster 12 main status
