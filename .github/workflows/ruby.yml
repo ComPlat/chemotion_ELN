@@ -57,5 +57,7 @@ jobs:
             echo "RAKE DB"
             source ~/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare 
             echo "NPM TEST"
+            which npm
+            npm -v
             source ~/.nvm/nvm.sh && nvm use && npm test
 
