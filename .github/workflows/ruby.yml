@@ -35,7 +35,9 @@ jobs:
             echo "POSTGRES"
             which psql
             psql --version
-            postgres pg_ctlcluster 12 main status
+            echo "SUDOERS"
+            sudo cat /etc/sudoers
+            #postgres pg_ctlcluster 12 main status
             #psql -d postgresql://postgres:postgres@localhost/postgres -c "\du"
             #sudo -u postgres pg_ctlcluster 12 main status
             # echo "ALLL FILES?"
