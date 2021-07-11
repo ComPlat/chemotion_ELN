@@ -54,6 +54,8 @@ jobs:
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
             whoami
+            echo "NPM INSTALL"
+            source ~/.nvm/nvm.sh && nvm install 12.22.1 && npm install -g npm@7.11.1 && npm install
             echo "RAKE DB"
             source ~/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare 
             echo "NPM TEST"
