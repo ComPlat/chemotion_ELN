@@ -26,8 +26,9 @@ jobs:
         run: |
             #cd ${{ github.workspace }}
             #cd /github/home
-            docker exec -i $(docker run --name complat -it -d -v "$(pwd)":"/home/gitlab-runner" complat/complat-ubuntu-runner:0.12.20) bash
+            docker exec -i $(docker run --name complat -it -d --mount type=bind,source=/home/gitlab-runner,target="$(pwd)" complat/complat-ubuntu-runner:0.12.20) bash
             whoami
+            pwd
             ls -la
             /usr/bin/docker images
             /usr/bin/docker ps -a
