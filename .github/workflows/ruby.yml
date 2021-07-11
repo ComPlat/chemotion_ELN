@@ -55,11 +55,12 @@ jobs:
         run: |
             whoami
             echo "NPM INSTALL"
-            sudo source ~/.nvm/nvm.sh && nvm install 12.22.1 && npm install -g npm@7.11.1 && npm install
+            sudo -s
+            source ~/.nvm/nvm.sh && nvm install 12.22.1 && npm install -g npm@7.11.1 && npm install
             echo "RAKE DB"
-            sudo source ~/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare 
+            source ~/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare 
             echo "NPM TEST"
             # which npm
             # npm -v
-            sudo source ~/.nvm/nvm.sh && nvm use && npm test
+            source ~/.nvm/nvm.sh && nvm use && npm test
 
