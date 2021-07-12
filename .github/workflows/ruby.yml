@@ -55,11 +55,11 @@ jobs:
             psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE chemotion_test OWNER chemotion_test;"
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
-
+            
+            cd ../..
             sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
             # TODO rm?
-            cd ..
-            chmod -R +x spec
+            chmod -R +x chemotion_ELN/spec
 
       # - name: Set up Ruby
       #   uses: ruby/setup-ruby@v1
