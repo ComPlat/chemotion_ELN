@@ -76,6 +76,10 @@ jobs:
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
             cd ../..
+            pwd
+            ls -la
+            cd ..
+            pwd
             ls -la
             # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle info openbabel"
             # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle env"
