@@ -56,12 +56,12 @@ jobs:
             whoami
             echo "NPM INSTALL"
             #sudo su
-            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 12.22.1 
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 12.22.1"
             #&& npm install -g npm@7.11.1 && npm install"
             echo "RAKE DB"
-            source /home/gitlab-runner/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare 
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare"
             echo "NPM TEST"
             # # which npm
             # # npm -v
-            source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm test
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm test"
 
