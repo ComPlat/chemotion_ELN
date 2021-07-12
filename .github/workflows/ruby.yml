@@ -60,9 +60,11 @@ jobs:
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
 
             sudo chown -R gitlab-runner:gitlab-runner ./
+            echo "PER"
+            ls -la
 
-            # # TODO rm?
-            # chmod -R +x spec
+            # TODO rm?
+            chmod -R +x spec
 
       - name: bundle + node install
         working-directory: /home/gitlab-runner/chemotion_ELN
