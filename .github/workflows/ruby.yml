@@ -36,8 +36,10 @@ jobs:
           POSTGRES_PASSWORD: 123456
         run: |
             whoami
-            sudo -H -u gitlab-runner git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
-            # sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
+            sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+            sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
+            echo "LS"
+            ls -la
             cd chemotion_ELN/config
             sudo cp database.yml.gitlab database.yml
             sudo cp -f storage.yml.example storage.yml
