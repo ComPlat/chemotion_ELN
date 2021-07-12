@@ -69,7 +69,7 @@ jobs:
             chmod -R +x spec
 
       - name: bundle + node install
-        working-directory: /home/gitlab-runner/chemotion_ELN
+        working-directory: /home/gitlab-runner
         run: |
             # echo "LS"
             # cd ..
@@ -103,7 +103,7 @@ jobs:
 
       # # working
       - name: npm test
-        working-directory: /home/gitlab-runner/chemotion_ELN
+        working-directory: /home/gitlab-runner
         run: |
             whoami
             #&& npm install -g npm@7.11.1 && npm install"
@@ -113,7 +113,7 @@ jobs:
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm test"
 
       - name: acc test
-        working-directory: /home/gitlab-runner/chemotion_ELN
+        working-directory: /home/gitlab-runner
         run: |
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rspec spec/features"
 
