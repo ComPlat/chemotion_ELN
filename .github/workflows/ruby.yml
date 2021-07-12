@@ -50,10 +50,10 @@ jobs:
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6.6
+      # - name: Set up Ruby
+      #   uses: ruby/setup-ruby@v1
+      #   with:
+      #     ruby-version: 2.6.6
 
       - name: npm test
         working-directory: /home/gitlab-runner/chemotion_ELN
@@ -62,10 +62,8 @@ jobs:
             echo "NPM INSTALL"
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 12.22.1"
             #&& npm install -g npm@7.11.1 && npm install"
-            echo "BUNDLE"
-            which bundle
             echo "RAKE DB"
-            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare"
             echo "NPM TEST"
             # # which npm
             # # npm -v
