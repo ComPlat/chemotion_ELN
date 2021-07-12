@@ -87,9 +87,9 @@ jobs:
             echo "CONFIG"
             cd config
             ls -la
-            echo "RAILS"
-            sudo which rails
-            sudo rails -v
+            # echo "RAILS"
+            # sudo which rails
+            # sudo rails -v
             # cd ../..
             # pwd
             # ls -la
