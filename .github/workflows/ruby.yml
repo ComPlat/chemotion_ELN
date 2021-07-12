@@ -72,8 +72,8 @@ jobs:
       - name: log
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            bundle info openbabel
-            bundle env
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle info openbabel"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle env"
 
       # working
       # - name: npm test
