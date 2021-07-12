@@ -58,7 +58,8 @@ jobs:
 
             sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
             # TODO rm?
-            chmod -R +x chemotion_ELN/spec
+            cd ..
+            chmod -R +x spec
 
       # - name: Set up Ruby
       #   uses: ruby/setup-ruby@v1
