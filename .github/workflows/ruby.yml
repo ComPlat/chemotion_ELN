@@ -74,15 +74,20 @@ jobs:
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 12.22.1"
             echo "OPENBABEL"
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle info openbabel"
+            echo "RAILS"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle info rails"
 
       - name: log
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
             echo "RVM"
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && rvm list"
+            echo "CONFIG"
+            cd config
+            ls -la
             echo "RAILS"
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && which rails"
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && rails -v"
+            sudo which rails
+            sudo rails -v
             # cd ../..
             # pwd
             # ls -la
