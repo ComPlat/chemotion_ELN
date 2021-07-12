@@ -65,7 +65,7 @@ jobs:
 
             cd ..
             # TODO rm?
-            chmod -R +x spec
+            sudo chmod -R +x spec
 
             cd ..
             sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
