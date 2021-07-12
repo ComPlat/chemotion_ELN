@@ -64,11 +64,6 @@ jobs:
             # # TODO rm?
             # chmod -R +x spec
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6.6
-
       - name: bundle + node install
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
