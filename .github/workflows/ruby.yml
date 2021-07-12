@@ -42,7 +42,7 @@ jobs:
             sudo chown -R gitlab-runner:gitlab-runner /github/home
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
-            chmod +x chemotion_ELN/spec
+            chmod -R +x chemotion_ELN/spec
             echo "LS"
             ls -la
             cd chemotion_ELN/config
