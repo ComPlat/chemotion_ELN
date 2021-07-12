@@ -78,11 +78,11 @@ jobs:
       - name: log
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            echo "RAILS"
-            which rails
-            rails -v
             echo "RVM"
-            rvm list
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && rvm list"
+            echo "RAILS"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && which rails"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && rails -v"
             # cd ../..
             # pwd
             # ls -la
