@@ -59,6 +59,7 @@ jobs:
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
             psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
 
+            cd ..
             sudo chown -R gitlab-runner:gitlab-runner ./
             echo "PER"
             ls -la
