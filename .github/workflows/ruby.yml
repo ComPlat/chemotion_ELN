@@ -78,7 +78,7 @@ jobs:
             # echo "LS"
             # cd ..
             # ls -la
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path shared/bundle"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ../shared/bundle"
             echo "NPM INSTALL"
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 12.22.1 && npm i"
 
