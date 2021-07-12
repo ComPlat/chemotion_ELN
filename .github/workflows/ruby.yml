@@ -78,15 +78,20 @@ jobs:
       - name: log
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            cd ../..
-            pwd
-            ls -la
-            cd ..
-            pwd
-            ls -la
-            echo "/github/home"
-            cd /github/home
-            ls -la
+            echo "RAILS"
+            which rails
+            rails -v
+            echo "RVM"
+            rvm list
+            # cd ../..
+            # pwd
+            # ls -la
+            # cd ..
+            # pwd
+            # ls -la
+            # echo "/github/home"
+            # cd /github/home
+            # ls -la
             # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle info openbabel"
             # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle env"
 
@@ -101,10 +106,10 @@ jobs:
       #       echo "NPM TEST"
       #       /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm test"
 
-      - name: ruby test
-        working-directory: /home/gitlab-runner/chemotion_ELN
-        run: |
-            # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec --exclude-pattern spec/{features}/#**/*_spec.rb"
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec spec/models/collections_sample_spec.rb"
+      # - name: ruby test
+      #   working-directory: /home/gitlab-runner/chemotion_ELN
+      #   run: |
+      #       # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec --exclude-pattern spec/{features}/#**/*_spec.rb"
+      #       /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec spec/models/collections_sample_spec.rb"
 
 
