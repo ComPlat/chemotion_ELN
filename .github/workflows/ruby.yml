@@ -36,6 +36,7 @@ jobs:
           POSTGRES_PASSWORD: 123456
         run: |
             whoami
+            sudo chown -R gitlab-runner:gitlab-runner shared
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
             echo "LS"
@@ -86,8 +87,8 @@ jobs:
       #       echo "NPM TEST"
       #       /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm test"
 
-      # - name: ruby test
-      #   working-directory: /home/gitlab-runner/chemotion_ELN
-      #   run: |
-      #       /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
+      - name: ruby test
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
 
