@@ -44,6 +44,7 @@ jobs:
 
             sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
             sudo mv chemotion_ELN/* ./
+            sudo rm -r chemotion_ELN 
             #ls -la
             cd config
             sudo cp database.yml.gitlab database.yml
