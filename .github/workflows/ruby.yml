@@ -68,15 +68,13 @@ jobs:
             echo "NPM INSTALL"
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 12.22.1"
 
-      # - name: npm test
-      #   working-directory: /home/gitlab-runner/chemotion_ELN
-      #   run: |
-      #       whoami
-      #       #&& npm install -g npm@7.11.1 && npm install"
-      #       echo "RAKE DB"
-      #       /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare"
-      #       echo "NPM TEST"
-      #       # # which npm
-      #       # # npm -v
-      #       /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm test"
+      - name: npm test
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            whoami
+            #&& npm install -g npm@7.11.1 && npm install"
+            echo "RAKE DB"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use && RAILS_ENV=test bundle exec rake db:test:prepare"
+            echo "NPM TEST"
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm test"
 
