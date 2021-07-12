@@ -36,7 +36,8 @@ jobs:
           POSTGRES_PASSWORD: 123456
         run: |
             whoami
-            sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+            sudo -H -u gitlab-runner git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+            # sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
             cd chemotion_ELN/config
             sudo cp database.yml.gitlab database.yml
             sudo cp -f storage.yml.example storage.yml
@@ -58,12 +59,12 @@ jobs:
       - name: bundle + node install
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            echo "LS"
-            cd ..
-            ls -la
-      #       /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ../shared/bundle"
-      #       echo "NPM INSTALL"
-      #       /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 12.22.1"
+            # echo "LS"
+            # cd ..
+            # ls -la
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ../shared/bundle"
+            echo "NPM INSTALL"
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 12.22.1"
 
       # - name: npm test
       #   working-directory: /home/gitlab-runner/chemotion_ELN
