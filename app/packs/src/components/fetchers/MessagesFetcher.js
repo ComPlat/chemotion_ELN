@@ -17,6 +17,14 @@ export default class MessagesFetcher {
     });
   }
 
+  static fetchSpectraMessages(isAck) {
+    return fetch(`/api/v1/messages/spectra.json?is_ack=${isAck}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static fetchChannels(channelType) {
     return fetch(`/api/v1/messages/channels.json?channel_type=${channelType}`, {
       credentials: 'same-origin'
