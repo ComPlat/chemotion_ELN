@@ -98,6 +98,7 @@ export default class ElementDetails extends Component {
     this.handleResize = this.handleResize.bind(this);
     this.toggleFullScreen = this.toggleFullScreen.bind(this);
     this.onDetailChange = this.onDetailChange.bind(this);
+    this.checkSpectraMessage = this.checkSpectraMessage.bind(this);
   }
 
   componentDidMount() {
@@ -126,8 +127,9 @@ export default class ElementDetails extends Component {
   }
 
   onDetailChange(state) {
-    const { selecteds, activeKey, deletingElement } = state;
+    const { selecteds, activeKey, deletingElement, spectraMsg } = state;
     this.setState(prevState => ({ ...prevState, selecteds, activeKey, deletingElement }));
+    this.checkSpectraMessage(spectraMsg);
   }
 
   toggleFullScreen() {
@@ -141,6 +143,16 @@ export default class ElementDetails extends Component {
       this.setState({ offsetTop: 0 });
     } else {
       this.setState({ offsetTop: 70 });
+    }
+  }
+
+  checkSpectraMessage(spectraMsg) {
+    if (spectraMsg) {
+      const { showedSpcMsgID } = this.state;
+      if (!showedSpcMsgID || showedSpcMsgID !== spectraMsg.message_id) {
+        this.setState({showedSpcMsgID: spectraMsg.message_id})
+        alert(spectraMsg.content.data);
+      }
     }
   }
 

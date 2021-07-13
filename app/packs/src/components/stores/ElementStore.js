@@ -41,6 +41,8 @@ import { chmoConversions } from '../OlsComponent';
 import MatrixCheck from '../common/MatrixCheck';
 import GenericEl from '../models/GenericEl';
 
+import MessagesFetcher from '../fetchers/MessagesFetcher';
+
 const fetchOls = (elementType) => {
   switch (elementType) {
     case 'reaction':
@@ -999,6 +1001,15 @@ class ElementStore {
         ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
       }
     }
+
+    MessagesFetcher.fetchSpectraMessages(0).then((result) => {
+      result.messages.sort((a, b) => (a.id - b.id));
+      const messages = result.messages;
+      if (messages && messages.length > 0) {
+        const lastMsg = messages[0]
+        this.setState({spectraMsg: lastMsg})
+      }
+    })
   }
 
 

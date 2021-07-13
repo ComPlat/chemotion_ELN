@@ -34,6 +34,20 @@ module Chemotion
         cur
       end
 
+      desc 'Return spectra messages of the current user'
+      params do
+        requires :is_ack, type: Integer, desc: 'messages is acknowledged or not'
+      end
+      get 'spectra' do
+        messages = NotifyMessage.where(receiver_id: current_user.id, is_ack: params[:is_ack], subject: 'Chem Spectra Notification') if params[:is_ack] < 9
+        messages = NotifyMessage.where(receiver_id: current_user.id, subject: 'Chem Spectra Notification') unless params[:is_ack] < 9
+        if messages&.length > 0
+          job_msgs = messages.select { |hash| hash[:channel_type] == 8 }
+          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length == 0
+        end
+        messages
+      end
+
       desc 'Return channels'
       params do
         requires :channel_type, type: Integer, desc: '9: system; 8: system user'

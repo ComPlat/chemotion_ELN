@@ -1,6 +1,6 @@
 import React from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
-import { Modal, Well, Button } from 'react-bootstrap';
+import { Modal, Well, Button, Toast } from 'react-bootstrap';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
 
@@ -612,6 +612,7 @@ class ViewSpectra extends React.Component {
 
   render() {
     const { showModal } = this.state;
+    
     const { jcamp, predictions, idx } = this.getContent();
     const dialogClassName = 'spectra-editor-dialog';
     // WORKAROUND: react-stickydiv duplicates elements.

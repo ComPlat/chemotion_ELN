@@ -185,6 +185,16 @@ module AttachmentJcampProcess
         abs_path, t_molfile.path, is_regen, params
       )
     end
+
+    if tmp_img == nil && spc_type == nil && tmp_jcamp['invalid_molfile'] == true
+      #add message when invalid molfile
+      Message.create_msg_notification(
+        channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
+        message_from: attachable.root_element.created_by,
+        data_args: { 'msg': 'Invalid molfile'}
+      )
+    end
+
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
     jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'peak')
@@ -202,6 +212,15 @@ module AttachmentJcampProcess
       t_molfile.rewind
       Chemotion::Jcamp::Create.spectrum(
         abs_path, t_molfile.path, is_regen, params
+      )
+    end
+
+    if tmp_img == nil && spc_type == nil && tmp_jcamp['invalid_molfile'] == true
+      #add message when invalid molfile
+      Message.create_msg_notification(
+        channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
+        message_from: attachable.root_element.created_by,
+        data_args: { 'msg': 'Invalid molfile'}
       )
     end
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
