@@ -34,7 +34,7 @@ see [INSTALL.md][INSTALL]
 
 ## User Documentation
 
-see online ![docs](https://www.chemotion.net/chemotionsaurus/docs/eln/about)
+see online [docs](https://www.chemotion.net/chemotionsaurus/docs/eln/about)
 
 ## Code Status
 
