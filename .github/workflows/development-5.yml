@@ -80,7 +80,8 @@ jobs:
             # ls -la
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ../shared/bundle"
             echo "NPM INSTALL"
-            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 14.16.0 && npm i"
+            # 7.11.1
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 14.16.0 && npm install -g npm@7.11.1 && npm i"
 
       # - name: log
       #   working-directory: /home/gitlab-runner/chemotion_ELN
