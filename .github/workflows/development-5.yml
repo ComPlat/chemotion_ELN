@@ -42,7 +42,7 @@ jobs:
             # TODO!
             sudo chown -R gitlab-runner:gitlab-runner /github/home
 
-            sudo git clone --branch development --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+            sudo git clone --branch development-5 --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
 
             # error with npm test
             # sudo mv chemotion_ELN/* ./
