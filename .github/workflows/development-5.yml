@@ -84,14 +84,15 @@ jobs:
             cd /home/gitlab-runner/.nvm/versions/node
             ls -la
             # echo "NPM INSTALL"
-            # sudo rm -rf /home/gitlab-runner/.nvm/versions/node/v14.16.0/bin/npm
+            sudo rm -rf /home/gitlab-runner/.nvm/versions/node/v12.22.1
             # echo "CHECK RM NPM"
-            # /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && which npm"
-            # /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm install 14.16.0 && npm install -g npm@7.11.1"
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && npm -v"
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && which npm"
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use 14.16.0 && npm install -g npm@7.11.1"
             # echo "NPM -V"
             # /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && npm -v"
             #/bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && npm list"
-            #/bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && npm i"
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && npm i"
 
       # - name: log
       #   working-directory: /home/gitlab-runner/chemotion_ELN
