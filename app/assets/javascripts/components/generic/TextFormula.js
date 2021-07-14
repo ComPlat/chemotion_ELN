@@ -8,7 +8,7 @@ import LayerSelect from './LayerSelect';
 import FieldSelect from './FieldSelect';
 
 const AddRowBtn = ({ addRow }) => (
-  <Button active onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>
+  <Button onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>
 );
 
 AddRowBtn.propTypes = { addRow: PropTypes.func.isRequired };
@@ -18,7 +18,7 @@ const DelRowBtn = ({ delRow, node }) => {
   const btnClick = () => {
     delRow(data);
   };
-  return (<Button active onClick={btnClick} bsSize="xsmall" bsStyle="danger"><i className="fa fa-trash" aria-hidden="true" /></Button>);
+  return (<Button onClick={btnClick} bsSize="xsmall"><i className="fa fa-times" aria-hidden="true" /></Button>);
 };
 
 DelRowBtn.propTypes = { delRow: PropTypes.func.isRequired, node: PropTypes.object.isRequired };
@@ -34,7 +34,24 @@ export default class TextFormula extends React.Component {
     this.selField = this.selField.bind(this);
     this.refresh = this.refresh.bind(this);
     this.onCellValueChanged = this.onCellValueChanged.bind(this);
-    this.columnDefs = [
+  }
+
+  componentDidUpdate(prevProps) {
+    const { field, allLayers } = this.props;
+    const sub = field.text_sub_fields || [];
+    if (this.props.allLayers !== prevProps.allLayers) {
+      const columnDefs = this.gridApi.getColumnDefs();
+      columnDefs.find(c => c.field === 'layer').cellRendererParams.allLayers = allLayers;
+      columnDefs.find(c => c.field === 'field').cellRendererParams.allLayers = allLayers;
+      this.gridApi.setColumnDefs(columnDefs);
+    }
+    this.gridApi && this.gridApi.setRowData(sub);
+  }
+
+  onGridReady(e) {
+    this.gridApi = e.api;
+    this.gridColumnApi = e.columnApi;
+    const columnDefs = [
       {
         rowDrag: true,
         resizable: true,
@@ -51,7 +68,7 @@ export default class TextFormula extends React.Component {
         minWidth: 150,
         width: 150,
         cellRendererFramework: LayerSelect,
-        cellRendererParams: { allLayers: props.allLayers, selLayer: this.selLayer },
+        cellRendererParams: { allLayers: this.props.allLayers, selLayer: this.selLayer },
       },
       {
         headerName: 'Field (type: text)',
@@ -59,7 +76,7 @@ export default class TextFormula extends React.Component {
         editable: false,
         minWidth: 250,
         cellRendererFramework: FieldSelect,
-        cellRendererParams: { allLayers: props.allLayers, selField: this.selField },
+        cellRendererParams: { allLayers: this.props.allLayers, selField: this.selField, types: ['text'], tableText: true },
       },
       {
         headerName: 'Separator',
@@ -78,27 +95,20 @@ export default class TextFormula extends React.Component {
         cellRendererParams: { delRow: this.delRow },
         editable: false,
         filter: false,
-        minWidth: 35,
-        width: 35,
+        minWidth: 48,
+        width: 48,
+        suppressSizeToFit: true,
+        pinned: 'left'
       },
     ];
-  }
-
-  componentDidUpdate() {
-    const { field } = this.props;
-    const sub = field.text_sub_fields || [];
-    this.gridApi.setRowData(sub);
-  }
-
-  onGridReady(e) {
-    this.gridApi = e.api;
-    this.gridColumnApi = e.columnApi;
+    this.gridApi.setColumnDefs(columnDefs);
     this.autoSizeAll();
   }
 
-  autoSizeAll() {
-    if (!this.gridApi) return;
-    setTimeout(() => { this.gridApi.sizeColumnsToFit(); }, 10);
+  onCellValueChanged(params) {
+    const { oldValue, newValue } = params;
+    if (oldValue === newValue) return;
+    this.refresh();
   }
 
   delRow() {
@@ -150,10 +160,9 @@ export default class TextFormula extends React.Component {
     updSub(layerKey, field, () => {});
   }
 
-  onCellValueChanged(params) {
-    const { oldValue, newValue } = params;
-    if (oldValue === newValue) return;
-    this.refresh();
+  autoSizeAll() {
+    if (!this.gridApi) return;
+    setTimeout(() => { this.gridApi.sizeColumnsToFit(); }, 10);
   }
 
   render() {
@@ -165,20 +174,19 @@ export default class TextFormula extends React.Component {
           <b>Text-Formula: </b>
           select the text fields which are combined together with separator
         </div>
-        <div style={{ width: '100%', height: '16vh' }}>
-          <div style={{ width: '100%', height: '100%' }} className="ag-theme-balham">
-            <AgGridReact
-              enableColResize
-              columnDefs={this.columnDefs}
-              rowSelection="single"
-              onGridReady={this.onGridReady}
-              rowData={sub}
-              singleClickEdit
-              stopEditingWhenGridLosesFocus
-              rowDragManaged
-              onRowDragEnd={this.refresh}
-            />
-          </div>
+        <div style={{ width: '100%', height: '100%' }} className="ag-theme-balham">
+          <AgGridReact
+            enableColResize
+            defaultColDef={{ suppressMovable: true }}
+            rowSelection="single"
+            onGridReady={this.onGridReady}
+            rowData={sub}
+            singleClickEdit
+            stopEditingWhenGridLosesFocus
+            rowDragManaged
+            onRowDragEnd={this.refresh}
+            domLayout="autoHeight"
+          />
         </div>
       </div>
     );

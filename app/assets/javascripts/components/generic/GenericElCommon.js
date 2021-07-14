@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
@@ -8,13 +9,37 @@ import { genUnits, unitConversion } from '../../admin/generic/Utils';
 import {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
-  GenPropertiesTextArea, GenDummy, GenTextFormula
+  GenPropertiesTextArea, GenDummy, GenTextFormula, GenPropertiesTable
 } from './GenericPropertiesFields';
+
+const ShowProperties = (fObj, layers) => {
+  let showField = true;
+  if (fObj && fObj.cond_fields && fObj.cond_fields.length > 0) {
+    showField = false;
+    for (let i = 0; i < fObj.cond_fields.length; i += 1) {
+      const cond = fObj.cond_fields[i] || {};
+      const { layer, field, value } = cond;
+      if (field && field !== '') {
+        const fd = ((layers[layer] || {}).fields || []).find(f => f.field === field) || {};
+        if (fd.type === 'checkbox' && ((['false', 'no', 'f', '0'].includes((value || '').trim().toLowerCase()) && (typeof (fd && fd.value) === 'undefined' || fd.value === false)) ||
+        (['true', 'yes', 't', '1'].includes((value || '').trim().toLowerCase()) && (typeof (fd && fd.value) !== 'undefined' && fd.value === true)))) {
+          showField = true;
+          break;
+        } else if (['text', 'select'].includes(fd && fd.type) && (typeof (fd && fd.value) !== 'undefined' && ((fd && fd.value) || '').trim() == (value || '').trim())) {
+          showField = true;
+          break;
+        }
+      }
+    }
+  }
+  return showField;
+};
 
 const GenProperties = (opt) => {
   const fieldProps = { ...opt, dndItems: [] };
   const type = fieldProps.type.split('_');
   if (opt.isSearchCriteria && type[0] === 'drag') type[0] = 'text';
+
   switch (type[0]) {
     case 'checkbox':
       return GenPropertiesCheckbox(fieldProps);
@@ -35,6 +60,8 @@ const GenProperties = (opt) => {
       return GenPropertiesTextArea(fieldProps);
     case 'dummy':
       return GenDummy();
+    case 'table':
+      return GenPropertiesTable(fieldProps);
     case 'text-formula':
       return GenTextFormula(fieldProps);
     default:
@@ -49,28 +76,29 @@ class GenPropertiesLayer extends Component {
     super(props);
     this.handleSubChange = this.handleSubChange.bind(this);
   }
-  // event, field, layer, type
+
   handleChange(e, f, k, t) {
     this.props.onChange(e, f, k, t);
   }
 
-  handleSubChange(e, id, f) {
+  handleSubChange(e, id, f, valueOnly = false) {
     const sub = f.sub_fields.find(m => m.id === id);
-    if (e.type === 'system-defined') {
-      const units = genUnits(e.option_layers);
-      let uIdx = units.findIndex(u => u.key === e.value_system);
-      if (uIdx < units.length - 1) uIdx += 1; else uIdx = 0;
-      sub.value_system = units.length > 0 ? units[uIdx].key : '';
-      sub.value = unitConversion(e.option_layers, sub.value_system, e.value);
-    } else {
-      sub.value = e.target.value;
+    if (!valueOnly) {
+      if (e.type === 'system-defined') {
+        const units = genUnits(e.option_layers);
+        let uIdx = units.findIndex(u => u.key === e.value_system);
+        if (uIdx < units.length - 1) uIdx += 1; else uIdx = 0;
+        sub.value_system = units.length > 0 ? units[uIdx].key : '';
+        sub.value = unitConversion(e.option_layers, sub.value_system, e.value);
+      } else {
+        sub.value = e.target.value;
+      }
     }
     const { layer } = this.props;
     const obj = { f, sub };
-    this.props.onSubChange(layer.key, obj);
+    this.props.onSubChange(layer.key, obj, valueOnly);
   }
 
-  // event, field, key of layer, field object, value, unitsSystem
   handleClick(keyLayer, obj, val) {
     const units = genUnits(obj.option_layers);
     let uIdx = units.findIndex(e => e.key === val);
@@ -90,45 +118,65 @@ class GenPropertiesLayer extends Component {
     const klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
     const vs = [];
     let op = [];
-    fields.forEach((f, i) => {
-      const unit = genUnits(f.option_layers)[0] || {};
-      const eachCol = (
-        <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col} className={klaz}>
-          <GenProperties
-            layers={layers}
-            id={id}
-            layer={layer}
-            f_obj={f}
-            label={f.label}
-            value={f.value || ''}
-            description={f.description || ''}
-            type={f.type || 'text'}
-            field={f.field || 'field'}
-            formula={f.formula || ''}
-            options={(selectOptions && selectOptions[f.option_layers]) || []}
-            onChange={event => this.handleChange(event, f.field, key, f.type)}
-            onSubChange={this.handleSubChange}
-            isEditable
-            readOnly={false}
-            isRequired={f.required || false}
-            placeholder={f.placeholder || ''}
-            option_layers={f.option_layers}
-            value_system={f.value_system || unit.key}
-            onClick={() => this.handleClick(key, f, (f.value_system || unit.key))}
-          />
-        </Col>
-      );
-      op.push(eachCol);
-      if (((i + 1) % perRow === 0) || (fields.length === (i + 1))) {
-        vs.push(<Row key={`prop_row_${key}_${f.priority}_${f.field}`}>{op}</Row>);
-        op = [];
+    let newRow = 0;
+    let rowId = 1;
+    (fields || []).forEach((f, i) => {
+      if (ShowProperties(f, layers)) {
+        const unit = genUnits(f.option_layers)[0] || {};
+        const tabCol = (f.cols || 1) * 1;
+        const rCol = (f.type === 'table') ? (12 / (tabCol || 1)) : col;
+        newRow = (f.type === 'table') ? newRow += (perRow / (tabCol || 1)) : newRow += 1;
+
+        if (newRow > perRow) {
+          vs.push(<Row key={rowId}>{op}</Row>);
+          rowId += 1;
+          op = [];
+          newRow = (f.type === 'table') ? newRow = (perRow / (tabCol || 1)) : newRow = 1;
+        }
+        const eachCol = (
+          <Col key={`prop_${key}_${f.priority}_${f.field}`} md={rCol} lg={rCol} className={f.type === 'table' ? '' : klaz}>
+            <GenProperties
+              key={`${id}_${layer}_${f.field}_GenPropertiesLayer`}
+              layers={layers}
+              id={id}
+              layer={layer}
+              f_obj={f}
+              label={f.label}
+              value={f.value || ''}
+              description={f.description || ''}
+              type={f.type || 'text'}
+              field={f.field || 'field'}
+              formula={f.formula || ''}
+              options={(selectOptions && selectOptions[f.option_layers] && selectOptions[f.option_layers].options) || []}
+              onChange={event => this.handleChange(event, f.field, key, f.type)}
+              onSubChange={this.handleSubChange}
+              isEditable
+              readOnly={false}
+              isRequired={f.required || false}
+              placeholder={f.placeholder || ''}
+              option_layers={f.option_layers}
+              value_system={f.value_system || unit.key}
+              onClick={() => this.handleClick(key, f, (f.value_system || unit.key))}
+            />
+          </Col>
+        );
+        op.push(eachCol);
+        if (newRow % perRow === 0) newRow = 0;
+        if ((newRow === 0) || (fields.length === (i + 1))) {
+          vs.push(<Row key={rowId}>{op}</Row>);
+          rowId += 1;
+          op = [];
+        }
       }
     });
+
     return vs;
   }
 
   render() {
-    const bs = this.props.layer.color ? this.props.layer.color : 'default';
+    let bs = this.props.layer.color ? this.props.layer.color : 'default';
+    const noneKlass = bs === 'none' ? 'generic_panel_none' : '';
+    if (bs === 'none') bs = 'default';
     const cl = this.props.layer.style ? this.props.layer.style : 'panel_generic_heading';
     const panelHeader = this.props.layer.label === '' ? (<span />) : (
       <Panel.Heading className={cl} >
@@ -137,7 +185,7 @@ class GenPropertiesLayer extends Component {
     );
     return (
       <PanelGroup accordion id="accordion_generic_layer" defaultActiveKey="1" style={{ marginBottom: '0px' }}>
-        <Panel bsStyle={bs} className="panel_generic_properties" eventKey="1">
+        <Panel bsStyle={bs} className={`panel_generic_properties ${noneKlass}`} eventKey="1">
           {panelHeader}
           <Panel.Collapse>
             <Panel.Body className="panel_generic_properties_body">{this.views()}</Panel.Body>
@@ -149,8 +197,7 @@ class GenPropertiesLayer extends Component {
 }
 
 GenPropertiesLayer.propTypes = {
-  id: PropTypes.number,
-  // eslint-disable-next-line react/require-default-props
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   layer: PropTypes.object,
   selectOptions: PropTypes.object,
   onChange: PropTypes.func.isRequired,
@@ -199,7 +246,7 @@ class GenPropertiesLayerSearchCriteria extends Component {
     const klaz = (12 % perRow) > 0 ? 'g_col_w' : '';
     const vs = [];
     let op = [];
-    fields.forEach((f, i) => {
+    (fields || []).forEach((f, i) => {
       const unit = genUnits(f.option_layers)[0] || {};
       const eCol = (
         <Col key={`prop_${key}_${f.priority}_${f.field}`} md={col} lg={col} className={klaz}>
@@ -209,7 +256,7 @@ class GenPropertiesLayerSearchCriteria extends Component {
             value={f.value || ''}
             type={f.type || 'text'}
             field={f.field || 'field'}
-            options={(selectOptions && selectOptions[f.option_layers]) || []}
+            options={(selectOptions && selectOptions[f.option_layers] && selectOptions[f.option_layers].options) || []}
             onChange={event => this.handleChange(event, f.field, key, f.type)}
             onSubChange={this.handleSubChange}
             option_layers={f.option_layers}
@@ -241,7 +288,6 @@ class GenPropertiesLayerSearchCriteria extends Component {
 }
 
 GenPropertiesLayerSearchCriteria.propTypes = {
-  // eslint-disable-next-line react/require-default-props
   layer: PropTypes.object,
   selectOptions: PropTypes.object,
   onSubChange: PropTypes.func.isRequired,
@@ -256,7 +302,7 @@ GenPropertiesLayerSearchCriteria.defaultProps = {
 const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, funcClick = () => {}, layout = [], id = 0) => {
   const sortedLayers = sortBy(layers, l => l.position) || [];
   sortedLayers.forEach((layer) => {
-    if (layer.condition == null || layer.condition.trim().length === 0) {
+    if (typeof layer.cond_fields === 'undefined' || layer.cond_fields == null || layer.cond_fields.length === 0) {
       const ig = (
         <GenPropertiesLayer
           id={id}
@@ -270,25 +316,26 @@ const LayersLayout = (layers, options, funcChange, funcSubChange = () => {}, fun
         />
       );
       layout.push(ig);
-    } else if (layer.condition && layer.condition.trim().length > 0) {
-      const conditions = layer.condition.split(';');
+    } else if (layer.cond_fields && layer.cond_fields.length > 0) {
       let showLayer = false;
 
-      for (let i = 0; i < conditions.length; i += 1) {
-        const arr = conditions[i].split(',');
-        if (arr.length >= 3) {
-          const specificObj = layers[`${arr[0].trim()}`] && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`) && layers[`${arr[0].trim()}`].fields.find(e => e.field === `${arr[1].trim()}`);
-          const specific = specificObj && specificObj.value;
-          if ((specific && specific.toString()) === (arr[2] && arr[2].toString().trim())) {
-            showLayer = true;
-            break;
-          }
+      for (let i = 0; i < layer.cond_fields.length; i += 1) {
+        const cond = layer.cond_fields[i] || {};
+        const fd = ((layers[cond.layer] || {}).fields || []).find(f => f.field === cond.field) || {};
+        if (fd.type === 'checkbox' && ((['false', 'no', 'f', '0'].includes((cond.value || '').trim().toLowerCase()) && (typeof (fd && fd.value) === 'undefined' || fd.value === false)) ||
+        (['true', 'yes', 't', '1'].includes((cond.value || '').trim().toLowerCase()) && (typeof fd.value !== 'undefined' && fd.value === true)))) {
+          showLayer = true;
+          break;
+        } else if (['text', 'select'].includes(fd.type) && (typeof (fd && fd.value) !== 'undefined' && (fd.value || '').trim() == (cond.value || '').trim())) {
+          showLayer = true;
+          break;
         }
       }
 
       if (showLayer === true) {
         const igs = (
           <GenPropertiesLayer
+            id={id}
             key={layer.key}
             layer={layer}
             onChange={funcChange}

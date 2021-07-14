@@ -42,6 +42,42 @@ export default class AdminFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static fetchDeviceMetadataByDeviceId(deviceId) {
+    return fetch(`/api/v1/admin/deviceMetadata/${deviceId}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static postDeviceMetadata(params) {
+    return fetch('/api/v1/admin/deviceMetadata', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static syncDeviceMetadataToDataCite(params) {
+    return fetch(`/api/v1/admin/deviceMetadata/${params.device_id}/sync_to_data_cite`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
   static testSFTP(params) {
     return fetch('/api/v1/admin/sftpDevice/', {
       credentials: 'same-origin',
@@ -332,8 +368,12 @@ export default class AdminFetcher {
     return this.genericKlass(params, 'update_segment_template');
   }
 
-  static deleteSegmentKlass(id) {
-    return this.exec(`/api/v1/admin/delete_segment_klass/${id}`, 'DELETE');
+  static deleteKlassRevision(params) {
+    return this.genericKlass(params, 'delete_klass_revision');
+  }
+
+  static deleteGenericRevision(id) {
+    return this.exec(`/api/v1/admin/delete_generic_revision/${id}`, 'DELETE');
   }
 
   static listSegmentKlass(params = {}) {
@@ -352,5 +392,32 @@ export default class AdminFetcher {
 
   static updateDatasetTemplate(params) {
     return this.genericKlass(params, 'update_dataset_template');
+  }
+
+  static fetchJobs() {
+    return fetch('/api/v1/admin/jobs', {
+      credentials: 'same-origin',
+      method: 'GET',
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.error(errorMessage); });
+  }
+
+  static restartJob(id) {
+    return fetch('/api/v1/admin/jobs/restart/', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(id)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.error(errorMessage); });
+  }
+
+  static fetchKlassRevisions(id, klass) {
+    return this.exec(`/api/v1/admin/klass_revisions.json?id=${id}&klass=${klass}`, 'GET');
   }
 }

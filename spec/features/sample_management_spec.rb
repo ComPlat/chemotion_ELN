@@ -4,7 +4,7 @@ require 'rails_helper'
 
 describe 'Sample management' do
   let!(:user)    { create(:person) }
-  let(:sample) { create(:sample, creator: user, collections: user.collections) }
+  let(:sample) { create(:sample, creator: user, solvent: '["{\"label\":\"MeOD-d4\",\"smiles\":null,\"ratio\":\"100\"}"]', collections: user.collections) }
 
   before do
     user.update!(confirmed_at: Time.now, account_active: true)
@@ -21,6 +21,7 @@ describe 'Sample management' do
 
     it 'splits sample', js: true do
       # actions button is disabled if current collection is 'All'
+      find('.tree-view', text: 'All').click
       expect(find('button#create-split-button')[:disabled]).to eq('true')
 
       # check if split button is disabled unless we select sample
@@ -42,8 +43,22 @@ describe 'Sample management' do
                       .text
       expect(molecule_name).to eq(sample.molecule.iupac_name)
 
-      %w[name external_label location purity solvent
-         density].each do |field|
+      # %w[name external_label location purity
+      #   density].each do |field|
+      #   label = field.capitalize.tr('_', ' ')
+      #   value = find_bs_field(label).value
+      #   if begin
+      #         Float(value)
+      #      rescue StandardError
+      #        false
+      #       end
+      #     expect(value.to_f).to eq(sample[field].to_f)
+      #   else
+      #     expect(value).to eq(sample[field])
+      #   end
+      # end
+
+      %w[name external_label location purity].each do |field|
         label = field.capitalize.tr('_', ' ')
         value = find_bs_field(label).value
         if begin
@@ -57,6 +72,15 @@ describe 'Sample management' do
         end
       end
 
+      find('a#tab-density-molarity-tab-density').click
+      density_tab = find('div#tab-density-molarity-pane-density')
+      density_value = density_tab.first('span.input-group').find_all('input').first.value
+      expect(density_value.to_f).to eq(sample['density'])
+
+      find_by_id('Solvents').click
+      solvent = find("input[name='solvent_label']").value
+      expect(solvent).to eq('MeOD-d4')
+
       %w[boiling_point melting_point].each do |field|
         label = field.capitalize.tr('_', ' ')
         value = find_bs_field(label).value
@@ -67,7 +91,11 @@ describe 'Sample management' do
       expect(find_bs_field('Amount').value.to_f).to eq(amount)
 
       molarity = sample.molarity_value
-      expect(find_bs_field('Molarity').value.to_f).to eq(molarity)
+      # expect(find_bs_field('Molarity').value.to_f).to eq(molarity)
+      find('a#tab-density-molarity-tab-molarity').click
+      molarity_tab = find('div#tab-density-molarity-pane-molarity')
+      molarity_value = molarity_tab.first('span.input-group').find_all('input').first.value
+      expect(molarity_value.to_f).to eq(molarity)
 
       find('div.chem-identifiers-section').click
       expect(find('input#inchistringInput')[:disabled]).to eq('true')

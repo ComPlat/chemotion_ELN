@@ -96,7 +96,7 @@ const rxlSetting = () => (
 );
 
 const Setting = (props) => {
-  switch (props.template) {
+  switch (props.template.value) {
     case 'standard':
       return stdSetting(props);
     case 'spectrum':
@@ -109,7 +109,7 @@ const Setting = (props) => {
     case 'rxn_list_html':
       return rxlSetting(props);
     default:
-      return null;
+      return stdSetting(props);
   }
 };
 

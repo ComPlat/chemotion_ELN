@@ -16,8 +16,11 @@ import GenericEl from '../models/GenericEl';
 import Attachment from '../models/Attachment';
 import CopyElementModal from '../common/CopyElementModal';
 import { notification, genUnits, toBool, toNum, unitConversion } from '../../admin/generic/Utils';
+import { organizeSubValues } from '../../admin/generic/collate';
 import GenericAttachments from './GenericAttachments';
 import { SegmentTabs } from './SegmentDetails';
+import PreviewModal from './PreviewModal';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -35,6 +38,8 @@ export default class GenericElDetails extends Component {
     this.handleAttachmentDelete = this.handleAttachmentDelete.bind(this);
     this.handleAttachmentEdit = this.handleAttachmentEdit.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.handleRetriveRevision = this.handleRetriveRevision.bind(this);
+    this.handleDelRevision = this.handleDelRevision.bind(this);
   }
 
   componentDidMount() {
@@ -63,57 +68,77 @@ export default class GenericElDetails extends Component {
     }
   }
 
-  handleGenericElChanged(genericEl) {
+  handleGenericElChanged(el) {
+    const genericEl = el;
+    genericEl.changed = true;
     this.setState({ genericEl });
   }
 
   handleSelect(eventKey, type) {
     UIActions.selectTab({ tabKey: eventKey, type });
-    this.setState({
-      activeTab: eventKey
-    });
+    this.setState({ activeTab: eventKey });
+  }
+
+  handleRetriveRevision(revision, cb) {
+    const { genericEl } = this.state;
+    genericEl.properties = revision;
+    genericEl.changed = true;
+    this.setState({ genericEl, showHistory: false }, cb);
+  }
+
+  handleDelRevision(params, cb) {
+    const { genericEl } = this.state;
+    GenericElsFetcher.deleteRevisions({ id: params.id, element_id: genericEl.id, klass: 'Element' })
+      .then((response) => {
+        if (response.error) {
+          notification({ title: 'Delete Revision', lvl: 'error', msg: response.error });
+        } else {
+          cb();
+        }
+      });
   }
 
   handleReload() {
     const { genericEl } = this.state;
-    const newProps = genericEl.element_klass.properties_template.layers;
-    Object.keys(newProps).forEach((key) => {
-      const newLayer = newProps[key] || {};
-      const curFields = (genericEl.properties[key] && genericEl.properties[key].fields) || [];
+    const newProps = genericEl.element_klass.properties_release;
+    newProps.klass_uuid = genericEl.element_klass.uuid;
+    Object.keys(newProps.layers).forEach((key) => {
+      const newLayer = newProps.layers[key] || {};
+      const curFields = (genericEl.properties.layers[key] && genericEl.properties.layers[key].fields) || [];
       (newLayer.fields || []).forEach((f, idx) => {
         const curIdx = findIndex(curFields, o => o.field === f.field);
         if (curIdx >= 0) {
-          const curVal = genericEl.properties[key].fields[curIdx].value;
+          const curVal = genericEl.properties.layers[key].fields[curIdx].value;
           const curType = typeof curVal;
-          if (['select', 'text', 'textarea', 'formula-field'].includes(newProps[key].fields[idx].type)) {
-            newProps[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
+          if (['select', 'text', 'textarea', 'formula-field'].includes(newProps.layers[key].fields[idx].type)) {
+            newProps.layers[key].fields[idx].value = curType !== 'undefined' ? curVal.toString() : '';
           }
-          if (newProps[key].fields[idx].type === 'integer') {
-            newProps[key].fields[idx].value = (curType === 'undefined' || curType === 'boolean' || isNaN(curVal)) ? 0 : parseInt(curVal, 10);
+          if (newProps.layers[key].fields[idx].type === 'integer') {
+            newProps.layers[key].fields[idx].value = (curType === 'undefined' || curType === 'boolean' || isNaN(curVal)) ? 0 : parseInt(curVal, 10);
           }
-          if (newProps[key].fields[idx].type === 'checkbox') {
-            newProps[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
+          if (newProps.layers[key].fields[idx].type === 'checkbox') {
+            newProps.layers[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
           }
-          if ((newProps[key].fields[idx].type === 'drag_sample' && genericEl.properties[key].fields[curIdx].type === 'drag_sample')
-          || (newProps[key].fields[idx].type === 'drag_molecule' && genericEl.properties[key].fields[curIdx].type === 'drag_molecule')) {
-            if (typeof curVal !== 'undefined') newProps[key].fields[idx].value = curVal;
+          if ((newProps.layers[key].fields[idx].type === 'drag_sample' && genericEl.properties.layers[key].fields[curIdx].type === 'drag_sample')
+          || (newProps.layers[key].fields[idx].type === 'drag_molecule' && genericEl.properties.layers[key].fields[curIdx].type === 'drag_molecule')) {
+            if (typeof curVal !== 'undefined') newProps.layers[key].fields[idx].value = curVal;
           }
-          if (newProps[key].fields[idx].type === 'system-defined') {
-            const units = genUnits(newProps[key].fields[idx].option_layers);
+          if (newProps.layers[key].fields[idx].type === 'system-defined') {
+            const units = genUnits(newProps.layers[key].fields[idx].option_layers);
             const vs = units.find(u =>
-              u.key === genericEl.properties[key].fields[curIdx].value_system);
-            newProps[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
-            newProps[key].fields[idx].value = toNum(curVal);
+              u.key === genericEl.properties.layers[key].fields[curIdx].value_system);
+            newProps.layers[key].fields[idx].value_system = (vs && vs.key) || units[0].key;
+            newProps.layers[key].fields[idx].value = toNum(curVal);
           }
-          if (newProps[key].fields[idx].type === 'input-group') {
-            if (genericEl.properties[key].fields[curIdx].type !== newProps[key].fields[idx].type) {
-              newProps[key].fields[idx].value = undefined;
+          if (newProps.layers[key].fields[idx].type === 'input-group') {
+            if (genericEl.properties.layers[key].fields[curIdx].type !== newProps.layers[key].fields[idx].type) {
+              newProps.layers[key].fields[idx].value = undefined;
             } else {
-              const nSubs = newProps[key].fields[idx].sub_fields || [];
-              const cSubs = genericEl.properties[key].fields[curIdx].sub_fields || [];
+              const nSubs = newProps.layers[key].fields[idx].sub_fields || [];
+              const cSubs = genericEl.properties.layers[key].fields[curIdx].sub_fields || [];
               const exSubs = [];
               if (nSubs.length < 1) {
-                newProps[key].fields[idx].value = undefined;
+                newProps.layers[key].fields[idx].value = undefined;
               } else {
                 nSubs.forEach((nSub) => {
                   const hitSub = cSubs.find(c => c.id === nSub.id) || {};
@@ -123,10 +148,23 @@ export default class GenericElDetails extends Component {
                       exSubs.push(nSub);
                     } else { exSubs.push({ ...nSub, value: (hitSub.value || '').toString() }); }
                   }
-                  if (['number', 'system-defined'].includes(nSub.type)) { exSubs.push({ ...nSub, value: toNum(hitSub.value) }); }
+                  if (['number', 'system-defined'].includes(nSub.type)) {
+                    if (nSub.option_layers === hitSub.option_layers) {
+                      exSubs.push({ ...nSub, value: toNum(hitSub.value), value_system: hitSub.value_system });
+                    } else {
+                      exSubs.push({ ...nSub, value: toNum(hitSub.value) });
+                    }
+                  }
                 });
               }
-              newProps[key].fields[idx].sub_fields = exSubs;
+              newProps.layers[key].fields[idx].sub_fields = exSubs;
+            }
+          }
+          if (newProps.layers[key].fields[idx].type === 'table') {
+            if (genericEl.properties.layers[key].fields[curIdx].type !== newProps.layers[key].fields[idx].type) {
+              newProps.layers[key].fields[idx].sub_values = [];
+            } else {
+              newProps.layers[key].fields[idx].sub_values = organizeSubValues(newProps.layers[key].fields[idx], genericEl.properties.layers[key].fields[curIdx]);
             }
           }
         }
@@ -148,8 +186,8 @@ export default class GenericElDetails extends Component {
     }
     LoadingActions.start();
     genericEl.name = genericEl.name.trim();
-    (Object.keys(genericEl.properties) || {}).forEach((key) => {
-      genericEl.properties[key].fields = (genericEl.properties[key].fields || []).map((f) => {
+    (Object.keys(genericEl.properties.layers) || {}).forEach((key) => {
+      genericEl.properties.layers[key].fields = (genericEl.properties.layers[key].fields || []).map((f) => {
         const field = f;
         if (field.type === 'text' && typeof field.value !== 'undefined' && field.value != null) {
           field.value = field.value.trim();
@@ -169,15 +207,17 @@ export default class GenericElDetails extends Component {
     return true;
   }
 
-  handleSubChange(layer, obj) {
+  handleSubChange(layer, obj, valueOnly = false) {
     const { genericEl } = this.state;
     const { properties } = genericEl;
-    const subFields = properties[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
-    const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
-    subFields.splice(idxSub, 1, obj.sub);
-    properties[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
+    if (!valueOnly) {
+      const subFields = properties.layers[`${layer}`].fields.find(m => m.field === obj.f.field).sub_fields || [];
+      const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
+      subFields.splice(idxSub, 1, obj.sub);
+      properties.layers[`${layer}`].fields.find(e => e.field === obj.f.field).sub_fields = subFields;
+    }
+    properties.layers[`${layer}`].fields.find(e => e.field === obj.f.field).sub_values = obj.f.sub_values || [];
     genericEl.properties = properties;
-    genericEl.changed = true;
     this.handleGenericElChanged(genericEl);
   }
 
@@ -203,14 +243,13 @@ export default class GenericElDetails extends Component {
     if (field === 'name' && layer === '') {
       genericEl.name = value;
     } else {
-      properties[`${layer}`].fields.find(e => e.field === field).value = value;
-      if (type === 'system-defined' && (!properties[`${layer}`].fields.find(e => e.field === field).value_system || properties[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
-        const opt = properties[`${layer}`].fields.find(e => e.field === field).option_layers;
-        properties[`${layer}`].fields.find(e => e.field === field).value_system = genUnits(opt)[0].key;
+      properties.layers[`${layer}`].fields.find(e => e.field === field).value = value;
+      if (type === 'system-defined' && (!properties.layers[`${layer}`].fields.find(e => e.field === field).value_system || properties.layers[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
+        const opt = properties.layers[`${layer}`].fields.find(e => e.field === field).option_layers;
+        properties.layers[`${layer}`].fields.find(e => e.field === field).value_system = genUnits(opt)[0].key;
       }
     }
     genericEl.properties = properties;
-    genericEl.changed = true;
     this.handleGenericElChanged(genericEl);
   }
 
@@ -218,17 +257,15 @@ export default class GenericElDetails extends Component {
     const { genericEl } = this.state;
     const { properties } = genericEl;
     const newVal = unitConversion(obj.option_layers, obj.value_system, obj.value);
-    properties[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
-    properties[`${layer}`].fields.find(e => e.field === obj.field).value = newVal;
+    properties.layers[`${layer}`].fields.find(e => e.field === obj.field).value_system = obj.value_system;
+    properties.layers[`${layer}`].fields.find(e => e.field === obj.field).value = newVal;
     genericEl.properties = properties;
-    genericEl.changed = true;
     this.handleGenericElChanged(genericEl);
   }
 
   handleAttachmentDrop(files) {
     const { genericEl } = this.state;
     files.map(file => genericEl.attachments.push(Attachment.fromFile(file)));
-    genericEl.changed = true;
     this.handleGenericElChanged(genericEl);
   }
 
@@ -236,7 +273,6 @@ export default class GenericElDetails extends Component {
     const { genericEl } = this.state;
     const index = genericEl.attachments.indexOf(attachment);
     genericEl.attachments[index].is_deleted = isDelete;
-    genericEl.changed = true;
     this.handleGenericElChanged(genericEl);
   }
 
@@ -245,7 +281,6 @@ export default class GenericElDetails extends Component {
     genericEl.attachments.map((currentAttachment) => {
       if (currentAttachment.id === attachment.id) return attachment;
     });
-    genericEl.changed = true;
     this.handleGenericElChanged(genericEl);
   }
 
@@ -261,22 +296,35 @@ export default class GenericElDetails extends Component {
 
   elementalPropertiesItem(genericEl) {
     const options = [];
-    const selectOptions = (genericEl && genericEl.element_klass &&
-      genericEl.element_klass.properties_template &&
-      genericEl.element_klass.properties_template.select_options) || {};
-    const defaultName = <GenProperties label="" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
+    const defaultName = <GenProperties key={`${genericEl.id}_elementalPropertiesItem`} label="" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
     options.push(defaultName);
-
     const layersLayout = LayersLayout(
-      genericEl.properties,
-      selectOptions || {},
+      genericEl.properties.layers,
+      genericEl.properties.select_options || {},
       this.handleInputChange,
       this.handleSubChange,
       this.handleUnitClick,
       options,
       genericEl.id || 0
     );
-    return (<div style={{ marginTop: '10px' }}>{layersLayout}</div>);
+    const hisBtn = genericEl.is_new ? null : (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_history">click to view the history</Tooltip>}>
+        <Button bsSize="xsmall" className="generic_btn_default" onClick={() => this.setState({ showHistory: true })}><i className="fa fa-book" aria-hidden="true" />&nbsp;History</Button>
+      </OverlayTrigger>
+    );
+    return (
+      <div>
+        <div>
+          <ButtonToolbar style={{ margin: '5px 0px' }}>
+            <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>
+              <Button bsSize="xsmall" bsStyle="primary" onClick={() => this.handleReload()}><i className="fa fa-refresh" aria-hidden="true" />&nbsp;Reload</Button>
+            </OverlayTrigger>
+            {hisBtn}
+          </ButtonToolbar>
+        </div>
+        {layersLayout}
+      </div>
+    );
   }
 
   propertiesTab(ind) {
@@ -284,6 +332,15 @@ export default class GenericElDetails extends Component {
     return (
       <Tab eventKey={ind} title="Properties" key={`Props_${genericEl.id}`}>
         {this.elementalPropertiesItem(genericEl)}
+        <PreviewModal
+          showModal={this.state.showHistory || false}
+          fnClose={() => this.setState({ showHistory: false })}
+          fnRetrive={this.handleRetriveRevision}
+          fnDelete={this.handleDelRevision}
+          element={genericEl}
+          fetcher={GenericElsFetcher}
+          fetcherFn="fetchElementRevisions"
+        />
       </Tab>
     );
   }
@@ -363,6 +420,7 @@ export default class GenericElDetails extends Component {
   render() {
     const { genericEl } = this.state;
     const submitLabel = (genericEl && genericEl.isNew) ? 'Create' : 'Save';
+    const saveBtnDisplay = ((genericEl && genericEl.isNew) || (genericEl && genericEl.changed) || false) ? { display: '' } : { display: 'none' };
 
     let tabContents = [
       i => this.propertiesTab(i),
@@ -390,13 +448,10 @@ export default class GenericElDetails extends Component {
           </ListGroup>
           <hr />
           <ButtonToolbar>
-            <Button bsStyle="danger" onClick={() => this.handleReload()}>
-              Reload
-            </Button>
             <Button bsStyle="primary" onClick={() => DetailActions.close(genericEl, true)}>
               Close
             </Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+            <Button bsStyle="warning" onClick={() => this.handleSubmit()} style={saveBtnDisplay}>
               {submitLabel}
             </Button>
           </ButtonToolbar>

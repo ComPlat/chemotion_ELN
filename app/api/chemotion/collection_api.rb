@@ -61,7 +61,7 @@ module Chemotion
 
       desc "Return all unlocked unshared serialized collection roots of current user"
       get :roots do
-        collects = Collection.where(user_id: current_user.id).unlocked.unshared.order("id")
+        collects = Collection.where(user_id: current_user.id).unlocked.unshared.order('id')
         .select(
           <<~SQL
             id, label, ancestry, is_synchronized, permission_level, position, collection_shared_names(user_id, id) as shared_names,

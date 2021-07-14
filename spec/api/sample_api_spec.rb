@@ -289,7 +289,7 @@ describe Chemotion::SampleAPI do
             external_label: 'test extlabel',
             description: 'Test Sample',
             purity: 1,
-            solvent: '',
+            solvent: nil,
             location: '',
             density: 0.5,
             boiling_point_upperbound: 100,
@@ -317,15 +317,21 @@ describe Chemotion::SampleAPI do
 
           # TODO: Correct?
           params.delete(:container)
+          params.delete(:solvent)
           # end
 
+          puts 'TEST'
+
           params.each do |k, v|
+            puts k.to_s
             expect(s.attributes.symbolize_keys[:boiling_point].first).to eq(v) if k.to_s == 'boiling_point_upperbound'
             expect(s.attributes.symbolize_keys[:boiling_point].last).to eq(v) if k.to_s == 'boiling_point_lowerbound'
             expect(s.attributes.symbolize_keys[:melting_point].first).to eq(v) if k.to_s == 'melting_point_upperbound'
             expect(s.attributes.symbolize_keys[:melting_point].last).to eq(v) if k.to_s == 'melting_point_lowerbound'
             expect(s.attributes.symbolize_keys[k]).to eq(v) unless k.to_s.include? 'bound'
           end
+         
+          expect(s.attributes.symbolize_keys[:solvent]).to eq([])
         end
 
         it 'sets the creator' do
@@ -522,6 +528,7 @@ describe Chemotion::SampleAPI do
         end
 
         it 'is able to import new samples' do
+          # puts response.body
           expect(
             JSON.parse(response.body)['data'].collect do |e|
               [e['id'], e['name']]

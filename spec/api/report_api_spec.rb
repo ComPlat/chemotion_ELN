@@ -471,7 +471,8 @@ describe Chemotion::ReportAPI do
                           \"kind\":\"GCMS\" \
                         } \
                       ] \
-                    }"
+                    }",
+          templateId: 1
         }
       end
 

@@ -4,10 +4,10 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { Button, FormGroup, FormControl } from 'react-bootstrap';
 import GenericSubField from '../models/GenericSubField';
-import SystemSelect from '../generic/SystemSelect';
+import DefinedRenderer from '../generic/DefinedRenderer';
 
 const AddRowBtn = ({ addRow }) => (
-  <Button active onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>
+  <Button onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>
 );
 
 AddRowBtn.propTypes = { addRow: PropTypes.func.isRequired };
@@ -17,7 +17,7 @@ const DelRowBtn = ({ delRow, node }) => {
   const btnClick = () => {
     delRow(data);
   };
-  return (<Button active onClick={btnClick} bsSize="xsmall" bsStyle="danger"><i className="fa fa-trash" aria-hidden="true" /></Button>);
+  return (<Button onClick={btnClick} bsSize="xsmall"><i className="fa fa-times" aria-hidden="true" /></Button>);
 };
 
 DelRowBtn.propTypes = { delRow: PropTypes.func.isRequired, node: PropTypes.object.isRequired };
@@ -34,12 +34,6 @@ const TypeSelect = ({ selType, node }) => (
 );
 
 TypeSelect.propTypes = { selType: PropTypes.func.isRequired, node: PropTypes.object.isRequired };
-
-const SystemDefinedRenderer = (props) => {
-  const { unitConfig, node, selDefined } = props;
-  if (node.data.type === 'system-defined') return <SystemSelect unitConfig={unitConfig} selDefined={selDefined} node={node} />;
-  return node.data.value || null;
-};
 
 export default class GroupFields extends React.Component {
   constructor(props) {
@@ -102,12 +96,14 @@ export default class GroupFields extends React.Component {
         cellRendererParams: { delRow: this.delRow },
         editable: false,
         filter: false,
-        minWidth: 35,
-        width: 35,
+        minWidth: 48,
+        width: 48,
+        suppressSizeToFit: true,
+        pinned: 'left'
       },
     ];
     this.frameworkComponents = {
-      systemDefinedRenderer: SystemDefinedRenderer
+      systemDefinedRenderer: DefinedRenderer
     };
   }
 
@@ -194,19 +190,18 @@ export default class GroupFields extends React.Component {
           note: &#39;System-Defined&#39; represents the Unit field which
           has one input field and one unit converter.
         </div>
-        <div style={{ width: '100%', height: '16vh' }}>
-          <div style={{ width: '100%', height: '100%' }} className="ag-theme-balham">
-            <AgGridReact
-              enableColResize
-              columnDefs={this.columnDefs}
-              rowSelection="single"
-              onGridReady={this.onGridReady}
-              rowData={sub}
-              singleClickEdit
-              stopEditingWhenGridLosesFocus
-              frameworkComponents={this.frameworkComponents}
-            />
-          </div>
+        <div style={{ width: '100%', height: '100%' }} className="ag-theme-balham">
+          <AgGridReact
+            enableColResize
+            columnDefs={this.columnDefs}
+            rowSelection="single"
+            onGridReady={this.onGridReady}
+            rowData={sub}
+            singleClickEdit
+            stopEditingWhenGridLosesFocus
+            frameworkComponents={this.frameworkComponents}
+            domLayout="autoHeight"
+          />
         </div>
       </div>
     );

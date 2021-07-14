@@ -33,7 +33,7 @@ const spcContent = props => suiContent(props);
 const rxlContent = props => suiContent(props);
 
 const ordersContent = (props) => {
-  switch (props.template) {
+  switch (props.template.value) {
     case 'standard':
       return allContent(props);
     case 'spectrum':
@@ -46,7 +46,7 @@ const ordersContent = (props) => {
     case 'rxn_list_html':
       return rxlContent(props);
     default:
-      return null;
+      return allContent(props);
   }
 };
 

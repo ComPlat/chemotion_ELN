@@ -1,5 +1,5 @@
 import React from 'react';
-import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
+import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, Tabs, Tab } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy } from 'lodash';
@@ -10,9 +10,13 @@ import LoadingActions from '../components/actions/LoadingActions';
 import TemplateJsonModal from './generic/TemplateJsonModal';
 import LayerAttrEditModal from './generic/LayerAttrEditModal';
 import LayerAttrNewModal from './generic/LayerAttrNewModal';
+import FieldCondEditModal from './generic/FieldCondEditModal';
 import SelectAttrNewModal from './generic/SelectAttrNewModal';
+import Preview from './generic/Preview';
+import UploadModal from './generic/UploadModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
 
+const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
 export default class DatasetElementAdmin extends React.Component {
   constructor(props) {
     super(props);
@@ -28,7 +32,10 @@ export default class DatasetElementAdmin extends React.Component {
       showNewLayer: false,
       showEditLayer: false,
       showAddSelect: false,
-      showJson: false
+      showUpload: false,
+      showJson: false,
+      propTabKey: 1,
+      revisions: [],
     };
 
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -55,8 +62,19 @@ export default class DatasetElementAdmin extends React.Component {
     this.showJsonModal = this.showJsonModal.bind(this);
     this.hideJsonModal = this.hideJsonModal.bind(this);
     this.handleUpdateJson = this.handleUpdateJson.bind(this);
+    this.onShowFieldCond = this.onShowFieldCond.bind(this);
+    this.handleFieldCondClose = this.handleFieldCondClose.bind(this);
+    this.handleCond = this.handleCond.bind(this);
     this.fetchConfigs = this.fetchConfigs.bind(this);
     this.handleDeActive = this.handleDeActive.bind(this);
+    this.propTabSelect = this.propTabSelect.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.retriveRevision = this.retriveRevision.bind(this);
+    this.delRevision = this.delRevision.bind(this);
+    this.fetchRevisions = this.fetchRevisions.bind(this);
+    this.handleUploadShow = this.handleUploadShow.bind(this);
+    this.handleUploadClose = this.handleUploadClose.bind(this);
+    this.handleUploadTemplate = this.handleUploadTemplate.bind(this);
   }
 
   componentDidMount() {
@@ -71,7 +89,8 @@ export default class DatasetElementAdmin extends React.Component {
   onOptionInputChange(event, selectKey, optionKey) {
     const { element } = this.state;
     const options = (element &&
-      element.properties_template && element.properties_template.select_options[selectKey]);
+      element.properties_template && element.properties_template.select_options[selectKey]
+      && element.properties_template.select_options[selectKey].options) || [];
     const idx = findIndex(options, o => o.key === optionKey);
     const op = {};
     op.key = optionKey;
@@ -91,6 +110,10 @@ export default class DatasetElementAdmin extends React.Component {
     fields.splice(idx + 1, 0, new GenericDummy());
     element.properties_template.layers[e.l].fields = fields;
     this.setState({ element });
+  }
+
+  onShowFieldCond(field, lk) {
+    this.setState({ showFieldCond: true, fieldObj: field, layerKey: lk });
   }
 
   onFieldDrop(e) {
@@ -229,6 +252,14 @@ export default class DatasetElementAdmin extends React.Component {
     this.setState({ showPropModal: false });
   }
 
+  handleFieldCondClose() {
+    this.setState({ showFieldCond: false });
+  }
+
+  handleCond(lk) {
+    this.onShowFieldCond(null, lk);
+  }
+
   addLayer() {
     this.setState({ showNewLayer: true });
   }
@@ -249,10 +280,22 @@ export default class DatasetElementAdmin extends React.Component {
     this.setState({ showEditLayer: true, layerKey: e.layerKey });
   }
 
+  handleUploadShow() {
+    this.setState({ showUpload: true });
+  }
+
+  handleUploadClose() {
+    this.setState({ showUpload: false });
+  }
+
   newField(e) {
     const { element, newFieldKey } = this.state;
     if (newFieldKey === null || newFieldKey.trim().length === 0) {
       notification({ title: 'Add new field', lvl: 'error', msg: 'please input field name first!' });
+      return;
+    }
+    if (!validateField(newFieldKey)) {
+      notification({ title: 'Add new field', lvl: 'error', msg: 'only can be alphanumeric (a-z, A-Z, 0-9 and underscores).' });
       return;
     }
     const { layerKey } = e;
@@ -279,8 +322,9 @@ export default class DatasetElementAdmin extends React.Component {
       notification({ title: 'Add new option', lvl: 'error', msg: 'please input option name first!' });
       return;
     }
-    const selectObj = element && element.properties_template
-      && element.properties_template.select_options[key];
+    const selectObj = (element && element.properties_template
+      && element.properties_template.select_options[key]
+      && element.properties_template.select_options[key].options) || [];
     const dupops = filter(selectObj, o => o.key === newOptionKey);
     if (dupops && dupops.length > 0) {
       notification({ title: 'Add new option', lvl: 'error', msg: 'this option key is used already, please change another option key' });
@@ -288,7 +332,7 @@ export default class DatasetElementAdmin extends React.Component {
     }
     const newOption = { key: newOptionKey, label: newOptionKey };
     selectObj.push(newOption);
-    element.properties_template.select_options[key] = selectObj;
+    element.properties_template.select_options[key].options = selectObj;
     this.setState({ element });
   }
 
@@ -304,11 +348,43 @@ export default class DatasetElementAdmin extends React.Component {
     this.setState({ showAddSelect: false });
   }
 
+  fetchRevisions() {
+    const { element } = this.state;
+    if (element && element.id) {
+      AdminFetcher.fetchKlassRevisions(element.id, 'DatasetKlass')
+        .then((result) => {
+          let curr = Object.assign({}, { ...element.properties_template });
+          curr = Object.assign({}, { properties_release: curr }, { uuid: 'current' });
+          const revisions = [].concat(curr, result.revisions);
+          this.setState({ revisions });
+        });
+    }
+  }
+
+  delRevision(params) {
+    const { element } = this.state;
+    AdminFetcher.deleteKlassRevision({ id: params.id, klass_id: element.id, klass: 'DatasetKlass' })
+      .then((response) => {
+        if (response.error) {
+          notification({ title: 'Delete Revision', lvl: 'error', msg: response.error });
+        } else {
+          this.fetchRevisions();
+        }
+      });
+  }
+
+  propTabSelect(key) {
+    if (key !== 1) {
+      this.fetchRevisions();
+    }
+    this.setState({ propTabKey: key });
+  }
+
   handleAddSelect(selectName) {
     const { element } = this.state;
     if (validateSelectList(selectName, element)) {
       const sos = element.properties_template.select_options;
-      sos[selectName] = [];
+      sos[selectName] = {};
       const selectOptions = Object.keys(sos).map(key => ({ value: key, name: key, label: key }));
       this.setState({ element, showAddSelect: false, selectOptions });
     }
@@ -341,7 +417,7 @@ export default class DatasetElementAdmin extends React.Component {
   handleUpdateJson(propertiesTemplate) {
     const { element } = this.state;
     element.properties_template = propertiesTemplate;
-    this.setState({ element, showJson: false }, this.handleSubmit());
+    this.setState({ element, showJson: false }, this.handleSubmit(false));
   }
 
   handlePropShow(element) {
@@ -352,7 +428,25 @@ export default class DatasetElementAdmin extends React.Component {
     }
   }
 
-  handleSubmit() {
+  handleUploadTemplate(properties, message, valid) {
+    const { element } = this.state;
+    if (valid === false) {
+      this.setState({ showUpload: false });
+      notification({ title: `Upload Template for Dataset [${element.label}] Failed`, autoDismiss: 30, lvl: 'error', msg: message });
+    } else {
+      element.properties_template = properties;
+      this.setState({ element, showUpload: false });
+      notification({ title: `Upload template to Dataset [${element.label}]`, lvl: 'info', msg: 'The templates has been uploaded, please save it.' });
+    }
+  }
+
+  retriveRevision(revision, cb) {
+    const { element } = this.state;
+    element.properties_template = revision;
+    this.setState({ element, propTabKey: 1 }, cb);
+  }
+
+  handleSubmit(isRelease = false) {
     LoadingActions.start();
     const { element, unitsSystem } = this.state;
     Object.keys(element.properties_template.layers).forEach((key) => {
@@ -369,15 +463,20 @@ export default class DatasetElementAdmin extends React.Component {
       element.properties_template.layers[key].fields = sortedFields;
     });
 
+    element.is_release = isRelease;
     AdminFetcher.updateDatasetTemplate(element)
       .then((result) => {
         if (result.error) {
           notification({ title: `Update Dataset: [${element.label}] template fail`, lvl: 'error', msg: result.error });
         } else {
-          notification({ title: `Update Dataset: [${element.label}] template successfully`, lvl: 'info', msg: 'Saved successfully' });
-          this.setState({ element });
+          if (isRelease === true) {
+            notification({ title: `Update Dataset: [${element.label}] template`, lvl: 'info', msg: 'Saved and Released successfully' });
+          } else {
+            notification({ title: `Update Dataset: [${element.label}] template`, lvl: 'info', msg: 'Saved successfully' });
+          }
+          this.fetchElements();
+          this.setState({ element: result }, () => LoadingActions.stop());
         }
-        LoadingActions.stop();
       }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -439,7 +538,8 @@ export default class DatasetElementAdmin extends React.Component {
     const { element } = this.state;
     const selects = [];
     Object.keys(element.properties_template.select_options).forEach((key) => {
-      const soptions = element.properties_template.select_options[key] || [];
+      const soptions = (element.properties_template.select_options[key]
+      && element.properties_template.select_options[key].options) || [];
       const options = soptions.map(f => (
         <div key={`${f.key}_${key}`} style={{ marginTop: '10px' }}>
           <FormGroup bsSize="sm" controlId={`frmCtrlSelectOption_${f.key}`}>
@@ -528,9 +628,14 @@ export default class DatasetElementAdmin extends React.Component {
           onChange={(e, orig, fe, lk, fc, tp) => this.onFieldInputChange(e, orig, fe, lk, fc, tp)}
           unitsSystem={unitsSystem}
           onDummyAdd={this.onDummyAdd}
+          onShowFieldCond={(field, lk) => this.onShowFieldCond(field, lk)}
           allLayers={sortedLayers}
         />
       )) || [];
+      const hasCond = (layer && layer.cond_fields && layer.cond_fields.length > 0) || false;
+      const btnCond = hasCond ?
+        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} bs="warning" element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />) :
+        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />);
 
       const node = (
         <Panel className="panel_generic_properties" defaultExpanded key={`idxLayer_${layerKey}`}>
@@ -542,6 +647,7 @@ export default class DatasetElementAdmin extends React.Component {
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
                   <InputGroup.Button>
+                    {btnCond}
                     <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" size="sm" />
                     {this.renderDeleteButton('Layer', layerKey, null)}
                   </InputGroup.Button>
@@ -584,10 +690,10 @@ export default class DatasetElementAdmin extends React.Component {
   }
 
   renderList() {
-    const { elements } = this.state;
+    const { elements, element } = this.state;
     const tbody = elements && elements.map((e, idx) => (
       <tbody key={`tbody_${e.id}`}>
-        <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
+        <tr key={`row_${e.id}`} id={`row_${e.id}`} style={e.id === element.id ? { fontWeight: 'bold', borderWidth: 'medium', borderStyle: 'groove' } : { fontWeight: 'unset' }}>
           <td>{idx + 1}</td>
           <td>{e.label}</td>
           <td>
@@ -600,6 +706,7 @@ export default class DatasetElementAdmin extends React.Component {
             <ButtonTooltip tip="Edit Dataset template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
             <ButtonTooltip tip="Edit Dataset template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" />
           </td>
+          <td>{e.released_at} (UTC)</td>
         </tr>
       </tbody>
     ));
@@ -610,9 +717,10 @@ export default class DatasetElementAdmin extends React.Component {
             <thead>
               <tr style={{ backgroundColor: '#ddd' }}>
                 <th width="5%">#</th>
-                <th width="60%">Chemical Methods Ontology</th>
+                <th width="45%">Chemical Methods Ontology</th>
                 <th width="10%">Active</th>
                 <th width="20%">Template</th>
+                <th width="18%">Released at</th>
               </tr>
             </thead>
             { tbody }
@@ -623,26 +731,35 @@ export default class DatasetElementAdmin extends React.Component {
   }
 
   renderPropPanel() {
-    const { element, showPropModal } = this.state;
+    const { element, showPropModal, revisions, propTabKey } = this.state;
     if (showPropModal) {
       return (
-        <Panel show={showPropModal.toString()}>
-          <Panel.Heading>
-            <b>{`Properties Template of Dataset [${element.label}]: ${element.desc}`}</b>
-            <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Save template</Tooltip>}>
-              <Button className="button-right" bsSize="xs" bsStyle="primary" onClick={() => this.handleSubmit()}>
-                Save&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" />
-              </Button>
-            </OverlayTrigger>
-            <div className="clearfix" />
-          </Panel.Heading>
-          <Panel.Body>
-            <Row style={{ maxWidth: '2000px', margin: 'auto' }}>
-              <Col sm={8}>{this.renderProperties()}</Col>
-              <Col sm={4}>{this.renderSelectOptions()}</Col>
-            </Row>
-          </Panel.Body>
-        </Panel>
+        <Tabs activeKey={propTabKey} id="uncontrolled-tab-example" onSelect={this.propTabSelect}>
+          <Tab eventKey={1} title="Template">
+            <Panel show={showPropModal.toString()}>
+              <Panel.Heading>
+                <b>{`Properties Template of Dataset [${element.label}]`}</b>&nbsp;
+                <span className="generic_version">{`ver.: ${element.uuid}`}</span>
+                <span className="generic_version_draft">{element.uuid === element.properties_template.uuid ? '' : `draft: ${element.properties_template.uuid}`}</span>
+                <span className="button-right" >
+                  <ButtonTooltip txt="Save and Release" tip="Save and Release template" fnClick={() => this.handleSubmit(true)} fa="fa-floppy-o" place="top" bs="primary" />&nbsp;
+                  <ButtonTooltip txt="Save as draft" tip="Save template as draft" fnClick={() => this.handleSubmit(false)} fa="fa-floppy-o" place="top" bs="primary" />
+                </span>
+                <div className="clearfix" />
+              </Panel.Heading>
+              <Panel.Body>
+                <Row style={{ maxWidth: '2000px', margin: 'auto' }}>
+                  <Col sm={8}>{this.renderProperties()}</Col>
+                  <Col sm={4}>{this.renderSelectOptions()}</Col>
+                </Row>
+              </Panel.Body>
+            </Panel>
+          </Tab>
+          <Tab eventKey={3} title="Preview">
+            <Preview revisions={revisions} element={element} fnRetrive={this.retriveRevision} fnDelete={this.delRevision} canDL />
+          </Tab>
+        </Tabs>
+
       );
     }
     return (<div />);
@@ -652,6 +769,8 @@ export default class DatasetElementAdmin extends React.Component {
     const { element, layerKey } = this.state;
     const layer = (element && element.properties_template
       && element.properties_template.layers[layerKey]) || {};
+    const sortedLayers = (element && element.properties_template && element.properties_template.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
+
     return (
       <div>
         <div className="list-container-bottom">
@@ -673,11 +792,29 @@ export default class DatasetElementAdmin extends React.Component {
             fnClose={this.handleLayerClose}
             fnUpdate={this.handleUpdateLayer}
           />
+          <FieldCondEditModal
+            showModal={this.state.showFieldCond}
+            layer={layer}
+            allLayers={sortedLayers}
+            layerKey={this.state.layerKey}
+            updSub={this.updSubField}
+            updLayer={this.updLayerSubField}
+            field={this.state.fieldObj}
+            element={this.state.element}
+            fnClose={this.handleFieldCondClose}
+          />
           <TemplateJsonModal
             showModal={this.state.showJson}
             fnClose={this.hideJsonModal}
             fnUpdate={this.handleUpdateJson}
             element={this.state.element}
+          />
+          <UploadModal
+            content="Generic Dataset"
+            klass="DatasetKlass"
+            showModal={this.state.showUpload}
+            fnClose={this.handleUploadClose}
+            fnUpload={this.handleUploadTemplate}
           />
         </div>
         <LoadingModal />

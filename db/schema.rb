@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210416075103) do
+ActiveRecord::Schema.define(version: 20210617132532) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -131,19 +131,17 @@ ActiveRecord::Schema.define(version: 20210416075103) do
   add_index "collections", ["deleted_at"], name: "index_collections_on_deleted_at", using: :btree
   add_index "collections", ["user_id"], name: "index_collections_on_user_id", using: :btree
 
-
   create_table "collections_elements", force: :cascade do |t|
     t.integer  "collection_id"
     t.integer  "element_id"
-    t.datetime "deleted_at"
     t.string   "element_type"
+    t.datetime "deleted_at"
   end
 
   add_index "collections_elements", ["collection_id"], name: "index_collections_elements_on_collection_id", using: :btree
   add_index "collections_elements", ["deleted_at"], name: "index_collections_elements_on_deleted_at", using: :btree
   add_index "collections_elements", ["element_id", "collection_id"], name: "index_collections_elements_on_element_id_and_collection_id", unique: true, using: :btree
   add_index "collections_elements", ["element_id"], name: "index_collections_elements_on_element_id", using: :btree
-
 
   create_table "collections_reactions", force: :cascade do |t|
     t.integer  "collection_id"
@@ -258,7 +256,24 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.datetime "created_at",                                                         null: false
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string   "uuid"
+    t.jsonb    "properties_release",  default: {}
+    t.datetime "released_at"
   end
+
+  create_table "dataset_klasses_revisions", force: :cascade do |t|
+    t.integer  "dataset_klass_id"
+    t.string   "uuid"
+    t.jsonb    "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer  "released_by"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "dataset_klasses_revisions", ["dataset_klass_id"], name: "index_dataset_klasses_revisions_on_dataset_klass_id", using: :btree
 
   create_table "datasets", force: :cascade do |t|
     t.integer  "dataset_klass_id"
@@ -267,7 +282,23 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.jsonb    "properties"
     t.datetime "created_at",       null: false
     t.datetime "updated_at"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+    t.datetime "deleted_at"
   end
+
+  create_table "datasets_revisions", force: :cascade do |t|
+    t.integer  "dataset_id"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+    t.jsonb    "properties", default: {}
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "datasets_revisions", ["dataset_id"], name: "index_datasets_revisions_on_dataset_id", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -286,6 +317,35 @@ ActiveRecord::Schema.define(version: 20210416075103) do
 
   add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
 
+  create_table "device_metadata", force: :cascade do |t|
+    t.integer  "device_id"
+    t.string   "doi"
+    t.string   "url"
+    t.string   "landing_page"
+    t.string   "name"
+    t.string   "type"
+    t.string   "description"
+    t.string   "publisher"
+    t.integer  "publication_year"
+    t.jsonb    "manufacturers"
+    t.jsonb    "owners"
+    t.jsonb    "dates"
+    t.datetime "created_at",                                null: false
+    t.datetime "updated_at",                                null: false
+    t.datetime "deleted_at"
+    t.integer  "doi_sequence"
+    t.string   "data_cite_prefix"
+    t.datetime "data_cite_created_at"
+    t.datetime "data_cite_updated_at"
+    t.integer  "data_cite_version"
+    t.jsonb    "data_cite_last_response", default: {}
+    t.string   "data_cite_state",         default: "draft"
+    t.string   "data_cite_creator_name"
+  end
+
+  add_index "device_metadata", ["deleted_at"], name: "index_device_metadata_on_deleted_at", using: :btree
+  add_index "device_metadata", ["device_id"], name: "index_device_metadata_on_device_id", using: :btree
+
   create_table "element_klasses", force: :cascade do |t|
     t.string   "name"
     t.string   "label"
@@ -300,54 +360,24 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.string   "klass_prefix",        default: "E",  null: false
     t.boolean  "is_generic",          default: true, null: false
     t.integer  "place",               default: 100,  null: false
+    t.string   "uuid"
+    t.jsonb    "properties_release",  default: {}
+    t.datetime "released_at"
   end
 
-  create_table "elements", force: :cascade do |t|
-    t.string   "name"
+  create_table "element_klasses_revisions", force: :cascade do |t|
     t.integer  "element_klass_id"
-    t.jsonb    "properties"
-    t.integer  "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-    t.string   "short_label"
-  end
-
-  create_table "elements_samples", force: :cascade do |t|
-    t.integer  "element_id"
-    t.integer  "sample_id"
+    t.string   "uuid"
+    t.jsonb    "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer  "released_by"
     t.integer  "created_by"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
   end
 
-  add_index "elements_samples", ["element_id"], name: "index_elements_samples_on_element_id", using: :btree
-  add_index "elements_samples", ["sample_id"], name: "index_elements_samples_on_sample_id", using: :btree
-
-  create_table "segment_klasses", force: :cascade do |t|
-    t.integer  "element_klass_id"
-    t.string   "label",                              null: false
-    t.string   "desc"
-    t.jsonb    "properties_template"
-    t.boolean  "is_active",           default: true, null: false
-    t.integer  "place",               default: 100,  null: false
-    t.integer  "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-  end
-
-  create_table "segments", force: :cascade do |t|
-    t.integer  "segment_klass_id"
-    t.string   "element_type"
-    t.integer  "element_id"
-    t.jsonb    "properties"
-    t.integer  "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-  end
+  add_index "element_klasses_revisions", ["element_klass_id"], name: "index_element_klasses_revisions_on_element_klass_id", using: :btree
 
   create_table "element_tags", force: :cascade do |t|
     t.string   "taggable_type"
@@ -369,6 +399,45 @@ ActiveRecord::Schema.define(version: 20210416075103) do
   end
 
   add_index "elemental_compositions", ["sample_id"], name: "index_elemental_compositions_on_sample_id", using: :btree
+
+  create_table "elements", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "element_klass_id"
+    t.jsonb    "properties"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.string   "short_label"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+  end
+
+  create_table "elements_revisions", force: :cascade do |t|
+    t.integer  "element_id"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+    t.string   "name"
+    t.jsonb    "properties", default: {}
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "elements_revisions", ["element_id"], name: "index_elements_revisions_on_element_id", using: :btree
+
+  create_table "elements_samples", force: :cascade do |t|
+    t.integer  "element_id"
+    t.integer  "sample_id"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "elements_samples", ["element_id"], name: "index_elements_samples_on_element_id", using: :btree
+  add_index "elements_samples", ["sample_id"], name: "index_elements_samples_on_sample_id", using: :btree
 
   create_table "experiments", force: :cascade do |t|
     t.string   "type",                limit: 20
@@ -725,6 +794,16 @@ ActiveRecord::Schema.define(version: 20210416075103) do
   add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
   add_index "reactions_samples", ["sample_id"], name: "index_reactions_samples_on_sample_id", using: :btree
 
+  create_table "report_templates", force: :cascade do |t|
+    t.string   "name",          null: false
+    t.string   "report_type",   null: false
+    t.datetime "created_at",    null: false
+    t.datetime "updated_at",    null: false
+    t.integer  "attachment_id"
+  end
+
+  add_index "report_templates", ["attachment_id"], name: "index_report_templates_on_attachment_id", using: :btree
+
   create_table "reports", force: :cascade do |t|
     t.integer  "author_id"
     t.string   "file_name"
@@ -743,10 +822,12 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.text     "mol_serials",          default: "--- []\n"
     t.text     "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
     t.text     "prd_atts",             default: "--- []\n"
+    t.integer  "report_templates_id"
   end
 
   add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree
   add_index "reports", ["file_name"], name: "index_reports_on_file_name", using: :btree
+  add_index "reports", ["report_templates_id"], name: "index_reports_on_report_templates_id", using: :btree
 
   create_table "reports_users", force: :cascade do |t|
     t.integer  "user_id"
@@ -760,6 +841,44 @@ ActiveRecord::Schema.define(version: 20210416075103) do
   add_index "reports_users", ["deleted_at"], name: "index_reports_users_on_deleted_at", using: :btree
   add_index "reports_users", ["report_id"], name: "index_reports_users_on_report_id", using: :btree
   add_index "reports_users", ["user_id"], name: "index_reports_users_on_user_id", using: :btree
+
+  create_table "research_plan_metadata", force: :cascade do |t|
+    t.integer  "research_plan_id"
+    t.string   "doi"
+    t.string   "url"
+    t.string   "landing_page"
+    t.string   "title"
+    t.string   "type"
+    t.string   "publisher"
+    t.integer  "publication_year"
+    t.jsonb    "dates"
+    t.datetime "created_at",                                null: false
+    t.datetime "updated_at",                                null: false
+    t.datetime "deleted_at"
+    t.string   "data_cite_prefix"
+    t.datetime "data_cite_created_at"
+    t.datetime "data_cite_updated_at"
+    t.integer  "data_cite_version"
+    t.jsonb    "data_cite_last_response", default: {}
+    t.string   "data_cite_state",         default: "draft"
+    t.string   "data_cite_creator_name"
+    t.jsonb    "description"
+    t.text     "creator"
+    t.text     "affiliation"
+    t.text     "contributor"
+    t.string   "language"
+    t.text     "rights"
+    t.string   "format"
+    t.string   "version"
+    t.jsonb    "geo_location"
+    t.jsonb    "funding_reference"
+    t.text     "subject"
+    t.jsonb    "alternate_identifier"
+    t.jsonb    "related_identifier"
+  end
+
+  add_index "research_plan_metadata", ["deleted_at"], name: "index_research_plan_metadata_on_deleted_at", using: :btree
+  add_index "research_plan_metadata", ["research_plan_id"], name: "index_research_plan_metadata_on_research_plan_id", using: :btree
 
   create_table "research_plan_table_schemas", force: :cascade do |t|
     t.string   "name"
@@ -799,7 +918,7 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.integer  "molecule_id"
     t.binary   "molfile"
     t.float    "purity",                         default: 1.0
-    t.string   "solvent",                        default: ""
+    t.string   "deprecated_solvent",             default: ""
     t.string   "impurities",                     default: ""
     t.string   "location",                       default: ""
     t.boolean  "is_top_secret",                  default: false
@@ -828,6 +947,7 @@ ActiveRecord::Schema.define(version: 20210416075103) do
     t.boolean  "decoupled",                      default: false, null: false
     t.float    "molecular_mass"
     t.string   "sum_formula"
+    t.jsonb    "solvent"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
@@ -859,6 +979,62 @@ ActiveRecord::Schema.define(version: 20210416075103) do
   add_index "screens_wellplates", ["deleted_at"], name: "index_screens_wellplates_on_deleted_at", using: :btree
   add_index "screens_wellplates", ["screen_id"], name: "index_screens_wellplates_on_screen_id", using: :btree
   add_index "screens_wellplates", ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id", using: :btree
+
+  create_table "segment_klasses", force: :cascade do |t|
+    t.integer  "element_klass_id"
+    t.string   "label",                              null: false
+    t.string   "desc"
+    t.jsonb    "properties_template"
+    t.boolean  "is_active",           default: true, null: false
+    t.integer  "place",               default: 100,  null: false
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.string   "uuid"
+    t.jsonb    "properties_release",  default: {}
+    t.datetime "released_at"
+  end
+
+  create_table "segment_klasses_revisions", force: :cascade do |t|
+    t.integer  "segment_klass_id"
+    t.string   "uuid"
+    t.jsonb    "properties_release", default: {}
+    t.datetime "released_at"
+    t.integer  "released_by"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "segment_klasses_revisions", ["segment_klass_id"], name: "index_segment_klasses_revisions_on_segment_klass_id", using: :btree
+
+  create_table "segments", force: :cascade do |t|
+    t.integer  "segment_klass_id"
+    t.string   "element_type"
+    t.integer  "element_id"
+    t.jsonb    "properties"
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+  end
+
+  create_table "segments_revisions", force: :cascade do |t|
+    t.integer  "segment_id"
+    t.string   "uuid"
+    t.string   "klass_uuid"
+    t.jsonb    "properties", default: {}
+    t.integer  "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+  end
+
+  add_index "segments_revisions", ["segment_id"], name: "index_segments_revisions_on_segment_id", using: :btree
 
   create_table "subscriptions", force: :cascade do |t|
     t.integer  "channel_id"
@@ -1017,6 +1193,7 @@ ActiveRecord::Schema.define(version: 20210416075103) do
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
 
   add_foreign_key "literals", "literatures"
+  add_foreign_key "report_templates", "attachments"
 
   create_function :user_instrument, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)

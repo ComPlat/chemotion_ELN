@@ -11,10 +11,15 @@
 #  created_at       :datetime
 #  updated_at       :datetime
 #  deleted_at       :datetime
+#  uuid             :string
+#  klass_uuid       :string
 #
 
 class Segment < ActiveRecord::Base
   acts_as_paranoid
+  include GenericRevisions
+
   belongs_to :segment_klass
   belongs_to :element, polymorphic: true
+  has_many :segments_revisions, dependent: :destroy
 end

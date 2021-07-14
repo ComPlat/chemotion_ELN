@@ -17,4 +17,8 @@ class ReportSerializer < ActiveModel::Serializer
   def unread
     downloadable && !downloaded
   end
+
+  def template
+    object.report_templates_id ||= object.template
+  end
 end

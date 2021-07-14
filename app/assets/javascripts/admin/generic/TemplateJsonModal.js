@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import JSONInput from 'react-json-editor-ajrm';
 import { Form, FormGroup, Modal, Button } from 'react-bootstrap';
+import Dropzone from 'react-dropzone';
+import Utils from '../../components/utils/Functions';
 
 export default class TemplateJsonModal extends React.Component {
   constructor(props) {
@@ -56,7 +58,7 @@ export default class TemplateJsonModal extends React.Component {
     const { propertiesTemplate, isValidJson } = this.state;
     return (
       <Modal backdrop="static" dialogClassName="importChemDrawModal" show={showModal} onHide={() => this.handleClose()}>
-        <Modal.Header closeButton><Modal.Title>Template in JSON format</Modal.Title></Modal.Header>
+        <Modal.Header closeButton><Modal.Title>Template in YAML format</Modal.Title></Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
             <Form horizontal>
@@ -64,14 +66,14 @@ export default class TemplateJsonModal extends React.Component {
                 <JSONInput
                   placeholder={propertiesTemplate}
                   width="100%"
-                  height="800px"
+                  height="750px"
                   onChange={e => this.onChangeJson(e)}
                 />
               </FormGroup>
               <FormGroup>
                 <Button bsStyle="default" onClick={() => this.handleClose()}>Close&nbsp;<i className="fa fa-times" aria-hidden="true" /></Button>&nbsp;
                 <Button bsStyle="info" onClick={() => this.resetJson()}>Reset&nbsp;<i className="fa fa-repeat" aria-hidden="true" /></Button>&nbsp;
-                <Button bsStyle="warning" disabled={isValidJson} onClick={() => this.handleUpdateJson()}>Save&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" /></Button>
+                <Button bsStyle="warning" disabled={isValidJson} onClick={() => this.handleUpdateJson()}>Save&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" /></Button>&nbsp;
               </FormGroup>
             </Form>
           </div>

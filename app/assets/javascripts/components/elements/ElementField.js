@@ -1,12 +1,13 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
+import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
 import { ButtonTooltip, genUnitSup } from '../../admin/generic/Utils';
 import GroupFields from './GroupFields';
 import TextFormula from '../generic/TextFormula';
+import TableDef from '../generic/TableDef';
 
 const BaseFieldTypes = [
   { value: 'integer', name: 'integer', label: 'Integer' },
@@ -23,12 +24,14 @@ const ElementFieldTypes = [
   { value: 'drag_sample', name: 'drag_sample', label: 'Drag Sample' },
   { value: 'input-group', name: 'input-group', label: 'Input Group' },
   { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
+  { value: 'table', name: 'table', label: 'Table' },
 ];
 
 const SegmentFieldTypes = [
   { value: 'input-group', name: 'input-group', label: 'Input Group' },
   { value: 'text-formula', name: 'text-formula', label: 'Text-Formula' },
   { value: 'drag_molecule', name: 'drag_molecule', label: 'Drag Molecule' },
+  { value: 'table', name: 'table', label: 'Table' },
 ];
 
 class ElementField extends Component {
@@ -39,6 +42,7 @@ class ElementField extends Component {
     this.handelDelete = this.handelDelete.bind(this);
     this.handleMove = this.handleMove.bind(this);
     this.handleAddDummy = this.handleAddDummy.bind(this);
+    this.handleCond = this.handleCond.bind(this);
     this.updSubField = this.updSubField.bind(this);
   }
 
@@ -58,6 +62,11 @@ class ElementField extends Component {
 
   handleAddDummy(element) {
     this.props.onDummyAdd(element);
+  }
+
+  handleCond(field, lk) {
+    this.props.onShowFieldCond(field, lk);
+    //this.setState({ showFieldRestriction: true, element: element });
   }
 
   handelDelete(delStr, delKey, delRoot) {
@@ -149,6 +158,10 @@ class ElementField extends Component {
     }
     typeOpts.sort((a, b) => a.value.localeCompare(b.value));
     const f = this.props.field;
+    const hasCond = (f && f.cond_fields && f.cond_fields.length > 0) || false;
+    const btnCond = hasCond ?
+      (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(f, layerKey)} bs="warning" element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />) :
+      (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(f, layerKey)} element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />)
     const formulaField = (f.type === 'formula-field') ? (
       <FormGroup controlId="formControlFieldType">
         <Col componentClass={ControlLabel} sm={3}>Formula</Col>
@@ -186,12 +199,27 @@ class ElementField extends Component {
         </Col>
       </FormGroup>)
       : (<div />);
-    const skipRequired = ['Segment', 'Dataset'].includes(this.props.genericType) || !['integer', 'text'].includes(f.type) ? { display: 'none' } : {};
+    const skipRequired = ['Segment', 'Dataset'].includes(genericType) || !['integer', 'text'].includes(f.type) ? { display: 'none' } : {};
     const groupOptions = ['input-group'].includes(f.type) ? (
       <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
         <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
         <Col sm={9}>
           <GroupFields layerKey={layerKey} field={f} updSub={this.updSubField} unitsFields={(unitsSystem.fields || [])} />
+        </Col>
+      </FormGroup>
+    ) : null;
+    const tableOptions = ['table'].includes(f.type) ? (
+      <FormGroup controlId={`frmCtrlFid_${layerKey}_${f.field}_sub_fields`}>
+        <Col componentClass={ControlLabel} sm={3}>{' '}</Col>
+        <Col sm={9}>
+          <TableDef genericType={genericType} layerKey={layerKey} field={f} updSub={this.updSubField} unitsFields={(unitsSystem.fields || [])} />
+          <InputGroup>
+            <InputGroup.Addon>Tables per row</InputGroup.Addon>
+            <FormControl componentClass="select" defaultValue={f.cols || 1} onChange={event => this.handleChange(event, f.cols, f.field, layerKey, 'cols', f.cols)} >
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+            </FormControl>
+          </InputGroup>
         </Col>
       </FormGroup>
     ) : null;
@@ -212,6 +240,7 @@ class ElementField extends Component {
               {['dummy'].includes(f.type) ? '(dummy field)' : f.field}
             </Panel.Title>
             <ButtonGroup bsSize="xsmall">
+              {btnCond}
               <ButtonTooltip tip="Move Up" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: true }} fa="fa-arrow-up" place="top" disabled={this.props.position === 1} />
               <ButtonTooltip tip="Move Down" fnClick={this.handleMove} element={{ l: layerKey, f: f.field, isUp: false }} fa="fa-arrow-down" place="top" />
               {this.renderDeleteButton('Field', f.field, layerKey)}
@@ -246,6 +275,7 @@ class ElementField extends Component {
                     </FormGroup>)
                   }
                 { groupOptions }
+                { tableOptions }
                 { selectOptions }
                 { formulaField }
                 { textFormula }
@@ -257,7 +287,6 @@ class ElementField extends Component {
                       </Col>
                       <Col sm={9}>
                         <Checkbox
-                          inputRef={(m) => { this.accessLevelInput = m; }}
                           checked={f.required}
                           onChange={event => this.handleChange(event, f.required, f.field, layerKey, 'required', 'checkbox')}
                         />
@@ -293,6 +322,7 @@ ElementField.propTypes = {
   unitsSystem: PropTypes.object,
   onFieldSubFieldChange: PropTypes.func.isRequired,
   onDummyAdd: PropTypes.func.isRequired,
+  onShowFieldCond: PropTypes.func.isRequired,
 };
 
 ElementField.defaultProps = { genericType: 'Element', unitsSystem: [] };

@@ -383,6 +383,8 @@ class Device < User
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins, through: :users_admins, source: :admin
 
+  has_one :device_metadata, dependent: :destroy, foreign_key: :device_id
+
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :novnc, -> { joins(:profile).merge(Profile.novnc) }
 end

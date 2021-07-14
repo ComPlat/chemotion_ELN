@@ -2,12 +2,12 @@ import Element from './Element';
 
 export default class GenericDS extends Element {
   static buildEmpty(klass, containerId) {
-    const template = (klass && klass.properties_template) || {};
+    const template = (klass && klass.properties_release) || {};
     return new GenericDS({
       dataset_klass_id: klass && klass.id,
       element_type: 'Container',
       element_id: containerId,
-      properties: template.layers,
+      properties: template,
       klass_ols: klass.ols_term_id,
       klass_label: klass.label,
       changed: false

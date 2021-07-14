@@ -88,6 +88,7 @@ export default class ResearchPlan extends Element {
         this.body.push({
           id: uuidv4(),
           type: 'richtext',
+          title: 'Text',
           value: null
         });
         break;

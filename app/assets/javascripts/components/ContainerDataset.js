@@ -267,8 +267,8 @@ export default class ContainerDataset extends Component {
         newState.error = '';
         newState.showInstruments = false;
       }
-      this.setState(newState)
-    }).catch(error => console.log(error))
+      this.setState(newState);
+    }).catch(error => console.log(error));
   }
 
   handleInstrumentValueChange(event, doneInstrumentTyping) {

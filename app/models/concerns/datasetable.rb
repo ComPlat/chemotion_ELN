@@ -15,12 +15,24 @@ module Datasetable
   def save_dataset(**args)
     return if not_dataset?
 
+    klass = DatasetKlass.find_by(id: args[:dataset_klass_id])
+    uuid = SecureRandom.uuid
+    props = args[:properties]
+    props['eln'] = Chemotion::Application.config.version if props['eln'] != Chemotion::Application.config.version
     ds = Dataset.find_by(element_type: self.class.name, element_id: id)
-    if ds.present?
-      ds.update!(dataset_klass_id: args[:dataset_klass_id], properties: args[:properties])
-    else
-      Dataset.create!(dataset_klass_id: args[:dataset_klass_id], element_type: self.class.name, element_id: id, properties: args[:properties])
+    if ds.present? && (ds.klass_uuid != props['klass_uuid'] || ds.properties != props)
+      props['uuid'] = uuid
+      props['eln'] = Chemotion::Application.config.version
+      props['klass'] = 'Dataset'
+      ds.update!(uuid: uuid, dataset_klass_id: args[:dataset_klass_id], properties: props, klass_uuid: props['klass_uuid'])
     end
+    return if ds.present?
+
+    props['uuid'] = uuid
+    props['klass_uuid'] = klass.uuid
+    props['eln'] = Chemotion::Application.config.version
+    props['klass'] = 'Dataset'
+    Dataset.create!(uuid: uuid, dataset_klass_id: args[:dataset_klass_id], element_type: self.class.name, element_id: id, properties: props, klass_uuid: klass.uuid)
   end
 
   def destroy_datasetable

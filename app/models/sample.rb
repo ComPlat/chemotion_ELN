@@ -12,7 +12,7 @@
 #  molecule_id         :integer
 #  molfile             :binary
 #  purity              :float            default(1.0)
-#  solvent             :string           default("")
+#  deprecated_solvent  :string           default("")
 #  impurities          :string           default("")
 #  location            :string           default("")
 #  is_top_secret       :boolean          default(FALSE)
@@ -37,11 +37,12 @@
 #  molecule_name_id    :integer
 #  molfile_version     :string(20)
 #  stereo              :jsonb
-#  mol_rdkit           :string
 #  metrics             :string           default("mmm")
 #  decoupled           :boolean          default(FALSE), not null
 #  molecular_mass      :float
 #  sum_formula         :string
+#  solvent_old         :string
+#  solvent             :jsonb
 #
 # Indexes
 #
@@ -106,6 +107,7 @@ class Sample < ActiveRecord::Base
   # scopes for suggestions
   scope :by_residues_custom_info, ->(info, val) { joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?", "%#{sanitize_sql_like(val)}%")}
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_exact_name, ->(query) { where('name ~* :regex', regex: "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[A-Z])$") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_molecule_sum_formular, ->(query) {

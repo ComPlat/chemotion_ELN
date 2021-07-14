@@ -104,6 +104,7 @@ class API < Grape::API
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI
   mount Chemotion::ResearchPlanAPI
+  mount Chemotion::ResearchPlanMetadataAPI
   mount Chemotion::ScreenAPI
   mount Chemotion::UserAPI
   mount Chemotion::ReactionSvgAPI
@@ -116,6 +117,7 @@ class API < Grape::API
   mount Chemotion::ProfileAPI
   mount Chemotion::CodeLogAPI
   mount Chemotion::DeviceAPI
+  mount Chemotion::InboxAPI
   mount Chemotion::IconNmrAPI
   mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GateAPI
@@ -134,7 +136,8 @@ class API < Grape::API
   mount Chemotion::GenericElementAPI
   mount Chemotion::SegmentAPI
   mount Chemotion::GenericDatasetAPI
-
+  mount Chemotion::ReportTemplateAPI
+   
   add_swagger_documentation(info: {
     "title": "Chemotion ELN",
     "version": "1.0"

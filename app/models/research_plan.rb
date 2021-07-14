@@ -26,11 +26,14 @@ class ResearchPlan < ActiveRecord::Base
   after_create :create_root_container
 
   has_one :container, as: :containable
+  has_one :research_plan_metadata, dependent: :destroy, foreign_key: :research_plan_id
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
   has_many :attachments, as: :attachable
 
   before_destroy :delete_attachment
+  accepts_nested_attributes_for :collections_research_plans
+
 
   unless Dir.exists?(path = Rails.root.to_s + '/public/images/research_plans')
     Dir.mkdir path
@@ -58,6 +61,16 @@ class ResearchPlan < ActiveRecord::Base
 
   def analyses
     self.container ? self.container.analyses : Container.none
+  end
+
+  def svg_files
+    fields = body.select { |field| field['type'] == 'ketcher' }
+    svg_files = []
+    fields.each do |field|
+      svg_files << field['value']['svg_file']
+    end
+
+    svg_files
   end
 
   private

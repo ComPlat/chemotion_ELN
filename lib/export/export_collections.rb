@@ -253,8 +253,10 @@ module Export
         # fetch literature
         fetch_literals(research_plan)
 
-        # collect the svg_file
-        fetch_image('research_plans', research_plan.svg_file)
+        # collect the svg_files
+        research_plan.svg_files.each do |svg_file|
+          fetch_image('research_plans', svg_file)
+        end
       end
     end
 

@@ -2,13 +2,13 @@ import Element from './Element';
 
 export default class Segment extends Element {
   static buildEmpty(klass) {
-    const template = (klass && klass.properties_template) || {};
+    const template = (klass && klass.properties_release) || {};
     return new Segment({
       segment_klass_id: this.segment_klass_id || (klass && klass.id),
-      properties: template.layers,
+      properties: template,
       select_options: template.select_options || {},
       segment_klass: klass,
-      properties_template: []
+      properties_release: []
     });
   }
 

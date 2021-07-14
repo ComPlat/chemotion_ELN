@@ -199,7 +199,7 @@ module Chemotion
       requires :prdAtts, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :imgFormat, type: String, default: 'png', values: %w(png eps emf)
       requires :fileName, type: String, default: "ELN_Report_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S")
-      requires :template, type: String, default: "standard"
+      requires :templateId, type: Integer
       optional :fileDescription
     end
     post :reports, each_serializer: ReportSerializer do
@@ -221,7 +221,7 @@ module Chemotion
         prd_atts: prd_atts,
         objects: params[:objTags],
         img_format: params[:imgFormat],
-        template: params[:template],
+        report_templates_id: params[:templateId],
         author_id: current_user.id
       }
 

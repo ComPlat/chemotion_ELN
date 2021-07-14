@@ -183,6 +183,12 @@ module Import
           molecule_id: molecule&.id
         ))
 
+        solvent_value = fields.slice('solvent')['solvent']
+        if solvent_value.is_a? String
+          solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(solvent_value) }
+          sample['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }] if solvent.present?
+        end
+
         # for same sample_svg_file case
         s_svg_file = @svg_files.select { |s| s[:sample_svg_file] == fields.fetch('sample_svg_file') }.first
         @svg_files.push(sample_svg_file: fields.fetch('sample_svg_file'), svg_file: sample.sample_svg_file) if s_svg_file.nil?
@@ -363,16 +369,14 @@ module Import
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
           'description',
-          'sdf_file',
-          'svg_file',
+          'body',
           'created_at',
           'updated_at'
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
             'Collection', 'CollectionsResearchPlan', 'research_plan_id', 'collection_id', uuid
-          ),
-          svg_file: fetch_image('research_plans', fields.fetch('svg_file'))
+          )
         ))
 
         # add reaction to the @instances map

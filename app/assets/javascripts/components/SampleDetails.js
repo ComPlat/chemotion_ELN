@@ -68,13 +68,6 @@ import { addSegmentTabs } from './generic/SegmentDetails';
 const MWPrecision = 6;
 
 const decoupleCheck = (sample) => {
-  if (sample.decoupled && sample.sum_formula.trim() === '') {
-    NotificationActions.add({
-      title: 'Error on Sample creation', message: 'Sum formula is required!', level: 'error', position: 'tc'
-    });
-    LoadingActions.stop();
-    return false;
-  }
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
     NotificationActions.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
@@ -82,6 +75,8 @@ const decoupleCheck = (sample) => {
     LoadingActions.stop();
     return false;
   }
+  if (sample.decoupled && sample.sum_formula.trim() === '') { sample.sum_formula = 'undefined structure'; }
+  if (!sample.decoupled) { sample.sum_formula = ''; }
   return true;
 };
 

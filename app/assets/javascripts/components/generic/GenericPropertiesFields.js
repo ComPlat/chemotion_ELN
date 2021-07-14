@@ -5,6 +5,7 @@ import { filter } from 'lodash';
 import Select from 'react-select';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
+import TableRecord from './TableRecord';
 
 const GenTextFormula = (opt) => {
   const { layers } = opt;
@@ -13,9 +14,18 @@ const GenTextFormula = (opt) => {
   (opt.f_obj && opt.f_obj.text_sub_fields).map((e) => {
     const { layer, field, separator } = e;
     if (field && field !== '') {
-      const fd = ((layers[layer] || {}).fields || [])
-        .find(f => f.field === field);
-      if (fd && fd.value && fd.value !== '') { subs.push(fd.value); subs.push(separator); }
+      if (field.includes('[@@]')) {
+        const fds = field.split('[@@]');
+        if (fds && fds.length === 2) {
+          const fdt = ((layers[layer] || {}).fields || []).find(f => f.field === fds[0] && f.type === 'table');
+          ((fdt && fdt.sub_values) || []).forEach((svv) => {
+            if (svv && svv[fds[1]] && svv[fds[1]] !== '') { subs.push(svv[fds[1]]); subs.push(separator); }
+          });
+        }
+      } else {
+        const fd = ((layers[layer] || {}).fields || []).find(f => f.field === field);
+        if (fd && fd.value && fd.value !== '') { subs.push(fd.value); subs.push(separator); }
+      }
     }
     return true;
   });
@@ -236,12 +246,22 @@ const GenPropertiesSystemDefined = (opt) => {
   );
 };
 
+const GenPropertiesTable = (opt) => {
+  const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
+  return (
+    <FormGroup>
+      {fieldHeader}
+      <TableRecord key={`grid_${opt.f_obj.field}`} opt={opt} />
+    </FormGroup>
+  );
+};
+
 const GenPropertiesInputGroup = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   const fLab = e => <div key={uuid.v4()} className="form-control g_input_group_label">{e.value}</div>;
   const fTxt = e => <FormControl className="g_input_group" key={e.id} type={e.type} name={e.id} value={e.value} onChange={o => opt.onSubChange(o, e.id, opt.f_obj)} />;
   const fUnit = e => (
-    <span className="input-group" style={{ width: '100%' }}>
+    <span key={`${e.id}_GenPropertiesInputGroup`} className="input-group" style={{ width: '100%' }}>
       <FormControl key={e.id} type="number" name={e.id} value={e.value} onChange={o => opt.onSubChange(o, e.id, opt.f_obj)} min={1} />
       <InputGroup.Button>
         <Button active onClick={() => opt.onSubChange(e, e.id, opt.f_obj)} bsStyle="success">
@@ -305,5 +325,5 @@ const GenPropertiesDrop = (opt) => {
 export {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
-  GenPropertiesTextArea, GenDummy, GenTextFormula
+  GenPropertiesTextArea, GenDummy, GenTextFormula, GenPropertiesTable
 };

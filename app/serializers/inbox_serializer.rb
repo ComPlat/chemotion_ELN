@@ -29,6 +29,7 @@ class InboxSerializer < ActiveModel::Serializer
             :name => container.name,
             :container_type => container.container_type,
             :attachments => current_attachments,
+            :created_at => container.created_at,
             :children => json_tree(attachments, subcontainers).compact}
       end
   end

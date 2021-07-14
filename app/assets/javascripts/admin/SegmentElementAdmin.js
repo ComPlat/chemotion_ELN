@@ -1,5 +1,5 @@
 import React from 'react';
-import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
+import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, Tabs, Tab } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy, orderBy } from 'lodash';
@@ -10,12 +10,16 @@ import LoadingActions from '../components/actions/LoadingActions';
 import AttrNewModal from './generic/AttrNewModal';
 import AttrEditModal from './generic/AttrEditModal';
 import AttrCopyModal from './generic/AttrCopyModal';
+import FieldCondEditModal from './generic/FieldCondEditModal';
 import TemplateJsonModal from './generic/TemplateJsonModal';
 import LayerAttrEditModal from './generic/LayerAttrEditModal';
 import LayerAttrNewModal from './generic/LayerAttrNewModal';
 import SelectAttrNewModal from './generic/SelectAttrNewModal';
+import UploadModal from './generic/UploadModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
+import Preview from './generic/Preview';
 
+const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
 const validateInput = (element) => {
   if (element.klass_element === '') {
     notification({ title: 'Create Segment Error', lvl: 'error', msg: 'Please select Element.' });
@@ -46,7 +50,10 @@ export default class SegmentElementAdmin extends React.Component {
       showNewKlass: false,
       showEditKlass: false,
       showCopyKlass: false,
-      showJson: false
+      showFieldCond: false,
+      showUpload: false,
+      showJson: false,
+      propTabKey: 1
     };
 
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -79,13 +86,24 @@ export default class SegmentElementAdmin extends React.Component {
     this.onDummyAdd = this.onDummyAdd.bind(this);
     this.onFieldDrop = this.onFieldDrop.bind(this);
     this.onFieldMove = this.onFieldMove.bind(this);
+    this.onShowFieldCond = this.onShowFieldCond.bind(this);
+    this.handleFieldCondClose = this.handleFieldCondClose.bind(this);
     this.onFieldInputChange = this.onFieldInputChange.bind(this);
     this.onOptionInputChange = this.onOptionInputChange.bind(this);
     this.showJsonModal = this.showJsonModal.bind(this);
     this.hideJsonModal = this.hideJsonModal.bind(this);
     this.handleUpdateJson = this.handleUpdateJson.bind(this);
     this.fetchConfigs = this.fetchConfigs.bind(this);
+    this.handleCond = this.handleCond.bind(this);
     this.onFieldSubFieldChange = this.onFieldSubFieldChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.propTabSelect = this.propTabSelect.bind(this);
+    this.retriveRevision = this.retriveRevision.bind(this);
+    this.delRevision = this.delRevision.bind(this);
+    this.fetchRevisions = this.fetchRevisions.bind(this);
+    this.handleUploadShow = this.handleUploadShow.bind(this);
+    this.handleUploadClose = this.handleUploadClose.bind(this);
+    this.handleUploadTemplate = this.handleUploadTemplate.bind(this);
   }
 
   componentDidMount() {
@@ -100,7 +118,8 @@ export default class SegmentElementAdmin extends React.Component {
   onOptionInputChange(event, selectKey, optionKey) {
     const { element } = this.state;
     const options = (element &&
-      element.properties_template && element.properties_template.select_options[selectKey]);
+      element.properties_template && element.properties_template.select_options[selectKey]
+      && element.properties_template.select_options[selectKey].options) || [];
     const idx = findIndex(options, o => o.key === optionKey);
     const op = {};
     op.key = optionKey;
@@ -120,6 +139,10 @@ export default class SegmentElementAdmin extends React.Component {
     fields.splice(idx + 1, 0, new GenericDummy());
     element.properties_template.layers[e.l].fields = fields;
     this.setState({ element });
+  }
+
+  onShowFieldCond(field, lk) {
+    this.setState({ showFieldCond: true, fieldObj: field, layerKey: lk });
   }
 
   onFieldDrop(e) {
@@ -225,9 +248,56 @@ export default class SegmentElementAdmin extends React.Component {
     this.setState({ newOptionKey: e.target.value });
   }
 
+  retriveRevision(revision, cb) {
+    const { element } = this.state;
+    element.properties_template = revision;
+    this.setState({ element, propTabKey: 1 }, cb);
+  }
+
+  fetchRevisions() {
+    const { element } = this.state;
+    if (element && element.id) {
+      AdminFetcher.fetchKlassRevisions(element.id, 'SegmentKlass')
+        .then((result) => {
+          let curr = Object.assign({}, { ...element.properties_template });
+          curr = Object.assign({}, { properties_release: curr }, { uuid: 'current' });
+          const revisions = [].concat(curr, result.revisions);
+          this.setState({ revisions });
+        });
+    }
+  }
+
+  delRevision(params) {
+    const { element } = this.state;
+    AdminFetcher.deleteKlassRevision({ id: params.id, klass_id: element.id, klass: 'SegmentKlass' })
+      .then((response) => {
+        if (response.error) {
+          notification({ title: 'Delete Revision', lvl: 'error', msg: response.error });
+        } else {
+          this.fetchRevisions();
+        }
+      });
+  }
+
+  propTabSelect(key) {
+    if (key !== 1) {
+      this.fetchRevisions();
+    }
+    this.setState({ propTabKey: key });
+  }
+
   handlePropClose() {
     this.setState({ showPropModal: false });
   }
+
+  handleFieldCondClose() {
+    this.setState({ showFieldCond: false });
+  }
+
+  handleCond(lk) {
+    this.onShowFieldCond(null, lk);
+  }
+
 
   addLayer() {
     this.setState({ showNewLayer: true });
@@ -261,10 +331,22 @@ export default class SegmentElementAdmin extends React.Component {
     this.setState({ showCopyKlass: true, element });
   }
 
+  handleUploadShow() {
+    this.setState({ showUpload: true });
+  }
+
+  handleUploadClose() {
+    this.setState({ showUpload: false });
+  }
+
   newField(e) {
     const { element, newFieldKey } = this.state;
     if (newFieldKey === null || newFieldKey.trim().length === 0) {
-      alert('please input field name first!');
+      notification({ title: 'Add new field', lvl: 'error', msg: 'please input field name first!' });
+      return;
+    }
+    if (!validateField(newFieldKey)) {
+      notification({ title: 'Add new field', lvl: 'error', msg: 'only can be alphanumeric (a-z, A-Z, 0-9 and underscores).' });
       return;
     }
     const { layerKey } = e;
@@ -273,7 +355,7 @@ export default class SegmentElementAdmin extends React.Component {
     const fields = layer.fields || [];
     const dupfields = filter(fields, o => o.field === newFieldKey);
     if (dupfields && dupfields.length > 0) {
-      alert('this field is used already, please change a field name');
+      notification({ title: 'Add new field', lvl: 'error', msg: 'this field is used already, please change a field name' });
       return;
     }
     const newField = {
@@ -288,19 +370,20 @@ export default class SegmentElementAdmin extends React.Component {
     const { element, newOptionKey } = this.state;
 
     if (newOptionKey == null || newOptionKey.trim().length === 0) {
-      alert('please input option name first!');
+      notification({ title: 'Add new option', lvl: 'error', msg: 'please input option name first!' });
       return;
     }
-    const selectObj = element && element.properties_template
-      && element.properties_template.select_options[key];
+    const selectObj = (element && element.properties_template
+      && element.properties_template.select_options[key]
+      && element.properties_template.select_options[key].options) || [];
     const dupops = filter(selectObj, o => o.key === newOptionKey);
     if (dupops && dupops.length > 0) {
-      alert('this option key is used already, please change another option key');
+      notification({ title: 'Add new option', lvl: 'error', msg: 'this option key is used already, please change another option key' });
       return;
     }
     const newOption = { key: newOptionKey, label: newOptionKey };
     selectObj.push(newOption);
-    element.properties_template.select_options[key] = selectObj;
+    element.properties_template.select_options[key].options = selectObj;
     this.setState({ element });
   }
 
@@ -332,7 +415,7 @@ export default class SegmentElementAdmin extends React.Component {
     const { element } = this.state;
     if (validateSelectList(selectName, element)) {
       const sos = element.properties_template.select_options;
-      sos[selectName] = [];
+      sos[selectName] = {};
       const selectOptions = Object.keys(sos).map(key => ({ value: key, name: key, label: key }));
       this.setState({ element, showAddSelect: false, selectOptions });
     }
@@ -431,7 +514,7 @@ export default class SegmentElementAdmin extends React.Component {
       element,
       showJson: false
     });
-    this.handleSubmit();
+    this.handleSubmit(false);
   }
 
 
@@ -439,12 +522,21 @@ export default class SegmentElementAdmin extends React.Component {
     if (element) {
       const selectOptions = Object.keys(element.properties_template.select_options)
         .map(key => ({ value: key, name: key, label: key }));
-
       this.setState({
-        element,
-        selectOptions,
-        showPropModal: true
+        element, selectOptions, showPropModal: true, propTabKey: 1
       });
+    }
+  }
+
+  handleUploadTemplate(properties, message, valid) {
+    const { element } = this.state;
+    if (valid === false) {
+      this.setState({ showUpload: false });
+      notification({ title: `Upload Template for Segment [${element.label}] Failed`, autoDismiss: 30, lvl: 'error', msg: message });
+    } else {
+      element.properties_template = properties;
+      this.setState({ element, showUpload: false });
+      notification({ title: `Upload template to Segment [${element.label}]`, lvl: 'info', msg: 'The templates has been uploaded, please save it.' });
     }
   }
 
@@ -458,7 +550,7 @@ export default class SegmentElementAdmin extends React.Component {
     });
   }
 
-  handleSubmit() {
+  handleSubmit(isRelease = false) {
     LoadingActions.start();
     const { element, unitsSystem } = this.state;
     Object.keys(element.properties_template.layers).forEach((key) => {
@@ -469,7 +561,7 @@ export default class SegmentElementAdmin extends React.Component {
         fd.position = (idx + 1);
         if (fd.type === 'system-defined') { fd.option_layers = reUnit(unitsSystem, fd.option_layers); }
         fd.required = false;
-        if (fd.type !== 'input-group') { fd.sub_fields = []; }
+        fd.sub_fields = ['input-group', 'table'].includes(fd.type) ? fd.sub_fields : [];
         if (fd.type !== 'text-formula') { fd.text_sub_fields = []; }
         return fd;
       });
@@ -477,13 +569,20 @@ export default class SegmentElementAdmin extends React.Component {
       element.properties_template.layers[key].fields = sortedFields;
     });
 
+    element.is_release = isRelease;
+
     AdminFetcher.updateSegmentTemplate(element)
       .then((result) => {
         if (result.error) {
           notification({ title: 'Update Segment template fail', lvl: 'error', msg: result.error });
         } else {
-          notification({ title: 'Update Segment template successfully', lvl: 'info', msg: 'Saved successfully' });
-          this.setState({ element });
+          if (isRelease === true) {
+            notification({ title: 'Update Segment template', lvl: 'info', msg: 'Saved adn Released successfully' });
+          } else {
+            notification({ title: 'Update Segment template', lvl: 'info', msg: 'Saved successfully' });
+          }
+          this.fetchElements();
+          this.setState({ element: result });
         }
         LoadingActions.stop();
       }).catch((errorMessage) => {
@@ -554,8 +653,9 @@ export default class SegmentElementAdmin extends React.Component {
     const selects = [];
 
     Object.keys(element.properties_template.select_options).forEach((key) => {
-      const soptions = element.properties_template.select_options[key] || [];
-      const options = soptions.map(f => (
+      const soptions = (element.properties_template.select_options[key]
+        && element.properties_template.select_options[key].options) || [];
+      const options = (soptions || []).map(f => (
         <div key={`${f.key}_${key}`} style={{ marginTop: '10px' }}>
           <FormGroup bsSize="sm" controlId={`frmCtrlSelectOption_${f.key}_${key}`}>
             <InputGroup>
@@ -653,9 +753,15 @@ export default class SegmentElementAdmin extends React.Component {
           unitsSystem={unitsSystem}
           onFieldSubFieldChange={this.onFieldSubFieldChange}
           onDummyAdd={this.onDummyAdd}
+          onShowFieldCond={(field, lk) => this.onShowFieldCond(field, lk)}
           allLayers={sortedLayers}
         />
       )) || [];
+
+      const hasCond = (layer && layer.cond_fields && layer.cond_fields.length > 0) || false;
+      const btnCond = hasCond ?
+        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} bs="warning" element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />) :
+        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />);
 
       const node = (
         <Panel className="panel_generic_properties" defaultExpanded key={`idxLayer_${layerKey}`}>
@@ -667,6 +773,7 @@ export default class SegmentElementAdmin extends React.Component {
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
                   <InputGroup.Button>
+                    {btnCond}
                     <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" size="sm" />
                     {this.renderDeleteButton('Layer', layerKey, null)}
                   </InputGroup.Button>
@@ -713,39 +820,50 @@ export default class SegmentElementAdmin extends React.Component {
   }
 
   renderPropPanel() {
-    const { element, showPropModal } = this.state;
+    const {
+      element, showPropModal, revisions, propTabKey
+    } = this.state;
     if (showPropModal) {
       return (
-        <Panel show={showPropModal.toString()}>
-          <Panel.Heading>
-            <b>{`Properties Template of Segment [${element.label}]: ${element.desc}`}</b>
-            <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Save template</Tooltip>}>
-              <Button className="button-right" bsSize="xs" bsStyle="primary" onClick={() => this.handleSubmit()}>
-                Save&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" />
-              </Button>
-            </OverlayTrigger>
-            <div className="clearfix" />
-          </Panel.Heading>
-          <Panel.Body>
-            <Row style={{ maxWidth: '2000px', margin: 'auto' }}>
-              <Col sm={8}>{this.renderProperties()}</Col>
-              <Col sm={4}>{this.renderSelectOptions()}</Col>
-            </Row>
-          </Panel.Body>
-        </Panel>
+        <Tabs activeKey={propTabKey} id="segment-prop-tabs" onSelect={this.propTabSelect}>
+          <Tab eventKey={1} title="Template">
+            <Panel show={showPropModal.toString()}>
+              <Panel.Heading>
+                <b>{`Template of Segment [${element.label}]: ${element.desc}`}</b>&nbsp;
+                <span className="generic_version">{`ver.: ${element.uuid}`}</span>
+                <span className="generic_version_draft">{element.uuid === element.properties_template.uuid ? '' : `draft: ${element.properties_template.uuid}`}</span>
+                <span className="button-right" >
+                  <ButtonTooltip tip="Upload Segment template in JSON format" fnClick={this.handleUploadShow} element={element} place="top" fa="fa-upload" />&nbsp;
+                  <ButtonTooltip txt="Save and Release" tip="Save and Release template" fnClick={() => this.handleSubmit(true)} fa="fa-floppy-o" place="top" bs="primary" />&nbsp;
+                  <ButtonTooltip txt="Save as draft" tip="Save template as draft" fnClick={() => this.handleSubmit(false)} fa="fa-floppy-o" place="top" bs="primary" />
+                </span>
+                <div className="clearfix" />
+              </Panel.Heading>
+              <Panel.Body>
+                <Row style={{ maxWidth: '2000px', margin: 'auto' }}>
+                  <Col sm={8}>{this.renderProperties()}</Col>
+                  <Col sm={4}>{this.renderSelectOptions()}</Col>
+                </Row>
+              </Panel.Body>
+            </Panel>
+          </Tab>
+          <Tab eventKey={3} title="Preview">
+            <Preview revisions={revisions} element={element} fnRetrive={this.retriveRevision} fnDelete={this.delRevision} canDL />
+          </Tab>
+        </Tabs>
       );
     }
     return (<div />);
   }
 
   renderList() {
-    const { elements } = this.state;
+    const { elements, element } = this.state;
     const els = orderBy(elements, ['is_active', 'label'], ['desc', 'asc']);
     const tbody = els && els.map((e, idx) => (
       <tbody key={`tbody_${e.id}`}>
-        <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
+        <tr key={`row_${e.id}`} id={`row_${e.id}`} style={e.id === element.id ? { fontWeight: 'bold', borderWidth: 'medium', backgroundColor: 'white', borderStyle: 'groove' } : { fontWeight: 'unset' }}>
           <td>{idx + 1}</td>
-          <td width="12%">
+          <td>
             <ButtonTooltip tip="copy to ..." fa="fa fa-clone" element={e} fnClick={this.copyKlass} />
             &nbsp;
             <ButtonTooltip tip="Edit Segment attributes" fnClick={this.editKlass} element={e} />
@@ -763,6 +881,7 @@ export default class SegmentElementAdmin extends React.Component {
             <ButtonTooltip tip="Edit Segment template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" />
           </td>
           <td>{e.element_klass && e.element_klass.label}&nbsp;<i className={e.element_klass && e.element_klass.icon_name} /></td>
+          <td>{e.released_at} (UTC)</td>
         </tr>
       </tbody>
     ));
@@ -774,11 +893,12 @@ export default class SegmentElementAdmin extends React.Component {
               <tr style={{ backgroundColor: '#ddd' }}>
                 <th width="4%">#</th>
                 <th width="8%">Actions</th>
-                <th width="10%">Segment Label</th>
-                <th width="30%">Description</th>
+                <th width="12%">Segment Label</th>
+                <th width="20%">Description</th>
                 <th width="8%">Active</th>
-                <th width="10%">Template</th>
-                <th width="24%">Belongs to</th>
+                <th width="12%">Template</th>
+                <th width="16%">Belongs to</th>
+                <th width="18%">Released at</th>
               </tr>
             </thead>
             { tbody }
@@ -792,6 +912,9 @@ export default class SegmentElementAdmin extends React.Component {
     const { element, layerKey } = this.state;
     const layer = (element && element.properties_template
       && element.properties_template.layers[layerKey]) || {};
+
+    const sortedLayers = (element && element.properties_template && element.properties_template.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
+
     return (
       <div>
         <Button bsStyle="primary" bsSize="small" onClick={() => this.newKlass()}>
@@ -839,12 +962,30 @@ export default class SegmentElementAdmin extends React.Component {
             fnActivate={this.handleActivateKlass}
             fnUpdate={this.handleUpdateKlass}
           />
+          <FieldCondEditModal
+            showModal={this.state.showFieldCond}
+            layer={layer}
+            allLayers={sortedLayers}
+            layerKey={this.state.layerKey}
+            updSub={this.updSubField}
+            updLayer={this.updLayerSubField}
+            field={this.state.fieldObj}
+            element={this.state.element}
+            fnClose={this.handleFieldCondClose}
+          />
           <AttrCopyModal
             content="Segment"
             showModal={this.state.showCopyKlass}
             element={this.state.element}
             fnClose={this.handleCopyKlassClose}
             fnCopy={this.handleCreateKlass}
+          />
+          <UploadModal
+            content="Generic Segments"
+            klass="SegmentKlass"
+            showModal={this.state.showUpload}
+            fnClose={this.handleUploadClose}
+            fnUpload={this.handleUploadTemplate}
           />
         </div>
         <LoadingModal />

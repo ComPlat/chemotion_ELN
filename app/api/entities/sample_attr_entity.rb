@@ -63,5 +63,9 @@ module Entities
       false
     end
 
+    def solvent
+      object.solvent
+    end
+
   end
 end

@@ -48,14 +48,11 @@ export default class GenericElsFetcher {
       body: JSON.stringify(genericEl.serialize())
     }).then(response => response.json())
       .then((json) => {
-        if (newFiles.length <= 0 && delFiles.length <= 0) { return new GenericEl(json.element); }
+        if (newFiles.length <= 0 && delFiles.length <= 0) {
+          return Object.assign(new GenericEl(json.element), { attachments: json.attachments });
+        }
         return AttachmentFetcher.updateAttachables(newFiles, 'Element', json.element.id, delFiles)()
-          .then(() => {
-            const result = differenceBy(json.element.attachments, delFiles, 'id');
-            const newEl = new GenericEl(json.element);
-            newEl.attachments = concat(result, newFiles);
-            return new GenericEl(newEl);
-          });
+          .then(() => this.fetchById(json.element.id));
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
@@ -71,4 +68,24 @@ export default class GenericElsFetcher {
   static create(genericEl) {
     return this.updateOrCreate(genericEl, 'create');
   }
+
+  static fetchElementRevisions(id) {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/generic_elements/element_revisions.json?id=${id}`, requestMethod: 'GET', jsonTranformation: json => json
+    });
+  }
+
+  static deleteRevisions(params) {
+    return BaseFetcher.withBodyData({
+      apiEndpoint: '/api/v1/generic_elements/delete_revision', requestMethod: 'POST', bodyData: params, jsonTranformation: json => json
+    });
+
+  }
+
+  static fetchSegmentRevisions(id) {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/generic_elements/segment_revisions.json?id=${id}`, requestMethod: 'GET', jsonTranformation: json => json
+    });
+  }
+
 }

@@ -192,60 +192,44 @@ class ElementActions {
 
   }
 
-  // -- Collections --
-
+  // -- Generic --
   fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
     return (dispatch) => {
       GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
-        .then((result) => {
-          dispatch({ result, type: elementType });
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+        .then((result) => { dispatch({ result, type: elementType }); })
+        .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
-  generateEmptyGenericEl(collection_id, type) {
+  generateEmptyGenericEl(collectionId, type) {
     return (dispatch) => {
       GenericElsFetcher.fetchElementKlass(type)
-    .then((result) => {
-      dispatch(GenericEl.buildEmpty(collection_id, result.klass));
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-  };
+        .then((result) => { dispatch(GenericEl.buildEmpty(collectionId, result.klass)); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 
   fetchGenericElById(id, type) {
     return (dispatch) => {
       GenericElsFetcher.fetchById(id)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
   createGenericEl(params) {
     return (dispatch) => {
       GenericElsFetcher.create(params)
-      .then(result => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
   updateGenericEl(params) {
     return (dispatch) => {
       GenericElsFetcher.update(params)
-      .then(result => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 

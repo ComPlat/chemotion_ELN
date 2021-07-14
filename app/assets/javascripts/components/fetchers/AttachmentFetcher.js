@@ -18,16 +18,9 @@ export default class AttachmentFetcher {
     const promise = fetch(`/api/v1/attachments/image/${params.id}`, {
       credentials: 'same-origin',
       method: 'GET'
-    }).then((response) => {
-      return response.blob();
-    }).then((blob) => {
-      return  {
-        type:blob.type,
-        data:URL.createObjectURL(blob)
-     };
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then(response => response.blob())
+      .then(blob => ({ type: blob.type, data: URL.createObjectURL(blob) }))
+      .catch((errorMessage) => { console.log(errorMessage); });
     return promise;
   }
 
@@ -149,11 +142,7 @@ export default class AttachmentFetcher {
         } else {
           msg += response.statusText;
         }
-        NotificationActions.add({
-          message: msg,
-          level: 'error',
-          position: 'tc'
-        });
+        NotificationActions.add({ message: msg, level: 'error', position: 'tc' });
       }
     });
   }
@@ -277,33 +266,31 @@ export default class AttachmentFetcher {
     });
   }
 
-  static downloadZipBySample(sample_id){
-    let file_name = 'dataset.zip'
-    return fetch(`/api/v1/attachments/sample_analyses/${sample_id}`, {
+  static downloadZipBySample(sampleId) {
+    let fileName = 'dataset.zip';
+    return fetch(`/api/v1/attachments/sample_analyses/${sampleId}`, {
       credentials: 'same-origin',
       method: 'GET',
     }).then((response) => {
-      const disposition = response.headers.get('Content-Disposition')
+      const disposition = response.headers.get('Content-Disposition');
       if (disposition && disposition.indexOf('attachment') !== -1) {
-        let filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        let matches = filenameRegex.exec(disposition);
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(disposition);
         if (matches != null && matches[1]) {
-          file_name = matches[1].replace(/['"]/g, '');
+          fileName = matches[1].replace(/['"]/g, '');
         }
       }
-      return response.blob()
+      return response.blob();
     }).then((blob) => {
-      const a = document.createElement("a");
-      a.style = "display: none";
+      const a = document.createElement('a');
+      a.style = 'display: none';
       document.body.appendChild(a);
-      let url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
       a.href = url;
-      a.download = file_name
+      a.download = fileName;
       a.click();
       window.URL.revokeObjectURL(url);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static saveSpectrum(attId, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred) {
