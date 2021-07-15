@@ -147,13 +147,13 @@ group :development, :test do
   gem 'pry-byebug'
   gem 'pry-rails'
 
+  gem 'puma'
+
   gem 'rspec-rails'
   gem 'ruby_jard'
   gem 'rubyXL', '3.3.26'
 
   gem 'spring'
-
-  gem 'thin'
 end
 
 group :test do
