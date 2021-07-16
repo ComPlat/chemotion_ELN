@@ -21,7 +21,7 @@ describe 'Collection management' do
       # input collection name
       factory_collection_name = 'Hello Collection'
 
-      new_collection = find('input.collection-label.form-control:last-of-type')
+      new_collection = all('input.collection-label.form-control:last-of-type').last
       new_collection.click
       new_collection.set(factory_collection_name)
 
