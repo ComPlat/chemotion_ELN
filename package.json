@@ -8,8 +8,7 @@
     "@babel/polyfill": "^7.10.4",
     "@babel/preset-env": "^7.11.0",
     "@babel/preset-react": "7.10.4",
-    "@citation-js/core": "^0.5.1",
-    "@citation-js/plugin-isbn": "^0.2.1",
+    "@citation-js/plugin-isbn": "^0.3.0",
     "@complat/chem-spectra-client": "^0.10.12",
     "@complat/react-spectra-editor": "^0.10.12",
     "@novnc/novnc": "^1.2.0",
@@ -26,6 +25,7 @@
     "base-64": "^0.1.0",
     "browserify": "^17.0.0",
     "browserify-incremental": "^3.1.1",
+    "citation-js": "^0.5.1",
     "classnames": "^2.2.5",
     "clipboard": "^1.5.12",
     "commonmark": "^0.28.1",
@@ -153,8 +153,5 @@
     "presets": [
       "./node_modules/@rails/webpacker/package/babel/preset.js"
     ]
-  },
-  "browserslist": [
-    "defaults"
-  ]
+  }
 }
