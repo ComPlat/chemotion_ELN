@@ -15,13 +15,7 @@ import {
   Tooltip
 } from 'react-bootstrap';
 import Immutable from 'immutable';
-
-const  CiteCore = require('@citation-js/core');
-
-import {
-  uniqBy
-} from 'lodash';
-
+import { uniqBy } from 'lodash';
 import {
   Citation,
   CitationUserRow,
@@ -30,7 +24,6 @@ import {
   AddButton,
   LiteratureInput,
   sortByElement,
-  sortByReference,
   LiteralType,
   literatureContent
 } from './LiteratureCommon';
@@ -39,12 +32,12 @@ import LiteratureMap from './models/LiteratureMap';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
 import UIStore from './stores/UIStore';
 import UserStore from './stores/UserStore';
-import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
 import PanelHeader from './common/PanelHeader';
 import { stopEvent } from './utils/DomHelper';
 import NotificationActions from './actions/NotificationActions';
 
+const Cite = require('citation-js');
 
 const CloseBtn = ({ onClose }) => (
   <Button
@@ -114,23 +107,18 @@ ElementTypeLink.defaultProps = {
   type: 'sample'
 };
 
-
 const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
   <Table>
-    <thead><tr>
-      <th width="10%"></th>
-      <th width="10%"></th>
-      <th width="10%"></th>
-    </tr></thead>
+    <thead><tr><th width="10%" /><th width="10%" /><th width="10%" /></tr></thead>
     <tbody>
       {sortedIds.map((id, k, ids) => {
-        const citation = rows.get(id)
-        const prevCit = (k > 0) ? rows.get(ids[k-1]) : null
-        const sameRef = prevCit && prevCit.id === citation.id
-        const sameElement = prevCit && prevCit.element_id === citation.element_id &&  prevCit.element_type === citation.element_type
+        const citation = rows.get(id);
+        const prevCit = (k > 0) ? rows.get(ids[k - 1]) : null;
+        const sameRef = prevCit && prevCit.id === citation.id;
+        const sameElement = prevCit && prevCit.element_id === citation.element_id &&  prevCit.element_type === citation.element_type;
         return sameRef && sameElement ? (
           <tr key={`header-${id}-${citation.id}`} className={`collapse cit_${citation.id}-${citation.element_type}_${citation.element_id}`}>
-            <td/>
+            <td />
             <td className="padding-right">
               <CitationUserRow literature={citation} userId={userId} />
             </td>
@@ -146,9 +134,9 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
           </tr>
         ) : (
           <tr key={id} className={``}>
-            <td>{sameElement ? null : <ElementLink literature={citation}/>}</td>
+            <td>{sameElement ? null : <ElementLink literature={citation} />}</td>
             <td className="padding-right">
-              <Citation literature={citation}/>
+              <Citation literature={citation} />
             </td>
             <td>
               <Button
@@ -214,10 +202,6 @@ export default class LiteratureDetails extends Component {
     this.clipboard.destroy();
     UIStore.unlisten(this.handleUIStoreChange);
   }
-  // shouldComponentUpdate(nextProps, nextState){
-  //   console.log(nextState);
-  //   return true;
-  // }
 
   onClose() {
     DetailActions.close(this.props.literatureMap, true);
@@ -303,7 +287,7 @@ export default class LiteratureDetails extends Component {
       case 'litype':
         literature.litype = value;
         break;
-        default:
+      default:
         break;
     }
     this.setState(prevState => ({ ...prevState, literature }));
@@ -335,10 +319,10 @@ export default class LiteratureDetails extends Component {
   fetchDOIMetadata() {
     const { doi } = this.state.literature;
     NotificationActions.removeByUid('literature');
-    CiteCore.Cite.async(sanitizeDoi(doi)).then((json) => {
-      if (json[0]) {
-        const citation = new CiteCore.Cite(json[0]);
-        const { title, year } = json[0];
+    Cite.async(sanitizeDoi(doi)).then((json) => {
+      if (json.data && json.data.length > 0) {
+        const citation = new Cite(json.data[0]);
+        const { title, year } = json.data[0];
         this.setState(prevState => ({
           ...prevState,
           literature: {
@@ -353,7 +337,7 @@ export default class LiteratureDetails extends Component {
         }));
         this.handleLiteratureAdd(this.state.literature);
       }
-    }).catch((errorMessage) => {
+    }).catch(() => {
       const notification = {
         title: 'Add References for selected Elements',
         message: `unable to fetch metadata for this doi: ${doi}`,
@@ -369,10 +353,8 @@ export default class LiteratureDetails extends Component {
 
   render() {
     const {
-      collectionRefs,
       sampleRefs,
       reactionRefs,
-      // researchPlanRefs
       selectedRefs,
       sortedIds,
       currentCollection,
@@ -405,12 +387,10 @@ export default class LiteratureDetails extends Component {
         className="format-analysis-panel"
       >
         <Panel.Heading>
-          {
-            <PanelHeader
-              title={`Literature Management for collection '${label}'`}
-              btns={[<CloseBtn key="close tab" onClose={this.onClose} />]}
-            />
-          }
+          <PanelHeader
+            title={`Literature Management for collection '${label}'`}
+            btns={[<CloseBtn key="close tab" onClose={this.onClose} />]}
+          />
         </Panel.Heading>
         <Panel.Body>
           <PanelGroup accordion defaultActiveKey="1">
@@ -533,8 +513,6 @@ export default class LiteratureDetails extends Component {
           </PanelGroup>
         </Panel.Body>
       </Panel>
-
-
     );
   }
 }
