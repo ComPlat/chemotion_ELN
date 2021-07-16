@@ -127,10 +127,10 @@
       "position": 80,
       "placeholder": "duration",
       "units": [
-        { "key": "d", "label": "day(s)", "nm": 1 },
-        { "key": "h", "label": "hour(s)", "nm": 24 },
-        { "key": "min", "label": "min(s)", "nm": 1440 },
-        { "key": "s", "label": "sec(s)", "nm": 86400 }
+        { "key": "d", "label": "d", "nm": 1 },
+        { "key": "h", "label": "h", "nm": 24 },
+        { "key": "min", "label": "m", "nm": 1440 },
+        { "key": "s", "label": "s", "nm": 86400 }
       ]
     },
     {

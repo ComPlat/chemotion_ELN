@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { findIndex, cloneDeep } from 'lodash';
 import { Panel, Button, ButtonToolbar, OverlayTrigger, Tooltip, Tab } from 'react-bootstrap';
 import UserStore from '../stores/UserStore';
-import { LayersLayout } from './GenericElCommon';
+import { LayersLayout, UploadInputChange } from './GenericElCommon';
 import Segment from '../models/Segment';
 import MatrixCheck from '../common/MatrixCheck';
 import { notification, genUnits, toBool, toNum, unitConversion } from '../../admin/generic/Utils';
@@ -81,7 +81,7 @@ const SegmentTabs = (element, onChange, init = 0) => {
 class SegmentDetails extends Component {
   constructor(props) {
     super(props);
-    this.state = { showHistory: false };
+    this.state = { showHistory: false, showReload: false };
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSubChange = this.handleSubChange.bind(this);
     this.handleUnitClick = this.handleUnitClick.bind(this);
@@ -120,6 +120,16 @@ class SegmentDetails extends Component {
           value = event;
         }
         break;
+      case 'upload': {
+        const vals = UploadInputChange(properties, event, field, layer);
+        value = vals[0];
+        if (vals[1].length > 0) segment.files = (segment.files || []).concat(vals[1]);
+        if (vals.length > 2) {
+          const fileIdx = findIndex((segment.files || []), o => o.uid === event.uid);
+          if (fileIdx >= 0 && segment.files && segment.files.length > 0) segment.files.splice(fileIdx, 1);
+        }
+        break;
+      }
       case 'select':
         value = event ? event.value : null;
         break;
@@ -202,15 +212,23 @@ class SegmentDetails extends Component {
                   }
 
                   if (['number', 'system-defined'].includes(nSub.type)) {
+                    const nvl = (typeof hitSub.value === 'undefined' || hitSub.value == null || hitSub.value.length === 0) ? '' : toNum(hitSub.value);
                     if (nSub.option_layers === hitSub.option_layers) {
-                      exSubs.push({ ...nSub, value: toNum(hitSub.value), value_system: hitSub.value_system });
+                      exSubs.push({ ...nSub, value: nvl, value_system: hitSub.value_system });
                     } else {
-                      exSubs.push({ ...nSub, value: toNum(hitSub.value) });
+                      exSubs.push({ ...nSub, value: nvl });
                     }
                   }
                 });
               }
               newProps.layers[key].fields[idx].sub_fields = exSubs;
+            }
+          }
+          if (newProps.layers[key].fields[idx].type === 'upload') {
+            if (segment.properties.layers[key].fields[curIdx].type === newProps.layers[key].fields[idx].type) {
+              newProps.layers[key].fields[idx].value = segment.properties.layers[key].fields[curIdx].value;
+            } else {
+              newProps.layers[key].fields[idx].value = {};
             }
           }
           if (newProps.layers[key].fields[idx].type === 'table') {
@@ -259,12 +277,18 @@ class SegmentDetails extends Component {
   }
 
   render() {
-    const { segment } = this.props;
+    const { segment, klass } = this.props;
     const hisBtn = segment.is_new ? null : (
       <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_history">click to view the history</Tooltip>}>
         <Button bsSize="xsmall" className="generic_btn_default" onClick={() => this.setState({ showHistory: true })}><i className="fa fa-book" aria-hidden="true" />&nbsp;History</Button>
       </OverlayTrigger>
     );
+    const reloadBtn = (segment && (typeof segment.klass_uuid === 'undefined' || segment.klass_uuid === klass.uuid || segment.is_new)) ? null : (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>
+        <Button bsSize="xsmall" bsStyle="primary" onClick={() => this.handleReload()}><i className="fa fa-refresh" aria-hidden="true" />&nbsp;Reload</Button>
+      </OverlayTrigger>
+    );
+
     const hisModal = segment.is_new ? null : (
       <PreviewModal
         showModal={this.state.showHistory || false}
@@ -279,9 +303,7 @@ class SegmentDetails extends Component {
     return (
       <div>
         <ButtonToolbar style={{ margin: '5px 0px' }}>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>
-            <Button bsSize="xsmall" bsStyle="primary" onClick={() => this.handleReload()}><i className="fa fa-refresh" aria-hidden="true" />&nbsp;Reload</Button>
-          </OverlayTrigger>
+          {reloadBtn}
           {hisBtn}
         </ButtonToolbar>
         <Panel>

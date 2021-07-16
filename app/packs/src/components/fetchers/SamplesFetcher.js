@@ -5,7 +5,7 @@ import UIStore from '../stores/UIStore';
 import NotificationActions from '../actions/NotificationActions';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
-
+import GenericElsFetcher from './GenericElsFetcher';
 
 import Container from '../models/Container';
 
@@ -62,53 +62,44 @@ export default class SamplesFetcher {
   }
 
   static update(sample) {
-    let files = AttachmentFetcher.getFileListfrom(sample.container)
-    let promise = ()=> fetch('/api/v1/samples/' + sample.id, {
+    const files = AttachmentFetcher.getFileListfrom(sample.container);
+    const promise = ()=> fetch(`/api/v1/samples/${sample.id}`, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sample.serialize())
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return new Sample(json.sample);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    if(files.length > 0) {
+    }).then(response => response.json())
+      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
+        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    if (files.length > 0) {
       return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
-    } else {
-      return promise()
     }
-
+    return promise();
   }
 
   static create(sample) {
-    let files = AttachmentFetcher.getFileListfrom(sample.container)
-    let promise = ()=> fetch('/api/v1/samples', {
+    const files = AttachmentFetcher.getFileListfrom(sample.container);
+    const promise = () => fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(sample.serialize())
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return new Sample(json.sample);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    if(files.length > 0) {
+    }).then(response => response.json())
+      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
+        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    if (files.length > 0) {
       return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
-    } else {
-      return promise()
     }
+    return promise();
   }
 
   static splitAsSubsamples(params) {

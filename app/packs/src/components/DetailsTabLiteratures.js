@@ -1,29 +1,10 @@
+/* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Table,
-  ListGroup,
-  ListGroupItem,
-  Button,
-  Row,
-  Col,
-  Glyphicon,
-  OverlayTrigger,
-  Tooltip
-} from 'react-bootstrap';
+import { ListGroup, ListGroupItem, Button, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
-import {
-  Citation,
-  CitationUserRow,
-  doiValid,
-  sanitizeDoi,
-  groupByCitation,
-  AddButton,
-  LiteratureInput,
-  LiteralType,
-  literatureContent
-} from './LiteratureCommon';
+import { Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType } from './LiteratureCommon';
 import Sample from './models/Sample';
 import Reaction from './models/Reaction';
 import ResearchPlan from './models/ResearchPlan';
@@ -32,107 +13,14 @@ import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
 import UserStore from './stores/UserStore';
 import NotificationActions from './actions/NotificationActions';
 import LoadingActions from './actions/LoadingActions';
+import CitationTable from './CitationTable';
 
-const CiteCore = require('@citation-js/core');
+const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
 
 const notification = message => ({
-  title: 'Add Literature',
-  message,
-  level: 'error',
-  dismissible: 'button',
-  autoDismiss: 5,
-  position: 'tr',
-  uid: uuid.v4()
+  title: 'Add Literature', message, level: 'error', dismissible: 'button', autoDismiss: 5, position: 'tr', uid: uuid.v4()
 });
-
-const clipboardTooltip = () => {
-  return (
-    <Tooltip id="assign_button">copy to clipboard</Tooltip>
-  )
-}
-
-const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
-  <Table>
-    <thead><tr>
-      <th width="90%"></th>
-      <th width="10%"></th>
-    </tr></thead>
-    <tbody>
-      {sortedIds.map((id, k, ids) => {
-        const citation = rows.get(id)
-        const prevCit = (k > 0) ? rows.get(ids[k-1]) : null
-        const sameRef = prevCit && prevCit.id === citation.id
-        const content = literatureContent(citation, true);
-        return sameRef ? (
-          <tr key={`header-${id}-${citation.id}`} className={`collapse literature_id_${citation.id}`}>
-            <td className="padding-right">
-              <CitationUserRow literature={citation} userId={userId} />
-            </td>
-            <td>
-              <Button
-                bsSize="small"
-                bsStyle="danger"
-                onClick={() => removeCitation(citation)}
-              >
-                <i className="fa fa-trash-o" />
-              </Button>
-            </td>
-          </tr>
-        ) : (
-          <tr key={id} className={``}>
-            <td className="padding-right">
-              <Citation literature={citation}/>
-            </td>
-            <td>
-              <Button
-                data-toggle="collapse"
-                data-target={`.literature_id_${citation.id}`}
-                bsSize="sm"
-              >
-                <Glyphicon
-                  glyph={   true  ? 'chevron-right' : 'chevron-down' }
-                  title="Collapse/Uncollapse"
-                  // onClick={() => this.collapseSample(sampleCollapseAll)}
-                  style={{
-                    // fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#337ab7',
-                    top: 0
-                  }}
-                />
-              </Button>
-              <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                <Button bsSize="small" active className="clipboardBtn" data-clipboard-text={content} >
-                  <i className="fa fa-clipboard" aria-hidden="true" />
-                </Button>
-              </OverlayTrigger>
-            </td>
-          </tr>
-        );
-      })}
-    </tbody>
-  </Table>
-);
-CitationTable.propTypes = {
-  rows: PropTypes.instanceOf(Immutable.Map),
-  sortedIds: PropTypes.array,
-  userId: PropTypes.number,
-  removeCitation: PropTypes.func
-};
-
-CitationTable.defaultProps = {
-  rows: new Immutable.Map(),
-  sortedIds: [],
-  userId: 0
-};
-
-const sameConseqLiteratureId = (citations, sortedIds, i) => {
-  if (i === 0) { return false; }
-  const a = citations.get(sortedIds[i])
-  const b = citations.get(sortedIds[i-1])
-  return (a.id === b.id)
-};
 
 const checkElementStatus = (element) => {
   const type = element.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -198,9 +86,7 @@ export default class DetailsTabLiteratures extends Component {
       }));
       if (element.type === 'reaction') {
         element.literatures = element.literatures && element.literatures.delete(literature.literal_id);
-        this.setState({
-          reaction: element
-        })
+        this.setState({ reaction: element });
       }
     } else {
       LiteraturesFetcher.deleteElementReference({ element, literature })
@@ -216,10 +102,10 @@ export default class DetailsTabLiteratures extends Component {
 
   handleLiteratureAdd(literature) {
     const { element } = this.props;
-    if (!checkElementStatus(element)) {
-      return;
-    }
-    const { doi, url, title, isbn } = literature;
+    if (!checkElementStatus(element)) { return; }
+    const {
+      doi, url, title, isbn
+    } = literature;
     if (element.isNew === true && element.type === 'reaction'
     && element.literatures && element.literatures.size > 0) {
       const newlit = {
@@ -263,9 +149,7 @@ export default class DetailsTabLiteratures extends Component {
 
   fetchMetadata() {
     const { element } = this.props;
-    if (!checkElementStatus(element)) {
-      return;
-    }
+    if (!checkElementStatus(element)) { return; }
     const { doi_isbn } = this.state.literature;
     if (doiValid(doi_isbn)) {
       this.fetchDOIMetadata(doi_isbn);
@@ -277,27 +161,24 @@ export default class DetailsTabLiteratures extends Component {
   fetchDOIMetadata(doi) {
     NotificationActions.removeByUid('literature');
     LoadingActions.start();
-    CiteCore.Cite.async(sanitizeDoi(doi)).then((json) => {
+    Cite.async(sanitizeDoi(doi)).then((json) => {
       LoadingActions.stop();
-      if (json[0]) {
-        const citation = new CiteCore.Cite(json[0]);
-        const { title, year } = json[0];
+      if (json.data && json.data.length > 0) {
+        const data = json.data[0];
+        const citation = new Cite(data);
         this.setState(prevState => ({
           ...prevState,
           literature: {
             ...prevState.literature,
             doi,
-            title,
-            year,
-            refs: {
-              citation,
-              bibtex: citation.format('bibtex')
-            }
+            title: data.title || '',
+            year: (data && data.issued && data.issued['date-parts'][0]) || '',
+            refs: { citation, bibtex: citation.format('bibtex') }
           }
         }));
         this.handleLiteratureAdd(this.state.literature);
       }
-    }).catch((errorMessage) => {
+    }).catch(() => {
       LoadingActions.stop();
       NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}`));
     });
@@ -306,27 +187,25 @@ export default class DetailsTabLiteratures extends Component {
   fetchISBNMetadata(isbn) {
     NotificationActions.removeByUid('literature');
     LoadingActions.start();
-    CiteCore.Cite.async(isbn).then((json) => {
+    Cite.async(isbn).then((json) => {
       LoadingActions.stop();
       if (json.data && json.data.length > 0) {
-        const citation = new CiteCore.Cite(json.data);
+        const data = json.data[0];
+        const citation = new Cite(data);
         this.setState(prevState => ({
           ...prevState,
           literature: {
             ...prevState.literature,
             isbn,
-            title: json.data[0].title || '',
-            year: (json.data[0] && json.data[0].issued && json.data[0].issued['date-parts'][0]) || '',
-            url: (json.data[0] && json.data[0].URL) || '',
-            refs: {
-              citation,
-              bibtex: citation.format('bibtex')
-            }
+            title: data.title || '',
+            year: (data && data.issued && data.issued['date-parts'][0]) || '',
+            url: (data && data.URL) || '',
+            refs: { citation, bibtex: citation.format('bibtex') }
           }
         }));
         this.handleLiteratureAdd(this.state.literature);
       }
-    }).catch((errorMessage) => {
+    }).catch(() => {
       LoadingActions.stop();
       NotificationActions.add(notification(`unable to fetch metadata for this ISBN: ${isbn}`));
     });

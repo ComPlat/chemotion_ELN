@@ -12,7 +12,7 @@ import Utils from '../../components/utils/Functions';
 export default class Preview extends Component {
   constructor(props) {
     super(props);
-    this.state = { revisions: [], compareUUID: 'current' };
+    this.state = { revisions: [], compareUUID: 'current', fullScreen: false };
     this.compare = this.compare.bind(this);
     this.setRevision = this.setRevision.bind(this);
     this.delRevision = this.delRevision.bind(this);
@@ -21,6 +21,7 @@ export default class Preview extends Component {
     this.handleSubChange = this.handleSubChange.bind(this);
     this.handleUnitClick = this.handleUnitClick.bind(this);
     this.dlRevision = this.dlRevision.bind(this);
+    this.setScreen = this.setScreen.bind(this);
   }
 
   componentDidMount() {
@@ -37,6 +38,10 @@ export default class Preview extends Component {
 
   setRevision(revisions) {
     this.setState({ revisions });
+  }
+
+  setScreen(fullScreen) {
+    this.setState({ fullScreen });
   }
 
   compare(params) {
@@ -69,7 +74,6 @@ export default class Preview extends Component {
     const href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(revision.properties_release))}`;
     Utils.downloadFile({ contents: href, name: `${props.klass}_${element.label}_${revision.uuid}.json` });
     LoadingActions.stop();
-
   }
 
   handleInputChange(event, field, layer, type = 'text') {
@@ -127,7 +131,7 @@ export default class Preview extends Component {
   }
 
   render() {
-    const { compareUUID, revisions } = this.state;
+    const { compareUUID, revisions, fullScreen } = this.state;
     const { src, canDL } = this.props;
     const t = (v, idx) => {
       const s = v.uuid === compareUUID ? 'generic_block_select' : '';
@@ -174,13 +178,17 @@ export default class Preview extends Component {
       selected.uuid || 0
     );
 
+    const his = fullScreen ? null : (<Col md={4}>{revisions.map((r, idx) => (t(r, idx)))}</Col>);
+    const contentCol = fullScreen ? 12 : 8;
+    const screenFa = fullScreen ? 'compress' : 'expand';
     return (
       <div>
-        <Col md={4}>
-          {revisions.map((r, idx) => (t(r, idx)))}
-        </Col>
-        <Col md={8}>
-          <div style={{ margin: '10px 0px' }}><Badge style={{ backgroundColor: '#ffc107', color: 'black' }}><i className="fa fa-exclamation-circle" aria-hidden="true" />&nbsp;Sketch Map, the data input here will not be saved.</Badge></div>
+        {his}
+        <Col md={contentCol}>
+          <div style={{ margin: '10px 0px' }}>
+            <div style={{ float: 'right' }}><ButtonTooltip tip={screenFa} fnClick={this.setScreen} element={!this.state.fullScreen} fa={`fa-${screenFa}`} place="left" bs="default" /></div>
+            <Badge style={{ backgroundColor: '#ffc107', color: 'black' }}><i className="fa fa-exclamation-circle" aria-hidden="true" />&nbsp;Sketch Map, the data input here will not be saved.</Badge>
+          </div>
           <div style={{ width: '100%', minHeight: '50vh' }}>{layersLayout}</div>
         </Col>
       </div>

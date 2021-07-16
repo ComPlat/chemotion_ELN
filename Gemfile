@@ -51,7 +51,7 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', '~> 0.1.11', git: 'https://github.com/complat/ketcher-rails.git', ref: '1dbb0514f2edc600ecf5f3b963a3116155a7c577'
+gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git'
 
 gem 'net-sftp'
 gem 'net-ssh'
@@ -147,13 +147,13 @@ group :development, :test do
   gem 'pry-byebug'
   gem 'pry-rails'
 
+  gem 'puma'
+
   gem 'rspec-rails'
   gem 'ruby_jard'
   gem 'rubyXL', '3.3.26'
 
   gem 'spring'
-
-  gem 'thin'
 end
 
 group :test do

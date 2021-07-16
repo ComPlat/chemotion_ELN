@@ -3,6 +3,8 @@ import Wellplate from '../models/Wellplate';
 import UIStore from '../stores/UIStore';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
+import GenericElsFetcher from './GenericElsFetcher';
+
 export default class WellplatesFetcher {
   static fetchById(id) {
     let promise = fetch('/api/v1/wellplates/' + id + '.json', {
@@ -41,57 +43,46 @@ export default class WellplatesFetcher {
   }
 
   static update(params) {
-
     const wellplate = new Wellplate(params);
-    let files = AttachmentFetcher.getFileListfrom(wellplate.container)
-
-    let promise = () => fetch('/api/v1/wellplates/' + wellplate.id, {
+    const files = AttachmentFetcher.getFileListfrom(wellplate.container);
+    const promise = () => fetch(`/api/v1/wellplates/${wellplate.id}`, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(wellplate.serialize())
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return new Wellplate(json.wellplate);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    if(files.length > 0 ){
-        return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
-    }else{
-      return promise()
+    }).then(response => response.json())
+      .then(json => GenericElsFetcher.uploadGenericFiles(params, json.wellplate.id, 'Wellplat')
+        .then(() => this.fetchById(json.wellplate.id))).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    if (files.length > 0) {
+      return AttachmentFetcher.uploadFiles(files)().then(() => promise());
     }
+    return promise();
   }
 
   static create(params) {
-    let files = AttachmentFetcher.getFileListfrom(params.container)
-
-    let promise = () => fetch('/api/v1/wellplates/', {
+    const files = AttachmentFetcher.getFileListfrom(params.container);
+    const promise = () => fetch('/api/v1/wellplates/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return new Wellplate(json.wellplate);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    if(files.length > 0){
-      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
-    }else{
-      return promise()
+    }).then(response => response.json())
+      .then(json => GenericElsFetcher.uploadGenericFiles(params, json.wellplate.id, 'Wellplat')
+        .then(() => this.fetchById(json.wellplate.id))).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    if (files.length > 0) {
+      return AttachmentFetcher.uploadFiles(files)().then(() => promise());
     }
+    return promise();
   }
 
   static fetchWellplatesByUIState(params) {
