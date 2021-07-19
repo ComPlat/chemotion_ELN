@@ -132,6 +132,7 @@ module Chemotion
         requires :id, type: Integer, desc: 'Research plan id'
         optional :name, type: String, desc: 'Research plan name'
         optional :body, type: Array, desc: 'Research plan body'
+        optional :wellplate_ids, type: Array, desc: 'Research plan Wellplates'
         requires :container, type: Hash, desc: 'Research plan analyses'
       end
       route_param :id do
