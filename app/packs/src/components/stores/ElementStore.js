@@ -1113,6 +1113,7 @@ class ElementStore {
     const { selecteds } = this.state;
     ResearchPlansFetcher.fetchById(updatedResearchPlan.id)
       .then((result) => {
+        result.mode = 'edit';
         this.changeCurrentElement(result);
         const index = this.elementIndex(selecteds, result);
         const newSelecteds = this.updateElement(result, index);
