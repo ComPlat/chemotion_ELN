@@ -37,7 +37,8 @@ export default class ReactionDetailsScheme extends Component {
       reaction,
       lockEquivColumn: false,
       cCon: false,
-      reactionDescTemplate: textTemplate.toJS()
+      reactionDescTemplate: textTemplate.toJS(),
+      open: true
     };
 
     this.reactQuillRef = React.createRef();
