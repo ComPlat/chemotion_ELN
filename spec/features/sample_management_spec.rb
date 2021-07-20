@@ -4,7 +4,8 @@ require 'rails_helper'
 
 describe 'Sample management' do
   let!(:user)    { create(:person) }
-  let(:sample) { create(:sample, creator: user, solvent: '["{\"label\":\"MeOD-d4\",\"smiles\":null,\"ratio\":\"100\"}"]', collections: user.collections) }
+  let(:solvent) { { label: "MeOD-d4", smiles: nil, ratio: "100" } }
+  let(:sample) { create(:sample, creator: user, solvent: [solvent], collections: user.collections) }
 
   before do
     user.update!(confirmed_at: Time.now, account_active: true)
@@ -78,8 +79,8 @@ describe 'Sample management' do
       expect(density_value.to_f).to eq(sample['density'])
 
       find_by_id('Solvents').click
-      solvent = find("input[name='solvent_label']").value
-      expect(solvent).to eq('MeOD-d4')
+      solvent_val = find("input[name='solvent_label']").value
+      expect(solvent_val).to eq(solvent[:label])
 
       %w[boiling_point melting_point].each do |field|
         label = field.capitalize.tr('_', ' ')

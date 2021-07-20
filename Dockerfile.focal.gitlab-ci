@@ -6,7 +6,7 @@ RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
 RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
       imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
       build-essential nodejs sudo postgresql-client libappindicator1 swig \
-      xvfb gconf-service libasound2 libgconf-2-4 cmake \
+      gconf-service libasound2 libgconf-2-4 cmake \
       libnspr4 libnss3 libpango1.0-0 libxss1 xdg-utils tzdata libpq-dev \
       gtk2-engines-pixbuf \
       unzip openssh-client \
@@ -59,4 +59,6 @@ RUN sudo chmod 666 yarn.lock
 RUN /bin/bash -l -c "source ~/.nvm/nvm.sh && nvm install 14.16.0 && nvm use 14.16.0 && npm install -g npm && npm install -g yarn && yarn install"
 RUN echo $(ls -1 shared/node_modules)
 RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && rvm install 2.6.6 && gem install bundler -v 1.17.3 && bundle install --path shared/bundle"
-# RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && chromedriver-update"
+RUN /bin/bash -l -c "source ~/.rvm/scripts/rvm && chromedriver-update"
+RUN sudo apt remove lib*-dev
+RUN sudo apt install libboost-serialization

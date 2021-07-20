@@ -27,13 +27,6 @@ GIT
       rubyzip (>= 1.1)
 
 GIT
-  remote: https://github.com/MiniProfiler/rack-mini-profiler
-  revision: 08ad0c798f40588586c5b841491481fefd847b1c
-  specs:
-    rack-mini-profiler (1.0.2)
-      rack (>= 1.2.0)
-
-GIT
   remote: https://github.com/complat/ketcher-rails.git
   revision: e9562bc9770bdacbb6c4efa036aa054147c9b213
   specs:
@@ -345,7 +338,6 @@ GEM
     hashie (3.6.0)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
-    headless (2.0.0)
     html2haml (2.2.0)
       erubis (~> 2.7.0)
       haml (>= 4.0, < 6)
@@ -727,7 +719,6 @@ DEPENDENCIES
   grape-swagger-representable (~> 0.2)
   haml-rails (~> 1.0)
   hashie-forbidden_attributes
-  headless (= 2.0.0)
   httparty
   jbuilder (~> 2.0)
   jquery-rails
@@ -755,7 +746,6 @@ DEPENDENCIES
   pundit
   rack (~> 2.0.0)
   rack-cors
-  rack-mini-profiler!
   rails (~> 5.2.0)
   rdkit_chem!
   rinchi-gem (= 1.0.1)!
