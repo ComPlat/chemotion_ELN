@@ -91,6 +91,7 @@ export default class SamplesFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
+      body: JSON.stringify(sample.serialize())
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
