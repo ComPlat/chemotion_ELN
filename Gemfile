@@ -115,7 +115,7 @@ group :development do
 
   gem 'memory_profiler'
 
-  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
+#  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rspec', require: false
@@ -163,8 +163,6 @@ group :test do
 
   gem 'factory_bot_rails', '~>4.11'
   gem 'faker', '~> 1.6.6'
-
-  gem 'headless', '2.0.0'
 
   gem 'launchy', '~> 2.4.3'
 
