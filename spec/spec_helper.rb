@@ -6,16 +6,11 @@ require 'rspec/repeat'
 require 'webmock/rspec'
 
 require 'factory_bot_rails'
-require 'headless'
 require 'capybara'
 require 'webdrivers'
 # require 'capybara/rspec'
 require 'rails_helper'
 
-unless ENV['USE_HEAD']
-  @headless = Headless.new
-  @headless.start
-end
 
 Webdrivers.logger.level = :DEBUG
 
@@ -26,7 +21,7 @@ Capybara.register_driver :selenium do |app|
   )
 
   options = Selenium::WebDriver::Chrome::Options.new
-  options.add_argument('--window-size=2048,768')
+  options.add_argument('--window-size=2048,1080')
   options.add_argument('--disable-dev-shm-usage')
   options.add_argument('--disable-gpu')
   options.add_argument('--headless') unless ENV['USE_HEAD']
