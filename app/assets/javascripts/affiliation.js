@@ -1,37 +1,52 @@
-$(".affiliation-line").each(function(id){
-  let $this = $(this),
-    delButton = $this.find('> td > a.del-affiliation'),
-    delInput = $this.find('> input[name*=destroy]'),
-    fromCell = $this.find('> .affiliation_from'),
-    toCell = $this.find('> .affiliation_to'),
-    fromInput = $this.find('> input[name*=from]'),
-    toInput = $this.find('> input[name*=to]');
+document.querySelectorAll(".affiliation-line").forEach(box => {
+  let delButton = box.querySelector('td > a.del-affiliation'),
+    delInput = box.querySelector('input[name*=destroy]'),
+    fromCell = box.querySelector('.affiliation_from'),
+    toCell = box.querySelector('.affiliation_to'),
+    fromInput = box.querySelector('input[name*=from]'),
+    toInput = box.querySelector('input[name*=to]');
 
-  delButton.click(function(){
-    $this.toggleClass('strokeout danger');
-    delButton.find('> span').toggleClass('glyphicon-trash fa fa-undo');
-    if (delInput.val() == 't'){ delInput.val(null)} else{delInput.val('t')}
+  delButton.addEventListener("click", (e) => {
+    box.classList.toggle('strokeout');
+    box.classList.toggle('danger');
+    let span = delButton.querySelector('span');
+    span.classList.toggle('glyphicon-trash');
+    span.classList.toggle('fa');
+    span.classList.toggle('fa-undo');
+    if (delInput.value == 't') { delInput.value = null } else { delInput.value = 't' }
   });
-  fromCell.mouseenter(function(e){
+
+  fromCell.addEventListener("mouseenter", (e) => {
     e.stopPropagation();
-    let input = $('<input class="form" type="month" />');
-    input.val(fromInput.val());
-    fromCell.html(input);
-    fromCell.find('> input').focus();
-  }).mouseleave(function(){
-    var val = fromCell.find('> input').val();
-    fromCell.html(val)
-    fromInput.val(val)
+    let input = document.createElement('input');
+    input.classList.add("form-control");
+    input.setAttribute("type", "month");
+    input.value = fromInput.value;
+    fromCell.innerHTML = '';
+    fromCell.appendChild(input);
+    fromCell.querySelector('input').focus();
   });
-  toCell.mouseenter(function(e){
+
+  fromCell.addEventListener("mouseleave", (e) => {
+    var val = fromCell.querySelector('input').value;
+    fromCell.textContent = val;
+    fromInput.value = val;
+  });
+
+  toCell.addEventListener("mouseenter", (e) => {
     e.stopPropagation();
-    let input = $('<input class="form-control" type="month" />');
-    input.val(toInput.val());
-    toCell.html(input);
-    toCell.find('> input').focus();
-  }).mouseleave(function(){
-    var val = toCell.find('> input').val();
-    toCell.html(val)
-    toInput.val(val)
+    let input = document.createElement('input');
+    input.classList.add("form-control");
+    input.setAttribute("type", "month");
+    input.value = toInput.value;
+    toCell.innerHTML = '';
+    toCell.appendChild(input);
+    toCell.querySelector('input').focus();
+  });
+
+  toCell.addEventListener("mouseleave", (e) => {
+    var val = toCell.querySelector('input').value;
+    toCell.textContent = val;
+    toInput.value = val;
   });
 })
