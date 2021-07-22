@@ -71,6 +71,8 @@ class Wellplate < ApplicationRecord
   has_many :samples, through: :wells
   has_many :molecules, through: :samples
 
+  has_many :attachments, as: :attachable
+
   has_many :screens_wellplates, dependent: :destroy
   has_many :screens, through: :screens_wellplates
 

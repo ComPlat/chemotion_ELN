@@ -100,7 +100,10 @@ module Chemotion
 
         get do
           wellplate = Wellplate.find(params[:id])
-          {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
+          {
+            wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized,
+            attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
+          }
         end
       end
 
