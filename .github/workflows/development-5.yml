@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         bundler: [1.17.3]
-        node: [14.16.0]
         npm: [7.11.1]
     container: 
       image: complat/complat-ubuntu-runner:development-5.1
@@ -123,11 +122,11 @@ jobs:
       #       echo "NPM TEST"
       #       /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm test"
 
-      - name: acc test
-        working-directory: /home/gitlab-runner/chemotion_ELN
-        run: |
-            # Rails 5:
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rake assets:precompile && bundle exec rspec spec/features"
+      # - name: acc test
+      #   working-directory: /home/gitlab-runner/chemotion_ELN
+      #   run: |
+      #       # Rails 5:
+      #       /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rake assets:precompile && bundle exec rspec spec/features"
       #       # Rails 4:
       #       #/bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rspec spec/features"
 
