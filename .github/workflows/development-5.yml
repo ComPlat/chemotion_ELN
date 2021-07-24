@@ -123,18 +123,18 @@ jobs:
             echo "NPM TEST"
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm test"
 
-      # - name: acc test
-      #   working-directory: /home/gitlab-runner/chemotion_ELN
-      #   run: |
-      #       # Rails 5:
-      #       /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rake assets:precompile && bundle exec #rspec spec/features"
+      - name: acc test
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            # Rails 5:
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source ~/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rake assets:precompile && bundle exec rspec spec/features"
       #       # Rails 4:
       #       #/bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rspec spec/features"
 
-      # - name: ruby test
-      #   working-directory: /home/gitlab-runner/chemotion_ELN
-      #   run: |
-      #       /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
-      #       # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec spec/models/#collections_sample_spec.rb"
+      - name: ruby test
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
+            # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:schema:load && bundle exec rspec spec/models/#collections_sample_spec.rb"
 
 
