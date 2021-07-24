@@ -82,10 +82,8 @@ jobs:
         run: |
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v ${{ matrix.bundler }} --no-document && bundle install -j 3 --path ../shared/bundle"
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm install -g npm@${{ matrix.npm }}"
-            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm install yarn -g"
-            echo "CHECK RM NPM"
-            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && npm -v"
-            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && which npm"
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm install yarn -g"
+            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && yarn install"
       #       /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && yarn install"
       #       # Rails 4:
       #       #/bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use 14.16.0 && npm install -g npm@7.11.1"
