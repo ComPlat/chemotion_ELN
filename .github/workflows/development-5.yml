@@ -81,13 +81,6 @@ jobs:
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v ${{ matrix.bundler }} --no-document && bundle install -j 3 --path ../shared/bundle"
-      #       # echo "NODES"
-      #       # cd /home/gitlab-runner/.nvm/versions/node
-      #       # ls -la
-      #       # echo "NPM INSTALL"
-      #       #sudo rm -rf /home/gitlab-runner/.nvm/versions/node/v12.22.1
-
-      #       # Rails 5:
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm install -g npm@${{ matrix.npm }}"
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use && npm install yarn -g"
             echo "CHECK RM NPM"
