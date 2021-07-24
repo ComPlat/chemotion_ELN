@@ -79,11 +79,7 @@ jobs:
       - name: bundle + node install
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-      #       # echo "LS"
-      #       # cd ..
-      #       # ls -la
-      #       # TODO
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v 1.17.3 --no-document && bundle install -j 3 --path ../shared/bundle"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && gem install bundler -v ${{ matrix.bundler }} --no-document && bundle install -j 3 --path ../shared/bundle"
       #       # echo "NODES"
       #       # cd /home/gitlab-runner/.nvm/versions/node
       #       # ls -la
