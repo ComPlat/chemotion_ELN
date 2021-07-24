@@ -52,7 +52,7 @@ jobs:
             # TODO
             # set env variabes for versions
             cd chemotion_ELN
-            echo "NVM_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+            sudo echo "NVM_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
 
             cd config
             sudo cp database.yml.gitlab database.yml
