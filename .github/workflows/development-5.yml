@@ -128,6 +128,7 @@ jobs:
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
             # Rails 5:
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=dev bundle exec rake db:test:prepare"
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rake assets:precompile && bundle exec rspec spec/features"
       #       # Rails 4:
       #       #/bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && RAILS_ENV=test bundle exec rake db:test:prepare && bundle exec rspec spec/features"
