@@ -10510,10 +10510,10 @@ react-stickydiv@^3.4.19:
   dependencies:
     dom-find "^0.3.1"
 
-"react-svg-file-zoom-pan-latest@npm:react-svg-file-zoom-pan@^1.0.5", react-svg-file-zoom-pan@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.0.5.tgz#434a70db88ecf8c7f61840bc85fed13cf7f9a6be"
-  integrity sha512-N6ksXERM5/SjbkphZgJLWV/MY9RHY6Dgf2ckaE4YSfMuJ5vksUNdYvcGv82E+kcjbMc55Tx6iZs3lZkIK6yDgg==
+"react-svg-file-zoom-pan-latest@npm:@complat/react-svg-file-zoom-pan@^1.0.9":
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.0.9.tgz#d8febc94cc57d14ff376b43715c2b915e7d5a2ab"
+  integrity sha512-fqMbvd6RGnUMoPd14Cd47JxZZcilWlUJ8v+bKb9tXorwEY7rOlADpAgfUkELOcGV/VtJ6icO7ihRCZc380ct4A==
   dependencies:
     babel-plugin-transform-object-rest-spread "^6.26.0"
     d3 "^5.5.0"
@@ -10527,6 +10527,15 @@ react-svg-file-zoom-pan@0.1.5:
     babel-runtime "^6.5.0"
     d3 "^3.5.15"
     prop-types "^15.6.2"
+
+react-svg-file-zoom-pan@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.0.5.tgz#434a70db88ecf8c7f61840bc85fed13cf7f9a6be"
+  integrity sha512-N6ksXERM5/SjbkphZgJLWV/MY9RHY6Dgf2ckaE4YSfMuJ5vksUNdYvcGv82E+kcjbMc55Tx6iZs3lZkIK6yDgg==
+  dependencies:
+    babel-plugin-transform-object-rest-spread "^6.26.0"
+    d3 "^5.5.0"
+    regenerator-transform "^0.13.3"
 
 react-svg-inline@^1.2.0:
   version "1.2.0"
