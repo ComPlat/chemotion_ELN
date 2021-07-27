@@ -14,6 +14,7 @@ import MessagesFetcher from './fetchers/MessagesFetcher';
 import NotificationActions from '../components/actions/NotificationActions';
 import { UserLabelModal } from '../components/UserLabels';
 import MatrixCheck from '../components/common/MatrixCheck';
+import GroupElement from './GroupElement';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -46,10 +47,10 @@ export default class UserAuth extends Component {
 
     this.promptTextCreator = this.promptTextCreator.bind(this);
     this.handleSelectUser = this.handleSelectUser.bind(this);
-    this.loadUserByName = this.loadUserByName.bind(this);
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
 
   componentDidMount() {
@@ -74,27 +75,6 @@ export default class UserAuth extends Component {
 
   promptTextCreator(label) {
     return ("Share with \"" + label + "\"");
-  }
-
-  loadUserByName(input) {
-    if (!input) {
-      return Promise.resolve({ options: [] });
-    }
-
-    return UsersFetcher.fetchUsersByName(input)
-      .then((res) => {
-        let usersEntries = res.users.filter(u => u.user_type === 'Person')
-          .map((u) => {
-            return {
-              value: u.id,
-              name: u.name,
-              label: u.name + " (" + u.abb + ")"
-            }
-          });
-        return { options: usersEntries };
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
   }
 
   handlefetchDeviceMetadataByDeviceId(deviceID) {
@@ -228,21 +208,6 @@ export default class UserAuth extends Component {
       });
   }
 
-  // confirm action after pressing yes
-  // if type is group, call deleteGroup api, if type is user, call deleteUser api
-  confirmDelete(type, groupRec, userRec) {
-    switch (type) {
-      case 'group':
-        this.deleteGroup(groupRec);
-        break;
-      case 'user':
-        this.deleteUser(groupRec, userRec);
-        break;
-      default:
-        break;
-    }
-  }
-
   // create new group
   // need to use the wording 'group_param' because of the definition of current api
   createGroup() {
@@ -269,152 +234,16 @@ export default class UserAuth extends Component {
       });
   }
 
-  // delete a group
-  // filter out the deleted group and then setState
-  deleteGroup(groupRec) {
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: true })
-      .then((group) => {
-        this.setState({
-          currentGroups: _.filter(this.state.currentGroups, o => o.id != group.destroyed_id),
-        });
-      });
-  }
-
-  // delete a user
-  // replace with response result and then setState
-  deleteUser(groupRec, userRec) {
-    let { currentGroups } = this.state;
-    const { currentUser } = this.state;
-
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, rm_users: [userRec.id] })
-      .then((result) => {
-        const findIdx = _.findIndex(result.group.users, function(o) { return o.id == currentUser.id; });
-        const findAdmin = _.findIndex(result.group.admins, function(o) { return o.id == currentUser.id; });
-        if (findIdx == -1 && findAdmin == -1) {
-          currentGroups = _.filter(this.state.currentGroups, o => o.id != result.group.id);
-        } else {
-          const idx = _.findIndex(currentGroups, function(o) { return o.id == result.group.id; });
-          currentGroups.splice(idx, 1, result.group);
-        }
-        this.setState({ currentGroups });
-      });
-  }
-
-  // add multiple users
-  // replace with response result and then setState (with forceUpdate)
-  addUser(groupRec) {
-    const { selectedUsers, currentGroups } = this.state;
-
-    const userIds = [];
-    selectedUsers.map((g) => {
-      userIds.push(g.value);
-      return true;
-    });
-
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, add_users: userIds })
-      .then((group) => {
-        const idx = _.findIndex(currentGroups, function(o) { return o.id == group.group.id; });
-        currentGroups.splice(idx, 1, group.group);
-        this.setState({ selectedUsers: null });
-
-        const ve = document.getElementById(`row_add_${groupRec.id}`);
-        if (ve.classList.contains('in')) {
-          ve.classList.remove('in');
-        }
-      });
-  }
-
-  // render delete(icon-trash) button
-  renderDeleteButton(type, groupRec, userRec) {
-    let msg = 'remove yourself from the group';
-    if (type === 'user') {
-      if (userRec.id === this.state.currentUser.id) {
-        msg = 'remove yourself from the group';
-      } else {
-        msg = `remove user: ${userRec.name}`;
-      }
-    } else {
-      msg = `remove group: ${groupRec.name}`;
-    }
-
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        {msg} ?<br />
-        <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(type, groupRec, userRec)}>
-          Yes
-          </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
-          No
-          </Button>
-        </div>
-      </Popover>
-    );
-
-    return (
-      <ButtonGroup className="actions">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
-          <Button bsSize="xsmall" bsStyle="danger" >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
-      </ButtonGroup>
-    );
-  }
-
-  // render buttons if user is group's administrator
-  renderAdminButtons(group) {
-    const { selectedUsers } = this.state;
-    if (group.admins && group.admins.length > 0 && group.admins[0].id === this.state.currentUser.id) {
-      return (
-        <td>
-          <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" data-toggle="collapse" data-target={`.div_row_${group.id}`} />&nbsp;&nbsp;
-          <Button bsSize="xsmall" type="button" bsStyle="success" className="fa fa-plus" data-toggle="collapse" data-target={`.row_add_${group.id}`} />&nbsp;&nbsp;
-          {this.renderDeleteButton('group', group)}
-          <span className={`collapse row_add_${group.id}`} id={`row_add_${group.id}`}>
-            <Select.AsyncCreatable
-              multi
-              isLoading
-              backspaceRemoves
-              value={selectedUsers}
-              valueKey="value"
-              labelKey="label"
-              matchProp="name"
-              placeholder="Select users"
-              promptTextCreator={this.promptTextCreator}
-              loadOptions={this.loadUserByName}
-              onChange={this.handleSelectUser}
-            />
-            <Button bsSize="xsmall" type="button" bsStyle="warning" onClick={() => this.addUser(group)}>Save to group</Button>
-          </span>
-        </td>
-      );
-    }
-    return (
-      <td><Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" data-toggle="collapse" data-target={`.div_row_${group.id}`} /></td>
-    );
-  }
-
-  // render buttons for user
-  renderUserButtons(groupRec, userRec = null) {
-    if ((groupRec.admins && groupRec.admins.length > 0 && groupRec.admins[0].id === this.state.currentUser.id) || userRec.id === this.state.currentUser.id) {
-      return this.renderDeleteButton('user', groupRec, userRec);
-    }
-    return (<div />);
-  }
-
   renderDeviceButtons(device) {
     return (
       <td>
         <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-laptop" onClick={() => this.handleDeviceMetadataModalShow(device)} />&nbsp;&nbsp;
       </td>
     );
+  }
+
+  handleChange(currentGroups) {
+    this.setState({ currentGroups: currentGroups });
   }
 
   // render modal
@@ -432,34 +261,7 @@ export default class UserAuth extends Component {
       tBodyGroups = '';
     } else {
       tBodyGroups = currentGroups ? currentGroups.map(g => (
-        <tbody key={`tbody_${g.id}`}>
-          <tr key={`row_${g.id}`} id={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
-            <td>{g.name}</td>
-            <td>{g.initials}</td>
-            <td>
-              {g.admins && g.admins.length > 0 && g.admins[0].name}&nbsp;&nbsp;
-            </td>
-            { this.renderAdminButtons(g) }
-          </tr>
-          <tr className={`collapse div_row_${g.id}`} id={`div_row_${g.id}`}>
-            <td colSpan="4">
-              <Table>
-                <tbody>
-                  {g.users.map(u => (
-                    <tr key={`row_${g.id}_${u.id}`} id={`row_${g.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                      <td width="20%">{u.name}</td>
-                      <td width="10%">{u.initials}</td>
-                      <td width="20%">{ }</td>
-                      <td width="50%">
-                        { this.renderUserButtons(g, u) }
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </td>
-          </tr>
-        </tbody>
+        <GroupElement groupElement={g} currentState={this.state} onChangeData={this.handleChange}></GroupElement>
       )) : '';
     }
 
@@ -471,7 +273,7 @@ export default class UserAuth extends Component {
           <tr key={`row_${g.id}`} id={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
             <td>{g.name}</td>
             <td>{g.name_abbreviation}</td>
-            { this.renderDeviceButtons(g) }
+            {this.renderDeviceButtons(g)}
           </tr>
         </tbody>
       )) : '';
@@ -541,7 +343,7 @@ export default class UserAuth extends Component {
                       <th width="50%">&nbsp;</th>
                     </tr>
                   </thead>
-                  { tBodyGroups }
+                  {tBodyGroups}
                 </Table>
               </Panel.Body>
             </Panel>
@@ -560,7 +362,7 @@ export default class UserAuth extends Component {
                       <th width="50%">&nbsp;</th>
                     </tr>
                   </thead>
-                  { tBodyDevices }
+                  {tBodyDevices}
                 </Table>
               </Panel.Body>
             </Panel>
@@ -600,7 +402,7 @@ export default class UserAuth extends Component {
             <div>
               <Table>
                 <tbody>
-                  { tbody }
+                  {tbody}
                 </tbody>
               </Table>
             </div>
@@ -699,7 +501,7 @@ export default class UserAuth extends Component {
                           type="text"
                           defaultValue={dateItem.date}
                           readonly="true"
-                          />
+                        />
                       </FormGroup>
                     </Col>
                     <Col smOffset={0} sm={6}>
@@ -763,10 +565,10 @@ export default class UserAuth extends Component {
             <Glyphicon glyph="log-out" />
           </NavItem>
         </Nav>
-        { this.renderModal() }
+        {this.renderModal()}
         <UserLabelModal showLabelModal={this.state.showLabelModal} onHide={() => this.handleLabelClose()} />
-        { this.renderSubscribeModal() }
-        { this.renderDeviceMetadataModal() }
+        {this.renderSubscribeModal()}
+        {this.renderDeviceMetadataModal()}
       </div>
     );
   }
