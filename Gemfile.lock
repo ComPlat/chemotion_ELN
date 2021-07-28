@@ -28,7 +28,8 @@ GIT
 
 GIT
   remote: https://github.com/complat/ketcher-rails.git
-  revision: e9562bc9770bdacbb6c4efa036aa054147c9b213
+  revision: 77514fbb2b5540e39ee1c31e7dd149e8f7ee82db
+  ref: 77514fbb2b5540e39ee1c31e7dd149e8f7ee82db
   specs:
     ketcherails (0.1.12)
       active_model_serializers (< 0.10.0)
@@ -234,7 +235,7 @@ GEM
     coderay (1.1.2)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
-    concurrent-ruby (1.1.7)
+    concurrent-ruby (1.1.9)
     countries (3.0.0)
       i18n_data (~> 0.8.0)
       sixarm_ruby_unaccent (~> 1.1)
@@ -250,8 +251,8 @@ GEM
     declarative (0.0.20)
     delayed_cron_job (0.7.2)
       delayed_job (>= 4.1)
-    delayed_job (4.1.8)
-      activesupport (>= 3.0, < 6.1)
+    delayed_job (4.1.9)
+      activesupport (>= 3.0, < 6.2)
     delayed_job_active_record (4.1.4)
       activerecord (>= 3.0, < 6.1)
       delayed_job (>= 3.0, < 5)
@@ -404,7 +405,7 @@ GEM
       rake
     mini_mime (1.0.2)
     mini_portile2 (2.4.0)
-    minitest (5.14.2)
+    minitest (5.14.4)
     msgpack (1.3.3)
     multi_json (1.13.1)
     multi_xml (0.6.0)
@@ -619,7 +620,7 @@ GEM
       parallel (~> 1.0)
       railties (>= 4)
       sprockets (~> 3.0)
-    tzinfo (1.2.8)
+    tzinfo (1.2.9)
       thread_safe (~> 0.1)
     uber (0.1.0)
     uglifier (4.2.0)
