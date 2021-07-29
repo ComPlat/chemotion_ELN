@@ -68,7 +68,7 @@ const SolventDetails = ({solvent, deleteSolvent, onChangeSolvent}) => {
           name="solvent_label"
           value={solvent.label}
           onChange={changeLabel}
-	  disabled
+          disabled
         />
       </td>
       <td width="26%">
@@ -198,7 +198,7 @@ class SampleDetailsSolventsDnd extends React.Component {
     }
     return connectDropTarget(
       <div style={style}>
-        <SolventsGroup 
+        <SolventsGroup
           sample={sample}
           addDefaultSolvent={dropSample}
           deleteSolvent={deleteSolvent}
