@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import Numeral from 'numeral';
 import GenericSubField from '../models/GenericSubField';
-import { AddRowBtn, DelRowBtn } from './GridBtn';
+import { AddRowBtn, DelRowBtn, DnDRowBtn, NullRowBtn } from './GridBtn';
 import { ColumnHeader, ColumnRow, NoRow } from './GridEntry';
 import UConverterRenderer from './UConverterRenderer';
 import { genUnits, unitConversion, molOptions, samOptions } from '../../admin/generic/Utils';
@@ -12,12 +12,14 @@ import DropRenderer from './DropRenderer';
 import DropTextRenderer from './DropTextRenderer';
 import DropLinkRenderer from './DropLinkRenderer';
 import SampOption from './SamOption';
+import DragDropItemTypes from '../DragDropItemTypes';
 
 export default class TableRecord extends React.Component {
   constructor(props) {
     super(props);
     this.delRow = this.delRow.bind(this);
     this.addRow = this.addRow.bind(this);
+    this.moveRow = this.moveRow.bind(this);
     this.onCellChange = this.onCellChange.bind(this);
     this.onUnitClick = this.onUnitClick.bind(this);
     this.onDrop = this.onDrop.bind(this);
@@ -162,7 +164,30 @@ export default class TableRecord extends React.Component {
       width: 'unset',
     };
     columnDefs.splice(0, 0, act);
+    const dtype = `${DragDropItemTypes.GENERIC_GRID}_${opt.layer.key}_${opt.f_obj.field}`;
+    const move = {
+      type: 'dnd',
+      field: opt.f_obj.field,
+      headerName: '',
+      colId: `${opt.f_obj.field}_dnd`,
+      headerComponent: NullRowBtn,
+      cellRenderer: DnDRowBtn,
+      cellParams: { moveRow: this.moveRow, field: opt.f_obj.field, type: dtype },
+      width: 'unset',
+    };
+    columnDefs.splice(0, 0, move);
     return columnDefs;
+  }
+
+  moveRow(source, target) {
+    const { opt } = this.props;
+    const alles = opt.f_obj.sub_values;
+    const sid = alles.findIndex(e => e.id === source);
+    const tid = alles.findIndex(e => e.id === target);
+    const temp = alles[sid];
+    alles[sid] = alles[tid];
+    alles[tid] = temp;
+    opt.onSubChange(0, 0, opt.f_obj, true);
   }
 
   delRow(rowData) {
