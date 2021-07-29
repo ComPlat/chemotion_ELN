@@ -3,6 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import GridDnD from './GridDnD';
 
 const AddRowBtn = ({ addRow }) => (
   <OverlayTrigger delayShow={1000} placement="top" overlay={<Tooltip id={uuid.v4()} >add entry</Tooltip>}>
@@ -22,4 +23,18 @@ const DelRowBtn = ({ delRow, node }) => {
 
 DelRowBtn.propTypes = { delRow: PropTypes.func.isRequired, node: PropTypes.object.isRequired };
 
-export { AddRowBtn, DelRowBtn };
+const NullRowBtn = () => (<div className="grid-btn-none"><span className="fa fa-arrows" /></div>);
+
+const DnDRowBtn = ({
+  moveRow, field, type, node
+}) => (
+  <GridDnD field={field} type={type} rowValue={node.data} handleMove={moveRow} />
+);
+
+DnDRowBtn.propTypes = {
+  moveRow: PropTypes.func.isRequired,
+  field: PropTypes.string.isRequired,
+  type: PropTypes.string.isRequired,
+  node: PropTypes.object.isRequired
+};
+export { AddRowBtn, DelRowBtn, DnDRowBtn, NullRowBtn };

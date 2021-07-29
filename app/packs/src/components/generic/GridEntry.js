@@ -22,6 +22,7 @@ const setCell = (columnDef, rowValue) => {
       );
     case 'drag_molecule':
     case 'drag_sample':
+    case 'dnd':
       return (cellRenderer({ ...cellParams, node: { data: rowValue } }));
     default:
       return <span />;

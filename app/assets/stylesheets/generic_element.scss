@@ -379,3 +379,28 @@ $color-default: #777;
     }
   }
 }
+
+.grid-btn-none {
+  font-size: large;
+  color: white;
+}
+
+.generic_grid_dnd {
+  .dnd-btn {
+    font-size: large;
+    span {
+      cursor: move;
+    }
+  }
+  &.can-drop {
+    border: 2px dashed $color-can-drop;
+    color: $color-can-drop;
+  }
+  &.is-over {
+    border: 2px dashed $color-is-over;
+    color: $color-is-over;
+  }
+  &.is-dragging {
+    opacity: 0.2;
+  }
+}
