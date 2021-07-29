@@ -68,13 +68,14 @@ const SolventDetails = ({solvent, deleteSolvent, onChangeSolvent}) => {
           name="solvent_label"
           value={solvent.label}
           onChange={changeLabel}
+          disabled
         />
       </td>
       <td width="26%">
         <FormControl
           bsClass="bs-form--compact form-control"
           bsSize="small"
-          type="text"
+          type="number"
           name="solvent_ratio"
           value={solvent.ratio}
           onChange={changeRatio}
@@ -197,7 +198,7 @@ class SampleDetailsSolventsDnd extends React.Component {
     }
     return connectDropTarget(
       <div style={style}>
-        <SolventsGroup 
+        <SolventsGroup
           sample={sample}
           addDefaultSolvent={dropSample}
           deleteSolvent={deleteSolvent}
