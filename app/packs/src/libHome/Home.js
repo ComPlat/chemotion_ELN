@@ -4,6 +4,7 @@ import { Grid, Row } from 'react-bootstrap';
 
 import Navigation from '../components/Navigation'
 import XHome from '../components/extra/HomeXHome'
+import WelcomeMessage from '../components/WelcomeMessage';
 
 const extraHomes = () => {
   const homes = [];
@@ -29,6 +30,7 @@ class Home extends Component {
               <Navigation />
             </Row>
             <Row className="card-content">
+              <WelcomeMessage />
             </Row>
           </Grid>
         }

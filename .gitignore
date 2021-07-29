@@ -156,3 +156,5 @@ spec/examples.txt
 /yarn-error.log
 yarn-debug.log*
 
+#welcome message
+/public/welcome-message.md
