@@ -517,7 +517,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const style = { height: '200px' };
+    const style = { min-height: '200px' };
     const pubchemLcss = sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss ?
       sample.pubchem_tag.pubchem_lcss.Record.Section[0].Section[0].Section[0].Information : null;
     const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid ?
