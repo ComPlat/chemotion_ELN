@@ -35,9 +35,9 @@ see [INSTALL.md][INSTALL]
 
 ## Code Status
 
-[![Ruby Unit Tests](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=github-actions)](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=github-actions)
-
 [![JavaScript Unit Tests](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=github-actions)](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=github-actions)
+
+[![Ruby Unit Tests](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=github-actions)](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=github-actions)
 
 [![Feature Tests](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=github-actions)](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=github-actions)
 
