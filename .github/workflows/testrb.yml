@@ -1,4 +1,4 @@
-name: testrb
+name: Ruby Unit Tests
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
           --health-interval 10s 
           --health-timeout 5s 
           --health-retries 5
-          
+
     steps:
       - name: git clone + postgres
         working-directory: /home/gitlab-runner

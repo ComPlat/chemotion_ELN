@@ -1,4 +1,4 @@
-name: testjs
+name: JavaScript Unit Tests
 
 on:
   push:

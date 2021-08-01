@@ -1,4 +1,4 @@
-name: testacceptance
+name: Feature Tests
 
 on:
   push:
