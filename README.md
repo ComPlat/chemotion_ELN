@@ -35,6 +35,10 @@ see [INSTALL.md][INSTALL]
 
 ## Code Status
 
+![Ruby Unit Tests](https://github.com/github/docs/actions/workflows/testrb.yml/badge.svg?branch=github-actions)
+![JavaScript Unit Tests](https://github.com/github/docs/actions/workflows/testjs.yml/badge.svg?branch=github-actions)
+![Feature Tests](https://github.com/github/docs/actions/workflows/testacceptance.yml/badge.svg?branch=github-actions)
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1054134.svg)](https://doi.org/10.5281/zenodo.1054134)
 
 [![Build Status](https://travis-ci.org/ComPlat/chemotion_ELN.svg?branch=master)](https://travis-ci.org/ComPlat/chemotion_ELN)

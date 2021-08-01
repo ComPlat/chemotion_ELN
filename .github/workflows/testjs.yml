@@ -30,7 +30,7 @@ jobs:
           --health-timeout 5s 
           --health-retries 5
 
-  steps:
+    steps:
         - name: git clone + postgres
           working-directory: /home/gitlab-runner
           # TODO rm?
@@ -88,10 +88,10 @@ jobs:
               /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm install yarn -g"
               /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && yarn install"
 
-      - name: npm test
-        working-directory: /home/gitlab-runner/chemotion_ELN
-        run: |
-            echo "RAKE DB"
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare"
-            echo "NPM TEST"
-            /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm test"
+        - name: npm test
+          working-directory: /home/gitlab-runner/chemotion_ELN
+          run: |
+              echo "RAKE DB"
+              /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare"
+              echo "NPM TEST"
+              /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm test"
