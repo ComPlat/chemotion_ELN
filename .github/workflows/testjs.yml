@@ -41,21 +41,14 @@ jobs:
             POSTGRES_USER: chemotion_test
             POSTGRES_PASSWORD: 123456
           run: |
-              whoami
               # owner was root before
-              # TODO very slow
-              #sudo chown -R gitlab-runner:gitlab-runner shared
-              # TODO!
               sudo chown -R gitlab-runner:gitlab-runner /github/home
 
               sudo git clone --branch development-5 --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
 
-              # TODO
-              # set env variabes for versions
               cd chemotion_ELN
-              export NVM_VERSION="${NODE_VERSION}:$(cat .nvmrc)"
-              export NVM_VERSION="${RUBY_VERSION}:$(cat .ruby-version.example)"
-              #sudo echo "RUBY_VERSION=$(sudo cat .nvmrc)" >> $GITHUB_ENV # error
+              export NODE_VERSION="${NODE_VERSION}:$(cat .nvmrc)"
+              #export RUBY_VERSION="${RUBY_VERSION}:$(cat .ruby-version.example)"
 
               cd config
               sudo cp database.yml.gitlab database.yml

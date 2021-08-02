@@ -4,11 +4,11 @@ on:
   push:
     branches: [ github-actions ]
 
-  #TODO: create skip all feature --> github actions save expression as environment variable?
+  #TODO: create skip feature to not run certain tests + insert into unit tests
 env:
   SKIP_ALL: "!contains(github.event.commits[0].message, 'skip all')"
-  SKIP_JS: "!contains(github.event.commits[0].message, 'skip unitjs')"
-  SKIP_RB: "!contains(github.event.commits[0].message, 'skip unitrb')"
+  # SKIP_JS: "!contains(github.event.commits[0].message, 'skip unitjs')"
+  # SKIP_RB: "!contains(github.event.commits[0].message, 'skip unitrb')"
   SKIP_ACC: "!contains(github.event.commits[0].message, 'skip acceptance')"
 
   workflow_dispatch:
@@ -48,15 +48,11 @@ jobs:
           POSTGRES_USER: chemotion_test
           POSTGRES_PASSWORD: 123456
         run: |
-            whoami
             # owner was root before
-            # TODO very slow
             sudo chown -R gitlab-runner:gitlab-runner /github/home
 
             sudo git clone --branch development-5 --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
 
-            # TODO
-            # set env variabes for versions
             cd chemotion_ELN
             export NODE_VERSION="${NODE_VERSION}:$(cat .nvmrc)"
             #export RUBY_VERSION="${RUBY_VERSION}:$(cat .ruby-version.example)"
@@ -94,7 +90,7 @@ jobs:
 
       - name: testacceptance
         working-directory: /home/gitlab-runner/chemotion_ELN
-        if: ${{ env.SKIP_ALL == 'false' && env.SKIP_ACC == 'false' }}
+        #if: ${{ env.SKIP_ALL == 'false' && env.SKIP_ACC == 'false' }}
         run: |
             echo "RAKE DB"
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare"
