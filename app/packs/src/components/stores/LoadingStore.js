@@ -8,6 +8,7 @@ import PredictionActions from '../actions/PredictionActions';
 class LoadingStore {
   constructor() {
     this.loading = false;
+    this.state = { filePool: [] };
 
     this.bindListeners({
       handleStart: LoadingActions.start,
@@ -33,6 +34,9 @@ class LoadingStore {
           InboxActions.fetchInbox,
           PredictionActions.infer,
         ],
+      handleStartLoadingWithProgress: LoadingActions.startLoadingWithProgress,
+      handleStopLoadingWithProgress: LoadingActions.stopLoadingWithProgress,
+      handleUpdateLoadingProgress: LoadingActions.updateLoadingProgress,
     });
   }
 
@@ -42,6 +46,54 @@ class LoadingStore {
 
   handleStop() {
     this.setState({ loading: false });
+  }
+
+  handleStartLoadingWithProgress(filename) {
+    let { filePool } = this.state;
+    if (!filePool) {
+      filePool = [{ filename: filename, progress: 0 }];
+    }
+    else {
+      const filter = filePool.filter(value => value.filename === filename);
+      if (filter.length === 0) {
+        const value = { filename: filename, progress: 0 };
+        filePool.push(value);
+      }
+    }
+
+    if (filePool.length > 0) {
+      this.setState({ loadingWithProgress: true, filePool: filePool });
+    }
+  }
+
+  handleStopLoadingWithProgress(filename) {
+    const { filePool } = this.state;
+    if (filePool) {
+      filePool.forEach((file, index, object) => {
+        if (file.filename === filename) {
+          object.splice(index, 1);
+        }
+      });
+
+      if (filePool.length === 0) {
+        this.setState({ loadingWithProgress: false, filePool: [] });
+      }
+      else {
+        this.setState({ filePool: filePool });
+      }
+    }
+  }
+
+  handleUpdateLoadingProgress(value) {
+    const { filePool } = this.state;
+    if (filePool) {
+      filePool.forEach(file => {
+        if (file.filename === value.filename) {
+          file.progress = value.progress;
+        }
+      });
+      this.setState({ filePool: filePool });
+    }
   }
 }
 

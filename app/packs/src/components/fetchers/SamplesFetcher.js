@@ -40,8 +40,8 @@ export default class SamplesFetcher {
 
   static fetchById(id) {
     let promise = fetch('/api/v1/samples/' + id + '.json', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -63,7 +63,7 @@ export default class SamplesFetcher {
 
   static update(sample) {
     const files = AttachmentFetcher.getFileListfrom(sample.container);
-    const promise = ()=> fetch(`/api/v1/samples/${sample.id}`, {
+    const promise = () => fetch(`/api/v1/samples/${sample.id}`, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -74,11 +74,16 @@ export default class SamplesFetcher {
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
     if (files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
+
     return promise();
   }
 
@@ -95,11 +100,16 @@ export default class SamplesFetcher {
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
     if (files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file)));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
+
     return promise();
   }
 

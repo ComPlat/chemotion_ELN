@@ -18,6 +18,7 @@ import UserActions from './actions/UserActions';
 import KeyboardActions from './actions/KeyboardActions';
 import UIStore from './stores/UIStore';
 import InboxModal from './inbox/InboxModal';
+import ProgressModal from './common/ProgressModal';
 
 class App extends Component {
   constructor(props) {
@@ -114,6 +115,7 @@ class App extends Component {
         <Row>
           <Notifications />
           <LoadingModal />
+          <ProgressModal />
         </Row>
         <InboxModal showCollectionTree={showCollectionTree} />
       </Grid>
