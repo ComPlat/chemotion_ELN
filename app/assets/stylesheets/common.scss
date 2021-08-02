@@ -169,6 +169,16 @@
   }
 }
 
+.loading-progress-modal {
+  .modal-content {
+    height: 100px;
+    text-align: center;
+    margin: auto;
+    padding: 25px;
+    width: auto;
+  }
+}
+
 .status-select {
   .Select-menu-outer {
     z-index: 30;
