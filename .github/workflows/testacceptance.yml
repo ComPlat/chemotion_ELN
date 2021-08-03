@@ -92,9 +92,11 @@ jobs:
         working-directory: /home/gitlab-runner/chemotion_ELN
         #if: ${{ env.SKIP_ALL == 'false' && env.SKIP_ACC == 'false' }}
         run: |
+            echo "NODE"
+            $NODE_VERSION
             echo "RAKE DB"
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare"
             echo "PRECOMPILE"
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle exec rake assets:precompile"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake assets:precompile"
             echo "TESTACCEPTANCE"
-            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && bundle exec rspec spec/features"
+            /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rspec spec/features"
