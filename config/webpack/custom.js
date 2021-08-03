@@ -9,4 +9,12 @@ module.exports = {
       'process.version': JSON.stringify(process.version)
     }),
   ],
+  module: {
+    rules: [
+      {
+        test: /\.md$/,
+        use: 'raw-loader'
+      }
+    ]
+  }
 };
