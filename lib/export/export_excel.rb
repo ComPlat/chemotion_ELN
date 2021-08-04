@@ -43,7 +43,9 @@ module Export
         if filtered_sample[decouple_idx].present?
           filtered_sample[decouple_idx] = filtered_sample[decouple_idx].presence == 't' ? 'Yes' : 'No'
         end
-        sheet.add_row(filtered_sample, sz: 12, height: row_height * 3 / 4)
+
+        size = sheet.styles.add_style :sz => 12
+        sheet.add_row filtered_sample, :height => row_height * 3 / 4, :style=>[size]
       end
       sheet.column_info[@image_index].width = image_width / 8 if @image_index
       # end
