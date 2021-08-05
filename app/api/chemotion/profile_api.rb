@@ -44,10 +44,12 @@ module Chemotion
           sorted_layout = {}
           next if dt[0..6] != 'layout_'
 
-          old_layout = data[dt]
-          old_layout&.select { |_k, v| v > 0 }.sort_by { |_k, v| v }.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
-          old_layout&.select { |_k, v| v < 0 }.sort_by { |_k, v| -v }.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
-          data[dt] = sorted_layout
+          unless data[dt].blank?
+            old_layout = data[dt]
+            old_layout&.select { |_k, v| v > 0 }&.sort_by { |_k, v| v }&.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
+            old_layout&.select { |_k, v| v < 0 }&.sort_by { |_k, v| -v }&.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
+            data[dt] = sorted_layout
+          end
         end
 
         {
