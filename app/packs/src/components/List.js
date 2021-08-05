@@ -209,12 +209,14 @@ export default class List extends React.Component {
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
       }
       const navItem = (
-        <NavItem eventKey={i} key={value + "_navItem"}>
-          <i className={iconClass}>
-            {elementState.totalElements && elementState.totalElements[`${value}s`]}
-            ({totalCheckedElements[value] || 0})
-          </i>
-        </NavItem>
+          <NavItem eventKey={i} key={value + '_navItem'}>
+              <i className={iconClass}></i>
+              <span style={{ paddingLeft: 5 }}>
+                  {elementState.totalElements &&
+                      elementState.totalElements[`${value}s`]}
+                  ({totalCheckedElements[value] || 0})
+              </span>
+          </NavItem>
       )
       const tabContent = (
         <Tab.Pane eventKey={i} key={value + "_tabPanel"}>
