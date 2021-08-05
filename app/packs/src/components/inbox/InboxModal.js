@@ -111,7 +111,7 @@ export default class InboxModal extends React.Component {
           >
             <Panel bsStyle="primary" className="eln-panel-detail research-plan-details cursor">
               <Panel.Heading className="cursor handle">
-                <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Inbox &nbsp;</i>
+                <i className="fa fa-inbox" onClick={() => this.onClickInbox()}></i><span style='padding-left: 5px; padding-right: 5px'>Inbox</span>
                 {
                   this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
                 }
