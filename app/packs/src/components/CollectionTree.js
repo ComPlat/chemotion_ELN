@@ -323,7 +323,7 @@ export default class CollectionTree extends React.Component {
         {extraDiv.map((e)=>{return e})}
         <div className="tree-view">
           <div className="title" style={{ backgroundColor: 'white' }}>
-            <i className="fa fa-inbox" onClick={() => this.onClickInbox()}></i><span style='padding-left: 5px; padding-right: 5px'>Inbox</span>
+            <span onClick={() => this.onClickInbox()}><i className="fa fa-inbox"></i><span style={{paddingLeft: 5, paddingRight: 5}}>Inbox</span></span>
             {
               this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
             }
