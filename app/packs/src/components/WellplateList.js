@@ -70,6 +70,7 @@ export default class WellplateList extends Component {
     return (
       <div>
         <Table bordered hover condensed>
+          {/* TODO: make Table h-scrollable */}
           <thead>
             <tr>
               <th width="3%">#</th>
