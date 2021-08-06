@@ -67,11 +67,12 @@ jobs:
             sudo touch klasses.json
 
             echo "POSTGRES"
-            psql -d postgresql://postgres:postgres@postgres/postgres -c "\du"
+            echo ${{ matrix.pg_role }}
+            echo ${{ matrix.pg_database }}
             psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB SUPERUSER PASSWORD '123456'"
             psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE ${{ matrix.pg_database }} OWNER ${{ matrix.pg_role }};"
-            #psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE chemotion_dev LOGIN CREATEDB SUPERUSER PASSWORD '123456'"
-            #psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE chemotion_dev OWNER chemotion_test;"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE chemotion_dev LOGIN CREATEDB SUPERUSER PASSWORD '123456'"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE chemotion_dev OWNER chemotion_test;"
             psql -d postgresql://${{ matrix.pg_role }}:123456@postgres/${{ matrix.pg_database }} -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
             psql -d postgresql://${{ matrix.pg_role }}:123456@postgres/${{ matrix.pg_database }} -c "\du"
 
