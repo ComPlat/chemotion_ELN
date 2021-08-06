@@ -186,8 +186,9 @@ class Sample < ApplicationRecord
   belongs_to :molecule_name, optional: true
 
   has_one :container, as: :containable
-  has_many :wells, dependent: :destroy
 
+  # TODO: really dependent-destroy?
+  has_many :wells, dependent: :destroy
   has_many :wellplates, through: :well
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
