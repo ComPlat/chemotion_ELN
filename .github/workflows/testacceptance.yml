@@ -31,6 +31,7 @@ jobs:
           - 5432:5432
         env:
           POSTGRES_PASSWORD: postgres
+          NODE_OPTIONS: '--max_old_space_size=4096'
         options: >-
           --health-cmd pg_isready 
           --health-interval 10s 
