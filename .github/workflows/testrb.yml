@@ -39,8 +39,8 @@ jobs:
         env:
           POSTGRES_HOST: postgres:12-alpine
           POSTGRES_PORT: 5432
-          POSTGRES_DB: chemotion_test
-          POSTGRES_USER: chemotion_test
+          POSTGRES_DB: ${{ matrix.pg_database }}
+          POSTGRES_USER: ${{ matrix.pg_role }}
           POSTGRES_PASSWORD: 123456
         run: |
             # owner was root before
@@ -61,10 +61,8 @@ jobs:
 
             echo "POSTGRES"
             psql -d postgresql://postgres:postgres@postgres/postgres -c "\du"
-            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB SUPERUSER PASSWORD '123456'"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB NOSUPERUSER PASSWORD '123456'"
             psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE ${{ matrix.pg_database }} OWNER ${{ matrix.pg_role }};"
-            #psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE chemotion_dev LOGIN CREATEDB SUPERUSER PASSWORD '123456'"
-            #psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE chemotion_dev OWNER ${{ matrix.pg_role }};"
             psql -d postgresql://${{ matrix.pg_role }}:123456@postgres/${{ matrix.pg_database }} -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
             psql -d postgresql://${{ matrix.pg_role }}:123456@postgres/${{ matrix.pg_database }} -c "\du"
 
