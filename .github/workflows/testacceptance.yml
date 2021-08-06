@@ -92,6 +92,18 @@ jobs:
             echo "PRECOMPILE"
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake assets:precompile"
             mv /public/welcome-message-sample.md /public/welcome-message.md
+      - name: log
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            echo "RAM"
+            free -g
       - name: testacceptance-1
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
             echo "TESTACCEPTANCE"
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rspec spec/features"
+      - name: log
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            echo "RAM"
+            free -g
