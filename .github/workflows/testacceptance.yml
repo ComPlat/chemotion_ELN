@@ -83,7 +83,7 @@ jobs:
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && yarn install"
       - name: testacceptance-0
         working-directory: /home/gitlab-runner/chemotion_ELN
-        if: ${{ env.SKIP_ALL == 'false' && env.SKIP_ACC == 'false' }}
+        #if: ${{ env.SKIP_ALL == 'false' && env.SKIP_ACC == 'false' }}
         run: |
             echo "NODE"
             $NODE_VERSION
@@ -95,11 +95,12 @@ jobs:
       - name: log
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            echo "SKIP"
-            echo "!contains(github.event.commits[0].message, 'skip all')"
-            echo ${{ env.SKIP_ALL }}
             echo "RAM"
             free -g
+            if: "!contains(github.event.commits[0].message, 'skip all')"
+            echo "SKIP"
+            
+            #echo ${{ env.SKIP_ALL }}
       - name: testacceptance-1
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
