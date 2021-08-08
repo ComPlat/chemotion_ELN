@@ -96,6 +96,7 @@ jobs:
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
             echo "SKIP"
+            echo "!contains(github.event.commits[0].message, 'skip all')"
             echo ${{ env.SKIP_ALL }}
             echo "RAM"
             free -g
