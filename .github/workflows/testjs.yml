@@ -10,6 +10,7 @@ jobs:
 
   docker_container:
     if: "!contains(github.event.commits[0].message, 'skip all')"
+    #if: "!contains(github.event.commits[0].message, 'skip unitjs')"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,6 +36,7 @@ jobs:
 
     steps:
         - name: test
+          if: "!contains(github.event.commits[0].message, 'skip all')"
           if: "!contains(github.event.commits[0].message, 'skip all')"
           run: |
             echo "TRUE"
