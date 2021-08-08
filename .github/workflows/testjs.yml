@@ -19,29 +19,34 @@ jobs:
     container: 
       image: complat/complat-ubuntu-runner:development-5.3
 
-    # services:
-    #   postgres:
-    #     image: postgres
-    #     ports:
-    #       - 5432:5432
-    #     env:
-    #       POSTGRES_PASSWORD: postgres
-    #     options: >-
-    #       --health-cmd pg_isready 
-    #       --health-interval 10s 
-    #       --health-timeout 5s 
-    #       --health-retries 5
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
 
     steps:
+        - name: test
+          working-directory: /home/gitlab-runner/chemotion_ELN
+          if: "!contains(github.event.commits[0].message, 'skip all')"
+          run: |
+            echo "TRUE"
+            echo github.event.commits[0].message
         - name: git clone + postgres
           working-directory: /home/gitlab-runner
-          # TODO rm?
-          # env:
-          #   POSTGRES_HOST: postgres
-          #   POSTGRES_PORT: 5432
-          #   POSTGRES_DB: chemotion_test
-          #   POSTGRES_USER: chemotion_test
-          #   POSTGRES_PASSWORD: 123456
+          env:
+            POSTGRES_HOST: postgres
+            POSTGRES_PORT: 5432
+            POSTGRES_DB: chemotion_test
+            POSTGRES_USER: chemotion_test
+            POSTGRES_PASSWORD: 123456
           run: |
               # owner was root before
               sudo chown -R gitlab-runner:gitlab-runner /github/home
@@ -59,14 +64,11 @@ jobs:
               sudo cp -f profile_default.yml.example profile_default.yml
               sudo touch klasses.json
 
-              # echo "POSTGRES"
-              # psql -d postgresql://postgres:postgres@postgres/postgres -c "\du"
-              # psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE chemotion_test LOGIN CREATEDB SUPERUSER PASSWORD '123456'"
-              # psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE chemotion_test OWNER chemotion_test;"
-              # psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE chemotion_dev LOGIN CREATEDB SUPERUSER PASSWORD '123456'"
-              # psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE chemotion_dev OWNER chemotion_test;"
-              # psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
-              # psql -d postgresql://chemotion_test:123456@postgres/chemotion_test -c "\du"
+              echo "POSTGRES"
+              psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB NOSUPERUSER PASSWORD '123456'"
+              psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE ${{ matrix.pg_database }} OWNER ${{ matrix.pg_role }};"
+              psql -d postgresql://${{ matrix.pg_role }}:123456@postgres/${{ matrix.pg_database }} -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+              psql -d postgresql://${{ matrix.pg_role }}:123456@postgres/${{ matrix.pg_database }} -c "\du"
 
               cd ..
               # TODO rm?
@@ -86,7 +88,7 @@ jobs:
         - name: npm test
           working-directory: /home/gitlab-runner/chemotion_ELN
           run: |
-              # echo "RAKE DB"
-              # /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare"
+              echo "RAKE DB"
+              /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare"
               echo "NPM TEST"
               /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && npm test"
