@@ -83,7 +83,7 @@ jobs:
             /bin/bash -l -c "source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && yarn install"
       - name: testacceptance-0
         working-directory: /home/gitlab-runner/chemotion_ELN
-        #if: ${{ env.SKIP_ALL == 'false' && env.SKIP_ACC == 'false' }}
+        if: ${{ env.SKIP_ALL == 'false' && env.SKIP_ACC == 'false' }}
         run: |
             echo "NODE"
             $NODE_VERSION
@@ -91,10 +91,12 @@ jobs:
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake db:test:prepare"
             echo "PRECOMPILE"
             /bin/bash -l -c "source /home/gitlab-runner/.rvm/scripts/rvm && source /home/gitlab-runner/.nvm/nvm.sh && nvm use $NODE_VERSION && RAILS_ENV=test bundle exec rake assets:precompile"
-            mv /public/welcome-message-sample.md /public/welcome-message.md
+            mv public/welcome-message-sample.md public/welcome-message.md
       - name: log
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
+            echo "SKIP"
+            echo ${{ env.SKIP_ALL }}
             echo "RAM"
             free -g
       - name: testacceptance-1
