@@ -98,8 +98,7 @@ jobs:
             echo "RAM"
             free -g
             if: "!contains(github.event.commits[0].message, 'skip all')"
-            echo "SKIP"
-            
+            echo "SKIP"            
             #echo ${{ env.SKIP_ALL }}
       - name: testacceptance-1
         working-directory: /home/gitlab-runner/chemotion_ELN
@@ -111,3 +110,9 @@ jobs:
         run: |
             echo "RAM"
             free -g
+      - name: test
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        if: "!contains(github.event.commits[0].message, 'skip all')"
+        run: |
+          echo "TRUE"
+          echo github.event.commits[0].message
