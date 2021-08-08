@@ -34,7 +34,6 @@ jobs:
 
     steps:
         - name: test
-          working-directory: /home/gitlab-runner/chemotion_ELN
           if: "!contains(github.event.commits[0].message, 'skip all')"
           run: |
             echo "TRUE"
