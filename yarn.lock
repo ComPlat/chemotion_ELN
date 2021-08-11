@@ -1233,12 +1233,12 @@
     "@citation-js/name" "^0.4.2"
     wikidata-sdk "7"
 
-"@complat/chem-spectra-client@^0.10.12":
-  version "0.10.12"
-  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-0.10.12.tgz#19736590647c98ebe9e17f428de275aa9e06fe14"
-  integrity sha512-a0UCxUIU6Dkj++lvsxbzRsxONmV9G/w0/dECNjPwTUAF2HF1voq8YIBxxYdSXmD3U1ujHHgZRaMnIyk+S6wWiw==
+"@complat/chem-spectra-client@0.10.13-beta.1":
+  version "0.10.13-beta.1"
+  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-0.10.13-beta.1.tgz#4e87f24100392446041813120b4dcc640abfefa6"
+  integrity sha512-6fEEfGD0q7fTibLedpAuxlX6LsYSnFE0VVWPV/tgPqV9MplnX9cYdxy0bfNBYUPjyOUNEhd89XyAj3kLZ/SZCQ==
   dependencies:
-    "@complat/react-spectra-editor" "^0.10.12"
+    "@complat/react-spectra-editor" "0.10.13-beta.1"
     "@material-ui/core" "^3.9.4"
     "@material-ui/icons" "^3.0.2"
     axios "^0.18.0"
@@ -1255,10 +1255,10 @@
     redux-form "^7.4.2"
     redux-saga "^0.16.2"
 
-"@complat/react-spectra-editor@^0.10.12":
-  version "0.10.12"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-0.10.12.tgz#3f005108f3f44a4797e1dfaeabdbaf7ad28faacb"
-  integrity sha512-E6c8TeXzHF2xww7/myxXUbZ+1EDYk4Sy2sQhx7qexjqyuhjTOAYQ3uhyik3kPQrKjeovMAfcJRa4Ad+dCirL7Q==
+"@complat/react-spectra-editor@0.10.13-beta.1":
+  version "0.10.13-beta.1"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-0.10.13-beta.1.tgz#b1d599ceeefc1b9787a6d3e0e0ff4b35639ba192"
+  integrity sha512-L6grc1AGLWSw2BvBp4+HJlD/qMOyLKZuI4w6h9IOVGRTky6J9XWQue9skPYbEcUQat7RjZFtPGY6WLEM/IpHwA==
   dependencies:
     "@material-ui/core" "^3.9.3"
     "@material-ui/icons" "^3.0.2"
