@@ -111,9 +111,22 @@ module Chemotion
         file_path, mol_path, is_regen = false, params = {}
       )
         rsp = stub_http(file_path, mol_path, is_regen, params)
-        rsp_io = StringIO.new(rsp.body.to_s)
-        spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-        Util.extract_zip(rsp_io) << spc_type
+        begin
+          json_rsp = JSON.parse(rsp.to_s)
+        rescue
+          #cannot parse response from json, return as normal
+          rsp_io = StringIO.new(rsp.body.to_s)
+          spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
+          Util.extract_zip(rsp_io) << spc_type
+        else
+          if json_rsp['invalid_molfile'] == true
+            [json_rsp, nil, nil]
+          else
+            rsp_io = StringIO.new(rsp.body.to_s)
+            spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
+            Util.extract_zip(rsp_io) << spc_type
+          end
+        end
       end
     end
   end

@@ -31,6 +31,7 @@ class Channel < ApplicationRecord
   EDITOR_CALLBACK = 'EditorCallback'
   COLLECTION_ZIP = 'Collection Import and Export'
   COLLECTION_ZIP_FAIL = 'Collection Import and Export Failure'
+  CHEM_SPECTRA_NOTIFICATION = 'Chem Spectra Notification'
 
   class << self
     def build_message(**args)
