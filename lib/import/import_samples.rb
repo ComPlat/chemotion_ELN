@@ -145,9 +145,7 @@ class Import::ImportSamples
     inchikey = babel_info[:inchikey]
     is_partial = babel_info[:is_partial]
     if inchikey.presence
-      if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
-        molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
-      end
+      molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
     end
     return molfile, molecule
   end
