@@ -59,7 +59,7 @@ RSpec.describe Collection, type: :model do
 
     describe 'belongs_to_or_shared_by (with a group)' do
       it 'returns own collections and unlocked collections owned through a group ' do
-        p1.collections.where(label: ['chemotion.net', 'All']).destroy_all
+        p1.collections.where(label: ['chemotion-repository.net', 'All']).destroy_all
         expect(described_class.belongs_to_or_shared_by(p1.id, [g1.id])).to match_array [collection_5]
       end
     end

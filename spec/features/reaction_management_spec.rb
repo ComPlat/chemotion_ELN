@@ -47,7 +47,7 @@ describe 'Reaction management' do
     end
 
     it 'Yield 50%', js: true do
-      find('.tree-view', text: 'chemotion.net').click
+      find('.tree-view', text: 'chemotion-repository.net').click
       first('i.icon-reaction').click
       first('span.isvg.loaded.reaction').click
       material_amount = 6800

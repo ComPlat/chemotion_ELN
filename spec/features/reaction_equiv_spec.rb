@@ -66,10 +66,11 @@ describe 'Reaction Equiv Spec' do
 
     it 'change material amount', js: true do
       material_new_amount = 4000
-      find('.tree-view', text: 'chemotion.net').click
+      find('.tree-view', text: 'chemotion-repository.net').click
       first('i.icon-reaction').click
       first('span.isvg.loaded.reaction').click
-      find('div#reaction-detail-tab a#reaction-detail-tab-tab-scheme').click
+      find('div#reaction-detail-tab').click
+      find('a#reaction-detail-tab-tab-scheme').click
       tab_scheme = find('div#reaction-detail-tab div.tab-content')
       tab_scheme.all('span.input-group')[0].find_all('input').first.click
       tab_scheme.first('button#lock_equiv_column_btn').click
