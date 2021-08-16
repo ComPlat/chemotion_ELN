@@ -1,7 +1,7 @@
 const reaction = {
   "collection_labels":[
     {
-      "name":"chemotion.net",
+      "name":"chemotion-repository.net",
       "is_shared":false,
       "id":1
     }

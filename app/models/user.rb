@@ -350,7 +350,7 @@ class User < ApplicationRecord
   def create_chemotion_public_collection
     return unless self.type == 'Person'
 
-    Collection.create(user: self, label: 'chemotion.net', is_locked: true, position: 1)
+    Collection.create(user: self, label: 'chemotion-repository.net', is_locked: true, position: 1)
   end
 
   def set_account_active

@@ -11,8 +11,8 @@ RSpec.describe 'Person', type: :model do
       expect(person.type).to eq 'Person'
     end
 
-    it 'creates an All & chemotion.net collection' do
-      expect(person.collections.pluck(:label)).to match_array ['All', 'chemotion.net']
+    it 'creates an All & chemotion-repository.net collection' do
+      expect(person.collections.pluck(:label)).to match_array ['All', 'chemotion-repository.net']
     end
 
     context 'when several groups contain the person,' do

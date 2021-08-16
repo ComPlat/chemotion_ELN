@@ -202,7 +202,7 @@ module Chemotion
 
         after_validation do
           error!('Unauthorized', 401) unless (@collec = Collection.find_by(
-            user_id: current_user.id, is_locked: true, label: 'chemotion.net'
+            user_id: current_user.id, is_locked: true, label: 'chemotion-repository.net'
           ))
         end
 

@@ -26,7 +26,7 @@ describe 'Sample management' do
       expect(find('button#create-split-button')[:disabled]).to eq('true')
 
       # check if split button is disabled unless we select sample
-      find('.tree-view', text: 'chemotion.net').click
+      find('.tree-view', text: 'chemotion-repository.net').click
       click_button 'create-split-button'
       expect(find('li', text: 'Split Sample')[:class]).to eq('disabled')
       click_button 'create-split-button'

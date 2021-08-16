@@ -64,7 +64,7 @@ class GatePushBtn extends React.Component {
     } else if (status === 'unavailable') {
       content = (
         <div>
-          Sorry, it seems chemotion.net can not be reached at the moment
+          Sorry, it seems chemotion-repository.net can not be reached at the moment
           <ButtonGroup>
             <Button
               bsStyle="warning"

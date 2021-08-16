@@ -15,13 +15,13 @@ describe 'Create and update Reaction' do
     svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
 
-    col = Collection.find_by(user: user, label: 'chemotion.net')
+    col = Collection.find_by(user: user, label: 'chemotion-repository.net')
     CollectionsSample.find_or_create_by!(sample_id: material.id, collection_id: col.id)
     CollectionsSample.find_or_create_by!(sample_id: product.id, collection_id: col.id)
   end
 
   it 'Create and update reaction UI', js: true do
-    find_by_id('tree-id-chemotion.net').click
+    find_by_id('tree-id-chemotion-repository.net').click
     find_by_id('create-split-button').click
     find_by_id('create-reaction-button').click
     source = first('span.dnd-arrow-enable')
