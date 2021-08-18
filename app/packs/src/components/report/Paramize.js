@@ -25,9 +25,12 @@ const abstractConfigs = configs => (
 );
 
 const paramize = (state) => {
-  const { selectedObjs, splSettings, rxnSettings, configs, selMolSerials,
+  const {
+    selectedObjs, splSettings, rxnSettings, configs, selMolSerials,
     fileName, fileDescription, imgFormat, template, siRxnSettings,
-    prdAtts } = state;
+    prdAtts
+  } = state;
+
   const params = {
     objTags: JSON.stringify(objTags(selectedObjs)),
     splSettings: JSON.stringify(abstractSettings(splSettings)),
@@ -35,7 +38,7 @@ const paramize = (state) => {
     siRxnSettings: JSON.stringify(siRxnSettings),
     configs: JSON.stringify(abstractConfigs(configs)),
     prdAtts: JSON.stringify(prdAtts),
-    imgFormat,
+    imgFormat: imgFormat?.value || imgFormat || 'png',
     fileName,
     fileDescription,
     templateId: template.id,

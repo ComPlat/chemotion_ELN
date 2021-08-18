@@ -1,114 +1,65 @@
-import alt from '../alt';
-import UIFetcher from '../fetchers/UIFetcher';
-import ReportsFetcher from '../fetchers/ReportsFetcher';
-import AttachmentFetcher from '../fetchers/ReportTemplateFetcher';
-import ReportTemplateFetcher from '../fetchers/ReportTemplateFetcher';
 import _ from 'lodash';
+import alt from '../alt';
+import AttachmentFetcher from '../fetchers/AttachmentFetcher';
+import ReportsFetcher from '../fetchers/ReportsFetcher';
+import ReportTemplateFetcher from '../fetchers/ReportTemplateFetcher';
+import UIFetcher from '../fetchers/UIFetcher';
 import { GetTypeIds, LoadPreviewIds } from '../utils/ReportHelper';
 
 class ReportActions {
+  updateImgFormat = value => value
+  updateTemplate = value => value
 
-  updateImgFormat(value) {
-    return value;
-  }
+  updateSplSettings = target => target
+  toggleSplSettingsCheckAll = () => null
 
-  updateTemplate(value) {
-    return value;
-  }
+  updateRxnSettings = target => target
+  toggleRxnSettingsCheckAll = () => null
 
-  updateSplSettings(target) {
-    return target;
-  }
+  updateSiRxnSettings = target => target
+  toggleSiRxnSettingsCheckAll = () => null
 
-  toggleSplSettingsCheckAll() {
-    return null;
-  }
+  updateConfigs = target => target
+  toggleConfigsCheckAll = () => null
 
-  updateRxnSettings(target) {
-    return target;
-  }
-
-  toggleRxnSettingsCheckAll() {
-    return null;
-  }
-
-  updateSiRxnSettings(target) {
-    return target;
-  }
-
-  toggleSiRxnSettingsCheckAll() {
-    return null;
-  }
-
-  updateConfigs(target) {
-    return target;
-  }
-
-  toggleConfigsCheckAll() {
-    return null;
-  }
-
-  generateReport(report) {
-    return (dispatch) => {
-      ReportsFetcher.create(report)
+  generateReport = report => (dispatch) => {
+    ReportsFetcher.create(report)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-    };
   }
 
-  //
-  updateDefaultTags(dTags) {
-    return dTags;
-  }
+  updateDefaultTags = dTags => dTags
+  move = ({ sourceTag, targetTag }) => ({ sourceTag, targetTag })
 
-  move({ sourceTag, targetTag }) {
-    return { sourceTag, targetTag };
-  }
-
-  getArchives() {
-    return (dispatch) => {
-      ReportsFetcher.fetchArchives()
+  getArchives = () => (dispatch) => {
+    ReportsFetcher.fetchArchives()
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-    };
   }
 
-  updateProcessQueue(oriQueue) {
-    return (dispatch) => {
-      ReportsFetcher.fetchDownloadable(oriQueue)
+  updateProcessQueue = oriQueue => (dispatch) => {
+    ReportsFetcher.fetchDownloadable(oriQueue)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-    };
   }
 
-  updateFileName(e) {
-    return e.target.value;
-  }
+  updateFileName = e => e.target.value
+  updateFileDescription = e => e.target.value
+  updateActiveKey = key => key
+  downloadReport = (id, template) => ({ id, template })
 
-  updateFileDescription(e) {
-    return e.target.value;
-  }
-
-  updateActiveKey(key) {
-    return key;
-  }
-
-  downloadReport(id, template) {
-    return { id, template };
-  }
-
-  clone(archive) {
-    const sampleIds = GetTypeIds(archive.objects, 'sample')
-    const reactionIds = GetTypeIds(archive.objects, 'reaction')
+  clone = (archive) => {
+    const sampleIds = GetTypeIds(archive.objects, 'sample');
+    const reactionIds = GetTypeIds(archive.objects, 'reaction');
     const uiState = {
       sample: { checkedIds: sampleIds },
       reaction: { checkedIds: reactionIds },
@@ -123,52 +74,38 @@ class ReportActions {
     };
   }
 
-  delete(archive) {
-    return (dispatch) => {
-      ReportsFetcher.deleteArchive(archive.id)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
+  delete = archive => (dispatch) => {
+    ReportsFetcher.deleteArchive(archive.id)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
-  remove(target) {
-    return target;
+  remove = target => target
+  reset = () => null
+  updMSVal = (moleculeId, value) => ({ moleculeId, value })
+
+  updateThumbNails = attIds => (dispatch) => {
+    AttachmentFetcher.fetchThumbnails(attIds)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
-  reset() {
-    return null;
+  fetchTemplates = () => (dispatch) => {
+    ReportTemplateFetcher.fetchTemplates()
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
-  updMSVal(moleculeId, value) {
-    return { moleculeId, value };
-  }
-
-  updateThumbNails(attIds) {
-    return (dispatch) => {
-      AttachmentFetcher.fetchThumbnails(attIds)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  fetchTemplates() {
-    return (dispatch) => {
-      ReportTemplateFetcher.fetchTemplates()
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  updateCheckedTags({ uiState, reportState }) {
+  updateCheckedTags = ({ uiState, reportState }) => {
     const { sample, reaction, currentCollection } = uiState;
     const { selectedObjTags, defaultObjTags } = reportState;
     const sampleCheckedIds = sample.checkedIds.toArray();
@@ -179,8 +116,6 @@ class ReportActions {
     const dfRIds = _.difference(reactionCheckedIds, reactionIds)
       .filter(id => !defaultObjTags.reactionIds.includes(id));
 
-    // const diffTags = { sample: dfSIds, reaction: dfRIds };
-
     const elementAdded = dfSIds.length > 0 || dfRIds.length > 0
       || sample.checkedAll || reaction.checkedAll;
 
@@ -189,9 +124,10 @@ class ReportActions {
 
     if (elementAdded) {
       return (dispatch) => {
-        UIFetcher.loadReport({
-          sample, reaction, currentCollection, selectedTags: selectedObjTags,
-        },
+        UIFetcher.loadReport(
+          {
+            sample, reaction, currentCollection, selectedTags: selectedObjTags,
+          },
           'lists',
         ).then((result) => {
           const newTags = {
@@ -218,7 +154,7 @@ class ReportActions {
     };
   }
 
-  loadRreview({ reportState }) {
+  loadRreview = ({ reportState }) => {
     const state = LoadPreviewIds(reportState);
     return (dispatch) => {
       UIFetcher.loadReport(state, 'elements')
