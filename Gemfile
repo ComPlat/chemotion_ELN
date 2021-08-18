@@ -12,7 +12,6 @@ gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
 gem 'bibtex-ruby'
 gem 'bootsnap'
 gem 'bootstrap-sass', '~> 3.4.1'
-gem 'browserify-rails', '~> 4.3'
 
 gem 'closure_tree'
 gem 'countries'

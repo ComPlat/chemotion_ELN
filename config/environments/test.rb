@@ -45,5 +45,5 @@ Rails.application.configure do
   # config.action_view.raise_on_missing_translations = true
 
   # Capybara.ignore_hidden_elements = false
-  Capybara.server = :webrick
+  Capybara.server = :puma
 end

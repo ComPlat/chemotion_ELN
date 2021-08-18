@@ -30,7 +30,7 @@ Rails.application.configure do
   config.public_file_server.enabled = true
 
   # Compress JavaScripts and CSS.
-  config.assets.js_compressor = Uglifier.new(harmony: true, mangle: false, compress: false)
+  # config.assets.js_compressor = Uglifier.new(harmony: true, mangle: false, compress: false)
   config.assets.css_compressor = :sass
 
   # Do not fallback to assets pipeline if a precompiled asset is missed.
@@ -121,5 +121,4 @@ Rails.application.configure do
     :openssl_verify_mode  => ENV['SMTP_SSL_MODE']
   }
 
-  config.browserify_rails.commandline_options = "-t [ babelify --presets [ @babel/preset-env  @babel/preset-react ] --plugins [ @babel/plugin-proposal-object-rest-spread ] ] -g uglifyify "
 end

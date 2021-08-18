@@ -38,6 +38,7 @@ module Chemotion
     end.map(&:name)
 
     config.before_configuration do
+      ## TODO fix this for ELN pugin
       # For each registered plugin gem (group :plugins in Gemfile) browserify needs to find
       # an aliasifyConfig.js file (and a package.json file ) in gem root directory.
       # This create a sym link if no file exists.
@@ -127,10 +128,6 @@ module Chemotion
     `sed -i "s~import { props, ignoredProps } from './props';~import wikiprops from './props';const { props, ignoredProps } = wikiprops;~" #{src4}`
   end
 
-#    config.browserify_rails.commandline_options = ' -t [ babelify --presets [ @babel/preset-env  @babel/preset-react ] --plugins [ @babel/plugin-proposal-object-rest-spread ] ] '
-    # Environments in which to generate source maps
-    # The default is none
-#    config.browserify_rails.source_map_environments << 'development'
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers

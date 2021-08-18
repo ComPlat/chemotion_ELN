@@ -1,4 +1,4 @@
-###### Note: This is a sample file for reference. In order to display the welome message please create a file named as 'welcome-message.md' in the same directory(app/public).
+###### Note: This is a sample file for reference. In order to display the welome message please create a file named as 'welcome-message.md' in the same directory(public).
 
 ###  Welcome to Chemotion Electronic Lab Notebook.
 
