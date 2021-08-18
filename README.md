@@ -38,11 +38,11 @@ see online [docs](https://www.chemotion.net/chemotionsaurus/docs/eln/about)
 
 ## Code Status
 
+[![JavaScript Unit Tests](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=development-5)](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=development-5)
+[![Ruby Unit Tests](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=development-5)](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=development-5)
+[![Acceptance Tests](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=development-5)](https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=development-5)
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1054134.svg)](https://doi.org/10.5281/zenodo.1054134)
-
-[![Build Status](https://travis-ci.org/ComPlat/chemotion_ELN.svg?branch=master)](https://travis-ci.org/ComPlat/chemotion_ELN)
-
-[![Coverage Status](https://coveralls.io/repos/github/ComPlat/chemotion_ELN/badge.svg)](https://coveralls.io/github/ComPlat/chemotion_ELN)
 
 
 
