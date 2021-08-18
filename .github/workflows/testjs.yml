@@ -1,0 +1,66 @@
+name: JavaScript Unit Tests
+
+on:
+  workflow_dispatch:
+  push:
+    
+jobs:
+  docker_container:
+    if: "!contains(github.event.commits[0].message, 'skip all') && !contains(github.event.commits[0].message, 'skip unit js')"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pg_role: [chemotion_test]
+        pg_database: [chemotion_test]
+        pg_password: [123456]
+    container: 
+      image: complat/complat-ubuntu-runner:development-5.9
+    env:
+      HOME: /home/gitlab-runner
+
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+      - name: git clone + postgres
+        working-directory: /home/gitlab-runner
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+
+        run: |
+            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+
+            sudo bash ./chemotion_ELN/.github/workflows/config.sh
+
+            echo "POSTGRES"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB NOSUPERUSER PASSWORD '${{ matrix.pg_password }}'"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE ${{ matrix.pg_database }} OWNER ${{ matrix.pg_role }};"
+            psql -d postgresql://${{ matrix.pg_role }}:${{ matrix.pg_password }}@postgres/${{ matrix.pg_database }} -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+
+            sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
+
+      - name: bundle + yarn install
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && bundle install"
+            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && yarn install"
+
+      - name: npm test
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            echo "RAKE DB"
+            /bin/bash -l -c "RAILS_ENV=test bundle exec rake db:test:prepare > /dev/null"
+            echo "NPM TEST"
+            /bin/bash -l -c "npm test"
+            
