@@ -41,7 +41,7 @@ const paramize = (state) => {
     imgFormat: imgFormat?.value || imgFormat || 'png',
     fileName,
     fileDescription,
-    templateId: template.id,
+    templateId: template.id || template,
     molSerials: JSON.stringify(selMolSerials),
   };
 
