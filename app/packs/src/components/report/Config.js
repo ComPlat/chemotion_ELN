@@ -26,11 +26,11 @@ const EpsWarning = ({ imgFormat }) => (
 );
 
 const onImgFormatChange = (e) => {
-  ReportActions.updateImgFormat(e);
+  ReportActions.updateImgFormat(e.value);
 };
 
 const ImgFormat = ({ imgFormat }) => (
-  <Row>
+  <Row style={{ paddingBottom: 100 }} >
     <Col md={3} sm={8}>
       <label>Images format</label>
       <Select
