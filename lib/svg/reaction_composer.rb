@@ -255,10 +255,10 @@ module SVG
       @preserve_aspect_ratio = pas&.match(/(\w| )+/) && "preserveAspectRatio = #{$1}" || ''
       @global_view_box_array = [0, 0, 50, 50]
     end
-    
+
     # check the length of each solvent and decide how many solv. per line according to solv.length and reactants.size
     def actual_solvents_lines
-      solv_lines = [] 
+      solv_lines = []
       i = 0
       solvents.each_with_index do |solvent, i|
         solv_str_sum = 0
@@ -380,18 +380,18 @@ module SVG
 
     # assign height scale for condition lines
     def find_cond_max_height 
-      conditions_arr = conditions.split("\n") || []
+      conditions_arr = conditions.try(:split, "\n") || []
       conditions_arr.length * 75
     end
 
     # assign height scale for solvent lines
     def find_solvent_max_height
-      (actual_solvents_lines.length)* 75
+      actual_solvents_lines.length * 75
     end
 
     # sum of conditions and solvents height scale
     def count_height_solv_conditions
-      find_solvent_max_height() + find_cond_max_height()
+      find_solvent_max_height + find_cond_max_height
     end 
 
     def set_global_view_box_height
@@ -568,24 +568,24 @@ module SVG
         it.present? ? "#{acc} <g transform='translate(#{x_shift}, #{y_shift})'> #{it} </g>" : acc
       end
     end
-    
+
     # sum of conditions and solvents array length
     def solv_conditions_length
       (find_solvent_max_height + find_cond_max_height) / 75
-    end 
+    end
 
     #  correcting scale for reactants size when solv_condi arr is max and @reactant_max > 300
     def adjust_reactants_range
       max = 300
       count = 0
-      range = 50 
-      
-      until @reactant_max <= max 
-        max += 100 
+      range = 50
+
+      until @reactant_max <= max
+        max += 100
         count += 1
       end
-      range * count 
-    end 
+      range * count
+    end
 
     # correcting scale when material(> 400) is larger than reactants and solv_condi array
     def material_scale
@@ -601,7 +601,7 @@ module SVG
       solv_range = (y_center - 90) + (solv_conditions_length - 3) * 12.2
       @reactant_max <= 300 && @max_of_solv_conditions != 0 ? solv_range
       : solv_range - adjust_reactants_range 
-    end 
+    end
 
     def check_case
       material_max = find_material_max_height(starting_materials + products)
