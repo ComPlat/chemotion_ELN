@@ -1,4 +1,4 @@
-image: "complat/complat-ubuntu-runner:development-5.7"
+image: "complat/complat-ubuntu-runner:development-5.9"
 
 services:
   - postgres:12-alpine
