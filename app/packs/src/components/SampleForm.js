@@ -10,6 +10,7 @@ import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import TextRangeWithAddon from './TextRangeWithAddon';
 import { solventOptions } from './staticDropdownOptions/options';
 import SampleDetailsSolvents from './SampleDetailsSolvents';
+import PrivateNoteElement from './PrivateNoteElement';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -458,6 +459,12 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  samplePrivateNote(sample) {
+    return (
+      <PrivateNoteElement element={sample} disabled={!sample.can_update}/>
+    )
+  }
+
   render() {
     const sample = this.props.sample || {};
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
@@ -662,6 +669,11 @@ export default class SampleForm extends React.Component {
           <tr>
             <td colSpan="4">
               {this.textInput(sample, 'location', 'Location')}
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="4">
+              {this.samplePrivateNote(sample)}
             </td>
           </tr>
           {this.props.customizableField()}

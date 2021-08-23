@@ -17,6 +17,7 @@ import SearchFetcher from '../fetchers/SearchFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ContainerFetcher from '../fetchers/ContainerFetcher';
 import GenericElsFetcher from '../fetchers/GenericElsFetcher';
+import PrivateNoteFetcher from '../fetchers/PrivateNoteFetcher'
 
 import GenericEl from '../models/GenericEl';
 import Sample from '../models/Sample';
@@ -773,6 +774,27 @@ class ElementActions {
 
   refreshComputedProp(cprop) {
     return cprop;
+  }
+
+  // -- Private Note --
+  createPrivateNote(params) {
+    return (dispatch) => {
+      PrivateNoteFetcher.create(params).then((result) => {
+        dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      })
+    };
+  }
+
+  updatePrivateNote(note) {
+    return (dispatch) => {
+      PrivateNoteFetcher.update(note).then((result) => {
+        dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      })
+    };
   }
 }
 

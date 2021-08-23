@@ -139,6 +139,7 @@ class API < Grape::API
   mount Chemotion::SegmentAPI
   mount Chemotion::GenericDatasetAPI
   mount Chemotion::ReportTemplateAPI
+  mount Chemotion::PrivateNoteAPI
    
   add_swagger_documentation(info: {
     "title": "Chemotion ELN",
