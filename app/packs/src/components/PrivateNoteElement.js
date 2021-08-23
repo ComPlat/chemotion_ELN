@@ -48,7 +48,7 @@ export default class PrivateNoteElement extends React.Component {
     if (!element || !note) {
       return;
     }
-    if (note.is_new) {
+    if (!note.created_at) {
       const params = { 
         content: note.content, noteable_id: element.id, 
         noteable_type: element.type 
@@ -58,8 +58,7 @@ export default class PrivateNoteElement extends React.Component {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-    }
-    else {
+    } else {
       PrivateNoteFetcher.update(note).then((newNote) => {
         this.setState({ note: newNote });
       }).catch((errorMessage) => {
@@ -79,7 +78,7 @@ export default class PrivateNoteElement extends React.Component {
 
     return (
       <FormGroup>
-        <ControlLabel>Note</ControlLabel>
+        <ControlLabel>Private Note</ControlLabel>
         <FormControl
           componentClass="textarea"
           ref={(input) => { this.noteInput = input; }}
