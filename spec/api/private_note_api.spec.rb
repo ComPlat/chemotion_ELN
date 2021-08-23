@@ -3,18 +3,20 @@
 require 'rails_helper'
 
 describe Chemotion::PrivateNoteAPI do
-  context "unauthorized user can't log in" do
-    let(:authoirzed_user) { create(:user) }
-    let(:unauthoirzed_user) { create(:person) }
+  let!(:unauthorized_user) { create(:person) }
+  let!(:author_user) { create(:person) }
+  let!(:c) { create(:collection, user: unauthorized_user, is_shared: false) }
+  let!(:c2) { create(:collection, user: author_user, is_shared: false) }
+  let!(:r) { create(:reaction, collections: [c]) }
+  let!(:s) { create(:sample, collections: [c]) }
 
+  context "unauthorized user, " do
     before do
-      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(authoirzed_user)
+      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(unauthorized_user)
     end
 
     describe 'GET /api/v1/private_notes/:id' do
-      let!(:c) { create(:collection, user: authoirzed_user, is_shared: false) }
-      let!(:r) { create(:reaction, collections: [c]) }
-      let(:note_1) { create(:private_note, noteable: r, user_id: unauthoirzed_user.id) }
+      let(:note_1) { create(:private_note, noteable: r, user_id: author_user.id) }
 
       before do
         get "/api/v1/private_notes/#{note_1.id}"
@@ -27,9 +29,7 @@ describe Chemotion::PrivateNoteAPI do
 
     describe 'PUT /api/v1/private_notes/:id' do
       context 'update with only content' do
-        let!(:c) { create(:collection, user: authoirzed_user, is_shared: false) }
-        let!(:r) { create(:reaction, collections: [c]) }
-        let(:note_1) { create(:private_note, noteable: r, user_id: unauthoirzed_user.id) }
+        let(:note_1) { create(:private_note, noteable: r, user_id: author_user.id) }
         let(:params) do
           {
             content: 'test note'
@@ -37,7 +37,7 @@ describe Chemotion::PrivateNoteAPI do
         end
 
         before do
-          put "/api/v1/private_notes/#{note_1.id}", params
+          put "/api/v1/private_notes/#{note_1.id}", params: params
         end
 
         it 'returns 401 status code' do
@@ -46,11 +46,7 @@ describe Chemotion::PrivateNoteAPI do
       end
 
       context 'with sample' do
-        let(:user2) { create(:person, id: 3) }
-        let!(:c) { create(:collection, user: user2, is_shared: false) }
-        let!(:r) { create(:reaction, collections: [c]) }
-        let(:note_1) { create(:private_note, noteable: r, user_id: unauthoirzed_user.id) }
-        let!(:s) { create(:sample, collections: [c]) }
+        let(:note_1) { create(:private_note, noteable: r, user_id: author_user.id) }
         let(:params) do
           {
             content: 'test note',
@@ -60,7 +56,7 @@ describe Chemotion::PrivateNoteAPI do
         end
 
         before do
-          put "/api/v1/private_notes/#{note_1.id}", params
+          put "/api/v1/private_notes/#{note_1.id}", params: params
         end
 
         it 'returns 401 status code' do
@@ -69,11 +65,7 @@ describe Chemotion::PrivateNoteAPI do
       end
 
       context 'with reaction' do
-        let(:user3) { create(:person, id: 4) }
-        let!(:c) { create(:collection, user: user3, is_shared: false) }
-        let!(:s) { create(:sample, collections: [c]) }
-        let(:note_1) { create(:private_note, noteable: s, user_id: unauthoirzed_user.id) }
-        let!(:r) { create(:reaction, collections: [c]) }
+        let(:note_1) { create(:private_note, noteable: s, user_id: author_user.id) }
         let(:params) do
           {
             content: 'test note q',
@@ -83,7 +75,7 @@ describe Chemotion::PrivateNoteAPI do
         end
 
         before do
-          put "/api/v1/private_notes/#{note_1.id}", params
+          put "/api/v1/private_notes/#{note_1.id}", params: params
         end
 
         it 'returns 401 status code' do
@@ -93,9 +85,7 @@ describe Chemotion::PrivateNoteAPI do
     end
 
     describe 'DELETE /api/v1/private_notes/:id' do
-      let!(:c) { create(:collection, user: authoirzed_user, is_shared: false) }
-      let!(:r) { create(:reaction, collections: [c]) }
-      let(:note_1) { create(:private_note, content: 'test', noteable: r, user_id: unauthoirzed_user.id) }
+      let(:note_1) { create(:private_note, content: 'test', noteable: r, user_id: author_user.id) }
 
       before do
         delete "/api/v1/private_notes/#{note_1.id}"
@@ -107,17 +97,13 @@ describe Chemotion::PrivateNoteAPI do
     end
   end
 
-  context 'authorized user logged in' do
-    let(:user) { create(:person) }
-
+  context 'authorized user' do
     before do
-      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
+      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(author_user)
     end
 
     describe 'GET /api/v1/private_notes/:id' do
-      let!(:c) { create(:collection, user: user, is_shared: false) }
-      let!(:r) { create(:reaction, collections: [c]) }
-      let(:note_1) { create(:private_note, noteable: r, user_id: user.id) }
+      let(:note_1) { create(:private_note, noteable: r, user_id: author_user.id) }
 
       before do
         get "/api/v1/private_notes/#{note_1.id}"
@@ -135,23 +121,19 @@ describe Chemotion::PrivateNoteAPI do
 
     describe 'POST /api/v1/private_notes/create' do
       context 'with content' do
-        let!(:c) { create(:collection, user: user, is_shared: false) }
-        let!(:r) { create(:reaction, collections: [c]) }
         let(:params) { { content: 'test note', noteable_id: r.id, noteable_type: 'Reaction' } }
 
         before do
-          post "/api/v1/private_notes/create", params
+          post "/api/v1/private_notes/create", params: params
         end
 
-        it 'is able to create a new note' do
+        it 'is able to create a new note (on unaccessible element)' do
           note = PrivateNote.find_by(content: 'test note')
           expect(note).not_to be_nil
         end
       end
 
       context 'with sample' do
-        let!(:c) { create(:collection, user: user, is_shared: false) }
-        let!(:s) { create(:sample, collections: [c]) }
         let(:params) do
           {
             content: 'test note sample',
@@ -161,7 +143,7 @@ describe Chemotion::PrivateNoteAPI do
         end
 
         before do
-          post "/api/v1/private_notes/create", params
+          post "/api/v1/private_notes/create", params: params
         end
 
         it 'is able to create a new note' do
@@ -177,8 +159,6 @@ describe Chemotion::PrivateNoteAPI do
       end
 
       context 'with reaction' do
-        let!(:c) { create(:collection, user: user, is_shared: false) }
-        let!(:r) { create(:reaction, collections: [c]) }
         let(:params) do
           {
             content: 'test note reaction',
@@ -188,7 +168,7 @@ describe Chemotion::PrivateNoteAPI do
         end
 
         before do
-          post "/api/v1/private_notes/create", params
+          post "/api/v1/private_notes/create", params: params
         end
 
         it 'is able to create a new note' do
@@ -206,9 +186,7 @@ describe Chemotion::PrivateNoteAPI do
 
     describe 'PUT /api/v1/private_notes/:id' do
       context 'with only content' do
-        let!(:c) { create(:collection, user: user, is_shared: false) }
-        let!(:r) { create(:reaction, collections: [c]) }
-        let(:note_1) { create(:private_note, noteable: r, user_id: user.id) }
+        let(:note_1) { create(:private_note, noteable: r, user_id: author_user.id) }
         let(:params) do
           {
             content: 'update test note'
@@ -216,7 +194,7 @@ describe Chemotion::PrivateNoteAPI do
         end
 
         before do
-          put "/api/v1/private_notes/#{note_1.id}", params
+          put "/api/v1/private_notes/#{note_1.id}", params: params
         end
 
         it "is able to update note's content" do
@@ -226,10 +204,7 @@ describe Chemotion::PrivateNoteAPI do
       end
 
       context 'with sample' do
-        let!(:c) { create(:collection, user: user, is_shared: false) }
-        let!(:r) { create(:reaction, collections: [c]) }
-        let(:note_1) { create(:private_note, noteable: r, user_id: user.id) }
-        let!(:s) { create(:sample, collections: [c]) }
+        let(:note_1) { create(:private_note, noteable: r, user_id: author_user.id) }
         let(:params) do
           {
             content: 'update test note sample',
@@ -240,7 +215,7 @@ describe Chemotion::PrivateNoteAPI do
         end
 
         before do
-          put "/api/v1/private_notes/#{note_1.id}", params
+          put "/api/v1/private_notes/#{note_1.id}", params: params
         end
 
         it "is able to update note's content" do
@@ -250,10 +225,7 @@ describe Chemotion::PrivateNoteAPI do
       end
 
       context 'with reaction' do
-        let!(:c) { create(:collection, user_id: user.id, is_shared: false) }
-        let!(:s) { create(:sample, collections: [c]) }
-        let(:note_1) { create(:private_note, noteable: s, user_id: user.id) }
-        let!(:r) { create(:reaction, collections: [c]) }
+        let(:note_1) { create(:private_note, noteable: s, user_id: author_user.id) }
         let(:params) do
           {
             content: 'update test note reaction',
@@ -263,7 +235,7 @@ describe Chemotion::PrivateNoteAPI do
         end
 
         before do
-          put "/api/v1/private_notes/#{note_1.id}", params
+          put "/api/v1/private_notes/#{note_1.id}", params: params
         end
 
         it "is able to update note's content" do
@@ -275,10 +247,8 @@ describe Chemotion::PrivateNoteAPI do
     end
 
     describe 'DELETE /api/v1/private_notes/:id' do
-      let(:c) { create(:collection, user_id: user.id, is_shared: false) }
-      let(:r) { create(:reaction, collections: [c]) }
       let(:note_1) do
-        create(:private_note, content: 'test', noteable: r, user_id: user.id)
+        create(:private_note, content: 'test', noteable: r, user_id: author_user.id)
       end
 
       before do

@@ -8,6 +8,7 @@ export default class PrivateNote extends Element {
       noteable_id: null,
       noteable_type: null,
       created_by: null,
+      created_at: null,
     });
   }
 
@@ -34,7 +35,6 @@ export default class PrivateNote extends Element {
   get created_by() {
     return this._created_by;
   }
-
   set created_by(created_by) {
     this._created_by = created_by;
   }

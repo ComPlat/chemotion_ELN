@@ -1,46 +1,31 @@
 import 'whatwg-fetch';
-import PrivateNote from '../models/PrivateNote'
+import PrivateNote from '../models/PrivateNote';
+
+const classify = string => string.charAt(0).toUpperCase() + string.slice(1);
 
 export default class PrivateNoteFetcher {
   static fetchById(id) {
-    let promise = fetch('/api/v1/private_notes/' + id + '.json', {
+    return fetch(`/api/v1/private_notes/${id}.json`, {
       credentials: 'same-origin'
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchByNoteableId(noteable_id, noteable_type) {
-    let promise = () => fetch('/api/v1/private_notes', {
+    return fetch(`/api/v1/private_notes?noteable_id=${noteable_id}&noteable_type=${classify(noteable_type)}`, {
       credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        noteable_id: noteable_id,
-        noteable_type: noteable_type
-      })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      let note = new PrivateNote(json.note)
-      return note
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-  
-    return promise()
+    }).then(response => response.json())
+      .then(json => new PrivateNote(json.note))
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static create(params) {
-    let promise = () => fetch('/api/v1/private_notes/create', {
+  static create(prms) {
+    const params = { ...prms };
+    if (prms.noteable_type) {
+      params.noteable_type = classify(prms.noteable_type);
+    }
+    return fetch('/api/v1/private_notes/create', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -48,20 +33,13 @@ export default class PrivateNoteFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      let note = new PrivateNote(json.note)
-      return note
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-  
-    return promise()
+    }).then(response => response.json())
+      .then(json => new PrivateNote(json.note))
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static update(privateNote) {
-    let promise = () => fetch('/api/v1/private_notes/' + privateNote.id, {
+    return fetch(`/api/v1/private_notes/${privateNote.id}`, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -69,15 +47,8 @@ export default class PrivateNoteFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(privateNote.serialize())
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      let note = new PrivateNote(json.note)
-      return note
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise()
+    }).then(response => response.json())
+      .then(json => new PrivateNote(json.note))
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 }
