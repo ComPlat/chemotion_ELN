@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -9,11 +10,11 @@ import {
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
-import Barcode from 'react-barcode';
 import Select from 'react-select';
-import { _, cloneDeep, findIndex } from 'lodash';
+import { cloneDeep, findIndex } from 'lodash';
 import uuid from 'uuid';
 import classNames from 'classnames';
+import Immutable from 'immutable';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -61,7 +62,6 @@ import NotificationActions from './actions/NotificationActions';
 import MatrixCheck from './common/MatrixCheck';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
 
-import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
 
@@ -136,6 +136,12 @@ export default class SampleDetails extends React.Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange);
+    const { activeTab } = this.state;
+    this.fetchQcWhenNeeded(activeTab);
+  }
+
   componentWillReceiveProps(nextProps) {
     if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))
         || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey == 'DUMMY')) {
@@ -154,24 +160,19 @@ export default class SampleDetails extends React.Component {
     });
   }
 
-  componentDidMount() {
-    UIStore.listen(this.onUIStoreChange);
-    const { activeTab } = this.state;
-    this.fetchQcWhenNeeded(activeTab);
-  }
-
   componentWillUnmount() {
     this.clipboard.destroy();
     UIStore.unlisten(this.onUIStoreChange);
   }
 
   onUIStoreChange(state) {
-    if (state.sample.activeTab != this.state.activeTab){
-      this.setState((previousState)=>{ return {
+    if (state.sample.activeTab !== this.state.activeTab) {
+      this.setState(previousState => ({
         ...previousState, activeTab: state.sample.activeTab
-      }})
+      }));
     }
   }
+
   handleMolfileShow() {
     this.setState({
       showMolfileModal: true
@@ -191,34 +192,34 @@ export default class SampleDetails extends React.Component {
   }
 
   handleAmountChanged(amount) {
-    const sample = this.state.sample;
+    const { sample } = this.state;
     sample.setAmountAndNormalizeToGram(amount);
     this.setState({ sample });
   }
 
   handleImportedReadoutChanged(e) {
-    let sample = this.state.sample;
-    sample.imported_readout = e.target.value
+    const { sample } = this.state;
+    sample.imported_readout = e.target.value;
     this.setState({
-      sample: sample
+      sample
     });
   }
 
   showStructureEditor() {
     this.setState({
       showStructureEditor: true
-    })
+    });
   }
 
   hideStructureEditor() {
     this.setState({
       showStructureEditor: false
-    })
+    });
   }
 
   toggleInchi() {
-    const { showInchikey } = this.state
-    this.setState({ showInchikey: !showInchikey })
+    const { showInchikey } = this.state;
+    this.setState({ showInchikey: !showInchikey });
   }
 
   handleMoleculeBySmile() {
@@ -228,6 +229,7 @@ export default class SampleDetails extends React.Component {
     MoleculesFetcher.fetchBySmi(smi)
       .then((result) => {
         if (!result || result == null) {
+          // eslint-disable-next-line no-alert
           alert('Can not create molecule with this smiles!');
         } else {
           sample.molfile = result.molfile;
@@ -322,14 +324,12 @@ export default class SampleDetails extends React.Component {
       }
     } else if (sample.belongTo && sample.belongTo.type === 'wellplate') {
       const wellplate = sample.belongTo;
-      ElementActions.updateSampleForWellplate(sample, wellplate)
+      ElementActions.updateSampleForWellplate(sample, wellplate);
+    } else if (sample.isNew) {
+      ElementActions.createSample(sample, closeView);
     } else {
-      if (sample.isNew) {
-        ElementActions.createSample(sample, closeView)
-      } else {
-        sample.cleanBoilingMelting();
-        ElementActions.updateSample(new Sample(sample), closeView)
-      }
+      sample.cleanBoilingMelting();
+      ElementActions.updateSample(new Sample(sample), closeView);
     }
 
     if (sample.is_new || closeView) {
@@ -341,16 +341,17 @@ export default class SampleDetails extends React.Component {
 
   structureEditorButton(isDisabled) {
     return (
+      // eslint-disable-next-line react/jsx-no-bind
       <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
-        <Glyphicon glyph='pencil'/>
+        <Glyphicon glyph="pencil" />
       </Button>
     )
   }
 
   svgOrLoading(sample) {
-    let svgPath = "";
+    let svgPath = '';
     if (this.state.loadingMolecule) {
-      svgPath = "/images/wild_card/loading-bubbles.svg";
+      svgPath = '/images/wild_card/loading-bubbles.svg';
     } else {
       svgPath = sample.svgPath;
     }
@@ -1182,7 +1183,7 @@ export default class SampleDetails extends React.Component {
     const tabTitlesMap = {
       qc_curation: 'qc curation',
       computed_props: 'computed props'
-    }
+    };
 
     for (let j = 0; j < XTabs.count; j += 1) {
       if (XTabs[`on${j}`](sample)) {
@@ -1200,10 +1201,24 @@ export default class SampleDetails extends React.Component {
 
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
 
+    const stb = [];
     const tabContents = [];
     visible.forEach((value) => {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
+      stb.push(value);
+    });
+
+    let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+    segmentKlasses = segmentKlasses.filter(s => s.element_klass && s.element_klass.name === sample.type);
+    segmentKlasses.forEach((klass) => {
+      const visIdx = visible.indexOf(klass.label);
+      const idx = findIndex(sample.segments, o => o.segment_klass_id === klass.id);
+      if (visIdx < 0 && idx > -1) {
+        const tabContent = tabContentsMap[klass.label];
+        if (tabContent) { tabContents.push(tabContent); }
+        stb.push(klass.label);
+      }
     });
 
     const { pageMessage } = this.state;
@@ -1225,7 +1240,8 @@ export default class SampleDetails extends React.Component {
       </Alert>
     ) : null;
 
-    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
+    const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1 &&
+     this.state.activeTab) || visible.get(0);
 
     return (
       <Panel
