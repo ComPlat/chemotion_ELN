@@ -5,6 +5,8 @@ import moment from 'moment';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from '../components/fetchers/AdminFetcher';
 
+import AdminGroupElement from './AdminGroupElement';
+import AdminDeviceElement from './AdminDeviceElement';
 export default class GroupsDevices extends React.Component {
   constructor(props) {
     super(props);
@@ -30,6 +32,8 @@ export default class GroupsDevices extends React.Component {
     this.handleCloseDeviceMetadata = this.handleCloseDeviceMetadata.bind(this);
     this.handleShowCreateModal = this.handleShowCreateModal.bind(this);
     this.handleCloseGroup = this.handleCloseGroup.bind(this);
+    this.handleGroupChange = this.handleGroupChange.bind(this);
+    this.handleDeviceChange = this.handleDeviceChange.bind(this);
   }
 
   componentDidMount() {
@@ -38,6 +42,14 @@ export default class GroupsDevices extends React.Component {
   }
 
   componentWillUnmount() {
+  }
+
+  handleGroupChange() {
+    this.fetch('Group');
+  }
+
+  handleDeviceChange() {
+    this.fetch('Device');
   }
 
   setGroupAdmin(groupRec, userRec, setAdmin = true) {
@@ -412,68 +424,8 @@ export default class GroupsDevices extends React.Component {
       tbody = '';
     } else {
       tbody = groups.map((g, idx) => (
-        <tbody key={`tbody_${g.id}`}>
-          <tr key={`row_${g.id}`} id={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
-            <td>{idx + 1}</td>
-            { this.renderGroupButtons(g) }
-            <td>{g.name}</td>
-            <td>{g.name_abbreviation}</td>
-            <td>
-              {g.admins && g.admins.map(x => x.name).join(', ')}&nbsp;&nbsp;
-            </td>
-            <td>{g.email}</td>
-          </tr>
-          <tr className={`collapse div_row_${g.id}`} id={`div_row_${g.id}`}>
-            <td colSpan="7">
-              <Panel>
-                <Panel.Heading>
-                  <Panel.Title>
-                    Users in Group: {g.name}
-                  </Panel.Title>
-                </Panel.Heading>
-                <Table>
-                  <tbody>
-                    {g.users.map((u, i) => (
-                      <tr key={`row_${g.id}_${u.id}`} id={`row_${g.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                        <td width="5%">{i + 1}</td>
-                        <td width="20%">{u.name}</td>
-                        <td width="10%">{u.initials}</td>
-                        <td width="20%">{u.email}</td>
-                        <td width="15%">{g.admins && g.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
-                        <td width="30%">{ this.renderGroupUserButtons(g, u) }</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Panel>
-            </td>
-          </tr>
-          <tr className={`collapse div_row_d${g.id}`} id={`div_row_d${g.id}`}>
-            <td colSpan="7">
-              <Panel>
-                <Panel.Heading>
-                  <Panel.Title>
-                    Devices in Group: {g.name}
-                  </Panel.Title>
-                </Panel.Heading>
-                <Table>
-                  <tbody>
-                    {g.devices.map((u, i) => (
-                      <tr key={`row_${g.id}_${u.id}`} id={`row_${g.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                        <td width="5%">{i + 1}</td>
-                        <td width="20%">{u.name}</td>
-                        <td width="10%">{u.initials}</td>
-                        <td width="20%">{}</td>
-                        <td width="15%">{}</td>
-                        <td width="30%">{ this.renderDeleteButton('Group', 'Device', g, u) }</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Panel>
-            </td>
-          </tr>
-        </tbody>
+        <AdminGroupElement groupElement={g} index={idx} currentState={this.state}
+        onChangeGroupData={this.handleGroupChange} onShowModal={this.handleShowModal}></AdminGroupElement>
       ));
     }
 
@@ -510,41 +462,9 @@ export default class GroupsDevices extends React.Component {
     if (typeof (devices) !== 'undefined' && Object.keys(devices).length <= 0) {
       tbody = '';
     } else {
-      tbody = devices && devices.map((g, idx) => (
-        <tbody key={`tbody_${g.id}`}>
-          <tr key={`row_${g.id}`} id={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
-            <td>{idx + 1}</td>
-            { this.renderDeviceButtons(g) }
-            <td>{g.name}</td>
-            <td>{g.name_abbreviation}</td>
-            <td>{g.email}</td>
-          </tr>
-          <tr className={`collapse div_row_du${g.id}`} id={`div_row_du${g.id}`}>
-            <td colSpan="5">
-              <Panel>
-                <Panel.Heading>
-                  <Panel.Title>
-                    Device: [{g.name}] managed by following users/groups <br />
-                  </Panel.Title>
-                </Panel.Heading>
-                <Table>
-                  <tbody>
-                    {g.users.map((u, i) => (
-                      <tr key={`row_${g.id}_${u.id}`} id={`row_${g.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                        <td width="5%">{i + 1}</td>
-                        <td width="30%">{u.name}</td>
-                        <td width="10%">{u.initials}</td>
-                        <td width="20%">{u.type}</td>
-                        <td width="15%">{}</td>
-                        <td width="20%">{ this.renderDeleteButton('Device', 'Person', g, u) }</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Panel>
-            </td>
-          </tr>
-        </tbody>
+      tbody = devices && devices.map((device, idx) => (
+        <AdminDeviceElement deviceElement={device} index={idx} currentState={this.state}
+        onChangeDeviceData={this.handleDeviceChange} onShowModal={this.handleShowModal} onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}></AdminDeviceElement>
       ));
     }
 
@@ -569,144 +489,6 @@ export default class GroupsDevices extends React.Component {
           { tbody }
         </Table>
       </Panel>
-    );
-  }
-
-  renderDeleteButton(rootType, actionType, groupRec, userRec, isRoot = false) {
-    let msg = 'remove yourself from the group';
-    if (rootType === 'Group' && isRoot) {
-      msg = `remove group: ${groupRec.name}`;
-    } else if (rootType === 'Device' && isRoot) {
-      msg = `remove device: ${groupRec.name}`;
-    } else if (rootType === 'Group' && !isRoot && actionType === 'Person') {
-      msg = `remove user: ${userRec.name} from group: ${groupRec.name} ?`;
-    } else if (rootType === 'Group' && !isRoot && actionType === 'Device') {
-      msg = `remove device: ${userRec.name} from group: ${groupRec.name} ?`;
-    } else if (rootType === 'Device' && !isRoot) {
-      msg = `remove user: ${userRec.name} from group: ${groupRec.name} ?`;
-    } else {
-      msg = `remove ???: ${groupRec.name}`;
-    }
-
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        {msg} <br />
-        <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
-          Yes
-          </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
-          No
-          </Button>
-        </div>
-      </Popover>
-    );
-
-    return (
-      <ButtonGroup className="actions">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
-          <Button bsSize="xsmall" bsStyle="danger" >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
-      </ButtonGroup>
-    );
-  }
-
-  renderDeviceButtons(device) {
-    return (
-      <td>
-        <ButtonGroup aria-label="Device-Users">
-          <OverlayTrigger placement="top" overlay={<Tooltip id="deviceUsersShow">List Device-Users</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="info" data-toggle="collapse" data-target={`.div_row_du${device.id}`} >
-              <i className="fa fa-users" />&nbsp;({device.users.length < 10 ? `0${device.users.length}` : device.users.length})
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add device permission to users</Tooltip>}>
-            <Button bsSize="xsmall" type="button" onClick={() => this.handleShowModal(device, 'Device', 'Person')} >
-              <i className="fa fa-user" /><i className="fa fa-plus" />
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add device permission to groups</Tooltip>}>
-            <Button bsSize="xsmall" type="button" onClick={() => this.handleShowModal(device, 'Device', 'Group')} >
-              <i className="fa fa-users" /><i className="fa fa-plus" />
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="inchi_tooltip">Edit Device Metadata</Tooltip>} >
-            <Button bsSize="xsmall" bsStyle="info" onClick={() => this.handleShowDeviceMetadataModal(device)}>
-              <i className="fa fa-laptop" />
-            </Button>
-          </OverlayTrigger>
-        </ButtonGroup>&nbsp;&nbsp;
-
-        <ButtonGroup>
-          {this.renderDeleteButton('Device', null, device, null, true)}
-        </ButtonGroup>
-      </td>
-    );
-  }
-
-  renderGroupButtons(group) {
-    return (
-      <td>
-        <ButtonGroup aria-label="Group-Users">
-          <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersShow">List Group-Users</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="info" data-toggle="collapse" data-target={`.div_row_${group.id}`} >
-              <i className="fa fa-users" />&nbsp;({group.users.length < 10 ? `0${group.users.length}` : group.users.length})
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add user to group</Tooltip>}>
-            <Button bsSize="xsmall" type="button" onClick={() => this.handleShowModal(group, 'Group', 'Person')} >
-              <i className="fa fa-user" /><i className="fa fa-plus" />
-            </Button>
-          </OverlayTrigger>
-        </ButtonGroup>&nbsp;&nbsp;
-
-        <ButtonGroup>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="groupDevicesShow">List Group-Devices</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="success" data-toggle="collapse" data-target={`.div_row_d${group.id}`} >
-              <i className="fa fa-server" />&nbsp;({group.devices.length < 10 ? `0${group.devices.length}` : group.devices.length})
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add device to group</Tooltip>}>
-            <Button bsSize="xsmall" type="button" onClick={() => this.handleShowModal(group, 'Group', 'Device')} >
-              <i className="fa fa-laptop" /><i className="fa fa-plus" />
-            </Button>
-          </OverlayTrigger>
-        </ButtonGroup>&nbsp;&nbsp;
-        <ButtonGroup>
-          {this.renderDeleteButton('Group', null, group, null, true)}
-        </ButtonGroup>
-      </td>
-    );
-  }
-
-  renderGroupUserButtons(group, user) {
-    const isAdmin = group.admins && group.admins.filter(a => (a.id === user.id)).length > 0;
-    const adminTooltip = isAdmin === true ? 'set to normal user' : 'set to Administrator';
-    return (
-      <td>
-        <ButtonGroup className="actions">
-          <OverlayTrigger placement="top" overlay={<Tooltip id="userAdmin">{adminTooltip}</Tooltip>}>
-            <Button
-              bsSize="xsmall"
-              type="button"
-              bsStyle={isAdmin === true ? 'default' : 'info'}
-              onClick={() => this.setGroupAdmin(group, user, !isAdmin)}
-            >
-              <i className="fa fa-key" />
-            </Button>
-          </OverlayTrigger>
-          {this.renderDeleteButton('Group', 'Person', group, user)}
-        </ButtonGroup>
-        &nbsp;&nbsp;
-      </td>
     );
   }
 
