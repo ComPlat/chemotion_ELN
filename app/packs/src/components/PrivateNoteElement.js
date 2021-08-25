@@ -2,7 +2,7 @@
 object-property-newline, semi, react/no-unused-prop-types, react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, ControlLabel, FormControl, Button } from 'react-bootstrap';
+import { FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PrivateNoteFetcher from './fetchers/PrivateNoteFetcher';
 import PrivateNote from './models/PrivateNote';
 
@@ -10,7 +10,8 @@ export default class PrivateNoteElement extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      note: undefined
+      note: undefined,
+      isSaving: false
     };
   }
 
@@ -48,27 +49,30 @@ export default class PrivateNoteElement extends React.Component {
     if (!element || !note) {
       return;
     }
+    this.setState({isSaving: true})
     if (!note.created_at) {
       const params = { 
         content: note.content, noteable_id: element.id, 
         noteable_type: element.type 
       };
       PrivateNoteFetcher.create(params).then((newNote) => {
-        this.setState({ note: newNote });
+        this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
+        this.setState({isSaving: false})
       });
     } else {
       PrivateNoteFetcher.update(note).then((newNote) => {
-        this.setState({ note: newNote });
+        this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
+        this.setState({isSaving: false})
       });
     }
   }
 
   render() {
-    const { note } = this.state;
+    const { note, isSaving } = this.state;
     const content = note ? note.content : '';
     let disabled = this.props.disabled || false;
     const { element } = this.props;
@@ -78,7 +82,19 @@ export default class PrivateNoteElement extends React.Component {
 
     return (
       <FormGroup>
-        <ControlLabel>Private Note</ControlLabel>
+        <OverlayTrigger
+          placement="top"
+          overlay={
+            <Tooltip>Only you can see this note</Tooltip>
+          }
+        >
+          <ControlLabel>
+            Private Note <span className="glyphicon glyphicon-info-sign" />
+          </ControlLabel>
+        </OverlayTrigger>
+
+        <i>{isSaving ? " saving your note" : ""}</i>
+        
         <FormControl
           componentClass="textarea"
           ref={(input) => { this.noteInput = input; }}
@@ -87,11 +103,15 @@ export default class PrivateNoteElement extends React.Component {
           onChange={e => this.handleInputChange(e.target.value)}
           rows={10}
           disabled={disabled}
+          onBlur={() => this.saveNote()}
         />
         <Button 
           bsStyle="warning" 
           onClick={() => this.saveNote()}
-          disabled={disabled}>Save note</Button>
+          disabled={disabled}
+        >
+          Save note
+        </Button>
       </FormGroup>
     )
   }
