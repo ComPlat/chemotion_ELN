@@ -158,5 +158,6 @@ yarn-debug.log*
 
 #welcome message
 /public/welcome-message.md
+
 vendor/bundle/*
 .idea/*
