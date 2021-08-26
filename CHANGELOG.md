@@ -1,23 +1,27 @@
 
 # Chemotion_ELN Changelog
 
-## [v1.0.0-alpha]
-> 2021-07-07
+## [v1.0.0-beta]
+> 2021-08-26
 
 * Update
   * upd to rails 5 - webpack
-
-
-## [v0.10.0]
-> 2021-07-07
+  * 
 
 * Features
-  *
-
+  * private notes for samples
+  * Generic elements/segments
+  * send welcome email for new users
+  * instance customizable home page as MD file
+  * revamp of analytics inbox
+  * report template management
+  * device metadata
 
 * Fix
-  * 
-  * 
+  * input field on ipad
+  * truncated reaction svg
+  * upload of large files
+  * reload of reports
 
 ## [v0.9.1]
 > 2021-06-04

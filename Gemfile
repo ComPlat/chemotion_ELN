@@ -109,6 +109,7 @@ group :development do
   gem 'capistrano-nvm', require: false
   gem 'capistrano-rails'
   gem 'capistrano-rvm'
+  gem 'capistrano-yarn'
 
   gem 'fast_stack'    # For Ruby MRI 2.0
   gem 'flamegraph'

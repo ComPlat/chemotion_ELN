@@ -58,23 +58,19 @@ set(:rvm_ruby_version, "#{version}#{'@' if gemset}#{gemset}") if File.exist?('.r
 
 set :slackistrano, false
 
+set :default_env, fetch(:default_env, {}).merge({
+#  'WEBPACKER_PRECOMPILE' => 'false',
+  'NODE_OPTIONS' => '"--max-old-space-size=3072"'
+})
+
+
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }
 
 # Default value for keep_releases is 5
 # set :keep_releases, 5
 
-# before 'deploy:migrate', 'deploy:backup'
 
-## NMV and NPM tasks
-## Install node version if not installed
-before 'nvm:validate', 'deploy:nvm_check'
-## Install defined version of npm if not selected
-before 'nvm:validate', 'deploy:npm_install_npm'
-## Clear all npm packages
-before 'npm:install', 'deploy:clear_node_module'
-
-after 'deploy:publishing', 'deploy:restart'
 
 namespace :git do
   task :update_repo_url do
@@ -116,9 +112,11 @@ namespace :deploy do
   task :npm_install_npm do
     on roles :app do
       execute <<~SH
-        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == "#{fetch(:npm_version)}" ]] && echo "npm already installed" || npm install -g npm@#{fetch(:npm_version)}
+        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
       SH
-      # source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
+      execute <<~SH
+        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} &&  npm install -g yarn
+      SH
     end
   end
 
@@ -131,6 +129,45 @@ namespace :deploy do
   task :restart do
     on roles :app do
       execute :touch, "#{current_path}/tmp/restart.txt"
+    end
+  end
+
+  task :webpk do
+    on roles :app do
+      execute :rake, 'webpacker:compile'
+    end
+  end
+
+   task :echo do
+    on roles :app do
+      execute :echo, '$NODE_OPTIONS'
+    end
+  end
+
+  desc 'fix citation.js import path for webpack'
+  task :fix_cit_import do
+    on roles :app do
+      path = Pathname.new(fetch(:deploy_to)).join('shared', 'node_modules', '@citation-js')
+      src1 = path.join('core', 'lib-mjs', 'util', 'fetchFile.js')
+      src2 = path.join('core/lib-mjs/index.js')
+      src3 = path.join('plugin-bibtex/lib-mjs/input/constants.js')
+      src4 = path.join('plugin-wikidata/lib-mjs/entity.js')
+      cmd1 = <<~SED
+        sed -i "s~import { version } from '../../package.json';~import pkg from '../../package.json';const { version } = pkg.version;~" #{src1}
+      SED
+      cmd2 = <<~SED
+        sed -i "s~import { version } from '../package.json';~import pkg from '../package.json';const { version } = pkg.version;~" #{src2}
+      SED
+      cmd3 = <<~SED
+        sed -i "s~export { diacritics, commands } from './unicode.json';~import unicode from './unicode.json';export const diacritics = unico  de.diacritics;export const commands = unicode.commands;~" #{src3}
+      SED
+      cmd4 = <<~SED
+        sed -i "s~import { props, ignoredProps } from './props';~import wikiprops from './props';const { props, ignoredProps } = wikiprops;~"   #{src4}
+      SED
+      execute(cmd1) if File.exist?(src1)
+      execute(cmd2) if File.exist?(src2)
+      execute(cmd3) if File.exist?(src3)
+      execute(cmd4) if File.exist?(src4)
     end
   end
 
@@ -194,3 +231,22 @@ namespace :delayed_job do
     end
   end
 end
+
+before 'nvm:validate', 'deploy:nvm_check'
+
+## Clear all npm packages
+after 'deploy:nvm_check', 'deploy:clear_node_module'
+
+## Install defined version of npm if not selected
+after 'nvm:validate', 'deploy:npm_install_npm'
+
+
+after 'yarn:install', 'deploy:fix_cit_import'
+
+# after 'deploy:compile_assets', 'deploy:webpk'
+
+# before 'deploy:compile_assets', 'deploy:echo'
+
+after 'deploy:publishing', 'deploy:restart'
+
+
