@@ -234,7 +234,7 @@ export default class CollectionSubtree extends React.Component {
         marginBottom: 0
       };
     }
-    const gated = root && root.is_locked && label=='chemotion.net' ?
+    const gated = root && root.is_locked && label=='chemotion-repository.net' ?
       <GatePushBtn collection_id={root.id}/> : null;
     return (
       <div className="tree-view" key={root.id}>
