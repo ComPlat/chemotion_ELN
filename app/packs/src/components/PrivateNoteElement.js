@@ -21,7 +21,7 @@ export default class PrivateNoteElement extends React.Component {
   }
 
   fetchNote(element) {
-    if (element === undefined) {
+    if (element === undefined || element.is_new) {
       return;
     }
 
@@ -85,7 +85,7 @@ export default class PrivateNoteElement extends React.Component {
         <OverlayTrigger
           placement="top"
           overlay={
-            <Tooltip>Only you can see this note</Tooltip>
+            <Tooltip id='private-note'>Only you can see this note</Tooltip>
           }
         >
           <ControlLabel>
