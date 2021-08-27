@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
+# Sample Structure
 class OSample < OpenStruct
-  def initialize data
+  def initialize(data)
     # set nested attributes
 
-    %w(residues elemental_compositions).each do |prop|
+    %w[residues elemental_compositions].each do |prop|
       prop_value = data.delete(prop) || []
 
       prop_value.each { |i| i.delete :id }
@@ -12,7 +15,7 @@ class OSample < OpenStruct
       ) unless prop_value.blank?
     end
 
-    data["elemental_compositions_attributes"].each { |i| i.delete("description") } if data["elemental_compositions_attributes"]
+    data['elemental_compositions_attributes'].each { |i| i.delete('description') } if data['elemental_compositions_attributes']
     data['show_label'] = false if data['show_label'].blank?
     super
   end
@@ -25,11 +28,12 @@ class OSample < OpenStruct
     to_boolean super
   end
 
-  def to_boolean string
+  def to_boolean(string)
     !!"#{string}".match(/^(true|t|yes|y|1)$/i)
   end
 end
 
+# Reaction Helper
 module ReactionHelpers
   def rangebound(lower, upper)
     lower = lower.blank? ? -Float::INFINITY : BigDecimal(lower.to_s)
@@ -45,11 +49,11 @@ module ReactionHelpers
     collections = reaction.collections
     materials = OpenStruct.new(material_attributes)
     materials = {
-      starting_material: Array(material_attributes['starting_materials']).map{|m| OSample.new(m)},
-      reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
-      solvent: Array(material_attributes['solvents']).map{|m| OSample.new(m)},
-      purification_solvent: Array(material_attributes['purification_solvents']).map{|m| OSample.new(m)},
-      product: Array(material_attributes['products']).map{|m| OSample.new(m)}
+      starting_material: Array(material_attributes['starting_materials']).map { |m| OSample.new(m) },
+      reactant: Array(material_attributes['reactants']).map { |m| OSample.new(m) },
+      solvent: Array(material_attributes['solvents']).map { |m| OSample.new(m) },
+      purification_solvent: Array(material_attributes['purification_solvents']).map { |m| OSample.new(m) },
+      product: Array(material_attributes['products']).map { |m| OSample.new(m) }
     }
 
     ActiveRecord::Base.transaction do
@@ -60,12 +64,12 @@ module ReactionHelpers
         samples.each_with_index do |sample, idx|
           sample.position = idx if sample.position.nil?
           sample.reference = false if material_group === 'solvent' && sample.reference == true
-          #create new subsample
+          # create new subsample
           if sample.is_new
             if sample.is_split && sample.parent_id
               parent_sample = Sample.find(sample.parent_id)
 
-              #TODO extract subsample method
+              # TODO: extract subsample method
               subsample = parent_sample.create_subsample(current_user, collections, true)
 
               # Use 'reactant' or 'solvent' as short_label
@@ -77,8 +81,8 @@ module ReactionHelpers
               subsample.real_amount_unit = sample.real_amount_unit
               subsample.metrics = sample.metrics
 
-              #add new data container
-              #subsample.container = create_root_container
+              # add new data container
+              # subsample.container = create_root_container
               subsample.container = update_datamodel(sample.container) if sample.container
               subsample.save!
               subsample.reload
@@ -86,7 +90,7 @@ module ReactionHelpers
 
               included_sample_ids << subsample.id
               s_id = subsample.id
-            #create new sample
+            # create new sample
             else
               attributes = sample.to_h.except(
                 :id, :is_new, :is_split, :reference, :equivalent, :position,
@@ -97,10 +101,10 @@ module ReactionHelpers
                       boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                       melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
 
-                      # update attributes[:name] for a copied reaction
-              if (reaction.name || '').include?("Copy") && attributes[:name].present?
+              # update attributes[:name] for a copied reaction
+              if (reaction.name || '').include?('Copy') && attributes[:name].present?
                 named_by_reaction = "#{reaction.short_label}"
-                named_by_reaction += "-#{attributes[:name].split("-").last}"
+                named_by_reaction += "-#{attributes[:name].split('-').last}"
                 attributes.merge!(name: named_by_reaction)
               end
 
@@ -114,7 +118,7 @@ module ReactionHelpers
               # Use 'reactant' or 'solvent' as short_label
               new_sample.short_label = fixed_label if fixed_label
 
-              #add new data container
+              # add new data container
               new_sample.container = update_datamodel(container_info)
 
               new_sample.collections << collections
@@ -135,7 +139,7 @@ module ReactionHelpers
               type: reactions_sample_klass
             ) if s_id
             s_id = nil
-          #update the existing sample
+          # update the existing sample
           else
             existing_sample = Sample.find(sample.id)
 
@@ -164,7 +168,7 @@ module ReactionHelpers
 
             existing_association = ReactionsSample.find_by(sample_id: sample.id)
 
-            #update existing associations
+            # update existing associations
             if existing_association
               existing_association.update_attributes!(
                 reaction_id: reaction.id,
@@ -176,9 +180,9 @@ module ReactionHelpers
                 position: sample.position,
                 type: reactions_sample_klass
               )
-            #sample was moved to other materialgroup
+            # sample was moved to other materialgroup
             else
-              #create a new association
+              # create a new association
               ReactionsSample.create!(
                 sample_id: sample.id,
                 reaction_id: reaction.id,
@@ -195,14 +199,14 @@ module ReactionHelpers
         end
       end
 
-      #delete all samples not anymore in one of the groups
+      # delete all samples not anymore in one of the groups
 
       current_sample_ids = reaction.reactions_samples.pluck(:sample_id)
       deleted_sample_ids = current_sample_ids - included_sample_ids
       Sample.where(id: deleted_sample_ids).destroy_all
 
-      #for testing
-      #raise ActiveRecord::Rollback
+      # for testing
+      # raise ActiveRecord::Rollback
     end
 
     # to update the SVG
@@ -212,6 +216,7 @@ module ReactionHelpers
 end
 
 module Chemotion
+  # Reaction API
   class ReactionAPI < Grape::API
     include Grape::Kaminari
     helpers ContainerHelpers
@@ -248,10 +253,10 @@ module Chemotion
         end
       end
 
-      desc "Return serialized reactions"
+      desc 'Return serialized reactions'
       params do
-        optional :collection_id, type: Integer, desc: "Collection id"
-        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :collection_id, type: Integer, desc: 'Collection id'
+        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -264,23 +269,20 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
-              .find(params[:collection_id])
-              .reactions
-          rescue ActiveRecord::RecordNotFound
-            Reaction.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
-              .collection.reactions
-          rescue ActiveRecord::RecordNotFound
-            Reaction.none
-          end
-        else
-          Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.includes(:tag, collections: :sync_collections_users).order("created_at DESC")
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(params[:collection_id]).reactions
+                  rescue ActiveRecord::RecordNotFound
+                    Reaction.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.reactions
+                  rescue ActiveRecord::RecordNotFound
+                    Reaction.none
+                  end
+                else
+                  Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                end.includes(:tag, collections: :sync_collections_users).order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -292,12 +294,12 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
       end
 
-      desc "Return serialized reaction by id"
+      desc 'Return serialized reaction by id'
       params do
-        requires :id, type: Integer, desc: "Reaction id"
+        requires :id, type: Integer, desc: 'Reaction id'
       end
       route_param :id do
         before do
@@ -311,9 +313,9 @@ module Chemotion
         end
       end
 
-      desc "Delete a reaction by id"
+      desc 'Delete a reaction by id'
       params do
-        requires :id, type: Integer, desc: "Reaction id"
+        requires :id, type: Integer, desc: 'Reaction id'
       end
       route_param :id do
         before do
@@ -341,9 +343,9 @@ module Chemotion
       #   end
       # end
 
-      desc "Update reaction by id"
+      desc 'Update reaction by id'
       params do
-        requires :id, type: Integer, desc: "Reaction id"
+        requires :id, type: Integer, desc: 'Reaction id'
         optional :name, type: String
         optional :description, type: Hash
         optional :timestamp_start, type: String
@@ -371,7 +373,6 @@ module Chemotion
         optional :segments, type: Array
       end
       route_param :id do
-
         after_validation do
           @reaction = Reaction.find_by(id: params[:id])
           @element_policy = ElementPolicy.new(current_user, @reaction)
@@ -382,8 +383,8 @@ module Chemotion
           reaction = @reaction
           attributes = declared(params, include_missing: false)
           materials = attributes.delete(:materials)
-          literatures = attributes.delete(:literatures)
-          id = attributes.delete(:id)
+          attributes.delete(:literatures)
+          attributes.delete(:id)
 
           update_datamodel(attributes[:container])
           attributes.delete(:container)
@@ -396,11 +397,11 @@ module Chemotion
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
-          #save to profile
+          # save to profile
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids, @element_policy).serialized}
+          { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids, @element_policy).serialized }
         end
       end
 
@@ -451,11 +452,11 @@ module Chemotion
           literatures.each do |literature|
             next unless literature&.length > 1
 
-            refs = literature[1].refs
-            doi = literature[1].doi
-            url = literature[1].url
-            title = literature[1].title
-            isbn = literature[1].isbn
+            refs = literature[1][:refs]
+            doi = literature[1][:doi]
+            url = literature[1][:url]
+            title = literature[1][:title]
+            isbn = literature[1][:isbn]
 
             lit = Literature.find_or_create_by(doi: doi, url: url, title: title, isbn: isbn)
             lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs

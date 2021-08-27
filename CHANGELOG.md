@@ -5,20 +5,38 @@
 > 2021-08-26
 
 * Update
+
   * upd to rails 5 - webpack
-  * 
 
-* Features
-  * private notes for samples
-  * Generic elements/segments
-  * send welcome email for new users
-  * instance customizable home page as MD file
-  * revamp of analytics inbox
-  * report template management
-  * device metadata
+* New features and improvements
 
-* Fix
-  * input field on ipad
+  * Private notes for samples
+  * Generic elements/segments/datasets
+    - Element details tab layout: segment tab to show if data present [Element details tab layout: segment tab to show if data present #506](https://github.com/ComPlat/chemotion_ELN/issues/506)
+    - In user view, enable the sorting of lines of a table [generic elements, segments and analyses #480](https://github.com/ComPlat/chemotion_ELN/issues/480)
+    - Add samples to generic element in table #461 [Add samples to generic element in table #461](https://github.com/ComPlat/chemotion_ELN/issues/461)
+    - Generic element/segment units (Joule) [generic element/segment units (Joule) #457](https://github.com/ComPlat/chemotion_ELN/issues/457)
+    - Administrator can export/import the generic template [generic template upload and download #444](https://github.com/ComPlat/chemotion_ELN/issues/444)
+    - Revision control, track changes of the template and user inputs [generic revision feature #443](https://github.com/ComPlat/chemotion_ELN/issues/443)
+    - Drag and drop sample/molecule to the table [ELN Adminstration/generic elements: Create a table for drag and drop Sample/Molecule #437](https://github.com/ComPlat/chemotion_ELN/issues/437)
+    - new units for generic sections [new units for generic sections #436](https://github.com/ComPlat/chemotion_ELN/issues/436)
+    - new units for generic sections [new units for generic sections #434](https://github.com/ComPlat/chemotion_ELN/issues/434)
+    - Add new field type: Upload in generic element/segment #400 [Upload option in generic element/segment #400](https://github.com/ComPlat/chemotion_ELN/issues/400)
+  * Send welcome email for new users [Customized welcome email to new user #483](https://github.com/ComPlat/chemotion_ELN/issues/483)
+  * Decoupled sample
+    - Remove name in scheme for decoupled sample [remove name in scheme for decoupled sample #465](https://github.com/ComPlat/chemotion_ELN/issues/465)
+    - Add "undefined structure" as default value for decoupled samples [Add "undefined structure" as default value for decoupled samples #463](https://github.com/ComPlat/chemotion_ELN/issues/463)
+    - Provide table function in generic element/segment [table function #414](https://github.com/ComPlat/chemotion_ELN/issues/414)
+  * Instance customizable home page as MD file
+  * Revamp of analytics inbox
+  * Report template management
+  * Device metadata
+
+* Fixes
+
+  * rename chemotion.net to chemotion-repository.net in the Collection Bar [rename chemotion.net to chemotion-repository.net in the Collection Bar #515](https://github.com/ComPlat/chemotion_ELN/issues/515)
+  * input field on ipad [Not all fields work normally with ipad #458](https://github.com/ComPlat/chemotion_ELN/issues/458)
+  * The permission level "delete" in sharing collections doesn't work and the receiver can't delete [The permission level "delete" in sharing collections doesn't work and the receiver can't delete #425](https://github.com/ComPlat/chemotion_ELN/issues/425)
   * truncated reaction svg
   * upload of large files
   * reload of reports
@@ -28,7 +46,7 @@
 
 * Fix
   * sync/share deletion permission
-  * Admin: segment deletion 
+  * Admin: segment deletion
 
 ## [v0.9.0]
 > 2021-05-26
@@ -50,7 +68,7 @@
   * nmr_sim ELN plugin installed by default
 
 * Fix
-  * Add configurable default profile for Element-Detail tab sortings 
+  * Add configurable default profile for Element-Detail tab sortings
   * slow opening of reaction panel: rm debounce
   * green-chemistry: fix checkbox rerendering in table cell
   * Analytics atom count scenari
@@ -61,10 +79,10 @@
 > 2021-03-26
 
 * Features
-  * sorting of tabs in Element-detail Panel (Sample, Reaction,...)  
+  * sorting of tabs in Element-detail Panel (Sample, Reaction,...)
 
 * Fix
-  * mimemagic gem updated due to previous version forced retirement 
+  * mimemagic gem updated due to previous version forced retirement
   * research-plan table: cell focus input
   * slow opening of reaction panel: rm debounce
 
@@ -117,7 +135,7 @@
   * Extract RSMI from docx embedded cdx object
 * Fixes
   * Report formating
-  * shared collection from deleted account  
+  * shared collection from deleted account
 
 ## [v0.3.dev]
 * Features
@@ -200,5 +218,5 @@
 
 ## [v0.1.0]
 > 2016-05-31
--**Features:** ELN for (organic) chemistry   
+-**Features:** ELN for (organic) chemistry
 [v0.1.0]: https://github.com/ComPlat/chemotion_ELN/releases/tag/v0.1.0
