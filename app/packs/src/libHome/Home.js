@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Grid, Row } from 'react-bootstrap';
-
-import Navigation from '../components/Navigation'
-import XHome from '../components/extra/HomeXHome'
+import Navigation from '../components/Navigation';
+import XHome from '../components/extra/HomeXHome';
 import WelcomeMessage from '../components/WelcomeMessage';
 
 const extraHomes = () => {
@@ -14,12 +13,10 @@ const extraHomes = () => {
   }
   return homes;
 };
-
 class Home extends Component {
   constructor(props) {
     super();
   }
-
   render() {
     return (
       <div>
@@ -38,7 +35,6 @@ class Home extends Component {
     );
   }
 }
-
 // $(document).ready(function() {
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('Home');

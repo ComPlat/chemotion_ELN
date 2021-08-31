@@ -15,9 +15,9 @@
 #
 
 class CollectionsWellplate < ApplicationRecord
-  acts_as_paranoid
-  belongs_to :collection
-  belongs_to :wellplate
+        acts_as_paranoid
+        belongs_to :collection
+    belongs_to :wellplate
 
   include Tagging
   include Collecting
@@ -37,6 +37,7 @@ class CollectionsWellplate < ApplicationRecord
   def self.delete_in_collection_with_filter(wellplate_ids, collection_ids)
     [collection_ids].flatten.each do |cid|
       next unless cid.is_a?(Integer)
+
       # from a collection, select wellplate_ids not associated with a screen
       ids = CollectionsWellplate.joins(
         <<~SQL

@@ -8,6 +8,9 @@ jobs:
   docker_container:
     if: "!contains(github.event.commits[0].message, 'skip all') && !contains(github.event.commits[0].message, 'skip unit js')"
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     strategy:
       matrix:
         pg_role: [chemotion_test]
@@ -53,14 +56,14 @@ jobs:
       - name: bundle + yarn install
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && bundle install"
-            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && yarn install"
+            source /home/gitlab-runner/.asdf/asdf.sh && bundle install
+            source /home/gitlab-runner/.asdf/asdf.sh && yarn install
+            # /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && bundle install"
+            # /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && yarn install"
 
       - name: npm test
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            echo "RAKE DB"
-            /bin/bash -l -c "RAILS_ENV=test bundle exec rake db:test:prepare > /dev/null"
-            echo "NPM TEST"
-            /bin/bash -l -c "npm test"
+            RAILS_ENV=test bundle exec rake db:test:prepare > /dev/null
+            npm test
             

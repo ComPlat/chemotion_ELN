@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, FormGroup, FormControl, Glyphicon, Navbar, NavItem, Nav, OverlayTrigger, Tooltip } from 'react-bootstrap';
-
 const NewSession = ({ authenticityToken }) => (
   <div>
     <Nav pullRight><NavItem href="/users/sign_up"> or Sign Up </NavItem></Nav>
@@ -24,9 +23,7 @@ const NewSession = ({ authenticityToken }) => (
     </Navbar.Form>
   </div>
 );
-
 NewSession.propTypes = {
   authenticityToken: PropTypes.string.isRequired,
 };
-
 export default NewSession;

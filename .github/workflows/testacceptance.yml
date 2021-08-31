@@ -11,6 +11,9 @@ jobs:
   docker_container:
     if: "!contains(github.event.commits[0].message, 'skip all') && !contains(github.event.commits[0].message, 'skip acceptance')"
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     strategy:
       matrix:
         pg_role_test: [chemotion_test]
@@ -35,13 +38,19 @@ jobs:
           --health-retries 5
           
     steps:
+      - name: config git bot
+        working-directory: /home/gitlab-runner
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
       - name: git clone + postgres
         working-directory: /home/gitlab-runner
         env:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5433
         run: |
-            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+            git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github-actions[bot]:${{ github.token }}@github.com/ComPlat/chemotion_ELN.git
             
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
@@ -56,20 +65,64 @@ jobs:
       - name: bundle + yarn install
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && bundle install"
-            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && yarn install"
+            source /home/gitlab-runner/.asdf/asdf.sh && bundle install
+            source /home/gitlab-runner/.asdf/asdf.sh && yarn install
+          
+      - name: linting
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        continue-on-error: true
+        if: "!contains(github.event.commits[0].message, 'skip linting')"
+        run: |
+          sudo apt-get update > /dev/null
+          sudo rm /etc/apt/sources.list.d/google.list
+          sudo apt-get install jq -y > /dev/null
+          sudo apt-get install -y --no-install-recommends apt-utils
+          export FILES_RB="$(wget -O - -q https://api.github.com/repos/ComPlat/chemotion_ELN/commits/${{ github.sha }} | jq -r ".files | .[].filename | select(contains(\".rb\"))")"
+          export FILES_JS="$(wget -O - -q https://api.github.com/repos/ComPlat/chemotion_ELN/commits/${{ github.sha }} | jq -r ".files | .[].filename | select(contains(\".js\"))")"
+          source /home/gitlab-runner/.asdf/asdf.sh && yarn run eslint --plugin eslint-plugin-only-warn --fix $FILES_JS
+          bundle exec rubocop -x $FILES_RB
+          if [ "$FILES_JS" -o  "$FILES_RB" ]; then 
+          echo "FILES"
+          echo $FILES_JS
+          echo $FILES_RB
+          git add $FILES_JS $FILES_RB
+          git commit -m "automatic linting: skip all"
+          git push
+          fi
 
-      - name: precompile
+      - name: db
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && RAILS_ENV=test bundle exec rake db:migrate db:test:prepare > /dev/null"
-
+            source /home/gitlab-runner/.asdf/asdf.sh && RAILS_ENV=test bundle exec rake db:migrate db:test:prepare > /dev/null
             mv public/welcome-message-sample.md public/welcome-message.md
 
-            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && RAILS_ENV=test bundle exec rails webpacker:compile"
-            sleep 30
-
-      - name: testacceptance
+      - name: rake assets:precompile
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && RAILS_ENV=test bundle exec rspec spec/features"
+            source /home/gitlab-runner/.asdf/asdf.sh && RAILS_ENV=test NODE_ENV=test bundle exec rake assets:precompile WEBPACKER_PRECOMPILE=false
+            
+      # ERROR: Permission denied because no root user in complat container?
+      # - name: cache webpacker precompile
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: /home/gitlab-runner/chemotion_ELN/public/packs-test
+      #     key: ${{ runner.os }}-${{ hashFiles('**/app/assets/javascripts') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-${{ hashFiles('**/app/assets/javascripts') }}
+      #       ${{ runner.os }}-
+
+      - name: webpacker
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+            source /home/gitlab-runner/.asdf/asdf.sh && RAILS_ENV=test DEVTOOL=eval bundle exec rails webpacker:compile
+            # sleep 30
+
+      - name: testacceptance
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 5
+          retry_on: error
+          command: |
+            cd /home/gitlab-runner/chemotion_ELN
+            source /home/gitlab-runner/.asdf/asdf.sh && RAILS_ENV=test bundle exec rspec spec/features

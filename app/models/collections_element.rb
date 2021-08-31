@@ -17,21 +17,21 @@
 #
 
 class CollectionsElement < ApplicationRecord
-    acts_as_paranoid
-    belongs_to :collection
-    belongs_to :element
+          acts_as_paranoid
+          belongs_to :collection
+          belongs_to :element
 
     include Tagging
     include Collecting
 
     def self.get_elements_by_collection_type(collection_ids, type)
-      self.where(collection_id: collection_ids, element_type: type).pluck(:element_id).compact.uniq
+        self.where(collection_id: collection_ids, element_type: type).pluck(:element_id).compact.uniq
     end
 
     def self.remove_in_collection(element_ids, from_col_ids)
-      sample_ids = Element.get_associated_samples(element_ids)
-      delete_in_collection(element_ids, from_col_ids)
-      update_tag_by_element_ids(element_ids)
+        sample_ids = Element.get_associated_samples(element_ids)
+        delete_in_collection(element_ids, from_col_ids)
+        update_tag_by_element_ids(element_ids)
       CollectionsSample.remove_in_collection(sample_ids, from_col_ids)
     end
 
