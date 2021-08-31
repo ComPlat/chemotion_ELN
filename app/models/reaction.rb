@@ -41,7 +41,6 @@
 #  index_reactions_on_role            (role)
 #
 
-
 class Reaction < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
@@ -83,7 +82,7 @@ class Reaction < ApplicationRecord
   pg_search_scope :search_by_substring, against: :name, associated_against: {
     samples: :name,
     sample_molecules: :iupac_name
-  }, using: { trigram: { threshold:  0.0001 } }
+  }, using: { trigram: { threshold: 0.0001 } }
 
   # scopes for suggestions
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
@@ -93,8 +92,8 @@ class Reaction < ApplicationRecord
   scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
   scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
-  scope :by_sample_ids,  ->(ids) { joins(:reactions_samples).where('samples.id IN (?)', ids) }
-  scope :by_status,  ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_sample_ids, ->(ids) { joins(:reactions_samples).where('samples.id IN (?)', ids) }
+  scope :by_status, ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
   scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }
 
@@ -159,13 +158,13 @@ class Reaction < ApplicationRecord
   end
 
   def auto_format_temperature!
-    valueUnitCheck = (temperature["valueUnit"] =~ /^(°C|°F|K)$/).present?
-    temperature["valueUnit"] = "°C" if (!valueUnitCheck)
+    valueUnitCheck = (temperature['valueUnit'] =~ /^(°C|°F|K)$/).present?
+    temperature['valueUnit'] = '°C' if (!valueUnitCheck)
 
-    temperature["data"].each do |t|
-      valid_time = (t["time"] =~ /^((?:\d\d):[0-5]\d:[0-5]\d$)/i).present?
-      t["time"] = "00:00:00" if (!valid_time)
-      t["value"] = t["value"].gsub(/[^0-9.-]/, '')
+    temperature['data'].each do |t|
+      valid_time = (t['time'] =~ /^((?:\d\d):[0-5]\d:[0-5]\d$)/i).present?
+      t['time'] = '00:00:00' if (!valid_time)
+      t['value'] = t['value'].gsub(/[^0-9.-]/, '')
     end
   end
 
@@ -173,7 +172,7 @@ class Reaction < ApplicationRecord
     userText = temperature["userText"]
     return userText if (userText != "")
 
-    return "" if (temperature["data"].length == 0)
+    return '' if (temperature["data"].length == 0)
 
     arrayData = temperature["data"]
     maxTemp = (arrayData.max_by { |x| x["value"] })["value"]
@@ -200,17 +199,13 @@ class Reaction < ApplicationRecord
     svg = reaction_svg_file
     if svg.present? && svg.end_with?('</svg>')
       svg_file_name = "#{SecureRandom.hex(64)}.svg"
-      svg_path = "#{Rails.root}/public/images/reactions/#{svg_file_name}"
-
+      svg_path = File.join(Rails.public_path, 'images', 'reactions', svg_file_name)
       svg_file = File.new(svg_path, 'w+')
       svg_file.write(svg)
       svg_file.close
-
       self.reaction_svg_file = svg_file_name
-      # end
     else
       paths = {}
-
       {
         starting_materials: :reactions_starting_material_samples,
         reactants: :reactions_reactant_samples,
@@ -222,14 +217,11 @@ class Reaction < ApplicationRecord
           params = [
             svg_path(sample.sample_svg_file, sample.molecule.molecule_svg_file)
           ]
-
           params[0] = sample.svg_text_path if reactions_sample.show_label
-
           params.append(yield_amount(sample.id)) if prop == :products
           params
         end
       end
-
       begin
         composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
                                                     duration: duration,
@@ -241,9 +233,11 @@ class Reaction < ApplicationRecord
         Rails.logger.info('**** SVG::ReactionComposer failed ***')
       end
     end
-
-    file_path = "#{Rails.root}/public/images/reactions/#{reaction_svg_file_was}" if reaction_svg_file_changed?
-    File.delete(file_path) if reaction_svg_file_changed? && reaction_svg_file_was.present? && File.exist?(file_path)
+    if reaction_svg_file_changed? && reaction_svg_file_was.present?
+      file_was = File.join(Rails.public_path, 'images', 'reactions', reaction_svg_file_was)
+      File.delete(file_was) if Reaction.where(reaction_svg_file: reaction_svg_file_was).length < 2 && File.exist?(file_was)
+    end
+    reaction_svg_file
   end
 
   def svg_path(sample_svg, molecule_svg)
