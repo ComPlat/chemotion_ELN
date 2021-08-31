@@ -27,7 +27,7 @@ describe Chemotion::MessageAPI do
   end
   let!(:n_sys_u2) { create(:notification, message_id: m_sys.id, user_id: u2.id) }
 
-  context 'authorized user logged in' do
+  context 'with authorized user logged in' do
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user)
         .and_return(u1)

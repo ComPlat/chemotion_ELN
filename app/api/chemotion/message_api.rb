@@ -2,9 +2,7 @@
 
 module Chemotion
   # Publish-Subscription MessageAPI
-  # rubocop:disable ClassLength
   class MessageAPI < Grape::API
-    # rubocop:disable Metrics/BlockLength
     resource :messages do
       desc 'Get message configuration'
       get 'config' do
@@ -21,15 +19,15 @@ module Chemotion
         messages = NotifyMessage.where(receiver_id: current_user.id, is_ack: params[:is_ack]) if params[:is_ack] < 9
         messages = NotifyMessage.where(receiver_id: current_user.id) unless params[:is_ack] < 9
         if Rails.env.production?
-          asset_application = Rails.application.assets_manifest.assets['application.js']
+          asset_application = Dir[File.join(Rails.public_path, 'packs', 'js', 'application-*.js')].first
           cur = present(messages, with: Entities::MessageEntity, root: 'messages')
           cur[:version] = asset_application
         else
           cur = present(messages, with: Entities::MessageEntity, root: 'messages')
         end
-        if messages&.length > 0
+        if messages && messages.length.positive?
           job_msgs = messages.select { |hash| hash[:channel_type] == 5 }
-          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length == 0
+          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length.zero?
         end
         cur
       end
@@ -41,9 +39,9 @@ module Chemotion
       get 'spectra' do
         messages = NotifyMessage.where(receiver_id: current_user.id, is_ack: params[:is_ack], subject: 'Chem Spectra Notification') if params[:is_ack] < 9
         messages = NotifyMessage.where(receiver_id: current_user.id, subject: 'Chem Spectra Notification') unless params[:is_ack] < 9
-        if messages&.length > 0
+        if messages && messages.length.positive?
           job_msgs = messages.select { |hash| hash[:channel_type] == 8 }
-          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length == 0
+          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length.zero?
         end
         messages
       end
@@ -83,10 +81,12 @@ module Chemotion
         end
         put do
           return if params[:ids].nil?
+
           notifs = Notification.find(params[:ids])
           params_arr = { is_ack: 1 }
           notifs.each do |notif|
             next if notif.user_id != current_user.id
+
             notif.update!(params_arr)
           end
         end
@@ -101,6 +101,7 @@ module Chemotion
         post do
           channel = Channel.find(params[:channel_id])
           return if channel.nil?
+
           if params[:subscribe]
             sub_attr = {
               channel_id: channel.id,
@@ -146,7 +147,5 @@ module Chemotion
         end
       end
     end
-    # rubocop:enable Metrics/BlockLength
   end
-  # rubocop:enable ClassLength
 end
