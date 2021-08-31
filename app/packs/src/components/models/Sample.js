@@ -432,6 +432,9 @@ export default class Sample extends Element {
     return this._external_label || this.molecule.iupac_name || this.molecule_formula;
   }
 
+  set preferred_label(label) {
+    
+  }
 
   set segments(segments) {
     this._segments = (segments && segments.map(s => new Segment(s))) || [];
