@@ -2,6 +2,7 @@ import { isEmpty } from 'lodash';
 import Element from './Element';
 import Container from './Container';
 import Segment from './Segment';
+import UserStore from '../stores/UserStore';
 
 const uuidv4 = require('uuid/v4');
 
@@ -45,6 +46,12 @@ export default class ResearchPlan extends Element {
     this.mode = args.mode ? args.mode : 'view';
   }
 
+  static buildResearchPlanShortLabel() {
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return 'New Research Plan'; }
+    return `${currentUser.initials}-${currentUser.research_plans_count + 1}`;
+    }
+
   static buildEmpty(collectionId) {
     return new ResearchPlan({
       collection_id: collectionId,
@@ -56,8 +63,45 @@ export default class ResearchPlan extends Element {
       changed: true,
       can_update: true,
       attachments: [],
-      segments: []
+      segments: [],
+      short_label: this.buildResearchPlanShortLabel()
     });
+  }
+
+  static copyFromResearchPlanAndCollectionId(research_plan, collection_id) {
+    const copy = research_plan.buildCopy(research_plan); // buildCopy() from Element.js
+    const copyDeep = this.deepCopy(research_plan, copy);
+    copyDeep.container = research_plan.container;
+    copyDeep.attachments = research_plan.attachments;
+    copyDeep.can_copy = false;
+    copyDeep.changed = true;
+    copyDeep.collection_id = collection_id;
+    copyDeep.mode = 'edit'
+    copyDeep.short_label = this.buildResearchPlanShortLabel();
+    return copyDeep;
+  }
+
+  static deepCopy(src, target) {
+    /**
+     *
+     * @src {object} will be copied to
+     * @target {object}
+     */
+  
+    // key = e. g. object property
+    Object.keys(src).forEach(key => {
+      if (src[key] && src[key] !== 'undefined' && src[key] !== 'null' && !target[key]) {
+        if (src.hasOwnProperty(key)) {
+          // if the value is a nested object, recursively copy all it's properties
+          if (typeof(src[key]) === 'object') {
+            target[key] = deepCopy(src[key], {});
+          } else {
+            target[key] = src[key];
+          }
+        }
+      }
+    });
+    return target;
   }
 
   serialize() {

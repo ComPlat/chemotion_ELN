@@ -18,6 +18,7 @@ import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+import ResearchPlan from '../models/ResearchPlan';
 
 import Device from '../models/Device';
 import Container from '../models/Container';
@@ -188,6 +189,8 @@ class ElementStore {
       handleCopyReaction: ElementActions.copyReaction,
       handleCopyElement: ElementActions.copyElement,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
+
+      handleCopyResearchPlan: ElementActions.copyResearchPlan,
 
       handleBulkCreateWellplatesFromSamples:
         ElementActions.bulkCreateWellplatesFromSamples,
@@ -843,6 +846,12 @@ class ElementStore {
   handleCreateResearchPlan(research_plan) {
     this.handleRefreshElements('research_plan');
     this.navigateToNewElement(research_plan);
+  }
+
+  handleCopyResearchPlan(result) {
+    const copy = ResearchPlan.copyFromResearchPlanAndCollectionId(result.research_plan, result.colId)
+    this.changeCurrentElement(copy);
+    Aviator.navigate(`/collection/${result.colId}/research_plan/copy`);
   }
 
   // -- Reactions --

@@ -2,7 +2,6 @@ import React from 'react';
 import { PanelGroup, Panel, Button, Modal, Table } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
-
 import MessagesFetcher from '../fetchers/MessagesFetcher';
 import CollectionActions from '../actions/CollectionActions';
 import NotificationActions from '../actions/NotificationActions';
@@ -166,7 +165,6 @@ export default class NoticeButton extends React.Component {
     const applicationTag = _.filter(document.scripts, s => s.src.indexOf(documentIndex) > -1);
     const applicationTagValue = applicationTag[0].src.substr(applicationTag[0].src
       .indexOf(documentIndex));
-
     MessagesFetcher.configuration()
       .then((result) => {
         this.setState({

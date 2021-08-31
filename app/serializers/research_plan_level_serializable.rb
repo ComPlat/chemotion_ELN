@@ -15,6 +15,10 @@ module ResearchPlanLevelSerializable
     def is_restricted
       true
     end
+
+    def can_copy
+      @policy&.try(:copy?)
+    end
   end
 
   class_methods do

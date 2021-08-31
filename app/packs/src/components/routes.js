@@ -95,9 +95,11 @@ const routes = {
   },
   '/research_plan': {
     target: {
-      showOrNew: routesUtils.researchPlanShowOrNew
+      // showOrNew: routesUtils.researchPlanShowOrNew
+      show: routesUtils.reactionShow,
     },
-    '/:research_planID': 'showOrNew'
+    // '/:research_planID': 'showOrNew'
+    '/:research_planID': 'show'
   },
   '/fwdRxnPrediction': {
     target: {
