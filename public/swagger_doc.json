@@ -1,0 +1,46 @@
+{
+  "info": {
+    "title": "Chemotion ELN",
+    "version": "0.0.1"
+  },
+  "swagger": "2.0",
+  "produces": [
+    "application/json"
+  ],
+  "host": "localhost:3000",
+  "tags": [
+    {
+      "name": "samples",
+      "description": "Operations about samples"
+    }
+  ],
+  "paths": {
+    "/api/v1/samples": {
+      "get": {
+        "description": "Return serialized sample by id",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Sample id",
+            "type": "integer",
+            "format": "int32",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return serialized sample by id"
+          }
+        },
+        "tags": [
+          "samples"
+        ],
+        "operationId": "getApiV1SamplesId"
+      }
+    }
+  }
+}

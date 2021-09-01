@@ -54,7 +54,7 @@ Rails.application.routes.draw do
   get 'chemspectra', to: 'pages#chemspectra'
   get 'chemspectra-editor', to: 'pages#chemspectra_editor'
 
-  get 'home', to: 'pages#home'
+  get 'home', to: 'pages#home'  
   get 'about', to: 'pages#about'
   get 'command_n_control', to: 'pages#home'
 
@@ -62,9 +62,7 @@ Rails.application.routes.draw do
 
   mount API => '/'
 
-  if Rails.env.development?
-    mount GrapeSwaggerRails::Engine => '/swagger_doc' 
-  end
+  mount GrapeSwaggerRails::Engine => '/swagger' 
 
   root to: redirect('home')
 
