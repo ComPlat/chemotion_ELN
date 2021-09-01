@@ -10662,10 +10662,10 @@ react-stickydiv@^3.4.19:
   dependencies:
     dom-find "^0.3.1"
 
-"react-svg-file-zoom-pan-latest@npm:@complat/react-svg-file-zoom-pan@^1.0.9":
-  version "1.0.9"
-  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.0.9.tgz#d8febc94cc57d14ff376b43715c2b915e7d5a2ab"
-  integrity sha512-fqMbvd6RGnUMoPd14Cd47JxZZcilWlUJ8v+bKb9tXorwEY7rOlADpAgfUkELOcGV/VtJ6icO7ihRCZc380ct4A==
+"react-svg-file-zoom-pan-latest@npm:@complat/react-svg-file-zoom-pan@1.0.11":
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.0.11.tgz#06d73b2db328f15f4757b1c194d23e56d2156b45"
+  integrity sha512-omIJCc1ajIoJ1Rq887h5MynkQG7+megTnTJx/OKvjeAB/7jhUwnNXn73z4GS3YOZOqSfw173XbHp55eSVIkcnA==
   dependencies:
     babel-plugin-transform-object-rest-spread "^6.26.0"
     d3 "^5.5.0"
