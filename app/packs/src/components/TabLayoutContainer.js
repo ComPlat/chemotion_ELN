@@ -14,13 +14,15 @@ export default class TabLayoutContainer extends React.Component {
       hidden: Immutable.List(props.hidden)
     }
 
-    this.moveLayout = this.moveLayout.bind(this)
+    this.moveLayout = this.moveLayout.bind(this);
   }
 
   moveLayout(dragItem, hoverItem) {
     let { visible, hidden } = this.state;
 
     if (!dragItem.isHidden && hoverItem.isHidden && visible.size === 1) return;
+    
+    if (dragItem.isHidden && dragItem.title === 'hidden') return
 
     if (dragItem.isHidden) {
       hidden = hidden.splice(dragItem.index, 1);
@@ -29,9 +31,9 @@ export default class TabLayoutContainer extends React.Component {
     }
 
     if (hoverItem.isHidden) {
-      hidden = hidden.splice(hoverItem.index, 0, dragItem.cell)
+      hidden = hidden.splice(hoverItem.index, 0, dragItem.cell);
     } else {
-      visible = visible.splice(hoverItem.index, 0, dragItem.cell)
+      visible = visible.splice(hoverItem.index, 0, dragItem.cell);
     }
 
     if (hidden.size === 0) {
@@ -50,12 +52,12 @@ export default class TabLayoutContainer extends React.Component {
 
     return (
       <table className="layout-container">
-        <tbody><tr>
+        <tbody>
           {visible.map(function(e, index) {
             return (<TabLayoutCell key={index + "_visible"} cell={e}
                                   isHidden={false} index={index}
-                                  moveLayout={moveLayout}
                                   title={tabTitles[e] || e}
+                                  moveLayout={moveLayout}
                                   isElementDetails={isElementDetails}/>)
           })}
           {hidden.map(function(e, index) {
@@ -65,7 +67,7 @@ export default class TabLayoutContainer extends React.Component {
                                   title={tabTitles[e] || e}
                                   isElementDetails={isElementDetails}/>)
           })}
-        </tr></tbody>
+        </tbody>
       </table>
     )
   }
@@ -78,4 +80,3 @@ TabLayoutContainer.propTypes = {
 TabLayoutContainer.defaultProps = {
   tabTitles: {},
 };
-

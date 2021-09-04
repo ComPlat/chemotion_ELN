@@ -44,12 +44,25 @@ class TabLayoutCell extends Component {
       ttl = genericEl.label;
     }
 
-    const layoutCell = (
+    const layoutCell = isElementDetails ? (
+      <tr>
+        <td className={isHidden ? 'hidden-layout' : ''}>
+          <div style={{ width: "100%"}}>
+            <i style={styleObj}>{title === 'hidden' ? '-' : title}</i>
+          </div>
+        </td>
+      </tr>
+
+    ) : (
       <td className={isHidden ? 'hidden-layout' : ''}>
-        {
-          isElementDetails ? (<div><i style={styleObj}>{title}</i></div>) : (<div><OverlayTrigger delayShow={500} placement="top" overlay={<Tooltip id="_tooltip_history">{ttl}</Tooltip>}><i className={iconCell}/></OverlayTrigger></div>)
-        }
+        <div>
+          <OverlayTrigger delayShow={500} placement="top" overlay={<Tooltip id="_tooltip_history">{ttl}</Tooltip>}>
+            <i className={iconCell} />
+          </OverlayTrigger>
+        </div>
       </td>
+
+
     );
 
     if (sourceType === '') {
