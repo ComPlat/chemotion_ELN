@@ -50,7 +50,7 @@ export default class ResearchPlan extends Element {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return 'New Research Plan'; }
     return `${currentUser.initials}-${currentUser.research_plans_count + 1}`;
-    }
+  }
 
   static buildEmpty(collectionId) {
     return new ResearchPlan({
@@ -76,7 +76,7 @@ export default class ResearchPlan extends Element {
     copyDeep.can_copy = false;
     copyDeep.changed = true;
     copyDeep.collection_id = collection_id;
-    copyDeep.mode = 'edit'
+    copyDeep.mode = 'edit';
     copyDeep.short_label = this.buildResearchPlanShortLabel();
     return copyDeep;
   }
@@ -87,13 +87,12 @@ export default class ResearchPlan extends Element {
      * @src {object} will be copied to
      * @target {object}
      */
-  
     // key = e. g. object property
-    Object.keys(src).forEach(key => {
+    Object.keys(src).forEach((key) => {
       if (src[key] && src[key] !== 'undefined' && src[key] !== 'null' && !target[key]) {
         if (src.hasOwnProperty(key)) {
           // if the value is a nested object, recursively copy all it's properties
-          if (typeof(src[key]) === 'object') {
+          if (typeof (src[key]) === 'object') {
             target[key] = deepCopy(src[key], {});
           } else {
             target[key] = src[key];

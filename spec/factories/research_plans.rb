@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :research_plan do
     sequence(:name) { |i| "Research plan #{i}" }

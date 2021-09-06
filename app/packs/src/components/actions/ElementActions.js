@@ -664,7 +664,7 @@ class ElementActions {
   copyResearchPlan(research_plan, colId) {
     return (
       { research_plan: research_plan, colId: colId }
-    )
+    );
   }
 
   // -- Report --

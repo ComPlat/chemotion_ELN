@@ -849,7 +849,7 @@ class ElementStore {
   }
 
   handleCopyResearchPlan(result) {
-    const copy = ResearchPlan.copyFromResearchPlanAndCollectionId(result.research_plan, result.colId)
+    const copy = ResearchPlan.copyFromResearchPlanAndCollectionId(result.research_plan, result.colId);
     this.changeCurrentElement(copy);
     Aviator.navigate(`/collection/${result.colId}/research_plan/copy`);
   }

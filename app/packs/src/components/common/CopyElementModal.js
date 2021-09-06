@@ -61,11 +61,9 @@ export default class CopyElementModal extends React.Component {
       ClipboardActions.fetchElementAndBuildCopy(element, selectedCol, 'copy_sample');
     } else if (element.type === 'reaction') {
       ElementActions.copyReaction(element, selectedCol);
-    } 
-    else if (element.type == 'research_plan') {
-    ElementActions.copyResearchPlan(element, selectedCol);
-    }
-    else {
+    } else if (element.type === 'research_plan') {
+      ElementActions.copyResearchPlan(element, selectedCol);
+    } else {
       ElementActions.copyElement(element, selectedCol);
     }
 
