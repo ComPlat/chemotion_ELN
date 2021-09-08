@@ -10,7 +10,7 @@ set -euo pipefail
 ############# VARIABLES ####################
 
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH=development
+BRANCH=development-5
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -263,7 +263,7 @@ if [ "${PART_5:-}" ]; then
   sharpi "$description"
   sudo -H -u $PROD bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash"
   sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm install $NODE_VERSION"
-  sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION && npm install -g npm@$NPM_VERSION"
+  sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION && npm install -g yarn"
   green "done $description\n"
 else
   yellow "skip $description\n"
@@ -356,8 +356,8 @@ EOL
   # sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle install --jobs $NCPU --path $PROD_HOME/shared/bundle"
   yellow "Installing ruby gems\n"
   sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle install --jobs $NCPU "
-  yellow "Installing npm packages\n"
-  sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION  && npm install "
+  yellow "Installing npm / yarn packages\n"
+  sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION  && yarn install "
   yellow "Run DB migrations\n"
   sudo -H -u $PROD bash -c "$src && cd $TMP_DIR &&  bundle exec rake db:migrate"
 
