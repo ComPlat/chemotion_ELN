@@ -110,7 +110,7 @@ SpectraEditorBtn.defaultProps = {
 export default class ReactionDetailsContainers extends Component {
   constructor(props) {
     super();
-    const {reaction} = props;
+    const { reaction } = props;
     this.state = {
       reaction,
       activeContainer: 0
@@ -129,7 +129,8 @@ export default class ReactionDetailsContainers extends Component {
     TextTemplateActions.fetchTextTemplates('reaction');
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       reaction: nextProps.reaction,
     });
@@ -227,7 +228,7 @@ export default class ReactionDetailsContainers extends Component {
 
 
   handleRemove(container) {
-    let { reaction } = this.state;
+    const { reaction } = this.state;
 
     container.is_deleted = true;
     this.props.parent.handleReactionChange(reaction, { schemaChanged: false });
@@ -256,10 +257,10 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   render() {
-    const {reaction, activeContainer} = this.state;
-    const {readOnly} = this.props;
+    const { reaction, activeContainer } = this.state;
+    const { readOnly } = this.props;
 
-    let containerHeader = (container) => {
+    const containerHeader = (container) => {
       let kind = container.extended_metadata.kind || '';
       kind = (kind.split('|')[1] || kind).trim();
       const insText = instrumentText(container);
@@ -320,7 +321,7 @@ export default class ReactionDetailsContainers extends Component {
       )
     };
 
-    let containerHeaderDeleted = (container) => {
+    const containerHeaderDeleted = (container) => {
       const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
       const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
 

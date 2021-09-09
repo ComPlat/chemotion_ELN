@@ -10,17 +10,18 @@ export default class ElementCheckbox extends React.Component {
     }
   }
 
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const { element, checked } = nextProps;
+    this.setState({
+      element,
+      checked
+    });
+  }
+
   updateCheckedStatus(element, state) {
     let checked = this.isChecked(element, state);
     this.setState({checked: checked});
-  }
-
-  componentWillReceiveProps(nextProps) {
-    let {element, checked} =  nextProps;
-    this.setState({
-      element: element,
-      checked: checked
-    });
   }
 
   toggleCheckbox() {
@@ -35,10 +36,12 @@ export default class ElementCheckbox extends React.Component {
 
   render() {
     return (
-      <input  type="checkbox"
-              onChange={this.toggleCheckbox.bind(this)}
-              checked={this.props.checked}
-              className="element-checkbox" />
-    )
+      <input
+        type="checkbox"
+        onChange={this.toggleCheckbox.bind(this)}
+        checked={this.props.checked}
+        className="element-checkbox"
+      />
+    );
   }
 }

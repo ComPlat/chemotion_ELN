@@ -18,7 +18,7 @@ class Notification extends React.Component {
     this.handleDismiss = this.handleDismiss.bind(this);
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     this.setState({
       show: !(newProps.notification.trim() === '')
     });

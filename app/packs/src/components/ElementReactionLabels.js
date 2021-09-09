@@ -1,74 +1,64 @@
 import React from 'react';
 import {Label, Modal, Button} from 'react-bootstrap';
 
-import ElementActions from './actions/ElementActions'
-import ElementStore from './stores/ElementStore'
+import ElementActions from './actions/ElementActions';
+import ElementStore from './stores/ElementStore';
 
 export default class ElementReactionLabels extends React.Component {
   constructor(props) {
-    super(props)
-
+    super(props);
     this.state = {
       showWarning: false,
       clicked: false
-    }
+    };
+    let { element } = props;
 
-    let {element} = props
+    this.handleOnClick = this.handleOnClick.bind(this);
+    this.closeWarning = this.closeWarning.bind(this);
 
-    this.handleOnClick = this.handleOnClick.bind(this)
-    this.closeWarning = this.closeWarning.bind(this)
-
-    this.onStoreChange = this.onStoreChange.bind(this)
-  }
-
-  componentWillReceiveProps(nextProps) {
-    let {element} = nextProps
+    this.onStoreChange = this.onStoreChange.bind(this);
   }
 
   componentDidMount() {
-    ElementStore.listen(this.onStoreChange)
+    ElementStore.listen(this.onStoreChange);
   }
 
   componentWillUnmount() {
-    ElementStore.unlisten(this.onStoreChange)
+    ElementStore.unlisten(this.onStoreChange);
   }
 
   onStoreChange(state) {
     if (this.state.showWarning != state.elementWarning) {
       this.setState({
         showWarning: state.elementWarning
-      })
+      });
     }
   }
 
   closeWarning() {
-    this.setState({showWarning: false})
-    ElementActions.closeWarning()
+    this.setState({showWarning: false });
+    ElementActions.closeWarning();
   }
 
   handleOnClick(e) {
-    let {element} = this.props
+    let { element } = this.props;
 
-    ElementActions.tryFetchReactionById(element.tag.taggable_data.reaction_id)
-    this.setState({clicked: true})
-    e.stopPropagation()
+    ElementActions.tryFetchReactionById(element.tag.taggable_data.reaction_id);
+    this.setState({ clicked: true });
+    e.stopPropagation();
   }
 
   render() {
-    let {element} = this.props
+    let { element } = this.props;
 
     if (!element.tag || !element.tag.taggable_data ||
         !element.tag.taggable_data.reaction_id)
-      return (<span></span>)
+      return (<span />);
 
-    let {showWarning, clicked} = this.state
+    const { showWarning, clicked } = this.state;
 
-    let reaction = <i className='icon-reaction'/>
-    let labelStyle = {
-      backgroundColor:'white',
-      color:'black',
-      border: '1px solid grey'
-    }
+    const reaction = <i className="icon-reaction" />;
+
 
     return (
       <div style={{display: 'inline-block'}}>

@@ -15,7 +15,7 @@ export default class SampleComputedProps extends React.Component {
     this.onGridReady = this.onGridReady.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (this.gridApi) this.gridApi.setRowData(nextProps.cprops);
   }
 

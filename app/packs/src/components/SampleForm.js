@@ -33,7 +33,8 @@ export default class SampleForm extends React.Component {
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
   }
 
-  componentWillReceiveProps() {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps() {
     this.setState({ isMolNameLoading: false });
   }
 
@@ -234,7 +235,7 @@ export default class SampleForm extends React.Component {
   }
 
   moleculeInput() {
-    const sample = this.props.sample;
+    const { sample } = this.props;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
@@ -410,7 +411,6 @@ export default class SampleForm extends React.Component {
   sampleAmount(sample) {
     const content = [];
     const isDisabled = !sample.can_update;
-    const { molarityBlocked } = this.state;
     const volumeBlocked = !sample.has_density && !sample.has_molarity;
 
     if (sample.isMethodDisabled('amount_value') === false) {
@@ -470,8 +470,8 @@ export default class SampleForm extends React.Component {
 
   samplePrivateNote(sample) {
     return (
-      <PrivateNoteElement element={sample} disabled={!sample.can_update}/>
-    )
+      <PrivateNoteElement element={sample} disabled={!sample.can_update} />
+    );
   }
 
   render() {

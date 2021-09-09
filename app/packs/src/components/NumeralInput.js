@@ -12,27 +12,28 @@ export default class NumeralInput extends Component {
   constructor(props) {
     super(props);
 
-    let {value} = props;
+    let { value } = props;
     this.state = {
       numeralValue: this._convertValueToNumeralValue(value)
     };
   }
 
-  componentWillReceiveProps(nextProps) {
-    let {value} = nextProps;
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    let { value } = nextProps;
     this.setState({
       numeralValue: this._convertValueToNumeralValue(value)
     });
   }
 
   _convertValueToNumeralValue(value) {
-    let {numeralFormat} = this.props;
+    let { numeralFormat } = this.props;
     let numeralValue = null;
 
     try {
       numeralValue = Numeral(value).format(numeralFormat);
-    } catch(err) {
-      console.log('Error in NumeralInput component: ' + err)
+    } catch (err) {
+      console.log(`Error in NumeralInput component: ${err}`);
     }
 
     return numeralValue;
@@ -55,10 +56,10 @@ export default class NumeralInput extends Component {
   }
 
   render() {
-    let {bsSize, bsStyle, addonAfter, buttonAfter, label, disabled} = this.props;
-    let {numeralValue} = this.state;
+    let { bsSize, bsStyle, addonAfter, buttonAfter, label, disabled } = this.props;
+    let { numeralValue } = this.state;
     let addonAfterWrapper, buttonAfterWrapper;
-    if(addonAfter) {
+    if (addonAfter) {
       addonAfterWrapper = <InputGroup.Addon>{addonAfter}</InputGroup.Addon>;
     }
 
@@ -73,7 +74,7 @@ export default class NumeralInput extends Component {
           <FormControl type='text'  value={numeralValue || ''} bsSize={bsSize}
             bsStyle={bsStyle}
             disabled={disabled}
-            onChange={ event => this._handleInputValueChange(event)}/>
+            onChange={ event => this._handleInputValueChange(event)} />
           {buttonAfterWrapper}
           {addonAfterWrapper}
         </InputGroup>

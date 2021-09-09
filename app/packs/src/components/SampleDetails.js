@@ -62,6 +62,7 @@ import CopyElementModal from './common/CopyElementModal';
 import NotificationActions from './actions/NotificationActions';
 import MatrixCheck from './common/MatrixCheck';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
+import NmrSimTab from './nmr_sim/NmrSimTab';
 
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
@@ -120,6 +121,7 @@ export default class SampleDetails extends React.Component {
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
+    this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -144,7 +146,8 @@ export default class SampleDetails extends React.Component {
     this.fetchQcWhenNeeded(activeTab);
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))
         || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey == 'DUMMY')) {
       this.setState({
@@ -1085,6 +1088,24 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  nmrSimTab(ind) {
+    const { sample } = this.state;
+    if (!sample) { return null; }
+    return (
+      <Tab
+        eventKey={ind}
+        title="NMR Simulation"
+        key={`NMR_${sample.id}_${ind}`}
+      >
+        <ListGroupItem style={{ paddingBottom: 20 }} >
+          <NmrSimTab
+            sample={sample}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   extraLabels() {
     let labels = [];
     for (let j = 0; j < XLabels.count; j += 1) {
@@ -1224,16 +1245,21 @@ export default class SampleDetails extends React.Component {
       analyses: this.sampleContainerTab('analyses'),
       literature: this.sampleLiteratureTab('literature'),
       results: this.sampleImportReadoutTab('results'),
-      qc_curation: this.qualityCheckTab('qc_curation'),
+      qc_curation: this.qualityCheckTab('qc_curation')
     };
 
     if (this.enableComputedProps) {
       tabContentsMap.computed_props = this.moleculeComputedProps('computed_props');
     }
 
+    if (this.enableNmrSim) {
+      tabContentsMap.nmr_sim = this.nmrSimTab('nmr_sim');
+    }
+
     const tabTitlesMap = {
       qc_curation: 'qc curation',
-      computed_props: 'computed props'
+      computed_props: 'computed props',
+      nmr_sim: 'NMR Simulation'
     };
 
     for (let j = 0; j < XTabs.count; j += 1) {

@@ -44,12 +44,10 @@ export default class QuillEditor extends React.Component {
     this.height = props.height;
     if (!props.height || props.height === '') this.height = '230px';
 
-    this.toolbar = (props.toolbarSymbol || []).map(x => {
-      return {
-        name: x.name,
-        render: x.render,
-      }
-    });
+    this.toolbar = (props.toolbarSymbol || []).map(x => ({
+      name: x.name,
+      render: x.render,
+    }));
 
     this.editor = false;
     this.id = _.uniqueId('quill-editor-');
@@ -63,14 +61,12 @@ export default class QuillEditor extends React.Component {
     this.onChange = this.onChange.bind(this);
   }
 
-  componentWillMount() {
-  }
-
   componentDidMount() {
     this.initQuill();
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const nextVal = nextProps.value;
     const oldContents = this.editor ? this.getContents() : null;
 
@@ -83,7 +79,8 @@ export default class QuillEditor extends React.Component {
     }
   }
 
-  componentWillUpdate() {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillUpdate() {
     this.componentWillUnmount();
   }
 
@@ -177,7 +174,7 @@ export default class QuillEditor extends React.Component {
         }
       });
 
-      const id = this.id;
+      const { id } = this;
 
       this.toolbar.forEach((element) => {
         const selector = `#toolbar-${id} #${element.name}_id`;
@@ -215,7 +212,7 @@ export default class QuillEditor extends React.Component {
             const options = elementValue.map(function(e) {
               if(e == false){
                 return <option value="" key="" />
-              } 
+              }
               return <option value={e} key={`opt_${e}`} />
             });
 
@@ -290,7 +287,7 @@ export default class QuillEditor extends React.Component {
     if (this.theme !== 'snow' || !this.toolbar || this.toolbar.length === 0) {
       return (<span />);
     }
-    
+
     const customToolbarElement = this.toolbar.map(element => {
       if (element.render) {
         return element.render(element.name);
@@ -340,7 +337,7 @@ export default class QuillEditor extends React.Component {
           {this.renderQuillToolbarGroup()}
           <span className="ql-formats custom-toolbar">
             { this.props.customToolbar }
-          </span> 
+          </span>
           {this.renderCustomToolbar()}
           {this.renderCustomDropdown()}
         </div>

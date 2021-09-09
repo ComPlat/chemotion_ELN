@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import { Table, Button, Tooltip, OverlayTrigger, Label } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
-
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
@@ -16,7 +14,6 @@ import ArrayUtils from './utils/ArrayUtils';
 import ElementContainer from './ElementContainer';
 
 import UIStore from './stores/UIStore';
-import UserStore from './stores/UserStore';
 import ElementStore from './stores/ElementStore';
 import KeyboardStore from './stores/KeyboardStore';
 
@@ -151,9 +148,6 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
   }
 
   const { collId, showPreviews } = UIStore.getState();
-   // const dragItem = Sample.copyFromSampleAndCollectionId(sample, collId, true);
-   // dragItem.id = null;
-
   return (
     <tr
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
@@ -209,7 +203,8 @@ export default class ElementsTableSampleEntries extends Component {
     KeyboardStore.listen(this.sampleOnKeyDown);
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const displayedMoleculeGroup = [];
     const { currentElement } = ElementStore.getState();
     const { elements } = nextProps;
@@ -262,32 +257,34 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   sampleOnKeyDown(state) {
-    const context = state.context
-    if (context != "sample") { return false; }
+    const context = state.context;
+    if (context != 'sample') { return false; }
 
-    const documentKeyDownCode = state.documentKeyDownCode
-    let { keyboardIndex, keyboardSeletectedElementId, flattenSamplesId } = this.state
+    const documentKeyDownCode = state.documentKeyDownCode;
+    let { keyboardIndex, keyboardSeletectedElementId, flattenSamplesId } = this.state;
 
-    switch(documentKeyDownCode) {
+    switch (documentKeyDownCode) {
       case 13: // Enter
       case 39: // Right
         if (keyboardIndex != null && keyboardSeletectedElementId != null) {
-          showDetails(keyboardSeletectedElementId)
+          showDetails(keyboardSeletectedElementId);
         }
         break;
       case 38: // Up
         if (keyboardIndex > 0) {
           keyboardIndex--;
         } else {
-          keyboardIndex = 0
+          keyboardIndex = 0;
         }
         break;
       case 40: // Down
         if (keyboardIndex == null) {
-          keyboardIndex = 0
+          keyboardIndex = 0;
         } else if (keyboardIndex < (flattenSamplesId.length - 1)) {
           keyboardIndex++;
         }
+        break;
+      default:
         break;
     }
 

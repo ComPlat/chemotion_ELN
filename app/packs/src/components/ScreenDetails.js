@@ -35,6 +35,20 @@ export default class ScreenDetails extends Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
+  }
+
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const { screen } = nextProps;
+    this.setState({ screen });
+  }
+
   onUIStoreChange(state) {
     if (state.screen.activeTab != this.state.activeTab){
       this.setState({
@@ -43,20 +57,8 @@ export default class ScreenDetails extends Component {
     }
   }
 
-  componentDidMount() {
-    UIStore.listen(this.onUIStoreChange)
-  }
-
-  componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange)
-  }
-  componentWillReceiveProps(nextProps) {
-    const {screen} = nextProps;
-    this.setState({ screen });
-  }
-
   handleSubmit() {
-    const {screen} = this.state;
+    const { screen } = this.state;
 
     if(screen.isNew) {
       ElementActions.createScreen(screen);

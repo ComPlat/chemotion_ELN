@@ -61,7 +61,8 @@ export default class TextTemplate extends React.Component {
     ];
   }
 
-  componentWillReceiveProps(newProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(newProps) {
     const { fetchedTemplates } = newProps;
     const selectedRows = this.gridApi.getSelectedRows();
     if (selectedRows.length === 0) return;

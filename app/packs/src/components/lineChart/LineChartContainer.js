@@ -14,7 +14,7 @@ export default class LineChartContainer extends React.Component {
     })
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     LineChart.update({
       data: nextProps.data,
       el: this.getDOMNode(),

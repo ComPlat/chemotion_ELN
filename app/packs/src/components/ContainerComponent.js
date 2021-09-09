@@ -41,7 +41,8 @@ export default class ContainerComponent extends Component {
     TextTemplateStore.listen(this.handleTemplateChange);
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       container: nextProps.container,
     });
@@ -107,7 +108,6 @@ export default class ContainerComponent extends Component {
     const { readOnly, disabled } = this.props;
 
     let quill = (<span />);
-    const { content } = container.extended_metadata;
     if (readOnly || disabled) {
       quill = (
         <QuillViewer value={container.extended_metadata.content} />
@@ -119,6 +119,7 @@ export default class ContainerComponent extends Component {
           template={textTemplate}
           analysis={container}
           updateTextTemplates={this.updateTextTemplates}
+          // eslint-disable-next-line react/jsx-no-bind
           onChangeContent={this.handleInputChange.bind(this, 'content')}
         />
       );
@@ -132,6 +133,7 @@ export default class ContainerComponent extends Component {
             type="text"
             label="Name"
             value={container.name || '***'}
+            // eslint-disable-next-line react/jsx-no-bind
             onChange={this.handleInputChange.bind(this, 'name')}
             disabled={readOnly || disabled} />
         </Col>
@@ -144,6 +146,7 @@ export default class ContainerComponent extends Component {
               options={confirmOptions}
               value={container.extended_metadata['status']}
               disabled={readOnly || disabled}
+              // eslint-disable-next-line react/jsx-no-bind
               onChange={this.handleInputChange.bind(this, 'status')}
             />
           </div>
@@ -153,7 +156,7 @@ export default class ContainerComponent extends Component {
             <ControlLabel>Type (Chemical Methods Ontology)</ControlLabel>
             <OlsTreeSelect
               selectName="chmo"
-              selectedValue={container.extended_metadata['kind'] || ''}
+              selectedValue={container.extended_metadata.kind || ''}
               onSelectChange={event => this.handleInputChange('kind', event)}
               selectedDisable={readOnly || disabled || false}
             />
@@ -171,6 +174,7 @@ export default class ContainerComponent extends Component {
               label="Description"
               value={container.description || ''}
               disabled={readOnly || disabled}
+              // eslint-disable-next-line react/jsx-no-bind
               onChange={this.handleInputChange.bind(this, 'description')}
             />
           </FormGroup>

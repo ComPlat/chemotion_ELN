@@ -33,7 +33,8 @@ export default class ReactionDetailsMainProperties extends Component {
     this.temperatureUnit = props.reaction.temperature.valueUnit;
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       temperature: nextProps.reaction.temperature,
     });
@@ -172,6 +173,7 @@ export default class ReactionDetailsMainProperties extends Component {
 }
 
 ReactionDetailsMainProperties.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
   onInputChange: PropTypes.func
 };

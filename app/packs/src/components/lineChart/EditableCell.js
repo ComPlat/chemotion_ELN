@@ -14,7 +14,7 @@ export default class EditableCell extends React.Component {
     this.handleBlur = this.handleBlur.bind(this)
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({val: nextProps.value})
   }
 

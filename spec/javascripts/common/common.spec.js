@@ -1,7 +1,7 @@
 import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import sinon from 'sinon';
 
 import SpinnerPencilIcon from '../../../app/packs/src/components/common/SpinnerPencilIcon';

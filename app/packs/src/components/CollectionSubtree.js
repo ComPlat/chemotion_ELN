@@ -1,17 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
-import {Glyphicon, Label, Button, OverlayTrigger} from 'react-bootstrap';
-
+import { Glyphicon, OverlayTrigger } from 'react-bootstrap';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import UserInfos from './UserInfos';
-import GatePushBtn from './common/GatePushBtn'
+import GatePushBtn from './common/GatePushBtn';
 import { collectionShow, scollectionShow } from './routesUtils';
-
-
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -19,7 +16,6 @@ export default class CollectionSubtree extends React.Component {
 
     this.state = {
       isRemote: props.isRemote,
-      isSynchronized: false,
       label: props.root.label,
       selected: false,
       root: props.root,
@@ -31,21 +27,13 @@ export default class CollectionSubtree extends React.Component {
     this.handleClick = this.handleClick.bind(this)
   }
 
-  isVisible(node, uiState) {
-    if(node.descendant_ids) {
-      let currentCollectionId = parseInt(uiState.currentCollection.id)
-      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true
-    }
-
-    let {visibleRootsIds} = CollectionStore.getState()
-    return (visibleRootsIds.indexOf(node.id) > -1)
-  }
 
   componentDidMount() {
     UIStore.listen(this.onChange);
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       root: nextProps.root,
       label: nextProps.root.label
@@ -58,10 +46,10 @@ export default class CollectionSubtree extends React.Component {
 
   onChange(state) {
     if(state.currentCollection) {
-      let visible = this.isVisible(this.state.root, state)
-      const {root} = this.state
+      const visible = this.isVisible(this.state.root, state)
+      const { root } = this.state;
 
-      let selectedCol = (
+      const selectedCol = (
         state.currentCollection.id == root.id &&
         state.currentCollection.is_synchronized == root.is_synchronized
       ) || (
@@ -69,20 +57,28 @@ export default class CollectionSubtree extends React.Component {
         state.currentCollection.isRemote == root.isRemote
       )
 
-      if(selectedCol) {
+      if (selectedCol) {
         this.setState({
           selected: true,
-          visible: visible,
-          isSynchronized: root.is_synchronized
-        })
+          visible
+        });
       } else {
         this.setState({
           selected: false,
-          visible: visible,
-          isSynchronized: root.is_synchronized
-        })
+          visible
+        });
       }
     }
+  }
+
+  isVisible(node, uiState) {
+    if(node.descendant_ids) {
+      let currentCollectionId = parseInt(uiState.currentCollection.id)
+      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true
+    }
+
+    let { visibleRootsIds } = CollectionStore.getState();
+    return (visibleRootsIds.indexOf(node.id) > -1)
   }
 
   selectedCssClass() {
@@ -98,73 +94,75 @@ export default class CollectionSubtree extends React.Component {
   }
 
   subtrees() {
-    let children = this.children();
+    const children = this.children();
 
-    if(this.hasChildren()) {
+    if (this.hasChildren()) {
       return children.map((child, index) => {
         return (
           <li key={index}>
             <CollectionSubtree root={child} isRemote={this.state.isRemote} />
           </li>
-        )
-      })
-    } else {
-      return null;
+        );
+      });
     }
+    return null;
   }
-
 
   expandButton() {
     let icon = this.state.visible ? 'minus' : 'plus';
 
     if (this.hasChildren()) {
       return (
-        <Glyphicon glyph={icon} style={{float: "right", marginLeft: "5px"}}
-          onClick={this.toggleExpansion}/>
-      )
+        <Glyphicon
+          glyph={icon}
+          style={{ float: 'right', marginLeft: '5px' }}
+          onClick={this.toggleExpansion}
+        />
+      );
     }
+    return (<div />);
   }
 
   takeOwnershipButton() {
-    let root = this.state.root
-    let isRemote = this.state.isRemote;
-    let isTakeOwnershipAllowed = this.state.root.permission_level == 5;
-    let isSync = (root.sharer && root.user && root.user.type != 'Group') ? true : false
+    const { root } = this.state;
+    const { isRemote } = this.state;
+    const isTakeOwnershipAllowed = this.state.root.permission_level === 5;
+    const isSync = !!((root.sharer && root.user && root.user.type !== 'Group'));
     if ((isRemote || isSync) && isTakeOwnershipAllowed) {
       return (
         <div className="take-ownership-btn">
-          <i className="fa fa-exchange"
-             onClick={(e) => this.handleTakeOwnership(e)} />
+          <i className="fa fa-exchange" onClick={e => this.handleTakeOwnership(e)} />
         </div>
       )
     }
+    return (<div />);
   }
 
   handleTakeOwnership() {
-    let isSync = this.state.root.sharer ? true : false
-    CollectionActions.takeOwnership({id: this.state.root.id, isSync: isSync});
+    const isSync = !!this.state.root.sharer;
+    CollectionActions.takeOwnership({ id: this.state.root.id, isSync });
   }
 
   handleClick(e) {
-    const {fakeRoot} = this.props
+    const { fakeRoot } = this.props;
     if (fakeRoot) {
-      e.stopPropagation()
-      return
+      e.stopPropagation();
+      return;
     }
 
-    const { root } = this.state
-    let {visible} = this.state
-    const uiState = UIStore.getState()
+    const { root } = this.state;
+    let { visible } = this.state;
+    const uiState = UIStore.getState();
 
-    visible = visible || this.isVisible(root, uiState)
-    this.setState({visible: visible, isClicked: true})
+    visible = visible || this.isVisible(root, uiState);
+    this.setState({ visible });
     let collectionID = 'all';
     if (root.label === 'All' && root.is_locked) {
       Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`, { silent: true });
       collectionShow({ params: { collectionID } });
       return;
     }
-    let url = (this.props.root.sharer)
+    const url = (this.props.root.sharer)
       ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
       : `/collection/${root.id}/${this.urlForCurrentElement()}`;
     Aviator.navigate(url, { silent: true });
@@ -174,18 +172,14 @@ export default class CollectionSubtree extends React.Component {
   }
 
   urlForCurrentElement() {
-    const {currentElement} = ElementStore.getState();
+    const { currentElement } = ElementStore.getState();
     if (currentElement) {
       if (currentElement.isNew) {
         return `${currentElement.type}/new`;
       }
-      else {
-        return `${currentElement.type}/${currentElement.id}`;
-      }
+      return `${currentElement.type}/${currentElement.id}`;
     }
-    else {
-      return '';
-    }
+    return '';
   }
 
   toggleExpansion(e) {
@@ -223,14 +217,14 @@ export default class CollectionSubtree extends React.Component {
 
 
   render() {
-    const {fakeRoot} = this.props
-    const {label, root} = this.state
-    let {visible} = this.state
+    const { fakeRoot } = this.props;
+    const { label, root } = this.state;
+    let { visible } = this.state;
 
-    let style
+    let style;
     if (!visible) {
       style = {
-        display: "none",
+        display: 'none',
         marginBottom: 0
       };
     }
@@ -241,7 +235,7 @@ export default class CollectionSubtree extends React.Component {
         {this.takeOwnershipButton()}
 
         <div id={`tree-id-${root.label}`} className={"title " + this.selectedCssClass()}
-             onClick={this.handleClick}>
+          onClick={this.handleClick}>
           {this.expandButton()}
           {this.synchronizedIcon()}
           {gated}
@@ -258,4 +252,4 @@ export default class CollectionSubtree extends React.Component {
 CollectionSubtree.propTypes = {
   isRemote: PropTypes.bool,
   root: PropTypes.object
-}
+};

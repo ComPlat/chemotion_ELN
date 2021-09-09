@@ -19,7 +19,7 @@ export default class GenericElDetailsContainers extends Component {
     TextTemplateActions.fetchTextTemplates(this.props.genericEl.type);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       genericEl: nextProps.genericEl
     });

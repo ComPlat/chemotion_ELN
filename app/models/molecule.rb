@@ -44,6 +44,8 @@ class Molecule < ApplicationRecord
 
   has_many :computed_props
 
+  has_many :nmr_simulations, foreign_key: 'molecule_id', dependent: :destroy
+
   before_save :sanitize_molfile
   after_create :create_molecule_names
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile

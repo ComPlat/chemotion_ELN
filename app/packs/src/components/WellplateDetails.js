@@ -43,7 +43,7 @@ export default class WellplateDetails extends Component {
     UIStore.listen(this.onUIStoreChange);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { wellplate } = this.state;
     const nextWellplate = nextProps.wellplate;
     if (nextWellplate.id !== wellplate.id || nextWellplate.updated_at !== wellplate.updated_at) {

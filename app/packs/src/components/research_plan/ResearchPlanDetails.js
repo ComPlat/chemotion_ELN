@@ -41,7 +41,7 @@ export default class ResearchPlanDetails extends Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { researchPlan } = nextProps;
     this.setState({ researchPlan });
   }
