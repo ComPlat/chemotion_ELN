@@ -63,19 +63,14 @@ export default class ReactionDetailsScheme extends Component {
     TextTemplateActions.fetchTextTemplates('reactionDescription');
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { reaction } = nextProps;
     this.setState({ reaction });
   }
 
   componentWillUnmount() {
     TextTemplateStore.unlisten(this.handleTemplateChange);
-  }
-
-  handleTemplateChange(state) {
-    this.setState({
-      reactionDescTemplate: state.reactionDescription.toJS()
-    });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -237,6 +232,12 @@ export default class ReactionDetailsScheme extends Component {
     this.props.onReactionChange(reaction, options);
   }
 
+  handleTemplateChange(state) {
+    this.setState({
+      reactionDescTemplate: state.reactionDescription.toJS()
+    });
+  }
+
   handleMaterialsChange(changeEvent) {
     switch (changeEvent.type) {
       case 'referenceChanged':
@@ -291,6 +292,8 @@ export default class ReactionDetailsScheme extends Component {
       case 'addToDesc':
         this.addSampleTo(changeEvent,  'description');
         this.addSampleTo(changeEvent, 'observation');
+        break;
+      default:
         break;
     }
   }

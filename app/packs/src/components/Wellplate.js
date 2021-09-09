@@ -5,8 +5,6 @@ import WellContainer from './WellContainer';
 import WellplateLabels from './WellplateLabels';
 import WellOverlay from './WellOverlay';
 
-import Sample from './models/Sample';
-
 export default class Wellplate extends Component {
   constructor(props) {
     super(props);
@@ -15,7 +13,7 @@ export default class Wellplate extends Component {
       overlayTarget: {},
       overlayWell: {},
       overlayPlacement: 'right'
-    }
+    };
   }
 
   componentDidMount() {
@@ -23,9 +21,10 @@ export default class Wellplate extends Component {
     document.getElementsByClassName('panel-body')[0].addEventListener('scroll', this.onScroll.bind(this));
   }
 
-  componentWillReceiveProps(nextProps) {
-    const {show} = nextProps;
-    if(!show) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const { show } = nextProps;
+    if (!show) {
       this.hideOverlay();
     }
   }
@@ -36,27 +35,27 @@ export default class Wellplate extends Component {
   }
 
   onScroll() {
-    const {showOverlay, overlayTarget, overlayWell} = this.state;
-    if(showOverlay) {
+    const { showOverlay, overlayTarget, overlayWell } = this.state;
+    if (showOverlay) {
       this.hideOverlay();
       setTimeout(() => {
-        this.showOverlay(overlayTarget, overlayWell)
+        this.showOverlay(overlayTarget, overlayWell);
       }, 700);
     }
   }
 
   swapWells(firstWell, secondWell) {
-    const {handleWellsChange, wells} = this.props;
+    const { handleWellsChange, wells } = this.props;
     const firstWellId = wells.indexOf(firstWell);
     const secondWellId = wells.indexOf(secondWell);
-    let temp = wells[firstWellId].sample;
+    const temp = wells[firstWellId].sample;
     wells[firstWellId].sample = wells[secondWellId].sample;
     wells[secondWellId].sample = temp;
     handleWellsChange(wells);
   }
 
   dropSample(droppedSample, well) {
-    const {handleWellsChange, wells} = this.props;
+    const { handleWellsChange, wells } = this.props;
     const wellId = wells.indexOf(well);
     const sample = droppedSample.buildChild();
     wells[wellId] = {
@@ -67,7 +66,7 @@ export default class Wellplate extends Component {
   }
 
   removeSampleFromWell(well) {
-    const {handleWellsChange, wells} = this.props;
+    const { handleWellsChange, wells } = this.props;
     const wellId = wells.indexOf(well);
     wells[wellId] = {
       ...well,
@@ -84,7 +83,7 @@ export default class Wellplate extends Component {
   }
 
   showOverlay(key, well) {
-    const {cols} = this.props;
+    const { cols } = this.props;
     const isWellInUpperHalf = Math.ceil(cols / 2) > key % cols;
     const placement = (isWellInUpperHalf) ? 'right' : 'left';
     this.setState({

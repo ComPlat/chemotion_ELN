@@ -19,7 +19,7 @@ class Root extends Component {
     attachEditor('chemscanner-cdjs-container');
   }
 
-  componentWillReceiveProps({
+  UNSAFE_componentWillReceiveProps({
     isScriptLoaded,
     isScriptLoadSucceed,
     attachEditor

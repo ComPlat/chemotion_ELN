@@ -22,7 +22,7 @@ export default class ScreenDetailsContainers extends Component {
     TextTemplateActions.fetchTextTemplates('screen');
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       screen: nextProps.screen
     })

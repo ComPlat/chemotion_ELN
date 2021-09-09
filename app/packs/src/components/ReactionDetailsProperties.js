@@ -24,7 +24,8 @@ export default class ReactionDetailsProperties extends Component {
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (!nextProps.reaction) { return; }
     nextProps.reaction.convertDurationDisplay();
   }
