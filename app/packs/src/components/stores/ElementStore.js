@@ -646,6 +646,7 @@ class ElementStore {
     UserActions.fetchCurrentUser();
     reaction.addMaterial(newSample, materialGroup);
     this.handleRefreshElements('sample');
+    ElementActions.handleSvgReactionChange(reaction);
     this.changeCurrentElement(reaction);
   }
 
@@ -664,6 +665,7 @@ class ElementStore {
   handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
     if (closeView) {
+      ElementActions.handleSvgReactionChange(reaction);
       this.changeCurrentElement(reaction);
     } else {
       this.changeCurrentElement(sample);
