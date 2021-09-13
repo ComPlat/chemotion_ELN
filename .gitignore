@@ -180,4 +180,5 @@ shrine/*
 .docker-sync/
 
 public/sprite.png
+shrine/*
 config/shrine_config.yml

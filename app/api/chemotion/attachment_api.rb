@@ -44,6 +44,78 @@ module Chemotion
       error!(message, 404)
     end
 
+    resource :inbox do
+      params do
+        requires :cnt_only, type: Boolean, desc: 'return count number only'
+      end
+      get do
+        current_user.container = Container.create(name: 'inbox', container_type: 'root') unless current_user.container
+
+        if params[:cnt_only]
+          present current_user.container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
+        else
+          present current_user.container, with: Entities::InboxEntity, root: :inbox
+        end
+      end
+    end
+
+    resource :attachable do
+      params do
+        optional :files, type: Array[File], desc: 'files', default: []
+        optional :attachable_type, type: String, desc: 'attachable_type'
+        optional :attachable_id, type: Integer, desc: 'attachable id'
+        optional :del_files, type: Array[Integer], desc: 'del file id', default: []
+      end
+      after_validation do
+        case params[:attachable_type]
+        when 'ResearchPlan'
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: params[:attachable_id])).update?
+        end
+      end
+
+      desc 'Update attachable records'
+      post 'update_attachments_attachable' do
+        attachable_type = params[:attachable_type]
+        attachable_id = params[:attachable_id]
+        if params.fetch(:files, []).any?
+          attach_ary = []
+          rp_attach_ary = []
+          params[:files].each do |file|
+            next unless (tempfile = file[:tempfile])
+
+            a = Attachment.new(
+              bucket: file[:container_id],
+              filename: file[:filename],
+              file_path: file[:tempfile],
+              created_by: current_user.id,
+              created_for: current_user.id,
+              content_type: file[:type],
+              attachable_type: attachable_type,
+              attachable_id: attachable_id
+            )
+            
+            begin
+              a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+              if a.valid?
+                a.attachment_attacher.create_derivatives
+                a.save!
+                attach_ary.push(a.id)
+                rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
+              end
+            ensure
+              tempfile.close
+              tempfile.unlink
+            end
+          end
+
+          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) if rp_attach_ary.any?
+          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) if attach_ary.any?
+        end
+        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) if params[:del_files].any?
+        true
+      end
+    end
+
     resource :attachments do
       before do
         if params[:attachment_id].present? && params[:attachment_id].match(/^(\d)+$/)
@@ -157,43 +229,75 @@ module Chemotion
 
       desc 'Upload files to Inbox as unsorted'
       post 'upload_to_inbox' do
-        attach_ary = []
-        params.each do |_file_id, file|
-          next unless tempfile = file[:tempfile]
+        attach_ary = Array.new
+        params.each do |file_id, file|
+          if tempfile = file[:tempfile]
+              attach = Attachment.new(
+                bucket: file[:container_id],
+                filename: file[:filename],
+                key: file[:name],
+                file_path: file[:tempfile],
+                created_by: current_user.id,
+                created_for: current_user.id,
+                content_type: file[:type],
+                attachable_type: 'Container'
+              )
+            ActiveRecord::Base.transaction do
+              begin
+                attach.save!
 
-          attach = Attachment.new(
-            bucket: file[:container_id],
-            filename: file[:filename],
-            key: file[:name],
-            file_path: file[:tempfile],
-            created_by: current_user.id,
-            created_for: current_user.id,
-            content_type: file[:type],
-            attachable_type: 'Container'
-          )
-          begin
-            attach.save!
-            attach_ary.push(attach.id)
-          ensure
-            tempfile.close
-            tempfile.unlink
+                attach.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
+                if attach.valid?
+                  attach.attachment_attacher.create_derivatives
+                  attach.save!
+                  attach_ary.push(attach.id)
+                else
+                  raise ActiveRecord::Rollback
+                end
+              ensure
+                tempfile.close
+                tempfile.unlink
+              end
+            end
           end
         end
-
+     
         true
       end
 
       desc 'Download the attachment file'
       get ':attachment_id' do
-        content_type 'application/octet-stream'
+        params do
+          optional :version, type: Integer
+        end
+        content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-        uploaded_file = @attachment.attachment_attacher.file
         
+        uploaded_file = if params[:version].nil?
+                           @attachment.attachment_attacher.file
+                        else
+                          @attachment.reload_log_data
+                          @attachment.at(version: params[:version].to_i).attachment_attacher.file
+                        end
         data = uploaded_file.read
         uploaded_file.close
 
         data
+      end
+
+      desc "Get all versions of a attachments"
+      get ':attachment_id/versions' do
+        content_type "application/octet-stream"
+
+        versions = []
+        @attachment.reload_log_data
+        for numb in 1..@attachment.log_size do
+          att = @attachment.at(version: numb)
+          att.updated_at = Time.strptime("#{@attachment.log_data.versions[numb-1].data['ts']}", '%Q')
+          versions.push att
+        end
+        Entities::AttachmentEntity.represent(versions)
       end
 
       desc 'Download the zip attachment file'

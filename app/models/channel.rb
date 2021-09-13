@@ -35,6 +35,7 @@ class Channel < ApplicationRecord
   ASSIGN_INBOX_TO_SAMPLE = 'Assign Inbox Attachment to Sample'
   DOWNLOAD_ANALYSES_ZIP = 'Download Analyses'
   DOWNLOAD_ANALYSES_ZIP_FAIL = 'Download Analyses Failure'
+  DONE_EDIT_LOCALLY = 'DoneEditLocally'
 
   class << self
     def build_message(**args)

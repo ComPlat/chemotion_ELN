@@ -147,6 +147,8 @@ module AttachmentJcampProcess
 
     att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att.set_csv if ext == 'csv'
+
+    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att.update!(storage: Rails.configuration.storage.primary_store)
     att
   end

@@ -80,6 +80,25 @@ export default class AttachmentFetcher {
     return promise;
   }
 
+  static fetchAttachmentVersions(id) {
+    let promise = fetch(`/api/v1/attachments/${id}/versions`, {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static fetchJcamp(target) {
     const { file, mass, mol } = target;
     const data = new FormData();

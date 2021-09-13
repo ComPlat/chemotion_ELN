@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
 # Class for creating thumbnails. It must fulfill the contract of the "virtual" interface for creating derivatives:
-# create_derivative(tmpPath,originalFile,dbId,result,record)
-# Currently we use the thumbnailer library
+# createDerivative(tmpPath,originalFile,dbId,result,record)
+# Currently we use the thumbnailer library, but it can be dynamically replaced in the constructor
 # https://github.com/merlin-p/thumbnailer.git
 
 class ThumbnailCreator
-  def create_derivative(tmp_path, _, _, result, record)
+  def initialize(thumbnailer = nil)
+    @thumbnailer = thumbnailer || ThumbnailerWrapper.new
+  end
+
+  def create_derivative(tmp_path, original_file, db_id, result, record)
     begin
       thumbnail = Thumbnailer.create(tmp_path)
 
@@ -24,5 +28,11 @@ class ThumbnailCreator
     end
 
     result
+  end
+
+  class ThumbnailerWrapper
+    def create_thumbnail(tmp_path)
+      Thumbnailer.create(tmp_path)
+    end
   end
 end

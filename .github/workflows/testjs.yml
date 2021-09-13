@@ -20,7 +20,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres
+        image: postgres:12-alpine
         ports:
           - 5432:5432
         env:
@@ -44,7 +44,7 @@ jobs:
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
             echo "POSTGRES"
-            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB NOSUPERUSER PASSWORD '${{ matrix.pg_password }}'"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB SUPERUSER PASSWORD '${{ matrix.pg_password }}'"
             psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE ${{ matrix.pg_database }} OWNER ${{ matrix.pg_role }};"
             psql -d postgresql://${{ matrix.pg_role }}:${{ matrix.pg_password }}@postgres/${{ matrix.pg_database }} -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 

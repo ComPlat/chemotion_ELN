@@ -19,7 +19,6 @@ class DatacollectorFile < DatacollectorObject
   def attach(device)
     att = Attachment.new(
       filename: @name,
-      file_data: IO.binread(@path),
       content_type: MimeMagic.by_path(@name)&.type,
       created_by: device.id,
       created_for: recipient.id

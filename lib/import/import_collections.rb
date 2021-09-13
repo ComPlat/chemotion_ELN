@@ -50,7 +50,6 @@ module Import
               tmp.rewind
               ActiveRecord::Base.transaction do
                 attachment.save!
-
                 attachment.attachment_attacher.attach(tmp)
                 if attachment.valid?
                   attachment.attachment_attacher.create_derivatives

@@ -15,6 +15,8 @@ const NavHead = () => (
       <MenuItem eventKey="13" href="http://www.complat.kit.edu/" target="_blank">Complat</MenuItem>
       <MenuItem eventKey="14" href="https://github.com/ComPlat" target="_blank">Complat on Github</MenuItem>
       <MenuItem divider />
+      <MenuItem eventKey='16' href="https://github.com/Allenskywalker92/ChemotionURIHandler/tree/main/ChemotionURLHandler/Release" target="_blank">Download URL handler </MenuItem>
+      <MenuItem divider />
       <MenuItem eventKey="15" href="/" target="_self">ELN</MenuItem>
     </NavDropdown>
   </Navbar.Brand>
