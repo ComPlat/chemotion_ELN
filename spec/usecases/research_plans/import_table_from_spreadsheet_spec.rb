@@ -6,13 +6,13 @@ RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
   let(:file_path) { Rails.root.join('public/xlsx/wellplate_import_template.xlsx') }
   let(:file_name) { File.basename(file_path) }
   let(:attachment) do
-    create(:attachment, filename: file_name, file_path: file_path)
+    FactoryBot.create(:attachment, filename: file_name, file_path: file_path, attachment: File.open(file_path, binmode: true))
   end
   let(:research_plan) { create(:research_plan, attachments: [attachment]) }
   let(:importer) { described_class.new(research_plan, attachment) }
 
   context 'when receiving wrong extension' do
-    let(:attachment) { create(:attachment) }
+    let(:attachment) { FactoryBot.create(:attachment, attachment: File.open(Rails.root.join('spec/fixtures/import/wrong.txt'), binmode: true)) }
 
     it 'raises an exception' do
       error_message = ["Can not process this type of file, must be '.xlsx'."].join("\n")
