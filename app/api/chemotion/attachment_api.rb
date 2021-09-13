@@ -102,32 +102,35 @@ module Chemotion
           attach_ary = []
           rp_attach_ary = []
           params[:files].each do |file|
-            next unless (tempfile = file[:tempfile])
-
-            a = Attachment.new(
-              bucket: file[:container_id],
-              filename: file[:filename],
-              file_path: file[:tempfile],
-              created_by: current_user.id,
-              created_for: current_user.id,
-              content_type: file[:type],
-              attachable_type: attachable_type,
-              attachable_id: attachable_id
-            )
-            begin
-              a.save!
-              attach_ary.push(a.id)
-              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
-            ensure
-              tempfile.close
-              tempfile.unlink
+            if (tempfile = file[:tempfile])
+              a = Attachment.new(
+                bucket: file[:container_id],
+                filename: file[:filename],
+                file_path: file[:tempfile],
+                created_by: current_user.id,
+                created_for: current_user.id,
+                content_type: file[:type],
+                attachable_type: attachable_type,
+                attachable_id: attachable_id
+              )
+              begin
+                a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+                if a.valid?
+                  a.attachment_attacher.create_derivatives
+                  a.save!
+                  attach_ary.push(a.id)
+                  rp_attach_ary.push(a.id) if %w[ResearchPlan Element].include?(attachable_type)
+                end
+              ensure
+                tempfile.close
+                tempfile.unlink
+              end
             end
           end
-
-          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) if rp_attach_ary.any?
-          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) if attach_ary.any?
+          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) unless rp_attach_ary.empty?
+          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) unless attach_ary.empty?
         end
-        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) if params[:del_files].any?
+        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) unless params[:del_files].empty?
         true
       end
     end
@@ -183,6 +186,7 @@ module Chemotion
 
       desc 'Upload attachments'
       post 'upload_dataset_attachments' do
+        error_messages = []
         params.each do |_file_id, file|
           next unless tempfile = file[:tempfile]
 
@@ -190,13 +194,19 @@ module Chemotion
             bucket: file[:container_id],
             filename: file[:filename],
             key: file[:name],
-            file_path: file[:tempfile],
             created_by: current_user.id,
             created_for: current_user.id,
             content_type: file[:type]
           )
+
+          a.attachment_attacher.attach(file[:tempfile])
           begin
-            a.save!
+            if a.valid?
+              a.attachment_attacher.create_derivatives
+              a.save!
+            else
+              error_messages.push(a.errors.to_h[:attachment])
+            end
           ensure
             tempfile.close
             tempfile.unlink
@@ -250,20 +260,28 @@ module Chemotion
 
           if file_checksum == params[:checksum]
             attach = Attachment.new(
-              bucket: nil,
+              bucket: 1,
               filename: file_name,
+              identifier: params[:key],
               key: params[:key],
               file_path: file_path,
               created_by: current_user.id,
               created_for: current_user.id,
               content_type: MIME::Types.type_for(file_name)[0].to_s
             )
+            error_messages = []
+            
+            attach.attachment_attacher.attach(File.open(file_path, binmode: true))
+            if attach.valid?
+              attach.attachment_attacher.create_derivatives
+              attach.save!
+            else
+              error_messages.push(attach.errors.to_h[:attachment])
+            end
 
-            attach.save!
-
-            return true
+            return { ok: true, error_messages: error_messages }
           else
-            return { ok: false, statusText: 'File upload has error. Please try again!' }
+            return { ok: false, error_messages: ['File upload has error. Please try again!'] }
           end
         ensure
           entries.each do |file|
@@ -290,17 +308,19 @@ module Chemotion
                 attachable_type: 'Container'
               )
             begin
-              attach.save!
-              attach_ary.push(attach.id)
+              attach.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
+              if attach.valid?
+                attach.attachment_attacher.create_derivatives
+                attach.save!
+                attach_ary.push(attach.id)
+              end
             ensure
               tempfile.close
               tempfile.unlink
             end
           end
         end
-        TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
-                       .perform_later(attach_ary)
-
+     
         true
       end
 
@@ -309,7 +329,11 @@ module Chemotion
         content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-        @attachment.read_file
+        uploaded_file = @attachment.attachment_attacher.file
+        data = uploaded_file.read
+        uploaded_file.close
+
+        data
       end
 
       desc "Download the zip attachment file"
@@ -373,7 +397,11 @@ module Chemotion
         header['Content-Disposition'] = "attachment; filename=" + sfilename
         header['Content-Transfer-Encoding'] = 'binary';
         env['api.format'] = :binary
-        @attachment.read_file
+        uploaded_file = @attachment.attachment_attacher.file
+        data = uploaded_file.read
+        uploaded_file.close
+
+        data
       end
 
       desc 'Return Base64 encoded thumbnail'

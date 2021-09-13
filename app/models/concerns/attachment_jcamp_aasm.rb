@@ -126,19 +126,25 @@ module AttachmentJcampProcess
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
     content_type = ext == 'png' ? 'image/png' : 'application/octet-stream'
-    att = Attachment.new(
-      filename: meta_filename,
-      file_path: meta_tmp.path,
-      attachable_id: attachable_id,
-      attachable_type: 'Container',
-      created_by: created_by,
-      created_for: created_for,
-      content_type: content_type
-    )
+    att = Attachment.children_of(self[:id]).where(filename: meta_filename).take
+    if att.nil?
+      att = Attachment.children_of(self[:id]).new(
+        filename: meta_filename,
+        file_path: meta_tmp.path,
+        created_by: created_by,
+        created_for: created_for,
+        content_type: content_type,
+        key: SecureRandom.uuid
+      )
+    end
+    att.attachment_attacher.attach(File.open(meta_tmp.path, binmode: true))
+    att.attachment_attacher.create_derivatives
     att.save!
     att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'
     att.set_json if ext == 'json'
+
+    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att.set_csv if ext == 'csv'
     att.update!(storage: Rails.configuration.storage.primary_store)
     att

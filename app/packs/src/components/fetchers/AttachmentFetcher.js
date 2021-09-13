@@ -177,7 +177,7 @@ export default class AttachmentFetcher {
   }
 
   static uploadFiles(files) {
-    const data = new FormData()
+    const data = new FormData();
     files.forEach((file) => {
       data.append(file.id || file.name, file);
     });
@@ -187,19 +187,15 @@ export default class AttachmentFetcher {
       method: 'post',
       body: data
     }).then((response) => {
-      if (response.ok == false) {
-        let msg = 'Files uploading failed: ';
-        if (response.status == 413) {
-          msg += 'File size limit exceeded.'
-        } else {
-          msg += response.statusText;
-        }
+      return response.json();
+    }).then((json) => {
+      for (let i = 0; i < json.error_messages.length; i++) {
         NotificationActions.add({
-          message: msg,
+          message: json.error_messages[i],
           level: 'error'
         });
       }
-    })
+    });
   }
 
   static uploadCompleted(filename, key, checksum) {
@@ -213,19 +209,26 @@ export default class AttachmentFetcher {
       body: JSON.stringify({ filename: filename, key: key, checksum: checksum }),
     }).then(response => response.json())
       .then((response) => {
-      LoadingActions.stopLoadingWithProgress(filename);
-      if (response.ok == false) {
-        let msg = 'Files uploading failed: ';
-        if (response.status == 413) {
-          msg += 'File size limit exceeded.';
-        } else {
-          msg += response.statusText;
-        }
+        LoadingActions.stopLoadingWithProgress(filename);
+        if (response.ok == false) {
+          let msg = 'Files uploading failed: ';
+          if (response.status == 413) {
+            msg += 'File size limit exceeded.';
+          } else {
+            msg += response.statusText;
+          }
 
         NotificationActions.add({
           message: msg,
           level: 'error'
         });
+      } else {
+        for (let i = 0; i < response.error_messages.length; i++) {
+          NotificationActions.add({
+            message: response.error_messages[i],
+            level: 'error'
+          });
+        }
       }
     })
   };
@@ -303,7 +306,7 @@ export default class AttachmentFetcher {
         'Content-Type': 'application/json'
       }
     }).then((response) => {
-      return response.json()
+      return response.json();
     }).then((json) => {
       return new Attachment(json.attachment);
     }).catch((errorMessage) => {
@@ -322,7 +325,7 @@ export default class AttachmentFetcher {
         'Content-Type': 'application/json'
       }
     }).then((response) => {
-      return response.json()
+      return response.json();
     }).then((json) => {
       return new Attachment(json.attachment);
     }).catch((errorMessage) => {
@@ -491,32 +494,6 @@ export default class AttachmentFetcher {
         body: JSON.stringify({
           original: jcampIds.orig,
           generated: jcampIds.gene,
-        }),
-      },
-    )
-      .then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
-  static regenerateEditedSpectrum(jcampIds, molfile) {
-    const promise = fetch(
-      '/api/v1/attachments/regenerate_edited_spectrum/',
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers:
-          {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-        body: JSON.stringify({
-          edited: jcampIds.edited,
-          molfile: molfile
         }),
       },
     )

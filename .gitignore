@@ -175,6 +175,8 @@ vendor/bundle/*
 vendor/cache/*
 .idea/*
 .devcontainer
+shrine/*
 .docker-sync/
 
 public/sprite.png
+config/shrine_config.yml
