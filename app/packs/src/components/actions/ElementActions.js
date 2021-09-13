@@ -32,6 +32,7 @@ import ComputeTask from '../models/ComputeTask';
 import DeviceControl from '../models/DeviceControl';
 import LiteratureMap from '../models/LiteratureMap';
 import Prediction from '../models/Prediction';
+import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 
 import _ from 'lodash';
 
@@ -305,6 +306,32 @@ class ElementActions {
       .then((newSample) => {
         dispatch({newSample, reaction, materialGroup})
       });};
+  }
+
+  handleSvgReactionChange(reaction) {
+    const materialsSvgPaths = {
+      starting_materials: reaction.starting_materials.map(material => material.svgPath),
+      reactants: reaction.reactants.map(material => material.svgPath),
+      products: reaction.products.map(material => [material.svgPath, material.equivalent])
+    };
+
+    const solvents = reaction.solvents.map((s) => {
+      const name = s.preferred_label;
+      return name;
+    }).filter(s => s);
+
+    let temperature = reaction.temperature_display;
+    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
+      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
+    }
+
+    return () => { ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
+      .then((result) => {
+        reaction.reaction_svg_file = result.reaction_svg;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
   editReactionSample(reactionID, sampleID) {
