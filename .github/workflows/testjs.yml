@@ -58,8 +58,6 @@ jobs:
         run: |
             source /home/gitlab-runner/.asdf/asdf.sh && bundle install
             source /home/gitlab-runner/.asdf/asdf.sh && yarn install
-            # /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && bundle install"
-            # /bin/bash -l -c "source /home/gitlab-runner/.asdf/asdf.sh && yarn install"
 
       - name: npm test
         working-directory: /home/gitlab-runner/chemotion_ELN
