@@ -113,6 +113,8 @@ gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
 
 gem 'yaml_db'
+gem "shrine", "~> 3.0"
+gem "image_processing", "~> 1.8"
 
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser

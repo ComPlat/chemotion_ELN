@@ -95,6 +95,7 @@ module Chemotion
       # TODO: Remove this endpoint. It is not used by the FE
       desc 'Upload attachments'
       post 'upload_dataset_attachments' do
+        error_messages = []
         params.each do |_file_id, file|
           next unless tempfile = file[:tempfile]
 
@@ -102,13 +103,19 @@ module Chemotion
             bucket: file[:container_id],
             filename: file[:filename],
             key: file[:name],
-            file_path: file[:tempfile],
             created_by: current_user.id,
             created_for: current_user.id,
             content_type: file[:type]
           )
+
+          a.attachment_attacher.attach(file[:tempfile])
           begin
-            a.save!
+            if a.valid?
+              a.attachment_attacher.create_derivatives
+              a.save!
+            else
+              error_messages.push(a.errors.to_h[:attachment])
+            end
           ensure
             tempfile.close
             tempfile.unlink
@@ -179,7 +186,11 @@ module Chemotion
         content_type 'application/octet-stream'
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-        @attachment.read_file
+        uploaded_file = @attachment.attachment_attacher.file
+        data = uploaded_file.read
+        uploaded_file.close
+
+        data
       end
 
       desc 'Download the zip attachment file'
@@ -242,7 +253,11 @@ module Chemotion
         header['Content-Disposition'] = 'attachment; filename=' + sfilename
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
-        @attachment.read_file
+        uploaded_file = @attachment.attachment_attacher.file
+        data = uploaded_file.read
+        uploaded_file.close
+
+        data
       end
 
       desc 'Return Base64 encoded thumbnail'
