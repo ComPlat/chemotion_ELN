@@ -101,17 +101,10 @@ export default class PrivateNoteElement extends React.Component {
           placeholder={content}
           value={content}
           onChange={e => this.handleInputChange(e.target.value)}
-          rows={10}
+          rows={2}
           disabled={disabled}
           onBlur={() => this.saveNote()}
         />
-        <Button 
-          bsStyle="warning" 
-          onClick={() => this.saveNote()}
-          disabled={disabled}
-        >
-          Save note
-        </Button>
       </FormGroup>
     )
   }
