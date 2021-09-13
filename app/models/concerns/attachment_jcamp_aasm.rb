@@ -133,13 +133,19 @@ module AttachmentJcampProcess
       attachable_type: 'Container',
       created_by: created_by,
       created_for: created_for,
-      content_type: content_type
+      content_type: content_type,
+      key: SecureRandom.uuid
     )
+
+    att.attachment_attacher.attach(File.open(meta_tmp.path, binmode: true))
+    att.attachment_attacher.create_derivatives
     att.save!
     att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'
     att.set_json if ext == 'json'
     att.set_csv if ext == 'csv'
+
+    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att.update!(storage: Rails.configuration.storage.primary_store)
     att
   end

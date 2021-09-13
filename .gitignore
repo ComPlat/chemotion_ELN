@@ -179,3 +179,4 @@ vendor/cache/*
 .docker-sync/
 
 public/sprite.png
+shrine/*

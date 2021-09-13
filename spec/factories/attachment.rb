@@ -1,6 +1,7 @@
 FactoryBot.define do
   factory :attachment do
     #  container_id nil
+    key { SecureRandom.uuid }
     filename { 'upload.txt' }
     #  identifier nil
     #  checksum nil
