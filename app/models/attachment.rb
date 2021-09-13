@@ -21,6 +21,7 @@
 #  attachable_type :string
 #  aasm_state      :string
 #  filesize        :bigint
+#  attachment_data :jsonb
 #
 # Indexes
 #
@@ -33,20 +34,21 @@ class Attachment < ApplicationRecord
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
+  include AttachmentUploader::Attachment(:attachment)
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
   before_create :generate_key
-  before_create :store_tmp_file_and_thumbnail, if: :new_upload
+  # before_create :store_tmp_file_and_thumbnail, if: :new_upload
   before_create :add_checksum, if: :new_upload
   before_create :add_content_type
   before_save :update_filesize
 
-  before_save  :move_from_store, if: :store_changed, on: :update
+  # before_save  :move_from_store, if: :store_changed, on: :update
 
   #reload to get identifier:uuid
   after_create :reload, on: :create
-  after_create :store_file_and_thumbnail_for_dup, if: :duplicated
+  # after_create :store_file_and_thumbnail_for_dup, if: :duplicated
 
   after_destroy :delete_file_and_thumbnail
 
@@ -83,15 +85,15 @@ class Attachment < ApplicationRecord
   end
 
   def read_file
-    store.read_file
+    self.attachment_attacher.file.read if self.attachment_attacher.file.present?
   end
 
   def read_thumbnail
-    store.read_thumb if self.thumb
+    self.attachment(:thumbnail).read if self.attachment(:thumbnail).present?
   end
 
   def abs_path
-    store.path
+    self.attachment_attacher.url if self.attachment_attacher.file.present?
   end
 
   def abs_prev_path
@@ -107,7 +109,7 @@ class Attachment < ApplicationRecord
   end
 
   def add_checksum
-    store.add_checksum
+    self.checksum = Digest::MD5.hexdigest(read_file) if self.attachment_attacher.file.present?
   end
 
   def reset_checksum
@@ -116,7 +118,7 @@ class Attachment < ApplicationRecord
   end
 
   def regenerate_thumbnail
-    return unless filesize <= 50 * 1024 * 1024
+    return unless self.filesize <= 50 * 1024 * 1024
 
     store.regenerate_thumbnail
     update_column('thumb', thumb) if thumb_changed?
@@ -191,6 +193,16 @@ class Attachment < ApplicationRecord
                         end
   end
 
+  def reload
+    super
+  
+    set_key
+  end
+
+  def set_key
+    self.key = self.identifier
+  end
+
   private
 
   def generate_key
@@ -241,7 +253,7 @@ class Attachment < ApplicationRecord
   end
 
   def delete_file_and_thumbnail
-    store.destroy
+    self.attachment_attacher.destroy
   end
 
   def move_from_store(from_store = self.storage_was)

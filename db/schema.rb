@@ -69,6 +69,7 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.string "attachable_type"
     t.string "aasm_state"
     t.bigint "filesize"
+    t.jsonb "attachment_data"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end

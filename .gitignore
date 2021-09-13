@@ -171,3 +171,4 @@ vendor/bundle/*
 vendor/cache/*
 .idea/*
 .devcontainer
+shrine/*

@@ -74,10 +74,6 @@ describe Chemotion::AttachmentAPI do
       it 'creates attachments for each file' do
         expect(attachments.count).to eq 2
       end
-
-      it 'stores file localy' do
-        expect(File.exist?(attachments.last.store.path)).to be true
-      end
     end
 
     describe 'upload img thru POST attachments/upload_dataset_attachments' do
@@ -93,12 +89,8 @@ describe Chemotion::AttachmentAPI do
         expect(img_attachments.count).to eq 2
       end
 
-      it 'stores file localy' do
-        expect(File.exist?(img_attachments.last.store.path)).to be true
-      end
-
-      it 'creates thumbnail localy' do
-        expect(File.exist?(img_attachments.last.store.thumb_path)).to be true
+      it 'creates thumbnail' do
+        expect(img_attachments.last.attachment_url(:thumbnail).present?).to be true
       end
 
       describe 'Return Base64 encoded thumbnail' do
@@ -219,15 +211,6 @@ describe Chemotion::SampleAPI do
           expect(
             s1.analyses.first.children.first.attachments.first
           ).to eq(attachment)
-        end
-
-        it 'has stored the file in the primary storage' do
-          expect(
-            s1.analyses.first.children.first.attachments.first.storage
-          ).to eq(Rails.configuration.storage.primary_store)
-          expect(
-            s1.analyses.first.children.first.attachments.first.store.file_exist?
-          ).to be true
         end
       end
     end
