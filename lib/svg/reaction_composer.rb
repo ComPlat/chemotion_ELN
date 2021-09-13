@@ -597,8 +597,8 @@ module SVG
     # adjusting y position of reactants when there is solvents/conditions lines below reaction arrow - deduct solv_height (range) from box height so that it does not affect reactants position
     def reactants_solv_interaction
       solv_conditions_length = (find_solvent_max_height + find_cond_max_height) / 75
-      y_center = (global_view_box_array[3]/ 2).round 
-      solv_range = (y_center - 90) + (solv_conditions_length - 3) * 12.2
+      y_center = (global_view_box_array[3]/ 2).round
+      solv_range = @reactant_max <= 100 ? y_center + (solv_conditions_length - 3) * 12.2 : (y_center - 90) + (solv_conditions_length - 3) * 12.2
       @reactant_max <= 300 && @max_of_solv_conditions != 0 ? solv_range
       : solv_range - adjust_reactants_range 
     end
