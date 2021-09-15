@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
-  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip]
+  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip].freeze
 
   extend ActiveSupport::Concern
 
@@ -83,27 +83,32 @@ module AttachmentJcampAasm
 
   def init_aasm
     return if transferred?
+
     return unless idle?
+
     _, extname = extension_parts
     FILE_EXT_SPECTRA.include?(extname.downcase) ? set_queueing : set_non_jcamp
   end
 
   def require_peaks_generation? # rubocop:disable all
     return if transferred?
+
     return unless belong_to_analysis?
+
     typname, extname = extension_parts
     return if peaked? || edited?
+
     return unless FILE_EXT_SPECTRA.include?(extname.downcase)
+
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
+
     generate_spectrum(true, false) if queueing? && !new_upload
     generate_spectrum(true, true) if regenerating? && !new_upload
   end
 
   def belong_to_analysis?
-    container &&
-      container.parent &&
-      container.parent.container_type == 'analysis'
+    container&.parent&.container_type == 'analysis'
   end
 end
 
@@ -112,7 +117,7 @@ end
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
-  def generate_att(meta_tmp, addon, toEdit = false, ext = nil) # rubocop:disable AbcSize
+  def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
@@ -125,7 +130,7 @@ module AttachmentJcampProcess
       content_type: content_type
     )
     att.save!
-    att.set_edited if ext != 'png' && toEdit
+    att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'
     att.set_json if ext == 'json'
     att.update!(attachable_id: attachable_id, attachable_type: 'Container')
@@ -133,65 +138,67 @@ module AttachmentJcampProcess
     att
   end
 
-  def generate_img_att(img_tmp, addon, toEdit = false)
+  def generate_img_att(img_tmp, addon, to_edit = false)
     ext = 'png'
-    generate_att(img_tmp, addon, toEdit, ext)
+    generate_att(img_tmp, addon, to_edit, ext)
   end
 
-  def generate_jcamp_att(jcamp_tmp, addon, toEdit = false)
-    generate_att(jcamp_tmp, addon, toEdit, 'jdx')
+  def generate_jcamp_att(jcamp_tmp, addon, to_edit = false)
+    generate_att(jcamp_tmp, addon, to_edit, 'jdx')
   end
 
-  def generate_json_att(json_tmp, addon, toEdit = false)
-    generate_att(json_tmp, addon, toEdit, 'json')
+  def generate_json_att(json_tmp, addon, to_edit = false)
+    generate_att(json_tmp, addon, to_edit, 'json')
   end
 
   def build_params(params = {})
     _, extname = extension_parts
-    if attachable&.root_element.class.to_s == 'Sample'
+    params[:mass] = 0.0
+    if attachable&.root_element.is_a?(Sample)
       params[:mass] = attachable&.root_element&.molecule&.exact_molecular_weight || 0.0
-    else
-      params[:mass] = 0.0;
     end
     params[:ext] = extname.downcase
     params[:fname] = filename.to_s
     params
   end
 
-  def get_infer_json_content()
+  def get_infer_json_content
     atts = Attachment.where(attachable_id: attachable_id)
 
     infers = atts.map do |att|
-      keyword, extname = att.extension_parts
+      keyword, _extname = att.extension_parts
       keep = att.json? && keyword == 'infer'
       keep ? att : nil
     end.select(&:present?)
-    infers.length > 0 ? infers[0].read_file : '{}'
+    !infers.empty? ? infers[0].read_file : '{}'
   end
 
   def update_prediction(params, spc_type, is_regen)
     return auto_infer_n_clear_json(spc_type, is_regen) if spc_type == 'MS'
-    ori_infer = get_infer_json_content()
+
+    ori_infer = get_infer_json_content
     decision = params[:keep_pred] ? ori_infer : params['predict']
     write_infer_to_file(decision)
   end
 
   def create_process(is_regen)
     params = build_params
-    tmp_jcamp, tmp_img, spc_type =  Tempfile.create('molfile') do |t_molfile|
-      t_molfile.write(attachable.root_element.molecule.molfile)
-      t_molfile.rewind
+    tmp_jcamp, tmp_img, spc_type = Tempfile.create('molfile') do |t_molfile|
+      if attachable&.root_element.is_a?(Sample)
+        t_molfile.write(attachable.root_element.molecule.molfile)
+        t_molfile.rewind
+      end
       Chemotion::Jcamp::Create.spectrum(
         abs_path, t_molfile.path, is_regen, params
       )
     end
 
-    if tmp_img == nil && spc_type == nil && tmp_jcamp['invalid_molfile'] == true
-      #add message when invalid molfile
+    if tmp_img.nil? && spc_type.nil? && tmp_jcamp['invalid_molfile'] == true
+      # add message when invalid molfile
       Message.create_msg_notification(
         channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
         message_from: attachable.root_element.created_by,
-        data_args: { 'msg': 'Invalid molfile'}
+        data_args: { 'msg': 'Invalid molfile' }
       )
     end
 
@@ -207,20 +214,22 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, spc_type =  Tempfile.create('molfile') do |t_molfile|
-      t_molfile.write(attachable.root_element.molecule.molfile)
-      t_molfile.rewind
+    tmp_jcamp, tmp_img, spc_type = Tempfile.create('molfile') do |t_molfile|
+      if attachable&.root_element.is_a?(Sample)
+        t_molfile.write(attachable.root_element.molecule.molfile)
+        t_molfile.rewind
+      end
       Chemotion::Jcamp::Create.spectrum(
         abs_path, t_molfile.path, is_regen, params
       )
     end
 
-    if tmp_img == nil && spc_type == nil && tmp_jcamp['invalid_molfile'] == true
-      #add message when invalid molfile
+    if tmp_img.nil? && spc_type.nil? && tmp_jcamp['invalid_molfile'] == true
+      # add message when invalid molfile
       Message.create_msg_notification(
         channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
         message_from: attachable.root_element.created_by,
-        data_args: { 'msg': 'Invalid molfile'}
+        data_args: { 'msg': 'Invalid molfile' }
       )
     end
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
@@ -244,6 +253,7 @@ module AttachmentJcampProcess
   def delete_tmps(tmp_arr)
     tmp_arr.each do |tmp|
       next unless tmp
+
       tmp.close
       tmp.unlink
     end
@@ -288,9 +298,9 @@ module AttachmentJcampProcess
   end
 
   def infer_base_on_type(t_molfile, params)
+    spectrum = read_file
     case params[:layout]
     when 'IR'
-      spectrum = read_file
       Tempfile.create('spectrum') do |t_spectrum|
         t_spectrum.write(spectrum)
         t_spectrum.rewind
@@ -299,7 +309,6 @@ module AttachmentJcampProcess
         )
       end
     when 'MS'
-      spectrum = read_file
       Tempfile.create('spectrum') do |t_spectrum|
         t_spectrum.write(spectrum)
         t_spectrum.rewind
@@ -308,7 +317,6 @@ module AttachmentJcampProcess
         )
       end
     else
-      spectrum = read_file
       Tempfile.create('spectrum') do |t_spectrum|
         t_spectrum.write(spectrum)
         t_spectrum.rewind
