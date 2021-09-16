@@ -11,6 +11,8 @@ import TextRangeWithAddon from './TextRangeWithAddon';
 import { solventOptions } from './staticDropdownOptions/options';
 import SampleDetailsSolvents from './SampleDetailsSolvents';
 import PrivateNoteElement from './PrivateNoteElement';
+import NotificationActions from './actions/NotificationActions';
+
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -271,7 +273,14 @@ export default class SampleForm extends React.Component {
 
   handleFieldChanged(field, e) {
     const { sample } = this.props;
-    if (/amount/.test(field)) {
+    if (field === 'purity' && (e.value < 0 || e.value > 1)) {
+      e.value = 1;
+      sample[field] = e.value;
+      NotificationActions.add({
+        message: 'Purity value should be >= 0 and <=1',
+        level: 'error'
+      });
+    } else if (/amount/.test(field)) {
       this.handleAmountChanged(e);
     } else if (/molarity/.test(field)) {
       this.handleMolarityChanged(e);
@@ -282,7 +291,7 @@ export default class SampleForm extends React.Component {
     } else if (/^xref_/.test(field)) {
       const key = field.split('xref_')[1];
       sample.xref[key] = e;
-    } else if (e && e.value) {
+    } else if (e && (e.value || e.value === 0)) {
       // for numeric inputs
       sample[field] = e.value;
     } else {
