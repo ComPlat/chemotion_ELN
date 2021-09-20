@@ -1,21 +1,51 @@
-import React from 'react';
-import _ from 'lodash';
 import Immutable from 'immutable';
-import { Tab, Row, Col, Nav, NavItem } from 'react-bootstrap';
-
-import ArrayUtils from './utils/ArrayUtils';
-
+import React from 'react';
+import { Col, Nav, NavItem, Row, Tab } from 'react-bootstrap';
+import KeyboardActions from './actions/KeyboardActions';
+import UIActions from './actions/UIActions';
+import UserActions from './actions/UserActions';
+import MatrixCheck from './common/MatrixCheck';
 import ElementsTable from './ElementsTable';
 import ElementsTableSettings from './ElementsTableSettings';
-
 import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UserStore from './stores/UserStore';
+import ArrayUtils from './utils/ArrayUtils';
 
-import UserActions from './actions/UserActions';
-import UIActions from './actions/UIActions';
-import KeyboardActions from './actions/KeyboardActions';
-import MatrixCheck from './common/MatrixCheck';
+
+function getSortedHash(inputHash) {
+  const resultHash = {};
+
+  const keys = Object.keys(inputHash);
+  keys.sort((a, b) => inputHash[a] - inputHash[b]).forEach((k) => {
+    resultHash[k] = inputHash[k];
+  });
+  return resultHash;
+}
+
+function getArrayFromLayout(layout, isVisible) {
+  let array = Immutable.List();
+  let sortedLayout = layout;
+
+  if (isVisible == true) {
+    sortedLayout = getSortedHash(sortedLayout);
+  }
+
+  Object.keys(sortedLayout).forEach((key, idx) => {
+    const order = sortedLayout[key];
+    if (isVisible && order < 0) { return; }
+    if (!isVisible && order > 0) { return; }
+
+    if (isVisible == true) {
+      array = array.set(idx + 1, key);
+    } else {
+      array = array.set(Math.abs(order), key);
+    }
+  });
+
+  array = array.filter(n => n != undefined);
+  return array;
+}
 
 export default class List extends React.Component {
   constructor(props) {
@@ -44,12 +74,6 @@ export default class List extends React.Component {
     this.initState();
   }
 
-  componentWillUnmount() {
-    ElementStore.unlisten(this.onChange);
-    UserStore.unlisten(this.onChangeUser);
-    UIStore.unlisten(this.onChangeUI);
-  }
-
   shouldComponentUpdate(nextProps, nextState) {
     return nextProps.overview !== this.props.overview ||
     nextProps.showReport !== this.props.showReport ||
@@ -59,8 +83,10 @@ export default class List extends React.Component {
     nextState.currentTab !== this.state.currentTab;
   }
 
-  initState(){
-    this.onChange(ElementStore.getState())
+  componentWillUnmount() {
+    ElementStore.unlisten(this.onChange);
+    UserStore.unlisten(this.onChangeUser);
+    UIStore.unlisten(this.onChangeUI);
   }
 
   onChange(state) {
@@ -79,14 +105,14 @@ export default class List extends React.Component {
     let hidden = '';
     let currentTabIndex = 0;
 
-    const { currentType } = state
-    let type = state.currentType
+    const { currentType } = state;
+    let type = state.currentType;
 
     if (typeof (state.profile) !== 'undefined' && state.profile &&
       typeof (state.profile.data) !== 'undefined' && state.profile.data) {
-      visible = this.getArrayFromLayout(state.profile.data.layout, true)
-      hidden = this.getArrayFromLayout(state.profile.data.layout, false)
-      currentTabIndex = visible.findIndex(e => e === currentType)
+      visible = getArrayFromLayout(state.profile.data.layout, true);
+      hidden = getArrayFromLayout(state.profile.data.layout, false);
+      currentTabIndex = visible.findIndex(e => e === currentType);
       if (type === '') { type = visible.get(0); }
     }
     if (hidden.size === 0) {
@@ -111,7 +137,7 @@ export default class List extends React.Component {
   onChangeUI(state) {
     const { totalCheckedElements } = this.state;
     let forceUpdate = false;
-    //const genericNames = (genericEls && genericEls.map(el => el.name)) || [];
+    // const genericNames = (genericEls && genericEls.map(el => el.name)) || [];
     let klasses = [];
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
@@ -120,20 +146,22 @@ export default class List extends React.Component {
     const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].concat(klasses);
 
     elNames.forEach((type) => {
-      let elementUI = state[type] || { checkedAll: false, checkedIds: [], uncheckedIds: [], currentId: null };
-      const element = ElementStore.getState()['elements'][`${type}s`];
+      const elementUI = state[type] || {
+        checkedAll: false, checkedIds: [], uncheckedIds: [], currentId: null
+      };
+      const element = ElementStore.getState().elements[`${type}s`];
       const nextCount = elementUI.checkedAll ?
         (element.totalElements - elementUI.uncheckedIds.size) :
         elementUI.checkedIds.size;
       if (!forceUpdate && nextCount !== (totalCheckedElements[type] || 0)) { forceUpdate = true; }
-      totalCheckedElements[type] = nextCount
+      totalCheckedElements[type] = nextCount;
     });
 
-    this.setState((previousState) => { return { ...previousState, totalCheckedElements }; });
-    // could not use shouldComponentUpdate because state.totalCheckedElements has already changed independently of setstate
+    this.setState(previousState => ({ ...previousState, totalCheckedElements }));
+    // could not use shouldComponentUpdate because state.totalCheckedElements
+    // has already changed independently of setstate
     if (forceUpdate) { this.forceUpdate(); }
   }
-
 
   handleTabSelect(tab) {
     UserActions.selectTab(tab);
@@ -144,92 +172,68 @@ export default class List extends React.Component {
 
     if (!uiState[type] || !uiState[type].page) { return; }
 
-    const page = uiState[type].page;
+    const { page } = uiState[type];
 
     UIActions.setPagination({ type, page });
 
     KeyboardActions.contextChange(type);
   }
 
-  getSortedHash(inputHash) {
-    var resultHash = {};
-
-    var keys = Object.keys(inputHash);
-    keys.sort(function (a, b) {
-      return inputHash[a] - inputHash[b]
-    }).forEach(function (k) {
-      resultHash[k] = inputHash[k];
-    });
-    return resultHash;
-  }
-
-  getArrayFromLayout(layout, isVisible) {
-    let array = Immutable.List();
-
-    if (isVisible == true) {
-      layout = this.getSortedHash(layout);
-    }
-
-    Object.keys(layout).forEach(function (key, idx) {
-      const order = layout[key]
-      if (isVisible && order < 0) { return; }
-      if (!isVisible && order > 0) { return; }
-
-      if (isVisible == true) {
-        array = array.set(idx+1, key)
-      } else {
-        array = array.set(Math.abs(order), key)
-      }
-    })
-
-    array = array.filter(function(n) { return n != undefined })
-    return array;
+  initState() {
+    this.onChange(ElementStore.getState());
   }
 
   render() {
-    let {
+    const {
       visible, hidden, currentTab, totalCheckedElements
     } = this.state;
     const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     const { overview, showReport } = this.props;
     const elementState = this.state;
 
-    const navItems = []
-    const tabContents = []
-    for (let i = 0; i < visible.size; i++) {
-      let value = visible.get(i)
-      let camelized_value = value.split('_').map(function(word){
-        return word.charAt(0).toUpperCase() + word.slice(1);
-      }).join('');
+    const navItems = [];
+    const tabContents = [];
+    for (let i = 0; i < visible.size; i += 1) {
+      const value = visible.get(i);
 
       let iconClass = `icon-${value}`;
 
       if (!constEls.includes(value)) {
-        const genericEl = (this.state.genericEls && this.state.genericEls.find(el => el.name == value)) || {};
+        const genericEl = (this.state.genericEls &&
+                           this.state.genericEls.find(el => el.name == value)) || {};
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
       }
       const navItem = (
-        <NavItem eventKey={i} key={value + "_navItem"}>
-          <i className={iconClass}>
-            {elementState.totalElements && elementState.totalElements[`${value}s`]}
+        <NavItem eventKey={i} key={`${value}_navItem`}>
+          <i className={iconClass} />
+          <span style={{ paddingLeft: 5 }}>
+            {elementState.totalElements &&
+                      elementState.totalElements[`${value}s`]}
             ({totalCheckedElements[value] || 0})
-          </i>
+          </span>
         </NavItem>
-      )
+      );
       const tabContent = (
-        <Tab.Pane eventKey={i} key={value + "_tabPanel"}>
-           <ElementsTable overview={overview} showReport={showReport}
-                         type={value}/>
+        <Tab.Pane eventKey={i} key={`${value}_tabPanel`}>
+          <ElementsTable
+            overview={overview}
+            showReport={showReport}
+            type={value}
+          />
         </Tab.Pane>
-        )
+      );
 
-      navItems.push(navItem)
-      tabContents.push(tabContent)
+      navItems.push(navItem);
+      tabContents.push(tabContent);
     }
 
     return (
-      <Tab.Container  id="tabList" defaultActiveKey={0} activeKey={currentTab}
-                      onSelect={this.handleTabSelect}>
+      <Tab.Container
+        id="tabList"
+        defaultActiveKey={0}
+        activeKey={currentTab}
+        onSelect={this.handleTabSelect}
+      >
         <Row className="clearfix">
           <Col sm={12}>
             <Nav bsStyle="tabs">
@@ -249,6 +253,6 @@ export default class List extends React.Component {
           </Col>
         </Row>
       </Tab.Container>
-    )
+    );
   }
 }
