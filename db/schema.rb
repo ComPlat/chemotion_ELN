@@ -636,6 +636,18 @@ ActiveRecord::Schema.define(version: 2021_09_24_095106) do
     t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true
   end
 
+  create_table "nmr_sim_nmr_simulations", id: :serial, force: :cascade do |t|
+    t.integer "molecule_id"
+    t.text "path_1h"
+    t.text "path_13c"
+    t.text "source"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at"
+    t.index ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true
+  end
+
   create_table "notifications", id: :serial, force: :cascade do |t|
     t.integer "message_id"
     t.integer "user_id"
