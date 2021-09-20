@@ -136,7 +136,7 @@ class ViewSpectra extends React.Component {
 
   formatPks({
     peaks, shift, layout, isAscend, decimal, body,
-    isIntensity,
+    isIntensity, integration
   }) {
     const { jcamp } = this.getContent();
     const { entity } = FN.buildData(jcamp);
@@ -152,7 +152,7 @@ class ViewSpectra extends React.Component {
       : (features.editPeak || features.autoPeak);
     const boundary = { maxY, minY };
     const mBody = body || FN.peaksBody({
-      peaks, layout, decimal, shift, isAscend, isIntensity, boundary,
+      peaks, layout, decimal, shift, isAscend, isIntensity, boundary, integration
     });
     const layoutOpsObj = SpectraOps[layout];
     const { label, value, name } = shift.ref;
@@ -255,6 +255,7 @@ class ViewSpectra extends React.Component {
         decimal,
         body,
         isIntensity,
+        integration
       });
     }
 
