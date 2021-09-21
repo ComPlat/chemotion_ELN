@@ -7,7 +7,7 @@ import {
   InputGroup, FormGroup, FormControl,
   Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, DropdownButton, MenuItem,
-  ControlLabel, Modal, Alert
+  ControlLabel, Modal, Alert, Checkbox
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -135,6 +135,7 @@ export default class SampleDetails extends React.Component {
     this.decoupleMolecule = this.decoupleMolecule.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.decoupleChanged = this.decoupleChanged.bind(this);
   }
 
   componentDidMount() {
@@ -263,6 +264,16 @@ export default class SampleDetails extends React.Component {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
+  }
+
+  decoupleChanged(e) {
+    const { sample } = this.state;
+    sample.decoupled = e.target.checked;
+    if (!sample.decoupled && ((sample.molfile || '') === '')) {
+      this.handleSampleChanged(sample);
+    } else {
+      this.handleSampleChanged(sample, this.decoupleMolecule);
+    }
   }
 
   handleStructureEditorSave(molfile, svg_file = null, config = null, editor = null) {
@@ -454,9 +465,14 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     const colLabel = sample.isNew ? null : (
-      <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
+      <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
 
+    const decoupleCb = sample.can_update ? (
+      <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
+        Decoupled
+      </Checkbox>
+    ) : null;
 
     return (
       <div>
@@ -510,6 +526,7 @@ export default class SampleDetails extends React.Component {
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={sample} />
+        {decoupleCb}
         <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           {colLabel}
