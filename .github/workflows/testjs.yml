@@ -39,8 +39,8 @@ jobs:
           POSTGRES_PORT: 5432
 
         run: |
-            echo "BRANCH 0"
-            ${{ github.ref }}
+            # echo "BRANCH 0"
+            # ${{ github.ref }}
             # echo "BRANCH 1"
             # $GITHUB_REF
             echo "CLONE"
