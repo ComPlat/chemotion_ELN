@@ -41,11 +41,11 @@ jobs:
         run: |
             echo "BRANCH 0"
             ${{ github.ref }}
-            echo "BRANCH 1"
-            $GITHUB_REF
+            # echo "BRANCH 1"
+            # $GITHUB_REF
             echo "CLONE"
             #sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
-            git clone --branch ${{ github.ref }} --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+            git clone --branch $(echo $GITHUB_REF | cut -c 12-) --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
 
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
