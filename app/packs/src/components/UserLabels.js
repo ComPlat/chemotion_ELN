@@ -430,7 +430,7 @@ class ShowUserLabels extends React.Component {
     ));
 
     return (
-      <div> {elementLabels} </div>
+      <span> {elementLabels} </span>
     );
   }
 }

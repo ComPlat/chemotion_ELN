@@ -127,7 +127,7 @@
     z-index: 5;
   }
 
-  .nav-tabs{ 
+  .nav-tabs{
     font-size: 13px;
     font-weight: 700;
 
@@ -298,5 +298,7 @@
   }
 }
 
-// $select-input-height: 34px;
-// @import "../../../node_modules/react-select/scss/default";
+.sample-header-decouple {
+  float: right;
+  margin: 0px 5px 0px 0px !important;
+}
