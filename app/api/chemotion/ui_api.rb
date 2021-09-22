@@ -14,7 +14,8 @@ module Chemotion
         {
           has_chem_spectra: sconfig.present?,
           matrices: File.exist?(m_config) ? JSON.parse(File.read(m_config)) : {},
-          klasses: ElementKlass.where(is_active: true, is_generic: true)&.pluck(:name) || []
+          klasses: ElementKlass.where(is_active: true, is_generic: true)&.pluck(:name) || [],
+          structure_editors: Rails.configuration.structure_editors
         }
       end
     end

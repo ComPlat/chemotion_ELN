@@ -154,14 +154,12 @@ module Chemotion
       params do
         requires :molfile, type: String, desc: 'Molecule molfile'
         optional :svg_file, type: String, desc: 'Molecule svg file'
+        optional :editor, type: String, desc: 'SVGProcessor'
       end
       post do
         svg = params[:svg_file]
         molfile = params[:molfile]
-
-        # write temporary SVG
-        processor = Ketcherails::SVGProcessor.new svg
-
+        processor = params[:editor] == 'editor-marvinjs' ? Chemotion::MarvinjsSvgProcessor.new(svg) : Ketcherails::SVGProcessor.new(svg)
         svg = processor.centered_and_scaled_svg
 
         digest = Digest::SHA256.hexdigest molfile

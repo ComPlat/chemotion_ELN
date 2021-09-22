@@ -9,28 +9,39 @@ import {
   ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
+import UserStore from '../stores/UserStore';
+import UIStore from '../stores/UIStore';
 import StructureEditor from '../models/StructureEditor';
-// import StructureEditorContent from './StructureEditorContent';
-import { EditorListParams, EditorList } from './StructureEditorMap';
+import EditorAttrs from './StructureEditorSet';
+import ChemDrawEditor from './ChemDrawEditor';
+import MarvinjsEditor from './MarvinjsEditor';
+import loadScripts from './loadScripts';
 
-const EditorSelector = ({ value, updateEditorSelection }) => (
-  <FormGroup>
-    <div className="col-lg-2 col-md-2">
-      <ControlLabel>Structure Editor</ControlLabel>
-    </div>
-    <div className="col-lg-6 col-md-8">
-      <Select
-        name="editor selection"
-        clearable={false}
-        options={EditorListParams}
-        onChange={updateEditorSelection}
-        value={value}
-      />
-    </div>
-    <div className="col-lg-4 col-md-2">{' '}
-    </div>
-  </FormGroup>
-);
+const EditorList = (props) => {
+  const { options, fnChange, value } = props;
+  return (
+    <FormGroup>
+      <div className="col-lg-2 col-md-2"><ControlLabel>Structure Editor</ControlLabel></div>
+      <div className="col-lg-6 col-md-8">
+        <Select
+          className="status-select"
+          name="editor selection"
+          clearable={false}
+          options={options}
+          onChange={fnChange}
+          value={value}
+        />
+      </div>
+      <div className="col-lg-4 col-md-2">{' '}</div>
+    </FormGroup>
+  );
+};
+
+EditorList.propTypes = {
+  value: PropTypes.string.isRequired,
+  fnChange: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(PropTypes.object).isRequired
+};
 
 const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
   (
@@ -44,12 +55,10 @@ const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
         <p>This sample has parents or descendants, and they will not be changed.</p>
         <p>Are you sure?</p>
         <br />
-        <Button bsStyle="danger" onClick={handleCancelBtn}
-          className="g-marginLeft--10">
+        <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
           Cancel
         </Button>
-        <Button bsStyle="warning" onClick={hideWarning}
-          className="g-marginLeft--10">
+        <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">
           Continue Editing
         </Button>
       </Panel.Body>
@@ -70,10 +79,16 @@ export default class StructureEditorModal extends React.Component {
       showModal: props.showModal,
       showWarning: props.hasChildren || props.hasParent,
       molfile: props.molfile,
-      editor: props.editors.ketcher
+      matriceConfigs: [],
+      editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' })
     };
-
+    this.editors = { ketcher: this.state.editor };
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
+    this.onChangeUser = this.onChangeUser.bind(this);
+  }
+
+  componentDidMount() {
+    UserStore.listen(this.onChangeUser);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -83,13 +98,35 @@ export default class StructureEditorModal extends React.Component {
     });
   }
 
+  onChangeUser(state) {
+    let grantEditors = (state.matriceConfigs || []).map(u => u.configs.editor) || [];
+    const availableEditors = UIStore.getState().structureEditors || {};
+    if (Object.keys(availableEditors.editors || {}).length > 0) {
+      grantEditors = grantEditors.map((g) => {
+        const available = availableEditors.editors[g];
+        if (available) {
+          if (available.extJs && available.extJs.length > 0) {
+            loadScripts({
+              es: available.extJs, id: g, cbError: () => alert(`${g} is failed to load!`), cbLoaded: () => {}
+            });
+          }
+          return Object.assign({}, { [g]: new StructureEditor({ ...EditorAttrs[g], ...available, id: g }) });
+        }
+        return null;
+      });
+      this.editors = [{ ketcher: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }) }].concat(grantEditors).reduce((acc, args) => {
+        return Object.assign({}, acc, args);
+      }, {});
+    }
+  }
+
   initializeEditor() {
     const { editor, molfile } = this.state;
-    editor.molfile = molfile;
+    if (editor) { editor.structureDef.molfile = molfile; }
   }
 
   handleEditorSelection(e) {
-    this.setState(prevState => ({ ...prevState, editor: this.props.editors[e.value] }));
+    this.setState(prevState => ({ ...prevState, editor: this.editors[e.value] }));
   }
 
   handleCancelBtn() {
@@ -99,13 +136,23 @@ export default class StructureEditorModal extends React.Component {
 
   handleSaveBtn() {
     const { editor } = this.state;
-    const { molfile, info } = editor;
-    editor.fetchSVG().then((svg) => {
-      this.setState({
-        showModal: false,
-        showWarning: this.props.hasChildren || this.props.hasParent
-      }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info); } });
-    });
+    const structure = editor.structureDef;
+    if (editor.id === 'marvinjs') {
+      structure.editor.sketcherInstance.exportStructure('mol').then((mMol) => {
+        const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
+        editorImg.render(mMol).then((svg) => {
+          this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, 'editor-marvinjs'); } });
+        }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
+      }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
+    } else {
+      const { molfile, info } = structure;
+      structure.fetchSVG().then((svg) => {
+        this.setState({
+          showModal: false,
+          showWarning: this.props.hasChildren || this.props.hasParent
+        }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info); } });
+      });
+    }
   }
 
   hideModal() {
@@ -123,12 +170,40 @@ export default class StructureEditorModal extends React.Component {
     const handleSaveBtn = !this.props.onSave ? null : this.handleSaveBtn.bind(this);
     const { cancelBtnText, submitBtnText } = this.props;
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const { editor, showWarning } = this.state;
-
+    const { editor, showWarning, molfile } = this.state;
     const iframeHeight = showWarning ? '0px' : '730px';
-    const iframeStyle = showWarning ? { border: 'none' } : { };
+    const iframeStyle = showWarning ? { border: 'none' } : {};
     const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
 
+    let useEditor = (
+      <div>
+        <iframe
+          id={editor.id}
+          src={editor.src}
+          title={`${editor.title}`}
+          height={iframeHeight}
+          width="100%"
+          style={iframeStyle}
+          ref={(f) => { this.ifr = f; }}
+        />
+      </div>
+    );
+
+    if (!showWarning && editor.id === 'chemdraw') {
+      useEditor =
+        <ChemDrawEditor editor={this.editors.chemdraw} molfile={molfile} parent={this} iH={iframeHeight} />;
+    }
+    let citeMarvin = null;
+    if (!showWarning && editor.id === 'marvinjs') {
+      useEditor =
+        <MarvinjsEditor editor={this.editors.marvinjs} molfile={molfile} parent={this} iH={iframeHeight} />;
+      citeMarvin = (
+        <a href="https://chemaxon.com/" target="_blank" rel="noreferrer">
+          <img alt="Marvin JS" src="/marvinjs/powered_by_chemaxon.png" style={{ width: '256px', cursor: 'pointer' }} />
+        </a>
+      );
+    }
+    const editorOptions = Object.keys(this.editors).map(e => ({ value: e, name: this.editors[e].label, label: this.editors[e].label }));
     return (
       <div>
         <Modal
@@ -140,10 +215,12 @@ export default class StructureEditorModal extends React.Component {
         >
           <Modal.Header closeButton>
             <Modal.Title>
-              <EditorSelector
-                value={editor}
-                updateEditorSelection={this.handleEditorSelection}
+              <EditorList
+                value={editor.id}
+                fnChange={this.handleEditorSelection}
+                options={editorOptions}
               />
+              {citeMarvin}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body >
@@ -152,17 +229,7 @@ export default class StructureEditorModal extends React.Component {
               hideWarning={this.hideWarning.bind(this)}
               show={!!showWarning}
             />
-            <div>
-              <iframe
-                id={editor.id}
-                src={editor.src}
-                title={`${editor.title}`}
-                height={iframeHeight}
-                width="100%"
-                style={iframeStyle}
-                ref={(f) => { this.ifr = f; }}
-              />
-            </div>
+            {useEditor}
             <div style={buttonToolStyle}>
               <ButtonToolbar>
                 <Button bsStyle="warning" onClick={this.handleCancelBtn.bind(this)}>
@@ -184,7 +251,6 @@ export default class StructureEditorModal extends React.Component {
 }
 
 StructureEditorModal.propTypes = {
-  editors: PropTypes.objectOf(PropTypes.instanceOf(StructureEditor)),
   molfile: PropTypes.string,
   showModal: PropTypes.bool,
   hasChildren: PropTypes.bool,
@@ -196,11 +262,12 @@ StructureEditorModal.propTypes = {
 };
 
 StructureEditorModal.defaultProps = {
-  editors: EditorList,
-  molfile: "\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n",
+  molfile: '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n',
   showModal: false,
   hasChildren: false,
   hasParent: false,
+  onCancel: () => {},
+  onSave: () => {},
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
 };

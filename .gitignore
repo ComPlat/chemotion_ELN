@@ -114,6 +114,7 @@
 /public/assets/*
 
 /public/cdjs/*
+/public/marvinjs/*
 
 /coverage/
 

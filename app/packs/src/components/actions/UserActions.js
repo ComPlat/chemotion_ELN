@@ -93,6 +93,17 @@ class UserActions {
     };
   }
 
+  fetchEditors() {
+    return (dispatch) => {
+      UsersFetcher.listEditors()
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   fetchNoVNCDevices() {
     return (dispatch) => {
       UsersFetcher.fetchNoVNCDevices()
