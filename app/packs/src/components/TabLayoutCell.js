@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { findDOMNode } from 'react-dom';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import UserStore from './stores/UserStore';
@@ -20,43 +20,42 @@ const layoutTarget = {
 };
 
 class TabLayoutCell extends Component {
-  constructor(props) {
-    super(props);
-  }
 
   render() {
-    const { 
+    const {
       connectDragSource, sourceType, isHidden, cell, connectDropTarget, isElementDetails, title
     } = this.props;
 
     const styleObj = {
       fontSize: 12,
-      color: "#000000",
-      textAlign: "center",
-      wordWrap: "break-word"
-    }
+      color: '#000000',
+      textAlign: 'center',
+      wordWrap: 'break-word'
+    };
+
     const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let iconCell = `icon-${cell}`;
+    let ttl = cell.charAt(0).toUpperCase() + cell.slice(1);
 
     if (!constEls.includes(cell)) {
       const genericEls = UserStore.getState().genericEls || [];
-      const genericEl = (genericEls && genericEls.find(el => el.name == cell)) || {};
+      const genericEl = (genericEls && genericEls.find(el => el.name === cell)) || {};
       iconCell = `${genericEl.icon_name}`;
+      ttl = genericEl.label;
     }
 
     const layoutCell = (
-      <td className={isHidden ? "hidden-layout" : "" }>
+      <td className={isHidden ? 'hidden-layout' : ''}>
         {
-          isElementDetails ? (<div><i style={styleObj}>{title}</i></div>) : (<div><i className={iconCell}/></div>)
+          isElementDetails ? (<div><i style={styleObj}>{title}</i></div>) : (<div><OverlayTrigger delayShow={500} placement="top" overlay={<Tooltip id="_tooltip_history">{ttl}</Tooltip>}><i className={iconCell}/></OverlayTrigger></div>)
         }
       </td>
-    )
+    );
 
-    if (sourceType == "") {
-      return layoutCell
+    if (sourceType === '') {
+      return layoutCell;
     }
-
-    return connectDragSource(connectDropTarget(layoutCell), {dropEffect: 'copy'})
+    return connectDragSource(connectDropTarget(layoutCell), { dropEffect: 'copy' });
   }
 }
 
