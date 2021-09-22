@@ -1,6 +1,20 @@
 
 # Chemotion_ELN Changelog
 
+## [v1.x.x]
+> 2021-09-26
+
+* New features and improvements
+
+  * Structure editor configuration [documentation](https://www.chemotion.net/chemotionsaurus/docs/eln/settings#structure-editor)
+  * Add hover over information to generic elements' symbols [add hover over information to generic elements' symbols #524](https://github.com/ComPlat/chemotion_ELN/issues/524)
+  * Move/duplicate checkbox for decoupled sample [move/duplicate checkbox for decoupled sample #509](https://github.com/ComPlat/chemotion_ELN/issues/509)
+
+* Fixes
+
+  * QC curation tab is not working
+  * Reaction svg size become smaller and the svg is overlapping
+
 ## [v1.0.0-beta]
 > 2021-08-26
 

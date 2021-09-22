@@ -166,6 +166,14 @@ export default class UsersFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static listEditors() {
+    const promise = fetch('/api/v1/users/list_editors.json', { credentials: 'same-origin' })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
   static listUserLabels() {
     const promise = fetch('/api/v1/users/list_labels.json', {
       credentials: 'same-origin'

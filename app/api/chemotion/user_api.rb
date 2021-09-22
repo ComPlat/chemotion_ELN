@@ -19,12 +19,19 @@ module Chemotion
       get 'current' do
         present current_user, with: Entities::UserEntity, root: 'user'
       end
-      
+
       desc 'list user labels'
       get 'list_labels' do
         labels = UserLabel.where('user_id = ? or access_level >= 1', current_user.id)
                           .order('access_level desc, position, title')
         present labels || [], with: Entities::UserLabelEntity, root: 'labels'
+      end
+
+      desc 'list structure editors'
+      get 'list_editors' do
+        editors = []
+        %w[chemdrawEditor marvinjsEditor].each { |str| editors.push(str) if current_user.matrix_check_by_name(str) }
+        present Matrice.where(name: editors).order('id'), with: Entities::MatriceEntity, root: 'matrices'
       end
 
       namespace :save_label do
