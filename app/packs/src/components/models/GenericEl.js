@@ -6,6 +6,7 @@ import Segment from './Segment';
 
 export default class GenericEl extends Element {
 
+  // eslint-disable-next-line camelcase
   static buildEmpty(collection_id, klass) {
     const template = (klass && klass.properties_release) || {};
     return new GenericEl({
@@ -81,6 +82,10 @@ export default class GenericEl extends Element {
 
   set name(name) {
     this._name = name;
+  }
+
+  get label() {
+    return this._element_klass && this._element_klass.label;
   }
 
   get element_klass() {
