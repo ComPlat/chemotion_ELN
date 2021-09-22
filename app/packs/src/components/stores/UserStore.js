@@ -17,7 +17,8 @@ class UserStore {
       genericEls: [],
       segmentKlasses: [],
       dsKlasses: [],
-      unitsSystem: {}
+      unitsSystem: {},
+      matriceConfigs: []
     };
 
     this.bindListeners({
@@ -27,6 +28,7 @@ class UserStore {
       handleFetchCurrentUser: UserActions.fetchCurrentUser,
       handleFetchUserLabels: UserActions.fetchUserLabels,
       handleFetchProfile: UserActions.fetchProfile,
+      handleFetchEditors: UserActions.fetchEditors,
       handleSelectTab: UserActions.selectTab,
       handleUpdateUserProfile: UserActions.updateUserProfile,
       handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
@@ -38,6 +40,10 @@ class UserStore {
 
   handleFetchUserLabels(result) {
     this.state.labels = result.labels;
+  }
+
+  handleFetchEditors(result) {
+    this.state.matriceConfigs = result.matrices;
   }
 
   handleFetchOlsRxno(result) {

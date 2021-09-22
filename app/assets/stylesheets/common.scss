@@ -250,3 +250,37 @@
   opacity: 0.65 !important;
   cursor: not-allowed !important;
 }
+
+.chemdraw-loading {
+  .modal-content {
+    height: 100px;
+    text-align: center;
+    margin: 0 auto;
+    width: 100px;
+    border: none;
+    box-shadow: none;
+    font-size: large;
+    font-weight: bold;
+  }
+}
+
+.cdd-tool-button-subtool {
+  z-index: 1000 !important
+}
+
+.cdd.cdd-toolbar-popup-container {
+  z-index: 2000 !important;
+}
+
+.cdd-dialog-container {
+  div.fade.in.modal {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.cdd .modal-dialog {
+  left: unset !important;
+  top: unset !important;
+}

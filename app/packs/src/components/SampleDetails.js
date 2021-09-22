@@ -265,7 +265,7 @@ export default class SampleDetails extends React.Component {
       });
   }
 
-  handleStructureEditorSave(molfile, svg_file = null, config = null) {
+  handleStructureEditorSave(molfile, svg_file = null, config = null, editor = null) {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
@@ -274,7 +274,7 @@ export default class SampleDetails extends React.Component {
     // this.updateMolecule(molfile, svg_file, smiles);
     if (!smiles || smiles === '') {
       this.setState({ loadingMolecule: true });
-      MoleculesFetcher.fetchByMolfile(molfile, svg_file)
+      MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor)
         .then((result) => {
           sample.molecule = result;
           sample.molecule_id = result.id;
