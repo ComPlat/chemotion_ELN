@@ -9,7 +9,7 @@ set -euo pipefail
 
 ## CHEMOTION ELN GIT REPOSITORY
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH='v0.9.1'
+BRANCH='v1.0.0'
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -225,7 +225,7 @@ if [ "${PART_5:-}" ]; then
   sharpi "$description"
   sudo -H -u $PROD bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash"
   sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm install $NODE_VERSION"
-  sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION && npm install -g npm@$NPM_VERSION"
+  sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION && npm install -g yarn"
   green "done $description\n"
 else
   yellow "skip $description\n"
