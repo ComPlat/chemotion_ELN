@@ -85,7 +85,11 @@ export default class GenericEl extends Element {
   }
 
   get label() {
-    return this._element_klass && this._element_klass.label;
+    return (this.element_klass && this.element_klass.label) || '';
+  }
+
+  get desc() {
+    return (this.element_klass && this.element_klass.desc) || '';
   }
 
   get element_klass() {

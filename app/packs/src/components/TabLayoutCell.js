@@ -35,19 +35,21 @@ class TabLayoutCell extends Component {
 
     const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let iconCell = `icon-${cell}`;
-    let ttl = cell.charAt(0).toUpperCase() + cell.slice(1);
+    let ttl = cell && (cell.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
+    let ttd = '';
 
     if (!constEls.includes(cell)) {
       const genericEls = UserStore.getState().genericEls || [];
       const genericEl = (genericEls && genericEls.find(el => el.name === cell)) || {};
       iconCell = `${genericEl.icon_name}`;
       ttl = genericEl.label;
+      ttd = genericEl.desc;
     }
 
     const layoutCell = isElementDetails ? (
       <tr>
         <td className={isHidden ? 'hidden-layout' : ''}>
-          <div style={{ width: "100%"}}>
+          <div style={{ width: '100%' }}>
             <i style={styleObj}>{title === 'hidden' ? '-' : title}</i>
           </div>
         </td>
@@ -55,11 +57,7 @@ class TabLayoutCell extends Component {
 
     ) : (
       <td className={isHidden ? 'hidden-layout' : ''}>
-        <div>
-          <OverlayTrigger delayShow={500} placement="top" overlay={<Tooltip id="_tooltip_history">{ttl}</Tooltip>}>
-            <i className={iconCell} />
-          </OverlayTrigger>
-        </div>
+        <div><OverlayTrigger delayShow={500} placement="top" overlay={<Tooltip id="_tooltip_history" className="left_tooltip">{ttl}<br />{ttd}</Tooltip>}><i className={iconCell} /></OverlayTrigger></div>
       </td>
 
 
