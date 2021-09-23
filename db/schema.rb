@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_16_113952) do
+ActiveRecord::Schema.define(version: 2021_09_23_131838) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -593,6 +593,14 @@ ActiveRecord::Schema.define(version: 2021_08_16_113952) do
     t.integer "channel_id"
     t.jsonb "content", null: false
     t.integer "created_by", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "metadata", force: :cascade do |t|
+    t.integer "collection_id"
+    t.jsonb "metadata"
+    t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -1353,7 +1361,7 @@ ActiveRecord::Schema.define(version: 2021_08_16_113952) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
