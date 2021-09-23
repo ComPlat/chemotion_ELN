@@ -8,7 +8,6 @@
 
   * Resize private note field and remove save button [Private note rework #534](https://github.com/ComPlat/chemotion_ELN/issues/534)
   * Add hover over information to generic elements' symbols [add hover over information to generic elements' symbols #524](https://github.com/ComPlat/chemotion_ELN/issues/524)
-  * Move/duplicate checkbox for decoupled sample [move/duplicate checkbox for decoupled sample #509](https://github.com/ComPlat/chemotion_ELN/issues/509)
   * Structure editor configuration [documentation](https://www.chemotion.net/chemotionsaurus/docs/eln/settings#structure-editor)
 
 * Fixes
