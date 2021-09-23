@@ -1,21 +1,31 @@
 
 # Chemotion_ELN Changelog
 
-## [v1.x.x]
-> 2021-09-29
-
-* New features and improvements
-
-
-* Fixes
-
-
 ## [v1.0.0]
 > 2021-09-22
 
+* New features and improvements
+
+  * Resize private note field and remove save button [Private note rework #534](https://github.com/ComPlat/chemotion_ELN/issues/534)
+  * Add hover over information to generic elements' symbols [add hover over information to generic elements' symbols #524](https://github.com/ComPlat/chemotion_ELN/issues/524)
+  * Move/duplicate checkbox for decoupled sample [move/duplicate checkbox for decoupled sample #509](https://github.com/ComPlat/chemotion_ELN/issues/509)
+  * Structure editor configuration [documentation](https://www.chemotion.net/chemotionsaurus/docs/eln/settings#structure-editor)
+
+* Fixes
+
+  * Adapt install_development.sh to Rails 5 environment [adapt install_development.sh to Rails 5 environment #530](https://github.com/ComPlat/chemotion_ELN/pull/530)
+  * Tab headers in navigation items are italic [Tab headers in navigation items are italic #500](https://github.com/ComPlat/chemotion_ELN/issues/500)
+  * Reaction svg shrinking or dedoubling
+  * Reaction svg size become smaller and the svg is overlapping
+  * Prevent hidden cell from being added to visible layout in tabslayout
+  * QC curation tab is not working
+
+## [v1.0.0-beta]
+> 2021-08-26
+
 * Update
 
-  * upd to rails from 4.2 to 5.2 
+  * upd to rails from 4.2 to 5.2
   * now using yarn instead of npm, and webpack instead of browserify
 
 * New features and improvements
@@ -41,7 +51,6 @@
   * Revamp of analytics inbox
   * Report template management
   * Device metadata
-  * Structure editor configuration [documentation](https://www.chemotion.net/chemotionsaurus/docs/eln/settings#structure-editor)
 
 * Fixes
 
@@ -51,7 +60,6 @@
   * truncated reaction svg
   * upload of large files
   * reload of reports
-  * Reaction svg shrinking or dedoubling 
 
 ## [v0.9.1]
 > 2021-06-04
