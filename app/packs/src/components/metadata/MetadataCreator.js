@@ -12,8 +12,8 @@ const MetadataCreator = ({ creator, index, onAdd, onChange, onRemove }) => (
           </ControlLabel>
           <FormControl
             type="text"
-            value={creator.given_name}
-            onChange={event => onChange(event.target.value, 'creators', index, 'given_name')}
+            value={creator.givenName}
+            onChange={event => onChange(event.target.value, 'creators', index, 'givenName')}
           />
         </FormGroup>
       </Col>
@@ -24,8 +24,8 @@ const MetadataCreator = ({ creator, index, onAdd, onChange, onRemove }) => (
           </ControlLabel>
           <FormControl
             type="text"
-            value={creator.family_name}
-            onChange={event => onChange(event.target.value, 'creators', index, 'family_name')}
+            value={creator.familyName}
+            onChange={event => onChange(event.target.value, 'creators', index, 'familyName')}
           />
         </FormGroup>
       </Col>

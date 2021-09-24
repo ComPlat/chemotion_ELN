@@ -40,8 +40,8 @@ const MetadataContributor = ({ contributor, index, onAdd, onChange, onRemove }) 
             </ControlLabel>
             <FormControl
               type="text"
-              value={contributor.given_name}
-              onChange={event => onChange(event.target.value, 'contributors', index, 'given_name')}
+              value={contributor.givenName}
+              onChange={event => onChange(event.target.value, 'contributors', index, 'givenName')}
             />
           </FormGroup>
         </Col>
@@ -52,8 +52,8 @@ const MetadataContributor = ({ contributor, index, onAdd, onChange, onRemove }) 
             </ControlLabel>
             <FormControl
               type="text"
-              value={contributor.family_name}
-              onChange={event => onChange(event.target.value, 'contributors', index, 'family_name')}
+              value={contributor.familyName}
+              onChange={event => onChange(event.target.value, 'contributors', index, 'familyName')}
             />
           </FormGroup>
         </Col>

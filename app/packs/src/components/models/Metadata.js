@@ -1,14 +1,36 @@
 import Element from './Element';
 
+import UserStore from '../stores/UserStore';
+import UIStore from '../stores/UIStore';
+
 export default class Metadata extends Element {
   static buildEmpty(collection_id) {
+    const { currentCollection } = UIStore.getState()
+    const { currentUser } = UserStore.getState()
+
     const metadata = new Metadata({
       collection_id,
       type: 'metadata',
       metadata: {}
     });
 
-    return metadata;
+    if (currentCollection) {
+      metadata.metadata.title = currentCollection.label
+    }
+
+    if (currentUser) {
+      metadata.metadata.creators = []
+      metadata.metadata.creators.push({
+        givenName: currentUser.first_name,
+        familyName: currentUser.last_name,
+        orcid: '',
+        affiliations: [{
+          affiliation: ''
+        }]
+      })
+    }
+
+    return metadata
   }
 
   add(field, index, subfield) {
@@ -63,8 +85,8 @@ export default class Metadata extends Element {
     }
 
     this.metadata.creators.push({
-      given_name: '',
-      family_name: '',
+      givenName: '',
+      familyName: '',
       orcid: '',
       affiliations: [{
         affiliation: ''
@@ -78,8 +100,8 @@ export default class Metadata extends Element {
     }
 
     this.metadata.contributors.push({
-      given_name: '',
-      family_name: '',
+      givenName: '',
+      familyName: '',
       orcid: '',
       affiliations: [{
         affiliation: ''
