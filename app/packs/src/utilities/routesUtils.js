@@ -3,7 +3,9 @@ import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import DetailActions from 'src/stores/alt/actions/DetailActions'
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
@@ -177,6 +179,21 @@ const researchPlanShowOrNew = (e) => {
   }
 };
 
+const metadataShowOrNew = (e) => {
+  const { collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState()
+
+  // check if the metadata detail tab is alredy open
+  const index = selecteds.findIndex(el => el.collection_id == collectionID)
+  if (index < 0) {
+    // not found, fetch the metadata from the server
+    ElementActions.fetchMetadata(collectionID);
+  } else if (index != activeKey) {
+    // not active, activate tab
+    DetailActions.select(index)
+  }
+};
+
 const genericElShowOrNew = (e, type) => {
   const { collectionID } = e.params;
   let itype = '';
@@ -215,6 +232,9 @@ const elementShowOrNew = (e) => {
     case 'research_plan':
       researchPlanShowOrNew(e);
       break;
+    case 'metadata':
+      metadataShowOrNew(e);
+      break;
     default:
       if (e && e.klassType == 'GenericEl') {
         genericElShowOrNew(e, type);
@@ -241,6 +261,7 @@ export {
   deviceShow,
   deviceShowDeviceManagement,
   researchPlanShowOrNew,
+  metadataShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
   genericElShowOrNew
