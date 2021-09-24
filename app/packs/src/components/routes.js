@@ -10,7 +10,6 @@ import * as routesUtils from './routesUtils';
 import UIFetcher from './fetchers/UIFetcher';
 import klasses from '../../../../config/klasses.json';
 
-
 const allRoutes = (r) => {
   let rts = { ...r };
   for (let i = 0; i < rXr.count; i++) { rts = { ...rts, ...rXr[`content${i}`] }; }
@@ -39,6 +38,13 @@ const routes = {
     },
     '/management': 'showCollectionManagement',
     '/:collectionID': 'show'
+  },
+
+  '/metadata': {
+    target: {
+      showMetadata: routesUtils.metadataShowOrNew
+    },
+    '/': 'showMetadata'
   },
 
   '/report': {

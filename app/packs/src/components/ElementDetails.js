@@ -19,8 +19,18 @@ import LiteratureDetails from './LiteratureDetails';
 import PredictionContainer from './prediction/PredictionContainer';
 import GenericElDetails from './generic/GenericElDetails';
 import UserStore from './stores/UserStore';
+import MetadataContainer from './metadata/MetadataContainer';
 
 const tabInfoHash = {
+  metadata: {
+    title: 'Metadata',
+    iconEl: (
+      <span>
+        <i className="fa fa-file-text-o" />&nbsp;&nbsp;
+        <i className="fa fa-book" />
+      </span>
+    )
+  },
   report: {
     title: 'Report',
     iconEl: (
@@ -204,6 +214,8 @@ export default class ElementDetails extends Component {
             toggleFullScreen={this.toggleFullScreen}
           />
         );
+      case 'metadata':
+        return <MetadataContainer metadata={el} />;
       case 'report':
         return <ReportContainer report={el} />;
       case 'prediction':

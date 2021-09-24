@@ -5,12 +5,15 @@ import { Dropdown, Button, MenuItem, Glyphicon } from 'react-bootstrap';
 import CollectionActions from '../actions/CollectionActions';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
+import UIStore from '../stores/UIStore';
 import ModalImport from './ModalImport';
 import ModalImportChemScanner from './ModalImportChemScanner';
 import ModalExport from './ModalExport';
 import ModalReactionExport from './ModalReactionExport';
 import ModalExportCollection from './ModalExportCollection';
+import ModalExportRadarCollection from './ModalExportRadarCollection';
 import ModalImportCollection from './ModalImportCollection';
+import { elementShowOrNew } from '../routesUtils'
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
   <Dropdown id='export-dropdown'>
@@ -39,6 +42,16 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
       <MenuItem onSelect={() => importCollectionFunction(updateModalProps)}
         title='Import collections from ZIP archive'>
         Import collections
+      </MenuItem>
+      <MenuItem divider />
+      <MenuItem onSelect={() => editMetadataFunction()}
+                disabled={isDisabled}
+                title='Edit metadata'>
+        Edit collection metadata
+      </MenuItem>
+      <MenuItem onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
+        title='Export to RADAR'>
+        Archive current collection to RADAR
       </MenuItem>
       {/* <MenuItem onSelect={() => importChemScannerFunction(updateModalProps)} disabled={isDisabled} */}
       {/*   title='Import from Docs'> */}
@@ -142,6 +155,34 @@ const importCollectionFunction = (updateModalProps) => {
     component,
     action,
     listSharedCollections,
+  };
+
+  updateModalProps(modalProps);
+};
+
+const editMetadataFunction = () => {
+    const { currentCollection, isSync } = UIStore.getState();
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/metadata`
+      : `/collection/${currentCollection.id}/metadata`;
+    Aviator.navigate(uri, { silent: true} );
+
+    elementShowOrNew({
+      type: 'metadata',
+      params: { collectionID: currentCollection.id }
+    });
+}
+
+const exportCollectionToRadarFunction = (updateModalProps) => {
+  const title = "Archive current Collection to RADAR";
+  const component = ModalExportRadarCollection;
+  const action = CollectionActions.exportCollectionToRadar;
+
+  const modalProps = {
+    show: true,
+    title,
+    component,
+    action
   };
 
   updateModalProps(modalProps);
