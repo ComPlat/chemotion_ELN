@@ -212,20 +212,17 @@ module Chemotion
           require :key, type: String
         end
         return { ok: false, statusText: 'File key is not valid' } unless validate_uuid_format(params[:key])
-        begin
-          FileUtils.mkdir_p(Rails.root.join('tmp/uploads', 'chunks'))
-          File.open(Rails.root.join('tmp/uploads', 'chunks', "#{params[:key]}$#{params[:counter]}"), 'wb') do |file|
-            File.open(params[:file][:tempfile], 'r') do |data|
-              test = data.read
-              file.write(test)
-            end
-          end
 
-          true
-        ensure
-          CleanUpChunksJob.set(wait: 1.minutes).perform_later(params[:key]) if params[:counter].to_i == 1
+        FileUtils.mkdir_p(Rails.root.join('tmp/uploads', 'chunks'))
+        File.open(Rails.root.join('tmp/uploads', 'chunks', "#{params[:key]}$#{params[:counter]}"), 'wb') do |file|
+          File.open(params[:file][:tempfile], 'r') do |data|
+            file.write(data.read)
+          end
         end
+
+        true
       end
+
 
       desc 'Upload completed'
       post 'upload_chunk_complete' do
@@ -241,14 +238,15 @@ module Chemotion
           entries = Dir["#{Rails.root.join('tmp/uploads', 'chunks', params[:key])}*"].sort_by { |s| s.scan(/\d+/).last.to_i }
           file_path = Rails.root.join('tmp/uploads', 'full', params[:key])
           file_path = "#{file_path}#{File.extname(file_name)}"
+          file_checksum = Digest::MD5.new
           File.open(file_path, 'wb') do |outfile|
             entries.each do |file|
-              outfile.write(File.open(file, 'rb').read)
-              File.delete(file) if File.exist?(file)
+              buff = File.open(file, 'rb').read
+              file_checksum.update(buff)
+              outfile.write(buff)
             end
           end
 
-          file_checksum = Digest::MD5.hexdigest(IO.binread(file_path))
           if file_checksum == params[:checksum]
             attach = Attachment.new(
               bucket: nil,
@@ -261,14 +259,19 @@ module Chemotion
             )
 
             attach.save!
+
             return true
           else
             return { ok: false, statusText: 'File upload has error. Please try again!' }
           end
         ensure
+          entries.each do |file|
+            File.delete(file) if File.exist?(file)
+          end
           File.delete(file_path) if File.exist?(file_path)
         end
       end
+
 
       desc "Upload files to Inbox as unsorted"
       post 'upload_to_inbox' do

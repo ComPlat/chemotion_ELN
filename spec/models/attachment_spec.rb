@@ -39,7 +39,7 @@ RSpec.describe Attachment, type: :model do
 
       it 'checksummed the file_data' do
         expect(attachment_with_file.checksum).to eq(
-          Digest::SHA256.file(file_path).hexdigest
+          Digest::MD5.file(file_path).hexdigest
         )
       end
     end

@@ -213,6 +213,7 @@ export default class AttachmentFetcher {
       body: JSON.stringify({ filename: filename, key: key, checksum: checksum }),
     }).then(response => response.json())
       .then((response) => {
+      LoadingActions.stopLoadingWithProgress(filename);
       if (response.ok == false) {
         let msg = 'Files uploading failed: ';
         if (response.status == 413) {
@@ -229,7 +230,7 @@ export default class AttachmentFetcher {
     })
   };
 
-  static uploadChunk(chunk, counter, key) {
+  static uploadChunk(chunk, counter, key, progress, filename) {
     let body = { file: chunk, counter: counter, key: key };
     const formData = new FormData();
     for (const name in body) {
@@ -242,6 +243,7 @@ export default class AttachmentFetcher {
     })
       .then(response => response.json())
       .then((response) => {
+        LoadingActions.updateLoadingProgress(filename, progress);
         if (response.ok == false) {
           const msg = `Chunk uploading failed: ${response.statusText}`;
           NotificationActions.add({
@@ -254,7 +256,7 @@ export default class AttachmentFetcher {
 
   static async uploadFile(file) {
     LoadingActions.startLoadingWithProgress(file.name);
-    const chunkSize = 1048576 * 5;
+    const chunkSize = 100 * 1024 * 1024;
     const chunksCount = file.size % chunkSize == 0
       ? file.size / chunkSize
       : Math.floor(file.size / chunkSize) + 1;
@@ -263,18 +265,17 @@ export default class AttachmentFetcher {
     let tasks = [];
     const key = file.id;
     let spark = new SparkMD5.ArrayBuffer();
+    let totalStep = chunksCount + 1;
     for (let counter = 1; counter <= chunksCount; counter++) {
       let chunk = file.slice(beginingOfTheChunk, endOfTheChunk);
-      tasks.push(this.uploadChunk(chunk, counter, key)());
+      tasks.push(this.uploadChunk(chunk, counter, key, counter/totalStep, file.name)());
       spark.append(await this.getFileContent(chunk));
       beginingOfTheChunk = endOfTheChunk;
       endOfTheChunk += chunkSize;
-      LoadingActions.updateLoadingProgress(file.name, counter/chunksCount);
     }
 
     let checksum = spark.end();
     return Promise.all(tasks).then(() => {
-      LoadingActions.stopLoadingWithProgress(file.name);
       return this.uploadCompleted(file.name, key, checksum)();
     });
   }
