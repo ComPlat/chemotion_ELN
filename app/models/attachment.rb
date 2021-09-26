@@ -20,7 +20,8 @@
 #  folder          :string
 #  attachable_type :string
 #  aasm_state      :string
-#  filesize        :integer
+#  filesize        :bigint
+#  attachment_data :jsonb
 #
 # Indexes
 #
@@ -115,6 +116,8 @@ class Attachment < ApplicationRecord
   end
 
   def regenerate_thumbnail
+    return unless self.filesize <= 50 * 1024 * 1024
+
     store.regenerate_thumbnail
     save! if self.thumb
   end
@@ -214,6 +217,8 @@ class Attachment < ApplicationRecord
 
   def store_file_and_thumbnail_for_dup
     #TODO have copy function inside store
+    return unless self.filesize <= 50 * 1024 * 1024
+
     self.duplicated = nil
     if store.respond_to?(:path)
       self.file_path = store.path
@@ -226,7 +231,7 @@ class Attachment < ApplicationRecord
       self.thumb_data = store.read_thumb
     end
     stored = store.store_file
-    self.thumb = store.store_thumb if stored
+    self.thumb = store.store_thumb if stored 
     self.save if stored
     stored
   end

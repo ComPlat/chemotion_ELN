@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_16_113952) do
+ActiveRecord::Schema.define(version: 2021_09_24_095106) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -68,7 +68,8 @@ ActiveRecord::Schema.define(version: 2021_08_16_113952) do
     t.string "folder"
     t.string "attachable_type"
     t.string "aasm_state"
-    t.integer "filesize"
+    t.bigint "filesize"
+    t.jsonb "attachment_data"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
