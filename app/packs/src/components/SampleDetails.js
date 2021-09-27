@@ -345,7 +345,7 @@ export default class SampleDetails extends React.Component {
       <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
         <Glyphicon glyph="pencil" />
       </Button>
-    )
+    );
   }
 
   svgOrLoading(sample) {
@@ -543,13 +543,13 @@ export default class SampleDetails extends React.Component {
       sample.pubchem_tag.pubchem_lcss.Record.Section[0].Section[0].Section[0].Information : null;
     const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid ?
       sample.pubchem_tag.pubchem_cid : 0;
-    const lcssSign = pubchemLcss ?
+    const lcssSign = pubchemLcss && !sample.decoupled ?
       <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : <div />;
 
     return (
       <Row style={style}>
         <Col md={4}>
-          <h4><SampleName sample={sample}/></h4>
+          <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
           {lcssSign}
