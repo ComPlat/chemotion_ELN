@@ -161,7 +161,8 @@ const exportCollectionToRadarFunction = (updateModalProps) => {
     show: true,
     title,
     component,
-    action
+    action,
+    editAction: editMetadataFunction
   };
 
   updateModalProps(modalProps);
