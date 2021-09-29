@@ -305,6 +305,22 @@ export default class CollectionsFetcher {
     }).catch((errorMessage) => { throw new Error(errorMessage); });
   }
 
+  static createExportRadarJob(params) {
+    return fetch('/api/v1/collections/exports/radar/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then((response) => {
+      NotificationActions.notifyExImportStatus('export', response.status);
+      if (response.ok) { return true; }
+      throw new Error(response.status);
+    }).catch((errorMessage) => { throw new Error(errorMessage); });
+  }
+
   static createImportJob(params) {
     const data = new FormData();
     data.append('file', params.file);

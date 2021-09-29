@@ -200,6 +200,15 @@ class CollectionActions {
     };
   }
 
+  exportCollectionToRadar(params) {
+    return (dispatch) => { CollectionsFetcher.createExportRadarJob(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   importCollectionsFromFile(params) {
     return (dispatch) => {
       CollectionsFetcher.createImportJob(params)
