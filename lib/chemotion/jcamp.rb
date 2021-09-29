@@ -85,6 +85,7 @@ module Chemotion
           integration: params[:integration],
           multiplicity: params[:multiplicity],
           fname: params[:fname] || (params[:file] && params[:file].try(:[], :filename)),
+          wave_length: params[:wave_length]
         }
       end
 

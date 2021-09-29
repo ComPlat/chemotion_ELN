@@ -102,6 +102,7 @@ module Chemotion
           optional :thres, type: String
           optional :predict, type: String
           optional :molfile
+          optional :waveLength, type: String
         end
         post 'save' do
           env['api.format'] = :binary
