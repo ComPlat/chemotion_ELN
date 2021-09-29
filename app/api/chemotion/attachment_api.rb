@@ -475,6 +475,7 @@ module Chemotion
         optional :thres, type: String
         optional :predict, type: String
         optional :keep_pred, type: Boolean
+        optional :waveLength, type: String
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(
