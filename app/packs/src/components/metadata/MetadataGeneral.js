@@ -1,44 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Button, ControlLabel, FormControl, FormGroup } from 'react-bootstrap'
+import { Button, ControlLabel, FormControl, FormGroup, Row, Col } from 'react-bootstrap'
 import Select from 'react-select3'
 
-const subjectAreas = [
-  'Agriculture',
-  'Architecture',
-  'Arts and Media',
-  'Astrophysics and Astronomy',
-  'Biochemistry',
-  'Biology',
-  'Behavioural Sciences',
-  'Chemistry',
-  'Computer Science',
-  'Economics',
-  'Engineering',
-  'Environmental Science and Ecology',
-  'Ethnology',
-  'Geological Science',
-  'Geography',
-  'History',
-  'Horticulture',
-  'Information Technology',
-  'Life Science',
-  'Linguistics',
-  'Materials Science',
-  'Mathematics',
-  'Medicine',
-  'Philosophy',
-  'Physics',
-  'Psychology',
-  'Social Sciences',
-  'Software Technology',
-  'Sports',
-  'Theology',
-  'Veterinary Medicine',
-  'Other'
-].map(value => ({ label: value, value }))
+import { subjectAreas } from '../staticDropdownOptions/radar/subjectAreas'
 
-const MetadataGeneral = ({ metadata, onAdd, onChange, onDelete }) => (
+const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
   <div>
     <h4>General</h4>
     <FormGroup>
@@ -64,34 +31,53 @@ const MetadataGeneral = ({ metadata, onAdd, onChange, onDelete }) => (
     </FormGroup>
     <h4>Subject areas</h4>
     {
-      metadata.subjects && metadata.subjects.map((subject, index) => {
-        const value = subjectAreas.find(el => el.value == subject)
+      metadata.subjectAreas && metadata.subjectAreas.map((subjectArea, index) => {
+        const value = subjectAreas.find(el => el.value == subjectArea.controlledSubjectAreaName)
         return (
-          <FormGroup key={index}>
-            <Select
-              name="subject"
-              classNamePrefix="react-select"
-              options={subjectAreas}
-              onChange={option => onChange(option.value, 'subjects', index)}
-              value={value}
-            />
-          </FormGroup>
+          <Row key={index}>
+            <Col sm={11}>
+              <FormGroup>
+                <Select
+                  name="subject"
+                  options={subjectAreas}
+                  onChange={option => onChange(option.value, 'subjectAreas', index, 'controlledSubjectAreaName')}
+                  value={value}
+                  menuPortalTarget={document.body}
+                  styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                />
+              </FormGroup>
+            </Col>
+            <Col sm={1}>
+              <Button bsStyle="danger" onClick={() => onRemove('subjectAreas', index)}>
+                <i className="fa fa-trash-o" />
+              </Button>
+            </Col>
+          </Row>
         )
       })
     }
-    <Button bsStyle="success" bsSize="small" onClick={event => onAdd('subjects')}>
+    <Button bsStyle="success" bsSize="small" onClick={event => onAdd('subjectAreas')}>
       Add new subject area
     </Button>
     <h4>Keywords</h4>
     {
       metadata.keywords && metadata.keywords.map((keyword, index) => (
-      <FormGroup key={index}>
-        <FormControl
-          type="text"
-          value={keyword}
-          onChange={event => onChange(event.target.value, 'keywords', index)}
-        />
-      </FormGroup>
+        <Row key={index}>
+          <Col sm={11}>
+            <FormGroup>
+              <FormControl
+                type="text"
+                value={keyword}
+                onChange={event => onChange(event.target.value, 'keywords', index)}
+              />
+            </FormGroup>
+          </Col>
+          <Col sm={1}>
+            <Button bsStyle="danger" onClick={() => onRemove('keywords', index)}>
+              <i className="fa fa-trash-o" />
+            </Button>
+          </Col>
+        </Row>
       ))
     }
     <Button bsStyle="success" bsSize="small" onClick={event => onAdd('keywords')}>
@@ -101,7 +87,10 @@ const MetadataGeneral = ({ metadata, onAdd, onChange, onDelete }) => (
 );
 
 MetadataGeneral.propTypes = {
-  metadata: PropTypes.object.isRequired
+  metadata: PropTypes.object.isRequired,
+  onAdd: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired
 };
 
 export default MetadataGeneral;

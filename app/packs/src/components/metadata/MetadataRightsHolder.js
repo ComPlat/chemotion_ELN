@@ -9,8 +9,8 @@ const MetadataRightsHolder = ({ rightsHolder, index, onChange, onRemove }) => (
         <FormGroup>
           <FormControl
             type="text"
-            value={rightsHolder.rightsHolder}
-            onChange={event => onChange(event.target.value, 'rightsHolders', index, 'rightsHolder')}
+            value={rightsHolder}
+            onChange={event => onChange(event.target.value, 'rightsHolders', index)}
           />
         </FormGroup>
       </Col>
@@ -24,7 +24,7 @@ const MetadataRightsHolder = ({ rightsHolder, index, onChange, onRemove }) => (
 );
 
 MetadataRightsHolder.propTypes = {
-  rightsHolder: PropTypes.object.isRequired,
+  rightsHolder: PropTypes.string.isRequired,
   index: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired

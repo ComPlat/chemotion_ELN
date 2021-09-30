@@ -3,12 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
 
-const funderIdentifierTypes = [
-  'ISNI',
-  'GRID',
-  'CrossRef Funder',
-  'Other'
-].map(value => ({ label: value, value }))
+import { funderIdentifierTypes } from '../staticDropdownOptions/radar/funderIdentifierTypes'
 
 const MetadataFundingReference = ({ fundingReference, index, onChange, onRemove }) => {
   const funderIdentifierType = funderIdentifierTypes.find(el => el.value == fundingReference.funderIdentifierType)
@@ -47,10 +42,11 @@ const MetadataFundingReference = ({ fundingReference, index, onChange, onRemove 
             </ControlLabel>
             <Select
               name="relationType"
-              classNamePrefix="react-select"
               options={funderIdentifierTypes}
               onChange={option => onChange(option.value, 'fundingReferences', index, 'funderIdentifierType')}
               value={funderIdentifierType}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
             />
           </FormGroup>
         </Col>

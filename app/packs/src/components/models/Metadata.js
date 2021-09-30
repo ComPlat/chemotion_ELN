@@ -36,8 +36,8 @@ export default class Metadata extends Element {
   add(field, index, subfield) {
     if (field == 'keywords') {
       this.addKeyword()
-    } else if (field == 'subjects') {
-      this.addSubject()
+    } else if (field == 'subjectAreas') {
+      this.addSubjectAreas()
     } else if (field == 'creators') {
       if (subfield == 'affiliations') {
         this.addAffiliation('creators', index)
@@ -71,12 +71,14 @@ export default class Metadata extends Element {
     this.metadata.keywords.push('')
   }
 
-  addSubject() {
-    if (this.metadata.subjects === undefined) {
-      this.metadata.subjects = []
+  addSubjectAreas() {
+    if (this.metadata.subjectAreas === undefined) {
+      this.metadata.subjectAreas = []
     }
 
-    this.metadata.subjects.push('')
+    this.metadata.subjectAreas.push({
+      controlledSubjectAreaName: ''
+    })
   }
 
   addCreator() {
@@ -125,7 +127,7 @@ export default class Metadata extends Element {
     }
 
     this.metadata.alternateIdentifiers.push({
-      alternateIdentifier: '',
+      value: '',
       alternateIdentifierType: ''
     })
   }
@@ -136,7 +138,7 @@ export default class Metadata extends Element {
     }
 
     this.metadata.relatedIdentifiers.push({
-      relatedIdentifier: '',
+      value: '',
       relatedIdentifierType: '',
       relationType: ''
     })
@@ -147,9 +149,7 @@ export default class Metadata extends Element {
       this.metadata.rightsHolders = []
     }
 
-    this.metadata.rightsHolders.push({
-      rightsHolder: '',
-    })
+    this.metadata.rightsHolders.push('')
   }
 
   addRights() {
