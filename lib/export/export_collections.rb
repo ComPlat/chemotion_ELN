@@ -1,5 +1,6 @@
 module Export
   class ExportCollections
+    attr_accessor :file_path
 
     def initialize(export_id, collection_ids, format, nested)
       @export_id = export_id

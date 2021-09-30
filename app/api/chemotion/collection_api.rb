@@ -470,12 +470,7 @@ module Chemotion
           end
         end
         post :radar do
-          # ExportCollectionToRadarJob.perform_later(params[:collection_id], current_user.id)
-
-          export = Export::ExportRadar.new(params[:collection_id])
-          export.fetch_access_token
-          export.create_dataset
-
+          ExportCollectionToRadarJob.perform_later(params[:collection_id], current_user.id)
           status 204
         end
       end
