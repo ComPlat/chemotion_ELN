@@ -221,13 +221,18 @@ module Export
         response = HTTParty.post(url, :body => body, :headers => headers)
 
         if response.code == 201
-          @dataset_id = JSON.parse(response.body)['id']
+          @radar_id = JSON.parse(response.body)['id']
         else
           Rails.logger.error("Error with RADAR: #{response.body} (#{response.code})")
         end
       rescue StandardError => e
         Rails.logger.error('Could not create dataset in RADAR')
       end
+
+      # store the radar id in the metadata json
+      @collection.metadata.metadata['radarId'] = @radar_id
+      @collection.metadata.metadata['radarUrl'] = Rails.configuration.radar.url + '/radar/en/dataset/' + @radar_id
+      @collection.metadata.save!
     end
 
     def upload_assets
@@ -235,8 +240,6 @@ module Export
       headers = {
         'Authorization' => 'Bearer ' + @access_token
       }
-
-      puts @dataset_id
 
       @assets.each do |asset|
         body = {

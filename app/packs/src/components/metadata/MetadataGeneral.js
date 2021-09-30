@@ -8,6 +8,14 @@ import { subjectAreas } from '../staticDropdownOptions/radar/subjectAreas'
 const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
   <div>
     <h4>General</h4>
+    {metadata.radarUrl && <FormGroup>
+      <ControlLabel>
+        RADAR URL
+      </ControlLabel>
+      <p>
+        <a href={metadata.radarUrl} target="blank">{metadata.radarUrl}</a>
+      </p>
+    </FormGroup>}
     <FormGroup>
       <ControlLabel>
         Title
