@@ -1,9 +1,14 @@
 import React from 'react';
 import {Button, ButtonToolbar} from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
 import { elementShowOrNew } from 'src/utilities/routesUtils'
+import { subjectAreas } from 'src/components/staticDropdownOptions/radar/subjectAreas'
+import { contributorTypes } from 'src/components/staticDropdownOptions/radar/contributorTypes'
+import { relatedIdentifierTypes } from 'src/components/staticDropdownOptions/radar/relatedIdentifierTypes'
+import { relationTypes } from 'src/components/staticDropdownOptions/radar/relationTypes'
+import { controlledRightsList } from 'src/components/staticDropdownOptions/radar/controlledRightsList'
+import { funderIdentifierTypes } from 'src/components/staticDropdownOptions/radar/funderIdentifierTypes'
 
 export default class ModalExportRadarCollection extends React.Component {
   constructor(props) {
@@ -65,19 +70,24 @@ export default class ModalExportRadarCollection extends React.Component {
         <div>
           <dl>
             <dt>Title</dt>
-            <dd>{metadata.title}</dd>
+            <dd>
+              {metadata.title || <p className="text-danger">Please provide a title.</p>}
+            </dd>
             <dt>Description</dt>
             <dd>{metadata.description}</dd>
             <dt>Subjects</dt>
             <dd>
               {
-                metadata.subjects ? <ul>
+                metadata.subjectAreas ? <ul>
                 {
-                  metadata.subjects.map((subject, index) => (
-                    <li key={index}>{subject}</li>
-                  ))
+                  metadata.subjectAreas.map((subjectArea, index) => {
+                    const controlledSubjectAreaName = subjectAreas.find(el => el.value == subjectArea.controlledSubjectAreaName)
+                    return (
+                      <li key={index}>{controlledSubjectAreaName.label}</li>
+                    )
+                  })
                 }
-                </ul> : <p className="text-danger">Please provide at least one subject.</p>
+                </ul> : <p className="text-danger">Please provide at least one subject area.</p>
               }
             </dd>
             <dt>Keywords</dt>
@@ -115,15 +125,19 @@ export default class ModalExportRadarCollection extends React.Component {
               {
                 metadata.contributors ? <ul>
                 {
-                  metadata.contributors.map((contributor, index) => (
-                    <li key={index}>
-                      {contributor.givenName} {contributor.familyName}
-                      {contributor.orcid && `, ${contributor.orcid}`}
-                      {contributor.affiliations.length > 0 && `, ${contributor.affiliations.map(
-                        affiliation => affiliation.affiliation
-                      ).join(', ')}`}
-                    </li>
-                  ))
+                  metadata.contributors.map((contributor, index) => {
+                    const contributorType = contributorTypes.find(el => el.value == contributor.contributorType)
+
+                    return (
+                      <li key={index}>
+                        {contributor.givenName} {contributor.familyName}, {contributorType.label}
+                        {contributor.orcid && `, ${contributor.orcid}`}
+                        {contributor.affiliations.length > 0 && `, ${contributor.affiliations.map(
+                          affiliation => affiliation.affiliation
+                        ).join(', ')}`}
+                      </li>
+                    )
+                  })
                 }
                 </ul> : <p>---</p>
               }
@@ -133,11 +147,16 @@ export default class ModalExportRadarCollection extends React.Component {
               {
                 metadata.relatedIdentifiers ? <ul>
                 {
-                  metadata.relatedIdentifiers.map((relatedIdentifier, index) => (
-                    <li key={index}>
-                      {relatedIdentifier.relatedIdentifier}, {relatedIdentifier.relatedIdentifierType}, {relatedIdentifier.relationType}
-                    </li>
-                  ))
+                  metadata.relatedIdentifiers.map((relatedIdentifier, index) => {
+                    const relatedIdentifierType = relatedIdentifierTypes.find(el => el.value == relatedIdentifier.relatedIdentifierType)
+                    const relationType = relationTypes.find(el => el.value == relatedIdentifier.relationType)
+
+                    return (
+                      <li key={index}>
+                        {relatedIdentifier.relatedIdentifier}{', '}{relatedIdentifierType.label}{', '}{relationType.label}
+                      </li>
+                    )
+                  })
                 }
                 </ul> : <p>---</p>
               }
@@ -149,7 +168,7 @@ export default class ModalExportRadarCollection extends React.Component {
                 {
                   metadata.alternateIdentifiers.map((alternateIdentifier, index) => (
                     <li key={index}>
-                      {alternateIdentifier.alternateIdentifier}, {alternateIdentifier.alternateIdentifierType}
+                      {alternateIdentifier.alternateIdentifier}{', '}{alternateIdentifier.alternateIdentifierType}
                     </li>
                   ))
                 }
@@ -162,7 +181,7 @@ export default class ModalExportRadarCollection extends React.Component {
                 metadata.rightsHolders ? <ul>
                 {
                   metadata.rightsHolders.map((rightsHolder, index) => (
-                    <li key={index}>{rightsHolder.rightsHolder}</li>
+                    <li key={index}>{rightsHolder}</li>
                   ))
                 }
                 </ul> : <p className="text-danger">Please provide at least one rights holder.</p>
@@ -173,12 +192,15 @@ export default class ModalExportRadarCollection extends React.Component {
               {
                 metadata.rights ? <ul>
                 {
-                  metadata.rights.map((rights, index) => (
-                    <li key={index}>
-                      {rights.controlledRights}
-                      {rights.additionalRights && `, ${rights.additionalRights}`}
-                    </li>
-                  ))
+                  metadata.rights.map((rights, index) => {
+                    const controlledRights = controlledRightsList.find(el => el.value == rights.controlledRights)
+                    return (
+                      <li key={index}>
+                        {controlledRights.label}
+                        {rights.additionalRights && `, ${rights.additionalRights}`}
+                      </li>
+                    )
+                  })
                 }
                 </ul> : <p className="text-danger">Please provide usage rights.</p>
               }
@@ -188,16 +210,20 @@ export default class ModalExportRadarCollection extends React.Component {
               {
                 metadata.fundingReferences ? <ul>
                 {
-                  metadata.fundingReferences.map((fundingReference, index) => (
-                    <li key={index}>
-                      {fundingReference.funderName}
-                      {fundingReference.funderIdentifier && `,${fundingReference.funderIdentifier}`}
-                      {fundingReference.funderIdentifierTypes && `,${fundingReference.funderIdentifierTypes}`}
-                      {fundingReference.awardTitle && `,${fundingReference.awardTitle}`}
-                      {fundingReference.awardNumber && `,${fundingReference.awardNumber}`}
-                      {fundingReference.awardURI && `,${fundingReference.awardURI}`}
-                    </li>
-                  ))
+                  metadata.fundingReferences.map((fundingReference, index) => {
+                    const funderIdentifierType = funderIdentifierTypes.find(el => el.value == fundingReference.funderIdentifierType)
+
+                    return (
+                      <li key={index}>
+                        {fundingReference.funderName}
+                        {fundingReference.funderIdentifier && `, ${fundingReference.funderIdentifier}`}
+                        {funderIdentifierType && `, ${funderIdentifierType.label}`}
+                        {fundingReference.awardTitle && `, ${fundingReference.awardTitle}`}
+                        {fundingReference.awardNumber && `, ${fundingReference.awardNumber}`}
+                        {fundingReference.awardURI && `, ${fundingReference.awardURI}`}
+                      </li>
+                    )
+                  })
                 }
                 </ul> : <p>---</p>
               }
@@ -241,7 +267,7 @@ export default class ModalExportRadarCollection extends React.Component {
     const { processing, metadata } = this.state;
     return processing === true || metadata === null || (
       metadata.title === undefined || metadata.title.length < 1 ||
-      metadata.subjects === undefined || metadata.subjects.length < 1 ||
+      metadata.subjectAreas === undefined || metadata.subjectAreas.length < 1 ||
       metadata.creators === undefined || metadata.creators.length < 1 ||
       metadata.rightsHolders === undefined || metadata.rightsHolders.length < 1 ||
       metadata.rights === undefined || metadata.rights.length < 1

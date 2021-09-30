@@ -3,67 +3,11 @@ import PropTypes from 'prop-types';
 import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
 
-const identifierTypes = [
-  'ARK',
-  'arXiv',
-  'bibcode',
-  'DOI',
-  'EAN13',
-  'EISSN',
-  'Handle',
-  'IGSN',
-  'ISBN',
-  'ISSN',
-  'ISTC',
-  'LISSN',
-  'LSID',
-  'PMID',
-  'PURL',
-  'UPC',
-  'URL',
-  'URN',
-  'w3id'
-].map(value => ({ label: value, value }))
-
-const relationTypes = [
-  'IsCitedBy',
-  'Cites',
-  'IsSupplementTo',
-  'IsSupplementedBy',
-  'IsContinuedBy',
-  'Continues',
-  'IsDescribedBy',
-  'Describes',
-  'HasMetadata',
-  'IsMetadataFor',
-  'HasVersion',
-  'IsVersionOf',
-  'IsNewVersionOf',
-  'IsPreviousVersionOf',
-  'IsPartOf',
-  'HasPart',
-  'IsPublishedIn',
-  'IsReferencedBy',
-  'References',
-  'IsDocumentedBy',
-  'Documents',
-  'IsCompiledBy',
-  'Compiles',
-  'IsVariantFormOf',
-  'IsOriginalFormOf',
-  'IsIdenticalTo',
-  'IsReviewedBy',
-  'Reviews',
-  'IsDerivedFrom',
-  'IsSourceOf',
-  'IsRequiredBy',
-  'Requires',
-  'IsObsoletedBy',
-  'Obsoletes'
-].map(value => ({ label: value, value }))
+import { relatedIdentifierTypes } from '../staticDropdownOptions/radar/relatedIdentifierTypes'
+import { relationTypes } from '../staticDropdownOptions/radar/relationTypes'
 
 const MetadataRelatedIdentifier = ({ relatedIdentifier, index, onChange, onRemove }) => {
-  const relatedIdentifierType = identifierTypes.find(el => el.value == relatedIdentifier.relatedIdentifierType)
+  const relatedIdentifierType = relatedIdentifierTypes.find(el => el.value == relatedIdentifier.relatedIdentifierType)
   const relationType = relationTypes.find(el => el.value == relatedIdentifier.relationType)
 
   return (
@@ -76,8 +20,8 @@ const MetadataRelatedIdentifier = ({ relatedIdentifier, index, onChange, onRemov
             </ControlLabel>
             <FormControl
               type="text"
-              value={relatedIdentifier.relatedIdentifier}
-              onChange={event => onChange(event.target.value, 'relatedIdentifiers', index, 'relatedIdentifier')}
+              value={relatedIdentifier.value}
+              onChange={event => onChange(event.target.value, 'relatedIdentifiers', index, 'value')}
             />
           </FormGroup>
         </Col>
@@ -88,10 +32,11 @@ const MetadataRelatedIdentifier = ({ relatedIdentifier, index, onChange, onRemov
             </ControlLabel>
             <Select
               name="relatedIdentifierType"
-              classNamePrefix="react-select"
-              options={identifierTypes}
+              options={relatedIdentifierTypes}
               onChange={option => onChange(option.value, 'relatedIdentifiers', index, 'relatedIdentifierType')}
               value={relatedIdentifierType}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
             />
           </FormGroup>
         </Col>
@@ -102,10 +47,11 @@ const MetadataRelatedIdentifier = ({ relatedIdentifier, index, onChange, onRemov
             </ControlLabel>
             <Select
               name="relationType"
-              classNamePrefix="react-select"
               options={relationTypes}
               onChange={option => onChange(option.value, 'relatedIdentifiers', index, 'relationType')}
               value={relationType}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
             />
           </FormGroup>
         </Col>

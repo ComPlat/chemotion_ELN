@@ -12,8 +12,8 @@ const MetadataAlternateIdentifier = ({ alternateIdentifier, index, onChange, onR
           </ControlLabel>
           <FormControl
             type="text"
-            value={alternateIdentifier.alternateIdentifier}
-            onChange={event => onChange(event.target.value, 'alternateIdentifiers', index, 'alternateIdentifier')}
+            value={alternateIdentifier.value}
+            onChange={event => onChange(event.target.value, 'alternateIdentifiers', index, 'value')}
           />
         </FormGroup>
       </Col>

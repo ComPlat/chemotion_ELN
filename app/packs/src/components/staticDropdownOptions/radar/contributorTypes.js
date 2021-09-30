@@ -1,0 +1,21 @@
+export const contributorTypes = [
+  {label: 'ContactPerson', value: 'CONTACT_PERSON'},
+  {label: 'DataCollector', value: 'DATA_COLLECTOR'},
+  {label: 'DataCurator', value: 'DATA_CURATOR'},
+  {label: 'DataManager', value: 'DATA_MANAGER'},
+  {label: 'Distributor', value: 'DISTRIBUTOR'},
+  {label: 'Editor', value: 'EDITOR'},
+  {label: 'HostingInstitution', value: 'HOSTING_INSTITUTION'},
+  {label: 'Producer', value: 'PRODUCER'},
+  {label: 'ProjectLeader', value: 'PROJECT_LEADER'},
+  {label: 'ProjectManager', value: 'PROJECT_MANAGER'},
+  {label: 'ProjectMember', value: 'PROJECT_MEMBER'},
+  {label: 'RegistrationAgency', value: 'REGISTRATION_AGENCY'},
+  {label: 'RegistrationAuthority', value: 'REGISTRATION_AUTHORITY'},
+  {label: 'RelatedPerson', value: 'RELATED_PERSON'},
+  {label: 'Researcher', value: 'RESEARCHER'},
+  {label: 'ResearchGroup', value: 'RESEARCH_GROUP'},
+  {label: 'Sponsor', value: 'SPONSOR'},
+  {label: 'WorkPackageLeader', value: 'WORK_PACKAGE_LEADER'},
+  {label: 'Other', value: 'OTHER'}
+]

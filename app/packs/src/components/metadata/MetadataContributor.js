@@ -3,29 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
 
-const contributorTypes = [
-  'ContactPerson',
-  'DataCollector',
-  'DataCurator',
-  'DataManager',
-  'Distributor',
-  'Editor',
-  'HostingInstitution',
-  'Producer',
-  'ProjectLeader',
-  'ProjectManager',
-  'ProjectMember',
-  'RegistrationAgency',
-  'RegistrationAuthority',
-  'RelatedPerson',
-  'Researcher',
-  'ResearchGroup',
-  'RightsHolder',
-  'Sponsor',
-  'Supervisor',
-  'WorkPackageLeader',
-  'Other'
-].map(value => ({ label: value, value }))
+import { contributorTypes } from '../staticDropdownOptions/radar/contributorTypes'
 
 const MetadataContributor = ({ contributor, index, onAdd, onChange, onRemove }) => {
   const contributorType = contributorTypes.find(el => el.value == contributor.contributorType)
@@ -78,10 +56,11 @@ const MetadataContributor = ({ contributor, index, onAdd, onChange, onRemove }) 
             </ControlLabel>
             <Select
               name="contributorType"
-              classNamePrefix="react-select"
               options={contributorTypes}
               onChange={option => onChange(option.value, 'contributors', index, 'contributorType')}
               value={contributorType}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
             />
           </FormGroup>
         </Col>

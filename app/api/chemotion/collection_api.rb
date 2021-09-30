@@ -463,9 +463,19 @@ module Chemotion
           requires :collection_id, type: Integer, desc: "Collection id"
         end
         before do
-          error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:collection_id])).create_archive?
+          if params[:collection_id]
+            error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:collection_id])).create_archive?
+          else
+            error!('400 Bad Request', 400)
+          end
         end
         post :radar do
+          # ExportCollectionToRadarJob.perform_later(params[:collection_id], current_user.id)
+
+          export = Export::ExportRadar.new(params[:collection_id])
+          export.fetch_access_token
+          export.create_dataset
+
           status 204
         end
       end
