@@ -1,7 +1,8 @@
 module Export
   class ExportRadar
 
-    def initialize(collection_id)
+    def initialize(job_id, collection_id)
+      @job_id = job_id
       @collection_id = collection_id
       @collection = Collection.find(@collection_id)
       @metadata = @collection.metadata.metadata
@@ -235,8 +236,15 @@ module Export
       @collection.metadata.save!
     end
 
+    def create_assets
+      export = Export::ExportCollections.new(@job_id, [@collection_id], 'zip', true)
+      export.prepare_data
+      export.to_file
+      @assets << export.file_path
+    end
+
     def upload_assets
-      url = Rails.configuration.radar.url + '/radar-ingest/upload/' + @dataset_id + '/file'
+      url = Rails.configuration.radar.url + '/radar-ingest/upload/' + @radar_id + '/file'
       headers = {
         'Authorization' => 'Bearer ' + @access_token
       }
