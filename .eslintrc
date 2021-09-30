@@ -17,6 +17,7 @@
     "comma-dangle": [1,"only-multiline"],
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
     "prefer-destructuring": ["error", {"object": true, "array": false}],
+    "react/forbid-prop-types": ["off"],
     "no-relative-import-paths/no-relative-import-paths": [
       "error",
       { "allowSameFolder": false, "rootDir": "app/packs" }

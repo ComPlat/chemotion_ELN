@@ -32,6 +32,8 @@
 #
 
 class Attachment < ApplicationRecord
+  include Versionable
+
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter

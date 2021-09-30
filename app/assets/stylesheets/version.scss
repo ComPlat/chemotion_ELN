@@ -1,0 +1,24 @@
+.row.row-version-history { // overwrite bootstrap
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 10px;
+  margin: 0;
+  word-break: break-all;
+
+  & + .row-version-history {
+    margin-top: 15px;
+  }
+
+  & > [class*="col-"] {
+    padding: 10px;
+  }
+
+  .ql-editor {
+    padding: 0;
+  }
+
+  .ql-tooltip.ql-hidden {
+    height: 0;
+    padding-top: 10px;
+  }
+}

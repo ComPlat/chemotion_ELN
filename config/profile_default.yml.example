@@ -26,6 +26,8 @@ development:
         4
       :results:
         5
+      :history:
+        6
     :layout_detail_reaction:
       :scheme:
         1
@@ -39,6 +41,8 @@ development:
         5
       :variations:
         6
+      :history:
+        7
     :layout_detail_wellplate:
       :properties:
         1
@@ -82,6 +86,8 @@ production:
         4
       :results:
         5
+      :history:
+        6
     :layout_detail_reaction:
       :scheme:
         1
@@ -95,6 +101,8 @@ production:
         5
       :variations:
         6
+      :history:
+        7
     :layout_detail_wellplate:
       :properties:
         1

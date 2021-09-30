@@ -123,6 +123,8 @@ gem 'yaml_db'
 
 gem 'icalendar'
 
+gem 'logidze'
+
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser
 

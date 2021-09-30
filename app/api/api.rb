@@ -6,6 +6,8 @@ require 'grape-swagger'
 
 # rubocop:disable Metrics/BlockLength
 class API < Grape::API
+  include LogidzeModule
+
   format :json
   prefix :api
   version 'v1'
@@ -183,6 +185,7 @@ class API < Grape::API
   mount Labimotion::GenericDatasetAPI
   mount Labimotion::SegmentAPI
   mount Labimotion::LabimotionHubAPI
+  mount Chemotion::VersionAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {
