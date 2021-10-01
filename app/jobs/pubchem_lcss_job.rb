@@ -13,7 +13,7 @@ class PubchemLcssJob < ApplicationJob
             .where("et.taggable_data->>'pubchem_cid' is not null")
             .where("et.taggable_data->>'pubchem_cid' ~ '^[0-9]+$'")
             .where("et.taggable_data->>'pubchem_lcss' is null")
-            .uniq
+            .distinct
             .find_in_batches(batch_size: batch_size) do |batch|
 
       batch.each do |mol|
