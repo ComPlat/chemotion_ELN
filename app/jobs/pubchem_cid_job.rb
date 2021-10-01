@@ -12,7 +12,7 @@ class PubchemCidJob < ApplicationJob
             .joins("inner join element_tags et on et.taggable_id = molecules.id and et.taggable_type = 'Molecule'")
             .where(is_partial: false)
             .where("et.taggable_data->>'pubchem_cid' isnull")
-            .uniq
+            .distinct
             .find_in_batches(batch_size: batch_size) do |batch|
       iks = batch.map(&:inchikey)
 
