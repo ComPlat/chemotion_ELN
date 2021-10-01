@@ -32,9 +32,9 @@ class ExportCollectionToRadarJob < ActiveJob::Base
       @labels = Collection.where(id: @collection_id).pluck(:label)
       @link = 'http://example.com'
 
-      export = Export::ExportRadar.new(job_id, collection_id)
+      export = Export::ExportRadar.new(job_id, collection_id, user_id)
       export.fetch_access_token
-      export.create_dataset
+      export.store_dataset
       export.create_assets
       export.upload_assets
     rescue StandardError => e
