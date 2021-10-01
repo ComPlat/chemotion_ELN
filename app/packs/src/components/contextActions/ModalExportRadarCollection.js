@@ -65,183 +65,184 @@ export default class ModalExportRadarCollection extends React.Component {
   renderMetadata() {
     const { metadata } = this.state
 
-    if (metadata) {
-      return (
-        <div>
-          <dl>
-            <dt>Title</dt>
-            <dd>
-              {metadata.title || <p className="text-danger">Please provide a title.</p>}
-            </dd>
-            <dt>Description</dt>
-            <dd>{metadata.description}</dd>
-            <dt>Subjects</dt>
-            <dd>
+    return (
+      <div>
+        <dl>
+          <dt>Title</dt>
+          <dd>
+            {metadata.title || <p className="text-danger">Please provide a title.</p>}
+          </dd>
+          <dt>Description</dt>
+          <dd>{metadata.description}</dd>
+          <dt>Subjects</dt>
+          <dd>
+            {
+              metadata.subjectAreas ? <ul>
               {
-                metadata.subjectAreas ? <ul>
-                {
-                  metadata.subjectAreas.map((subjectArea, index) => {
-                    const controlledSubjectAreaName = subjectAreas.find(el => el.value == subjectArea.controlledSubjectAreaName)
-                    return (
-                      <li key={index}>{controlledSubjectAreaName.label}</li>
-                    )
-                  })
-                }
-                </ul> : <p className="text-danger">Please provide at least one subject area.</p>
+                metadata.subjectAreas.map((subjectArea, index) => {
+                  const controlledSubjectAreaName = subjectAreas.find(el => el.value == subjectArea.controlledSubjectAreaName)
+                  return (
+                    <li key={index}>{controlledSubjectAreaName.label}</li>
+                  )
+                })
               }
-            </dd>
-            <dt>Keywords</dt>
-            <dd>
+              </ul> : <p className="text-danger">Please provide at least one subject area.</p>
+            }
+          </dd>
+          <dt>Keywords</dt>
+          <dd>
+            {
+              metadata.keywords ? <ul>
               {
-                metadata.keywords ? <ul>
-                {
-                  metadata.keywords.map((keyword, index) => (
-                    <li key={index}>{keyword}</li>
-                  ))
-                }
-                </ul> : <p>---</p>
+                metadata.keywords.map((keyword, index) => (
+                  <li key={index}>{keyword}</li>
+                ))
               }
-            </dd>
-            <dt>Creators</dt>
-            <dd>
+              </ul> : <p>---</p>
+            }
+          </dd>
+          <dt>Creators</dt>
+          <dd>
+            {
+              metadata.creators ? <ul>
               {
-                metadata.creators ? <ul>
-                {
-                  metadata.creators.map((creator, index) => (
+                metadata.creators.map((creator, index) => (
+                  <li key={index}>
+                    {creator.givenName} {creator.familyName}
+                    {creator.orcid && `, ${creator.orcid}`}
+                    {creator.affiliations.length > 0 && `, ${creator.affiliations.map(
+                      affiliation => affiliation.affiliation
+                    ).join(', ')}`}
+                  </li>
+                ))
+              }
+              </ul> : <p className="text-danger">Please provide at least one creator.</p>
+            }
+          </dd>
+          <dt>Contributors</dt>
+          <dd>
+            {
+              metadata.contributors ? <ul>
+              {
+                metadata.contributors.map((contributor, index) => {
+                  const contributorType = contributorTypes.find(el => el.value == contributor.contributorType)
+
+                  return (
                     <li key={index}>
-                      {creator.givenName} {creator.familyName}
-                      {creator.orcid && `, ${creator.orcid}`}
-                      {creator.affiliations.length > 0 && `, ${creator.affiliations.map(
+                      {contributor.givenName} {contributor.familyName}, {contributorType.label}
+                      {contributor.orcid && `, ${contributor.orcid}`}
+                      {contributor.affiliations.length > 0 && `, ${contributor.affiliations.map(
                         affiliation => affiliation.affiliation
                       ).join(', ')}`}
                     </li>
-                  ))
-                }
-                </ul> : <p className="text-danger">Please provide at least one creator.</p>
+                  )
+                })
               }
-            </dd>
-            <dt>Contributors</dt>
-            <dd>
+              </ul> : <p>---</p>
+            }
+          </dd>
+          <dt>Releated identifiers</dt>
+          <dd>
+            {
+              metadata.relatedIdentifiers ? <ul>
               {
-                metadata.contributors ? <ul>
-                {
-                  metadata.contributors.map((contributor, index) => {
-                    const contributorType = contributorTypes.find(el => el.value == contributor.contributorType)
+                metadata.relatedIdentifiers.map((relatedIdentifier, index) => {
+                  const relatedIdentifierType = relatedIdentifierTypes.find(el => el.value == relatedIdentifier.relatedIdentifierType)
+                  const relationType = relationTypes.find(el => el.value == relatedIdentifier.relationType)
 
-                    return (
-                      <li key={index}>
-                        {contributor.givenName} {contributor.familyName}, {contributorType.label}
-                        {contributor.orcid && `, ${contributor.orcid}`}
-                        {contributor.affiliations.length > 0 && `, ${contributor.affiliations.map(
-                          affiliation => affiliation.affiliation
-                        ).join(', ')}`}
-                      </li>
-                    )
-                  })
-                }
-                </ul> : <p>---</p>
-              }
-            </dd>
-            <dt>Releated identifiers</dt>
-            <dd>
-              {
-                metadata.relatedIdentifiers ? <ul>
-                {
-                  metadata.relatedIdentifiers.map((relatedIdentifier, index) => {
-                    const relatedIdentifierType = relatedIdentifierTypes.find(el => el.value == relatedIdentifier.relatedIdentifierType)
-                    const relationType = relationTypes.find(el => el.value == relatedIdentifier.relationType)
-
-                    return (
-                      <li key={index}>
-                        {relatedIdentifier.relatedIdentifier}{', '}{relatedIdentifierType.label}{', '}{relationType.label}
-                      </li>
-                    )
-                  })
-                }
-                </ul> : <p>---</p>
-              }
-            </dd>
-            <dt>Alternative identifiers</dt>
-            <dd>
-              {
-                metadata.alternateIdentifiers ? <ul>
-                {
-                  metadata.alternateIdentifiers.map((alternateIdentifier, index) => (
+                  return (
                     <li key={index}>
-                      {alternateIdentifier.alternateIdentifier}{', '}{alternateIdentifier.alternateIdentifierType}
+                      {relatedIdentifier.relatedIdentifier}{', '}{relatedIdentifierType.label}{', '}{relationType.label}
                     </li>
-                  ))
-                }
-                </ul> : <p>---</p>
+                  )
+                })
               }
-            </dd>
-            <dt>Rights holder</dt>
-            <dd>
+              </ul> : <p>---</p>
+            }
+          </dd>
+          <dt>Alternative identifiers</dt>
+          <dd>
+            {
+              metadata.alternateIdentifiers ? <ul>
               {
-                metadata.rightsHolders ? <ul>
-                {
-                  metadata.rightsHolders.map((rightsHolder, index) => (
-                    <li key={index}>{rightsHolder}</li>
-                  ))
-                }
-                </ul> : <p className="text-danger">Please provide at least one rights holder.</p>
+                metadata.alternateIdentifiers.map((alternateIdentifier, index) => (
+                  <li key={index}>
+                    {alternateIdentifier.alternateIdentifier}{', '}{alternateIdentifier.alternateIdentifierType}
+                  </li>
+                ))
               }
-            </dd>
-            <dt>Rights</dt>
-            <dd>
+              </ul> : <p>---</p>
+            }
+          </dd>
+          <dt>Rights holder</dt>
+          <dd>
+            {
+              metadata.rightsHolders ? <ul>
               {
-                metadata.rights ? <ul>
-                {
-                  metadata.rights.map((rights, index) => {
-                    const controlledRights = controlledRightsList.find(el => el.value == rights.controlledRights)
-                    return (
-                      <li key={index}>
-                        {controlledRights.label}
-                        {rights.additionalRights && `, ${rights.additionalRights}`}
-                      </li>
-                    )
-                  })
-                }
-                </ul> : <p className="text-danger">Please provide usage rights.</p>
+                metadata.rightsHolders.map((rightsHolder, index) => (
+                  <li key={index}>{rightsHolder}</li>
+                ))
               }
-            </dd>
-            <dt>Funding references</dt>
-            <dd>
+              </ul> : <p className="text-danger">Please provide at least one rights holder.</p>
+            }
+          </dd>
+          <dt>Rights</dt>
+          <dd>
+            {
+              metadata.rights ? <ul>
               {
-                metadata.fundingReferences ? <ul>
-                {
-                  metadata.fundingReferences.map((fundingReference, index) => {
-                    const funderIdentifierType = funderIdentifierTypes.find(el => el.value == fundingReference.funderIdentifierType)
+                metadata.rights.map((rights, index) => {
+                  const controlledRights = controlledRightsList.find(el => el.value == rights.controlledRights)
+                  return (
+                    <li key={index}>
+                      {controlledRights.label}
+                      {rights.additionalRights && `, ${rights.additionalRights}`}
+                    </li>
+                  )
+                })
+              }
+              </ul> : <p className="text-danger">Please provide usage rights.</p>
+            }
+          </dd>
+          <dt>Funding references</dt>
+          <dd>
+            {
+              metadata.fundingReferences ? <ul>
+              {
+                metadata.fundingReferences.map((fundingReference, index) => {
+                  const funderIdentifierType = funderIdentifierTypes.find(el => el.value == fundingReference.funderIdentifierType)
 
-                    return (
-                      <li key={index}>
-                        {fundingReference.funderName}
-                        {fundingReference.funderIdentifier && `, ${fundingReference.funderIdentifier}`}
-                        {funderIdentifierType && `, ${funderIdentifierType.label}`}
-                        {fundingReference.awardTitle && `, ${fundingReference.awardTitle}`}
-                        {fundingReference.awardNumber && `, ${fundingReference.awardNumber}`}
-                        {fundingReference.awardURI && `, ${fundingReference.awardURI}`}
-                      </li>
-                    )
-                  })
-                }
-                </ul> : <p>---</p>
+                  return (
+                    <li key={index}>
+                      {fundingReference.funderName}
+                      {fundingReference.funderIdentifier && `, ${fundingReference.funderIdentifier}`}
+                      {funderIdentifierType && `, ${funderIdentifierType.label}`}
+                      {fundingReference.awardTitle && `, ${fundingReference.awardTitle}`}
+                      {fundingReference.awardNumber && `, ${fundingReference.awardNumber}`}
+                      {fundingReference.awardURI && `, ${fundingReference.awardURI}`}
+                    </li>
+                  )
+                })
               }
-            </dd>
-          </dl>
-        </div>
-      )
-    } else {
-      return <p className="text-center"><i className="fa fa-refresh fa-spin fa-fw" /></p>
-    }
+              </ul> : <p>---</p>
+            }
+          </dd>
+        </dl>
+      </div>
+    )
   }
 
   renderButtonBar() {
     const { onHide } = this.props;
-    const { processing } = this.state;
+    const { processing, metadata } = this.state;
     const bStyle = processing === true ? 'danger' : 'warning';
     const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
-    const bTitle = processing === true ? 'Archiving' : 'Archive to RADAR';
+
+    let bTitle = processing === true ? 'Archiving' : 'Archive to RADAR';
+    if (metadata.radarId) {
+      bTitle = processing === true ? 'Updating' : 'Update in RADAR';
+    }
+
     return (
       <ButtonToolbar>
         <div className="pull-right">
@@ -275,15 +276,21 @@ export default class ModalExportRadarCollection extends React.Component {
   }
 
   render() {
+    const { full } = this.props
+    const { metadata } = this.state
     const onChange = (v) => this.setState(
       previousState => {return { ...previousState, value: v }}
     )
-    const { full } = this.props;
-    return (
-      <div className="export-collections-modal">
-        {this.renderMetadata()}
-        {this.renderButtonBar()}
-      </div>
-    )
+
+    if (metadata) {
+      return (
+        <div className="export-collections-modal">
+          {this.renderMetadata()}
+          {this.renderButtonBar()}
+        </div>
+      )
+    } else {
+      return <p className="text-center"><i className="fa fa-refresh fa-spin fa-fw" /></p>
+    }
   }
 }

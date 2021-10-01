@@ -1,11 +1,18 @@
 module Export
   class ExportRadar
 
-    def initialize(job_id, collection_id)
+    def initialize(job_id, collection_id, user_id)
       @job_id = job_id
       @collection_id = collection_id
+      @user_id = user_id
+
       @collection = Collection.find(@collection_id)
       @metadata = @collection.metadata.metadata
+      @radarId = @collection.metadata.metadata['radarId']
+
+      @user = User.find(@user_id)
+
+      @title = "[#{@user.name_abbreviation}-#{SecureRandom.alphanumeric(4)}] #{@metadata['title']}"
 
       @archive_date = Time.now.utc
       @publish_date = @archive_date
@@ -31,6 +38,7 @@ module Export
             }
         },
         'descriptiveMetadata' => {
+          'title' => @title,
           'productionYear' => @production_date.year,
           'publicationYear' => @publish_date.year,
           'language' => 'ENG',
@@ -52,10 +60,6 @@ module Export
           }
         }
       }
-
-      if @metadata['title']
-        radar_metadata['descriptiveMetadata']['title'] = @metadata['title']
-      end
 
       if @metadata['description']
         radar_metadata['descriptiveMetadata']['descriptions'] = {
@@ -210,30 +214,49 @@ module Export
       end
     end
 
-    def create_dataset
-      url = Rails.configuration.radar.url + '/radar/api/workspaces/' + Rails.configuration.radar.workspace_id + '/datasets'
+    def store_dataset
       headers = {
         'Authorization' => 'Bearer ' + @access_token,
         'Content-Type' => 'application/json'
       }
       body = self.to_json
 
-      begin
-        response = HTTParty.post(url, :body => body, :headers => headers)
+      # to be removed
+      @radarId = nil
 
-        if response.code == 201
-          @radar_id = JSON.parse(response.body)['id']
-        else
-          Rails.logger.error("Error with RADAR: #{response.body} (#{response.code})")
+      if @radarId.nil?
+        # create a new dataset
+        url = Rails.configuration.radar.url + '/radar/api/workspaces/' + Rails.configuration.radar.workspace_id + '/datasets'
+        begin
+          response = HTTParty.post(url, :body => body, :headers => headers)
+
+          if response.code == 201
+            @radar_id = JSON.parse(response.body)['id']
+          else
+            Rails.logger.error("Error with RADAR: #{response.body} (#{response.code})")
+          end
+        rescue StandardError => e
+          Rails.logger.error('Could not create dataset in RADAR')
         end
-      rescue StandardError => e
-        Rails.logger.error('Could not create dataset in RADAR')
-      end
 
-      # store the radar id in the metadata json
-      @collection.metadata.metadata['radarId'] = @radar_id
-      @collection.metadata.metadata['radarUrl'] = Rails.configuration.radar.url + '/radar/en/dataset/' + @radar_id
-      @collection.metadata.save!
+        # store the radar id in the metadata json
+        @collection.metadata.metadata['radarId'] = @radar_id
+        @collection.metadata.metadata['radarUrl'] = Rails.configuration.radar.url + '/radar/en/dataset/' + @radar_id
+        @collection.metadata.save!
+      else
+        # update dataset
+        url = Rails.configuration.radar.url + '/radar/api/datasets/' + @radarId
+
+        begin
+          response = HTTParty.put(url, :body => body, :headers => headers)
+
+          unless response.code == 200
+            Rails.logger.error("Error with RADAR: #{response.body} (#{response.code})")
+          end
+        rescue StandardError => e
+          Rails.logger.error('Could not update dataset in RADAR')
+        end
+      end
     end
 
     def create_assets
