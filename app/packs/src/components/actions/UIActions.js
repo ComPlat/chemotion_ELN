@@ -130,6 +130,10 @@ class UIActions {
   setProductOnly(bool) {
     return bool;
   }
+
+  setInlineEdit(bool) {
+    return bool;
+  }
 }
 
 export default alt.createActions(UIActions);
