@@ -294,10 +294,10 @@ class ElementActions {
       });};
   }
 
-  createSample(params, closeView = false) {
+  createSample(params, closeView = false, refreshElements = true) {
     return (dispatch) => { SamplesFetcher.create(params)
       .then((result) => {
-        dispatch({ element: result, closeView })
+        dispatch({ element: result, closeView, refreshElements })
       });};
   }
 
@@ -354,10 +354,10 @@ class ElementActions {
       });};
   }
 
-  updateSample(params, closeView = false) {
+  updateSample(params, closeView = false, refreshElements = true) {
     return (dispatch) => { SamplesFetcher.update(params)
       .then((result) => {
-        dispatch({ element: result, closeView })
+        dispatch({ element: result, closeView, refreshElements })
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -481,17 +481,17 @@ class ElementActions {
     return null
   }
 
-  createReaction(params) {
+  createReaction(params, closeView = false, refreshElements = true) {
     return (dispatch) => { ReactionsFetcher.create(params)
       .then((result) => {
-        dispatch(result)
+        dispatch({ reaction: result, closeView, refreshElements })
       });};
   }
 
-  updateReaction(params, closeView = false) {
+  updateReaction(params, closeView = false, refreshElements = true) {
     return (dispatch) => { ReactionsFetcher.update(params)
       .then((result) => {
-        dispatch({ element: result, closeView })
+        dispatch({ element: result, closeView, refreshElements })
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -571,10 +571,10 @@ class ElementActions {
     return  Wellplate.buildEmpty(collection_id);
   }
 
-  createWellplate(wellplate) {
+  createWellplate(wellplate, closeView = false, refreshElements = true) {
     return (dispatch) => { WellplatesFetcher.create(wellplate)
       .then(result => {
-        dispatch(result);
+        dispatch({ element: result, closeView, refreshElements });
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -637,19 +637,19 @@ class ElementActions {
     return  Screen.buildEmpty(collection_id);
   }
 
-  createScreen(params) {
+  createScreen(params, closeView = false, refreshElements = true) {
     return (dispatch) => { ScreensFetcher.create(params)
       .then(result => {
-        dispatch(result);
+        dispatch({ screen: result, closeView, refreshElements });
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
   }
 
-  updateScreen(params) {
+  updateScreen(params, closeView = false, refreshElements = true) {
     return (dispatch) => { ScreensFetcher.update(params)
       .then(result => {
-        dispatch(result);
+        dispatch({ element: result, closeView, refreshElements });
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -823,6 +823,57 @@ class ElementActions {
       })
     };
   }
+
+  // -- inline edit --
+
+  changeElementProperty(element, field, value) {
+    // used by the inlineEdit functionality
+    return { element, field, value };
+  }
+
+  changeElementProperties(element, properties) {
+    // used by the inlineEdit functionality
+    return { element, properties };
+  }
+
+  callElementMethod(element, method, args) {
+    // used by the inlineEdit functionality
+    return { element, method, args };
+  }
+
+  // adopted from DetailActions for the inlineEdit since it needs a different handler
+  updateMoleculeNamesInline(sample, newMolName = '') {
+    const inchikey = sample.molecule.inchikey;
+    if (!inchikey) { return null; }
+
+    return (dispatch) => {
+      MoleculesFetcher
+        .updateNames(inchikey, newMolName)
+        .then((result) => {
+          const properties = {
+            molecule_names: result,
+            molecule_name: sample.molecule_name
+          }
+          const mn = result.find(r => r.name === newMolName)
+          if (mn) properties.molecule_name = { label: mn.name, value: mn.id }
+
+          dispatch({ element: sample, properties });
+        })
+        .catch(errorMessage => console.log(errorMessage));
+    };
+  }
+
+  // adopted from DetailActions for the inlineEdit since it needs a different handler
+  updateMoleculeCasInline(sample) {
+    return (dispatch) => { MoleculesFetcher.fetchCas(sample.molecule.inchikey)
+      .then((result) => {
+        dispatch({ element: sample, field: 'molecule', value: result })
+      }).catch((errorMessage) => {
+        console.log(errorMessage)
+      })
+    }
+  }
+
 }
 
 export default alt.createActions(ElementActions);

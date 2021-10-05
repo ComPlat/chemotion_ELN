@@ -60,7 +60,7 @@ export default class TextRangeWithAddon extends Component {
     } = this.props;
     return (
       <FormGroup bsSize="small">
-        <ControlLabel>{label}</ControlLabel>
+        {label && <ControlLabel>{label}</ControlLabel>}
         <InputGroup>
           <FormControl
             title={tipOnText}

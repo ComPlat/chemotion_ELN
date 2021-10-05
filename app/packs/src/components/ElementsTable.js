@@ -13,6 +13,7 @@ import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementsTableEntries from './ElementsTableEntries';
+import ElementsTableInlineEditEntries from './ElementsTableInlineEditEntries';
 import ElementsTableSampleEntries from './ElementsTableSampleEntries';
 import Switch from './Switch';
 
@@ -383,20 +384,40 @@ export default class ElementsTable extends React.Component {
       ui,
       currentElement,
       sampleCollapseAll,
-      moleculeSort
+      moleculeSort,
+      inlineEdit
     } = this.state
 
     const {overview, type} = this.props
     let elementsTableEntries = null
 
     if (type === 'sample') {
-      elementsTableEntries = (
-        <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
-          elements={elements} currentElement={currentElement}
-          showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
-          onChangeCollapse={(checked) => this.collapseSample(!checked)}
-        />
-      )
+      if (inlineEdit) {
+        elementsTableEntries = (
+          <ElementsTableInlineEditEntries elements={elements} type={type} />
+        )
+      } else {
+        elementsTableEntries = (
+          <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
+            elements={elements} currentElement={currentElement}
+            showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
+            onChangeCollapse={(checked) => this.collapseSample(!checked)}
+          />
+        )
+      }
+    } else if (type === 'reaction' || type === 'wellplate' || type === 'screen') {
+      if (inlineEdit) {
+        elementsTableEntries = (
+          <ElementsTableInlineEditEntries elements={elements} type={type} />
+        )
+      } else {
+        elementsTableEntries = (
+          <ElementsTableEntries
+            elements={elements} currentElement={currentElement}
+            showDragColumn={!overview} ui={ui}
+          />
+        )
+      }
     } else {
       elementsTableEntries = (
         <ElementsTableEntries
@@ -407,7 +428,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div className="list-elements">
+      <div className={inlineEdit ? 'list-elements list-elements-inline' : 'list-elements'}>
         {elementsTableEntries}
       </div>
     )
