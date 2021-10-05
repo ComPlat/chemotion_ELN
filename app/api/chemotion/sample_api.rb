@@ -140,6 +140,7 @@ module Chemotion
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :product_only, type: Boolean, desc: 'query only reaction products'
+        optional :inline_edit, type: Boolean, desc: 'return full serialization for inline edit'
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
 
@@ -199,7 +200,15 @@ module Chemotion
         reset_pagination_page(scope)
         sample_serializer_selector =
           if own_collection
-            ->(s) { Entities::SampleEntity::Level10.represent(s) }
+            if params[:inline_edit]
+              lambda do |s|
+                # use the regular serializer for inline edit to include all fields
+                element_policy = ElementPolicy.new(current_user, s)
+                SampleSerializer::Level10.new(s, {policy: element_policy}).serializable_hash
+              end
+            else
+              ->(s) { Entities::SampleEntity::Level10.represent(s) }
+            end
           else
             lambda do |s|
               ElementListPermissionProxy.new(current_user, s, user_ids).serialized
@@ -427,6 +436,10 @@ module Chemotion
       end
       post do
         molecule_id = params[:decoupled] && params[:molfile].blank? ? Molecule.find_or_create_dummy&.id : params[:molecule_id]
+        # check if the molecule_id is missing
+        unless molecule_id
+          error!('400 missing molecule_id', 400)
+        end
         attributes = {
           name: params[:name],
           short_label: params[:short_label],
