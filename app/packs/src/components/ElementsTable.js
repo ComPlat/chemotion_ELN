@@ -28,6 +28,7 @@ export default class ElementsTable extends React.Component {
       moleculeSort: false,
       advancedSearch: false,
       productOnly: false,
+      inlineEdit: false,
       page: null,
       pages: null,
       perPage: null,
@@ -42,6 +43,7 @@ export default class ElementsTable extends React.Component {
     this.changeDateFilter = this.changeDateFilter.bind(this);
 
     this.toggleProductOnly = this.toggleProductOnly.bind(this);
+    this.toggleInlineEdit = this.toggleInlineEdit.bind(this);
     this.setFromDate = this.setFromDate.bind(this);
     this.setToDate = this.setToDate.bind(this);
   }
@@ -64,7 +66,7 @@ export default class ElementsTable extends React.Component {
     }
     const { checkedIds, uncheckedIds, checkedAll } = state[this.props.type];
     const {
-      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly
+      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly, inlineEdit
     } = state;
 
     // check if element details of any type are open at the moment
@@ -78,7 +80,7 @@ export default class ElementsTable extends React.Component {
 
     const stateChange = (
       checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt ||
-      fromDate || toDate || productOnly !== this.state.productOnly ||
+      fromDate || toDate || productOnly !== this.state.productOnly || inlineEdit !== this.state.inlineEdit ||
       isAdvS !== this.state.advancedSearch
     );
 
@@ -95,6 +97,7 @@ export default class ElementsTable extends React.Component {
           toDate
         },
         productOnly,
+        inlineEdit,
         advancedSearch: isAdvS
       });
     }
@@ -217,6 +220,10 @@ export default class ElementsTable extends React.Component {
     UIActions.setProductOnly(!this.state.productOnly);
   }
 
+  toggleInlineEdit() {
+    UIActions.setInlineEdit(!this.state.inlineEdit);
+  }
+
   changeDateFilter() {
     let { filterCreatedAt } = this.state;
     filterCreatedAt = !filterCreatedAt;
@@ -235,7 +242,7 @@ export default class ElementsTable extends React.Component {
     const {
       sampleCollapseAll,
       moleculeSort, ui,
-      advancedSearch, productOnly
+      advancedSearch, productOnly, inlineEdit
     } = this.state;
     const { fromDate, toDate } = ui;
     const { type, showReport } = this.props;
@@ -303,6 +310,29 @@ export default class ElementsTable extends React.Component {
     const inchiTooltip = <Tooltip id="date_tooltip">{dateTitle}</Tooltip>;
     const dateIcon = <i className={`fa ${btnIcon}`} />;
 
+    let inlineEditSwitch = null;
+    if (type != 'research_plan') {
+      inlineEditSwitch = (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          &nbsp;&nbsp;
+          <Switch
+            checked={inlineEdit}
+            style={{ marginTop: '3px', width: '85px' }}
+            onChange={this.toggleInlineEdit}
+            title="Change to inline edit mode"
+            checkedChildren="Edit"
+            unCheckedChildren="Table"
+          />
+        </div>
+      )
+    }
+
     const headerRight = (
       <div className="header-right" style={{paddingRight: '25px'}}>
         <OverlayTrigger placement="top" overlay={inchiTooltip}>
@@ -330,6 +360,7 @@ export default class ElementsTable extends React.Component {
             dateFormat="DD-MM-YY"
           />
         </div>
+        {inlineEditSwitch}
         &nbsp;&nbsp;
         {sampleHeader}
       </div>

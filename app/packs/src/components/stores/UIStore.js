@@ -57,6 +57,7 @@ class UIStore {
       fromDate: null,
       toDate: null,
       productOnly: false,
+      inlineEdit: false,
       number_of_results: 15,
       currentCollection: null,
       currentSearchSelection: null,
@@ -116,6 +117,7 @@ class UIStore {
       handleSetFromDate: UIActions.setFromDate,
       handleSetToDate: UIActions.setToDate,
       handleSetProductOnly: UIActions.setProductOnly,
+      handleSetInlineEdit: UIActions.setInlineEdit
     });
   }
 
@@ -411,6 +413,11 @@ class UIStore {
 
   handleSetProductOnly(productOnly) {
     this.state.productOnly = productOnly;
+    this.handleSelectCollection(this.state.currentCollection, true);
+  }
+
+  handleSetInlineEdit(inlineEdit) {
+    this.state.inlineEdit = inlineEdit;
     this.handleSelectCollection(this.state.currentCollection, true);
   }
 }
