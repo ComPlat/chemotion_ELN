@@ -53,10 +53,10 @@ export default class BaseFetcher {
     const filterCreatedAt = queryParams.filterCreatedAt === true ? '&filter_created_at=true' : '&filter_created_at=false';
     const fromDate = queryParams.fromDate ? `&from_date=${queryParams.fromDate.unix()}` : '';
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
-    const product_only = queryParams.productOnly === true ? `&product_only=true` : '&product_only=false';
+    const inlineEdit = queryParams.inlineEdit ? `&inline_edit=true` : '';
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}` +
               `collection_id=${id}&page=${page}&per_page=${perPage}&` +
-              `${fromDate}${toDate}${filterCreatedAt}${product_only}`;
+              `${fromDate}${toDate}${filterCreatedAt}${inlineEdit}`;
     let addQuery = type === 'samples' ?
       `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`
       : '';
