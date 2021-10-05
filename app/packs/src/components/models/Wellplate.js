@@ -100,7 +100,11 @@ export default class Wellplate extends Element {
   initWellsWithPosition(wells, size) {
     const placeholdersCount = size - wells.length;
     const placeholders = Array(placeholdersCount).fill({});
-    let allWells = wells.concat(placeholders);
+    let allWells = wells
+    if (placeholdersCount > 0) {
+      const placeholders = Array(placeholdersCount).fill({});
+      allWells = allWells.concat(placeholders);
+    }
     return allWells.map((well, i) => this.initWellWithPositionByIndex(well, i));
   }
 
