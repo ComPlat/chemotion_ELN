@@ -1218,6 +1218,8 @@ class ElementStore {
           fetchOls('sample');
           this.handleRefreshElements('sample');
         }
+
+        this.changeCurrentElement(element);
         break;
       case 'reaction':
         if (refreshElements) {
@@ -1225,12 +1227,16 @@ class ElementStore {
           this.handleRefreshElements('reaction');
           this.handleRefreshElements('sample');
         }
+
+        this.changeCurrentElement(element);
         break;
       case 'screen':
         if (refreshElements) {
           fetchOls('screen');
           this.handleRefreshElements('screen');
         }
+
+        this.changeCurrentElement(element);
         break;
       case 'research_plan':
         if (refreshElements) {
@@ -1244,6 +1250,8 @@ class ElementStore {
           this.handleRefreshElements('wellplate');
           this.handleRefreshElements('sample');
         }
+
+        this.changeCurrentElement(element);
         break;
       case 'genericEl':
         if (refreshElements) {

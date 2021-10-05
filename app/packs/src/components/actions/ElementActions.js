@@ -609,10 +609,10 @@ class ElementActions {
       });};
   }
 
-  updateWellplate(wellplate) {
+  updateWellplate(wellplate, closeView = false, refreshElements = true) {
     return (dispatch) => { WellplatesFetcher.update(wellplate)
       .then(result => {
-        dispatch(result);
+        dispatch({ element: result, closeView, refreshElements });
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};

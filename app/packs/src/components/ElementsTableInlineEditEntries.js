@@ -47,7 +47,7 @@ export default class ElementsTableInlineEditEntries extends Component {
   handleSave(event, elements, type) {
     event.preventDefault();
 
-    const closeView = true, refreshElements = false
+    const closeView = true, refreshElements = true
 
     if (type == 'sample') {
       elements.map(sample => {
