@@ -184,11 +184,19 @@ export default class CreateButton extends React.Component {
   }
 
   createElementOfType(type) {
-    const {currentCollection,isSync} = UIStore.getState();
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/new`
-      : `/collection/${currentCollection.id}/${type}/new`;
-    Aviator.navigate(uri, { silent: true} );
+    const { currentCollection, isSync, inlineEdit } = UIStore.getState();
+    const { currentType } = UserStore.getState();
+
+    if (inlineEdit && type == currentType && type != 'research_plan') {
+      // don't change the uri, if inlineEdit is active and the element.type is the currently active tab
+      // the new element will be appended
+    } else {
+      const uri = isSync
+        ? `/scollection/${currentCollection.id}/${type}/new`
+        : `/collection/${currentCollection.id}/${type}/new`;
+      Aviator.navigate(uri, { silent: true} );
+    }
+
     const e = { type, params: { collectionID: currentCollection.id } };
     e.params[`${type}ID`] = 'new'
     const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];

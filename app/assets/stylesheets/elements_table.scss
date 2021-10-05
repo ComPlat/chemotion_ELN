@@ -120,6 +120,60 @@ th.drag {
   margin-bottom: 15px;
   overflow-x: hidden;
   overflow-y: scroll;
+
+  &.list-elements-inline {
+    overflow-x: scroll;
+
+    .form-group {
+      margin: 0;
+    }
+
+    .elements-inline {
+      margin-bottom: 0;
+      table-layout: fixed;
+
+      // border-collapse needs to be "seperate" not collapse to make the stiky columns work
+      border-collapse: separate;
+
+      > thead > tr > th,
+      > tbody > tr > td {
+        vertical-align: middle;
+
+        .checkbox {
+          // for the top secret field
+          margin: 0 0 0 5px;
+        }
+      }
+
+      > thead > tr > th:first-child,
+      > tbody > tr > td:first-child
+      {
+        position: sticky;
+        left: 0px;
+        z-index: 1030;
+        border-right: 1px solid #ddd;
+        background-color: white;
+      }
+      > thead > tr > th:last-child,
+      > tbody > tr > td:last-child
+      {
+        position: sticky;
+        right: 0px;
+        z-index: 1030;
+        border-left: 1px solid #ddd;
+        background-color: white;
+        text-align: right;
+      }
+    }
+
+    .amount-input {
+      padding-right: 4px;
+
+      &:last-child {
+        padding-right: 0;
+      }
+    }
+  }
 }
 
 .list-pagination {

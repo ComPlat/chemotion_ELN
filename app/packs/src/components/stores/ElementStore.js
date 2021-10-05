@@ -258,6 +258,16 @@ class ElementStore {
         ElementActions.updateGenericEl,
       ],
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
+      // for the inlineEdit mode
+      handleChangeElementProperty: [
+        ElementActions.changeElementProperty,
+        ElementActions.updateMoleculeCasInline,
+      ],
+      handleChangeElementProperties: [
+        ElementActions.changeElementProperties,
+        ElementActions.updateMoleculeNamesInline
+      ],
+      handleCallElementMethod: ElementActions.callElementMethod
     })
   }
 
@@ -633,10 +643,12 @@ class ElementStore {
     }
   }
 
-  handleCreateSample({ element, closeView }) {
+  handleCreateSample({ element, closeView, refreshElements }) {
     UserActions.fetchCurrentUser();
     fetchOls('sample');
-    this.handleRefreshElements('sample');
+    if (refreshElements) {
+      this.handleRefreshElements('sample');
+    }
     if (!closeView) {
       this.navigateToNewElement(element);
     }
@@ -670,16 +682,18 @@ class ElementStore {
     }
     // TODO: check if this is needed with the new handling of changing CE
     // maybe this.handleRefreshElements is enough
-    this.handleUpdateElement(sample);
+    this.handleUpdateElement({ sample, closeView, refreshElements: true });
   }
 
-  handleUpdateLinkedElement({ element, closeView }) {
+  handleUpdateLinkedElement({ element, closeView, refreshElements }) {
     if (closeView) {
       this.deleteCurrentElement(element);
     } else {
       this.changeCurrentElement(element);
     }
-    this.handleUpdateElement(element);
+    if (refreshElements) {
+      this.handleUpdateElement({ element, closeView, refreshElements });
+    }
   }
 
   handleUpdateSampleForWellplate(wellplate) {
@@ -800,11 +814,14 @@ class ElementStore {
   //  this.navigateToNewElement(result)
   }
 
-
-  handleCreateWellplate(wellplate) {
+  handleCreateWellplate({ wellplate, closeView, refreshElements }) {
     fetchOls('wellplate');
-    this.handleRefreshElements('wellplate');
-    this.navigateToNewElement(wellplate);
+    if (refreshElements) {
+      this.handleRefreshElements('wellplate');
+    }
+    if (!closeView) {
+      this.navigateToNewElement(wellplate);
+    }
   }
 
   handleGenerateWellplateFromClipboard(collection_id) {
@@ -822,10 +839,14 @@ class ElementStore {
     }
   }
 
-  handleCreateScreen(screen) {
+  handleCreateScreen({ screen, closeView, refreshElements }) {
     fetchOls('screen');
-    this.handleRefreshElements('screen');
-    this.navigateToNewElement(screen);
+    if (refreshElements) {
+      this.handleRefreshElements('screen');
+    }
+    if (!closeView) {
+      this.navigateToNewElement(screen);
+    }
   }
 
   handleGenerateScreenFromClipboard(collection_id) {
@@ -877,12 +898,15 @@ class ElementStore {
     this.state.elementWarning = false
   }
 
-
-  handleCreateReaction(reaction) {
-    UserActions.fetchCurrentUser();
-    fetchOls('reaction');
-    this.handleRefreshElements('reaction');
-    this.navigateToNewElement(reaction);
+  handleCreateReaction({ reaction, closeView, refreshElements }) {
+    if (refreshElements) {
+      UserActions.fetchCurrentUser();
+      fetchOls('reaction');
+      this.handleRefreshElements('reaction');
+    }
+    if (!closeView) {
+      this.navigateToNewElement(reaction);
+    }
   }
 
   handleCopyReactionFromId(reaction) {
@@ -939,13 +963,41 @@ class ElementStore {
   }
 
   handleGenerateEmptyElement(element) {
-    const { currentElement } = this.state;
+    const { inlineEdit, sample, reaction } = UIStore.getState();
+    const { currentType } = UserStore.getState();
+    const { elements, currentElement } = this.state;
 
-    const newElementOfSameTypeIsPresent =
-      currentElement && currentElement.isNew && currentElement.type ==
-      element.type;
-    if(!newElementOfSameTypeIsPresent) {
-      this.changeCurrentElement(element);
+    if (inlineEdit && element.type == currentType && element.type != 'research_plan') {
+      // add the element to the list of elements
+      // if inlineEdit is active and the element.type is the currently active tab
+      switch (element.type) {
+        case 'sample':
+          elements.samples.elements.push(element)
+          elements.samples.totalElements += 1
+          break;
+        case 'reaction':
+          elements.reactions.elements.push(element)
+          elements.reactions.totalElements += 1
+          break;
+        case 'wellplate':
+          elements.wellplates.elements.push(element)
+          elements.wellplates.totalElements += 1
+          break;
+        case 'screen':
+          elements.screens.elements.push(element)
+          elements.screens.totalElements += 1
+          break;
+        default:
+          break;
+      }
+    } else {
+      // open the details view if the element is not already active
+      const newElementOfSameTypeIsPresent =
+        currentElement && currentElement.isNew && currentElement.type ==
+        element.type;
+      if(!newElementOfSameTypeIsPresent) {
+        this.changeCurrentElement(element);
+      }
     }
   }
 
@@ -986,8 +1038,8 @@ class ElementStore {
       });
     } else {
       const per_page = uiState.number_of_results;
-      const { fromDate, toDate, productOnly } = uiState;
-      const params = { page, per_page, fromDate, toDate, productOnly, name: type };
+      const { fromDate, toDate, productOnly, inlineEdit } = uiState;
+      const params = { page, per_page, fromDate, toDate, productOnly, inlineEdit, name: type };
       const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
       let fn = `fetch${fnName}ByCollectionId`;
       const allowedActions = [
@@ -1129,36 +1181,48 @@ class ElementStore {
     this.UpdateMolecule(updatedSample);
   }
 
-  handleUpdateElement(updatedElement) {
-    switch (updatedElement.type) {
+  handleUpdateElement({ element, closeView, refreshElements }) {
+    switch (element.type) {
       case 'sample':
-        fetchOls('sample');
-        this.handleRefreshElements('sample');
+        if (refreshElements) {
+          fetchOls('sample');
+          this.handleRefreshElements('sample');
+        }
         break;
       case 'reaction':
-        fetchOls('reaction');
-        this.handleRefreshElements('reaction');
-        this.handleRefreshElements('sample');
+        if (refreshElements) {
+          fetchOls('reaction');
+          this.handleRefreshElements('reaction');
+          this.handleRefreshElements('sample');
+        }
         break;
       case 'screen':
-        fetchOls('screen');
-        this.handleRefreshElements('screen');
+        if (refreshElements) {
+          fetchOls('screen');
+          this.handleRefreshElements('screen');
+        }
         break;
       case 'research_plan':
-        this.handleRefreshElements('research_plan');
-        this.handleUpdateResearchPlanAttaches(updatedElement);
+        if (refreshElements) {
+          this.handleRefreshElements('research_plan');
+        }
+        this.handleUpdateResearchPlanAttaches(element);
         break;
       case 'wellplate':
-        fetchOls('wellplate');
-        this.handleRefreshElements('wellplate');
-        this.handleRefreshElements('sample');
+        if (refreshElements) {
+          fetchOls('wellplate');
+          this.handleRefreshElements('wellplate');
+          this.handleRefreshElements('sample');
+        }
         break;
       case 'genericEl':
-        this.handleRefreshElements('genericEl');
+        if (refreshElements) {
+          this.handleRefreshElements('genericEl');
+        }
         break;
       default:
-        this.changeCurrentElement(updatedElement);
-        this.handleRefreshElements(updatedElement.type);
+        this.changeCurrentElement(element);
+        this.handleRefreshElements(element.type);
         break;
     }
 
@@ -1316,6 +1380,31 @@ class ElementStore {
   handleUpdatePrivateNote(note) {
     this.state.currentElement.private_note = note
     this.changeCurrentElement(this.state.currentElement)
+  }
+
+  // -- inline edit --
+
+  handleChangeElementProperty({ element, field, value }) {
+    // used by the inlineEdit functionality
+    const type = element.type + 's'
+    const index = this.state.elements[type].elements.findIndex(el => (el.id === element.id))
+    this.state.elements[type].elements[index][field] = value
+  }
+
+  handleChangeElementProperties({ element, properties }) {
+    // used by the inlineEdit functionality
+    const type = element.type + 's'
+    const index = this.state.elements[type].elements.findIndex(el => (el.id === element.id))
+    for (const [field, value] of Object.entries(properties)) {
+      this.state.elements[type].elements[index][field] = value
+    }
+  }
+
+  handleCallElementMethod({ element, method, args }) {
+    // used by the inlineEdit functionality
+    const type = element.type + 's'
+    const index = this.state.elements[type].elements.findIndex(el => (el.id === element.id))
+    this.state.elements[type].elements[index][method](...args)
   }
 }
 
