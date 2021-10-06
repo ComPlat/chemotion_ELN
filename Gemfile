@@ -13,6 +13,9 @@ gem 'bibtex-ruby'
 gem 'bootsnap'
 gem 'bootstrap-sass', '~> 3.4.1'
 
+# gem 'chem_scanner', git: 'git@git.scc.kit.edu:ComPlat/chem_scanner.git'
+gem 'chem_scanner', git: 'https://github.com/complat/chem_scanner.git'
+
 gem 'closure_tree'
 gem 'countries'
 
