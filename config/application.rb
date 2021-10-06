@@ -117,10 +117,10 @@ module Chemotion
     src3 = citepath.join('plugin-bibtex', 'lib-mjs', 'input', 'constants.js')
     src4 = citepath.join('plugin-wikidata', 'lib-mjs', 'entity.js')
     if File.exist?(src1)
-      `sed -i "s~import { version } from '../../package.json';~import pkg from '../../package.json';const { version } = pkg.version;~" #{src1}`
+      `sed -i "s~import { version } from '../../package.json';~import pkg from '../../package.json';const version  = pkg.version;~" #{src1}`
     end
     if File.exist?(src2)
-      `sed -i "s~import { version } from '../package.json';~import pkg from '../package.json';const { version } = pkg.version;~" #{src2}`
+      `sed -i "s~import { version } from '../package.json';~import pkg from '../package.json';const version = pkg.version;~" #{src2}`
     end
     if File.exist?(src3)
       `sed -i "s~export { diacritics, commands } from './unicode.json';~import unicode from './unicode.json';export const diacritics = unicode.diacritics;export const commands = unicode.commands;~" #{src3}`
