@@ -21,7 +21,6 @@
 #  attachable_type :string
 #  aasm_state      :string
 #  filesize        :bigint
-#  attachment_data :jsonb
 #
 # Indexes
 #

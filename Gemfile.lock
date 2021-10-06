@@ -27,6 +27,17 @@ GIT
       rubyzip (>= 1.1)
 
 GIT
+  remote: https://github.com/complat/chem_scanner.git
+  revision: f98ed3304f5a5a91123e6f8f8cb58acc7d73ce9e
+  specs:
+    chem_scanner (0.1.3)
+      chronic_duration (>= 0.10)
+      nokogiri (>= 1.8)
+      rdkit_chem
+      ruby-geometry (>= 0.0.6)
+      ruby-ole (>= 1.2)
+
+GIT
   remote: https://github.com/complat/ketcher-rails.git
   revision: 77514fbb2b5540e39ee1c31e7dd149e8f7ee82db
   ref: 77514fbb2b5540e39ee1c31e7dd149e8f7ee82db
@@ -231,6 +242,8 @@ GEM
     childprocess (2.0.0)
       rake (< 13.0)
     chronic (0.10.2)
+    chronic_duration (0.10.6)
+      numerizer (~> 0.1.1)
     chunky_png (1.3.11)
     climate_control (0.2.0)
     closure_tree (7.0.0)
@@ -431,6 +444,7 @@ GEM
     nio4r (2.5.4)
     nokogiri (1.10.10)
       mini_portile2 (~> 2.4.0)
+    numerizer (0.1.1)
     open4 (1.3.4)
     orm_adapter (0.5.0)
     pandoc-ruby (2.0.2)
@@ -696,6 +710,7 @@ DEPENDENCIES
   capistrano-rvm
   capistrano-yarn
   capybara (~> 3.29.0)
+  chem_scanner!
   chronic
   closure_tree
   countries
