@@ -6,14 +6,17 @@ import Quill from 'quill';
 import Delta from 'quill-delta';
 
 import _ from 'lodash';
-import { ButtonToolbar, DropdownButton, MenuItem } from 'react-bootstrap';
+import { ButtonToolbar, DropdownButton, MenuItem, OverlayTrigger, Popover, Button } from 'react-bootstrap';
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],
   [{ list: 'ordered' }, { list: 'bullet' }],
   [{ script: 'sub' }, { script: 'super' }],
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
+  [{ specialCharacters: ['→', '⇌', '⇐', '⇒', '⇑', ' ⇓', '⇠', '⇢', '⇡', '⇣', '⇤', '⇥', '⤒', '⤓', '↨', '∆', 'α', 'β', 'δ', 'Κ', '°C', '°F', '☉', '⬤', 'Ⓤ', '🜚', 'Ω', 'Ā', 'ā', 'Ă', 'ă', '<', '>', '≤', '≥', '–', '—', '¯', '‾', '°', '−', '±', '÷', '⁄', '×', '≈', '≠', '≡', '≅', '∫', '∑', 'φ', '∞', '√', '∼', '∃', '∀', '∗', '∝', '∠'] }],
+  // [{ 'color': [] }, { 'background': [] }],
   // [{ 'font': [] }],
+  // ['α', 'β', 'π'],
   // ['blockquote', 'code-block'],
   // [{ 'header': 1 }, { 'header': 2 }],
   // [{ 'indent': '-1'}, { 'indent': '+1' }],
@@ -53,6 +56,9 @@ export default class QuillEditor extends React.Component {
 
     this.getContents = this.getContents.bind(this);
     this.updateEditorValue = this.updateEditorValue.bind(this);
+    this.specialCharacters = this.specialCharacters.bind(this);
+    this.handleEditorValue = this.handleEditorValue.bind(this);
+    this.renderCharacters = this.renderCharacters.bind(this);
     this.debouncedOnChange = _.debounce(this.props.onChange.bind(this), 300);
     this.onChange = this.onChange.bind(this);
   }
@@ -125,13 +131,27 @@ export default class QuillEditor extends React.Component {
     }
   }
 
+  specialCharacters(args) {
+    this.editor.focus();
+    const cursorPosition = this.editor.getSelection().index;
+    this.editor.setSelection(cursorPosition + args.length);
+    this.editor.insertText(cursorPosition, args);
+    const contents = this.getContents();
+    this.updateEditorValue(contents);
+  }
+
   initQuill() {
     if (!this.editor) {
       const quillEditor = ReactDOM.findDOMNode(this.refs[this.id]);
 
       const quillOptions = {
         modules: {
-          toolbar: `#toolbar-${this.id}`,
+          toolbar: {
+            container: `#toolbar-${this.id}`,
+            handlers: {
+              specialCharacters: this.specialCharacters,
+            }
+          },
         },
         theme: this.theme,
         readOnly: this.readOnly,
@@ -192,13 +212,44 @@ export default class QuillEditor extends React.Component {
               />
             );
           } else if (Array.isArray(elementValue)) {
-            const options = elementValue.map(function(e){
+            const options = elementValue.map(function(e) {
               if(e == false){
                 return <option value="" key="" />
               } 
-              
               return <option value={e} key={`opt_${e}`} />
             });
+
+            const character = elementValue.map(e => this.renderCharacters(e));
+            const templateCreatorPopover = (
+              <Popover
+                id="popover-positioned-bottom"
+                title="special characters"
+                // className="analyses-template-creator"
+              >
+                <span className="ql-spec-group">
+                  {character}
+                </span>
+              </Popover>
+            );
+
+            /* eslint-disable eqeqeq */
+            if (Object.keys(element) == 'specialCharacters') {
+              return (
+                <OverlayTrigger
+                  trigger="click"
+                  placement="bottom"
+                  rootClose
+                  overlay={templateCreatorPopover}
+                >
+                  <span className="ql-formats">
+                    <button>
+                      <span> &#937; </span>
+                    </button>
+                  </span>
+                </OverlayTrigger>
+              );
+            }
+
             return (
               <select
                 className={`ql-${elementName}`}
@@ -209,7 +260,6 @@ export default class QuillEditor extends React.Component {
             );
           }
         }
-
         return (<span key={`span_empty_${index}`}/>);
       });
 
@@ -219,15 +269,28 @@ export default class QuillEditor extends React.Component {
         </span>
       );
     });
-
     return quillToolbar;
+  }
+
+  renderCharacters(e) {
+    return (
+      <Button
+        className="ql-spec-Charac"
+        key={`btnKey_${e}`}
+        value={e}
+        // eslint-disable-next-line no-shadow
+        onClick={e => this.specialCharacters(e.target.value)}
+      >
+        {e}
+      </Button>
+    );
   }
 
   renderCustomToolbar() {
     if (this.theme !== 'snow' || !this.toolbar || this.toolbar.length === 0) {
       return (<span />);
     }
-
+    
     const customToolbarElement = this.toolbar.map(element => {
       if (element.render) {
         return element.render(element.name);
@@ -277,7 +340,7 @@ export default class QuillEditor extends React.Component {
           {this.renderQuillToolbarGroup()}
           <span className="ql-formats custom-toolbar">
             { this.props.customToolbar }
-          </span>
+          </span> 
           {this.renderCustomToolbar()}
           {this.renderCustomDropdown()}
         </div>
