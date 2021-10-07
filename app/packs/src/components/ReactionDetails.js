@@ -56,6 +56,9 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    if(!reaction.reaction_svg_file) {
+      this.updateReactionSvg();
+    }
   }
 
   onUIStoreChange(state) {
@@ -265,7 +268,7 @@ export default class ReactionDetails extends Component {
     if(!reaction.svgPath) {
       return false;
     } else {
-      const svgProps = reaction.svgPath.includes('.svg') ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
+      const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg' ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
       return (
         <SvgFileZoomPan 
           duration={300}

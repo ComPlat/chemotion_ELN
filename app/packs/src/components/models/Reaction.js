@@ -710,8 +710,13 @@ export default class Reaction extends Element {
   }
 
   get svgPath() {
-    if(this.reaction_svg_file && this.reaction_svg_file != '***')
-      return `/images/reactions/${this.reaction_svg_file}`
+    if(this.reaction_svg_file && this.reaction_svg_file != '***' ) {
+      if(this.reaction_svg_file.includes('<svg')) {
+        return this.reaction_svg_file
+      } else if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
+        return `/images/reactions/${this.reaction_svg_file}`
+      }
+    }
     else
       return `images/wild_card/no_image_180.svg`
   }
@@ -746,6 +751,8 @@ export default class Reaction extends Element {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
     let group;
+    
+    this.reaction_svg_file = ''
     while (i < cats.length) {
       const groupName = `_${cats[i]}`;
       group = this[groupName];
