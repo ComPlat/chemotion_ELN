@@ -123,6 +123,7 @@
     "webpack-dev-server": "^3.11.2"
   },
   "scripts": {
+    "postinstall": "./package_postinstall.sh",
     "test": "mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
   },
   "license": "MIT",

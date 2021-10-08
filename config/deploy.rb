@@ -144,33 +144,6 @@ namespace :deploy do
     end
   end
 
-  desc 'fix citation.js import path for webpack'
-  task :fix_cit_import do
-    on roles :app do
-      path = Pathname.new(fetch(:deploy_to)).join('shared', 'node_modules', '@citation-js')
-      src1 = path.join('core', 'lib-mjs', 'util', 'fetchFile.js')
-      src2 = path.join('core/lib-mjs/index.js')
-      src3 = path.join('plugin-bibtex/lib-mjs/input/constants.js')
-      src4 = path.join('plugin-wikidata/lib-mjs/entity.js')
-      cmd1 = <<~SED
-        sed -i "s~import { version } from '../../package.json';~import pkg from '../../package.json';const { version } = pkg.version;~" #{src1}
-      SED
-      cmd2 = <<~SED
-        sed -i "s~import { version } from '../package.json';~import pkg from '../package.json';const { version } = pkg.version;~" #{src2}
-      SED
-      cmd3 = <<~SED
-        sed -i "s~export { diacritics, commands } from './unicode.json';~import unicode from './unicode.json';export const diacritics = unico  de.diacritics;export const commands = unicode.commands;~" #{src3}
-      SED
-      cmd4 = <<~SED
-        sed -i "s~import { props, ignoredProps } from './props';~import wikiprops from './props';const { props, ignoredProps } = wikiprops;~"   #{src4}
-      SED
-      execute(cmd1) if File.exist?(src1)
-      execute(cmd2) if File.exist?(src2)
-      execute(cmd3) if File.exist?(src3)
-      execute(cmd4) if File.exist?(src4)
-    end
-  end
-
   after :restart, :clear_cache do
     on roles :app do
       # Here we can do anything such as:
@@ -239,9 +212,6 @@ after 'deploy:nvm_check', 'deploy:clear_node_module'
 
 ## Install defined version of npm if not selected
 after 'nvm:validate', 'deploy:npm_install_npm'
-
-
-after 'yarn:install', 'deploy:fix_cit_import'
 
 # after 'deploy:compile_assets', 'deploy:webpk'
 
