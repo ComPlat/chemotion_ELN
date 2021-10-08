@@ -556,8 +556,15 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const style = { height: '200px' };
-    const pubchemLcss = sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss ?
-      sample.pubchem_tag.pubchem_lcss.Record.Section[0].Section[0].Section[0].Information : null;
+    let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
+    if (pubchemLcss && pubchemLcss.Reference) {
+      const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
+      if (echa.length > 0) {
+        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Safety and Hazards') || [];
+        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Hazards Identification') || [];
+        pubchemLcss = pubchemLcss.Section[0].Information.filter(e => echa.includes(e.ReferenceNumber)) || null;
+      } else pubchemLcss = null;
+    }
     const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid ?
       sample.pubchem_tag.pubchem_cid : 0;
     const lcssSign = pubchemLcss && !sample.decoupled ?
