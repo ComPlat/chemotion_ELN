@@ -1,4 +1,6 @@
 namespace :webpack do
+
+  # Tmp fix: Should not import the named export 'version' (reexported as 'version') from default-exporting module (only default export is available soon)
   desc 'fix import for citation.js'
   task fix_import: :environment do
     src1 = Rails.root.join('node_modules', '@citation-js', 'core', 'lib-mjs', 'util', 'fetchFile.js')
@@ -12,7 +14,7 @@ namespace :webpack do
       sed -i "s~import { version } from '../package.json';~import pkg from '../package.json';const version = pkg.version;~" #{src2}
     SED
     cmd3 = <<~SED
-      sed -i "s~export { diacritics, commands } from './unicode.json';~import unicode from './unicode.json';export const diacritics = un  ico  de.diacritics;export const commands = unicode.commands;~" #{src3}
+      sed -i "s~export { diacritics, commands } from './unicode.json';~import unicode from './unicode.json';export const diacritics = unicode.diacritics;export const commands = unicode.commands;~" #{src3}
     SED
     cmd4 = <<~SED
       sed -i "s~import { props, ignoredProps } from './props';~import wikiprops from './props';const { props, ignoredProps } = wikiprops  ;~" #{src4}
