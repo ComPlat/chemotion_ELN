@@ -7,6 +7,9 @@ development:
     :length_group: [2, 5]
     :length_device: [2, 6]
     :length_default: [2, 3]
+    :format_abbr: !ruby/regexp '/\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/'
+    :format_abbr_err_msg: can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not.
+
 
 production:
   :name_abbreviation:
@@ -17,3 +20,5 @@ production:
     :length_group: [2, 5]
     :length_device: [2, 6]
     :length_default: [2, 3]
+    :format_abbr: !ruby/regexp '/\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/'
+    :format_abbr_err_msg: can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not.
