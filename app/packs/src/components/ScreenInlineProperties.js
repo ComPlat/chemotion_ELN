@@ -23,7 +23,7 @@ export default class ScreenInlineProperties extends Component {
 
     return (
       <FormGroup>
-        <Button bsSize="xsmall" bsStyle="warning" disabled={!screen.isValid}
+        <Button bsSize="xsmall" bsStyle="warning"
           onClick={(event) => onSave(event, [screen], screen.type)}>
           <i className="fa fa-floppy-o" />
         </Button>
