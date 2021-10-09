@@ -519,6 +519,16 @@ class ElementActions {
       });};
   }
 
+  copyReactionInline(reaction) {
+    return (dispatch) => { ReactionsFetcher.fetchById(reaction.id)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
   copyElement(element, colId) {
     return (
       { element: element, colId: colId }

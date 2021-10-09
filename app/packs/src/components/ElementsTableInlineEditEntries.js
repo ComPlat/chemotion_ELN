@@ -6,7 +6,6 @@ import UserStore from './stores/UserStore';
 import { elementShowOrNew } from './routesUtils';
 
 import ElementActions from './actions/ElementActions'
-
 import SampleInlineHead from './SampleInlineHead'
 import SampleInlineProperties from './SampleInlineProperties'
 import ReactionInlineHead from './ReactionInlineHead'
@@ -22,6 +21,7 @@ export default class ElementsTableInlineEditEntries extends Component {
     super(props)
 
     this.showDetails = this.showDetails.bind(this)
+    this.handleCopy = this.handleCopy.bind(this)
     this.handleSave = this.handleSave.bind(this)
   }
 
@@ -91,6 +91,19 @@ export default class ElementsTableInlineEditEntries extends Component {
     }
   }
 
+  handleCopy(event, element) {
+    const { currentCollection } = UIStore.getState();
+
+    if (element.type == 'sample') {
+    } else if (element.type == 'reaction') {
+      ElementActions.copyReactionInline(element);
+    } else if (element.type == 'wellplate') {
+
+    } else if (element.type == 'screen') {
+
+    }
+  }
+
   renderButtons() {
     const { elements, type } = this.props;
 
@@ -114,7 +127,7 @@ export default class ElementsTableInlineEditEntries extends Component {
             {type == 'reaction' && <ReactionInlineHead />}
             {type == 'wellplate' && <WellplateInlineHead />}
             {type == 'screen' && <ScreenInlineHead />}
-            <th style={{ width: 40 }}>
+            <th style={{ width: 63 }}>
               {this.renderButtons()}
             </th>
           </tr>
@@ -123,13 +136,13 @@ export default class ElementsTableInlineEditEntries extends Component {
           {
             elements.map((element, index) => {
               if (type == 'sample') {
-                return <SampleInlineProperties key={index} sample={element} onSave={this.handleSave} showDetails={this.showDetails} />
+                return <SampleInlineProperties key={index} sample={element} onCopy={this.handleCopy} onSave={this.handleSave} showDetails={this.showDetails} />
               } else if (type == 'reaction') {
-                return <ReactionInlineProperties key={index} reaction={element} onSave={this.handleSave} showDetails={this.showDetails} />
+                return <ReactionInlineProperties key={index} reaction={element} onCopy={this.handleCopy} onSave={this.handleSave} showDetails={this.showDetails} />
               } else if (type == 'wellplate') {
-                return <WellplateInlineProperties key={index} wellplate={element} onSave={this.handleSave} showDetails={this.showDetails} />
+                return <WellplateInlineProperties key={index} wellplate={element} onCopy={this.handleCopy} onSave={this.handleSave} showDetails={this.showDetails} />
               } else if (type == 'screen') {
-                return <ScreenInlineProperties key={index} screen={element} onSave={this.handleSave} showDetails={this.showDetails} />
+                return <ScreenInlineProperties key={index} screen={element} onCopy={this.handleCopy} onSave={this.handleSave} showDetails={this.showDetails} />
               }
             })
           }

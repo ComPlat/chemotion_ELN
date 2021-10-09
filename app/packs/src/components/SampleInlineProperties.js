@@ -131,10 +131,14 @@ export default class SampleInlineProperties extends Component {
   }
 
   renderButtons() {
-    const { sample, onSave } = this.props;
+    const { sample, onCopy, onSave } = this.props;
 
     return (
       <FormGroup>
+        {!sample.isNew && <Button bsSize="xsmall" bsStyle="success" style={{marginRight: 5}}
+          onClick={(event) => onCopy(event, sample)}>
+          <i className="fa fa-clone" />
+        </Button>}
         <Button bsSize="xsmall" bsStyle="warning" disabled={!sample.isValid}
           onClick={(event) => onSave(event, [sample], sample.type)}>
           <i className="fa fa-floppy-o" />
