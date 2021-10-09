@@ -380,6 +380,16 @@ class ElementActions {
     return  collection_id;
   }
 
+  copySampleInline(sample) {
+    return (dispatch) => { SamplesFetcher.fetchById(sample.id)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
   addSampleToMaterialGroup(params) {
     return  params;
   }

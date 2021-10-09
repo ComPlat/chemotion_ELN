@@ -166,6 +166,7 @@ class ElementStore {
       handleUpdateSampleForReaction: ElementActions.updateSampleForReaction,
       handleUpdateSampleForWellplate: ElementActions.updateSampleForWellplate,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
+      handleCopySampleInline: ElementActions.copySampleInline,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
@@ -748,6 +749,18 @@ class ElementStore {
     }
   }
 
+  handleCopySampleInline(sample) {
+    this.waitFor(UIStore.dispatchToken);
+    const uiState = UIStore.getState();
+    const { elements } = this.state;
+    const newSample = Sample.copyFromSampleAndCollectionId(sample, uiState.currentCollection.id, true)
+
+    // insert new_reaction after reaction
+    const index = this.state.elements.samples.elements.findIndex(el => (el.id === sample.id))
+    this.state.elements.samples.elements.splice(index + 1, 0, newSample)
+    elements.samples.totalElements += 1
+  }
+
   /**
    * @param {Object} params = { reaction, materialGroup }
    */
@@ -928,11 +941,11 @@ class ElementStore {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
     const { elements } = this.state;
-    const new_reaction = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
+    const newReaction = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
 
-    // insert new_reaction after reaction
+    // insert newReaction after reaction
     const index = this.state.elements.reactions.elements.findIndex(el => (el.id === reaction.id))
-    this.state.elements.reactions.elements.splice(index + 1, 0, new_reaction)
+    this.state.elements.reactions.elements.splice(index + 1, 0, newReaction)
     elements.reactions.totalElements += 1
   }
 
