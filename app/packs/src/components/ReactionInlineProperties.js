@@ -30,10 +30,14 @@ export default class ReactionInlineProperties extends Component {
   }
 
   renderButtons() {
-    const { reaction, onSave } = this.props
+    const { reaction, onCopy, onSave } = this.props
 
     return (
       <FormGroup>
+        {!reaction.isNew && <Button bsSize="xsmall" bsStyle="success" style={{marginRight: 5}}
+          onClick={(event) => onCopy(event, reaction)}>
+          <i className="fa fa-clone" />
+        </Button>}
         <Button bsSize="xsmall" bsStyle="warning"
           disabled={!permitOn(reaction)}
           onClick={(event) => onSave(event, [reaction], reaction.type)}>

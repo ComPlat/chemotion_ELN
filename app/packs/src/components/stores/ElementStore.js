@@ -186,6 +186,7 @@ class ElementStore {
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
       handleCopyReaction: ElementActions.copyReaction,
+      handleCopyReactionInline: ElementActions.copyReactionInline,
       handleCopyElement: ElementActions.copyElement,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
@@ -918,6 +919,18 @@ class ElementStore {
   handleCopyReaction(result) {
     this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(result.reaction, result.colId));
     Aviator.navigate(`/collection/${result.colId}/reaction/copy`);
+  }
+
+  handleCopyReactionInline(reaction) {
+    this.waitFor(UIStore.dispatchToken);
+    const uiState = UIStore.getState();
+    const { elements } = this.state;
+    const new_reaction = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
+
+    // insert new_reaction after reaction
+    const index = this.state.elements.reactions.elements.findIndex(el => (el.id === reaction.id))
+    this.state.elements.reactions.elements.splice(index + 1, 0, new_reaction)
+    elements.reactions.totalElements += 1
   }
 
   handleCopyElement(result) {
