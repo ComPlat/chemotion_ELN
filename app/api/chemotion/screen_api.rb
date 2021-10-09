@@ -14,6 +14,7 @@ module Chemotion
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
+        optional :inline_edit, type: Boolean, desc: 'return full serialization for inline edit'
       end
       paginate per_page: 5, offset: 0
       before do
@@ -49,7 +50,11 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
+        if params[:inline_edit]
+          paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids, ElementPolicy.new(current_user, s)).serialized}
+        else
+          paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
+        end
       end
 
       desc "Return serialized screen by id"

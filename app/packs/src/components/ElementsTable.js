@@ -13,6 +13,7 @@ import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementsTableEntries from './ElementsTableEntries';
+import ElementsTableInlineEditEntries from './ElementsTableInlineEditEntries';
 import ElementsTableSampleEntries from './ElementsTableSampleEntries';
 import Switch from './Switch';
 
@@ -28,6 +29,7 @@ export default class ElementsTable extends React.Component {
       moleculeSort: false,
       advancedSearch: false,
       productOnly: false,
+      inlineEdit: false,
       page: null,
       pages: null,
       perPage: null,
@@ -42,6 +44,7 @@ export default class ElementsTable extends React.Component {
     this.changeDateFilter = this.changeDateFilter.bind(this);
 
     this.toggleProductOnly = this.toggleProductOnly.bind(this);
+    this.toggleInlineEdit = this.toggleInlineEdit.bind(this);
     this.setFromDate = this.setFromDate.bind(this);
     this.setToDate = this.setToDate.bind(this);
   }
@@ -64,7 +67,7 @@ export default class ElementsTable extends React.Component {
     }
     const { checkedIds, uncheckedIds, checkedAll } = state[this.props.type];
     const {
-      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly
+      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly, inlineEdit
     } = state;
 
     // check if element details of any type are open at the moment
@@ -78,7 +81,7 @@ export default class ElementsTable extends React.Component {
 
     const stateChange = (
       checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt ||
-      fromDate || toDate || productOnly !== this.state.productOnly ||
+      fromDate || toDate || productOnly !== this.state.productOnly || inlineEdit !== this.state.inlineEdit ||
       isAdvS !== this.state.advancedSearch
     );
 
@@ -95,6 +98,7 @@ export default class ElementsTable extends React.Component {
           toDate
         },
         productOnly,
+        inlineEdit,
         advancedSearch: isAdvS
       });
     }
@@ -217,6 +221,10 @@ export default class ElementsTable extends React.Component {
     UIActions.setProductOnly(!this.state.productOnly);
   }
 
+  toggleInlineEdit() {
+    UIActions.setInlineEdit(!this.state.inlineEdit);
+  }
+
   changeDateFilter() {
     let { filterCreatedAt } = this.state;
     filterCreatedAt = !filterCreatedAt;
@@ -235,7 +243,7 @@ export default class ElementsTable extends React.Component {
     const {
       sampleCollapseAll,
       moleculeSort, ui,
-      advancedSearch, productOnly
+      advancedSearch, productOnly, inlineEdit
     } = this.state;
     const { fromDate, toDate } = ui;
     const { type, showReport } = this.props;
@@ -303,6 +311,29 @@ export default class ElementsTable extends React.Component {
     const inchiTooltip = <Tooltip id="date_tooltip">{dateTitle}</Tooltip>;
     const dateIcon = <i className={`fa ${btnIcon}`} />;
 
+    let inlineEditSwitch = null;
+    if (type != 'research_plan') {
+      inlineEditSwitch = (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          &nbsp;&nbsp;
+          <Switch
+            checked={inlineEdit}
+            style={{ marginTop: '3px', width: '85px' }}
+            onChange={this.toggleInlineEdit}
+            title="Change to inline edit mode"
+            checkedChildren="Edit"
+            unCheckedChildren="Table"
+          />
+        </div>
+      )
+    }
+
     const headerRight = (
       <div className="header-right" style={{paddingRight: '25px'}}>
         <OverlayTrigger placement="top" overlay={inchiTooltip}>
@@ -330,6 +361,7 @@ export default class ElementsTable extends React.Component {
             dateFormat="DD-MM-YY"
           />
         </div>
+        {inlineEditSwitch}
         &nbsp;&nbsp;
         {sampleHeader}
       </div>
@@ -352,20 +384,40 @@ export default class ElementsTable extends React.Component {
       ui,
       currentElement,
       sampleCollapseAll,
-      moleculeSort
+      moleculeSort,
+      inlineEdit
     } = this.state
 
     const {overview, type} = this.props
     let elementsTableEntries = null
 
     if (type === 'sample') {
-      elementsTableEntries = (
-        <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
-          elements={elements} currentElement={currentElement}
-          showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
-          onChangeCollapse={(checked) => this.collapseSample(!checked)}
-        />
-      )
+      if (inlineEdit) {
+        elementsTableEntries = (
+          <ElementsTableInlineEditEntries elements={elements} type={type} />
+        )
+      } else {
+        elementsTableEntries = (
+          <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
+            elements={elements} currentElement={currentElement}
+            showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
+            onChangeCollapse={(checked) => this.collapseSample(!checked)}
+          />
+        )
+      }
+    } else if (type === 'reaction' || type === 'wellplate' || type === 'screen') {
+      if (inlineEdit) {
+        elementsTableEntries = (
+          <ElementsTableInlineEditEntries elements={elements} type={type} />
+        )
+      } else {
+        elementsTableEntries = (
+          <ElementsTableEntries
+            elements={elements} currentElement={currentElement}
+            showDragColumn={!overview} ui={ui}
+          />
+        )
+      }
     } else {
       elementsTableEntries = (
         <ElementsTableEntries
@@ -376,7 +428,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div className="list-elements">
+      <div className={inlineEdit ? 'list-elements list-elements-inline' : 'list-elements'}>
         {elementsTableEntries}
       </div>
     )

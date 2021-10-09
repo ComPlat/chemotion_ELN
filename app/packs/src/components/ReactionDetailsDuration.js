@@ -58,14 +58,14 @@ export default class ReactionDetailsDuration extends Component {
   }
 
   render() {
-    const { reaction } = this.props;
+    const { reaction, inline } = this.props;
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
     return (
       <Row className="small-padding">
         <Col md={3} sm={6}>
           <FormGroup>
-            <ControlLabel>Start</ControlLabel>
+            {!inline && <ControlLabel>Start</ControlLabel>}
             <InputGroup>
               <FormControl
                 type="text"
@@ -84,7 +84,7 @@ export default class ReactionDetailsDuration extends Component {
         </Col>
         <Col md={3} sm={6}>
           <FormGroup>
-            <ControlLabel>Stop</ControlLabel>
+            {!inline && <ControlLabel>Stop</ControlLabel>}
             <InputGroup>
               <FormControl
                 type="text"
@@ -103,7 +103,7 @@ export default class ReactionDetailsDuration extends Component {
         </Col>
         <Col md={3} sm={6}>
           <FormGroup>
-            <ControlLabel>Duration</ControlLabel>
+            {!inline && <ControlLabel>Duration</ControlLabel>}
             <InputGroup>
               <FormControl type="text" value={durationCalc || ''} disabled placeholder="Duration" />
               <InputGroup.Button>
@@ -129,7 +129,7 @@ export default class ReactionDetailsDuration extends Component {
         </Col>
         <Col md={3} sm={6}>
           <FormGroup>
-            <ControlLabel>&nbsp;</ControlLabel>
+            {!inline && <ControlLabel>&nbsp;</ControlLabel>}
             <InputGroup>
               <FormControl
                 disabled={!permitOn(reaction)}
@@ -156,10 +156,12 @@ export default class ReactionDetailsDuration extends Component {
 
 ReactionDetailsDuration.propTypes = {
   reaction: PropTypes.object,
+  inline: PropTypes.bool,
   onInputChange: PropTypes.func
 };
 
 ReactionDetailsDuration.defaultProps = {
   reaction: {},
+  inline: false,
   onInputChange: () => {}
 };

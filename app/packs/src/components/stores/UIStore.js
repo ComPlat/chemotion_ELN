@@ -57,6 +57,7 @@ class UIStore {
       fromDate: null,
       toDate: null,
       productOnly: false,
+      inlineEdit: false,
       number_of_results: 15,
       currentCollection: null,
       currentSearchSelection: null,
@@ -116,6 +117,7 @@ class UIStore {
       handleSetFromDate: UIActions.setFromDate,
       handleSetToDate: UIActions.setToDate,
       handleSetProductOnly: UIActions.setProductOnly,
+      handleSetInlineEdit: UIActions.setInlineEdit
     });
   }
 
@@ -280,7 +282,7 @@ class UIStore {
   handleSelectCollection(collection, hasChanged = false) {
     const state = this.state;
     const isSync = collection.is_sync_to_me ? true : false;
-    const { filterCreatedAt, fromDate, toDate, productOnly } = state;
+    const { filterCreatedAt, fromDate, toDate, productOnly, inlineEdit } = state;
 
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
@@ -299,7 +301,7 @@ class UIStore {
       this.state.isSync = isSync;
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
-      const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
+      const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly, inlineEdit };
 
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
@@ -411,6 +413,11 @@ class UIStore {
 
   handleSetProductOnly(productOnly) {
     this.state.productOnly = productOnly;
+    this.handleSelectCollection(this.state.currentCollection, true);
+  }
+
+  handleSetInlineEdit(inlineEdit) {
+    this.state.inlineEdit = inlineEdit;
     this.handleSelectCollection(this.state.currentCollection, true);
   }
 }
