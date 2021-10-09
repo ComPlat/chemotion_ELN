@@ -23,7 +23,7 @@ export default class WellplateInlineProperties extends Component {
 
     return (
       <FormGroup>
-        <Button bsSize="xsmall" bsStyle="warning" disabled={!wellplate.isValid}
+        <Button bsSize="xsmall" bsStyle="warning"
           onClick={(event) => onSave(event, [wellplate], wellplate.type)}>
           <i className="fa fa-floppy-o" />
         </Button>
@@ -33,7 +33,7 @@ export default class WellplateInlineProperties extends Component {
 
   render() {
     const { wellplate, showDetails } = this.props
-    const { name, size } = wellplate
+    const { name } = wellplate
 
     return (
       <tr>

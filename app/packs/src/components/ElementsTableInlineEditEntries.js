@@ -73,7 +73,7 @@ export default class ElementsTableInlineEditEntries extends Component {
     } else if (type == 'wellplate') {
       elements.map(wellplate => {
         if (wellplate.isNew) {
-          ElementActions.createWellplate(wellplate, closeView, refreshElements)
+          ElementActions.createWellplate(wellplate.serialize(), closeView, refreshElements)
           ElementActions.changeElementProperty(wellplate, 'is_new', false)
         } else {
           ElementActions.updateWellplate(wellplate, closeView, refreshElements)
