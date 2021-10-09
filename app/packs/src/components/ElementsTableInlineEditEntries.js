@@ -95,6 +95,7 @@ export default class ElementsTableInlineEditEntries extends Component {
     const { currentCollection } = UIStore.getState();
 
     if (element.type == 'sample') {
+      ElementActions.copySampleInline(element);
     } else if (element.type == 'reaction') {
       ElementActions.copyReactionInline(element);
     } else if (element.type == 'wellplate') {
