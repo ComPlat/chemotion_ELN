@@ -817,7 +817,7 @@ class ElementActions {
   // adopted from DetailActions for the inlineEdit since it needs a different handler
   updateMoleculeNamesInline(sample, newMolName = '') {
     const inchikey = sample.molecule.inchikey;
-    if (!inchikey) { return null; }
+    if (!inchikey) { return { element: null } }
 
     return (dispatch) => {
       MoleculesFetcher

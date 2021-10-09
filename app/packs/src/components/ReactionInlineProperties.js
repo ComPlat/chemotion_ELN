@@ -22,11 +22,6 @@ export default class ReactionInlineProperties extends Component {
     this.handleInputChange = this.handleInputChange.bind(this)
   }
 
-  reactionIsValid() {
-    const { reaction } = this.props;
-    return reaction.hasMaterials() && reaction.SMGroupValid();
-  }
-
   handleInputChange(type, event) {
     const { reaction } = this.props;
     const value = event.target.value;
@@ -39,8 +34,8 @@ export default class ReactionInlineProperties extends Component {
 
     return (
       <FormGroup>
-        <Button bsSize="xsmall" bsStyle="warning" disabled={!reaction.isValid}
-          disabled={!permitOn(reaction) || !this.reactionIsValid()}
+        <Button bsSize="xsmall" bsStyle="warning"
+          disabled={!permitOn(reaction)}
           onClick={(event) => onSave(event, [reaction], reaction.type)}>
           <i className="fa fa-floppy-o" />
         </Button>
