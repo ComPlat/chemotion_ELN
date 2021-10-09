@@ -205,9 +205,6 @@ export default class SampleInlineProperties extends Component {
                            field="external_label" />
         </td>
         <td>
-          <SampleSolventInput sample={sample} inline={true} disabled={isDisabled} onChange={onChange} />
-        </td>
-        <td>
           <table>
             <tbody>
               <tr>

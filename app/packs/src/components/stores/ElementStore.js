@@ -1396,10 +1396,12 @@ class ElementStore {
 
   handleChangeElementProperties({ element, properties }) {
     // used by the inlineEdit functionality
-    const type = element.type + 's'
-    const index = this.state.elements[type].elements.findIndex(el => (el.id === element.id))
-    for (const [field, value] of Object.entries(properties)) {
-      this.state.elements[type].elements[index][field] = value
+    if (element !== null) {
+      const type = element.type + 's'
+      const index = this.state.elements[type].elements.findIndex(el => (el.id === element.id))
+      for (const [field, value] of Object.entries(properties)) {
+        this.state.elements[type].elements[index][field] = value
+      }
     }
   }
 
