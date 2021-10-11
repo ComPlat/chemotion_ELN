@@ -19,7 +19,7 @@ Person.find_each do |u|
   )
   ca =  Collection.find_by(user: u, label: 'All', is_locked: true)
   # Molecule.find_each do |molecule|
-  Molecule.limit(50).each do |molecule|
+  Molecule.limit(100).each do |molecule|
     FileUtils.cp_r "public/images/molecules/#{molecule.molecule_svg_file}", 'public/images/samples/'
     temp_1 = rand(0..273.0).round(2)
     temp_2 = temp_1 + rand(0..20.0).round(2)
@@ -58,14 +58,15 @@ Person.find_each do |u|
     sample.save!
   end
 
-  sample = Sample.includes(:molecule).limit(50)
-  for i in 0..49
-    sample_1 = sample[rand(0..49)]
-    sample_2 = sample[rand(0..49)]
-    sample_3 = sample[rand(0..49)]
-    sample_4 = sample[rand(0..49)]
-    sample_5 = sample[rand(0..49)]
-    sample_6 = sample[rand(0..49)]
+  samples = u.samples.includes(:molecule).limit(50)
+  samples.each_slice(6) do |slice|
+    break if slice.size < 5
+    sample_1 = slice[0]
+    sample_2 = slice[1]
+    sample_3 = slice[2]
+    sample_4 = slice[3]
+    sample_5 = slice[4]
+    sample_6 = slice[5]
 
     starting_material_1 = ReactionsSample.new({
                                                 sample_id: sample_1[:id],
@@ -81,7 +82,7 @@ Person.find_each do |u|
     starting_material_2 = ReactionsSample.new({
                                                 sample_id: sample_2[:id],
                                                 sample: sample_2,
-                                                reference: true,
+                                                reference: false,
                                                 type: 'ReactionsStartingMaterialSample',
                                                 waste: false,
                                                 coefficient: 1,
@@ -92,7 +93,7 @@ Person.find_each do |u|
     reactant_1 = ReactionsSample.new({
                                        sample_id: sample_3[:id],
                                        sample: sample_3,
-                                       reference: true,
+                                       reference: false,
                                        type: 'ReactionsReactantSample',
                                        waste: false,
                                        coefficient: 1,
@@ -103,7 +104,7 @@ Person.find_each do |u|
     reactant_2 = ReactionsSample.new({
                                        sample_id: sample_4[:id],
                                        sample: sample_4,
-                                       reference: true,
+                                       reference: false,
                                        type: 'ReactionsReactantSample',
                                        waste: false,
                                        coefficient: 1,
@@ -114,7 +115,7 @@ Person.find_each do |u|
     product_1 = ReactionsSample.new({
                                       sample_id: sample_5[:id],
                                       sample: sample_5,
-                                      reference: true,
+                                      reference: false,
                                       type: 'ReactionsProductSample',
                                       waste: false,
                                       coefficient: 1,
@@ -125,7 +126,7 @@ Person.find_each do |u|
     product_2 = ReactionsSample.new({
                                       sample_id: sample_6[:id],
                                       sample: sample_6,
-                                      reference: true,
+                                      reference: false,
                                       type: 'ReactionsProductSample',
                                       waste: false,
                                       coefficient: 1,
