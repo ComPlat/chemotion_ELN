@@ -23,6 +23,14 @@ module Export
       @responsible_email = Rails.configuration.radar.email
       @publication_backlink = Rails.configuration.radar.backlink
 
+      # fetch all molecules for this collection and create toc
+      molecules = Molecule.joins(:samples).joins(:collections).where('collections.id = ?', @collection.id).distinct
+      molecule_names = molecules.map do |molecule|
+        mn = "[#{molecule.sum_formular}]"
+        mn << " #{molecule.iupac_name}]" if molecule.iupac_name
+      end
+      @table_of_contents = molecule_names.join("\n")
+
       @assets = []
     end
 
@@ -41,6 +49,12 @@ module Export
         },
         'descriptiveMetadata' => {
           'title' => @title,
+          'descriptions' => {
+            'description' => [{
+                'value': @table_of_contents,
+                'descriptionType': 'TABLE_OF_CONTENTS'
+            }]
+          },
           'productionYear' => @production_date.year,
           'publicationYear' => @publish_date.year,
           'language' => 'ENG',
@@ -64,13 +78,9 @@ module Export
       }
 
       if @metadata['description']
-        radar_metadata['descriptiveMetadata']['descriptions'] = {
-          'description' => [
-            {
-                'value': @metadata['description'],
-                'descriptionType': 'ABSTRACT'
-            }
-          ]
+        radar_metadata['descriptiveMetadata']['descriptions']['description'] << {
+            'value': @metadata['description'],
+            'descriptionType': 'ABSTRACT'
         }
       end
 
