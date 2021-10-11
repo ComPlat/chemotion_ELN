@@ -1,6 +1,23 @@
 
 # Chemotion_ELN Changelog
 
+## [v1.0.1]
+> 2021-10-11
+
+* Improvements:
+
+  * LCSS display info only from ECHA source
+  * QuillEditor: added special characters menu for ResearchPlan 
+    
+
+* Fixes
+  
+  * postinstall rewrite of some imports in citation.js to fix wbpk assets compilation
+  * Reaction SVG refresh  after editing or adding samples 
+  * Fix Cron Jobs for LCSS and Pubchem Info
+  * dev: fix reaction seeds
+
+
 ## [v1.0.0]
 > 2021-09-22
 
