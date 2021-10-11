@@ -2,6 +2,8 @@ module Export
   class ExportRadar
 
     def initialize(job_id, collection_id, user_id)
+      raise 'RADAR credentials not initialized!' unless Rails.configuration.radar
+
       @job_id = job_id
       @collection_id = collection_id
       @user_id = user_id
