@@ -14,7 +14,7 @@ module Export
 
       @user = User.find(@user_id)
 
-      @title = "[#{@user.name_abbreviation}-#{SecureRandom.alphanumeric(4)}] #{@metadata['title']}"
+      @title = "[#{@user.name_abbreviation}-#{@collection_id}] #{@metadata['title']}"
 
       @archive_date = Time.now.utc
       @publish_date = @archive_date
