@@ -239,7 +239,7 @@ export default class ModalExportRadarCollection extends React.Component {
     const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
 
     let bTitle = processing === true ? 'Archiving' : 'Archive to RADAR';
-    if (metadata.radarId) {
+    if (metadata.datasetId) {
       bTitle = processing === true ? 'Updating' : 'Update in RADAR';
     }
 

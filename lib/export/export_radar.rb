@@ -10,7 +10,8 @@ module Export
 
       @collection = Collection.find(@collection_id)
       @metadata = @collection.metadata.metadata
-      @radarId = @collection.metadata.metadata['radarId']
+      @datasetId = @collection.metadata.metadata['datasetId']
+      @fileId = @collection.metadata.metadata['fileId']
 
       @user = User.find(@user_id)
 
@@ -30,8 +31,6 @@ module Export
         mn << " #{molecule.iupac_name}]" if molecule.iupac_name
       end
       @table_of_contents = molecule_names.join("\n")
-
-      @assets = []
     end
 
     def to_json
@@ -76,6 +75,11 @@ module Export
           }
         }
       }
+
+      # add the dataset id for the update
+      unless @datasetId.nil?
+        radar_metadata['id'] = @datasetId
+      end
 
       if @metadata['description']
         radar_metadata['descriptiveMetadata']['descriptions']['description'] << {
@@ -233,17 +237,14 @@ module Export
       }
       body = self.to_json
 
-      # to be removed
-      @radarId = nil
-
-      if @radarId.nil?
+      if @datasetId.nil?
         # create a new dataset
         url = Rails.configuration.radar.url + '/radar/api/workspaces/' + Rails.configuration.radar.workspace_id + '/datasets'
         begin
           response = HTTParty.post(url, :body => body, :headers => headers)
 
           if response.code == 201
-            @radar_id = JSON.parse(response.body)['id']
+            @datasetId = JSON.parse(response.body)['id']
           else
             Rails.logger.error("Error with RADAR: #{response.body} (#{response.code})")
           end
@@ -252,12 +253,12 @@ module Export
         end
 
         # store the radar id in the metadata json
-        @collection.metadata.metadata['radarId'] = @radar_id
-        @collection.metadata.metadata['radarUrl'] = Rails.configuration.radar.url + '/radar/en/dataset/' + @radar_id
+        @collection.metadata.metadata['datasetId'] = @datasetId
+        @collection.metadata.metadata['datasetUrl'] = Rails.configuration.radar.url + '/radar/en/dataset/' + @datasetId
         @collection.metadata.save!
       else
         # update dataset
-        url = Rails.configuration.radar.url + '/radar/api/datasets/' + @radarId
+        url = Rails.configuration.radar.url + '/radar/api/datasets/' + @datasetId
 
         begin
           response = HTTParty.put(url, :body => body, :headers => headers)
@@ -271,30 +272,51 @@ module Export
       end
     end
 
-    def create_assets
+    def create_file
       export = Export::ExportCollections.new(@job_id, [@collection_id], 'zip', true)
       export.prepare_data
       export.to_file
-      @assets << export.file_path
+      @file = export.file_path
     end
 
-    def upload_assets
-      url = Rails.configuration.radar.url + '/radar-ingest/upload/' + @radar_id + '/file'
+    def upload_file
+      upload_url = Rails.configuration.radar.url + '/radar-ingest/upload/' + @datasetId + '/file'
       headers = {
         'Authorization' => 'Bearer ' + @access_token
       }
+      body = {
+        'upload_file' => File.open(@file)
+      }
 
-      @assets.each do |asset|
-        body = {
-          'upload_file' => File.open(asset)
-        }
+      unless @fileId.nil?
+        # delete the old file, we want to replace it
+        file_url = Rails.configuration.radar.url + '/radar/api/files/' + @fileId
+        response = HTTParty.delete(file_url, :headers => headers)
 
-        begin
-          response = HTTParty.post(url, :body => body, :headers => headers)
-        rescue StandardError => e
-          Rails.logger.error('Could not create dataset in RADAR')
+        if response.code == 204
+          @fileId = nil
+        else
+          Rails.logger.error("Error with RADAR: #{response.body} (#{response.code})")
         end
       end
+
+      # upload file
+      begin
+        response = HTTParty.post(upload_url, :body => body, :headers => headers)
+
+        if response.code == 200
+          @fileId = response.body
+        else
+          Rails.logger.error("Error with RADAR: #{response.body} (#{response.code})")
+        end
+      rescue StandardError => e
+        Rails.logger.error('Could not upload file to RADAR')
+      end
+
+      # store the (new) file id in the metadata json
+      @collection.metadata.metadata['fileId'] = @fileId
+      @collection.metadata.metadata['fileUrl'] = Rails.configuration.radar.url + '/radar/en/file/' + @fileId
+      @collection.metadata.save!
     end
   end
 end

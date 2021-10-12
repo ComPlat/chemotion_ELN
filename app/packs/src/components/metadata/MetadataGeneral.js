@@ -8,12 +8,20 @@ import { subjectAreas } from '../staticDropdownOptions/radar/subjectAreas'
 const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
   <div>
     <h4>General</h4>
-    {metadata.radarUrl && <FormGroup>
+    {metadata.datasetUrl && <FormGroup>
       <ControlLabel>
-        RADAR URL
+        RADAR Dataset URL
       </ControlLabel>
       <p>
-        <a href={metadata.radarUrl} target="blank">{metadata.radarUrl}</a>
+        <a href={metadata.datasetUrl} target="blank">{metadata.datasetUrl}</a>
+      </p>
+    </FormGroup>}
+    {metadata.fileUrl && <FormGroup>
+      <ControlLabel>
+        RADAR File URL
+      </ControlLabel>
+      <p>
+        <a href={metadata.fileUrl} target="blank">{metadata.fileUrl}</a>
       </p>
     </FormGroup>}
     <FormGroup>
