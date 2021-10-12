@@ -30,13 +30,11 @@ class ExportCollectionToRadarJob < ActiveJob::Base
 
     begin
       @labels = Collection.where(id: @collection_id).pluck(:label)
-      @link = 'http://example.com'
-
       export = Export::ExportRadar.new(job_id, collection_id, user_id)
       export.fetch_access_token
       export.store_dataset
-      export.create_assets
-      export.upload_assets
+      export.create_file
+      export.upload_file
     rescue StandardError => e
       Delayed::Worker.logger.error e
       # Message.create_msg_notification(
