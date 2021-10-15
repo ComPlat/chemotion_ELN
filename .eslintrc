@@ -12,6 +12,7 @@
     "no-console": ["off"],
     "comma-dangle": [1,"only-multiline"],
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
-    "prefer-destructuring": ["error", {"object": true, "array": false}]
+    "prefer-destructuring": ["error", {"object": true, "array": false}],
+    "react/forbid-prop-types": ["off"]
   }
 }
