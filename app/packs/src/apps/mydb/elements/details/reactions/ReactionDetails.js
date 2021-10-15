@@ -66,6 +66,29 @@ const productLink = (product) => (
   </span>
 );
 
+const handleProductClick = (product) => {
+  const uri = Aviator.getCurrentURI();
+  const uriArray = uri.split(/\//);
+  Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
+  sampleShowOrNew({ params: { sampleID: product.id } });
+};
+
+const productLink = product => (
+  <span>
+    Analysis:
+    &nbsp;
+    <span
+      aria-hidden="true"
+      className="pseudo-link"
+      onClick={() => handleProductClick(product)}
+      style={{ cursor: 'pointer' }}
+      title="Open sample window"
+    >
+      <i className="icon-sample" />&nbsp;{product.title()}
+    </span>
+  </span>
+);
+
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
