@@ -1,5 +1,15 @@
 
 # Chemotion_ELN Changelog
+## [v1.0.1]
+> 2021-10-18
+
+* Improvements:
+
+  * Rename reaction tab 'references' to 'literature'. Please update the current profile_default.yml with the new one.
+    
+
+* Fixes
+  
 
 ## [v1.0.3]
 > 2021-10-21
