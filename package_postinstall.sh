@@ -16,7 +16,7 @@ yellow() {
   printf "${YEL}${1:-}${NOC}\n"
 }
 
-yellow "rewrite import for citation.js in :"
+yellow "rewrite import for citation.js in:"
 
 yellow "$src1"
 sed -i "s~import { version } from '../../package.json';~import pkg from '../../package.json';const version = pkg.version;~" $src1
