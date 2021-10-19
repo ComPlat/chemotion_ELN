@@ -75,6 +75,8 @@
 !/public/images/wild_card/
 !/public/images/ghs/
 
+/public/editors/*
+!/public/editors/.keep
 /public/favicon.ico
 
 /public/ontologies/*
