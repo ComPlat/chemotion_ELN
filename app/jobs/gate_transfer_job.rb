@@ -79,7 +79,8 @@ class GateTransferJob < ApplicationJob
       tmp_files << Tempfile.new(encoding: 'ascii-8bit')
       file_stream = att.read_file
       file_checksum = Digest::SHA256.hexdigest(file_stream)
-      if att.checksum != file_checksum
+      file_checksum_md5 = Digest::MD5.hexdigest(file_stream)
+      if att.checksum != file_checksum && att.checksum != file_checksum_md5
         raise 'The file checksum does not mach, unable to transfer, please try again later!'
       end
       tmp_files[-1].write(file_stream)
