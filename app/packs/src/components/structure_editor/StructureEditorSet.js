@@ -22,18 +22,10 @@ const EditorAttrs =
       getMfFuncName: 'getMOL',
       setMfFuncName: 'loadMOL',
       getSVGFuncName: 'getSVG',
-      getSmiFuncName: 'getSMILES',
       getMfWithCallback: true,
       setMolfileInFrame: false,
       getMolfileFunction: 'getMOL',
       getSVGWithCallback: true,
-      getSmiWithCallback: true
-    },
-    extConf:
-    {
-      layout: { orientation: 'Horizontal' },
-      features: { enabled: ['WebService'] },
-      properties: { StyleSheet: 'ACS Document 1996', chemservice: 'https://chemdrawdirect.perkinelmer.cloud/rest' }
     }
   },
   marvinjs:
