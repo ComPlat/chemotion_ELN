@@ -99,18 +99,25 @@ export default class StructureEditorModal extends React.Component {
   }
 
   onChangeUser(state) {
-    let grantEditors = (state.matriceConfigs || []).map(u => u.configs.editor) || [];
+    let grantEditors = (state.matriceConfigs || []).map(u => u.configs) || [];
     const availableEditors = UIStore.getState().structureEditors || {};
     if (Object.keys(availableEditors.editors || {}).length > 0) {
       grantEditors = grantEditors.map((g) => {
-        const available = availableEditors.editors[g];
+        const available = availableEditors.editors[g.editor];
         if (available) {
           if (available.extJs && available.extJs.length > 0) {
             loadScripts({
-              es: available.extJs, id: g, cbError: () => alert(`${g} is failed to load!`), cbLoaded: () => {}
+              es: available.extJs,
+              id: g.editor,
+              cbError: () => alert(`${g.editor} failed to load!`),
+              cbLoaded: () => {}
             });
           }
-          return Object.assign({}, { [g]: new StructureEditor({ ...EditorAttrs[g], ...available, id: g }) });
+          return Object.assign({}, {
+            [g.editor]: new StructureEditor({
+              ...EditorAttrs[g.editor], ...available, ...g, id: g.editor
+            })
+          });
         }
         return null;
       });
@@ -141,7 +148,7 @@ export default class StructureEditorModal extends React.Component {
       structure.editor.sketcherInstance.exportStructure('mol').then((mMol) => {
         const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
         editorImg.render(mMol).then((svg) => {
-          this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, 'editor-marvinjs'); } });
+          this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
     } else {
@@ -150,7 +157,7 @@ export default class StructureEditorModal extends React.Component {
         this.setState({
           showModal: false,
           showWarning: this.props.hasChildren || this.props.hasParent
-        }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info); } });
+        }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); } });
       });
     }
   }
