@@ -1,6 +1,17 @@
 
 # Chemotion_ELN Changelog
 
+
+## [v1.0.2]
+> 2021-10-19
+
+* Fixes
+  
+  * DB migration: fix typo that could prevent updating from 0.9.1
+  * structure editor: chemdrawjs-20 support
+  * gate transfer: attachment checksum bckwrd compatibility
+
+
 ## [v1.0.1]
 > 2021-10-11
 
