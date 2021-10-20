@@ -137,7 +137,7 @@ module Import
         # neither the Molecule or the MoleculeName are created if they already exist
         molfile = fields.fetch('molfile')
         molecule = fields.fetch('decoupled', nil) && molfile.blank? ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
-        molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id) unless fields.fetch('decoupled', nil) && molfile.blank?
+        molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id) unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
 
         # get the molecule_name from the list of molecule names in molecule
         # this seems a bit cumbersome, but fits in with the methods of Molecule and MoleculeName
