@@ -1,6 +1,16 @@
 
 # Chemotion_ELN Changelog
 
+## [v1.0.3]
+> 2021-10-21
+
+* Fixes
+  
+  * reseach-plan .docx export: convert SVG to PNG sample/reaction images
+  * collection import with sample missing molecule_name: use default value
+  * structure editors: added public/editors to ease set up
+  * node post-install fx to resolve node_modules path when located outside of app (docker)
+
 
 ## [v1.0.2]
 > 2021-10-19
