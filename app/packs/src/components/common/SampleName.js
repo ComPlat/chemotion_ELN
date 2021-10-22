@@ -2,9 +2,8 @@ import React from 'react';
 import Formula from './Formula';
 import ClipboardCopyText from './ClipboardCopyText';
 
-
 const SampleName = ({ sample }) => {
-  const { contains_residues, polymer_type, molecule_formula } = sample;
+  const { contains_residues, polymer_type, molecule_formula, decoupled } = sample;
   const moleculeName = sample.decoupled ? null :
     (<p style={{ wordBreak: 'break-all' }}><ClipboardCopyText text={sample.showedName()} /></p>);
   let stereo = '';
@@ -20,13 +19,15 @@ const SampleName = ({ sample }) => {
     stereo = stereoInfo === '' ? '' : ` - ${stereoInfo}`;
   }
   const sumFormulaCom = <Formula formula={molecule_formula} customText={stereo} />;
+  let clipText = molecule_formula;
   if (contains_residues) {
-    const polymerName = `${polymer_type.charAt(0).toUpperCase()}${polymer_type.slice(1)}`.replace('_', '-');
+    const polymerName = (decoupled && polymer_type === 'self_defined') ? '' : `${polymer_type.charAt(0).toUpperCase()}${polymer_type.slice(1)}`.replace('_', '-');
+    clipText = (decoupled && polymer_type === 'self_defined') ? clipText : `${polymerName} - ${molecule_formula}`;
     return (
       <div>
         <p>
           {polymerName}&nbsp;
-          <ClipboardCopyText text={sumFormulaCom} clipText={`${polymerName} - ${molecule_formula}`} />
+          <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
         </p>
         {moleculeName}
       </div>
@@ -34,7 +35,7 @@ const SampleName = ({ sample }) => {
   }
   return (
     <div>
-      <p><ClipboardCopyText text={sumFormulaCom} clipText={molecule_formula} /></p>
+      <p><ClipboardCopyText text={sumFormulaCom} clipText={clipText} /></p>
       {moleculeName}
     </div>
   );
