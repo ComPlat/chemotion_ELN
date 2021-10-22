@@ -94,7 +94,7 @@ export default class Sample extends Element {
         residue_type: 'polymer', custom_info: {
           "formula": 'CH',
           "loading": null,
-          "polymer_type": "polystyrene",
+          "polymer_type": (this.decoupled ? "self_defined" : "polystyrene"),
           "loading_type": "external",
           "external_loading": 0.0,
           "reaction_product": (this.reaction_product ? true : null),
@@ -123,7 +123,7 @@ export default class Sample extends Element {
             custom_info: {
               "formula": 'CH',
               "loading": (residue.custom_info ? residue.custom_info.loading : null),
-              "polymer_type": "polystyrene",
+              "polymer_type": (this.decoupled ? "self_defined" : "polystyrene"),
               "loading_type": "external",
               "external_loading": 0.0,
               "reaction_product": (this.reaction_product ? true : null),
@@ -433,7 +433,7 @@ export default class Sample extends Element {
   }
 
   set preferred_label(label) {
-    
+
   }
 
   set segments(segments) {
@@ -1021,8 +1021,8 @@ export default class Sample extends Element {
       }
       const solventData = { label: molecule.iupac_name, smiles: molecule.cano_smiles, inchikey: molecule.inchikey, ratio: 1 }
       const filtered = tmpSolvents.find((solv) => {
-        return (solv && solv.label === solventData.label && 
-          solv.smiles === solventData.smiles && 
+        return (solv && solv.label === solventData.label &&
+          solv.smiles === solventData.smiles &&
           solv.inchikey && solventData.inchikey)
       })
       if (!filtered) {
@@ -1039,7 +1039,7 @@ export default class Sample extends Element {
     }
 
     const filteredIndex = tmpSolvents.findIndex((solv) => {
-      return (solv.label === solventToDelete.label && 
+      return (solv.label === solventToDelete.label &&
         solv.smiles === solventToDelete.smiles &&
         solv.inchikey === solventToDelete.inchikey)
     })
@@ -1056,7 +1056,7 @@ export default class Sample extends Element {
     }
 
     const filteredIndex = tmpSolvents.findIndex((solv) => {
-      return (solv.smiles === solventToUpdate.smiles && 
+      return (solv.smiles === solventToUpdate.smiles &&
         solv.inchikey && solventToUpdate.inchikey)
     })
     if (filteredIndex >= 0) {

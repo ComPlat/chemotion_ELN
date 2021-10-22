@@ -40,17 +40,17 @@ import XTabs from './extra/SampleDetailsXTabs';
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
 import Sample from './models/Sample';
-import Container from './models/Container'
+import Container from './models/Container';
 import PolymerSection from './PolymerSection';
 import ElementalCompositionGroup from './ElementalCompositionGroup';
-import ToggleSection from './common/ToggleSection'
-import SampleName from './common/SampleName'
+import ToggleSection from './common/ToggleSection';
+import SampleName from './common/SampleName';
 import ClipboardCopyText from './common/ClipboardCopyText';
-import SampleForm from './SampleForm'
+import SampleForm from './SampleForm';
 import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
 import ComputedPropLabel from './computed_props/ComputedPropLabel';
 import Utils from './utils/Functions';
-import PrintCodeButton from './common/PrintCodeButton'
+import PrintCodeButton from './common/PrintCodeButton';
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import PubchemLcss from './PubchemLcss';
@@ -272,6 +272,15 @@ export default class SampleDetails extends React.Component {
   decoupleChanged(e) {
     const { sample } = this.state;
     sample.decoupled = e.target.checked;
+    if (!sample.decoupled) {
+      sample.sum_formula = '';
+    } else {
+      if (sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+      if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
+        sample.residues[0].custom_info.polymer_type = 'self_defined';
+        delete sample.residues[0].custom_info.surface_type;
+      }
+    }
     if (!sample.decoupled && ((sample.molfile || '') === '')) {
       this.handleSampleChanged(sample);
     } else {
@@ -285,7 +294,6 @@ export default class SampleDetails extends React.Component {
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
-    // this.updateMolecule(molfile, svg_file, smiles);
     if (!smiles || smiles === '') {
       this.setState({ loadingMolecule: true });
       MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor, sample.decoupled)
@@ -479,7 +487,7 @@ export default class SampleDetails extends React.Component {
       <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
 
-    const decoupleCb = sample.can_update ? (
+    const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
         Decoupled
       </Checkbox>
