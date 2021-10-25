@@ -664,12 +664,13 @@ class ElementStore {
 
   handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
+    ElementActions.handleSvgReactionChange(reaction);
     if (closeView) {
-      ElementActions.handleSvgReactionChange(reaction);
       this.changeCurrentElement(reaction);
     } else {
       this.changeCurrentElement(sample);
     }
+
     // TODO: check if this is needed with the new handling of changing CE
     // maybe this.handleRefreshElements is enough
     this.handleUpdateElement(sample);
