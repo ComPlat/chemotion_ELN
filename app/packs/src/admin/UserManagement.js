@@ -1,6 +1,8 @@
+// FIXME: formatting
 import React from 'react';
-import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab } from 'react-bootstrap';
 import Select from 'react-select';
+import { CSVReader } from 'react-papaparse';
 import UsersFetcher from '../components/fetchers/UsersFetcher';
 import AdminFetcher from '../components/fetchers/AdminFetcher';
 import MessagesFetcher from '../components/fetchers/MessagesFetcher';
@@ -67,9 +69,10 @@ export default class UserManagement extends React.Component {
       selectedUsers: null,
       showMsgModal: false,
       showNewUserModal: false,
-      createUserMessage: '',
-      editUserMessage: '',
-      showEditUserModal: false
+      createUserMessage: '', // FIXME: rename, misleading: implies two different actions (create, edit) on "UserMessage"
+      editUserMessage: '', // FIXME: rename, misleading: implies two different actions (create, edit) on "UserMessage"
+      showEditUserModal: false,
+      userFileProcessingSummary: '',
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
     this.handleMsgShow = this.handleMsgShow.bind(this);
@@ -145,7 +148,7 @@ export default class UserManagement extends React.Component {
     AdminFetcher.updateAccount({ user_id: id, enable: lockedAt !== null })
       .then((result) => {
         this.handleFetchUsers();
-        const message = lockedAt !== null ? 'Account unloacked!' : 'Account locked!'
+        const message = lockedAt !== null ? 'Account unloacked!' : 'Account locked!' // FIXME: typo
         alert(message);
       });
   }
@@ -204,10 +207,10 @@ export default class UserManagement extends React.Component {
   }
 
   validateUserInput() {
-    if (this.email.value === '') {
+    if (this.email.value === '') { // also validated in backend
       this.setState({ createUserMessage: 'Please input email.' });
       return false;
-    } else if (!validateEmail(this.email.value.trim())) {
+    } else if (!validateEmail(this.email.value.trim())) { // also validated in backend
       this.setState({ createUserMessage: 'You have entered an invalid email address!' });
       return false;
     } else if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
@@ -216,10 +219,10 @@ export default class UserManagement extends React.Component {
     } else if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
       this.setState({ createUserMessage: 'passwords do not mach!' });
       return false;
-    } else if (this.password.value.trim().length < 2) {
+    } else if (this.password.value.trim().length < 2) { // also validated in backend; FIXME: increase password length from 2 to 8
       this.setState({ createUserMessage: 'Password is too short (minimum is 8 characters)' });
       return false;
-    } else if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') {
+    } else if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') { // also validated in backend
       this.setState({ createUserMessage: 'Please input First name, Last name and Name abbreviation' });
       return false;
     }
@@ -254,6 +257,143 @@ export default class UserManagement extends React.Component {
         return true;
       });
     return true;
+  }
+
+  handleOnDropUserFile = (data, file) => {
+    const validFileTypes = ['text/csv', 'application/vnd.ms-excel'];
+    if (!validFileTypes.includes(file.type)) { // Note that MIME type doesn't reliably indicate file type. It's only an initial guard and data is validated more thoroughly during processing.
+      this.setState({ userFileProcessingSummary: `Invalid file type ${file.type}. Please make sure to upload a CSV file.` });
+      this.newUsers = null;
+      return false;
+    }
+    this.newUsers = data;
+    for (let i = 0; i < this.newUsers.length; i++) {
+      this.newUsers[i].data.row = i + 1;
+    }
+  };
+
+  handleOnErrorUserFile = (err, file, inputElem, reason) => {
+    console.log(err);
+    this.newUsers = null;
+  };
+
+  handleOnRemoveUserFile = (data) => {
+    this.newUsers = null;
+  };
+
+  handleCreateNewUsersFromFile() {
+    if (!this.validUserFile()) {
+      this.newUsers = null;
+      this.setState({ createUserMessage: 'Finished processing user file.' });
+    } else {
+      const promisedNewUsers = this.newUsers.map(user => this.createNewUserFromFile(user));
+      Promise.allSettled(promisedNewUsers)
+        .then((userResults) => {
+          this.showProcessingSummaryUserFile(userResults);
+        })
+        .then(() => this.handleFetchUsers())
+        .catch((reason) => {
+          this.setState({ createUserMessage: `Failed to process user file: ${reason}.` });
+        });
+    }
+  }
+
+  createNewUserFromFile(newUser) {
+    return AdminFetcher.createUserAccount({
+      email: newUser.data.email.trim(),
+      password: newUser.data.password.trim(),
+      first_name: newUser.data.firstname.trim(),
+      last_name: newUser.data.lastname.trim(),
+      name_abbreviation: newUser.data.nameabbr.trim(),
+      type: newUser.data.type.trim()
+    })
+      .then((result) => {
+        let userResult = `Row ${newUser.data.row}: Successfully created new user.`;
+        if (result.error) {
+          userResult = `Row ${newUser.data.row}: Failed to create user; ${result.error}.`;
+        }
+        this.setState({ createUserMessage: userResult });
+        return userResult;
+      });
+  }
+
+  validUserFile() {
+    if (!Array.isArray(this.newUsers) || !this.newUsers.length) {
+      this.setState({ userFileProcessingSummary: 'The file is empty.' });
+      return false;
+    }
+
+    const nUsers = this.newUsers.length;
+    const nUsersMax = 100;
+    if (nUsers > nUsersMax) {
+      this.setState({ userFileProcessingSummary: `The file contains too many users. Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.` });
+      return false;
+    }
+
+    const fileHeader = this.newUsers[0].meta.fields;
+    const validHeader = ['email', 'password', 'firstname', 'lastname', 'nameabbr', 'type'];
+    if (!(fileHeader.length === validHeader.length &&
+      fileHeader.every((val, index) => val === validHeader[index]))) {
+      this.setState({ userFileProcessingSummary: `The file contains an invalid header ${fileHeader}. Please make sure that your file's header is organized as follows: ${validHeader}.` });
+      return false;
+    }
+
+    let parsingErrorMessage = '';
+    this.newUsers.forEach((user) => {
+      const parsingErrors = user.errors;
+      if (parsingErrors.length) {
+        parsingErrors.forEach((error) => {
+          parsingErrorMessage += `Row ${user.data.row}: The user could not be parsed correctly; ${error.message}\n\n`;
+        });
+      }
+    });
+    if (!(parsingErrorMessage === '')) {
+      this.setState({ userFileProcessingSummary: parsingErrorMessage });
+      return false;
+    }
+
+    // We need to guard against invalid user types when creating multiple users from file,
+    // since user type is not validated on the backend.
+    // The backend doesn't validate user type because in the modal for adding a single users,
+    // the user type cannot be invalid since it's selected from a dropdown.
+    // However, when multiple users are created from a file, type can be any string.
+    const validTypes = ['Person', 'Device', 'Admin'];
+    let invalidTypeMessage = '';
+    this.newUsers.forEach((user) => {
+      const userType = user.data.type.trim();
+      if (!validTypes.includes(userType)) {
+        invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}" is invalid. Please select a valid type from ${validTypes}.\n\n`;
+      }
+    });
+    if (!(invalidTypeMessage === '')) {
+      this.setState({ userFileProcessingSummary: invalidTypeMessage });
+      return false;
+    }
+
+    const sortedUserEmails = this.newUsers.map(user => user.data.email).sort();
+    const duplicateUserEmails = new Set();
+    for (let i = 0; i < sortedUserEmails.length - 1; i++) {
+      if (sortedUserEmails[i + 1] == sortedUserEmails[i]) {
+        duplicateUserEmails.add(sortedUserEmails[i]);
+      }
+    }
+    if (duplicateUserEmails.size) {
+      this.setState({ userFileProcessingSummary: `The file contains duplicate user emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.` });
+      return false;
+    }
+
+    return true;
+  }
+
+  showProcessingSummaryUserFile(userResults) {
+    let summary = '';
+    userResults.forEach((result) => {
+      summary += `${result.value}\n\n`;
+    });
+    this.setState({
+      createUserMessage: 'Finished processing user file.',
+      userFileProcessingSummary: summary
+    });
   }
 
   handleUpdateUser(user) {
@@ -379,88 +519,155 @@ export default class UserManagement extends React.Component {
         <Modal.Header closeButton>
           <Modal.Title>New User</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-9">
-            <Form horizontal>
-              <FormGroup controlId="formControlEmail">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Email:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlPassword">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Password:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="password" name="password" inputRef={(ref) => { this.password = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlPasswordConfirmation">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Password Confirmation:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="password" inputRef={(ref) => { this.passwordConfirm = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlFirstName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  First name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" name="firstname" inputRef={(ref) => { this.firstname = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlLastName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Last name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" name="lastname" inputRef={(ref) => { this.lastname = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlAbbr">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Abbr (3) *:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" name="nameAbbr" inputRef={(ref) => { this.nameAbbr = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlsType">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Type:
-                </Col>
-                <Col sm={9}>
-                  <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }} >
-                    <option value="Person">Person</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Device">Device</option>
-                  </FormControl>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlMessage">
-                <Col sm={12}>
-                  <FormControl type="text" readOnly name="createUserMessage" value={this.state.createUserMessage} />
-                </Col>
-              </FormGroup>
-              <FormGroup>
-                <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()} >
-                    Create&nbsp;
+        <Modal.Body>
+          <Tabs id="createUserTabs">
+            <Tab eventKey="singleUser" title="Single user">
+              <Form horizontal>
+                <FormGroup controlId="formControlEmail">
+                  <Col componentClass={ControlLabel} sm={3}>
+                    Email:
+                  </Col>
+                  <Col sm={9}>
+                    <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="formControlPassword">
+                  <Col componentClass={ControlLabel} sm={3}>
+                    Password:
+                  </Col>
+                  <Col sm={9}>
+                    <FormControl type="password" name="password" inputRef={(ref) => { this.password = ref; }} />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="formControlPasswordConfirmation">
+                  <Col componentClass={ControlLabel} sm={3}>
+                    Password Confirmation:
+                  </Col>
+                  <Col sm={9}>
+                    <FormControl type="password" inputRef={(ref) => { this.passwordConfirm = ref; }} />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="formControlFirstName">
+                  <Col componentClass={ControlLabel} sm={3}>
+                    First name:
+                  </Col>
+                  <Col sm={9}>
+                    <FormControl type="text" name="firstname" inputRef={(ref) => { this.firstname = ref; }} />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="formControlLastName">
+                  <Col componentClass={ControlLabel} sm={3}>
+                    Last name:
+                  </Col>
+                  <Col sm={9}>
+                    <FormControl type="text" name="lastname" inputRef={(ref) => { this.lastname = ref; }} />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="formControlAbbr">
+                  <Col componentClass={ControlLabel} sm={3}>
+                    Abbr (3) *:
+                  </Col>
+                  <Col sm={9}>
+                    <FormControl type="text" name="nameAbbr" inputRef={(ref) => { this.nameAbbr = ref; }} />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="formControlsType">
+                  <Col componentClass={ControlLabel} sm={3}>
+                    Type:
+                  </Col>
+                  <Col sm={9}>
+                    <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }} >
+                      <option value="Person">Person</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Device">Device</option>
+                    </FormControl>
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col smOffset={0} sm={10}>
+                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()} >
+                      Create user&nbsp;
+                      <i className="fa fa-plus" />
+                    </Button>
+                  </Col>
+                </FormGroup>
+              </Form>
+            </Tab>
+            <Tab eventKey="multiUser" title="Multiple users from file">
+              <Form>
+                <FormGroup>
+                  <ControlLabel>Please format the user file like the table below.</ControlLabel>
+                  <Table striped bordered hover>
+                    <thead>
+                      <tr>
+                        <th>email</th>
+                        <th>password</th>
+                        <th>firstname</th>
+                        <th>lastname</th>
+                        <th>nameabbr</th>
+                        <th>type</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>john.doe@eln.edu</td>
+                        <td>password0</td>
+                        <td>John</td>
+                        <td>Doe</td>
+                        <td>jod</td>
+                        <td>Person</td>
+                      </tr>
+                      <tr>
+                        <td>jane.doe@eln.edu</td>
+                        <td>password1</td>
+                        <td>Jane</td>
+                        <td>Doe</td>
+                        <td>jad</td>
+                        <td>Person</td>
+                      </tr>
+                    </tbody>
+                  </Table>
+                </FormGroup>
+                <FormGroup id="userFileDragAndDrop">
+                  <CSVReader
+                    onDrop={this.handleOnDropUserFile}
+                    onError={this.handleOnErrorUserFile}
+                    style={{}}
+                    config={{ header: true, skipEmptyLines: true }}
+                    addRemoveButton
+                    onRemoveFile={this.handleOnRemoveUserFile}
+                  >
+                    <span>Drop a CSV user file here or click to upload.
+                      The following column-delimiters are accepted: &apos;,&apos; or &apos;;&apos; or &apos;tab&apos;.
+                    </span>
+                  </CSVReader>
+                </FormGroup>
+                <FormGroup>
+                  <Button bsStyle="primary" onClick={() => this.handleCreateNewUsersFromFile()} >
+                    Create users&nbsp;
                     <i className="fa fa-plus" />
                   </Button>
-                  &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleNewUserClose()} >
-                    Cancel&nbsp;
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Form>
-          </div>
+                </FormGroup>
+                <FormGroup>
+                  <ControlLabel>Processing Summary</ControlLabel>
+                  <FormControl
+                    readOnly
+                    id="processingSummary"
+                    componentClass="textarea"
+                    rows="5"
+                    style={{ whiteSpace: 'pre-wrap', overflowY: 'scroll' }}
+                    value={this.state.userFileProcessingSummary}
+                  />
+                </FormGroup>
+              </Form>
+            </Tab>
+          </Tabs>
+          <Modal.Footer>
+            <FormGroup controlId="formControlMessage">
+              <FormControl type="text" readOnly name="createUserMessage" value={this.state.createUserMessage} />
+            </FormGroup>
+            <Button bsStyle="warning" onClick={() => this.handleNewUserClose()} >Cancel</Button>
+          </Modal.Footer>
         </Modal.Body>
       </Modal>
     );
