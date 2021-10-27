@@ -5,7 +5,8 @@ module.exports = {
     extensions: ['.json', '...'],
     fallback: {
       util: require.resolve('util/'),
-      querystring: require.resolve('querystring-es3')
+      querystring: require.resolve('querystring-es3'),
+      stream: false
     }
   },
   plugins: [
