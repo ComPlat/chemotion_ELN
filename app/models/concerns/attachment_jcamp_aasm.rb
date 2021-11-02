@@ -332,7 +332,7 @@ module AttachmentJcampProcess
   end
 
   def infer_with_molfile(params)
-    molfile = attachable.root_element.molecule.molfile
+    molfile = attachable.root_element.molfile || attachable.root_element.molecule.molfile
     Tempfile.create('molfile') do |t_molfile|
       t_molfile.write(molfile)
       t_molfile.rewind
