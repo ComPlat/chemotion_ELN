@@ -32,6 +32,7 @@ class Channel < ApplicationRecord
   COLLECTION_ZIP = 'Collection Import and Export'
   COLLECTION_ZIP_FAIL = 'Collection Import and Export Failure'
   CHEM_SPECTRA_NOTIFICATION = 'Chem Spectra Notification'
+  ASSIGN_INBOX_TO_SAMPLE = 'Assign Inbox Attachment to Sample'
 
   class << self
     def build_message(**args)
