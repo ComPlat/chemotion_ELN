@@ -109,10 +109,16 @@ module Reporter
     end
 
     def buildDeltaOps(op)
-      return op["insert"] if (!op["attributes"])
+      return op["insert"] if (!op["attributes"]) && (!op["insert"]["image"])
 
       styles = []
       tags = []
+
+      if (op["insert"]["image"])
+        styles << "color:red"
+        styles << "font-weight:bold"
+        return "<i><span style=\"#{styles.join(";")}\">(Image is not supported in this version)</span></i>"
+      end
 
       (op["attributes"].keys || []).each do |html_attr|
         value = op["attributes"][html_attr].to_s
