@@ -3,8 +3,9 @@ import {Button, Popover, Overlay, ControlLabel, FormGroup, FormControl} from 're
 import SVG from 'react-inlinesvg';
 import UIStore from './stores/UIStore';
 import { wellplateShowSample } from './routesUtils';
+import Select from 'react-select';
 
-const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFromWell}) => {
+const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFromWell, handleWellLabel}) => {
   return (
     <Overlay  rootClose
               show={show}
@@ -12,16 +13,28 @@ const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFr
               placement={placement}
               onHide={() => handleClose()} >
       <Popover title={title(handleClose)} id={'wellpop'+well.id}>
-        {content(well, removeSampleFromWell)}
+        {content(well, removeSampleFromWell, handleWellLabel)}
       </Popover>
     </Overlay>
   );
 }
 
-const content = (well, removeSampleFromWell) => {
+const content = (well, removeSampleFromWell, handleWellLabel) => {
   const { sample } = well;
+
+  const labels = [{
+    label: 'Name',
+    value: 'name'
+  }, {
+    label: 'External name',
+    value: 'external name'
+  }, {
+    label: 'Molecular structure',
+    value: 'Molecular structure'
+  }];
+
   return(
-    <div style={{width: 200, height: 620}}>
+    <div style={{width: 200, height: 750}}>
       {renderWellContent(well, removeSampleFromWell)}
       <div>
         <hr style={{marginTop: 28, marginBottom: 10}}/>
@@ -41,6 +54,14 @@ const content = (well, removeSampleFromWell) => {
             style={{height: 100}}
           />
         </FormGroup>
+        <Select
+          id="label"
+          name="label"
+          multi={false}
+          options={labels}
+          value={well.label}
+          onChange={(e) => handleWellLabel(e)}
+        />
       </div>
     </div>
   )

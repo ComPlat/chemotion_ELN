@@ -90,6 +90,7 @@ class WellContainer extends Component {
         <div style={{ ...containerStyle, ...style}}>
           <Well
             active={active}
+            label={well.label}
             sample={well.sample}
             />
         </div>

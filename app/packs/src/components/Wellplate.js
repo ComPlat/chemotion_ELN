@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 import WellContainer from './WellContainer';
 import WellplateLabels from './WellplateLabels';
 import WellOverlay from './WellOverlay';
+import WellplatesFetcher from './fetchers/WellplatesFetcher';
 
 export default class Wellplate extends Component {
   constructor(props) {
@@ -108,6 +109,17 @@ export default class Wellplate extends Component {
     return (showOverlay && overlayWell == well);
   }
 
+  setWellLabel(target) {
+    const { overlayWell } = this.state;
+    WellplatesFetcher.updateWellLabel({
+      id: overlayWell.id,
+      label: target.value,
+    }).then((result) => {
+      overlayWell.label = result.label;
+      this.setState({ overlayWell });
+    });
+  }
+
   render() {
     const {wells, size, cols, width, handleWellsChange} = this.props;
     const {showOverlay, overlayTarget, overlayWell, overlayPlacement} = this.state;
@@ -160,7 +172,8 @@ export default class Wellplate extends Component {
           target={() => ReactDOM.findDOMNode(this.refs[overlayTarget]).children[0]}
           handleClose={() => this.hideOverlay()}
           removeSampleFromWell={well => this.removeSampleFromWell(well)}
-          />
+          handleWellLabel={value => this.setWellLabel(value)}
+        />
       </div>
     );
   }
