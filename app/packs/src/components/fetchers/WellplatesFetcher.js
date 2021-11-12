@@ -138,4 +138,23 @@ export default class WellplatesFetcher {
 
     return promise;
   }
+
+  static updateWellLabel(params) {
+    let promise = fetch('/api/v1/wellplates/well_label', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
 }

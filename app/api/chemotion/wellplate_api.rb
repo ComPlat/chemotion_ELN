@@ -188,6 +188,22 @@ module Chemotion
           end
         end
       end
+
+      namespace :well_label do
+        desc "update well label"
+        params do
+          requires :id, type: Integer
+          requires :label, type: String
+        end
+        after_validation do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Well.find(params[:id]).wellplate).update?
+        end
+        post do
+          well = Well.find(params[:id])
+          well.update(label: params[:label])
+          { label: well.label }
+        end
+      end
     end
   end
 end

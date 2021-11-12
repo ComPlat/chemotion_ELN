@@ -163,4 +163,5 @@ yarn-debug.log*
 /public/welcome-message.md
 
 vendor/bundle/*
+vendor/cache/*
 .idea/*
