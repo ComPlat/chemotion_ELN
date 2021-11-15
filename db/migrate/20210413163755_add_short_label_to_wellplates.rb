@@ -1,4 +1,4 @@
-class AddShortLabelToWellplates < ActiveRecord::Migration
+class AddShortLabelToWellplates < ActiveRecord::Migration[5.2]
   def up
     add_column :wellplates, :short_label, :string
 
