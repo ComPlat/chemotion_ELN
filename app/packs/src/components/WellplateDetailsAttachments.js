@@ -7,6 +7,7 @@ import EditorFetcher from './fetchers/EditorFetcher';
 import ImageModal from './common/ImageModal';
 import SpinnerPencilIcon from './common/SpinnerPencilIcon';
 import { previewAttachmentImage } from './utils/imageHelper';
+import Utils from './utils/Functions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
@@ -82,6 +83,10 @@ export default class WellplateDetailsAttachments extends Component {
           alert('Unauthorized to edit this file.');
         }
       });
+  }
+
+  handleTemplateDownload() { // eslint-disable-line class-methods-use-this
+    Utils.downloadFile({ contents: '/xlsx/wellplate_import_template.xlsx', name: 'wellplate_import_template.xlsx' });
   }
 
   renderRemoveAttachmentButton(attachment) {
@@ -206,7 +211,12 @@ export default class WellplateDetailsAttachments extends Component {
     }
     return (
       <div>
-        There are currently no Datasets.<br />
+        <a onClick={() => this.handleTemplateDownload()} style={{ cursor: 'pointer' }}>
+          Download Wellplate Import Template xlsx.<br />
+        </a><br />
+        <div>
+          There are currently no Datasets.<br />
+        </div>
       </div>
     );
   }
