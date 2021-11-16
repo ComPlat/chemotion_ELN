@@ -563,6 +563,8 @@ module ReportHelpers
       sel.symbolize_keys.fetch(table, []).each do |col|
         if col == 'user_labels'
           selection << "labels_by_user_sample(#{user_id}, s_id) as user_labels"
+        elsif col == 'literature'
+          selection << "literatures_by_element('Sample', s_id) as literatures"
         elsif (s = attrs[table][col.to_sym])
           selection << (s[1] && s[0] + ' as ' + s[1] || s[0])
         end

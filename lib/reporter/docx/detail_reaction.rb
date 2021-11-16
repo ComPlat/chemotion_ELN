@@ -228,9 +228,10 @@ module Reporter
         liters = obj.literatures
         return [] if !liters
         liters.each do |l|
-          output.push({ title: l[:title],
-                        url: l[:url]
-          })
+          bib = l[:refs] && l[:refs]['bibtex']
+          bb = DataCite::LiteraturePaser.parse_bibtex!(bib, id)
+          bb = DataCite::LiteraturePaser.get_metadata(bb, l[:doi], id) unless bb.class == BibTeX::Entry
+          output.push(DataCite::LiteraturePaser.report_hash(l, bb)) if bb.class == BibTeX::Entry
         end
         return output
       end
