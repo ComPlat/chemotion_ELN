@@ -63,6 +63,7 @@ export default class ModalExport extends React.Component {
           {value: "created_at", text: "created at", checked: true},
           {value: "updated_at", text: "updated at", checked: false},
           {value: "user_labels", text: "user labels", checked: false},
+          {value: "literature", text: "literature", checked: false},
         ],
         molecule: [
           {value: "cano_smiles", text: "canonical smiles", checked: true},

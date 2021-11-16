@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_09_24_095106) do
+ActiveRecord::Schema.define(version: 2021_11_17_235010) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1175,6 +1175,16 @@ ActiveRecord::Schema.define(version: 2021_09_24_095106) do
        WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
        group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
        ) as result
+       $function$
+  SQL
+  create_function :literatures_by_element, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(l2.title::text, CHR(10)) as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
   create_function :user_ids, sql_definition: <<-SQL
