@@ -38,7 +38,6 @@ describe 'Collection management' do
 
   describe 'Delete an unshared collection' do
     it 'delete an unshared collection', js: true do
-      # byebug
       # press Collections button (on the left-side tree view)
       find('div.take-ownership-btn').click
 

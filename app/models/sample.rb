@@ -203,7 +203,7 @@ class Sample < ApplicationRecord
   has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w[amount_value amount_unit]
 
-  has_ancestry
+  has_ancestry orphan_strategy: :adopt
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   belongs_to :molecule, optional: true

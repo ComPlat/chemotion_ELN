@@ -102,7 +102,7 @@ class Attachment < ApplicationRecord
   end
 
   def old_store(old_store = self.storage_was)
-    Storage.old_store(self,old_store)
+    Storage.old_store(self, old_store)
   end
 
   def add_checksum
@@ -115,10 +115,10 @@ class Attachment < ApplicationRecord
   end
 
   def regenerate_thumbnail
-    return unless self.filesize <= 50 * 1024 * 1024
+    return unless filesize <= 50 * 1024 * 1024
 
     store.regenerate_thumbnail
-    save! if self.thumb
+    update_column('thumb', thumb) if thumb_changed?
   end
 
   def for_research_plan?
