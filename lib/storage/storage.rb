@@ -31,10 +31,10 @@ class Storage
 
   def move_to_store(store = primary_store)
     dest_store = self.class.constantize(store).new(attachment)
-    attachment.file_data = read_file
-    attachment.thumb_data = read_thumb if attachment.thumb
+    attachment.file_path = path
+    attachment.thumb_data = read_thumb if attachment.thumb && attachment.filesize <= 50 * 1024 * 1024
     file_stored = dest_store.store_file
-    thumb_stored = dest_store.store_thumb if attachment.thumb
+    thumb_stored = dest_store.store_thumb if attachment.thumb && attachment.filesize <= 50 * 1024 * 1024
     #TODO checksum check
     file_removed = remove_file(true) if file_stored
     thumb_removed = remove_thumb_file(true) if thumb_stored
@@ -47,7 +47,7 @@ class Storage
   end
 
   def regenerate_thumbnail
-    return if (fn = attachment.filename).blank? || (fe = File.extname(fn)&.downcase).blank?
+    return if (fn = attachment.filename).blank? || (fe = File.extname(fn)&.downcase).blank? || attachment.filesize <= 50 * 1024 * 1024
     # wa for issue with 'jpeg' extension
     fe = '.jpg' if fe == '.jpeg'
     tmp = Tempfile.new([fn, fe], encoding: 'ascii-8bit')

@@ -1,23 +1,25 @@
 import 'whatwg-fetch';
 
 export default class MoleculesFetcher {
-  static fetchByMolfile(molfile, svgfile, editor = 'ketcher') {
+  static fetchByMolfile(molfile, svgfile, editor = 'ketcher', decoupled = false) {
     return fetch('/api/v1/molecules', {
       credentials: 'same-origin',
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ molfile, svg_file: svgfile, editor })
+      body: JSON.stringify({
+        molfile, svg_file: svgfile, editor, decoupled
+      })
     }).then(response => response.json()).then(json => json)
       .catch(errorMessage => console.log(errorMessage));
   }
 
-  static fetchBySmi(smi, svgfile, molfile) {
+  static fetchBySmi(smi, svgfile, molfile, editor = 'ketcher') {
     return fetch('/api/v1/molecules/smiles', {
       credentials: 'same-origin',
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        smiles: smi, svg_file: svgfile, layout: molfile
+        smiles: smi, svg_file: svgfile, layout: molfile, editor
       })
     }).then(response => response.json()).then(json => json)
       .catch(errorMessage => console.log(errorMessage));

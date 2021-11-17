@@ -647,6 +647,7 @@ class ElementStore {
     UserActions.fetchCurrentUser();
     reaction.addMaterial(newSample, materialGroup);
     this.handleRefreshElements('sample');
+    ElementActions.handleSvgReactionChange(reaction);
     this.changeCurrentElement(reaction);
   }
 
@@ -665,6 +666,7 @@ class ElementStore {
   handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
     if (closeView) {
+      ElementActions.handleSvgReactionChange(reaction);
       this.changeCurrentElement(reaction);
     } else {
       this.changeCurrentElement(sample);
@@ -1081,7 +1083,7 @@ class ElementStore {
 
     if (index === -1) {
       this.state.activeKey = selecteds.length;
-      this.state.selecteds = this.addElement(nextEl);
+      if (nextEl) this.state.selecteds = this.addElement(nextEl);
     } else {
       this.state.activeKey = index;
       this.state.selecteds = this.updateElement(nextEl, index);
@@ -1243,11 +1245,10 @@ class ElementStore {
 
   deleteCurrentElement(deleteEl) {
     const newSelecteds = this.deleteElement(deleteEl)
-    const left = this.state.activeKey - 1
-    this.setState(
-      prevState => ({ ...prevState, selecteds: newSelecteds }),
-      this.resetCurrentElement(left, newSelecteds)
-    )
+    let left = this.state.activeKey - 1
+    if ( left < 0 ) left = 0;
+    this.setState({  selecteds: newSelecteds });
+    this.resetCurrentElement(left, newSelecteds);
   }
 
   isDeletable(deleteEl) {

@@ -7,7 +7,7 @@ import {
   InputGroup, FormGroup, FormControl,
   Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, DropdownButton, MenuItem,
-  ControlLabel, Modal, Alert
+  ControlLabel, Modal, Alert, Checkbox
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -135,6 +135,7 @@ export default class SampleDetails extends React.Component {
     this.decoupleMolecule = this.decoupleMolecule.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.decoupleChanged = this.decoupleChanged.bind(this);
   }
 
   componentDidMount() {
@@ -231,7 +232,7 @@ export default class SampleDetails extends React.Component {
       .then((result) => {
         if (!result || result == null) {
           // eslint-disable-next-line no-alert
-          alert('Can not create molecule with this smiles!');
+          alert('Cannot create molecule with this smiles!');
         } else {
           sample.molfile = result.molfile;
           sample.molecule_id = result.id;
@@ -265,7 +266,17 @@ export default class SampleDetails extends React.Component {
       });
   }
 
-  handleStructureEditorSave(molfile, svg_file = null, config = null, editor = null) {
+  decoupleChanged(e) {
+    const { sample } = this.state;
+    sample.decoupled = e.target.checked;
+    if (!sample.decoupled && ((sample.molfile || '') === '')) {
+      this.handleSampleChanged(sample);
+    } else {
+      this.handleSampleChanged(sample, this.decoupleMolecule);
+    }
+  }
+
+  handleStructureEditorSave(molfile, svg_file = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
@@ -274,7 +285,7 @@ export default class SampleDetails extends React.Component {
     // this.updateMolecule(molfile, svg_file, smiles);
     if (!smiles || smiles === '') {
       this.setState({ loadingMolecule: true });
-      MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor)
+      MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor, sample.decoupled)
         .then((result) => {
           sample.molecule = result;
           sample.molecule_id = result.id;
@@ -285,20 +296,28 @@ export default class SampleDetails extends React.Component {
             pageMessage: result.ob_log
           });
         }).catch((errorMessage) => {
-          console.log(errorMessage);
+          alert('Cannot create molecule!');
+          console.log(`handleStructureEditorSave exception of fetchByMolfile: ${errorMessage}`);
         });
     } else {
       this.setState({ loadingMolecule: true });
-      MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile)
+      MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile, editor)
         .then((result) => {
-          sample.molecule = result;
-          sample.molecule_id = result.id;
-          this.setState({
-            sample,
-            smileReadonly: true,
-            loadingMolecule: false,
-            pageMessage: result.ob_log
-          });
+          if (!result || result == null) {
+            alert('Cannot create molecule!');
+          } else {
+            sample.molecule = result;
+            sample.molecule_id = result.id;
+            this.setState({
+              sample,
+              smileReadonly: true,
+              loadingMolecule: false,
+              pageMessage: result.ob_log
+            });
+          }
+        }).catch((errorMessage) => {
+          alert('Cannot create molecule!');
+          console.log(`handleStructureEditorSave exception of fetchBySmi: ${errorMessage}`);
         });
     }
     this.hideStructureEditor();
@@ -345,7 +364,7 @@ export default class SampleDetails extends React.Component {
       <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
         <Glyphicon glyph="pencil" />
       </Button>
-    )
+    );
   }
 
   svgOrLoading(sample) {
@@ -454,9 +473,14 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     const colLabel = sample.isNew ? null : (
-      <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
+      <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
 
+    const decoupleCb = sample.can_update ? (
+      <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
+        Decoupled
+      </Checkbox>
+    ) : null;
 
     return (
       <div>
@@ -510,6 +534,7 @@ export default class SampleDetails extends React.Component {
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={sample} />
+        {decoupleCb}
         <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           {colLabel}
@@ -539,17 +564,24 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const style = { height: '200px' };
-    const pubchemLcss = sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss ?
-      sample.pubchem_tag.pubchem_lcss.Record.Section[0].Section[0].Section[0].Information : null;
+    let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
+    if (pubchemLcss && pubchemLcss.Reference) {
+      const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
+      if (echa.length > 0) {
+        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Safety and Hazards') || [];
+        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Hazards Identification') || [];
+        pubchemLcss = pubchemLcss.Section[0].Information.filter(e => echa.includes(e.ReferenceNumber)) || null;
+      } else pubchemLcss = null;
+    }
     const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid ?
       sample.pubchem_tag.pubchem_cid : 0;
-    const lcssSign = pubchemLcss ?
+    const lcssSign = pubchemLcss && !sample.decoupled ?
       <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : <div />;
 
     return (
       <Row style={style}>
         <Col md={4}>
-          <h4><SampleName sample={sample}/></h4>
+          <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
           {lcssSign}

@@ -17,7 +17,7 @@ const PubchemLcss = ({
     picArry.map((p) => {
       const makeups = p.Value.StringWithMarkup;
       makeups.map((ms) => {
-        const extract = ms.Markup.map((m) => { return { src: m.URL.replace(sourceRoot, ''), title: m.Extra }; });
+        const extract = ms.Markup.map(m => ({ src: m.URL.replace(sourceRoot, ''), title: m.Extra }));
         imgs = concat(imgs, extract);
       });
     });
@@ -49,11 +49,9 @@ const PubchemLcss = ({
         <Col md={12}>
           <Button style={{ border: 'none' }} bsSize="xsmall" onClick={() => { window.open(`${sourceRoot}/compound/${cid}#datasheet=lcss&section=Top`, '_blank'); }}>
             <img src="/images/wild_card/pubchem.svg" style={{ height: '1.5vh' }} alt="" />&nbsp;
-            <i style={{
-              color: '#777777', fontSize: '10px', fontWeight: 'bold', textDecoration: 'underline'
-              }}
-            >
-              Read more about Safety Summary...
+            <i className="lcss-link">
+              Source: European Chemicals Agency (ECHA)<br />
+              Read more about Safety Summary from PubChem
             </i>
           </Button>
         </Col>

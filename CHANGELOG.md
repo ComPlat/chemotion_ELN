@@ -1,6 +1,44 @@
 
 # Chemotion_ELN Changelog
 
+## [v1.0.3]
+> 2021-10-21
+
+* Fixes
+  
+  * reseach-plan .docx export: convert SVG to PNG sample/reaction images
+  * collection import with sample missing molecule_name: use default value
+  * structure editors: added public/editors to ease set up
+  * node post-install fx to resolve node_modules path when located outside of app (docker)
+
+
+## [v1.0.2]
+> 2021-10-19
+
+* Fixes
+  
+  * DB migration: fix typo that could prevent updating from 0.9.1
+  * structure editor: chemdrawjs-20 support
+  * gate transfer: attachment checksum bckwrd compatibility
+
+
+## [v1.0.1]
+> 2021-10-11
+
+* Improvements:
+
+  * LCSS display info only from ECHA source
+  * QuillEditor: added special characters menu for ResearchPlan 
+    
+
+* Fixes
+  
+  * postinstall rewrite of some imports in citation.js to fix wbpk assets compilation
+  * Reaction SVG refresh  after editing or adding samples 
+  * Fix Cron Jobs for LCSS and Pubchem Info
+  * dev: fix reaction seeds
+
+
 ## [v1.0.0]
 > 2021-09-22
 
