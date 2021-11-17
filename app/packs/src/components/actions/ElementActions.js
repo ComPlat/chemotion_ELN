@@ -18,6 +18,7 @@ import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ContainerFetcher from '../fetchers/ContainerFetcher';
 import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 import PrivateNoteFetcher from '../fetchers/PrivateNoteFetcher'
+import MetadataFetcher from '../fetchers/MetadataFetcher';
 
 import GenericEl from '../models/GenericEl';
 import Sample from '../models/Sample';
@@ -32,8 +33,8 @@ import ComputeTask from '../models/ComputeTask';
 import DeviceControl from '../models/DeviceControl';
 import LiteratureMap from '../models/LiteratureMap';
 import Prediction from '../models/Prediction';
+import Metadata from '../models/Metadata';
 import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
-
 import _ from 'lodash';
 
 const handleFetch = (dispatch, fetch) => {
@@ -686,6 +687,29 @@ class ElementActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
+  }
+
+  // -- DataCite/Radar metadata --
+  fetchMetadata(collection_id) {
+    return (dispatch) => {
+      return MetadataFetcher.fetch(collection_id)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  storeMetadata(metadata) {
+    return (dispatch) => {
+      return MetadataFetcher.store(metadata)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
   // -- Report --

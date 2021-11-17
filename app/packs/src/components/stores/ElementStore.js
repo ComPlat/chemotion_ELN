@@ -229,6 +229,7 @@ class ElementStore {
           ElementActions.showPredictionContainer,
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
+      handleFetchMetadata: ElementActions.fetchMetadata,
       handleDeleteElements: ElementActions.deleteElements,
 
       handleUpdateElementsCollection: ElementActions.updateElementsCollection,
@@ -1307,7 +1308,6 @@ class ElementStore {
   // End of DetailStore
   /////////////////////
 
-
   // -- Private Note --
   handleCreatePrivateNote(note) {
     this.state.currentElement.private_note = note
@@ -1317,6 +1317,12 @@ class ElementStore {
   handleUpdatePrivateNote(note) {
     this.state.currentElement.private_note = note
     this.changeCurrentElement(this.state.currentElement)
+  }
+
+  // -- Metadata --
+
+  handleFetchMetadata(metadata) {
+    this.changeCurrentElement(metadata);
   }
 }
 

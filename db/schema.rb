@@ -597,6 +597,14 @@ ActiveRecord::Schema.define(version: 2021_09_24_095106) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "metadata", force: :cascade do |t|
+    t.integer "collection_id"
+    t.jsonb "metadata"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "molecule_names", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.integer "user_id"
@@ -1353,7 +1361,7 @@ ActiveRecord::Schema.define(version: 2021_09_24_095106) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL

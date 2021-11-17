@@ -1,0 +1,33 @@
+development:
+  :url: https://test.radar-service.eu
+  :client_id:
+  :client_secret:
+  :redirect_url:
+  :username:
+  :password:
+  :contract_id:
+  :workspace_id:
+  :email:
+  :backlink:
+  :publisher:
+  :resource:
+  :resourceType:
+  :softwareName:
+  :softwareVersion:
+
+production:
+  :url: https://www.radar-service.eu
+  :client_id:
+  :client_secret:
+  :redirect_url:
+  :username:
+  :password:
+  :contract_id:
+  :workspace_id:
+  :email:
+  :backlink:
+  :publisher:
+  :resource:
+  :resourceType:
+  :softwareName:
+  :softwareVersion:
