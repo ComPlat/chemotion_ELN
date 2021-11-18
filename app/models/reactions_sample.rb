@@ -13,6 +13,8 @@
 #  waste       :boolean          default(FALSE)
 #  coefficient :float            default(1.0)
 #  show_label  :boolean          default(FALSE), not null
+#  created_at  :datetime         default(Fri, 01 Oct 2021 00:00:00 UTC +00:00), not null
+#  updated_at  :datetime         default(Fri, 01 Oct 2021 00:00:00 UTC +00:00), not null
 #
 # Indexes
 #
@@ -21,6 +23,8 @@
 #
 
 class ReactionsSample < ApplicationRecord
+  include Versionable
+
   acts_as_paranoid
   belongs_to :reaction, optional: true
   belongs_to :sample, optional: true

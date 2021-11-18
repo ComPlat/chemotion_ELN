@@ -3,6 +3,8 @@ require 'grape-entity'
 require 'grape-swagger'
 
 class API < Grape::API
+  include LogidzeModule
+
   format :json
   prefix :api
   version 'v1'
@@ -143,6 +145,7 @@ class API < Grape::API
   mount Chemotion::NmrdbAPI
   mount Chemotion::MeasurementsAPI
   mount Chemotion::ConverterAPI
+  mount Chemotion::VersionAPI
 
   add_swagger_documentation(info: {
     "title": "Chemotion ELN",

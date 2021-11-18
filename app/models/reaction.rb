@@ -50,6 +50,7 @@ class Reaction < ApplicationRecord
   include Taggable
   include ReactionRinchi
   include Segmentable
+  include Versionable
 
   serialize :description, Hash
   serialize :observation, Hash

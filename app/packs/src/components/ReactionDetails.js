@@ -19,6 +19,7 @@ import ReactionDetailsContainers from './ReactionDetailsContainers';
 import SampleDetailsContainers from './SampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
+import VersionsTable from './VersionsTable';
 import GreenChemistry from './green_chem/GreenChemistry';
 import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton';
@@ -99,9 +100,9 @@ export default class ReactionDetails extends Component {
     const nextReaction = nextProps.reaction;
 
     if (nextReaction.id !== reaction.id ||
-        nextReaction.updated_at !== reaction.updated_at ||
-        nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
-        nextReaction.changed || nextReaction.editedSample) {
+      nextReaction.updated_at !== reaction.updated_at ||
+      nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
+      nextReaction.changed || nextReaction.editedSample) {
       this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
     }
   }
@@ -460,6 +461,14 @@ export default class ReactionDetails extends Component {
             onReactionChange={this.handleReactionChange}
           />
         </Tab>
+      ),
+      history: (
+        <Tab eventKey="history" title="History" key={`history_${reaction.id}`}>
+          <VersionsTable
+            type="reactions"
+            id={reaction.id}
+          />
+        </Tab>
       )
     };
 
@@ -508,7 +517,13 @@ export default class ReactionDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="reaction-detail-tab">
+          <Tabs
+            activeKey={activeTab}
+            onSelect={this.handleSelect}
+            id="reaction-detail-tab"
+            mountOnEnter
+            unmountOnExit
+          >
             {tabContents}
           </Tabs>
           <hr />

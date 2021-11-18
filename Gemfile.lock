@@ -429,6 +429,10 @@ GEM
     listen (3.3.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
+    logidze (1.2.0)
+      activerecord (>= 5.0)
+      railties (>= 5.0)
+      ruby-next-core (~> 0.9)
     loofah (2.17.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -641,6 +645,7 @@ GEM
       activesupport
       memoist
     ruby-mailchecker (3.2.29)
+    ruby-next-core (0.13.1)
     ruby-ole (1.2.12.2)
     ruby-progressbar (1.10.1)
     ruby2_keywords (0.0.2)
@@ -828,6 +833,7 @@ DEPENDENCIES
   ketcherails!
   launchy (~> 2.4.3)
   listen
+  logidze
   memory_profiler
   meta_request
   net-sftp
