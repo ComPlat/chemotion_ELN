@@ -62,6 +62,8 @@ COPY Gemfile /home/gitlab-runner/
 COPY Gemfile.lock /home/gitlab-runner/
 COPY package.json /home/gitlab-runner/
 COPY yarn.lock /home/gitlab-runner/
+COPY package_postinstall.sh /home/gitlab-runner/
+
 RUN sudo chmod 666 Gemfile.lock
 RUN sudo chmod 666 yarn.lock
 

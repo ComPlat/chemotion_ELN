@@ -1,15 +1,32 @@
 
 # Chemotion_ELN Changelog
-## [v1.0.1]
-> 2021-10-18
 
-* Improvements:
+## [v1.1.0]
+> 2021-11-18
 
-  * Rename reaction tab 'references' to 'literature'. Please update the current profile_default.yml with the new one.
-    
+* NB:
+  * Admin: if applicable, chemspectra backend should be updated to version XXX
+  * Developers: reactjs updated to 17
+
+* Features and Improvements:
+  * export sample: literature option for excel list https://github.com/ComPlat/chemotion_ELN/issues/554
+  * report: Add literature section in standard sample report  https://github.com/ComPlat/chemotion_ELN/issues/554
+  * report: Add more information to standard reaction report https://github.com/ComPlat/chemotion_ELN/issues/523
+  * attachments-inbox: filename matching  with sample’s “name” or “external name”. https://github.com/ComPlat/chemotion_ELN/issues/537
+  * attachments-inbox: case-insensitive matching https://github.com/ComPlat/chemotion_ELN/issues/537
+  * attachments-inbox: added labels “product” or “start material” if applicable https://github.com/ComPlat/chemotion_ELN/issues/537
+  * attachments-inbox: when the assignment is completed, send a notification to user’s message box https://github.com/ComPlat/chemotion_ELN/issues/537
+  * attachments-inbox: filename matching to support files from ELA system. 
+  * chemspectra: UV-vis layout extension  (part of https://github.com/ComPlat/chemotion_ELN/issues/531 )
+  * chemspectra: Add further functions to XRD layout https://github.com/ComPlat/chemotion_ELN/issues/532
+  * wellplate designer: select info to be displayed in well (https://github.com/ComPlat/chemotion_ELN/issues/556)
+  * name_abbreviation regexp validation is configurable
+  * swagger documentation: visibility of endpoints doc customizable
+  * rename reaction tab 'references' to 'literature'. Please update the current profile_default.yml with the new one.
 
 * Fixes
-  
+  * fix filtering product samples of reactions when filter is on on sample list
+
 
 ## [v1.0.3]
 > 2021-10-21
