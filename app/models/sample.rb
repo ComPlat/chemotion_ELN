@@ -70,6 +70,7 @@ class Sample < ApplicationRecord
   include UnitConvertable
   include Taggable
   include Labimotion::Segmentable
+  include Versionable
 
   STEREO_ABS = ['any', 'rac', 'meso', 'delta', 'lambda', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)', '(Ra)'].freeze
   STEREO_REL = %w[any syn anti p-geminal p-ortho p-meta p-para cis trans fac mer].freeze

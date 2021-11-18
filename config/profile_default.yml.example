@@ -1,11 +1,11 @@
-development:
+default: &default
   :layout:
     :layout:
       :sample: 1
       :reaction: 2
       :wellplate: 3
       :screen: 4
-      :research_plan: 5
+      :research_plan: 
       :cell_line: -1000
       :device_description: -1100
     :layout_detail_research_plan:
@@ -28,6 +28,8 @@ development:
         4
       :results:
         5
+      :history:
+        6
     :layout_detail_reaction:
       :scheme:
         1
@@ -41,6 +43,8 @@ development:
         5
       :variations:
         6
+      :history:
+        7
     :layout_detail_wellplate:
       :properties:
         1

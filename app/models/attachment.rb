@@ -33,7 +33,9 @@
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #
 
-class Attachment < ApplicationRecord
+class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
+  include Versionable
+
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter
