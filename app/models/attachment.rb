@@ -32,6 +32,8 @@
 #
 
 class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
+  include Versionable
+
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter

@@ -34,6 +34,7 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -504,6 +505,14 @@ export default class ReactionDetails extends Component {
           />
         </Tab>
       ),
+      history: (
+        <Tab eventKey="history" title="History" key={`history_${reaction.id}`}>
+          <VersionsTable
+            type="reactions"
+            id={reaction.id}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
@@ -546,6 +555,7 @@ export default class ReactionDetails extends Component {
             activeKey={currentActiveTab}
             onSelect={this.handleSelect}
             id="reaction-detail-tab"
+            mountOnEnter
             unmountOnExit
           >
             {tabContents}

@@ -61,6 +61,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 const MWPrecision = 6;
 
@@ -1269,6 +1270,22 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  historyTab(ind) {
+    const { sample } = this.state;
+    if (!sample) { return null; }
+    return (
+      <Tab
+        eventKey={ind}
+        title="History"
+        key={`${sample.id}_${ind}`}
+      >
+        <ListGroupItem style={{ paddingBottom: 20 }}>
+          <VersionsTable type="samples" id={sample.id} />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   nmrSimTab(ind) {
     const { sample } = this.state;
     if (!sample) {
@@ -1417,6 +1434,7 @@ export default class SampleDetails extends React.Component {
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
       measurements: this.measurementsTab('measurements'),
+      history: this.historyTab('history'),
     };
 
     if (this.enableComputedProps) {
@@ -1517,6 +1535,8 @@ export default class SampleDetails extends React.Component {
               activeKey={currentActiveTab}
               onSelect={this.handleSelect}
               id="SampleDetailsXTab"
+              mountOnEnter
+              unmountOnExit
             >
               {tabContents}
             </Tabs>

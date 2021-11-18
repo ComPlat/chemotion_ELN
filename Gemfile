@@ -119,6 +119,8 @@ gem 'whenever', require: false
 
 gem 'yaml_db'
 
+gem 'logidze'
+
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser
 
