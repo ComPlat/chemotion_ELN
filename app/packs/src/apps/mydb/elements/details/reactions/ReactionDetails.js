@@ -40,6 +40,7 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -353,10 +354,15 @@ export default class ReactionDetails extends Component {
   }
 
   handleSelect(key) {
-    UIActions.selectTab({ tabKey: key, type: 'reaction' });
+    UIActions.selectTab({
+      tabKey: key,
+      type: 'reaction'
+    });
     this.setState({
       activeTab: key
     });
+  }
+
   reactionSVG() {
     const { reaction } = this.state;
     if (!reaction.svgPath || !reaction.hasMaterials()) {
@@ -536,6 +542,14 @@ export default class ReactionDetails extends Component {
           />
         </Tab>
       ),
+      history: (
+        <Tab eventKey="history" title="History" key={`history_${reaction.id}`}>
+          <VersionsTable
+            type="reactions"
+            id={reaction.id}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
@@ -578,7 +592,8 @@ export default class ReactionDetails extends Component {
             activeKey={currentActiveTab}
             onSelect={this.handleSelect}
             id="reaction-detail-tab"
-            unmountOnExit={true}
+            mountOnEnter
+            unmountOnExit
           >
             {tabContents}
           </Tabs>

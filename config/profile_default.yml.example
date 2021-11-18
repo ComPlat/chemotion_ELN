@@ -26,6 +26,8 @@ development:
         4
       :results:
         5
+      :history:
+        6
     :layout_detail_reaction:
       :scheme:
         1
@@ -37,6 +39,8 @@ development:
         4
       :green_chemistry:
         5
+      :history:
+        6
     :layout_detail_wellplate:
       :properties:
         1
@@ -80,6 +84,8 @@ production:
         4
       :results:
         5
+      :history:
+        6
     :layout_detail_reaction:
       :scheme:
         1
@@ -91,6 +97,8 @@ production:
         4
       :green_chemistry:
         5
+      :history:
+        6
     :layout_detail_wellplate:
       :properties:
         1
