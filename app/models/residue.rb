@@ -15,6 +15,7 @@
 #
 
 class Residue < ApplicationRecord
+  include Versionable
 
   belongs_to :sample, optional: true
   validate :loading_present

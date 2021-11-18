@@ -16,6 +16,8 @@
 #
 
 class ElementalComposition < ApplicationRecord
+  include Versionable
+
   belongs_to :sample
 
   TYPES = {
