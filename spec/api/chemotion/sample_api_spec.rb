@@ -648,6 +648,7 @@ describe Chemotion::SampleAPI do
         melting_point_lowerbound: 200,
         molfile: File.read("#{Rails.root}/spec/fixtures/test_2.mol"),
         is_top_secret: false,
+        dry_solvent: true,
         xref: { 'cas' => cas },
         container: {
           attachments: [],
@@ -687,6 +688,19 @@ describe Chemotion::SampleAPI do
     it 'sets the creator' do
       s = Sample.find_by(name: 'test')
       expect(s.creator).to eq(user)
+    end
+
+    context 'with dry solvent' do
+      let(:sample) { Sample.find_by(name: 'test') }
+
+      it 'correctly sets the dry_solvent field' do
+        expect(sample.dry_solvent).to be(true)
+      end
+
+      it 'can be set to false' do
+        sample.dry_solvent = false
+        expect(sample.dry_solvent).to be(false)
+      end
     end
   end
 
