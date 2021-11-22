@@ -41,6 +41,7 @@
 /config/spectra.yml
 /config/editors.yml
 /config/inference.yml
+/config/omniauth.yml
 
 /node_modules
 
