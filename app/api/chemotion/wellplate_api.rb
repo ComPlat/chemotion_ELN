@@ -204,6 +204,22 @@ module Chemotion
           { label: well.label }
         end
       end
+
+      namespace :well_color_code do
+        desc "add or update color code"
+        params do
+          requires :id, type: Integer
+          requires :color_code, type: String
+        end
+        after_validation do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Well.find(params[:id]).wellplate).update?
+        end
+        post do
+          well = Well.find(params[:id])
+          well.update(color_code: params[:color_code])
+          { color_code: well.color_code }
+        end
+      end
     end
   end
 end

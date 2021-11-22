@@ -157,4 +157,23 @@ export default class WellplatesFetcher {
     });
     return promise;
   }
+
+  static updateWellColorCode(params) {
+    let promise = fetch('/api/v1/wellplates/well_color_code', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
 }
