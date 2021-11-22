@@ -23,17 +23,19 @@
 #  name_abbreviation      :string(12)
 #  type                   :string           default("Person")
 #  reaction_name_prefix   :string(3)        default("R")
-#  layout                 :hstore           not null
 #  confirmation_token     :string
 #  confirmed_at           :datetime
 #  confirmation_sent_at   :datetime
 #  unconfirmed_email      :string
+#  layout                 :hstore           not null
 #  selected_device_id     :integer
 #  failed_attempts        :integer          default(0), not null
 #  unlock_token           :string
 #  locked_at              :datetime
 #  account_active         :boolean
 #  matrix                 :integer          default(0)
+#  omniauth_provider      :string
+#  omniauth_uid           :string
 #
 # Indexes
 #

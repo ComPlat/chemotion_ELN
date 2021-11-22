@@ -144,6 +144,14 @@ class UserActions {
       });
     }
   }
+
+  fetchOmniauthProviders() {
+    return (dispatch) => {
+      UsersFetcher.fetchOmniauthProviders()
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    }
+  }
 }
 
 export default alt.createActions(UserActions);

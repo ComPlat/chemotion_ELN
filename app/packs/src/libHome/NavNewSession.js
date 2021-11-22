@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, FormGroup, FormControl, Glyphicon, Navbar, NavItem, Nav, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
-const NewSession = ({ authenticityToken }) => (
+const NewSession = ({ authenticityToken, omniauthProviders }) => (
   <div>
     <Nav pullRight><NavItem href="/users/sign_up"> or Sign Up </NavItem></Nav>
     <Navbar.Form pullRight>
@@ -22,11 +22,25 @@ const NewSession = ({ authenticityToken }) => (
         </Button>
       </form>
     </Navbar.Form>
+    {
+      omniauthProviders.includes('orcid') && <Nav pullRight>
+        <NavItem href="/users/auth/orcid" className="omniauth-navitem">
+          <img src="images/omniauth/ORCIDiD_icon32x32.png"/>Login with ORCID
+        </NavItem>
+      </Nav>
+    }
+    {
+      omniauthProviders.includes('github') && <Nav pullRight>
+        <NavItem href="/users/auth/github" className="omniauth-navitem">
+          <img src="images/omniauth/GitHub-Mark-32px.png"/>Login with GitHub
+        </NavItem>
+      </Nav>
+    }
   </div>
 );
 
 NewSession.propTypes = {
-  authenticityToken: PropTypes.string.isRequired,
+  authenticityToken: PropTypes.string.isRequired
 };
 
 export default NewSession;

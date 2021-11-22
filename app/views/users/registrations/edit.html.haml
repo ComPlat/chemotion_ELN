@@ -29,6 +29,17 @@
   %h3 Cancel my account
   %p
     Unhappy? #{button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete, class: 'btn btn-danger'}
+  %h3 Account connections
+  - if resource.omniauth_provider
+    %p Your account is connected to #{resource.omniauth_provider.to_s.titleize}.
+    - resource_class.omniauth_providers.each do |provider|
+      - if provider.to_s != resource.omniauth_provider
+        = link_to "Connect with #{provider.to_s.titleize} instead", omniauth_authorize_path(resource_name, provider)
+        %br/
+  - else
+    - resource_class.omniauth_providers.each do |provider|
+      = link_to "Connect existing account with #{provider.to_s.titleize}", omniauth_authorize_path(resource_name, provider)
+      %br/
 
   %br/
   %br/

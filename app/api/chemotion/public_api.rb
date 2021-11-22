@@ -38,6 +38,13 @@ module Chemotion
         end
       end
 
+      namespace :omniauth_providers do
+        desc "get omniauth providers"
+        get do
+          Devise.omniauth_configs.keys
+        end
+      end
+
       namespace :download do
         desc 'download file for editoring'
         before do

@@ -11,13 +11,13 @@ class ApplicationController < ActionController::Base
 
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: [
-      :email, :first_name, :last_name, :name_abbreviation,
+      :email, :first_name, :last_name, :name_abbreviation, :omniauth_provider, :omniauth_uid,
       affiliations_attributes: [
         :country,
         :organization,
         :department,
         :group
-      ]
+      ],
     ])
     devise_parameter_sanitizer.permit(:sign_in) do |u|
       u.permit(:login, :password, :remember_me)

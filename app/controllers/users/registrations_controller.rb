@@ -12,6 +12,25 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
     @affiliation = resource.affiliations.build
 
+    # try to get the data from the oauth provider from the session
+    if data = session['devise.omniauth.data']
+      resource.email = data['email'] if resource.email.blank?
+      resource.first_name = data['first_name'] if resource.first_name.blank?
+      resource.last_name = data['last_name'] if resource.last_name.blank?
+
+      if data['affiliation']
+        resource.affiliations[0].organization = data['affiliation']['organization'] if resource.affiliations[0].organization.blank?
+        resource.affiliations[0].country = data['affiliation']['country'] if resource.affiliations[0].country.blank?
+        resource.affiliations[0].department = data['affiliation']['department-name'] if resource.affiliations[0].department.blank?
+      end
+
+      resource.omniauth_provider = data['provider']
+      resource.omniauth_uid = data['uid']
+
+      # delete the entry in the session
+      session.delete('devise.omniauth.data')
+    end
+
     set_minimum_password_length
     yield resource if block_given?
     respond_with self.resource
@@ -21,6 +40,10 @@ class Users::RegistrationsController < Devise::RegistrationsController
   def create
     build_resource(sign_up_params)
     resource.affiliations = [Affiliation.find_or_create_by(resource.affiliations.first.slice(:country, :organization, :department, :group))]
+
+    if resource.password.nil?
+      resource.password = Devise.friendly_token[0,20]
+    end
 
     resource_saved = resource.save
     yield resource if block_given?
