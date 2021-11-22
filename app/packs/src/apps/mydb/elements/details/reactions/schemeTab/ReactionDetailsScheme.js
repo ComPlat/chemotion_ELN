@@ -292,6 +292,11 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForExternalLabelChange(changeEvent)
         );
         break;
+      case 'drysolventChanged':
+        this.onReactionChange(
+          this.updatedReactionForDrySolventChange(changeEvent)
+        );
+        break;
       case 'externalLabelCompleted':
         const { reaction } = this.state;
         this.onReactionChange(reaction, { schemaChanged: true });
@@ -334,6 +339,15 @@ export default class ReactionDetailsScheme extends Component {
     updatedSample.external_label = externalLabel;
 
     return this.updatedReactionWithSample(this.updatedSamplesForExternalLabelChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForDrySolventChange(changeEvent) {
+    const { sampleID, dry_solvent } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
+
+    updatedSample.dry_solvent = dry_solvent;
+
+    return this.updatedReactionWithSample(this.updatedSamplesForDrySolventChange.bind(this), updatedSample);
   }
 
   updatedReactionForReferenceChange(changeEvent) {
@@ -671,6 +685,17 @@ export default class ReactionDetailsScheme extends Component {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         sample.external_label = updatedSample.external_label;
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForDrySolventChange(samples, updatedSample) {
+    const { referenceMaterial } = this.props.reaction;
+
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        sample.dry_solvent = updatedSample.dry_solvent;
       }
       return sample;
     });

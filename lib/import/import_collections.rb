@@ -226,6 +226,7 @@ module Import
           'impurities',
           'location',
           'is_top_secret',
+          'dry_solvent',
           'external_label',
           'short_label',
           'real_amount_value',

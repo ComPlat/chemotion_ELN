@@ -21,6 +21,7 @@ module Entities
       expose! :type
       expose :comments,                                     using: 'Entities::CommentEntity'
       expose :comment_count
+      expose :dry_solvent
     end
 
     # Level 1 attributes

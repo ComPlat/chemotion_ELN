@@ -353,7 +353,7 @@ class Import::ImportJson
     when 'Sample'
       attributes -= [
         'ancestry', 'molecule_id', 'xref', 'fingerprint_id', 'molecule_name_id',
-        'is_top_secret', 'molecule_svg_file'
+        'is_top_secret', 'molecule_svg_file', 'dry_solvent'
       ]
       attributes += %w[residues_attributes elemental_compositions_attributes molecule_name_attributes]
     # when 'Reaction'

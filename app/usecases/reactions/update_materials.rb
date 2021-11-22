@@ -96,6 +96,7 @@ module Usecases
         subsample.real_amount_value = sample.real_amount_value
         subsample.real_amount_unit = sample.real_amount_unit
         subsample.metrics = sample.metrics
+        subsample.dry_solvent = sample.dry_solvent
 
         # add new data container
         subsample.container = update_datamodel(sample.container) if sample.container
@@ -152,6 +153,7 @@ module Usecases
         existing_sample.short_label = sample.short_label if sample.short_label
         existing_sample.short_label = fixed_label if fixed_label
         existing_sample.name = sample.name if sample.name
+        existing_sample.dry_solvent = sample.dry_solvent
 
         if r = existing_sample.residues[0]
           r.assign_attributes sample.residues_attributes[0]

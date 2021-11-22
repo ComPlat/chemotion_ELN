@@ -42,6 +42,7 @@
 #  molecular_mass      :float
 #  sum_formula         :string
 #  solvent             :jsonb
+#  dry_solvent         :boolean          default(FALSE)
 #  inventory_sample    :boolean          default(FALSE)
 #
 # Indexes

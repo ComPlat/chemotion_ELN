@@ -127,6 +127,22 @@ export default class SampleForm extends React.Component {
     return (<span />);
   }
 
+  drySolventCheckbox(sample) {
+    if (sample.can_update) {
+      return (
+        <Checkbox
+          inputRef={(ref) => { this.drySolventInput = ref; }}
+          checked={sample.dry_solvent}
+          onChange={(e) => this.handleFieldChanged('dry_solvent', e.target.checked)}
+        >
+          Dry Solvent
+        </Checkbox>
+      );
+    }
+
+    return (<span />);
+  }
+
   decoupledCheckbox(sample) {
     if (sample.can_update) {
       return (
@@ -660,13 +676,12 @@ export default class SampleForm extends React.Component {
                 <div style={{ width: '33%', paddingLeft: '5px' }}>
                   {this.textInput(sample, 'external_label', 'External label')}
                 </div>
-                <div style={{ width: '33%', paddingLeft: '5px' }}>
+                <div style={{ width: '30%', paddingLeft: '5px' }}>
                   {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
                 </div>
-                {/* <div style={{ width: '40%' }}>
-                  <label htmlFor="solventInput">Solvent</label>
-                  {this.sampleSolvent(sample)}
-                </div> */}
+                <div style={{ width: '16%', paddingLeft: '30px' }} className="top-secret-checkbox">
+                  {this.drySolventCheckbox(sample)}
+                </div>
               </div>
             </td>
           </tr>
