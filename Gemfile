@@ -57,6 +57,8 @@ gem 'net-ssh'
 gem 'nokogiri'
 
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
+gem 'omniauth', '~> 1.9.1'
+gem 'omniauth-github', '~> 1.4.0'
 
 gem 'pandoc-ruby'
 gem 'paranoia', '~> 2.0'

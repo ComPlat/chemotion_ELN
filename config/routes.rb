@@ -9,7 +9,7 @@ Rails.application.routes.draw do
       put 'users' => 'devise/registrations#update', :as => 'user_registration'
     end
   else
-    devise_for :users, controllers: { registrations: 'users/registrations' }
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }
   end
 
   authenticated :user, lambda {|u| u.type == "Admin"} do

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_16_113952) do
+ActiveRecord::Schema.define(version: 2021_11_22_142906) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1081,6 +1081,8 @@ ActiveRecord::Schema.define(version: 2021_08_16_113952) do
     t.datetime "locked_at"
     t.boolean "account_active"
     t.integer "matrix", default: 0
+    t.string "omniauth_provider"
+    t.string "omniauth_uid"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -1353,7 +1355,7 @@ ActiveRecord::Schema.define(version: 2021_08_16_113952) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL

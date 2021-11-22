@@ -1,0 +1,8 @@
+development:
+  :github:
+    :client_id:
+    :client_secret:
+production:
+  :github:
+    :client_id:
+    :client_secret:
