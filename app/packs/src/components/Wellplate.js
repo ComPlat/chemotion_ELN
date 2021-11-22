@@ -13,7 +13,8 @@ export default class Wellplate extends Component {
       showOverlay: false,
       overlayTarget: {},
       overlayWell: {},
-      overlayPlacement: 'right'
+      overlayPlacement: 'right',
+      selectedColor: null
     };
   }
 
@@ -79,7 +80,8 @@ export default class Wellplate extends Component {
 
   hideOverlay() {
     this.setState({
-      showOverlay: false
+      showOverlay: false,
+      selectedColor: null
     });
   }
 
@@ -109,6 +111,21 @@ export default class Wellplate extends Component {
     return (showOverlay && overlayWell == well);
   }
 
+  saveColorCode() {
+    const { overlayWell, selectedColor } = this.state;
+    WellplatesFetcher.updateWellColorCode({
+      id: overlayWell.id,
+      color_code: selectedColor,
+    }).then((result) => {
+      overlayWell.color_code = result.color_code;
+      this.setState({ overlayWell });
+    });
+  }
+
+  setColorPicker(color) {
+    this.setState({ selectedColor: color.hex });
+  }
+
   setWellLabel(target) {
     const { overlayWell } = this.state;
     WellplatesFetcher.updateWellLabel({
@@ -122,7 +139,7 @@ export default class Wellplate extends Component {
 
   render() {
     const {wells, size, cols, width, handleWellsChange} = this.props;
-    const {showOverlay, overlayTarget, overlayWell, overlayPlacement} = this.state;
+    const {showOverlay, overlayTarget, overlayWell, overlayPlacement, selectedColor} = this.state;
     const style = {
       width: (cols + 1) * width,
       height: ((size / cols) + 1) * width
@@ -168,11 +185,14 @@ export default class Wellplate extends Component {
         <WellOverlay
           show={showOverlay}
           well={overlayWell}
+          selectedColor={selectedColor}
           placement={overlayPlacement}
           target={() => ReactDOM.findDOMNode(this.refs[overlayTarget]).children[0]}
           handleClose={() => this.hideOverlay()}
           removeSampleFromWell={well => this.removeSampleFromWell(well)}
           handleWellLabel={value => this.setWellLabel(value)}
+          handleColorPicker={value => this.setColorPicker(value)}
+          saveColorCode={() => this.saveColorCode()}
         />
       </div>
     );
