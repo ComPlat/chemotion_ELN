@@ -71,6 +71,14 @@ GIT
       sprite-factory (= 1.7.1)
 
 GIT
+  remote: https://github.com/datacite/omniauth-orcid
+  revision: caf25d6940b8aaf31d31318e7259897120ca15f5
+  specs:
+    omniauth-orcid (2.1.2)
+      omniauth-oauth2 (~> 1.3)
+      ruby_dig (~> 0.0.2)
+
+GIT
   remote: https://github.com/fl9/fun_sftp.git
   revision: 24edb517e0196c83fe21f6b229c76841fe7ab2ca
   branch: allow-port-option
@@ -365,7 +373,7 @@ GEM
       html2haml (>= 1.0.1)
       railties (>= 4.0.1)
     hashdiff (1.0.0)
-    hashie (3.6.0)
+    hashie (5.0.0)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
     html2haml (2.2.0)
@@ -454,6 +462,21 @@ GEM
     nokogiri (1.10.10)
       mini_portile2 (~> 2.4.0)
     numerizer (0.1.1)
+    oauth2 (1.4.7)
+      faraday (>= 0.8, < 2.0)
+      jwt (>= 1.0, < 3.0)
+      multi_json (~> 1.3)
+      multi_xml (~> 0.5)
+      rack (>= 1.2, < 3)
+    omniauth (1.9.1)
+      hashie (>= 3.4.6)
+      rack (>= 1.6.2, < 3)
+    omniauth-github (1.4.0)
+      omniauth (~> 1.5)
+      omniauth-oauth2 (>= 1.4.0, < 2.0)
+    omniauth-oauth2 (1.7.2)
+      oauth2 (~> 1.4)
+      omniauth (>= 1.9, < 3)
     open4 (1.3.4)
     orm_adapter (0.5.0)
     pandoc-ruby (2.0.2)
@@ -594,6 +617,7 @@ GEM
     rubyXL (3.3.26)
       nokogiri (>= 1.4.4)
       rubyzip (>= 1.1.6)
+    ruby_dig (0.0.2)
     ruby_jard (0.3.1)
       byebug (>= 9.1, < 12.0)
       pry (~> 0.13.0)
@@ -766,6 +790,9 @@ DEPENDENCIES
   net-sftp
   net-ssh
   nokogiri
+  omniauth (~> 1.9.1)
+  omniauth-github (~> 1.4.0)
+  omniauth-orcid!
   openbabel (= 2.4.90.3)!
   pandoc-ruby
   paranoia (~> 2.0)

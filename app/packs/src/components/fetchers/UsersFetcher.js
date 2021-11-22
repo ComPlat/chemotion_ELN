@@ -27,6 +27,14 @@ export default class UsersFetcher {
     });
   }
 
+  static fetchOmniauthProviders() {
+    return fetch('/api/v1/public/omniauth_providers.json', {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static fetchUsersByName(name) {
     const promise = fetch(`/api/v1/users/name.json?name=${name}`, {
       credentials: 'same-origin'

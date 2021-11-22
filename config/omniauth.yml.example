@@ -1,0 +1,34 @@
+development:
+  :github:
+    :client_id:
+    :client_secret:
+  :orcid:
+    :client_id:
+    :client_secret:
+    :member:
+    :sandbox:
+    :scope: '/read-limited'
+  :chemotion_orcid:
+    :client_id:
+    :client_secret:
+    :member:
+    :sandbox:
+    :scope: '/read-limited'
+    :redirect_uri:
+production:
+  :github:
+    :client_id:
+    :client_secret:
+  :orcid:
+    :client_id:
+    :client_secret:
+    :member:
+    :sandbox:
+    :scope: '/read-limited'
+  :chemotion_orcid:
+    :client_id:
+    :client_secret:
+    :member:
+    :sandbox:
+    :scope: '/read-limited'
+    :redirect_uri:
