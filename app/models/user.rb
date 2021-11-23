@@ -338,6 +338,17 @@ class User < ApplicationRecord
       user.email = email
       user.first_name = first_name
       user.last_name = last_name
+      user.password = Devise.friendly_token[0,20]
+    end
+  end
+
+  def link_omniauth(provider, uid)
+    if User.where(omniauth_provider: provider, omniauth_uid: uid).exists?
+      return nil
+    else
+      self.omniauth_provider = provider
+      self.omniauth_uid = uid
+      self.save
     end
   end
 

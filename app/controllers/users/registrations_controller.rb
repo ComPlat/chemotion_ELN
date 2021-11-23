@@ -38,9 +38,12 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
   # POST /resource
   def create
-    puts sign_up_params
     build_resource(sign_up_params)
     resource.affiliations = [Affiliation.find_or_create_by(resource.affiliations.first.slice(:country, :organization, :department, :group))]
+
+    if resource.password.nil?
+      resource.password = Devise.friendly_token[0,20]
+    end
 
     resource_saved = resource.save
     yield resource if block_given?
