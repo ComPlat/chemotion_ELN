@@ -13,23 +13,21 @@ module Chemotion
 
       desc 'Return messages of the current user'
       params do
-        requires :is_ack, type: Integer, desc: 'messages is acknowledged or not'
+        requires :is_ack, type: Integer, desc: 'whether messages are acknowledged or not'
       end
       get 'list' do
-        messages = NotifyMessage.where(receiver_id: current_user.id, is_ack: params[:is_ack]) if params[:is_ack] < 9
-        messages = NotifyMessage.where(receiver_id: current_user.id) unless params[:is_ack] < 9
-        if Rails.env.production?
-          asset_application = Dir[File.join(Rails.public_path, 'packs', 'js', 'application-*.js')].first
-          cur = present(messages, with: Entities::MessageEntity, root: 'messages')
-          cur[:version] = asset_application
-        else
-          cur = present(messages, with: Entities::MessageEntity, root: 'messages')
+        messages = NotifyMessage.where(receiver_id: current_user.id)
+        messages = messages.where(is_ack: params[:is_ack]) if params[:is_ack] < 9
+        message_list = present(messages, with: Entities::MessageEntity, root: 'messages')
+
+        message_list[:version] = ENV['VERSION_ASSETS'] if ENV['VERSION_ASSETS']
+
+        Notification.where(
+          id: messages.where(channel_type: 5).pluck(:id)
+        ).each do |notification|
+          notification.update!(is_ack: 1)
         end
-        if messages && messages.length.positive?
-          job_msgs = messages.select { |hash| hash[:channel_type] == 5 }
-          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length.zero?
-        end
-        cur
+        message_list
       end
 
       desc 'Return spectra messages of the current user'
@@ -37,11 +35,10 @@ module Chemotion
         requires :is_ack, type: Integer, desc: 'messages is acknowledged or not'
       end
       get 'spectra' do
-        messages = NotifyMessage.where(receiver_id: current_user.id, is_ack: params[:is_ack], subject: 'Chem Spectra Notification') if params[:is_ack] < 9
-        messages = NotifyMessage.where(receiver_id: current_user.id, subject: 'Chem Spectra Notification') unless params[:is_ack] < 9
-        if messages && messages.length.positive?
-          job_msgs = messages.select { |hash| hash[:channel_type] == 8 }
-          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length.zero?
+        messages = NotifyMessage.where(receiver_id: current_user.id, subject: 'Chem Spectra Notification')
+        messages = messages.where(is_ack: params[:is_ack]) if params[:is_ack] < 9
+        messages.where(channel_type: 8).each do |msg|
+          Notification.find(msg.id)&.update!(is_ack: 1)
         end
         messages
       end
