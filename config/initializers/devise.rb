@@ -242,7 +242,22 @@ Devise.setup do |config|
   omniauth_config = Rails.application.config_for :omniauth
   Rails.application.configure do
     if omniauth_config.key?(:github)
-      config.omniauth :github, omniauth_config[:github][:client_id], omniauth_config[:github][:client_secret], scope: 'user,public_repo'
+      config.omniauth :github, omniauth_config[:github][:client_id], omniauth_config[:github][:client_secret],
+                      scope: 'user,public_repo'
+    end
+
+    if omniauth_config.key?(:orcid)
+      # the regular omniauth-orcid provider, from https://github.com/datacite/omniauth-orcid
+      config.omniauth :orcid, omniauth_config[:orcid][:client_id], omniauth_config[:orcid][:client_secret],
+                member: omniauth_config[:orcid][:member], sandbox: omniauth_config[:orcid][:sandbox],
+                scope: omniauth_config[:orcid][:sandbox]
+    elsif omniauth_config.key?(:chemotion_orcid)
+      # the special chemotion orcid provider
+      require 'omniauth/strategies/chemotion_orcid'
+      config.omniauth :orcid, omniauth_config[:chemotion_orcid][:client_id], omniauth_config[:chemotion_orcid][:client_secret],
+                      member: omniauth_config[:chemotion_orcid][:member], sandbox: omniauth_config[:chemotion_orcid][:sandbox],
+                      scope: omniauth_config[:chemotion_orcid][:scope], redirect_uri: omniauth_config[:chemotion_orcid][:redirect_uri],
+                      strategy_class: OmniAuth::Strategies::ChemotionORCID
     end
   end
 

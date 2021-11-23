@@ -51,6 +51,14 @@ GIT
       sprite-factory (= 1.7.1)
 
 GIT
+  remote: https://github.com/datacite/omniauth-orcid
+  revision: caf25d6940b8aaf31d31318e7259897120ca15f5
+  specs:
+    omniauth-orcid (2.1.2)
+      omniauth-oauth2 (~> 1.3)
+      ruby_dig (~> 0.0.2)
+
+GIT
   remote: https://github.com/fl9/fun_sftp.git
   revision: 24edb517e0196c83fe21f6b229c76841fe7ab2ca
   branch: allow-port-option
@@ -586,6 +594,7 @@ GEM
     rubyXL (3.3.26)
       nokogiri (>= 1.4.4)
       rubyzip (>= 1.1.6)
+    ruby_dig (0.0.2)
     ruby_jard (0.3.1)
       byebug (>= 9.1, < 12.0)
       pry (~> 0.13.0)
@@ -757,6 +766,7 @@ DEPENDENCIES
   nokogiri
   omniauth (~> 1.9.1)
   omniauth-github (~> 1.4.0)
+  omniauth-orcid!
   openbabel (= 2.4.90.3)!
   pandoc-ruby
   paranoia (~> 2.0)

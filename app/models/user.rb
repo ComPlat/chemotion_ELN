@@ -332,21 +332,9 @@ class User < ApplicationRecord
     end
   end
 
-  def self.new_with_session(params, session)
-    super.tap do |user|
-      if data = session["devise.user_attributes"]
-        user.email = data['email'] if user.email.blank?
-        user.first_name = data['first_name'] if user.first_name.blank?
-        user.last_name = data['last_name'] if user.last_name.blank?
-
-        user.omniauth_provider = data['omniauth_provider']
-        user.omniauth_uid = data['omniauth_uid']
-      end
-    end
-  end
-
   def self.from_omniauth(provider, uid, email, first_name, last_name)
     where(omniauth_provider: provider, omniauth_uid: uid).first_or_create do |user|
+      # update the email, the first_name, and the last_name on every login
       user.email = email
       user.first_name = first_name
       user.last_name = last_name
