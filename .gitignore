@@ -148,6 +148,8 @@ tags
 tags.temp
 .vscode/*
 
+.*.swp
+
 spec/examples.txt
 
 # Ignore master key for decrypting credentials and more.
@@ -165,3 +167,4 @@ yarn-debug.log*
 vendor/bundle/*
 vendor/cache/*
 .idea/*
+
