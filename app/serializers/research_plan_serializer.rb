@@ -20,6 +20,10 @@ class ResearchPlanSerializer < ActiveModel::Serializer
     false
   end
 
+  def can_copy
+    true
+  end
+
   class Level0 < ActiveModel::Serializer
     include ResearchPlanLevelSerializable
     define_restricted_methods_for_level(0)

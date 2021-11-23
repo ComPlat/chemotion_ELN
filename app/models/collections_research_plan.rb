@@ -30,14 +30,14 @@ class CollectionsResearchPlan < ApplicationRecord
   def self.move_to_collection(element_ids, from_col_ids, to_col_ids)
     # Delete in collection
     delete_in_collection(element_ids, from_col_ids)
-    # Upsert in target collection
+    # Insert in target collection
     insert_in_collection(element_ids, to_col_ids)
     # Update element tag with collection info
     update_tag_by_element_ids(element_ids)
   end
 
   def self.create_in_collection(element_ids, collection_ids)
-    # upsert in target collection
+    # insert in target collection
     # update sample tag with collection info
     static_create_in_collection(element_ids, collection_ids)
   end

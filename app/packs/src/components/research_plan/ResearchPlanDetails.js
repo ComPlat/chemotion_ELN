@@ -20,6 +20,8 @@ import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
 import Immutable from 'immutable';
 import ElementDetailSortTab from '../ElementDetailSortTab';
 import { addSegmentTabs } from '../generic/SegmentDetails';
+import UIStore from '../stores/UIStore';
+import CopyElementModal from '../common/CopyElementModal';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -382,6 +384,16 @@ export default class ResearchPlanDetails extends Component {
 
   renderPanelHeading(researchPlan) {
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
+    const { currentCollection } = UIStore.getState();
+    const defCol = currentCollection && currentCollection.is_shared === false &&
+    currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+    const copyBtn = (researchPlan.can_copy && !researchPlan.isNew) ? (
+      <CopyElementModal
+        element={researchPlan}
+        defCol={defCol}
+      />
+    ) : null;
 
     return (
       <Panel.Heading>
@@ -398,6 +410,7 @@ export default class ResearchPlanDetails extends Component {
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
+        {copyBtn}
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Fullresearch_plan</Tooltip>}>
           <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={this.toggleFullScreen}>
             <i className="fa fa-expand" aria-hidden="true" />

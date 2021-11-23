@@ -18,6 +18,8 @@ class ResearchPlan < ApplicationRecord
   include Taggable
   include Segmentable
 
+  attr_accessor :can_copy
+
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, :name, presence: true
 
