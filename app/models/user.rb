@@ -304,7 +304,8 @@ class User < ApplicationRecord
   def update_matrix
     check_sql = ApplicationRecord.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
     result = ApplicationRecord.connection.exec_query(check_sql)
-    if result.first["rs"] == 't'
+
+    if result.presence&.first&.fetch('rs', false)
       sql = ApplicationRecord.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', id])
       ApplicationRecord.connection.exec_query(sql)
     end
@@ -320,7 +321,7 @@ class User < ApplicationRecord
   def self.gen_matrix(user_ids = nil)
     check_sql = ApplicationRecord.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
     result = ApplicationRecord.connection.exec_query(check_sql)
-    if result.first['rs'] == 't'
+    if result.presence&.first&.fetch('rs', false)
       sql = if user_ids.present?
               ApplicationRecord.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', user_ids])
             else
