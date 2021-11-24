@@ -97,7 +97,6 @@ export default class WellplatesFetcher {
       if (files.length <= 0) {
         return new Wellplate(json.wellplate);
       }
-      console.log(json.wellplate);
       return AttachmentFetcher.updateAttachables(files, 'Wellplate', json.wellplate.id, [])()
         .then(() => new Wellplate(json.wellplate));
     }).catch((errorMessage) => {
