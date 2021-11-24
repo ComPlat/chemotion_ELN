@@ -15,6 +15,8 @@ import WellplateProperties from './WellplateProperties';
 import WellplateDetailsContainers from './WellplateDetailsContainers';
 import WellplateDetailsAttachments from './WellplateDetailsAttachments';
 import PrintCodeButton from './common/PrintCodeButton';
+import Attachment from './models/Attachment';
+import Utils from './utils/Functions';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import ConfirmClose from './common/ConfirmClose';
@@ -71,9 +73,9 @@ export default class WellplateDetails extends Component {
     const { wellplate } = this.state;
     LoadingActions.start();
     if (wellplate.isNew) {
-      ElementActions.createWellplate(wellplate.serialize());
+      ElementActions.createWellplate(wellplate);
     } else {
-      ElementActions.updateWellplate(wellplate.serialize());
+      ElementActions.updateWellplate(wellplate);
     }
     if (wellplate.is_new) {
       const force = true;
@@ -135,6 +137,49 @@ export default class WellplateDetails extends Component {
     UIActions.selectTab({ tabKey: eventKey, type: 'wellplate' });
   }
 
+  // handle attachment actions
+
+  handleAttachmentDrop(files) {
+    const { wellplate } = this.state;
+    console.log(wellplate);
+    wellplate.changed = true;
+    files.forEach((file) => {
+      const attachment = Attachment.fromFile(file);
+      wellplate.attachments.push(attachment);
+    });
+    this.setState({ wellplate });
+  }
+
+  handleAttachmentDelete(attachment) {
+    const { wellplate } = this.state;
+    const index = wellplate.attachments.indexOf(attachment);
+    wellplate.changed = true;
+    wellplate.attachments[index].is_deleted = true;
+    this.setState({ wellplate });
+  }
+
+  handleAttachmentUndoDelete(attachment) {
+    const { wellplate } = this.state;
+    const index = wellplate.attachments.indexOf(attachment);
+    wellplate.attachments[index].is_deleted = false;
+    this.setState({ wellplate });
+  }
+
+  handleAttachmentDownload(attachment) { // eslint-disable-line class-methods-use-this
+    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
+  }
+
+  handleAttachmentEdit(attachment) {
+    const { wellplate } = this.state;
+
+    // update only this attachment
+    wellplate.attachments.map((currentAttachment) => {
+      if (currentAttachment.id === attachment.id) return attachment;
+    });
+    this.setState({ wellplate });
+    this.forceUpdate();
+  }
+
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
     const datetp = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
@@ -172,12 +217,11 @@ export default class WellplateDetails extends Component {
         <ListGroupItem >
           <WellplateDetailsAttachments
             attachments={attachments}
-            // TODO: implement
-            // onDrop={this.handleAttachmentDrop.bind(this)}
-            // onDelete={this.handleAttachmentDelete.bind(this)}
-            // onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-            // onDownload={this.handleAttachmentDownload.bind(this)}
-            // onEdit={this.handleAttachmentEdit.bind(this)}
+            onDrop={this.handleAttachmentDrop.bind(this)}
+            onDelete={this.handleAttachmentDelete.bind(this)}
+            onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+            onDownload={this.handleAttachmentDownload.bind(this)}
+            onEdit={this.handleAttachmentEdit.bind(this)}
             readOnly={false}
           />
         </ListGroupItem>

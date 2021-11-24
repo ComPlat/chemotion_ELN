@@ -18,7 +18,9 @@ export default class Wellplate extends Element {
       size: 96,
       description: Wellplate.quillDefault(),
       wells: [],
+      readout_titles: [],
       container: Container.init(),
+      attachments: [],
     });
   }
 
@@ -40,7 +42,9 @@ export default class Wellplate extends Element {
       size: 96,
       description: Wellplate.quillDefault(),
       wells,
+      readout_titles: [],
       container: Container.init(),
+      attachments: [],
     });
   }
 
@@ -76,7 +80,8 @@ export default class Wellplate extends Element {
       description: this.description,
       wells: this.wells.map(w => w.serialize()),
       readout_titles: this.readout_titles,
-      container: this.container
+      container: this.container,
+      attachments: this.attachments,
     });
   }
 
@@ -96,11 +101,11 @@ export default class Wellplate extends Element {
     };
   }
 
-  calculatePositionOfWellByIndex(i) {
+  calculatePositionOfWellByIndex(i) { // eslint-disable-line class-methods-use-this
     const cols = 12;
-    let remainder = (i + 1) % cols;
+    const remainder = (i + 1) % cols;
     return {
-      x: (remainder == 0) ? cols : remainder,
+      x: (remainder === 0) ? cols : remainder,
       y: Math.floor(i / cols) + 1
     };
   }

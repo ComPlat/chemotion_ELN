@@ -252,7 +252,6 @@ export default class WellplateDetailsAttachments extends Component {
 }
 
 WellplateDetailsAttachments.propTypes = {
-  // attachments: PropTypes.array,
   attachments: PropTypes.arrayOf(PropTypes.object).isRequired,
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
@@ -263,5 +262,4 @@ WellplateDetailsAttachments.propTypes = {
 };
 
 WellplateDetailsAttachments.defaultProps = {
-  attachments: []
 };
