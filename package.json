@@ -31,6 +31,7 @@
     "d3": "^3.5.15",
     "deep-equal": "1.0.1",
     "es6-promise-debounce": "^1.0.1",
+    "html2pdf.js": "^0.10.1",
     "humps": "^2.0.1",
     "immutability-helper": "^2.8.1",
     "immutable": "^4.0.0-rc.12",
