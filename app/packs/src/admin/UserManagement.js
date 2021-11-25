@@ -1,4 +1,3 @@
-// FIXME: formatting
 import React from 'react';
 import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab } from 'react-bootstrap';
 import Select from 'react-select';
@@ -69,10 +68,10 @@ export default class UserManagement extends React.Component {
       selectedUsers: null,
       showMsgModal: false,
       showNewUserModal: false,
-      createUserMessage: '', // FIXME: rename, misleading: implies two different actions (create, edit) on "UserMessage"
-      editUserMessage: '', // FIXME: rename, misleading: implies two different actions (create, edit) on "UserMessage"
       showEditUserModal: false,
-      userFileProcessingSummary: '',
+      messageNewUserModal: '',
+      messageEditUserModal: '',
+      processingSummaryUserFile: '',
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
     this.handleMsgShow = this.handleMsgShow.bind(this);
@@ -122,7 +121,7 @@ export default class UserManagement extends React.Component {
   handleEditUserShow(user) {
     this.setState({
       showEditUserModal: true,
-      editUserMessage: '',
+      messageEditUserModal: '',
       user
     });
   }
@@ -130,7 +129,7 @@ export default class UserManagement extends React.Component {
   handleEditUserClose() {
     this.setState({
       showEditUserModal: false,
-      editUserMessage: '',
+      messageEditUserModal: '',
       user: {}
     });
   }
@@ -148,7 +147,7 @@ export default class UserManagement extends React.Component {
     AdminFetcher.updateAccount({ user_id: id, enable: lockedAt !== null })
       .then((result) => {
         this.handleFetchUsers();
-        const message = lockedAt !== null ? 'Account unloacked!' : 'Account locked!' // FIXME: typo
+        const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked!'; //
         alert(message);
       });
   }
@@ -208,22 +207,22 @@ export default class UserManagement extends React.Component {
 
   validateUserInput() {
     if (this.email.value === '') { // also validated in backend
-      this.setState({ createUserMessage: 'Please input email.' });
+      this.setState({ messageNewUserModal: 'Please input email.' });
       return false;
     } else if (!validateEmail(this.email.value.trim())) { // also validated in backend
-      this.setState({ createUserMessage: 'You have entered an invalid email address!' });
+      this.setState({ messageNewUserModal: 'You have entered an invalid email address!' });
       return false;
     } else if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
-      this.setState({ createUserMessage: 'Please input password with correct format.' });
+      this.setState({ messageNewUserModal: 'Please input password with correct format.' });
       return false;
     } else if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
-      this.setState({ createUserMessage: 'passwords do not mach!' });
+      this.setState({ messageNewUserModal: 'passwords do not mach!' });
       return false;
-    } else if (this.password.value.trim().length < 2) { // also validated in backend; FIXME: increase password length from 2 to 8
-      this.setState({ createUserMessage: 'Password is too short (minimum is 8 characters)' });
+    } else if (this.password.value.trim().length < 8) { // also validated in backend
+      this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
       return false;
     } else if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') { // also validated in backend
-      this.setState({ createUserMessage: 'Please input First name, Last name and Name abbreviation' });
+      this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
       return false;
     }
     return true;
@@ -243,10 +242,10 @@ export default class UserManagement extends React.Component {
     })
       .then((result) => {
         if (result.error) {
-          this.setState({ createUserMessage: result.error });
+          this.setState({ messageNewUserModal: result.error });
           return false;
         }
-        this.setState({ createUserMessage: 'New user created.' });
+        this.setState({ messageNewUserModal: 'New user created.' });
         this.email.value = '';
         this.password.value = '';
         this.passwordConfirm.value = '';
@@ -262,7 +261,7 @@ export default class UserManagement extends React.Component {
   handleOnDropUserFile = (data, file) => {
     const validFileTypes = ['text/csv', 'application/vnd.ms-excel'];
     if (!validFileTypes.includes(file.type)) { // Note that MIME type doesn't reliably indicate file type. It's only an initial guard and data is validated more thoroughly during processing.
-      this.setState({ userFileProcessingSummary: `Invalid file type ${file.type}. Please make sure to upload a CSV file.` });
+      this.setState({ processingSummaryUserFile: `Invalid file type ${file.type}. Please make sure to upload a CSV file.` });
       this.newUsers = null;
       return false;
     }
@@ -284,7 +283,7 @@ export default class UserManagement extends React.Component {
   handleCreateNewUsersFromFile() {
     if (!this.validUserFile()) {
       this.newUsers = null;
-      this.setState({ createUserMessage: 'Finished processing user file.' });
+      this.setState({ messageNewUserModal: 'Finished processing user file.' });
     } else {
       const promisedNewUsers = this.newUsers.map(user => this.createNewUserFromFile(user));
       Promise.allSettled(promisedNewUsers)
@@ -293,7 +292,7 @@ export default class UserManagement extends React.Component {
         })
         .then(() => this.handleFetchUsers())
         .catch((reason) => {
-          this.setState({ createUserMessage: `Failed to process user file: ${reason}.` });
+          this.setState({ messageNewUserModal: `Failed to process user file: ${reason}.` });
         });
     }
   }
@@ -312,21 +311,21 @@ export default class UserManagement extends React.Component {
         if (result.error) {
           userResult = `Row ${newUser.data.row}: Failed to create user; ${result.error}.`;
         }
-        this.setState({ createUserMessage: userResult });
+        this.setState({ messageNewUserModal: userResult });
         return userResult;
       });
   }
 
   validUserFile() {
     if (!Array.isArray(this.newUsers) || !this.newUsers.length) {
-      this.setState({ userFileProcessingSummary: 'The file is empty.' });
+      this.setState({ processingSummaryUserFile: 'The file is empty.' });
       return false;
     }
 
     const nUsers = this.newUsers.length;
     const nUsersMax = 100;
     if (nUsers > nUsersMax) {
-      this.setState({ userFileProcessingSummary: `The file contains too many users. Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.` });
+      this.setState({ processingSummaryUserFile: `The file contains too many users. Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.` });
       return false;
     }
 
@@ -334,7 +333,7 @@ export default class UserManagement extends React.Component {
     const validHeader = ['email', 'password', 'firstname', 'lastname', 'nameabbr', 'type'];
     if (!(fileHeader.length === validHeader.length &&
       fileHeader.every((val, index) => val === validHeader[index]))) {
-      this.setState({ userFileProcessingSummary: `The file contains an invalid header ${fileHeader}. Please make sure that your file's header is organized as follows: ${validHeader}.` });
+      this.setState({ processingSummaryUserFile: `The file contains an invalid header ${fileHeader}. Please make sure that your file's header is organized as follows: ${validHeader}.` });
       return false;
     }
 
@@ -348,7 +347,7 @@ export default class UserManagement extends React.Component {
       }
     });
     if (!(parsingErrorMessage === '')) {
-      this.setState({ userFileProcessingSummary: parsingErrorMessage });
+      this.setState({ processingSummaryUserFile: parsingErrorMessage });
       return false;
     }
 
@@ -366,7 +365,7 @@ export default class UserManagement extends React.Component {
       }
     });
     if (!(invalidTypeMessage === '')) {
-      this.setState({ userFileProcessingSummary: invalidTypeMessage });
+      this.setState({ processingSummaryUserFile: invalidTypeMessage });
       return false;
     }
 
@@ -378,7 +377,7 @@ export default class UserManagement extends React.Component {
       }
     }
     if (duplicateUserEmails.size) {
-      this.setState({ userFileProcessingSummary: `The file contains duplicate user emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.` });
+      this.setState({ processingSummaryUserFile: `The file contains duplicate user emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.` });
       return false;
     }
 
@@ -391,17 +390,17 @@ export default class UserManagement extends React.Component {
       summary += `${result.value}\n\n`;
     });
     this.setState({
-      createUserMessage: 'Finished processing user file.',
-      userFileProcessingSummary: summary
+      messageNewUserModal: 'Finished processing user file.',
+      processingSummaryUserFile: summary
     });
   }
 
   handleUpdateUser(user) {
     if (!validateEmail(this.u_email.value.trim())) {
-      this.setState({ editUserMessage: 'You have entered an invalid email address!' });
+      this.setState({ messageEditUserModal: 'You have entered an invalid email address!' });
       return false;
     } else if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim() === '' || this.u_abbr.value.trim() === '') {
-      this.setState({ editUserMessage: 'please input first name, last name and name abbreviation!' });
+      this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
       return false;
     }
     AdminFetcher.updateUser({
@@ -414,10 +413,10 @@ export default class UserManagement extends React.Component {
     })
       .then((result) => {
         if (result.error) {
-          this.setState({ editUserMessage: result.error });
+          this.setState({ messageEditUserModal: result.error });
           return false;
         }
-        this.setState({ showEditUserModal: false, editUserMessage: '' });
+        this.setState({ showEditUserModal: false, messageEditUserModal: '' });
         this.u_email.value = '';
         this.u_firstname.value = '';
         this.u_lastname.value = '';
@@ -656,7 +655,7 @@ export default class UserManagement extends React.Component {
                     componentClass="textarea"
                     rows="5"
                     style={{ whiteSpace: 'pre-wrap', overflowY: 'scroll' }}
-                    value={this.state.userFileProcessingSummary}
+                    value={this.state.processingSummaryUserFile}
                   />
                 </FormGroup>
               </Form>
@@ -664,7 +663,7 @@ export default class UserManagement extends React.Component {
           </Tabs>
           <Modal.Footer>
             <FormGroup controlId="formControlMessage">
-              <FormControl type="text" readOnly name="createUserMessage" value={this.state.createUserMessage} />
+              <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
             </FormGroup>
             <Button bsStyle="warning" onClick={() => this.handleNewUserClose()} >Cancel</Button>
           </Modal.Footer>
@@ -734,7 +733,7 @@ export default class UserManagement extends React.Component {
               </FormGroup>
               <FormGroup controlId="formControlMessage">
                 <Col sm={12}>
-                  <FormControl type="text" readOnly name="editUserMessage" value={this.state.editUserMessage} />
+                  <FormControl type="text" readOnly name="messageEditUserModal" value={this.state.messageEditUserModal} />
                 </Col>
               </FormGroup>
               <FormGroup>
@@ -804,7 +803,7 @@ export default class UserManagement extends React.Component {
         <th width="15%">Login at</th>
         <th width="2%">ID</th>
       </tr>
-    )
+    );
 
     const tbody = users.map((g, idx) => (
       <tr key={`row_${g.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
@@ -878,7 +877,7 @@ export default class UserManagement extends React.Component {
               bsStyle={g.account_active === true ? 'default' : 'danger'}
               onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
             >
-              <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true"  />
+              <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           &nbsp;
@@ -898,11 +897,11 @@ export default class UserManagement extends React.Component {
       <div>
         <Panel>
           <Button bsStyle="warning" bsSize="small" onClick={() => this.handleMsgShow()}>
-          Send Message&nbsp;<i className="fa fa-commenting-o" />
+            Send Message&nbsp;<i className="fa fa-commenting-o" />
           </Button>
           &nbsp;
           <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()}>
-          New User&nbsp;<i className="fa fa-plus" />
+            New User&nbsp;<i className="fa fa-plus" />
           </Button>
         </Panel>
         <Panel>
