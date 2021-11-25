@@ -9,6 +9,14 @@ class ExportCollectionsJob < ApplicationJob
       CleanExportFilesJob.set(queue: "remove_files_#{job.job_id}", wait: 24.hours)
                          .perform_later(job.job_id, @extname)
 
+      # Notify ELNer
+      Message.create_msg_notification(
+        channel_subject: Channel::COLLECTION_ZIP,
+        data_args: { expires_at: @expires_at, operation: 'Export', col_labels: @labels },
+        message_from: @user_id,
+        url: @link
+      )
+
       # Email ELNer
       CollectionMailer.mail_export_completed(
         @user_id,
@@ -16,13 +24,6 @@ class ExportCollectionsJob < ApplicationJob
         @link,
         @expires_at
       ).deliver_now
-      # Notify ELNer
-      Message.create_msg_notification(
-        channel_subject: Channel::COLLECTION_ZIP,
-        message_from: @user_id,
-        data_args: {expires_at: @expires_at, operation: 'Export', col_labels: @labels },
-        url: @link
-      )
     rescue StandardError => e
       Delayed::Worker.logger.error e
     end if @success

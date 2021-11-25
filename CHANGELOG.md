@@ -25,8 +25,8 @@
   * rename reaction tab 'references' to 'literature'. Please update the current profile_default.yml with the new one.
 
 * Fixes
-  * fix filtering product samples of reactions when filter is on on sample list
-
+  * filtering product samples of reactions when filter is on on sample list 
+  * https://github.com/ComPlat/chemotion_ELN/issues/584
 
 ## [v1.0.3]
 > 2021-10-21
