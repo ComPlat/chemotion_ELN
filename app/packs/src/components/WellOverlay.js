@@ -33,16 +33,21 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
   const bcStyle = {
     backgroundColor: selectedColor || well.color_code
   };
+  const wellLabels = well.label ? well.label.split(',') : [];
+  const isDisable = () => wellLabels.some(item => item === 'Molecular structure');
 
   const labels = [{
     label: 'Name',
-    value: 'name'
+    value: 'Name',
+    disabled: isDisable()
   }, {
-    label: 'External name',
-    value: 'external name'
+    label: 'External label',
+    value: 'External label',
+    disabled: isDisable()
   }, {
     label: 'Molecular structure',
-    value: 'Molecular structure'
+    value: 'Molecular structure',
+    disabled: (wellLabels.some(item => item !== 'Molecular structure'))
   }];
 
   return(
@@ -50,6 +55,15 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
       {renderWellContent(well, removeSampleFromWell)}
       <div>
         <hr style={{marginTop: 28, marginBottom: 10}}/>
+        <Select
+          id="label"
+          name="label"
+          multi
+          options={labels}
+          value={well.label}
+          onChange={e => handleWellLabel(e)}
+        />
+        &nbsp;
         <FormGroup>
           <ControlLabel>Readout</ControlLabel>
           <FormControl componentClass="textarea"
@@ -66,15 +80,6 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
             style={{height: 80}}
           />
         </FormGroup>
-        <Select
-          id="label"
-          name="label"
-          multi={false}
-          options={labels}
-          value={well.label}
-          onChange={(e) => handleWellLabel(e)}
-        />
-        &nbsp;
         <FormGroup style={{ top: '50px' }} controlId="colorInput">
           <Col componentClass={ControlLabel} sm={3}>
             Select Color
@@ -92,7 +97,7 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
         </FormGroup>
         <FormGroup controlId="formHorizontalPicker">
           <Col sm={12}>
-            <CirclePicker width="132%" onChangeComplete={(e) => handleColorPicker(e)} />
+            <CirclePicker width="132%" onChangeComplete={e => handleColorPicker(e)} />
           </Col>
         </FormGroup>
         <ButtonGroup style={{ top: '10px', bottom: '10px' }}>
