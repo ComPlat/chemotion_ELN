@@ -13,6 +13,8 @@ export default class WellplatesFetcher {
       }).then((json) => {
         const rWellplate = new Wellplate(json.wellplate);
         rWellplate.attachments = json.attachments;
+        // eslint-disable-next-line no-underscore-dangle
+        rWellplate._checksum = rWellplate.checksum();
         if (json.error) {
           return new Wellplate({ id: `${id}:error:Wellplate ${id} is not accessible!`, wells: [], is_new: true });
         }
