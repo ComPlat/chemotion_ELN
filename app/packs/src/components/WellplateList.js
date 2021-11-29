@@ -141,7 +141,7 @@ export default class WellplateList extends Component {
 }
 
 WellplateList.propTypes = {
-  wells: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
-  readoutTitles: PropTypes.array.isRequired,
+  wells: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
+  readoutTitles: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
   handleWellsChange: PropTypes.func.isRequired
 };
