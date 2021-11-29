@@ -158,6 +158,16 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
+  handleAttachmentImport(attachment) {
+    const { wellplate } = this.state;
+    const index = wellplate.attachments.indexOf(attachment);
+    // wellplate.changed = true;
+    // wellplate.attachments[index].is_deleted = true;
+    // this.setState({ wellplate });
+    console.log(index);
+    // return index;
+  }
+
   handleAttachmentUndoDelete(attachment) {
     const { wellplate } = this.state;
     const index = wellplate.attachments.indexOf(attachment);
@@ -221,6 +231,7 @@ export default class WellplateDetails extends Component {
             onDelete={this.handleAttachmentDelete.bind(this)}
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
             onDownload={this.handleAttachmentDownload.bind(this)}
+            onImport={this.handleAttachmentImport.bind(this)}
             onEdit={this.handleAttachmentEdit.bind(this)}
             readOnly={false}
           />

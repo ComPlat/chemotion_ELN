@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
-import { FormGroup, Button, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger } from 'react-bootstrap';
+import { FormGroup, Button, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import EditorFetcher from './fetchers/EditorFetcher';
 import ImageModal from './common/ImageModal';
@@ -11,6 +11,7 @@ import Utils from './utils/Functions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
+const importTooltip = <Tooltip id="import_tooltip">Import attachment as Wellplate data</Tooltip>;
 const imageStyle = {
   style: {
     position: 'absolute',
@@ -23,13 +24,14 @@ export default class WellplateDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     const {
-      attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
+      attachments, onDrop, onDelete, onUndoDelete, onDownload, onImport, onEdit
     } = props;
     this.state = {
       onDrop,
       onDelete,
       onUndoDelete,
       onDownload,
+      onImport,
       onEdit,
       attachmentEditor: false,
       extension: null,
@@ -87,6 +89,27 @@ export default class WellplateDetailsAttachments extends Component {
 
   handleTemplateDownload() { // eslint-disable-line class-methods-use-this
     Utils.downloadFile({ contents: '/xlsx/wellplate_import_template.xlsx', name: 'wellplate_import_template.xlsx' });
+  }
+
+  renderImportAttachmentButton(attachment) {
+    const { onImport } = this.state;
+    const ext = last(attachment.filename.split('.'));
+
+    if (ext === 'xlsx') {
+      return (
+        <OverlayTrigger placement="top" overlay={importTooltip} >
+          <Button
+            bsSize="xsmall"
+            bsStyle="success"
+            className="button-right"
+            onClick={() => onImport(attachment)}
+          >
+            <Glyphicon glyph="import" />
+          </Button>
+        </OverlayTrigger>
+      );
+    }
+    return true;
   }
 
   renderRemoveAttachmentButton(attachment) {
@@ -190,6 +213,7 @@ export default class WellplateDetailsAttachments extends Component {
                 <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
               </Button>
             </OverlayTrigger>
+            {this.renderImportAttachmentButton(attachment)}
           </Col>
         </Row>
       </div>
@@ -268,6 +292,7 @@ WellplateDetailsAttachments.propTypes = {
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
   onDownload: PropTypes.func.isRequired,
+  onImport: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired
 };
