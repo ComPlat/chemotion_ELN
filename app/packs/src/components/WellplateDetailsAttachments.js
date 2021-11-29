@@ -200,23 +200,34 @@ export default class WellplateDetailsAttachments extends Component {
     const { attachments } = this.props;
     if (attachments && attachments.length > 0) {
       return (
-        <ListGroup>
-          {attachments.map(attachment => (
-            <ListGroupItem key={attachment.id}>
-              {this.renderListGroupItem(attachment)}
-            </ListGroupItem>
-            ))}
-        </ListGroup>
+        <div>
+          {this.renderTemplateDownload()}
+          <ListGroup>
+            {attachments.map(attachment => (
+              <ListGroupItem key={attachment.id}>
+                {this.renderListGroupItem(attachment)}
+              </ListGroupItem>
+              ))}
+          </ListGroup>
+        </div>
       );
     }
+    return (
+      <div>
+        {this.renderTemplateDownload()}
+        <div>
+          There are currently no Datasets.<br />
+        </div>
+      </div>
+    );
+  }
+
+  renderTemplateDownload() {
     return (
       <div>
         <a onClick={() => this.handleTemplateDownload()} style={{ cursor: 'pointer' }}>
           Download Wellplate Import Template xlsx.<br />
         </a><br />
-        <div>
-          There are currently no Datasets.<br />
-        </div>
       </div>
     );
   }
