@@ -18,6 +18,10 @@ module Chemotion
       def time_now
         Time.now.strftime('%Y-%m-%dT%H-%M-%S')
       end
+
+      def is_int?
+        self == /\A[-+]?\d+\z/
+      end
     end
 
     resource :reports do
@@ -212,7 +216,7 @@ module Chemotion
       requires :prdAtts, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :imgFormat, type: String, default: 'png', values: %w[png eps emf]
       requires :fileName, type: String, default: 'ELN_Report_' + Time.now.strftime('%Y-%m-%dT%H-%M-%S')
-      requires :templateId, type: Integer
+      requires :templateId, type: String
       optional :fileDescription
     end
     post :reports, each_serializer: ReportSerializer do
@@ -234,7 +238,8 @@ module Chemotion
         prd_atts: prd_atts,
         objects: params[:objTags],
         img_format: params[:imgFormat],
-        report_templates_id: params[:templateId],
+        template: params[:templateId],
+        report_templates_id: !!/\A\d+\z/.match(params[:templateId]) ? params[:templateId].to_i : nil,
         author_id: current_user.id
       }
 
