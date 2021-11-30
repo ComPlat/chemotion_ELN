@@ -9,7 +9,7 @@
 Delayed::Worker.logger = Logger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
 
 begin
-  if ActiveRecord::Base.connection.data_source_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
+  if defined?(ActiveRecord::Base) && ActiveRecord::Base.connection.data_source_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
     Delayed::Job.where("handler like ?", "%CollectDataFrom%").destroy_all
     Delayed::Job.where("handler like ?", "%CollectFileFrom%").destroy_all
     if Rails.configuration.datacollectors && Rails.configuration.datacollectors.services
@@ -53,6 +53,6 @@ begin
     ChemrepoIdJob.set(cron: cron_config ).perform_later
 
   end
-rescue PG::ConnectionBad => e
+rescue PG::ConnectionBad, ActiveRecord::NoDatabaseError => e
   puts e.message
 end
