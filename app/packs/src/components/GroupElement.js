@@ -11,7 +11,6 @@ export default class GroupElement extends React.Component {
       currentUser: props.currentState.currentUser || { name: 'unknown' },
       showUsers: false,
       showRowAdd: false,
-      currentGroups: props.currentState.currentGroups
     };
 
     this.toggleUsers = this.toggleUsers.bind(this);
@@ -100,7 +99,7 @@ export default class GroupElement extends React.Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" >
+          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(groupRec, userRec)}>
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
@@ -152,10 +151,10 @@ export default class GroupElement extends React.Component {
   confirmDelete(type, groupRec, userRec) {
     switch (type) {
       case 'group':
-        this.deleteGroup(groupRec);
+        this.props.onDeleteGroup(groupRec.id)
         break;
       case 'user':
-        this.deleteUser(groupRec, userRec);
+        this.props.onDeleteUser(groupRec, userRec);
         break;
       default:
         break;
@@ -165,50 +164,20 @@ export default class GroupElement extends React.Component {
   // add multiple users
   // replace with response result and then setState (with forceUpdate)
   addUser(groupRec) {
-    const { selectedUsers, currentGroups } = this.state;
+    const { selectedUsers} = this.state;
 
     const userIds = [];
     selectedUsers.map((g) => {
       userIds.push(g.value);
       return true;
     });
-
+    
     UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, add_users: userIds })
       .then((group) => {
-        const idx = _.findIndex(currentGroups, function (o) { return o.id == group.group.id; });
-        currentGroups.splice(idx, 1, group.group);
+        const idx = _.findIndex(this.props.currentGroup, function (o) { return o.id == group.group.id; });
+        this.props.currentGroup.splice(idx, 1, group.group);
         this.setState({ selectedUsers: null });
-        this.props.onChangeData(currentGroups);
-      });
-  }
-
-  // delete a user
-  // replace with response result and then setState
-  deleteUser(groupRec, userRec) {
-    let { currentGroups } = this.state;
-    const { currentUser } = this.state;
-
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, rm_users: [userRec.id] })
-      .then((result) => {
-        const findIdx = _.findIndex(result.group.users, function (o) { return o.id == currentUser.id; });
-        const findAdmin = _.findIndex(result.group.admins, function (o) { return o.id == currentUser.id; });
-        if (findIdx == -1 && findAdmin == -1) {
-          currentGroups = _.filter(this.state.currentGroups, o => o.id != result.group.id);
-        } else {
-          const idx = _.findIndex(currentGroups, function (o) { return o.id == result.group.id; });
-          currentGroups.splice(idx, 1, result.group);
-        }
-
-        this.props.onChangeData(currentGroups);
-      });
-  }
-
-  // delete a group
-  // filter out the deleted group and then setState
-  deleteGroup(groupRec) {
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: true })
-      .then((group) => {
-        this.props.onChangeData(_.filter(this.state.currentGroups, o => o.id != group.destroyed_id));
+        this.props.onChangeData(this.props.currentGroup);
       });
   }
 

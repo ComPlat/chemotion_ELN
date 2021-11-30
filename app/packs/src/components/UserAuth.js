@@ -46,11 +46,11 @@ export default class UserAuth extends Component {
     this.handleDeviceMetadataModalClose = this.handleDeviceMetadataModalClose.bind(this);
 
     this.promptTextCreator = this.promptTextCreator.bind(this);
-    this.handleSelectUser = this.handleSelectUser.bind(this);
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    
   }
 
   componentDidMount() {
@@ -62,7 +62,6 @@ export default class UserAuth extends Component {
     UserStore.unlisten(this.onChange);
   }
 
-
   onChange(state) {
     this.setState({
       currentUser: state.currentUser
@@ -71,7 +70,7 @@ export default class UserAuth extends Component {
 
   logout() {
     UserActions.logout();
-  }
+  }  
 
   promptTextCreator(label) {
     return ("Share with \"" + label + "\"");
@@ -155,13 +154,7 @@ export default class UserAuth extends Component {
   // tooltip of yes/no confirmation
   handleClick() {
     this.setState({ show: !this.state.show });
-  }
-
-  handleSelectUser(val) {
-    if (val) {
-      this.setState({ selectedUsers: val });
-    }
-  }
+  } 
 
   // inputs of create new group
   handleInputChange(type, ev) {
@@ -246,6 +239,28 @@ export default class UserAuth extends Component {
     this.setState({ currentGroups: currentGroups });
   }
 
+  handleDeleteGroup = currentGroupId => {
+    const currentGroups = this.state.currentGroups.filter(cg => cg.id !== currentGroupId);
+    UsersFetcher.updateGroup({ id: currentGroupId, destroy_group: true })
+    this.setState({ currentGroups });
+  };
+
+  handleDeleteUser =(groupRec, userRec) => {
+    let { currentGroups, currentUser } = this.state;
+    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, rm_users: [userRec.id] })
+      .then((result) => {
+        const findIdx = _.findIndex(result.group.users, function (o) { return o.id == currentUser.id; });
+        const findAdmin = _.findIndex(result.group.admins, function (o) { return o.id == currentUser.id; });
+        if (findIdx == -1 && findAdmin == -1) {
+          currentGroups = _.filter(this.state.currentGroups, o => o.id != result.group.id);
+        } else {
+          const idx = _.findIndex(currentGroups, function (o) { return o.id == result.group.id; });
+          currentGroups.splice(idx, 1, result.group);
+        }
+        this.setState({ currentGroups: currentGroups });
+      });    
+  }  
+
   // render modal
   renderModal() {
     const { showModal, currentGroups, currentDevices } = this.state;
@@ -261,7 +276,11 @@ export default class UserAuth extends Component {
       tBodyGroups = '';
     } else {
       tBodyGroups = currentGroups ? currentGroups.map(g => (
-        <GroupElement groupElement={g} currentState={this.state} onChangeData={this.handleChange}></GroupElement>
+        <GroupElement groupElement={g} key={g.id} currentState={this.state}
+        currentGroup={this.state.currentGroups}
+        onDeleteGroup={this.handleDeleteGroup}
+        onDeleteUser={this.handleDeleteUser}
+        onChangeData={this.handleChange}></GroupElement>
       )) : '';
     }
 
@@ -298,7 +317,7 @@ export default class UserAuth extends Component {
               </Panel.Heading>
               <Panel.Body>
                 <Form inline>
-                  <FormGroup controlId="formInlineName">
+                  <FormGroup controlId="formInlineFname">
                     <ControlLabel>Name</ControlLabel>&nbsp;&nbsp;
                     <FormControl
                       type="text"
@@ -306,7 +325,7 @@ export default class UserAuth extends Component {
                       onChange={this.handleInputChange.bind(this, 'first')}
                     />
                   </FormGroup>
-                  <FormGroup controlId="formInlineName">
+                  <FormGroup controlId="formInlineLname">
                     <FormControl
                       type="text"
                       placeholder="J. Moriarty"
