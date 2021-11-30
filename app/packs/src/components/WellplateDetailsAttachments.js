@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
-import { FormGroup, Button, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon } from 'react-bootstrap';
+import { FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import EditorFetcher from './fetchers/EditorFetcher';
 import ImageModal from './common/ImageModal';
@@ -35,6 +35,7 @@ export default class WellplateDetailsAttachments extends Component {
       onEdit,
       attachmentEditor: false,
       extension: null,
+      showImportConfirm: [],
     };
     this.editorInitial = this.editorInitial.bind(this);
   }
@@ -91,22 +92,63 @@ export default class WellplateDetailsAttachments extends Component {
     Utils.downloadFile({ contents: '/xlsx/wellplate_import_template.xlsx', name: 'wellplate_import_template.xlsx' });
   }
 
-  renderImportAttachmentButton(attachment) {
-    const { onImport } = this.state;
-    const ext = last(attachment.filename.split('.'));
+  toggleImportConfirm(attachmentId) {
+    const { showImportConfirm } = this.state;
 
-    if (ext === 'xlsx') {
-      return (
-        <OverlayTrigger placement="top" overlay={importTooltip} >
+    showImportConfirm[attachmentId] = !showImportConfirm[attachmentId];
+
+    this.setState({
+      showImportConfirm,
+    });
+  }
+
+  confirmAttachmentImport(attachment) {
+    const { onImport } = this.state;
+    onImport(attachment);
+    this.toggleImportConfirm(attachment.id);
+  }
+
+  renderImportAttachmentButton(attachment) {
+    const { showImportConfirm } = this.state;
+    const extension = last(attachment.filename.split('.'));
+
+    const confirmTooltip = (
+      <Tooltip placement="bottom" className="in" id="tooltip-bottom">
+        Really import data from Spreadsheet? This will overwrite existing Wellplate data.<br />
+        <ButtonGroup>
           <Button
+            bsStyle="danger"
             bsSize="xsmall"
-            bsStyle="success"
-            className="button-right"
-            onClick={() => onImport(attachment)}
+            onClick={() => this.confirmAttachmentImport(attachment)}
           >
-            <Glyphicon glyph="import" />
+            Yes
           </Button>
-        </OverlayTrigger>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            onClick={() => this.toggleImportConfirm(attachment.id)}
+          >
+            No
+          </Button>
+        </ButtonGroup>
+      </Tooltip>
+    );
+
+    if (extension === 'xlsx') {
+      return (
+        <div>
+          <OverlayTrigger placement="top" overlay={importTooltip} >
+            <Button
+              bsSize="xsmall"
+              bsStyle="success"
+              className="button-right"
+              onClick={() => this.toggleImportConfirm(attachment.id)}
+            >
+              <Glyphicon glyph="import" />
+            </Button>
+          </OverlayTrigger>
+          { showImportConfirm[attachment.id] ? confirmTooltip : null}
+        </div>
       );
     }
     return true;
