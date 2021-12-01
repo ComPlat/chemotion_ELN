@@ -11,7 +11,6 @@ import Utils from './utils/Functions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
-const importTooltip = <Tooltip id="import_tooltip">Import attachment as Wellplate data</Tooltip>;
 const imageStyle = {
   style: {
     position: 'absolute',
@@ -111,8 +110,15 @@ export default class WellplateDetailsAttachments extends Component {
   renderImportAttachmentButton(attachment) {
     const { showImportConfirm } = this.state;
     const extension = last(attachment.filename.split('.'));
+    const importDisabled = attachment.is_new;
+    const btnStyle = importDisabled ? { pointerEvents: 'none' } : {};
+
+    const importTooltip = importDisabled ?
+      <Tooltip id="import_tooltip">Only saved attachments can be imported</Tooltip> :
+      <Tooltip id="import_tooltip">Import attachment as Wellplate data</Tooltip>;
 
     const confirmTooltip = (
+      // TODO: fix positioning
       <Tooltip placement="bottom" className="in" id="tooltip-bottom">
         Really import data from Spreadsheet? This will overwrite existing Wellplate data.<br />
         <ButtonGroup>
@@ -138,14 +144,19 @@ export default class WellplateDetailsAttachments extends Component {
       return (
         <div>
           <OverlayTrigger placement="top" overlay={importTooltip} >
-            <Button
-              bsSize="xsmall"
-              bsStyle="success"
-              className="button-right"
-              onClick={() => this.toggleImportConfirm(attachment.id)}
-            >
-              <Glyphicon glyph="import" />
-            </Button>
+            <div>
+              {/* TODO: "float: right" doesn't allow disabled tooltip to show */}
+              <Button
+                bsSize="xsmall"
+                bsStyle="success"
+                className="button-right"
+                disabled={importDisabled}
+                style={btnStyle}
+                onClick={() => this.toggleImportConfirm(attachment.id)}
+              >
+                <Glyphicon glyph="import" />
+              </Button>
+            </div>
           </OverlayTrigger>
           { showImportConfirm[attachment.id] ? confirmTooltip : null}
         </div>
@@ -292,7 +303,7 @@ export default class WellplateDetailsAttachments extends Component {
     return (
       <div>
         <a onClick={() => this.handleTemplateDownload()} style={{ cursor: 'pointer' }}>
-          Download Wellplate Import Template xlsx.<br />
+          Download Wellplate import template xlsx<br />
         </a><br />
       </div>
     );
