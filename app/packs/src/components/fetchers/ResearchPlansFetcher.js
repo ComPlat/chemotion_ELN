@@ -62,8 +62,13 @@ export default class ResearchPlansFetcher {
       .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
       console.log(errorMessage);
     });
+    
     if (containerFiles.length > 0) {
-      return AttachmentFetcher.uploadFiles(containerFiles)().then(() => promise());
+      let tasks = [];
+      containerFiles.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
     return promise();
   }
