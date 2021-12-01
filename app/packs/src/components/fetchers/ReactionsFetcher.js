@@ -63,9 +63,12 @@ export default class ReactionsFetcher {
         console.log(errorMessage);
       });
 
-
     if (allFiles.length > 0) {
-      return AttachmentFetcher.uploadFiles(allFiles)().then(() => promise());
+      let tasks = [];
+      allFiles.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
     return promise();
   }

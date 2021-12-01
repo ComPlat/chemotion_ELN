@@ -43,8 +43,13 @@ export default class ScreensFetcher {
         .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
+      
     if (files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(() => promise());
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
     return promise();
   }
@@ -64,8 +69,13 @@ export default class ScreensFetcher {
         .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
+
     if (files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(() => promise());
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
     return promise();
   }
