@@ -46,8 +46,8 @@ GIT
 
 GIT
   remote: https://github.com/complat/ketcher-rails.git
-  revision: 77514fbb2b5540e39ee1c31e7dd149e8f7ee82db
-  ref: 77514fbb2b5540e39ee1c31e7dd149e8f7ee82db
+  revision: 287c848ad4149caf6466a1b7a648ada017d30304
+  ref: 287c848ad4149caf6466a1b7a648ada017d30304
   specs:
     ketcherails (0.1.12)
       active_model_serializers (< 0.10.0)
@@ -59,10 +59,12 @@ GIT
       grape-active_model_serializers (~> 1.3.2)
       haml-rails
       httparty
+      inchi-gem
       jquery-rails
       jquery-ui-rails (~> 5.0.5)
       kaminari
-      nokogiri (~> 1.10.0)
+      mimemagic (>= 0.3.10)
+      nokogiri (>= 1.10, < 1.13)
       openbabel
       paperclip (~> 5.2.0)
       rails (~> 5.2.0)
