@@ -144,8 +144,7 @@ export default class WellplateDetailsAttachments extends Component {
       return (
         <div>
           <OverlayTrigger placement="top" overlay={importTooltip} >
-            <div>
-              {/* TODO: "float: right" doesn't allow disabled tooltip to show */}
+            <div style={{ float: 'right' }}>
               <Button
                 bsSize="xsmall"
                 bsStyle="success"

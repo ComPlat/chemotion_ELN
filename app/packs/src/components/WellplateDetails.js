@@ -141,7 +141,6 @@ export default class WellplateDetails extends Component {
 
   handleAttachmentDrop(files) {
     const { wellplate } = this.state;
-    console.log(wellplate);
     wellplate.changed = true;
     files.forEach((file) => {
       const attachment = Attachment.fromFile(file);
@@ -159,12 +158,13 @@ export default class WellplateDetails extends Component {
   }
 
   handleAttachmentImport(attachment) {
+    // TODO: implement this stuff
     const { wellplate } = this.state;
     const index = wellplate.attachments.indexOf(attachment);
     // wellplate.changed = true;
     // wellplate.attachments[index].is_deleted = true;
     // this.setState({ wellplate });
-    console.log(index);
+    console.log(`wellplate: ${index}`);
     // return index;
   }
 
