@@ -51,8 +51,8 @@ class User < ApplicationRecord
   attr_writer :login
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
-  devise :database_authenticatable, :registerable, :confirmable, :recoverable,
-         :rememberable, :trackable, :validatable, :lockable, :omniauthable, authentication_keys: [:login]
+  devise :database_authenticatable, :registerable, :confirmable,
+         :recoverable, :rememberable, :trackable, :validatable, :lockable, :omniauthable, authentication_keys: [:login]
   has_one :profile, dependent: :destroy
   has_one :container, as: :containable
 
@@ -153,7 +153,7 @@ class User < ApplicationRecord
     format_abbr = name_abbr_config[:format_abbr].presence || format_abbr_default.presence
     format_err_msg = name_abbr_config[:format_abbr_err_msg].presence || format_err_msg_default.presence
 
-    return if name_abbreviation.match?(format_abbr)
+    return if name_abbreviation&.match?(format_abbr)
 
     errors.add(:name_abbreviation, format_err_msg)
   end
@@ -375,6 +375,7 @@ class User < ApplicationRecord
   # - move it around in collection tree
   # - add subcollections
   # - delete it
+
   def create_all_collection
     Collection.create(user: self, label: 'All', is_locked: true, position: 0)
   end

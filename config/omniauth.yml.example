@@ -1,14 +1,27 @@
 development:
   :github:
+    :enable:
     :client_id:
     :client_secret:
+  :openid_connect:
+    :enable:
+    :client_id:
+    :client_secret:
+    :host:
+    :scheme:
+    :authorization_endpoint:
+    :token_endpoint:
+    :redirect_uri:
+    :issuer:
   :orcid:
+    :enable:
     :client_id:
     :client_secret:
     :member:
     :sandbox:
     :scope: '/read-limited'
   :chemotion_orcid:
+    :enable:
     :client_id:
     :client_secret:
     :member:
@@ -17,15 +30,28 @@ development:
     :redirect_uri:
 production:
   :github:
+    :enable:
     :client_id:
     :client_secret:
+  :openid_connect:
+    :enable:
+    :client_id:
+    :client_secret:
+    :host:
+    :scheme:
+    :authorization_endpoint:
+    :token_endpoint:
+    :redirect_uri:
+    :issuer:
   :orcid:
+    :enable:
     :client_id:
     :client_secret:
     :member:
     :sandbox:
     :scope: '/read-limited'
   :chemotion_orcid:
+    :enable:
     :client_id:
     :client_secret:
     :member:
