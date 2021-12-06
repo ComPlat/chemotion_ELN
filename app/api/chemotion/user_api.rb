@@ -34,6 +34,13 @@ module Chemotion
         present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices'
       end
 
+      namespace :omniauth_providers do
+        desc "get omniauth providers"
+        get do
+          { providers: Devise.omniauth_configs.keys, current_user: current_user }
+        end
+      end
+
       namespace :save_label do
         desc 'create or update user labels'
         params do

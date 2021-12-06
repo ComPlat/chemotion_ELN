@@ -66,6 +66,7 @@ gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git'
 gem 'omniauth', '~> 1.9.1'
 gem 'omniauth-github', '~> 1.4.0'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
+gem 'omniauth_openid_connect'
 
 gem 'pandoc-ruby'
 gem 'paranoia', '~> 2.0'

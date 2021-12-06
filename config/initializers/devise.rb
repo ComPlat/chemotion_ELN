@@ -239,19 +239,33 @@ Devise.setup do |config|
   # Add a new OmniAuth provider. Check the wiki for more information on setting
   # up on your models and hooks.
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
-  omniauth_config = Rails.application.config_for :omniauth
-  Rails.application.configure do
-    if omniauth_config.key?(:github)
+  omniauth_config = (File.exist? Rails.root.join('config', 'omniauth.yml')) && (Rails.application.config_for :omniauth)
+  omniauth_config && Rails.application.configure do
+    if omniauth_config.key?(:github) && omniauth_config[:github][:enable]
       config.omniauth :github, omniauth_config[:github][:client_id], omniauth_config[:github][:client_secret],
                       scope: 'user,public_repo'
     end
 
-    if omniauth_config.key?(:orcid)
+    if omniauth_config.key?(:openid_connect) && omniauth_config[:openid_connect][:enable]
+      options = {
+        port: 443,
+        scheme: omniauth_config[:openid_connect][:scheme],
+        host: omniauth_config[:openid_connect][:host],
+        authorization_endpoint: omniauth_config[:openid_connect][:authorization_endpoint],
+        token_endpoint: omniauth_config[:openid_connect][:token_endpoint],
+        identifier: omniauth_config[:openid_connect][:client_id],
+        secret: omniauth_config[:openid_connect][:client_secret],
+        redirect_uri: omniauth_config[:openid_connect][:redirect_uri]
+      }
+      config.omniauth :openid_connect, scope: [:openid, :email, :profile], issuer: omniauth_config[:openid_connect][:issuer], response_type: :code, discovery: :true, client_options: options
+    end
+
+    if omniauth_config.key?(:orcid) && omniauth_config[:orcid][:enable]
       # the regular omniauth-orcid provider, from https://github.com/datacite/omniauth-orcid
       config.omniauth :orcid, omniauth_config[:orcid][:client_id], omniauth_config[:orcid][:client_secret],
                 member: omniauth_config[:orcid][:member], sandbox: omniauth_config[:orcid][:sandbox],
                 scope: omniauth_config[:orcid][:sandbox]
-    elsif omniauth_config.key?(:chemotion_orcid)
+    elsif omniauth_config.key?(:chemotion_orcid) && omniauth_config[:chemotion_orcid][:enable]
       # the special chemotion orcid provider
       require 'omniauth/strategies/chemotion_orcid'
       config.omniauth :orcid, omniauth_config[:chemotion_orcid][:client_id], omniauth_config[:chemotion_orcid][:client_secret],
@@ -259,6 +273,7 @@ Devise.setup do |config|
                       scope: omniauth_config[:chemotion_orcid][:scope], redirect_uri: omniauth_config[:chemotion_orcid][:redirect_uri],
                       strategy_class: OmniAuth::Strategies::ChemotionORCID
     end
+
   end
 
   # ==> Warden configuration

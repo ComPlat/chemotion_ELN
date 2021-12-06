@@ -2,11 +2,12 @@
   %h2 Sign up
   = form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f|
     = devise_error_messages!
-    .form-group.field
+
+    - if resource.password_required?
+      .form-group.field
       = f.label :email, class: "required"
       %br/
       = f.email_field :email, autofocus: true, class: 'form-control', required: true
-    - if resource.password_required?
       .form-group.field
         = f.label :password
         - if @validatable
@@ -18,14 +19,28 @@
         = f.label :password_confirmation
         %br/
         = f.password_field :password_confirmation, autocomplete: "off", class: 'form-control'
-    .form-group.field
-      = f.label :first_name, class: "required"
+      .form-group.field
+        = f.label :first_name, class: "required"
+        %br/
+        = f.text_field :first_name, autofocus: true, class: 'form-control', required: true
+      .form-group.field
+        = f.label :last_name, class: "required"
+        %br/
+        = f.text_field :last_name, autofocus: true, class: 'form-control', required: true
+    - else
+      .form-group.field
+      = f.label :email, class: "required"
       %br/
-      = f.text_field :first_name, autofocus: true, class: 'form-control', required: true
-    .form-group.field
-      = f.label :last_name, class: "required"
-      %br/
-      = f.text_field :last_name, autofocus: true, class: 'form-control', required: true
+      = f.email_field :email, autofocus: true, class: 'form-control', required: true, readonly: true
+      .form-group.field
+        = f.label :first_name, class: "required"
+        %br/
+        = f.text_field :first_name, autofocus: true, class: 'form-control', required: true, readonly: true
+      .form-group.field
+        = f.label :last_name, class: "required"
+        %br/
+        = f.text_field :last_name, autofocus: true, class: 'form-control', required: true, readonly: true
+
     .form-group.field
       = f.label "Name Abbreviation", class: "required"
       %em

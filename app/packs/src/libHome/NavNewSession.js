@@ -23,16 +23,23 @@ const NewSession = ({ authenticityToken, omniauthProviders }) => (
       </form>
     </Navbar.Form>
     {
-      omniauthProviders.includes('orcid') && <Nav pullRight>
+      omniauthProviders && omniauthProviders.includes('orcid') && <Nav pullRight>
         <NavItem href="/users/auth/orcid" className="omniauth-navitem">
-          <img src="images/omniauth/ORCIDiD_icon32x32.png"/>Login with ORCID
+          Login ORCID
         </NavItem>
       </Nav>
     }
     {
-      omniauthProviders.includes('github') && <Nav pullRight>
+      omniauthProviders && omniauthProviders.includes('github') && <Nav pullRight>
         <NavItem href="/users/auth/github" className="omniauth-navitem">
-          <img src="images/omniauth/GitHub-Mark-32px.png"/>Login with GitHub
+          Login GitHub
+        </NavItem>
+      </Nav>
+    }
+    {
+      omniauthProviders && omniauthProviders.includes('openid_connect') && <Nav pullRight>
+        <NavItem href="/users/auth/openid_connect" className="omniauth-navitem">
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Login OIDC
         </NavItem>
       </Nav>
     }

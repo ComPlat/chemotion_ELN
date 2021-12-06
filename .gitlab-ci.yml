@@ -86,7 +86,8 @@ testrb:
     - /bin/bash -l -c "bundle install"
     - /bin/bash -l -c "bundle list"
     - /bin/bash -l -c "yarn install"
-    - /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:migrate  db:test:prepare db:seed"
+    - /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:migrate  db:test:prepare"
+    - /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:seed"
     - /bin/bash -l -c "RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
   except:
     variables:
