@@ -227,6 +227,7 @@ export default class WellplateDetails extends Component {
         <ListGroupItem >
           <WellplateDetailsAttachments
             attachments={attachments}
+            wellplateChanged={wellplate.isEdited}
             onDrop={this.handleAttachmentDrop.bind(this)}
             onDelete={this.handleAttachmentDelete.bind(this)}
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}

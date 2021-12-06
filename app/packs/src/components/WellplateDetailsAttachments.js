@@ -23,7 +23,7 @@ export default class WellplateDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     const {
-      attachments, onDrop, onDelete, onUndoDelete, onDownload, onImport, onEdit
+      attachments, wellplateChanged, onDrop, onDelete, onUndoDelete, onDownload, onImport, onEdit
     } = props;
     this.state = {
       onDrop,
@@ -109,18 +109,19 @@ export default class WellplateDetailsAttachments extends Component {
 
   renderImportAttachmentButton(attachment) {
     const { showImportConfirm } = this.state;
+    const { wellplateChanged } = this.props;
     const extension = last(attachment.filename.split('.'));
-    const importDisabled = attachment.is_new;
+    const importDisabled = wellplateChanged;
     const btnStyle = importDisabled ? { pointerEvents: 'none' } : {};
 
     const importTooltip = importDisabled ?
-      <Tooltip id="import_tooltip">Only saved attachments can be imported</Tooltip> :
+      <Tooltip id="import_tooltip">Wellplate must be saved before import</Tooltip> :
       <Tooltip id="import_tooltip">Import attachment as Wellplate data</Tooltip>;
 
     const confirmTooltip = (
       // TODO: fix positioning
       <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-        Really import data from Spreadsheet? This will overwrite existing Wellplate data.<br />
+        Import data from Spreadsheet? This will overwrite existing Wellplate data.<br />
         <ButtonGroup>
           <Button
             bsStyle="danger"
@@ -340,6 +341,7 @@ export default class WellplateDetailsAttachments extends Component {
 
 WellplateDetailsAttachments.propTypes = {
   attachments: PropTypes.arrayOf(PropTypes.object).isRequired,
+  wellplateChanged: PropTypes.bool.isRequired,
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
