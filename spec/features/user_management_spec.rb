@@ -73,7 +73,7 @@ PROCESSING_SUMMARY =
     Row 3: Failed to create user; Validation failed: First name can't be blank.
     Row 4: Failed to create user; Validation failed: Last name can't be blank.
     Row 5: Failed to create user; Validation failed: Name abbreviation has to be 2 to 3 characters long.
-    Row 6: Failed to create user; Validation failed: Email has already been taken, Name abbreviation has already been taken..
+    Row 6: Failed to create user; Validation failed: Email has already been taken, Name abbreviation is already in use..
     Row 7: Successfully created new user.
   HEREDOC
 
