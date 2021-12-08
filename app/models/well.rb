@@ -12,6 +12,8 @@
 #  readout      :string
 #  additive     :string
 #  deleted_at   :datetime
+#  label        :string           default("Molecular structure"), not null
+#  color_code   :string
 #
 # Indexes
 #
@@ -23,7 +25,7 @@
 class Well < ApplicationRecord
   acts_as_paranoid
   belongs_to :wellplate
-  belongs_to :sample
+  belongs_to :sample, optional: true
 
   include Tagging
 

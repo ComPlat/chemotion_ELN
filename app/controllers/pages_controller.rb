@@ -48,14 +48,13 @@ class PagesController < ApplicationController
     end
   end
 
-  def affiliations
-    #flash.discard    
+  def affiliations    
   end
 
   def create_affiliation
     @affiliation = Affiliation.find_or_create_by(sliced_affiliation_params)
     current_user.user_affiliations.build(
-      from: affiliation_params[:from_month],affiliation_id: @affiliation.id
+      from: affiliation_params[:from_month], affiliation_id: @affiliation.id
     )
     if current_user.save!
       flash['success'] = 'New affiliation added!'
@@ -64,13 +63,14 @@ class PagesController < ApplicationController
       flash.now['danger'] = 'Not saved! Please check input fields.'
       render 'affiliations'
     end
-    #redirect_to pages_affiliations_path
+    # redirect_to pages_affiliations_path
   end
 
   def update_affiliations
-    affiliations_params[:affiliations].each do |affiliation|
+    affiliations_params[:affiliations].presence&.each do |affiliation|
       u_affiliation = @affiliations.find_by(id: affiliation[:id])
       next unless u_affiliation
+
       if affiliation.delete(:_destroy).blank?
         unless u_affiliation.update(affiliation)
           messages = u_affiliation.errors.messages[:to]
@@ -106,7 +106,7 @@ class PagesController < ApplicationController
   end
 
   def sliced_affiliation_params
-     affiliation_params.slice(:country, :organization, :department, :group)
+    affiliation_params.slice(:country, :organization, :department, :group)
   end
 
   def affiliations_params

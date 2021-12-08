@@ -15,7 +15,7 @@ class TextTemplateInit < ActiveRecord::Migration[4.2]
         type: 'PredefinedTextTemplate',
         name: template_name,
         data: template,
-        user_id: Admin.first&.id
+        user_id: Admin.first&.id || 0
       )
     end
     Person.all.each(&:create_text_template)

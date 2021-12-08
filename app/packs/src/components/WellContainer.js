@@ -45,7 +45,7 @@ const collectSource = (connect, monitor) => ({
 });
 
 class WellContainer extends Component {
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {active, hideOverlay} = this.props;
     if (active && nextProps.isDragging) {
       hideOverlay();
@@ -65,7 +65,7 @@ class WellContainer extends Component {
       verticalAlign: 'middle',
       lineHeight: 2,
       cursor: 'move',
-      backgroundColor: 'white'
+      backgroundColor: well.color_code || 'white'
     };
     if (active) {
       containerStyle.backgroundColor = '#337ab7';
@@ -90,8 +90,9 @@ class WellContainer extends Component {
         <div style={{ ...containerStyle, ...style}}>
           <Well
             active={active}
+            label={well.label}
             sample={well.sample}
-            />
+          />
         </div>
       ))
     );

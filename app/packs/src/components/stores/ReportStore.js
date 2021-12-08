@@ -16,6 +16,7 @@ class ReportStore {
       { checked: true, text: 'collection' },
       { checked: true, text: 'analyses' },
       { checked: true, text: 'reaction description' },
+      { checked: true, text: 'literature' },
     ];
     this.rxnSettings = [
       { checked: true, text: 'diagram' },
@@ -437,6 +438,7 @@ class ReportStore {
           { text: 'collection', checked: ss.collection },
           { text: 'analyses', checked: ss.analyses },
           { text: 'reaction description', checked: ss.reaction_description },
+          { text: 'literature', checked: ss.literature },
         ],
       rxnSettings:
         [
@@ -530,6 +532,7 @@ class ReportStore {
           { text: 'collection', checked: true },
           { text: 'analyses', checked: true },
           { text: 'reaction description', checked: true },
+          { text: 'literature', checked: true },
         ],
       rxnSettings:
         [

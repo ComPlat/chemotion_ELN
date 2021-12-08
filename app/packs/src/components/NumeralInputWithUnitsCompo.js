@@ -22,7 +22,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     this.forceUpdate();
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { value, block } = nextProps;
     this.setState({ value, block });
   }

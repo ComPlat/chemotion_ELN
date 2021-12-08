@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -33,7 +34,8 @@ export default class SampleForm extends React.Component {
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
   }
 
-  componentWillReceiveProps() {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps() {
     this.setState({ isMolNameLoading: false });
   }
 
@@ -234,7 +236,7 @@ export default class SampleForm extends React.Component {
   }
 
   moleculeInput() {
-    const sample = this.props.sample;
+    const { sample } = this.props;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
@@ -301,6 +303,15 @@ export default class SampleForm extends React.Component {
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
+      if (!sample[field]) {
+        sample.sum_formula = '';
+      } else {
+        if (sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+        if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
+          sample.residues[0].custom_info.polymer_type = 'self_defined';
+          delete sample.residues[0].custom_info.surface_type;
+        }
+      }
       if (!sample[field] && ((sample.molfile || '') === '')) {
         this.props.parent.setState({ sample });
       } else {
@@ -410,7 +421,6 @@ export default class SampleForm extends React.Component {
   sampleAmount(sample) {
     const content = [];
     const isDisabled = !sample.can_update;
-    const { molarityBlocked } = this.state;
     const volumeBlocked = !sample.has_density && !sample.has_molarity;
 
     if (sample.isMethodDisabled('amount_value') === false) {
@@ -470,8 +480,8 @@ export default class SampleForm extends React.Component {
 
   samplePrivateNote(sample) {
     return (
-      <PrivateNoteElement element={sample} disabled={!sample.can_update}/>
-    )
+      <PrivateNoteElement element={sample} disabled={!sample.can_update} />
+    );
   }
 
   render() {
@@ -599,70 +609,6 @@ export default class SampleForm extends React.Component {
               </table>
             </td>
           </tr>
-
-          {/* comment 'Optical rotation' ... 'Private notes' out temporarily */}
-
-          {/* <tr>
-            <td>
-              {
-                this.textInput(sample, 'xref_optical_rotation', 'Optical rotation')
-              }
-            </td>
-            <td>
-              {
-                this.textInput(sample, 'xref_rfvalue', 'Rf-Value')
-              }
-            </td>
-            <td>
-              {
-                this.textInput(sample, 'xref_rfsovents', 'Rf-Sovents')
-              }
-            </td>
-            <td>
-              {
-                this.textInput(sample, 'xref_supplier', 'Supplier')
-              }
-            </td>
-          </tr>
-          <tr>
-            <td colSpan="4">
-              <FormGroup>
-                <ControlLabel>Private notes</ControlLabel>
-                <FormControl
-                  componentClass="textarea"
-                  value={sample.xref.private_notes || ''}
-                  onChange={e => this.handleFieldChanged('xref_private_notes', e.target.value)}
-                  rows={2}
-                  disabled={!sample.can_update}
-                />
-              </FormGroup>
-            </td>
-          </tr> */}
-
-          <tr>
-            {/* {
-              this.numInput(sample, 'density', 'g/ml', ['n'], 5, 'Density', '', polyDisabled, '', densityBlocked, isPolymer)
-            }
-            {
-              this.numInput(sample, 'molarity_value', 'M', ['n'], 5, 'Molarity', '', polyDisabled, '', molarityBlocked, isPolymer)
-            }
-            {
-              this.numInput(sample, 'purity', 'n', ['n'], 5, 'Purity', '', isDisabled)
-            }
-            <td>
-              <TextRangeWithAddon
-                field="melting_point"
-                label="Melting point"
-                addon="°C"
-                value={sample.melting_point_display}
-                disabled={polyDisabled}
-                onChange={this.handleRangeChanged}
-                tipOnText="Use space-separated value to input a Temperature range"
-              />
-            </td> */}
-
-          </tr>
-
           <tr>
             <td colSpan="4">
               <SampleDetailsSolvents

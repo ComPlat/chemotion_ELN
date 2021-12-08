@@ -56,25 +56,18 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-  }
-
-  onUIStoreChange(state) {
-    if (state.reaction.activeTab != this.state.activeTab){
-      this.setState({
-        activeTab: state.reaction.activeTab
-      })
+    if(!reaction.reaction_svg_file) {
+      this.updateReactionSvg();
     }
   }
+
 
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange)
   }
 
-  componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange)
-  }
-
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { reaction } = this.state;
     const nextReaction = nextProps.reaction;
 
@@ -100,29 +93,16 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  updateReactionSvg() {
-    const {reaction} = this.state;
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map(material => material.svgPath),
-      reactants: reaction.reactants.map(material => material.svgPath),
-      products: reaction.products.map(material => [material.svgPath, material.equivalent])
-    };
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
+  }
 
-    const solvents = reaction.solvents.map((s) => {
-      const name = s.preferred_label;
-      return name;
-    }).filter(s => s);
-
-    const solventsArray = solvents.length !== 0 ? solvents : [reaction.solvent]
-    let temperature = reaction.temperature_display
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = temperature + " " + reaction.temperature.valueUnit
+  onUIStoreChange(state) {
+    if (state.reaction.activeTab != this.state.activeTab) {
+      this.setState({
+        activeTab: state.reaction.activeTab
+      });
     }
-
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions).then((result) => {
-      reaction.reaction_svg_file = result.reaction_svg;
-      this.setState(reaction);
-    });
   }
 
   handleSubmit(closeView = false) {
@@ -265,12 +245,12 @@ export default class ReactionDetails extends Component {
     if(!reaction.svgPath) {
       return false;
     } else {
-      const svgProps = reaction.svgPath.includes('.svg') ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
+      const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg' ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
       return (
-        <SvgFileZoomPan 
+        <SvgFileZoomPan
           duration={300}
           resize={true}
-          {...svgProps} 
+          {...svgProps}
         />)
     }
   }
@@ -377,7 +357,31 @@ export default class ReactionDetails extends Component {
   }
 
   onTabPositionChanged(visible) {
-    this.setState({visible})
+    this.setState({ visible })
+  }
+
+  updateReactionSvg() {
+    const { reaction } = this.state;
+    const materialsSvgPaths = {
+      starting_materials: reaction.starting_materials.map(material => material.svgPath),
+      reactants: reaction.reactants.map(material => material.svgPath),
+      products: reaction.products.map(material => [material.svgPath, material.equivalent])
+    };
+
+    const solvents = reaction.solvents.map((s) => {
+      const name = s.preferred_label;
+      return name;
+    }).filter(s => s);
+
+    let temperature = reaction.temperature_display;
+    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
+      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
+    }
+
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions).then((result) => {
+      reaction.reaction_svg_file = result.reaction_svg;
+      this.setState(reaction);
+    });
   }
 
   handleSegmentsChange(se) {
@@ -391,7 +395,7 @@ export default class ReactionDetails extends Component {
   }
 
   render() {
-    const {reaction} = this.state;
+    const { reaction } = this.state;
     const { visible } = this.state;
     const tabContentsMap = {
       scheme: (
@@ -413,8 +417,8 @@ export default class ReactionDetails extends Component {
           />
         </Tab>
       ),
-      references: (
-        <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
+      literature: (
+        <Tab eventKey="literature" title="Literature" key={`references_${reaction.id}`}>
           <ReactionDetailsLiteratures
             element={reaction}
             literatures={reaction.isNew === true ? reaction.literatures : null}
@@ -451,7 +455,7 @@ export default class ReactionDetails extends Component {
             </ListGroupItem>
           </Tab>
         );
-	tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
+        tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
       }
     }
 
@@ -463,7 +467,7 @@ export default class ReactionDetails extends Component {
       if (tabContent) { tabContents.push(tabContent); }
     });
 
-    const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
+    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
 
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
@@ -483,7 +487,7 @@ export default class ReactionDetails extends Component {
           <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab">
             {tabContents}
           </Tabs>
-          <hr/>
+          <hr />
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
               Close

@@ -76,6 +76,8 @@
 !/public/images/wild_card/
 !/public/images/ghs/
 
+/public/editors/*
+!/public/editors/.keep
 /public/favicon.ico
 
 /public/ontologies/*
@@ -147,6 +149,8 @@ tags
 tags.temp
 .vscode/*
 
+.*.swp
+
 spec/examples.txt
 
 # Ignore master key for decrypting credentials and more.
@@ -162,4 +166,6 @@ yarn-debug.log*
 /public/welcome-message.md
 
 vendor/bundle/*
+vendor/cache/*
 .idea/*
+.devcontainer

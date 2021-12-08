@@ -9,8 +9,8 @@ module Chemotion
           requires :smiles, type: String, desc: 'Input SMILES'
           optional :svg_file, type: String, desc: 'Molecule svg file'
           optional :layout, type: String, desc: 'Molecule molfile layout'
+          optional :editor, type: String, desc: 'SVGProcessor', default: 'ketcher'
         end
-
         post do
           smiles = params[:smiles]
           svg = params[:svg_file]
@@ -40,41 +40,28 @@ module Chemotion
             else
               molfile = rd_mol
             end
-
             return {} unless molfile
-
             molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
           end
           return unless molecule
 
-          # write temporary SVG
-          digest = Digest::SHA256.hexdigest "#{molecule.inchikey}#{Time.now}"
-          digest = Digest::SHA256.hexdigest digest
-          svg_file_name = "TMPFILE#{digest}.svg"
-          svg_file_path = File.join('public','images', 'samples', svg_file_name)
-          if (svg)
-            processor = Chemotion::ChemdrawSvgProcessor.new svg
-            svg = processor.centered_and_scaled_svg
-            svg_file = File.new(svg_file_path, 'w+')
-            svg_file.write(svg)
-            svg_file.close
+          svg_digest = "#{molecule.inchikey}#{Time.now}"
+          if svg.present?
+            svg_process = SVG::Processor.new.structure_svg(params[:editor], svg, svg_digest)
           else
+            svg_process = SVG::Processor.new.generate_svg_info('samples', svg_digest)
             svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
             if File.exist?(svg_file_src)
               mol = molecule.molfile.lines[0..1]
               if mol[1]&.strip&.match?('OpenBabel')
                 svg = File.read(svg_file_src)
-                ob_processor = Chemotion::OpenBabelSvgProcessor.new svg
-                svg = ob_processor.imitate_ketcher_svg
-                svg_file = File.new(svg_file_path, 'w+')
-                svg_file.write(svg.to_xml)
-                svg_file.close
+                svg_process = SVG::Processor.new.structure_svg('openbabel', svg, svg_digest)
               else
-                FileUtils.cp(svg_file_src, svg_file_path)
+                FileUtils.cp(svg_file_src, svg_process[:svg_file_path])
               end
             end
           end
-          molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name, ob_log: babel_info[:ob_log] })
+          molecule.attributes.merge(temp_svg: File.exist?(svg_process[:svg_file_path]) && svg_process[:svg_file_name], ob_log: babel_info[:ob_log])
         end
       end
 
@@ -146,7 +133,7 @@ module Chemotion
             molecule = Molecule.find_or_create_by_molfile(molfile)
             ob = molecule&.ob_log
           end
-          molecule.attributes.merge(temp_svg: svg_name, ob_log: ob)
+          molecule&.attributes&.merge(temp_svg: svg_name, ob_log: ob)
         end
       end
 
@@ -155,30 +142,36 @@ module Chemotion
         requires :molfile, type: String, desc: 'Molecule molfile'
         optional :svg_file, type: String, desc: 'Molecule svg file'
         optional :editor, type: String, desc: 'SVGProcessor'
+        optional :decoupled, type: Boolean, desc: 'decouple from molecule', default: false
       end
       post do
         svg = params[:svg_file]
         molfile = params[:molfile]
-        processor = params[:editor] == 'editor-marvinjs' ? Chemotion::MarvinjsSvgProcessor.new(svg) : Ketcherails::SVGProcessor.new(svg)
-        svg = processor.centered_and_scaled_svg
-
-        digest = Digest::SHA256.hexdigest molfile
-        digest = Digest::SHA256.hexdigest digest
-        svg_file_name = "TMPFILE#{digest}.svg"
-        svg_file_path = "public/images/samples/#{svg_file_name}"
-
-        svg_file = File.new(svg_file_path, 'w+')
-        svg_file.write(svg)
-        svg_file.close
-
+        decoupled = params[:decoupled]
         molecule = Molecule.find_or_create_by_molfile(molfile)
+        molecule = Molecule.find_by(inchikey: 'DUMMY') if molecule.blank? && decoupled
         ob = molecule&.ob_log
-        molecule&.attributes&.merge(temp_svg: svg_file_name, ob_log: ob)
+        if params[:svg_file].present?
+          svg_process = SVG::Processor.new.structure_svg(params[:editor], svg, molfile)
+        else
+          svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
+          if File.exist?(svg_file_src)
+            mol = molecule.molfile.lines[0..1]
+            if mol[1]&.strip&.match?('OpenBabel')
+              svg = File.read(svg_file_src)
+              svg_process = SVG::Processor.new.structure_svg('openbabel', svg, molfile)
+            else
+              svg_process = SVG::Processor.new.generate_svg_info('samples', molfile)
+              FileUtils.cp(svg_file_src, svg_process[:svg_file_path])
+            end
+          end
+        end
+        molecule&.attributes&.merge(temp_svg: svg_process[:svg_file_name], ob_log: ob)
       end
 
-      desc "return CAS of the molecule"
+      desc 'return CAS of the molecule'
       params do
-        requires :inchikey, type: String, desc: "Molecule inchikey"
+        requires :inchikey, type: String, desc: 'Molecule inchikey'
       end
       get :cas do
         inchikey = params[:inchikey]

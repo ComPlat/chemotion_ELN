@@ -33,7 +33,7 @@ development:
         2
       :analyses:
         3
-      :references:
+      :literature:
         4
       :green_chemistry:
         5
@@ -87,7 +87,7 @@ production:
         2
       :analyses:
         3
-      :references:
+      :literature:
         4
       :green_chemistry:
         5
@@ -141,7 +141,7 @@ test:
         2
       :analyses:
         3
-      :references:
+      :literature:
         4
       :green_chemistry:
         5

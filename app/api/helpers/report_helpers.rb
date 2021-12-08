@@ -478,7 +478,8 @@ module ReportHelpers
         created_at: ['s.created_at', nil, 0],
         updated_at: ['s.updated_at', nil, 0],
         # deleted_at: ['wp.deleted_at', nil, 10],
-        molecule_name: ['mn."name"', '"molecule name"', 1]
+        molecule_name: ['mn."name"', '"molecule name"', 1],
+        molarity_value: ['s."molarity_value"', '"molarity_value"', 0]
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -562,6 +563,8 @@ module ReportHelpers
       sel.symbolize_keys.fetch(table, []).each do |col|
         if col == 'user_labels'
           selection << "labels_by_user_sample(#{user_id}, s_id) as user_labels"
+        elsif col == 'literature'
+          selection << "literatures_by_element('Sample', s_id) as literatures"
         elsif (s = attrs[table][col.to_sym])
           selection << (s[1] && s[0] + ' as ' + s[1] || s[0])
         end

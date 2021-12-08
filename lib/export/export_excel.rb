@@ -100,11 +100,32 @@ module Export
       end
     end
 
+    def literatures_info(ids)
+      output = []
+      ids&.split(',')&.each do |id|
+        lit = Literature.find(id)
+        return '' if lit.nil?
+
+        bib = lit[:refs] && lit[:refs]['bibtex']
+        bb = DataCite::LiteraturePaser.parse_bibtex!(bib, id)
+        bb = DataCite::LiteraturePaser.get_metadata(bb, lit[:doi], id) unless bb.class == BibTeX::Entry
+        output.push(DataCite::LiteraturePaser.excel_string(lit, bb)) if bb.class == BibTeX::Entry
+      end
+      output = output.join("\n")
+      output
+    end
+    
     def filter_with_permission_and_detail_level(sample)
       # return all data if sample in own collection
       if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
         headers = @headers
-        data = headers.map { |column| sample[column] }
+        data = headers.map do |column|
+          if column == 'literatures'
+            literatures_info(sample[column])
+          else
+            sample[column]
+          end
+        end
         data[@image_index] = svg_path(sample) if @image_index
       # elsif sample['ts'] == 't' || sample['ts'].equal?(true)
       #   return Array.new(@headers.size)data = headers.map { |column| sample[column] }

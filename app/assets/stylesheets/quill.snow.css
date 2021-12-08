@@ -879,3 +879,14 @@
 .ql-container.ql-snow {
   border: 1px solid #ccc;
 }
+
+.ql-spec-Charac {
+  margin: 2px 2px 2px 2px;
+  width: 15%;
+}
+
+.ql-snow .ql-spec-group {
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: center;
+}

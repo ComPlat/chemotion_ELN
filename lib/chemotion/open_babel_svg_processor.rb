@@ -42,5 +42,9 @@ module Chemotion
       @svg = Nokogiri::XML(@svg.to_xml)
       @svg
     end
+
+    def centered_and_scaled_svg
+      imitate_ketcher_svg
+    end
   end
 end

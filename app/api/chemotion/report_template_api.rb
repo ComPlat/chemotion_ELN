@@ -10,7 +10,7 @@ module Chemotion
     resource :report_templates do
       desc 'Return list templates'
       get do
-        data = Entities::ReportTemplateEntity.represent(ReportTemplate.all, only: [:id, :name, :report_type, :attachment_id ])
+        data = Entities::ReportTemplateEntity.represent(ReportTemplate.all.order(:id), only: [:id, :name, :report_type, :attachment_id ])
         { templates: data }
       end
 

@@ -42,7 +42,6 @@ export default class ReactionDescriptionEditor extends React.Component {
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
     this.quillOnChange = this.quillOnChange.bind(this);
-    //this.debouncedQuillOnChange = _.debounce(this.quillOnChange, 300);
   }
 
   componentDidMount() {
@@ -53,9 +52,6 @@ export default class ReactionDescriptionEditor extends React.Component {
     const { template } = this.props;
     const namesToFetch = Object.values(template).flat();
     this.fetchPredefinedTemplates(namesToFetch);
-  }
-
-  componentWillReceiveProps(newProps) {
   }
 
   componentWillUnmount() {

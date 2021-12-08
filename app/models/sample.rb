@@ -106,7 +106,7 @@ class Sample < ApplicationRecord
   # scopes for suggestions
   scope :by_residues_custom_info, ->(info, val) { joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?", "%#{sanitize_sql_like(val)}%")}
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :by_exact_name, ->(query) { where('name ~* :regex', regex: "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[A-Z])$") }
+  scope :by_exact_name, ->(query) { where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)', "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$", "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_molecule_sum_formular, ->(query) {
@@ -181,6 +181,9 @@ class Sample < ApplicationRecord
   has_many :reactions_as_reactant, through: :reactions_reactant_samples, source: :reaction
   has_many :reactions_as_solvent, through: :reactions_solvent_samples, source: :reaction
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
+  
+  has_many :literals, as: :element, dependent: :destroy
+  has_many :literatures, through: :literals
 
   has_many :devices_samples
   has_many :analyses_experiments
@@ -200,7 +203,7 @@ class Sample < ApplicationRecord
   has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w[amount_value amount_unit]
 
-  has_ancestry
+  has_ancestry orphan_strategy: :adopt
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   belongs_to :molecule, optional: true

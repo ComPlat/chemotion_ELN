@@ -1,0 +1,166 @@
+
+
+
+ 14 13  0  0  0  0  0  0  0  0999 V2000
+   -0.1875    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4000   -0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1875    1.4000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0248   -0.7000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6125    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6125    1.4000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8248    2.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.0373    1.4000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.0373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8248   -0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4000   -2.1000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6373    0.0000    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0373    0.0000    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  2  0  0  0  0
+  1  4  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  2  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+  9 10  1  0  0  0  0
+  5 10  2  0  0  0  0
+  2  5  1  0  0  0  0
+  2 11  1  6  0  0  0
+  4 12  1  0  0  0  0
+ 13 14  1  0  0  0  0
+M  END
+>  <db_id>
+1
+
+>  <molecule_name>
+(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride
+
+>  <emp_formula_short>
+C9H12ClNO2
+
+>  <cas_nr>
+19883-41-1
+
+>  <chemical_storage_conc>
+
+
+>  <molecule_type>
+
+
+>  <chemical_storage_type>
+
+
+>  <safety_sym>
+GHS07
+
+>  <safety_sym_text>
+
+
+>  <pos_neg>
+ 
+
+>  <chemical_storage_bilancing>
+Standard
+
+>  <molecule_bilancing>
+Standard
+
+>  <owner_person_id>
+
+
+>  <safety_text>
+
+
+>  <safety_data_sheet>
+
+
+>  <safety_r_s>
+H: 319; P: 305+351+338
+
+>  <safety_class>
+1
+
+>  <safety_danger>
+
+
+>  <safety_cancer>
+
+
+>  <safety_mutagen>
+
+
+>  <safety_reprod>
+
+
+>  <safety_other>
+WGK: 3
+
+>  <disposed_when>
+
+
+>  <disposed_by>
+
+
+>  <smiles_stereo>
+[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]
+
+>  <mw>
+201.65
+
+
+>  <amount>
+10 g /  g
+
+>  <inventarisation>
+49.02904749736127, 8.401973618901206
+
+>  <chemical_storage_barcode>
+01011010001111
+
+>  <lot_no>
+
+
+>  <container>
+100 ml Glass bottle
+
+>  <storage>
+B319
+
+>  <borrowed_by>
+
+
+>  <order_date>
+
+
+>  <open_date>
+
+
+>  <expiry_date>
+
+
+>  <supplier>
+Aldrich
+
+>  <cat_no>
+
+
+>  <price>
+
+
+>  <chemical_storage_properties>
+
+
+>  <density_20>
+
+
+>  <mp_short>
+189-191
+
+>  <bp_short>
+
+
+>  <n_20>
+
+
+

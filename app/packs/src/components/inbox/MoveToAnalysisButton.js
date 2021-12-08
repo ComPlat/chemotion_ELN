@@ -100,7 +100,7 @@ export default class MoveToAnalysisButton extends React.Component {
           onClick={() => this.moveToAnalysis(sample.id, attachment.id)}
         >
           <i className="fa fa-arrow-circle-right" aria-hidden="true" />&nbsp;
-          {sample.short_label} {sample.name}
+          {sample.short_label} {sample.name} {sample.type}
         </Button>
         <br />
       </div>

@@ -1,6 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
-import { Col, Nav, NavItem, Row, Tab } from 'react-bootstrap';
+import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import KeyboardActions from './actions/KeyboardActions';
 import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
@@ -197,15 +197,21 @@ export default class List extends React.Component {
       const value = visible.get(i);
 
       let iconClass = `icon-${value}`;
+      let ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{value && (value.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()))}</Tooltip>);
 
       if (!constEls.includes(value)) {
         const genericEl = (this.state.genericEls &&
-                           this.state.genericEls.find(el => el.name == value)) || {};
+                           this.state.genericEls.find(el => el.name === value)) || {};
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
+        ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{genericEl.label}<br />{genericEl.desc}</Tooltip>);
       }
+
+
       const navItem = (
         <NavItem eventKey={i} key={`${value}_navItem`}>
-          <i className={iconClass} />
+          <OverlayTrigger delayShow={500} placement="top" overlay={ttl}>
+            <i className={iconClass} />
+          </OverlayTrigger>
           <span style={{ paddingLeft: 5 }}>
             {elementState.totalElements &&
                       elementState.totalElements[`${value}s`]}

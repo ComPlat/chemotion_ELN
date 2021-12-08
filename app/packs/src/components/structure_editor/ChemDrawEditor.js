@@ -10,7 +10,7 @@ const LoadingModal = (props) => {
   const { loading } = props;
   return (
     <Modal className="chemdraw-loading" animation show={loading}>
-      <img src="/cdjs/sample/images/chemdraw.png" alt="ChemDraw" title="ChemDraw" />
+      <img src="/images/chemdraw.png" alt="ChemDraw" title="ChemDraw" />
       <div>Initializing...</div>
       <i className="fa fa-spinner fa-pulse fa-3x fa-fw" aria-hidden="true" />
     </Modal>
@@ -54,6 +54,7 @@ class ChemDrawEditor extends React.Component {
     const { editor } = this.props;
     const { id } = editor;
     const extConf = editor.extConf || { };
+    if (!extConf.properties) extConf.properties = { StyleSheet: 'ACS Document 1996', chemservice: 'https://chemdrawdirect.perkinelmer.cloud/rest' };
     const licenseUrl = editor.license || '';
     perkinelmer.ChemdrawWebManager.attach({
       id,

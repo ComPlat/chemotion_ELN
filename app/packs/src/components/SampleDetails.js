@@ -7,7 +7,7 @@ import {
   InputGroup, FormGroup, FormControl,
   Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, DropdownButton, MenuItem,
-  ControlLabel, Modal, Alert
+  ControlLabel, Modal, Alert, Checkbox
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -40,17 +40,17 @@ import XTabs from './extra/SampleDetailsXTabs';
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
 import Sample from './models/Sample';
-import Container from './models/Container'
+import Container from './models/Container';
 import PolymerSection from './PolymerSection';
 import ElementalCompositionGroup from './ElementalCompositionGroup';
-import ToggleSection from './common/ToggleSection'
-import SampleName from './common/SampleName'
+import ToggleSection from './common/ToggleSection';
+import SampleName from './common/SampleName';
 import ClipboardCopyText from './common/ClipboardCopyText';
-import SampleForm from './SampleForm'
+import SampleForm from './SampleForm';
 import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
 import ComputedPropLabel from './computed_props/ComputedPropLabel';
 import Utils from './utils/Functions';
-import PrintCodeButton from './common/PrintCodeButton'
+import PrintCodeButton from './common/PrintCodeButton';
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import PubchemLcss from './PubchemLcss';
@@ -62,6 +62,7 @@ import CopyElementModal from './common/CopyElementModal';
 import NotificationActions from './actions/NotificationActions';
 import MatrixCheck from './common/MatrixCheck';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
+import NmrSimTab from './nmr_sim/NmrSimTab';
 
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
@@ -120,6 +121,7 @@ export default class SampleDetails extends React.Component {
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
+    this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -135,6 +137,7 @@ export default class SampleDetails extends React.Component {
     this.decoupleMolecule = this.decoupleMolecule.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.decoupleChanged = this.decoupleChanged.bind(this);
   }
 
   componentDidMount() {
@@ -143,7 +146,8 @@ export default class SampleDetails extends React.Component {
     this.fetchQcWhenNeeded(activeTab);
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))
         || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey == 'DUMMY')) {
       this.setState({
@@ -231,7 +235,7 @@ export default class SampleDetails extends React.Component {
       .then((result) => {
         if (!result || result == null) {
           // eslint-disable-next-line no-alert
-          alert('Can not create molecule with this smiles!');
+          alert('Cannot create molecule with this smiles!');
         } else {
           sample.molfile = result.molfile;
           sample.molecule_id = result.id;
@@ -265,16 +269,34 @@ export default class SampleDetails extends React.Component {
       });
   }
 
-  handleStructureEditorSave(molfile, svg_file = null, config = null, editor = null) {
+  decoupleChanged(e) {
+    const { sample } = this.state;
+    sample.decoupled = e.target.checked;
+    if (!sample.decoupled) {
+      sample.sum_formula = '';
+    } else {
+      if (sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+      if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
+        sample.residues[0].custom_info.polymer_type = 'self_defined';
+        delete sample.residues[0].custom_info.surface_type;
+      }
+    }
+    if (!sample.decoupled && ((sample.molfile || '') === '')) {
+      this.handleSampleChanged(sample);
+    } else {
+      this.handleSampleChanged(sample, this.decoupleMolecule);
+    }
+  }
+
+  handleStructureEditorSave(molfile, svg_file = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
-    // this.updateMolecule(molfile, svg_file, smiles);
     if (!smiles || smiles === '') {
       this.setState({ loadingMolecule: true });
-      MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor)
+      MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor, sample.decoupled)
         .then((result) => {
           sample.molecule = result;
           sample.molecule_id = result.id;
@@ -285,20 +307,28 @@ export default class SampleDetails extends React.Component {
             pageMessage: result.ob_log
           });
         }).catch((errorMessage) => {
-          console.log(errorMessage);
+          alert('Cannot create molecule!');
+          console.log(`handleStructureEditorSave exception of fetchByMolfile: ${errorMessage}`);
         });
     } else {
       this.setState({ loadingMolecule: true });
-      MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile)
+      MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile, editor)
         .then((result) => {
-          sample.molecule = result;
-          sample.molecule_id = result.id;
-          this.setState({
-            sample,
-            smileReadonly: true,
-            loadingMolecule: false,
-            pageMessage: result.ob_log
-          });
+          if (!result || result == null) {
+            alert('Cannot create molecule!');
+          } else {
+            sample.molecule = result;
+            sample.molecule_id = result.id;
+            this.setState({
+              sample,
+              smileReadonly: true,
+              loadingMolecule: false,
+              pageMessage: result.ob_log
+            });
+          }
+        }).catch((errorMessage) => {
+          alert('Cannot create molecule!');
+          console.log(`handleStructureEditorSave exception of fetchBySmi: ${errorMessage}`);
         });
     }
     this.hideStructureEditor();
@@ -345,7 +375,7 @@ export default class SampleDetails extends React.Component {
       <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
         <Glyphicon glyph="pencil" />
       </Button>
-    )
+    );
   }
 
   svgOrLoading(sample) {
@@ -454,9 +484,14 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     const colLabel = sample.isNew ? null : (
-      <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
+      <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
 
+    const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
+      <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
+        Decoupled
+      </Checkbox>
+    ) : null;
 
     return (
       <div>
@@ -510,6 +545,7 @@ export default class SampleDetails extends React.Component {
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={sample} />
+        {decoupleCb}
         <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           {colLabel}
@@ -539,17 +575,24 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const style = { height: '200px' };
-    const pubchemLcss = sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss ?
-      sample.pubchem_tag.pubchem_lcss.Record.Section[0].Section[0].Section[0].Information : null;
+    let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
+    if (pubchemLcss && pubchemLcss.Reference) {
+      const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
+      if (echa.length > 0) {
+        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Safety and Hazards') || [];
+        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Hazards Identification') || [];
+        pubchemLcss = pubchemLcss.Section[0].Information.filter(e => echa.includes(e.ReferenceNumber)) || null;
+      } else pubchemLcss = null;
+    }
     const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid ?
       sample.pubchem_tag.pubchem_cid : 0;
-    const lcssSign = pubchemLcss ?
+    const lcssSign = pubchemLcss && !sample.decoupled ?
       <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : <div />;
 
     return (
       <Row style={style}>
         <Col md={4}>
-          <h4><SampleName sample={sample}/></h4>
+          <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
           {lcssSign}
@@ -1053,6 +1096,24 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  nmrSimTab(ind) {
+    const { sample } = this.state;
+    if (!sample) { return null; }
+    return (
+      <Tab
+        eventKey={ind}
+        title="NMR Simulation"
+        key={`NMR_${sample.id}_${ind}`}
+      >
+        <ListGroupItem style={{ paddingBottom: 20 }} >
+          <NmrSimTab
+            sample={sample}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   extraLabels() {
     let labels = [];
     for (let j = 0; j < XLabels.count; j += 1) {
@@ -1192,16 +1253,21 @@ export default class SampleDetails extends React.Component {
       analyses: this.sampleContainerTab('analyses'),
       literature: this.sampleLiteratureTab('literature'),
       results: this.sampleImportReadoutTab('results'),
-      qc_curation: this.qualityCheckTab('qc_curation'),
+      qc_curation: this.qualityCheckTab('qc_curation')
     };
 
     if (this.enableComputedProps) {
       tabContentsMap.computed_props = this.moleculeComputedProps('computed_props');
     }
 
+    if (this.enableNmrSim) {
+      tabContentsMap.nmr_sim = this.nmrSimTab('nmr_sim');
+    }
+
     const tabTitlesMap = {
       qc_curation: 'qc curation',
-      computed_props: 'computed props'
+      computed_props: 'computed props',
+      nmr_sim: 'NMR Simulation'
     };
 
     for (let j = 0; j < XTabs.count; j += 1) {
