@@ -91,7 +91,7 @@ describe 'create multiple users from file' do
       find_button('Create users').click
       expect(find('#processingSummary')).to have_content(:all, expected_processing_summary)
     end
-    expect(find('#formControlMessage').value).to eq 'Finished processing user file.'
+    expect(page).to have_field('formControlMessage', with: 'Finished processing user file.')
   end
 
   before do
