@@ -10,7 +10,7 @@ require:
   - rubocop-performance
 AllCops:
   DisplayCopNames: true
-  TargetRubyVersion: 2.5.6
+  TargetRubyVersion: 2.6.6
   Exclude:
     - 'bin/*'
     - 'db/**/*'
@@ -18,3 +18,7 @@ AllCops:
     - 'tmp/**/*'
     - 'vendor/**/*'
   CacheRootDirectory: tmp
+ClassAndModuleChildren:
+  EnforcedStyle: compact
+Style/Documentation:
+  Enabled: false
