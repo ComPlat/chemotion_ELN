@@ -21,7 +21,7 @@
   * attachments-inbox: case-insensitive matching https://github.com/ComPlat/chemotion_ELN/issues/537
   * attachments-inbox: added labels “product” or “start material” if applicable https://github.com/ComPlat/chemotion_ELN/issues/537
   * attachments-inbox: when the assignment is completed, send a notification to user’s message box https://github.com/ComPlat/chemotion_ELN/issues/537
-  * attachments-inbox: filename matching to support files from ELA system. 
+  * attachments-inbox: filename matching to support files from ELA system.
   * chemspectra: UV-vis layout extension  (part of https://github.com/ComPlat/chemotion_ELN/issues/531 )
   * chemspectra: Add further functions to XRD layout https://github.com/ComPlat/chemotion_ELN/issues/532
   * wellplate designer: select info to be displayed in well (https://github.com/ComPlat/chemotion_ELN/issues/556)
@@ -31,7 +31,8 @@
   * Admin user management: add multiple users from file.
 
 * Fixes
-  * filtering product samples of reactions when filter is on on sample list 
+  * import collection failed due to some molecules cannot be created successfully [cannot create molecule with given molfile](https://git.scc.kit.edu/ComPlat/chemotion_ELN/-/issues/1351)
+  * filtering product samples of reactions when filter is on on sample list
   * https://github.com/ComPlat/chemotion_ELN/issues/584
 
 
@@ -59,11 +60,11 @@
 
 * Improvements
   * LCSS display info only from ECHA source
-  * QuillEditor: added special characters menu for ResearchPlan 
+  * QuillEditor: added special characters menu for ResearchPlan
 
 * Fixes
   * postinstall rewrite of some imports in citation.js to fix wbpk assets compilation
-  * Reaction SVG refresh  after editing or adding samples 
+  * Reaction SVG refresh  after editing or adding samples
   * Fix Cron Jobs for LCSS and Pubchem Info
   * dev: fix reaction seeds
 
