@@ -187,8 +187,7 @@ class Sample < ApplicationRecord
 
   has_one :container, as: :containable
 
-  # TODO: really dependent-destroy?
-  has_many :wells, dependent: :destroy
+  has_many :wells
   has_many :wellplates, through: :well
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
