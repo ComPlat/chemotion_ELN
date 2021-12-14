@@ -6,12 +6,10 @@ FactoryBot.define do
     readouts do
       [
         {
-          title: 'Activity',
           value: '98.34',
           unit: '%'
         },
         {
-          title: 'Compound Concentration',
           value: '50',
           unit: 'µM'
         }

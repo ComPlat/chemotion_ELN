@@ -14,8 +14,8 @@ FactoryBot.define do
 
     trait :with_wells do
       after(:create) do |wellplate|
-        (1..8).each do |pos_x|
-          (1..12).each do |pos_y|
+        (1..8).each do |pos_y|
+          (1..12).each do |pos_x|
             FactoryBot.create(:well, wellplate: wellplate, position_x: pos_x, position_y: pos_y)
           end
         end
