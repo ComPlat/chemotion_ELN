@@ -12,8 +12,6 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
 
   let(:attachment_id) { attachment.id }
 
-  # let!(:collection) { create(:collection) }
-  # let!(:wellplate) { create(:wellplate, collection: collection, attachments: [attachment]) }
   let!(:wellplate) { create(:wellplate, :with_wells, attachments: [attachment]) }
 
   let(:import) { Import::ImportWellplateSpreadsheet.new(attachment_id) }
@@ -33,7 +31,8 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_headers.xlsx') }
 
       expected = { status: 'invalid',
-                   message: ["Can not process this type of file, must be '.xlsx'."],
+                   message: ['Position should be in cell A1.',
+                             'sample_id should be in cell B1.'],
                    data: [] }
 
       # test 1
@@ -43,7 +42,8 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_prefix.xlsx') }
 
       expected = { status: 'invalid',
-                   message: ["Can not process this type of file, must be '.xlsx'."],
+                   message: ["'_Value 'and '_Unit' prefixes don't match up.",
+                             'Prefixes must be unique.'],
                    data: [] }
 
       # test 2
@@ -53,7 +53,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_wells.xlsx') }
 
       expected = { status: 'invalid',
-                   message: ["Can not process this type of file, must be '.xlsx'."],
+                   message: ['Well A3 is missing or at wrong position.'],
                    data: [] }
 
       # test 3
