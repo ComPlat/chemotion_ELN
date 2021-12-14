@@ -18,7 +18,5 @@ AllCops:
     - 'tmp/**/*'
     - 'vendor/**/*'
   CacheRootDirectory: tmp
-ClassAndModuleChildren:
-  EnforcedStyle: compact
 Style/Documentation:
   Enabled: false
