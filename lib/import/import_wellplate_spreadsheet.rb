@@ -59,14 +59,14 @@ module Import
     def read_file
       @xlsx = Roo::Spreadsheet.open(@file_path, extension: :xlsx)
       @sheet = xlsx.sheet(0)
-      @header = sheet.row(1).reject { |e| e.to_s.empty? }.map(&:strip)
+      @header = sheet.row(1).map(&:to_s).map(&:strip)
       @rows = sheet.parse
     end
 
     def check_headers
-      ['Position', 'sample_ID', 'External Compound Label/ ID', 'Smiles', '.+_Value', '.+_Unit'].each_with_index do |check, index|
-        error_messages << "#{check} should be in cell #{@letters[index]}." if (header[index] =~ /^#{check}/i).nil?
-        byebug unless error_messages.empty?
+      ['Position', 'sample_ID', 'External Compound Label/ID', 'Smiles', '.+_Value', '.+_Unit'].each_with_index do |check, index|
+        error_messages << "#{check} should be in cell #{@letters[index]}1." if (header[index] =~ /^#{check}/i).nil?
+        # byebug unless error_messages.empty?
       end
 
       raise StandardError unless error_messages.empty?
@@ -85,7 +85,7 @@ module Import
         column = index + 4
         value2compare = column.even? ? value_headers[index / 2] : unit_headers[index / 2]
         error_messages << "#{vh} should be in column #{@letters[column]}" if vh != value2compare
-        byebug unless error_messages.empty?
+        # byebug unless error_messages.empty?
       end
 
       raise StandardError unless error_messages.empty?
@@ -98,8 +98,8 @@ module Import
       wells = xlsx.column(1).drop(1)
 
       positions_check.each_with_index do |position, index|
-        error_messagers << "Well #{position} is missing or at wrong position." if position != wells[index]
-        byebug unless error_messages.empty?
+        error_messages << "Well #{position} is missing or at wrong position." if position != wells[index]
+        # byebug unless error_messages.empty?
       end
 
       raise StandardError unless error_messages.empty?

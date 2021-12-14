@@ -16,7 +16,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
 
   let(:import) { Import::ImportWellplateSpreadsheet.new(attachment_id) }
 
-  context 'when handling faulty data' do
+  context 'when receiving wrong extension' do
     let!(:attachment) { FactoryBot.create(:attachment) }
 
     it 'rejects wrong extensions' do
@@ -26,37 +26,44 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
 
       expect(import.process!).to eql expected
     end
+  end
+
+  context 'when headers are missing' do
+    let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_headers.xlsx') }
 
     it 'handles missing headers' do
-      let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_headers.xlsx') }
-
       expected = { status: 'invalid',
                    message: ['Position should be in cell A1.',
-                             'sample_id should be in cell B1.'],
+                             'sample_ID should be in cell B1.'],
                    data: [] }
 
-      # test 1
+      expect(import.process!).to eql expected
     end
+  end
+
+  context 'when headers are missing' do
+    let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_prefix.xlsx') }
 
     it 'handles missing prefixes' do
-      let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_prefix.xlsx') }
-
       expected = { status: 'invalid',
                    message: ["'_Value 'and '_Unit' prefixes don't match up.",
                              'Prefixes must be unique.'],
                    data: [] }
 
-      # test 2
+      expect(import.process!).to eql expected
     end
+  end
+
+  context 'when wells are missing' do
+    let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_wells.xlsx') }
 
     it 'handles missing wells' do
-      let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_wells.xlsx') }
-
       expected = { status: 'invalid',
-                   message: ['Well A3 is missing or at wrong position.'],
+                   message: ['Well A3 is missing or at wrong position.',
+                             'Well H9 is missing or at wrong position.'],
                    data: [] }
 
-      # test 3
+      expect(import.process!).to eql expected
     end
   end
 
@@ -72,18 +79,11 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
 
     it 'imports well readouts' do
       expected_sample_ids = (1..96).map { |x| x + 10_000 }
-      expected_sample_ids = (1..96).map { nil }
       expected_readouts = (1..96).map do |x|
-        [{ value: "0.#{x}",
-           unit: 'mg' },
-         { value: "#{x}.00",
-           unit: 'GW' }]
-      end
-      expected_readouts = (1..96).map do
-        [{ "value": nil,
-           "unit": nil }.stringify_keys,
-         { "value": nil,
-           "unit": nil }.stringify_keys]
+        [{ value: "0.#{x}".to_f,
+           unit: 'mg' }.stringify_keys,
+         { value: "#{x}.00".to_f,
+           unit: 'GW' }.stringify_keys]
       end
 
       expect(wellplate.wells.count).to eq 96
