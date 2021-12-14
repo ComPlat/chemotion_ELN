@@ -10,7 +10,17 @@ export default class CollectionsFetcher {
     let promise = fetch(`/api/v1/${sync}ollections/take_ownership/${params.id}`, {
       credentials: 'same-origin',
       method: 'POST'
-    })
+    }).then((response) => {
+      return response.json()
+    }).then((response) => {
+      if (response.ok === false) {
+        NotificationActions.add({ title: 'Cannot take ownership of this collection! ', message: response.statusText, level: 'error', position: 'tr' });
+      } else {
+        NotificationActions.add({ message: response.statusText, level: 'info', position: 'tr' });
+      }
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
 
     return promise;
   }

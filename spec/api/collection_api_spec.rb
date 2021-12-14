@@ -115,9 +115,11 @@ describe Chemotion::CollectionAPI do
       it 'returns serialized (unshared) collection roots of logged in user' do
         get '/api/v1/collections/roots'
         collections = JSON.parse(response.body)['collections']
-        data1 = Entities::CollectionRootEntity.represent(c1, serializable: true).as_json
-        data2 = Entities::CollectionRootEntity.represent(c3, serializable: true).as_json
-        expect(collections).to eq [data1, data2]
+        data1 = Entities::CollectionRootEntity.represent(c1, serializable: true)
+        data1['is_sync_disabled'] = false
+        data2 = Entities::CollectionRootEntity.represent(c3, serializable: true)
+        data2['is_sync_disabled'] = false
+        expect(collections).to eq [data1.as_json, data2.as_json]
       end
     end
 
