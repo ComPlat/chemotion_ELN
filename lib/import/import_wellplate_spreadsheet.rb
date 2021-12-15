@@ -66,7 +66,6 @@ module Import
     def check_headers
       ['Position', 'sample_ID', 'External Compound Label/ID', 'Smiles', '.+_Value', '.+_Unit'].each_with_index do |check, index|
         error_messages << "#{check} should be in cell #{@letters[index]}1." if (header[index] =~ /^#{check}/i).nil?
-        # byebug unless error_messages.empty?
       end
 
       raise StandardError unless error_messages.empty?
@@ -85,7 +84,6 @@ module Import
         column = index + 4
         value2compare = column.even? ? value_headers[index / 2] : unit_headers[index / 2]
         error_messages << "#{vh} should be in column #{@letters[column]}" if vh != value2compare
-        # byebug unless error_messages.empty?
       end
 
       raise StandardError unless error_messages.empty?
@@ -99,7 +97,6 @@ module Import
 
       positions_check.each_with_index do |position, index|
         error_messages << "Well #{position} is missing or at wrong position." if position != wells[index]
-        # byebug unless error_messages.empty?
       end
 
       raise StandardError unless error_messages.empty?

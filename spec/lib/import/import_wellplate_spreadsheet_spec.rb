@@ -20,9 +20,10 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
     let!(:attachment) { FactoryBot.create(:attachment) }
 
     it 'rejects wrong extensions' do
-      expected = { status: 'invalid',
-                   message: ["Can not process this type of file, must be '.xlsx'."],
-                   data: [] }
+      expected =
+        { status: 'invalid',
+          message: ["Can not process this type of file, must be '.xlsx'."],
+          data: [] }
 
       expect(import.process!).to eql expected
     end
@@ -31,11 +32,12 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
   context 'when headers are missing' do
     let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_headers.xlsx') }
 
-    it 'handles missing headers' do
-      expected = { status: 'invalid',
-                   message: ['Position should be in cell A1.',
-                             'sample_ID should be in cell B1.'],
-                   data: [] }
+    it 'raises an exception' do
+      expected =
+        { status: 'invalid',
+          message: ['Position should be in cell A1.',
+                    'sample_ID should be in cell B1.'],
+          data: [] }
 
       expect(import.process!).to eql expected
     end
@@ -44,11 +46,12 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
   context 'when headers are missing' do
     let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_prefix.xlsx') }
 
-    it 'handles missing prefixes' do
-      expected = { status: 'invalid',
-                   message: ["'_Value 'and '_Unit' prefixes don't match up.",
-                             'Prefixes must be unique.'],
-                   data: [] }
+    it 'raises an exception' do
+      expected =
+        { status: 'invalid',
+          message: ["'_Value 'and '_Unit' prefixes don't match up.",
+                    'Prefixes must be unique.'],
+          data: [] }
 
       expect(import.process!).to eql expected
     end
@@ -57,11 +60,26 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
   context 'when wells are missing' do
     let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_wells.xlsx') }
 
-    it 'handles missing wells' do
-      expected = { status: 'invalid',
-                   message: ['Well A3 is missing or at wrong position.',
-                             'Well H9 is missing or at wrong position.'],
-                   data: [] }
+    it 'raises an exception' do
+      expected =
+        { status: 'invalid',
+          message: ['Well A3 is missing or at wrong position.',
+                    'Well H9 is missing or at wrong position.'],
+          data: [] }
+
+      expect(import.process!).to eql expected
+    end
+  end
+
+  context 'with multiple errors in file' do
+    let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_multiple_errors.xlsx') }
+
+    it 'only raises the first error' do
+      expected =
+        { status: 'invalid',
+          message: ['Position should be in cell A1.',
+                    'Smiles should be in cell D1.'],
+          data: [] }
 
       expect(import.process!).to eql expected
     end
