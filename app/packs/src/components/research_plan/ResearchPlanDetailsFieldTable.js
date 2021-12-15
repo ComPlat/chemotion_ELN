@@ -1,10 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { range } from 'lodash';
 import { Row, Col, Button } from 'react-bootstrap';
-import DataGrid from 'react-data-grid';
-import { Menu } from 'react-data-grid-addons';
-import ResearchPlanDetailsFieldTableContextMenu from './ResearchPlanDetailsFieldTableContextMenu';
 import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal';
 import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
