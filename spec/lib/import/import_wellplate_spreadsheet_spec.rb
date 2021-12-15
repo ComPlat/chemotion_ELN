@@ -9,12 +9,12 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
   let!(:attachment) do
     FactoryBot.create(:attachment, filename: file_name, file_path: file_path, file_data: file_data)
   end
-
-  let(:attachment_id) { attachment.id }
-
   let!(:wellplate) { create(:wellplate, :with_wells, attachments: [attachment]) }
 
-  let(:import) { Import::ImportWellplateSpreadsheet.new(attachment_id) }
+  let(:att_id) { attachment.id }
+  let(:wp_id) { wellplate.id }
+
+  let(:import) { Import::ImportWellplateSpreadsheet.new(wellplate_id: wp_id, attachment_id: att_id) }
 
   context 'when receiving wrong extension' do
     let!(:attachment) { FactoryBot.create(:attachment) }

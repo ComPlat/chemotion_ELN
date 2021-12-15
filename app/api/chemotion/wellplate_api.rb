@@ -190,7 +190,27 @@ module Chemotion
           col_id = ui_state[:currentCollectionId]
           wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(ui_state[:wellplate], CollectionsWellplate, col_id)
           Wellplate.where(id: wellplate_ids).each do |wellplate|
-            subwellplate = wellplate.create_subwellplate current_user, col_id, true
+            wellplate.create_subwellplate current_user, col_id, true
+          end
+        end
+      end
+
+      namespace :import_spreadsheet do
+        desc 'Import spreadsheet data to Wellplates and Wells'
+        params do
+          requires :wellplate_id, type: Integer
+          requires :attachment_id, type: Integer
+        end
+        route_param :wellplate_id do
+          before do
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:wellplate_id])).update?
+          end
+
+          put do
+            importer = ImportWellplateSpreadsheet.new(wellplate_id: wellplate_id, attachment_id: attachment_id)
+            importer.process!
+
+            { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
           end
         end
       end

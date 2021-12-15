@@ -4,13 +4,12 @@ require 'roo'
 
 module Import
   class ImportWellplateSpreadsheet
-    attr_reader :xlsx, :sheet, :header, :mandatory_check, :rows, :error_messages,
-                :file_path, :current_user_id, :prefixes, :prefix_diff
+    attr_reader :xlsx, :sheet, :header, :mandatory_check, :rows, :error_messages, :file_path
 
-    def initialize(attachment_id)
+    def initialize(wellplate_id:, attachment_id:)
+      @wellplate = Wellplate.find(wellplate_id)
       @attachment = Attachment.find(attachment_id)
       @file_path = @attachment.store.path
-      @wellplate = Wellplate.find(@attachment.attachable_id)
 
       @rows = []
       @error_messages = []
@@ -115,7 +114,7 @@ module Import
           sample_id = row[@sample_index]
 
           tuples = row[@readout_index..@readout_index + @prefixes.count * 2 - 1].each_slice(2).to_a
-          readouts = tuples.map { |values| Hash[[%w[value unit], values].transpose].symbolize_keys }
+          readouts = tuples.map { |tuple| Hash[[%w[value unit], tuple].transpose].symbolize_keys }
 
           well = Well.find_or_create_by!(
             wellplate_id: @wellplate.id,
@@ -129,7 +128,7 @@ module Import
           )
         end
 
-        @wellplate.update_attributes!(readout_titles: prefixes)
+        @wellplate.update_attributes!(readout_titles: @prefixes)
       end
     end
 
