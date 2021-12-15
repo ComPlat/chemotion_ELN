@@ -302,9 +302,14 @@ export default class WellplateDetailsAttachments extends Component {
   renderTemplateDownload() {
     return (
       <div>
-        <a onClick={() => this.handleTemplateDownload()} style={{ cursor: 'pointer' }}>
-          Download Wellplate import template xlsx<br />
-        </a><br />
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => this.handleTemplateDownload()}
+        >
+          Download Wellplate import template xlsx
+        </button>
+        <br />
       </div>
     );
   }
