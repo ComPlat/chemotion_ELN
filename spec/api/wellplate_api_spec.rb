@@ -2,8 +2,8 @@
 
 require 'rails_helper'
 
-describe Chemotion::WellplateAPI do
-  context 'authorized user logged in' do
+describe Chemotion::WellplateAPI do # rubocop: disable RSpec/FilePath
+  context 'with authorized user logged in' do
     let(:user) { create(:user) }
 
     before do

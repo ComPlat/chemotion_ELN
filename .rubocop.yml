@@ -7,6 +7,8 @@ inherit_gem:
 
 require:
   - rubocop-rspec
+  # TODO: install rubocop-rails
+  # - rubocop-rails
   - rubocop-performance
 AllCops:
   DisplayCopNames: true
@@ -20,3 +22,15 @@ AllCops:
   CacheRootDirectory: tmp
 Style/Documentation:
   Enabled: false
+# Rails:
+#   Enabled: true
+#   Exclude:
+#     - 'Guardfile'
+#     - 'bin/**/*'
+#     - 'config/*'
+#     - 'config/**/*'
+#     - 'tmp/**/*'
+#     - 'Rakefile'
+RSpec:
+  Include:
+    - 'spec/**/*_spec.rb'

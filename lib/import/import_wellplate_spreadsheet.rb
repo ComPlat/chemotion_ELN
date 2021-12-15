@@ -68,7 +68,7 @@ module Import
         error_messages << "#{check} should be in cell #{@letters[index]}1." if (header[index] =~ /^#{check}/i).nil?
       end
 
-      raise StandardError unless error_messages.empty?
+      raise StandardError if error_messages.present?
     end
 
     def check_prefixes
@@ -86,7 +86,7 @@ module Import
         error_messages << "#{vh} should be in column #{@letters[column]}" if vh != value2compare
       end
 
-      raise StandardError unless error_messages.empty?
+      raise StandardError if error_messages.present?
 
       @prefixes = value_prefixes
     end
@@ -99,7 +99,7 @@ module Import
         error_messages << "Well #{position} is missing or at wrong position." if position != wells[index]
       end
 
-      raise StandardError unless error_messages.empty?
+      raise StandardError if error_messages.present?
     end
 
     def import_data
@@ -110,7 +110,7 @@ module Import
           expected_position = "#{@letters[position_y - 1]}#{position_x}"
 
           @error_messages << "Error. Position #{row[@position_index]} is faulty." if row[@position_index] != expected_position
-          raise StandardError unless error_messages.empty?
+          raise StandardError if error_messages.present?
 
           sample_id = row[@sample_index]
 

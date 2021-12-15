@@ -6,11 +6,11 @@ RSpec.describe Wellplate, type: :model do
   let!(:collection) { create(:collection) }
   let!(:screen)     { create(:screen, collections: [collection]) }
   let!(:research_plan) { create(:research_plan, collections: [collection]) }
-  let!(:wellplate)  do
+  let!(:wellplate) do
     create(:wellplate, collections: [collection], screens: [screen], research_plans: [research_plan])
   end
-  let!(:sample)     { create(:sample, collections: [collection]) }
-  let!(:well)       do
+  let!(:sample) { create(:sample, collections: [collection]) }
+  let!(:well) do
     create(:well, sample_id: sample.id, wellplate_id: wellplate.id)
   end
 
