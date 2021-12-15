@@ -178,6 +178,7 @@ class ElementStore {
       handleBulkCreateWellplatesFromSamples:
         ElementActions.bulkCreateWellplatesFromSamples,
       handleFetchWellplateById: ElementActions.fetchWellplateById,
+      handleImportWellplateSpreadsheet: ElementActions.importWellplateSpreadsheet,
       handleCreateWellplate: ElementActions.createWellplate,
       handleGenerateWellplateFromClipboard:
         ElementActions.generateWellplateFromClipboard,
@@ -740,6 +741,9 @@ class ElementStore {
   //  this.navigateToNewElement(result)
   }
 
+  handleImportWellplateSpreadsheet(result) {
+    this.changeCurrentElement(result);
+  }
 
   handleCreateWellplate(wellplate) {
     fetchOls('wellplate');

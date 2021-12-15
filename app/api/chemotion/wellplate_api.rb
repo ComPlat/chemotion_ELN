@@ -207,10 +207,16 @@ module Chemotion
           end
 
           put do
-            importer = ImportWellplateSpreadsheet.new(wellplate_id: wellplate_id, attachment_id: attachment_id)
-            importer.process!
+            wellplate_id = params[:wellplate_id]
+            attachment_id = params[:attachment_id]
+            import = Import::ImportWellplateSpreadsheet.new(wellplate_id: wellplate_id, attachment_id: attachment_id)
+            import.process!
+            wellplate = import.wellplate
 
-            { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
+            {
+              wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized,
+              attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
+            }
           end
         end
       end

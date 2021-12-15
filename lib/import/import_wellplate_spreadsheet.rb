@@ -4,7 +4,7 @@ require 'roo'
 
 module Import
   class ImportWellplateSpreadsheet
-    attr_reader :xlsx, :sheet, :header, :mandatory_check, :rows, :error_messages, :file_path
+    attr_reader :xlsx, :sheet, :error_messages, :wellplate
 
     def initialize(wellplate_id:, attachment_id:)
       @wellplate = Wellplate.find(wellplate_id)
@@ -30,26 +30,26 @@ module Import
       begin
         check_headers
       rescue StandardError
-        return error_object
+        raise StandardError.new(message: @error_messages)
       end
 
       begin
         check_prefixes
       rescue StandardError
-        return error_object
+        raise StandardError.new(message: @error_messages)
       end
 
       begin
         check_wells
       rescue StandardError
-        return error_object
+        raise StandardError.new(message: @error_messages)
       end
 
       begin
         import_data
-        return @unprocessable.empty? ? success : warning
+        return @error_messages.empty? ? true : StandardError.new(message: @error_messages)
       rescue StandardError
-        return warning
+        raise StandardError.new(message: @error_messages)
       end
     end
 
@@ -64,22 +64,22 @@ module Import
 
     def check_headers
       ['Position', 'sample_ID', 'External Compound Label/ID', 'Smiles', '.+_Value', '.+_Unit'].each_with_index do |check, index|
-        error_messages << "#{check} should be in cell #{@letters[index]}1." if (header[index] =~ /^#{check}/i).nil?
+        error_messages << "#{check} should be in cell #{@letters[index]}1." if (@header[index] =~ /^#{check}/i).nil?
       end
 
       raise StandardError if error_messages.present?
     end
 
     def check_prefixes
-      value_headers = header.select { |e| /^.+_Value/ =~e }
+      value_headers = @header.select { |e| /^.+_Value/ =~e }
       value_prefixes = value_headers.map { |e| e.delete_suffix('_Value') }
-      unit_headers = header.select { |e| /^.+_Unit/ =~e }
+      unit_headers = @header.select { |e| /^.+_Unit/ =~e }
       unit_prefixes = unit_headers.map { |e| e.delete_suffix('_Unit') }
 
       error_messages << "'_Value 'and '_Unit' prefixes don't match up." unless value_prefixes == unit_prefixes
       error_messages << 'Prefixes must be unique.' if value_headers.uniq != value_headers || unit_headers.uniq != unit_headers
 
-      header[@readout_index..(4 + value_headers.count * 2)].each_with_index do |vh, index|
+      @header[@readout_index..(4 + value_headers.count * 2)].each_with_index do |vh, index|
         column = index + 4
         value2compare = column.even? ? value_headers[index / 2] : unit_headers[index / 2]
         error_messages << "#{vh} should be in column #{@letters[column]}" if vh != value2compare
@@ -130,24 +130,6 @@ module Import
 
         @wellplate.update_attributes!(readout_titles: @prefixes)
       end
-    end
-
-    def error_object
-      { status: 'invalid',
-        message: error_messages,
-        data: [] }
-    end
-
-    def warning
-      { status: 'warning',
-        message: error_messages,
-        data: error_messages }
-    end
-
-    def success
-      { status: 'ok',
-        message: '',
-        data: processed }
     end
   end
 end

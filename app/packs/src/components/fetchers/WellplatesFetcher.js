@@ -164,4 +164,32 @@ export default class WellplatesFetcher {
 
     return promise;
   }
+
+  static importWellplateSpreadsheet(wellplateId, attachmentId) {
+    const promise = fetch(`/api/v1/wellplates/import_spreadsheet/${wellplateId}`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        wellplate_id: wellplateId,
+        attachment_id: attachmentId
+      })
+    }).then(response => response.json())
+      .then((json) => {
+        const rWellplate = new Wellplate(json.wellplate);
+        rWellplate.attachments = json.attachments;
+        // eslint-disable-next-line no-underscore-dangle
+        rWellplate._checksum = rWellplate.checksum();
+        if (json.error) {
+          return new Wellplate({ id: `${wellplateId}:error:Wellplate ${wellplateId} is not accessible!`, wells: [], is_new: true });
+        }
+        return rWellplate;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
 }

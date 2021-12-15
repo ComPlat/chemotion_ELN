@@ -158,14 +158,12 @@ export default class WellplateDetails extends Component {
   }
 
   handleAttachmentImport(attachment) {
-    // TODO: implement this stuff
+    LoadingActions.start();
     const { wellplate } = this.state;
-    const index = wellplate.attachments.indexOf(attachment);
-    // wellplate.changed = true;
-    // wellplate.attachments[index].is_deleted = true;
-    // this.setState({ wellplate });
-    console.log(`wellplate: ${index}`);
-    // return index;
+    const wellplateId = wellplate.id;
+    const attachmentId = attachment.id;
+
+    ElementActions.importWellplateSpreadsheet(wellplateId, attachmentId);
   }
 
   handleAttachmentUndoDelete(attachment) {
