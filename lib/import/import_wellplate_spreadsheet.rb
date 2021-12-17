@@ -24,32 +24,31 @@ module Import
         read_file
       rescue Zip::Error
         error_messages << "Can not process this type of file, must be '.xlsx'."
-        return error_object
+        raise StandardError, error_messages.join("\n")
       end
 
       begin
         check_headers
       rescue StandardError
-        raise StandardError.new(message: @error_messages)
+        raise StandardError, error_messages.join("\n")
       end
 
       begin
         check_prefixes
       rescue StandardError
-        raise StandardError.new(message: @error_messages)
+        raise StandardError, error_messages.join("\n")
       end
 
       begin
         check_wells
       rescue StandardError
-        raise StandardError.new(message: @error_messages)
+        raise StandardError, error_messages.join("\n")
       end
 
       begin
         import_data
-        return @error_messages.empty? ? true : StandardError.new(message: @error_messages)
       rescue StandardError
-        raise StandardError.new(message: @error_messages)
+        raise StandardError, error_messages.join("\n")
       end
     end
 
