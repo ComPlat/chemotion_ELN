@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
-import { FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon } from 'react-bootstrap';
+import { FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon, Popover } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import EditorFetcher from './fetchers/EditorFetcher';
 import ImageModal from './common/ImageModal';
@@ -11,6 +11,19 @@ import Utils from './utils/Functions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
+const templateInfo = (
+  <Popover
+    title="Template info"
+  >
+    This template should be used to import well readouts.<br />
+    The <strong>red</strong> column may not be altered at all.<br />
+    The contents of the <strong>yellow</strong> columns may be altered, the headers may not be
+    altered.<br />
+    The <strong>green</strong> columns must contain at least one pair
+    of <i>readout</i> and <i>unit</i> with a matching prefix before the underscore.
+    They may contain an arbitrary amount of readout pairs.
+  </Popover>
+);
 const imageStyle = {
   style: {
     position: 'absolute',
@@ -301,15 +314,20 @@ export default class WellplateDetailsAttachments extends Component {
 
   renderTemplateDownload() {
     return (
-      <div>
-        <button
-          type="button"
-          className="link-button"
+      <div div style={{ 'margin-bottom': '5px' }}>
+        <Button
+          bsStyle="primary"
           onClick={() => this.handleTemplateDownload()}
         >
-          Download Wellplate import template xlsx
-        </button>
-        <br />
+          <i className="fa fa-download" aria-hidden="true" /> Download Wellplate import template xlsx
+        </Button>
+        <OverlayTrigger placement="bottom" overlay={templateInfo}>
+          <Button
+            bsStyle="info"
+          >
+            <i className="fa fa-info" aria-hidden="true" />
+          </Button>
+        </OverlayTrigger>
       </div>
     );
   }
