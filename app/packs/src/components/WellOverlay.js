@@ -103,13 +103,13 @@ const content = (well, readoutTitles, removeSampleFromWell) => {
             </div>
           ))}
         </FormGroup>
-        <FormGroup>
+        <FormGroup style={{ display: 'none' }}>
           <ControlLabel>Imported Readout</ControlLabel>
           <FormControl
             componentClass="textarea"
             disabled
             value={sampleImportedReadout(sample) || ''}
-            style={{ height: 100 }}
+            style={{ height: 50 }}
           />
         </FormGroup>
       </div>

@@ -80,7 +80,7 @@ export default class WellplateList extends Component {
               <th width="11%">External Label</th>
               <th width="15%">Sum-Formula</th>
               {this.renderReadoutHeaders()}
-              <th width="25%">Imported Readout</th>
+              <th style={{ display: 'none' }} width="25%">Imported Readout</th>
             </tr>
           </thead>
           <tbody>
@@ -101,7 +101,8 @@ export default class WellplateList extends Component {
                 height: 66
               };
               const inputContainerStyle = {
-                padding: 0
+                padding: 0,
+                display: 'none'
               };
               if (sample) {
                 svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
