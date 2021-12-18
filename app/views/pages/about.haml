@@ -1,12 +1,13 @@
-.container
+- @changelog = File.read("#{Rails.root}/CHANGELOG.md")
 
+.container
   %h2
     Chemotion ELN
     %br/
     - Chemotion::Application.config.version.each do |k, v|
       %h3= "#{k.humanize}: #{v}"
 
-
+  = markdown @changelog
 
   %br/
 
