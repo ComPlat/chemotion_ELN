@@ -242,7 +242,7 @@ module Chemotion
         end
 
         post do
-          Import::FromChemScanner.from_list(
+          Import::FromChemscanner.from_list(
             params[:reactions],
             params[:molecules],
             current_user.id,

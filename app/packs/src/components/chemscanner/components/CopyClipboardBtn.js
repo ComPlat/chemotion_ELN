@@ -29,18 +29,21 @@ export default class CopyClipboardBtn extends React.Component {
   }
 
   render() {
-    const { smi, mdl } = this.props;
+    const {
+      smi, mdl, inchi, inchiKey
+    } = this.props;
     const clipboardIcon = (<i className="fa fa-clipboard" />);
 
     return (
       <DropdownButton
-        pullRight
         title={clipboardIcon}
-        className="clipboard-btn right-btn btn btn-xs"
+        className="clipboard-btn left-btn btn btn-xs"
         id={this.ddId}
       >
         <MenuItem eventKey="1" data-clipboard-text={smi}>SMILES</MenuItem>
         <MenuItem eventKey="2" data-clipboard-text={mdl}>Molfile</MenuItem>
+        <MenuItem eventKey="3" data-clipboard-text={inchi}>InChI</MenuItem>
+        <MenuItem eventKey="4" data-clipboard-text={inchiKey}>InChIKey</MenuItem>
       </DropdownButton>
     );
   }
@@ -49,6 +52,8 @@ export default class CopyClipboardBtn extends React.Component {
 CopyClipboardBtn.propTypes = {
   smi: PropTypes.string.isRequired,
   mdl: PropTypes.string.isRequired,
+  inchi: PropTypes.string.isRequired,
+  inchiKey: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   identifier: PropTypes.object.isRequired,
   container: PropTypes.instanceOf(Element)

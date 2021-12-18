@@ -3,16 +3,12 @@ import thunk from 'redux-thunk';
 
 import api from '../middleware/api';
 import chemdraw from '../middleware/chemdraw';
-import rootReducer from '../reducers/index';
+import rootReducer from '../reducers/root';
 
-const configureStore = (preloadedState) => {
-  const store = createStore(
-    rootReducer,
-    preloadedState,
-    applyMiddleware(thunk, chemdraw, api)
-  );
-
-  return store;
-};
+const configureStore = preloadedState => createStore(
+  rootReducer,
+  preloadedState,
+  applyMiddleware(thunk, chemdraw, api)
+);
 
 export default configureStore;

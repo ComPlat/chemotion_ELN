@@ -8,9 +8,7 @@ export default class SelectBtn extends React.Component {
   }
 
   onClick() {
-    const {
-      itemId, onClick
-    } = this.props;
+    const { itemId, onClick } = this.props;
     onClick(itemId);
   }
 
@@ -20,7 +18,7 @@ export default class SelectBtn extends React.Component {
 
     return (
       <button
-        className="right-btn btn btn-xs"
+        className="left-btn btn btn-xs"
         onClick={this.onClick}
       >
         <i className={`fa ${className}`} />
@@ -32,5 +30,6 @@ export default class SelectBtn extends React.Component {
 SelectBtn.propTypes = {
   onClick: PropTypes.func.isRequired,
   itemId: PropTypes.number.isRequired,
+  schemeIdx: PropTypes.number.isRequired,
   selected: PropTypes.bool.isRequired
 };

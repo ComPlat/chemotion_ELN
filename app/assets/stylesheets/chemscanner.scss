@@ -7,9 +7,37 @@
   padding-left: 0px !important;
   padding-right: 0px !important;
 
+  .file-filter.ag-input-wrapper {
+    flex-flow: row wrap;
+
+    div:nth-child(1)::after {
+      content: '';
+      width: 100%;
+    }
+  }
+
   .row {
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .ag-row {
+    z-index: 0;
+  }
+
+  .ag-row.ag-row-focus {
+    z-index: 1;
+  }
+
+  .ag-root,
+  .ag-body-viewport,
+  .ag-body-viewport-wrapper,
+  .ag-center-cols-clipper,
+  .ag-center-cols-viewport,
+  .ag-header,
+  .ag-header-viewport,
+  .ag-header-row {
+    overflow: visible !important;
   }
 
   #chemscanner-cdjs-container {
@@ -75,8 +103,8 @@
     }
   }
 
-  .chemscanner-files-contents {
-    max-height: calc(100vh - 100px);
+  #chemscanner-files-list {
+    max-height: calc(100vh - 110px);
     overflow: auto;
     position: relative;
     margin-top: 20px;
@@ -95,10 +123,24 @@
 
     .scanned-reaction-desc {
       display: flex;
+      width: 100%;
       flex-wrap: wrap;
 
-      div {
-        margin: 0px 10px 10px 10px;
+      div:not(:first-child) {
+        flex-grow: 1;
+        margin-bottom: 10px;
+      }
+    }
+
+    .scanned-molecule-desc {
+      display: flex;
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+
+      div:not(:first-child) {
+        flex-grow: 1;
+        margin-bottom: 10px;
       }
     }
   }
@@ -113,14 +155,17 @@
     float: right;
   }
 
+  .left-btn {
+    float: left;
+  }
+
   .selected-item {
     background-color: #e8f0fe;
   }
 
   .scanned-item {
     border-radius: 4px;
-    border: 1px solid black;
-    display: flow-root;
+    border: 2px solid black;
     margin-bottom: 5px;
 
     button {
@@ -157,7 +202,7 @@
     }
 
     > .dropdown {
-      float: right;
+      float: left;
       margin-left: 5px;
       > button {
         background-color: #ccc;
@@ -188,11 +233,65 @@
   .abbreviation-management {
     display: flex;
     justify-content: center;
+
+    .ag-grid-abbreviation {
+      width: 70%;
+      margin-right: 5px;
+      height: calc(100vh - 150px);
+
+      .ag-header-container .ag-header-row:nth-of-type(2) {
+        .ag-header-cell:nth-of-type(1) {
+          .ag-floating-filter-body {
+            display: none;
+          }
+
+          .ag-floating-filter-button {
+            display: none;
+          }
+        }
+      }
+    }
+
+    .ag-grid-superatom {
+      width: 30%;
+      height: calc(100vh - 150px);
+
+      .ag-header-container .ag-header-row:nth-of-type(2) {
+        .ag-header-cell:nth-of-type(1) {
+          .ag-floating-filter-body {
+            display: none;
+          }
+
+          .ag-floating-filter-button {
+            display: none;
+          }
+        }
+      }
+    }
   }
 
   .chemscanner-abb-view-header {
     display: flex;
     justify-content: center;
+  }
+
+  .chemscanner-filestorage-action-header {
+    display: block;
+    margin-top: 4px;
+    overflow: visible;
+  }
+
+  .chemscanner-filestorage-action-row {
+    overflow: visible;
+  }
+
+  .cs-extended-metadata-table {
+    line-height: 20px;
+
+    td {
+      padding-right: 5px;
+      padding-bottom: 5px;
+    }
   }
 
   ::-webkit-scrollbar {

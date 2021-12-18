@@ -92,6 +92,98 @@ ActiveRecord::Schema.define(version: 2022_01_16_164546) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "chemscanner_molecules", force: :cascade do |t|
+    t.integer "scheme_id", null: false
+    t.integer "external_id"
+    t.integer "clone_from"
+    t.string "mdl"
+    t.string "cano_smiles"
+    t.string "label"
+    t.string "abbreviation"
+    t.string "description"
+    t.jsonb "aliases", default: {}
+    t.jsonb "details", default: {}
+    t.jsonb "extended_metadata", default: {}
+    t.boolean "is_approved", default: false
+    t.integer "imported_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.string "inchistring"
+    t.string "inchikey"
+  end
+
+  create_table "chemscanner_reaction_steps", force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "reaction_external_id", null: false
+    t.integer "reagent_ids", default: [], array: true
+    t.string "reagent_smiles", default: [], array: true
+    t.integer "step_number", null: false
+    t.string "description"
+    t.string "temperature"
+    t.string "time"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "chemscanner_reactions", force: :cascade do |t|
+    t.integer "scheme_id", null: false
+    t.integer "external_id", null: false
+    t.integer "clone_from"
+    t.string "description"
+    t.string "temperature"
+    t.string "time"
+    t.string "status"
+    t.float "yield"
+    t.jsonb "details", default: {}
+    t.jsonb "extended_metadata", default: {}
+    t.boolean "is_approved", default: false
+    t.integer "imported_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "chemscanner_reactions_molecules", force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "molecule_id", null: false
+    t.string "type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "chemscanner_schemes", force: :cascade do |t|
+    t.integer "source_id", null: false
+    t.boolean "is_approved", default: false
+    t.jsonb "extended_metadata", default: {}
+    t.integer "index", default: 0
+    t.string "image_data", default: ""
+    t.string "version", default: ""
+    t.integer "created_by", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "chemscanner_source_hierarchies", id: false, force: :cascade do |t|
+    t.integer "ancestor_id", null: false
+    t.integer "descendant_id", null: false
+    t.integer "generations", null: false
+    t.index ["ancestor_id", "descendant_id", "generations"], name: "chemscanner_source_anc_desc_idx", unique: true
+    t.index ["descendant_id"], name: "chemscanner_source_desc_idx"
+  end
+
+  create_table "chemscanner_sources", force: :cascade do |t|
+    t.integer "parent_id"
+    t.integer "file_id", null: false
+    t.jsonb "extended_metadata", default: {}
+    t.integer "created_by", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
     t.string "source"
     t.integer "source_id"
@@ -1377,7 +1469,7 @@ ActiveRecord::Schema.define(version: 2022_01_16_164546) do
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
