@@ -44,7 +44,7 @@ const InfoEditor = ({ fileName, data }) => {
               <td style={{ width: '55px' }}>
                 <ControlLabel>Domain</ControlLabel>
               </td>
-              <td>
+              <td style={{ width: '155px' }}>
                 <Radio
                   name="domainGroup"
                   defaultValue="organic"
@@ -53,7 +53,7 @@ const InfoEditor = ({ fileName, data }) => {
                   Organic
                 </Radio>
               </td>
-              <td>
+              <td style={{ width: '110px' }}>
                 <Radio
                   name="domainGroup"
                   defaultValue="inorganic"
@@ -62,7 +62,7 @@ const InfoEditor = ({ fileName, data }) => {
                   Inorganic
                 </Radio>
               </td>
-              <td>
+              <td style={{ width: '90px' }}>
                 <Radio
                   name="domainGroup"
                   defaultValue="solidPhase"
@@ -71,7 +71,7 @@ const InfoEditor = ({ fileName, data }) => {
                   Solid Phase
                 </Radio>
               </td>
-              <td>
+              <td style={{ width: '90px' }}>
                 <Radio
                   name="domainGroup"
                   defaultValue="heteroCyclic"

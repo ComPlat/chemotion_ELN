@@ -325,6 +325,7 @@ export default class FileStorage extends React.Component {
             enableGroupEdit
             onRowGroupOpened={this.toggleExpand}
             pagination
+            domLayout="autoHeight"
             paginateChildRows={false}
             rowSelection="multiple"
             suppressRowClickSelection

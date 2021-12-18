@@ -294,6 +294,14 @@
     }
   }
 
+  .ag-theme-balham .ag-icon-contracted::before {
+    content: "\f12f";
+  }
+
+  .ag-theme-balham .ag-icon-expanded::before {
+    content: "\f12d";
+  }
+
   ::-webkit-scrollbar {
     background: transparent;
     overflow: visible;
