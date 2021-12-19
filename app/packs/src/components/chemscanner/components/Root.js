@@ -101,7 +101,7 @@ Root.defaultProps = {
   modal: ''
 };
 
-const scriptUrl = '/cdjs/chemdrawweb/chemdrawweb.js';
-// const scriptUrl = 'https://chemdrawdirect.perkinelmer.cloud/js/chemdrawweb/chemdrawweb.js';
+// const scriptUrl = '/cdjs/chemdrawweb/chemdrawweb.js';
+const scriptUrl = 'https://chemdrawdirect.perkinelmer.cloud/js/chemdrawweb/chemdrawweb.js';
 
 export default scriptLoader(scriptUrl)(Root);

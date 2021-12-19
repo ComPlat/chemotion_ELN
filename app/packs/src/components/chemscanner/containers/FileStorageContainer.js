@@ -216,8 +216,7 @@ class FileStorageContainer extends React.Component {
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
 
-    // const klass = 'ag-body-viewport-wrapper';
-    const klass = 'ag-body-viewport';
+    const klass = 'ag-body-viewport-wrapper';
     const viewPortEl = this.storageRef.current.getElementsByClassName(klass)[0];
     if (viewPortEl) {
       this.gridHeight = viewPortEl.offsetHeight;
