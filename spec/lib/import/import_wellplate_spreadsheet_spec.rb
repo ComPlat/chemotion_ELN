@@ -30,7 +30,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
     let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_headers.xlsx') }
 
     it 'raises an exception' do
-      error_message = ['Position should be in cell A1.', 'sample_ID should be in cell B1.'].join("\n")
+      error_message = ["'Position' must be in cell A1.", "'sample_ID' must be in cell B1."].join("\n")
 
       expect { import.process! }.to raise_error(StandardError, error_message)
     end
@@ -60,7 +60,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
     let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_multiple_errors.xlsx') }
 
     it 'only raises the first error' do
-      error_message = ['Position should be in cell A1.', 'Smiles should be in cell D1.'].join("\n")
+      error_message = ["'Position' must be in cell A1.", "'Smiles' must be in cell D1."].join("\n")
 
       expect { import.process! }.to raise_error(StandardError, error_message)
     end

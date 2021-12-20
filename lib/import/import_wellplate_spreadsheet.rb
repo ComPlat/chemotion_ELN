@@ -63,7 +63,7 @@ module Import
 
     def check_headers
       ['Position', 'sample_ID', 'External Compound Label/ID', 'Smiles', '.+_Value', '.+_Unit'].each_with_index do |check, index|
-        error_messages << "#{check} should be in cell #{@letters[index]}1." if (@header[index] =~ /^#{check}/i).nil?
+        error_messages << "'#{check}' must be in cell #{@letters[index]}1." if (@header[index] =~ /^#{check}/i).nil?
       end
 
       raise StandardError if error_messages.present?
