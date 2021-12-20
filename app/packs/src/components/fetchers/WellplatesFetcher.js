@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import Wellplate from '../models/Wellplate';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
+import NotificationActions from '../actions/NotificationActions';
 
 export default class WellplatesFetcher {
   static fetchById(id) {
@@ -179,13 +180,23 @@ export default class WellplatesFetcher {
       })
     }).then(response => response.json())
       .then((json) => {
+        if (json.error) {
+          let msg = 'Import to wellplate failed: ';
+          msg += json.error;
+          NotificationActions.add({
+            message: msg,
+            level: 'error'
+          });
+          return json;
+        }
+        NotificationActions.add({
+          message: 'Import successful.',
+          level: 'success'
+        });
         const rWellplate = new Wellplate(json.wellplate);
         rWellplate.attachments = json.attachments;
         // eslint-disable-next-line no-underscore-dangle
         rWellplate._checksum = rWellplate.checksum();
-        if (json.error) {
-          return new Wellplate({ id: `${wellplateId}:error:Wellplate ${wellplateId} is not accessible!`, wells: [], is_new: true });
-        }
         return rWellplate;
       }).catch((errorMessage) => {
         console.log(errorMessage);
