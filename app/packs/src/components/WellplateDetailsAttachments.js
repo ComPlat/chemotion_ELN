@@ -12,12 +12,12 @@ import Utils from './utils/Functions';
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const templateInfo = (
-  <Popover title="Template info">
+  <Popover id="popver-template-info" title="Template info">
     This template should be used to import well readouts.<br />
     The <strong>red</strong> column may not be altered at all.<br />
     The contents of the <strong>yellow</strong> columns may be altered, the headers may not.<br />
     The <strong>green</strong> columns must contain at least one pair
-    of <i>readout</i> and <i>unit</i> with a matching prefix before the underscore.
+    of <i>Value</i> and <i>Unit</i> with a matching prefix before the underscore.
     They may contain an arbitrary amount of readout pairs.
   </Popover>
 );
@@ -311,7 +311,7 @@ export default class WellplateDetailsAttachments extends Component {
 
   renderTemplateDownload() {
     return (
-      <div div style={{ 'margin-bottom': '5px' }}>
+      <div style={{ marginBottom: '5px' }}>
         <Button
           bsStyle="primary"
           onClick={() => this.handleTemplateDownload()}

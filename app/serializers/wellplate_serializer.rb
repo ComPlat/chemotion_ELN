@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WellplateSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Wellplate.new.base_attributes
 
@@ -30,7 +32,7 @@ class WellplateSerializer < ActiveModel::Serializer
     define_restricted_methods_for_level(0)
 
     def wells
-      object.wells.order(position_y: :asc, position_x: :asc).map{ |s| WellSerializer::Level0.new(s, @nested_dl).serializable_hash }
+      object.wells.order(position_y: :asc, position_x: :asc).map { |s| WellSerializer::Level0.new(s, @nested_dl).serializable_hash }
     end
   end
 
@@ -39,19 +41,20 @@ class WellplateSerializer < ActiveModel::Serializer
     define_restricted_methods_for_level(1)
 
     def wells
-      object.wells.order(position_y: :asc, position_x: :asc).map{ |s| WellSerializer::Level1.new(s, @nested_dl).serializable_hash }
+      object.wells.order(position_y: :asc, position_x: :asc).map { |s| WellSerializer::Level1.new(s, @nested_dl).serializable_hash }
     end
   end
-end
 
-class WellplateSerializer::Level10 < WellplateSerializer
-  alias_method :original_initialize, :initialize
-  def initialize(element, nested_detail_levels)
-    original_initialize(element)
-    @nested_dl = nested_detail_levels
-  end
+  class Level10 < WellplateSerializer
+    alias original_initialize initialize
 
-  def wells
-    object.wells.order(position_y: :asc, position_x: :asc).map{ |s| WellSerializer::Level10.new(s, @nested_dl).serializable_hash }
+    def initialize(element, nested_detail_levels)
+      original_initialize(element)
+      @nested_dl = nested_detail_levels
+    end
+
+    def wells
+      object.wells.order(position_y: :asc, position_x: :asc).map { |s| WellSerializer::Level10.new(s, @nested_dl).serializable_hash }
+    end
   end
 end

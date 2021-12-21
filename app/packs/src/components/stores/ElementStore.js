@@ -737,8 +737,8 @@ class ElementStore {
 
   handleFetchWellplateById(result) {
     this.changeCurrentElement(result);
-    //this.state.currentElement = result;
-  //  this.navigateToNewElement(result)
+    // this.state.currentElement = result;
+    // this.navigateToNewElement(result)
   }
 
   handleImportWellplateSpreadsheet(result) {
