@@ -11,10 +11,10 @@ class ScreenSerializer < ActiveModel::Serializer
   end
 
   def created_at
-    object.created_at.strftime("%d.%m.%Y, %H:%M")
+    object.created_at.strftime('%d.%m.%Y, %H:%M:%S')
   end
   def updated_at
-    object.updated_at.strftime("%d.%m.%Y, %H:%M")
+    object.updated_at.strftime('%d.%m.%Y, %H:%M:%S')
   end
 
   def type
