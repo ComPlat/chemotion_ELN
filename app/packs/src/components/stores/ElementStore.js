@@ -742,7 +742,13 @@ class ElementStore {
   }
 
   handleImportWellplateSpreadsheet(result) {
-    this.changeCurrentElement(result);
+    if (result.error) { return; }
+
+    const { selecteds } = this.state;
+
+    const index = this.elementIndex(selecteds, result);
+    const newSelecteds = this.updateElement(result, index);
+    this.setState({ selecteds: newSelecteds });
   }
 
   handleCreateWellplate(wellplate) {
@@ -1142,7 +1148,7 @@ class ElementStore {
   }
 
   updateElement(updateEl, index) {
-    const selecteds = this.state.selecteds;
+    const { selecteds } = this.state;
     return [
       ...selecteds.slice(0, index),
       updateEl,
