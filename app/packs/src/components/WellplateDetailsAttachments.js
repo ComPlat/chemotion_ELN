@@ -102,16 +102,22 @@ export default class WellplateDetailsAttachments extends Component {
     Utils.downloadFile({ contents: '/xlsx/wellplate_import_template.xlsx', name: 'wellplate_import_template.xlsx' });
   }
 
-  toggleImportConfirm(attachmentId) {
+  showImportConfirm(attachmentId) {
     const { showImportConfirm } = this.state;
-    showImportConfirm[attachmentId] = !showImportConfirm[attachmentId];
+    showImportConfirm[attachmentId] = true;
+    this.setState({ showImportConfirm });
+  }
+
+  hideImportConfirm(attachmentId) {
+    const { showImportConfirm } = this.state;
+    showImportConfirm[attachmentId] = false;
     this.setState({ showImportConfirm });
   }
 
   confirmAttachmentImport(attachment) {
     const { onImport } = this.state;
     onImport(attachment);
-    this.toggleImportConfirm(attachment.id);
+    this.hideImportConfirm(attachment.id);
   }
 
   renderImportAttachmentButton(attachment) {
@@ -137,7 +143,7 @@ export default class WellplateDetailsAttachments extends Component {
           <Button
             bsStyle="warning"
             bsSize="xsmall"
-            onClick={() => this.toggleImportConfirm(attachment.id)}
+            onClick={() => this.hideImportConfirm(attachment.id)}
           >
             No
           </Button>
@@ -157,7 +163,7 @@ export default class WellplateDetailsAttachments extends Component {
                 disabled={importDisabled}
                 ref={(ref) => { this.importButtonRefs[attachment.id] = ref; }}
                 style={importDisabled ? { pointerEvents: 'none' } : {}}
-                onClick={() => this.toggleImportConfirm(attachment.id)}
+                onClick={() => this.showImportConfirm(attachment.id)}
               >
                 <Glyphicon glyph="import" />
               </Button>
@@ -167,7 +173,7 @@ export default class WellplateDetailsAttachments extends Component {
             show={show}
             placement="bottom"
             rootClose
-            onHide={() => this.toggleImportConfirm(attachment.id)}
+            onHide={() => this.hideImportConfirm(attachment.id)}
             target={this.importButtonRefs[attachment.id]}
           >
             { confirmTooltip }

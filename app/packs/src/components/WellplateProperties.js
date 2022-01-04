@@ -11,9 +11,15 @@ export default class WellplateProperties extends Component {
     this.state = { showDeleteReadoutConfirm: [] };
   }
 
-  toggleDeleteReadoutTitleConfirm(index) {
+  showDeleteReadoutTitleConfirm(index) {
     const { showDeleteReadoutConfirm } = this.state;
-    showDeleteReadoutConfirm[index] = !showDeleteReadoutConfirm[index];
+    showDeleteReadoutConfirm[index] = true;
+    this.setState({ showDeleteReadoutConfirm });
+  }
+
+  hideDeleteReadoutTitleConfirm(index) {
+    const { showDeleteReadoutConfirm } = this.state;
+    showDeleteReadoutConfirm[index] = false;
     this.setState({ showDeleteReadoutConfirm });
   }
 
@@ -37,7 +43,7 @@ export default class WellplateProperties extends Component {
     currentTitles.splice(index, 1);
     changeProperties({ type: 'readoutTitles', value: currentTitles });
     handleRemoveReadout(index);
-    this.toggleDeleteReadoutTitleConfirm(index);
+    this.hideDeleteReadoutTitleConfirm(index);
   }
 
   updateReadoutTitle(index, newValue) {
@@ -65,7 +71,7 @@ export default class WellplateProperties extends Component {
           <Button
             bsStyle="warning"
             bsSize="xsmall"
-            onClick={() => this.toggleDeleteReadoutTitleConfirm(index)}
+            onClick={() => this.hideDeleteReadoutTitleConfirm(index)}
           >
             No
           </Button>
@@ -83,7 +89,7 @@ export default class WellplateProperties extends Component {
             bsStyle="danger"
             className="button-right"
             ref={(ref) => { this.deleteButtonRefs[index] = ref; }}
-            onClick={() => this.toggleDeleteReadoutTitleConfirm(index)}
+            onClick={() => this.showDeleteReadoutTitleConfirm(index)}
           >
             <i className="fa fa-trash-o" />
           </Button>
@@ -92,7 +98,7 @@ export default class WellplateProperties extends Component {
           show={show}
           placement="bottom"
           rootClose
-          onHide={() => this.toggleDeleteReadoutTitleConfirm(index)}
+          onHide={() => this.hideDeleteReadoutTitleConfirm(index)}
           target={this.deleteButtonRefs[index]}
         >
           { confirmTooltip }
