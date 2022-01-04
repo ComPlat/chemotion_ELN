@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
-import { FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon, Popover } from 'react-bootstrap';
+import { FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon, Popover, Overlay } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import EditorFetcher from './fetchers/EditorFetcher';
 import ImageModal from './common/ImageModal';
@@ -16,8 +16,8 @@ const templateInfo = (
     This template should be used to import well readouts.<br />
     The <strong>red</strong> column may not be altered at all.<br />
     The contents of the <strong>yellow</strong> columns may be altered, the headers may not.<br />
-    The <strong>green</strong> columns must contain at least one pair
-    of <i>Value</i> and <i>Unit</i> with a matching prefix before the underscore.
+    The <strong>green</strong> columns must contain at least one <i>_Value</i> and <i>_Unit</i> pair
+    with a matching prefix before the underscore.
     They may contain an arbitrary amount of readout pairs.
   </Popover>
 );
@@ -32,6 +32,7 @@ const imageStyle = {
 export default class WellplateDetailsAttachments extends Component {
   constructor(props) {
     super(props);
+    this.importButtonRefs = [];
     const {
       attachments, wellplateChanged, onDrop, onDelete, onUndoDelete, onDownload, onImport, onEdit
     } = props;
@@ -103,12 +104,8 @@ export default class WellplateDetailsAttachments extends Component {
 
   toggleImportConfirm(attachmentId) {
     const { showImportConfirm } = this.state;
-
     showImportConfirm[attachmentId] = !showImportConfirm[attachmentId];
-
-    this.setState({
-      showImportConfirm,
-    });
+    this.setState({ showImportConfirm });
   }
 
   confirmAttachmentImport(attachment) {
@@ -118,18 +115,15 @@ export default class WellplateDetailsAttachments extends Component {
   }
 
   renderImportAttachmentButton(attachment) {
-    const { showImportConfirm } = this.state;
-    const { wellplateChanged } = this.props;
+    const show = this.state.showImportConfirm[attachment.id];
+    const importDisabled = this.props.wellplateChanged;
     const extension = last(attachment.filename.split('.'));
-    const importDisabled = wellplateChanged;
-    const btnStyle = importDisabled ? { pointerEvents: 'none' } : {};
 
     const importTooltip = importDisabled ?
       <Tooltip id="import_tooltip">Wellplate must be saved before import</Tooltip> :
       <Tooltip id="import_tooltip">Import attachment as Wellplate data</Tooltip>;
 
     const confirmTooltip = (
-      // TODO: fix positioning
       <Tooltip placement="bottom" className="in" id="tooltip-bottom">
         Import data from Spreadsheet? This will overwrite existing Wellplate data.<br />
         <ButtonGroup>
@@ -161,14 +155,24 @@ export default class WellplateDetailsAttachments extends Component {
                 bsStyle="success"
                 className="button-right"
                 disabled={importDisabled}
-                style={btnStyle}
+                ref={(ref) => { this.importButtonRefs[attachment.id] = ref; }}
+                style={importDisabled ? { pointerEvents: 'none' } : {}}
                 onClick={() => this.toggleImportConfirm(attachment.id)}
               >
                 <Glyphicon glyph="import" />
               </Button>
             </div>
           </OverlayTrigger>
-          { showImportConfirm[attachment.id] ? confirmTooltip : null}
+          <Overlay
+            show={show}
+            placement="bottom"
+            rootClose
+            onHide={() => this.toggleImportConfirm(attachment.id)}
+            target={this.importButtonRefs[attachment.id]}
+          >
+            { confirmTooltip }
+          </Overlay>
+
         </div>
       );
     }

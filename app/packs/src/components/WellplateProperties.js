@@ -1,10 +1,22 @@
 import React, { Component } from 'react';
-import { FormGroup, InputGroup, FormControl, ControlLabel, Button } from 'react-bootstrap';
+import { FormGroup, InputGroup, FormControl, ControlLabel, Button, ButtonGroup, Overlay, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import QuillEditor from './QuillEditor';
 
 export default class WellplateProperties extends Component {
+  constructor(props) {
+    super(props);
+    this.deleteButtonRefs = [];
+    this.state = { showDeleteReadoutConfirm: [] };
+  }
+
+  toggleDeleteReadoutTitleConfirm(index) {
+    const { showDeleteReadoutConfirm } = this.state;
+    showDeleteReadoutConfirm[index] = !showDeleteReadoutConfirm[index];
+    this.setState({ showDeleteReadoutConfirm });
+  }
+
   handleInputChange(type, event) {
     const { changeProperties } = this.props;
     const { value } = event.target;
@@ -19,12 +31,13 @@ export default class WellplateProperties extends Component {
     handleAddReadout();
   }
 
-  removeReadoutTitle(index) {
+  deleteReadoutTitle(index) {
     const { readoutTitles, changeProperties, handleRemoveReadout } = this.props;
     const currentTitles = readoutTitles || [];
     currentTitles.splice(index, 1);
     changeProperties({ type: 'readoutTitles', value: currentTitles });
     handleRemoveReadout(index);
+    this.toggleDeleteReadoutTitleConfirm(index);
   }
 
   updateReadoutTitle(index, newValue) {
@@ -34,10 +47,65 @@ export default class WellplateProperties extends Component {
     changeProperties({ type: 'readoutTitles', value: currentTitles });
   }
 
+  renderDeleteReadoutTitleButton(index) {
+    const { showDeleteReadoutConfirm } = this.state;
+    const show = showDeleteReadoutConfirm[index];
+
+    const confirmTooltip = (
+      <Tooltip className="in" id="tooltip-bottom">
+        Delete Readout Title? This will also delete the respective well readouts.<br />
+        <ButtonGroup>
+          <Button
+            bsStyle="danger"
+            bsSize="xsmall"
+            onClick={() => this.deleteReadoutTitle(index)}
+          >
+            Yes
+          </Button>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            onClick={() => this.toggleDeleteReadoutTitleConfirm(index)}
+          >
+            No
+          </Button>
+        </ButtonGroup>
+      </Tooltip>
+    );
+
+    return (
+      <InputGroup.Button>
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="delete_readout_title_tooltip">Delete Readout Title</Tooltip>}
+        >
+          <Button
+            bsStyle="danger"
+            className="button-right"
+            ref={(ref) => { this.deleteButtonRefs[index] = ref; }}
+            onClick={() => this.toggleDeleteReadoutTitleConfirm(index)}
+          >
+            <i className="fa fa-trash-o" />
+          </Button>
+        </OverlayTrigger>
+        <Overlay
+          show={show}
+          placement="bottom"
+          rootClose
+          onHide={() => this.toggleDeleteReadoutTitleConfirm(index)}
+          target={this.deleteButtonRefs[index]}
+        >
+          { confirmTooltip }
+        </Overlay>
+      </InputGroup.Button>
+    );
+  }
+
   render() {
     const {
       name, size, description, readoutTitles
     } = this.props;
+
     return (
       <table width="100%">
         <tbody>
@@ -68,16 +136,17 @@ export default class WellplateProperties extends Component {
           <tr>
             <td colSpan={2}>
               <ControlLabel>Readout Titles</ControlLabel>
-              <Button className="button-right" bsStyle="success" bsSize="small" onClick={() => this.addReadoutTitle()}>
-                <i className="fa fa-plus" />
-              </Button>
+              <OverlayTrigger placement="top" overlay={<Tooltip id="add_readout_title_tooltip">Add Readout Title</Tooltip>} >
+                <Button className="button-right" bsStyle="success" onClick={() => this.addReadoutTitle()}>
+                  <i className="fa fa-plus" />
+                </Button>
+              </OverlayTrigger>
             </td>
           </tr>
           {readoutTitles && readoutTitles.map((readoutTitle, index) => (
             // eslint-disable-next-line react/no-array-index-key
             <tr key={index}>
-              {/* TODO: why does colSpan={2} not work here? */}
-              <td>
+              <td colSpan={2}>
                 <FormGroup>
                   <InputGroup>
                     <FormControl
@@ -85,11 +154,7 @@ export default class WellplateProperties extends Component {
                       value={readoutTitle}
                       onChange={event => this.updateReadoutTitle(index, event.target.value)}
                     />
-                    <InputGroup.Button>
-                      <Button bsStyle="danger" className="button-right" onClick={() => this.removeReadoutTitle(index)}>
-                        <i className="fa fa-trash-o" />
-                      </Button>
-                    </InputGroup.Button>
+                    { this.renderDeleteReadoutTitleButton(index) }
                   </InputGroup>
                 </FormGroup>
               </td>
