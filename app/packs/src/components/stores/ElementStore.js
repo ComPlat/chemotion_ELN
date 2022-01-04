@@ -27,6 +27,7 @@ import DeviceSample from '../models/DeviceSample';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import ModalImportConfirm from '../contextActions/ModalImportConfirm';
 
@@ -1049,6 +1050,21 @@ class ElementStore {
     this.UpdateResearchPlanAttaches(updatedResearchPlan);
   }
 
+  UpdateWellplateAttaches(updatedWellplate) {
+    const { selecteds } = this.state;
+    WellplatesFetcher.fetchById(updatedWellplate.id)
+      .then((result) => {
+        this.changeCurrentElement(result);
+        const index = this.elementIndex(selecteds, result);
+        const newSelecteds = this.updateElement(result, index);
+        this.setState({ selecteds: newSelecteds });
+      });
+  }
+
+  handleUpdateWellplateAttaches(updatedWellplate) {
+    this.UpdateWellplateAttaches(updatedWellplate);
+  }
+
   UpdateScreen(updatedScreen) {
     const { selecteds } = this.state;
     ScreensFetcher.fetchById(updatedScreen.id)
@@ -1095,6 +1111,7 @@ class ElementStore {
       case 'wellplate':
         fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
+        this.handleUpdateWellplateAttaches(updatedElement);
         this.handleRefreshElements('sample');
         break;
       default:
