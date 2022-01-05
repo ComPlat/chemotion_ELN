@@ -64,5 +64,37 @@ describe Chemotion::WellplateAPI do # rubocop: disable RSpec/FilePath
         end
       end
     end
+
+    describe 'PUT /api/v1/wellplates/import_spreadsheet/:id' do
+      let(:collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
+      let(:attachment) { create(:attachment) }
+      let(:wellplate) { create(:wellplate, name: 'test', attachments: [attachment]) }
+      let(:params) { { wellplate_id: wellplate.id, attachment_id: attachment.id } }
+
+      let(:mock) { instance_double(Import::ImportWellplateSpreadsheet, wellplate: wellplate) }
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
+
+        allow(Import::ImportWellplateSpreadsheet).to receive(:new).and_return(mock)
+        allow(mock).to receive(:process!)
+
+        put "/api/v1/wellplates/import_spreadsheet/#{wellplate.id}", params: params, as: :json
+      end
+
+      it 'returns 200 status code' do
+        expect(response.status).to eq 200
+      end
+
+      it 'receives process!' do
+        expect(mock).to have_received(:process!)
+      end
+
+      it 'returns a hash' do
+        expect(response.parsed_body).to be_a(Hash)
+        expect(response.parsed_body['wellplate']['type']).to eq('wellplate')
+        expect(response.parsed_body['attachments'].first['filename']).to eq(attachment.filename)
+      end
+    end
   end
 end
