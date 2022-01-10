@@ -158,16 +158,15 @@ module Chemotion
         requires :name, type: String
         optional :size, type: Integer
         optional :description, type: Hash
-        optional :wells, type: Array
+        requires :wells, type: Array
         optional :readout_titles, type: Array
-        optional :collection_id, type: Integer
+        requires :collection_id, type: Integer
         requires :container, type: Hash
       end
       post do
-        container = params[:container]
-        params.delete(:container)
+        container = params.delete(:container)
 
-        wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user.id).execute!
+        wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user).execute!
         wellplate.container = update_datamodel(container)
 
         wellplate.save!
@@ -176,7 +175,6 @@ module Chemotion
         kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        current_user.increment_counter 'wellplates'
         { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
       end
 

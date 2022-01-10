@@ -3,20 +3,21 @@
 module Usecases
   module Wellplates
     class Create
-      attr_reader :params, :user_id
+      attr_reader :params, :user
 
-      def initialize(params, user_id)
+      def initialize(params, user)
         @params = params
-        @user_id = user_id
+        @user = user
       end
 
       def execute!
         ActiveRecord::Base.transaction do
           wellplate = Wellplate.create(params.except(:collection_id, :wells))
+          wellplate.set_short_label(user: user)
           wellplate.reload
           collection = Collection.find(params[:collection_id])
           CollectionsWellplate.create(wellplate: wellplate, collection: collection)
-          CollectionsWellplate.create(wellplate: wellplate, collection: Collection.get_all_collection_for_user(user_id))
+          CollectionsWellplate.create(wellplate: wellplate, collection: Collection.get_all_collection_for_user(user.id))
           WellplateUpdater.update_wells_for_wellplate(wellplate, params[:wells])
           wellplate
         end

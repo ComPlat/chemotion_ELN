@@ -43,6 +43,28 @@ describe Chemotion::WellplateAPI do # rubocop: disable RSpec/FilePath
       end
     end
 
+    describe 'CREATE /api/v1/wellplates' do
+      context 'with appropriate permissions' do
+        let(:c1) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
+
+        let(:container) { create(:root_container) }
+        let(:params) { { name: 'Wellplate-test', readout_titles: %w[Mass Energy], wells: [], collection_id: c1.id, container: container } }
+        let(:params2) { { name: 'Wellplate-test2', readout_titles: %w[Mass Energy], wells: [], collection_id: c1.id, container: container } }
+
+        before do
+          post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
+          post '/api/v1/wellplates/', params: params2.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
+          user.reload
+        end
+
+        it 'sets the correct short_label and increments user wellplate counter' do
+          wellplate = Wellplate.find_by(name: 'Wellplate-test2')
+          expect(wellplate.short_label).to eq "#{user.name_abbreviation}-WP2"
+          expect(user.counters['wellplates']).to eq '2'
+        end
+      end
+    end
+
     describe 'DELETE /api/v1/wellplates' do
       context 'with appropriate permissions' do
         let(:c1) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }

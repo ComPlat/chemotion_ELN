@@ -27,8 +27,6 @@ class Wellplate < ApplicationRecord
   include ElementCodes
   include Taggable
 
-  after_create :auto_set_short_label
-
   serialize :description, Hash
 
   multisearchable against: :name
@@ -136,12 +134,11 @@ class Wellplate < ApplicationRecord
     subwellplate
   end
 
-  private
-
-  # TODO: set short_label from creator (user) counter
-  def auto_set_short_label
+  def set_short_label(user:) # rubocop:disable Naming/AccessorMethodName
     prefix = 'WP'
-    counter = id
-    self.short_label = "#{prefix}#{counter}"
+    counter = user.increment_counter 'wellplates'
+    user_label = user.name_abbreviation
+
+    update_attributes(short_label: "#{user_label}-#{prefix}#{counter}")
   end
 end

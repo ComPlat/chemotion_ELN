@@ -40,10 +40,6 @@ RSpec.describe Wellplate, type: :model do
         /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
       )
     end
-
-    it 'has a ShortLabel' do
-      expect(wellplate.short_label).to eq("WP#{wellplate.id}")
-    end
   end
 
   describe 'deletion' do

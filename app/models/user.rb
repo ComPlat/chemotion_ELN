@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: users
@@ -209,10 +211,12 @@ class User < ApplicationRecord
   end
 
   def increment_counter(key)
-    return if self.counters[key].nil?
+    return if counters[key].nil?
 
-    self.counters[key] = self.counters[key].succ
-    self.save!
+    counters[key] = counters[key].succ
+    save!
+
+    counters[key]
   end
 
   def has_profile
