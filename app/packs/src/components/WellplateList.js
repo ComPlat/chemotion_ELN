@@ -69,8 +69,7 @@ export default class WellplateList extends Component {
     const { wells } = this.props;
     return (
       <div>
-        <Table bordered hover condensed>
-          {/* TODO: make Table h-scrollable */}
+        <Table bordered hover condensed responsive>
           <thead>
             <tr>
               <th width="3%">#</th>
