@@ -172,7 +172,7 @@ module Chemotion
         wellplate.save!
 
         # save to profile
-        kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
+        kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
