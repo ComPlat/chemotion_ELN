@@ -1,0 +1,47 @@
+# This docker-compose file sets up the dev environment.
+# It builds an app container based on Dockerfile.chemotion.dev
+#
+# USAGE:
+# - Run app server: docker-compose -f docker-compose.dev.yml up
+# - Open shell within container (for rake tasks etc): docker-compose -f docker-compose.dev.yml run app /bin/bash
+# - Run unit tests: docker-compose -f docker-compose.dev.yml run app bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb
+# - Run feature tests: docker-compose -f docker-compose.dev.yml run app bundle exec rspec spec/features
+# - Run JS tests: docker-compose -f docker-compose.dev.yml run app npm test
+# Note: all these commands can be run manually from the shell. This might be the better choice as docker creates an overlay FS for every run
+#
+# To setup the app initially, there are some hurdles to overcome
+# Running `rake db:setup` will load the initializers of the rails app, which in turn try to access the not yet created database.
+# This will be rectified in the future, but for now it should suffice to comment out the code from the following initializers during the first `rake db:setup` run:
+# - config/initializers/computed_props.rb
+# - config/initializers/delayed_job_config.rb
+# - config/initializers/eln_features.rb
+# - config/initializers/inference.rb
+
+version: '3'
+
+services:
+  db:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+    expose: # expose port to app container
+      - '5432'
+    ports: # expose port to host machine in case we want to use external db gui tools
+      - '5432:5432'
+
+  app:
+    build:
+      context: '.'
+      dockerfile: 'Dockerfile.chemotion-dev'
+    depends_on:
+      - 'db'
+    ports: # expose default rails port to host machine
+      - "3000:3000"
+    environment:
+      RAILS_ENV: 'development'
+      DATABASE_HOST: 'db'
+      DATABASE_PORT: '5432'
+    volumes:
+      - '.:/home/chemotion-dev/app'
+    working_dir: "/home/chemotion-dev/app"
+    command: "bundle exec rails s -p 3000 -b 0.0.0.0"
