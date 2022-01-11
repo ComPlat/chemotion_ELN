@@ -99,7 +99,7 @@ export default class WellplateDetails extends Component {
   handleAddReadout() {
     const { wellplate } = this.state;
     wellplate.wells.forEach((well) => {
-      well.readouts.push({ title: '', value: '', unit: '' });
+      well.readouts.push({ value: '', unit: '' });
     });
     this.setState({ wellplate });
   }

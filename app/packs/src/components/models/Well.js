@@ -5,7 +5,7 @@ export default class Well extends Element {
   serialize() {
     return super.serialize({
       position: this.position,
-      readouts: this.readouts,
+      readouts: this.readouts || [],
       sample: this.sample && new Sample(this.sample).serialize()
     });
   }
