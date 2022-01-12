@@ -1,6 +1,7 @@
 module Entities
   class SampleAttrEntity < Grape::Entity
     expose :id, documentation: { type: "Integer", desc: "Sample's unique id"}
+    expose :molecule, using: Entities::MoleculeEntity
     expose :type, :name, :short_label, :description, :created_at, :updated_at,
     :target_amount_value, :target_amount_unit, :real_amount_value, :location,
     :real_amount_unit, :molfile, :solvent, :molarity_value, :molarity_unit,
@@ -57,6 +58,10 @@ module Entities
 
     def can_copy
       false
+    end
+
+    def molfile
+      object.molfile&.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace) if object.respond_to? :molfile
     end
 
     def can_publish

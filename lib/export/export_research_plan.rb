@@ -23,12 +23,10 @@ module Export
             :rows => field['value']['rows']
           }
         when 'ketcher'
-          output_file = Tempfile.new(['output', ".png"])
-          Reporter::Img::Conv.by_inkscape("public/images/research_plans/#{field['value']['svg_file']}", output_file.path, 'png')
-
+          img_src = to_png('research_plans', field['value']['svg_file'])
           @fields << {
             :type => field['type'],
-            :src =>  output_file.path
+            :src =>  img_src
           }
         when 'image'
           @fields << {
@@ -39,9 +37,10 @@ module Export
           next unless (sample = Sample.find_by(id: field['value']['sample_id']))
 
           if ElementPolicy.new(@current_user, sample).read?
+            img_src = to_png('samples', sample['sample_svg_file'])
             @fields << {
               :type => field['type'],
-              :src => "/images/samples/#{sample['sample_svg_file']}",
+              :src => img_src,
               :p => sample['name']
             }
           end
@@ -49,14 +48,22 @@ module Export
           next unless (reaction = Reaction.find_by(id: field['value']['reaction_id']))
 
           if ElementPolicy.new(@current_user, reaction).read?
+            img_src = to_png('reactions', reaction['reaction_svg_file'])
             @fields << {
               :type => field['type'],
-              :src => "/images/reactions/#{reaction['reaction_svg_file']}",
+              :src => img_src,
               :p => reaction['name']
             }
           end
         end
       end
+    end
+
+    def to_png(sub_folder, file)
+      output_file = Tempfile.new(['output', '.png'])
+      svg_file_path = File.join('public', 'images', sub_folder, file)
+      Reporter::Img::Conv.by_inkscape(svg_file_path, output_file.path, 'png')
+      output_file.path
     end
 
     def to_html()

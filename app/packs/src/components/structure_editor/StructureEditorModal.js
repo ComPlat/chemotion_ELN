@@ -91,7 +91,7 @@ export default class StructureEditorModal extends React.Component {
     UserStore.listen(this.onChangeUser);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       showModal: nextProps.showModal,
       molfile: nextProps.molfile

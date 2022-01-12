@@ -1,5 +1,5 @@
 DIR = Rails.root.join('lib', 'template').to_s
-USER_ID = User.first.id
+USER_ID = Admin.first&.id  || 0
 TEMPLATE_LIST = [
   [ "Standard.docx", "Standard", "standard" ],
   [ "Supporting_information.docx", "Supporting Information", "supporting_information" ],

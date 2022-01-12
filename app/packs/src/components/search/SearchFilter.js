@@ -85,7 +85,7 @@ export default class SearchFilter extends React.Component {
     this.handleUpdateFilters = this.handleUpdateFilters.bind(this)
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({showFilters: nextProps.show})
   }
 

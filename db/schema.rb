@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_09_24_095106) do
+ActiveRecord::Schema.define(version: 2021_12_06_144812) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -636,6 +636,18 @@ ActiveRecord::Schema.define(version: 2021_09_24_095106) do
     t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true
   end
 
+  create_table "nmr_sim_nmr_simulations", id: :serial, force: :cascade do |t|
+    t.integer "molecule_id"
+    t.text "path_1h"
+    t.text "path_13c"
+    t.text "source"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at"
+    t.index ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true
+  end
+
   create_table "notifications", id: :serial, force: :cascade do |t|
     t.integer "message_id"
     t.integer "user_id"
@@ -1128,6 +1140,8 @@ ActiveRecord::Schema.define(version: 2021_09_24_095106) do
     t.string "readout"
     t.string "additive"
     t.datetime "deleted_at"
+    t.string "label", default: "Molecular structure", null: false
+    t.string "color_code"
     t.index ["deleted_at"], name: "index_wells_on_deleted_at"
     t.index ["sample_id"], name: "index_wells_on_sample_id"
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
@@ -1163,6 +1177,16 @@ ActiveRecord::Schema.define(version: 2021_09_24_095106) do
        WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
        group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
        ) as result
+       $function$
+  SQL
+  create_function :literatures_by_element, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(l2.title::text, CHR(10)) as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
   create_function :user_ids, sql_definition: <<-SQL

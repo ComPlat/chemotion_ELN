@@ -40,17 +40,17 @@ import XTabs from './extra/SampleDetailsXTabs';
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
 import Sample from './models/Sample';
-import Container from './models/Container'
+import Container from './models/Container';
 import PolymerSection from './PolymerSection';
 import ElementalCompositionGroup from './ElementalCompositionGroup';
-import ToggleSection from './common/ToggleSection'
-import SampleName from './common/SampleName'
+import ToggleSection from './common/ToggleSection';
+import SampleName from './common/SampleName';
 import ClipboardCopyText from './common/ClipboardCopyText';
-import SampleForm from './SampleForm'
+import SampleForm from './SampleForm';
 import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
 import ComputedPropLabel from './computed_props/ComputedPropLabel';
 import Utils from './utils/Functions';
-import PrintCodeButton from './common/PrintCodeButton'
+import PrintCodeButton from './common/PrintCodeButton';
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import PubchemLcss from './PubchemLcss';
@@ -62,6 +62,7 @@ import CopyElementModal from './common/CopyElementModal';
 import NotificationActions from './actions/NotificationActions';
 import MatrixCheck from './common/MatrixCheck';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
+import NmrSimTab from './nmr_sim/NmrSimTab';
 
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
@@ -120,6 +121,7 @@ export default class SampleDetails extends React.Component {
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
+    this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -144,7 +146,8 @@ export default class SampleDetails extends React.Component {
     this.fetchQcWhenNeeded(activeTab);
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))
         || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey == 'DUMMY')) {
       this.setState({
@@ -269,6 +272,15 @@ export default class SampleDetails extends React.Component {
   decoupleChanged(e) {
     const { sample } = this.state;
     sample.decoupled = e.target.checked;
+    if (!sample.decoupled) {
+      sample.sum_formula = '';
+    } else {
+      if (sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+      if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
+        sample.residues[0].custom_info.polymer_type = 'self_defined';
+        delete sample.residues[0].custom_info.surface_type;
+      }
+    }
     if (!sample.decoupled && ((sample.molfile || '') === '')) {
       this.handleSampleChanged(sample);
     } else {
@@ -282,7 +294,6 @@ export default class SampleDetails extends React.Component {
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
-    // this.updateMolecule(molfile, svg_file, smiles);
     if (!smiles || smiles === '') {
       this.setState({ loadingMolecule: true });
       MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor, sample.decoupled)
@@ -476,7 +487,7 @@ export default class SampleDetails extends React.Component {
       <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
 
-    const decoupleCb = sample.can_update ? (
+    const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
         Decoupled
       </Checkbox>
@@ -1085,6 +1096,24 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  nmrSimTab(ind) {
+    const { sample } = this.state;
+    if (!sample) { return null; }
+    return (
+      <Tab
+        eventKey={ind}
+        title="NMR Simulation"
+        key={`NMR_${sample.id}_${ind}`}
+      >
+        <ListGroupItem style={{ paddingBottom: 20 }} >
+          <NmrSimTab
+            sample={sample}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   extraLabels() {
     let labels = [];
     for (let j = 0; j < XLabels.count; j += 1) {
@@ -1224,16 +1253,21 @@ export default class SampleDetails extends React.Component {
       analyses: this.sampleContainerTab('analyses'),
       literature: this.sampleLiteratureTab('literature'),
       results: this.sampleImportReadoutTab('results'),
-      qc_curation: this.qualityCheckTab('qc_curation'),
+      qc_curation: this.qualityCheckTab('qc_curation')
     };
 
     if (this.enableComputedProps) {
       tabContentsMap.computed_props = this.moleculeComputedProps('computed_props');
     }
 
+    if (this.enableNmrSim) {
+      tabContentsMap.nmr_sim = this.nmrSimTab('nmr_sim');
+    }
+
     const tabTitlesMap = {
       qc_curation: 'qc curation',
-      computed_props: 'computed props'
+      computed_props: 'computed props',
+      nmr_sim: 'NMR Simulation'
     };
 
     for (let j = 0; j < XTabs.count; j += 1) {

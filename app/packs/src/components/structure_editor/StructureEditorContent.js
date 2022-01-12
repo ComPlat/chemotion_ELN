@@ -12,7 +12,7 @@ class StructureEditorContent extends React.Component {
    this.attachEditor = this.attachEditor.bind(this)
   }
 
-  componentWillReceiveProps({ isScriptLoaded, isScriptLoadSucceed }) {
+  UNSAFE_componentWillReceiveProps({ isScriptLoaded, isScriptLoadSucceed }) {
     if (isScriptLoaded && !this.props.isScriptLoaded) { // load finished
       if (isScriptLoadSucceed) {
         setTimeout(this.attachEditor, 3000);

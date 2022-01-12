@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "Please cite this software as specified in the 'preferred-citation' section below."
+title: "Chemotion Electronic Lab Notebook (ELN)"
+authors:
+  - name: "Chemotion ELN contributors"
+url: "https://github.com/ComPlat/chemotion_ELN"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Tremouilhac"
+    given-names: "Pierre"
+  - family-names: "Nguyen"
+    given-names: "An"
+  - family-names: "Huang"
+    given-names: "Yu-Chieh"
+  - family-names: "Kotov"
+    given-names: "Serhii"
+  - family-names: "Lütjohann"
+    given-names: "Dominic Sebastian"
+  - family-names: "Hübsch"
+    given-names: "Florian"
+  - family-names: "Jung"
+    given-names: "Nicole"
+  - family-names: "Bräse"
+    given-names: "Stefan"
+  doi: "10.1186/s13321-017-0240-0"
+  journal: "Journal of Cheminformatics"
+  title: "Chemotion ELN: an Open Source electronic lab notebook for chemists in academia"
+  issue: 1
+  volume: 9
+  year: 2017

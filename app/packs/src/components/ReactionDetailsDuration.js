@@ -21,7 +21,8 @@ export default class ReactionDetailsDuration extends Component {
     this.clipboard = new Clipboard('.clipboardBtn');
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (!nextProps.reaction) { return; }
     nextProps.reaction.convertDurationDisplay();
   }

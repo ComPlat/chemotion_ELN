@@ -92,14 +92,11 @@ class User < ApplicationRecord
   accepts_nested_attributes_for :affiliations
 
   validates_presence_of :first_name, :last_name, allow_blank: false
-  validates :name_abbreviation,
-            uniqueness: { message: ' has already been taken.' },
-            format: {
-              with: /\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/,
-              message: " can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not."
-            }
+
+  validates :name_abbreviation, uniqueness: { message: 'is already in use.' }
   validate :name_abbreviation_reserved_list, on: :create
   validate :name_abbreviation_length, on: :create
+  validate :name_abbreviation_format, on: :create
   # validate :academic_email
   validate :mail_checker
 
@@ -138,16 +135,30 @@ class User < ApplicationRecord
     super && account_active
   end
 
+  def name_abbr_config
+    @name_abbr_config ||= Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
+  end
+
   def name_abbreviation_reserved_list
-    name_abbr_config = Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
-    if (name_abbr_config[:reserved_list] || []).include?(name_abbreviation)
-      errors.add(:name_abbreviation, " is reserved, please change")
-    end
+    return unless (name_abbr_config[:reserved_list] || []).include?(name_abbreviation)
+
+    errors.add(:name_abbreviation, 'is reserved, please change')
+  end
+
+  def name_abbreviation_format
+    format_abbr_default = /\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/
+    format_err_msg_default = "can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not."
+
+    format_abbr = name_abbr_config[:format_abbr].presence || format_abbr_default.presence
+    format_err_msg = name_abbr_config[:format_abbr_err_msg].presence || format_err_msg_default.presence
+
+    return if name_abbreviation.match?(format_abbr)
+
+    errors.add(:name_abbreviation, format_err_msg)
   end
 
   def name_abbreviation_length
     na = name_abbreviation
-    name_abbr_config = Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
     case type
     when 'Group'
       min_val = name_abbr_config[:length_group]&.first || 2
@@ -293,7 +304,8 @@ class User < ApplicationRecord
   def update_matrix
     check_sql = ApplicationRecord.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
     result = ApplicationRecord.connection.exec_query(check_sql)
-    if result.first["rs"] == 't'
+
+    if result.presence&.first&.fetch('rs', false)
       sql = ApplicationRecord.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', id])
       ApplicationRecord.connection.exec_query(sql)
     end
@@ -309,7 +321,7 @@ class User < ApplicationRecord
   def self.gen_matrix(user_ids = nil)
     check_sql = ApplicationRecord.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
     result = ApplicationRecord.connection.exec_query(check_sql)
-    if result.first['rs'] == 't'
+    if result.presence&.first&.fetch('rs', false)
       sql = if user_ids.present?
               ApplicationRecord.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', user_ids])
             else
