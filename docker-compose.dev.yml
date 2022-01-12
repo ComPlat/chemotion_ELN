@@ -3,19 +3,14 @@
 #
 # USAGE:
 # - Run app server: docker-compose -f docker-compose.dev.yml up
+# - Initial dev setup without external seeds: docker-compose -f docker-compose.dev.yml run app bundle exec rake db:setup
 # - Open shell within container (for rake tasks etc): docker-compose -f docker-compose.dev.yml run app /bin/bash
 # - Run unit tests: docker-compose -f docker-compose.dev.yml run app bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb
 # - Run feature tests: docker-compose -f docker-compose.dev.yml run app bundle exec rspec spec/features
 # - Run JS tests: docker-compose -f docker-compose.dev.yml run app npm test
 # Note: all these commands can be run manually from the shell. This might be the better choice as docker creates an overlay FS for every run
 #
-# To setup the app initially, there are some hurdles to overcome
-# Running `rake db:setup` will load the initializers of the rails app, which in turn try to access the not yet created database.
-# This will be rectified in the future, but for now it should suffice to comment out the code from the following initializers during the first `rake db:setup` run:
-# - config/initializers/computed_props.rb
-# - config/initializers/delayed_job_config.rb
-# - config/initializers/eln_features.rb
-# - config/initializers/inference.rb
+
 
 version: '3'
 
