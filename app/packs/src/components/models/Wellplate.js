@@ -99,7 +99,7 @@ export default class Wellplate extends Element {
     return {
       ...well,
       position: this.calculatePositionOfWellByIndex(i),
-      readouts: []
+      readouts: well.readouts || []
     };
   }
 
