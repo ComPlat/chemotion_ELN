@@ -10,7 +10,7 @@
 #  storage         :string(20)       default("tmp")
 #  created_by      :integer          not null
 #  created_for     :integer
-#  version         :integer          default(0)
+#  version         :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  content_type    :string
@@ -21,6 +21,8 @@
 #  attachable_type :string
 #  aasm_state      :string
 #  filesize        :bigint
+#  attachment_data :jsonb
+#  is_editing      :boolean          default(FALSE)
 #
 # Indexes
 #
@@ -30,25 +32,28 @@
 
 
 class Attachment < ApplicationRecord
+  has_logidze  ignore_log_data: true
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
+  include AttachmentUploader::Attachment(:attachment)
 
+  has_ancestry ancestry_column: :version
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
   before_create :generate_key
-  before_create :store_tmp_file_and_thumbnail, if: :new_upload
+  # before_create :store_tmp_file_and_thumbnail, if: :new_upload
   before_create :add_checksum, if: :new_upload
   before_create :add_content_type
   before_save :update_filesize
 
-  before_save  :move_from_store, if: :store_changed, on: :update
+  # before_save  :move_from_store, if: :store_changed, on: :update
 
   #reload to get identifier:uuid
   after_create :reload, on: :create
-  after_create :store_file_and_thumbnail_for_dup, if: :duplicated
+  # after_create :store_file_and_thumbnail_for_dup, if: :duplicated
 
-  after_destroy :delete_file_and_thumbnail
+  before_destroy :delete_file_and_thumbnail
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template
@@ -83,15 +88,15 @@ class Attachment < ApplicationRecord
   end
 
   def read_file
-    store.read_file
+    self.attachment_attacher.file.read if self.attachment_attacher.file.present?
   end
 
   def read_thumbnail
-    store.read_thumb if self.thumb
+    self.attachment(:thumbnail).read if self.attachment(:thumbnail).present?
   end
 
   def abs_path
-    store.path
+    self.attachment_attacher.url if self.attachment_attacher.file.present?
   end
 
   def abs_prev_path
@@ -107,7 +112,7 @@ class Attachment < ApplicationRecord
   end
 
   def add_checksum
-    store.add_checksum
+    self.checksum = Digest::MD5.hexdigest(read_file) if self.attachment_attacher.file.present?
   end
 
   def reset_checksum
@@ -116,7 +121,7 @@ class Attachment < ApplicationRecord
   end
 
   def regenerate_thumbnail
-    return unless filesize <= 50 * 1024 * 1024
+    return unless self.filesize <= 50 * 1024 * 1024
 
     store.regenerate_thumbnail
     update_column('thumb', thumb) if thumb_changed?
@@ -170,13 +175,6 @@ class Attachment < ApplicationRecord
     update!(attachable_id: r_id, attachable_type: 'Report')
   end
 
-  def rewrite_file_data!
-    return unless file_data.present?
-    store.destroy
-    store.store_file
-    self
-  end
-
   def update_filesize
     self.filesize = File.size(self.file_path) if self.file_path.present?
     self.filesize = self.file_data.bytesize if self.file_data && self.filesize.nil?
@@ -189,6 +187,16 @@ class Attachment < ApplicationRecord
                         rescue
                           nil
                         end
+  end
+
+  def reload
+    super
+  
+    set_key
+  end
+
+  def set_key
+    self.key = self.identifier
   end
 
   private
@@ -241,7 +249,13 @@ class Attachment < ApplicationRecord
   end
 
   def delete_file_and_thumbnail
-    store.destroy
+    self.reload_log_data
+    for numb in 1..self.log_size do
+      att = self.at(version: numb)
+      att.attachment_attacher.destroy
+    end
+   
+    attachment_attacher.destroy
   end
 
   def move_from_store(from_store = self.storage_was)

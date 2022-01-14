@@ -2,9 +2,7 @@
 
 module Chemotion
   # Editor API
-  # rubocop:disable ClassLength
   class EditorAPI < Grape::API
-    # rubocop:disable Metrics/BlockLength
     namespace :editor do
       namespace :initial do
         get do
@@ -29,9 +27,32 @@ module Chemotion
             user_id: current_user.id,
             exp: (Time.now + 15.minutes).to_i
           }
+
           @attachment.oo_editing_start!
           token = JWT.encode payload, Rails.application.secrets.secret_key_base
-          {token: token}
+          { token: token }
+        end
+      end
+
+      namespace :token do
+        desc 'start editing a document'
+        params do
+          requires :attachment_id, type: Integer, desc: 'attachment id'
+        end
+        before do
+          @attachment = Attachment.find_by(id: params[:attachment_id])
+        end
+        post do
+          return { token: nil } if @attachment.is_editing
+
+          payload = {
+            att_id: @attachment.id,
+            user_id: current_user.id,
+            exp: (Time.now + 1.hours).to_i
+          }
+
+          token = JWT.encode payload, Rails.application.secrets.secret_key_base
+          { token: token }
         end
       end
     end
