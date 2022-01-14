@@ -9,16 +9,15 @@ RSpec.describe Attachment, type: :model do
     let(:file_name) { File.basename(file_path) }
     let!(:attachment) { FactoryBot.create(:attachment) }
     let!(:attachment_with_file) do
-      FactoryBot.create(:attachment, filename: file_name, file_data: file_data)
+      FactoryBot.create(:attachment, filename: file_name, attachment: File.open(file_path, binmode: true))
     end
     let(:new_attachment) do
-      FactoryBot.build(:attachment, filename: file_name, file_data: file_data)
+      FactoryBot.build(:attachment, filename: file_name, attachment: File.open(file_path, binmode: true))
     end
     let(:new_attachment_with_img) do
       FactoryBot.build(
         :attachment, filename: 'upload.jpg', key: SecureRandom.uuid,
-                     file_path: "#{Rails.root}/spec/fixtures/upload.jpg"
-        # file_data: File.read("#{Rails.root}/spec/fixtures/upload.jpg")
+                     attachment: File.open("#{Rails.root}/spec/fixtures/upload.jpg", binmode: true)
       )
     end
 
@@ -63,13 +62,6 @@ RSpec.describe Attachment, type: :model do
       end
     end
 
-    describe 'store_tmp_file_and_thumbnail' do
-      it 'stores file in tmp_folder' do
-        expect(new_attachment_with_img.send(:store_tmp_file_and_thumbnail)).to be true
-        expect(new_attachment_with_img.thumb).to be true
-      end
-    end
-
     context 'local store' do
       let(:f_path) { new_attachment_with_img.store.path }
       let(:t_path) { new_attachment_with_img.store.thumb_path }
@@ -84,21 +76,15 @@ RSpec.describe Attachment, type: :model do
       end
 
       context 'when destroyed' do
-        before do
-          new_attachment_with_img.destroy!
-        end
-
         it 'deletes the file and thumbnail' do
-          expect(f_path).to eq(new_attachment_with_img.store.path)
-          expect(File.exist?(t_path)).to be false
-          expect(File.exist?(f_path)).to be false
+          new_attachment_with_img.attachment_derivatives!
+          f_path = new_attachment_with_img.attachment_url
+          t_path = new_attachment_with_img.attachment_url(:thumbnail)
+          new_attachment_with_img.destroy!
+          expect(File.exist?(new_attachment_with_img.attachment_url)).to be false
+          expect(File.exist?(new_attachment_with_img.attachment_url(:thumbnail))).to be false
         end
       end
     end
-
-    # it 'stores file in tmp folder with storage tmp' do
-    # #  expect
-    #
-    # end
   end
 end

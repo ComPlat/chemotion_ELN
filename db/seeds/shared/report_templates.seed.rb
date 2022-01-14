@@ -12,7 +12,7 @@ TEMPLATE_LIST = [
 
 def create_template(file_name, template_name, template_type)
   if(file_name)
-    attachment = Attachment.create!(
+    attachment = Attachment.create(
       filename: file_name,
       key: 'file',
       file_path: "#{DIR}/#{file_name}",
@@ -20,13 +20,12 @@ def create_template(file_name, template_name, template_type)
       created_for: USER_ID,
       content_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
-
+    
+    attachment.attachment_attacher.attach(File.open("#{DIR}/#{file_name}", binmode: true))
+    attachment.save!
     ReportTemplate.create!(
       name: "#{template_name}", report_type: "#{template_type}", attachment: attachment
     )
-  
-    primary_store = Rails.configuration.storage.primary_store
-    attachment.update!(storage: primary_store)
   else
     ReportTemplate.create!(
       name: "#{template_name}", report_type: "#{template_type}"
