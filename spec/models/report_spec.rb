@@ -20,7 +20,8 @@ RSpec.describe Report, type: :report do
       filename: rp1.file_name + '.' + ext,
       attachable_id: rp1.id,
       attachable_type: 'Report',
-      content_type: docx_mime_type
+      content_type: docx_mime_type,
+      attachment: File.open("#{Rails.root}/spec/fixtures/upload.jpg", binmode: true)
     )
   end
 
@@ -66,17 +67,12 @@ RSpec.describe Report, type: :report do
   end
 
   describe 'delete archive file after Report is destroyed' do
-    let(:f_path) { att1.store.path }
-    let(:t_path) { att1.store.thumb_path }
-
-    before do
+    it 'delete the archive file' do
+      att1.attachment_attacher.create_derivatives
+      f_path = att1.attachment_url
       rp1.really_destroy!
       att1.destroy!
-    end
-
-    it 'delete the archive file' do
       expect(File.exist?(f_path)).to be false
-      expect(File.exist?(t_path)).to be false
     end
   end
 end

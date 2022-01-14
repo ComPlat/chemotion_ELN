@@ -4,10 +4,9 @@ require 'rails_helper'
 
 RSpec.describe 'ImportWellplateSpreadsheet' do
   let(:file_path) { Rails.root.join('public/xlsx/wellplate_import_template.xlsx') }
-  let(:file_data) { File.read(file_path) }
   let(:file_name) { File.basename(file_path) }
   let!(:attachment) do
-    FactoryBot.create(:attachment, filename: file_name, file_path: file_path, file_data: file_data)
+    FactoryBot.create(:attachment, filename: file_name, file_path: file_path, attachment: File.open(file_path, binmode: true))
   end
   let!(:wellplate) { create(:wellplate, :with_wells, attachments: [attachment]) }
 
@@ -17,7 +16,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
   let(:import) { Import::ImportWellplateSpreadsheet.new(wellplate_id: wp_id, attachment_id: att_id) }
 
   context 'when receiving wrong extension' do
-    let!(:attachment) { FactoryBot.create(:attachment) }
+    let!(:attachment) { FactoryBot.create(:attachment, attachment: File.open('spec/fixtures/import/wrong.txt', binmode: true)) }
 
     it 'raises an exception' do
       error_message = ["Can not process this type of file, must be '.xlsx'."].join("\n")
