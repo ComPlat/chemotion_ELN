@@ -494,11 +494,8 @@ module Chemotion
         is_shared_collection = false
         unless collection.present?
           sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
-          if sync_collection.present?
-            is_shared_collection = true
-            sample.collections << Collection.find(sync_collection['collection_id'])
-            sample.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-          end
+          is_shared_collection = true if sync_collection.present?
+          sample.collections << Collection.find(sync_collection['collection_id']) if sync_collection.present?
         end
 
         unless is_shared_collection
