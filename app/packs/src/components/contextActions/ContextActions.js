@@ -9,6 +9,7 @@ import ScanCodeButton from './ScanCodeButton';
 import NoticeButton from './NoticeButton';
 import InboxButton from './InboxButton';
 //import DeviceButton from './DeviceButton'
+import { PermissionConst } from '../utils/PermissionConst';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -36,16 +37,16 @@ export default class ContextActions extends React.Component {
 
   isCreateDisabled() {
     const {currentCollection} = this.state.uiState;
-    return currentCollection && (currentCollection.label == 'All' ||
-                             currentCollection.is_shared);
+    return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked) || 
+    (currentCollection.is_shared && currentCollection.is_synchronized == false) ||  (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write)) ;
   }
 
   isDisabled() {
     const {currentCollection} = this.state.uiState
 
     if (currentCollection) {
-      if (currentCollection.label == 'All' ||
-          (currentCollection.is_shared == true && currentCollection.permission_level < 4))
+      if ((currentCollection.label == 'All'  && currentCollection.is_locked) ||
+          (currentCollection.is_shared == true && currentCollection.permission_level < PermissionConst.ImportElements))
       return true
     }
 

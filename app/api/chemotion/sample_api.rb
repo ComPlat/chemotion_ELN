@@ -487,12 +487,24 @@ module Chemotion
         sample = Sample.new(attributes)
 
         if params[:collection_id]
-          collection = current_user.collections.find(params[:collection_id])
-          sample.collections << collection
+          collection = current_user.collections.where(id: params[:collection_id]).take
+          sample.collections << collection if collection.present?
         end
 
-        all_coll = Collection.get_all_collection_for_user(current_user.id)
-        sample.collections << all_coll
+        is_shared_collection = false
+        unless collection.present?
+          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
+          next if sync_collection.nil?
+ 
+          is_shared_collection = true
+          sample.collections << Collection.find(sync_collection['collection_id'])
+          sample.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+        end
+
+        unless is_shared_collection
+          all_coll = Collection.get_all_collection_for_user(current_user.id)
+          sample.collections << all_coll
+        end
 
         sample.container = update_datamodel(params[:container])
         sample.save!
