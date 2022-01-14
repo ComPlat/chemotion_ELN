@@ -39,8 +39,7 @@ module Chemotion
         file = params[:file]
         if file && tempfile = file[:tempfile]
           attachment_id = report_template.attachment_id
-          report_template.attachment = Attachment.new(
-            bucket: file[:container_id],
+          attachment = Attachment.new(
             filename: file[:filename],
             key: file[:name],
             file_path: file[:tempfile],
@@ -49,13 +48,25 @@ module Chemotion
             content_type: file[:type]
           )
 
-          begin
-            report_template.save!
-            Attachment.find(attachment_id).delete
-          ensure
-            tempfile.close
-            tempfile.unlink
+          ActiveRecord::Base.transaction do
+            begin
+              attachment.save!
+
+              attachment.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
+              if attachment.valid?
+                attachment.save!
+              else
+                raise ActiveRecord::Rollback
+              end
+            ensure
+              tempfile.close
+              tempfile.unlink
+            end
           end
+
+          report_template.attachment = attachment
+          report_template.save!
+          Attachment.find(attachment_id).delete
         end
 
         report_template.save!
@@ -84,16 +95,24 @@ module Chemotion
               created_for: current_user.id,
               content_type: file[:type]
             )
+            ActiveRecord::Base.transaction do
+              begin
+                attachment.save!
+
+                attachment.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
+                if attachment.valid?
+                  attachment.save!
+                else
+                  raise ActiveRecord::Rollback
+                end
+              ensure
+                tempfile.close
+                tempfile.unlink
+              end
+            end
 
             report_template.attachment = attachment
-            begin
-              report_template.save!
-              primary_store = Rails.configuration.storage.primary_store
-              attachment.update!(storage: primary_store)
-            ensure
-              tempfile.close
-              tempfile.unlink
-            end
+            report_template.save!
           end
         else
           report_template.save!

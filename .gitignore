@@ -177,3 +177,5 @@ vendor/cache/*
 .devcontainer
 .docker-sync/
 
+shrine/*
+config/shrine_config.yml
