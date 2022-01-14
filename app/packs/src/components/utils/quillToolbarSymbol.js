@@ -275,20 +275,19 @@ const opsRAMANTail = () => (
 
 const opsUVVISHead = () => (
   [
-    { insert: 'UV/VIS (ṽ) = ' },
+    { insert: 'UV-VIS (absorption, solvent), λmax = ' },
   ]
 );
 
 const opsHPLCUVVISHead = () => (
   [
-    { insert: 'HPLC UV/VIS (ṽ) = ' },
+    { insert: 'HPLC UV/VIS (λmax) = ' },
   ]
 );
 
 const opsUVVISTail = () => (
   [
-    { insert: ' cm' },
-    { attributes: { script: 'super' }, insert: '–1' },
+    { insert: ' nm' },
     { insert: '. ' },
   ]
 );
