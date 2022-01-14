@@ -46,5 +46,9 @@ module Entities
         obj['temp_sharer']
     end
     expose :children, as: 'children', using: Entities::CollectionSyncEntity
+
+    expose :is_sync_to_me do |obj|
+        true
+    end
   end
 end

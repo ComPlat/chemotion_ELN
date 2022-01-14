@@ -268,6 +268,7 @@ module Chemotion
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             collections_element_klass.move_to_collection(ids, from_collection.id, to_collection_id)
+            collections_element_klass.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
           klasses = ElementKlass.find_each do |klass|
@@ -280,6 +281,7 @@ module Chemotion
 
             ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
+            CollectionsElement.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
           status 204

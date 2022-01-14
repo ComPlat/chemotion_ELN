@@ -68,12 +68,25 @@ module Chemotion
         research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
 
-        if col_id = params[:collection_id]
-          research_plan.collections << current_user.collections.find(col_id)
+        if params[:collection_id]
+          collection = current_user.collections.where(id: params[:collection_id]).take
+          research_plan.collections << collection if collection.present?
         end
 
-        all_coll = Collection.get_all_collection_for_user(current_user.id)
-        research_plan.collections << all_coll
+        is_shared_collection = false
+        unless collection.present?
+          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
+          next if sync_collection.nil?
+
+          is_shared_collection = true
+          research_plan.collections << Collection.find(sync_collection['collection_id'])
+          research_plan.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+        end
+
+        unless is_shared_collection
+          all_coll = Collection.get_all_collection_for_user(current_user.id)
+          research_plan.collections << all_coll
+        end
 
         research_plan
       end

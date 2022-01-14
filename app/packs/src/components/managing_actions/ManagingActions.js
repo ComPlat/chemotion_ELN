@@ -178,6 +178,7 @@ export default class ManagingActions extends React.Component {
         modalProps.title = "Move to Collection";
         modalProps.component = ManagingModalCollectionActions;
         modalProps.action = ElementActions.updateElementsCollection;
+        modalProps.listSharedCollections = true;
         break;
       case 'remove':
         modalProps.title = "Remove selected elements from this Collection?";
@@ -188,7 +189,7 @@ export default class ManagingActions extends React.Component {
         modalProps.title = "Assign to Collection";
         modalProps.component = ManagingModalCollectionActions;
         modalProps.action = ElementActions.assignElementsCollection;
-        modalProps.listSharedCollections = true;
+        modalProps.listSharedCollections = false;
         break;
       case 'delete':
         modalProps.title = "Delete from all Collections?";

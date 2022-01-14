@@ -57,7 +57,7 @@ module CollectionHelpers
       )
     elsif prms[:is_sync_to_me]
       c = Collection.joins(:sync_collections_users).where(
-        'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and sync_collections_users.permission_level >= ?',
+        'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and (sync_collections_users.permission_level = 1 or sync_collections_users.permission_level >= ?)',
         c_id,
         user_ids,
         pl

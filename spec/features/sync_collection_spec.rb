@@ -50,11 +50,32 @@ describe 'Sync Collection Test' do
     first_user_syncs_collection('Write')
     second_user_accesses_synced_collection
     expect(page).to have_field('reaction_name', disabled: false)
+    expect(page).to have_field('reaction_name', disabled: false)
+  end
+
+  it 'Sync collection with write permission can add a new sample', js: true do
+    first_user_syncs_collection('Write')
+    second_user_accesses_synced_collection
+    expect(page).to have_button('create-split-button', disabled: false)
+
+    find_by_id('create-split-button').click
+    find_by_id('create-sample-button').click
+    sheader = first('i.glyphicon-chevron-right')
+    sheader.click
+    smile = 'c1cc(cc(c1)c1ccccc1)c1ccccc1'
+    smile_field = find_by_id('smilesInput')
+    smile_field.click
+    smile_field.set(smile)
+    find_by_id('smile-create-molecule').click
+    find_by_id('txinput_name').set('Sample A').send_keys(:enter)
+    find_by_id('submit-sample-btn').click
+    expect(page).to have_content('Sample A')
   end
 
   it 'Sync collection with read permission', js: true do
     first_user_syncs_collection('Read')
     second_user_accesses_synced_collection
     expect(page).to have_field('reaction_name', disabled: true)
+    expect(page).to have_button('create-split-button', disabled: true)
   end
 end

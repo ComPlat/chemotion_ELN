@@ -442,7 +442,7 @@ module Chemotion
         attributes.delete(:container)
         attributes.delete(:segments)
 
-        collection = Collection.find(collection_id)
+        collection = current_user.collections.where(id: collection_id).take
         attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -476,8 +476,19 @@ module Chemotion
         reaction.container = update_datamodel(container_info)
         reaction.save!
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        CollectionsReaction.create(reaction: reaction, collection: collection)
-        CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
+        CollectionsReaction.create(reaction: reaction, collection: collection) if collection.present?
+
+        is_shared_collection = false
+        unless collection.present?
+          sync_collection = current_user.all_sync_in_collections_users.where(id: collection_id).take
+          next if sync_collection.nil?
+
+          is_shared_collection = true
+          CollectionsReaction.create(reaction: reaction, collection: Collection.find(sync_collection['collection_id']))
+          CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(sync_collection['shared_by_id']))
+        end
+
+        CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id)) unless is_shared_collection
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
         if reaction
           if attributes['origin'] && attributes['origin']['short_label']
