@@ -216,29 +216,30 @@ export default class ReactionDetails extends Component {
         {tabs}
         <Tab eventKey={4.1} title={reactionTab}>
           <ListGroupItem style={{ paddingBottom: 20 }}>
-            <ReactionDetailsContainers 
-              reaction={reaction} 
-              parent={this} r
-              eadOnly={!permitOn(reaction)} 
-              handleSubmit={this.handleSubmit}/>
+            <ReactionDetailsContainers
+              reaction={reaction}
+              parent={this}
+              readOnly={!permitOn(reaction)}
+              handleSubmit={this.handleSubmit}
+            />
           </ListGroupItem>
         </Tab>
       </Tabs>
     );
   }
 
-  extraTab(ind){
-    let reaction = this.state.reaction || {}
-    let num = ind  ;
-    let NoName =  XTabs["content"+num];
-    let TabName = XTabs["title"+num];
-    return(
-       <Tab eventKey={ind+5}  title={TabName} key={"sampleDetailsTab"+ind+3} >
-         <ListGroupItem style={{paddingBottom: 20}}>
-           <NoName  reaction={reaction}/>
-         </ListGroupItem>
-       </Tab>
-      )
+  extraTab(ind) {
+    const reaction = this.state.reaction || {};
+    const num = ind;
+    const NoName = XTabs["content"+num];
+    const TabName = XTabs["title"+num];
+    return (
+      <Tab eventKey={ind + 5} title={TabName} key={`sampleDetailsTab${ind + 3}`} >
+        <ListGroupItem style={{ paddingBottom: 20 }}>
+          <NoName reaction={reaction} />
+        </ListGroupItem>
+      </Tab>
+    );
   }
 
   reactionSVG(reaction) {
