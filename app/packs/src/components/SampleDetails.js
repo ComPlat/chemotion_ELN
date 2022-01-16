@@ -997,14 +997,14 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  sampleLiteratureTab(ind) {
+  sampleLiteratureTab() {
     const { sample } = this.state;
     if (!sample) { return null; }
     return (
       <Tab
-        eventKey={ind}
-        title="Literature"
-        key={`Literature_${sample.id}`}
+        eventKey="references"
+        title="References"
+        key={`References_${sample.id}`}
       >
         <ListGroupItem style={{ paddingBottom: 20 }} >
           <SampleDetailsLiteratures
@@ -1251,7 +1251,7 @@ export default class SampleDetails extends React.Component {
     const tabContentsMap = {
       properties: this.samplePropertiesTab('properties'),
       analyses: this.sampleContainerTab('analyses'),
-      literature: this.sampleLiteratureTab('literature'),
+      references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation')
     };
