@@ -417,8 +417,8 @@ export default class ReactionDetails extends Component {
           />
         </Tab>
       ),
-      literature: (
-        <Tab eventKey="literature" title="Literature" key={`references_${reaction.id}`}>
+      references: (
+        <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
           <ReactionDetailsLiteratures
             element={reaction}
             literatures={reaction.isNew === true ? reaction.literatures : null}
