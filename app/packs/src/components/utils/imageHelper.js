@@ -11,11 +11,11 @@ const previewContainerImage = (container, noAttSvg = '/images/wild_card/no_attac
   }
 };
 
-const previewAttachmentImage = (attachment, noAttSvg = '/images/wild_card/no_attachment.svg') => {
+const previewAttachmentImage = (attachment, noAvaSvg = '/images/wild_card/not_available.svg') => {
   if (attachment.thumb) {
     return `/images/thumbnail/${attachment.identifier}`;
   }
-  return noAttSvg;
+  return noAvaSvg;
 };
 
 export { previewContainerImage, previewAttachmentImage };

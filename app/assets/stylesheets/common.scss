@@ -71,12 +71,13 @@
 }
 
 .span-checkbox:hover {
-  border: 2px solid #b2b2b2;
+  border: 1px solid #b2b2b2;
 }
 
 .all-checkbox {
   -webkit-border-radius: 2px;
   border-radius: 2px;
+  border: 1px solid transparent;
   user-select: none;
   cursor: default;
 
@@ -168,6 +169,16 @@
   }
 }
 
+.loading-progress-modal {
+  .modal-content {
+    min-height: 100px;
+    text-align: center;
+    margin: auto;
+    padding: 25px;
+    width: auto;
+  }
+}
+
 .status-select {
   .Select-menu-outer {
     z-index: 30;
@@ -238,4 +249,45 @@
   pointer-events: none;
   opacity: 0.65 !important;
   cursor: not-allowed !important;
+}
+
+.chemdraw-loading {
+  .modal-content {
+    height: 100px;
+    text-align: center;
+    margin: 0 auto;
+    width: 100px;
+    border: none;
+    box-shadow: none;
+    font-size: large;
+    font-weight: bold;
+  }
+}
+
+.cdd-tool-button-subtool {
+  z-index: 1000 !important
+}
+
+.cdd.cdd-toolbar-popup-container {
+  z-index: 2000 !important;
+}
+
+.cdd-dialog-container {
+  div.fade.in.modal {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.cdd .modal-dialog {
+  left: unset !important;
+  top: unset !important;
+}
+
+.lcss-link {
+  color: #777777;
+  font-size: 10px;
+  font-weight: bold;
+  text-decoration: underline;
 }

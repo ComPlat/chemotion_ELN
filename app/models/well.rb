@@ -11,10 +11,11 @@
 #  position_y   :integer
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
-#  readout      :string
 #  additive     :string
 #  deleted_at   :datetime
 #  readouts     :jsonb
+#  label        :string           default("Molecular structure"), not null
+#  color_code   :string
 #
 # Indexes
 #
@@ -27,6 +28,8 @@ class Well < ApplicationRecord
   acts_as_paranoid
   belongs_to :wellplate
   belongs_to :sample, optional: true
+
+  include Tagging
 
   def self.get_samples_in_wellplates(wellplate_ids)
     where(wellplate_id: wellplate_ids).pluck(:sample_id).compact.uniq

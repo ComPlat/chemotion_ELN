@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
+import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
   Well, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger, Col, Row
 } from 'react-bootstrap';
 import Immutable from 'immutable';
+import { findIndex } from 'lodash';
 import LoadingActions from './actions/LoadingActions';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
@@ -22,6 +24,7 @@ import UIActions from './actions/UIActions';
 import ConfirmClose from './common/ConfirmClose';
 import ExportSamplesBtn from './ExportSamplesBtn';
 import ElementDetailSortTab from './ElementDetailSortTab';
+import { addSegmentTabs } from './generic/SegmentDetails';
 
 const cols = 12;
 
@@ -37,13 +40,14 @@ export default class WellplateDetails extends Component {
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { wellplate } = this.state;
     const nextWellplate = nextProps.wellplate;
     if (nextWellplate.id !== wellplate.id || nextWellplate.updated_at !== wellplate.updated_at) {
@@ -69,6 +73,16 @@ export default class WellplateDetails extends Component {
     this.setState({ visible });
   }
 
+  handleSegmentsChange(se) {
+    const { wellplate } = this.state;
+    const { segments } = wellplate;
+    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    wellplate.segments = segments;
+    wellplate.changed = true;
+    this.setState({ wellplate });
+  }
+
   handleSubmit() {
     const { wellplate } = this.state;
     LoadingActions.start();
@@ -88,6 +102,14 @@ export default class WellplateDetails extends Component {
     this.setState({
       wellplate
     });
+  }
+
+  handlePrint() {
+    const element = document.getElementById('wellplate-designer');
+    if (element) {
+      const opt = { filename: `${this.state.wellplate.name}-wells.pdf` };
+      html2pdf(element, opt);
+    }
   }
 
   handleWellsChange(wells) {
@@ -259,7 +281,7 @@ export default class WellplateDetails extends Component {
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
           <Row className="wellplate-detail">
             <Col md={10}>
-              <Well>
+              <Well id="wellplate-designer">
                 <Wellplate
                   show={showWellplate}
                   size={size}
@@ -314,7 +336,8 @@ export default class WellplateDetails extends Component {
     };
 
     const tabTitlesMap = {
-    };
+    }
+    addSegmentTabs(wellplate, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
     visible.forEach((value) => {
@@ -345,6 +368,9 @@ export default class WellplateDetails extends Component {
               {submitLabel}
             </Button>
             {exportButton}
+            <Button bsStyle="primary" onClick={() => this.handlePrint()}>
+              Print Wells
+            </Button>
           </ButtonToolbar>
         </Panel.Body>
       </Panel>

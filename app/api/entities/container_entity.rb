@@ -32,9 +32,11 @@ module Entities
       bt.dig('children', 0, 'children')&.each do |analysis|
         analysis['preview_img'] = preview_img(dataset_ids[analysis['id']], attachments)
         analysis['code_log'] = code_logs.find { |cl| cl.source_id == analysis['id'] }.attributes
-        analysis['children'].each do |dataset|
-          atts = attachments.select { |a| a.attachable_id == dataset['id'] }
-          dataset['attachments'] = Entities::AttachmentEntity.represent(atts)
+        analysis['children'].each do |ds_entity|
+          atts = attachments.select { |a| a.attachable_id == ds_entity['id'] }
+          ds_entity['attachments'] = Entities::AttachmentEntity.represent(atts)
+          gds = Dataset.find_by(element_type: 'Container', element_id: ds_entity['id'])
+          ds_entity['dataset'] = Entities::DatasetEntity.represent(gds) if gds.present?
         end
       end
       bt

@@ -83,6 +83,19 @@
     justify-content: space-between;
   }
 
+  .numeric-input-unit_g{
+    margin-top: -15px;
+  }
+
+  .numeric-input-unit_l{
+    margin-top: -15px;
+  }
+
+  .numeric-input-unit_mol{
+    margin-top: -15px;
+  }
+
+
   td {
     padding: 2px 3px 2px 3px !important;
     border-top: none !important;
@@ -112,6 +125,17 @@
 
   .Select-menu-outer {
     z-index: 5;
+  }
+
+  .nav-tabs{
+    font-size: 13px;
+    font-weight: 700;
+
+    li {
+      a {
+        padding: 0 10px 5px 10px;
+      }
+    }
   }
 }
 
@@ -274,5 +298,7 @@
   }
 }
 
-// $select-input-height: 34px;
-// @import "../../../node_modules/react-select/scss/default";
+.sample-header-decouple {
+  float: right;
+  margin: 0px 5px 0px 0px !important;
+}

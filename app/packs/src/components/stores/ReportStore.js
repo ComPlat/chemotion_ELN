@@ -16,6 +16,7 @@ class ReportStore {
       { checked: true, text: 'collection' },
       { checked: true, text: 'analyses' },
       { checked: true, text: 'reaction description' },
+      { checked: true, text: 'literature' },
     ];
     this.rxnSettings = [
       { checked: true, text: 'diagram' },
@@ -57,10 +58,11 @@ class ReportStore {
     this.fileDescription = '';
     this.activeKey = 0;
     this.processings = [];
-    this.template = 'standard';
+    this.template = {};
     this.prdAtts = [];
     this.attThumbNails = [];
     this.fileName = '';
+    this.templateOpts = [];
 
     this.bindListeners({
       handleUpdateSplSettings: ReportActions.updateSplSettings,
@@ -90,6 +92,7 @@ class ReportStore {
       handleUpdateThumbNails: ReportActions.updateThumbNails,
       handleUpdateDefaultTags: ReportActions.updateDefaultTags,
       handleLoadRreview: ReportActions.loadRreview,
+      handleFetchTemplate: ReportActions.fetchTemplates
     });
   }
 
@@ -300,7 +303,7 @@ class ReportStore {
     let prefix = 'Supporting_Information_';
     let datetime = moment().format('YYYY-MM-DD[H]HH[M]mm[S]ss');
 
-    switch (template) {
+    switch (template.value) {
       case 'standard':
         prefix = this.stdReportPrefix(initial);
         datetime = moment().format('YYYYMMDD');
@@ -435,6 +438,7 @@ class ReportStore {
           { text: 'collection', checked: ss.collection },
           { text: 'analyses', checked: ss.analyses },
           { text: 'reaction description', checked: ss.reaction_description },
+          { text: 'literature', checked: ss.literature },
         ],
       rxnSettings:
         [
@@ -528,6 +532,7 @@ class ReportStore {
           { text: 'collection', checked: true },
           { text: 'analyses', checked: true },
           { text: 'reaction description', checked: true },
+          { text: 'literature', checked: true },
         ],
       rxnSettings:
         [
@@ -707,6 +712,11 @@ class ReportStore {
       selMolSerials: molSerials,
     });
     return null;
+  }
+
+  handleFetchTemplate(result) {
+    const templates = result.templates;
+    this.setState({ templateOpts: templates, template: templates[0] });
   }
 }
 

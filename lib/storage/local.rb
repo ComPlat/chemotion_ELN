@@ -85,7 +85,13 @@ class Local < Storage
   end
 
   def add_checksum
-    attachment.checksum = Digest::SHA256.hexdigest(read_file)
+    # attachment.checksum = File.open(path, 'rb') { |f| Digest::MD5.hexdigest(f.read) }
+    attachment.checksum = File.open(path, 'rb') do |io|
+      dig = Digest::MD5.new
+      buf = ''
+      dig.update(buf) while io.read(4096, buf)
+      dig
+    end
   end
 
   private

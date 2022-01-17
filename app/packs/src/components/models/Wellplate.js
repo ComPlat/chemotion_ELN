@@ -1,7 +1,9 @@
 import React from 'react';
 import Element from './Element';
 import Well from './Well';
-import Container from './Container';
+import Sample from './Sample';
+import Container from './Container.js';
+import Segment from './Segment';
 
 export default class Wellplate extends Element {
   constructor(args) {
@@ -10,18 +12,21 @@ export default class Wellplate extends Element {
     this._checksum = this.checksum();
   }
 
-  static buildEmpty(collectionID) {
-    return new Wellplate({
-      collection_id: collectionID,
-      type: 'wellplate',
-      name: 'New Wellplate',
-      size: 96,
-      description: Wellplate.quillDefault(),
-      wells: [],
-      readout_titles: [],
-      container: Container.init(),
-      attachments: [],
-    });
+  static buildEmpty(collection_id) {
+    return new Wellplate(
+      {
+        collection_id: collection_id,
+        type: 'wellplate',
+        name: 'New Wellplate',
+        size: 96,
+        description: Wellplate.quillDefault(),
+        wells: [],
+        readout_titles: [],
+        container: Container.init(),
+        segments: [],
+        attachments: []
+      }
+    )
   }
 
   static buildFromSamplesAndCollectionId(clipboardSamples, collection_id) {
@@ -36,17 +41,20 @@ export default class Wellplate extends Element {
       });
     })
 
-    return new Wellplate({
-      collection_id,
-      type: 'wellplate',
-      name: 'New Wellplate',
-      size: 96,
-      description: Wellplate.quillDefault(),
-      wells,
-      readout_titles: [],
-      container: Container.init(),
-      attachments: [],
-    });
+    return new Wellplate(
+      {
+        collection_id: collection_id,
+        type: 'wellplate',
+        name: 'New Wellplate',
+        size: 96,
+        description: Wellplate.quillDefault(),
+        wells: wells,
+        readout_titles: [],
+        container: Container.init(),
+        segments: []
+        attachments: [],
+      }
+    )
   }
 
   get name() {
@@ -73,6 +81,13 @@ export default class Wellplate extends Element {
     this._wells = wells.map(w => new Well(w));
   }
 
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
+  }
 
   serialize() {
     return super.serialize({
@@ -83,6 +98,7 @@ export default class Wellplate extends Element {
       readout_titles: this.readout_titles,
       container: this.container,
       attachments: this.attachments,
+      segments: this.segments.map(s => s.serialize())
     });
   }
 

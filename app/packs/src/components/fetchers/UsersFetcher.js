@@ -2,6 +2,31 @@ import 'whatwg-fetch';
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class UsersFetcher {
+  static fetchElementKlasses(genericOnly = true) {
+    let api = '/api/v1/generic_elements/klasses.json';
+    if (genericOnly) {
+      api = '/api/v1/generic_elements/klasses.json?generic_only=true';
+    }
+    return fetch(api, {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
+  static fetchElementKlassNames(genericOnly = true) {
+    let api = '/api/v1/public/element_klasses_name.json';
+    if (genericOnly) {
+      api = '/api/v1/public/element_klasses_name.json?generic_only=true';
+    }
+
+    return fetch(api, {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static fetchUsersByName(name) {
     const promise = fetch(`/api/v1/users/name.json?name=${name}`, {
       credentials: 'same-origin'
@@ -91,6 +116,27 @@ export default class UsersFetcher {
     return promise;
   }
 
+  static fetchCurrentDevices() {
+    const promise = fetch('/api/v1/groups/queryCurrentDevices', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static fetchDeviceMetadataByDeviceId(deviceId) {
+    const promise = fetch(`/api/v1/groups/deviceMetadata/${deviceId}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static updateGroup(params = {}) {
     const promise = fetch(`/api/v1/groups/upd/${params.id}`, {
       credentials: 'same-origin',
@@ -120,6 +166,14 @@ export default class UsersFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static listEditors() {
+    const promise = fetch('/api/v1/users/list_editors.json', { credentials: 'same-origin' })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
   static listUserLabels() {
     const promise = fetch('/api/v1/users/list_labels.json', {
       credentials: 'same-origin'
@@ -142,6 +196,22 @@ export default class UsersFetcher {
     }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
+    return promise;
+  }
+
+  static updateUserCounter(params = {}) {
+    const promise = fetch('/api/v1/users/update_counter', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
     return promise;
   }
 }

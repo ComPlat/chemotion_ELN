@@ -162,7 +162,8 @@ describe Chemotion::SyncCollectionAPI do
             sample_detail_level: 5,
             reaction_detail_level: 2,
             wellplate_detail_level: 1,
-            screen_detail_level: 5
+            screen_detail_level: 5,
+            element_detail_level: 10
           }
         }
       end

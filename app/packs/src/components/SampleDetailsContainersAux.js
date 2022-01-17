@@ -308,7 +308,7 @@ const HeaderNormal = ({
       <div className="preview">
         <ImageModal
           hasPop={hasPop}
-          preivewObject={{
+          previewObject={{
             src: previewImg
           }}
           popObject={{

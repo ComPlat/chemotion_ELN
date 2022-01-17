@@ -74,6 +74,17 @@ module Chemotion
                 name: {field: "name", displayName: "Name"},
                 external_label: {field: "external_label", displayName: "External label"},
                 purity: {field: "purity", displayName: "Purity"},
+
+                molecule_name: { field: 'molecule_name', displayName: 'Molecule Name' },
+                short_label: { field: 'short_label', displayName: 'Short Label' },
+                real_amount: { field: 'real_amount', displayName: 'Real Amount' },
+                real_amount_unit: { field: 'real_amount_unit', displayName: 'Real Amount Unit' },
+                target_amount: { field: 'target_amount', displayName: 'Target Amount' },
+                target_amount_unit: { field: 'target_amount_unit', displayName: 'Target Amount Unit' },
+                molarity: { field: 'molarity', displayName: 'Molarity' },
+                density: { field: 'density', displayName: 'Density' },
+                melting_point: { field: 'melting_point', displayName: 'Melting Point' },
+                boiling_point: { field: 'boiling_point', displayName: 'Boiling Point' },
               },
               current_user_id: current_user.id)
             sdf_import.find_or_create_mol_by_batch
@@ -109,11 +120,11 @@ module Chemotion
             current_user_id: current_user.id,
             rows: params[:rows],
             mapped_keys: params[:mapped_keys]
-
           )
+
           sdf_import.create_samples
           return {
-            sdf: true, message: sdf_import.message, status: sdf_import.status,
+            sdf: true, message: sdf_import.message, status: sdf_import.status, error_messages: sdf_import.error_messages
           }
         end
       end
@@ -188,7 +199,7 @@ module Chemotion
         reset_pagination_page(scope)
         sample_serializer_selector =
           if own_collection
-            ->(s) { SampleListSerializer::Level10.new(s, 10).serializable_hash }
+            ->(s) { Entities::SampleEntity::Level10.represent(s) }
           else
             lambda do |s|
               ElementListPermissionProxy.new(current_user, s, user_ids).serialized
@@ -236,10 +247,10 @@ module Chemotion
         end
 
         get do
-          sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
+          sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
 
-          var_detail_level = db_exec_detail_level_for_sample(current_user.id, sample.id);
+          var_detail_level = db_exec_detail_level_for_sample(current_user.id, sample.id)
           nested_detail_levels = {}
           nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
           nested_detail_levels[:wellplate] = [ var_detail_level[0]['detail_level_wellplate'].to_i ]
@@ -266,7 +277,7 @@ module Chemotion
         optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         optional :description, type: String, desc: "Sample description"
         optional :purity, type: Float, desc: "Sample purity"
-        optional :solvent, type: String, desc: "Sample solvent"
+        optional :solvent, type: Array[Hash], desc: "Sample solvent"
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
@@ -281,6 +292,7 @@ module Chemotion
         optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
         optional :melting_point_lowerbound, type: Float, desc: 'lower bound of sample melting point'
         optional :residues, type: Array
+        optional :segments, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
         optional :stereo, type: Hash do
@@ -304,12 +316,15 @@ module Chemotion
         end
         put do
           attributes = declared(params, include_missing: false)
+          # attributes[:solvent] = params[:solvent].to_json
+          attributes[:solvent] = params[:solvent]
 
-          update_datamodel(attributes[:container]);
-          attributes.delete(:container);
+          update_datamodel(attributes[:container])
+          attributes.delete(:container)
 
           update_element_labels(@sample,attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
+          attributes.delete(:segments)
 
           # otherwise ActiveRecord::UnknownAttributeError appears
           attributes[:elemental_compositions].each do |i|
@@ -336,6 +351,16 @@ module Chemotion
           attributes.delete(:melting_point_upperbound)
 
           @sample.update!(attributes)
+          @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
+
+          # params[:segments].each do |seg|
+          #   segment = Segment.find_by(element_type: Sample.name, element_id: @sample.id, segment_klass_id: seg["segment_klass_id"])
+          #   if segment.present?
+          #     segment.update!(properties: seg["properties"])
+          #   else
+          #     Segment.create!(segment_klass_id: seg["segment_klass_id"], element_type: Sample.name, element_id: @sample.id, properties: seg["properties"], created_by: current_user.id)
+          #   end
+          # end
 
           #save to profile
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
@@ -372,7 +397,8 @@ module Chemotion
         optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         requires :description, type: String, desc: "Sample description"
         requires :purity, type: Float, desc: "Sample purity"
-        requires :solvent, type: String, desc: "Sample solvent"
+        # requires :solvent, type: String, desc: "Sample solvent"
+        optional :solvent, type: Array[Hash], desc: "Sample solvent"
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
@@ -385,6 +411,7 @@ module Chemotion
         optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
         optional :melting_point_lowerbound, type: Float, desc: 'lower bound of sample melting point'
         optional :residues, type: Array
+        optional :segments, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
         optional :stereo, type: Hash do
@@ -455,6 +482,7 @@ module Chemotion
             "#{prop}_attributes".to_sym => prop_value
           ) unless prop_value.blank?
         end
+        attributes.delete(:segments)
 
         sample = Sample.new(attributes)
 
@@ -467,8 +495,17 @@ module Chemotion
         sample.collections << all_coll
 
         sample.container = update_datamodel(params[:container])
-
         sample.save!
+
+        sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
+        # params[:segments].each do |seg|
+        #   segment = Segment.find_by(element_type: Sample.name, element_id: @sample.id, segment_klass_id: seg["segment_klass_id"])
+        #   if segment.present?
+        #     segment.update!(properties: seg["properties"])
+        #   else
+        #     Segment.create!(segment_klass_id: seg["segment_klass_id"], element_type: Sample.name, element_id: @sample.id, properties: seg["properties"], created_by: current_user.id)
+        #   end
+        # end
 
         #save to profile
         kinds = sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))

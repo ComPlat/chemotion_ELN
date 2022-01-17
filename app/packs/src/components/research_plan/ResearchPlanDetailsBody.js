@@ -9,12 +9,13 @@ import Field from './ResearchPlanDetailsField';
 export default class ResearchPlanDetailsBody extends Component {
   render() {
     const {
-      body, disabled, onChange, onDrop, onAdd, onDelete, onExport, update, edit
+      body, disabled, onChange, onDrop, onAdd, onDelete, onExport, update, edit, isNew,
+      copyableFields, onCopyToMetadata
     } = this.props;
 
     let tableIndex = 0;
-    const fields = body.map((field, index) =>{
-      let item = (<Field
+    const fields = body.map((field, index) => {
+      const item = (<Field
         key={field.id}
         field={field}
         index={index}
@@ -23,12 +24,15 @@ export default class ResearchPlanDetailsBody extends Component {
         onDrop={onDrop.bind(this)}
         onDelete={onDelete.bind(this)}
         onExport={onExport.bind(this)}
+        onCopyToMetadata={onCopyToMetadata.bind(this)}
         update={update}
         edit={edit}
         tableIndex={tableIndex}
-      />)
+        isNew={isNew}
+        copyableFields={copyableFields}
+      />);
 
-      if(field.type === 'table') tableIndex++;
+      if (field.type === 'table') tableIndex++;
 
       return item;
     });
@@ -69,6 +73,9 @@ ResearchPlanDetailsBody.propTypes = {
   onDrop: PropTypes.func,
   onDelete: PropTypes.func,
   onExport: PropTypes.func,
+  onCopyToMetadata: PropTypes.func,
   update: PropTypes.bool,
-  edit: PropTypes.bool
+  edit: PropTypes.bool,
+  isNew: PropTypes.bool,
+  copyableFields: PropTypes.arrayOf(PropTypes.object)
 };

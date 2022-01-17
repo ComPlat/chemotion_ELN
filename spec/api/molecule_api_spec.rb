@@ -64,7 +64,8 @@ M  END"
 	  mw = params.delete(:molecular_weight)
 	  expect(m.attributes['molecular_weight'].round(5)).to eq(mw)
           params.each do |k, v|
-            expect(m.attributes.symbolize_keys[k]).to eq(v)
+            expect(m.attributes.symbolize_keys[k]).to eq(v) unless m.attributes.symbolize_keys[k].is_a?(Float)
+            expect(m.attributes.symbolize_keys[k].round(5)).to eq(v.round(5)) if m.attributes.symbolize_keys[k].is_a?(Float)
           end
           expect(m.molecule_svg_file).to match(/\w{128}\.svg/)
         end

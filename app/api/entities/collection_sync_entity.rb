@@ -30,6 +30,9 @@ module Entities
     expose :wellplate_detail_level do |obj|
         obj['wellplate_detail_level']
     end
+    expose :element_detail_level do |obj|
+        obj['element_detail_level']
+    end
     expose :shared_to do |obj|
         obj['shared_to']
     end

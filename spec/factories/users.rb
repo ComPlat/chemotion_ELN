@@ -3,7 +3,7 @@ FactoryBot.define do
     sequence(:email) { |n| "foobar#{n}@bar.de" }
     first_name { 'first_name' }
     last_name { 'last_name' }
-    sequence(:name_abbreviation) { |n| "U#{n}" }
+    sequence(:name_abbreviation) { |n| "U#{SecureRandom.alphanumeric(2)}" }
     password { 'testtest' }
     password_confirmation { 'testtest' }
     counters do

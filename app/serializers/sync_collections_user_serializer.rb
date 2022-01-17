@@ -1,6 +1,6 @@
 class SyncCollectionsUserSerializer < ActiveModel::Serializer
   attributes :id, :permission_level, :sample_detail_level, :reaction_detail_level,
-    :wellplate_detail_level, :screen_detail_level
+    :wellplate_detail_level, :screen_detail_level, :element_detail_level
   attributes :ancestry, :user, :sharer
   attributes :label, :is_shared, :is_locked, :is_sync_to_me
 

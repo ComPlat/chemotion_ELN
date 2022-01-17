@@ -2,11 +2,11 @@ import React from 'react'
 import expect from 'expect'
 import { mount } from 'enzyme'
 import Enzyme from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 
 
 import sinon from 'sinon'
-import CheckBoxs from '../../../app/assets/javascripts/components/common/CheckBoxs'
+import CheckBoxs from '../../../app/packs/src/components/common/CheckBoxs'
 
 Enzyme.configure({ adapter: new Adapter() });
 

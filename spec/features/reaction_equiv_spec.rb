@@ -59,18 +59,20 @@ describe 'Reaction Equiv Spec' do
       ReactionsStartingMaterialSample.create!(
         reaction: reaction, sample: material, reference: true, equivalent: 1
       )
-      ReactionsReactantSample.create!(reaction: reaction, sample: reactant1, equivalent: 2)
+      ReactionsReactantSample.create!(reaction: reaction, sample: reactant1, equivalent: 1)
       ReactionsSolventSample.create!(reaction: reaction, sample: solvent, equivalent: 1)
       ReactionsProductSample.create!(reaction: reaction, sample: product, equivalent: 1)
     end
 
     it 'change material amount', js: true do
       material_new_amount = 4000
-      find('.tree-view', text: 'chemotion.net').click
+      find('.tree-view', text: 'chemotion-repository.net').click
       first('i.icon-reaction').click
-      first('i.c-bs-success').click
-      find('div#reaction-detail-tab a#reaction-detail-tab-tab-0').click
+      first('span.isvg.loaded.reaction').click
+      find('div#reaction-detail-tab').click
+      find('a#reaction-detail-tab-tab-scheme').click
       tab_scheme = find('div#reaction-detail-tab div.tab-content')
+      tab_scheme.all('span.input-group')[0].find_all('input').first.click
       tab_scheme.first('button#lock_equiv_column_btn').click
       material_field = tab_scheme.first('span.input-group').find_all('input').first
       reactants_table = find('th', text: 'Reactants').find(:xpath, '../../../..')

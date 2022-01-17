@@ -1,7 +1,7 @@
 import expect from 'expect';
 import { describe, it } from 'mocha';
 
-import { keepSupSub } from '../../../app/assets/javascripts/components/utils/quillFormat';
+import { keepSupSub } from '../../../app/packs/src/components/utils/quillFormat';
 
 describe('keepSupSub', () => {
   it('does nothing special if empty ops', () => {

@@ -150,7 +150,7 @@ const rxlHtmlLabel = () => (
 );
 
 const templateLable = (archive) => {
-  switch (archive.template) {
+  switch (archive.template.value) {
     case 'standard':
       return null;
     case 'spectrum':

@@ -12,7 +12,7 @@ const shallowCamelizeKeys = (obj) => {
 
 export default class TextTemplatesFetcher {
   static fetchTextTemplates(elementName) {
-    return fetch(`/api/v1/text_templates/${decamelize(elementName)}`, {
+    return fetch(`/api/v1/text_templates/by_type?type=${decamelize(elementName)}`, {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => shallowCamelizeKeys(json))
@@ -40,14 +40,14 @@ export default class TextTemplatesFetcher {
   }
 
   static updateTextTemplates(elementName, template) {
-    return fetch(`/api/v1/text_templates/${decamelize(elementName)}`, {
+    return fetch('/api/v1/text_templates/update', {
       credentials: 'same-origin',
       method: 'PUT',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ data: template })
+      body: JSON.stringify({ data: template, type: decamelize(elementName) })
     }).then(response => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }

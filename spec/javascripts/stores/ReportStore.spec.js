@@ -2,9 +2,9 @@ import React from 'react'
 import expect from 'expect'
 import sinon from 'sinon'
 import {originalState} from '../fixture/report'
-import alt from '../../../app/assets/javascripts/components/alt'
-import ReportActions from '../../../app/assets/javascripts/components/actions/ReportActions'
-import ReportStore from '../../../app/assets/javascripts/components/stores/ReportStore'
+import alt from '../../../app/packs/src/components/alt'
+import ReportActions from '../../../app/packs/src/components/actions/ReportActions'
+import ReportStore from '../../../app/packs/src/components/stores/ReportStore'
 
 describe('ReportStore', () => {
   beforeEach(() => {
@@ -42,7 +42,8 @@ describe('ReportStore', () => {
       splSettings: [ {text: "diagram", checked: false},
                       {text: "collection", checked: false},
                       {text: "analyses", checked: false},
-                      {text: "reaction description", checked: false} ]
+                      {text: "reaction description", checked: false},
+                      {text: "literature", checked: false} ]
     }
     expect(newState).toEqual(expected)
   })

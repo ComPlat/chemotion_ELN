@@ -1,12 +1,15 @@
 
-showExampleLabel = function() {
-  var prefix = $('input#reaction-name-prefix').val();
-  var counter = parseInt($('input#reactions-count').val());
-  var user_name_abbr = $('input#name_abbreviation').val();
+function showExampleLabel() {
+  var prefix = document.querySelector('input#reaction-name-prefix')?.value;
+  var counter = parseInt(document.querySelector('input#reactions-count')?.value);
+  var user_name_abbr = document.querySelector('input#name_abbreviation')?.value;
   var reaction_label = user_name_abbr + '-' + prefix + (counter + 1)
-  $('span#reaction-label-example').text(reaction_label);
+  let label = document.querySelector('span#reaction-label-example')
+  if (label) {
+    label.textContent = reaction_label;
+  }
 }
 
-$(function() {
+(function () {
   showExampleLabel();
-});
+})();

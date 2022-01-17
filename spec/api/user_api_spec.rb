@@ -107,7 +107,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'Returns current user' do
-        expect(JSON.parse(response.body)['user'].except('confirmed_at', 'current_sign_in_at', 'locked_at', 'unconfirmed_email')).to(
+        expect(JSON.parse(response.body)['user'].except('confirmed_at', 'current_sign_in_at', 'locked_at', 'unconfirmed_email','counters')).to(
           eq p1.as_json(json_options).merge(srlzr).merge('layout' => layout)
         )
       end
@@ -175,7 +175,7 @@ describe Chemotion::UserAPI do
       end
 
       before do
-        put "/api/v1/groups/upd/#{g3.id}", params: params
+        put "/api/v1/groups/upd/#{g3.id}", params: params, as: :json
       end
 
       it 'Deletes a group of persons' do
@@ -193,7 +193,7 @@ describe Chemotion::UserAPI do
       end
 
       before do
-        put "/api/v1/groups/upd/#{g4.id}", params: params
+        put "/api/v1/groups/upd/#{g4.id}", params: params, as: :json
       end
 
       it 'Does not update a group of persons' do

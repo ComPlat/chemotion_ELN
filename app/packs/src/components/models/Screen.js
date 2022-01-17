@@ -1,6 +1,7 @@
 import Element from './Element';
 import Wellplate from './Wellplate';
 import Container from './Container';
+import Segment from './Segment';
 
 export default class Screen extends Element {
   static buildEmpty(collectionID) {
@@ -20,12 +21,13 @@ export default class Screen extends Element {
       wellplates: [],
       research_plans: [],
       container: Container.init(),
+      segments: []
     });
   }
 
-  static buildFromWellplatesAndCollectionId(clipboardWellplates, collectionID) {
-    const descriptionDefault = {
-      ops: [{ insert: '' }]
+  static buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id) {
+    let descriptionDefault = {
+      ops: [{ insert: "" }]
     };
 
     return new Screen({
@@ -40,7 +42,8 @@ export default class Screen extends Element {
       wellplates: clipboardWellplates,
       research_plans: [],
       container: Container.init(),
-    });
+      segments: []
+    })
   }
 
   serialize() {
@@ -54,7 +57,8 @@ export default class Screen extends Element {
       wellplate_ids: this.wellplateIDs,
       research_plan_ids: this.researchPlanIDs,
       container: this.container,
-    });
+      segments: this.segments.map(s => s.serialize())
+    })
   }
 
   get name() {
@@ -119,6 +123,14 @@ export default class Screen extends Element {
 
   get researchPlanIDs() {
     return this.research_plans.map(rp => rp.id);
+  }
+
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
   }
 
   title() {

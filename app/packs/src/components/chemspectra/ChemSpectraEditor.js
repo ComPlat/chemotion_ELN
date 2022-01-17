@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { ChemSpectraClient } from 'chem-spectra-client';
+import { ChemSpectraClient } from '@complat/chem-spectra-client';
 
 const domLoadedCb = () => {
   const csElement = document.getElementById('ChemSpectraEditor');

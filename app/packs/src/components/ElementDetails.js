@@ -17,6 +17,8 @@ import ElementStore from './stores/ElementStore';
 import { SameEleTypId } from './utils/ElementUtils';
 import LiteratureDetails from './LiteratureDetails';
 import PredictionContainer from './prediction/PredictionContainer';
+import GenericElDetails from './generic/GenericElDetails';
+import UserStore from './stores/UserStore';
 
 const tabInfoHash = {
   report: {
@@ -90,11 +92,13 @@ export default class ElementDetails extends Component {
       activeKey,
       deletingElement,
       showTooltip: false,
+      genericEls: UserStore.getState().genericEls || []
     };
 
     this.handleResize = this.handleResize.bind(this);
     this.toggleFullScreen = this.toggleFullScreen.bind(this);
     this.onDetailChange = this.onDetailChange.bind(this);
+    this.checkSpectraMessage = this.checkSpectraMessage.bind(this);
   }
 
   componentDidMount() {
@@ -123,8 +127,9 @@ export default class ElementDetails extends Component {
   }
 
   onDetailChange(state) {
-    const { selecteds, activeKey, deletingElement } = state;
+    const { selecteds, activeKey, deletingElement, spectraMsg } = state;
     this.setState(prevState => ({ ...prevState, selecteds, activeKey, deletingElement }));
+    this.checkSpectraMessage(spectraMsg);
   }
 
   toggleFullScreen() {
@@ -141,7 +146,18 @@ export default class ElementDetails extends Component {
     }
   }
 
+  checkSpectraMessage(spectraMsg) {
+    if (spectraMsg) {
+      const { showedSpcMsgID } = this.state;
+      if (!showedSpcMsgID || showedSpcMsgID !== spectraMsg.message_id) {
+        this.setState({showedSpcMsgID: spectraMsg.message_id})
+        alert(spectraMsg.content.data);
+      }
+    }
+  }
+
   content(el) {
+
     switch (el.type) {
       case 'sample':
         return (
@@ -201,6 +217,9 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       default:
+        if (el && el.klassType === 'GenericEl' && el.type != null) {
+          return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
+        }
         return (
           <div style={{ textAlign: 'center' }}>
             <br />
@@ -226,6 +245,7 @@ export default class ElementDetails extends Component {
     const tab = tabInfoHash[el.type] || {};
     const title = tab.title || el.title();
     if (tab.iconEl) { iconElement = tab.iconEl; }
+    if (el.element_klass) { iconElement = (<i className={`${el.element_klass.icon_name}`} />); }
     const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle || ''}>{iconElement}</Label>);
     return (<div>{icon} &nbsp; {title} </div>);
   }

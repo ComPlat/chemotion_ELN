@@ -30,11 +30,6 @@ module Chemotion
 
     config.active_job.queue_adapter = :delayed_job
 
-    # copy favicon if not present in app
-    favicon_example_file = Rails.public_path.join('favicon.ico.example')
-    favicon_file = Rails.public_path.join('favicon.ico')
-    `cp #{favicon_example_file} #{favicon_file}` unless File.exist?(favicon_file)
-
     # Chemotion Plugin configuration
 
     # list of registered plugins (from the plugins group of the Gemfile):
@@ -43,6 +38,7 @@ module Chemotion
     end.map(&:name)
 
     config.before_configuration do
+      ## TODO fix this for ELN pugin
       # For each registered plugin gem (group :plugins in Gemfile) browserify needs to find
       # an aliasifyConfig.js file (and a package.json file ) in gem root directory.
       # This create a sym link if no file exists.
@@ -115,14 +111,15 @@ module Chemotion
     end
 
 ### Fix import version (mac)
-src1 = Rails.root.join('node_modules', '@citation-js', 'core', 'lib-mjs', 'util', 'fetchFile.js')
-src2 = Rails.root.join('node_modules/@citation-js/core/lib-mjs/index.js')
-if File.exist?(src1)
-  `sed -i ".bak" "s|import { version } from '../../package.json';|import pkg from '../../package.json';const { version } = pkg.version;|" #{src1}`
-end
-if File.exist?(src2)
-  `sed -i ".bak" "s|import { version } from '../package.json';|import pkg from '../package.json';const { version } = pkg.version;|" #{src2}`
-end
+# TODO: Check if this is required or can be removed safely
+# src1 = Rails.root.join('node_modules', '@citation-js', 'core', 'lib-mjs', 'util', 'fetchFile.js')
+# src2 = Rails.root.join('node_modules/@citation-js/core/lib-mjs/index.js')
+# if File.exist?(src1)
+#   `sed -i ".bak" "s|import { version } from '../../package.json';|import pkg from '../../package.json';const { version } = pkg.version;|" #{src1}`
+# end
+# if File.exist?(src2)
+#   `sed -i ".bak" "s|import { version } from '../package.json';|import pkg from '../package.json';const { version } = pkg.version;|" #{src2}`
+# end
 
 
 #    config.browserify_rails.commandline_options = ' -t [ babelify --presets [ @babel/preset-env  @babel/preset-react ] --plugins [ @babel/plugin-proposal-object-rest-spread ] ] '

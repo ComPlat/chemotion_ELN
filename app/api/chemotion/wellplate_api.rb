@@ -59,24 +59,23 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope =
-          if params[:collection_id]
-            begin
-              Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
-                        .find(params[:collection_id]).wellplates
-            rescue ActiveRecord::RecordNotFound
-              Wellplate.none
-            end
-          elsif params[:sync_collection_id]
-            begin
-              current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
-            rescue ActiveRecord::RecordNotFound
-              Wellplate.none
-            end
-          else
-            # All collection of current_user
-            Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-          end.includes(collections: :sync_collections_users).order('created_at DESC')
+        scope = if params[:collection_id]
+          begin
+            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
+              find(params[:collection_id]).wellplates
+          rescue ActiveRecord::RecordNotFound
+            Wellplate.none
+          end
+        elsif params[:sync_collection_id]
+          begin
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
+          rescue ActiveRecord::RecordNotFound
+            Wellplate.none
+          end
+        else
+          # All collection of current_user
+          Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+        end.includes(collections: :sync_collections_users).order("created_at DESC")
 
         from = params[:from_date]
         to = params[:to_date]
@@ -133,6 +132,7 @@ module Chemotion
         optional :wells, type: Array
         optional :readout_titles, type: Array
         requires :container, type: Hash
+        optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
         before do
@@ -143,7 +143,7 @@ module Chemotion
           update_datamodel(params[:container])
           params.delete(:container)
 
-          wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false)).execute!
+          wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false), current_user.id).execute!
 
           # save to profile
           kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
@@ -162,6 +162,7 @@ module Chemotion
         optional :readout_titles, type: Array
         requires :collection_id, type: Integer
         requires :container, type: Hash
+        optional :segments, type: Array, desc: 'Segments'
       end
       post do
         container = params.delete(:container)
@@ -219,6 +220,38 @@ module Chemotion
               error!(e, 500)
             end
           end
+        end
+      end
+
+      namespace :well_label do
+        desc "update well label"
+        params do
+          requires :id, type: Integer
+          requires :label, type: String
+        end
+        after_validation do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Well.find(params[:id]).wellplate).update?
+        end
+        post do
+          well = Well.find(params[:id])
+          well.update(label: params[:label])
+          { label: well.label }
+        end
+      end
+
+      namespace :well_color_code do
+        desc "add or update color code"
+        params do
+          requires :id, type: Integer
+          requires :color_code, type: String
+        end
+        after_validation do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Well.find(params[:id]).wellplate).update?
+        end
+        post do
+          well = Well.find(params[:id])
+          well.update(color_code: params[:color_code])
+          { color_code: well.color_code }
         end
       end
     end

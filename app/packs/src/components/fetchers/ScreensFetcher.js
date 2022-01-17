@@ -1,15 +1,18 @@
 import 'whatwg-fetch';
 import Screen from '../models/Screen';
-import AttachmentFetcher from './AttachmentFetcher';
+import UIStore from '../stores/UIStore'
+import AttachmentFetcher from './AttachmentFetcher'
 import BaseFetcher from './BaseFetcher';
+import GenericElsFetcher from './GenericElsFetcher';
 
 export default class ScreensFetcher {
   static fetchById(id) {
-    const promise = fetch(`/api/v1/screens/${id}.json`, {
+    let promise = fetch('/api/v1/screens/' + id + '.json', {
       credentials: 'same-origin'
     })
-      .then(response => response.json())
-      .then((json) => {
+      .then((response) => {
+        return response.json()
+      }).then((json) => {
         const rScreen = new Screen(json.screen);
         if (json.error) {
           rScreen.id = `${id}:error:Screen ${id} is not accessible!`;
@@ -37,12 +40,17 @@ export default class ScreensFetcher {
       },
       body: JSON.stringify(screen.serialize())
     }).then(response => response.json())
-      .then(json => new Screen(json.screen)).catch((errorMessage) => {
+      .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
+        .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
 
     if (files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(() => promise());
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
     return promise();
   }
@@ -59,12 +67,17 @@ export default class ScreensFetcher {
       },
       body: JSON.stringify(screen.serialize())
     }).then(response => response.json())
-      .then(json => new Screen(json.screen)).catch((errorMessage) => {
+      .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
+        .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
 
     if (files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(() => promise());
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
     return promise();
   }

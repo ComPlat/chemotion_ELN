@@ -17,6 +17,8 @@ import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import KeyboardActions from './actions/KeyboardActions';
 import UIStore from './stores/UIStore';
+import InboxModal from './inbox/InboxModal';
+import ProgressModal from './common/ProgressModal';
 
 class App extends Component {
   constructor(props) {
@@ -38,6 +40,11 @@ class App extends Component {
     UserActions.fetchOlsChmo();
     UserActions.fetchProfile();
     UserActions.fetchUserLabels();
+    UserActions.fetchGenericEls();
+    UserActions.fetchSegmentKlasses();
+    UserActions.fetchDatasetKlasses();
+    UserActions.fetchUnitsSystem();
+    UserActions.fetchEditors();
     UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);
   }
@@ -49,6 +56,10 @@ class App extends Component {
   handleUiStoreChange(state) {
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });
+    }
+
+    if (this.state.klasses !== state.klasses) {
+      this.setState({ klasses: state.klasses });
     }
   }
 
@@ -92,6 +103,7 @@ class App extends Component {
   }
 
   render() {
+    const { showCollectionTree } = this.state;
     return (
       <Grid fluid>
         <Row className="card-navigation">
@@ -104,7 +116,9 @@ class App extends Component {
         <Row>
           <Notifications />
           <LoadingModal />
+          <ProgressModal />
         </Row>
+        <InboxModal showCollectionTree={showCollectionTree} />
       </Grid>
     );
   }

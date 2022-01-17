@@ -19,6 +19,7 @@
     }
     .modal-body {
       height: 90%;
+      overflow: auto;
       .row {
         height: 100%;
         .col-base .desc {

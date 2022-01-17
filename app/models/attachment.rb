@@ -20,7 +20,7 @@
 #  folder          :string
 #  attachable_type :string
 #  aasm_state      :string
-#  filesize        :integer
+#  filesize        :bigint
 #
 # Indexes
 #
@@ -50,6 +50,7 @@ class Attachment < ApplicationRecord
   after_destroy :delete_file_and_thumbnail
 
   belongs_to :attachable, polymorphic: true, optional: true
+  has_one :report_template
 
   scope :where_research_plan, lambda { |c_id|
     where(attachable_id: c_id, attachable_type: 'ResearchPlan')
@@ -61,6 +62,10 @@ class Attachment < ApplicationRecord
 
   scope :where_report, lambda { |r_id|
     where(attachable_id: r_id, attachable_type: 'Report')
+  }
+
+  scope :where_template, lambda {
+    where(attachable_type: 'Template')
   }
 
   def copy(**args)
@@ -96,7 +101,7 @@ class Attachment < ApplicationRecord
   end
 
   def old_store(old_store = self.storage_was)
-    Storage.old_store(self,old_store)
+    Storage.old_store(self, old_store)
   end
 
   def add_checksum
@@ -109,8 +114,10 @@ class Attachment < ApplicationRecord
   end
 
   def regenerate_thumbnail
+    return unless filesize <= 50 * 1024 * 1024
+
     store.regenerate_thumbnail
-    save! if self.thumb
+    update_column('thumb', thumb) if thumb_changed?
   end
 
   def for_research_plan?
@@ -123,6 +130,10 @@ class Attachment < ApplicationRecord
 
   def for_report?
     attachable_type == 'Report'
+  end
+
+  def for_template?
+    attachable_type == 'Template'
   end
 
   def research_plan_id
@@ -204,6 +215,8 @@ class Attachment < ApplicationRecord
 
   def store_file_and_thumbnail_for_dup
     #TODO have copy function inside store
+    return unless self.filesize <= 50 * 1024 * 1024
+
     self.duplicated = nil
     if store.respond_to?(:path)
       self.file_path = store.path

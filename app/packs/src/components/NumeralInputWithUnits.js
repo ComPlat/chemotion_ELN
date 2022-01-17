@@ -13,8 +13,9 @@ export default class NumeralInputWithUnits extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
-    let {value, unit} = nextProps;
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    let { value, unit } = nextProps;
     this.setState({
       unit: unit,
       value: value
@@ -22,7 +23,7 @@ export default class NumeralInputWithUnits extends Component {
   }
 
   _handleUnitSelect(nextUnit) {
-    let {value, unit} = this.state;
+    let { value, unit } = this.state;
     let convertedValue = value;
     if(this.props.convertValueFromUnitToNextUnit) {
       convertedValue = this.props.convertValueFromUnitToNextUnit(unit, nextUnit, value);
@@ -36,7 +37,7 @@ export default class NumeralInputWithUnits extends Component {
 
   _handleValueChange(value) {
     this.setState({
-      value: value
+      value
     }, () => this._onChangeCallback());
   }
 

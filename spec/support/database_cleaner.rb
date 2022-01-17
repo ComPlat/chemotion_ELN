@@ -19,7 +19,7 @@ RSpec.configure do |config|
     DatabaseCleaner.start
   end
 
-  config.after do
+  config.append_after do
     DatabaseCleaner.clean
   rescue Exception => e
     sleep 2

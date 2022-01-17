@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 import WellContainer from './WellContainer';
 import WellplateLabels from './WellplateLabels';
 import WellOverlay from './WellOverlay';
+import WellplatesFetcher from './fetchers/WellplatesFetcher';
 
 export default class Wellplate extends Component {
   constructor(props) {
@@ -12,7 +13,8 @@ export default class Wellplate extends Component {
       showOverlay: false,
       overlayTarget: {},
       overlayWell: {},
-      overlayPlacement: 'right'
+      overlayPlacement: 'right',
+      selectedColor: null
     };
   }
 
@@ -21,7 +23,8 @@ export default class Wellplate extends Component {
     document.getElementsByClassName('panel-body')[0].addEventListener('scroll', this.onScroll.bind(this));
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { show } = nextProps;
     if (!show) {
       this.hideOverlay();
@@ -77,7 +80,8 @@ export default class Wellplate extends Component {
 
   hideOverlay() {
     this.setState({
-      showOverlay: false
+      showOverlay: false,
+      selectedColor: null
     });
   }
 
@@ -90,6 +94,17 @@ export default class Wellplate extends Component {
       overlayTarget: key,
       overlayWell: well,
       overlayPlacement: placement
+    });
+  }
+
+  setWellLabel(target) {
+    const { overlayWell } = this.state;
+    WellplatesFetcher.updateWellLabel({
+      id: overlayWell.id,
+      label: target.map(t => t.label).toString()
+    }).then((result) => {
+      overlayWell.label = result.label;
+      this.setState({ overlayWell });
     });
   }
 
@@ -107,9 +122,24 @@ export default class Wellplate extends Component {
     return (showOverlay && overlayWell === well);
   }
 
+  saveColorCode() {
+    const { overlayWell, selectedColor } = this.state;
+    WellplatesFetcher.updateWellColorCode({
+      id: overlayWell.id,
+      color_code: selectedColor,
+    }).then((result) => {
+      overlayWell.color_code = result.color_code;
+      this.setState({ overlayWell });
+    });
+  }
+
+  setColorPicker(color) {
+    this.setState({ selectedColor: color.hex });
+  }
+
   render() {
-    const { wells, readoutTitles, size, cols, width } = this.props;
-    const { showOverlay, overlayTarget, overlayWell, overlayPlacement } = this.state;
+    const { wells, readoutTitles, size, cols, width, handleWellsChange} = this.props;
+    const { showOverlay, overlayTarget, overlayWell, overlayPlacement, selectedColor} = this.state;
     const style = {
       width: (cols + 1) * width,
       height: ((size / cols) + 1) * width
@@ -154,10 +184,14 @@ export default class Wellplate extends Component {
           show={showOverlay}
           well={overlayWell}
           readoutTitles={readoutTitles}
+          selectedColor={selectedColor}
           placement={overlayPlacement}
           target={() => ReactDOM.findDOMNode(this.refs[overlayTarget]).children[0]}
           handleClose={() => this.hideOverlay()}
           removeSampleFromWell={well => this.removeSampleFromWell(well)}
+          handleColorPicker={value => this.setColorPicker(value)}
+          saveColorCode={() => this.saveColorCode()}
+          handleWellLabel={value => this.setWellLabel(value)}
         />
       </div>
     );

@@ -5,7 +5,7 @@ import UIStore from '../stores/UIStore';
 import NotificationActions from '../actions/NotificationActions';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
-
+import GenericElsFetcher from './GenericElsFetcher';
 
 import Container from '../models/Container';
 
@@ -40,8 +40,8 @@ export default class SamplesFetcher {
 
   static fetchById(id) {
     let promise = fetch('/api/v1/samples/' + id + '.json', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -62,53 +62,55 @@ export default class SamplesFetcher {
   }
 
   static update(sample) {
-    let files = AttachmentFetcher.getFileListfrom(sample.container)
-    let promise = ()=> fetch('/api/v1/samples/' + sample.id, {
+    const files = AttachmentFetcher.getFileListfrom(sample.container);
+    const promise = () => fetch(`/api/v1/samples/${sample.id}`, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sample.serialize())
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return new Sample(json.sample);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    if(files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
-    } else {
-      return promise()
+    }).then(response => response.json())
+      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
+        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    if (files.length > 0) {
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
 
+    return promise();
   }
 
   static create(sample) {
-    let files = AttachmentFetcher.getFileListfrom(sample.container)
-    let promise = ()=> fetch('/api/v1/samples', {
+    const files = AttachmentFetcher.getFileListfrom(sample.container);
+    const promise = () => fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sample.serialize())
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return new Sample(json.sample);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    if(files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
-    } else {
-      return promise()
+    }).then(response => response.json())
+      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
+        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    if (files.length > 0) {
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file)));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
+
+    return promise();
   }
 
   static splitAsSubsamples(params) {
@@ -162,7 +164,6 @@ export default class SamplesFetcher {
   }
 
   static importSamplesFromFileConfirm(params) {
-
     let promise = fetch('/api/v1/samples/confirm_import/', {
       credentials: 'same-origin',
       method: 'post',
@@ -176,8 +177,16 @@ export default class SamplesFetcher {
         mapped_keys: params.mapped_keys,
       })
     }).then((response) => {
-      return response.json()
+      return response.json();
     }).then((json) => {
+      for (let i = 0; i < json.error_messages.length; i++) {
+        NotificationActions.add({
+          message: json.error_messages[i],
+          level: 'error',
+          autoDismiss: 10
+        });
+      };
+
       return json;
     }).catch((errorMessage) => {
       console.log(errorMessage);

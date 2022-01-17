@@ -17,6 +17,14 @@ export default class MessagesFetcher {
     });
   }
 
+  static fetchSpectraMessages(isAck) {
+    return fetch(`/api/v1/messages/spectra.json?is_ack=${isAck}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static fetchChannels(channelType) {
     return fetch(`/api/v1/messages/channels.json?channel_type=${channelType}`, {
       credentials: 'same-origin'
@@ -45,10 +53,7 @@ export default class MessagesFetcher {
     return fetch('/api/v1/messages/ack/', {
       credentials: 'same-origin',
       method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);
@@ -59,10 +64,7 @@ export default class MessagesFetcher {
     return fetch('/api/v1/messages/subscribe/', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);
@@ -73,10 +75,7 @@ export default class MessagesFetcher {
     return fetch('/api/v1/messages/new/', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);

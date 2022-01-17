@@ -12,7 +12,10 @@ gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
 gem 'bibtex-ruby'
 gem 'bootsnap'
 gem 'bootstrap-sass', '~> 3.4.1'
-gem 'browserify-rails', '~> 4.3'
+gem 'charlock_holmes'
+
+# gem 'chem_scanner', git: 'git@git.scc.kit.edu:ComPlat/chem_scanner.git'
+gem 'chem_scanner', git: 'https://github.com/complat/chem_scanner.git'
 
 gem 'closure_tree'
 gem 'countries'
@@ -36,15 +39,16 @@ gem 'grape', '~>1.2.3'
 gem 'grape-active_model_serializers'
 gem 'grape-entity'
 gem 'grape-kaminari'
-gem 'grape-swagger-entity', '~> 0.3'
-gem 'grape-swagger-representable', '~> 0.2'
 gem 'grape-swagger'
-gem 'rack-cors', :require => 'rack/cors'
+gem 'grape-swagger-entity', '~> 0.3'
 gem 'grape-swagger-rails'
+gem 'grape-swagger-representable', '~> 0.2'
 
 gem 'haml-rails', '~> 1.0'
 gem 'hashie-forbidden_attributes'
 gem 'httparty'
+
+gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
 
 gem 'jbuilder', '~> 2.0'
 gem 'jquery-rails'
@@ -52,7 +56,7 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails',  git: 'https://github.com/ComPlat/ketcher-rails.git', ref: '1dbb0514f2edc600ecf5f3b963a3116155a7c577'
+gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '287c848ad4149caf6466a1b7a648ada017d30304'
 
 gem 'net-sftp'
 gem 'net-ssh'
@@ -71,8 +75,9 @@ gem 'pundit'
 # If we want to upgrade past rack >= 2.1 we need to upgrade to at least grape
 # 1.3.0
 gem 'rack', '~> 2.0.0'
+gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 5.2.0'
-gem 'rdkit_chem', git: "https://github.com/CamAnNguyen/rdkit_chem"
+gem 'rdkit_chem', git: 'https://github.com/CamAnNguyen/rdkit_chem'
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'
 gem 'roo', '>2.5.0'
@@ -86,6 +91,7 @@ gem 'sablon', git: 'https://github.com/ComPlat/sablon'
 gem 'sassc-rails', '~> 2.1.2'
 gem 'scenic'
 gem 'schmooze'
+gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master'
 gem 'swot', git: 'https://github.com/leereilly/swot.git', branch: 'master', ref: 'bfe392b4cd52f62fbc1d83156020275719783dd1'
 gem 'sys-filesystem'
 
@@ -109,19 +115,20 @@ group :development do
   gem 'capistrano-nvm', require: false
   gem 'capistrano-rails'
   gem 'capistrano-rvm'
+  gem 'capistrano-yarn'
 
   gem 'fast_stack'    # For Ruby MRI 2.0
   gem 'flamegraph'
 
   gem 'memory_profiler'
 
-#  gem 'rack-mini-profiler', '~>2.3.1', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
-  gem 'rubocop'             , require: false
-  gem 'rubocop-performance' , require: false
-  gem 'rubocop-rspec'       , require: false
+#  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
+  gem 'rubocop', require: false
+  gem 'rubocop-performance', require: false
+  gem 'rubocop-rspec', require: false
 
   gem 'slackistrano'
-  gem 'stackprof'     # For Ruby MRI 2.1+
+  gem 'stackprof' # For Ruby MRI 2.1+
 
   gem 'web-console', '~> 2.0'
 end
@@ -147,13 +154,13 @@ group :development, :test do
   gem 'pry-byebug'
   gem 'pry-rails'
 
+  gem 'puma'
+
   gem 'rspec-rails'
   gem 'ruby_jard'
   gem 'rubyXL', '3.3.26'
 
   gem 'spring'
-
-  gem 'thin'
 end
 
 group :test do
@@ -173,6 +180,8 @@ group :test do
   gem 'webdrivers', '~> 4.1.2'
   gem 'webmock'
 end
+
+# gem 'nmr_sim', git: 'https://github.com/ComPlat/nmr_sim', ref: 'e2f91776aafd8eb1fa9d88c8ec2291b02201f222', group: [:plugins,:development, :test, :production]
 
 # Chemotion plugins: list your ELN specific plugin gems in the Gemfile.plugin
 eln_plugin = File.join(File.dirname(__FILE__), "Gemfile.plugin")

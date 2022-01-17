@@ -1,14 +1,1 @@
-export default class InboxFetcher {
-  static fetchInbox(isCntOnly = false) {
-    const promise = fetch(`/api/v1/inbox?cnt_only=${isCntOnly}`, {
-      credentials: 'same-origin'
-    })
-      .then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-}
+// CONFLICT (rename/delete): app/assets/javascripts/components/fetchers/InboxFetcher.js deleted in development-5 and renamed to app/packs/src/components/fetchers/InboxFetcher.js in HEAD. Version HEAD of app/packs/src/components/fetchers/InboxFetcher.js left in tree.

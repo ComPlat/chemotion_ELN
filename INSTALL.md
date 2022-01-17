@@ -7,7 +7,7 @@ Server requirement: the installation can fail if not enough memory is available.
 copy the installation script on a ubuntu server 18.04 or 20.04 (also works with debian buster)
 
 ```
-curl -o chemotion_ELN_install.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/install_production.sh
+curl -o chemotion_ELN_install.sh -L https://github.com/ComPlat/chemotion_ELN/raw/development-5/scripts/install_production.sh
 ```
 
 
@@ -38,14 +38,14 @@ An admin account should have been created (email: eln-admin@kit.edu, pw: PleaseC
 To update the application code for such an installation, use the update script:
 
 ```
-curl -o chemotion_ELN_update.sh -L https://git.scc.kit.edu/complat/chemotion_ELN_server/raw/development/scripts/update_production.sh
+curl -o chemotion_ELN_update.sh -L https://github.com/ComPlat/chemotion_ELN/raw/development-5/scripts/update_production.sh
 ```
 
 
 If needed, edit the file  (change the variables or comments out parts to disable), then
 
 ```
-chmod 700 chemotion_ELN_update.sh 
+chmod 700 chemotion_ELN_update.sh
 
 sudo ./chemotion_ELN_update.sh
 ```
@@ -54,7 +54,7 @@ sudo ./chemotion_ELN_update.sh
 
 The instalation script works with Ubuntu 20 under WSL2.
 
-NB: 
+NB:
 
 - openssh-server should be reinstalled.
 - services (postgres, nginx) needs to be started manually.
@@ -64,38 +64,26 @@ NB:
 
 ## Using Docker
 
+see online [docs](https://www.chemotion.net/chemotionsaurus/docs/eln/docker_installation)
 
-
-This is a setup for a 'pseudo' production stage using passenger and aimed for user testing.
-(For the development environment, change 'RAILS_ENV' to 'development' in docker-compose.yml)
-**Make sure you have finished the BASIC SETUP FIRST**
-
-1. Build the image from Dockerfile `docker-compose build` or pull the image: `docker-compose pull`
-2. Initialize database FIRST:
-  * `docker-compose run app bundle exec rake db:create`
-  * `docker-compose run app bundle exec rake db:migrate`
-  * `docker-compose run app bundle exec rake db:seed` (optional). A "seed"
-    user will be inserted into the db with the information as below: template.moderator@eln.edu - password: "@eln.edu"
-  * `docker-compose run app rake ketcherails:import:common_templates` (optional)
-3. Precompile assets: `docker-compose run app bundle exec rake assets:precompile`
-4. To start the server: `docker-compose up` or start server and detach: `docker-compose up -d`
-
-* Start interactive shell with docker: `docker-compose run app /bin/bash`
-* NOTE: In this Docker image, we disabled the email verification progress
-
-* To enable email confirmation, uncomment ":confirmable" at line 5 of `app/models/user.rb`, stop the `docker-compose` by `docker-compose stop` and start `docker-compose`.
 
 
 # Basic Development Setup
 
 ## Ubuntu native or under WSL-2
 
-See the scripts/install_development.sh for guidance or run it. Application should be all set up and ready to run. 
+See the scripts/install_development.sh for guidance or run it. Application should be all set up and ready to run.
 
 When using WLS-2:
 -  postgres service needs to be started (```sudo service postgresql start ```)
--  you may want to move the application code somewhere to /mnt/... 
+-  you may want to move the application code somewhere to /mnt/...
 -  bind the WSL ip address  when starting the rails s (`rails s -b ip.ad.dr.ess`)
+
+
+## Using Docker
+
+see https://github.com/ptrxyz/chemotion/tree/main/client-chemotion-dev
+
 
 
 ## Application Setup Notes

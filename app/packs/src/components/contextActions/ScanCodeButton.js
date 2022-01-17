@@ -59,7 +59,7 @@ export default class ScanCodeButton extends React.Component {
       inputStream: {
         name: "Live",
         type: "LiveStream",
-        target: document.querySelector('#code-scanner'),
+        target: document.querySelector('#barcode-scanner'),
       },
       decoder: {
         readers: ["code_128_reader"],
@@ -80,8 +80,10 @@ export default class ScanCodeButton extends React.Component {
     Quagga.onDetected((data) => {
       const barcode = data.codeResult.code;
       this.handleScan(barcode, true);
+      Quagga.stop();
     });
-    Quagga.stop();
+
+    this.setState({ showQrReader: false });
   }
 
   startQrCodeScan() {
@@ -92,9 +94,9 @@ export default class ScanCodeButton extends React.Component {
     if (state.showQrReader === true) {
       return (
         <QrReader
-          handleScan={this.handleScan.bind(this)}
-          handleError={this.handleError}
           previewStyle={{ width: 550 }}
+          onScan={this.handleScan.bind(this)}
+          onError={this.handleError}
         />
       );
     }
@@ -111,9 +113,18 @@ export default class ScanCodeButton extends React.Component {
     }
   }
 
-  handleScan(d, stopQuagga = false) {
-    const data = this.codeInput.value;
+  handleScan(data, stopQuagga = false) {
+    let codeInput = this.codeInput.value;
     let code_log = {};
+    if(codeInput) {
+      data = codeInput;
+    }
+    
+    if(!data) {
+      return;
+    }
+
+    stopQuagga && Quagga.stop()
     fetch(`/api/v1/code_logs/generic?code=${data}`, {
       credentials: 'same-origin'
     })
@@ -121,7 +132,6 @@ export default class ScanCodeButton extends React.Component {
       .then(this.checkJSONResponse)
       .then((json) => {
         code_log = json.code_log
-        stopQuagga && Quagga.stop()
         if (code_log.source === 'container') {
           // open active analysis
           UIActions.selectTab({ tabKey: 1, type: code_log.root_code.source });
@@ -160,8 +170,7 @@ export default class ScanCodeButton extends React.Component {
             <Modal.Title>Scan barcode or QR code</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div id="code-scanner" style={{ maxHeight: '400px', overflow: 'hidden' }}>
-              {this.qrReader(this.state)}
+            <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
               <FormGroup>
                 <FormControl
                   autoFocus
@@ -176,6 +185,9 @@ export default class ScanCodeButton extends React.Component {
                 ref={(scanInput) => { this.scanInput = scanInput; }}
                 onClick={() => this.handleScan()}
               />
+              
+              <div id="barcode-scanner" {...this.state.showQrReader && {style : {display: 'none'}}}></div>
+              {this.qrReader(this.state)}
             </div>
             <br />
             {this.scanAlert()}

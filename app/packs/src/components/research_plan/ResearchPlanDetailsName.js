@@ -1,9 +1,31 @@
 /* eslint-disable react/prefer-stateless-function */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { ControlLabel, FormControl, FormGroup, Row, Col } from 'react-bootstrap';
+import { ControlLabel, FormControl, FormGroup, Row, Col, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 
 export default class ResearchPlanDetailsName extends Component {
+  renderCopyToMetadataButton() {
+    const { isNew, onCopyToMetadata } = this.props;
+    const metadataTooltipText = 'Copy Name to Metadata';
+    return (
+      <OverlayTrigger
+        placement="top"
+        delayShow={500}
+        overlay={<Tooltip id="metadataTooltip">{metadataTooltipText}</Tooltip>}
+      >
+        <Button
+          id="copyMetadataButton"
+          title=""
+          className="fa fa-laptop pull-right"
+          bsStyle="info"
+          bsSize="xsmall"
+          onClick={() => onCopyToMetadata(null, 'name')}
+          disabled={isNew}
+        />
+      </OverlayTrigger>
+    );
+  }
+
   render() {
     const {
       value, disabled, onChange, edit
@@ -15,6 +37,7 @@ export default class ResearchPlanDetailsName extends Component {
             <Col lg={8}>
               <FormGroup>
                 <ControlLabel>Name</ControlLabel>
+                { this.renderCopyToMetadataButton() }
                 <FormControl
                   type="text"
                   value={value || ''}
@@ -38,6 +61,8 @@ export default class ResearchPlanDetailsName extends Component {
 ResearchPlanDetailsName.propTypes = {
   value: PropTypes.string,
   disabled: PropTypes.bool,
+  isNew: PropTypes.bool,
   onChange: PropTypes.func,
-  edit: PropTypes.bool
+  edit: PropTypes.bool,
+  onCopyToMetadata: PropTypes.func
 };

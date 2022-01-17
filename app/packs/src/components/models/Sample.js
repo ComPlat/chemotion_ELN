@@ -6,6 +6,7 @@ import Molecule from './Molecule';
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 import Container from './Container.js';
+import Segment from './Segment';
 
 const prepareRangeBound = (args, field) => {
   const argsNew = args;
@@ -65,6 +66,7 @@ export default class Sample extends Element {
     }
 
     newSample.filterElementalComposition();
+    newSample.segments = _.cloneDeep(sample.segments);
 
     return newSample;
   }
@@ -92,7 +94,7 @@ export default class Sample extends Element {
         residue_type: 'polymer', custom_info: {
           "formula": 'CH',
           "loading": null,
-          "polymer_type": "polystyrene",
+          "polymer_type": (this.decoupled ? "self_defined" : "polystyrene"),
           "loading_type": "external",
           "external_loading": 0.0,
           "reaction_product": (this.reaction_product ? true : null),
@@ -121,7 +123,7 @@ export default class Sample extends Element {
             custom_info: {
               "formula": 'CH',
               "loading": (residue.custom_info ? residue.custom_info.loading : null),
-              "polymer_type": "polystyrene",
+              "polymer_type": (this.decoupled ? "self_defined" : "polystyrene"),
               "loading_type": "external",
               "external_loading": 0.0,
               "reaction_product": (this.reaction_product ? true : null),
@@ -169,7 +171,7 @@ export default class Sample extends Element {
       description: '',
       purity: 1,
       density: 0,
-      solvent: '',
+      solvent: [],
       location: '',
       molfile: '',
       molecule: { id: '_none_' },
@@ -315,7 +317,8 @@ export default class Sample extends Element {
       user_labels: this.user_labels || [],
       decoupled: this.decoupled,
       molecular_mass: this.molecular_mass,
-      sum_formula: this.sum_formula
+      sum_formula: this.sum_formula,
+      segments: this.segments.map(s => s.serialize()),
     });
 
     return serialized;
@@ -429,10 +432,21 @@ export default class Sample extends Element {
     return this._external_label || this.molecule.iupac_name || this.molecule_formula;
   }
 
+  set preferred_label(label) {
+
+  }
+
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
+  }
+
   showedName() {
     return this.showed_name;
   }
-
 
   userLabels() {
     return this.user_labels;
@@ -978,6 +992,77 @@ export default class Sample extends Element {
       target = [...target, ...atts];
     });
     return target;
+  }
+
+  get solvent() {
+    try {
+      //handle the old solvent data
+      const jsonSolvent = JSON.parse(this._solvent)
+      let solv = []
+      if (jsonSolvent) {
+        solv.push(jsonSolvent)
+      }
+      return solv
+    }
+    catch (e) {}
+    return this._solvent
+  }
+
+  set solvent(solvent) {
+    this._solvent = solvent
+  }
+
+  addSolvent(newSolvent) {
+    const molecule = newSolvent.molecule
+    if (molecule) {
+      let tmpSolvents = []
+      if (this.solvent) {
+        Object.assign(tmpSolvents, this.solvent)
+      }
+      const solventData = { label: molecule.iupac_name, smiles: molecule.cano_smiles, inchikey: molecule.inchikey, ratio: 1 }
+      const filtered = tmpSolvents.find((solv) => {
+        return (solv && solv.label === solventData.label &&
+          solv.smiles === solventData.smiles &&
+          solv.inchikey && solventData.inchikey)
+      })
+      if (!filtered) {
+        tmpSolvents.push(solventData)
+      }
+      this.solvent = tmpSolvents
+    }
+  }
+
+  deleteSolvent(solventToDelete) {
+    let tmpSolvents = []
+    if (this.solvent) {
+      Object.assign(tmpSolvents, this.solvent)
+    }
+
+    const filteredIndex = tmpSolvents.findIndex((solv) => {
+      return (solv.label === solventToDelete.label &&
+        solv.smiles === solventToDelete.smiles &&
+        solv.inchikey === solventToDelete.inchikey)
+    })
+    if (filteredIndex >= 0) {
+      tmpSolvents.splice(filteredIndex, 1);
+    }
+    this.solvent = tmpSolvents
+  }
+
+  updateSolvent(solventToUpdate) {
+    let tmpSolvents = []
+    if (this.solvent) {
+      Object.assign(tmpSolvents, this.solvent)
+    }
+
+    const filteredIndex = tmpSolvents.findIndex((solv) => {
+      return (solv.smiles === solventToUpdate.smiles &&
+        solv.inchikey && solventToUpdate.inchikey)
+    })
+    if (filteredIndex >= 0) {
+      tmpSolvents[filteredIndex] = solventToUpdate
+    }
+    this.solvent = tmpSolvents
   }
 }
 

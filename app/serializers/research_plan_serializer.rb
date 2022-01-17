@@ -1,9 +1,10 @@
 class ResearchPlanSerializer < ActiveModel::Serializer
 
-  attributes *DetailLevels::ResearchPlan.new.base_attributes
+  attributes *(DetailLevels::ResearchPlan.new.base_attributes + ['research_plan_metadata'])
 
   has_one :container, :serializer => ContainerSerializer
   has_many :wellplates, :serializer => WellplateSerializer
+  has_many :segments
 
   def created_at
     object.created_at.strftime('%d.%m.%Y, %H:%M:%S')

@@ -89,18 +89,16 @@ class User < ApplicationRecord
   has_one :screen_text_template, dependent: :destroy
   has_one :wellplate_text_template, dependent: :destroy
   has_one :research_plan_text_template, dependent: :destroy
+  has_many :element_text_templates, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations
 
   validates_presence_of :first_name, :last_name, allow_blank: false
-  validates :name_abbreviation,
-            uniqueness: { message: ' has already been taken.' },
-            format: {
-              with: /\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/,
-              message: " can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not."
-            }
+
+  validates :name_abbreviation, uniqueness: { message: 'is already in use.' }
   validate :name_abbreviation_reserved_list, on: :create
   validate :name_abbreviation_length, on: :create
+  validate :name_abbreviation_format, on: :create
   # validate :academic_email
   validate :mail_checker
 
@@ -114,6 +112,7 @@ class User < ApplicationRecord
   after_create :create_all_collection, :has_profile
   after_create :new_user_text_template
   after_create :update_matrix
+  after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
   before_destroy :delete_data
 
   scope :by_name, ->(query) {
@@ -138,16 +137,30 @@ class User < ApplicationRecord
     super && account_active
   end
 
+  def name_abbr_config
+    @name_abbr_config ||= Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
+  end
+
   def name_abbreviation_reserved_list
-    name_abbr_config = Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
-    if (name_abbr_config[:reserved_list] || []).include?(name_abbreviation)
-      errors.add(:name_abbreviation, " is reserved, please change")
-    end
+    return unless (name_abbr_config[:reserved_list] || []).include?(name_abbreviation)
+
+    errors.add(:name_abbreviation, 'is reserved, please change')
+  end
+
+  def name_abbreviation_format
+    format_abbr_default = /\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/
+    format_err_msg_default = "can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not."
+
+    format_abbr = name_abbr_config[:format_abbr].presence || format_abbr_default.presence
+    format_err_msg = name_abbr_config[:format_abbr_err_msg].presence || format_err_msg_default.presence
+
+    return if name_abbreviation.match?(format_abbr)
+
+    errors.add(:name_abbreviation, format_err_msg)
   end
 
   def name_abbreviation_length
     na = name_abbreviation
-    name_abbr_config = Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
     case type
     when 'Group'
       min_val = name_abbr_config[:length_group]&.first || 2
@@ -230,6 +243,13 @@ class User < ApplicationRecord
         data['chmo'] = result['ols_terms']
         data['is_templates_moderator'] = false
         data['molecule_editor'] = false
+        data.merge!(layout: {
+          'sample' => 1,
+          'reaction' => 2,
+          'wellplate' => 3,
+          'screen' => 4,
+          'research_plan' => 5
+        }) if (data['layout'].nil?)
         self.profile.update_columns(data: data)
       end
     end
@@ -288,7 +308,8 @@ class User < ApplicationRecord
   def update_matrix
     check_sql = ApplicationRecord.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
     result = ApplicationRecord.connection.exec_query(check_sql)
-    if result.first["rs"] == 't'
+
+    if result.presence&.first&.fetch('rs', false)
       sql = ApplicationRecord.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', id])
       ApplicationRecord.connection.exec_query(sql)
     end
@@ -304,7 +325,7 @@ class User < ApplicationRecord
   def self.gen_matrix(user_ids = nil)
     check_sql = ApplicationRecord.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
     result = ApplicationRecord.connection.exec_query(check_sql)
-    if result.first['rs'] == 't'
+    if result.presence&.first&.fetch('rs', false)
       sql = if user_ids.present?
               ApplicationRecord.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', user_ids])
             else
@@ -317,7 +338,7 @@ class User < ApplicationRecord
   end
 
   def create_text_template
-    TextTemplate.types.keys.each do |type|
+    API::TEXT_TEMPLATE.each do |type|
       klass = type.to_s.constantize
       template = klass.new
       template.user_id = id
@@ -345,11 +366,20 @@ class User < ApplicationRecord
   def create_chemotion_public_collection
     return unless self.type == 'Person'
 
-    Collection.create(user: self, label: 'chemotion.net', is_locked: true, position: 1)
+    Collection.create(user: self, label: 'chemotion-repository.net', is_locked: true, position: 1)
   end
 
   def set_account_active
     self.account_active = ENV['DEVISE_NEW_ACCOUNT_INACTIVE'].presence != 'true'
+  end
+
+  def send_welcome_email
+    file_path =  Rails.public_path.join('welcome-message.md')
+    if File.exist?(file_path)
+      SendWelcomeEmailJob.perform_later(id)
+    else
+      #do nothing
+    end
   end
 
   def delete_data
@@ -378,6 +408,8 @@ class Device < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins, through: :users_admins, source: :admin
+
+  has_one :device_metadata, dependent: :destroy, foreign_key: :device_id
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :novnc, -> { joins(:profile).merge(Profile.novnc) }

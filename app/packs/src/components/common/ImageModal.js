@@ -6,11 +6,6 @@ import { stopEvent } from '../utils/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
-const defaultImageStyle = {
-  style: {
-    cursor: 'default'
-  }
-};
 
 export default class ImageModal extends Component {
   constructor(props) {
@@ -40,40 +35,10 @@ export default class ImageModal extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.popObject.fetchNeeded) {
-      if (this.props.popObject.fetchId !== prevProps.popObject.fetchId) {
-        this.fetchImage();
-      }
+    if (this.props.popObject.fetchNeeded &&
+      (this.props.popObject.fetchId !== prevProps.popObject.fetchId)) {
+      this.fetchImage();
     }
-  }
-
-  fetchImage() {
-    AttachmentFetcher.fetchImageAttachment({ id: this.props.popObject.fetchId })
-      .then((result) => {
-        if (result.data != null) {
-          this.setState({ fetchSrc: result.data });
-          if (result.type === "application/pdf") {
-            this.setState({ isPdf: true });
-          }
-          else {
-            this.setState({ isPdf: false });
-          }
-        }
-      });
-  }
-
-  handleModalClose(e) {
-    stopEvent(e);
-    this.setState({ showModal: false });
-  }
-
-  handleModalShow(e) {
-    stopEvent(e);
-    this.setState({ showModal: true });
-  }
-
-  handleImageError() {
-    this.setState({ fetchSrc: this.props.preivewObject.src });
   }
 
   onDocumentLoadSuccess(numPages) {
@@ -83,7 +48,7 @@ export default class ImageModal extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     if (this.state.numOfPages == nextState.numOfPages
       && this.state.numOfPages != 0
-      && this.state.pageIndex == nextState.pageIndex 
+      && this.state.pageIndex == nextState.pageIndex
       && this.state.showModal == nextState.showModal) {
       return false;
     }
@@ -102,17 +67,41 @@ export default class ImageModal extends Component {
   nextPage() {
     this.changePage(1);
   }
+
+  fetchImage() {
+    AttachmentFetcher.fetchImageAttachment({ id: this.props.popObject.fetchId })
+      .then((result) => {
+        if (result.data != null) { this.setState({ fetchSrc: result.data, isPdf: (result.type === 'application/pdf') }); }
+      });
+  }
+
+  handleModalClose(e) {
+    stopEvent(e);
+    this.setState({ showModal: false });
+  }
+
+  handleModalShow(e) {
+    stopEvent(e);
+    this.setState({ showModal: true });
+  }
+
+  handleImageError() {
+    this.setState({ fetchSrc: this.props.previewObject.src });
+  }
+
   render() {
-    const { hasPop, preivewObject, popObject } = this.props;
+    const {
+      hasPop, previewObject, popObject, imageStyle
+    } = this.props;
     const { pageIndex, numOfPages } = this.state;
     if (!hasPop) {
-      return (<div className="preview-table"><img src={preivewObject.src} alt="" {...this.props.imageStyle || defaultImageStyle} /></div>);
+      return (<div className="preview-table"><img src={previewObject.src} alt="" style={{ cursor: 'default', ...imageStyle }} /></div>);
     }
 
     return (
       <div>
         <div className="preview-table" onClick={this.handleModalShow}>
-          <img src={preivewObject.src} alt="" style={{ cursor: 'pointer' }} />
+          <img src={previewObject.src} alt="" style={{ cursor: 'pointer', ...imageStyle }} />
         </div>
         <Modal show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
           <Modal.Header closeButton>
@@ -135,30 +124,18 @@ export default class ImageModal extends Component {
                     onClick={() => this.previousPage()}
                   >
                     Previous
-        </button>
+                  </button>
                   <button
                     type="button"
                     disabled={pageIndex >= numOfPages}
                     onClick={() => this.nextPage()}
                   >
                     Next
-        </button>
+                  </button>
                 </div>
               </div>
               :
-              <img
-                src={this.state.fetchSrc}
-                style={{
-                  display: 'block',
-                  maxHeight: '100%',
-                  maxWidth: '100%',
-                }}
-                alt=""
-                onError={this.handleImageError}
-              />}
-
-
-
+              <img src={this.state.fetchSrc} style={{ display: 'block', maxHeight: '100%', maxWidth: '100%' }} alt="" onError={this.handleImageError} />}
           </Modal.Body>
           <Modal.Footer>
             <Button bsStyle="primary" onClick={this.handleModalClose} className="pull-left">Close</Button>
@@ -172,13 +149,13 @@ export default class ImageModal extends Component {
 ImageModal.propTypes = {
   imageStyle: PropTypes.object,
   hasPop: PropTypes.bool.isRequired,
-  preivewObject: PropTypes.shape({
+  previewObject: PropTypes.shape({
     src: PropTypes.string,
   }).isRequired,
   popObject: PropTypes.shape({
     title: PropTypes.string,
     src: PropTypes.string,
     fetchNeeded: PropTypes.bool,
-    fetchId: PropTypes.number,
+    fetchId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
 };

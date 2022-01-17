@@ -25,12 +25,14 @@
 .env
 
 /config/matrices.json
+/config/klasses.json
 /config/mailcollector.yml
 /config/datamailcollector.yml
 /config/datacollector.yml
 /config/datacollectors.yml
 /config/data_collector_keys/*
 /config/user_props.yml
+/config/profile_default.yml
 /config/compute_props.yml
 !/config/data_collector_keys/.keep
 
@@ -73,6 +75,10 @@
 !/public/images/wild_card/
 !/public/images/ghs/
 
+/public/editors/*
+!/public/editors/.keep
+/public/favicon.ico
+
 /public/ontologies/*
 !/public/ontologies/.keep
 !/public/ontologies/chmo.default.edited.json
@@ -110,6 +116,7 @@
 /public/assets/*
 
 /public/cdjs/*
+/public/marvinjs/*
 
 /coverage/
 
@@ -127,6 +134,7 @@
 #config generated files
 aliasifyConfig.js
 /app/assets/javascripts/components/extra/*
+/app/packs/src/components/extra/*
 
 # Backups folder
 backup/deploy_backup
@@ -145,13 +153,23 @@ spec/examples.txt
 # ignore vendor files
 vendor/cache/*
 .idea/*
+.*.swp
+
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
 
+# yarn / pack
 /public/packs
 /public/packs-test
-/node_modules
 /yarn-error.log
 yarn-debug.log*
 .yarn-integrity
+
+#welcome message
+/public/welcome-message.md
+
+vendor/bundle/*
+vendor/cache/*
+.idea/*
+.devcontainer

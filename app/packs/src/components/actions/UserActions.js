@@ -1,10 +1,10 @@
 import alt from '../alt';
 import UsersFetcher from '../fetchers/UsersFetcher';
+import SegmentsFetcher from '../fetchers/SegmentsFetcher';
+import GenericDSsFetcher from '../fetchers/GenericDSsFetcher';
 
 import cookie from 'react-cookie'
-
 import DocumentHelper from '../utils/DocumentHelper';
-
 
 class UserActions {
   fetchOlsRxno() {
@@ -37,6 +37,16 @@ class UserActions {
         console.log(errorMessage);
       });};
   }
+
+  fetchGenericEls() {
+    return (dispatch) => { UsersFetcher.fetchElementKlasses()
+      .then((roots) => {
+        dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
 
   logout() {
     fetch('/users/sign_out', {
@@ -83,12 +93,56 @@ class UserActions {
     };
   }
 
+  fetchEditors() {
+    return (dispatch) => {
+      UsersFetcher.listEditors()
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   fetchNoVNCDevices() {
     return (dispatch) => {
       UsersFetcher.fetchNoVNCDevices()
         .then(result => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
+  }
+
+  fetchSegmentKlasses() {
+    return (dispatch) => {
+      SegmentsFetcher.fetchKlass()
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchDatasetKlasses() {
+    return (dispatch) => {
+      GenericDSsFetcher.fetchKlass()
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchUnitsSystem() {
+    return (dispatch) => { fetch('/units_system/units_system.json', {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'cache-control': 'no-cache' }
+      }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    }
   }
 }
 

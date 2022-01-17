@@ -11,6 +11,7 @@ import Sample from './Sample';
 import Container from './Container';
 
 import UserStore from '../stores/UserStore';
+import Segment from './Segment';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -171,6 +172,7 @@ export default class Reaction extends Element {
       temperature: this.temperature,
       timestamp_start: this.timestamp_start,
       timestamp_stop: this.timestamp_stop,
+      segments: this.segments.map(s => s.serialize())
     });
   }
 
@@ -708,8 +710,13 @@ export default class Reaction extends Element {
   }
 
   get svgPath() {
-    if(this.reaction_svg_file && this.reaction_svg_file != '***')
-      return `/images/reactions/${this.reaction_svg_file}`
+    if(this.reaction_svg_file && this.reaction_svg_file != '***' ) {
+      if(this.reaction_svg_file.includes('<svg')) {
+        return this.reaction_svg_file
+      } else if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
+        return `/images/reactions/${this.reaction_svg_file}`
+      }
+    }
     else
       return `images/wild_card/no_image_180.svg`
   }
@@ -744,6 +751,7 @@ export default class Reaction extends Element {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
     let group;
+    
     while (i < cats.length) {
       const groupName = `_${cats[i]}`;
       group = this[groupName];
@@ -837,5 +845,26 @@ export default class Reaction extends Element {
         break;
     }
     return name;
+  }
+
+
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
+  }
+
+  analysesContainers() {
+    if (this.container.children.length === 0) {
+      const analyses = Container.buildEmpty();
+      analyses.container_type = 'analyses';
+      this.container.children.push(analyses);
+    }
+
+    return this.container
+      .children
+      .filter(el => ~el.container_type.indexOf('analyses'));
   }
 }

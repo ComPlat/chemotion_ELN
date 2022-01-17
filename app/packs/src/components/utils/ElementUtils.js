@@ -80,7 +80,7 @@ const countHWithinBracket = (peakContent) => {
   const bracketContent = peakContent && peakContent.match(/\((.*\d+[^C]*H.*)\)/);
   if (!bracketContent) { return false; }
 
-  const simpleCount = bracketContent[1].match(/(^|[^\w])(\d+(\.\d+)?)H/);
+  const simpleCount = bracketContent[1].match(/(^|[^\w])(\d+(\.\d+)?)\s*H\b/);
   if (simpleCount) { return parseFloat(simpleCount[2], 10); }
 
   // const xCount = bracketContent[1].match(/(\d+(\.\d+)?)\s*(×|x)\s*./);

@@ -22,6 +22,7 @@ export default class Navigation extends React.Component {
     super(props);
     this.state = {
       currentUser: null,
+      genericEls: null,
       showAdvancedSearch: false,
       modalProps: {
         show: false,
@@ -41,6 +42,7 @@ export default class Navigation extends React.Component {
     UIStore.listen(this.onUIChange)
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
+    UserActions.fetchGenericEls();
   }
 
   componentWillUnmount() {
@@ -54,6 +56,11 @@ export default class Navigation extends React.Component {
     if (newId !== oldId){
       this.setState({
         currentUser: state.currentUser
+      });
+    }
+    if (this.state.genericEls === null) {
+      this.setState({
+        genericEls: state.genericEls
       });
     }
   }
@@ -111,16 +118,15 @@ export default class Navigation extends React.Component {
   }
 
   render() {
-    const { modalProps, showAdvancedSearch } = this.state;
+    const { modalProps, showAdvancedSearch, genericEls } = this.state;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
-
     return (this.state.currentUser
       ? <Navbar fluid className='navbar-custom'>
           {this.navHeader()}
           <Nav navbar className='navbar-form'>
             <Search />
-            <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} />
+            <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
             <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
             <NavigationModal {...modalProps} />
           </Nav>

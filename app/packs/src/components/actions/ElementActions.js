@@ -16,7 +16,10 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ContainerFetcher from '../fetchers/ContainerFetcher';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
+import PrivateNoteFetcher from '../fetchers/PrivateNoteFetcher'
 
+import GenericEl from '../models/GenericEl';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
@@ -29,6 +32,7 @@ import ComputeTask from '../models/ComputeTask';
 import DeviceControl from '../models/DeviceControl';
 import LiteratureMap from '../models/LiteratureMap';
 import Prediction from '../models/Prediction';
+import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 
 import _ from 'lodash';
 
@@ -186,9 +190,50 @@ class ElementActions {
           NotificationActions.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
+
+
   }
 
-  // -- Collections --
+  // -- Generic --
+  fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => { dispatch({ result, type: elementType }); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  generateEmptyGenericEl(collectionId, type) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchElementKlass(type)
+        .then((result) => { dispatch(GenericEl.buildEmpty(collectionId, result.klass)); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  fetchGenericElById(id, type) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchById(id)
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  createGenericEl(params) {
+    return (dispatch) => {
+      GenericElsFetcher.create(params)
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  updateGenericEl(params) {
+    return (dispatch) => {
+      GenericElsFetcher.update(params)
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
 
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
       moleculeSort = false) {
@@ -261,6 +306,32 @@ class ElementActions {
       .then((newSample) => {
         dispatch({newSample, reaction, materialGroup})
       });};
+  }
+
+  handleSvgReactionChange(reaction) {
+    const materialsSvgPaths = {
+      starting_materials: reaction.starting_materials.map(material => material.svgPath),
+      reactants: reaction.reactants.map(material => material.svgPath),
+      products: reaction.products.map(material => [material.svgPath, material.equivalent])
+    };
+
+    const solvents = reaction.solvents.map((s) => {
+      const name = s.preferred_label;
+      return name;
+    }).filter(s => s);
+
+    let temperature = reaction.temperature_display;
+    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
+      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
+    }
+
+    return () => { ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
+      .then((result) => {
+        reaction.reaction_svg_file = result.reaction_svg;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
   editReactionSample(reactionID, sampleID) {
@@ -385,6 +456,27 @@ class ElementActions {
     }
   }
 
+  tryFetchWellplateById(id) {
+    return (dispatch) => {
+      WellplatesFetcher.fetchById(id)
+                      .then((result) => {
+                        dispatch(result)
+                      }).catch((errorMessage) => {
+                        console.log(errorMessage)
+                      })
+    }
+  }
+
+  tryFetchGenericElById(id) {
+    return (dispatch) => {
+      GenericElsFetcher.fetchById(id)
+                      .then((result) => {
+                        dispatch(result)
+                      }).catch((errorMessage) => {
+                        console.log(errorMessage)
+                      })
+    }
+  }
   closeWarning() {
     return null
   }
@@ -419,8 +511,17 @@ class ElementActions {
   }
 
   copyReaction(reaction, colId) {
+    return (dispatch) => { ReactionsFetcher.fetchById(reaction.id)
+      .then((result) => {
+        dispatch({ reaction: result, colId: colId });
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  copyElement(element, colId) {
     return (
-      { reaction: reaction, colId: colId }
+      { element: element, colId: colId }
     )
   }
 
@@ -715,6 +816,27 @@ class ElementActions {
 
   refreshComputedProp(cprop) {
     return cprop;
+  }
+
+  // -- Private Note --
+  createPrivateNote(params) {
+    return (dispatch) => {
+      PrivateNoteFetcher.create(params).then((result) => {
+        dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      })
+    };
+  }
+
+  updatePrivateNote(note) {
+    return (dispatch) => {
+      PrivateNoteFetcher.update(note).then((result) => {
+        dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      })
+    };
   }
 }
 

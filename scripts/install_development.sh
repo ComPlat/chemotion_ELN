@@ -9,8 +9,8 @@ set -euo pipefail
 ############################################
 ############# VARIABLES ####################
 
-REPO='https://git.scc.kit.edu/complat/chemotion_ELN_server'
-BRANCH=development
+REPO='https://github.com/ComPlat/chemotion_ELN.git'
+BRANCH=development-5
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -23,9 +23,10 @@ RUBY_VERSION=2.6.6 # 2.5 recommended for bionic
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
-NVM_VERSION='v0.35.3'
+NVM_VERSION='v0.38.0'
 NODE_VERSION=14.16.0
-NPM_VERSION=7.6.2
+NPM_VERSION=7.11.1
+YARN_VERSION=1.22.10
 
 APP_NAME=chemotion_ELN # used for naming directories and files
 
@@ -262,7 +263,7 @@ if [ "${PART_5:-}" ]; then
   sharpi "$description"
   sudo -H -u $PROD bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash"
   sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm install $NODE_VERSION"
-  sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION && npm install -g npm@$NPM_VERSION"
+  sudo -H -u $PROD bash -c "source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION && npm install -g yarn"
   green "done $description\n"
 else
   yellow "skip $description\n"
@@ -355,8 +356,8 @@ EOL
   # sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle install --jobs $NCPU --path $PROD_HOME/shared/bundle"
   yellow "Installing ruby gems\n"
   sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle install --jobs $NCPU "
-  yellow "Installing npm packages\n"
-  sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION  && npm install "
+  yellow "Installing npm / yarn packages\n"
+  sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.nvm/nvm.sh &&  nvm use $NODE_VERSION  && yarn install "
   yellow "Run DB migrations\n"
   sudo -H -u $PROD bash -c "$src && cd $TMP_DIR &&  bundle exec rake db:migrate"
 

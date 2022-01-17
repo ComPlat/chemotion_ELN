@@ -14,13 +14,13 @@ export default class EditableCell extends React.Component {
     this.handleBlur = this.handleBlur.bind(this)
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({val: nextProps.value})
   }
 
   handleBlur(e) {
-    let newValue = e.target.value
-    let {uid, type, onCellValueChange} = this.props
+    let {uid, type, onCellValueChange, inputOnChange} = this.props
+    let newValue = inputOnChange(this.state.val, e.target.value)
 
     this.setState({
       editing: false,
@@ -30,9 +30,8 @@ export default class EditableCell extends React.Component {
 
   handleChange(e) {
     let {inputOnChange} = this.props
-    let newValue = inputOnChange(this.state.val, e.target.value)
 
-    this.setState({val: newValue})
+    this.setState({val: e.target.value})
   }
 
   handleDoubleClick() {

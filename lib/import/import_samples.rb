@@ -145,9 +145,7 @@ class Import::ImportSamples
     inchikey = babel_info[:inchikey]
     is_partial = babel_info[:is_partial]
     if inchikey.presence
-      if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
-        molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
-      end
+      molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
     end
     return molfile, molecule
   end
@@ -198,6 +196,12 @@ class Import::ImportSamples
       sample[db_column] = '' if %w[description solvent location external_label].include?(db_column) && row[field].nil?
       sample[db_column] = row[field] == 'Yes' if %w[decoupled].include?(db_column)
     end
+
+    if row['solvent'].is_a? String
+      solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(row['solvent']) }
+      sample['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }] if solvent.present?
+    end
+
     sample.validate_stereo(stereo)
     sample.collections << Collection.find(collection_id)
     sample.collections << Collection.get_all_collection_for_user(current_user_id)

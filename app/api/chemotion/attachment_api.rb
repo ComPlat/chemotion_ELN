@@ -46,6 +46,13 @@ module Chemotion
         end
         can_write
       end
+
+      def validate_uuid_format(uuid)
+        uuid_regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        return true if uuid_regex.match?(uuid.to_s.downcase)
+
+        return false
+      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |error|
@@ -75,10 +82,10 @@ module Chemotion
 
     resource :attachable do
       params do
-        optional :files, type: Array[File], desc: "files"
-        optional :attachable_type, type: String, desc: "attachable_type"
-        optional :attachable_id, type: Integer, desc: "attachable id"
-        optional :del_files, type: Array[Integer], desc: "del file id"
+        optional :files, type: Array[File], desc: 'files', default: []
+        optional :attachable_type, type: String, desc: 'attachable_type'
+        optional :attachable_id, type: Integer, desc: 'attachable id'
+        optional :del_files, type: Array[Integer], desc: 'del file id', default: []
       end
       after_validation do
         case params[:attachable_type]
@@ -110,7 +117,7 @@ module Chemotion
             begin
               a.save!
               attach_ary.push(a.id)
-              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate])
+              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
             ensure
               tempfile.close
               tempfile.unlink
@@ -129,12 +136,13 @@ module Chemotion
         end
         if params.fetch(:del_files, []).any?
           Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil)
-          if params[:attachable_type].in?(%w[ResearchPlan Wellplate])
+          if params[:attachable_type].in?(%w[ResearchPlan Wellplate Element])
             Attachment.find_by(attachable_type: params[:attachable_type], attachable_id: params[:attachable_id])
             params[:attachable_type].constantize.find(params[:attachable_id])
             # rp.update!(thumb_svg: a.nil?? nil : '/images/thumbnail/' + a.identifier)
           end
         end
+        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) unless params[:del_files].empty?
         true
       end
     end
@@ -150,14 +158,14 @@ module Chemotion
         # when /post/i
         when /get/i
           can_dwnld = false
-          if request.url =~ /zip/
+          if /zip/.match?(request.url)
             @container = Container.find(params[:container_id])
             if (element = @container.root.containable)
               can_read = ElementPolicy.new(current_user, element).read?
               can_dwnld = can_read &&
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
-          elsif request.url =~ /sample_analyses/
+          elsif /sample_analyses/.match?(request.url)
             @sample = Sample.find(params[:sample_id])
             if (element = @sample)
               can_read = ElementPolicy.new(current_user, element).read?
@@ -176,41 +184,110 @@ module Chemotion
         end
       end
 
-      desc "Delete Attachment"
+      desc 'Delete Attachment'
       delete ':attachment_id' do
         @attachment.delete
       end
 
-      desc "Delete container id of attachment"
+      desc 'Delete container id of attachment'
       delete 'link/:attachment_id' do
         @attachment.attachable_id = nil
         @attachment.attachable_type = 'Container'
         @attachment.save!
       end
 
-      desc "Upload attachments"
+      desc 'Upload attachments'
       post 'upload_dataset_attachments' do
-        params.each do |file_id, file|
-          if tempfile = file[:tempfile]
-              a = Attachment.new(
-                bucket: file[:container_id],
-                filename: file[:filename],
-                key: file[:name],
-                file_path: file[:tempfile],
-                created_by: current_user.id,
-                created_for: current_user.id,
-                content_type: file[:type]
-              )
-            begin
-              a.save!
-            ensure
-              tempfile.close
-              tempfile.unlink
-            end
+        params.each do |_file_id, file|
+          next unless tempfile = file[:tempfile]
+
+          a = Attachment.new(
+            bucket: file[:container_id],
+            filename: file[:filename],
+            key: file[:name],
+            file_path: file[:tempfile],
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: file[:type]
+          )
+          begin
+            a.save!
+          ensure
+            tempfile.close
+            tempfile.unlink
           end
         end
         true
       end
+
+      desc 'Upload large file as chunks'
+      post 'upload_chunk' do
+        params do
+          require :file, type: File, desc: 'file'
+          require :counter, type: Integer, default: 0
+          require :key, type: String
+        end
+        return { ok: false, statusText: 'File key is not valid' } unless validate_uuid_format(params[:key])
+
+        FileUtils.mkdir_p(Rails.root.join('tmp/uploads', 'chunks'))
+        File.open(Rails.root.join('tmp/uploads', 'chunks', "#{params[:key]}$#{params[:counter]}"), 'wb') do |file|
+          File.open(params[:file][:tempfile], 'r') do |data|
+            file.write(data.read)
+          end
+        end
+
+        true
+      end
+
+
+      desc 'Upload completed'
+      post 'upload_chunk_complete' do
+        params do
+          require :filename, type: String
+          require :key, type: String
+        end
+        return { ok: false, statusText: 'File key is not valid' } unless validate_uuid_format(params[:key])
+
+        begin
+          file_name = ActiveStorage::Filename.new(params[:filename]).sanitized
+          FileUtils.mkdir_p(Rails.root.join('tmp/uploads', 'full'))
+          entries = Dir["#{Rails.root.join('tmp/uploads', 'chunks', params[:key])}*"].sort_by { |s| s.scan(/\d+/).last.to_i }
+          file_path = Rails.root.join('tmp/uploads', 'full', params[:key])
+          file_path = "#{file_path}#{File.extname(file_name)}"
+          file_checksum = Digest::MD5.new
+          File.open(file_path, 'wb') do |outfile|
+            entries.each do |file|
+              buff = File.open(file, 'rb').read
+              file_checksum.update(buff)
+              outfile.write(buff)
+            end
+          end
+
+          if file_checksum == params[:checksum]
+            attach = Attachment.new(
+              bucket: nil,
+              filename: file_name,
+              key: params[:key],
+              file_path: file_path,
+              created_by: current_user.id,
+              created_for: current_user.id,
+              content_type: MIME::Types.type_for(file_name)[0].to_s
+            )
+
+            attach.save!
+
+            return true
+          else
+            return { ok: false, statusText: 'File upload has error. Please try again!' }
+          end
+        ensure
+          entries.each do |file|
+            File.delete(file) if File.exist?(file)
+          end
+          File.delete(file_path) if File.exist?(file_path)
+        end
+      end
+
 
       desc "Upload files to Inbox as unsorted"
       post 'upload_to_inbox' do
@@ -245,7 +322,7 @@ module Chemotion
       desc "Download the attachment file"
       get ':attachment_id' do
         content_type "application/octet-stream"
-        header['Content-Disposition'] = "attachment; filename=" + @attachment.filename
+        header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
         @attachment.read_file
       end
@@ -414,6 +491,7 @@ module Chemotion
         optional :thres, type: String
         optional :predict, type: String
         optional :keep_pred, type: Boolean
+        optional :waveLength, type: String
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(

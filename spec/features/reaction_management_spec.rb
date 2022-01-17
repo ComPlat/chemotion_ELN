@@ -47,12 +47,12 @@ describe 'Reaction management' do
     end
 
     it 'Yield 50%', js: true do
-      find('.tree-view', text: 'chemotion.net').click
+      find('.tree-view', text: 'chemotion-repository.net').click
       first('i.icon-reaction').click
-      first('i.c-bs-success').click
+      first('span.isvg.loaded.reaction').click
       material_amount = 6800
 
-      find('div#reaction-detail-tab a#reaction-detail-tab-tab-0').click
+      find('div#reaction-detail-tab a#reaction-detail-tab-tab-scheme').click
 
       tab_scheme = find('div#reaction-detail-tab div.tab-content')
       material_field = tab_scheme.first('span.input-group').find_all('input').first

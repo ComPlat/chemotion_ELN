@@ -1,16 +1,42 @@
 import { isEmpty } from 'lodash';
 import Element from './Element';
 import Container from './Container';
+import Segment from './Segment';
 
 const uuidv4 = require('uuid/v4');
 
-const columns = ['a', 'b', 'c', 'd', 'e', 'f'].map(columnName => ({
-  key: columnName,
-  name: columnName,
-  editable: true,
-  resizable: true,
-  width: 130
-}));
+const columns = [
+  {
+    headerName: 'a',
+    field: 'a',
+    colId: 'a'
+  },
+  {
+    headerName: 'b',
+    field: 'b',
+    colId: 'b'
+  },
+  {
+    headerName: 'c',
+    field: 'c',
+    colId: 'c'
+  },
+  {
+    headerName: 'd',
+    field: 'd',
+    colId: 'd'
+  },
+  {
+    headerName: 'e',
+    field: 'e',
+    colId: 'e'
+  },
+  {
+    headerName: 'f',
+    field: 'f',
+    colId: 'f'
+  }
+];
 
 
 export default class ResearchPlan extends Element {
@@ -29,7 +55,8 @@ export default class ResearchPlan extends Element {
       container: Container.init(),
       changed: true,
       can_update: true,
-      attachments: []
+      attachments: [],
+      segments: []
     });
   }
 
@@ -40,6 +67,7 @@ export default class ResearchPlan extends Element {
       attachments: this.attachments,
       container: this.container,
       wellplate_ids: this.wellplateIDs,
+      segments: this.segments.map(s => s.serialize())
     });
   }
 
@@ -61,6 +89,7 @@ export default class ResearchPlan extends Element {
         this.body.push({
           id: uuidv4(),
           type: 'richtext',
+          title: 'Text',
           value: null
         });
         break;
@@ -82,13 +111,13 @@ export default class ResearchPlan extends Element {
             columns,
             rows: [
               {
-                a: '1', b: '', c: '', d: '', e: '', f: ''
+                a: '', b: '', c: '', d: '', e: '', f: ''
               },
               {
-                a: '1', b: '', c: '', d: '', e: '', f: ''
+                a: '', b: '', c: '', d: '', e: '', f: ''
               },
               {
-                a: '1', b: '', c: '', d: '', e: '', f: ''
+                a: '', b: '', c: '', d: '', e: '', f: ''
               },
             ]
           }
@@ -152,5 +181,13 @@ export default class ResearchPlan extends Element {
 
   set mode(mode) {
     this._mode = mode;
+  }
+
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
+
+  get segments() {
+    return this._segments || [];
   }
 }

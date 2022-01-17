@@ -15,17 +15,17 @@ describe 'Create and update Reaction' do
     svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
 
-    col = Collection.find_by(user: user, label: 'chemotion.net')
+    col = Collection.find_by(user: user, label: 'chemotion-repository.net')
     CollectionsSample.find_or_create_by!(sample_id: material.id, collection_id: col.id)
     CollectionsSample.find_or_create_by!(sample_id: product.id, collection_id: col.id)
   end
 
   it 'Create and update reaction UI', js: true do
-    find_by_id('tree-id-chemotion.net').click
+    find_by_id('tree-id-chemotion-repository.net').click
     find_by_id('create-split-button').click
     find_by_id('create-reaction-button').click
     source = first('span.dnd-arrow-enable')
-    scheme_tab = find_by_id('reaction-detail-tab-pane-0')
+    scheme_tab = find_by_id('reaction-detail-tab-pane-scheme')
     target1 = scheme_tab.find_all('span.glyphicon-plus')[0]
     source.drag_to(target1)
     target2 = scheme_tab.find_all('span.glyphicon-plus')[2]
@@ -33,18 +33,9 @@ describe 'Create and update Reaction' do
     find_field('reaction_name').set('reaction A').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
 
-    # FIXME: Improve this spec by getting rid of the sleep after being on a
-    # stable rails 5.0 version
-    sleep 6
-    expect(page).to have_content('reaction A')
-
+    expect(page).to have_content('reaction A', wait: 5)
     find_field('reaction_name').set('reaction B').send_keys(:enter)
     find_by_id('submit-reaction-btn').click
-
-    # FIXME: Improve this spec by getting rid of the sleep after being on a
-    # stable rails 5.0 version
-    sleep 6
-    expect(page).to have_content('reaction B')
-
+    expect(page).to have_content('reaction B', wait: 5)
   end
 end

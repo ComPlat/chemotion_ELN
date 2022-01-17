@@ -22,7 +22,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     this.forceUpdate();
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { value, block } = nextProps;
     this.setState({ value, block });
   }
@@ -169,7 +169,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       );
 
       return (
-        <div className="numeric-input-unit">
+        <div className={`numeric-input-unit_${this.props.unit}`}>
           {labelWrap}
           <InputGroup
             onDoubleClick={event => this.handleInputDoubleClick(event)}

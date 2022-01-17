@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'
 import 'whatwg-fetch';
-import { ButtonGroup, OverlayTrigger, Popover, Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Panel, Form, FormControl, FormGroup, ControlLabel } from 'react-bootstrap';
+import { ButtonGroup, OverlayTrigger, Popover, Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Panel, Form, FormControl, FormGroup, ControlLabel, Col, Row } from 'react-bootstrap';
+import moment from 'moment';
 import Select from 'react-select';
 import _ from 'lodash';
 
@@ -13,6 +14,7 @@ import MessagesFetcher from './fetchers/MessagesFetcher';
 import NotificationActions from '../components/actions/NotificationActions';
 import { UserLabelModal } from '../components/UserLabels';
 import MatrixCheck from '../components/common/MatrixCheck';
+import GroupElement from './GroupElement';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -22,9 +24,15 @@ export default class UserAuth extends Component {
       showModal: false,
       showLabelModal: false,
       currentGroups: [],
+      currentDevices: [],
       selectedUsers: null,
       showSubscription: false,
       currentSubscriptions: [],
+      showDeviceMetadataModal: false,
+      device: {},
+      deviceMetadata: {
+        dates: []
+      }
     };
 
     this.onChange = this.onChange.bind(this);
@@ -34,13 +42,15 @@ export default class UserAuth extends Component {
     this.handleLabelClose = this.handleLabelClose.bind(this);
     this.handleSubscriptionShow = this.handleSubscriptionShow.bind(this);
     this.handleSubscriptionClose = this.handleSubscriptionClose.bind(this);
+    this.handleDeviceMetadataModalShow = this.handleDeviceMetadataModalShow.bind(this);
+    this.handleDeviceMetadataModalClose = this.handleDeviceMetadataModalClose.bind(this);
 
     this.promptTextCreator = this.promptTextCreator.bind(this);
     this.handleSelectUser = this.handleSelectUser.bind(this);
-    this.loadUserByName = this.loadUserByName.bind(this);
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
 
   componentDidMount() {
@@ -67,27 +77,16 @@ export default class UserAuth extends Component {
     return ("Share with \"" + label + "\"");
   }
 
-  loadUserByName(input) {
-    if (!input) {
-      return Promise.resolve({ options: [] });
-    }
-
-    return UsersFetcher.fetchUsersByName(input)
-      .then((res) => {
-        let usersEntries = res.users.filter(u => u.user_type === 'Person')
-          .map((u) => {
-            return {
-              value: u.id,
-              name: u.name,
-              label: u.name + " (" + u.abb + ")"
-            }
+  handlefetchDeviceMetadataByDeviceId(deviceID) {
+    UsersFetcher.fetchDeviceMetadataByDeviceId(deviceID)
+      .then((result) => {
+        if (result.device_metadata) {
+          this.setState({
+            deviceMetadata: result.device_metadata
           });
-        return { options: usersEntries };
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
+        }
       });
   }
-
   // show modal
   handleShow() {
     UsersFetcher.fetchCurrentGroup()
@@ -98,11 +97,33 @@ export default class UserAuth extends Component {
           selectedUsers: null
         });
       });
+    UsersFetcher.fetchCurrentDevices()
+      .then((result) => {
+        this.setState({
+          currentDevices: result.currentDevices
+        });
+      });
   }
 
   // hide modal
   handleClose() {
     this.setState({ showModal: false, selectedUsers: null });
+  }
+
+  handleDeviceMetadataModalShow(device) {
+    this.setState({
+      showDeviceMetadataModal: true,
+      device
+    });
+    this.handlefetchDeviceMetadataByDeviceId(device.id);
+  }
+
+  handleDeviceMetadataModalClose() {
+    this.setState({
+      showDeviceMetadataModal: false,
+      device: {},
+      deviceMetadata: {}
+    });
   }
 
   handleLabelShow() {
@@ -187,21 +208,6 @@ export default class UserAuth extends Component {
       });
   }
 
-  // confirm action after pressing yes
-  // if type is group, call deleteGroup api, if type is user, call deleteUser api
-  confirmDelete(type, groupRec, userRec) {
-    switch (type) {
-      case 'group':
-        this.deleteGroup(groupRec);
-        break;
-      case 'user':
-        this.deleteUser(groupRec, userRec);
-        break;
-      default:
-        break;
-    }
-  }
-
   // create new group
   // need to use the wording 'group_param' because of the definition of current api
   createGroup() {
@@ -228,186 +234,46 @@ export default class UserAuth extends Component {
       });
   }
 
-  // delete a group
-  // filter out the deleted group and then setState
-  deleteGroup(groupRec) {
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: true })
-      .then((group) => {
-        this.setState({
-          currentGroups: _.filter(this.state.currentGroups, o => o.id != group.destroyed_id),
-        });
-      });
-  }
-
-  // delete a user
-  // replace with response result and then setState
-  deleteUser(groupRec, userRec) {
-    let { currentGroups } = this.state;
-    const { currentUser } = this.state;
-
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, rm_users: [userRec.id] })
-      .then((result) => {
-        const findIdx = _.findIndex(result.group.users, function(o) { return o.id == currentUser.id; });
-        const findAdmin = _.findIndex(result.group.admins, function(o) { return o.id == currentUser.id; });
-        if (findIdx == -1 && findAdmin == -1) {
-          currentGroups = _.filter(this.state.currentGroups, o => o.id != result.group.id);
-        } else {
-          const idx = _.findIndex(currentGroups, function(o) { return o.id == result.group.id; });
-          currentGroups.splice(idx, 1, result.group);
-        }
-        this.setState({ currentGroups });
-      });
-  }
-
-  // add multiple users
-  // replace with response result and then setState (with forceUpdate)
-  addUser(groupRec) {
-    const { selectedUsers, currentGroups } = this.state;
-
-    const userIds = [];
-    selectedUsers.map((g) => {
-      userIds.push(g.value);
-      return true;
-    });
-
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, add_users: userIds })
-      .then((group) => {
-        const idx = _.findIndex(currentGroups, function(o) { return o.id == group.group.id; });
-        currentGroups.splice(idx, 1, group.group);
-        this.setState({ selectedUsers: null });
-
-        const ve = document.getElementById(`row_add_${groupRec.id}`);
-        if (ve.classList.contains('in')) {
-          ve.classList.remove('in');
-        }
-      });
-  }
-
-  // render delete(icon-trash) button
-  renderDeleteButton(type, groupRec, userRec) {
-    let msg = 'remove yourself from the group';
-    if (type === 'user') {
-      if (userRec.id === this.state.currentUser.id) {
-        msg = 'remove yourself from the group';
-      } else {
-        msg = `remove user: ${userRec.name}`;
-      }
-    } else {
-      msg = `remove group: ${groupRec.name}`;
-    }
-
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        {msg} ?<br />
-        <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(type, groupRec, userRec)}>
-          Yes
-          </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
-          No
-          </Button>
-        </div>
-      </Popover>
-    );
-
+  renderDeviceButtons(device) {
     return (
-      <ButtonGroup className="actions">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
-          <Button bsSize="xsmall" bsStyle="danger" >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
-      </ButtonGroup>
+      <td>
+        <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-laptop" onClick={() => this.handleDeviceMetadataModalShow(device)} />&nbsp;&nbsp;
+      </td>
     );
   }
 
-  // render buttons if user is group's administrator
-  renderAdminButtons(group) {
-    const { selectedUsers } = this.state;
-    if (group.admins && group.admins.length > 0 && group.admins[0].id === this.state.currentUser.id) {
-      return (
-        <td>
-          <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" data-toggle="collapse" data-target={`.div_row_${group.id}`} />&nbsp;&nbsp;
-          <Button bsSize="xsmall" type="button" bsStyle="success" className="fa fa-plus" data-toggle="collapse" data-target={`.row_add_${group.id}`} />&nbsp;&nbsp;
-          {this.renderDeleteButton('group', group)}
-          <span className={`collapse row_add_${group.id}`} id={`row_add_${group.id}`}>
-            <Select.AsyncCreatable
-              multi
-              isLoading
-              backspaceRemoves
-              value={selectedUsers}
-              valueKey="value"
-              labelKey="label"
-              matchProp="name"
-              placeholder="Select users"
-              promptTextCreator={this.promptTextCreator}
-              loadOptions={this.loadUserByName}
-              onChange={this.handleSelectUser}
-            />
-            <Button bsSize="xsmall" type="button" bsStyle="warning" onClick={() => this.addUser(group)}>Save to group</Button>
-          </span>
-        </td>
-      );
-    }
-    return (
-      <td><Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" data-toggle="collapse" data-target={`.div_row_${group.id}`} /></td>
-    );
-  }
-
-  // render buttons for user
-  renderUserButtons(groupRec, userRec = null) {
-    if ((groupRec.admins && groupRec.admins.length > 0 && groupRec.admins[0].id === this.state.currentUser.id) || userRec.id === this.state.currentUser.id) {
-      return this.renderDeleteButton('user', groupRec, userRec);
-    }
-    return (<div />);
+  handleChange(currentGroups) {
+    this.setState({ currentGroups: currentGroups });
   }
 
   // render modal
   renderModal() {
-    const { showModal, currentGroups } = this.state;
+    const { showModal, currentGroups, currentDevices } = this.state;
 
     const modalStyle = {
       overflowY: 'auto',
     };
 
-    let tbody = '';
+    let tBodyGroups = '';
+    let tBodyDevices = '';
 
     if (Object.keys(currentGroups).length <= 0) {
-      tbody = '';
+      tBodyGroups = '';
     } else {
-      tbody = currentGroups ? currentGroups.map(g => (
+      tBodyGroups = currentGroups ? currentGroups.map(g => (
+        <GroupElement groupElement={g} currentState={this.state} onChangeData={this.handleChange}></GroupElement>
+      )) : '';
+    }
+
+    if (Object.keys(currentDevices).length <= 0) {
+      tBodyDevices = '';
+    } else {
+      tBodyDevices = currentDevices ? currentDevices.map(g => (
         <tbody key={`tbody_${g.id}`}>
           <tr key={`row_${g.id}`} id={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
             <td>{g.name}</td>
-            <td>{g.initials}</td>
-            <td>
-              {g.admins && g.admins.length > 0 && g.admins[0].name}&nbsp;&nbsp;
-            </td>
-            { this.renderAdminButtons(g) }
-          </tr>
-          <tr className={`collapse div_row_${g.id}`} id={`div_row_${g.id}`}>
-            <td colSpan="4">
-              <Table>
-                <tbody>
-                  {g.users.map(u => (
-                    <tr key={`row_${g.id}_${u.id}`} id={`row_${g.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                      <td width="20%">{u.name}</td>
-                      <td width="10%">{u.initials}</td>
-                      <td width="20%">{ }</td>
-                      <td width="50%">
-                        { this.renderUserButtons(g, u) }
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </td>
+            <td>{g.name_abbreviation}</td>
+            {this.renderDeviceButtons(g)}
           </tr>
         </tbody>
       )) : '';
@@ -420,7 +286,7 @@ export default class UserAuth extends Component {
         onHide={this.handleClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>My Groups</Modal.Title>
+          <Modal.Title>My Groups & Devices</Modal.Title>
         </Modal.Header>
         <Modal.Body style={modalStyle}>
           <div>
@@ -477,7 +343,26 @@ export default class UserAuth extends Component {
                       <th width="50%">&nbsp;</th>
                     </tr>
                   </thead>
-                  { tbody }
+                  {tBodyGroups}
+                </Table>
+              </Panel.Body>
+            </Panel>
+            <Panel bsStyle="info">
+              <Panel.Heading>
+                <Panel.Title>
+                  My Devices
+                </Panel.Title>
+              </Panel.Heading>
+              <Panel.Body>
+                <Table responsive condensed hover>
+                  <thead>
+                    <tr style={{ backgroundColor: '#ddd' }}>
+                      <th width="40%">Name</th>
+                      <th width="10%">Kürzel</th>
+                      <th width="50%">&nbsp;</th>
+                    </tr>
+                  </thead>
+                  {tBodyDevices}
                 </Table>
               </Panel.Body>
             </Panel>
@@ -517,7 +402,7 @@ export default class UserAuth extends Component {
             <div>
               <Table>
                 <tbody>
-                  { tbody }
+                  {tbody}
                 </tbody>
               </Table>
             </div>
@@ -526,6 +411,126 @@ export default class UserAuth extends Component {
       );
     }
     return (<div />);
+  }
+
+  renderDeviceMetadataModal() {
+    const { showDeviceMetadataModal, device, deviceMetadata } = this.state;
+    const title = 'Device Metadata';
+    return (
+      <Modal
+        show={showDeviceMetadataModal}
+        onHide={this.handleDeviceMetadataModalClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{device.name} Metadata</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Panel bsStyle="success">
+            <Panel.Heading>
+              <Panel.Title>
+                {title}
+              </Panel.Title>
+            </Panel.Heading>
+            <Panel.Body>
+              <Form>
+                <FormGroup controlId="metadataFormDOI">
+                  <ControlLabel>DOI</ControlLabel>&nbsp;&nbsp;
+                  <FormControl
+                    type="text"
+                    defaultValue={deviceMetadata.doi}
+                    readonly="true"
+                  />
+                </FormGroup>
+                <FormGroup controlId="metadataFormState">
+                  <ControlLabel>State</ControlLabel>
+                  <FormControl
+                    type="text"
+                    defaultValue={deviceMetadata.data_cite_state}
+                    readonly="true"
+                  />
+                </FormGroup>
+
+                <FormGroup controlId="metadataFormURL">
+                  <ControlLabel>URL</ControlLabel>
+                  <FormControl
+                    type="text"
+                    defaultValue={deviceMetadata.url}
+                    readonly="true"
+                  />
+                </FormGroup>
+
+                <FormGroup controlId="metadataFormLandingPage">
+                  <ControlLabel>Landing Page</ControlLabel>
+                  <FormControl
+                    type="text"
+                    defaultValue={deviceMetadata.landing_page}
+                    readonly="true"
+                  />
+                </FormGroup>
+                <FormGroup controlId="metadataFormName">
+                  <ControlLabel>Name</ControlLabel>&nbsp;&nbsp;
+                  <FormControl
+                    type="text"
+                    defaultValue={deviceMetadata.name}
+                    readonly="true"
+                  />
+                </FormGroup>
+                <FormGroup controlId="metadataFormPublicationYear">
+                  <ControlLabel>Publication Year</ControlLabel>
+                  <FormControl
+                    type="number"
+                    defaultValue={deviceMetadata.publication_year}
+                    readonly="true"
+                  />
+                </FormGroup>
+                <FormGroup controlId="metadataFormDescription">
+                  <ControlLabel>Description</ControlLabel>
+                  <FormControl
+                    type="text"
+                    defaultValue={deviceMetadata.description}
+                    readonly="true"
+                  />
+                </FormGroup>
+
+                {deviceMetadata.dates && deviceMetadata.dates.map((dateItem, index) => (
+                  <div key={index}>
+                    <Col smOffset={0} sm={6}>
+                      <FormGroup>
+                        <ControlLabel>Date</ControlLabel>
+                        <FormControl
+                          type="text"
+                          defaultValue={dateItem.date}
+                          readonly="true"
+                        />
+                      </FormGroup>
+                    </Col>
+                    <Col smOffset={0} sm={6}>
+                      <FormGroup>
+                        <ControlLabel>DateType</ControlLabel>
+                        <FormControl
+                          type="text"
+                          defaultValue={dateItem.dateType}
+                          readonly="true"
+                        />
+                      </FormGroup>
+                    </Col>
+                  </div>
+                ))}
+
+                <Row>
+                  <Col smOffset={0} sm={12}>
+                    <p class="text-right">
+                      DataCiteVersion: {deviceMetadata.data_cite_version}<br />
+                      DataCiteUpdatedAt: {moment(deviceMetadata.data_cite_updated_at).format('YYYY-MM-DD HH:mm')}<br />
+                    </p>
+                  </Col>
+                </Row>
+              </Form>
+            </Panel.Body>
+          </Panel>
+        </Modal.Body>
+      </Modal>
+    );
   }
 
   render() {
@@ -549,20 +554,21 @@ export default class UserAuth extends Component {
             {this.state.currentUser.is_templates_moderator ? templatesLink : null}
             <MenuItem eventKey="3" href="/users/edit" >Change Password</MenuItem>
             <MenuItem eventKey="5" href="/pages/affiliations" >My Affiliations</MenuItem>
-            <MenuItem onClick={this.handleShow}>My Groups</MenuItem>
+            <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
             {userLabel}
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-            {/* <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem> */}
+            <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
           </NavDropdown>
           <NavItem onClick={() => this.logout()} style={{ marginRight: '5px' }} className="" title="Log out">
             <Glyphicon glyph="log-out" />
           </NavItem>
         </Nav>
-        { this.renderModal() }
+        {this.renderModal()}
         <UserLabelModal showLabelModal={this.state.showLabelModal} onHide={() => this.handleLabelClose()} />
-        { this.renderSubscribeModal() }
+        {this.renderSubscribeModal()}
+        {this.renderDeviceMetadataModal()}
       </div>
     );
   }

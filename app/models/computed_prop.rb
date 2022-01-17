@@ -33,9 +33,8 @@
 # ComputedProp, Molecule computed properties via OpenMOPAC and TURBOMOLE
 class ComputedProp < ApplicationRecord
   acts_as_paranoid
-
   belongs_to :molecule
-  belongs_to :user
+  belongs_to :user, foreign_key: :creator, class_name: 'User'
 
   enum status: %w[
     pending

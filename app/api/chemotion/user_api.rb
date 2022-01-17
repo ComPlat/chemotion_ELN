@@ -27,6 +27,13 @@ module Chemotion
         present labels || [], with: Entities::UserLabelEntity, root: 'labels'
       end
 
+      desc 'list structure editors'
+      get 'list_editors' do
+        editors = []
+        %w[chemdrawEditor marvinjsEditor].each { |str| editors.push(str) if current_user.matrix_check_by_name(str) }
+        present Matrice.where(name: editors).order('id'), with: Entities::MatriceEntity, root: 'matrices'
+      end
+
       namespace :save_label do
         desc 'create or update user labels'
         params do
@@ -51,6 +58,19 @@ module Chemotion
           else
             UserLabel.create!(attr)
           end
+        end
+      end
+
+      namespace :update_counter do
+        desc 'create or update user labels'
+        params do
+          optional :type, type: String
+          optional :counter, type: Integer
+        end
+        put do
+          counters = current_user.counters
+          counters[params[:type]] = params[:counter]
+          current_user.update(counters: counters)
         end
       end
 
@@ -101,6 +121,26 @@ module Chemotion
         get do
           data = current_user.groups | current_user.administrated_accounts.where(type: 'Group').distinct
           present data, with: Entities::GroupEntity, root: 'currentGroups'
+        end
+      end
+
+      namespace :queryCurrentDevices do
+        desc 'fetch devices of current user'
+        get do
+          data = [current_user.devices + current_user.groups.map(&:devices)].flatten.uniq
+          present data, with: Entities::DeviceEntity, root: 'currentDevices'
+        end
+      end
+
+      namespace :deviceMetadata do
+        desc 'Get deviceMetadata by device id'
+        params do
+          requires :device_id, type: Integer, desc: 'device id'
+        end
+        route_param :device_id do
+          get do
+            present DeviceMetadata.find_by(device_id: params[:device_id]), with: Entities::DeviceMetadataEntity, root: 'device_metadata'
+          end
         end
       end
 

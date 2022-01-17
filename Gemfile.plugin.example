@@ -4,4 +4,4 @@
 #  git: 'https://github.com/ComPlat/scifinding',
 #  group: [:plugins,:development,:production]
 #  # path: '../scifinding',
-# gem 'nmr_sim', git: 'https://github.com/ComPlat/nmr_sim', ref: '104ac26879ede1f495dd5e90979d6f701a356c9f', group: [:plugins,:development,:production]
+# gem 'nmr_sim', git: 'https://github.com/ComPlat/nmr_sim', ref: 'e2f91776aafd8eb1fa9d88c8ec2291b02201f222', group: [:plugins,:development,:production]

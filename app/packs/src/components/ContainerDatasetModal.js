@@ -16,19 +16,18 @@ export default class ContainerDatasetModal extends Component {
 
   render() {
     const {
-      show, dataset_container, onHide, onChange, readOnly, disabled
+      show, dataset_container, onHide, onChange, readOnly, disabled, kind
     } = this.props;
     if (show) {
       return (
-        <Modal show={show} backdrop="static" bsSize="large" dialogClassName="attachment-dataset-modal" onHide={() => onHide()}>
+        <Modal show={show} backdrop="static" bsSize="large" dialogClassName="attachment-dataset-modal" onHide={() => this.handleSave()}>
           <Modal.Header>
             <Modal.Title>
               {dataset_container.name}
               <ButtonToolbar>
-                <Button bsStyle="primary" onClick={() => this.handleSave()} disabled={disabled}>
-                  Close
+                <Button bsStyle="light" onClick={() => this.handleSave()} disabled={disabled}>
+                  <i className="fa fa-times" />
                 </Button>
-                <Button bsStyle="danger" onClick={() => onHide()}>Discard</Button>
               </ButtonToolbar>
             </Modal.Title>
           </Modal.Header>
@@ -37,6 +36,7 @@ export default class ContainerDatasetModal extends Component {
               ref={this.datasetInput}
               readOnly={readOnly}
               dataset_container={dataset_container}
+              kind={kind}
               onModalHide={() => onHide()}
               onChange={dataset_container => onChange(dataset_container)}
             />

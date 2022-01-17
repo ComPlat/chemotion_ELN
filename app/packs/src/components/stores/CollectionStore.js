@@ -11,6 +11,7 @@ import Xstate from '../extra/CollectionStoreXstate';
 class CollectionStore {
   constructor() {
     this.state = {
+      genericEls: [],
       unsharedRoots: [],
       sharedRoots: [],
       remoteRoots: [],
@@ -29,6 +30,7 @@ class CollectionStore {
 
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,
+      //handleFetchGenericEls: CollectionActions.fetchGenericEls,
       handleFetchLockedCollectionRoots: CollectionActions.fetchLockedCollectionRoots,
       handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
       handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots,
@@ -55,6 +57,11 @@ class CollectionStore {
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
   }
+
+  //handleFetchGenericEls(result) {
+  //  console.log(result);
+  //  this.state.genericEls = result.genericEls;
+  //}
 
   handleFetchLockedCollectionRoots(results) {
     this.state.lockedRoots = results.collections;

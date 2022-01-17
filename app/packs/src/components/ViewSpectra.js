@@ -1,5 +1,5 @@
 import React from 'react';
-import { SpectraEditor, FN } from 'react-spectra-editor';
+import { SpectraEditor, FN } from '@complat/react-spectra-editor';
 import { Modal, Well, Button } from 'react-bootstrap';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
@@ -46,6 +46,7 @@ class ViewSpectra extends React.Component {
     this.getSpcInfo = this.getSpcInfo.bind(this);
     this.getQDescVal = this.getQDescVal.bind(this);
     this.buildOthers = this.buildOthers.bind(this);
+    this.onSpectraDescriptionChanged = this.onSpectraDescriptionChanged.bind(this);
   }
 
   componentDidMount() {
@@ -135,7 +136,7 @@ class ViewSpectra extends React.Component {
 
   formatPks({
     peaks, shift, layout, isAscend, decimal, body,
-    isIntensity,
+    isIntensity, integration
   }) {
     const { jcamp } = this.getContent();
     const { entity } = FN.buildData(jcamp);
@@ -151,7 +152,7 @@ class ViewSpectra extends React.Component {
       : (features.editPeak || features.autoPeak);
     const boundary = { maxY, minY };
     const mBody = body || FN.peaksBody({
-      peaks, layout, decimal, shift, isAscend, isIntensity, boundary,
+      peaks, layout, decimal, shift, isAscend, isIntensity, boundary, integration
     });
     const layoutOpsObj = SpectraOps[layout];
     const { label, value, name } = shift.ref;
@@ -254,6 +255,7 @@ class ViewSpectra extends React.Component {
         decimal,
         body,
         isIntensity,
+        integration
       });
     }
 
@@ -317,7 +319,7 @@ class ViewSpectra extends React.Component {
   // }
 
   saveOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity,
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength,
   }) {
     const { handleSubmit } = this.props;
     const si = this.getSpcInfo();
@@ -325,6 +327,7 @@ class ViewSpectra extends React.Component {
     const fPeaks = FN.rmRef(peaks, shift);
     const peaksStr = FN.toPeakStr(fPeaks);
     const predict = JSON.stringify(rmRefreshed(analysis));
+    const waveLengthStr = JSON.stringify(waveLength);
 
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
@@ -338,6 +341,7 @@ class ViewSpectra extends React.Component {
       predict,
       handleSubmit,
       keepPred,
+      waveLengthStr
     );
   }
 
@@ -363,16 +367,17 @@ class ViewSpectra extends React.Component {
   }
 
   saveCloseOp({
-    peaks, shift, scan, thres, analysis, integration, multiplicity,
+    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity,
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength
     });
     this.closeOp();
   }
 
   getPeaksByLayou(peaks, layout, multiplicity) {
     if (['IR'].indexOf(layout) >= 0) return peaks;
+    if (['13C'].indexOf(layout) >= 0) return FN.CarbonFeatures(peaks, multiplicity);
 
     const { stack, shift } = multiplicity;
     const nmrMpyCenters = stack.map((stk) => {
@@ -382,7 +387,7 @@ class ViewSpectra extends React.Component {
         y: 0,
       };
     });
-    const defaultCenters = [{ x: -1000.0, y: 0}];
+    const defaultCenters = [{ x: -1000.0, y: 0 }];
     return nmrMpyCenters.length > 0 ? nmrMpyCenters : defaultCenters;
   }
 
@@ -550,6 +555,8 @@ class ViewSpectra extends React.Component {
               forecast={forecast}
               molSvg={sample.svgPath}
               descriptions={descriptions}
+              canChangeDescription={true}
+              onDescriptionChanged={this.onSpectraDescriptionChanged}
             />
         }
       </Modal.Body>
@@ -592,8 +599,23 @@ class ViewSpectra extends React.Component {
     );
   }
 
+  onSpectraDescriptionChanged(value) {
+    const { spcInfos, spcIdx } = this.state;
+    const sis = spcInfos.filter(x => x.idx === spcIdx);
+    const si = sis.length > 0 ? sis[0] : spcInfos[0];
+    const { sample}  = this.props
+    sample.analysesContainers().forEach((ae) => {
+      if (ae.id !== si.idAe) return;
+      ae.children.forEach((ai) => {
+        if (ai.id !== si.idAi) return;
+        ai.extended_metadata.content.ops =value.ops;
+      });
+    });
+  }
+
   render() {
     const { showModal } = this.state;
+    
     const { jcamp, predictions, idx } = this.getContent();
     const dialogClassName = 'spectra-editor-dialog';
     // WORKAROUND: react-stickydiv duplicates elements.

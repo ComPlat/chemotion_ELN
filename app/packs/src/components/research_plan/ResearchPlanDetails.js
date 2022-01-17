@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem } from 'react-bootstrap';
 import { unionBy } from 'lodash';
 import Immutable from 'immutable';
+import { findIndex } from 'lodash';
 import ElementCollectionLabels from '../ElementCollectionLabels';
 import UIActions from '../actions/UIActions';
 import ElementActions from '../actions/ElementActions';
@@ -10,6 +11,7 @@ import DetailActions from '../actions/DetailActions';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import ResearchPlansLiteratures from '../DetailsTabLiteratures';
 import ResearchPlanWellplates from '../ResearchPlanWellplates';
+import ResearchPlansMetadata from '../DetailsTabMetadata';
 import Attachment from '../models/Attachment';
 import Utils from '../utils/Functions';
 import LoadingActions from '../actions/LoadingActions';
@@ -20,6 +22,7 @@ import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
 import ElementDetailSortTab from '../ElementDetailSortTab';
+import { addSegmentTabs } from '../generic/SegmentDetails';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -38,9 +41,10 @@ export default class ResearchPlanDetails extends Component {
     this.handleBodyAdd = this.handleBodyAdd.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { researchPlan } = nextProps;
     this.setState({ researchPlan });
   }
@@ -58,6 +62,16 @@ export default class ResearchPlanDetails extends Component {
 
   handleResearchPlanChange(el) {
     const researchPlan = el;
+    researchPlan.changed = true;
+    this.setState({ researchPlan });
+  }
+
+  handleSegmentsChange(se) {
+    const { researchPlan } = this.state;
+    const { segments } = researchPlan;
+    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    researchPlan.segments = segments;
     researchPlan.changed = true;
     this.setState({ researchPlan });
   }
@@ -87,7 +101,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   handleSelect(eventKey) {
-    UIActions.selectTab({ tabKey: eventKey, type: 'screen' });
+    UIActions.selectTab({ tabKey: eventKey, type: 'research_plan' });
     this.setState({
       activeTab: eventKey
     });
@@ -201,6 +215,55 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
+  newItemByType(fieldName, value, type) {
+    switch (fieldName) {
+      case 'description':
+        return {
+          description: value,
+          descriptionType: type
+        }
+      case 'alternate_identifier':
+        return {
+          alternateIdentifier: value,
+          alternateIdentifierType: type
+        }
+      case 'related_identifier':
+        return {
+          relatedIdentifier: value,
+          relatedIdentifierType: type
+        }
+      }
+  }
+
+  handleCopyToMetadata(id, fieldName) {
+    const { researchPlan } = this.state;
+    const researchPlanMetadata = researchPlan.research_plan_metadata;
+    const args = { research_plan_id: researchPlanMetadata.research_plan_id };
+    const index = researchPlan.body.findIndex(field => field.id === id);
+    const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || ''
+    if (fieldName === 'name') {
+      researchPlanMetadata.title = researchPlan.name;
+      args.title = researchPlan.name.trim();
+    } else if (fieldName === 'subject') {
+      researchPlanMetadata.subject = value;
+      args.subject = value;
+    } else {
+      const type = researchPlan.body[index]?.title?.trim() || ''
+      const newItem = this.newItemByType(fieldName, value, type)
+
+      const currentCollection = researchPlanMetadata[fieldName] ? researchPlanMetadata[fieldName] : []
+      const newCollection = currentCollection.concat(newItem)
+      researchPlanMetadata[fieldName] = newCollection
+      args[`${fieldName}`] = researchPlanMetadata[fieldName]
+    }
+
+    ResearchPlansFetcher.postResearchPlanMetadata(args).then((result) => {
+      if (result.error) {
+        alert(result.error);
+      }
+    });
+  }
+
   // render functions
 
   renderExportButton(disabled) {
@@ -255,6 +318,7 @@ export default class ResearchPlanDetails extends Component {
             onAdd={this.handleBodyAdd}
             onDelete={this.handleBodyDelete.bind(this)}
             onExport={this.handleExportField.bind(this)}
+            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             update={update}
             edit={edit}
           />
@@ -262,6 +326,43 @@ export default class ResearchPlanDetails extends Component {
       </ListGroup>
     );
   } /* eslint-enable */
+
+  renderPropertiesTab(researchPlan, update) {
+    const { name, body } = researchPlan;
+    return (
+      <ListGroup fill="true">
+        <ListGroupItem >
+          <ResearchPlanDetailsName
+            value={name}
+            isNew={researchPlan.isNew}
+            disabled={researchPlan.isMethodDisabled('name')}
+            onChange={this.handleNameChange}
+            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+            edit
+          />
+          <ResearchPlanDetailsBody
+            body={body}
+            disabled={researchPlan.isMethodDisabled('body')}
+            onChange={this.handleBodyChange.bind(this)}
+            onDrop={this.handleBodyDrop.bind(this)}
+            onAdd={this.handleBodyAdd}
+            onDelete={this.handleBodyDelete.bind(this)}
+            onExport={this.handleExportField.bind(this)}
+            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+            isNew={researchPlan.isNew}
+            copyableFields={[
+              { title: 'Subject', fieldName: 'subject' },
+              { title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
+              { title: 'Related Identifier', fieldName: 'related_identifier' },
+              { title: 'Description', fieldName: 'description' }
+            ]}
+            update={update}
+            edit
+          />
+        </ListGroupItem>
+      </ListGroup>
+    );
+  }
 
   renderAnalysesTab(researchPlan) {
     return (
@@ -362,6 +463,14 @@ export default class ResearchPlanDetails extends Component {
             wellplates={researchPlan.wellplates}
             dropWellplate={wellplate => this.dropWellplate(wellplate)}
             deleteWellplate={wellplate => this.deleteWellplate(wellplate)}
+            />
+        </Tab>
+      ),
+      metadata: (
+        <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
+          <ResearchPlansMetadata
+            parentResearchPlan={researchPlan}
+            parentResearchPlanMetadata={researchPlan.research_plan_metadata}
           />
         </Tab>
       ),
@@ -373,7 +482,9 @@ export default class ResearchPlanDetails extends Component {
       attachments: 'Attachments',
       literature: 'Literature',
       wellplates: 'Wellplates',
+      metadata: 'Metadata',
     };
+    addSegmentTabs(researchPlan, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
     visible.forEach((value) => {
@@ -391,7 +502,7 @@ export default class ResearchPlanDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
+          <Tabs activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
             {tabContents}
           </Tabs>
           <ButtonToolbar>

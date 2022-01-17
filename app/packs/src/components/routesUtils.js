@@ -3,10 +3,15 @@ import CollectionStore from './stores/CollectionStore';
 import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
+import UserStore from './stores/UserStore';
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
   UserActions.fetchCurrentUser();
+  const { profile } = UserStore.getState();
+  if (!profile) {
+    UserActions.fetchProfile();
+  }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
   const collectionId = e.params['collectionID'];
@@ -47,6 +52,10 @@ const collectionShowCollectionManagement = () => {
 const scollectionShow = (e) => {
   UIActions.showElements();
   UserActions.fetchCurrentUser();
+  const { profile } = UserStore.getState();
+  if (!profile) {
+    UserActions.fetchProfile();
+  }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
   const collectionId = e.params['collectionID'];
@@ -168,6 +177,26 @@ const researchPlanShowOrNew = (e) => {
   }
 };
 
+const genericElShowOrNew = (e, type) => {
+  const { collectionID } = e.params;
+  let itype = '';
+  if (typeof type === 'undefined' || typeof type === 'object' || type == null || type == '') {
+    const keystr = e.params && Object.keys(e.params).filter(k => k != 'collectionID' && k.includes('ID'));
+    itype = keystr && keystr[0] && keystr[0].slice(0,-2);
+  } else {
+    itype = type;
+  }
+
+  const genericElID = e.params[`${itype}ID`];
+  if (genericElID === 'new') {
+    ElementActions.generateEmptyGenericEl(collectionID, itype);
+  } else if (genericElID === 'copy') {
+    //
+  } else {
+    ElementActions.fetchGenericElById(genericElID, itype);
+  }
+};
+
 const elementShowOrNew = (e) => {
   const type = e.type;
   switch(type) {
@@ -186,7 +215,12 @@ const elementShowOrNew = (e) => {
     case 'research_plan':
       researchPlanShowOrNew(e);
       break;
-    default: return null;
+    default:
+      if (e && e.klassType == 'GenericEl') {
+        genericElShowOrNew(e, type);
+        break;
+      }
+      return null;
   }
   return null;
 };
@@ -209,4 +243,5 @@ export {
   researchPlanShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
+  genericElShowOrNew
 };

@@ -12,7 +12,7 @@
 #  molecule_id         :integer
 #  molfile             :binary
 #  purity              :float            default(1.0)
-#  solvent             :string           default("")
+#  deprecated_solvent  :string           default("")
 #  impurities          :string           default("")
 #  location            :string           default("")
 #  is_top_secret       :boolean          default(FALSE)
@@ -41,6 +41,7 @@
 #  decoupled           :boolean          default(FALSE), not null
 #  molecular_mass      :float
 #  sum_formula         :string
+#  solvent             :jsonb
 #
 # Indexes
 #
@@ -60,6 +61,7 @@ class Sample < ApplicationRecord
   include AnalysisCodes
   include UnitConvertable
   include Taggable
+  include Segmentable
 
   STEREO_ABS = ['any', 'rac', 'meso', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)'].freeze
   STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para', 'cis', 'trans', 'fac', 'mer'].freeze
@@ -104,6 +106,7 @@ class Sample < ApplicationRecord
   # scopes for suggestions
   scope :by_residues_custom_info, ->(info, val) { joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?", "%#{sanitize_sql_like(val)}%")}
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_exact_name, ->(query) { where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)', "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$", "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_molecule_sum_formular, ->(query) {
@@ -171,6 +174,7 @@ class Sample < ApplicationRecord
   has_many :reactions_reactant_samples, dependent: :destroy
   has_many :reactions_solvent_samples, dependent: :destroy
   has_many :reactions_product_samples, dependent: :destroy
+  has_many :elements_samples, dependent: :destroy
 
   has_many :reactions, through: :reactions_samples
   has_many :reactions_as_starting_material, through: :reactions_starting_material_samples, source: :reaction
@@ -178,8 +182,12 @@ class Sample < ApplicationRecord
   has_many :reactions_as_solvent, through: :reactions_solvent_samples, source: :reaction
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
+  has_many :literals, as: :element, dependent: :destroy
+  has_many :literatures, through: :literals
+
   has_many :devices_samples
   has_many :analyses_experiments
+  has_many :private_notes, as: :noteable, dependent: :destroy
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
@@ -188,14 +196,14 @@ class Sample < ApplicationRecord
   has_one :container, as: :containable
 
   has_many :wells
-  has_many :wellplates, through: :well
+  has_many :wellplates, through: :wells
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
 
   has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w[amount_value amount_unit]
 
-  has_ancestry
+  has_ancestry orphan_strategy: :adopt
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   belongs_to :molecule, optional: true

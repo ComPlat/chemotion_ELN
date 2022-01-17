@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 
 import { OverlayTrigger, Popover } from 'react-bootstrap';
 
-import _ from 'lodash';
 import Delta from 'quill-delta';
 
 import { formatAnalysisContent } from './utils/ElementUtils';
@@ -32,10 +31,10 @@ export default class AnalysisEditor extends React.Component {
 
     const templateStore = TextTemplateStore.getState();
     const { predefinedTemplateNames, fetchedPredefinedTemplates } = templateStore;
-    const fetchedTemplates = fetchedPredefinedTemplates.toJS();
+    const fetchedTemplates = fetchedPredefinedTemplates && fetchedPredefinedTemplates.toJS();
     this.state = {
       fetchedNames: Object.keys(fetchedTemplates),
-      predefinedTemplateNames: predefinedTemplateNames.toJS(),
+      predefinedTemplateNames: predefinedTemplateNames && predefinedTemplateNames.toJS(),
       fetchedPredefinedTemplates
     };
 
@@ -48,21 +47,13 @@ export default class AnalysisEditor extends React.Component {
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
     this.quillOnChange = this.quillOnChange.bind(this);
-    //this.debouncedQuillOnChange = _.debounce(this.quillOnChange, 300);
   }
 
   componentDidMount() {
     TextTemplateStore.listen(this.onChangeTemplateStore);
-
     TextTemplateActions.fetchPredefinedTemplateNames();
 
     const { template } = this.props;
-    const namesToFetch = Object.values(template).flat();
-    this.fetchPredefinedTemplates(namesToFetch);
-  }
-
-  componentWillReceiveProps(newProps) {
-    const { template } = newProps;
     const namesToFetch = Object.values(template).flat();
     this.fetchPredefinedTemplates(namesToFetch);
   }
@@ -74,13 +65,13 @@ export default class AnalysisEditor extends React.Component {
   onChangeTemplateStore(state) {
     const { predefinedTemplateNames, fetchedPredefinedTemplates } = state;
     const { fetchedNames } = this.state;
-    const fetchedTemplates = fetchedPredefinedTemplates.toJS();
+    const fetchedTemplates = (fetchedPredefinedTemplates && fetchedPredefinedTemplates.toJS()) || Map();
 
     const templateStoreFetched = Object.keys(fetchedTemplates);
     const fetched = [...new Set(fetchedNames.concat(templateStoreFetched))];
     this.setState({
       fetchedNames: fetched,
-      predefinedTemplateNames: predefinedTemplateNames.toJS(),
+      predefinedTemplateNames: predefinedTemplateNames && predefinedTemplateNames.toJS(),
       fetchedPredefinedTemplates: fetchedTemplates
     });
   }

@@ -3,10 +3,10 @@ import {
   slice,
   intersectionWith,
   findIndex,
+  filter
 } from 'lodash';
 import Aviator from 'aviator';
 import alt from '../alt';
-
 import UserStore from './UserStore';
 import ElementActions from '../actions/ElementActions';
 import CollectionActions from '../actions/CollectionActions';
@@ -40,6 +40,10 @@ import { elementShowOrNew } from '../routesUtils';
 import DetailActions from '../actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
 import { chmoConversions } from '../OlsComponent';
+import MatrixCheck from '../common/MatrixCheck';
+import GenericEl from '../models/GenericEl';
+
+import MessagesFetcher from '../fetchers/MessagesFetcher';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -55,49 +59,51 @@ const fetchOls = (elementType) => {
 
 class ElementStore {
   constructor() {
-    this.state = {
-      elements: {
-        samples: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        },
-        reactions: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        },
-        wellplates: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        },
-        screens: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        },
-        devices: {
-          devices: [],
-          activeAccordionDevice: 0,
-          selectedDeviceId: -1
-        },
-        research_plans: {
-          elements: [],
-          totalElements: 0,
-          page: null,
-          pages: null,
-          perPage: null
-        }
+    const elements = {
+      samples: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
       },
+      reactions: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
+      wellplates: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
+      screens: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
+      devices: {
+        devices: [],
+        activeAccordionDevice: 0,
+        selectedDeviceId: -1
+      },
+      research_plans: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
+    };
+
+    this.state = {
+      elements,
       currentElement: null,
       elementWarning: false,
       moleculeSort: false,
@@ -144,6 +150,10 @@ class ElementStore {
 
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
 
+      handleFetchGenericElsByCollectionId: ElementActions.fetchGenericElsByCollectionId,
+      handleFetchGenericElById: ElementActions.fetchGenericElById,
+      handleCreateGenericEl: ElementActions.createGenericEl,
+
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
@@ -169,11 +179,16 @@ class ElementStore {
       handleChangeSorting: ElementActions.changeSorting,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
-      handleTryFetchReactionById: ElementActions.tryFetchReactionById,
+      handleTryFetchById: [
+        ElementActions.tryFetchReactionById,
+        ElementActions.tryFetchWellplateById,
+        ElementActions.tryFetchGenericElById
+      ],
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
       handleCopyReaction: ElementActions.copyReaction,
+      handleCopyElement: ElementActions.copyElement,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples:
@@ -192,6 +207,9 @@ class ElementStore {
       handlefetchResearchPlanById: ElementActions.fetchResearchPlanById,
       handleCreateResearchPlan: ElementActions.createResearchPlan,
 
+      handleCreatePrivateNote: ElementActions.createPrivateNote,
+      handleUpdatePrivateNote: ElementActions.updatePrivateNote,
+
       // FIXME ElementStore listens to UIActions?
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
@@ -199,6 +217,7 @@ class ElementStore {
       handleRefreshElements: ElementActions.refreshElements,
       handleGenerateEmptyElement:
         [
+          ElementActions.generateEmptyGenericEl,
           ElementActions.generateEmptyWellplate,
           ElementActions.generateEmptyScreen,
           ElementActions.generateEmptyResearchPlan,
@@ -238,7 +257,8 @@ class ElementStore {
         // ElementActions.updateSample,
         ElementActions.updateWellplate,
         ElementActions.updateScreen,
-        ElementActions.updateResearchPlan
+        ElementActions.updateResearchPlan,
+        ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
@@ -495,7 +515,7 @@ class ElementStore {
     const ui_state = UIStore.getState();
     const { sample, reaction, wellplate, screen, research_plan, currentCollection } = ui_state;
     const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
-    ElementActions.deleteElementsByUIState({
+    const params = {
       options,
       sample,
       reaction,
@@ -504,7 +524,19 @@ class ElementStore {
       research_plan,
       currentCollection,
       selecteds
-    });
+    };
+
+    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+      const { klasses } = UIStore.getState();
+
+      // eslint-disable-next-line no-unused-expressions
+      klasses && klasses.forEach((klass) => {
+        params[`${klass}`] = ui_state[`${klass}`];
+      });
+    }
+
+    ElementActions.deleteElementsByUIState(params);
   }
 
   handleUpdateElementsCollection() {
@@ -543,8 +575,38 @@ class ElementStore {
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
+
+
+        const { currentUser, genericEls } = UserStore.getState();
+        if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+          // eslint-disable-next-line no-unused-expressions
+          const genericNames = (genericEls.map(el => el.name)) || [];
+          genericNames.forEach((klass) => {
+            if (layout[`${klass}`] && layout[`${klass}`] > 0) { this.handleRefreshElements(klass); }
+          });
+        }
       }
     }
+  }
+
+  handleFetchGenericElsByCollectionId(result) {
+    //const klassName = result.element_klass && result.element_klass.name;
+    let type = result.type;
+    if (typeof type === 'undefined' || type == null) {
+      type = (result.result.elements && result.result.elements.length > 0 && result.result.elements[0].type) || result.result.type;
+    }
+    this.state.elements[`${type}s`] = result.result;
+  }
+
+  handleFetchGenericElById(result) {
+    this.changeCurrentElement(result);
+  }
+
+  handleCreateGenericEl(genericEl) {
+    UserActions.fetchCurrentUser();
+    this.handleRefreshElements((genericEl.element_klass && genericEl.element_klass.name) || 'genericEl');
+    //this.handleRefreshElements('genericEl');
+    this.navigateToNewElement(genericEl, 'GenericEl');
   }
 
   handleFetchSamplesByCollectionId(result) {
@@ -588,6 +650,7 @@ class ElementStore {
     UserActions.fetchCurrentUser();
     reaction.addMaterial(newSample, materialGroup);
     this.handleRefreshElements('sample');
+    ElementActions.handleSvgReactionChange(reaction);
     this.changeCurrentElement(reaction);
   }
 
@@ -605,11 +668,13 @@ class ElementStore {
 
   handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
+    ElementActions.handleSvgReactionChange(reaction);
     if (closeView) {
       this.changeCurrentElement(reaction);
     } else {
       this.changeCurrentElement(sample);
     }
+
     // TODO: check if this is needed with the new handling of changing CE
     // maybe this.handleRefreshElements is enough
     this.handleUpdateElement(sample);
@@ -814,7 +879,7 @@ class ElementStore {
     });
   }
 
-  handleTryFetchReactionById(result) {
+  handleTryFetchById(result) {
     if (result.hasOwnProperty("error")) {
       this.state.elementWarning = true
     } else {
@@ -847,6 +912,11 @@ class ElementStore {
     Aviator.navigate(`/collection/${result.colId}/reaction/copy`);
   }
 
+  handleCopyElement(result) {
+    this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
+    Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
+  }
+
   handleOpenReactionDetails(reaction) {
     this.changeCurrentElement(reaction);
     this.handleRefreshElements('sample')
@@ -869,7 +939,7 @@ class ElementStore {
 
   // -- Generic --
 
-  navigateToNewElement(element = {}) {
+  navigateToNewElement(element = {}, klassType='') {
     this.waitFor(UIStore.dispatchToken);
     const { type, id } = element;
     const { uri, namedParams } = Aviator.getCurrentRequest();
@@ -880,7 +950,7 @@ class ElementStore {
     }
     namedParams[`${type}ID`] = id;
     Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${id}`, { silent: true });
-    elementShowOrNew({ type, params: namedParams });
+    elementShowOrNew({ type, klassType, params: namedParams });
     return null;
   }
 
@@ -908,15 +978,19 @@ class ElementStore {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
     if (!uiState.currentCollection || !uiState.currentCollection.id) return;
+    if (typeof uiState[type] === 'undefined') return;
 
     const { page } = uiState[type];
     const { moleculeSort } = this.state;
-    this.state.elements[`${type}s`].page = page;
+    if (this.state.elements[`${type}s`]) {
+      this.state.elements[`${type}s`].page = page;
+    }
 
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
     const { currentSearchSelection } = uiState;
+
     if (currentSearchSelection != null) {
       currentSearchSelection.page_size = uiState.number_of_results;
       ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
@@ -929,21 +1003,34 @@ class ElementStore {
     } else {
       const per_page = uiState.number_of_results;
       const { fromDate, toDate, productOnly } = uiState;
-      const params = { page, per_page, fromDate, toDate, productOnly };
+      const params = { page, per_page, fromDate, toDate, productOnly, name: type };
       const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
-      const fn = `fetch${fnName}ByCollectionId`;
+      let fn = `fetch${fnName}ByCollectionId`;
       const allowedActions = [
         'fetchSamplesByCollectionId',
         'fetchReactionsByCollectionId',
         'fetchWellplatesByCollectionId',
         'fetchScreensByCollectionId',
-        'fetchResearchPlansByCollectionId',
+        'fetchResearchPlansByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
         ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+      } else {
+        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
       }
     }
+
+    MessagesFetcher.fetchSpectraMessages(0).then((result) => {
+      result.messages.sort((a, b) => (a.id - b.id));
+      const messages = result.messages;
+      if (messages && messages.length > 0) {
+        const lastMsg = messages[0]
+        this.setState({spectraMsg: lastMsg})
+      }
+    })
   }
+
 
   // CurrentElement
   handleSetCurrentElement(result) {
@@ -1009,7 +1096,7 @@ class ElementStore {
 
     if (index === -1) {
       this.state.activeKey = selecteds.length;
-      this.state.selecteds = this.addElement(nextEl);
+      if (nextEl) this.state.selecteds = this.addElement(nextEl);
     } else {
       this.state.activeKey = index;
       this.state.selecteds = this.updateElement(nextEl, index);
@@ -1020,7 +1107,7 @@ class ElementStore {
 
 
   handleGetMoleculeCas(updatedSample) {
-    const selecteds = this.state.selecteds
+    const selecteds = this.state.selecteds;
     const index = this.elementIndex(selecteds, updatedSample)
     const newSelecteds = this.updateElement(updatedSample, index)
     this.setState({ selecteds: newSelecteds })
@@ -1039,6 +1126,7 @@ class ElementStore {
     const { selecteds } = this.state;
     ResearchPlansFetcher.fetchById(updatedResearchPlan.id)
       .then((result) => {
+        result.mode = 'edit';
         this.changeCurrentElement(result);
         const index = this.elementIndex(selecteds, result);
         const newSelecteds = this.updateElement(result, index);
@@ -1114,7 +1202,12 @@ class ElementStore {
         this.handleUpdateWellplateAttaches(updatedElement);
         this.handleRefreshElements('sample');
         break;
+      case 'genericEl':
+        this.handleRefreshElements('genericEl');
+        break;
       default:
+        this.changeCurrentElement(updatedElement);
+        this.handleRefreshElements(updatedElement.type);
         break;
     }
 
@@ -1202,11 +1295,10 @@ class ElementStore {
 
   deleteCurrentElement(deleteEl) {
     const newSelecteds = this.deleteElement(deleteEl)
-    const left = this.state.activeKey - 1
-    this.setState(
-      prevState => ({ ...prevState, selecteds: newSelecteds }),
-      this.resetCurrentElement(left, newSelecteds)
-    )
+    let left = this.state.activeKey - 1
+    if ( left < 0 ) left = 0;
+    this.setState({  selecteds: newSelecteds });
+    this.resetCurrentElement(left, newSelecteds);
   }
 
   isDeletable(deleteEl) {
@@ -1265,6 +1357,18 @@ class ElementStore {
 
   // End of DetailStore
   /////////////////////
+
+
+  // -- Private Note --
+  handleCreatePrivateNote(note) {
+    this.state.currentElement.private_note = note
+    this.changeCurrentElement(this.state.currentElement)
+  }
+
+  handleUpdatePrivateNote(note) {
+    this.state.currentElement.private_note = note
+    this.changeCurrentElement(this.state.currentElement)
+  }
 }
 
 export default alt.createStore(ElementStore, 'ElementStore');

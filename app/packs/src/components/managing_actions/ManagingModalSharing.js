@@ -12,6 +12,8 @@ import UserActions from '../actions/UserActions';
 import UIStore from '../stores/UIStore';
 import UserStore from '../stores/UserStore';
 import UsersFetcher from '../fetchers/UsersFetcher';
+import MatrixCheck from '../common/MatrixCheck';
+import klasses from '../../../../../config/klasses.json';
 
 export default class ManagingModalSharing extends React.Component {
 
@@ -28,6 +30,7 @@ export default class ManagingModalSharing extends React.Component {
       reactionDetailLevel: props.reactionDetailLevel,
       wellplateDetailLevel: props.wellplateDetailLevel,
       screenDetailLevel: props.screenDetailLevel,
+      elementDetailLevel: props.elementDetailLevel,
       selectedUsers: null,
     }
 
@@ -67,8 +70,21 @@ export default class ManagingModalSharing extends React.Component {
     let isWellplateSelectionEmpty = this.isElementSelectionEmpty(uiState.wellplate);
     let isScreenSelectionEmpty = this.isElementSelectionEmpty(uiState.screen);
 
+    let isElementSelectionEmpty = false;
+
+    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+
+      // eslint-disable-next-line no-unused-expressions
+      klasses && klasses.forEach((klass) => {
+        isElementSelectionEmpty = isElementSelectionEmpty && this.isElementSelectionEmpty(uiState[`${klass}`]);
+      });
+    }
+
+
     return isSampleSelectionEmpty && isReactionSelectionEmpty &&
-           isWellplateSelectionEmpty && isScreenSelectionEmpty
+           isWellplateSelectionEmpty && isScreenSelectionEmpty &&
+           isElementSelectionEmpty;
   }
 
   filterParamsWholeCollection(uiState) {
@@ -106,6 +122,17 @@ export default class ManagingModalSharing extends React.Component {
       },
       currentSearchSelection: uiState.currentSearchSelection
     };
+
+    klasses && klasses.forEach((klass) => {
+      filterParams[`${klass}`] = {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: collectionId
+      };
+    });
+
+    console.log(filterParams);
     return filterParams;
   }
 
@@ -145,13 +172,24 @@ export default class ManagingModalSharing extends React.Component {
       },
       currentSearchSelection: uiState.currentSearchSelection
     };
+
+    klasses && klasses.forEach((klass) => {
+      filterParams[`${klass}`] = {
+        all: uiState[`${klass}`].checkedAll,
+        included_ids: uiState[`${klass}`].checkedIds,
+        excluded_ids: uiState[`${klass}`].uncheckedIds,
+        collection_id: collectionId
+      };
+    });
+    console.log(filterParams);
+
     return filterParams;
   }
 
   handleSharing() {
     const {
       permissionLevel, sampleDetailLevel, reactionDetailLevel,
-      wellplateDetailLevel, screenDetailLevel
+      wellplateDetailLevel, screenDetailLevel, elementDetailLevel
     } = this.state;
 
     const params = {
@@ -161,7 +199,8 @@ export default class ManagingModalSharing extends React.Component {
         sample_detail_level: sampleDetailLevel,
         reaction_detail_level: reactionDetailLevel,
         wellplate_detail_level: wellplateDetailLevel,
-        screen_detail_level: screenDetailLevel
+        screen_detail_level: screenDetailLevel,
+        element_detail_level: elementDetailLevel
       },
     };
 
@@ -306,7 +345,7 @@ export default class ManagingModalSharing extends React.Component {
             <option value='supervisor'>Supervisor</option>
           </FormControl>
         </FormGroup>
-        <FormGroup controlId="permissionLevelSelect">
+        <FormGroup controlId="permissionLevelSelect" id="permissionLevelSelect">
           <ControlLabel>Permission level</ControlLabel>
           <FormControl componentClass="select"
             onChange={(e) => this.handlePLChange(e)}
@@ -365,6 +404,14 @@ export default class ManagingModalSharing extends React.Component {
             <option value='10'>Everything</option>
           </FormControl>
         </FormGroup>
+        <FormGroup controlId="screenDetailLevelSelect">
+          <ControlLabel>Element detail level</ControlLabel>
+          <FormControl componentClass="select"
+            onChange={(e) => this.handleDLChange(e,'element')}
+            value={this.state.elementDetailLevel || ''}>
+            <option value='10'>Everything</option>
+          </FormControl>
+        </FormGroup>
         {this.selectUsers()}
         <br/>
         <Button id="create-sync-shared-col-btn" bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
@@ -382,6 +429,7 @@ ManagingModalSharing.propTypes = {
           reactionDetailLevel: PropTypes.number,
           wellplateDetailLevel: PropTypes.number,
           screenDetailLevel: PropTypes.number,
+          elementDetailLevel: PropTypes.number,
           onHide: PropTypes.func.isRequired,
           listSharedCollections: PropTypes.bool
 };
@@ -395,4 +443,5 @@ ManagingModalSharing.defaultProps = {
           reactionDetailLevel: 0,
           wellplateDetailLevel: 0,
           screenDetailLevel: 0,
+          elementDetailLevel: 10
 };

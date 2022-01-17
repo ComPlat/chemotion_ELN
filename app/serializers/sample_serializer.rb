@@ -1,12 +1,13 @@
 class SampleSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Sample.new.base_attributes
 
-  has_one :molecule
+  has_one :molecule, :serializer => MoleculeListSerializer
   has_one :container, :serializer => ContainerSerializer
   has_one :tag
 
   has_many :residues, serializer: ResidueSerializer
   has_many :elemental_compositions, serializer: ElementalCompositionSerializer
+  has_many :segments
 
   def code_log
     CodeLogSerializer.new(object.code_log).serializable_hash

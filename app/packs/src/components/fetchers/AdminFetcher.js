@@ -1,6 +1,15 @@
 import 'whatwg-fetch';
+import BaseFetcher from './BaseFetcher';
 
 export default class AdminFetcher {
+  static fetchUnitsSystem() {
+    return fetch('/units_system/units_system.json', {
+      credentials: 'same-origin', cache: 'no-store', headers: { 'cache-control': 'no-cache' }
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static fetchLocalCollector() {
     return fetch('/api/v1/admin/listLocalCollector/all.json', {
       credentials: 'same-origin'
@@ -28,6 +37,42 @@ export default class AdminFetcher {
   static fetchDeviceById(deviceId) {
     return fetch(`/api/v1/admin/device/${deviceId}`, {
       credentials: 'same-origin'
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static fetchDeviceMetadataByDeviceId(deviceId) {
+    return fetch(`/api/v1/admin/deviceMetadata/${deviceId}`, {
+      credentials: 'same-origin'
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static postDeviceMetadata(params) {
+    return fetch('/api/v1/admin/deviceMetadata', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static syncDeviceMetadataToDataCite(params) {
+    return fetch(`/api/v1/admin/deviceMetadata/${params.device_id}/sync_to_data_cite`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
@@ -269,5 +314,110 @@ export default class AdminFetcher {
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static exec(path, method) {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: path, requestMethod: method, jsonTranformation: json => json
+    });
+  }
+
+  static genericKlass(params, path) {
+    return BaseFetcher.withBodyData({
+      apiEndpoint: `/api/v1/admin/${path}/`, requestMethod: 'POST', bodyData: params, jsonTranformation: json => json
+    });
+  }
+
+  static fetchElementKlasses() {
+    return this.exec('/api/v1/generic_elements/klasses_all.json', 'GET');
+  }
+
+  static updateGElTemplates(params) {
+    return this.genericKlass(params, 'update_element_template');
+  }
+
+  static createElementKlass(params) {
+    return this.genericKlass(params, 'create_element_klass');
+  }
+
+  static updateElementKlass(params) {
+    return this.genericKlass(params, 'update_element_klass');
+  }
+
+  static activeInActiveElementKlass(params) {
+    return this.genericKlass(params, 'de_active_element_klass');
+  }
+
+  static deleteElementKlass(params) {
+    return this.genericKlass(params, 'delete_element_klass');
+  }
+
+  static createSegmentKlass(params) {
+    return this.genericKlass(params, 'create_segment_klass');
+  }
+
+  static updateSegmentKlass(params) {
+    return this.genericKlass(params, 'update_segment_klass');
+  }
+
+  static deActiveSegmentKlass(params) {
+    return this.genericKlass(params, 'de_active_segment_klass');
+  }
+
+  static updateSegmentTemplate(params) {
+    return this.genericKlass(params, 'update_segment_template');
+  }
+
+  static deleteKlassRevision(params) {
+    return this.genericKlass(params, 'delete_klass_revision');
+  }
+
+  static deleteGenericRevision(id) {
+    return this.exec(`/api/v1/admin/delete_generic_revision/${id}`, 'DELETE');
+  }
+
+  static listSegmentKlass(params = {}) {
+    const api = params.is_active === undefined ? '/api/v1/admin/list_segment_klass.json' : `/api/v1/admin/list_segment_klass.json?is_active=${params.is_active}`;
+    return this.exec(api, 'GET');
+  }
+
+  static listDatasetKlass(params = {}) {
+    const api = params.is_active === undefined ? '/api/v1/admin/list_dataset_klass.json' : `/api/v1/admin/list_dataset_klass.json?is_active=${params.is_active}`;
+    return this.exec(api, 'GET');
+  }
+
+  static deActiveDatasetKlass(params) {
+    return this.genericKlass(params, 'de_active_dataset_klass');
+  }
+
+  static updateDatasetTemplate(params) {
+    return this.genericKlass(params, 'update_dataset_template');
+  }
+
+  static fetchJobs() {
+    return fetch('/api/v1/admin/jobs', {
+      credentials: 'same-origin',
+      method: 'GET',
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.error(errorMessage); });
+  }
+
+  static restartJob(id) {
+    return fetch('/api/v1/admin/jobs/restart/', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(id)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.error(errorMessage); });
+  }
+
+  static fetchKlassRevisions(id, klass) {
+    return this.exec(`/api/v1/admin/klass_revisions.json?id=${id}&klass=${klass}`, 'GET');
   }
 }

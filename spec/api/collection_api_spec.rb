@@ -125,7 +125,7 @@ describe Chemotion::CollectionAPI do
       it 'returns serialized locked unshared collection roots of logged in user' do
         get '/api/v1/collections/locked'
         expect(JSON.parse(response.body)['collections'].map { |coll| coll['label'] })
-          .to eq ['All', 'chemotion.net']
+          .to eq ['All', 'chemotion-repository.net']
       end
     end
 

@@ -1,27 +1,19 @@
 import React from 'react';
 import Select from 'react-select';
-import { FormGroup, OverlayTrigger, ControlLabel, FormControl, Tooltip,
-  Row, Col } from 'react-bootstrap';
+import {
+  FormGroup, OverlayTrigger, ControlLabel, FormControl, Tooltip,
+  Row, Col
+} from 'react-bootstrap';
 import ReportActions from '../actions/ReportActions';
 import CheckBoxs from '../common/CheckBoxs';
+import { array } from 'prop-types';
+
 
 const imgFormatOpts = () => (
   [
     { label: 'PNG', value: 'png' },
     { label: 'EPS', value: 'eps' },
     { label: 'EMF', value: 'emf' },
-  ]
-);
-
-const templateOpts = () => (
-  [
-    { label: 'Standard', value: 'standard' },
-    { label: 'Supporting Information', value: 'supporting_information' },
-    { label: 'Supporting Information - Standard Reaction', value: 'supporting_information_std_rxn' },
-    { label: 'Supporting Information - Spectra', value: 'spectrum' },
-    { label: 'Supporting Information - Reaction List (.xlsx)', value: 'rxn_list_xlsx' },
-    { label: 'Supporting Information - Reaction List (.csv)', value: 'rxn_list_csv' },
-    { label: 'Supporting Information - Reaction List (.html)', value: 'rxn_list_html' },
   ]
 );
 
@@ -38,7 +30,7 @@ const onImgFormatChange = (e) => {
 };
 
 const ImgFormat = ({ imgFormat }) => (
-  <Row>
+  <Row style={{ paddingBottom: 100 }} >
     <Col md={3} sm={8}>
       <label>Images format</label>
       <Select
@@ -91,23 +83,29 @@ const FileName = ({ fileName }) => (
 );
 
 const onTemplateChange = (e) => {
-  ReportActions.updateTemplate(e.value);
+  ReportActions.updateTemplate(e);
 };
 
-const Template = ({ template }) => (
-  <Row>
-    <Col md={6} sm={12}>
-      <label>Template Selection</label>
-      <Select
-        options={templateOpts()}
-        value={template}
-        clearable={false}
-        onChange={onTemplateChange}
-      />
-    </Col>
-    <Col md={6} sm={12} />
-  </Row>
-);
+function TemplateRender(template, options) {
+  const templateOpts = options.map(item => {
+    return { id: item.id, label: item.name, value: item.report_type }
+  })
+
+  return (
+    <Row>
+      <Col md={6} sm={12}>
+        <label>Template Selection</label>
+        <Select
+          options={templateOpts}
+          value={template}
+          clearable={false}
+          onChange={onTemplateChange}
+        />
+      </Col>
+      <Col md={6} sm={12} />
+    </Row>
+  )
+}
 
 const toggleConfigs = (text, checked) => {
   ReportActions.updateConfigs({ text, checked });
@@ -118,13 +116,13 @@ const toggleConfigsAll = () => {
 };
 
 const suiConfig = ({ template, configs, fileName, checkedAllConfigs,
-  fileDescription }) => {
+  fileDescription, options }) => {
 
   const filteredConfigs = configs.filter(c => c.text === 'Show all chemicals in schemes (unchecked to show products only)');
   return (
     <div>
       <br />
-      <Template template={template} />
+      {TemplateRender(template, options)}
       <br />
       <FileName fileName={fileName} />
       <FileDescription fileDescription={fileDescription} />
@@ -139,14 +137,14 @@ const suiConfig = ({ template, configs, fileName, checkedAllConfigs,
 };
 
 const suiStdRxnConfig = ({
-  template, configs, fileName, checkedAllConfigs, fileDescription, 
+  template, configs, fileName, checkedAllConfigs, fileDescription, options
 }) => {
 
   const filteredConfigs = configs.filter(c => c.text === 'Show all chemicals in schemes (unchecked to show products only)');
   return (
     <div>
       <br />
-      <Template template={template} />
+      {TemplateRender(template, options)}
       <br />
       <FileName fileName={fileName} />
       <FileDescription fileDescription={fileDescription} />
@@ -160,12 +158,12 @@ const suiStdRxnConfig = ({
   );
 };
 
-const stdConfig = ({template, configs, fileName, checkedAllConfigs,
-  imgFormat, fileDescription }) => {
+const stdConfig = ({ template, configs, fileName, checkedAllConfigs,
+  imgFormat, fileDescription, options }) => {
   return (
     <div>
       <br />
-      <Template template={template} />
+      {TemplateRender(template, options)}
       <br />
       <FileName fileName={fileName} />
       <FileDescription fileDescription={fileDescription} />
@@ -180,11 +178,11 @@ const stdConfig = ({template, configs, fileName, checkedAllConfigs,
   );
 };
 
-const spcConfig = ({ template, fileName, fileDescription }) => {
+const spcConfig = ({ template, fileName, fileDescription, options }) => {
   return (
     <div>
       <br />
-      <Template template={template} />
+      {TemplateRender(template, options)}
       <br />
       <FileName fileName={fileName} />
       <FileDescription fileDescription={fileDescription} />
@@ -195,7 +193,7 @@ const spcConfig = ({ template, fileName, fileDescription }) => {
 const rxlConfig = props => spcConfig(props);
 
 const Config = (props) => {
-  switch (props.template) {
+  switch (props.template.value) {
     case 'standard':
       return stdConfig(props);
     case 'spectrum':
@@ -209,7 +207,7 @@ const Config = (props) => {
     case 'rxn_list_html':
       return rxlConfig(props);
     default:
-      return null;
+      return stdConfig(props);
   }
 };
 

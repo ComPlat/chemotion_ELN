@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import { Table, Button, Tooltip, OverlayTrigger, Label } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
-
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementReactionLabels from './ElementReactionLabels';
+import ElementWellplateLabels from './ElementWellplateLabels';
+import GenericElementLabels from './generic/GenericElementLabels';
 import PubchemLabels from './PubchemLabels';
 import ChemrepoLabels from './ChemrepoLabels';
 import ComputedPropLabel from './computed_props/ComputedPropLabel';
@@ -51,8 +51,12 @@ const targets = {
   molecule: ['reaction'],
 };
 
-const isCurrEleDropType = (sourceType, targetType) =>
-  sourceType && targetType && targets[sourceType].includes(targetType);
+const isCurrEleDropType = (sourceType, targetType) => {
+  if ((sourceType == 'molecule' || sourceType == 'sample') && !['wellplate', 'device', 'research_plan'].includes(targetType)) {
+    return sourceType && targetType;
+  }
+  return sourceType && targetType && targets[sourceType].includes(targetType);
+};
 
 const dragColumn = (element, showDragColumn, sourceType, targetType) => {
   if (showDragColumn) {
@@ -117,7 +121,7 @@ const svgPreview = (showPreviews, sample) => (
       showPreviews
         ? <SvgWithPopover
           hasPop
-          preivewObject={{
+          previewObject={{
             txtOnly: '',
             isSVG: true,
             src: sample.svgPath
@@ -144,9 +148,6 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
   }
 
   const { collId, showPreviews } = UIStore.getState();
-   // const dragItem = Sample.copyFromSampleAndCollectionId(sample, collId, true);
-   // dragItem.id = null;
-
   return (
     <tr
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
@@ -202,7 +203,8 @@ export default class ElementsTableSampleEntries extends Component {
     KeyboardStore.listen(this.sampleOnKeyDown);
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const displayedMoleculeGroup = [];
     const { currentElement } = ElementStore.getState();
     const { elements } = nextProps;
@@ -255,32 +257,34 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   sampleOnKeyDown(state) {
-    const context = state.context
-    if (context != "sample") { return false; }
+    const context = state.context;
+    if (context != 'sample') { return false; }
 
-    const documentKeyDownCode = state.documentKeyDownCode
-    let { keyboardIndex, keyboardSeletectedElementId, flattenSamplesId } = this.state
+    const documentKeyDownCode = state.documentKeyDownCode;
+    let { keyboardIndex, keyboardSeletectedElementId, flattenSamplesId } = this.state;
 
-    switch(documentKeyDownCode) {
+    switch (documentKeyDownCode) {
       case 13: // Enter
       case 39: // Right
         if (keyboardIndex != null && keyboardSeletectedElementId != null) {
-          showDetails(keyboardSeletectedElementId)
+          showDetails(keyboardSeletectedElementId);
         }
         break;
       case 38: // Up
         if (keyboardIndex > 0) {
           keyboardIndex--;
         } else {
-          keyboardIndex = 0
+          keyboardIndex = 0;
         }
         break;
       case 40: // Down
         if (keyboardIndex == null) {
-          keyboardIndex = 0
+          keyboardIndex = 0;
         } else if (keyboardIndex < (flattenSamplesId.length - 1)) {
           keyboardIndex++;
         }
+        break;
+      default:
         break;
     }
 
@@ -358,6 +362,8 @@ export default class ElementsTableSampleEntries extends Component {
               <ShowUserLabels element={sample} />
               <XvialIcon label={sample.external_label} />
               <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+              <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
+              <GenericElementLabels element={sample} key={`${sample.id}_element`} />
               <ElementCollectionLabels element={sample} key={`${sample.id}`} />
               <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
               <TopSecretIcon element={sample} />

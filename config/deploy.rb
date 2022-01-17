@@ -16,7 +16,7 @@ set :bundle_jobs, 4 # parallel bundler
 
 set :nvm_type, :user
 set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip || 'v14.16.0'
-set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip || '7.6.2'
+set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip || '7.11.1'
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('bundle')
 # Default value for :format is :pretty
@@ -46,7 +46,8 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
   'backup/deploy_backup', 'backup/weekly_backup',
   'node_modules',
   'log',
-  'public/images', 'public/docx', 'public/simulations',
+  'public/editors',
+  'public/images', 'public/docx', 'public/simulations', 'public/zip',
   'tmp/pids', 'tmp/cache', 'tmp/sockets', 'tmp/uploads',
   'uploads'
 )
@@ -58,23 +59,19 @@ set(:rvm_ruby_version, "#{version}#{'@' if gemset}#{gemset}") if File.exist?('.r
 
 set :slackistrano, false
 
+set :default_env, fetch(:default_env, {}).merge({
+#  'WEBPACKER_PRECOMPILE' => 'false',
+  'NODE_OPTIONS' => '"--max-old-space-size=3072"'
+})
+
+
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }
 
 # Default value for keep_releases is 5
 # set :keep_releases, 5
 
-# before 'deploy:migrate', 'deploy:backup'
 
-## NMV and NPM tasks
-## Install node version if not installed
-before 'nvm:validate', 'deploy:nvm_check'
-## Install defined version of npm if not selected
-before 'nvm:validate', 'deploy:npm_install_npm'
-## Clear all npm packages
-before 'npm:install', 'deploy:clear_node_module'
-
-after 'deploy:publishing', 'deploy:restart'
 
 namespace :git do
   task :update_repo_url do
@@ -116,9 +113,11 @@ namespace :deploy do
   task :npm_install_npm do
     on roles :app do
       execute <<~SH
-        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == "#{fetch(:npm_version)}" ]] && echo "npm already installed" || npm install -g npm@#{fetch(:npm_version)}
+        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
       SH
-      # source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
+      execute <<~SH
+        source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} &&  npm install -g yarn
+      SH
     end
   end
 
@@ -131,6 +130,18 @@ namespace :deploy do
   task :restart do
     on roles :app do
       execute :touch, "#{current_path}/tmp/restart.txt"
+    end
+  end
+
+  task :webpk do
+    on roles :app do
+      execute :rake, 'webpacker:compile'
+    end
+  end
+
+   task :echo do
+    on roles :app do
+      execute :echo, '$NODE_OPTIONS'
     end
   end
 
@@ -194,3 +205,19 @@ namespace :delayed_job do
     end
   end
 end
+
+before 'nvm:validate', 'deploy:nvm_check'
+
+## Clear all npm packages
+after 'deploy:nvm_check', 'deploy:clear_node_module'
+
+## Install defined version of npm if not selected
+after 'nvm:validate', 'deploy:npm_install_npm'
+
+# after 'deploy:compile_assets', 'deploy:webpk'
+
+# before 'deploy:compile_assets', 'deploy:echo'
+
+after 'deploy:publishing', 'deploy:restart'
+
+

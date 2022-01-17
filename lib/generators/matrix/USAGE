@@ -8,7 +8,7 @@ Description:
     }
 
     ## In your ruby code, add this to validate if the user is allowed to access the function:
-    if user.matrix_check_by_name("userLabel")
+    if user.matrix_check_by_name('userLabel')
       // Enable your function
     end
 

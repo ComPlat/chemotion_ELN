@@ -22,7 +22,7 @@ class Tmp < Local
          else
            afp
          end
-    return if fp.blank? || (fe = File.extname(fp)&.downcase).blank?
+    return if fp.blank? || ((fe = File.extname(fp)&.downcase).blank? && (fe = File.extname(attachment.filename)&.downcase).blank?)
     # wa for issue with 'jpeg' extension
     fe = '.jpg' if fe == '.jpeg'
     tmp = Tempfile.new([File.basename(fp, '.*'), fe], encoding: 'ascii-8bit')

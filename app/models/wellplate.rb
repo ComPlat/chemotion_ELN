@@ -26,6 +26,7 @@ class Wellplate < ApplicationRecord
   include Collectable
   include ElementCodes
   include Taggable
+  include Segmentable
 
   serialize :description, Hash
 

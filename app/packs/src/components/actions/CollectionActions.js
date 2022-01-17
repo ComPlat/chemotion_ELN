@@ -1,9 +1,19 @@
 import alt from '../alt';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
+import UsersFetcher from '../fetchers/UsersFetcher';
 import UIStore from '../stores/UIStore';
 import Utils from '../utils/Functions';
 
 class CollectionActions {
+  fetchGenericEls() {
+    return (dispatch) => { UsersFetcher.fetchElementKlasses()
+      .then((roots) => {
+        dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   takeOwnership(params) {
     return (dispatch) => { CollectionsFetcher.takeOwnership(params)
       .then((roots) => {

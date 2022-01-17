@@ -75,7 +75,7 @@ class SectionSpectrum extends Component {
     return isChanged;
   }
 
-  componentWillUpdate() {
+  UNSAFE_componentWillUpdate() {
     this.updateThumbNails();
   }
 

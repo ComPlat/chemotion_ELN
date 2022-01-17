@@ -14,4 +14,6 @@ export default {
   DATASET: 'dataset',
   CONTAINER: 'container',
   GENERALPROCEDURE: 'generalProcedure',
+  ELEMENT_FIELD: 'element_field',
+  GENERIC_GRID: 'generic_grid'
 };

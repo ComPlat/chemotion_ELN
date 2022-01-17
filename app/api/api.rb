@@ -95,6 +95,8 @@ class API < Grape::API
 
   ELEMENTS = %w[research_plan screen wellplate reaction sample]
 
+  TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate ]
+
   mount Chemotion::LiteratureAPI
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
@@ -104,6 +106,7 @@ class API < Grape::API
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI
   mount Chemotion::ResearchPlanAPI
+  mount Chemotion::ResearchPlanMetadataAPI
   mount Chemotion::ScreenAPI
   mount Chemotion::UserAPI
   mount Chemotion::ReactionSvgAPI
@@ -116,6 +119,7 @@ class API < Grape::API
   mount Chemotion::ProfileAPI
   mount Chemotion::CodeLogAPI
   mount Chemotion::DeviceAPI
+  mount Chemotion::InboxAPI
   mount Chemotion::IconNmrAPI
   mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GateAPI
@@ -131,7 +135,13 @@ class API < Grape::API
   mount Chemotion::PredictionAPI
   mount Chemotion::ComputeTaskAPI
   mount Chemotion::TextTemplateAPI
-   
+  mount Chemotion::GenericElementAPI
+  mount Chemotion::SegmentAPI
+  mount Chemotion::GenericDatasetAPI
+  mount Chemotion::ReportTemplateAPI
+  mount Chemotion::PrivateNoteAPI
+  mount Chemotion::NmrdbAPI
+
   add_swagger_documentation(info: {
     "title": "Chemotion ELN",
     "version": "1.0"
