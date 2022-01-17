@@ -55,7 +55,7 @@ class Report < ApplicationRecord
   def create_docx
     template = self.template
 
-    if report_templates_id
+    if ReportTemplate.where(id: report_templates_id).present?
       report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
       template = report_template.report_type
       tpl_path = if report_template.attachment
