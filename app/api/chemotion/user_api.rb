@@ -30,8 +30,8 @@ module Chemotion
       desc 'list structure editors'
       get 'list_editors' do
         editors = []
-        %w[chemdrawEditor marvinjsEditor].each { |str| editors.push(str) if current_user.matrix_check_by_name(str) }
-        present Matrice.where(name: editors).order('id'), with: Entities::MatriceEntity, root: 'matrices'
+        %w[chemdrawEditor marvinjsEditor ketcher2Editor].each { |str| editors.push(str) if current_user.matrix_check_by_name(str) }
+        present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices'
       end
 
       namespace :save_label do
