@@ -7,7 +7,7 @@
 
 
 ## [v1.1.0]
-> 2021-11-18
+> 2022-01-18
 
 * NB:
   * Admin: if applicable, chemspectra backend should be updated to version 0.10.13
