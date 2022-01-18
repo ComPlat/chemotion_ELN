@@ -35,6 +35,7 @@
   * import collection failed due to some molecules cannot be created successfully [cannot create molecule with given molfile](https://git.scc.kit.edu/ComPlat/chemotion_ELN/-/issues/1351)
   * filtering product samples of reactions when filter is on on sample list
   * https://github.com/ComPlat/chemotion_ELN/issues/584
+  * Notification channels: correct wrong data format
 
 
 ## [v1.0.3]
@@ -45,6 +46,7 @@
   * collection import with sample missing molecule_name: use default value
   * structure editors: added public/editors to ease set up
   * node post-install fx to resolve node_modules path when located outside of app (docker)
+   
 
 
 ## [v1.0.2]
