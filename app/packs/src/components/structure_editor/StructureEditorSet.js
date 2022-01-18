@@ -15,6 +15,17 @@ const EditorAttrs =
       getSVGWithCallback: false
     }
   },
+  ketcher2:
+  {
+    structure:
+    {
+      path: 'ketcher',
+      setMolfileInFrame: false,
+      setMfFuncName: 'setMolecule',
+      getMfFuncName: 'getMolfile',
+      getMfWithCallback: false,
+    }
+  },
   chemdraw:
   {
     structure:

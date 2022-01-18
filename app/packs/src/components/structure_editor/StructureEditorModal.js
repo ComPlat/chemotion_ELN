@@ -15,6 +15,7 @@ import StructureEditor from '../models/StructureEditor';
 import EditorAttrs from './StructureEditorSet';
 import ChemDrawEditor from './ChemDrawEditor';
 import MarvinjsEditor from './MarvinjsEditor';
+import KetcherEditor from './KetcherEditor';
 import loadScripts from './loadScripts';
 
 const EditorList = (props) => {
@@ -151,6 +152,14 @@ export default class StructureEditorModal extends React.Component {
           this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
+    } else if (editor.id === 'ketcher2') {
+      structure.editor.getMolfile().then((molfile) => {
+        structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
+          imgfile.text().then((text) => {
+            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
+          });
+        });
+      });
     } else {
       const { molfile, info } = structure;
       structure.fetchSVG().then((svg) => {
@@ -195,7 +204,10 @@ export default class StructureEditorModal extends React.Component {
         />
       </div>
     );
-
+    if (!showWarning && editor.id === 'ketcher2') {
+      useEditor =
+        <KetcherEditor editor={this.editors.ketcher2} fh={iframeHeight} fs={iframeStyle} molfile={molfile} />;
+    }
     if (!showWarning && editor.id === 'chemdraw') {
       useEditor =
         <ChemDrawEditor editor={this.editors.chemdraw} molfile={molfile} parent={this} iH={iframeHeight} />;
