@@ -1,1 +1,25 @@
-// CONFLICT (rename/delete): app/assets/javascripts/components/actions/LoadingActions.js deleted in development-5 and renamed to app/packs/src/components/actions/LoadingActions.js in HEAD. Version HEAD of app/packs/src/components/actions/LoadingActions.js left in tree.
+import alt from '../alt';
+
+class LoadingActions {
+  start() {
+    return null;
+  }
+
+  stop() {
+    return null;
+  }
+
+  startLoadingWithProgress(filename) {
+    return filename;
+  }
+
+  stopLoadingWithProgress(filename) {
+    return filename;
+  }
+
+  updateLoadingProgress(filename, progress) {
+    return { filename: filename, progress: progress };
+  }
+}
+
+export default alt.createActions(LoadingActions);

@@ -124,25 +124,10 @@ module Chemotion
             end
           end
 
-          if rp_attach_ary.any?
-            # TransferThumbnailToPublicJob.perform_now(rp_attach_ary)
-            TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}")
-                                        .perform_later(rp_attach_ary)
-          end
-          if attach_ary.any?
-            TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
-                                  .perform_later(attach_ary)
-          end
+          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) if rp_attach_ary.any?
+          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) if attach_ary.any?
         end
-        if params.fetch(:del_files, []).any?
-          Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil)
-          if params[:attachable_type].in?(%w[ResearchPlan Wellplate Element])
-            Attachment.find_by(attachable_type: params[:attachable_type], attachable_id: params[:attachable_id])
-            params[:attachable_type].constantize.find(params[:attachable_id])
-            # rp.update!(thumb_svg: a.nil?? nil : '/images/thumbnail/' + a.identifier)
-          end
-        end
-        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) unless params[:del_files].empty?
+        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) if params[:del_files].any?
         true
       end
     end

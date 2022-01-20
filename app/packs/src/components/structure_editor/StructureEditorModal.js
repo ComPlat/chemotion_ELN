@@ -1,1 +1,280 @@
-// CONFLICT (rename/delete): app/assets/javascripts/components/structure_editor/StructureEditorModal.js deleted in development-5 and renamed to app/packs/src/components/structure_editor/StructureEditorModal.js in HEAD. Version HEAD of app/packs/src/components/structure_editor/StructureEditorModal.js left in tree.
+import React from 'react';
+import PropTypes from 'prop-types';
+import {
+  Button,
+  ButtonToolbar,
+  Modal,
+  Panel,
+  FormGroup,
+  ControlLabel
+} from 'react-bootstrap';
+import Select from 'react-select';
+import UserStore from '../stores/UserStore';
+import UIStore from '../stores/UIStore';
+import StructureEditor from '../models/StructureEditor';
+import EditorAttrs from './StructureEditorSet';
+import ChemDrawEditor from './ChemDrawEditor';
+import MarvinjsEditor from './MarvinjsEditor';
+import loadScripts from './loadScripts';
+
+const EditorList = (props) => {
+  const { options, fnChange, value } = props;
+  return (
+    <FormGroup>
+      <div className="col-lg-2 col-md-2"><ControlLabel>Structure Editor</ControlLabel></div>
+      <div className="col-lg-6 col-md-8">
+        <Select
+          className="status-select"
+          name="editor selection"
+          clearable={false}
+          options={options}
+          onChange={fnChange}
+          value={value}
+        />
+      </div>
+      <div className="col-lg-4 col-md-2">{' '}</div>
+    </FormGroup>
+  );
+};
+
+EditorList.propTypes = {
+  value: PropTypes.string.isRequired,
+  fnChange: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(PropTypes.object).isRequired
+};
+
+const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
+  (
+    <Panel bsStyle="info">
+      <Panel.Heading>
+        <Panel.Title>
+          Parents/Descendants will not be changed!
+        </Panel.Title>
+      </Panel.Heading>
+      <Panel.Body>
+        <p>This sample has parents or descendants, and they will not be changed.</p>
+        <p>Are you sure?</p>
+        <br />
+        <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
+          Cancel
+        </Button>
+        <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">
+          Continue Editing
+        </Button>
+      </Panel.Body>
+    </Panel>
+  ) : null
+);
+
+WarningBox.propTypes = {
+  handleCancelBtn: PropTypes.func.isRequired,
+  hideWarning: PropTypes.func.isRequired,
+  show: PropTypes.bool.isRequired,
+};
+
+export default class StructureEditorModal extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      showModal: props.showModal,
+      showWarning: props.hasChildren || props.hasParent,
+      molfile: props.molfile,
+      matriceConfigs: [],
+      editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' })
+    };
+    this.editors = { ketcher: this.state.editor };
+    this.handleEditorSelection = this.handleEditorSelection.bind(this);
+    this.onChangeUser = this.onChangeUser.bind(this);
+  }
+
+  componentDidMount() {
+    UserStore.listen(this.onChangeUser);
+  }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    this.setState({
+      showModal: nextProps.showModal,
+      molfile: nextProps.molfile
+    });
+  }
+
+  onChangeUser(state) {
+    let grantEditors = (state.matriceConfigs || []).map(u => u.configs) || [];
+    const availableEditors = UIStore.getState().structureEditors || {};
+    if (Object.keys(availableEditors.editors || {}).length > 0) {
+      grantEditors = grantEditors.map((g) => {
+        const available = availableEditors.editors[g.editor];
+        if (available) {
+          if (available.extJs && available.extJs.length > 0) {
+            loadScripts({
+              es: available.extJs,
+              id: g.editor,
+              cbError: () => alert(`${g.editor} failed to load!`),
+              cbLoaded: () => {}
+            });
+          }
+          return Object.assign({}, {
+            [g.editor]: new StructureEditor({
+              ...EditorAttrs[g.editor], ...available, ...g, id: g.editor
+            })
+          });
+        }
+        return null;
+      });
+      this.editors = [{ ketcher: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }) }].concat(grantEditors).reduce((acc, args) => {
+        return Object.assign({}, acc, args);
+      }, {});
+    }
+  }
+
+  initializeEditor() {
+    const { editor, molfile } = this.state;
+    if (editor) { editor.structureDef.molfile = molfile; }
+  }
+
+  handleEditorSelection(e) {
+    this.setState(prevState => ({ ...prevState, editor: this.editors[e.value] }));
+  }
+
+  handleCancelBtn() {
+    this.hideModal();
+    if (this.props.onCancel) { this.props.onCancel(); }
+  }
+
+  handleSaveBtn() {
+    const { editor } = this.state;
+    const structure = editor.structureDef;
+    if (editor.id === 'marvinjs') {
+      structure.editor.sketcherInstance.exportStructure('mol').then((mMol) => {
+        const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
+        editorImg.render(mMol).then((svg) => {
+          this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
+        }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
+      }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
+    } else {
+      const { molfile, info } = structure;
+      structure.fetchSVG().then((svg) => {
+        this.setState({
+          showModal: false,
+          showWarning: this.props.hasChildren || this.props.hasParent
+        }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); } });
+      });
+    }
+  }
+
+  hideModal() {
+    this.setState({
+      showModal: false,
+      showWarning: this.props.hasChildren || this.props.hasParent
+    });
+  }
+
+  hideWarning() {
+    this.setState({ showWarning: false });
+  }
+
+  render() {
+    const handleSaveBtn = !this.props.onSave ? null : this.handleSaveBtn.bind(this);
+    const { cancelBtnText, submitBtnText } = this.props;
+    const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
+    const { editor, showWarning, molfile } = this.state;
+    const iframeHeight = showWarning ? '0px' : '730px';
+    const iframeStyle = showWarning ? { border: 'none' } : {};
+    const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
+
+    let useEditor = (
+      <div>
+        <iframe
+          id={editor.id}
+          src={editor.src}
+          title={`${editor.title}`}
+          height={iframeHeight}
+          width="100%"
+          style={iframeStyle}
+          ref={(f) => { this.ifr = f; }}
+        />
+      </div>
+    );
+
+    if (!showWarning && editor.id === 'chemdraw') {
+      useEditor =
+        <ChemDrawEditor editor={this.editors.chemdraw} molfile={molfile} parent={this} iH={iframeHeight} />;
+    }
+    let citeMarvin = null;
+    if (!showWarning && editor.id === 'marvinjs') {
+      useEditor =
+        <MarvinjsEditor editor={this.editors.marvinjs} molfile={molfile} parent={this} iH={iframeHeight} />;
+      citeMarvin = (
+        <a href="https://chemaxon.com/" target="_blank" rel="noreferrer">
+          <img alt="Marvin JS" src="/marvinjs/powered_by_chemaxon.png" style={{ width: '256px', cursor: 'pointer' }} />
+        </a>
+      );
+    }
+    const editorOptions = Object.keys(this.editors).map(e => ({ value: e, name: this.editors[e].label, label: this.editors[e].label }));
+    return (
+      <div>
+        <Modal
+          dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
+          animation
+          show={this.state.showModal}
+          onLoad={this.initializeEditor.bind(this)}
+          onHide={this.handleCancelBtn.bind(this)}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <EditorList
+                value={editor.id}
+                fnChange={this.handleEditorSelection}
+                options={editorOptions}
+              />
+              {citeMarvin}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body >
+            <WarningBox
+              handleCancelBtn={this.handleCancelBtn.bind(this)}
+              hideWarning={this.hideWarning.bind(this)}
+              show={!!showWarning}
+            />
+            {useEditor}
+            <div style={buttonToolStyle}>
+              <ButtonToolbar>
+                <Button bsStyle="warning" onClick={this.handleCancelBtn.bind(this)}>
+                  {cancelBtnText}
+                </Button>
+                {!handleSaveBtn ? null : (
+                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }} >
+                    {submitBtnText}
+                  </Button>
+                )}
+                {!handleSaveBtn ? null : submitAddons}
+              </ButtonToolbar>
+            </div>
+          </Modal.Body>
+        </Modal>
+      </div>
+    );
+  }
+}
+
+StructureEditorModal.propTypes = {
+  molfile: PropTypes.string,
+  showModal: PropTypes.bool,
+  hasChildren: PropTypes.bool,
+  hasParent: PropTypes.bool,
+  onCancel: PropTypes.func,
+  onSave: PropTypes.func,
+  submitBtnText: PropTypes.string,
+  cancelBtnText: PropTypes.string,
+};
+
+StructureEditorModal.defaultProps = {
+  molfile: '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n',
+  showModal: false,
+  hasChildren: false,
+  hasParent: false,
+  onCancel: () => {},
+  onSave: () => {},
+  submitBtnText: 'Save',
+  cancelBtnText: 'Cancel',
+};
