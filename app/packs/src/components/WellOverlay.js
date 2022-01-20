@@ -1,13 +1,12 @@
 import React from 'react';
 import { Button, Popover, Overlay, ControlLabel, FormGroup, FormControl, Col, InputGroup, ButtonGroup } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import Aviator from 'aviator';
 import PropTypes from 'prop-types';
-import { wellplateShowSample } from './routesUtils';
 import Select from 'react-select';
 import { CirclePicker } from 'react-color';
 
-const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode}) => {
+const WellOverlay = ({
+  show, well, readoutTitles, placement, target, handleClose, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode}) => {
   return (
     <Overlay  rootClose
               show={show}
@@ -15,14 +14,53 @@ const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFr
               placement={placement}
               onHide={() => handleClose()} >
       <Popover title={title(handleClose)} id={'wellpop'+well.id}>
-        {content(well, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode)}
+        {content(well, readoutTitles, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode)}
       </Popover>
     </Overlay>
   );
 }
 
-const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode) => {
-  const { sample } = well;
+// TODO: remove this
+// const content = (well, readoutTitles, removeSampleFromWell) => {
+//   const { sample, readouts } = well;
+//   return (
+//     <div style={{ width: 200 }}>
+//       {renderWellContent(well, removeSampleFromWell)}
+//       <div>
+//         <hr style={{ marginTop: 28, marginBottom: 10 }} />
+//         <FormGroup>
+//           {readouts && readouts.map((readout, index) => (
+//             <div key={`readout_${readout.id}`}>
+//               <ControlLabel>{readoutTitles[index]}</ControlLabel>
+//               <InputGroup>
+//                 <FormControl
+//                   type="text"
+//                   value={readout.value}
+//                   disabled
+//                   placeholder="Value"
+//                 />
+//                 <InputGroup.Addon disabled>{readout.unit}</InputGroup.Addon>
+//               </InputGroup>
+//             </div>
+//           ))}
+//         </FormGroup>
+//         <FormGroup style={{ display: 'none' }}>
+//           <ControlLabel>Imported Readout</ControlLabel>
+//           <FormControl
+//             componentClass="textarea"
+//             disabled
+//             value={sampleImportedReadout(sample) || ''}
+//             style={{ height: 50 }}
+//           />
+//         </FormGroup>
+//       </div>
+//     </div>
+//   );
+// };
+
+const content = (
+  well, readoutTitles, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode) => {
+  const { sample, readouts } = well;
   const bcStyle = {
     backgroundColor: selectedColor || well.color_code
   };
@@ -58,19 +96,28 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
         />
         &nbsp;
         <FormGroup>
-          <ControlLabel>Readout</ControlLabel>
-          <FormControl componentClass="textarea"
-            disabled={true}
-            value={well.readout || ''}
-            style={{height: 80}}
-          />
+          {readouts && readouts.map((readout, index) => (
+            <div key={`readout_${readout.id}`}>
+              <ControlLabel>{readoutTitles[index]}</ControlLabel>
+              <InputGroup>
+                <FormControl
+                  type="text"
+                  value={readout.value}
+                  disabled
+                  placeholder="Value"
+                />
+                <InputGroup.Addon disabled>{readout.unit}</InputGroup.Addon>
+              </InputGroup>
+            </div>
+          ))}
         </FormGroup>
-        <FormGroup>
+        <FormGroup style={{ display: 'none' }}>
           <ControlLabel>Imported Readout</ControlLabel>
-          <FormControl componentClass="textarea"
-            disabled={true}
+          <FormControl
+            componentClass="textarea"
+            disabled
             value={sampleImportedReadout(sample) || ''}
-            style={{height: 80}}
+            style={{ height: 50 }}
           />
         </FormGroup>
         <FormGroup style={{ top: '50px' }} controlId="colorInput">
@@ -158,59 +205,6 @@ const renderWellContent = (well, removeSampleFromWell) => {
 };
 
 const sampleImportedReadout = sample => (sample ? sample.imported_readout : '');
-
-const content = (well, readoutTitles, removeSampleFromWell) => {
-  const { sample, readouts } = well;
-  return (
-    <div style={{ width: 200 }}>
-      {renderWellContent(well, removeSampleFromWell)}
-      <div>
-        <hr style={{ marginTop: 28, marginBottom: 10 }} />
-        <FormGroup>
-          {readouts && readouts.map((readout, index) => (
-            <div key={`readout_${readout.id}`}>
-              <ControlLabel>{readoutTitles[index]}</ControlLabel>
-              <InputGroup>
-                <FormControl
-                  type="text"
-                  value={readout.value}
-                  disabled
-                  placeholder="Value"
-                />
-                <InputGroup.Addon disabled>{readout.unit}</InputGroup.Addon>
-              </InputGroup>
-            </div>
-          ))}
-        </FormGroup>
-        <FormGroup style={{ display: 'none' }}>
-          <ControlLabel>Imported Readout</ControlLabel>
-          <FormControl
-            componentClass="textarea"
-            disabled
-            value={sampleImportedReadout(sample) || ''}
-            style={{ height: 50 }}
-          />
-        </FormGroup>
-      </div>
-    </div>
-  );
-};
-
-const WellOverlay = ({
-  show, well, readoutTitles, placement, target, handleClose, removeSampleFromWell
-}) => (
-  <Overlay
-    rootClose
-    show={show}
-    target={target}
-    placement={placement}
-    onHide={() => handleClose()}
-  >
-    <Popover title={title(handleClose)} id={`wellpop${well.id}`}>
-      {content(well, readoutTitles, removeSampleFromWell)}
-    </Popover>
-  </Overlay>
-);
 
 WellOverlay.propTypes = {
   show: PropTypes.bool.isRequired,
