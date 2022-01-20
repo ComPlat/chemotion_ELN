@@ -51,7 +51,7 @@ export default class Wellplate extends Element {
         wells: wells,
         readout_titles: [],
         container: Container.init(),
-        segments: []
+        segments: [],
         attachments: [],
       }
     )
