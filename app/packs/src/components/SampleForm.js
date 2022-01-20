@@ -176,6 +176,8 @@ export default class SampleForm extends React.Component {
       { label: 'any', value: 'any' },
       { label: 'rac', value: 'rac' },
       { label: 'meso', value: 'meso' },
+      { label: 'delta', value: 'delta' },
+      { label: 'lambda', value: 'lambda' },
       { label: '(S)', value: '(S)' },
       { label: '(R)', value: '(R)' },
       { label: '(Sp)', value: '(Sp)' },
