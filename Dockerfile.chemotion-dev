@@ -77,7 +77,6 @@ RUN /bin/bash -l -c "yarn install"
 
 
 RUN /bin/bash -l -c "gem install bundler -v 1.17.3 && bundle install "
-RUN sudo apt -yy remove lib*-dev
 RUN sudo apt-get -y --autoremove --fix-missing install \
     libboost-serialization1.71.0 \
     libboost-iostreams1.71.0 \
