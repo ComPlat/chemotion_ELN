@@ -23,6 +23,8 @@ services:
       - '5432'
     ports: # expose port to host machine in case we want to use external db gui tools
       - '5432:5432'
+    volumes:
+      - 'database:/var/lib/postgresql'
 
   app:
     build:
@@ -33,6 +35,11 @@ services:
     ports: # expose default rails port to host machine
       - "3000:3000"
     volumes:
+      - 'homedir:/home/chemotion-dev/' # houses the installed gems via asdf
       - '.:/home/chemotion-dev/app'
     working_dir: "/home/chemotion-dev/app"
     command: "bundle exec rails s -p 3000 -b 0.0.0.0"
+
+volumes:
+  database:
+  homedir:
