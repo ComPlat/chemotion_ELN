@@ -36,7 +36,7 @@ describe Chemotion::ResearchPlanAPI do
       let(:rp) { create(:research_plan) }
       let!(:research_plan_metadata) { create(:research_plan_metadata) }
 
-   before do
+      before do
         rp.research_plan_metadata = research_plan_metadata
         CollectionsResearchPlan.create!(research_plan: rp, collection: c)
       end
@@ -86,6 +86,38 @@ describe Chemotion::ResearchPlanAPI do
           rp = ResearchPlan.find_by(name: 'test')
           expect(rp.creator).to eq(user)
         end
+      end
+    end
+
+    describe 'POST /api/v1/research_plans/:id/import_wellplate/:wellplate_id' do
+      let(:collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
+      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3) }
+      let(:research_plan) { create(:research_plan, creator: user) }
+      let(:params) { { research_plan_id: research_plan.id } }
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
+        CollectionsResearchPlan.create!(research_plan: research_plan, collection: collection)
+
+        post "/api/v1/research_plans/#{research_plan.id}/import_wellplate/#{wellplate.id}", params: params, as: :json
+      end
+
+      it 'imports the wellplate as table into the research plan body' do
+        response_body = JSON.parse(response.body)
+        table = response_body.dig('research_plan', 'body').last
+
+        expect(response_body.key?('error')).to be false
+
+        rows = table['value']['rows']
+        columns = table['value']['columns']
+
+        expect(table['type']).to eq 'table'
+
+        expect(rows.size).to eq 12 * 8
+        expect(columns.size).to eq 4 # coordinate + 3 readouts
+
+        names = columns.map { |column| column['name'] }
+        expect(names).to eq ['X, Y', 'Readout 1', 'Readout 2', 'Readout 3']
       end
     end
   end

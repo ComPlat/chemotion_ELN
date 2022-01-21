@@ -268,6 +268,30 @@ module Chemotion
           export.read
         end
       end
+
+      desc 'Import Wellplate as table into a research plan'
+      params do
+        requires :id, type: Integer, desc: 'Research plan id'
+        requires :wellplate_id, type: String, desc: 'Wellplate id'
+      end
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).update?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:wellplate_id])).read?
+        end
+
+        post 'import_wellplate/:wellplate_id' do
+          wellplate = Wellplate.find(params[:wellplate_id])
+          research_plan = ResearchPlan.find(params[:id])
+          exporter = Usecases::ResearchPlans::ImportWellplateAsTable.new(research_plan, wellplate)
+          begin
+            exporter.execute!
+            { research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized }
+          rescue StandardError => e
+            error!(e, 500)
+          end
+        end
+      end
     end
   end
 end
