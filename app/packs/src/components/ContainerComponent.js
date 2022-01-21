@@ -18,6 +18,7 @@ import OlsTreeSelect from './OlsComponent';
 import { confirmOptions } from './staticDropdownOptions/options';
 
 import AnalysisEditor from './AnalysisEditor';
+import HyperLinksSection from './common/HyperLinksSection';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
@@ -35,6 +36,9 @@ export default class ContainerComponent extends Component {
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
+    
+    this.handleAddLink = this.handleAddLink.bind(this);
+    this.handleRemoveLink = this.handleRemoveLink.bind(this);
   }
 
   componentDidMount() {
@@ -101,6 +105,25 @@ export default class ContainerComponent extends Component {
   updateTextTemplates(textTemplate) {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
+  }
+  
+  handleAddLink(link) {
+    const { container } = this.state;
+    if (container.extended_metadata['hyperlinks'] == null) {
+      container.extended_metadata['hyperlinks'] = [link];
+    } else {
+      container.extended_metadata['hyperlinks'].push(link);
+    }
+    this.setState({ container });
+  }
+
+  handleRemoveLink(link) {
+    const { container } = this.state;
+    var index = container.extended_metadata['hyperlinks'].indexOf(link);
+    if (index !== -1) {
+      container.extended_metadata['hyperlinks'].splice(index, 1);
+    }
+    this.setState({ container });
   }
 
   render() {
@@ -187,6 +210,10 @@ export default class ContainerComponent extends Component {
             disabled={disabled}
             onChange={this.onChange}
           />
+        </Col>
+        <Col md={12}>
+          <HyperLinksSection data={container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
+            disabled={disabled}></HyperLinksSection>
         </Col>
       </div>
     );

@@ -322,6 +322,14 @@ module Chemotion
             zip.put_next_entry att.filename
             zip.write att.read_file
           end
+          file_text = "";
+          @container.attachments.each do |att|
+            file_text += "#{att.filename} #{att.checksum}\n"
+          end
+          hyperlinks_text = ""
+          JSON.parse(@container.extended_metadata.fetch('hyperlinks', nil)).each do |link|
+            hyperlinks_text += "#{link} \n"
+          end
           zip.put_next_entry "dataset_description.txt"
           zip.write <<~DESC
           dataset name: #{@container.name}
@@ -330,10 +338,10 @@ module Chemotion
           #{@container.description}
 
           Files:
+          #{file_text}
+          Hyperlinks:
+          #{hyperlinks_text}
           DESC
-          @container.attachments.each do |att|
-            zip.write "#{att.filename} #{att.checksum}\n"
-          end
         end
         zip.rewind
         zip.read
