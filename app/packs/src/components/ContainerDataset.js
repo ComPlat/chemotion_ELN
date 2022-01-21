@@ -15,6 +15,8 @@ import InboxActions from './actions/InboxActions';
 import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
 import ChildOverlay from './managing_actions/ChildOverlay';
 
+import HyperLinksSection from './common/HyperLinksSection';
+
 export default class ContainerDataset extends Component {
   constructor(props) {
     super();
@@ -23,11 +25,15 @@ export default class ContainerDataset extends Component {
       dataset_container: dataset_container,
       instruments: null,
       valueBeforeFocus: null,
-      timeoutReference: null
+      timeoutReference: null,
+      link: null
     };
+
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleAddLink = this.handleAddLink.bind(this);
+    this.handleRemoveLink = this.handleRemoveLink.bind(this);
   }
 
   componentDidMount() {
@@ -57,7 +63,7 @@ export default class ContainerDataset extends Component {
   handleInputChange(type, event) {
     const { dataset_container } = this.state;
     const { value } = event.target;
-    switch(type) {
+    switch (type) {
       case 'name':
         dataset_container.name = value;
         break;
@@ -93,7 +99,7 @@ export default class ContainerDataset extends Component {
   }
 
   handleAttachmentDownload(attachment) {
-    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
   }
 
   handleAttachmentRemove(attachment) {
@@ -115,11 +121,11 @@ export default class ContainerDataset extends Component {
   }
 
   handleUndo(attachment) {
-    const {dataset_container} = this.state;
+    const { dataset_container } = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
 
     dataset_container.attachments[index].is_deleted = false;
-    this.setState({dataset_container});
+    this.setState({ dataset_container });
   }
 
   handleSave() {
@@ -216,7 +222,7 @@ export default class ContainerDataset extends Component {
   }
 
   dropzone() {
-    const {readOnly, disabled} = this.props;
+    const { readOnly, disabled } = this.props;
     if (!readOnly && !disabled) {
       return (
         <Dropzone
@@ -283,9 +289,9 @@ export default class ContainerDataset extends Component {
     }
     this.setState({
       value,
-      timeoutReference: setTimeout(function(){
-                                    doneInstrumentTyping()
-                                  }, this.timeout)
+      timeoutReference: setTimeout(function () {
+        doneInstrumentTyping()
+      }, this.timeout)
     });
     this.handleInputChange('instrument', event);
   }
@@ -331,7 +337,7 @@ export default class ContainerDataset extends Component {
     if (instruments) {
       return (
         <div>
-          { instruments.map((instrument, index) => {
+          {instruments.map((instrument, index) => {
             return (
               <ListGroupItem
                 onClick={() => this.selectInstrument()}
@@ -348,6 +354,25 @@ export default class ContainerDataset extends Component {
       return <ListGroupItem>{error}</ListGroupItem>;
     }
     return (<div />);
+  }
+
+  handleAddLink(link) {
+    const { dataset_container } = this.state;
+    if (dataset_container.extended_metadata['hyperlinks'] == null) {
+      dataset_container.extended_metadata['hyperlinks'] = [link];
+    } else {
+      dataset_container.extended_metadata['hyperlinks'].push(link);
+    }
+    this.setState({ dataset_container });
+  }
+
+  handleRemoveLink(link) {
+    const { dataset_container } = this.state;
+    var index = dataset_container.extended_metadata['hyperlinks'].indexOf(link);
+    if (index !== -1) {
+      dataset_container.extended_metadata['hyperlinks'].splice(index, 1);
+    }
+    this.setState({ dataset_container });
   }
 
   render() {
@@ -426,9 +451,11 @@ export default class ContainerDataset extends Component {
           />
         </Col>
         <Col md={6} className="col-full">
-          <label>Attachments</label>
+          <label>Attachments: </label>
           {this.dropzone()}
           {this.attachments()}
+          <HyperLinksSection data={dataset_container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
+          disabled={disabled}></HyperLinksSection>
         </Col>
       </Row>
     );
