@@ -87,6 +87,7 @@ class Molecule < ApplicationRecord
     end
     inchikey = babel_info[:inchikey]
     return unless inchikey.present?
+
     is_partial = babel_info[:is_partial]
     partial_molfile = babel_info[:molfile]
     molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
@@ -121,6 +122,7 @@ class Molecule < ApplicationRecord
     inchikey = babel_info[:inchikey]
 
     return unless inchikey.present?
+
     pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
     self.assign_molecule_data babel_info, pubchem_info
     self.save!
@@ -134,11 +136,9 @@ class Molecule < ApplicationRecord
     self.iupac_name = pubchem_info[:iupac_name]
     self.names = pubchem_info[:names]
     self.pcid = pubchem_info[:cid]
-    self.check_sum_formular # correct exact and average MW for resins
-
-    #self.attach_svg babel_info[:svg]
-    svg = Chemotion::OpenBabelService.svg_from_molfile(self.molfile)
-    self.attach_svg svg
+    check_sum_formular
+    svg = Molecule.svg_reprocess(babel_info[:svg], molfile)
+    attach_svg svg
 
     self.cano_smiles = babel_info[:cano_smiles]
     self.molfile_version = babel_info[:molfile_version]
@@ -147,16 +147,17 @@ class Molecule < ApplicationRecord
 
   def pubchem_lcss
     return unless cid.present?
+
     # if pubchem_lcss of taggable does not exist, try PubChem API and then update DB and return
     mol_tag = self.tag
     mol_tag_data = mol_tag.taggable_data || {}
     if mol_tag_data['pubchem_lcss'] && mol_tag_data['pubchem_lcss'].length > 0
-      mol_tag_data['pubchem_lcss'];
+      mol_tag_data['pubchem_lcss']
     else
       mol_tag_data['pubchem_lcss'] = Chemotion::PubchemService.lcss_from_cid(cid)
       # updated_at of element_tags(not molecule) is updated
       mol_tag.update_attributes taggable_data: mol_tag_data
-      mol_tag_data['pubchem_lcss'];
+      mol_tag_data['pubchem_lcss']
     end
   end
 
@@ -168,10 +169,10 @@ class Molecule < ApplicationRecord
     return unless svg_data.match /\A<\?xml/
 
     svg_file_name = if self.is_partial
-      "#{SecureRandom.hex(64)}Part.svg"
-    else
-      "#{SecureRandom.hex(64)}.svg"
-    end
+                      "#{SecureRandom.hex(64)}Part.svg"
+                    else
+                      "#{SecureRandom.hex(64)}.svg"
+                    end
     svg_file_path = "public/images/molecules/#{svg_file_name}"
 
     svg_file = File.new(svg_file_path, 'w+')
@@ -208,6 +209,7 @@ class Molecule < ApplicationRecord
   def load_cas(force = false)
     return unless inchikey.present?
     return unless force || cas.blank?
+
     self.cas = PubChem.get_cas_from_cid(cid)
     save
   end
@@ -225,6 +227,7 @@ class Molecule < ApplicationRecord
 
   def create_molecule_name_by_user(new_name, user_id)
     return unless unique_molecule_name(new_name)
+
     molecule_names
       .create(name: new_name, description: "defined by user #{user_id}")
   end
@@ -232,6 +235,21 @@ class Molecule < ApplicationRecord
   def unique_molecule_name(new_name)
     mns = molecule_names.map(&:name)
     !mns.include?(new_name)
+  end
+
+  def self.svg_reprocess(svg, molfile)
+    return svg unless Rails.configuration.try(:ketcher_service).try(:endpoint).present?
+
+    return svg if svg.present? && !svg&.include?('Open Babel')
+
+    svg = NodeService::KetcherSvg.svg(molfile)
+
+    if svg&.present?
+      svg = Ketcherails::SVGProcessor.new(svg)
+      svg.centered_and_scaled_svg
+    else
+      Chemotion::OpenBabelService.svg_from_molfile(molfile)
+    end
   end
 
 private

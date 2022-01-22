@@ -76,6 +76,7 @@ gem 'pg_search'
 gem 'prawn'
 gem 'prawn-svg'
 gem 'pundit'
+gem 'ffi-rzmq'
 
 # If we want to upgrade past rack >= 2.1 we need to upgrade to at least grape
 # 1.3.0

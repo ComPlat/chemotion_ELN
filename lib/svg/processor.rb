@@ -5,7 +5,7 @@ require 'digest'
 module SVG
   # SVG Processor
   class Processor
-    def structure_svg(editor, svg, hexdigest)
+    def structure_svg(editor, svg, hexdigest, is_centered = false)
       processor = case editor
                   when /marvinjs/i
                     Chemotion::MarvinjsSvgProcessor.new(svg)
@@ -16,7 +16,7 @@ module SVG
                   else
                     Chemotion::OpenBabelSvgProcessor.new(svg)
                   end
-      svg = processor.centered_and_scaled_svg
+      svg = processor.centered_and_scaled_svg unless is_centered == true
       info = generate_svg_info('samples', hexdigest)
       svg_file = File.new(info[:svg_file_path], 'w+')
       svg_file.write(svg)

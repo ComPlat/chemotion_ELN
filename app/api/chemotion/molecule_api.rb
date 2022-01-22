@@ -59,6 +59,7 @@ module Chemotion
               molfile = rd_mol
             end
             return {} unless molfile
+
             molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
           end
           return unless molecule
@@ -70,10 +71,9 @@ module Chemotion
             svg_process = SVG::Processor.new.generate_svg_info('samples', svg_digest)
             svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
             if File.exist?(svg_file_src)
-              mol = molecule.molfile.lines[0..1]
-              if mol[1]&.strip&.match?('OpenBabel')
-                svg = File.read(svg_file_src)
-                svg_process = SVG::Processor.new.structure_svg('openbabel', svg, svg_digest)
+              if svg.nil? || svg&.include?('Open Babel')
+                svg = Molecule.svg_reprocess(svg, molecule.molfile)
+                svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
               else
                 FileUtils.cp(svg_file_src, svg_process[:svg_file_path])
               end
@@ -194,7 +194,7 @@ module Chemotion
       get :cas do
         inchikey = params[:inchikey]
         molecule = Molecule.find_by(inchikey: inchikey)
-        molecule.load_cas if molecule
+        molecule&.load_cas
         molecule
       end
 

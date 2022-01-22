@@ -327,6 +327,10 @@ GEM
       faraday (>= 0.7.4, < 1.0)
     fast_stack (0.2.0)
     ffi (1.13.1)
+    ffi-rzmq (2.0.7)
+      ffi-rzmq-core (>= 1.0.7)
+    ffi-rzmq-core (1.0.7)
+      ffi
     flamegraph (0.9.5)
     font-awesome-rails (4.7.0.5)
       railties (>= 3.2, < 6.1)
@@ -803,6 +807,7 @@ DEPENDENCIES
   faraday (~> 0.12.1)
   faraday_middleware (~> 0.12.1)
   fast_stack
+  ffi-rzmq
   flamegraph
   font-awesome-rails
   fun_sftp!
