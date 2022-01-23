@@ -238,7 +238,6 @@ $color-default: #777;
 .generic_grid_header {
   @include generic_grid_cell;
   font-weight: bolder;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
 .generic_grid_row {
