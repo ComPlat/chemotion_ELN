@@ -1,10 +1,20 @@
 import React from 'react';
-import {Button, Popover, Overlay, ControlLabel, FormGroup, FormControl} from 'react-bootstrap';
+import {
+  Button,
+  Popover,
+  Overlay,
+  ControlLabel,
+  FormGroup,
+  FormControl,
+  Col, InputGroup, ButtonGroup, Form,
+} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import UIStore from './stores/UIStore';
 import { wellplateShowSample } from './routesUtils';
+import Select from 'react-select';
+import { CirclePicker } from 'react-color';
 
-const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFromWell}) => {
+const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode}) => {
   return (
     <Overlay  rootClose
               show={show}
@@ -12,25 +22,54 @@ const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFr
               placement={placement}
               onHide={() => handleClose()} >
       <Popover title={title(handleClose)} id={'wellpop'+well.id}>
-        {content(well, removeSampleFromWell)}
+        {content(well, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode)}
       </Popover>
     </Overlay>
   );
 }
 
-const content = (well, removeSampleFromWell) => {
+const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode) => {
   const { sample } = well;
+  const bcStyle = {
+    backgroundColor: selectedColor || well.color_code
+  };
+  const wellLabels = well.label ? well.label.split(',') : [];
+  const isDisable = () => wellLabels.some(item => item === 'Molecular structure');
+
+  const labels = [{
+    label: 'Name',
+    value: 'Name',
+    disabled: isDisable()
+  }, {
+    label: 'External label',
+    value: 'External label',
+    disabled: isDisable()
+  }, {
+    label: 'Molecular structure',
+    value: 'Molecular structure',
+    disabled: (wellLabels.some(item => item !== 'Molecular structure'))
+  }];
+
   return(
-    <div style={{width: 200, height: 620}}>
+    <div style={{width: 220, height: 850}}>
       {renderWellContent(well, removeSampleFromWell)}
       <div>
         <hr style={{marginTop: 28, marginBottom: 10}}/>
+        <Select
+          id="label"
+          name="label"
+          multi
+          options={labels}
+          value={well.label}
+          onChange={e => handleWellLabel(e)}
+        />
+        &nbsp;
         <FormGroup>
           <ControlLabel>Readout</ControlLabel>
           <FormControl componentClass="textarea"
             disabled={true}
             value={well.readout || ''}
-            style={{height: 100}}
+            style={{height: 80}}
           />
         </FormGroup>
         <FormGroup>
@@ -38,9 +77,32 @@ const content = (well, removeSampleFromWell) => {
           <FormControl componentClass="textarea"
             disabled={true}
             value={sampleImportedReadout(sample) || ''}
-            style={{height: 100}}
+            style={{height: 80}}
           />
         </FormGroup>
+        <FormGroup style={{ top: '50px' }} controlId="colorInput">
+          <Col componentClass={ControlLabel} sm={3}>
+            Select Color
+          </Col>
+          <Col sm={9}>
+            <InputGroup>
+              <InputGroup.Addon style={bcStyle}></InputGroup.Addon>
+              <FormControl
+                type="text"
+                readOnly
+                value={selectedColor || well.color_code}
+              />
+            </InputGroup>
+          </Col>
+        </FormGroup>
+        <FormGroup controlId="formHorizontalPicker">
+          <Col sm={12}>
+            <CirclePicker width="132%" onChangeComplete={e => handleColorPicker(e)} />
+          </Col>
+        </FormGroup>
+        <ButtonGroup style={{ top: '10px', bottom: '10px' }}>
+          <Button style={{ left: '80px' }} onClick={saveColorCode}>Save</Button>
+        </ButtonGroup>
       </div>
     </div>
   )

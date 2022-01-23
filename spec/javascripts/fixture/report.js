@@ -3,6 +3,7 @@ const splSettings = [
   { checked: true, text: 'collection' },
   { checked: true, text: 'analyses' },
   { checked: true, text: 'reaction description' },
+  { checked: true, text: 'literature' },
 ];
 
 const rxnSettings = [

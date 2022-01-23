@@ -21,7 +21,7 @@ export default class WellplateDetailsContainers extends Component {
     TextTemplateActions.fetchTextTemplates('wellplate');
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       wellplate: nextProps.wellplate
     })

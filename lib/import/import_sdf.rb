@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'charlock_holmes'
+
 class Import::ImportSdf
   attr_reader  :collection_id, :current_user_id, :processed_mol, :file_path,
                :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys
@@ -9,7 +11,7 @@ class Import::ImportSdf
 
   def initialize(args)
     @raw_data = args[:raw_data] || []
-    @message = { error: [], info: [] }
+    @message = { error: [], info: [], error_messages: [] }
     @collection_id = args[:collection_id]
     @current_user_id = args[:current_user_id]
     @file_path = args[:file_path]
@@ -31,7 +33,10 @@ class Import::ImportSdf
     if file_path
       size = File.size(file_path)
       if size.to_f < SIZE_LIMIT * 10**6
-        @raw_data = File.binread(file_path).encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/\${4}\r?\n/)
+        file_data = File.read(file_path)
+        detection = CharlockHolmes::EncodingDetector.detect(file_data)
+        encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
+        @raw_data = encoded_file.split(/\${4}\r?\n/)
       else
         @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
       end
@@ -44,6 +49,10 @@ class Import::ImportSdf
     @message[:error].join("\n") + @message[:info].join("\n")
   end
 
+  def error_messages
+    @message[:error_messages]
+  end
+
   def status
     @message[:error].empty? && 'ok' || 'error'
   end
@@ -52,7 +61,7 @@ class Import::ImportSdf
     n = batch_size - 1
     inchikeys = []
     @processed_mol = []
-    data = raw_data.dup 
+    data = raw_data.dup
     until data.empty?
       batch = data.slice!(0..n)
       molecules = find_or_create_by_molfiles(batch)
@@ -67,6 +76,12 @@ class Import::ImportSdf
       @message[:error] << 'No Molecule processed. '
     end
     @inchi_array += inchikeys.compact
+  end
+
+  def is_number?(string)
+    true if Float(string)
+  rescue StandardError
+    false
   end
 
   def create_samples
@@ -99,9 +114,11 @@ class Import::ImportSdf
       begin
         ActiveRecord::Base.transaction do
           attribs = Sample.attribute_names & @mapped_keys.keys
+          error_messages = []
           rows.each do |row|
             next unless row
 
+            error_columns = ''
             molfile = row['molfile']
             san_molfile = sanitize_molfile(molfile)
             babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(san_molfile)
@@ -115,22 +132,80 @@ class Import::ImportSdf
               molfile_version: babel_info[:molfile_version],
               molecule_id: molecule.id
             )
+
             attribs.each do |attrib|
-              sample[attrib] = row[attrib] if row[attrib].is_a?(Numeric) || row[attrib] && !row[attrib].empty?
+              sample[attrib] = row[attrib] if is_number?(row[attrib])
             end
+            if row['molecule_name'].present?
+              molecule_name = molecule.create_molecule_name_by_user(row['molecule_name'], current_user_id)
+              sample['molecule_name_id'] = molecule_name.id unless molecule_name.blank?
+            end
+
+            mp = row['melting_point'].scan(/\d+(?:\.\d+)?/).map(&:to_f) if row['melting_point'].present?
+            sample['melting_point'] = Range.new(-Float::INFINITY, Float::INFINITY)
+            sample['melting_point'] = Range.new(mp[0], Float::INFINITY) if mp.present? && mp.length == 1
+            sample['melting_point'] = Range.new(mp[0], mp[1]) if mp.present? && mp.length == 2
+            bp = row['boiling_point'].scan(/\d+(?:\.\d+)?/).map(&:to_f) if row['boiling_point'].present?
+            sample['boiling_point']  = Range.new(-Float::INFINITY, Float::INFINITY)
+            sample['boiling_point']  = Range.new(bp[0], Float::INFINITY) if bp.present? && bp.length == 1
+            sample['boiling_point']  = Range.new(bp[0], bp[1]) if bp.present? && bp.length == 2
+
+            sample['description'] = row['description'] if row['description'].present?
+            sample['location'] = row['location'] if row['location'].present?
+            sample['name'] = row['name'] if row['name'].present?
+            sample['external_label'] = row['external_label'] if row['external_label'].present?
+            sample['short_label'] = row['short_label'] if row['short_label'].present?
+            sample['molarity_value'] = row['molarity']&.scan(/\d+\.*\d*/)[0] if row['molarity'].present?
             properties = process_molfile_opt_data(molfile)
             sample.validate_stereo('abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'])
 
             sample.target_amount_value = properties['TARGET_AMOUNT'] unless properties['TARGET_AMOUNT'].blank?
             sample.target_amount_unit = properties['TARGET_UNIT'] unless properties['TARGET_UNIT'].blank?
+            if row['target_amount'].present? && row['target_amount_unit'].blank?
+              target_amount_data = row['target_amount']&.split('/')[0] || ''
+              target_amount = target_amount_data&.scan(/\d+|\D+/)
+              sample.target_amount_value = 0
+              sample.target_amount_unit = 'g'
+              if target_amount.length == 2
+                target_amount[1] = target_amount[1].gsub(/\A\p{Space}*|\p{Space}*\z/, '')
+                if is_number?(target_amount[0]) && %w[g mg l ml mol].include?(target_amount[1])
+                  sample.target_amount_value = target_amount[0]
+                  sample.target_amount_unit = target_amount[1]
+                else
+                  error_columns += ' target amount, target amount unit ,'
+                end
+              else
+                error_columns += ' target amount, target amount unit ,'
+              end
+            end
+
             sample.real_amount_value = properties['REAL_AMOUNT'] unless properties['REAL_AMOUNT'].blank?
             sample.real_amount_unit = properties['REAL_UNIT'] unless properties['REAL_UNIT'].blank?
+            if row['real_amount'].present? && row['real_amount_unit'].blank?
+              real_amount_data = row['real_amount']&.split('/')[0] || ''
+              real_amount = real_amount_data&.scan(/\d+|\D+/)
+              sample.real_amount_value = 0
+              sample.real_amount_unit = 'g'
+              if real_amount.length == 2
+                real_amount[1] = real_amount[1].gsub(/\A\p{Space}*|\p{Space}*\z/, '')
+                if is_number?(real_amount[0]) && %w[g mg l ml mol].include?(real_amount[1])
+                  sample.real_amount_value = real_amount[0]
+                  sample.real_amount_unit = real_amount[1]
+                else
+                  error_columns += ' real amount, real amount unit ,'
+                end
+              else
+                error_columns += ' target amount, target amount unit ,'
+              end
+            end
 
+            error_messages << "The columns#{error_columns} of sample #{molecule['iupac_name']} cannot be processed." if error_columns.present?
             sample.collections << Collection.find(collection_id)
             sample.collections << Collection.get_all_collection_for_user(current_user_id)
             sample.save!
             ids << sample.id
           end
+          @message[:error_messages] = error_messages if error_messages.present?
         end
       rescue ActiveRecord::RecordInvalid => e
         @message[:error] << e
@@ -166,7 +241,7 @@ class Import::ImportSdf
 
   def process_molfile_opt_data(molfile)
     mf = molfile.to_s
-    custom_data = mf.scan(/^\>[^\n]*\<(\S+)\>[^\n]*[\n]*([^>]*)/m)
+    custom_data = mf.scan(/^\>[^\n]*\<(.*?)\>[^\n]*[\n]*([^>]*)/m)
     Hash[custom_data.map do |key, value|
       k = key.to_s.strip.upcase.gsub(/\s/, '_')
       @custom_data_keys[k] = true
@@ -175,8 +250,7 @@ class Import::ImportSdf
   end
 
   def sanitize_molfile(mf)
-#TODO check for residue polymer thingy
+    # TODO: check for residue polymer thingy
     mf.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
-
   end
 end

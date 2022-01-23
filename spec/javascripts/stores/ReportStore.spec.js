@@ -42,7 +42,8 @@ describe('ReportStore', () => {
       splSettings: [ {text: "diagram", checked: false},
                       {text: "collection", checked: false},
                       {text: "analyses", checked: false},
-                      {text: "reaction description", checked: false} ]
+                      {text: "reaction description", checked: false},
+                      {text: "literature", checked: false} ]
     }
     expect(newState).toEqual(expected)
   })

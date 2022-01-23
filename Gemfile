@@ -12,6 +12,7 @@ gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
 gem 'bibtex-ruby'
 gem 'bootsnap'
 gem 'bootstrap-sass', '~> 3.4.1'
+gem 'charlock_holmes'
 
 # gem 'chem_scanner', git: 'git@git.scc.kit.edu:ComPlat/chem_scanner.git'
 gem 'chem_scanner', git: 'https://github.com/complat/chem_scanner.git'
@@ -47,13 +48,15 @@ gem 'haml-rails', '~> 1.0'
 gem 'hashie-forbidden_attributes'
 gem 'httparty'
 
+gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
+
 gem 'jbuilder', '~> 2.0'
 gem 'jquery-rails'
 gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '77514fbb2b5540e39ee1c31e7dd149e8f7ee82db'
+gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '287c848ad4149caf6466a1b7a648ada017d30304'
 
 gem 'net-sftp'
 gem 'net-ssh'

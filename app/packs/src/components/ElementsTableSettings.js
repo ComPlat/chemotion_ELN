@@ -18,16 +18,16 @@ export default class ElementsTableSettings extends React.Component {
     this.state = {
       visible: props.visible,
       hidden: props.hidden,
-      currentType: "",
+      currentType: '',
       showSampleExternalName: false,
       tableSchemePreviews: true
     }
 
-    this.handleOnExit = this.handleOnExit.bind(this)
-    this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this)
-    this.handleToggleScheme = this.handleToggleScheme .bind(this)
-    this.onChangeUser = this.onChangeUser.bind(this)
-    this.onChangeUI = this.onChangeUI.bind(this)
+    this.handleOnExit = this.handleOnExit.bind(this);
+    this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this);
+    this.handleToggleScheme = this.handleToggleScheme.bind(this);
+    this.onChangeUser = this.onChangeUser.bind(this);
+    this.onChangeUI = this.onChangeUI.bind(this);
   }
 
   componentDidMount() {
@@ -41,15 +41,15 @@ export default class ElementsTableSettings extends React.Component {
   }
 
   onChangeUI(state) {
-    let tableSchemePreviews = state.showPreviews;
+    const tableSchemePreviews = state.showPreviews;
 
     if (this.state.tableSchemePreviews != tableSchemePreviews) {
-      this.setState({tableSchemePreviews})
+      this.setState({ tableSchemePreviews });
     }
   }
 
   onChangeUser(state) {
-    let {currentType, showSampleExternalName} = this.state;
+    let { currentType, showSampleExternalName } = this.state;
     let showExt = showSampleExternalName;
     if (state.profile && state.profile.show_external_name) {
       showExt = state.profile.show_external_name;
@@ -84,33 +84,34 @@ export default class ElementsTableSettings extends React.Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       visible: nextProps.visible,
       hidden: nextProps.hidden
-    })
+    });
   }
 
   handleToggleScheme() {
-    const {tableSchemePreviews} = this.state;
-    this.setState({tableSchemePreviews: !tableSchemePreviews});
+    const { tableSchemePreviews } = this.state;
+    this.setState({ tableSchemePreviews: !tableSchemePreviews });
   }
 
   handleToggleSampleExt() {
-    const {showSampleExternalName} = this.state;
-    this.setState({showSampleExternalName: !showSampleExternalName});
+    const { showSampleExternalName } = this.state;
+    this.setState({ showSampleExternalName: !showSampleExternalName });
   }
 
   updateLayout() {
     const { visible, hidden } = this.layout.state;
-    const layout = {}
+    const layout = {};
 
     visible.forEach((value, index) => {
-      layout[value] = (index + 1)
-    })
+      layout[value] = (index + 1);
+    });
     hidden.forEach((value, index) => {
       if (value !== 'hidden') layout[value] = (- index - 1)
-    })
+    });
 
     const userProfile = UserStore.getState().profile;
     _.set(userProfile, 'data.layout', layout);
@@ -121,11 +122,11 @@ export default class ElementsTableSettings extends React.Component {
     const {
       visible, hidden, currentType,
       tableSchemePreviews, showSampleExternalName
-    } = this.state
+    } = this.state;
 
     const wd = 35 + ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
 
-    let sampleSettings = (<span />)
+    let sampleSettings = (<span />);
     if (currentType == "sample" || currentType == "reaction") {
       sampleSettings = (
         <div>
@@ -147,7 +148,7 @@ export default class ElementsTableSettings extends React.Component {
         </div>
       )
     }
-    let popoverSettings = (
+    const popoverSettings = (
       <Popover
         className="collection-overlay"
         id="popover-layout"
@@ -177,7 +178,7 @@ export default class ElementsTableSettings extends React.Component {
       >
         <Button
           bsSize="xsmall"
-          style={{ margin: "10px 10px 10px 0", float: "right" }}
+          style={{ margin: '10px 10px 10px 0', float: 'right' }}
         >
           <i className="fa fa-sliders" />
         </Button>

@@ -752,7 +752,6 @@ export default class Reaction extends Element {
     let i = 0;
     let group;
     
-    this.reaction_svg_file = ''
     while (i < cats.length) {
       const groupName = `_${cats[i]}`;
       group = this[groupName];

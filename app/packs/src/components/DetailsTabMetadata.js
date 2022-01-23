@@ -37,13 +37,6 @@ export default class ResearchPlansMetadata extends Component {
     };
   }
 
-  handleFieldChange(event) {
-    const { researchPlanMetadata } = this.state;
-
-    researchPlanMetadata[event.target.id] = event.target.value;
-
-    this.setState({ researchPlanMetadata });
-  }
 
   componentDidMount() {
     const { parentResearchPlan, parentResearchPlanMetadata } = this.props;
@@ -57,12 +50,21 @@ export default class ResearchPlansMetadata extends Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { parentResearchPlan, parentResearchPlanMetadata } = nextProps;
     this.setState({
       researchPlan: parentResearchPlan,
       researchPlanMetadata: parentResearchPlanMetadata
     });
+  }
+
+  handleFieldChange(event) {
+    const { researchPlanMetadata } = this.state;
+
+    researchPlanMetadata[event.target.id] = event.target.value;
+
+    this.setState({ researchPlanMetadata });
   }
 
   saveResearchPlanMetadata() {
@@ -158,10 +160,9 @@ export default class ResearchPlansMetadata extends Component {
 
   updateResearchPlanMetadataGeoLocation(index, fieldname, value) {
     this.setState(state => {
-      const researchPlanMetadata = state.researchPlanMetadata
-      researchPlanMetadata.geo_location[index]['geoLocationPoint'][fieldname] = value
-
-      return researchPlanMetadata
+      const researchPlanMetadata = state.researchPlanMetadata;
+      researchPlanMetadata.geo_location[index]['geoLocationPoint'][fieldname] = value;
+      return researchPlanMetadata;
     })
   }
 
@@ -176,7 +177,7 @@ export default class ResearchPlansMetadata extends Component {
               <FormControl
                 type="text"
                 value={researchPlanMetadata?.title}
-                onChange={(event) => this.handleFieldChange(event)}
+                onChange={event => this.handleFieldChange(event)}
                 placeholder="Title"
               />
             </FormGroup>
@@ -185,7 +186,7 @@ export default class ResearchPlansMetadata extends Component {
               <FormControl
                 type="text"
                 value={researchPlanMetadata?.subject}
-                onChange={(event) => this.handleFieldChange(event)}
+                onChange={event => this.handleFieldChange(event)}
                 placeholder="Subject"
               />
             </FormGroup>
@@ -287,7 +288,7 @@ export default class ResearchPlansMetadata extends Component {
                         type="text"
                         value={description?.description}
                         placeholder="Description"
-                        onChange={(event) => this.updateResearchPlanMetadataArrayItem('description', index, 'description', event.target.value)}
+                        onChange={event => this.updateResearchPlanMetadataArrayItem('description', index, 'description', event.target.value)}
                         />
                     </FormGroup>
                   </Col>
@@ -298,7 +299,7 @@ export default class ResearchPlansMetadata extends Component {
                         type="text"
                         value={description?.descriptionType}
                         placeholder="Type"
-                        onChange={(event) => this.updateResearchPlanMetadataArrayItem('description', index, 'descriptionType', event.target.value)}
+                        onChange={event => this.updateResearchPlanMetadataArrayItem('description', index, 'descriptionType', event.target.value)}
                       />
                     </FormGroup>
                   </Col>
@@ -348,7 +349,7 @@ export default class ResearchPlansMetadata extends Component {
                         type="text"
                         value={locationItem?.geoLocationPoint?.longitude}
                         placeholder="Longitude e.g. '71.43703438955458'"
-                        onChange={(event) => this.updateResearchPlanMetadataGeoLocation(index, 'longitude', event.target.value)}
+                        onChange={event => this.updateResearchPlanMetadataGeoLocation(index, 'longitude', event.target.value)}
                       />
                     </FormGroup>
                   </Col>
@@ -359,7 +360,7 @@ export default class ResearchPlansMetadata extends Component {
                         type="text"
                         value={locationItem?.geoLocationPoint?.latitude}
                         placeholder="Latitude e.g. '-62.85961569975635'"
-                        onChange={(event) => this.updateResearchPlanMetadataGeoLocation(index, 'latitude', event.target.value)}
+                        onChange={event => this.updateResearchPlanMetadataGeoLocation(index, 'latitude', event.target.value)}
                       />
                     </FormGroup>
                   </Col>
@@ -391,7 +392,7 @@ export default class ResearchPlansMetadata extends Component {
                         type="text"
                         value={fundingReferenceItem?.funderName}
                         placeholder="Funder Name e.g. 'Gordon and Betty Moore Foundation'"
-                        onChange={(event) => this.updateResearchPlanMetadataArrayItem('funding_reference', index, 'funderName', event.target.value)}
+                        onChange={event => this.updateResearchPlanMetadataArrayItem('funding_reference', index, 'funderName', event.target.value)}
                         />
                     </FormGroup>
                   </Col>
@@ -402,7 +403,7 @@ export default class ResearchPlansMetadata extends Component {
                         type="text"
                         value={fundingReferenceItem?.funderIdentifier}
                         placeholder="Funder Identifier e.g. 'https://doi.org/10.13039/100000936'"
-                        onChange={(event) => this.updateResearchPlanMetadataArrayItem('funding_reference', index, 'funderIdentifier', event.target.value)}
+                        onChange={event => this.updateResearchPlanMetadataArrayItem('funding_reference', index, 'funderIdentifier', event.target.value)}
                       />
                     </FormGroup>
                   </Col>
@@ -428,7 +429,7 @@ export default class ResearchPlansMetadata extends Component {
               <FormControl
                 componentClass="select"
                 value={researchPlanMetadata?.data_cite_state}
-                onChange={(event) => this.updateResearchPlanMetadataDataCiteState(event.target.value)}
+                onChange={event => this.updateResearchPlanMetadataDataCiteState(event.target.value)}
                 inputRef={(m) => { this.dataCiteState = m; }}
               >
                 <option value="draft">Draft</option>

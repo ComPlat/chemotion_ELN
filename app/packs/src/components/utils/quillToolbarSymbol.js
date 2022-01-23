@@ -275,14 +275,26 @@ const opsRAMANTail = () => (
 
 const opsUVVISHead = () => (
   [
-    { insert: 'UV/VIS (ṽ) = ' },
+    { insert: 'UV-VIS (absorption, solvent), λmax = ' },
+  ]
+);
+
+const opsHPLCUVVISHead = () => (
+  [
+    { insert: 'HPLC UV/VIS (λmax) = ' },
   ]
 );
 
 const opsUVVISTail = () => (
   [
-    { insert: ' cm' },
-    { attributes: { script: 'super' }, insert: '–1' },
+    { insert: ' nm' },
+    { insert: '. ' },
+  ]
+);
+
+const opsHPLCUVVISTail = () => (
+  [
+    { insert: ' ' },
     { insert: '. ' },
   ]
 );
@@ -343,6 +355,7 @@ const SpectraOps = {
   IR: { head: opsIRHead, tail: opsIRTail },
   RAMAN: { head: opsRAMANHead, tail: opsRAMANTail },
   'UV/VIS': { head: opsUVVISHead, tail: opsUVVISTail },
+  'HPLC UV/VIS': { head: opsHPLCUVVISHead, tail: opsHPLCUVVISTail },
   MS: { head: opsMSHead, tail: opsMSTail },
 };
 

@@ -306,7 +306,7 @@ module Chemotion
       desc "Download the attachment file"
       get ':attachment_id' do
         content_type "application/octet-stream"
-        header['Content-Disposition'] = "attachment; filename=" + @attachment.filename
+        header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
         @attachment.read_file
       end
@@ -475,6 +475,7 @@ module Chemotion
         optional :thres, type: String
         optional :predict, type: String
         optional :keep_pred, type: Boolean
+        optional :waveLength, type: String
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(

@@ -335,7 +335,7 @@ class EditUserLabels extends React.Component {
     let { selectedLabels } = this.state;
     const { currentUser, labels } = this.state;
 
-    if (!MatrixCheck(currentUser.matrix, UL_FUNC_NAME)) {
+    if (!MatrixCheck(currentUser && currentUser.matrix, UL_FUNC_NAME)) {
       return (<span />);
     }
 
@@ -408,7 +408,7 @@ class ShowUserLabels extends React.Component {
     const { currentUser, labels } = this.state;
     const curLableIds = (element.tag && element.tag.taggable_data) ? element.tag.taggable_data.user_labels : [];
 
-    if (!MatrixCheck(currentUser.matrix, UL_FUNC_NAME)) {
+    if (!MatrixCheck(currentUser && currentUser.matrix, UL_FUNC_NAME)) {
       return (<span />);
     }
     const elementLabels = (labels || []).filter(r => (

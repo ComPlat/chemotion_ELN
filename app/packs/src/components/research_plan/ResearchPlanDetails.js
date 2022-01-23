@@ -41,7 +41,7 @@ export default class ResearchPlanDetails extends Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { researchPlan } = nextProps;
     this.setState({ researchPlan });
   }
@@ -438,8 +438,8 @@ export default class ResearchPlanDetails extends Component {
           {this.renderAttachmentsTab(researchPlan)}
         </Tab>
       ),
-      literature: (
-        <Tab eventKey="literature" title="Literature" key={`lit_${researchPlan.id}`}>
+      references: (
+        <Tab eventKey="references" title="References" key={`lit_${researchPlan.id}`}>
           <ResearchPlansLiteratures element={researchPlan} />
         </Tab>
       ),
@@ -457,7 +457,7 @@ export default class ResearchPlanDetails extends Component {
       research_plan: 'Research Plan',
       analyses: 'Analyses',
       attachments: 'Attachments',
-      literature: 'Literature',
+      references: 'References',
       metadata: 'Metadata',
     };
     addSegmentTabs(researchPlan, this.handleSegmentsChange, tabContentsMap);

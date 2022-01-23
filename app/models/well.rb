@@ -12,6 +12,8 @@
 #  readout      :string
 #  additive     :string
 #  deleted_at   :datetime
+#  label        :string           default("Molecular structure"), not null
+#  color_code   :string
 #
 # Indexes
 #

@@ -19,7 +19,7 @@ export default class ContainerDatasets extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       container: nextProps.container
     })

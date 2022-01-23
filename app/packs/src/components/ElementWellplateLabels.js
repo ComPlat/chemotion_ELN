@@ -1,28 +1,24 @@
 import React from 'react';
-import {Label, Modal, Button} from 'react-bootstrap';
+import { Label, Modal, Button } from 'react-bootstrap';
 
-import ElementActions from './actions/ElementActions'
-import ElementStore from './stores/ElementStore'
+import ElementActions from './actions/ElementActions';
+import ElementStore from './stores/ElementStore';
 
 export default class ElementWellplateLabels extends React.Component {
   constructor(props) {
-    super(props)
+    super(props);
 
     this.state = {
       showWarning: false,
       clicked: false
     }
 
-    let {element} = props
+    let { element } = props;
 
     this.handleOnClick = this.handleOnClick.bind(this)
     this.closeWarning = this.closeWarning.bind(this)
 
     this.onStoreChange = this.onStoreChange.bind(this)
-  }
-
-  componentWillReceiveProps(nextProps) {
-    let {element} = nextProps
   }
 
   componentDidMount() {
@@ -42,36 +38,32 @@ export default class ElementWellplateLabels extends React.Component {
   }
 
   closeWarning() {
-    this.setState({showWarning: false})
-    ElementActions.closeWarning()
+    this.setState({ showWarning: false });
+    ElementActions.closeWarning();
   }
 
   handleOnClick(e) {
-    let {element} = this.props
+    let { element } = this.props;
 
     ElementActions.tryFetchWellplateById(element.tag.taggable_data.wellplate_id)
-    this.setState({clicked: true})
-    e.stopPropagation()
+    this.setState({ clicked: true });
+    e.stopPropagation();
   }
 
   render() {
-    let {element} = this.props
+    let { element } = this.props;
 
     if (!element.tag || !element.tag.taggable_data ||
-        !element.tag.taggable_data.wellplate_id)
-      return (<span></span>)
-
-    let {showWarning, clicked} = this.state
-
-    let wellplate = <i className='icon-wellplate'/>
-    let labelStyle = {
-      backgroundColor:'white',
-      color:'black',
-      border: '1px solid grey'
+        !element.tag.taggable_data.wellplate_id) {
+      return (<span />);
     }
 
+    const { showWarning, clicked } = this.state;
+
+    const wellplate = <i className='icon-wellplate'/>
+
     return (
-      <div style={{display: 'inline-block'}}>
+      <div style={{ display: 'inline-block' }}>
         <div onClick={this.handleOnClick}>
           <span className="collection-label" key={element.id}>
             <Label>{wellplate}</Label>

@@ -6,7 +6,7 @@ import _ from 'lodash';
 import { keepSupSub } from './utils/quillFormat';
 
 export default class QuillViewer extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props);
 
     this.viewer = false;
@@ -16,7 +16,8 @@ export default class QuillViewer extends React.Component {
     this.initQuill();
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const oldVal = this.props.value;
     const newVal = nextProps.value;
     if (oldVal && newVal && !_.isEqual(newVal, oldVal)) {
@@ -26,7 +27,7 @@ export default class QuillViewer extends React.Component {
 
   initQuill() {
     if (!this.viewer) {
-      const quillViewer = this.quillViewer;
+      const { quillViewer } = this;
       const defaultOptions = {
         theme: this.theme,
         readOnly: this.readOnly,
@@ -45,9 +46,7 @@ export default class QuillViewer extends React.Component {
 
     return (
       this.props.preview
-        ? <div className="quill-viewer">
-            <div ref={(m) => { this.quillViewer = m; }}></div>
-          </div>
+        ? <div className="quill-viewer"><div ref={(m) => { this.quillViewer = m; }} /></div>
         : <span ref={(n) => { this.quillViewer = n; }} />
     );
   }
