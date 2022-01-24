@@ -129,10 +129,6 @@ export default class Wellplate extends Element {
   }
 
   title() {
-    return (
-      <span>
-        <span>{this.short_label}</span>
-        <span>{`  ${this.name}`}</span>
-      </span>);
+    return `${this.short_label}     ${this.name}`;
   }
 }

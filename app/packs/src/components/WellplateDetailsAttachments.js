@@ -11,6 +11,7 @@ import Utils from './utils/Functions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
+const imageStyle = { position: 'absolute', width: 60, height: 60 };
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
     This template should be used to import well readouts.<br />
@@ -21,13 +22,6 @@ const templateInfo = (
     They may contain an arbitrary amount of readout pairs.
   </Popover>
 );
-const imageStyle = {
-  style: {
-    position: 'absolute',
-    width: 60,
-    height: 60
-  }
-};
 
 export default class WellplateDetailsAttachments extends Component {
   constructor(props) {

@@ -20,44 +20,6 @@ const WellOverlay = ({
   );
 }
 
-// TODO: remove this
-// const content = (well, readoutTitles, removeSampleFromWell) => {
-//   const { sample, readouts } = well;
-//   return (
-//     <div style={{ width: 200 }}>
-//       {renderWellContent(well, removeSampleFromWell)}
-//       <div>
-//         <hr style={{ marginTop: 28, marginBottom: 10 }} />
-//         <FormGroup>
-//           {readouts && readouts.map((readout, index) => (
-//             <div key={`readout_${readout.id}`}>
-//               <ControlLabel>{readoutTitles[index]}</ControlLabel>
-//               <InputGroup>
-//                 <FormControl
-//                   type="text"
-//                   value={readout.value}
-//                   disabled
-//                   placeholder="Value"
-//                 />
-//                 <InputGroup.Addon disabled>{readout.unit}</InputGroup.Addon>
-//               </InputGroup>
-//             </div>
-//           ))}
-//         </FormGroup>
-//         <FormGroup style={{ display: 'none' }}>
-//           <ControlLabel>Imported Readout</ControlLabel>
-//           <FormControl
-//             componentClass="textarea"
-//             disabled
-//             value={sampleImportedReadout(sample) || ''}
-//             style={{ height: 50 }}
-//           />
-//         </FormGroup>
-//       </div>
-//     </div>
-//   );
-// };
-
 const content = (
   well, readoutTitles, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode) => {
   const { sample, readouts } = well;
@@ -97,7 +59,7 @@ const content = (
         &nbsp;
         <FormGroup>
           {readouts && readouts.map((readout, index) => (
-            <div key={`readout_${readout.id}`}>
+            <div key={`readout_${index}`}>
               <ControlLabel>{readoutTitles[index]}</ControlLabel>
               <InputGroup>
                 <FormControl
@@ -163,6 +125,19 @@ const sampleName = (sample) => {
   }
   return (<div />);
 };
+
+const title = (handleClose) => {
+  return(
+    <div>
+      Well Details
+      <span className='pull-right' style={{marginRight: -8, marginTop: -3}}>
+        <Button bsSize='xsmall' onClick={() => handleClose()}>
+          <i className="fa fa-times"></i>
+        </Button>
+      </span>
+    </div>
+  )
+}
 
 const renderWellContent = (well, removeSampleFromWell) => {
   const { sample } = well;
