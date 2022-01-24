@@ -240,7 +240,7 @@ export default class WellplateDetailsAttachments extends Component {
                 <ImageModal
                   imageStyle={imageStyle}
                   hasPop={hasPop}
-                  preivewObject={{
+                  previewObject={{
                     src: previewImg
                   }}
                   popObject={{
