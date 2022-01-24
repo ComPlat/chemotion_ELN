@@ -16,7 +16,7 @@ jobs:
         pg_role_test: [chemotion_test]
         pg_database_test: [chemotion_test]
         pg_password: [123456]
-    container: 
+    container:
       image: complat/complat-ubuntu-runner:development-5.9abbcea9.squashed
     env:
       HOME: /home/gitlab-runner
@@ -29,11 +29,11 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
-          --health-cmd pg_isready 
-          --health-interval 10s 
-          --health-timeout 5s 
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
-          
+
     steps:
       - name: git clone + postgres
         working-directory: /home/gitlab-runner
@@ -41,8 +41,8 @@ jobs:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5433
         run: |
-            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
-            
+            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/${GITHUB_REPOSITORY}
+
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
             echo "POSTGRES"
