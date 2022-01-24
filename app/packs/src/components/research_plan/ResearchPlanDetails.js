@@ -458,7 +458,7 @@ export default class ResearchPlanDetails extends Component {
         </Tab>
       ),
       wellplates: (
-        <Tab eventKey="wellplastes" title="Wellplates" key={`wellplates_${researchPlan.id}`}>
+        <Tab eventKey="wellplates" title="Wellplates" key={`wellplates_${researchPlan.id}`}>
           <ResearchPlanWellplates
             wellplates={researchPlan.wellplates}
             dropWellplate={wellplate => this.dropWellplate(wellplate)}
@@ -491,6 +491,7 @@ export default class ResearchPlanDetails extends Component {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
     });
+    const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
       <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">

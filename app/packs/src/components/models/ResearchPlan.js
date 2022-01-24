@@ -56,6 +56,7 @@ export default class ResearchPlan extends Element {
       changed: true,
       can_update: true,
       attachments: [],
+      wellplates: [],
       segments: []
     });
   }
