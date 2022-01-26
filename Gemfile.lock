@@ -368,7 +368,6 @@ GEM
     hashie (3.6.0)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
-    headless (2.0.0)
     html2haml (2.2.0)
       erubis (~> 2.7.0)
       haml (>= 4.0, < 6)
@@ -752,7 +751,6 @@ DEPENDENCIES
   grape-swagger-representable (~> 0.2)
   haml-rails (~> 1.0)
   hashie-forbidden_attributes
-  headless (= 2.0.0)
   httparty
   inchi-gem (= 1.06.1)!
   jbuilder (~> 2.0)
