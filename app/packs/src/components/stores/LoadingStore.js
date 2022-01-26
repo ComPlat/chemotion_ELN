@@ -29,6 +29,7 @@ class LoadingStore {
           ElementActions.updateReaction,
           ElementActions.createResearchPlan,
           ElementActions.updateResearchPlan,
+          ElementActions.createScreen,
           ElementActions.updateScreen,
           ElementActions.updateEmbeddedResearchPlan,
           ElementActions.createWellplate,
