@@ -1,5 +1,5 @@
 class TextTemplateInit < ActiveRecord::Migration[4.2]
-  class TextTemplate < ApplicationRecord
+  class TextTemplate < ActiveRecord::Base
     self.inheritance_column = nil
   end
 
