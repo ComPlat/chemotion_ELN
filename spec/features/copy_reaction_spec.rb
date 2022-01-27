@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# TODO: tried to fix this spec, however spec/support/login_macros.rb appears to be broken
 require 'rails_helper'
 
 describe 'Copy reaction' do
@@ -21,11 +22,11 @@ describe 'Copy reaction' do
   let(:product3) { create(:sample, name: 'Product3', real_amount_value: 4.671, molecule: m2) }
   let(:reaction3) { create(:reaction, status: 'Successful', short_label: 'Reaction3') }
 
-  let!(:col) { create(:collection, user_id: user.id, label: 'Col1') }
+  let!(:col) { create(:collection, user_id: user1.id, label: 'Col1') }
 
-  let!(:root_share) { create(:collection, user: user, shared_by_id: user2.id, is_shared: true, is_locked: true) }
-  let!(:cshare) { create(:collection, user: user, label: 'share-col', permission_level: 10, sample_detail_level: 10, reaction_detail_level: 10, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
-  let!(:cshare2) { create(:collection, user: user, label: 'share-col-2', permission_level: 10, sample_detail_level: 0, reaction_detail_level: 0, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
+  let!(:root_share) { create(:collection, user: user1, shared_by_id: user2.id, is_shared: true, is_locked: true) }
+  let!(:cshare) { create(:collection, user: user1, label: 'share-col', permission_level: 10, sample_detail_level: 10, reaction_detail_level: 10, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
+  let!(:cshare2) { create(:collection, user: user1, label: 'share-col-2', permission_level: 10, sample_detail_level: 0, reaction_detail_level: 0, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
 
   let!(:col1) { create(:collection, user_id: user1.id, label: 'Col1') }
   let!(:col2) { create(:collection, user_id: user1.id, label: 'Col2') }
@@ -51,16 +52,16 @@ describe 'Copy reaction' do
   end
 
   before do
-    sign_in(user)
+    sign_in(user1)
     fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
     svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
 
-    CollectionsSample.find_or_create_by!(sample: material, collection: col)
-    CollectionsSample.find_or_create_by!(sample: product, collection: col)
-    CollectionsReaction.find_or_create_by!(reaction: reaction, collection: col)
-    ReactionsStartingMaterialSample.create!(reaction: reaction, sample: material, reference: true, equivalent: 1)
-    ReactionsProductSample.create!(reaction: reaction, sample: product, equivalent: 1)
+    CollectionsSample.find_or_create_by!(sample: material1, collection: col)
+    CollectionsSample.find_or_create_by!(sample: product1, collection: col)
+    CollectionsReaction.find_or_create_by!(reaction: reaction1, collection: col)
+    ReactionsStartingMaterialSample.create!(reaction: reaction1, sample: material1, reference: true, equivalent: 1)
+    ReactionsProductSample.create!(reaction: reaction1, sample: product1, equivalent: 1)
 
     CollectionsSample.find_or_create_by!(sample: material2, collection: cshare)
     CollectionsSample.find_or_create_by!(sample: product2, collection: cshare)
@@ -75,7 +76,7 @@ describe 'Copy reaction' do
     ReactionsProductSample.create!(reaction: reaction3, sample: product3, equivalent: 1)
   end
 
-  it ' new reaction', js: true do
+  it 'new reaction', js: true do
     find_by_id('tree-id-Col1').click
     first('i.icon-reaction').click
     expect(page).not_to have_button('copy-element-btn', wait: 5)
