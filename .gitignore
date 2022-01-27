@@ -165,7 +165,6 @@ vendor/cache/*
 /public/packs-test
 /yarn-error.log
 yarn-debug.log*
-.yarn-integrity
 
 #welcome message
 /public/welcome-message.md

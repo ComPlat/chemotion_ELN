@@ -1,1 +1,0 @@
-// CONFLICT (rename/delete): app/assets/javascripts/components/research_plan/ResearchPlanDetailsFieldTableContextMenu.js deleted in development-5 and renamed to app/packs/src/components/research_plan/ResearchPlanDetailsFieldTableContextMenu.js in HEAD. Version HEAD of app/packs/src/components/research_plan/ResearchPlanDetailsFieldTableContextMenu.js left in tree.

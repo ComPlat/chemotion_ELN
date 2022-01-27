@@ -19,7 +19,6 @@
 #
 
 class TextTemplate < ApplicationRecord
-
   belongs_to :user
 
   DEFAULT_TEMPLATES = {

@@ -59,14 +59,6 @@ export default class WellplatesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(wellplate.serialize())
-      // TODO: do we need this?
-      // ------
-      // }).then(response => response.json())
-      //   .then(json => GenericElsFetcher.uploadGenericFiles(params, json.wellplate.id, 'Wellplat')
-      //     .then(() => this.fetchById(json.wellplate.id))).catch((errorMessage) => {
-      //     console.log(errorMessage);
-      //   });
-      // -----
     }).then((response) => {
       return response.json();
     }).then((json) => {
