@@ -11,20 +11,19 @@
 
 * Features and Improvements:
     * Screens:
-        * Research Plans may be added to screen
-        * Associated Research Plans may be edited from screen
+        * Research Plans may be added to Screens
+        * Associated Research Plans may be edited from Screens
     * Research Plans:
-        * Wellplates may be added to Research Plan
+        * Wellplates may be added to Research Plans
     * Wellplates:
-        * Add short label with user prefix and user's wellplate count
-        * Has multiple readouts now
+        * Add short label with user prefix and user's Wellplate count
+        * Wells have multiple readouts now
         * Add title for readouts and display of multiple readouts in designer and list
         * Add attachments
-        * Add import well data from xlsx, add import template
+        * Add import for well data from .xlsx and import template .xlsx
 
 * Fixes
     * Adjust docker setup to work on mac
-
 ## [v1.1.0]
 > 2022-01-18
 
