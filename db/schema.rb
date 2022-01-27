@@ -186,6 +186,18 @@ ActiveRecord::Schema.define(version: 2022_04_08_113102) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "comments", force: :cascade do |t|
+    t.string "content"
+    t.integer "created_by", null: false
+    t.integer "section"
+    t.integer "commentable_id"
+    t.string "commentable_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
+    t.index ["created_by"], name: "index_comment_on_user"
+  end
+
   create_table "computed_props", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.float "max_potential", default: 0.0
