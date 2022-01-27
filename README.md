@@ -1,6 +1,6 @@
 # Chemotion [![Badge DOI]][DOI]
 
-*An* ***Electronic Lab Notebook*** *for chemists!*
+An **Electronic Lab Notebook** for chemists!
 
 ---
 
@@ -8,7 +8,7 @@
 
 ---
 
-## Unit Tests
+## Tests
 
 [![Badge JS]][JS Tests] <br>
 [![Badge Acceptance]][Acceptance Tests]  <br>
@@ -51,7 +51,7 @@ of the **[Karlsruhe Institute of Technology]**.
 
 <!----------------------------------------------------------------------------->
 
-[Installation]: INSTALL.md
+[Installation]: https://www.chemotion.net/chemotionsaurus/docs/category/installation
 [Documentation]: https://www.chemotion.net/chemotionsaurus/docs/eln/about
 [Changelog]: CHANGELOG.md
 
