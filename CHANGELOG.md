@@ -6,6 +6,25 @@
 > yyyy-mm-dd
 
 
+## [v1.2.0] Biology
+> 2022-01-27
+
+* Features and Improvements:
+    * Screens:
+        * Research Plans may be added to screen
+        * Associated Research Plans may be edited from screen
+    * Research Plans:
+        * Wellplates may be added to Research Plan
+    * Wellplates:
+        * Add short label with user prefix and user's wellplate count
+        * Has multiple readouts now
+        * Add title for readouts and display of multiple readouts in designer and list
+        * Add attachments
+        * Add import well data from xlsx, add import template
+
+* Fixes
+    * Adjust docker setup to work on mac
+
 ## [v1.1.0]
 > 2022-01-18
 
@@ -46,7 +65,7 @@
   * collection import with sample missing molecule_name: use default value
   * structure editors: added public/editors to ease set up
   * node post-install fx to resolve node_modules path when located outside of app (docker)
-   
+
 
 
 ## [v1.0.2]
