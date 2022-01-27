@@ -137,6 +137,7 @@ class Reaction < ApplicationRecord
   has_many :sync_collections_users, through: :collections
 
   has_many :private_notes, as: :noteable, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, presence: true

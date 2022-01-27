@@ -196,6 +196,7 @@ class Sample < ApplicationRecord
   has_many :devices_samples
   has_many :analyses_experiments
   has_many :private_notes, as: :noteable, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
