@@ -452,8 +452,8 @@ export default class ResearchPlanDetails extends Component {
           {this.renderAttachmentsTab(researchPlan)}
         </Tab>
       ),
-      literature: (
-        <Tab eventKey="literature" title="Literature" key={`lit_${researchPlan.id}`}>
+      references: (
+        <Tab eventKey="references" title="References" key={`lit_${researchPlan.id}`}>
           <ResearchPlansLiteratures element={researchPlan} />
         </Tab>
       ),
@@ -482,6 +482,7 @@ export default class ResearchPlanDetails extends Component {
       attachments: 'Attachments',
       literature: 'Literature',
       wellplates: 'Wellplates',
+      references: 'References',
       metadata: 'Metadata',
     };
     addSegmentTabs(researchPlan, this.handleSegmentsChange, tabContentsMap);

@@ -15,13 +15,14 @@ describe 'Collection management' do
     it 'create an unshared collection', js: true do
       # press Collections button (on the left-side tree view)
       find('div.take-ownership-btn').click
-
       # press Add(plus) button to add collection
+      sleep 2
+
       find('div.root-actions').find(:xpath, '..').all('button')[0].click
       # input collection name
       factory_collection_name = 'Hello Collection'
 
-      new_collection = all('input.collection-label.form-control:last-of-type').last
+      new_collection = all('input.collection-label.form-control').last
       new_collection.click
       new_collection.set(factory_collection_name)
 

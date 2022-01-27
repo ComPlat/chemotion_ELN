@@ -7,10 +7,10 @@
 
 
 ## [v1.1.0]
-> 2021-11-18
+> 2022-01-18
 
 * NB:
-  * Admin: if applicable, chemspectra backend should be updated to version XXX
+  * Admin: if applicable, chemspectra backend should be updated to version 0.10.13
   * Developers: reactjs updated to 17
 
 * Features and Improvements:
@@ -24,16 +24,18 @@
   * attachments-inbox: filename matching to support files from ELA system.
   * chemspectra: UV-vis layout extension  (part of https://github.com/ComPlat/chemotion_ELN/issues/531 )
   * chemspectra: Add further functions to XRD layout https://github.com/ComPlat/chemotion_ELN/issues/532
-  * wellplate designer: select info to be displayed in well (https://github.com/ComPlat/chemotion_ELN/issues/556)
+  * wellplate designer: select info and colour to be displayed in well (https://github.com/ComPlat/chemotion_ELN/issues/556, https://github.com/ComPlat/chemotion_ELN/issues/558)
+  * wellplate designer: print wellplate as pdf (https://github.com/ComPlat/chemotion_ELN/issues/555)
   * name_abbreviation regexp validation is configurable
   * swagger documentation: visibility of endpoints doc customizable
-  * rename reaction tab 'references' to 'literature'. Please update the current profile_default.yml with the new one.
+  * rename tab 'literature' to 'references'. Please update the current profile_default.yml with the new one.
   * Admin user management: add multiple users from file.
 
 * Fixes
   * import collection failed due to some molecules cannot be created successfully [cannot create molecule with given molfile](https://git.scc.kit.edu/ComPlat/chemotion_ELN/-/issues/1351)
   * filtering product samples of reactions when filter is on on sample list
   * https://github.com/ComPlat/chemotion_ELN/issues/584
+  * Notification channels: correct wrong data format
 
 
 ## [v1.0.3]
@@ -44,6 +46,7 @@
   * collection import with sample missing molecule_name: use default value
   * structure editors: added public/editors to ease set up
   * node post-install fx to resolve node_modules path when located outside of app (docker)
+   
 
 
 ## [v1.0.2]

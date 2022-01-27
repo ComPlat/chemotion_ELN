@@ -294,24 +294,20 @@ export default class SampleDetails extends React.Component {
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
+    this.setState({ loadingMolecule: true });
     if (!smiles || smiles === '') {
-      this.setState({ loadingMolecule: true });
       MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor, sample.decoupled)
         .then((result) => {
           sample.molecule = result;
           sample.molecule_id = result.id;
           this.setState({
-            sample,
-            smileReadonly: true,
-            loadingMolecule: false,
-            pageMessage: result.ob_log
+            sample, smileReadonly: true, pageMessage: result.ob_log, loadingMolecule: false
           });
         }).catch((errorMessage) => {
           alert('Cannot create molecule!');
           console.log(`handleStructureEditorSave exception of fetchByMolfile: ${errorMessage}`);
         });
     } else {
-      this.setState({ loadingMolecule: true });
       MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile, editor)
         .then((result) => {
           if (!result || result == null) {
@@ -320,10 +316,7 @@ export default class SampleDetails extends React.Component {
             sample.molecule = result;
             sample.molecule_id = result.id;
             this.setState({
-              sample,
-              smileReadonly: true,
-              loadingMolecule: false,
-              pageMessage: result.ob_log
+              sample, smileReadonly: true, pageMessage: result.ob_log, loadingMolecule: false
             });
           }
         }).catch((errorMessage) => {
@@ -997,14 +990,14 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  sampleLiteratureTab(ind) {
+  sampleLiteratureTab() {
     const { sample } = this.state;
     if (!sample) { return null; }
     return (
       <Tab
-        eventKey={ind}
-        title="Literature"
-        key={`Literature_${sample.id}`}
+        eventKey="references"
+        title="References"
+        key={`References_${sample.id}`}
       >
         <ListGroupItem style={{ paddingBottom: 20 }} >
           <SampleDetailsLiteratures
@@ -1251,7 +1244,7 @@ export default class SampleDetails extends React.Component {
     const tabContentsMap = {
       properties: this.samplePropertiesTab('properties'),
       analyses: this.sampleContainerTab('analyses'),
-      literature: this.sampleLiteratureTab('literature'),
+      references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation')
     };
