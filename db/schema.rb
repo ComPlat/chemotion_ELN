@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_12_06_144812) do
+ActiveRecord::Schema.define(version: 2022_01_16_164546) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1179,16 +1179,6 @@ ActiveRecord::Schema.define(version: 2021_12_06_144812) do
        ) as result
        $function$
   SQL
-  create_function :literatures_by_element, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.title::text, CHR(10)) as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
-         and l.element_type = $1 and l.element_id = $2
-       $function$
-  SQL
   create_function :user_ids, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
        RETURNS TABLE(user_ids integer)
@@ -1374,6 +1364,16 @@ ActiveRecord::Schema.define(version: 2021_12_06_144812) do
         return new;
       end
       $function$
+  SQL
+  create_function :literatures_by_element, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
+       $function$
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL

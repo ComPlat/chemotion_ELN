@@ -9,13 +9,21 @@ import InboxActions from '../actions/InboxActions';
 import ReportActions from '../actions/ReportActions';
 import ElementActions from '../actions/ElementActions';
 
+const changeUrl = (url, urlTitle) => (url ? <a href={url} target="_blank" rel="noopener noreferrer">{urlTitle || url}</a> : <span />);
+
 const handleNotification = (nots, act, needCallback = true) => {
   nots.forEach((n) => {
     if (act === 'rem') {
       NotificationActions.removeByUid(n.id);
     }
     if (act === 'add') {
-      const newText = n.content.data.split('\n').map(i => <p key={`${new Date().getTime() + i}`}>{i}</p>);
+      const time = new Date().getTime();
+      const newText = n.content.data.split('\n').map(i => <p key={`${time + i}`}>{i}</p>);
+      const { url, urlTitle } = n.content;
+      if (url) {
+        newText[newText.length] = <p key={`${new Date().getTime()}-${url}`}>{changeUrl(url, urlTitle)}</p>;
+      }
+
       const notification = {
         title: `From ${n.sender_name} on ${n.updated_at}`,
         message: newText,
@@ -75,9 +83,14 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
   const content = ['Dear ELNer,', 'A new version has been released. Please reload this page to enjoy the latest updates.',
     'Thank you and have a nice day  :)',
     '--------------------------',
-    `Your version: ${localVersion}`, `Current version: ${serverVersion}`
+    `Your version: ${localVersion}`, `Current version: ${serverVersion}`,
+    '--------------------------',
   ].join('\n');
-  const contentJson = { data: content };
+  const contentJson = {
+    data: content,
+    url: '/about',
+    urlTitle: 'Check what\'s new here'
+  };
   const options = {
     year: 'numeric',
     month: 'long',
@@ -94,8 +107,6 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
   };
   handleNotification([not], 'add', false);
 };
-
-const reviewUrl = (url, urlTitle) => (url ? <a href={url} target="_blank" rel="noopener noreferrer">{urlTitle || url}</a> : <span />);
 
 export default class NoticeButton extends React.Component {
   constructor(props) {
@@ -252,7 +263,7 @@ export default class NoticeButton extends React.Component {
           <tbody>
             <tr>
               <td style={{ border: '0px', width: '100vw', textAlign: 'center' }}>
-                All messages are read
+                No new messages.
               </td>
             </tr>
           </tbody>
@@ -292,7 +303,7 @@ export default class NoticeButton extends React.Component {
                   <td width="90%">
                     { not.content.data }
                     <br />
-                    {reviewUrl(not.content.url, not.content.url_title)}
+                    {changeUrl(not.content.url, not.content.url_title)}
                   </td>
                 </tr>
               </tbody>
@@ -322,7 +333,7 @@ export default class NoticeButton extends React.Component {
             {this.renderBody()}
           </Modal.Body>
           <Modal.Footer>
-            <Button id="notice-button-ack-all" key="notice-button-ack-all" onClick={() => this.messageAck(0, true)}><i className="fa fa-check" aria-hidden="true" />&nbsp;Mark as <strong>all read</strong></Button>
+            <Button id="notice-button-ack-all" key="notice-button-ack-all" onClick={() => this.messageAck(0, true)}><i className="fa fa-check" aria-hidden="true" />&nbsp;Mark all messages as read</Button>
           </Modal.Footer>
         </Modal>
       );
