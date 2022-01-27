@@ -82,7 +82,6 @@ export default class WellplatesFetcher {
       return Promise.all(tasks).then(() => {
         return promise();
       });
-      // ---------
     }
     return promise();
   }
@@ -98,14 +97,6 @@ export default class WellplatesFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      // --------
-    //   body: JSON.stringify(params)
-    // }).then(response => response.json())
-    //   .then(json => GenericElsFetcher.uploadGenericFiles(params, json.wellplate.id, 'Wellplat')
-    //     .then(() => this.fetchById(json.wellplate.id))).catch((errorMessage) => {
-    //     console.log(errorMessage);
-    //   });
-      //  ------
       body: JSON.stringify(wellplate.serialize())
     }).then((response) => {
       return response.json();
