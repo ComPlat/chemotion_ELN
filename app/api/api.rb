@@ -143,6 +143,7 @@ class API < Grape::API
   mount Chemotion::NmrdbAPI
   mount Chemotion::MeasurementsAPI
   mount Chemotion::ConverterAPI
+  mount Chemotion::CommentAPI
 
   add_swagger_documentation(info: {
     "title": "Chemotion ELN",

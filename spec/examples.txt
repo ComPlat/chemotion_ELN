@@ -406,6 +406,8 @@ example_id                                                                  | st
 ./spec/models/collections_wellplate_spec.rb[1:5:1]                          | passed  | 0.34253 seconds |
 ./spec/models/collections_wellplate_spec.rb[1:5:2]                          | passed  | 0.42869 seconds |
 ./spec/models/collector_error_spec.rb[1:1]                                  | pending | 0.00001 seconds |
+./spec/models/comment_spec.rb[1:1:1]                         | unknown |                 |
+./spec/models/comment_spec.rb[1:1:2]                         | unknown |                 |
 ./spec/models/concerns/attachable_spec.rb[1:1:1]                            | passed  | 0.17144 seconds |
 ./spec/models/concerns/attachable_spec.rb[1:2:1]                            | passed  | 0.18826 seconds |
 ./spec/models/concerns/attachable_spec.rb[1:3:1]                            | passed  | 0.21493 seconds |

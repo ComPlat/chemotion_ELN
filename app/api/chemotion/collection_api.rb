@@ -40,7 +40,7 @@ module Chemotion
       desc "Return all locked and unshared serialized collection roots of current user"
       get :locked do
         current_user.collections.includes(:shared_users)
-          .locked.unshared.roots.order('label ASC')
+                    .locked.unshared.roots.order('label ASC')
       end
 
       get_child = Proc.new do |children, collects|
