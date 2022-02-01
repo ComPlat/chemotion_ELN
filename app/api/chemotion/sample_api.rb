@@ -299,7 +299,7 @@ module Chemotion
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
         # optional :molecule, type: Hash, desc: "Sample molecule" do
-          # optional :id, type: Integer
+        #   optional :id, type: Integer
         # end
         optional :molecule_id, type: Integer
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
@@ -339,7 +339,7 @@ module Chemotion
           update_datamodel(attributes[:container])
           attributes.delete(:container)
 
-          update_element_labels(@sample,attributes[:user_labels], current_user.id)
+          update_element_labels(@sample, attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
           attributes.delete(:segments)
 
