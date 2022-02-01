@@ -216,9 +216,9 @@ module Chemotion
           screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
           research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
           elements = {}
-          ElementKlass.find_each { |klass|
+          ElementKlass.find_each do |klass|
             elements[klass.name] = Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
-          }
+          end
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
           top_secret_wellplate = wellplates.flat_map(&:samples).map(&:is_top_secret).any?
@@ -302,10 +302,12 @@ module Chemotion
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
             collections_element_klass = ('collections_' + element).classify.constantize
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
@@ -316,6 +318,7 @@ module Chemotion
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -349,6 +352,7 @@ module Chemotion
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -363,10 +367,12 @@ module Chemotion
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
             ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             CollectionsElement.create_in_collection(ids, to_collection_id, klass.name)
           end
@@ -392,21 +398,23 @@ module Chemotion
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
             collections_element_klass = ('collections_' + element).classify.constantize
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             collections_element_klass.remove_in_collection(ids, from_collection.id)
           end
 
-
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -437,7 +445,7 @@ module Chemotion
         desc "Create export job"
         params do
           requires :collections, type: Array[Integer]
-          requires :format, type: Symbol, values: [:json, :zip, :udm]
+          requires :format, type: Symbol, values: %i[json zip udm]
           requires :nested, type: Boolean
         end
 
@@ -494,7 +502,6 @@ module Chemotion
           end
         end
       end
-
     end
   end
 end

@@ -347,16 +347,18 @@ module Chemotion
           attributes.delete(:segments)
 
           # otherwise ActiveRecord::UnknownAttributeError appears
-          attributes[:elemental_compositions].each do |i|
+          attributes[:elemental_compositions]&.each do |i|
             i.delete :description
-          end if attributes[:elemental_compositions]
+          end
 
           # set nested attributes
-          %i(molecule residues elemental_compositions).each do |prop|
+          %i[molecule residues elemental_compositions].each do |prop|
             prop_value = attributes.delete(prop)
+            next if prop_value.blank?
+
             attributes.merge!(
               "#{prop}_attributes".to_sym => prop_value
-            ) unless prop_value.blank?
+            )
           end
 
           boiling_point_lowerbound = params['boiling_point_lowerbound'].blank? ? -Float::INFINITY : params['boiling_point_lowerbound']
@@ -481,21 +483,23 @@ module Chemotion
 
         # otherwise ActiveRecord::UnknownAttributeError appears
         # TODO should be in params validation
-        attributes[:elemental_compositions].each do |i|
+        attributes[:elemental_compositions]&.each do |i|
           i.delete :description
           i.delete :id
-        end if attributes[:elemental_compositions]
+        end
 
-        attributes[:residues].each do |i|
+        attributes[:residues]&.each do |i|
           i.delete :id
-        end if attributes[:residues]
+        end
 
         # set nested attributes
-        %i(molecule residues elemental_compositions).each do |prop|
+        %i[molecule residues elemental_compositions].each do |prop|
           prop_value = attributes.delete(prop)
+          next if prop_value.blank?
+
           attributes.merge!(
             "#{prop}_attributes".to_sym => prop_value
-          ) unless prop_value.blank?
+          )
         end
         attributes.delete(:segments)
 
