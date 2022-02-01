@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 module Chemotion
   class CollectionAPI < Grape::API
     helpers CollectionHelpers
     helpers ParamsHelpers
     resource :collections do
-
       namespace :all do
         desc "Return the 'All' collection of the current user"
         get do
@@ -11,9 +12,9 @@ module Chemotion
         end
       end
 
-      desc "Return collection by id"
+      desc 'Return collection by id'
       params do
-        requires :id, type: Integer, desc: "Collection id"
+        requires :id, type: Integer, desc: 'Collection id'
       end
       route_param :id, requirements: { id: /[0-9]*/ } do
         get do
@@ -22,9 +23,9 @@ module Chemotion
       end
 
       namespace :take_ownership do
-        desc "Take ownership of collection with specified id"
+        desc 'Take ownership of collection with specified id'
         params do
-          requires :id, type: Integer, desc: "Collection id"
+          requires :id, type: Integer, desc: 'Collection id'
         end
         route_param :id do
           before do
@@ -37,29 +38,29 @@ module Chemotion
         end
       end
 
-      desc "Return all locked and unshared serialized collection roots of current user"
+      desc 'Return all locked and unshared serialized collection roots of current user'
       get :locked do
         current_user.collections.includes(:shared_users)
                     .locked.unshared.roots.order('label ASC')
       end
 
-      get_child = Proc.new do |children, collects|
+      get_child = proc do |children, collects|
         children.each do |obj|
-          child = collects.select { |dt| dt['ancestry'] == obj['ancestry_root']}
-          get_child.call(child, collects) if child.count>0
+          child = collects.select { |dt| dt['ancestry'] == obj['ancestry_root'] }
+          get_child.call(child, collects) if child.count.positive?
           obj[:children] = child
         end
       end
 
-      build_tree = Proc.new do |collects, delete_empty_root|
+      build_tree = proc do |collects, delete_empty_root|
         col_tree = []
-        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
-        get_child.call(col_tree,collects)
-        col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
+        collects.collect { |obj| col_tree.push(obj) if obj['ancestry'].nil? }
+        get_child.call(col_tree, collects)
+        col_tree.select! { |col| col[:children].count.positive?} if delete_empty_root
         Entities::CollectionRootEntity.represent(col_tree, serializable: true)
       end
 
-      desc "Return all unlocked unshared serialized collection roots of current user"
+      desc 'Return all unlocked unshared serialized collection roots of current user'
       get :roots do
         collects = Collection.where(user_id: current_user.id).unlocked.unshared.order('id')
         .select(
@@ -73,9 +74,9 @@ module Chemotion
         build_tree.call(collects,false)
       end
 
-      desc "Return all shared serialized collections"
+      desc 'Return all shared serialized collections'
       get :shared_roots do
-        collects = Collection.shared(current_user.id).order("id")
+        collects = Collection.shared(current_user.id).order('id')
         .select(
           <<~SQL
             id, user_id, label,ancestry, permission_level, user_as_json(collections.user_id) as shared_to,
@@ -88,9 +89,9 @@ module Chemotion
         build_tree.call(collects,true)
       end
 
-      desc "Return all remote serialized collections"
+      desc 'Return all remote serialized collections'
       get :remote_roots do
-        collects = Collection.remote(current_user.id).where([" user_id in (select user_ids(?))",current_user.id]).order("id")
+        collects = Collection.remote(current_user.id).where([' user_id in (select user_ids(?))',current_user.id]).order('id')
         .select(
           <<~SQL
             id, user_id, label, ancestry, permission_level, user_as_json(collections.shared_by_id) as shared_by,
@@ -103,18 +104,18 @@ module Chemotion
         build_tree.call(collects,true)
       end
 
-      desc "Bulk update and/or create new collections"
+      desc 'Bulk update and/or create new collections'
       patch '/' do
         Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids])
       end
 
-      desc "reject a shared collections"
+      desc 'reject a shared collections'
       patch '/reject_shared' do
         Collection.reject_shared(current_user.id, params[:id])
       end
 
       namespace :shared do
-        desc "Update shared collection"
+        desc 'Update shared collection'
         params do
           requires :id, type: Integer
           requires :collection_attributes, type: Hash do
@@ -132,7 +133,7 @@ module Chemotion
           Collection.shared(current_user.id).find(params[:id]).update!(params[:collection_attributes])
         end
 
-        desc "Create shared collections"
+        desc 'Create shared collections'
         params do
           requires :elements_filter, type: Hash do
             requires :sample, type: Hash do
@@ -176,9 +177,9 @@ module Chemotion
           screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
           research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
           elements = {}
-          ElementKlass.find_each { |klass|
+          ElementKlass.find_each do |klass|
             elements[klass.name] = Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
-          }
+          end
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
           top_secret_wellplate = wellplates.flat_map(&:samples).map(&:is_top_secret).any?
@@ -192,7 +193,7 @@ module Chemotion
           share_screens = ElementsPolicy.new(current_user, screens).share?
           share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
           share_elements = !(elements&.length > 0)
-          elements.each do |k, v|
+          elements.each do |_k, v|
             share_elements = ElementsPolicy.new(current_user, v).share?
             break unless share_elements
           end
@@ -240,7 +241,7 @@ module Chemotion
       namespace :elements do
         desc 'Move elements by UI state to another collection'
         params do
-          requires :ui_state, type: Hash, desc: "Selected elements from the UI" do
+          requires :ui_state, type: Hash, desc: 'Selected elements from the UI' do
             use :main_ui_state_params
           end
           optional :collection_id, type: Integer, desc: 'Destination collect id'
@@ -260,10 +261,12 @@ module Chemotion
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
             collections_element_klass = ('collections_' + element).classify.constantize
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
@@ -274,6 +277,7 @@ module Chemotion
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -307,6 +311,7 @@ module Chemotion
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -321,10 +326,12 @@ module Chemotion
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
             ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             CollectionsElement.create_in_collection(ids, to_collection_id, klass.name)
           end
@@ -332,9 +339,9 @@ module Chemotion
           status 204
         end
 
-        desc "Remove from current collection a set of elements by UI state"
+        desc 'Remove from current collection a set of elements by UI state'
         params do
-          requires :ui_state, type: Hash, desc: "Selected elements from the UI" do
+          requires :ui_state, type: Hash, desc: 'Selected elements from the UI' do
             use :main_ui_state_params
           end
         end
@@ -350,21 +357,23 @@ module Chemotion
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
             collections_element_klass = ('collections_' + element).classify.constantize
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             collections_element_klass.remove_in_collection(ids, from_collection.id)
           end
 
-
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -380,9 +389,9 @@ module Chemotion
       end
 
       namespace :unshared do
-        desc "Create an unshared collection"
+        desc 'Create an unshared collection'
         params do
-          requires :label, type: String, desc: "Collection label"
+          requires :label, type: String, desc: 'Collection label'
         end
 
         post do
@@ -391,10 +400,10 @@ module Chemotion
       end
 
       namespace :exports do
-        desc "Create export job"
+        desc 'Create export job'
         params do
           requires :collections, type: Array[Integer]
-          requires :format, type: Symbol, values: [:json, :zip, :udm]
+          requires :format, type: Symbol, values: %i[json zip udm]
           requires :nested, type: Boolean
         end
 
@@ -423,7 +432,7 @@ module Chemotion
       end
 
       namespace :imports do
-        desc "Create import job"
+        desc 'Create import job'
         params do
           requires :file, type: File
         end
@@ -451,7 +460,6 @@ module Chemotion
           end
         end
       end
-
     end
   end
 end
