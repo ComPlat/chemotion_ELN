@@ -68,74 +68,72 @@ export default class WellplateList extends Component {
   render() {
     const { wells } = this.props;
     return (
-      <div>
-        <Table bordered hover condensed responsive>
-          <thead>
-            <tr>
-              <th width="3%">#</th>
-              <th width="5%">Position</th>
-              <th width="5%">Molecule</th>
-              <th width="11%">Name</th>
-              <th width="11%">External Label</th>
-              <th width="15%">Sum-Formula</th>
-              {this.renderReadoutHeaders()}
-              <th style={{ display: 'none' }} width="25%">Imported Readout</th>
-            </tr>
-          </thead>
-          <tbody>
-            {wells.map((well, key) => {
-              const id = key + 1;
-              const { sample, position } = well;
-              const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-              const positionY = alphabet[position.y - 1];
-              const positions = positionY + position.x;
-              let svgPath = '';
-              let sampleName = '';
-              let externalLabel = '';
-              let sum_formular = '';
-              let importedReadout = '';
-              let svgNode = '';
-              const style = {
-                resize: 'none',
-                height: 66
-              };
-              const inputContainerStyle = {
-                padding: 0,
-                display: 'none'
-              };
-              if (sample) {
-                svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
-                svgNode = <SVG className="molecule-small" src={svgPath} />;
-                const { external_label, short_label, imported_readout } = sample;
-                sampleName = `${short_label || ''}`;
-                externalLabel = `${external_label || ''}`;
-                importedReadout = imported_readout;
-                sum_formular = sample.molecule_formula;
-              }
-              return (
-                <tr key={key}>
-                  <td>{id}</td>
-                  <td>{positions}</td>
-                  <td>{svgNode}</td>
-                  <td>{sampleName}</td>
-                  <td>{externalLabel}</td>
-                  <td>{sum_formular}</td>
-                  {this.renderReadoutFields(well)}
-                  <td style={inputContainerStyle}>
-                    <FormControl
-                      componentClass="textarea"
-                      style={style}
-                      value={importedReadout || ''}
-                      disabled
-                      className="no-margin"
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
-      </div>
+      <Table bordered hover condensed>
+        <thead>
+          <tr>
+            <th width="3%">#</th>
+            <th width="5%">Position</th>
+            <th width="5%">Molecule</th>
+            <th width="11%">Name</th>
+            <th width="11%">External Label</th>
+            <th width="15%">Sum-Formula</th>
+            {this.renderReadoutHeaders()}
+            <th style={{ display: 'none' }} width="25%">Imported Readout</th>
+          </tr>
+        </thead>
+        <tbody>
+          {wells.map((well, key) => {
+            const id = key + 1;
+            const { sample, position } = well;
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const positionY = alphabet[position.y - 1];
+            const positions = positionY + position.x;
+            let svgPath = '';
+            let sampleName = '';
+            let externalLabel = '';
+            let sum_formular = '';
+            let importedReadout = '';
+            let svgNode = '';
+            const style = {
+              resize: 'none',
+              height: 66
+            };
+            const inputContainerStyle = {
+              padding: 0,
+              display: 'none'
+            };
+            if (sample) {
+              svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
+              svgNode = <SVG className="molecule-small" src={svgPath} />;
+              const { external_label, short_label, imported_readout } = sample;
+              sampleName = `${short_label || ''}`;
+              externalLabel = `${external_label || ''}`;
+              importedReadout = imported_readout;
+              sum_formular = sample.molecule_formula;
+            }
+            return (
+              <tr key={key}>
+                <td>{id}</td>
+                <td>{positions}</td>
+                <td>{svgNode}</td>
+                <td>{sampleName}</td>
+                <td>{externalLabel}</td>
+                <td>{sum_formular}</td>
+                {this.renderReadoutFields(well)}
+                <td style={inputContainerStyle}>
+                  <FormControl
+                    componentClass="textarea"
+                    style={style}
+                    value={importedReadout || ''}
+                    disabled
+                    className="no-margin"
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </Table>
     );
   }
 }

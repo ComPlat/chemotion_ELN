@@ -298,7 +298,7 @@ export default class WellplateDetails extends Component {
       ),
       list: (
         <Tab eventKey="list" title="List" key={`list_${wellplate.id}`}>
-          <Well>
+          <Well style={{ overflow: 'scroll', height: '100%', 'max-height': 'calc(100vh - 375px)' }}>
             <WellplateList
               wells={wells}
               readoutTitles={readoutTitles}
@@ -335,8 +335,7 @@ export default class WellplateDetails extends Component {
 
     };
 
-    const tabTitlesMap = {
-    }
+    const tabTitlesMap = {};
     addSegmentTabs(wellplate, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
