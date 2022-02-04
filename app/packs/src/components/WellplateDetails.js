@@ -3,7 +3,7 @@ import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
   Well, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row
+  Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import { findIndex } from 'lodash';
@@ -279,21 +279,17 @@ export default class WellplateDetails extends Component {
     const tabContentsMap = {
       designer: (
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
-          <Row className="wellplate-detail">
-            <Col md={10}>
-              <Well id="wellplate-designer">
-                <Wellplate
-                  show={showWellplate}
-                  size={size}
-                  readoutTitles={readoutTitles}
-                  wells={wells}
-                  handleWellsChange={w => this.handleWellsChange(w)}
-                  cols={cols}
-                  width={60}
-                />
-              </Well>
-            </Col>
-          </Row>
+          <Well id="wellplate-designer" style={{ overflow: 'scroll' }}>
+            <Wellplate
+              show={showWellplate}
+              size={size}
+              readoutTitles={readoutTitles}
+              wells={wells}
+              handleWellsChange={w => this.handleWellsChange(w)}
+              cols={cols}
+              width={60}
+            />
+          </Well>
         </Tab>
       ),
       list: (
