@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
   Well, Panel, ListGroupItem, ButtonToolbar, Button,
@@ -96,6 +97,14 @@ export default class WellplateDetails extends Component {
     });
   }
 
+  handlePrint() {
+    const element = document.getElementById('wellplate-designer');
+    if (element) {
+      const opt = { filename: `${this.state.wellplate.name}-wells.pdf` };
+      html2pdf(element, opt);
+    }
+  }
+
   handleWellsChange(wells) {
     const { wellplate } = this.state;
     wellplate.wells = wells;
@@ -175,7 +184,7 @@ export default class WellplateDetails extends Component {
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
           <Row className="wellplate-detail">
             <Col md={10}>
-              <Well>
+              <Well id="wellplate-designer">
                 <Wellplate
                   show={showWellplate}
                   size={size}
@@ -252,6 +261,9 @@ export default class WellplateDetails extends Component {
               {submitLabel}
             </Button>
             {exportButton}
+            <Button bsStyle="primary" onClick={() => this.handlePrint()}>
+              Print Wells
+            </Button>
           </ButtonToolbar>
         </Panel.Body>
       </Panel>

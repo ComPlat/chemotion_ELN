@@ -45,6 +45,13 @@ M  END
 
   end
 
+  def self.inchi_info(molfile)
+    extra_inchi = Inchi::ExtraInchiReturnValues.new
+    inchi = Inchi.molfileToInchi(molfile, extra_inchi, '-LooseTSACheck -Polymers -FoldCRU -NPZz -SAtZZ -LargeMolecules')
+    inchikey = Inchi::InchiToInchiKey(inchi)
+    { inchi: inchi, inchikey: inchikey }
+  end
+
   def self.molecule_info_from_molfile(molfile)
     self.molecule_info_from_structure(molfile, 'mol')
   end
@@ -78,14 +85,6 @@ M  END
     c.set_out_format 'can'
     ca_smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
 
-    c.set_out_format 'inchi'
-    return_values = Inchi::ExtraInchiReturnValues.new
-
-    format == 'mol' ? (inchi = Inchi::molfileToInchi(mf, return_values, '-LooseTSACheck -Polymers -FoldCRU -NPZz -SAtZZ -LargeMolecules')) : (inchi = c.write_string(m, false).to_s.gsub(/\n/, "").strip)
-
-    c.set_out_format 'inchikey'
-    format == 'mol' ? (inchikey = Inchi::InchiToInchiKey(inchi)) : (inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip)
-
     unless format == 'mol'
       c.set_out_format 'mol'
       # opts = OpenBabel::OBConversion::GENOPTIONS
@@ -94,6 +93,17 @@ M  END
       pop.do(m) if %w(can smi).include?(format)
       molfile = c.write_string(m, false).to_s
       version = 'V2000'
+    end
+
+    inchi_info = inchi_info(mf || molfile)
+    if inchi_info[:inchi].blank?
+      c.set_out_format 'inchi'
+      inchi = c.write_string(m, false).to_s.gsub(/\n/, '').strip
+      c.set_out_format 'inchikey'
+      inchikey = c.write_string(m, false).to_s.gsub(/\n/, '').strip
+    else
+      inchi = inchi_info[:inchi]
+      inchikey = inchi_info[:inchikey]
     end
 
     {
@@ -122,10 +132,9 @@ M  END
 
   end
 
-  def self.inchikey_from_molfile molfile
-    return_values = Inchi::ExtraInchiReturnValues.new
-    inchi = Inchi::molfileToInchi(molfile, return_values, '-Polymers -FoldCRU -NPZz -SAtZZ -LargeMolecules')
-    inchikey = Inchi::InchiToInchiKey(inchi)
+  def self.inchikey_from_molfile(molfile)
+    inchi_info = inchi_info(molfile)
+    inchi_info[:inchikey]
   end
 
   def self.molfile_from_cano_smiles(cano_smiles)
@@ -154,7 +163,7 @@ M  END
     molecule_info
   end
 
-  def self.smiles_to_canon_smiles smiles
+  def self.smiles_to_canon_smiles(smiles)
     c = OpenBabel::OBConversion.new
     c.set_in_format 'smi'
     c.set_out_format 'can'
@@ -163,7 +172,7 @@ M  END
     smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
   end
 
-  def self.canon_smiles_to_smiles can_smiles
+  def self.canon_smiles_to_smiles(can_smiles)
     c = OpenBabel::OBConversion.new
     c.set_in_format 'can'
     c.set_out_format 'smi'
@@ -172,16 +181,12 @@ M  END
     smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
   end
 
-  def self.smiles_to_inchikey smiles
-    c = OpenBabel::OBConversion.new
-    c.set_in_format 'smi'
-    c.set_out_format 'inchikey'
-    m = OpenBabel::OBMol.new
-    c.read_string m, smiles.to_s
-    smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+  def self.smiles_to_inchikey(smiles)
+    result = smiles_to_molfile(smiles)
+    inchikey_from_molfile(result)
   end
 
-  def self.smiles_to_molfile smi
+  def self.smiles_to_molfile(smi)
     c = OpenBabel::OBConversion.new
     c.set_in_format 'smi'
 

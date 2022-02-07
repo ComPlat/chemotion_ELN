@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import _ from 'lodash';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
+import NotificationActions from '../actions/NotificationActions';
 
 export default class ReportsFetcher {
   static fetchArchives() {
@@ -66,6 +67,17 @@ export default class ReportsFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
+      if(json.error) {
+        NotificationActions.add( {
+          title: json.error,
+          message: 'Please reload the page to try it again!',
+          level: 'error',
+          dismissible: 'button',
+          position: 'tr',
+        });
+
+        return null;
+      }
       return json;
     }).catch((errorMessage) => {
       console.log(errorMessage);

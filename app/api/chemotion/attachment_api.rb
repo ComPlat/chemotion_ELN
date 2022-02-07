@@ -306,7 +306,7 @@ module Chemotion
       desc "Download the attachment file"
       get ':attachment_id' do
         content_type "application/octet-stream"
-        header['Content-Disposition'] = "attachment; filename=" + @attachment.filename
+        header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
         @attachment.read_file
       end

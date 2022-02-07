@@ -58,8 +58,13 @@ export default class WellplatesFetcher {
         .then(() => this.fetchById(json.wellplate.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
+      
     if (files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(() => promise());
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
     return promise();
   }
@@ -79,8 +84,13 @@ export default class WellplatesFetcher {
         .then(() => this.fetchById(json.wellplate.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
+      
     if (files.length > 0) {
-      return AttachmentFetcher.uploadFiles(files)().then(() => promise());
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
     }
     return promise();
   }
@@ -141,6 +151,25 @@ export default class WellplatesFetcher {
 
   static updateWellLabel(params) {
     let promise = fetch('/api/v1/wellplates/well_label', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
+  static updateWellColorCode(params) {
+    let promise = fetch('/api/v1/wellplates/well_color_code', {
       credentials: 'same-origin',
       method: 'post',
       headers: {

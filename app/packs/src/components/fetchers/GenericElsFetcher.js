@@ -96,7 +96,14 @@ export default class GenericElsFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-    if (files.length > 0) return AttachmentFetcher.uploadFiles(files)().then(() => promise());
+      
+    if (files.length > 0) {
+      let tasks = [];
+      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        return promise();
+      });
+    }
     return promise();
   }
 

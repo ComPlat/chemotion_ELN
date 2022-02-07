@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_17_235010) do
+ActiveRecord::Schema.define(version: 2022_01_16_164546) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1141,6 +1141,7 @@ ActiveRecord::Schema.define(version: 2021_11_17_235010) do
     t.string "additive"
     t.datetime "deleted_at"
     t.string "label", default: "Molecular structure", null: false
+    t.string "color_code"
     t.index ["deleted_at"], name: "index_wells_on_deleted_at"
     t.index ["sample_id"], name: "index_wells_on_sample_id"
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
@@ -1176,16 +1177,6 @@ ActiveRecord::Schema.define(version: 2021_11_17_235010) do
        WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
        group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
        ) as result
-       $function$
-  SQL
-  create_function :literatures_by_element, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.title::text, CHR(10)) as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
-         and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
   create_function :user_ids, sql_definition: <<-SQL
@@ -1373,6 +1364,16 @@ ActiveRecord::Schema.define(version: 2021_11_17_235010) do
         return new;
       end
       $function$
+  SQL
+  create_function :literatures_by_element, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
+       $function$
   SQL
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL

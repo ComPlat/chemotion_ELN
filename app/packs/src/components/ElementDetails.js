@@ -157,6 +157,9 @@ export default class ElementDetails extends Component {
   }
 
   content(el) {
+    if (el && el.klassType === 'GenericEl' && el.type != null) {
+      return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
+    }
 
     switch (el.type) {
       case 'sample':
@@ -217,9 +220,6 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       default:
-        if (el && el.klassType === 'GenericEl' && el.type != null) {
-          return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
-        }
         return (
           <div style={{ textAlign: 'center' }}>
             <br />
