@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe Comment, type: :model do
   describe 'creation' do
     let(:sample) { create(:sample) }
-    let(:comment) { create(:comment, commentable: sample) }
+    let(:comment) { create(:comment, commentable: sample, section: described_class.sample_sections[:properties]) }
 
     it 'is possible to create a valid comment' do
       expect(comment.valid?).to be(true)
