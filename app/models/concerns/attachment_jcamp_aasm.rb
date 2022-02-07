@@ -122,17 +122,17 @@ module AttachmentJcampProcess
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
     content_type = ext == 'png' ? 'image/png' : 'application/octet-stream'
-    att = Attachment.new(
-      filename: meta_filename,
-      file_path: meta_tmp.path,
-      attachable_id: attachable_id,
-      attachable_type: 'Container',
-      created_by: created_by,
-      created_for: created_for,
-      content_type: content_type,
-      key: SecureRandom.uuid
-    )
-
+    att = Attachment.children_of(self[:id]).where(filename: meta_filename).take
+    if att.nil?
+      att = Attachment.children_of(self[:id]).new(
+        filename: meta_filename,
+        file_path: meta_tmp.path,
+        created_by: created_by,
+        created_for: created_for,
+        content_type: content_type,
+        key: SecureRandom.uuid
+      )
+    end
     att.attachment_attacher.attach(File.open(meta_tmp.path, binmode: true))
     att.attachment_attacher.create_derivatives
     att.save!
@@ -166,6 +166,7 @@ module AttachmentJcampProcess
     end
     params[:ext] = extname.downcase
     params[:fname] = filename.to_s
+    byebug
     params
   end
 
@@ -177,6 +178,7 @@ module AttachmentJcampProcess
       keep = att.json? && keyword == 'infer'
       keep ? att : nil
     end.select(&:present?)
+    byebug
     !infers.empty? ? infers[0].read_file : '{}'
   end
 
@@ -190,6 +192,7 @@ module AttachmentJcampProcess
 
   def create_process(is_regen)
     params = build_params
+    byebug
     tmp_jcamp, tmp_img, spc_type = Tempfile.create('molfile') do |t_molfile|
       if attachable&.root_element.is_a?(Sample)
         t_molfile.write(attachable.root_element.molecule.molfile)

@@ -2,12 +2,12 @@ class AttachmentUploader < Shrine
   MAX_SIZE = Rails.configuration.storage.maximum_size * 1024 * 1024 # 10 MB
 
   plugin :derivatives
-  plugin :remove_attachment
+  plugin :keep_files, replaced: true
   plugin :validation_helpers
   plugin :pretty_location
-  Attacher.validate do
-    validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.storage.maximum_size} MB"
-  end
+  # Attacher.validate do
+  #   validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.storage.maximum_size} MB"
+  # end
 
   def is_integer?
     !!(self =~ /\A[-+]?[0-9]+\z/)
@@ -16,7 +16,7 @@ class AttachmentUploader < Shrine
   def generate_location(io, context = {})
     sub_directories = Dir["#{storage.directory}/*"].select { |f| File.directory? f }.sort_by { |s| s.scan(/\d+/).last.to_i }
     if sub_directories.count <= 1
-      bucket = 1 
+      bucket = 1
     else
       bucket = sub_directories.count - 1
     end
@@ -56,7 +56,7 @@ class AttachmentUploader < Shrine
         thumb_path = "#{dir}/#{file_basename}.thumb.jpg"
         FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
         FileUtils.move(thumbnail, thumb_path)
-        result[:thumbnail]  = File.open(thumb_path, 'rb')
+        result[:thumbnail] = File.open(thumb_path, 'rb')
         record[:thumb] = true
       end
       result

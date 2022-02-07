@@ -1,5 +1,7 @@
 class UpdateAttachmentsWithShrine < ActiveRecord::Migration[5.2]
   def change
+    Attachment.reset_column_information
+    
     Attachment.where(attachment_data: [nil]).find_each do |item|
       file_path = item.store.path
       next unless File.exist? file_path

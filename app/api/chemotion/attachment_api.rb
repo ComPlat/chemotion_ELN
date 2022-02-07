@@ -263,12 +263,13 @@ module Chemotion
               bucket: 1,
               filename: file_name,
               key: params[:key],
+              identifier: params[:key],
               file_path: file_path,
               created_by: current_user.id,
               created_for: current_user.id,
               content_type: MIME::Types.type_for(file_name)[0].to_s
             )
-            
+            error_messages = []
             attach.attachment_attacher.attach(File.open(file_path, binmode: true))
             if attach.valid?
               attach.attachment_attacher.create_derivatives
@@ -324,14 +325,29 @@ module Chemotion
 
       desc "Download the attachment file"
       get ':attachment_id' do
+        params do
+          optional :version, type: Integer
+        end
         content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-        uploaded_file = @attachment.attachment_attacher.file
+        uploaded_file = @attachment.at(version: params[:version].to_i).attachment_attacher.file
         data = uploaded_file.read
         uploaded_file.close
 
         data
+      end
+
+      desc "Get all versions of a attachments"
+      get ':attachment_id/versions' do
+        content_type "application/octet-stream"
+
+      versions = []
+        for numb in 1..@attachment.log_size do
+          versions.push @attachment.at(version: numb)
+        end
+        
+        Entities::AttachmentEntity.represent(versions)
       end
 
       desc "Download the zip attachment file"

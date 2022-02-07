@@ -10,7 +10,7 @@
 #  storage         :string(20)       default("tmp")
 #  created_by      :integer          not null
 #  created_for     :integer
-#  version         :integer          default(0)
+#  version         :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  content_type    :string
@@ -22,6 +22,8 @@
 #  aasm_state      :string
 #  filesize        :bigint
 #  attachment_data :jsonb
+#  is_editing      :boolean          default(FALSE)
+#  log_data        :jsonb
 #
 # Indexes
 #
@@ -31,11 +33,13 @@
 
 
 class Attachment < ApplicationRecord
+  has_logidze
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
 
+  has_ancestry ancestry_column: :version
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
   before_create :generate_key
@@ -170,13 +174,6 @@ class Attachment < ApplicationRecord
 
   def update_report!(r_id)
     update!(attachable_id: r_id, attachable_type: 'Report')
-  end
-
-  def rewrite_file_data!
-    return unless file_data.present?
-    store.destroy
-    store.store_file
-    self
   end
 
   def update_filesize

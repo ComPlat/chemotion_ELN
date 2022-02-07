@@ -9,8 +9,6 @@ import ScanCodeButton from './ScanCodeButton';
 import NoticeButton from './NoticeButton';
 import InboxButton from './InboxButton';
 import { PermissionConst } from '../utils/PermissionConst';
-//import DeviceButton from './DeviceButton'
-import { PermissionConst } from '../utils/PermissionConst';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
