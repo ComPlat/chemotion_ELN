@@ -3,45 +3,26 @@ class ExportCollectionToRadarJob < ActiveJob::Base
 
   queue_as :export_collection_to_radar
 
-  after_perform do |job|
-    begin
-      # Email ELNer
-      # CollectionMailer.mail_archive_completed(
-      #   @user_id,
-      #   @label,
-      #   @link,
-      # ).deliver_now
-
-      # Notify ELNer
-      # Message.create_msg_notification(
-      #   channel_subject: Channel::ARCHIVE_RADAR,
-      #   message_from: @user_id,
-      #   data_args: {operation: 'Archive', label: @label },
-      #   url: @link
-      # )
-    rescue StandardError => e
-      Delayed::Worker.logger.error e
-    end if @success
-  end
-
-  def perform(collection_id, user_id)
+  def perform(access_token, collection_id, dataset_id)
     @success = true
+    @access_token = access_token
     @collection_id = collection_id
+    @dataset_id = dataset_id
 
     begin
-      @labels = Collection.where(id: @collection_id).pluck(:label)
-      export = Export::ExportRadar.new(job_id, collection_id, user_id)
-      export.fetch_access_token
-      export.store_dataset
-      export.create_file
-      export.upload_file
+      # create the collection export
+      export = Export::ExportCollections.new(job_id, [@collection_id], 'zip', true)
+      export.prepare_data
+      export.to_file
+
+      # upload the file to radar
+      file_id = Oauth2::Radar::store_file(@access_token, @dataset_id, export.file_path)
+
+      # store the metainformation about the dataset and the file in radar in the collection metadata
+      collection = Collection.find(@collection_id)
+      collection.metadata.set_radar_ids(@dataset_id, file_id)
     rescue StandardError => e
       Delayed::Worker.logger.error e
-      # Message.create_msg_notification(
-      #   channel_subject: Channel::ARCHIVE_RADAR_FAIL,
-      #   message_from: @user_id,
-      #   data_args: { operation: 'Archive', col_labels: @labels}
-      # )
       @success = false
     end
   end

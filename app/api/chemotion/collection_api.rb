@@ -457,22 +457,6 @@ module Chemotion
           ExportCollectionsJob.perform_later(collection_ids, params[:format].to_s, nested, current_user.id)
           status 204
         end
-
-        desc "Create export radar job"
-        params do
-          requires :collection_id, type: Integer, desc: "Collection id"
-        end
-        before do
-          if params[:collection_id]
-            error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:collection_id])).create_archive?
-          else
-            error!('400 Bad Request', 400)
-          end
-        end
-        post :radar do
-          ExportCollectionToRadarJob.perform_later(params[:collection_id], current_user.id)
-          status 204
-        end
       end
 
       namespace :imports do

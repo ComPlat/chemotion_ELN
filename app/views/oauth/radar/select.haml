@@ -1,0 +1,24 @@
+.container
+
+  %h2
+    Chemotion ELN
+  %br/
+
+  %h3
+    Export to RADAR
+
+  %p
+    Please select one of your workspaces.
+
+  = form_tag '/oauth/radar/select', :method => :post do
+    - @workspaces.each do |workspace|
+      .radio
+        %label
+          %input{name: "workspace", type: "radio", value: workspace['id']}
+          = workspace['descriptiveMetadata']['title']
+
+    - if @error
+      %p.text-danger
+        = @error
+
+    %button.btn.btn-primary.primary-button{ type: 'submit' } Export

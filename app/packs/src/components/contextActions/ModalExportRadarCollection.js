@@ -20,7 +20,6 @@ export default class ModalExportRadarCollection extends React.Component {
     }
 
     this.handleEdit = this.handleEdit.bind(this)
-    this.handleArchive = this.handleArchive.bind(this)
   }
 
   componentDidMount() {
@@ -38,23 +37,6 @@ export default class ModalExportRadarCollection extends React.Component {
     const { onHide, editAction } = this.props;
 
     editAction()
-
-    setTimeout(() => {
-      this.setState({ processing: false });
-      onHide();
-    }, 1000);
-  }
-
-  handleArchive() {
-    const { onHide, action } = this.props;
-    const { currentCollection } = UIStore.getState();
-    this.setState({ processing: true });
-
-    const params = {
-      collection_id: currentCollection.id
-    };
-
-    action(params);
 
     setTimeout(() => {
       this.setState({ processing: false });
@@ -234,14 +216,9 @@ export default class ModalExportRadarCollection extends React.Component {
 
   renderButtonBar() {
     const { onHide } = this.props;
-    const { processing, metadata } = this.state;
-    const bStyle = processing === true ? 'danger' : 'warning';
-    const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
-
-    let bTitle = processing === true ? 'Archiving' : 'Archive to RADAR';
-    if (metadata.datasetId) {
-      bTitle = processing === true ? 'Updating' : 'Update in RADAR';
-    }
+    const { metadata } = this.state;
+    const { currentCollection } = UIStore.getState()
+    const archiveUrl = `/oauth/radar/archive?collection_id=${currentCollection.id}`
 
     return (
       <ButtonToolbar>
@@ -249,15 +226,13 @@ export default class ModalExportRadarCollection extends React.Component {
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
             <Button onClick={this.handleEdit}>Edit collection metadata</Button>
-            <Button
-              bsStyle={bStyle}
-              id="md-export-dropdown"
-              disabled={this.isDisabled()}
-              title="Archive to RADAR"
-              onClick={this.handleArchive}
-            >
-              <span><i className={bClass} />&nbsp;{bTitle}</span>
-            </Button>
+            <a href={archiveUrl} target="_blank"
+               class="btn btn-danger"
+               disabled={this.isDisabled()}
+               title="Archive to RADAR"
+               onClick={onHide}>
+              <span><i className="fa fa-file-text-o" />&nbsp;Archive to RADAR</span>
+            </a>
           </ButtonToolbar>
         </div>
       </ButtonToolbar>

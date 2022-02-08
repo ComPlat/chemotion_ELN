@@ -2,7 +2,7 @@ development:
   :url: https://test.radar-service.eu
   :client_id:
   :client_secret:
-  :redirect_url:
+  :redirect_uri:
   :username:
   :password:
   :contract_id:
@@ -19,7 +19,7 @@ production:
   :url: https://www.radar-service.eu
   :client_id:
   :client_secret:
-  :redirect_url:
+  :redirect_uri:
   :username:
   :password:
   :contract_id:
