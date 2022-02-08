@@ -35,11 +35,14 @@ services:
     ports: # expose default rails port to host machine
       - "3000:3000"
     volumes:
-      - 'homedir:/home/chemotion-dev/' # houses the installed gems via asdf
-      - '.:/home/chemotion-dev/app'
+      - dev-sync:/home/chemotion-dev/app:nocopy
+      # - 'homedir:/home/chemotion-dev/' # houses the installed gems via asdf
+      # - '.:/home/chemotion-dev/app'
     working_dir: "/home/chemotion-dev/app"
     command: "bundle exec rails s -p 3000 -b 0.0.0.0"
 
 volumes:
   database:
   homedir:
+  dev-sync:
+    external: true

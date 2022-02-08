@@ -173,3 +173,5 @@ vendor/bundle/*
 vendor/cache/*
 .idea/*
 .devcontainer
+.docker-sync/
+
