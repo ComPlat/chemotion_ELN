@@ -46,9 +46,23 @@ export default class ModalExportRadarCollection extends React.Component {
 
   renderMetadata() {
     const { metadata } = this.state
-
     return (
       <div>
+        {metadata.datasetUrl && <div>
+          <p>
+            <strong>This collection was already archived to RADAR. You can archive the collection again, but you might need to remove the existing dataset in RADAR first.</strong>
+          </p>
+          <dl>
+            <dt>RADAR Dataset URL</dt>
+            <dd>
+              <a target="_blank" href={metadata.datasetUrl}>{metadata.datasetUrl}</a>
+            </dd>
+            <dt>RADAR File URL</dt>
+            <dd>
+              <a target="_blank" href={metadata.fileUrl}>{metadata.fileUrl}</a>
+            </dd>
+          </dl>
+        </div>}
         <dl>
           <dt>Title</dt>
           <dd>
@@ -227,7 +241,7 @@ export default class ModalExportRadarCollection extends React.Component {
             <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
             <Button onClick={this.handleEdit}>Edit collection metadata</Button>
             <a href={archiveUrl} target="_blank"
-               class="btn btn-danger"
+               className="btn btn-danger"
                disabled={this.isDisabled()}
                title="Archive to RADAR"
                onClick={onHide}>

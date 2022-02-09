@@ -13,7 +13,7 @@ const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
         RADAR Dataset URL
       </ControlLabel>
       <p>
-        <a href={metadata.datasetUrl} target="blank">{metadata.datasetUrl}</a>
+        <a href={metadata.datasetUrl} target="_blank">{metadata.datasetUrl}</a>
       </p>
     </FormGroup>}
     {metadata.fileUrl && <FormGroup>
@@ -21,7 +21,7 @@ const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
         RADAR File URL
       </ControlLabel>
       <p>
-        <a href={metadata.fileUrl} target="blank">{metadata.fileUrl}</a>
+        <a href={metadata.fileUrl} target="_blank">{metadata.fileUrl}</a>
       </p>
     </FormGroup>}
     <FormGroup>

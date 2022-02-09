@@ -70,10 +70,8 @@ class Oauth::RadarController < ApplicationController
     collection_id = session[:radar_collection_id]
     collection = Collection.find(collection_id)
 
-    puts collection.metadata.metadata['datasetURL'].nil?
-
-    unless collection.metadata.metadata['datasetURL'].nil?
-      redirect_to collection.metadata.metadata['datasetURL']
+    unless collection.metadata.metadata['datasetUrl'].nil?
+      redirect_to collection.metadata.metadata['datasetUrl']
     else
       render
     end
