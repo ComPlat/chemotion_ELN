@@ -24,18 +24,6 @@
     },
     {
       "type": "numeric",
-      "field": "amount_enzyme",
-      "label": "Amount enzyme as nmol/min",
-      "default": "",
-      "position": 30,
-      "placeholder": "amount enzyme as nmol/min",
-      "units": [
-        { "key": "u", "label": "U" },
-        { "key": "mu", "label": "mU" }
-      ]
-    },
-    {
-      "type": "numeric",
       "field": "molarity",
       "label": "Chem. concentration (Molarity)",
       "default": "",
@@ -177,8 +165,10 @@
       "position": 90,
       "placeholder": "Enzyme activity",
       "units": [
-        { "key": "u_l", "label": "U/L", "nm": 1 },
-        { "key": "u_ml", "label": "U/mL", "nm": 1000 }
+        { "key": "katal", "label": "kat", "nm": 1 },
+        { "key": "mkatal", "label": "mkat", "nm": 1000 },
+        { "key": "ukatal", "label": "µkat", "nm": 1000000 },
+        { "key": "nkatal", "label": "nkat", "nm": 1000000000 }
       ]
     },
     {
