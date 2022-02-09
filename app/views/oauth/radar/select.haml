@@ -7,18 +7,25 @@
   %h3
     Export to RADAR
 
-  %p
-    Please select one of your workspaces.
+  - unless @workspaces.nil? or @workspaces.empty?
+    %p
+      Please select one of your workspaces.
 
-  = form_tag '/oauth/radar/select', :method => :post do
-    - @workspaces.each do |workspace|
-      .radio
-        %label
-          %input{name: "workspace", type: "radio", value: workspace['id']}
-          = workspace['descriptiveMetadata']['title']
+    = form_tag '/oauth/radar/select', :method => :post do
 
+      - @workspaces.each do |workspace|
+        .radio
+          %label
+            %input{name: "workspace", type: "radio", value: workspace['id']}
+            = workspace['descriptiveMetadata']['title']
+
+      - if @error
+        %p.text-danger.mt-2
+          = @error
+
+      %button.btn.btn-primary.primary-button{ type: 'submit' } Export
+
+  - else
     - if @error
-      %p.text-danger
+      %p.text-danger.mt-2
         = @error
-
-    %button.btn.btn-primary.primary-button{ type: 'submit' } Export

@@ -4,7 +4,15 @@ class Oauth::RadarController < ApplicationController
   def archive
     collection_id = request.GET['collection_id']
     unless collection_id
-      return render status: 400, json: {:error => 'No collection_id provided'}.to_json
+      @error = 'No collection id was provided.'
+      return render status: 400
+    end
+
+    # check if the collection exists and belongs to the user
+    collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+    unless collection
+      @error = 'You are not allowed to access this collection.'
+      return render status: 403
     end
 
     # store collection in the session
@@ -32,7 +40,12 @@ class Oauth::RadarController < ApplicationController
     collection_id = session[:radar_collection_id]
     access_token = session[:radar_access_token]
 
-    collection = Collection.find(collection_id)
+    # get the collection and check if it exists and belongs to the user
+    collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+    unless collection
+      @error = 'You are not allowed to access this collection.'
+      return render status: 403
+    end
 
     if request.post?
       # get the workspaces from the session
@@ -51,16 +64,25 @@ class Oauth::RadarController < ApplicationController
           # enqueue the job to create the files and upload them to radar
           ExportCollectionToRadarJob.perform_later(access_token, collection_id, response['id'])
 
-          redirect_to action: 'export'
-          return
+          return redirect_to action: 'export'
         end
       else
         @error = 'Please select one of your workspaces.'
+        return render status: 400
       end
     else
       # fetch the available workspaces for the user
       response = Oauth2::Radar::fetch_workspaces(access_token)
-      session[:radar_workspaces] = @workspaces = response['data']
+      @workspaces = response['data']
+
+      # check if any workspaces were found
+      if @workspaces.empty?
+        @error = 'No workspaces could be retrieved from RADAR. Please make sure that at least one workspace is available.'
+        return render status: 400
+      end
+
+      # store the workspaces in the session
+      session[:radar_workspaces] = @workspaces
     end
 
     render
@@ -68,12 +90,18 @@ class Oauth::RadarController < ApplicationController
 
   def export
     collection_id = session[:radar_collection_id]
-    collection = Collection.find(collection_id)
+
+    # get the collection and check if it exists and belongs to the user
+    collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+    unless collection
+      @error = 'You are not allowed to access this collection.'
+      return render status: 403
+    end
 
     unless collection.metadata.metadata['datasetUrl'].nil?
-      redirect_to collection.metadata.metadata['datasetUrl']
+      return redirect_to collection.metadata.metadata['datasetUrl']
     else
-      render
+      return render
     end
   end
 end
