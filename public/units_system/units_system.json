@@ -70,7 +70,8 @@
       "units": [
         { "key": "s_m", "label": "S/m", "nm": 1 }
       ]
-    },{
+    },
+    {
       "type": "numeric",
       "field": "current",
       "label": "Current",
@@ -181,7 +182,7 @@
       "units": [
         { "key": "ul_min", "label": "µl/min", "nm": 1000000 },
         { "key": "ml_min", "label": "ml/min", "nm": 1000 },
-        { "key": "l_m", "label": "l/m", "nm": 1 }
+        { "key": "l_m", "label": "l/min", "nm": 1 }
       ]
     },
     {
@@ -215,8 +216,8 @@
       "position": 110,
       "placeholder": "length",
       "units": [
-        { "key": "pm", "label": "pm", "nm": 100000 },
-        { "key": "nm", "label": "nm", "nm": 10000 },
+        { "key": "nm", "label": "nm", "nm": 1000000000 },
+        { "key": "um", "label": "µm", "nm": 1000000 },
         { "key": "mm", "label": "mm", "nm": 1000 },
         { "key": "cm", "label": "cm", "nm": 100 },
         { "key": "m", "label": "m", "nm": 1  }
