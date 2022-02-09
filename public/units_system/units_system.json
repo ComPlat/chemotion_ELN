@@ -32,8 +32,8 @@
       "units": [
         { "key": "mol_l", "label": "mol/L (M)", "nm": 1 },
         { "key": "mmol_l", "label": "mmol/L (mM)", "nm": 1000 },
-        { "key": "nmol_l", "label": "nmol/L (nM)", "nm": 1000000 },
-        { "key": "pmol_l", "label": "pmol/L (pM)", "nm": 1000000000 }
+        { "key": "umol_l", "label": "µmol/L (µM)", "nm": 1000000 },
+        { "key": "nmol_l", "label": "nmol/L (nM)", "nm": 1000000000 }
       ]
     },
     {
@@ -55,7 +55,7 @@
       "position": 60,
       "placeholder": "concentration",
       "units": [
-        { "key": "ng_l", "label": "ng/L", "nm": 1000000 },
+        { "key": "ug_l", "label": "µg/L", "nm": 1000000 },
         { "key": "mg_l", "label": "mg/L", "nm": 1000 },
         { "key": "g_l", "label": "g/L", "nm": 1 }
       ]
