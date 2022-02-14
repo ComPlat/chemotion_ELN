@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class CommentAPI < Grape::API
     resource :comments do
@@ -10,7 +12,11 @@ module Chemotion
         get do
           comment = Comment.find(params[:id])
 
-          if comment.commentable.created_by == current_user.id # everyone with access to the shared or synced collection
+          collections = Collection.where(id: comment.commentable.collections.ids)
+          allowed_user_ids = (collections.pluck(:user_id) +
+            collections.pluck(:shared_by_id)).compact.uniq
+
+          if allowed_user_ids.include? current_user.id # everyone with access to the shared or synced collection
             present comment, with: Entities::CommentEntity, root: 'comment'
           else
             error!('401 Unauthorized', 401)
@@ -27,10 +33,19 @@ module Chemotion
       get do
         comment = Comment.find_by(
           commentable_id: params[:commentable_id],
-          commentable_type: params[:commentable_type],
-          created_by: current_user.id
-        ) || Comment.new
-        present comment, with: Entities::CommentEntity, root: 'comment'
+          commentable_type: params[:commentable_type]
+        )
+        error!('404 Comment not found', 404) unless comment.present?
+
+        collections = Collection.where(id: comment.commentable.collections.ids)
+        allowed_user_ids = (collections.pluck(:user_id) +
+          collections.pluck(:shared_by_id)).uniq
+
+        if allowed_user_ids.include? current_user.id # everyone with access to the shared or synced collection
+          present comment, with: Entities::CommentEntity, root: 'comment'
+        else
+          error!('401 Unauthorized', 401)
+        end
       end
 
       resource :create do
@@ -40,6 +55,19 @@ module Chemotion
           requires :commentable_id, type: Integer
           requires :commentable_type, type: String, values: %w[Sample Reaction]
           requires :section, type: String, values: Comment.sample_sections.values + Comment.reaction_sections.values
+        end
+
+        before do
+          commentable = if params[:commentable_type].eql?('Sample')
+                          Sample.find params[:commentable_id]
+                        else
+                          Reaction.find params[:commentable_id]
+                        end
+          collections = Collection.where(id: commentable.collections.ids)
+          allowed_user_ids = (collections.pluck(:user_id) +
+            collections.pluck(:shared_by_id)).compact.uniq
+
+          error!('401 Unauthorized', 401) unless allowed_user_ids.include? current_user.id
         end
 
         post do
