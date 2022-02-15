@@ -1,8 +1,9 @@
+/* eslint-disable no-underscore-dangle,  camelcase, semi,  no-unused-vars */
 import Element from './Element';
 
-export default class PrivateNote extends Element {
+export default class Comment extends Element {
   static buildEmpty() {
-    return new PrivateNote({
+    return new Comment({
       content: '',
       commentable_id: null,
       commentable_type: null,
@@ -10,6 +11,8 @@ export default class PrivateNote extends Element {
       created_at: null,
     });
   }
+
+  static buildWithElement(element) {}
 
   get content() {
     return this._content;
@@ -20,7 +23,7 @@ export default class PrivateNote extends Element {
   }
 
   get commentable_id() {
-    return this._commentable_id;``
+    return this._commentable_id;
   }
 
   set commentable_id(commentable_id) {
@@ -30,24 +33,43 @@ export default class PrivateNote extends Element {
   get created_by() {
     return this._created_by;
   }
+
   set created_by(created_by) {
     this._created_by = created_by;
   }
 
-  get noteable_type() {
-    return this._noteable_type;
+  get commentable_type() {
+    return this._commentable_type;
   }
 
-  set noteable_type(noteable_type) {
-    this._noteable_type = noteable_type;
+  set commentable_type(commentable_type) {
+    this._commentable_type = commentable_type;
+  }
+
+  get status() {
+    return this._status;
+  }
+
+  set status(status) {
+    this._status = status;
+  }
+
+  get submitter() {
+    return this._submitter;
+  }
+
+  set submitter(submitter) {
+    this._submitter = submitter;
   }
 
   serialize() {
     return super.serialize({
       content: this.content,
       commentable_id: this.commentable_id,
-      noteable_type: this.noteable_type,
+      commentable_type: this.commentable_type,
       created_by: this.created_by,
+      status: this.status,
+      submitter: this.submitter,
     });
   }
 }

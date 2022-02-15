@@ -12,6 +12,8 @@
 #  commentable_type :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
+#  status           :string           default("Pending")
+#  submitter        :string
 #
 # Indexes
 #
@@ -37,5 +39,8 @@ class Comment < ActiveRecord::Base
 
   belongs_to :commentable, polymorphic: true
 
-  validates :commentable, presence: true
+  validates :commentable, :section, :status, presence: true
+
+  scope :pending, -> { where(status: 'Pending') }
+  scope :resolved, -> { where(status: 'Resolved') }
 end

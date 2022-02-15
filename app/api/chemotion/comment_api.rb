@@ -76,7 +76,8 @@ module Chemotion
             commentable_id: params[:commentable_id],
             commentable_type: params[:commentable_type],
             section: params[:section],
-            created_by: current_user.id
+            created_by: current_user.id,
+            submitter: "#{current_user.first_name} #{current_user.last_name}"
           }
           comment = Comment.new(attributes)
           comment.save!

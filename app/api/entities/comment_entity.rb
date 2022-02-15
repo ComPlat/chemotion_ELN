@@ -6,6 +6,8 @@ module Entities
     expose :content
     expose :created_by
     expose :section
+    expose :status
+    expose :submitter
     expose :created_at, :updated_at
     expose :commentable_id, :commentable_type
 
