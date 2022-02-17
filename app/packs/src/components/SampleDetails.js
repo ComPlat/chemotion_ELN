@@ -65,6 +65,9 @@ import AttachmentFetcher from './fetchers/AttachmentFetcher';
 import NmrSimTab from './nmr_sim/NmrSimTab';
 import FastInput from './FastInput';
 import ScifinderSearch from './scifinder/ScifinderSearch';
+import CommentModal from './comments/CommentModal';
+import CommentFetcher from './fetchers/CommentFetcher';
+
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
 import MeasurementsTab from './MeasurementsTab';
@@ -390,7 +393,7 @@ export default class SampleDetails extends React.Component {
     } else {
       svgPath = sample.svgPath;
     }
-    let className = svgPath ? 'svg-container' : 'svg-container-empty'
+    const className = svgPath ? 'svg-container' : 'svg-container-empty';
     return (
       sample.can_update
         ? <div className={className}
@@ -740,7 +743,7 @@ export default class SampleDetails extends React.Component {
           <Button active className="clipboardBtn" onClick={this.handleMolfileShow}><i className="fa fa-file-text" /></Button>
         </InputGroup.Button>
       </InputGroup>
-    )
+    );
   }
 
   addManualCas(e) {
@@ -794,7 +797,6 @@ export default class SampleDetails extends React.Component {
       DetailActions.getMoleculeCas(this.state.sample)
     }
   }
-
 
   handleSegmentsChange(se) {
     const { sample } = this.state;
@@ -1234,7 +1236,6 @@ export default class SampleDetails extends React.Component {
           dialogClassName="importChemDrawModal"
           onHide={this.handleMolfileClose}
         >
-
           <Modal.Header closeButton>
             <Modal.Title>Molfile</Modal.Title>
           </Modal.Header>
@@ -1260,7 +1261,7 @@ export default class SampleDetails extends React.Component {
         </Modal>
       );
     }
-    return (<div />);
+    return <div />;
   }
 
   onTabPositionChanged(visible) {
@@ -1377,9 +1378,10 @@ export default class SampleDetails extends React.Component {
           {this.sampleFooter()}
           {this.structureEditorModal(sample)}
           {this.renderMolfileModal()}
+          {this.renderCommentModal(sample)}
         </Panel.Body>
       </Panel>
-    )
+    );
   }
 }
 

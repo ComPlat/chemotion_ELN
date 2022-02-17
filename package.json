@@ -22,6 +22,7 @@
     "alt-utils": "2.0.0",
     "antd": "^3.19.3",
     "aviator": "v0.6.1",
+    "axios": "^0.26.0",
     "base-64": "^0.1.0",
     "citation-js": "0.5.7",
     "classnames": "^2.2.5",

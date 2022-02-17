@@ -31,18 +31,16 @@ module Chemotion
       end
 
       get do
-        comment = Comment.find_by(
+        comments = Comment.where(
           commentable_id: params[:commentable_id],
           commentable_type: params[:commentable_type]
         )
-        error!('404 Comment not found', 404) unless comment.present?
 
-        collections = Collection.where(id: comment.commentable.collections.ids)
-        allowed_user_ids = (collections.pluck(:user_id) +
-          collections.pluck(:shared_by_id)).uniq
+        # collections = Collection.where(id: comment.commentable.collections.ids)
+        allowed_user_ids = [current_user.id]
 
         if allowed_user_ids.include? current_user.id # everyone with access to the shared or synced collection
-          present comment, with: Entities::CommentEntity, root: 'comment'
+          present comments, with: Entities::CommentEntity, root: 'comment'
         else
           error!('401 Unauthorized', 401)
         end
@@ -54,7 +52,9 @@ module Chemotion
           requires :content, type: String
           requires :commentable_id, type: Integer
           requires :commentable_type, type: String, values: %w[Sample Reaction]
-          requires :section, type: String, values: Comment.sample_sections.values + Comment.reaction_sections.values
+          requires :section,
+                   type: String,
+                   values: ['header'] + Comment.sample_sections.values + Comment.reaction_sections.values
         end
 
         before do
@@ -90,6 +90,7 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: 'Comment id'
         requires :content, type: String
+        optional :status, type: String, values: %w[Pending Resolved]
         optional :commentable_id, type: Integer
         optional :commentable_type, type: String, values: %w[Sample Reaction]
       end
