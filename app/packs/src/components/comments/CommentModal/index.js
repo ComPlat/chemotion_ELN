@@ -1,15 +1,14 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {Button, ButtonToolbar, FormControl, Modal, Table,} from 'react-bootstrap';
+import { Button, ButtonToolbar, FormControl, Modal, Table } from 'react-bootstrap';
 import CommentFetcher from '../../fetchers/CommentFetcher';
-import UserStore from '../../stores/UserStore';
 import LoadingActions from '../../actions/LoadingActions';
 
 
 export default class CommentModal extends Component {
   constructor(props) {
     super(props);
-    const comment = this.getOwnComment();
+    const comment = this.props.getOwnComment(this.props.section);
     this.state = {
       commentBody: comment && comment.content ? comment.content : '',
     };
@@ -17,13 +16,6 @@ export default class CommentModal extends Component {
 
   componentDidMount() {
     document.addEventListener('mousedown', this.handleClickOutside);
-  }
-
-  getOwnComment = () => {
-    const { comments } = this.props;
-    const { currentUser } = UserStore.getState();
-
-    return comments && comments.find(cmt => ((cmt.created_by === currentUser.id) && cmt.section === 'header'));
   }
 
   handleInputChange = (e) => {
@@ -71,6 +63,7 @@ export default class CommentModal extends Component {
     CommentFetcher.delete(comment)
       .then(() => {
         this.props.fetchComments();
+        this.setState({ commentBody: '' });
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
@@ -78,7 +71,8 @@ export default class CommentModal extends Component {
   };
 
   render() {
-    const { showCommentModal, comments } = this.props;
+    const { showCommentModal, section } = this.props;
+    const comments = this.props.getSectionComments(section);
 
     let commentsTbl = null;
     if (comments && comments.length > 0) {
@@ -175,6 +169,8 @@ CommentModal.propTypes = {
   toggleCommentModal: PropTypes.func.isRequired,
   comments: PropTypes.array,
   fetchComments: PropTypes.func.isRequired,
+  getOwnComment: PropTypes.func.isRequired,
+  getSectionComments: PropTypes.func.isRequired,
   section: PropTypes.string,
   elementId: PropTypes.number.isRequired,
   elementType: PropTypes.string.isRequired,

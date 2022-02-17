@@ -145,12 +145,17 @@ export default class SampleDetails extends React.Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.decoupleChanged = this.decoupleChanged.bind(this);
     this.handleFastInput = this.handleFastInput.bind(this);
+    this.toggleCommentModal = this.toggleCommentModal.bind(this);
+    this.fetchComments = this.fetchComments.bind(this);
+    this.renderCommentModal = this.renderCommentModal.bind(this);
+    this.getOwnComment = this.getOwnComment.bind(this);
   }
 
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange);
     const { activeTab } = this.state;
     this.fetchQcWhenNeeded(activeTab);
+    this.fetchComments();
   }
 
   // eslint-disable-next-line camelcase
@@ -477,6 +482,8 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleHeader(sample) {
+    const { comments } = this.state;
+    const selectedComments = this.getSectionComments('header');
     const saveBtnDisplay = sample.isEdited ? '' : 'none';
     const titleTooltip = `Created at: ${sample.created_at} \n Updated at: ${sample.updated_at}`;
 
@@ -563,6 +570,19 @@ export default class SampleDetails extends React.Component {
           {this.extraLabels().map((Lab, i) => <Lab key={i} element={sample} />)}
         </div>
         <ShowUserLabels element={sample} />
+        <OverlayTrigger
+          key="ot_comments"
+          placement="top"
+          overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
+        >
+          <Button
+            bsStyle={selectedComments && selectedComments.length > 0 ? 'success' : 'default'}
+            onClick={() => this.toggleCommentModal(true, 'header')}
+          >
+            <i className="fa fa-comments" />&nbsp;
+            Comments
+          </Button>
+        </OverlayTrigger>
       </div>
     );
   }
@@ -976,6 +996,10 @@ export default class SampleDetails extends React.Component {
           <SampleForm
             sample={sample}
             parent={this}
+            comments={this.state.comments}
+            toggleCommentModal={this.toggleCommentModal}
+            setCommentSection={this.setCommentSection}
+            getSectionComments={this.getSectionComments}
             customizableField={this.customizableField}
             enableSampleDecoupled={this.enableSampleDecoupled}
             decoupleMolecule={this.decoupleMolecule}
@@ -1266,6 +1290,63 @@ export default class SampleDetails extends React.Component {
 
   onTabPositionChanged(visible) {
     this.setState({ visible });
+  }
+
+  toggleCommentModal = (btnAction, section) => {
+    this.setState({ showCommentModal: btnAction });
+    if (section) {
+      this.setCommentSection(section);
+    }
+  };
+
+  fetchComments = () => {
+    const { sample } = this.state;
+    CommentFetcher.fetchByCommentableId(sample.id, 'Sample')
+      .then((comments) => {
+        if (comments != null) {
+          this.setState({ comments });
+        }
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  };
+
+  renderCommentModal = (sample) => {
+    const { showCommentModal, section } = this.state;
+    if (showCommentModal) {
+      return (
+        <CommentModal
+          showCommentModal={showCommentModal}
+          elementId={sample.id}
+          elementType="Sample"
+          section={section}
+          comments={this.state.comments}
+          toggleCommentModal={this.toggleCommentModal}
+          fetchComments={this.fetchComments}
+          getOwnComment={this.getOwnComment}
+          getSectionComments={this.getSectionComments}
+        />
+      );
+    }
+    return <div />;
+  };
+
+  getOwnComment = (section) => {
+    const { comments } = this.state;
+    const { currentUser } = UserStore.getState();
+
+    return comments && comments.find(cmt => (
+      (cmt.created_by === currentUser.id) && cmt.section === section));
+  }
+
+  setCommentSection = (section) => {
+    this.setState({ section });
+  }
+
+  getSectionComments = (section) => {
+    const { comments } = this.state;
+    return comments && comments.filter(cmt => (cmt.section === section));
   }
 
   render() {
