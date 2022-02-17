@@ -3,13 +3,12 @@ import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, FormControl, Modal, Table, Glyphicon } from 'react-bootstrap';
 import { Confirm } from 'react-confirm-bootstrap';
 import Draggable from 'react-draggable';
-import CommentFetcher from '../../fetchers/CommentFetcher';
-import ElementActions from '../../actions/ElementActions';
-import LoadingActions from '../../actions/LoadingActions';
-import UserStore from '../../stores/UserStore';
-import CommentDetails from '../CommentDetails';
-import { formatSection } from '../../../helper';
-
+import CommentFetcher from 'src/components/fetchers/CommentFetcher';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import CommentDetails from 'src/components/comments/CommentDetails';
+import { formatSection } from 'src/utilities/CommentHelper';
 
 export default class CommentModal extends Component {
   constructor(props) {
