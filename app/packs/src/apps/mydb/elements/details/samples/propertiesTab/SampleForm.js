@@ -16,7 +16,7 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-
+import CommentButton from 'src/components/comments/CommentButton';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -415,7 +415,7 @@ export default class SampleForm extends React.Component {
             break;
       }
     }
-    
+
     return (
       <td key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
@@ -623,6 +623,7 @@ export default class SampleForm extends React.Component {
 
   render() {
     const sample = this.props.sample || {};
+    const { comments } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
@@ -633,6 +634,17 @@ export default class SampleForm extends React.Component {
     return (
       <Table responsive className="sample-form">
         <tbody>
+          <tr>
+            <td colSpan="4">
+              <CommentButton
+                section="sample_properties"
+                comments={comments}
+                toggleCommentModal={this.props.toggleCommentModal}
+                setCommentSection={this.props.setCommentSection}
+                getSectionComments={this.props.getSectionComments}
+              />
+            </td>
+          </tr>
           <tr>
             <td colSpan="4">
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -763,7 +775,14 @@ SampleForm.propTypes = {
   parent: PropTypes.object,
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
-  decoupleMolecule: PropTypes.func.isRequired
+  decoupleMolecule: PropTypes.func.isRequired,
+  comments: PropTypes.array,
+  toggleCommentModal: PropTypes.func.isRequired,
+  setCommentSection: PropTypes.func.isRequired,
+  getSectionComments: PropTypes.func.isRequired,
 };
 
-SampleForm.defaultProps = { enableSampleDecoupled: false };
+SampleForm.defaultProps = {
+  enableSampleDecoupled: false,
+  comments: [],
+};
