@@ -1,25 +1,29 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {
-  Modal,
-  Button,
-  ButtonToolbar,
-  FormControl,
-  Table,
-} from 'react-bootstrap';
+import {Button, ButtonToolbar, FormControl, Modal, Table,} from 'react-bootstrap';
 import CommentFetcher from '../../fetchers/CommentFetcher';
+import UserStore from '../../stores/UserStore';
+import LoadingActions from '../../actions/LoadingActions';
 
 
 export default class CommentModal extends Component {
   constructor(props) {
     super(props);
+    const comment = this.getOwnComment();
     this.state = {
-      commentBody: '',
+      commentBody: comment && comment.content ? comment.content : '',
     };
   }
 
   componentDidMount() {
     document.addEventListener('mousedown', this.handleClickOutside);
+  }
+
+  getOwnComment = () => {
+    const { comments } = this.props;
+    const { currentUser } = UserStore.getState();
+
+    return comments && comments.find(cmt => ((cmt.created_by === currentUser.id) && cmt.section === 'header'));
   }
 
   handleInputChange = (e) => {
@@ -41,6 +45,7 @@ export default class CommentModal extends Component {
   };
 
   saveComment = () => {
+    LoadingActions.start();
     const { elementId, elementType, section } = this.props;
     const { commentBody } = this.state;
     const params = {
@@ -52,7 +57,10 @@ export default class CommentModal extends Component {
     CommentFetcher.create(params)
       .then(() => {
         this.props.fetchComments();
-        this.setState({ commentBody: '' });
+        this.setState({ commentBody: '' }, () => {
+          this.props.toggleCommentModal(false);
+          LoadingActions.stop();
+        });
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
@@ -175,5 +183,5 @@ CommentModal.propTypes = {
 CommentModal.defaultProps = {
   showCommentModal: false,
   comments: [],
-  section: 'header'
+  section: 'header',
 };
