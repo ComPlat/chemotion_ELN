@@ -4,7 +4,8 @@ import { Table } from 'react-bootstrap';
 
 export default function CommentList(props) {
   const { section } = props;
-  const comments = props.getSectionComments(section);
+  const sectionComments = props.getSectionComments(section);
+  const comments = sectionComments.filter(cmt => (cmt.status === 'Pending'));
 
   let commentsTbl = null;
 
