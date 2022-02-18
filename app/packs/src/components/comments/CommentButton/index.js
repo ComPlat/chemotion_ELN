@@ -12,6 +12,7 @@ export default function CommentButton(props) {
       overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
     >
       <Button
+        id="commentBtn"
         bsStyle={comments && comments.length > 0 ? 'success' : 'default'}
         bsSize="xsmall"
         onClick={() => props.toggleCommentModal(true, section)}
