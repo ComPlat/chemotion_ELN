@@ -14,6 +14,7 @@ import SampleDetailsSolvents from './SampleDetailsSolvents';
 import PrivateNoteElement from './PrivateNoteElement';
 import NotificationActions from './actions/NotificationActions';
 import CommentButton from './comments/CommentButton';
+import CommentList from './comments/CommentList';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -499,7 +500,14 @@ export default class SampleForm extends React.Component {
                 section="sample_properties"
                 comments={comments}
                 toggleCommentModal={this.props.toggleCommentModal}
-                setCommentSection={this.props.setCommentSection}
+                getSectionComments={this.props.getSectionComments}
+              />
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="4">
+              <CommentList
+                section="sample_properties"
                 getSectionComments={this.props.getSectionComments}
               />
             </td>
