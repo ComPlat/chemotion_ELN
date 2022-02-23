@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, FormControl } from 'react-bootstrap';
 import Select from 'react-select3';
+// import { template } from 'lodash';
 
 const customStyles = {
   container: ({ marginLeft, ...css }) => ({
@@ -44,6 +45,7 @@ export default class ToolbarTemplateCreator extends React.Component {
     this.id = dropdownTemplates.length + 1;
 
     this.setTitleRef = this.setTitleRef.bind(this);
+    this.onChangeDropdown = this.onChangeDropdown.bind(this);
 
     this.createDropdownTemplate = this.createDropdownTemplate.bind(this);
     this.removeDropdownTemplate = this.removeDropdownTemplate.bind(this);
@@ -63,6 +65,24 @@ export default class ToolbarTemplateCreator extends React.Component {
     this.id = dropdownTemplates.length + 1;
 
     this.setState({ iconTemplates, dropdownTemplates });
+  }
+
+  onChangeDropdown(type, e, id) {
+    const { dropdownTemplates } = this.state;
+
+    const tempOnChange = dropdownTemplates.filter(template => template.id === id);
+    if (type === 'DropdownName') {
+      tempOnChange[0].name = e.target.value;
+    } else {
+      const dataValues = [];
+      if (e !== null) {
+        e.forEach((object) => {
+          const tabContent = object.value;
+          if (tabContent) { dataValues.push(tabContent); }
+        });
+        tempOnChange[0].data = dataValues;
+      }
+    }
   }
 
   setTitleRef(id, ref) {
@@ -119,13 +139,10 @@ export default class ToolbarTemplateCreator extends React.Component {
       const selectRef = selectRefs[0].ref;
       const selectedValue = selectRef.current.state.value;
 
-      const titleRef = titleRefs[0].ref;
-      // eslint-disable-next-line no-underscore-dangle
-      const title = titleRef.current._reactInternalFiber.child.stateNode.value;
-
-      userTemplate[title] = selectedValue.map(v => v.value);
+      const tempName = template.name;
+      userTemplate[tempName] = selectedValue.map(v => v.value);
     });
-
+    this.setState({ dropdownTemplates });
     updateTextTemplates(userTemplate);
   }
 
@@ -158,6 +175,7 @@ export default class ToolbarTemplateCreator extends React.Component {
           <FormControl
             style={{ float: 'left', width: '90px', marginRight: '10px' }}
             // inputRef={(ref) => { this.setTitleRef(id, ref); }}
+            onChange={e => this.onChangeDropdown('DropdownName', e, id)}
             ref={titleRef.ref}
             type="text"
             defaultValue={name}
@@ -175,6 +193,7 @@ export default class ToolbarTemplateCreator extends React.Component {
             ref={selectRef.ref}
             options={options}
             defaultValue={ddSelected}
+            onChange={e => this.onChangeDropdown('DropdownData', e, id)}
             isMulti
             isSearchable
             closeMenuOnSelect={false}
