@@ -55,7 +55,6 @@ module ReactionHelpers
       purification_solvent: Array(material_attributes['purification_solvents']).map { |m| OSample.new(m) },
       product: Array(material_attributes['products']).map { |m| OSample.new(m) }
     }
-
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
@@ -66,7 +65,7 @@ module ReactionHelpers
           sample.reference = false if material_group === 'solvent' && sample.reference == true
           # create new subsample
           if sample.is_new
-            if sample.is_split && sample.parent_id
+            if sample.parent_id && material_group != 'products'
               parent_sample = Sample.find(sample.parent_id)
 
               # TODO: extract subsample method

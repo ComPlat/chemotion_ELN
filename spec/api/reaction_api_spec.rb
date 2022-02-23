@@ -357,7 +357,6 @@ describe Chemotion::ReactionAPI do
                 'solvent' => [{:label=>'Acetone', :smiles=>'CC(C)=O', :ratio=>'100'}],
                 'target_amount_unit' => 'mg',
                 'target_amount_value' => 86.09596,
-                'parent_id' => sample_1.id,
                 'reference' => false,
                 'equivalent' => 2,
                 'is_new' => true,
