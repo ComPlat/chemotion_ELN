@@ -751,7 +751,7 @@ export default class Reaction extends Element {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
     let group;
-    
+
     while (i < cats.length) {
       const groupName = `_${cats[i]}`;
       group = this[groupName];
