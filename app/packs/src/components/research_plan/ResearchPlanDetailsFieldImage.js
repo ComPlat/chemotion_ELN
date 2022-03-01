@@ -1,10 +1,20 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
-import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
+import { Button, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import ImageEditModal from './ImageEditModal';
+import logger from 'redux-logger';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
+
+  constructor(props){
+    super(props);
+    this.state={imageEditModalShown:false}
+ 
+
+  }
+
   handleDrop(files) {
     const { field, onChange } = this.props;
     const imageFile = files[0];
@@ -24,6 +34,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   renderEdit() {
+
     const { field } = this.props;
     let content;
     if (field.value.public_name) {
@@ -32,7 +43,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
       content = (
         <div className="image-container">
-          <img style={style} src={src} alt={field.value.file_name} />
+          <img id="researchPlanImageID" style={style} src={src} alt={field.value.file_name} />
         </div>
       );
     } else {
@@ -40,6 +51,14 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     }
     return (
       <div>
+       <ImageEditModal
+          imageName={field.value.public_name}
+          isShow={this.state.imageEditModalShown}
+          handleSave={(f)=>{this.handleDrop(f);this.setState({imageEditModalShown:false})}}
+          handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
+       />
+     
+       
         <FormGroup style={{ width: '30%' }}>
           <InputGroup>
             <InputGroup.Addon>Zoom</InputGroup.Addon>
@@ -52,8 +71,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               onChange={event => this.handleResizeChange(event)}
             />
             <InputGroup.Addon>%</InputGroup.Addon>
+            <Button
+            onClick={()=>{this.setState({imageEditModalShown:true})}}>Edit</Button>
           </InputGroup>
-        </FormGroup>
+        
+        </FormGroup>       
+      
         <Dropzone
           accept="image/*"
           multiple={false}
