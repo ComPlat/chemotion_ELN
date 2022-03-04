@@ -11,7 +11,7 @@ set -euo pipefail
 ############# VARIABLES ####################
 
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH='v1.1.0'
+BRANCH='v1.1.1'
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -314,16 +314,16 @@ description="Prepare postgresql DB"
 if [ "${PART_6:-}" ]; then
   sharpi "$description"
 
-  sudo -u postgres psql -c " CREATE ROLE $DB_ROLE LOGIN CREATEDB NOSUPERUSER PASSWORD '$DB_PW';" ||\
+  sudo -u postgres psql -p $DB_PORT -c " CREATE ROLE $DB_ROLE LOGIN CREATEDB NOSUPERUSER PASSWORD '$DB_PW';" ||\
    yellow "ROLE $DB_ROLE already exists and will be used!"
 
- sudo -u postgres psql -c " CREATE DATABASE $DB_NAME OWNER $DB_ROLE;" ||\
+ sudo -u postgres psql -p $DB_PORT -c " CREATE DATABASE $DB_NAME OWNER $DB_ROLE;" ||\
    { red "DATABASE $DB_NAME already exists! Press s to skip this part if you want to use the existing DB (default), press r to reset this DB (all existing data will be lost), or a to abort. [s/r/a]?" &&\
    read x && { [[ "$x" == "a" ]] && yellow "aborting" && rm_tmp && exit; } ||\
-   { [[ "$x" == "r" ]] && { sudo -u postgres psql -c " DROP DATABASE $DB_NAME;" || yellow "DB could not be DROPPED, press any key to continue with the existing DB" && read x; } } ||\
+   { [[ "$x" == "r" ]] && { sudo -u postgres psql -p $DB_PORT -c " DROP DATABASE $DB_NAME;" || yellow "DB could not be DROPPED, press any key to continue with the existing DB" && read x; } } ||\
    yellow "skip create DB and continue with existing DB"; }
 
-  sudo -u postgres psql -d $DB_NAME -c ' CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+  sudo -u postgres psql -p $DB_PORT -d $DB_NAME -c ' CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 
   green "done $description\n"
 else
@@ -409,7 +409,7 @@ fi
 if [ "${PART_71:-}" ]; then
   descripton="RESET DB PASSWORD"
   sharpi "$description"
-  sudo -u postgres psql -c "ALTER USER $DB_ROLE PASSWORD '$DB_PW';"
+  sudo -u postgres psql -p $DB_PORT -c "ALTER USER $DB_ROLE PASSWORD '$DB_PW';"
   sudo sed -i.bak "s/DB_PW='.*'/DB_PW='$DB_PW' /" $PROD_DIR/shared/.env
 fi
 
