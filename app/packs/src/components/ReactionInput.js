@@ -49,6 +49,7 @@ const ReactionStatusInput = ({reaction, inline, onChange }) => {
         onChange={option => onChange('status', option.value)}
         value={value}
         menuPortalTarget={inline ? document.body : null}
+        styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
       />
     </FormGroup>
   )
@@ -214,6 +215,7 @@ class ReactionRoleInput extends Component {
           value={value}
           components={{ Option: RoleOption }}
           menuPortalTarget={inline ? document.body : null}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
         />
       </FormGroup>
     )

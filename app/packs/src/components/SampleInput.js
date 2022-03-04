@@ -95,6 +95,7 @@ class SampleMoleculeInput extends Component {
             onCreateOption={this.addMolName}
             styles={inline ? selectInlineStyles : {}}
             menuPortalTarget={inline ? document.body : null}
+            styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
           />
           <InputGroup.Button>
             <Button
@@ -185,6 +186,7 @@ class SampleCASInput extends Component {
             onCreateOption={this.handleCreate}
             styles={inline ? selectInlineStyles : {}}
             menuPortalTarget={inline ? document.body : null}
+            styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
           />
         </FormGroup>
       )
@@ -206,6 +208,7 @@ class SampleCASInput extends Component {
             onCreateOption={this.handleCreate}
             styles={inline ? selectInlineStyles : {}}
             menuPortalTarget={inline ? document.body : null}
+            styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
           />
           <InputGroup.Button>
             <OverlayTrigger placement="bottom"
@@ -269,6 +272,7 @@ class SampleStereoAbsInput extends Component {
           value={value}
             styles={inline ? selectInlineStyles : {}}
           menuPortalTarget={inline ? document.body : null}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
         />
       </FormGroup>
     );
@@ -324,6 +328,7 @@ class SampleStereoRelInput extends Component {
           value={value}
           styles={inline ? selectInlineStyles : {}}
           menuPortalTarget={inline ? document.body : null}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
         />
       </FormGroup>
     );
@@ -401,6 +406,7 @@ const SampleSolventInput = ({sample, inline, disabled, onChange}) => {
         value={value}
         styles={inline ? selectInlineStyles : {}}
         menuPortalTarget={inline ? document.body : null}
+        styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
       />
     </FormGroup>
   )
