@@ -6,6 +6,17 @@
 > yyyy-mm-dd
 
 
+
+## [v1.1.1]
+> 2022-03-08
+
+* Fixes
+  * uniq sample short-label while creating reaction 
+  * customized toolbar refresh issue in quill editor
+  * rendering of the group list when deleting multiple groups
+  * permission to add elements to sync-collections
+
+
 ## [v1.1.0]
 > 2022-01-18
 
