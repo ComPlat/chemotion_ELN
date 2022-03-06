@@ -71,16 +71,15 @@ module Chemotion
         end
 
         post do
-          comment = Comment.find_or_create_by(
+          attributes = {
+            content: params[:content],
             commentable_id: params[:commentable_id],
             commentable_type: params[:commentable_type],
             section: params[:section],
-            created_by: current_user.id
-          )
-          comment.attributes = {
-            content: params[:content],
+            created_by: current_user.id,
             submitter: "#{current_user.first_name} #{current_user.last_name}"
           }
+          comment = Comment.new(attributes)
           comment.save!
 
           present comment, with: Entities::CommentEntity, root: 'comment'

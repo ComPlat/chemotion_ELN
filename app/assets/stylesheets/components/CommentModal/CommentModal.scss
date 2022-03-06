@@ -2,9 +2,17 @@
   .btn-toolbar {
     position: relative;
 
-    #deleteCommentBtn{
+    #editCommentBtn {
       position: absolute;
       left: 90px;
+      top: 50%;
+      -ms-transform: translateY(-50%);
+      transform: translateY(-50%);
+    }
+
+    #deleteCommentBtn{
+      position: absolute;
+      left: 118px;
       top: 50%;
       -ms-transform: translateY(-50%);
       transform: translateY(-50%);
