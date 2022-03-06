@@ -109,6 +109,8 @@ export default class CommentModal extends Component {
     this.commentInput.focus();
   }
 
+  disableEditComment = comment => comment.status === 'Resolved'
+
   render() {
     const { showCommentModal, section } = this.props;
     const { isEditing } = this.state;
@@ -124,7 +126,7 @@ export default class CommentModal extends Component {
           <td style={{ width: '15%' }}>
             <ButtonToolbar>
               <Button
-                disabled={comment.status === 'Resolved'}
+                disabled={this.disableEditComment(comment)}
                 onClick={() => this.markCommentResolved(comment)}
               >
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
@@ -134,7 +136,7 @@ export default class CommentModal extends Component {
                 bsSize="xsmall"
                 bsStyle="primary"
                 onClick={() => this.handleEditComment(comment)}
-                // disabled={isDisabled}
+                disabled={this.disableEditComment(comment)}
               >
                 <i className="fa fa-edit" />
               </Button>
