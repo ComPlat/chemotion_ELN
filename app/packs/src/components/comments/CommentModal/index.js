@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, FormControl, Modal, Table } from 'react-bootstrap';
+import { Confirm } from 'react-confirm-bootstrap';
 import Draggable from 'react-draggable';
 import CommentFetcher from '../../fetchers/CommentFetcher';
 import LoadingActions from '../../actions/LoadingActions';
@@ -137,14 +138,22 @@ export default class CommentModal extends Component {
               >
                 <i className="fa fa-edit" />
               </Button>
-              <Button
-                id="deleteCommentBtn"
-                bsStyle="danger"
-                bsSize="xsmall"
-                onClick={() => this.deleteComment(comment)}
+              <Confirm
+                onConfirm={() => this.deleteComment(comment)}
+                body="Are you sure you want to delete this?"
+                confirmText="Confirm Delete"
+                title="Deleting Comment"
+                showCancelButton
               >
-                <i className="fa fa-trash-o" />
-              </Button>
+                <Button
+                  id="deleteCommentBtn"
+                  bsStyle="danger"
+                  bsSize="xsmall"
+                  onClick={() => this.deleteComment(comment)}
+                >
+                  <i className="fa fa-trash-o" />
+                </Button>
+              </Confirm>
             </ButtonToolbar>
           </td>
         </tr>
