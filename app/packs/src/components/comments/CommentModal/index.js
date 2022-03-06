@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, FormControl, Modal, Table } from 'react-bootstrap';
+import Draggable from 'react-draggable';
 import CommentFetcher from '../../fetchers/CommentFetcher';
 import LoadingActions from '../../actions/LoadingActions';
 
@@ -8,9 +9,11 @@ import LoadingActions from '../../actions/LoadingActions';
 export default class CommentModal extends Component {
   constructor(props) {
     super(props);
-    const comment = this.props.getOwnComment(this.props.section);
+    this.textInput = React.createRef();
     this.state = {
-      commentBody: comment && comment.content ? comment.content : '',
+      commentBody: '',
+      isEditing: false,
+      commentObj: '',
     };
   }
 
@@ -20,6 +23,12 @@ export default class CommentModal extends Component {
 
   handleInputChange = (e) => {
     this.setState({ commentBody: e.target.value });
+    if (e.target.value.length === 0) {
+      this.setState({
+        commentObj: '',
+        isEditing: false,
+      });
+    }
   }
 
   markCommentResolved = (comment) => {
@@ -59,6 +68,26 @@ export default class CommentModal extends Component {
       });
   }
 
+  updateComment = () => {
+    LoadingActions.start();
+    const { commentBody } = this.state;
+    const comment = this.state.commentObj;
+    const params = {
+      content: commentBody,
+    };
+    CommentFetcher.updateComment(comment, params)
+      .then(() => {
+        this.props.fetchComments();
+        this.setState({ commentBody: '' }, () => {
+          this.props.toggleCommentModal(false);
+          LoadingActions.stop();
+        });
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   deleteComment = (comment) => {
     CommentFetcher.delete(comment)
       .then(() => {
@@ -70,8 +99,18 @@ export default class CommentModal extends Component {
       });
   };
 
+  handleEditComment = (comment) => {
+    this.setState({
+      commentBody: comment.content,
+      commentObj: comment,
+      isEditing: true
+    });
+    this.commentInput.focus();
+  }
+
   render() {
     const { showCommentModal, section } = this.props;
+    const { isEditing } = this.state;
     const comments = this.props.getSectionComments(section);
 
     let commentsTbl = null;
@@ -90,10 +129,18 @@ export default class CommentModal extends Component {
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
               </Button>
               <Button
+                id="editCommentBtn"
+                bsSize="xsmall"
+                bsStyle="primary"
+                onClick={() => this.handleEditComment(comment)}
+                // disabled={isDisabled}
+              >
+                <i className="fa fa-edit" />
+              </Button>
+              <Button
                 id="deleteCommentBtn"
                 bsStyle="danger"
                 bsSize="xsmall"
-                className="button-right"
                 onClick={() => this.deleteComment(comment)}
               >
                 <i className="fa fa-trash-o" />
@@ -114,52 +161,62 @@ export default class CommentModal extends Component {
     };
 
     return (
-      <Modal
-        show={showCommentModal}
-        onHide={() => this.props.toggleCommentModal(false)}
-        bsSize="large"
-        backdrop="static"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Comments</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div>
-            <Table striped bordered hover>
-              <thead>
-                <tr>
-                  <th width="20%">Date</th>
-                  <th width="40%">Comment</th>
-                  <th width="15%">From User</th>
-                  <th width="15%">Actions</th>
-                </tr>
-              </thead>
-              <tbody>{commentsTbl}</tbody>
-            </Table>
-          </div>
-          <FormControl
-            componentClass="textarea"
-            {...defaultAttrs}
-            value={this.state.commentBody}
-            inputRef={(m) => {
-              this.commentInput = m;
-            }}
-            onChange={this.handleInputChange}
-          />
-          <ButtonToolbar>
-            <Button onClick={() => this.props.toggleCommentModal(false)}>
-              Close
-            </Button>
-            <Button
-              bsStyle="primary"
-              disabled={!this.state.commentBody}
-              onClick={() => this.saveComment()}
-            >
-              Save
-            </Button>
-          </ButtonToolbar>
-        </Modal.Body>
-      </Modal>
+      <Draggable>
+        <Modal
+          show={showCommentModal}
+          onHide={() => this.props.toggleCommentModal(false)}
+          bsSize="large"
+          backdrop="static"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Comments</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div>
+              <Table striped bordered hover>
+                <thead>
+                  <tr>
+                    <th width="20%">Date</th>
+                    <th width="40%">Comment</th>
+                    <th width="15%">From User</th>
+                    <th width="17%">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>{commentsTbl}</tbody>
+              </Table>
+            </div>
+            <FormControl
+              componentClass="textarea"
+              autoFocus
+              {...defaultAttrs}
+              value={this.state.commentBody}
+              ref={(input) => { this.nameInput = input; }}
+              inputRef={(m) => {
+                this.commentInput = m;
+              }}
+              onChange={this.handleInputChange}
+            />
+            <ButtonToolbar>
+              <Button onClick={() => this.props.toggleCommentModal(false)}>
+                Close
+              </Button>
+              <Button
+                bsStyle="primary"
+                disabled={!this.state.commentBody}
+                onClick={() => {
+                  if (isEditing) {
+                    this.updateComment();
+                  } else {
+                    this.saveComment();
+                  }
+                }}
+              >
+                {isEditing ? 'Update' : 'Save'}
+              </Button>
+            </ButtonToolbar>
+          </Modal.Body>
+        </Modal>
+      </Draggable>
     );
   }
 }
@@ -179,5 +236,5 @@ CommentModal.propTypes = {
 CommentModal.defaultProps = {
   showCommentModal: false,
   comments: [],
-  section: 'header',
+  section: 'sample_header',
 };
