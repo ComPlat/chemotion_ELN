@@ -43,4 +43,8 @@ class Comment < ActiveRecord::Base
 
   scope :pending, -> { where(status: 'Pending') }
   scope :resolved, -> { where(status: 'Resolved') }
+
+  def resolved?
+    status.eql? 'Resolved'
+  end
 end

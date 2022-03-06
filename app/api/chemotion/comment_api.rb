@@ -99,6 +99,7 @@ module Chemotion
           @comment = Comment.find(params[:id])
           error!('404 Comment with given id not found', 404) if @comment.nil?
           error!('401 Unauthorized', 401) unless @comment.created_by == current_user.id
+          error!('422 Unprocessable Entity', 422) if @comment.resolved?
         end
 
         put do
