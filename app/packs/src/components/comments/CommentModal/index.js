@@ -5,6 +5,7 @@ import { Confirm } from 'react-confirm-bootstrap';
 import Draggable from 'react-draggable';
 import CommentFetcher from '../../fetchers/CommentFetcher';
 import LoadingActions from '../../actions/LoadingActions';
+import UserStore from '../../stores/UserStore';
 
 
 export default class CommentModal extends Component {
@@ -110,11 +111,13 @@ export default class CommentModal extends Component {
   }
 
   disableEditComment = comment => comment.status === 'Resolved'
+  commentByCurrentUser = (comment, currentUser) => currentUser.id === comment.created_by
 
   render() {
     const { showCommentModal, section } = this.props;
     const { isEditing } = this.state;
     const comments = this.props.getSectionComments(section);
+    const { currentUser } = UserStore.getState();
 
     let commentsTbl = null;
     if (comments && comments.length > 0) {
@@ -131,31 +134,37 @@ export default class CommentModal extends Component {
               >
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
               </Button>
-              <Button
-                id="editCommentBtn"
-                bsSize="xsmall"
-                bsStyle="primary"
-                onClick={() => this.handleEditComment(comment)}
-                disabled={this.disableEditComment(comment)}
-              >
-                <i className="fa fa-edit" />
-              </Button>
-              <Confirm
-                onConfirm={() => this.deleteComment(comment)}
-                body="Are you sure you want to delete this?"
-                confirmText="Confirm Delete"
-                title="Deleting Comment"
-                showCancelButton
-              >
+              {
+                this.commentByCurrentUser(comment, currentUser) &&
                 <Button
-                  id="deleteCommentBtn"
-                  bsStyle="danger"
+                  id="editCommentBtn"
                   bsSize="xsmall"
-                  onClick={() => this.deleteComment(comment)}
+                  bsStyle="primary"
+                  onClick={() => this.handleEditComment(comment)}
+                  disabled={this.disableEditComment(comment)}
                 >
-                  <i className="fa fa-trash-o" />
+                  <i className="fa fa-edit" />
                 </Button>
-              </Confirm>
+              }
+              {
+                this.commentByCurrentUser(comment, currentUser) &&
+                <Confirm
+                  onConfirm={() => this.deleteComment(comment)}
+                  body="Are you sure you want to delete this?"
+                  confirmText="Confirm Delete"
+                  title="Deleting Comment"
+                  showCancelButton
+                >
+                  <Button
+                    id="deleteCommentBtn"
+                    bsStyle="danger"
+                    bsSize="xsmall"
+                    onClick={() => this.deleteComment(comment)}
+                  >
+                    <i className="fa fa-trash-o" />
+                  </Button>
+                </Confirm>
+              }
             </ButtonToolbar>
           </td>
         </tr>
