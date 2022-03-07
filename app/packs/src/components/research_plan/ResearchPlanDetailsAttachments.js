@@ -10,6 +10,7 @@ import { previewAttachmentImage } from './../utils/imageHelper';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
+const annotateTooltip = <Tooltip id="annotate_tooltip">Annotate image</Tooltip>;
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
@@ -57,6 +58,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return docType;
   }
 
+  isImageFile(fileName){
+    const acceptedImageTypes=["png","jpg","bmp","tif","svg","jpeg"];
+    const dataType = last(fileName.split('.'));
+    return acceptedImageTypes.includes(dataType);
+  }
+
   handleEdit(attachment) {
     const { onEdit } = this.state;
     const fileType = last(attachment.filename.split('.'));
@@ -80,11 +87,23 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   renderRemoveAttachmentButton(attachment) {
     const { onDelete } = this.state;
-
     return (
       <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => onDelete(attachment)} disabled={this.props.readOnly}>
         <i className="fa fa-trash-o" aria-hidden="true" />
       </Button>
+    );
+  }
+
+  renderAnnotateImageButton(attachment){
+     if(!this.isImageFile(attachment.filename)){
+       return null;
+     }
+     return (
+      <OverlayTrigger placement="top" overlay={annotateTooltip} >
+      <Button bsSize="xsmall" bsStyle="warning" className="button-right" onClick={() => onDelete(attachment)}>
+        <i className="fa fa-pencil" aria-hidden="true" />
+      </Button>
+      </OverlayTrigger>
     );
   }
 
@@ -156,6 +175,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
             {attachment.filename}
           </Col>
           <Col md={2}>
+            {this.renderAnnotateImageButton(attachment)}
             {this.renderRemoveAttachmentButton(attachment)}
             <OverlayTrigger placement="top" overlay={downloadTooltip} >
               <Button
