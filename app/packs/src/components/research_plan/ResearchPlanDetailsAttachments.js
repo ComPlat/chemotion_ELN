@@ -6,6 +6,7 @@ import { last, findKey, values } from 'lodash';
 import EditorFetcher from '../fetchers/EditorFetcher';
 import ImageModal from '../common/ImageModal';
 import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
+import ImageEditModal from './ImageEditModal';
 import { previewAttachmentImage } from './../utils/imageHelper';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
@@ -27,6 +28,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       onEdit,
       attachmentEditor: false,
       extension: null,
+      imageEditModalShown:false
     };
     this.editorInitial = this.editorInitial.bind(this);
   }
@@ -94,15 +96,39 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
+  renderImageEditModal(){
+    const { onDrop } = this.state;
+    const { onDelete } = this.state;
+    return <ImageEditModal
+    imageName={this.state.imageName}
+    isShow={this.state.imageEditModalShown}
+    handleSave={(f)=>{
+      this.state.onDrop(f);
+      this.setState({imageEditModalShown:false});
+      onDelete(this.state.choosenAttachment)    
+    }
+    
+    }
+    handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
+    />    
+  }
+
   renderAnnotateImageButton(attachment){
      if(!this.isImageFile(attachment.filename)){
        return null;
      }
      return (
       <OverlayTrigger placement="top" overlay={annotateTooltip} >
-      <Button bsSize="xsmall" bsStyle="warning" className="button-right" onClick={() => onDelete(attachment)}>
-        <i className="fa fa-pencil" aria-hidden="true" />
-      </Button>
+        <Button
+        bsSize="xsmall"
+        bsStyle="warning"
+        className="button-right"
+        onClick={() => {this.setState(
+          {imageEditModalShown:true,
+          choosenAttachment:attachment,
+          imageName:attachment.filename})}}>
+          <i className="fa fa-pencil" aria-hidden="true" />
+        </Button>
       </OverlayTrigger>
     );
   }
@@ -127,10 +153,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
 
     if (attachment.is_deleted) {
-      return (
+      return (        
         <div>
           <Row>
-            <Col md={1} />
+         
+            <Col md={1} />            
             <Col md={9}>
               <strike>{attachment.filename}</strike>
             </Col>
@@ -241,16 +268,20 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   render() {
+    
     return (
+    
       <Row>
         <Col md={12}>
           <FormGroup>
-            <ControlLabel>Files</ControlLabel>
+            <ControlLabel>Files</ControlLabel>      
+            {this.renderImageEditModal()}                       
             {this.renderAttachments()}
             {this.renderDropzone()}
           </FormGroup>
         </Col>
       </Row>
+       
     );
   }
 }
