@@ -6,7 +6,7 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 
 export default class ImageEditModal extends Component {
 
-    constructor(props){
+    constructor(props){    
     super(props);     
   }
 
@@ -71,6 +71,9 @@ export default class ImageEditModal extends Component {
     }
     save_image(){
         var target = document.getElementById('researchPlanImageID');
+        if(target==null){
+          target=document.createElement('researchPlanImageID');
+        }
         var Layers = document.getElementById('miniPaintId').contentWindow.Layers;
         var tempCanvas = document.createElement("canvas");
         var tempCtx = tempCanvas.getContext("2d");
@@ -83,7 +86,7 @@ export default class ImageEditModal extends Component {
         target.height = dim.height;
         target.src = tempCanvas.toDataURL();
     
-        var file =this.dataURLtoFile(tempCanvas.toDataURL(),'test.png');
+        var file =this.dataURLtoFile(tempCanvas.toDataURL(),this.props.imageName);
     
         return file;
             
