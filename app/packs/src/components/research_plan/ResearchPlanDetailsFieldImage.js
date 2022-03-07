@@ -5,6 +5,7 @@ import { Button, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import ImageEditModal from './ImageEditModal';
 import logger from 'redux-logger';
+import { Left } from 'react-bootstrap/lib/Media';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
 
@@ -58,6 +59,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
        />
      
+       <div style={ 
+         {display: 'flex',
+         direction:'row'}}
+        >
+
        
         <FormGroup style={{ width: '30%' }}>
           <InputGroup>
@@ -71,11 +77,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               onChange={event => this.handleResizeChange(event)}
             />
             <InputGroup.Addon>%</InputGroup.Addon>
-            <Button
-            onClick={()=>{this.setState({imageEditModalShown:true})}}>Edit</Button>
-          </InputGroup>
-        
+            
+          </InputGroup>        
         </FormGroup>       
+        <Button
+             style={{marginLeft:'3px'}}
+            onClick={()=>{this.setState({imageEditModalShown:true})}}>Annotate</Button>
+        </div>
       
         <Dropzone
           accept="image/*"
