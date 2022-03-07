@@ -61,7 +61,6 @@ export default class CommentModal extends Component {
       .then(() => {
         this.props.fetchComments();
         this.setState({ commentBody: '' }, () => {
-          this.props.toggleCommentModal(false);
           LoadingActions.stop();
         });
       })
@@ -81,7 +80,6 @@ export default class CommentModal extends Component {
       .then(() => {
         this.props.fetchComments();
         this.setState({ commentBody: '' }, () => {
-          this.props.toggleCommentModal(false);
           LoadingActions.stop();
         });
       })
