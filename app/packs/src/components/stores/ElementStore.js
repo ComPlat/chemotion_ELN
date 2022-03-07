@@ -1219,7 +1219,9 @@ class ElementStore {
           this.handleRefreshElements('sample');
         }
 
-        this.changeCurrentElement(element);
+        if (SameEleTypId(element, this.state.currentElement)) {
+          this.changeCurrentElement(element);
+        }
         break;
       case 'reaction':
         if (refreshElements) {
