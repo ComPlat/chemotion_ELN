@@ -27,7 +27,8 @@ class Comment < ActiveRecord::Base
     properties: 'sample_properties',
     analyses: 'sample_analyses',
     qc_curation: 'sample_qc_curation',
-    results: 'sample_results'
+    results: 'sample_results',
+    references: 'sample_literature'
   }, _prefix: true
 
   enum reaction_section: {
