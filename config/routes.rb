@@ -39,7 +39,7 @@ Rails.application.routes.draw do
     get 'pages/affiliations', to: 'pages#affiliations'
     patch 'pages/create_affiliation', to: 'pages#create_affiliation'
     patch 'pages/update_affiliations', to: 'pages#update_affiliations'
-
+    get 'sfn_cb', to: 'pages#sfn_cb'
     get 'command_n_control', to: 'pages#cnc'
     get 'mydb/*any', to: 'pages#welcome'
     get 'mydb', to: 'pages#welcome'
@@ -54,7 +54,7 @@ Rails.application.routes.draw do
   get 'chemspectra', to: 'pages#chemspectra'
   get 'chemspectra-editor', to: 'pages#chemspectra_editor'
 
-  get 'home', to: 'pages#home'  
+  get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'
   get 'command_n_control', to: 'pages#home'
 
@@ -62,7 +62,7 @@ Rails.application.routes.draw do
 
   mount API => '/'
 
-  mount GrapeSwaggerRails::Engine => '/swagger' 
+  mount GrapeSwaggerRails::Engine => '/swagger'
 
   root to: redirect('home')
 

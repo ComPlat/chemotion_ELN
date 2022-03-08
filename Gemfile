@@ -67,6 +67,7 @@ gem 'omniauth', '~> 1.9.1'
 gem 'omniauth-github', '~> 1.4.0'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth_openid_connect'
+gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
 
 gem 'pandoc-ruby'
 gem 'paranoia', '~> 2.0'

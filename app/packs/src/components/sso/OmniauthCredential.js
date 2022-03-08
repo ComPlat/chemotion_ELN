@@ -17,7 +17,6 @@ const OmniauthCredential = () => {
 
   const [providers, setProviders] = useState(() => {
     UsersFetcher.fetchUserOmniauthProviders().then((json) => {
-      console.log(json);
       const options = json.providers.map(op => ({ value: op, name: op, label: op }));
       const currentProvider = (json && json.current_user && json.current_user.omniauth_provider) || '';
 
