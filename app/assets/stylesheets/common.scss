@@ -291,3 +291,14 @@
   font-weight: bold;
   text-decoration: underline;
 }
+
+.fast-input {
+  margin-bottom: 0px !important;
+  float: right;
+  .fi-tit { background-color: #e6e6e6; padding: 2px 4px; }
+  .fi-txt { border: unset; }
+  .fi-btn {
+    padding: 0px !important;
+    background-color: #e6e6e6;
+  }
+}
