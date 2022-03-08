@@ -1,6 +1,16 @@
 import 'whatwg-fetch';
 
 export default class MoleculesFetcher {
+  static fetchSciFinder(params) {
+    return fetch('/api/v1/molecules/sf', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    }).then(response => response.json()).then(json => json)
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static fetchByMolfile(molfile, svgfile, editor = 'ketcher', decoupled = false) {
     return fetch('/api/v1/molecules', {
       credentials: 'same-origin',

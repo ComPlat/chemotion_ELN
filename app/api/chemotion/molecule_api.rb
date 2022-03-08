@@ -3,6 +3,24 @@ module Chemotion
     include Grape::Kaminari
 
     resource :molecules do
+      namespace :sf do
+        desc 'Return SciFinder-n API'
+        params do
+          requires :str, type: String, desc: 'escaped structure string'
+          requires :search, type: String, desc: 'search for'
+          requires :ctype, type: String, desc: 'content Type of structure being searched', values: %w[x-cdxml x-mdl-molfile x-mdl-rxnfile]
+        end
+        post do
+          sfc = ScifinderNCredential.find_by(created_by: current_user.id)
+          token = sfc&.issued_token
+          begin
+            Chemotion::ScifinderNService.provider_search(params[:search], params[:str], params[:ctype], token)
+          rescue StandardError => e
+            { errors: ["#{e}. Go to Account & Profile and try to get the token again."] }
+          end
+        end
+      end
+
       namespace :smiles do
         desc 'Return molecule by SMILES'
         params do

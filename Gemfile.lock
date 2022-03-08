@@ -833,6 +833,7 @@ DEPENDENCIES
   nokogiri
   omniauth (~> 1.9.1)
   omniauth-github (~> 1.4.0)
+  omniauth-oauth2 (~> 1.7, >= 1.7.2)
   omniauth-orcid!
   omniauth_openid_connect
   openbabel (= 2.4.90.3)!

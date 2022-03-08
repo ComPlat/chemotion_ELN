@@ -1,0 +1,15 @@
+development:
+  :provider:
+    :metadata: api metadata uri
+    :host: api host
+    :client_id: your client id
+    :redirect: redirect uri
+    :redirect_host: redirect host
+
+production:
+  :provider:
+    :metadata: api metadata uri
+    :host: api host
+    :client_id: your client id
+    :redirect: redirect uri
+    :redirect_host: redirect host

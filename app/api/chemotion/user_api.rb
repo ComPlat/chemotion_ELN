@@ -81,6 +81,13 @@ module Chemotion
         end
       end
 
+      namespace :scifinder do
+        desc 'scifinder-n credential'
+        get do
+          ScifinderNCredential.find_by(created_by: current_user.id) || {}
+        end
+      end
+
       desc 'Log out current_user'
       delete 'sign_out' do
         status 204
