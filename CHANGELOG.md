@@ -5,6 +5,10 @@
 ## [vMAJOR.MINOR.PATCH]
 > yyyy-mm-dd
 
+* Features and Improvements:
+  * fast input: sample creation
+    - users can create samples by entering the CAS Registry Number or SMILES
+
 
 
 ## [v1.1.1]
@@ -57,7 +61,7 @@
   * collection import with sample missing molecule_name: use default value
   * structure editors: added public/editors to ease set up
   * node post-install fx to resolve node_modules path when located outside of app (docker)
-   
+
 
 
 ## [v1.0.2]
