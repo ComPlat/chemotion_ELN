@@ -42,6 +42,7 @@
 /config/editors.yml
 /config/inference.yml
 /config/omniauth.yml
+/config/scifinder_n.yml
 
 /node_modules
 

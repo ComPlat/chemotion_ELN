@@ -921,6 +921,15 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.index ["user_id"], name: "index_samples_on_user_id"
   end
 
+  create_table "scifinder_n_credentials", force: :cascade do |t|
+    t.string "access_token", null: false
+    t.string "refresh_token"
+    t.datetime "expires_at", null: false
+    t.integer "created_by", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by"], name: "uni_scifinder_n_credentials", unique: true
+  end
+
   create_table "screens", id: :serial, force: :cascade do |t|
     t.string "description"
     t.string "name"
