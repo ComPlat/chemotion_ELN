@@ -1,20 +1,23 @@
+# frozen_string_literal: true
+
 class SampleSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Sample.new.base_attributes
 
-  has_one :molecule, :serializer => MoleculeListSerializer
-  has_one :container, :serializer => ContainerSerializer
+  has_one :molecule, serializer: MoleculeListSerializer
+  has_one :container, serializer: ContainerSerializer
   has_one :tag
 
   has_many :residues, serializer: ResidueSerializer
   has_many :elemental_compositions, serializer: ElementalCompositionSerializer
   has_many :segments
+  has_many :comments
 
   def code_log
     CodeLogSerializer.new(object.code_log).serializable_hash
   end
 
   def created_at
-    object.created_at.strftime("%d.%m.%Y, %H:%M")
+    object.created_at.strftime('%d.%m.%Y, %H:%M')
   end
 
   def type
@@ -34,13 +37,11 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   def children_count
-    unless object.new_record?
-      object.children.count.to_i
-    end
+    object.children.count.to_i unless object.new_record?
   end
 
   def parent_id
-    object.parent.id if object.parent
+    object.parent&.id
   end
 
   def pubchem_tag
@@ -71,7 +72,7 @@ class SampleSerializer < ActiveModel::Serializer
     def molecule
       {
         molecular_weight: object.molecule.try(:molecular_weight),
-        exact_molecular_weight: object.molecule.try(:exact_molecular_weight),
+        exact_molecular_weight: object.molecule.try(:exact_molecular_weight)
       }
     end
   end
@@ -88,7 +89,7 @@ class SampleSerializer < ActiveModel::Serializer
     define_restricted_methods_for_level(2)
 
     def analyses
-      object.analyses.map {|x| x['datasets'] = {:datasets => []}}
+      object.analyses.map { |x| x['datasets'] = { datasets: [] } }
     end
   end
 
