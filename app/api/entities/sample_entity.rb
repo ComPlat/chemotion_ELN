@@ -19,6 +19,7 @@ module Entities
       expose! :molecule_computed_props,                     using: 'Entities::ComputedPropEntity'
       expose! :sum_formula
       expose! :type
+      expose :comments,                                     using: 'Entities::CommentEntity'
     end
 
     # Level 1 attributes
