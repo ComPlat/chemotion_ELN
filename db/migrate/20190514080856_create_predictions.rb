@@ -6,7 +6,7 @@ class CreatePredictions < ActiveRecord::Migration[4.2]
     create_table :predictions do |t|
       t.references :predictable, polymorphic: true, index: true
 
-      t.jsonb :decision, null: false, default: '{}'
+      t.jsonb :decision, null: false, default: {}
 
       t.timestamps
     end
