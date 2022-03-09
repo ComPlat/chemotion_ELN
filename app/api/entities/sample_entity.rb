@@ -17,6 +17,7 @@ module Entities
       expose! :molecule,                                    using: 'Entities::MoleculeEntity'
       expose! :sum_formula
       expose! :type
+      expose :comments,                                     using: 'Entities::CommentEntity'
     end
 
     # Level 1 attributes
