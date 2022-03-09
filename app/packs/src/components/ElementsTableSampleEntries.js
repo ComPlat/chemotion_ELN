@@ -23,6 +23,7 @@ import XMolHeadCont from './extra/ElementsTableSampleEntriesXMolHeadCont';
 import { sampleShowOrNew } from './routesUtils';
 import SvgWithPopover from './common/SvgWithPopover';
 import { ShowUserLabels } from './UserLabels';
+import CommentIcon from './comments/CommentIcon';
 
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;
@@ -358,6 +359,7 @@ export default class ElementsTableSampleEntries extends Component {
           >
             {sample.title(selected)}
             <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
+              <CommentIcon comments={sample.comments} />
               {showDecoupledIcon(sample)}
               <ShowUserLabels element={sample} />
               <XvialIcon label={sample.external_label} />

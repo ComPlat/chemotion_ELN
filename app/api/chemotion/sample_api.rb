@@ -179,7 +179,7 @@ module Chemotion
           scope = Sample.for_user(current_user.id).distinct
         end
         scope = scope.includes(
-          :residues, :tag, :molecule_name,
+          :residues, :tag, :molecule_name, :comments,
           collections: :sync_collections_users,
           molecule: :tag
         )

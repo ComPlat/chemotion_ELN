@@ -6,6 +6,7 @@ module Entities
     expose :segments, using: Entities::SegmentEntity
     expose :residues
     expose :elemental_compositions, using: Entities::ElementalCompositionEntity
+    expose :comments, using: Entities::CommentEntity
 
     expose :code_log, using: Entities::CodeLogEntity
 
