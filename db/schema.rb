@@ -1071,6 +1071,22 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
   end
 
+  create_table "tasks", force: :cascade do |t|
+    t.string "status", default: "To do"
+    t.float "measurement_value"
+    t.string "measurement_unit", default: "g", null: false
+    t.string "description"
+    t.string "private_note"
+    t.string "additional_note"
+    t.datetime "created_at", null: false
+    t.integer "created_by", null: false
+    t.datetime "updated_at"
+    t.bigint "sample_id"
+    t.bigint "attachment_id"
+    t.index ["attachment_id"], name: "index_tasks_on_attachment_id"
+    t.index ["sample_id"], name: "index_tasks_on_sample_id"
+  end
+
   create_table "text_templates", id: :serial, force: :cascade do |t|
     t.string "type"
     t.integer "user_id", null: false
@@ -1199,6 +1215,7 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
 
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
+  add_foreign_key "tasks", "samples"
 
   create_function :collection_shared_names, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)

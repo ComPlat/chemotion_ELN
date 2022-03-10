@@ -37,6 +37,21 @@ export default class ContainerFetcher {
     return promise;
   }
 
+  static deleteContainerById(containerId) {
+    const promise = fetch(`/api/v1/containers/${containerId}`, {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then(response => response.json()).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static updateContainerContent(container) {
     let content = _.cloneDeep(container.extended_metadata.content);
     if (typeof content === 'string') {

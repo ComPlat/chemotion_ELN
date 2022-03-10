@@ -44,6 +44,100 @@ module Chemotion
       error!(message, 404)
     end
 
+    resource :inbox do
+      params do
+        requires :cnt_only, type: Boolean, desc: 'return count number only'
+      end
+      get do
+        if current_user
+          inbox_container = Container.where(name: 'inbox', container_type: 'root', containable_id: current_user.id).take
+          unless inbox_container
+            inbox_container = Container.create!(name: 'inbox', container_type: 'root', containable_id: current_user.id)
+          end
+
+          if params[:cnt_only]
+            present inbox_container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
+          else
+            present inbox_container, with: Entities::InboxEntity, root: :inbox
+          end
+        end
+      end
+    end
+
+    resource :free_scan do
+      params do
+        requires :cnt_only, type: Boolean, desc: 'return count number only'
+      end
+      get do
+        return if current_user.nil?
+
+        free_scan_root_container = Container.where(name: 'free_scan_root', container_type: 'root', containable_id: current_user.id).take
+        unless free_scan_root_container
+          current_user.container = Container.create(name: 'free_scan_root', container_type: 'root', containable_id: current_user.id)
+          free_scan_root_container = current_user.container
+        end
+
+        free_scans = Entities::FreeScanEntity.represent(free_scan_root_container)
+        if params[:cnt_only]
+          { inbox: { inbox_count: free_scans.inbox_count } }
+        else
+          free_scans
+        end
+      end
+    end
+
+    resource :attachable do
+      params do
+        optional :files, type: Array[File], desc: 'files', default: []
+        optional :attachable_type, type: String, desc: 'attachable_type'
+        optional :attachable_id, type: Integer, desc: 'attachable id'
+        optional :del_files, type: Array[Integer], desc: 'del file id', default: []
+      end
+      after_validation do
+        case params[:attachable_type]
+        when 'ResearchPlan'
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: params[:attachable_id])).update?
+        end
+      end
+
+      desc 'Update attachable records'
+      post 'update_attachments_attachable' do
+        attachable_type = params[:attachable_type]
+        attachable_id = params[:attachable_id]
+        if params.fetch(:files, []).any?
+          attach_ary = []
+          rp_attach_ary = []
+          params[:files].each do |file|
+            next unless (tempfile = file[:tempfile])
+
+            a = Attachment.new(
+              bucket: file[:container_id],
+              filename: file[:filename],
+              file_path: file[:tempfile],
+              created_by: current_user.id,
+              created_for: current_user.id,
+              content_type: file[:type],
+              attachable_type: attachable_type,
+              attachable_id: attachable_id
+            )
+            begin
+              a.save!
+              attach_ary.push(a.id)
+              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
+            ensure
+              tempfile.close
+              tempfile.unlink
+            end
+          end
+
+          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) if rp_attach_ary.any?
+          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) if attach_ary.any?
+        end
+        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) if params[:del_files].any?
+        true
+      end
+    end
+
     resource :attachments do
       before do
         @attachment = Attachment.find_by(id: params[:attachment_id])

@@ -13,6 +13,7 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import AddTaskButton from 'src/components/common/AddTaskButton';
 
 
 export default class SampleForm extends React.Component {
@@ -459,6 +460,7 @@ export default class SampleForm extends React.Component {
       <FormGroup>
         <ControlLabel>Amount</ControlLabel>
         <FormControl type="text" disabled defaultValue="***" readOnly />
+        
       </FormGroup>
     );
   }
@@ -575,6 +577,9 @@ export default class SampleForm extends React.Component {
                         <label style={{ height: '14px' }} />
                         <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
                           {this.infoButton()}
+                        </InputGroup.Button>
+                        <InputGroup.Button style={{ paddingLeft: '5px'}} id="task" name="task" type="task" placeholder="Add Task">
+                            <AddTaskButton data={sample} disabled={sample.has_task}></AddTaskButton>
                         </InputGroup.Button>
                       </div>
                     </td>

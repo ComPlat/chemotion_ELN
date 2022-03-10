@@ -20,6 +20,7 @@ class MaterialDecorator
       m.waste = rma['waste']
       m.coefficient = rma['coefficient']
       m.container = reaction_material.sample.container
+      m.has_task = reaction_material.sample.task?
 
       m
     end

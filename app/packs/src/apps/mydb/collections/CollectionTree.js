@@ -16,6 +16,10 @@ import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 
+import FreeScanBox from './inbox/FreeScanBox';
+import FreeScanActions from './actions/FreeScanActions';
+import FreeScanStore from './stores/FreeScanStore';
+
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 
 export default class CollectionTree extends React.Component {
@@ -24,6 +28,7 @@ export default class CollectionTree extends React.Component {
 
     const collecState = CollectionStore.getState();
     const inboxState = InboxStore.getState();
+    const freeScanState = FreeScanStore.getState();
 
     this.state = {
       unsharedRoots: collecState.unsharedRoots,
@@ -36,17 +41,22 @@ export default class CollectionTree extends React.Component {
       sharedToCollectionVisible: false,
       syncCollectionVisible: false,
       inbox: inboxState.inbox,
+      free_scan: freeScanState.free_scan,
       numberOfAttachments: inboxState.numberOfAttachments,
-      inboxVisible: false
+      numberOfFreeScans: freeScanState.numberOfFreeScans,
+      inboxVisible: false,
+      freeScanVisible: false
     };
 
     this.onChange = this.onChange.bind(this);
     this.onClickInbox = this.onClickInbox.bind(this);
+    this.onClickFreeScan = this.onClickFreeScan.bind(this);
   }
 
   componentDidMount() {
     CollectionStore.listen(this.onChange);
     InboxStore.listen(this.onChange);
+    FreeScanStore.listen(this.onChange);
     //CollectionActions.fetchGenericEls();
     CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchUnsharedCollectionRoots();
@@ -54,11 +64,13 @@ export default class CollectionTree extends React.Component {
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
     InboxActions.fetchInboxCount();
+    FreeScanActions.fetchFreeScanCount();
   }
 
   componentWillUnmount() {
     CollectionStore.unlisten(this.onChange);
     InboxStore.unlisten(this.onChange);
+    FreeScanStore.unlisten(this.onChange);
   }
 
   onChange(state) {
@@ -74,9 +86,24 @@ export default class CollectionTree extends React.Component {
     }
   }
 
+  onClickFreeScan() {
+    const { freeScanVisible, free_scan } = this.state;
+    this.setState({ freeScanVisible: !freeScanVisible });
+    if (!free_scan.children) {
+      LoadingActions.start();
+      FreeScanActions.fetchFreeScan();
+      LoadingActions.stop();
+    }
+  }
+
   refreshInbox() {
     LoadingActions.start();
     InboxActions.fetchInbox();
+  }
+
+  refreshFreeScan() {
+    LoadingActions.start();
+    FreeScanActions.fetchFreeScan();
   }
 
   lockedSubtrees() {
@@ -159,7 +186,6 @@ export default class CollectionTree extends React.Component {
       false, sharedWithCollectionVisible)
   }
 
-
   inboxSubtrees() {
     const { inbox } = this.state;
 
@@ -180,6 +206,19 @@ export default class CollectionTree extends React.Component {
         {boxes}
         {inbox.unlinked_attachments
           ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
+          : ''
+        }
+      </div>
+    );
+  }
+
+  freeScanSubtrees() {
+    const { free_scan } = this.state;
+
+    return (
+      <div className="tree-view">
+        {free_scan.children
+          ? <FreeScanBox key="free_scan_box" unsorted_box={free_scan.children} />
           : ''
         }
       </div>
@@ -295,7 +334,7 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
-    let { ownCollectionVisible, inboxVisible, inbox } = this.state
+    let {ownCollectionVisible, inboxVisible, inbox, freeScanVisible} = this.state
     let extraDiv = [];
     for (let j = 0; j < Xdiv.count; j++) {
       let NoName = Xdiv["content" + j];
@@ -304,7 +343,8 @@ export default class CollectionTree extends React.Component {
 
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
     const inboxDisplay = inboxVisible ? '' : 'none';
-
+    const freeScanDisplay = freeScanVisible ? '' : 'none';
+     
     return (
       <div>
         <div className="tree-view">
@@ -348,6 +388,20 @@ export default class CollectionTree extends React.Component {
         </div>
         <div className="tree-wrapper" style={{ display: inboxDisplay }}>
           {this.inboxSubtrees()}
+        </div>
+        {extraDiv.map((e)=>{return e})}
+        <div className="tree-view">
+          <div className="title" style={{ backgroundColor: 'white' }}>
+            <i className="fa fa-tasks" onClick={() => this.onClickFreeScan()}> &nbsp; Free Scan &nbsp;</i>
+            {
+              this.state.numberOfFreeScans > 0 ? <Badge> {this.state.numberOfFreeScans} </Badge> : ''
+            }
+            {/* &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshFreeScan()} /> */}
+          </div>
+
+        </div>
+        <div className="tree-wrapper" style={{ display: freeScanDisplay }}>
+          { this.freeScanSubtrees() }
         </div>
       </div>
     )

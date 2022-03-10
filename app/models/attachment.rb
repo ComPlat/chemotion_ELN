@@ -51,6 +51,7 @@ class Attachment < ApplicationRecord
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template
+  has_many :task, dependent: :destroy
 
   scope :where_research_plan, lambda { |c_id|
     where(attachable_id: c_id, attachable_type: 'ResearchPlan')

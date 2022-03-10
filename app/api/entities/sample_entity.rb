@@ -50,7 +50,12 @@ module Entities
       unless: ->(instance, options) { displayed_in_list? }
     )
 
-    expose_timestamps
+    expose :code_log, using: Entities::CodeLogEntity
+    expose :has_task
+
+    def has_task
+      object.task?
+    end
 
     expose :analyses, using: 'Entities::ContainerEntity', unless: ->(instance, options) { displayed_in_list? }
     expose :code_log, using: 'Entities::CodeLogEntity', unless: ->(instance, options) { displayed_in_list? }

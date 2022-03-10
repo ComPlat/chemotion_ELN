@@ -44,7 +44,7 @@ module Entities
       Attachment.where(
         attachable_type: 'Container',
         attachable_id: nil,
-        created_for: object.containable.id
+        created_for: object.containable_id
       )
     end
 

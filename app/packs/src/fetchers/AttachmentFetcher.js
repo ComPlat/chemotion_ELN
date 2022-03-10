@@ -502,4 +502,17 @@ export default class AttachmentFetcher {
 
     return promise;
   }
+
+  static fetchFreeScan(isCntOnly = false) {
+    const promise = fetch(`/api/v1/free_scan?cnt_only=${isCntOnly}`, {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
 }
