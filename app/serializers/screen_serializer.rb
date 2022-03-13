@@ -22,6 +22,10 @@ class ScreenSerializer < ActiveModel::Serializer
     'screen'
   end
 
+  def comment_count
+    object.comments.count
+  end
+
   class Level0 < ActiveModel::Serializer
     include ScreenLevelSerializable
     define_restricted_methods_for_level(0)

@@ -60,22 +60,22 @@ module Chemotion
       end
       get do
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).wellplates
-          rescue ActiveRecord::RecordNotFound
-            Wellplate.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
-          rescue ActiveRecord::RecordNotFound
-            Wellplate.none
-          end
-        else
-          # All collection of current_user
-          Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.includes(collections: :sync_collections_users).order("created_at DESC")
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
+                      find(params[:collection_id]).wellplates
+                  rescue ActiveRecord::RecordNotFound
+                    Wellplate.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
+                  rescue ActiveRecord::RecordNotFound
+                    Wellplate.none
+                  end
+                else
+                  # All collection of current_user
+                  Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                end.includes(:comments, collections: :sync_collections_users).order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -225,7 +225,7 @@ module Chemotion
       end
 
       namespace :well_label do
-        desc "update well label"
+        desc 'update well label'
         params do
           requires :id, type: Integer
           requires :label, type: String
@@ -241,7 +241,7 @@ module Chemotion
       end
 
       namespace :well_color_code do
-        desc "add or update color code"
+        desc 'add or update color code'
         params do
           requires :id, type: Integer
           requires :color_code, type: String

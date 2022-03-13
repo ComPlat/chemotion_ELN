@@ -8,7 +8,7 @@ class DetailLevels::Reaction
       :rf_value, :temperature, :status, :reaction_svg_file,
       :short_label, :container, :code_log, :role, :origin,
       :rinchi_long_key, :rinchi_web_key, :rinchi_short_key,
-      :duration, :rxno, :can_copy, :can_update
+      :duration, :rxno, :can_copy, :can_update, :comment_count
     ]
   end
 

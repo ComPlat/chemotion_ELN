@@ -7,7 +7,7 @@ class ElementListPermissionProxy < ElementPermissionProxy
     when Sample
       SampleListSerializer
     when Reaction
-     ReactionListSerializer
+      ReactionListSerializer
     when Wellplate
       WellplateListSerializer
     when Screen

@@ -1,7 +1,8 @@
 class DetailLevels::Wellplate
   def base_attributes
     [
-      :id, :type, :size, :name, :description, :created_at, :updated_at, :code_log, :short_label, :readout_titles
+      :id, :type, :size, :name, :description, :created_at, :updated_at, :code_log,
+      :short_label, :readout_titles, :comment_count
     ]
   end
 

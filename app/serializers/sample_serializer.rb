@@ -10,7 +10,6 @@ class SampleSerializer < ActiveModel::Serializer
   has_many :residues, serializer: ResidueSerializer
   has_many :elemental_compositions, serializer: ElementalCompositionSerializer
   has_many :segments
-  has_many :comments
 
   def code_log
     CodeLogSerializer.new(object.code_log).serializable_hash
@@ -62,6 +61,10 @@ class SampleSerializer < ActiveModel::Serializer
 
   def can_publish
     false
+  end
+
+  def comment_count
+    object.comments.count
   end
 
   class Level0 < ActiveModel::Serializer

@@ -27,6 +27,10 @@ class WellplateSerializer < ActiveModel::Serializer
     'wellplate'
   end
 
+  def comment_count
+    object.comments.count
+  end
+
   class Level0 < ActiveModel::Serializer
     include WellplateLevelSerializable
     define_restricted_methods_for_level(0)

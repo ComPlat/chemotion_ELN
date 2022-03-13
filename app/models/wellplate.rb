@@ -82,6 +82,8 @@ class Wellplate < ApplicationRecord
 
   has_many :sync_collections_users, through: :collections
 
+  has_many :comments, as: :commentable, dependent: :destroy
+
   has_one :container, as: :containable
 
   accepts_nested_attributes_for :collections_wellplates

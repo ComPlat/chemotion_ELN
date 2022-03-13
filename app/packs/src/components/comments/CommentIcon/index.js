@@ -3,26 +3,27 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 export default function CommentIcon(props) {
-  const comments = props.comments || [];
+  const commentCount = props.commentCount || 0;
   return (
-    comments && comments.length > 0 &&
-    <OverlayTrigger
-      key="ot_comments"
-      placement="bottom"
-      overlay={<Tooltip id="showCommentsCount">{`${comments.length} comment/s`}</Tooltip>}
-    >
-      <span className="commentIcon">
-        <i className="fa fa-comments" />
-      </span>
-    </OverlayTrigger>
+    commentCount && commentCount > 0 ?
+      <OverlayTrigger
+        key="ot_comments"
+        placement="bottom"
+        overlay={<Tooltip id="showCommentsCount">{`${commentCount} comment/s`}</Tooltip>}
+      >
+        <span className="commentIcon">
+          <i className="fa fa-comments" />
+        </span>
+      </OverlayTrigger> :
+      <span />
   );
 }
 
 
 CommentIcon.propTypes = {
-  comments: PropTypes.array,
+  commentCount: PropTypes.number,
 };
 
 CommentIcon.defaultProps = {
-  comments: [],
+  commentCount: null,
 };

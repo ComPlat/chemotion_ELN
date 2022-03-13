@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class ResearchPlanAPI < Grape::API
     include Grape::Kaminari
@@ -17,22 +19,22 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        else
-          # All collection of current_user
-          ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order("created_at DESC")
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).research_plans
+                  rescue ActiveRecord::RecordNotFound
+                    ResearchPlan.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
+                  rescue ActiveRecord::RecordNotFound
+                    ResearchPlan.none
+                  end
+                else
+                  # All collection of current_user
+                  ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                end.includes(:comments).order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -44,7 +46,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map { |s| ElementPermissionProxy.new(current_user, s, user_ids).serialized }
       end
 
       desc 'Create a research plan'
@@ -144,7 +146,7 @@ module Chemotion
           ) if research_plan.research_plan_metadata.nil?
           {
             research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
-            attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
+            attachments: Entities::AttachmentEntity.represent(research_plan.attachments)
           }
         end
       end
@@ -197,7 +199,7 @@ module Chemotion
         svg_file.write(svg)
         svg_file.close
 
-        {svg_path: svg_file_name}
+        { svg_path: svg_file_name }
       end
 
       desc 'Save image file to filesystem'
@@ -224,7 +226,7 @@ module Chemotion
       desc 'Export research plan by id'
       params do
         requires :id, type: Integer, desc: 'Research plan id'
-        optional :export_format, type: Symbol, desc: 'Export format', values: [:docx, :odt, :html, :markdown, :latex]
+        optional :export_format, type: Symbol, desc: 'Export format', values: %i[docx odt html markdown latex]
       end
       route_param :id do
         before do
@@ -245,7 +247,7 @@ module Chemotion
             content_type 'application/octet-stream'
 
             # init the export object
-            if [:html, :markdown, :latex].include? params[:export_format]
+            if %i[html markdown latex].include? params[:export_format]
               header['Content-Disposition'] = "attachment; filename=\"#{research_plan.name}.zip\""
               present export.to_zip
             else

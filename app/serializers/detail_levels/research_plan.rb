@@ -1,7 +1,7 @@
 class DetailLevels::ResearchPlan
   def base_attributes
     [
-      :id, :type, :name, :body, :thumb_svg, :created_at, :updated_at, :container
+      :id, :type, :name, :body, :thumb_svg, :created_at, :updated_at, :container, :comment_count
     ]
   end
 

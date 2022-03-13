@@ -53,6 +53,10 @@ class ReactionSerializer < ActiveModel::Serializer
     false
   end
 
+  def comment_count
+    object.comments.count
+  end
+
   class Level0 < ActiveModel::Serializer
     include ReactionLevelSerializable
     define_restricted_methods_for_level(0)

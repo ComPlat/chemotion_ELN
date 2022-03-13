@@ -18,6 +18,7 @@ import XTdCont from './extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from './routesUtils';
 import SvgWithPopover from './common/SvgWithPopover';
 import UserStore from './stores/UserStore';
+import CommentIcon from './comments/CommentIcon';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -227,12 +228,12 @@ export default class ElementsTableEntries extends Component {
     const {showDragColumn} = this.props;
     if(showDragColumn) {
       return (
-        <td style={{verticalAlign: 'middle', textAlign: 'center'}}>
+        <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
           {this.dragHandle(element)}
         </td>
       );
     } else {
-     return <td style={{display:'none'}}></td>;
+      return <td style={{ display: 'none' }} />;
     }
   }
 
@@ -287,31 +288,31 @@ export default class ElementsTableEntries extends Component {
 
   reactionRole(element) {
     let tooltip = null;
-    if (element.type == 'reaction') {
+    if (element.type === 'reaction') {
       switch (element.role) {
-        case "gp":
+        case 'gp':
           tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-home c-bs-primary"/>
+              <i className="fa fa-home c-bs-primary" />
             </OverlayTrigger>
-          )
+          );
           break;
-        case "parts":
+        case 'parts':
           tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-bookmark c-bs-success"/>
+              <i className="fa fa-bookmark c-bs-success" />
             </OverlayTrigger>
-          )
+          );
           break;
-        case "single":
+        case 'single':
           tooltip = <Tooltip id="roleTp">Single</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-asterisk c-bs-danger"/>
+              <i className="fa fa-asterisk c-bs-danger" />
             </OverlayTrigger>
-          )
+          );
           break;
         default:
           break;
@@ -320,10 +321,10 @@ export default class ElementsTableEntries extends Component {
   }
 
   sampleAnalysesLabels(element) {
-    if (element.type == 'sample') {
+    if (element.type === 'sample') {
       return (
-        <ElementAnalysesLabels element={element} key={element.id+"_analyses"}/>
-      )
+        <ElementAnalysesLabels element={element} key={element.id+'_analyses'} />
+      );
     }
   }
 
@@ -334,17 +335,17 @@ export default class ElementsTableEntries extends Component {
     return (
       <Table className="elements" bordered hover style={{ borderTop: 0 }}>
         <tbody>
-          {elements.map((element, index) => {
-            const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name: '';
-            let style = {};
-            if (this.isElementSelected(element) ||
-              (keyboardElementIndex != null && keyboardElementIndex === index)) {
-              style = {
+        {elements.map((element, index) => {
+          const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name : '';
+          let style = {};
+          if (this.isElementSelected(element) ||
+            (keyboardElementIndex != null && keyboardElementIndex === index)) {
+            style = {
               color: '#000',
               background: '#ddd',
               border: '4px solid #337ab7'
-              };
-            }
+            };
+          }
 
             return (
               <tr key={index} style={style}>
@@ -378,6 +379,7 @@ export default class ElementsTableEntries extends Component {
                     {this.reactionRole(element)}
                     <br />
                     {sampleMoleculeName}
+                    <CommentIcon commentCount={element.comment_count} />
                     <ElementCollectionLabels element={element} key={element.id}/>
                     {this.sampleAnalysesLabels(element)}
                     {this.topSecretIcon(element)}

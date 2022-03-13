@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class ScreenAPI < Grape::API
     include Grape::Kaminari
@@ -7,10 +9,10 @@ module Chemotion
     helpers ProfileHelpers
 
     resource :screens do
-      desc "Return serialized screens"
+      desc 'Return serialized screens'
       params do
-        optional :collection_id, type: Integer, desc: "Collection id"
-        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :collection_id, type: Integer, desc: 'Collection id'
+        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -21,22 +23,22 @@ module Chemotion
       end
       get do
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).screens
-          rescue ActiveRecord::RecordNotFound
-            Screen.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.screens
-          rescue ActiveRecord::RecordNotFound
-            Screen.none
-          end
-        else
-          # All collection of current_user
-          Screen.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.includes(collections: :sync_collections_users).order("created_at DESC")
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).screens
+                  rescue ActiveRecord::RecordNotFound
+                    Screen.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.screens
+                  rescue ActiveRecord::RecordNotFound
+                    Screen.none
+                  end
+                else
+                  # All collection of current_user
+                  Screen.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                end.includes(:comments, collections: :sync_collections_users).order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -49,12 +51,12 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
       end
 
-      desc "Return serialized screen by id"
+      desc 'Return serialized screen by id'
       params do
-        requires :id, type: Integer, desc: "Screen id"
+        requires :id, type: Integer, desc: 'Screen id'
       end
       route_param :id do
         before do
@@ -63,13 +65,13 @@ module Chemotion
 
         get do
           screen = Screen.find(params[:id])
-          {screen: ElementPermissionProxy.new(current_user, screen, user_ids).serialized}
+          { screen: ElementPermissionProxy.new(current_user, screen, user_ids).serialized }
         end
       end
 
-      desc "Update screen by id"
+      desc 'Update screen by id'
       params do
-        requires :id, type: Integer, desc: "screen id"
+        requires :id, type: Integer, desc: 'screen id'
         optional :name, type: String
         optional :collaborator, type: String
         optional :requirements, type: String
@@ -97,7 +99,7 @@ module Chemotion
           screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
           old_wellplate_ids = screen.wellplates.pluck(:id)
 
-          #save to profile
+          # save to profile
           kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
@@ -108,11 +110,11 @@ module Chemotion
           (old_wellplate_ids - params[:wellplate_ids]).each do |id|
             ScreensWellplate.where(wellplate_id: id, screen_id: params[:id]).destroy_all
           end
-          {screen: ElementPermissionProxy.new(current_user, screen, user_ids).serialized}
+          { screen: ElementPermissionProxy.new(current_user, screen, user_ids).serialized }
         end
       end
 
-      desc "Create a screen"
+      desc 'Create a screen'
       params do
         requires :name, type: String
         optional :collaborator, type: String
@@ -143,7 +145,7 @@ module Chemotion
         screen.save!
         screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-        #save to profile
+        # save to profile
         kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 

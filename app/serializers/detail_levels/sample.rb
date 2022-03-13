@@ -10,7 +10,7 @@ class DetailLevels::Sample
       :reaction_description, :container, :pubchem_tag, :xref, :code_log, :metrics,
       :can_update, :can_copy, :can_publish, :molecule_name_hash, # :molecule_computed_props,
       :showed_name, :decoupled,
-      :molecular_mass, :sum_formula
+      :molecular_mass, :sum_formula, :comment_count
     ]
   end
 

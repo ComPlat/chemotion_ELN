@@ -27,6 +27,10 @@ class ResearchPlanSerializer < ActiveModel::Serializer
   #   object.wellplates.map { |s| "WellplateSerializer::Level#{@nested_dl[:wellplate]}".constantize.new(s, @nested_dl).serializable_hash }
   # end
 
+  def comment_count
+    object.comments.count
+  end
+
   class Level0 < ActiveModel::Serializer
     include ResearchPlanLevelSerializable
     define_restricted_methods_for_level(0)
