@@ -36,7 +36,7 @@ module Chemotion
         else
           # All collection of current_user
           Screen.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.includes(collections: :sync_collections_users).order("created_at DESC")
+        end.includes(:comments, collections: :sync_collections_users).order("created_at DESC")
 
         from = params[:from_date]
         to = params[:to_date]

@@ -351,7 +351,7 @@ export default class ElementsTableSampleEntries extends Component {
           >
             {sample.title(selected)}
             <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
-              <CommentIcon comments={sample.comments} />
+              <CommentIcon commentCount={sample.comment_count} />
               {showDecoupledIcon(sample)}
               <ShowUserLabels element={sample} />
               <XvialIcon label={sample.external_label} />

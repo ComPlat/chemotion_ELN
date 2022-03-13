@@ -96,7 +96,7 @@ class Reaction < ApplicationRecord
   scope :by_status, ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
   scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }
-  scope :includes_for_list_display, -> { includes(:tag) }
+  scope :includes_for_list_display, -> { includes(:tag, :comments) }
 
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions

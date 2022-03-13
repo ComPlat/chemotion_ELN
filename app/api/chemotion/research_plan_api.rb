@@ -238,7 +238,7 @@ module Chemotion
       desc 'Export research plan by id'
       params do
         requires :id, type: Integer, desc: 'Research plan id'
-        optional :export_format, type: Symbol, desc: 'Export format', values: [:docx, :odt, :html, :markdown, :latex]
+        optional :export_format, type: Symbol, desc: 'Export format', values: %i[docx odt html markdown latex]
       end
       route_param :id do
         before do
@@ -259,7 +259,7 @@ module Chemotion
             content_type 'application/octet-stream'
 
             # init the export object
-            if [:html, :markdown, :latex].include? params[:export_format]
+            if %i[html markdown latex].include? params[:export_format]
               header['Content-Disposition'] = "attachment; filename=\"#{research_plan.name}.zip\""
               present export.to_zip
             else

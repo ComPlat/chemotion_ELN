@@ -17,6 +17,7 @@ import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import CommentIcon from 'src/components/comments/CommentIcon';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -278,7 +279,7 @@ export default class ElementsTableEntries extends Component {
 
   reactionRole(element) {
     let tooltip = null;
-    if (element.type == 'reaction') {
+    if (element.type === 'reaction') {
       switch (element.role) {
         case "gp":
           tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
@@ -286,7 +287,7 @@ export default class ElementsTableEntries extends Component {
             <OverlayTrigger placement="top" overlay={tooltip}>
               <i className="fa fa-home c-bs-primary" />
             </OverlayTrigger>
-          )
+          );
           break;
         case "parts":
           tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
@@ -294,7 +295,7 @@ export default class ElementsTableEntries extends Component {
             <OverlayTrigger placement="top" overlay={tooltip}>
               <i className="fa fa-bookmark c-bs-success" />
             </OverlayTrigger>
-          )
+          );
           break;
         case "single":
           tooltip = <Tooltip id="roleTp">Single</Tooltip>;
@@ -302,7 +303,7 @@ export default class ElementsTableEntries extends Component {
             <OverlayTrigger placement="top" overlay={tooltip}>
               <i className="fa fa-asterisk c-bs-danger" />
             </OverlayTrigger>
-          )
+          );
           break;
         default:
           break;
@@ -311,7 +312,7 @@ export default class ElementsTableEntries extends Component {
   }
 
   sampleAnalysesLabels(element) {
-    if (element.type == 'sample') {
+    if (element.type === 'sample') {
       return (
         <ElementAnalysesLabels element={element} key={element.id + "_analyses"} />
       )
@@ -369,6 +370,7 @@ export default class ElementsTableEntries extends Component {
                     {this.reactionRole(element)}
                     <br />
                     {sampleMoleculeName}
+                    <CommentIcon commentCount={element.comment_count} />
                     <ElementCollectionLabels element={element} key={element.id} />
                     {this.sampleAnalysesLabels(element)}
                     {this.topSecretIcon(element)}
