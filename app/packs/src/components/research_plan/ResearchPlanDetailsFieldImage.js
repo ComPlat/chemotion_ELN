@@ -53,6 +53,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     return (
       <div>
        <ImageEditModal
+          imageElementId='researchPlanImageID'
           imageName={field.value.public_name}
           isShow={this.state.imageEditModalShown}
           handleSave={(f)=>{this.handleDrop(f);this.setState({imageEditModalShown:false})}}
@@ -80,9 +81,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             
           </InputGroup>        
         </FormGroup>       
-        <Button
-             style={{marginLeft:'3px'}}
-            onClick={()=>{this.setState({imageEditModalShown:true})}}>Annotate</Button>
+        {this.renderAnnotateButton()}
         </div>
       
         <Dropzone
@@ -94,6 +93,19 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           {content}
         </Dropzone>
       </div>
+    );
+  }
+
+  renderAnnotateButton(){
+    var imageSet=this.props.field.value.file_name;
+    if(!imageSet){
+      return null;
+    }
+    return(
+      <Button
+        style={{marginLeft:'3px'}}
+        onClick={()=>{this.setState({imageEditModalShown:true})}}>Annotate
+      </Button>
     );
   }
 
