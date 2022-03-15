@@ -34,6 +34,7 @@
 /config/user_props.yml
 /config/profile_default.yml
 /config/compute_props.yml
+/config/converter.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml
