@@ -1,0 +1,19 @@
+/* eslint-disable react/prefer-stateless-function */
+import React, { Component } from 'react';
+import { Modal,Button } from 'react-bootstrap';
+
+export default class ImageAnnotationModalSVG extends Component {
+    constructor(props){    
+        super(props);     
+    }
+
+    render() {
+        return (
+          'Hallo'             
+          
+        );
+
+    }
+    
+      
+}
