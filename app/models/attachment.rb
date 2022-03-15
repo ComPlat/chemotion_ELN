@@ -32,6 +32,7 @@
 class Attachment < ApplicationRecord
   include AttachmentJcampAasm
   include AttachmentJcampProcess
+  include AttachmentConverter
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
