@@ -27,7 +27,7 @@ module Chemotion
       desc 'Return comment by commentable_id and commentable_type'
       params do
         requires :commentable_id, type: Integer, desc: 'Commentable id'
-        requires :commentable_type, type: String, values: %w[Sample Reaction]
+        requires :commentable_type, type: String, values: Comment::COMMENTABLE_TYPE
       end
 
       get do
@@ -51,18 +51,19 @@ module Chemotion
         params do
           requires :content, type: String
           requires :commentable_id, type: Integer
-          requires :commentable_type, type: String, values: %w[Sample Reaction]
+          requires :commentable_type, type: String, values: Comment::COMMENTABLE_TYPE
           requires :section,
                    type: String,
-                   values: ['header'] + Comment.sample_sections.values + Comment.reaction_sections.values
+                   values: Comment.sample_sections.values +
+                           Comment.reaction_sections.values +
+                           Comment.wellplate_sections.values +
+                           Comment.screen_sections.values +
+                           Comment.research_plan_sections.values +
+                           Comment.header_sections.values
         end
 
         before do
-          commentable = if params[:commentable_type].eql?('Sample')
-                          Sample.find params[:commentable_id]
-                        else
-                          Reaction.find params[:commentable_id]
-                        end
+          commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
           collections = Collection.where(id: commentable.collections.ids)
           allowed_user_ids = (collections.pluck(:user_id) +
             collections.pluck(:shared_by_id)).compact.uniq
@@ -92,7 +93,7 @@ module Chemotion
         requires :content, type: String
         optional :status, type: String, values: %w[Pending Resolved]
         optional :commentable_id, type: Integer
-        optional :commentable_type, type: String, values: %w[Sample Reaction]
+        optional :commentable_type, type: String, values: Comment::COMMENTABLE_TYPE
       end
       route_param :id do
         after_validation do

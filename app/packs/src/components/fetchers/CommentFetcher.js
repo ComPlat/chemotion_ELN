@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { CommentManagementServices } from '../../endpoints/ApiServices';
 
-const classify = string => string.charAt(0).toUpperCase() + string.slice(1);
+const classify = (string) => {
+  const elementType = string.replace(/([-_]\w)/g, g => g[1].toUpperCase());
+  return elementType.charAt(0).toUpperCase() + elementType.slice(1);
+};
 
 export default class CommentFetcher {
   static async fetchById(commentId) {

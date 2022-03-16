@@ -10,6 +10,7 @@ export default function CommentSection(props) {
       <CommentButton
         section={section}
         comments={comments}
+        setCommentSection={props.setCommentSection}
         toggleCommentModal={props.toggleCommentModal}
         getSectionComments={props.getSectionComments}
       />
@@ -26,6 +27,7 @@ export default function CommentSection(props) {
 CommentSection.propTypes = {
   section: PropTypes.string,
   comments: PropTypes.array,
+  setCommentSection: PropTypes.func.isRequired,
   toggleCommentModal: PropTypes.func.isRequired,
   getSectionComments: PropTypes.func.isRequired,
 };

@@ -24,6 +24,9 @@ import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
 import ElementDetailSortTab from '../ElementDetailSortTab';
 import { addSegmentTabs } from '../generic/SegmentDetails';
 import PrivateNoteElement from '../PrivateNoteElement';
+import HeaderCommentSection from '../comments/HeaderCommentSection';
+import CommentModal from '../comments/CommentModal';
+import CommentSection from "../comments/CommentSection";
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -43,6 +46,12 @@ export default class ResearchPlanDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.renderCommentModal = this.renderCommentModal.bind(this);
+  }
+
+  componentDidMount() {
+    const { researchPlan } = this.props;
+    this.props.fetchComments(researchPlan);
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -82,6 +91,24 @@ export default class ResearchPlanDetails extends Component {
     researchPlan.mode = mode;
     this.setState({ researchPlan });
   }
+
+  renderCommentModal = (element) => {
+    const { showCommentModal, comments, section } = this.props;
+    if (showCommentModal) {
+      return (
+        <CommentModal
+          showCommentModal={showCommentModal}
+          element={element}
+          section={section}
+          comments={comments}
+          fetchComments={this.props.fetchComments}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+        />
+      );
+    }
+    return <div />;
+  };
 
   // handle functions
 
@@ -429,6 +456,7 @@ export default class ResearchPlanDetails extends Component {
   } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
+    const { showCommentSection } = this.props;
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
 
     return (
@@ -451,6 +479,14 @@ export default class ResearchPlanDetails extends Component {
             <i className="fa fa-expand" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
+        <HeaderCommentSection
+          headerSection="research_plan_header"
+          showCommentSection={showCommentSection}
+          setCommentSection={this.props.setCommentSection}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+          toggleCommentSection={this.props.toggleCommentSection}
+        />
       </Panel.Heading>
     );
   }
@@ -466,6 +502,16 @@ export default class ResearchPlanDetails extends Component {
     const tabContentsMap = {
       research_plan: (
         <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="research_plan_properties"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <div style={{ margin: '5px 0px 5px 5px' }}>
             {btnMode}
           </div>
@@ -475,16 +521,46 @@ export default class ResearchPlanDetails extends Component {
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${researchPlan.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="research_plan_analyses"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           {this.renderAnalysesTab(researchPlan)}
         </Tab>
       ),
       attachments: (
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${researchPlan.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="research_plan_attachments"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           {this.renderAttachmentsTab(researchPlan)}
         </Tab>
       ),
       references: (
         <Tab eventKey="references" title="References" key={`lit_${researchPlan.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="research_plan_references"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <ResearchPlansLiteratures element={researchPlan} />
         </Tab>
       ),
@@ -501,6 +577,16 @@ export default class ResearchPlanDetails extends Component {
       ),
       metadata: (
         <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="research_plan_metadata"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <ResearchPlansMetadata
             parentResearchPlan={researchPlan}
             parentResearchPlanMetadata={researchPlan.research_plan_metadata}
@@ -547,6 +633,7 @@ export default class ResearchPlanDetails extends Component {
             }
           </ButtonToolbar>
         </Panel.Body>
+        {this.renderCommentModal(researchPlan)}
       </Panel>
     );
   }
@@ -555,4 +642,13 @@ export default class ResearchPlanDetails extends Component {
 ResearchPlanDetails.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
   toggleFullScreen: PropTypes.func.isRequired,
+  comments: PropTypes.array.isRequired,
+  section: PropTypes.string.isRequired,
+  showCommentSection: PropTypes.bool.isRequired,
+  showCommentModal: PropTypes.bool.isRequired,
+  fetchComments: PropTypes.func.isRequired,
+  getSectionComments: PropTypes.func.isRequired,
+  setCommentSection: PropTypes.func.isRequired,
+  toggleCommentModal: PropTypes.func.isRequired,
+  toggleCommentSection: PropTypes.func.isRequired,
 };

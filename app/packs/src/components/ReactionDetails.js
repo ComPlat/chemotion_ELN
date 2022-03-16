@@ -35,6 +35,9 @@ import { addSegmentTabs } from './generic/SegmentDetails';
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
 import ScifinderSearch from './scifinder/ScifinderSearch';
+import HeaderCommentSection from './comments/HeaderCommentSection';
+import CommentModal from './comments/CommentModal';
+import CommentSection from './comments/CommentSection';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -59,6 +62,7 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.renderCommentModal = this.renderCommentModal.bind(this);
     if(!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
@@ -66,7 +70,9 @@ export default class ReactionDetails extends Component {
 
 
   componentDidMount() {
-    UIStore.listen(this.onUIStoreChange)
+    const { reaction } = this.props;
+    UIStore.listen(this.onUIStoreChange);
+    this.props.fetchComments(reaction);
   }
 
   // eslint-disable-next-line camelcase
@@ -107,6 +113,24 @@ export default class ReactionDetails extends Component {
       });
     }
   }
+
+  renderCommentModal = (element) => {
+    const { showCommentModal, comments, section } = this.props;
+    if (showCommentModal) {
+      return (
+        <CommentModal
+          showCommentModal={showCommentModal}
+          element={element}
+          section={section}
+          comments={comments}
+          fetchComments={this.props.fetchComments}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+        />
+      );
+    }
+    return <div />;
+  };
 
   handleSubmit(closeView = false) {
     LoadingActions.start();
@@ -260,7 +284,8 @@ export default class ReactionDetails extends Component {
   }
 
   reactionHeader(reaction) {
-    let hasChanged = reaction.changed ? '' : 'none'
+    const { showCommentSection } = this.props;
+    let hasChanged = reaction.changed ? '' : 'none';
     const titleTooltip = `Created at: ${reaction.created_at} \n Updated at: ${reaction.updated_at}`;
 
     const { currentCollection } = UIStore.getState();
@@ -349,19 +374,27 @@ export default class ReactionDetails extends Component {
           <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
         </div>
         <PrintCodeButton element={reaction}/>
+        <HeaderCommentSection
+          headerSection="reaction_header"
+          showCommentSection={showCommentSection}
+          setCommentSection={this.props.setCommentSection}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+          toggleCommentSection={this.props.toggleCommentSection}
+        />
       </div>
     );
   }
 
   handleSelect(key) {
-    UIActions.selectTab({tabKey: key, type: 'reaction'});
+    UIActions.selectTab({ tabKey: key, type: 'reaction' });
     this.setState({
       activeTab: key
-    })
+    });
   }
 
   onTabPositionChanged(visible) {
-    this.setState({ visible })
+    this.setState({ visible });
   }
 
   updateReactionSvg() {
@@ -404,6 +437,16 @@ export default class ReactionDetails extends Component {
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme"  key={`scheme_${reaction.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="reaction_scheme"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <ReactionDetailsScheme
             reaction={reaction}
             onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
@@ -413,6 +456,16 @@ export default class ReactionDetails extends Component {
       ),
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${reaction.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="reaction_properties"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <ReactionDetailsProperties
             reaction={reaction}
             onReactionChange={r => this.handleReactionChange(r)}
@@ -423,6 +476,16 @@ export default class ReactionDetails extends Component {
       ),
       references: (
         <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="reaction_references"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <ReactionDetailsLiteratures
             element={reaction}
             literatures={reaction.isNew === true ? reaction.literatures : null}
@@ -432,11 +495,31 @@ export default class ReactionDetails extends Component {
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${reaction.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="reaction_analyses"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           {this.productData(reaction)}
         </Tab>
       ),
       green_chemistry: (
         <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="reaction_green_chemistry"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <GreenChemistry
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
@@ -502,6 +585,7 @@ export default class ReactionDetails extends Component {
             </Button>
             {exportButton}
           </ButtonToolbar>
+          {this.renderCommentModal(reaction)}
         </Panel.Body>
       </Panel>
     );
@@ -511,4 +595,13 @@ export default class ReactionDetails extends Component {
 ReactionDetails.propTypes = {
   reaction: PropTypes.object,
   toggleFullScreen: PropTypes.func,
-}
+  comments: PropTypes.array.isRequired,
+  section: PropTypes.string.isRequired,
+  showCommentSection: PropTypes.bool.isRequired,
+  showCommentModal: PropTypes.bool.isRequired,
+  fetchComments: PropTypes.func.isRequired,
+  getSectionComments: PropTypes.func.isRequired,
+  setCommentSection: PropTypes.func.isRequired,
+  toggleCommentModal: PropTypes.func.isRequired,
+  toggleCommentSection: PropTypes.func.isRequired,
+};
