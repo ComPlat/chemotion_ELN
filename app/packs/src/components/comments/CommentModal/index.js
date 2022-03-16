@@ -34,13 +34,14 @@ export default class CommentModal extends Component {
   }
 
   markCommentResolved = (comment) => {
+    const { element } = this.props;
     const params = {
       content: comment.content,
       status: 'Resolved',
     };
     CommentFetcher.updateComment(comment, params)
       .then(() => {
-        this.props.fetchComments();
+        this.props.fetchComments(element);
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
@@ -49,17 +50,17 @@ export default class CommentModal extends Component {
 
   saveComment = () => {
     LoadingActions.start();
-    const { elementId, elementType, section } = this.props;
+    const { element, section } = this.props;
     const { commentBody } = this.state;
     const params = {
       content: commentBody,
-      commentable_id: elementId,
-      commentable_type: elementType,
+      commentable_id: element.id,
+      commentable_type: element.type,
       section,
     };
     CommentFetcher.create(params)
       .then(() => {
-        this.props.fetchComments();
+        this.props.fetchComments(element);
         this.setState({ commentBody: '' }, () => {
           LoadingActions.stop();
         });
@@ -72,13 +73,14 @@ export default class CommentModal extends Component {
   updateComment = () => {
     LoadingActions.start();
     const { commentBody } = this.state;
+    const { element } = this.props;
     const comment = this.state.commentObj;
     const params = {
       content: commentBody,
     };
     CommentFetcher.updateComment(comment, params)
       .then(() => {
-        this.props.fetchComments();
+        this.props.fetchComments(element);
         this.setState({ commentBody: '' }, () => {
           LoadingActions.stop();
         });
@@ -89,9 +91,10 @@ export default class CommentModal extends Component {
   }
 
   deleteComment = (comment) => {
+    const { element } = this.props;
     CommentFetcher.delete(comment)
       .then(() => {
-        this.props.fetchComments();
+        this.props.fetchComments(element);
         this.setState({ commentBody: '' });
       })
       .catch((errorMessage) => {
@@ -240,19 +243,16 @@ export default class CommentModal extends Component {
 }
 
 CommentModal.propTypes = {
-  showCommentModal: PropTypes.bool,
+  showCommentModal: PropTypes.bool.isRequired,
   toggleCommentModal: PropTypes.func.isRequired,
   comments: PropTypes.array,
   fetchComments: PropTypes.func.isRequired,
-  getOwnComment: PropTypes.func.isRequired,
   getSectionComments: PropTypes.func.isRequired,
   section: PropTypes.string,
-  elementId: PropTypes.number.isRequired,
-  elementType: PropTypes.string.isRequired,
+  element: PropTypes.object.isRequired,
 };
 
 CommentModal.defaultProps = {
-  showCommentModal: false,
   comments: [],
   section: 'sample_header',
 };

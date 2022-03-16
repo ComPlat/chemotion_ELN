@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 export default function CommentButton(props) {
   const { section } = props;
   const comments = props.getSectionComments(section);
+  console.log("_____________________CommentButton section", section);
   return (
     <OverlayTrigger
       key="ot_comments"
@@ -15,7 +16,10 @@ export default function CommentButton(props) {
         id="commentBtn"
         bsStyle={comments && comments.length > 0 ? 'success' : 'default'}
         bsSize="xsmall"
-        onClick={() => props.toggleCommentModal(true, section)}
+        onClick={() => {
+          props.toggleCommentModal(true);
+          props.setCommentSection(section);
+        }}
       >
         <i className="fa fa-comments" />
       </Button>
@@ -28,8 +32,9 @@ CommentButton.propTypes = {
   section: PropTypes.string,
   toggleCommentModal: PropTypes.func.isRequired,
   getSectionComments: PropTypes.func.isRequired,
+  setCommentSection: PropTypes.func.isRequired,
 };
 
 CommentButton.defaultProps = {
-  section: 'header',
+  section: 'sample_header',
 };

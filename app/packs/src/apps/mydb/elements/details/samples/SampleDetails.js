@@ -68,9 +68,10 @@ import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurements
 import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/ChemicalTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentModal from 'src/components/comments/CommentModal';
-import CommentFetcher from 'src/components/fetchers/CommentFetcher';
 import CommentSection from 'src/components/comments/CommentSection';
+import CommentFetcher from 'src/components/fetchers/CommentFetcher';
 
 const MWPrecision = 6;
 
@@ -125,10 +126,6 @@ export default class SampleDetails extends React.Component {
       startExport: false,
       sfn: UIStore.getState().hasSfn,
       saveInventoryAction: false,
-      showCommentModal: false,
-      comments: [],
-      section: '',
-      showCommentSection: false,
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -152,17 +149,15 @@ export default class SampleDetails extends React.Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.decoupleChanged = this.decoupleChanged.bind(this);
     this.handleFastInput = this.handleFastInput.bind(this);
-    this.toggleCommentModal = this.toggleCommentModal.bind(this);
-    this.fetchComments = this.fetchComments.bind(this);
     this.renderCommentModal = this.renderCommentModal.bind(this);
-    this.getOwnComment = this.getOwnComment.bind(this);
   }
 
   componentDidMount() {
+    const { sample } = this.props;
     UIStore.listen(this.onUIStoreChange);
     const { activeTab } = this.state;
     this.fetchQcWhenNeeded(activeTab);
-    this.fetchComments();
+    this.props.fetchComments(sample);
   }
 
   // eslint-disable-next-line camelcase
@@ -515,8 +510,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleHeader(sample) {
-    const { comments } = this.state;
-    const selectedComments = this.getSectionComments('header');
+    const { showCommentSection } = this.props;
     const saveBtnDisplay = sample.isEdited ? '' : 'none';
     const titleTooltip = `Created at: ${sample.created_at} \n Updated at: ${sample.updated_at}`;
 
@@ -616,34 +610,14 @@ export default class SampleDetails extends React.Component {
           {decoupleCb}
         </div>
         <ShowUserLabels element={sample} />
-        <OverlayTrigger
-          key="ot_comments"
-          placement="top"
-          overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
-        >
-          <Button
-            bsStyle={selectedComments && selectedComments.length > 0 ? 'success' : 'default'}
-            onClick={() => this.toggleCommentModal(true, 'header')}
-          >
-            <i className="fa fa-comments" />&nbsp;
-            Comments
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="top"
-          overlay={<Tooltip id="toggleComments">Show/Hide Comments</Tooltip>}
-        >
-          <Button
-            bsSize="xsmall"
-            // bsStyle="primary"
-            onClick={this.toggleCommentSection}
-            style={{ marginLeft: 5 }}
-          >
-            <span>
-              <i className={this.state.showCommentSection ? 'fa fa-angle-down' : 'fa fa-angle-up'} />
-            </span>
-          </Button>
-        </OverlayTrigger>
+        <HeaderCommentSection
+          headerSection="sample_header"
+          showCommentSection={showCommentSection}
+          setCommentSection={this.props.setCommentSection}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+          toggleCommentSection={this.props.toggleCommentSection}
+        />
       </div>
     );
   }
@@ -1070,22 +1044,19 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab eventKey={ind} title="Properties" key={'Props' + sample.id.toString()}>
         {
-          this.state.showCommentSection &&
+          this.props.showCommentSection &&
           <CommentSection
             section="sample_properties"
-            comments={this.state.comments}
-            toggleCommentModal={this.toggleCommentModal}
-            getSectionComments={this.getSectionComments}
+            comments={this.props.comments}
+            setCommentSection={this.props.setCommentSection}
+            toggleCommentModal={this.props.toggleCommentModal}
+            getSectionComments={this.props.getSectionComments}
           />
         }
         <ListGroupItem>
           <SampleForm
             sample={sample}
             parent={this}
-            comments={this.state.comments}
-            toggleCommentModal={this.toggleCommentModal}
-            setCommentSection={this.setCommentSection}
-            getSectionComments={this.getSectionComments}
             customizableField={this.customizableField}
             enableSampleDecoupled={this.enableSampleDecoupled}
             decoupleMolecule={this.decoupleMolecule}
@@ -1134,12 +1105,13 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab eventKey={ind} title="Analyses" key={`Container${sample.id.toString()}`}>
         {
-          this.state.showCommentSection &&
+          this.props.showCommentSection &&
           <CommentSection
             section="sample_analyses"
-            comments={this.state.comments}
-            toggleCommentModal={this.toggleCommentModal}
-            getSectionComments={this.getSectionComments}
+            comments={this.props.comments}
+            setCommentSection={this.props.setCommentSection}
+            toggleCommentModal={this.props.toggleCommentModal}
+            getSectionComments={this.props.getSectionComments}
           />
         }
         <ListGroupItem style={{ paddingBottom: 20 }}>
@@ -1165,12 +1137,13 @@ export default class SampleDetails extends React.Component {
         key={`References_${sample.id}`}
       >
         {
-          this.state.showCommentSection &&
+          this.props.showCommentSection &&
           <CommentSection
             section="sample_literature"
-            comments={this.state.comments}
-            toggleCommentModal={this.toggleCommentModal}
-            getSectionComments={this.getSectionComments}
+            comments={this.props.comments}
+            setCommentSection={this.props.setCommentSection}
+            toggleCommentModal={this.props.toggleCommentModal}
+            getSectionComments={this.props.getSectionComments}
           />
         }
         <ListGroupItem style={{ paddingBottom: 20 }} >
@@ -1191,12 +1164,13 @@ export default class SampleDetails extends React.Component {
         key={`Results${sample.id.toString()}`}
       >
         {
-          this.state.showCommentSection &&
+          this.props.showCommentSection &&
           <CommentSection
             section="sample_results"
-            comments={this.state.comments}
-            toggleCommentModal={this.toggleCommentModal}
-            getSectionComments={this.getSectionComments}
+            comments={this.props.comments}
+            setCommentSection={this.props.setCommentSection}
+            toggleCommentModal={this.props.toggleCommentModal}
+            getSectionComments={this.props.getSectionComments}
           />
         }
         <ListGroupItem style={{ paddingBottom: 20 }}>
@@ -1280,12 +1254,13 @@ export default class SampleDetails extends React.Component {
         key={`QC_${sample.id}_${ind}`}
       >
         {
-          this.state.showCommentSection &&
+          this.props.showCommentSection &&
           <CommentSection
             section="sample_qc_curation"
-            comments={this.state.comments}
-            toggleCommentModal={this.toggleCommentModal}
-            getSectionComments={this.getSectionComments}
+            comments={this.props.comments}
+            setCommentSection={this.props.setCommentSection}
+            toggleCommentModal={this.props.toggleCommentModal}
+            getSectionComments={this.props.getSectionComments}
           />
         }
         <ListGroupItem style={{ paddingBottom: 20 }} >
@@ -1439,67 +1414,23 @@ export default class SampleDetails extends React.Component {
     this.setState({ visible });
   }
 
-  toggleCommentModal = (btnAction, section) => {
-    this.setState({ showCommentModal: btnAction });
-    if (section) {
-      this.setCommentSection(section);
-    }
-  };
-
-  toggleCommentSection = () => {
-    this.setState({ showCommentSection: !this.state.showCommentSection });
-    this.setState({ isEditing: true });
-  }
-
-  fetchComments = () => {
-    const { sample } = this.state;
-    CommentFetcher.fetchByCommentableId(sample.id, 'Sample')
-      .then((comments) => {
-        if (comments != null) {
-          this.setState({ comments });
-        }
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  };
-
-  renderCommentModal = (sample) => {
-    const { showCommentModal, section } = this.state;
+  renderCommentModal = (element) => {
+    const { showCommentModal, comments, section } = this.props;
     if (showCommentModal) {
       return (
         <CommentModal
           showCommentModal={showCommentModal}
-          elementId={sample.id}
-          elementType="Sample"
+          element={element}
           section={section}
-          comments={this.state.comments}
-          toggleCommentModal={this.toggleCommentModal}
-          fetchComments={this.fetchComments}
-          getOwnComment={this.getOwnComment}
-          getSectionComments={this.getSectionComments}
+          comments={comments}
+          fetchComments={this.props.fetchComments}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
         />
       );
     }
     return <div />;
   };
-
-  getOwnComment = (section) => {
-    const { comments } = this.state;
-    const { currentUser } = UserStore.getState();
-
-    return comments && comments.find(cmt => (
-      (cmt.created_by === currentUser.id) && cmt.section === section));
-  }
-
-  setCommentSection = (section) => {
-    this.setState({ section });
-  }
-
-  getSectionComments = (section) => {
-    const { comments } = this.state;
-    return comments && comments.filter(cmt => (cmt.section === section));
-  }
 
   render() {
     const sample = this.state.sample || {};
@@ -1613,4 +1544,13 @@ export default class SampleDetails extends React.Component {
 SampleDetails.propTypes = {
   sample: PropTypes.object,
   toggleFullScreen: PropTypes.func,
+  comments: PropTypes.array.isRequired,
+  section: PropTypes.string.isRequired,
+  showCommentSection: PropTypes.bool.isRequired,
+  showCommentModal: PropTypes.bool.isRequired,
+  fetchComments: PropTypes.func.isRequired,
+  getSectionComments: PropTypes.func.isRequired,
+  setCommentSection: PropTypes.func.isRequired,
+  toggleCommentModal: PropTypes.func.isRequired,
+  toggleCommentSection: PropTypes.func.isRequired,
 };

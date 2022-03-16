@@ -26,6 +26,9 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentModal from 'src/components/comments/CommentModal';
+import CommentSection from "src/components/comments/CommentSection";
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -41,10 +44,13 @@ export default class ScreenDetails extends Component {
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.updateComponentGraphData = this.updateComponentGraphData.bind(this);
+    this.renderCommentModal = this.renderCommentModal.bind(this);
   }
 
   componentDidMount() {
+    const { screen } = this.props;
     UIStore.listen(this.onUIStoreChange);
+    this.props.fetchComments(screen);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -96,6 +102,24 @@ export default class ScreenDetails extends Component {
       DetailActions.close(screen, force);
     }
   }
+
+  renderCommentModal = (element) => {
+    const { showCommentModal, comments, section } = this.props;
+    if (showCommentModal) {
+      return (
+        <CommentModal
+          showCommentModal={showCommentModal}
+          element={element}
+          section={section}
+          comments={comments}
+          fetchComments={this.props.fetchComments}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+        />
+      );
+    }
+    return <div />;
+  };
 
   handleInputChange(type, event) {
     const types = ['name', 'requirements', 'collaborator', 'conditions', 'result', 'description'];
@@ -173,6 +197,7 @@ export default class ScreenDetails extends Component {
   screenHeader(screen) {
     const saveBtnDisplay = screen.isEdited ? '' : 'none';
     const datetp = `Created at: ${screen.created_at} \n Updated at: ${screen.updated_at}`;
+    const { showCommentSection } = this.props;
 
     return (
       <div>
@@ -215,6 +240,14 @@ export default class ScreenDetails extends Component {
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
         <PrintCodeButton element={screen} />
+        <HeaderCommentSection
+          headerSection="screen_header"
+          showCommentSection={showCommentSection}
+          setCommentSection={this.props.setCommentSection}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+          toggleCommentSection={this.props.toggleCommentSection}
+        />
       </div>
     );
   }
@@ -353,11 +386,31 @@ export default class ScreenDetails extends Component {
     const tabContentsMap = {
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${screen.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="screen_properties"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           {this.propertiesFields(screen)}
         </Tab>
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${screen.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="screen_analyses"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <ScreenDetailsContainers
             screen={screen}
             parent={this}
@@ -433,6 +486,7 @@ export default class ScreenDetails extends Component {
             <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
+          {this.renderCommentModal(screen)}
         </Panel.Body>
       </Panel>
     );
@@ -442,4 +496,13 @@ export default class ScreenDetails extends Component {
 ScreenDetails.propTypes = {
   screen: PropTypes.instanceOf(Screen).isRequired,
   toggleFullScreen: PropTypes.func.isRequired,
+  comments: PropTypes.array.isRequired,
+  section: PropTypes.string.isRequired,
+  showCommentSection: PropTypes.bool.isRequired,
+  showCommentModal: PropTypes.bool.isRequired,
+  fetchComments: PropTypes.func.isRequired,
+  getSectionComments: PropTypes.func.isRequired,
+  setCommentSection: PropTypes.func.isRequired,
+  toggleCommentModal: PropTypes.func.isRequired,
+  toggleCommentSection: PropTypes.func.isRequired,
 };

@@ -26,6 +26,9 @@ import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement'
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentModal from 'src/components/comments/CommentModal';
+import CommentSection from "src/components/comments/CommentSection";
 
 const cols = 12;
 
@@ -42,10 +45,13 @@ export default class WellplateDetails extends Component {
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.renderCommentModal = this.renderCommentModal.bind(this);
   }
 
   componentDidMount() {
+    const { wellplate } = this.props;
     UIStore.listen(this.onUIStoreChange);
+    this.props.fetchComments(wellplate);
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -83,6 +89,24 @@ export default class WellplateDetails extends Component {
     wellplate.changed = true;
     this.setState({ wellplate });
   }
+
+  renderCommentModal = (element) => {
+    const { showCommentModal, comments, section } = this.props;
+    if (showCommentModal) {
+      return (
+        <CommentModal
+          showCommentModal={showCommentModal}
+          element={element}
+          section={section}
+          comments={comments}
+          fetchComments={this.props.fetchComments}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+        />
+      );
+    }
+    return <div />;
+  };
 
   handleSubmit() {
     const { wellplate } = this.state;
@@ -214,7 +238,7 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
     const datetp = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
-
+    const { showCommentSection } = this.props;
 
     return (
       <div>
@@ -237,6 +261,14 @@ export default class WellplateDetails extends Component {
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={wellplate} />
+        <HeaderCommentSection
+          headerSection="wellplate_header"
+          showCommentSection={showCommentSection}
+          setCommentSection={this.props.setCommentSection}
+          getSectionComments={this.props.getSectionComments}
+          toggleCommentModal={this.props.toggleCommentModal}
+          toggleCommentSection={this.props.toggleCommentSection}
+        />
       </div>
     );
   }
@@ -280,6 +312,16 @@ export default class WellplateDetails extends Component {
     const tabContentsMap = {
       designer: (
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="wellplate_designer"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <Well id="wellplate-designer" style={{ overflow: 'scroll' }}>
             <Wellplate
               show={showWellplate}
@@ -295,6 +337,16 @@ export default class WellplateDetails extends Component {
       ),
       list: (
         <Tab eventKey="list" title="List" key={`list_${wellplate.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="wellplate_list"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <Well style={{ overflow: 'scroll', height: '100%', 'max-height': 'calc(100vh - 375px)' }}>
             <WellplateList
               wells={wells}
@@ -306,6 +358,16 @@ export default class WellplateDetails extends Component {
       ),
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${wellplate.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="wellplate_properties"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <WellplateProperties
             {...properties}
             changeProperties={c => this.handleChangeProperties(c)}
@@ -317,6 +379,16 @@ export default class WellplateDetails extends Component {
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${wellplate.id}`}>
+          {
+            this.props.showCommentSection &&
+            <CommentSection
+              section="wellplate_analyses"
+              comments={this.props.comments}
+              setCommentSection={this.props.setCommentSection}
+              toggleCommentModal={this.props.toggleCommentModal}
+              getSectionComments={this.props.getSectionComments}
+            />
+          }
           <ListGroupItem style={{ paddingBottom: 20 }}>
             <WellplateDetailsContainers
               wellplate={wellplate}
@@ -369,6 +441,7 @@ export default class WellplateDetails extends Component {
               Print Wells
             </Button>
           </ButtonToolbar>
+          {this.renderCommentModal(wellplate)}
         </Panel.Body>
       </Panel>
     );
@@ -378,4 +451,13 @@ export default class WellplateDetails extends Component {
 WellplateDetails.propTypes = { /* eslint-disable react/forbid-prop-types */
   wellplate: PropTypes.object.isRequired,
   toggleFullScreen: PropTypes.func.isRequired,
+  comments: PropTypes.array.isRequired,
+  section: PropTypes.string.isRequired,
+  showCommentSection: PropTypes.bool.isRequired,
+  showCommentModal: PropTypes.bool.isRequired,
+  fetchComments: PropTypes.func.isRequired,
+  getSectionComments: PropTypes.func.isRequired,
+  setCommentSection: PropTypes.func.isRequired,
+  toggleCommentModal: PropTypes.func.isRequired,
+  toggleCommentSection: PropTypes.func.isRequired,
 };
