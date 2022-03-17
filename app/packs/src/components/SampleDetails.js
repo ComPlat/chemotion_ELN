@@ -67,7 +67,6 @@ import FastInput from './FastInput';
 import ScifinderSearch from './scifinder/ScifinderSearch';
 import HeaderCommentSection from './comments/HeaderCommentSection';
 import CommentModal from './comments/CommentModal';
-import CommentFetcher from './fetchers/CommentFetcher';
 import CommentSection from './comments/CommentSection';
 
 import ElementDetailSortTab from './ElementDetailSortTab';
