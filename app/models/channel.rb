@@ -33,6 +33,8 @@ class Channel < ApplicationRecord
   COLLECTION_ZIP_FAIL = 'Collection Import and Export Failure'
   CHEM_SPECTRA_NOTIFICATION = 'Chem Spectra Notification'
   ASSIGN_INBOX_TO_SAMPLE = 'Assign Inbox Attachment to Sample'
+  COMMENT_ON_MY_COLLECTION = 'New comment on synchronized collection'
+  COMMENT_RESOLVED = 'Comment resolved in synchronized collection'
 
   class << self
     def build_message(**args)
@@ -40,6 +42,7 @@ class Channel < ApplicationRecord
       channel_subject = args[:channel_subject] # args.delete(:channel_subject)
       channel = channel_id ? find_by(id: channel_id) : find_by(subject: channel_subject)
       return unless channel
+
       data_args = args.delete(:data_args)
       message = channel.msg_template
       if message.present?

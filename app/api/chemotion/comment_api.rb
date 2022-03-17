@@ -2,6 +2,8 @@
 
 module Chemotion
   class CommentAPI < Grape::API
+    helpers CommentHelpers
+
     resource :comments do
       desc 'Return comment by ID'
       params do
@@ -13,10 +15,9 @@ module Chemotion
           comment = Comment.find(params[:id])
 
           collections = Collection.where(id: comment.commentable.collections.ids)
-          allowed_user_ids = (collections.pluck(:user_id) +
-            collections.pluck(:shared_by_id)).compact.uniq
+          allowed_user_ids = authorized_users(collections)
 
-          if allowed_user_ids.include? current_user.id # everyone with access to the shared or synced collection
+          if allowed_user_ids.include? current_user.id
             present comment, with: Entities::CommentEntity, root: 'comment'
           else
             error!('401 Unauthorized', 401)
@@ -31,15 +32,17 @@ module Chemotion
       end
 
       get do
-        comments = Comment.where(
-          commentable_id: params[:commentable_id],
-          commentable_type: params[:commentable_type]
-        )
+        commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
 
-        # collections = Collection.where(id: comment.commentable.collections.ids)
-        allowed_user_ids = [current_user.id]
+        collections = Collection.where(id: commentable.collections.ids)
+        allowed_user_ids = authorized_users(collections)
 
-        if allowed_user_ids.include? current_user.id # everyone with access to the shared or synced collection
+        if allowed_user_ids.include? current_user.id
+          comments = Comment.where(
+            commentable_id: params[:commentable_id],
+            commentable_type: params[:commentable_type]
+          )
+
           present comments, with: Entities::CommentEntity, root: 'comment'
         else
           error!('401 Unauthorized', 401)
@@ -64,9 +67,9 @@ module Chemotion
 
         before do
           commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
-          collections = Collection.where(id: commentable.collections.ids)
-          allowed_user_ids = (collections.pluck(:user_id) +
-            collections.pluck(:shared_by_id)).compact.uniq
+          @collections = Collection.where(id: commentable.collections.ids, is_synchronized: true)
+
+          allowed_user_ids = authorized_users(@collections)
 
           error!('401 Unauthorized', 401) unless allowed_user_ids.include? current_user.id
         end
@@ -82,6 +85,8 @@ module Chemotion
           }
           comment = Comment.new(attributes)
           comment.save!
+
+          create_message_notification(@collections, current_user)
 
           present comment, with: Entities::CommentEntity, root: 'comment'
         end
@@ -99,13 +104,22 @@ module Chemotion
         after_validation do
           @comment = Comment.find(params[:id])
           error!('404 Comment with given id not found', 404) if @comment.nil?
-          error!('401 Unauthorized', 401) unless @comment.created_by == current_user.id
+          error!('401 Unauthorized', 401) unless @comment.created_by == current_user.id || params[:status].eql?('Resolved')
           error!('422 Unprocessable Entity', 422) if @comment.resolved?
         end
 
         put do
           attributes = declared(params, include_missing: false)
           @comment.update!(attributes)
+
+          if @comment.saved_change_to_status? && @comment.created_by != current_user.id
+            Message.create_msg_notification(
+              channel_subject: Channel::COMMENT_RESOLVED,
+              message_from: current_user.id, message_to: [@comment.created_by],
+              data_args: { resolved_by: current_user.name },
+              level: 'info'
+            )
+          end
 
           present @comment, with: Entities::CommentEntity, root: 'comment'
         end
