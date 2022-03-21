@@ -480,6 +480,7 @@ export default class ResearchPlanDetails extends Component {
           </Button>
         </OverlayTrigger>
         <HeaderCommentSection
+          element={researchPlan}
           headerSection="research_plan_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}

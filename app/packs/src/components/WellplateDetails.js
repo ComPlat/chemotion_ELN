@@ -262,6 +262,7 @@ export default class WellplateDetails extends Component {
         </OverlayTrigger>
         <PrintCodeButton element={wellplate} />
         <HeaderCommentSection
+          element={wellplate}
           headerSection="wellplate_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}

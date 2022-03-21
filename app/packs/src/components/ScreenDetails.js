@@ -235,6 +235,7 @@ export default class ScreenDetails extends Component {
         </OverlayTrigger>
         <PrintCodeButton element={screen} />
         <HeaderCommentSection
+          element={screen}
           headerSection="screen_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}

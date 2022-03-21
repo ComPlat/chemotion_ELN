@@ -570,6 +570,7 @@ export default class SampleDetails extends React.Component {
         </div>
         <ShowUserLabels element={sample} />
         <HeaderCommentSection
+          element={sample}
           headerSection="sample_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}

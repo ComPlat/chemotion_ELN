@@ -369,12 +369,13 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-cogs" />
           </Button>
         </OverlayTrigger>
-        <div style={{display: "inline-block", marginLeft: "10px"}}>
+        <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           {colLabel}
-          <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
+          <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"} />
         </div>
-        <PrintCodeButton element={reaction}/>
+        <PrintCodeButton element={reaction} />
         <HeaderCommentSection
+          element={reaction}
           headerSection="reaction_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}
