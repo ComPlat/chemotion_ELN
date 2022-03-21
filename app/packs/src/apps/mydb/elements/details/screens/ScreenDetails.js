@@ -241,6 +241,7 @@ export default class ScreenDetails extends Component {
           : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
         <PrintCodeButton element={screen} />
         <HeaderCommentSection
+          element={screen}
           headerSection="screen_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}

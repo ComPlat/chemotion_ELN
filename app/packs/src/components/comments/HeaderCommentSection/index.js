@@ -3,10 +3,11 @@ import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 export default function HeaderCommentSection(props) {
-  const { showCommentSection, headerSection } = props;
+  const { element, showCommentSection, headerSection } = props;
   const selectedComments = props.getSectionComments(headerSection);
 
   return (
+    (element && element.isNew) ? <span /> :
     <span>
       <OverlayTrigger
         key="ot_comments"
@@ -45,6 +46,7 @@ export default function HeaderCommentSection(props) {
 
 
 HeaderCommentSection.propTypes = {
+  element: PropTypes.object.isRequired,
   showCommentSection: PropTypes.bool.isRequired,
   headerSection: PropTypes.string,
   getSectionComments: PropTypes.func.isRequired,

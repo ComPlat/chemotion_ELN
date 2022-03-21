@@ -503,6 +503,7 @@ export default class ResearchPlanDetails extends Component {
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
         <HeaderCommentSection
+          element={researchPlan}
           headerSection="research_plan_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}
