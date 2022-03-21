@@ -20,7 +20,7 @@ module Chemotion
       desc 'Return private note by noteable_id and noteable_type'
       params do
         requires :noteable_id, type: Integer, desc: 'Notable id'
-        requires :noteable_type, type: String, values: %w[Sample Reaction]
+        requires :noteable_type, type: String, values: %w[Sample Reaction Wellplate Screen ResearchPlan]
       end
 
       get do
@@ -35,7 +35,7 @@ module Chemotion
         params do
           requires :content, type: String
           requires :noteable_id, type: Integer
-          requires :noteable_type, type: String, values: %w[Sample Reaction]
+          requires :noteable_type, type: String, values: %w[Sample Reaction Wellplate Screen ResearchPlan]
         end
 
         post do
@@ -57,7 +57,7 @@ module Chemotion
         requires :id, type: Integer, desc: 'Private note id'
         requires :content, type: String
         optional :noteable_id, type: Integer
-        optional :noteable_type, type: String, values: %w[Sample Reaction]
+        optional :noteable_type, type: String, values: %w[Sample Reaction Wellplate Screen ResearchPlan]
       end
       route_param :id do
         after_validation do

@@ -480,12 +480,6 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  samplePrivateNote(sample) {
-    return (
-      <PrivateNoteElement element={sample} disabled={!sample.can_update} />
-    );
-  }
-
   render() {
     const sample = this.props.sample || {};
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
@@ -630,7 +624,7 @@ export default class SampleForm extends React.Component {
           </tr>
           <tr>
             <td colSpan="4">
-              {this.samplePrivateNote(sample)}
+              <PrivateNoteElement element={sample} disabled={!sample.can_update} />
             </td>
           </tr>
           {this.props.customizableField()}
