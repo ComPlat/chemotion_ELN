@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
-    devise_for :users, controllers: { registrations: 'users/registrations' }, skip: [:registrations]
+    # devise_for :users, controllers: { registrations: 'users/registrations' }, skip: [:registrations]
     as :user do
       get 'sign_in' => 'devise/sessions#new'
       get 'users/sign_up' => 'devise/sessions#new', as: 'new_user_registration'
@@ -9,6 +9,8 @@ Rails.application.routes.draw do
       put 'users' => 'devise/registrations#update', :as => 'user_registration'
     end
   else
+    post 'authenticate', to: 'authentication#authenticate'
+    # devise_for :users, :controllers => {sessions: 'sessions'} 
     devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }
   end
 

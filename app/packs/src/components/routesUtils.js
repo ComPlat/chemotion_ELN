@@ -4,6 +4,9 @@ import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 import UserStore from './stores/UserStore';
+import GrantPermission from './GrantPermission';
+import TokenList from './token/TokenList';
+
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
@@ -169,6 +172,8 @@ const deviceShowDeviceManagement = () => {
 };
 
 const researchPlanShowOrNew = (e) => {
+
+  console.log('researchPlanShowOrNew')
   const { research_planID, collectionID } = e.params;
   if (research_planID === 'new') {
     ElementActions.generateEmptyResearchPlan(collectionID);
@@ -178,6 +183,7 @@ const researchPlanShowOrNew = (e) => {
 };
 
 const genericElShowOrNew = (e, type) => {
+  console.log('genericElShowOrNew')
   const { collectionID } = e.params;
   let itype = '';
   if (typeof type === 'undefined' || typeof type === 'object' || type == null || type == '') {
@@ -197,7 +203,16 @@ const genericElShowOrNew = (e, type) => {
   }
 };
 
+const grantPermissionShowOrNew = () => {
+  UIActions.showGrantPermission();
+};
+
+const tokenShowTokenList = () => {
+  UIActions.showTokenList();
+};
+
 const elementShowOrNew = (e) => {
+  console.log('elementShowOrNew')
   const type = e.type;
   switch(type) {
     case 'sample':
@@ -243,5 +258,7 @@ export {
   researchPlanShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
-  genericElShowOrNew
+  genericElShowOrNew,
+  grantPermissionShowOrNew,
+  tokenShowTokenList
 };

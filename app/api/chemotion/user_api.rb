@@ -92,6 +92,63 @@ module Chemotion
       delete 'sign_out' do
         status 204
       end
+
+      namespace :token do
+        desc 'grant permission'
+        params do
+          requires :client_id, type: String, desc: 'client_id'
+          optional :client_name, type: String, desc: 'client_name'
+        end
+        post do
+          token = JsonWebToken.encode(client_id: params[:client_id], current_user_id: current_user.id, exp: 1.hours.from_now)
+          refresh_token = JsonWebToken.encode(client_id: params[:client_id], current_user_id: current_user.id, exp: 1.weeks.from_now)
+          Token.create!(client_id: params[:client_id], client_name: params[:client_name], user_id: current_user.id, token: token, refresh_token: refresh_token)
+          { token: token, refresh_token: refresh_token }
+        end
+
+        delete ':id' do
+          token = Token.find_by(id: params[:id])
+          error!('400 Bad request!', 400) if token.nil?
+
+          cache.store(token[:token], current_user.id)
+          token.destroy!
+        end
+
+        get do
+          Token.where(user_id: current_user.id).all
+        end
+
+        params do
+          requires :refresh_token, type: String, desc: 'refresh_token'
+        end
+        post 'refresh_token' do
+          # errors.add(:token, 'Invalid refresh token') if @cache[params[:refresh_token]].present?
+
+          result = JsonWebToken.decode(params[:refresh_token])
+          return errors.add(:token, 'Invalid refresh token') if result.nil?
+
+          token = JsonWebToken.encode(
+            client_id: params[:client_id],
+            current_user_id: current_user.id,
+            exp: 1.hours.from_now)
+          refresh_token = JsonWebToken.encode(
+            client_id: params[:client_id],
+            current_user_id: current_user.id,
+            exp: 1.weeks.from_now
+          )
+
+          current_token_info = Token.find_by(refresh_token: params[:refresh_token])
+          Token.create!(
+            client_id: current_token_info[:client_id],
+            client_name: current_token_info[:client_name],
+            user_id: current_token_info[:user_id], token: token,
+            refresh_token: refresh_token
+          )
+
+          current_token_info.destroy!
+          { token: token, refresh_token: refresh_token }
+        end
+      end
     end
 
     resource :groups do

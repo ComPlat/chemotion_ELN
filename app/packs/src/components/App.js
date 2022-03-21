@@ -19,6 +19,8 @@ import KeyboardActions from './actions/KeyboardActions';
 import UIStore from './stores/UIStore';
 import InboxModal from './inbox/InboxModal';
 import ProgressModal from './common/ProgressModal';
+import GrantPermission from './GrantPermission';
+import TokenList from './token/TokenList';
 
 class App extends Component {
   constructor(props) {
@@ -28,6 +30,8 @@ class App extends Component {
       indicatorClassName: 'fa fa-chevron-circle-left',
       showCollectionTree: true,
       mainContentClassName: 'small-col main-content',
+      showTokenList: false,
+      showGrantPermission: false
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this);
     this.documentKeyDown = this.documentKeyDown.bind(this);
@@ -53,9 +57,20 @@ class App extends Component {
     UIStore.unlisten(this.handleUiStoreChange);
     document.removeEventListener('keydown', this.documentKeyDown);
   }
+
   handleUiStoreChange(state) {
+    console.log('state')
+    console.log(state)
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });
+    }
+
+    if (this.state.showTokenList !== state.showTokenList) {
+      this.setState({ showTokenList: state.showTokenList });
+    }
+
+    if (this.state.showGrantPermission !== state.showGrantPermission) {
+      this.setState({ showGrantPermission: state.showGrantPermission });
     }
 
     if (this.state.klasses !== state.klasses) {
@@ -94,10 +109,20 @@ class App extends Component {
   }
 
   mainContent() {
-    const { showCollectionManagement, mainContentClassName } = this.state;
+    const { showCollectionManagement, mainContentClassName, showTokenList, showGrantPermission } = this.state;
+    let content;
+    if(showTokenList) {
+      content = <TokenList/>
+    } else if (showGrantPermission) {
+      content = <GrantPermission/>
+    } else if (showCollectionManagement) {
+      content =  <CollectionManagement /> 
+    } else {
+      content = <Elements />
+    }
     return (
       <Col className={mainContentClassName} >
-        {showCollectionManagement ? <CollectionManagement /> : <Elements />}
+        { content }
       </Col>
     );
   }

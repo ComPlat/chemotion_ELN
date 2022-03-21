@@ -66,7 +66,9 @@ class UIStore {
       showModal: false,
       modalParams: {},
       hasChemSpectra: false,
-      matrices: {}
+      matrices: {},
+      showTokenList: false,
+      showGrantPermission: false
     };
 
     // console.log(this.state.klasses);
@@ -116,6 +118,8 @@ class UIStore {
       handleSetFromDate: UIActions.setFromDate,
       handleSetToDate: UIActions.setToDate,
       handleSetProductOnly: UIActions.setProductOnly,
+      handleShowTokenList: UIActions.showTokenList,
+      handleShowGrantPermission: UIActions.showGrantPermission,
     });
   }
 
@@ -140,6 +144,14 @@ class UIStore {
 
   handleShowCollectionManagement() {
     this.state.showCollectionManagement = true;
+  }
+
+  handleShowTokenList() {
+    this.state.showTokenList = true;
+  }
+
+  handleShowGrantPermission() {
+    this.state.showGrantPermission = true;
   }
 
   handleShowDeviceManagement() {

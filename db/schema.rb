@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_09_182512) do
+ActiveRecord::Schema.define(version: 2022_03_28_112912) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -454,6 +454,12 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.time "deleted_at"
+  end
+
+  create_table "jwt_denylist", force: :cascade do |t|
+    t.string "jti", null: false
+    t.datetime "exp", null: false
+    t.index ["jti"], name: "index_jwt_denylist_on_jti"
   end
 
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
@@ -1034,6 +1040,15 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
   end
 
+  create_table "tasks", force: :cascade do |t|
+    t.string "status", default: "To do"
+    t.datetime "created_at", null: false
+    t.integer "created_by", null: false
+    t.datetime "updated_at"
+    t.bigint "sample_id"
+    t.index ["sample_id"], name: "index_tasks_on_sample_id"
+  end
+
   create_table "text_templates", id: :serial, force: :cascade do |t|
     t.string "type"
     t.integer "user_id", null: false
@@ -1045,6 +1060,17 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"
+  end
+
+  create_table "tokens", force: :cascade do |t|
+    t.string "token"
+    t.string "refresh_token"
+    t.string "client_id"
+    t.string "client_name"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.bigint "user_id"
+    t.index ["user_id"], name: "index_tokens_on_user_id"
   end
 
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
@@ -1160,6 +1186,8 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
 
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
+  add_foreign_key "tasks", "samples"
+  add_foreign_key "tokens", "users"
 
   create_function :user_instrument, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)

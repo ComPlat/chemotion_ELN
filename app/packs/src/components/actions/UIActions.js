@@ -15,6 +15,14 @@ class UIActions {
     return  null;
   }
 
+  showTokenList() {
+    return  true;
+  }
+
+  showGrantPermission() {
+    return  true;
+  }
+
   toggleCollectionManagement() {
     return  null;
   }

@@ -1,6 +1,7 @@
 #module API
 require 'grape-entity'
 require 'grape-swagger'
+require 'moneta'
 
 class API < Grape::API
   format :json
@@ -16,12 +17,27 @@ class API < Grape::API
       @current_user ||= API::WardenAuthentication.new(env).current_user
     end
 
+    def cache
+      @cache = Moneta.new(:Memory, expires: true) if @cache.nil?
+    end
+
     def user_ids
       @user_ids ||= current_user ? (current_user.group_ids + [current_user.id]) : [0]
     end
 
     def authenticate!
       error!('401 Unauthorized', 401) unless current_user
+    end
+
+    def authenticate_request!
+      @current_user = AuthorizeApiRequest.call(request.headers, cache).result
+      error!('401 Unauthorized', 401) if @current_user.nil?
+    end
+
+    def jwt_request?
+      request.path.start_with?(
+        # '/api/v1/samples_jwt'
+      )
     end
 
     def is_public_request?
@@ -83,8 +99,10 @@ class API < Grape::API
     end
   end
 
+
   before do
     authenticate! unless is_public_request?
+    authenticate_request! if jwt_request?
   end
 
   # desc: whitelisted tables and columns for advanced_search

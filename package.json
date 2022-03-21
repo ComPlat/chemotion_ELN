@@ -48,6 +48,7 @@
     "prop-types": "15.6.2",
     "qrcode.react": "^0.6.1",
     "quagga": "^0.11.5",
+    "query-string": "^7.1.1",
     "querystring-es3": "^0.2.1",
     "quill": "^1.3.7",
     "quill-delta": "3.4.3",

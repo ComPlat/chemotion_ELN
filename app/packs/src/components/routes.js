@@ -9,6 +9,7 @@ import rXr from './extra/routesXroutes';
 import * as routesUtils from './routesUtils';
 import UIFetcher from './fetchers/UIFetcher';
 import klasses from '../../../../config/klasses.json';
+import GrantPermission from './GrantPermission';
 
 
 const allRoutes = (r) => {
@@ -110,6 +111,18 @@ const routes = {
       showOrNew: routesUtils.genericElShowOrNew
     },
     '/:genericElID': 'showOrNew'
+  },
+  '/grantPermission': {
+    target: {
+      showGrantPermission: routesUtils.grantPermissionShowOrNew
+    },
+    '/': 'showGrantPermission',
+  },
+  '/token_management': {
+    target: {
+      showTokenList: routesUtils.tokenShowTokenList
+    },
+    '/': 'showTokenList'  
   }
 };
 
@@ -127,6 +140,7 @@ klasses && klasses.forEach((klass) => {
   const item = {};
   item['target'] = { showOrNew: routesUtils.genericElShowOrNew };
   item[`/:${klass}ID`] = 'showOrNew';
+  console.log('test');
   routes[`/${klass}`] = item;
 });
 
@@ -134,5 +148,6 @@ klasses && klasses.forEach((klass) => {
 export default function() {
   Aviator.root = '/mydb';
   Aviator.pushStateEnabled = true;
+  console.log('test');
   Aviator.setRoutes(allRoutes(routes));
 }
