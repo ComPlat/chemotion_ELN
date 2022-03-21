@@ -117,14 +117,30 @@ describe Chemotion::CommentAPI do
   context 'when user is authorized' do
     let!(:user2) { create(:person) }
 
+    let!(:c1) do
+      create(:collection, user_id: author_user.id, is_shared: false, shared_by_id: nil, is_locked: false,
+                          permission_level: 0, label: "U1x's collection")
+    end
+    let!(:c1_2) do
+      create(:collection, user_id: user2.id, is_shared: true, shared_by_id: author_user.id, is_locked: true,
+                          permission_level: 0, label: 'shared by U1x')
+    end
+    let!(:sc1_2) do
+      create(:sync_collections_user, collection_id: c1.id, user_id: user2.id, permission_level: 0,
+                                     shared_by_id: author_user.id, fake_ancestry: c1_2.id.to_s)
+    end
+
+    let!(:s1) { create(:sample, name: 'sample 1', collections: [c1]) }
+    let!(:r1) { create(:reaction, name: 'reaction 1', collections: [c1]) }
+
     let!(:root_u2) { create(:collection, user: author_user, shared_by_id: user2.id, is_shared: true, is_locked: true) }
     let!(:root_u) { create(:collection, user: user2, shared_by_id: author_user.id, is_shared: true, is_locked: true) }
 
-    let!(:col1)   { create(:collection, user: user2, shared_by_id: author_user.id, is_shared: true, permission_level: 2, ancestry: root_u.id.to_s) }
-    let!(:col2)   { create(:collection, user: author_user, is_shared: false) }
-    let!(:col3)   { create(:collection, user: author_user, is_shared: true) }
-    let!(:col4)   { create(:collection, user: author_user, shared_by_id: user2.id, is_shared: true, ancestry: root_u2.id.to_s) }
-    let!(:col5)   { create(:collection, shared_by_id: user2.id, is_shared: true) }
+    let!(:col1) { create(:collection, user: user2, shared_by_id: author_user.id, is_shared: true, permission_level: 2, ancestry: root_u.id.to_s) }
+    let!(:col2) { create(:collection, user: author_user, is_shared: false) }
+    let!(:col3) { create(:collection, user: author_user, is_shared: true) }
+    let!(:col4) { create(:collection, user: author_user, shared_by_id: user2.id, is_shared: true, ancestry: root_u2.id.to_s) }
+    let!(:col5) { create(:collection, shared_by_id: user2.id, is_shared: true) }
     let!(:reaction) { create(:reaction, collections: [col1]) }
     let!(:sample) { create(:sample, collections: [col1]) }
 
@@ -137,9 +153,9 @@ describe Chemotion::CommentAPI do
       let(:comment_1) do
         create(:comment,
                content: 'test',
-               commentable_id: reaction.id,
-               commentable_type: 'Reaction',
-               section: Comment.reaction_sections[:scheme])
+               commentable_id: s1.id,
+               commentable_type: 'Sample',
+               section: Comment.sample_sections[:properties])
       end
 
       before do
@@ -161,7 +177,7 @@ describe Chemotion::CommentAPI do
         let(:params) do
           {
             content: 'test comment',
-            commentable_id: reaction.id,
+            commentable_id: r1.id,
             commentable_type: 'Reaction',
             section: Comment.reaction_sections[:scheme]
           }
@@ -181,7 +197,7 @@ describe Chemotion::CommentAPI do
         let(:params) do
           {
             content: 'test comment sample',
-            commentable_id: sample.id,
+            commentable_id: s1.id,
             commentable_type: 'Sample',
             section: Comment.sample_sections[:properties]
           }
@@ -198,8 +214,8 @@ describe Chemotion::CommentAPI do
 
         it 'is valid in sample' do
           comment = Comment.find_by(content: 'test comment sample')
-          s1 = Sample.find_by(id: comment.commentable_id)
-          expect(s1.id).to eq(sample.id)
+          sample = Sample.find_by(id: comment.commentable_id)
+          expect(sample.id).to eq(s1.id)
         end
       end
 
@@ -207,7 +223,7 @@ describe Chemotion::CommentAPI do
         let(:params) do
           {
             content: 'test comment reaction',
-            commentable_id: reaction.id,
+            commentable_id: r1.id,
             commentable_type: 'Reaction',
             section: Comment.reaction_sections[:scheme]
           }
@@ -224,8 +240,8 @@ describe Chemotion::CommentAPI do
 
         it 'is valid in reaction' do
           comment = Comment.find_by(content: 'test comment reaction')
-          r1 = Reaction.find(comment.commentable_id)
-          expect(r1.id).to eq(reaction.id)
+          reaction = Reaction.find(comment.commentable_id)
+          expect(reaction.id).to eq(r1.id)
         end
       end
     end
