@@ -9,6 +9,9 @@ describe Chemotion::PrivateNoteAPI do
   let!(:c2) { create(:collection, user: author_user, is_shared: false) }
   let!(:r) { create(:reaction, collections: [c]) }
   let!(:s) { create(:sample, collections: [c]) }
+  let!(:sc) { create(:screen, collections: [c]) }
+  let!(:w) { create(:wellplate, collections: [c]) }
+  let!(:rp) { create(:research_plan, collections: [c]) }
 
   context "unauthorized user, " do
     before do
@@ -82,8 +85,65 @@ describe Chemotion::PrivateNoteAPI do
           expect(response.status).to eq 401
         end
       end
-    end
 
+      context 'with screen' do
+        let(:note_1) { create(:private_note, noteable: r, user_id: author_user.id) }
+        let(:params) do
+          {
+            content: 'test note screen',
+            noteable_id: sc.id,
+            noteable_type: 'Screen'
+          }
+        end
+
+        before do
+          put "/api/v1/private_notes/#{note_1.id}", params: params
+        end
+  
+        it 'returns 401 status code' do
+          expect(response.status).to eq 401
+        end
+      end
+
+      context 'with wellplate' do
+        let(:note_1) { create(:private_note, noteable: sc, user_id: author_user.id) }
+        let(:params) do
+          {
+            content: 'test note wellplate',
+            noteable_id: w.id,
+            noteable_type: 'Wellplate'
+          }
+        end
+
+        before do
+          put "/api/v1/private_notes/#{note_1.id}", params: params
+        end
+    
+        it 'returns 401 status code' do
+          expect(response.status).to eq 401
+        end
+      end
+
+      context 'with research plan' do
+        let(:note_1) { create(:private_note, noteable: w, user_id: author_user.id) }
+        let(:params) do
+          {
+            content: 'test note research plan',
+            noteable_id: rp.id,
+            noteable_type: 'ResearchPlan'
+          }
+        end
+
+        before do
+          put "/api/v1/private_notes/#{note_1.id}", params: params
+        end
+      
+        it 'returns 401 status code' do
+          expect(response.status).to eq 401
+        end
+      end
+    end
+    
     describe 'DELETE /api/v1/private_notes/:id' do
       let(:note_1) { create(:private_note, content: 'test', noteable: r, user_id: author_user.id) }
 
@@ -182,6 +242,81 @@ describe Chemotion::PrivateNoteAPI do
           expect(r1.id).to eq(r.id)
         end
       end
+
+      context 'with screen' do
+        let(:params) do
+          {
+            content: 'test note screen',
+            noteable_id: sc.id,
+            noteable_type: 'Screen'
+          }
+        end
+
+        before do
+          post "/api/v1/private_notes/create", params: params
+        end
+
+        it 'is able to create a new note' do
+          note = PrivateNote.find_by(content: 'test note screen')
+          expect(note).not_to be_nil
+        end
+
+        it 'is valid in screen' do
+          note = PrivateNote.find_by(content: 'test note screen')
+          sc1 = Screen.find(note.noteable_id)
+          expect(sc1.id).to eq(sc.id)
+        end
+      end
+
+      context 'with wellplate' do
+        let(:params) do
+          {
+            content: 'test note wellplate',
+            noteable_id: w.id,
+            noteable_type: 'Wellplate'
+          }
+        end
+
+        before do
+          post "/api/v1/private_notes/create", params: params
+        end
+
+        it 'is able to create a new note' do
+          note = PrivateNote.find_by(content: 'test note wellplate')
+          expect(note).not_to be_nil
+        end
+
+        it 'is valid in wellplate' do
+          note = PrivateNote.find_by(content: 'test note wellplate')
+          w1 = Wellplate.find(note.noteable_id)
+          expect(w1.id).to eq(w.id)
+        end
+      end
+
+      context 'with research plan' do
+        let(:params) do
+          {
+            content: 'test note research plan',
+            noteable_id: rp.id,
+            noteable_type: 'ResearchPlan'
+          }
+        end
+
+        before do
+          post "/api/v1/private_notes/create", params: params
+        end
+  
+        it 'is able to create a new note' do
+          note = PrivateNote.find_by(content: 'test note research plan')
+          expect(note).not_to be_nil
+        end
+
+        it 'is valid in research plan' do
+          note = PrivateNote.find_by(content: 'test note research plan')
+          rp1 = ResearchPlan.find(note.noteable_id)
+          expect(rp1.id).to eq(rp.id)
+        end
+      end
     end
 
     describe 'PUT /api/v1/private_notes/:id' do
@@ -242,6 +377,69 @@ describe Chemotion::PrivateNoteAPI do
           note = PrivateNote.find(note_1.id)
           puts "note:: #{note}"
           expect([note.content, note.noteable_id, note.noteable_type]).to eq(['update test note reaction', r.id, 'Reaction'])
+        end
+      end
+
+      context 'with screen' do
+        let(:note_1) { create(:private_note, noteable: s, user_id: author_user.id) }
+        let(:params) do
+          {
+            content: 'update test note screen',
+            noteable_id: sc.id,
+            noteable_type: 'Screen'
+          }
+        end
+
+        before do
+          put "/api/v1/private_notes/#{note_1.id}", params: params
+        end
+
+        it "is able to update note's content" do
+          note = PrivateNote.find(note_1.id)
+          puts "note:: #{note}"
+          expect([note.content, note.noteable_id, note.noteable_type]).to eq(['update test note screen', sc.id, 'Screen'])
+        end
+      end
+
+      context 'with wellplate' do
+        let(:note_1) { create(:private_note, noteable: sc, user_id: author_user.id) }
+        let(:params) do
+          {
+            content: 'update test note wellplate',
+            noteable_id: w.id,
+            noteable_type: 'Wellplate'
+          }
+        end
+  
+        before do
+          put "/api/v1/private_notes/#{note_1.id}", params: params
+        end
+  
+        it "is able to update note's content" do
+          note = PrivateNote.find(note_1.id)
+          puts "note:: #{note}"
+          expect([note.content, note.noteable_id, note.noteable_type]).to eq(['update test note wellplate', w.id, 'Wellplate'])
+        end
+      end
+
+      context 'with research plan' do
+        let(:note_1) { create(:private_note, noteable: w, user_id: author_user.id) }
+        let(:params) do
+          {
+            content: 'update test note research plan',
+            noteable_id: rp.id,
+            noteable_type: 'ResearchPlan'
+          }
+        end
+  
+        before do
+          put "/api/v1/private_notes/#{note_1.id}", params: params
+        end
+  
+        it "is able to update note's content" do
+          note = PrivateNote.find(note_1.id)
+          puts "note:: #{note}"
+          expect([note.content, note.noteable_id, note.noteable_type]).to eq(['update test note research plan', rp.id, 'ResearchPlan'])
         end
       end
     end
