@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_09_182512) do
+ActiveRecord::Schema.define(version: 2022_04_13_202333) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -674,6 +674,11 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.index ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true
   end
 
+  create_table "partner_apps", force: :cascade do |t|
+    t.string "name"
+    t.string "url"
+  end
+
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
     t.string "searchable_type"
@@ -1047,6 +1052,17 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.index ["user_id"], name: "index_text_templates_on_user_id"
   end
 
+  create_table "tokens", force: :cascade do |t|
+    t.string "token"
+    t.string "refresh_token"
+    t.string "client_id"
+    t.string "client_name"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.bigint "user_id"
+    t.index ["user_id"], name: "index_tokens_on_user_id"
+  end
+
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
     t.integer "user_id"
     t.integer "affiliation_id"
@@ -1160,6 +1176,7 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
 
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
+  add_foreign_key "tokens", "users"
 
   create_function :user_instrument, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)

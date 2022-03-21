@@ -1,6 +1,7 @@
 #module API
 require 'grape-entity'
 require 'grape-swagger'
+require 'moneta'
 
 class API < Grape::API
   format :json
@@ -16,12 +17,30 @@ class API < Grape::API
       @current_user ||= API::WardenAuthentication.new(env).current_user
     end
 
+    def cache
+      @cache = Moneta::Adapters::Memcached.new(expires: 60 * 60 * 24 * 7) if @cache.nil?
+    end
+
     def user_ids
       @user_ids ||= current_user ? (current_user.group_ids + [current_user.id]) : [0]
     end
 
     def authenticate!
       error!('401 Unauthorized', 401) unless current_user
+    end
+
+    def authenticate_request!
+      author_request = AuthorizeApiRequest.call(request.headers, cache)
+      error!('401 Unauthorized', 401) if author_request.errors.present?
+
+      @current_user_id = author_request.result
+      error!('401 Unauthorized', 401) if @current_user_id.nil?
+    end
+
+    def jwt_request?
+      request.path.start_with?(
+        '/api/v1/attachments_jwt'
+      )
     end
 
     def is_public_request?
@@ -31,8 +50,19 @@ class API < Grape::API
         '/api/v1/chemspectra/',
         '/api/v1/ketcher/layout',
         '/api/v1/gate/receiving',
-        '/api/v1/gate/ping'
+        '/api/v1/gate/ping',
+        '/api/v1/attachments_jwt'
       )
+    end
+
+    def http_auth_header
+      if headers['Authorization'].present?
+        return headers['Authorization'].split(' ').last
+      else
+        errors.add(:token, 'Missing token')
+      end
+  
+      nil
     end
 
     def cache_key search_method, arg, molfile, collection_id, molecule_sort, opt
@@ -83,8 +113,10 @@ class API < Grape::API
     end
   end
 
+
   before do
     authenticate! unless is_public_request?
+    authenticate_request! if jwt_request?
   end
 
   # desc: whitelisted tables and columns for advanced_search
@@ -142,9 +174,11 @@ class API < Grape::API
   mount Chemotion::PrivateNoteAPI
   mount Chemotion::NmrdbAPI
   mount Chemotion::ConverterAPI
+  mount Chemotion::AttachmentJwtAPI
+  mount Chemotion::PartnerAppAPI
 
   add_swagger_documentation(info: {
     "title": "Chemotion ELN",
     "version": "1.0"
-  }) if Rails.env.development?
+  })
 end

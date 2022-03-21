@@ -4,6 +4,9 @@ import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 import UserStore from './stores/UserStore';
+import GrantPermission from './GrantPermission';
+import TokenList from './token/TokenList';
+
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
@@ -197,6 +200,14 @@ const genericElShowOrNew = (e, type) => {
   }
 };
 
+const grantPermissionShowOrNew = () => {
+  UIActions.showGrantPermission();
+};
+
+const tokenShowTokenList = () => {
+  UIActions.showTokenList();
+};
+
 const elementShowOrNew = (e) => {
   const type = e.type;
   switch(type) {
@@ -243,5 +254,7 @@ export {
   researchPlanShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
-  genericElShowOrNew
+  genericElShowOrNew,
+  grantPermissionShowOrNew,
+  tokenShowTokenList
 };

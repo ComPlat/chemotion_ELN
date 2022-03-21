@@ -256,7 +256,7 @@ export default class CollectionTree extends React.Component {
 
   handleCollectionManagementToggle() {
     UIActions.toggleCollectionManagement();
-    const {showCollectionManagement, currentCollection,isSync} = UIStore.getState();
+    const {showCollectionManagement, currentCollection, isSync} = UIStore.getState();
     if(showCollectionManagement) {
       Aviator.navigate('/collection/management');
     } else {

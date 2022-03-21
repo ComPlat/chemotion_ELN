@@ -241,4 +241,63 @@ export default class UsersFetcher {
     });
     return promise;
   }
+
+  static grantPermission(params) {
+    const promise = fetch('/api/v1/users/token/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json())
+      .then(json => {
+        return json;
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static fetchTokens() {
+    const promise = fetch('/api/v1/users/token', {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+      .then(response => response.json())
+      .then(json => {
+        return json;
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static revokeToken(token) {
+    const promise = fetch('/api/v1/users/token/' + token, {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+      .then(response => response.json())
+      .then(json => {
+        return json;
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
 }

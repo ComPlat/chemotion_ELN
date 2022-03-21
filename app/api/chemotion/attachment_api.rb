@@ -272,6 +272,14 @@ module Chemotion
         end
       end
 
+      desc 'Return redirect url'
+      post ':attachment_id/redirect_url' do
+        params do
+          require :redirect_url, type: String
+        end
+
+        "#{params[:redirect_url]}?url=#{request.host_with_port}/api/v1/attachments_jwt/#{params[:attachment_id]}&token=#{JsonWebToken.encode(client_id: params[:client_id], current_user_id: current_user.id, exp: 24.hours.from_now)}&attachable_id=#{@attachment.attachable_id}&attachable_type=#{@attachment.attachable_type}"
+      end
 
       desc "Upload files to Inbox as unsorted"
       post 'upload_to_inbox' do
