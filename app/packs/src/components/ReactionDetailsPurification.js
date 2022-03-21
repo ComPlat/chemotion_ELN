@@ -10,6 +10,7 @@ import QuillViewer from './QuillViewer';
 import Sample from './models/Sample';
 import { observationPurification, solventsTL } from './utils/reactionPredefined';
 import { permitOn } from './common/uis';
+import PrivateNoteElement from './PrivateNoteElement';
 
 function dummy() { return true; }
 
@@ -152,6 +153,7 @@ export default class ReactionDetailsPurification extends Component {
                 }
               </div>
             </FormGroup>
+            <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
           </Col>
         </Row>
       </span>

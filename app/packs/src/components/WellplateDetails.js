@@ -22,6 +22,7 @@ import ExportSamplesBtn from './ExportSamplesBtn';
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
+import PrivateNoteElement from './PrivateNoteElement'
 
 const cols = 12;
 
@@ -214,6 +215,7 @@ export default class WellplateDetails extends Component {
             {...properties}
             changeProperties={c => this.handleChangeProperties(c)}
           />
+          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} /> {/*For samples and reactions (<element>): disabled={!<element>.can_update} */}
         </Tab>
       ),
       analyses: (

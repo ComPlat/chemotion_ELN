@@ -1,7 +1,21 @@
 import 'whatwg-fetch';
 import PrivateNote from '../models/PrivateNote';
 
-const classify = string => string.charAt(0).toUpperCase() + string.slice(1);
+// improved function for classifying strings - to fix research_plan being an invalid noteable type
+// takes into account any _ in strings and returns string: String_test => StringTest
+function classify(string) {
+  if (string.includes('_')) {
+    var substrings = string.split('_');
+    for (let i=0; i<substrings.length; i++) {
+      substrings[i] = substrings[i].charAt(0).toUpperCase() + substrings[i].slice(1);
+    }
+    string = substrings.join('')
+  }
+  else {
+    string = string.charAt(0).toUpperCase() + string.slice(1);
+  }
+  return string;
+}
 
 export default class PrivateNoteFetcher {
   static fetchById(id) {
