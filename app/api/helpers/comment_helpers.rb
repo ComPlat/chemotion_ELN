@@ -17,7 +17,10 @@ module CommentHelpers
   end
 
   def create_message_notification(collections, current_user)
-    message_to = collections.pluck(:user_id) - [current_user.id]
+    message_to = User.joins(:sync_in_collections_users)
+                     .persons
+                     .where('shared_by_id IN (?) AND collection_id IN (?)', collections.pluck(:user_id), collections.ids)
+                     .ids - [current_user.id]
     return unless message_to.present?
 
     Message.create_msg_notification(

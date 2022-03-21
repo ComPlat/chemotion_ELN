@@ -67,7 +67,7 @@ module Chemotion
 
         before do
           commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
-          @collections = Collection.where(id: commentable.collections.ids, is_synchronized: true)
+          @collections = Collection.where(id: commentable.collections.ids)
 
           allowed_user_ids = authorized_users(@collections)
 
@@ -86,7 +86,7 @@ module Chemotion
           comment = Comment.new(attributes)
           comment.save!
 
-          create_message_notification(@collections, current_user)
+          create_message_notification(@collections.where(is_synchronized: true), current_user)
 
           present comment, with: Entities::CommentEntity, root: 'comment'
         end
