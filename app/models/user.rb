@@ -120,6 +120,7 @@ class User < ApplicationRecord
     where("LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ?",
           "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%")
   }
+  scope :persons, -> { where(type: 'Person') }
 
   def login
     @login || self.name_abbreviation || self.email
