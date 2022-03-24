@@ -150,11 +150,11 @@ module Chemotion
         is_shared_collection = false
         unless collection.present?
           sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
-          next if sync_collection.nil?
-
-          is_shared_collection = true
-          CollectionsScreen.create(screen: screen, collection: Collection.find(sync_collection['collection_id']))
-          CollectionsScreen.create(screen: screen, collection: Collection.get_all_collection_for_user(sync_collection['shared_by_id']))
+          if sync_collection.present?
+            is_shared_collection = true
+            CollectionsScreen.create(screen: screen, collection: Collection.find(sync_collection['collection_id']))
+            CollectionsScreen.create(screen: screen, collection: Collection.get_all_collection_for_user(sync_collection['shared_by_id']))
+          end
         end
 
         CollectionsScreen.create(screen: screen, collection: Collection.get_all_collection_for_user(current_user.id)) unless is_shared_collection

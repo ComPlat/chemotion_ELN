@@ -21,11 +21,11 @@ module Usecases
           is_shared_collection = false
           unless collection.present?
             sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
-            next if sync_collection.nil?
-
-            is_shared_collection = true
-            CollectionsWellplate.create(wellplate: wellplate, collection: Collection.find(sync_collection['collection_id']))
-            CollectionsWellplate.create(wellplate: wellplate, collection: Collection.get_all_collection_for_user(sync_collection['shared_by_id']))
+            if sync_collection.present?
+              is_shared_collection = true
+              CollectionsWellplate.create(wellplate: wellplate, collection: Collection.find(sync_collection['collection_id']))
+              CollectionsWellplate.create(wellplate: wellplate, collection: Collection.get_all_collection_for_user(sync_collection['shared_by_id']))
+            end
           end
 
           CollectionsWellplate.create(wellplate: wellplate, collection: Collection.get_all_collection_for_user(current_user.id)) unless is_shared_collection
