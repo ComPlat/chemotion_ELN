@@ -163,7 +163,10 @@ export default class ContainerDataset extends Component {
           {preview}
           <tr>
             <td style={{ verticalAlign: 'middle' }}>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
+              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
+            </td>
+            <td><span>{attachment.size}</span></td>
+            <td>
               {this.removeAttachmentButton(attachment)} &nbsp;
               {this.attachmentBackToInboxButton(attachment)}
             </td>
