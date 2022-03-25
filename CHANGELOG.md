@@ -10,6 +10,13 @@
     - users can create samples by entering the CAS Registry Number or SMILES
   * SciFinder-n Search: integrate SciFinder-n into ELN and user can search in SciFinder for substances/reactions/references/suppliers by structure
 
+## [v1.1.2]
+> 2022-03-25
+
+* Fixes
+  * upd chemspectra client: XRD d-value 
+  * add product to reaction 
+
 
 ## [v1.1.1]
 > 2022-03-08
