@@ -73,7 +73,7 @@ export default class PrivateNoteElement extends React.Component {
 
   render() {
     const { note, isSaving } = this.state;
-    const content = note ? note.content : '';
+    const content = (note && note.content) ? note.content : '';
     let disabled = this.props.disabled || false;
     const { element } = this.props;
     if (element && element.is_new) {
