@@ -6,6 +6,13 @@
 > yyyy-mm-dd
 
 
+## [v1.1.2]
+> 2022-03-25
+
+* Fixes
+  * upd chemspectra client: XRD d-value 
+  * add product to reaction 
+
 
 ## [v1.1.1]
 > 2022-03-08
