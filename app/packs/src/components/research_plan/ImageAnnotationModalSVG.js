@@ -38,7 +38,7 @@ export default class ImageAnnotationModalSVG extends Component {
             </Modal.Header>
             <Modal.Body>
           
-            <iframe src="/svgedit-master/editor/index.html"
+            <iframe src="/svgedit/editor/index.html"
                 id="svgEditId"
                 width="100%"
                 height="800"
@@ -63,10 +63,12 @@ export default class ImageAnnotationModalSVG extends Component {
                 <Button bsStyle="warning" onClick={() => this.props.handleSave([this.save_image()])}>Save</Button>
             </Modal.Footer>
           </Modal>
-         
-    
         );
       }   
+
+      save_image(){
+        
+      }
     
     
       
