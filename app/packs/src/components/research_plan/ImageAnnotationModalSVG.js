@@ -4,34 +4,13 @@ import { Modal,Button } from 'react-bootstrap';
 
 export default class ImageAnnotationModalSVG extends Component {
     constructor(props){    
-        super(props);    
-        const img = document.getElementById('researchPlanImageID')
-        fetch("/images/research_plans/"+this.props.imageName)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], 'dot.png', blob);
-          this.setState({"file":file})           
-        })           
+      super(props);    
+      loadImageFileFromServer();           
     }
 
-    render() {
-        const imageName=this.props.imageName;       
-        const src="/images/research_plans/"+this.props.imageName;
-        const svgString=
-        "<svg "+
-        "  width=\"#WIDTH#\" "+
-        "  height=\"#HEIGTH#\" "+
-        "  xmlns=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
-        "    <g class=\"layer\">"+
-        "      <title>Image</title>"+
-        "      <image height=\"#HEIGTH#\" "+
-        "      id=\"svg_2\" "+
-        "      width=\"#WIDTH#\" "+
-        "      xlink:href=\""+src+"\"/>"+
-        "    </g>"+
-        "</svg>";
+    render() {       
+        const svgString=createSvgStringTemplate();
+       
         return (
           <Modal      
             bsSize='large'
@@ -50,7 +29,7 @@ export default class ImageAnnotationModalSVG extends Component {
                 width="100%"
                 height="800"
                 onLoad={()=>{
-                    let image =document.getElementById("researchPlanImageID");
+                    let image =document.getElementById(this.props.imageElementId);
                     let width=image.naturalWidth;
                     let height=image.naturalHeight;
                     let innerSvgString=svgString;
@@ -77,8 +56,33 @@ export default class ImageAnnotationModalSVG extends Component {
         let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
         let f=this.state.file;
         f.annotation=svgEditor.svgCanvas.getSvgString();
-        return f;
-           
+        return f;           
+      }
+
+      loadImageFileFromServer(){
+        fetch(this.props.dataSrc)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], 'dot.png', blob);
+          this.setState({"file":file})           
+        });     
+      }
+
+      createSvgStringTemplate(){
+        return "<svg "+
+        "  width=\"#WIDTH#\" "+
+        "  height=\"#HEIGTH#\" "+
+        "  xmlns=\"http://www.w3.org/2000/svg\" "+
+        "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
+        "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
+        "    <g class=\"layer\">"+
+        "      <title>Image</title>"+
+        "      <image height=\"#HEIGTH#\" "+
+        "      id=\"svg_2\" "+
+        "      width=\"#WIDTH#\" "+
+        "      xlink:href=\""+this.props.dataSrc+"\"/>"+
+        "    </g>"+
+        "</svg>";
       }
     
     

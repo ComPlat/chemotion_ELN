@@ -42,7 +42,6 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   renderEdit() {
-
     const { field } = this.props;
     let content;
     if (field.value.public_name) {
@@ -52,7 +51,10 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       
       content = (
         <div className="image-container">
-          <img id="researchPlanImageID" style={zoomStyle} src={src} alt={field.value.file_name} />
+          <img 
+            id={"researchPlanImageID"+field.value.public_name}
+            style={zoomStyle} src={src} 
+            alt={field.value.file_name} />
         </div>
       );
     } else {
@@ -61,9 +63,10 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     return (
       <div>
        <ImageAnnotationModalSVG
-          imageElementId='researchPlanImageID'
+          imageElementId={"researchPlanImageID"+field.value.public_name}
           imageName={field.value.public_name}
-          file={field}
+          file={field}         
+          dataSrc={"/images/research_plans/"+field.value.public_name}
           isShow={this.state.imageEditModalShown}
           handleSave={(f)=>{this.handleDrop(f);this.setState({imageEditModalShown:false})}}
           handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
