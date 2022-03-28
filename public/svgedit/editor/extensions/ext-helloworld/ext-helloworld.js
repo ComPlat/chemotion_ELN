@@ -1,0 +1,10 @@
+/**
+ * @file ext-helloworld.js
+ *
+ * @license MIT
+ *
+ * @copyright 2010 Alexis Deveria
+ *
+ */
+const e="helloworld",loadExtensionTranslation=async function(t){let r;const c=t.configObj.pref("lang");try{r=await function __variableDynamicImportRuntime0__(e){switch(e){case"./locale/en.js":return Promise.resolve().then((function(){return o}));case"./locale/fr.js":return Promise.resolve().then((function(){return n}));case"./locale/zh-CN.js":return Promise.resolve().then((function(){return l}));default:return new Promise((function(t,o){("function"==typeof queueMicrotask?queueMicrotask:setTimeout)(o.bind(null,new Error("Unknown variable dynamic import: "+e)))}))}}("./locale/".concat(c,".js"))}catch(t){console.warn("Missing translation (".concat(c,") for ").concat(e," - using 'en'")),r=await Promise.resolve().then((function(){return o}))}t.i18next.addResourceBundle(c,e,r.default)};var t={name:e,async init(t){const o=this;await loadExtensionTranslation(o);const{svgCanvas:n}=o,{$id:l,$click:r}=n;return{name:o.i18next.t("".concat(e,":name")),callback(){const t=document.createElement("template"),o="".concat(e,":buttons.0.title");t.innerHTML='\n        <se-button id="hello_world" title="'.concat(o,'" src="hello_world.svg"></se-button>\n        '),l("tools_left").append(t.content.cloneNode(!0)),r(l("hello_world"),(()=>{n.setMode("hello_world")}))},mouseDown(){if("hello_world"===n.getMode())return{started:!0}},mouseUp(t){if("hello_world"===n.getMode()){const l=n.getZoom(),r=t.mouse_x/l,c=t.mouse_y/l,a=o.i18next.t("".concat(e,":text"),{x:r,y:c});alert(a)}}}}},o=Object.freeze({__proto__:null,default:{name:"Hello World",text:"Hello World!\n\nYou clicked here: {{x}}, {{y}}",buttons:[{title:"Say 'Hello World'"}]}}),n=Object.freeze({__proto__:null,default:{name:"Bonjour le Monde",text:"Bonjour le Monde!\n\nVous avez cliqué ici: {{x}}, {{y}}",buttons:[{title:"Dire 'Bonjour le Monde'"}]}}),l=Object.freeze({__proto__:null,default:{name:"Hello World",text:"Hello World!\n\n 请点击: {{x}}, {{y}}",buttons:[{title:"输出 'Hello World'"}]}});export{t as default};
+//# sourceMappingURL=ext-helloworld.js.map
