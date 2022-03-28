@@ -63,6 +63,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
        <ImageAnnotationModalSVG
           imageElementId='researchPlanImageID'
           imageName={field.value.public_name}
+          file={field}
           isShow={this.state.imageEditModalShown}
           handleSave={(f)=>{this.handleDrop(f);this.setState({imageEditModalShown:false})}}
           handleOnClose={()=>{this.setState({imageEditModalShown:false})}}

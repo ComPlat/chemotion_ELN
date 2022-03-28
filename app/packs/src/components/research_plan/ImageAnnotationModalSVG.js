@@ -4,7 +4,14 @@ import { Modal,Button } from 'react-bootstrap';
 
 export default class ImageAnnotationModalSVG extends Component {
     constructor(props){    
-        super(props);     
+        super(props);    
+        const img = document.getElementById('researchPlanImageID')
+        fetch("/images/research_plans/"+this.props.imageName)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], 'dot.png', blob);
+          this.setState({"file":file})           
+        })           
     }
 
     render() {
@@ -66,8 +73,12 @@ export default class ImageAnnotationModalSVG extends Component {
         );
       }   
 
-      save_image(){
-        
+      save_image(){               
+        let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
+        let f=this.state.file;
+        f.annotation=svgEditor.svgCanvas.getSvgString();
+        return f;
+           
       }
     
     
