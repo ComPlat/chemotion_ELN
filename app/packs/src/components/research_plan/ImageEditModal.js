@@ -18,10 +18,12 @@ export default class ImageEditModal extends Component {
         onHide={this.props.handleOnClose}
       >
         <Modal.Header closeButton >
+          
                   
-          <Modal.Title>Edit of Image</Modal.Title>
+          <Modal.Title>Image annotation</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+      
         <iframe src="/miniPaint/index.html"
             id="miniPaintId"
             width="100%"
@@ -29,7 +31,7 @@ export default class ImageEditModal extends Component {
             onLoad={()=>{
                 let miniPaint = document.getElementById("miniPaintId").contentWindow;
                 let miniPaintFileOpen = miniPaint.FileOpen;
-                this.open_image('researchPlanImageID');
+                this.open_image();
             }}
         />
         </Modal.Body>
@@ -52,10 +54,10 @@ export default class ImageEditModal extends Component {
         return new File([u8arr], fileName, {type:mime});
     }
     
-    open_image(image){	
-        if(typeof image == 'string'){
-            image = document.getElementById(image);
-        }
+    open_image(){	
+       
+        var image = document.getElementById(this.props.imageElementId);
+       
         var Layers = document.getElementById('miniPaintId').contentWindow.Layers;
         var name = image.src.replace(/^.*[\\\/]/, '');
         var new_layer = {

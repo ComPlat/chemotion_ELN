@@ -6,6 +6,7 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import ImageEditModal from './ImageEditModal';
 import logger from 'redux-logger';
 import { Left } from 'react-bootstrap/lib/Media';
+import ImageAnnotationModalSVG from './ImageAnnotationModalSVG';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
 
@@ -34,17 +35,24 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     onChange(field.value, field.id);
   }
 
+  calculateZoomStyle(field){
+    const zoomNotSet=field.value.zoom == null || typeof field.value.zoom === 'undefined';
+    const noWithSet=field.value.width === ''
+    return (zoomNotSet||noWithSet) ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+  }
+
   renderEdit() {
 
     const { field } = this.props;
     let content;
     if (field.value.public_name) {
       const src = `/images/research_plans/${field.value.public_name}`;
-      const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
-      || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+      const zoomStyle=this.calculateZoomStyle(field);
+       
+      
       content = (
         <div className="image-container">
-          <img id="researchPlanImageID" style={style} src={src} alt={field.value.file_name} />
+          <img id="researchPlanImageID" style={zoomStyle} src={src} alt={field.value.file_name} />
         </div>
       );
     } else {
@@ -52,13 +60,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     }
     return (
       <div>
-       <ImageEditModal
+       <ImageAnnotationModalSVG
           imageElementId='researchPlanImageID'
           imageName={field.value.public_name}
           isShow={this.state.imageEditModalShown}
           handleSave={(f)=>{this.handleDrop(f);this.setState({imageEditModalShown:false})}}
           handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
-       />
+       />       
      
        <div style={ 
          {display: 'flex',

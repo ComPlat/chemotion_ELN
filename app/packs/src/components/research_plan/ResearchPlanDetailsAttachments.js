@@ -101,6 +101,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { onDelete } = this.state;
     return <ImageEditModal
     imageName={this.state.imageName}
+    imageElementId='rpa_helper_id'
     isShow={this.state.imageEditModalShown}
     handleSave={(f)=>{
       this.state.onDrop(f);
@@ -109,11 +110,15 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
     
     }
-    handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
+    handleOnClose={()=>{
+      this.setState({imageEditModalShown:false});
+      document.getElementById('rpa_helper_id').remove();
+    }}
     />    
   }
 
   renderAnnotateImageButton(attachment){
+   
      if(!this.isImageFile(attachment.filename)){
        return null;
      }
@@ -123,10 +128,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
         bsSize="xsmall"
         bsStyle="warning"
         className="button-right"
-        onClick={() => {this.setState(
-          {imageEditModalShown:true,
-          choosenAttachment:attachment,
-          imageName:attachment.filename})}}>
+        onClick={() => {
+          
+          var target=document.createElement('img');         
+          target.id='rpa_helper_id';
+          target.src='/api/v1/attachments/'.concat(attachment.id)
+          target.style={display:'none'}
+          document.body.appendChild(target);
+          this.setState(
+            {imageEditModalShown:true,
+            choosenAttachment:attachment,
+            imageName:attachment.filename});                  
+          }}>
           <i className="fa fa-pencil" aria-hidden="true" />
         </Button>
       </OverlayTrigger>
