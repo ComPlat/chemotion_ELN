@@ -37,8 +37,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
   calculateZoomStyle(field){
     const zoomNotSet=field.value.zoom == null || typeof field.value.zoom === 'undefined';
-    const noWithSet=field.value.width === ''
-    return (zoomNotSet||noWithSet) ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+    const noWidthSet=field.value.width === ''
+    return (zoomNotSet||noWidthSet) ? { width: 'unset' } : { width: `${field.value.zoom}%` };
   }
 
   renderEdit() {
