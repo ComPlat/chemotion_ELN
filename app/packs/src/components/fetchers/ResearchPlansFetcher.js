@@ -93,10 +93,13 @@ export default class ResearchPlansFetcher {
   static updateImageFile(image_file, replace) {
     var data = new FormData();
     data.append('file', image_file);
-
+    if(image_file.annotation){
+      data.append('annotation',image_file.annotation);
+    }
     if (replace) {
       data.append('replace', replace);
     }
+    
 
     let promise = ()=> fetch('/api/v1/research_plans/image', {
       credentials: 'same-origin',

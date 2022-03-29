@@ -5,11 +5,11 @@ import { Modal,Button } from 'react-bootstrap';
 export default class ImageAnnotationModalSVG extends Component {
     constructor(props){    
       super(props);    
-      loadImageFileFromServer();           
+      this.loadImageFileFromServer();           
     }
 
     render() {       
-        const svgString=createSvgStringTemplate();
+        const svgString=this.createSvgStringTemplate();
        
         return (
           <Modal      
@@ -17,29 +17,32 @@ export default class ImageAnnotationModalSVG extends Component {
             show={this.props.isShow}
             onHide={this.props.handleOnClose}
           >
-            <Modal.Header closeButton >
-              
-                      
+            <Modal.Header closeButton >                                    
               <Modal.Title>Image annotation</Modal.Title>
             </Modal.Header>
-            <Modal.Body>
-          
+            <Modal.Body>          
             <iframe src="/svgedit/editor/index.html"
                 id="svgEditId"
                 width="100%"
                 height="800"
                 onLoad={()=>{
-                    let image =document.getElementById(this.props.imageElementId);
-                    let width=image.naturalWidth;
-                    let height=image.naturalHeight;
-                    let innerSvgString=svgString;
-                    
-                    innerSvgString=innerSvgString.replaceAll("#WIDTH#",width);
-                    innerSvgString=innerSvgString.replaceAll("#HEIGTH#",height);
-                    let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
+                    let hasAnnotation=this.state.file.annotation;
+                    if(hasAnnotation===undefined){
+                      let image =document.getElementById(this.props.imageElementId);
+                      let width=image.naturalWidth;
+                      let height=image.naturalHeight;
+                      let innerSvgString=svgString;
+                      
+                      innerSvgString=innerSvgString.replaceAll("#WIDTH#",width);
+                      innerSvgString=innerSvgString.replaceAll("#HEIGTH#",height);
+                      let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
+                      svgEditor.setBackground("white");
+                      svgEditor.svgCanvas.setSvgString(innerSvgString);  
+                      svgEditor.svgCanvas.createLayer("Annotation");                                    
+                    }else{
+                      //Load the data with annotation
 
-                    svgEditor.svgCanvas.setSvgString(innerSvgString);  
-                    svgEditor.svgCanvas.createLayer("Annotation");                                    
+                    }
 
                 }}
             />
