@@ -190,9 +190,9 @@ module Chemotion
       end
       post :image do
        
+       
         file_name = params[:file][:filename]
-        file_extname = File.extname(file_name)
-        
+        file_extname = File.extname(file_name)        
         public_name = "#{SecureRandom.uuid}#{file_extname}"
         public_path = "public/images/research_plans/#{public_name}"
        
@@ -203,12 +203,12 @@ module Chemotion
         File.open(public_path, 'wb') do |file|
           file.write(params[:file][:tempfile].read)
         end
-       
-        if(params[:annotation]){
-          File.open(public_path_annotation, 'w') { |file| file.write(params[:annotation]) }
+        
+        if params[:annotation] 
           splittedFileName=public_path.split(/[.\s]/);
-          public_path_annotation=splittedFileName[splittedFileName.length()-2]+"_annotation.svg";
-        }
+          public_path_annotation=splittedFileName[splittedFileName.length()-2]+"_annotation.svg";          
+          File.open(public_path_annotation, 'w') { |file| file.write(params[:annotation]) }                  
+        end
 
         {
           file_name: file_name,
