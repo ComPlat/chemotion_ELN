@@ -17,9 +17,9 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import StickyDiv from 'react-stickydiv';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
-import CommentFetcher from 'src/components/fetchers/CommentFetcher';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
-
+import CommentModal from 'src/components/comments/CommentModal';
+import CommentFetcher from 'src/components/fetchers/CommentFetcher';
 
 const tabInfoHash = {
   metadata: {
@@ -181,6 +181,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -197,6 +198,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -213,6 +215,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -229,6 +232,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -252,6 +256,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -329,6 +334,24 @@ export default class ElementDetails extends Component {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
+  };
+
+  renderCommentModal = (element) => {
+    const { showCommentModal, comments, section } = this.state;
+    if (showCommentModal) {
+      return (
+        <CommentModal
+          showCommentModal={showCommentModal}
+          element={element}
+          section={section}
+          comments={comments}
+          fetchComments={this.fetchComments}
+          getSectionComments={this.getSectionComments}
+          toggleCommentModal={this.toggleCommentModal}
+        />
+      );
+    }
+    return <div />;
   };
 
   render() {

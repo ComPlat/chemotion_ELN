@@ -103,24 +103,6 @@ export default class ScreenDetails extends Component {
     }
   }
 
-  renderCommentModal = (element) => {
-    const { showCommentModal, comments, section } = this.props;
-    if (showCommentModal) {
-      return (
-        <CommentModal
-          showCommentModal={showCommentModal}
-          element={element}
-          section={section}
-          comments={comments}
-          fetchComments={this.props.fetchComments}
-          getSectionComments={this.props.getSectionComments}
-          toggleCommentModal={this.props.toggleCommentModal}
-        />
-      );
-    }
-    return <div />;
-  };
-
   handleInputChange(type, event) {
     const types = ['name', 'requirements', 'collaborator', 'conditions', 'result', 'description'];
     if (types.indexOf(type) !== -1) {
@@ -242,7 +224,6 @@ export default class ScreenDetails extends Component {
         <PrintCodeButton element={screen} />
         <HeaderCommentSection
           element={screen}
-          headerSection="screen_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}
           getSectionComments={this.props.getSectionComments}
@@ -487,7 +468,7 @@ export default class ScreenDetails extends Component {
             <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
-          {this.renderCommentModal(screen)}
+          {this.props.renderCommentModal(screen)}
         </Panel.Body>
       </Panel>
     );
@@ -502,6 +483,7 @@ ScreenDetails.propTypes = {
   showCommentSection: PropTypes.bool.isRequired,
   showCommentModal: PropTypes.bool.isRequired,
   fetchComments: PropTypes.func.isRequired,
+  renderCommentModal: PropTypes.func.isRequired,
   getSectionComments: PropTypes.func.isRequired,
   setCommentSection: PropTypes.func.isRequired,
   toggleCommentModal: PropTypes.func.isRequired,

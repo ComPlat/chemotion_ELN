@@ -41,7 +41,7 @@ module Chemotion
           comments = Comment.where(
             commentable_id: params[:commentable_id],
             commentable_type: params[:commentable_type]
-          )
+          ).order(:status, created_at: :desc)
 
           present comments, with: Entities::CommentEntity, root: 'comment'
         else

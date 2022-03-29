@@ -3,12 +3,13 @@ import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 export default function HeaderCommentSection(props) {
-  const { element, showCommentSection, headerSection } = props;
+  const { element, showCommentSection } = props;
+  const headerSection = `${element.type}_header`;
   const selectedComments = props.getSectionComments(headerSection);
 
   return (
     (element && element.isNew) ? <span /> :
-    <span>
+    <span style={{ marginLeft: '10px' }}>
       <OverlayTrigger
         key="ot_comments"
         placement="top"
@@ -48,13 +49,8 @@ export default function HeaderCommentSection(props) {
 HeaderCommentSection.propTypes = {
   element: PropTypes.object.isRequired,
   showCommentSection: PropTypes.bool.isRequired,
-  headerSection: PropTypes.string,
   getSectionComments: PropTypes.func.isRequired,
   setCommentSection: PropTypes.func.isRequired,
   toggleCommentModal: PropTypes.func.isRequired,
   toggleCommentSection: PropTypes.func.isRequired,
-};
-
-HeaderCommentSection.defaultProps = {
-  headerSection: 'sample_header',
 };
