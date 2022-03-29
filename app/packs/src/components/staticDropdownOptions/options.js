@@ -482,4 +482,13 @@ export const conditionsOptions = [{
 }, {
   label: 'visible light',
   value: 'visible light'
+}, {
+  label: 'pH = value',
+  value: 'pH = value'
+}, {
+  label: 'pH < value',
+  value: 'pH &lt; value' /* &lt; renders < in HTML*/
+}, {
+  label: 'pH > value',
+  value: 'pH &gt; value' /* &gt; renders > in HTML*/
 }];
