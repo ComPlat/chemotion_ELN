@@ -20,6 +20,7 @@ import PredictionContainer from './prediction/PredictionContainer';
 import GenericElDetails from './generic/GenericElDetails';
 import UserStore from './stores/UserStore';
 import CommentFetcher from './fetchers/CommentFetcher';
+import CommentModal from './comments/CommentModal';
 
 const tabInfoHash = {
   report: {
@@ -181,6 +182,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -197,6 +199,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -213,6 +216,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -229,6 +233,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -255,6 +260,7 @@ export default class ElementDetails extends Component {
             setCommentSection={this.setCommentSection}
             getSectionComments={this.getSectionComments}
             fetchComments={this.fetchComments}
+            renderCommentModal={this.renderCommentModal}
             toggleCommentModal={this.toggleCommentModal}
             toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
@@ -330,6 +336,24 @@ export default class ElementDetails extends Component {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
+  };
+
+  renderCommentModal = (element) => {
+    const { showCommentModal, comments, section } = this.state;
+    if (showCommentModal) {
+      return (
+        <CommentModal
+          showCommentModal={showCommentModal}
+          element={element}
+          section={section}
+          comments={comments}
+          fetchComments={this.fetchComments}
+          getSectionComments={this.getSectionComments}
+          toggleCommentModal={this.toggleCommentModal}
+        />
+      );
+    }
+    return <div />;
   };
 
   render() {

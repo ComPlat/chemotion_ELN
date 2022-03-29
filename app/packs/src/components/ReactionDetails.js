@@ -62,7 +62,6 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    this.renderCommentModal = this.renderCommentModal.bind(this);
     if(!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
@@ -98,7 +97,11 @@ export default class ReactionDetails extends Component {
       nextReaction.updated_at !== reaction.updated_at ||
       nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
       !!nextReaction.changed || !!nextReaction.editedSample ||
-      nextActiveTab !== activeTab || nextVisible !== visible
+      nextActiveTab !== activeTab || nextVisible !== visible ||
+      this.props.showCommentModal !== nextProps.showCommentModal ||
+      this.props.showCommentSection !== nextProps.showCommentSection ||
+      this.props.comments !== nextProps.comments ||
+      this.props.section !== nextProps.section
     );
   }
 
@@ -113,24 +116,6 @@ export default class ReactionDetails extends Component {
       });
     }
   }
-
-  renderCommentModal = (element) => {
-    const { showCommentModal, comments, section } = this.props;
-    if (showCommentModal) {
-      return (
-        <CommentModal
-          showCommentModal={showCommentModal}
-          element={element}
-          section={section}
-          comments={comments}
-          fetchComments={this.props.fetchComments}
-          getSectionComments={this.props.getSectionComments}
-          toggleCommentModal={this.props.toggleCommentModal}
-        />
-      );
-    }
-    return <div />;
-  };
 
   handleSubmit(closeView = false) {
     LoadingActions.start();
@@ -376,7 +361,6 @@ export default class ReactionDetails extends Component {
         <PrintCodeButton element={reaction} />
         <HeaderCommentSection
           element={reaction}
-          headerSection="reaction_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}
           getSectionComments={this.props.getSectionComments}
@@ -586,7 +570,7 @@ export default class ReactionDetails extends Component {
             </Button>
             {exportButton}
           </ButtonToolbar>
-          {this.renderCommentModal(reaction)}
+          {this.props.renderCommentModal(reaction)}
         </Panel.Body>
       </Panel>
     );
@@ -601,6 +585,7 @@ ReactionDetails.propTypes = {
   showCommentSection: PropTypes.bool.isRequired,
   showCommentModal: PropTypes.bool.isRequired,
   fetchComments: PropTypes.func.isRequired,
+  renderCommentModal: PropTypes.func.isRequired,
   getSectionComments: PropTypes.func.isRequired,
   setCommentSection: PropTypes.func.isRequired,
   toggleCommentModal: PropTypes.func.isRequired,

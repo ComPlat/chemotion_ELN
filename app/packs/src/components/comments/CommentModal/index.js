@@ -11,7 +11,7 @@ import UserStore from '../../stores/UserStore';
 export default class CommentModal extends Component {
   constructor(props) {
     super(props);
-    this.textInput = React.createRef();
+    this.modalRef = React.createRef();
     this.state = {
       commentBody: '',
       isEditing: false,
@@ -61,6 +61,7 @@ export default class CommentModal extends Component {
     CommentFetcher.create(params)
       .then(() => {
         this.props.fetchComments(element);
+        this.scrollToTop();
         this.setState({ commentBody: '' }, () => {
           LoadingActions.stop();
         });
@@ -81,7 +82,7 @@ export default class CommentModal extends Component {
     CommentFetcher.updateComment(comment, params)
       .then(() => {
         this.props.fetchComments(element);
-        this.setState({ commentBody: '' }, () => {
+        this.setState({ commentBody: '', isEditing: false }, () => {
           LoadingActions.stop();
         });
       })
@@ -111,6 +112,13 @@ export default class CommentModal extends Component {
     this.commentInput.focus();
   }
 
+   scrollToTop = () => {
+     this.modalRef.current.scrollTo({
+       top: 0,
+       behavior: 'smooth'
+     });
+   };
+
   disableEditComment = comment => comment.status === 'Resolved'
   commentByCurrentUser = (comment, currentUser) => currentUser.id === comment.created_by
 
@@ -124,10 +132,10 @@ export default class CommentModal extends Component {
     if (comments && comments.length > 0) {
       commentsTbl = comments.map(comment => (
         <tr key={comment.id}>
-          <td style={{ width: '15%' }}>{comment.created_at}</td>
-          <td style={{ width: '40%' }}>{comment.content}</td>
-          <td style={{ width: '15%' }}>{comment.submitter}</td>
-          <td style={{ width: '15%' }}>
+          <td width="15%">{comment.created_at}</td>
+          <td width="40%">{comment.content}</td>
+          <td width="15%">{comment.submitter}</td>
+          <td width="15%">
             <ButtonToolbar>
               <Button
                 disabled={this.disableEditComment(comment)}
@@ -175,14 +183,12 @@ export default class CommentModal extends Component {
     const defaultAttrs = {
       style: {
         height: '100px',
-        overflow: 'auto',
-        whiteSpace: 'pre',
         marginBottom: '20px',
       },
     };
 
     return (
-      <Draggable>
+      <Draggable enableUserSelectHack={false}>
         <Modal
           show={showCommentModal}
           onHide={() => this.props.toggleCommentModal(false)}
@@ -193,7 +199,7 @@ export default class CommentModal extends Component {
             <Modal.Title>Comments</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div>
+            <div className="commentList" ref={this.modalRef}>
               <Table striped bordered hover>
                 <thead>
                   <tr>

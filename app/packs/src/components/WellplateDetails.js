@@ -45,7 +45,6 @@ export default class WellplateDetails extends Component {
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    this.renderCommentModal = this.renderCommentModal.bind(this);
   }
 
   componentDidMount() {
@@ -89,24 +88,6 @@ export default class WellplateDetails extends Component {
     wellplate.changed = true;
     this.setState({ wellplate });
   }
-
-  renderCommentModal = (element) => {
-    const { showCommentModal, comments, section } = this.props;
-    if (showCommentModal) {
-      return (
-        <CommentModal
-          showCommentModal={showCommentModal}
-          element={element}
-          section={section}
-          comments={comments}
-          fetchComments={this.props.fetchComments}
-          getSectionComments={this.props.getSectionComments}
-          toggleCommentModal={this.props.toggleCommentModal}
-        />
-      );
-    }
-    return <div />;
-  };
 
   handleSubmit() {
     const { wellplate } = this.state;
@@ -263,7 +244,6 @@ export default class WellplateDetails extends Component {
         <PrintCodeButton element={wellplate} />
         <HeaderCommentSection
           element={wellplate}
-          headerSection="wellplate_header"
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}
           getSectionComments={this.props.getSectionComments}
@@ -442,7 +422,7 @@ export default class WellplateDetails extends Component {
               Print Wells
             </Button>
           </ButtonToolbar>
-          {this.renderCommentModal(wellplate)}
+          {this.props.renderCommentModal(wellplate)}
         </Panel.Body>
       </Panel>
     );
@@ -457,6 +437,7 @@ WellplateDetails.propTypes = { /* eslint-disable react/forbid-prop-types */
   showCommentSection: PropTypes.bool.isRequired,
   showCommentModal: PropTypes.bool.isRequired,
   fetchComments: PropTypes.func.isRequired,
+  renderCommentModal: PropTypes.func.isRequired,
   getSectionComments: PropTypes.func.isRequired,
   setCommentSection: PropTypes.func.isRequired,
   toggleCommentModal: PropTypes.func.isRequired,
