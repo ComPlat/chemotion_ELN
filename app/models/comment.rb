@@ -30,7 +30,7 @@ class Comment < ActiveRecord::Base
     analyses: 'sample_analyses',
     qc_curation: 'sample_qc_curation',
     results: 'sample_results',
-    references: 'sample_literature'
+    references: 'sample_references'
   }, _prefix: true
 
   enum reaction_section: {
@@ -54,7 +54,7 @@ class Comment < ActiveRecord::Base
   }, _prefix: true
 
   enum research_plan_section: {
-    properties: 'research_plan_properties',
+    properties: 'research_plan_research_plan',
     analyses: 'research_plan_analyses',
     attachments: 'research_plan_attachments',
     references: 'research_plan_references',

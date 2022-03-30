@@ -27,7 +27,6 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
-import CommentModal from 'src/components/comments/CommentModal';
 import CommentSection from ".src/components/comments/CommentSection";
 
 export default class ResearchPlanDetails extends Component {
@@ -507,9 +506,9 @@ export default class ResearchPlanDetails extends Component {
       research_plan: (
         <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !researchPlan.isNew &&
             <CommentSection
-              section="research_plan_properties"
+              section="research_plan_research_plan"
               comments={this.props.comments}
               setCommentSection={this.props.setCommentSection}
               toggleCommentModal={this.props.toggleCommentModal}
@@ -526,7 +525,7 @@ export default class ResearchPlanDetails extends Component {
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${researchPlan.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !researchPlan.isNew &&
             <CommentSection
               section="research_plan_analyses"
               comments={this.props.comments}
@@ -541,7 +540,7 @@ export default class ResearchPlanDetails extends Component {
       attachments: (
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${researchPlan.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !researchPlan.isNew &&
             <CommentSection
               section="research_plan_attachments"
               comments={this.props.comments}
@@ -556,7 +555,7 @@ export default class ResearchPlanDetails extends Component {
       references: (
         <Tab eventKey="references" title="References" key={`lit_${researchPlan.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !researchPlan.isNew &&
             <CommentSection
               section="research_plan_references"
               comments={this.props.comments}
@@ -582,7 +581,7 @@ export default class ResearchPlanDetails extends Component {
       metadata: (
         <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !researchPlan.isNew &&
             <CommentSection
               section="research_plan_metadata"
               comments={this.props.comments}

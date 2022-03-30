@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 export default function CommentButton(props) {
   const { section } = props;
   const comments = props.getSectionComments(section);
-  console.log("_____________________CommentButton section", section);
   return (
     <OverlayTrigger
       key="ot_comments"

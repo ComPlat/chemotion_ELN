@@ -69,7 +69,6 @@ import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/ChemicalTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
-import CommentModal from 'src/components/comments/CommentModal';
 import CommentSection from 'src/components/comments/CommentSection';
 
 const MWPrecision = 6;
@@ -1042,7 +1041,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab eventKey={ind} title="Properties" key={'Props' + sample.id.toString()}>
         {
-          this.props.showCommentSection &&
+          this.props.showCommentSection && !sample.isNew &&
           <CommentSection
             section="sample_properties"
             comments={this.props.comments}
@@ -1103,7 +1102,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab eventKey={ind} title="Analyses" key={`Container${sample.id.toString()}`}>
         {
-          this.props.showCommentSection &&
+          this.props.showCommentSection && !sample.isNew &&
           <CommentSection
             section="sample_analyses"
             comments={this.props.comments}
@@ -1135,9 +1134,9 @@ export default class SampleDetails extends React.Component {
         key={`References_${sample.id}`}
       >
         {
-          this.props.showCommentSection &&
+          this.props.showCommentSection && !sample.isNew &&
           <CommentSection
-            section="sample_literature"
+            section="sample_references"
             comments={this.props.comments}
             setCommentSection={this.props.setCommentSection}
             toggleCommentModal={this.props.toggleCommentModal}
@@ -1162,7 +1161,7 @@ export default class SampleDetails extends React.Component {
         key={`Results${sample.id.toString()}`}
       >
         {
-          this.props.showCommentSection &&
+          this.props.showCommentSection && !sample.isNew &&
           <CommentSection
             section="sample_results"
             comments={this.props.comments}
@@ -1252,7 +1251,7 @@ export default class SampleDetails extends React.Component {
         key={`QC_${sample.id}_${ind}`}
       >
         {
-          this.props.showCommentSection &&
+          this.props.showCommentSection && !sample.isNew &&
           <CommentSection
             section="sample_qc_curation"
             comments={this.props.comments}

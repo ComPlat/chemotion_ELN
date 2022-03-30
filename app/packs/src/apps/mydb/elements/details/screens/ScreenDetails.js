@@ -27,7 +27,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
-import CommentModal from 'src/components/comments/CommentModal';
 import CommentSection from "src/components/comments/CommentSection";
 
 export default class ScreenDetails extends Component {
@@ -80,7 +79,7 @@ export default class ScreenDetails extends Component {
     if (state.screen.activeTab != this.state.activeTab) {
       this.setState({
         activeTab: state.screen.activeTab
-      })
+      });
     }
   }
 
@@ -369,7 +368,7 @@ export default class ScreenDetails extends Component {
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${screen.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !screen.isNew &&
             <CommentSection
               section="screen_properties"
               comments={this.props.comments}
@@ -384,7 +383,7 @@ export default class ScreenDetails extends Component {
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${screen.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !screen.isNew &&
             <CommentSection
               section="screen_analyses"
               comments={this.props.comments}

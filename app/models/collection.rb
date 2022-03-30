@@ -59,6 +59,7 @@ class Collection < ApplicationRecord
 
   scope :ordered, -> { order('position ASC') }
   scope :unshared, -> { where(is_shared: false) }
+  scope :synchronized, -> { where(is_synchronized: true) }
   scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
   scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
   scope :belongs_to_or_shared_by, ->(user_id, with_group = false) do
