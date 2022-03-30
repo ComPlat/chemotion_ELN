@@ -27,8 +27,7 @@ import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
 import PrivateNoteElement from './PrivateNoteElement'
 import HeaderCommentSection from './comments/HeaderCommentSection';
-import CommentModal from './comments/CommentModal';
-import CommentSection from "./comments/CommentSection";
+import CommentSection from './comments/CommentSection';
 
 const cols = 12;
 
@@ -294,7 +293,7 @@ export default class WellplateDetails extends Component {
       designer: (
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !wellplate.isNew &&
             <CommentSection
               section="wellplate_designer"
               comments={this.props.comments}
@@ -319,7 +318,7 @@ export default class WellplateDetails extends Component {
       list: (
         <Tab eventKey="list" title="List" key={`list_${wellplate.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !wellplate.isNew &&
             <CommentSection
               section="wellplate_list"
               comments={this.props.comments}
@@ -340,7 +339,7 @@ export default class WellplateDetails extends Component {
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${wellplate.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !wellplate.isNew &&
             <CommentSection
               section="wellplate_properties"
               comments={this.props.comments}
@@ -361,7 +360,7 @@ export default class WellplateDetails extends Component {
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${wellplate.id}`}>
           {
-            this.props.showCommentSection &&
+            this.props.showCommentSection && !wellplate.isNew &&
             <CommentSection
               section="wellplate_analyses"
               comments={this.props.comments}
