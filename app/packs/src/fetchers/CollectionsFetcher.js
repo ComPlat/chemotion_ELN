@@ -1,7 +1,8 @@
 import 'whatwg-fetch';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import { downloadBlob } from 'src/utilities/FetcherHelper';
+import { downloadBlob, getFileName } from 'src/utilities/FetcherHelper';
 
 export default class CollectionsFetcher {
   static takeOwnership(params) {
@@ -318,5 +319,20 @@ export default class CollectionsFetcher {
       if (response.ok) { return true; }
       throw new Error(response.status);
     }).catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static fetchTabsLayout() {
+    let promise = fetch('/api/v1/segments/tabs', {
+      credentials: 'same-origin'
+    })
+      .then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
   }
 }

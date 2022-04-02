@@ -16,6 +16,9 @@ import SampleTaskInbox from 'src/apps/mydb/collections/sampleTaskInbox/SampleTas
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
+import GatePushBtn from './common/GatePushBtn';
+import Aviator from 'aviator';
+import { collectionShow, scollectionShow } from './routesUtils';
 
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 
@@ -38,12 +41,18 @@ export default class CollectionTree extends React.Component {
       syncCollectionVisible: false,
       inbox: inboxState.inbox,
       numberOfAttachments: inboxState.numberOfAttachments,
+      inboxVisible: false,
+      visible: false,
+      root: {},
+      selected: false,
       itemsPerPage: inboxState.itemsPerPage,
       inboxSectionVisible: false,
     };
 
     this.onChange = this.onChange.bind(this);
     this.onClickInbox = this.onClickInbox.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+    this.toggleExpansion = this.toggleExpansion.bind(this);
   }
 
   componentDidMount() {
@@ -56,11 +65,13 @@ export default class CollectionTree extends React.Component {
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
     InboxActions.fetchInboxCount();
+    UIStore.listen(this.onChange);
   }
 
   componentWillUnmount() {
     CollectionStore.unlisten(this.onChange);
     InboxStore.unlisten(this.onChange);
+    UIStore.unlisten(this.onChange);
   }
 
   handleSectionToggle = (visible) => {
@@ -72,6 +83,30 @@ export default class CollectionTree extends React.Component {
 
   onChange(state) {
     this.setState(state);
+    if (state.currentCollection) {
+      const visible = this.isVisible(this.state.root, state);
+      const { root } = this.state;
+
+      const selectedCol = (
+        state.currentCollection.id == root.id &&
+        state.currentCollection.is_synchronized == root.is_synchronized
+      ) || (
+        state.currentCollection.id == root.id &&
+        state.currentCollection.isRemote == root.isRemote
+      );
+
+      if (selectedCol) {
+        this.setState({
+          selected: true,
+          visible
+        });
+      } else {
+        this.setState({
+          selected: false,
+          visible
+        });
+      }
+    }
   }
 
   onClickInbox() {
@@ -281,10 +316,177 @@ export default class CollectionTree extends React.Component {
     return name.toLowerCase()
   }
 
+  children(root) {
+    return root.children || [];
+  }
+
+  hasChildren(root) {
+    return this.children(root).length > 0;
+  }
+  subSubtrees(root) { // child
+    // return null if root == undefined;
+    const children = this.children(root);
+
+    if (this.hasChildren(root)) {
+      return children.map((child, index) => {
+        return (
+          <li key={index}>
+            {this.collectionSubTree(child, child.label, this.state.isRemote, true)}
+            {/*<CollectionSubtree root={child} isRemote={} />*/}
+          </li>
+        );
+      });
+    }
+    return null;
+  }
+  isVisible(node, uiState) {
+    if(node.descendant_ids) {
+      let currentCollectionId = parseInt(uiState.currentCollection.id)
+      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true
+    }
+
+    let { visibleRootsIds } = CollectionStore.getState();
+    return (visibleRootsIds.indexOf(node.id) > -1)
+  }
+
+  synchronizedIcon(root) {
+    let sharedUsers = root.sync_collections_users;
+    return (
+      sharedUsers && sharedUsers.length > 0
+        ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers })}>
+            <i className="fa fa-share-alt" style={{ float: "right" }}></i>
+          </OverlayTrigger>
+        : null
+    )
+  }
+
+  toggleExpansion(e) {
+    e.stopPropagation();
+    const { visible, root } = this.state
+    visible = !visible
+    this.setState({ visible })
+
+    let {visibleRootsIds} = CollectionStore.getState();
+    if (visible) {
+      visibleRootsIds.push(root.id)
+    } else {
+      let descendantIds = root.descendant_ids
+        ? root.descendant_ids
+        : root.children.map(function(s) { return s.id })
+      descendantIds.push(root.id)
+      visibleRootsIds = visibleRootsIds.filter(x => descendantIds.indexOf(x) == -1)
+    }
+
+    // Remove duplicate
+    let newIds = Array.from(new Set(visibleRootsIds))
+    CollectionActions.updateCollectrionTree(newIds)
+  }
+
+  expandButton(root) {
+    let icon = this.state.visible ? 'minus' : 'plus';
+
+    if (this.hasChildren(root)) {
+      return (
+        <Glyphicon
+          glyph={icon}
+          style={{ float: 'right', marginLeft: '5px' }}
+          onClick={this.toggleExpansion}
+        />
+      );
+    }
+    return (<div />);
+  }
+
+  selectedCssClass() {
+    return (this.state.selected) ? "selected" : "";
+  }
+
+  handleTakeOwnership(root) {
+    const isSync = !!root.sharer;
+    CollectionActions.takeOwnership({ id: root.id, isSync });
+  }
+
+  takeOwnershipButton(root, isRemote) {
+    // const { root } = this.state;
+    // const { isRemote } = this.state;
+    const isTakeOwnershipAllowed = root.permission_level === 5;
+    const isSync = !!((root.sharer && root.user && root.user.type !== 'Group'));
+    if ((isRemote || isSync) && isTakeOwnershipAllowed) {
+      return (
+        <div className="take-ownership-btn">
+          <i className="fa fa-exchange" onClick={e => this.handleTakeOwnership(e, root)} />
+        </div>
+      )
+    }
+    return (<div />);
+  }
+
+  handleClick(e, root) {
+    const { fakeRoot } = this.props;
+    if (fakeRoot) {
+      e.stopPropagation();
+      return;
+    }
+
+    this.setState({ root });
+    // const { root } = this.state;
+    let { visible } = this.state;
+    const uiState = UIStore.getState();
+
+    visible = visible || this.isVisible(root, uiState);
+    this.setState({ visible });
+    let collectionID = 'all';
+    if (root.label === 'All' && root.is_locked) {
+      Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`, { silent: true });
+      collectionShow({ params: { collectionID } });
+      return;
+    }
+    const url = (root.sharer)
+      ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
+      : `/collection/${root.id}/${this.urlForCurrentElement()}`;
+    Aviator.navigate(url, { silent: true });
+    collectionID = root.id;
+    const collShow = root.sharer ? scollectionShow : collectionShow;
+    collShow({ params: { collectionID } });
+  }
+
+  collectionSubTree(root, label, isRemote, visible) {
+    let style;
+    if (!visible) {
+      style = {
+        display: 'none',
+        marginBottom: 0
+      };
+    }
+    const gated = root && root.is_locked && label == 'chemotion-repository.net' ?
+      <GatePushBtn collection_id={root.id} /> : null;
+    return (
+      <div className="tree-view" key={root.id}>
+        {this.takeOwnershipButton(root, isRemote)}
+
+        <div
+          id={`tree-id-${root.label}`}
+          className={`title + ${this.selectedCssClass()}`}
+          onClick={e => this.handleClick(e, root)}
+        >
+          {this.expandButton(root)}
+          {this.synchronizedIcon(root)}
+          {gated}
+          {`${root.label}`}
+        </div>
+        <ul style={style}>
+          { root && this.subSubtrees(root, label, isRemote, visible) }
+        </ul>
+      </div>
+    );
+  }
   subtrees(roots, label, isRemote, visible = true) {
-    let subtrees = roots.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} isRemote={isRemote} />
-    })
+
+    const subtrees = roots && roots.map((root, index) => {
+    //   return <CollectionSubtree root={root} key={index} isRemote={isRemote}/>
+    // })
+      return (this.collectionSubTree(root, label, isRemote, visible));
+    });
 
     let subtreesVisible = visible ? "" : "none"
     return (
