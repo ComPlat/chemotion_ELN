@@ -5,6 +5,40 @@ module Chemotion
     helpers CollectionHelpers
     helpers ContainerHelpers
 
+    namespace :annotation do
+      desc 'Get the latest version of an annotation of an image'
+      params do        
+        requires :imageId, type: String, desc: 'The id of the original image in uuid format'        
+      end
+      get do        
+         files=Dir.glob("public/images/research_plans/"+params[:imageId]+"_annotation*");
+         version=0;
+         if files.length>0
+          files=files.sort_by{ |name| [name[/\d+/].to_i, name] };
+          latestAnnotation=files[files.length-1];
+          version=latestAnnotation.split(/[.\s]/)[latestAnnotation.split(/[.\s]/).length-2];
+          version=version.split("v")[version.split("v").length-1]
+         end
+         {version:version}
+      end
+
+
+      desc 'Update annotation of image'
+      params do
+        requires :annotation, type: String , desc: 'the annotation to the image. the original image is embedded as a link. The string must be a svg string'
+        requires :imageId, type: String, desc: 'The id of the original image in uuid format'
+        requires :version, type:Integer, desc: 'the current version of the annotation'
+      end
+      post  do
+        annotation=params[:annotation];
+        imageid=params[:imageId].split(/[.\s]/)[params[:imageId].split(/[.\s]/).length-2];
+       
+        public_path_annotation=imageid+"_annotation_v"+((params[:version]+1).to_s) +".svg";                  
+        fileName="public/images/research_plans/"+public_path_annotation;        
+        File.open(fileName, 'w') { |file| file.write(params[:annotation]) }   
+      end
+    end
+
     namespace :research_plans do
       desc 'Return serialized research plans of current user'
       params do
@@ -182,7 +216,7 @@ module Chemotion
         svg_file.close
 
         {svg_path: svg_file_name}
-      end
+      end     
 
       desc 'Save image file to filesystem'
       params do
@@ -195,20 +229,11 @@ module Chemotion
         file_extname = File.extname(file_name)        
         public_name = "#{SecureRandom.uuid}#{file_extname}"
         public_path = "public/images/research_plans/#{public_name}"
-       
 
-
-
-        
         File.open(public_path, 'wb') do |file|
-          file.write(params[:file][:tempfile].read)
+           file.write(params[:file][:tempfile].read)
         end
         
-        if params[:annotation] 
-          splittedFileName=public_path.split(/[.\s]/);
-          public_path_annotation=splittedFileName[splittedFileName.length()-2]+"_annotation.svg";          
-          File.open(public_path_annotation, 'w') { |file| file.write(params[:annotation]) }                  
-        end
 
         {
           file_name: file_name,
