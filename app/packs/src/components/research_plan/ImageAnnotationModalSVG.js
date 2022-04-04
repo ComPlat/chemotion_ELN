@@ -4,8 +4,7 @@ import { Modal,Button } from 'react-bootstrap';
 
 export default class ImageAnnotationModalSVG extends Component {
     constructor(props){    
-      super(props);    
-      this.loadImageFileFromServer();           
+      super(props);          
     }
 
     render() {       
@@ -26,8 +25,18 @@ export default class ImageAnnotationModalSVG extends Component {
                 width="100%"
                 height="800"
                 onLoad={()=>{
-                    let hasAnnotation=this.state.file.annotation;
-                    if(hasAnnotation===undefined){
+                 
+                   let restOfAnno=this.props.dataSrc.split(".")[0]+"_annotation_v1.svg";     
+                                      
+                   fetch(restOfAnno)
+                   .then(res =>{
+                    if(res.status==200){
+                      return res.text().then(text => {
+                        let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
+                        console.log(text);
+                        svgEditor.svgCanvas.setSvgString(text);                 
+                       })
+                    }else{
                       let image =document.getElementById(this.props.imageElementId);
                       let width=image.naturalWidth;
                       let height=image.naturalHeight;
@@ -38,37 +47,41 @@ export default class ImageAnnotationModalSVG extends Component {
                       let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
                       svgEditor.setBackground("white");
                       svgEditor.svgCanvas.setSvgString(innerSvgString);  
-                      svgEditor.svgCanvas.createLayer("Annotation");                                    
-                    }else{
-                      //Load the data with annotation
-
-                    }
+                      svgEditor.svgCanvas.createLayer("Annotation");     
+                    }                    
+                  })
+                                                     
 
                 }}
             />
             </Modal.Body>
             <Modal.Footer style={{ textAlign: 'left' }}>
                 <Button bsStyle="primary" onClick={() => this.props.handleOnClose()}>Close</Button>
-                <Button bsStyle="warning" onClick={() => this.props.handleSave([this.save_image()])}>Save</Button>
+                <Button bsStyle="warning" onClick={() => this.saveAnnotation()}>Save</Button>
             </Modal.Footer>
           </Modal>
         );
       }   
 
-      save_image(){               
+      saveAnnotation(){               
         let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
-        let f=this.state.file;
-        f.annotation=svgEditor.svgCanvas.getSvgString();
-        return f;           
-      }
-
-      loadImageFileFromServer(){
-        fetch(this.props.dataSrc)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], 'dot.png', blob);
-          this.setState({"file":file})           
-        });     
+        let svgString=svgEditor.svgCanvas.getSvgString();
+        let imageId=this.props.imageName;       
+        var data = new FormData();
+        data.append('annotation', svgString);
+        data.append('imageId', imageId);
+        data.append('version', 1);
+ 
+         fetch('/api/v1/annotation', {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        }).then((response) => {
+          this.props.handleSave();
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+        
       }
 
       createSvgStringTemplate(){

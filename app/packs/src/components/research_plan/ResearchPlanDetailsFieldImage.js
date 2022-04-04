@@ -7,12 +7,33 @@ import ImageEditModal from './ImageEditModal';
 import logger from 'redux-logger';
 import { Left } from 'react-bootstrap/lib/Media';
 import ImageAnnotationModalSVG from './ImageAnnotationModalSVG';
+import SVG from 'react-inlinesvg';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
 
-  constructor(props){
+  constructor(props){   
     super(props);
-    this.state={imageEditModalShown:false}
+    const { field, onChange } = this.props;
+    this.state={imageEditModalShown:false};
+    this.state={annotation:{version:0}};
+    let restOfAnno=field.value.public_name.split(".")[0]+"_annotation.svg";  
+    const imageId=field.value.public_name.split(".")[0];
+    const src = `/images/research_plans/${restOfAnno}`;
+    const encodedValue = encodeURIComponent(imageId);
+    
+    fetch('/api/v1/annotation?imageId='+encodedValue, {
+      credentials: 'same-origin',
+      method: 'get',
+    })
+    .then(res =>{
+     if(res.status==200){
+       return res.json().then(json => {        
+          this.setState({'annotation':json});            
+        })
+
+     }else{
+       console.log("An error occured");
+     }});             
  
 
   }
@@ -44,17 +65,18 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   renderEdit() {
     const { field } = this.props;
     let content;
-    if (field.value.public_name) {
-      const src = `/images/research_plans/${field.value.public_name}`;
+    if (field.value.public_name) {     
+      let versionOfAnno=this.state.annotation.version;
+      let restOfAnno=field.value.public_name.split(".")[0]+"_annotation_v"+versionOfAnno+".svg";  
+      const src = `/images/research_plans/${restOfAnno}`;
+      //const src = `/images/research_plans/${field.value.public_name}`;      
       const zoomStyle=this.calculateZoomStyle(field);
        
       
       content = (
         <div className="image-container">
-          <img 
-            id={"researchPlanImageID"+field.value.public_name}
-            style={zoomStyle} src={src} 
-            alt={field.value.file_name} />
+           <SVG src={src} cacheRequests={false} />
+        
         </div>
       );
     } else {
@@ -68,7 +90,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           file={field}         
           dataSrc={"/images/research_plans/"+field.value.public_name}
           isShow={this.state.imageEditModalShown}
-          handleSave={(f)=>{this.handleDrop(f);this.setState({imageEditModalShown:false})}}
+          handleSave={()=>this.setState({imageEditModalShown:false})}
           handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
        />       
      
