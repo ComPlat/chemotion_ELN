@@ -7,9 +7,7 @@ export default class ImageAnnotationModalSVG extends Component {
       super(props);          
     }
 
-    render() {       
-        const svgString=this.createSvgStringTemplate();
-       
+    render() {              
         return (
           <Modal      
             bsSize='large'
@@ -24,31 +22,15 @@ export default class ImageAnnotationModalSVG extends Component {
                 id="svgEditId"
                 width="100%"
                 height="800"
-                onLoad={()=>{
-                 
-                   let restOfAnno=this.props.dataSrc.split(".")[0]+"_annotation_v1.svg";     
-                                      
+                onLoad={()=>{                 
+                   let restOfAnno=this.props.dataSrc.split(".")[0]+"_annotation_v"+ this.props.versionOfAnnotation+".svg";                                          
                    fetch(restOfAnno)
-                   .then(res =>{
-                    if(res.status==200){
+                   .then(res =>{                    
                       return res.text().then(text => {
                         let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
                         console.log(text);
                         svgEditor.svgCanvas.setSvgString(text);                 
-                       })
-                    }else{
-                      let image =document.getElementById(this.props.imageElementId);
-                      let width=image.naturalWidth;
-                      let height=image.naturalHeight;
-                      let innerSvgString=svgString;
-                      
-                      innerSvgString=innerSvgString.replaceAll("#WIDTH#",width);
-                      innerSvgString=innerSvgString.replaceAll("#HEIGTH#",height);
-                      let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
-                      svgEditor.setBackground("white");
-                      svgEditor.svgCanvas.setSvgString(innerSvgString);  
-                      svgEditor.svgCanvas.createLayer("Annotation");     
-                    }                    
+                       })               
                   })
                                                      
 
@@ -70,7 +52,7 @@ export default class ImageAnnotationModalSVG extends Component {
         var data = new FormData();
         data.append('annotation', svgString);
         data.append('imageId', imageId);
-        data.append('version', 1);
+        data.append('version', this.props.versionOfAnnotation);
  
          fetch('/api/v1/annotation', {
           credentials: 'same-origin',
@@ -82,25 +64,6 @@ export default class ImageAnnotationModalSVG extends Component {
           console.log(errorMessage);
         });
         
-      }
-
-      createSvgStringTemplate(){
-        return "<svg "+
-        "  width=\"#WIDTH#\" "+
-        "  height=\"#HEIGTH#\" "+
-        "  xmlns=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
-        "    <g class=\"layer\">"+
-        "      <title>Image</title>"+
-        "      <image height=\"#HEIGTH#\" "+
-        "      id=\"svg_2\" "+
-        "      width=\"#WIDTH#\" "+
-        "      xlink:href=\""+this.props.dataSrc+"\"/>"+
-        "    </g>"+
-        "</svg>";
-      }
-    
-    
+      }         
       
 }
