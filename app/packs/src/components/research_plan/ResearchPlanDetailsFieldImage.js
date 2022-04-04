@@ -16,6 +16,15 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const { field, onChange } = this.props;
     this.state={imageEditModalShown:false};
     this.state={annotation:{version:0}};
+    
+  }
+
+  componentDidMount(){
+    this.actualizeAnnotationVersion();
+  }
+
+  actualizeAnnotationVersion(){
+    const { field, onChange } = this.props;
     if(field.value.public_name){
       let restOfAnno=field.value.public_name.split(".")[0]+"_annotation.svg";  
       const imageId=field.value.public_name.split(".")[0];
@@ -36,8 +45,6 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         console.log("An error occured");
       }});   
     }          
- 
-
   }
 
   handleDrop(files) {
@@ -54,7 +61,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         // update research plan
         onChange(value, field.id);
       });
-      
+
 
     }
     // upload new image
@@ -76,8 +83,9 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   renderEdit() {
     const { field } = this.props;
     let content;
+    let versionOfAnno;
     if (field.value.public_name) {     
-      let versionOfAnno=this.state.annotation.version;
+      versionOfAnno=this.state.annotation.version;
       let restOfAnno=field.value.public_name.split(".")[0]+"_annotation_v"+versionOfAnno+".svg";  
       const src = `/images/research_plans/${restOfAnno}`;
       //const src = `/images/research_plans/${field.value.public_name}`;      
@@ -98,10 +106,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
        <ImageAnnotationModalSVG
           imageElementId={"researchPlanImageID"+field.value.public_name}
           imageName={field.value.public_name}
-          file={field}         
+          file={field}     
+          versionOfAnnotation={versionOfAnno}    
           dataSrc={"/images/research_plans/"+field.value.public_name}
           isShow={this.state.imageEditModalShown}
-          handleSave={()=>this.setState({imageEditModalShown:false})}
+          handleSave={()=>{
+            this.setState({imageEditModalShown:false});
+            this.actualizeAnnotationVersion()}}
           handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
        />       
      
