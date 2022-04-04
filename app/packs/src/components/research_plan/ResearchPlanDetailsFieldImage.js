@@ -94,7 +94,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       
       content = (
         <div className="image-container">
-           <SVG src={src} cacheRequests={false} />
+           <SVG style={zoomStyle} src={src} cacheRequests={false} />
         
         </div>
       );
@@ -173,13 +173,15 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         <div />
       );
     }
-    const src = `/images/research_plans/${field.value.public_name}`;
+    let versionOfAnno=this.state.annotation.version;
+    let restOfAnno=field.value.public_name.split(".")[0]+"_annotation_v"+versionOfAnno+".svg";  
+    const src = `/images/research_plans/${restOfAnno}`;
     const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
     || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
 
     return (
       <div className="image-container">
-        <img style={style} src={src} alt={field.value.file_name} />
+        <SVG src={src} cacheRequests={false} alt={field.value.file_name}/>
       </div>
     );
   }
