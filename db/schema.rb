@@ -10,7 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
+<<<<<<< HEAD
 ActiveRecord::Schema.define(version: 2023_12_19_162631) do
+=======
+ActiveRecord::Schema.define(version: 2022_04_04_111722) do
+>>>>>>> add rf_value tlc_solvents sample property in reaction properties and sample property
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1133,6 +1137,7 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
+    t.jsonb "rf_value"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"

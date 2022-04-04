@@ -22,6 +22,7 @@ module Entities
       expose :comments,                                     using: 'Entities::CommentEntity'
       expose :comment_count
       expose :dry_solvent
+      expose :rf_value
     end
 
     # Level 1 attributes

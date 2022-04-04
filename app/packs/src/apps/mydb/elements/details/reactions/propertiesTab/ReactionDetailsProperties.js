@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Row, Col, FormGroup, ControlLabel, FormControl, MenuItem,
-  ListGroupItem, ListGroup, InputGroup, DropdownButton
+  ListGroupItem, ListGroup, InputGroup, DropdownButton, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import Select from 'react-select';
 import 'moment-precise-range-plugin';
@@ -13,6 +13,8 @@ import StringTag from 'src/apps/mydb/elements/details/reactions/propertiesTab/St
 import { solventsTL } from 'src/utilities/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { permitOn } from 'src/components/common/uis';
+import ReactionTlcSection from './ReactionTlcSection';
+import Sample from './models/Sample';
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
@@ -60,7 +62,7 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   render() {
-    const { reaction } = this.props;
+    const { reaction, onChange } = this.props;
     const solventsItems = solventsTL.map((x, i) => {
       const val = Object.keys(x)[0];
       return (
@@ -75,6 +77,53 @@ export default class ReactionDetailsProperties extends Component {
         -
       </MenuItem>
     );
+
+    const oldTlcRow = (reaction.rf_value || reaction.tlc_solvents) ? (
+      <Row>
+        <OverlayTrigger placement="top" overlay={<Tooltip id="oldTlc">please enter this solvent data to the tlc section above of the respective sample</Tooltip>}>
+          <Col md={6}>
+            <FormGroup>
+              <ControlLabel>Solvents (parts)</ControlLabel>
+              <FormGroup>
+                <InputGroup>
+                  <DropdownButton
+                    disabled={permitOn(reaction)}
+                    componentClass={InputGroup.Button}
+                    id="solvents_dd"
+                    title=""
+                    onSelect={this.handleOnSolventSelect}
+                  >
+                    { solventsItems }
+                  </DropdownButton>
+                  <FormControl
+                    style={{ zIndex: 0 }}
+                    type="text"
+                    value={reaction.tlc_solvents || ''}
+                    disabled={permitOn(reaction) || reaction.isMethodDisabled('tlc_solvents')}
+                    placeholder="Solvents as parts..."
+                    onChange={event => this.props.onInputChange('tlc_solvents', event)}
+                  />
+                </InputGroup>
+              </FormGroup>
+            </FormGroup>
+          </Col>
+        </OverlayTrigger>
+        <OverlayTrigger placement="top" overlay={<Tooltip id="oldTlc">please enter this rf value to the tlc section above of the respective sample</Tooltip>}>
+          <Col md={6}>
+            <FormGroup>
+              <ControlLabel>RF Value</ControlLabel>
+              <FormControl
+                type="text"
+                value={reaction.rf_value || ''}
+                disabled={permitOn(reaction) || reaction.isMethodDisabled('rf_value')}
+                placeholder="RF Value..."
+                onChange={event => this.props.onInputChange('rfValue', event)}
+              />
+            </FormGroup>
+          </Col>
+        </OverlayTrigger>
+      </Row>
+    ) : null;
 
     return (
       <div>
@@ -109,8 +158,9 @@ export default class ReactionDetailsProperties extends Component {
               </Col>
             </Row>
           </ListGroupItem>
+
           <ListGroupItem>
-            <h4 className="list-group-item-heading" >TLC-Control</h4>
+            <h4 className="list-group-item-heading" >TLC Control</h4>
             <Row>
               <Col md={6}>
                 <FormGroup>
@@ -150,16 +200,21 @@ export default class ReactionDetailsProperties extends Component {
                   />
                 </FormGroup>
               </Col>
+              <ReactionTlcSection
+                reaction={reaction}
+                onChange={onChange}
+              />
             </Row>
+            {oldTlcRow}
             <Row>
               <Col md={12}>
                 <FormGroup>
-                  <ControlLabel>TLC-Description</ControlLabel>
+                  <ControlLabel>TLC Description</ControlLabel>
                   <FormControl
                     componentClass="textarea"
                     value={reaction.tlc_description || ''}
                     disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_description')}
-                    placeholder="TLC-Description..."
+                    placeholder="TLC Description..."
                     onChange={event => this.props.onInputChange('tlcDescription', event)}
                   />
                 </FormGroup>
@@ -175,5 +230,6 @@ export default class ReactionDetailsProperties extends Component {
 ReactionDetailsProperties.propTypes = {
   reaction: PropTypes.object,
   onReactionChange: PropTypes.func,
-  onInputChange: PropTypes.func
+  onInputChange: PropTypes.func,
+  onChange: PropTypes.func.isRequired
 };

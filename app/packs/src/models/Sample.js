@@ -318,6 +318,7 @@ export default class Sample extends Element {
       boiling_point_lowerbound: this.boiling_point_lowerbound,
       melting_point_upperbound: this.melting_point_upperbound,
       melting_point_lowerbound: this.melting_point_lowerbound,
+      rf_value: this.rf_value,
       residues: this.residues,
       elemental_compositions: this.elemental_compositions,
       is_split: this.is_split || false,
@@ -351,6 +352,20 @@ export default class Sample extends Element {
 
   set dry_solvent(dry_solvent) {
     this._dry_solvent = dry_solvent;
+  }
+  
+  get rf_value() {
+    try {
+      const jsonrf = JSON.parse(this._rf_value);
+      const rfVal = [];
+      rfVal.push(jsonrf);
+    }
+    catch (e) {}
+    return this._rf_value;
+  }
+
+  set rf_value(rf_value) {
+    this._rf_value = rf_value;
   }
 
   set contains_residues(value) {
@@ -1039,6 +1054,51 @@ export default class Sample extends Element {
       tmpSolvents[filteredIndex] = solventToUpdate;
     }
     this.solvent = tmpSolvents;
+  }
+
+  deleteTlcColumn(solvIndex) {
+
+    const tmpRfArray = [];
+    if (this._rf_value) {
+      Object.assign(tmpRfArray, this._rf_value);
+    }
+    tmpRfArray.splice(solvIndex, 1);
+    this._rf_value= tmpRfArray;
+  }
+
+  addTlcColumn() {
+    const object = {
+      rfVal: '',
+      tlcVal: '-'
+    };
+    if (!this._rf_value) {
+      this._rf_value = [];
+      this._rf_value.push(object);
+    } else if (this._rf_value) {
+      this._rf_value.push(object);
+    }
+  }
+
+  updateRfValue(rfValue, solvIndex, type) {
+
+    const tmpRfArray = [];
+
+    Object.assign(tmpRfArray, this._rf_value);
+    const obe = this._rf_value[solvIndex];
+
+    let object;
+    if (type === 'rfVal') {
+      object = {
+        rfVal: rfValue,
+        tlcVal: obe.tlcVal
+      };
+    } else if (type === 'tlcVal') {
+      object = {
+        rfVal: obe.rfVal,
+        tlcVal: rfValue
+      };
+    }
+    this._rf_value[solvIndex] = object;
   }
 }
 

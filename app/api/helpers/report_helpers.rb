@@ -557,6 +557,7 @@ module ReportHelpers
         molecule_name: ['mn."name"', '"molecule name"', 1],
         molarity_value: ['s."molarity_value"', '"molarity_value"', 0],
         dry_solvent: ['s."dry_solvent"', '"dry_solvent"', 0],
+        rf_value: ['s."rf_value"', '"rf_value"', 0],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],

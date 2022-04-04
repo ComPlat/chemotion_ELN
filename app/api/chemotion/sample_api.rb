@@ -321,6 +321,7 @@ module Chemotion
         optional :molfile, type: String, desc: 'Sample molfile'
         optional :sample_svg_file, type: String, desc: 'Sample SVG file'
         optional :dry_solvent, default: false, type: Boolean, desc: 'Sample dry solvent'
+        optional :rf_value, type: Array[Hash], desc: "Sample rf value"
         # optional :molecule, type: Hash, desc: "Sample molecule" do
         #   optional :id, type: Integer
         # end
@@ -425,6 +426,7 @@ module Chemotion
         requires :description, type: String, desc: 'Sample description'
         requires :purity, type: Float, desc: 'Sample purity'
         optional :dry_solvent, default: false, type: Boolean, desc: 'Sample dry solvent'
+        optional :rf_value, type: Array[Hash], desc: "Sample rf value"
         # requires :solvent, type: String, desc: "Sample solvent"
         optional :solvent, type: Array[Hash], desc: 'Sample solvent', default: []
         requires :location, type: String, desc: 'Sample location'
@@ -468,6 +470,7 @@ module Chemotion
           target_amount_unit: params[:target_amount_unit],
           real_amount_value: params[:real_amount_value],
           real_amount_unit: params[:real_amount_unit],
+          rf_value: params[:rf_value],
           molarity_value: params[:molarity_value],
           molarity_unit: params[:molarity_unit],
           description: params[:description],

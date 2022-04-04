@@ -65,7 +65,9 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    if (!reaction.reaction_svg_file) {
+    this.handleTlcChange = this.handleTlcChange.bind(this);
+
+    if(!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
   }
@@ -165,6 +167,11 @@ export default class ReactionDetails extends Component {
 
     const { newReaction, options } = setReactionByType(reaction, type, value);
     this.handleReactionChange(newReaction, options);
+  }
+
+  handleTlcChange() {
+    const { reaction } = this.state;
+    this.handleReactionChange(reaction, false);
   }
 
   handleProductClick(product) {
@@ -429,7 +436,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsProperties
             reaction={reaction}
-            onReactionChange={r => this.handleReactionChange(r)}
+            onChange={this.handleTlcChange}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
             key={reaction.checksum}
           />
