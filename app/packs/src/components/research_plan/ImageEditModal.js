@@ -18,7 +18,7 @@ export default class ImageEditModal extends Component {
         onHide={this.props.handleOnClose}
       >
         <Modal.Header closeButton >
-          
+           
                   
           <Modal.Title>Image annotation</Modal.Title>
         </Modal.Header>

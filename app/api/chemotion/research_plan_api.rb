@@ -223,19 +223,35 @@ module Chemotion
         requires :file, type: File
       end
       post :image do
-       
-       
         file_name = params[:file][:filename]
-        file_extname = File.extname(file_name)        
-        public_name = "#{SecureRandom.uuid}#{file_extname}"
+        file_extname = File.extname(file_name)  
+        uuid=SecureRandom.uuid; 
+        public_name = "#{uuid}#{file_extname}"
         public_path = "public/images/research_plans/#{public_name}"
 
         File.open(public_path, 'wb') do |file|
            file.write(params[:file][:tempfile].read)
         end
         
-
-        {
+        imageRest="/images/research_plans/#{public_name}";
+        initialImageAnnotation="<svg "+
+        "  width=\"#{params[:width]}\" "+
+        "  height=\"#{params[:height]}\" "+
+        "  xmlns=\"http://www.w3.org/2000/svg\" "+
+        "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
+        "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
+        "    <g class=\"layer\">"+
+        "      <title>Image</title>"+
+        "      <image height=\"#{params[:height]}\" "+
+        "      id=\"svg_2\" "+
+        "      width=\"#{params[:width]}\" "+
+        "      xlink:href=\""+imageRest+"\"/>"+
+        "    </g>"+
+        "</svg>";        
+        annotationFile = "public/images/research_plans/#{uuid}_annotation_v0.svg"
+      
+        File.open(annotationFile, 'w') { |file| file.write(initialImageAnnotation) };
+        {             
           file_name: file_name,
           public_name: public_name
         }

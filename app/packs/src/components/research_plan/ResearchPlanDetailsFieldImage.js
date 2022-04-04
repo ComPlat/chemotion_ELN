@@ -16,24 +16,26 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const { field, onChange } = this.props;
     this.state={imageEditModalShown:false};
     this.state={annotation:{version:0}};
-    let restOfAnno=field.value.public_name.split(".")[0]+"_annotation.svg";  
-    const imageId=field.value.public_name.split(".")[0];
-    const src = `/images/research_plans/${restOfAnno}`;
-    const encodedValue = encodeURIComponent(imageId);
-    
-    fetch('/api/v1/annotation?imageId='+encodedValue, {
-      credentials: 'same-origin',
-      method: 'get',
-    })
-    .then(res =>{
-     if(res.status==200){
-       return res.json().then(json => {        
-          this.setState({'annotation':json});            
-        })
+    if(field.value.public_name){
+      let restOfAnno=field.value.public_name.split(".")[0]+"_annotation.svg";  
+      const imageId=field.value.public_name.split(".")[0];
+      const src = `/images/research_plans/${restOfAnno}`;
+      const encodedValue = encodeURIComponent(imageId);
+      
+      fetch('/api/v1/annotation?imageId='+encodedValue, {
+        credentials: 'same-origin',
+        method: 'get',
+      })
+      .then(res =>{
+      if(res.status==200){
+        return res.json().then(json => {        
+            this.setState({'annotation':json});            
+          })
 
-     }else{
-       console.log("An error occured");
-     }});             
+      }else{
+        console.log("An error occured");
+      }});   
+    }          
  
 
   }
@@ -43,11 +45,20 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const imageFile = files[0];
     const replace = field.value.public_name;
 
+    const img = document.createElement('img');
+    const blob = URL.createObjectURL(imageFile);
+    img.src = blob;
+    img.onload = function() {    
+      imageFile.dimension=[img.width,img.height];
+      ResearchPlansFetcher.updateImageFile(imageFile, replace).then((value) => {
+        // update research plan
+        onChange(value, field.id);
+      });
+      
+
+    }
     // upload new image
-    ResearchPlansFetcher.updateImageFile(imageFile, replace).then((value) => {
-      // update research plan
-      onChange(value, field.id);
-    });
+   
   }
 
   handleResizeChange(event) {
