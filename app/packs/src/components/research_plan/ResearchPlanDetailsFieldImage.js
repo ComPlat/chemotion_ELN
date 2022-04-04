@@ -81,7 +81,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   renderEdit() {
-    const { field } = this.props;
+    const { field,onChange} = this.props;
+    
     let content;
     let versionOfAnno;
     if (field.value.public_name) {     
@@ -112,7 +113,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           isShow={this.state.imageEditModalShown}
           handleSave={()=>{
             this.setState({imageEditModalShown:false});
-            this.actualizeAnnotationVersion()}}
+            this.actualizeAnnotationVersion();
+            onChange(field.value, field.id);}}
           handleOnClose={()=>{this.setState({imageEditModalShown:false})}}
        />       
      

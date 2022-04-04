@@ -28,7 +28,7 @@ export default class ImageAnnotationModalSVG extends Component {
                    .then(res =>{                    
                       return res.text().then(text => {
                         let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;   
-                        console.log(text);
+                        svgEditor.setBackground('white');
                         svgEditor.svgCanvas.setSvgString(text);                 
                        })               
                   })
