@@ -10,15 +10,13 @@ import MaterialGroupContainer from './MaterialGroupContainer';
 import Sample from './models/Sample';
 import Reaction from './models/Reaction';
 import Molecule from './models/Molecule';
-import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import ReactionDetailsPurification from './ReactionDetailsPurification';
+import ReactionDetailsTemperature from './ReactionDetailsTemperature';
 
 import QuillViewer from './QuillViewer';
 import ReactionDescriptionEditor from './ReactionDescriptionEditor';
 
-import GeneralProcedureDnd from './GeneralProcedureDnD';
-import { rolesOptions, conditionsOptions } from './staticDropdownOptions/options';
-import OlsTreeSelect from './OlsComponent';
+import { conditionsOptions, dangerousProductsOptions } from './staticDropdownOptions/options';
 import ReactionDetailsDuration from './ReactionDetailsDuration';
 import { permitOn } from './common/uis';
 
@@ -36,9 +34,11 @@ export default class ReactionDetailsScheme extends Component {
     this.state = {
       reaction,
       lockEquivColumn: false,
-      cCon: false,
       reactionDescTemplate: textTemplate.toJS(),
-      open: true
+      smOpen: false, rOpen: false, pOpen: false, solOpen: true, conOpen: false
+      // collapseBtn booleans: starting materials, reactants, products, solvents, conditions (false - collapsed)
+      // - solvent sections not collapsed by default as asked for in issue #562
+      // TODO: generalise function: takes in 2 vars: 1) string for button text 2) relevant boolean
     };
 
     this.reactQuillRef = React.createRef();
@@ -47,8 +47,6 @@ export default class ReactionDetailsScheme extends Component {
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
 
     this.onReactionChange = this.onReactionChange.bind(this);
-    this.onChangeRole = this.onChangeRole.bind(this);
-    this.renderRole = this.renderRole.bind(this);
     this.addSampleTo = this.addSampleTo.bind(this);
     this.dropMaterial = this.dropMaterial.bind(this);
     this.dropSample = this.dropSample.bind(this);
@@ -111,12 +109,6 @@ export default class ReactionDetailsScheme extends Component {
     }
   }
 
-  onChangeRole(e) {
-    const { onInputChange } = this.props;
-    const value = e && e.value;
-    onInputChange('role', value);
-  }
-
   switchEquiv() {
     const { lockEquivColumn } = this.state;
     this.setState({ lockEquivColumn: !lockEquivColumn });
@@ -133,61 +125,10 @@ export default class ReactionDetailsScheme extends Component {
     this.props.onReactionChange(reaction, { schemaChanged: true });
   }
 
-  renderGPDnD() {
-    const { reaction } = this.props;
-    return (
-      <GeneralProcedureDnd
-        reaction={reaction}
-      />
-    );
-  }
-
-  renderRolesOptions(opt) {
-    const className = `fa ${opt.icon} ${opt.bsStyle}`;
-    return (
-      <span>
-        <i className={className} />
-        <span className="spacer-10" />
-        {opt.label}
-      </span>
-    );
-  }
-
-  renderRoleSelect() {
-    const { role } = this.props.reaction;
-    return (
-      <Select
-        disabled={!permitOn(this.props.reaction)}
-        name="role"
-        options={rolesOptions}
-        optionRenderer={this.renderRolesOptions}
-        multi={false}
-        clearable
-        value={role}
-        onChange={this.onChangeRole}
-      />
-    );
-  }
-
-  renderRole() {
-    const { role } = this.props.reaction;
-    const accordTo = role === 'parts' ? 'According to' : null;
-    return (
-      <span>
-        <Col md={3} style={{ paddingLeft: '6px' }}>
-          <FormGroup>
-            <ControlLabel>Role</ControlLabel>
-            {this.renderRoleSelect()}
-          </FormGroup>
-        </Col>
-        <Col md={3} style={{ paddingLeft: '6px' }}>
-          <FormGroup>
-            <ControlLabel>{accordTo}</ControlLabel>
-            {this.renderGPDnD()}
-          </FormGroup>
-        </Col>
-      </span>
-    );
+  handleMultiselectChange(type, selectedOptions) {
+    const values = selectedOptions.map(option => option.value);
+    const wrappedEvent = { target: { value: values } };
+    this.props.onInputChange(type, wrappedEvent);
   }
 
   deleteMaterial(material, materialGroup) {
@@ -653,9 +594,11 @@ export default class ReactionDetailsScheme extends Component {
     return reaction;
   }
 
-  solventCollapseBtn() {
-    const { open } = this.state;
-    const arrow = open
+  // generalise CollapseBtn functions
+
+  startingmaterialsCollapseBtn() {
+    const { smOpen } = this.state;
+    const arrow = smOpen
       ? <i className="fa fa-angle-double-up" />
       : <i className="fa fa-angle-double-down" />;
     return (
@@ -663,7 +606,58 @@ export default class ReactionDetailsScheme extends Component {
         <Button
           bsSize="xsmall"
           style={{ backgroundColor: '#ddd' }}
-          onClick={() => this.setState({ open: !open })}
+          onClick={() => this.setState({ smOpen: !smOpen })}
+        >{arrow} &nbsp; Starting Materials
+        </Button>
+      </ButtonGroup>
+    );
+  }
+
+  reactantsCollapseBtn() {
+    const { rOpen } = this.state;
+    const arrow = rOpen
+      ? <i className="fa fa-angle-double-up" />
+      : <i className="fa fa-angle-double-down" />;
+    return (
+      <ButtonGroup vertical block>
+        <Button
+          bsSize="xsmall"
+          style={{ backgroundColor: '#ddd' }}
+          onClick={() => this.setState({ rOpen: !rOpen })}
+        >{arrow} &nbsp; Reactants
+        </Button>
+      </ButtonGroup>
+    );
+  }
+
+  productsCollapseBtn() {
+    const { pOpen } = this.state;
+    const arrow = pOpen
+      ? <i className="fa fa-angle-double-up" />
+      : <i className="fa fa-angle-double-down" />;
+    return (
+      <ButtonGroup vertical block>
+        <Button
+          bsSize="xsmall"
+          style={{ backgroundColor: '#ddd' }}
+          onClick={() => this.setState({ pOpen: !pOpen })}
+        >{arrow} &nbsp; Products
+        </Button>
+      </ButtonGroup>
+    );
+  }
+
+  solventCollapseBtn() {
+    const { solOpen } = this.state;
+    const arrow = solOpen
+      ? <i className="fa fa-angle-double-up" />
+      : <i className="fa fa-angle-double-down" />;
+    return (
+      <ButtonGroup vertical block>
+        <Button
+          bsSize="xsmall"
+          style={{ backgroundColor: '#ddd' }}
+          onClick={() => this.setState({ solOpen: !solOpen })}
         >{arrow} &nbsp; Solvents
         </Button>
       </ButtonGroup>
@@ -671,8 +665,8 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   conditionsCollapseBtn() {
-    const { cCon } = this.state;
-    const arrow = cCon
+    const { conOpen } = this.state;
+    const arrow = conOpen
       ? <i className="fa fa-angle-double-up" />
       : <i className="fa fa-angle-double-down" />;
     return (
@@ -680,7 +674,7 @@ export default class ReactionDetailsScheme extends Component {
         <Button
           bsSize="xsmall"
           style={{ backgroundColor: '#ddd' }}
-          onClick={() => this.setState({ cCon: !cCon })}
+          onClick={() => this.setState({ conOpen: !conOpen })}
         >{arrow} &nbsp; Conditions
         </Button>
       </ButtonGroup>
@@ -737,60 +731,74 @@ export default class ReactionDetailsScheme extends Component {
       <div>
         <ListGroup fill="true">
           <ListGroupItem style={minPadding}>
-            <MaterialGroupContainer
-              reaction={reaction}
-              materialGroup="starting_materials"
-              materials={reaction.starting_materials}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={this.state.lockEquivColumn}
-              headIndex={0}
-            />
+            { this.startingmaterialsCollapseBtn() }
+            <Collapse in={this.state.smOpen}>
+              <div>
+                <MaterialGroupContainer
+                  reaction={reaction}
+                  materialGroup="starting_materials"
+                  materials={reaction.starting_materials}
+                  dropMaterial={this.dropMaterial}
+                  deleteMaterial={
+                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+                  }
+                  dropSample={this.dropSample}
+                  showLoadingColumn={!!reaction.hasPolymers()}
+                  onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+                  switchEquiv={this.switchEquiv}
+                  lockEquivColumn={this.state.lockEquivColumn}
+                  headIndex={0}
+                />
+              </div>
+            </Collapse>
           </ListGroupItem>
           <ListGroupItem style={minPadding} >
-            <MaterialGroupContainer
-              reaction={reaction}
-              materialGroup="reactants"
-              materials={reaction.reactants}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={lockEquivColumn}
-              headIndex={headReactants}
-            />
+            { this.reactantsCollapseBtn() }
+            <Collapse in={this.state.rOpen}>
+              <div>
+                <MaterialGroupContainer
+                  reaction={reaction}
+                  materialGroup="reactants"
+                  materials={reaction.reactants}
+                  dropMaterial={this.dropMaterial}
+                  deleteMaterial={
+                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+                  }
+                  dropSample={this.dropSample}
+                  showLoadingColumn={!!reaction.hasPolymers()}
+                  onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+                  switchEquiv={this.switchEquiv}
+                  lockEquivColumn={lockEquivColumn}
+                  headIndex={headReactants}
+                />
+              </div>
+            </Collapse> 
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
-
-            <MaterialGroupContainer
-              reaction={reaction}
-              materialGroup="products"
-              materials={reaction.products}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={this.state.lockEquivColumn}
-              headIndex={0}
-            />
+            { this.productsCollapseBtn() }
+            <Collapse in={this.state.pOpen}>
+              <div>
+                <MaterialGroupContainer
+                  reaction={reaction}
+                  materialGroup="products"
+                  materials={reaction.products}
+                  dropMaterial={this.dropMaterial}
+                  deleteMaterial={
+                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+                  }
+                  dropSample={this.dropSample}
+                  showLoadingColumn={!!reaction.hasPolymers()}
+                  onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+                  switchEquiv={this.switchEquiv}
+                  lockEquivColumn={this.state.lockEquivColumn}
+                  headIndex={0}
+                />
+              </div>
+            </Collapse>
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
             { this.solventCollapseBtn() }
-            <Collapse in={this.state.open}>
+            <Collapse in={this.state.solOpen}>
               <div>
                 <MaterialGroupContainer
                   reaction={reaction}
@@ -812,7 +820,7 @@ export default class ReactionDetailsScheme extends Component {
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
             { this.conditionsCollapseBtn() }
-            <Collapse in={this.state.cCon}>
+            <Collapse in={this.state.conOpen}>
               <div>
                 <Select
                   disabled={!permitOn(reaction)}
@@ -835,30 +843,29 @@ export default class ReactionDetailsScheme extends Component {
         </ListGroup>
         <ListGroup>
           <ListGroupItem>
-            <div className="reaction-scheme-props">
-              <ReactionDetailsMainProperties
-                reaction={reaction}
-                onInputChange={(type, event) => this.props.onInputChange(type, event)}
-              />
-            </div>
             <ReactionDetailsDuration
               reaction={reaction}
               onInputChange={(type, event) => this.props.onInputChange(type, event)}
             />
+            <ReactionDetailsTemperature
+              reaction={reaction}
+              onInputChange={(type, event) => this.props.onInputChange(type, event)}
+            />
+          </ListGroupItem>
+          <ListGroupItem>
             <Row>
-              <Col md={6}>
-                <FormGroup>
-                  <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
-                  <OlsTreeSelect
-                    selectName="rxno"
-                    selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                    onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
-                    selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
+              <Col md={12}>
+                <div><b>Dangerous Products</b></div>
+                <Select
+                  name="dangerous_products"
+                  multi
+                  options={dangerousProductsOptions}
+                  value={reaction.dangerous_products}
+                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
+                  onChange={selectedOptions => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
                   />
-                </FormGroup>
-              </Col>
-              {this.renderRole()}
-            </Row>
+                </Col>
+            </Row><br></br>
             <Row>
               <Col md={12}>
                 <FormGroup>
@@ -879,6 +886,8 @@ export default class ReactionDetailsScheme extends Component {
                 </FormGroup>
               </Col>
             </Row>
+          </ListGroupItem>
+          <ListGroupItem>
             <ReactionDetailsPurification
               reaction={reaction}
               onReactionChange={r => this.onReactionChange(r)}

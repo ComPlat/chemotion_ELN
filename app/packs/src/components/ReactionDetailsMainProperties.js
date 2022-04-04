@@ -5,96 +5,94 @@ import {
   FormGroup,
   FormControl,
   ControlLabel,
-  OverlayTrigger,
-  Button,
-  Tooltip,
-  InputGroup,
   Grid,
   Row
 } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
-import Reaction from './models/Reaction';
 import { statusOptions } from './staticDropdownOptions/options';
-import LineChartContainer from './lineChart/LineChartContainer';
-import EditableTable from './lineChart/EditableTable';
 import { permitOn } from './common/uis';
+import GeneralProcedureDnd from './GeneralProcedureDnD';
+import { rolesOptions } from './staticDropdownOptions/options';
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
     super(props);
-    const { temperature } = props && props.reaction;
-    this.state = {
-      showTemperatureChart: false,
-      temperature,
-    };
-    this.toggleTemperatureChart = this.toggleTemperatureChart.bind(this);
-    this.updateTemperature = this.updateTemperature.bind(this);
-    this.temperatureUnit = props.reaction.temperature.valueUnit;
+
+    this.onChangeRole = this.onChangeRole.bind(this);
+    this.renderRole = this.renderRole.bind(this);
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      temperature: nextProps.reaction.temperature,
-    });
-
-    this.temperatureUnit = nextProps.reaction.temperature.valueUnit;
+  renderGPDnD() {
+    const { reaction } = this.props;
+    return (
+      <GeneralProcedureDnd
+        reaction={reaction}
+      />
+    );
   }
 
-  updateTemperature(newData) {
-    const { temperature } = this.state;
-    temperature.data = newData;
-    this.setState({ temperature });
-    this.props.onInputChange('temperatureData', temperature);
+  renderRolesOptions(opt) {
+    const className = `fa ${opt.icon} ${opt.bsStyle}`;
+    return (
+      <span>
+        <i className={className} />
+        <span className="spacer-10" />
+        {opt.label}
+      </span>
+    );
   }
 
-  toggleTemperatureChart() {
-    const { showTemperatureChart } = this.state;
-    this.setState({ showTemperatureChart: !showTemperatureChart });
+  onChangeRole(e) {
+    const { onInputChange } = this.props;
+    const value = e && e.value;
+    onInputChange('role', value);
   }
 
-  changeUnit() {
-    const index = Reaction.temperature_unit.indexOf(this.temperatureUnit);
-    const unit = Reaction.temperature_unit[(index + 1) % 3];
-    this.props.onInputChange('temperatureUnit', unit);
+  renderRoleSelect() {
+    const { role } = this.props.reaction;
+    return (
+      <Select
+        disabled={!permitOn(this.props.reaction)}
+        name="role"
+        options={rolesOptions}
+        optionRenderer={this.renderRolesOptions}
+        multi={false}
+        clearable
+        value={role}
+        onChange={this.onChangeRole}
+      />
+    );
+  }
+
+  renderRole() {
+    const { role } = this.props.reaction;
+    const accordTo = role === 'parts' ? 'According to' : null;
+    return (
+      <span>
+        <Col md={3} style={{ paddingLeft: '6px' }}>
+          <FormGroup>
+            <ControlLabel>Role</ControlLabel>
+            {this.renderRoleSelect()}
+          </FormGroup>
+        </Col>
+        <Col md={3} style={{ paddingLeft: '6px' }}>
+          <FormGroup>
+            <ControlLabel>{accordTo}</ControlLabel>
+            {this.renderGPDnD()}
+          </FormGroup>
+        </Col>
+      </span>
+    );
   }
 
   render() {
     const { reaction, onInputChange } = this.props;
-    const temperatureTooltip = (
-      <Tooltip id="show_temperature">Show temperature chart</Tooltip>
-    );
-
-    const temperatureDisplay = reaction.temperature_display;
-    const { showTemperatureChart, temperature } = this.state;
-    const tempUnitLabel = `Temperature (${this.temperatureUnit})`;
-
-    let TempChartRow = <span />;
-    if (showTemperatureChart) {
-      TempChartRow = (
-        <Col md={12}>
-          <div style={{ width: '74%', float: 'left' }}>
-            <LineChartContainer
-              data={temperature}
-              xAxis="Time"
-              yAxis={tempUnitLabel}
-            />
-          </div>
-          <div style={{ width: '25%', float: 'left' }}>
-            <EditableTable
-              temperature={temperature}
-              updateTemperature={this.updateTemperature}
-            />
-          </div>
-        </Col>
-      );
-    }
 
     return (
       <Grid fluid style={{ paddingLeft: 'unset' }}>
         <Row>
-          <Col md={6}>
+          <Col md={3}>
             <FormGroup>
               <ControlLabel>Name</ControlLabel>
               <FormControl
@@ -128,44 +126,9 @@ export default class ReactionDetailsMainProperties extends Component {
               />
             </FormGroup>
           </Col>
-          <Col md={3}>
-            <FormGroup>
-              <ControlLabel>Temperature</ControlLabel>
-              <InputGroup>
-                <InputGroup.Button>
-                  <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
-                    <Button
-                      disabled={!permitOn(reaction)}
-                      active
-                      className="clipboardBtn"
-                      onClick={this.toggleTemperatureChart}
-                    >
-                      <i className="fa fa-area-chart" />
-                    </Button>
-                  </OverlayTrigger>
-                </InputGroup.Button>
-                <FormControl
-                  type="text"
-                  value={temperatureDisplay || ''}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('temperature')}
-                  placeholder="Temperature..."
-                  onChange={event => onInputChange('temperature', event)}
-                />
-                <InputGroup.Button>
-                  <Button
-                    disabled={!permitOn(reaction)}
-                    bsStyle="success"
-                    onClick={() => this.changeUnit()}
-                  >
-                    {this.temperatureUnit}
-                  </Button>
-                </InputGroup.Button>
-              </InputGroup>
-            </FormGroup>
-          </Col>
-        </Row>
-        <Row>
-          {TempChartRow}
+          <Row>
+            {this.renderRole()}
+          </Row>
         </Row>
       </Grid>
     );

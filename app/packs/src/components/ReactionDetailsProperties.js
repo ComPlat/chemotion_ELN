@@ -4,10 +4,8 @@ import {
   Row, Col, FormGroup, ControlLabel, FormControl, MenuItem,
   ListGroupItem, ListGroup, InputGroup, DropdownButton
 } from 'react-bootstrap';
-import Select from 'react-select';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
-import { dangerousProductsOptions } from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import StringTag from './StringTag';
 import { solventsTL } from './utils/reactionPredefined';
@@ -77,16 +75,12 @@ export default class ReactionDetailsProperties extends Component {
     );
 
     return (
-      <div>
         <ListGroup>
           <ListGroupItem>
-            <div className="reaction-scheme-props">
               <ReactionDetailsMainProperties
                 reaction={reaction}
                 onInputChange={(type, event) => this.props.onInputChange(type, event)}
               />
-            </div>
-            <FormGroup>
               <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
               <OlsTreeSelect
                 selectName="rxno"
@@ -94,20 +88,6 @@ export default class ReactionDetailsProperties extends Component {
                 onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
                 selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
               />
-            </FormGroup>
-            <Row>
-              <Col md={12}>
-                <div><b>Dangerous Products</b></div>
-                <Select
-                  name="dangerous_products"
-                  multi
-                  options={dangerousProductsOptions}
-                  value={reaction.dangerous_products}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
-                  onChange={selectedOptions => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
-                />
-              </Col>
-            </Row>
           </ListGroupItem>
           <ListGroupItem>
             <h4 className="list-group-item-heading" >TLC-Control</h4>
@@ -167,7 +147,6 @@ export default class ReactionDetailsProperties extends Component {
             </Row>
           </ListGroupItem>
         </ListGroup>
-      </div>
     );
   }
 }
