@@ -20,12 +20,12 @@ export default class ContainerDatasetModal extends Component {
     } = this.props;
     if (show) {
       return (
-        <Modal show={show} backdrop="static" bsSize="large" dialogClassName="attachment-dataset-modal" onHide={() => this.handleSave()}>
+        <Modal show={show} backdrop="static" bsSize="large" dialogClassName="attachment-dataset-modal" onHide={() => (disabled ? onHide() : this.handleSave())}>
           <Modal.Header>
             <Modal.Title>
               {dataset_container.name}
               <ButtonToolbar>
-                <Button bsStyle="light" onClick={() => this.handleSave()} disabled={disabled}>
+                <Button bsStyle="light" onClick={() => (disabled ? onHide() : this.handleSave())}>
                   <i className="fa fa-times" />
                 </Button>
               </ButtonToolbar>
