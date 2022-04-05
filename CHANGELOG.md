@@ -6,9 +6,19 @@
 > yyyy-mm-dd
 
 * Features and Improvements:
+
+
+
+## [v1.2.0-pre]
+> 2022-04-05
+
+* Features and Improvements:
   * fast input: sample creation
     - users can create samples by entering the CAS Registry Number or SMILES
   * SciFinder-n Search: integrate SciFinder-n into ELN and user can search in SciFinder for substances/reactions/references/suppliers by structure
+  * analytics converter integration
+  * OIDC signin
+
 
 # [v1.1.3]
 > 2022-04-05
