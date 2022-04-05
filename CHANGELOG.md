@@ -10,6 +10,15 @@
     - users can create samples by entering the CAS Registry Number or SMILES
   * SciFinder-n Search: integrate SciFinder-n into ELN and user can search in SciFinder for substances/reactions/references/suppliers by structure
 
+# [v1.1.3]
+> 2022-04-05
+
+* Fixes
+  * npx-audit and Gem patches 
+  * migration 
+  * reaction prediction UI
+
+
 ## [v1.1.2]
 > 2022-03-25
 
