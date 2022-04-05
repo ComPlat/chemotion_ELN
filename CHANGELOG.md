@@ -6,6 +6,15 @@
 > yyyy-mm-dd
 
 
+# [v1.1.3]
+> 2022-04-05
+
+* Fixes
+  * npx-audit and Gem patches 
+  * migration 
+  * reaction prediction UI
+
+
 ## [v1.1.2]
 > 2022-03-25
 
