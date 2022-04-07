@@ -26,6 +26,18 @@ module Chemotion
         end
       end
 
+      desc "Update type of literals by element"
+      params do
+        requires :element_id, type: Integer
+        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :id, type: Integer
+        requires :litype, type: String, values: %w[citedOwn citedRef referTo]
+      end
+      put do
+        Literal.find(params[:id])&.update(litype: params[:litype])
+        { literatures: citation_for_elements(params[:element_id], @element_klass, 'detail') }
+      end
+
       desc "Return the literature list for the given element"
       params do
         requires :element_id, type: Integer

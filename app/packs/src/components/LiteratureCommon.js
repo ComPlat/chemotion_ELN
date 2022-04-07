@@ -1,7 +1,30 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormControl } from 'react-bootstrap';
+import { Button, FormControl, OverlayTrigger, Tooltip, Popover } from 'react-bootstrap';
+import uuid from 'uuid';
 import Literature from './models/Literature';
+import { CitationType, CitationTypeMap } from './CitationType';
+
+const RefByUserInfo = ({ info, litype }) => {
+  if (typeof (info) === 'undefined' || !info || info.length === 0) {
+    return (<div />);
+  }
+  return (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={
+        <Tooltip id={`ref_by_user_${uuid.v4()}`} className="left_tooltip bs_tooltip">
+          Reference added by
+          {
+            Object.keys(info).map(lid => (litype[lid] ? ` ${info[lid]} (${CitationTypeMap[litype[lid]].def})` : info[lid])).join(', ')
+          }
+        </Tooltip>
+      }
+    >
+      <i className="fa fa-book" aria-hidden="true" />
+    </OverlayTrigger>
+  );
+};
 
 const Cite = require('citation-js');
 
@@ -13,9 +36,7 @@ const LiteralType = ({ val, handleInputChange, disabled = false }) => (
     value={val}
     disabled={disabled}
   >
-    <option value="">&nbsp;</option>
-    <option value="citing">referring to</option>
-    <option value="cited">cited by</option>
+    {CitationType.map(e => (<option key={`_litype_opt_${e}`} value={e}>{CitationTypeMap[e].def}</option>))}
   </FormControl>
 );
 
@@ -75,7 +96,6 @@ const doiValid = (doi) => {
 
 const literatureContent = (literature, onlyText) => {
   let content;
-
   if (literature.refs && literature.refs.citation) {
     content = (
       <div>
@@ -114,7 +134,6 @@ const Citation = ({ literature }) => {
   const formatedDoi = doi ? `https://dx.doi.org/${sanitizeDoi(doi)}` : null;
   const link = formatedDoi || url || isbn;
   const content = literatureContent(literature);
-
   return (
     <a href={link} target="_blank" rel="noopener noreferrer" title={title} style={{ wordBreak: 'break-word' }} onClick={e => e.stopPropagation()}>{content}</a>
   );
@@ -214,5 +233,6 @@ export {
   sortByElement,
   sortByReference,
   literatureContent,
-  LiteralType
+  LiteralType,
+  RefByUserInfo
 };

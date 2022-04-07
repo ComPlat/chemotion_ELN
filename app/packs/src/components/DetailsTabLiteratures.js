@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { ListGroup, ListGroupItem, Button, Row, Col } from 'react-bootstrap';
+import { ListGroup, ListGroupItem, Button, Row, Col, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
 import { Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType } from './LiteratureCommon';
@@ -13,7 +13,8 @@ import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
 import UserStore from './stores/UserStore';
 import NotificationActions from './actions/NotificationActions';
 import LoadingActions from './actions/LoadingActions';
-import CitationTable from './CitationTable';
+import CitationPanel from './CitationPanel';
+import { CitationTypeMap } from './CitationType';
 
 const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
@@ -21,6 +22,17 @@ require('@citation-js/plugin-isbn');
 const notification = message => ({
   title: 'Add Literature', message, level: 'error', dismissible: 'button', autoDismiss: 5, position: 'tr', uid: uuid.v4()
 });
+
+const clipboardTooltip = () => (
+  <Tooltip id="assign_button">copy to clipboard</Tooltip>
+);
+
+const sameConseqLiteratureId = (citations, sortedIds, i) => {
+  if (i === 0) { return false; }
+  const a = citations.get(sortedIds[i])
+  const b = citations.get(sortedIds[i-1])
+  return (a.id === b.id)
+};
 
 const checkElementStatus = (element) => {
   const type = element.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -40,6 +52,7 @@ export default class DetailsTabLiteratures extends Component {
       sortedIds: [],
     };
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleTypeUpdate = this.handleTypeUpdate.bind(this);
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
     this.handleLiteratureRemove = this.handleLiteratureRemove.bind(this);
     this.fetchDOIMetadata = this.fetchDOIMetadata.bind(this);
@@ -76,8 +89,22 @@ export default class DetailsTabLiteratures extends Component {
     this.setState(prevState => ({ ...prevState, literature }));
   }
 
+  handleTypeUpdate(updId, rType) {
+    const { element } = this.props;
+    if (!checkElementStatus(element)) { return; }
+    LoadingActions.start();
+    const params = {
+      element_id: element.id, element_type: element.type, id: updId, litype: rType
+    };
+    LiteraturesFetcher.updateReferenceType(params)
+      .then((literatures) => {
+        this.setState({ literatures, sortedIds: groupByCitation(literatures), sorting: 'literature_id' }, LoadingActions.stop());
+      });
+  }
+
   handleLiteratureRemove(literature) {
     const { element } = this.props;
+    if (!checkElementStatus(element)) { return; }
     if (isNaN(element.id) && element.type === 'reaction') {
       this.setState(prevState => ({
         ...prevState,
@@ -86,7 +113,9 @@ export default class DetailsTabLiteratures extends Component {
       }));
       if (element.type === 'reaction') {
         element.literatures = element.literatures && element.literatures.delete(literature.literal_id);
-        this.setState({ reaction: element });
+        this.setState({
+          reaction: element
+        });
       }
     } else {
       LiteraturesFetcher.deleteElementReference({ element, literature })
@@ -96,6 +125,8 @@ export default class DetailsTabLiteratures extends Component {
             literatures: prevState.literatures.delete(literature.literal_id),
             sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
           }));
+        }).catch((errorMessage) => {
+          NotificationActions.add(notification(errorMessage.error));
         });
     }
   }
@@ -178,9 +209,9 @@ export default class DetailsTabLiteratures extends Component {
         }));
         this.handleLiteratureAdd(this.state.literature);
       }
-    }).catch(() => {
+    }).catch((errorMessage) => {
       LoadingActions.stop();
-      NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}`));
+      NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`));
     });
   }
 
@@ -205,9 +236,9 @@ export default class DetailsTabLiteratures extends Component {
         }));
         this.handleLiteratureAdd(this.state.literature);
       }
-    }).catch(() => {
+    }).catch((errorMessage) => {
       LoadingActions.stop();
-      NotificationActions.add(notification(`unable to fetch metadata for this ISBN: ${isbn}`));
+      NotificationActions.add(notification(`unable to fetch metadata for this ISBN: ${isbn}, error: ${errorMessage}`));
     });
   }
 
@@ -216,10 +247,7 @@ export default class DetailsTabLiteratures extends Component {
     const { currentUser } = UserStore.getState();
     return (
       <ListGroup fill="true">
-        <ListGroupItem>
-          <CitationTable rows={literatures} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser && currentUser.id} />
-        </ListGroupItem>
-        <ListGroupItem>
+        <ListGroupItem style={{ border: 'unset' }}>
           <Row>
             <Col md={8} style={{ paddingRight: 0 }}>
               <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="doi_isbn" placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..." />
@@ -252,6 +280,11 @@ export default class DetailsTabLiteratures extends Component {
               <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} />
             </Col>
           </Row>
+        </ListGroupItem>
+        <ListGroupItem style={{ border: 'unset' }}>
+          {
+            Object.keys(CitationTypeMap).map(e => <CitationPanel key={`_citation_panel_${e}`} title={e} fnDelete={this.handleLiteratureRemove} sortedIds={sortedIds} rows={literatures} uid={currentUser && currentUser.id} fnUpdate={this.handleTypeUpdate} />)
+          }
         </ListGroupItem>
       </ListGroup>
     );

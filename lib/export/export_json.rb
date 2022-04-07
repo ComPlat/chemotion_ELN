@@ -138,7 +138,7 @@ module Export
         --, r.created_by, r.reaction_svg_file, r.deleted_at
         , cl.id as uuid, clo.id as origin_uuid --, r.origin
         ,(select array_to_json(array_agg(row_to_json(lis))) as lls from (
-        select lh.element_type,lh.element_id,lh.category,ld.title,ld.url,ld.refs,ld.doi
+        select lh.element_type,lh.element_id,lh.category,lh.litype,ld.title,ld.url,ld.refs,ld.doi
         from literals lh, literatures ld where lh.literature_id = ld.id
         and lh.element_id = r.id and lh.element_type = 'Reaction'
         ) as lis) as literatures
@@ -180,7 +180,7 @@ module Export
             from (select re.custom_info, re.residue_type from residues re where s.id = re.sample_id) red) as residues_attributes
         , row_to_json(mn) as molecule_name_attributes
         ,(select array_to_json(array_agg(row_to_json(lis))) as lls from (
-        select lh.element_type,lh.element_id,lh.category,ld.title,ld.url,ld.refs,ld.doi
+        select lh.element_type,lh.element_id,lh.category,lh.litype,ld.title,ld.url,ld.refs,ld.doi
         from literals lh, literatures ld where lh.literature_id = ld.id
         and lh.element_id = s.id and lh.element_type = 'Sample'
         ) as lis) as literatures

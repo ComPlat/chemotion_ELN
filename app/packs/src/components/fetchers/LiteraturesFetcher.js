@@ -41,14 +41,32 @@ export default class LiteraturesFetcher {
   static deleteElementReference(params) {
     const { element, literature } = params;
     const { type, id } = element;
-    const ref_id = literature.literal_id;
-    return fetch(`/api/v1/literatures?id=${ref_id}&element_type=${type}&element_id=${id}`, {
+    const refId = literature.literal_id;
+    return fetch(`/api/v1/literatures?id=${refId}&element_type=${type}&element_id=${id}`, {
       credentials: 'same-origin',
       method: 'delete',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
-    }).catch((errorMessage) => { console.log(errorMessage); });
+    }).then(response => response.json())
+      .then((json) => { if (json.error) { throw json; } })
+      .catch((errorMessage) => { throw errorMessage; });
+  }
+
+  static updateReferenceType(params) {
+    return fetch('/api/v1/literatures', {
+      credentials: 'same-origin',
+      method: 'put',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .then((json) => { if (json.error) { throw json; } return json.literatures; })
+      .then(literatures => literatures.map(lits => new Literature(lits)))
+      .then(lits => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
+      .catch((errorMessage) => { console.log(errorMessage); throw errorMessage; });
   }
 
   static fetchDOIMetadata(doi) {
