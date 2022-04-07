@@ -252,7 +252,8 @@ class Import::ImportJson
         user_id: user_id,
         element_type: l['element_type'],
         element_id: new_el_id,
-        category: l['category']
+        category: l['category'],
+        litype: l['litype']
       }
       unless Literal.find_by(attributes)
         Literal.create(attributes)
