@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { ListGroup, ListGroupItem, Button, Row, Col } from 'react-bootstrap';
+import { ListGroup, ListGroupItem, Button, Row, Col, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
 import { Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType } from './LiteratureCommon';
@@ -22,6 +22,17 @@ require('@citation-js/plugin-isbn');
 const notification = message => ({
   title: 'Add Literature', message, level: 'error', dismissible: 'button', autoDismiss: 5, position: 'tr', uid: uuid.v4()
 });
+
+const clipboardTooltip = () => (
+  <Tooltip id="assign_button">copy to clipboard</Tooltip>
+);
+
+const sameConseqLiteratureId = (citations, sortedIds, i) => {
+  if (i === 0) { return false; }
+  const a = citations.get(sortedIds[i])
+  const b = citations.get(sortedIds[i-1])
+  return (a.id === b.id)
+};
 
 const checkElementStatus = (element) => {
   const type = element.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
