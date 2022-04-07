@@ -21,7 +21,7 @@ export default class TabLayoutContainer extends React.Component {
     let { visible, hidden } = this.state;
 
     if (!dragItem.isHidden && hoverItem.isHidden && visible.size === 1) return;
-    
+
     if (dragItem.isHidden && dragItem.title === 'hidden') return
 
     if (dragItem.isHidden) {
@@ -54,17 +54,19 @@ export default class TabLayoutContainer extends React.Component {
       <table className="layout-container">
         <tbody>
           {visible.map(function(e, index) {
+            const defTitle = e.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
             return (<TabLayoutCell key={index + "_visible"} cell={e}
                                   isHidden={false} index={index}
-                                  title={tabTitles[e] || e}
+                                  title={tabTitles[e] || defTitle}
                                   moveLayout={moveLayout}
                                   isElementDetails={isElementDetails}/>)
           })}
           {hidden.map(function(e, index) {
+            const defTitle = e.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
             return (<TabLayoutCell key={index + "_hidden"} cell={e}
                                   isHidden={true} index={index}
                                   moveLayout={moveLayout}
-                                  title={tabTitles[e] || e}
+                                  title={tabTitles[e] || defTitle}
                                   isElementDetails={isElementDetails}/>)
           })}
         </tbody>
