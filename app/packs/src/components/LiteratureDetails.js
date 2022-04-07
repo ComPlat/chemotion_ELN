@@ -109,7 +109,6 @@ ElementTypeLink.defaultProps = {
 
 const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
   <Table>
-    <thead><tr><th width="10%" /><th width="10%" /><th width="10%" /></tr></thead>
     <tbody>
       {sortedIds.map((id, k, ids) => {
         const citation = rows.get(id);

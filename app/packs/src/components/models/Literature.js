@@ -1,3 +1,4 @@
+import { CitationType } from '../CitationType';
 import Element from './Element';
 
 export default class Literature extends Element {
@@ -7,7 +8,7 @@ export default class Literature extends Element {
       url: '',
       doi: '',
       isbn: '',
-      litype: '',
+      litype: CitationType[0],
       type: 'literature',
       is_new: false,
       refs: {}
