@@ -226,20 +226,23 @@ export default class CommentModal extends Component {
                 </Table>
               </div>
 
-              <Button onClick={this.toggleCollapse} id="detailsBtn">
-                <span>Details </span>
-                <Glyphicon
-                  glyph={collapseIcon}
-                  title="Collapse/Uncollapse"
-                  style={{
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#337ab7',
-                    verticalAlign: 'middle',
-                    top: 0
-                  }}
-                />
-              </Button>
+              {
+                allComments && allComments.length > 1 &&
+                <Button onClick={this.toggleCollapse} id="detailsBtn">
+                  <span>Details </span>
+                  <Glyphicon
+                    glyph={collapseIcon}
+                    title="Collapse/Uncollapse"
+                    style={{
+                      fontSize: '20px',
+                      cursor: 'pointer',
+                      color: '#337ab7',
+                      verticalAlign: 'middle',
+                      top: 0
+                    }}
+                  />
+                </Button>
+              }
 
               {
               commentsCollapseAll && (allComments && allComments.length > 1) &&
