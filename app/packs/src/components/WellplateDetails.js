@@ -218,7 +218,7 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
     const datetp = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
-    const { showCommentSection } = this.props;
+    const { showCommentSection, comments } = this.props;
 
     return (
       <div>
@@ -243,6 +243,7 @@ export default class WellplateDetails extends Component {
         <PrintCodeButton element={wellplate} />
         <HeaderCommentSection
           element={wellplate}
+          comments={comments}
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}
           getSectionComments={this.props.getSectionComments}

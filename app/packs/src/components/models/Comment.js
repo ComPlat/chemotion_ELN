@@ -62,6 +62,14 @@ export default class Comment extends Element {
     this._submitter = submitter;
   }
 
+  get resolver_name() {
+    return this._resolver_name;
+  }
+
+  set resolver_name(resolver_name) {
+    this._resolver_name = resolver_name;
+  }
+
   serialize() {
     return super.serialize({
       content: this.content,
@@ -70,6 +78,7 @@ export default class Comment extends Element {
       created_by: this.created_by,
       status: this.status,
       submitter: this.submitter,
+      resolver_name: this.resolver_name,
     });
   }
 }

@@ -16,6 +16,7 @@ export default function HeaderCommentSection(props) {
         overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
       >
         <Button
+          bsSize="xsmall"
           bsStyle={selectedComments && selectedComments.length > 0 ? 'success' : 'default'}
           onClick={() => {
             props.setCommentSection(headerSection);
@@ -28,7 +29,7 @@ export default function HeaderCommentSection(props) {
       </OverlayTrigger>
       <OverlayTrigger
         placement="top"
-        overlay={<Tooltip id="toggleComments">Show/Hide Comments</Tooltip>}
+        overlay={<Tooltip id="toggleComments">Show/Hide Section Comments</Tooltip>}
       >
         <Button
           bsSize="xsmall"

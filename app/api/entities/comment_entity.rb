@@ -8,6 +8,7 @@ module Entities
     expose :section
     expose :status
     expose :submitter
+    expose :resolver_name
     expose :created_at, :updated_at
     expose :commentable_id, :commentable_type
 

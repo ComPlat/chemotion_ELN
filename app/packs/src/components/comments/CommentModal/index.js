@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar, FormControl, Modal, Table } from 'react-bootstrap';
+import { Button, ButtonToolbar, FormControl, Modal, Table, Glyphicon } from 'react-bootstrap';
 import { Confirm } from 'react-confirm-bootstrap';
 import Draggable from 'react-draggable';
 import CommentFetcher from '../../fetchers/CommentFetcher';
 import LoadingActions from '../../actions/LoadingActions';
 import UserStore from '../../stores/UserStore';
+import CommentDetails from '../CommentDetails';
+import { formatSection } from '../../../helper';
 
 
 export default class CommentModal extends Component {
@@ -16,6 +18,7 @@ export default class CommentModal extends Component {
       commentBody: '',
       isEditing: false,
       commentObj: '',
+      commentsCollapseAll: false,
     };
   }
 
@@ -119,21 +122,27 @@ export default class CommentModal extends Component {
      });
    };
 
+  toggleCollapse = () => {
+    this.setState({ commentsCollapseAll: !this.state.commentsCollapseAll });
+  }
+
   disableEditComment = comment => comment.status === 'Resolved'
   commentByCurrentUser = (comment, currentUser) => currentUser.id === comment.created_by
 
   render() {
-    const { showCommentModal, section } = this.props;
-    const { isEditing } = this.state;
+    const { showCommentModal, section, element } = this.props;
+    const { isEditing, commentsCollapseAll } = this.state;
     const comments = this.props.getSectionComments(section);
+    const allComments = this.props.getAllComments(section);
     const { currentUser } = UserStore.getState();
+    const collapseIcon = commentsCollapseAll ? 'chevron-up' : 'chevron-down';
 
     let commentsTbl = null;
     if (comments && comments.length > 0) {
       commentsTbl = comments.map(comment => (
         <tr key={comment.id}>
-          <td width="15%">{comment.created_at}</td>
-          <td width="40%">{comment.content}</td>
+          <td width="20%">{comment.created_at}</td>
+          <td width="35%">{comment.content}</td>
           <td width="15%">{comment.submitter}</td>
           <td width="15%">
             <ButtonToolbar>
@@ -176,6 +185,7 @@ export default class CommentModal extends Component {
               }
             </ButtonToolbar>
           </td>
+          <td width="15%">{comment.resolver_name}</td>
         </tr>
       ));
     }
@@ -190,28 +200,62 @@ export default class CommentModal extends Component {
     return (
       <Draggable enableUserSelectHack={false}>
         <Modal
+          dialogClassName="comment-modal"
           show={showCommentModal}
           onHide={() => this.props.toggleCommentModal(false)}
           bsSize="large"
           backdrop="static"
         >
           <Modal.Header closeButton>
-            <Modal.Title>Comments</Modal.Title>
+            <Modal.Title>Comments on:  {formatSection(section)}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div className="commentList" ref={this.modalRef}>
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <th width="20%">Date</th>
-                    <th width="40%">Comment</th>
-                    <th width="15%">From User</th>
-                    <th width="17%">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>{commentsTbl}</tbody>
-              </Table>
+              <div>
+                <Table striped bordered hover>
+                  <thead>
+                    <tr>
+                      <th width="20%">Date</th>
+                      <th width="35%">Comment</th>
+                      <th width="15%">From User</th>
+                      <th width="17%">Actions</th>
+                      <th width="17%">Resolved By</th>
+                    </tr>
+                  </thead>
+                  <tbody>{commentsTbl}</tbody>
+                </Table>
+              </div>
+
+              <Button onClick={this.toggleCollapse} id="detailsBtn">
+                <span>Details </span>
+                <Glyphicon
+                  glyph={collapseIcon}
+                  title="Collapse/Uncollapse"
+                  style={{
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#337ab7',
+                    verticalAlign: 'middle',
+                    top: 0
+                  }}
+                />
+              </Button>
+
+              {
+              commentsCollapseAll && (allComments && allComments.length > 1) &&
+              <CommentDetails
+                section={section}
+                element={element}
+                disableEditComment={this.disableEditComment}
+                markCommentResolved={this.markCommentResolved}
+                commentByCurrentUser={this.commentByCurrentUser}
+                handleEditComment={this.handleEditComment}
+                deleteComment={this.deleteComment}
+                getAllComments={this.props.getAllComments}
+              />
+            }
             </div>
+
             <FormControl
               componentClass="textarea"
               autoFocus
@@ -254,6 +298,7 @@ CommentModal.propTypes = {
   comments: PropTypes.array,
   fetchComments: PropTypes.func.isRequired,
   getSectionComments: PropTypes.func.isRequired,
+  getAllComments: PropTypes.func.isRequired,
   section: PropTypes.string,
   element: PropTypes.object.isRequired,
 };
