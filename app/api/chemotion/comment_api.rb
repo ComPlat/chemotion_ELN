@@ -41,7 +41,7 @@ module Chemotion
           comments = Comment.where(
             commentable_id: params[:commentable_id],
             commentable_type: params[:commentable_type]
-          ).order(:status, created_at: :desc)
+          ).order(:status, :section, created_at: :desc)
 
           present comments, with: Entities::CommentEntity, root: 'comment'
         else
@@ -110,6 +110,9 @@ module Chemotion
 
         put do
           attributes = declared(params, include_missing: false)
+          if params[:status].eql?('Resolved')
+            attributes[:resolver_name] = "#{current_user.first_name} #{current_user.last_name}"
+          end
           @comment.update!(attributes)
 
           if @comment.saved_change_to_status? && @comment.created_by != current_user.id

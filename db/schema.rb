@@ -228,6 +228,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "updated_at", null: false
     t.string "status", default: "Pending"
     t.string "submitter"
+    t.string "resolver_name"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comment_on_user"
     t.index ["section"], name: "index_comments_on_section"

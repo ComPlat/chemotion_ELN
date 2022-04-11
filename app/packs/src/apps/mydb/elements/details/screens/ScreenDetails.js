@@ -178,7 +178,7 @@ export default class ScreenDetails extends Component {
   screenHeader(screen) {
     const saveBtnDisplay = screen.isEdited ? '' : 'none';
     const datetp = `Created at: ${screen.created_at} \n Updated at: ${screen.updated_at}`;
-    const { showCommentSection } = this.props;
+    const { showCommentSection, comments } = this.props;
 
     return (
       <div>
@@ -223,6 +223,7 @@ export default class ScreenDetails extends Component {
         <PrintCodeButton element={screen} />
         <HeaderCommentSection
           element={screen}
+          comments={comments}
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}
           getSectionComments={this.props.getSectionComments}

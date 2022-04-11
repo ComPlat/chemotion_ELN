@@ -14,6 +14,7 @@
 #  updated_at       :datetime         not null
 #  status           :string           default("Pending")
 #  submitter        :string
+#  resolver_name    :string
 #
 # Indexes
 #

@@ -320,6 +320,11 @@ export default class ElementDetails extends Component {
     return comments && comments.filter(cmt => (cmt.section === section));
   }
 
+  getAllComments = (section) => {
+    const { comments } = this.state;
+    return comments && comments.filter(cmt => (cmt.section !== section));
+  }
+
   setCommentSection = (section) => {
     this.setState({ section });
   }
@@ -348,6 +353,7 @@ export default class ElementDetails extends Component {
           fetchComments={this.fetchComments}
           getSectionComments={this.getSectionComments}
           toggleCommentModal={this.toggleCommentModal}
+          getAllComments={this.getAllComments}
         />
       );
     }

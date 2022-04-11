@@ -507,7 +507,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleHeader(sample) {
-    const { showCommentSection } = this.props;
+    const { showCommentSection, comments } = this.props;
     const saveBtnDisplay = sample.isEdited ? '' : 'none';
     const titleTooltip = `Created at: ${sample.created_at} \n Updated at: ${sample.updated_at}`;
 
@@ -609,6 +609,7 @@ export default class SampleDetails extends React.Component {
         <ShowUserLabels element={sample} />
         <HeaderCommentSection
           element={sample}
+          comments={comments}
           showCommentSection={showCommentSection}
           setCommentSection={this.props.setCommentSection}
           getSectionComments={this.props.getSectionComments}
