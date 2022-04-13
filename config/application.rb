@@ -114,5 +114,15 @@ module Chemotion
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
+    #
+    
+    # tmp assets fix
+    sprite_file = Rails.public_path.join('sprite.png')
+    sprite_source = Rails.public_path.join('assets', 'ketcherails','sprite*.png' )
+    new_sprite = Dir.glob(sprite_source).max_by{ |f| File.mtime(f)}
+    if new_sprite.present?
+      FileUtils.rm(sprite_file) if File.exist?(sprite_file)
+      FileUtils.ln_s(new_sprite, sprite_file) 
+    end
   end
 end
