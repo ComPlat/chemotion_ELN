@@ -508,7 +508,7 @@ export default class SampleDetails extends React.Component {
           overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
         >
           <Button
-            bsStyle="warning"
+            bsStyle="primary"
             bsSize="xsmall"
             className="button-right"
             onClick={() => this.handleSubmit(true)}
@@ -524,7 +524,7 @@ export default class SampleDetails extends React.Component {
           overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
         >
           <Button
-            bsStyle="warning"
+            bsStyle="primary"
             bsSize="xsmall"
             className="button-right"
             onClick={() => this.handleSubmit()}
@@ -1140,7 +1140,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Button
         id="submit-sample-btn"
-        bsStyle="warning"
+        bsStyle="primary"
         onClick={() => this.handleSubmit(closeView)}
         disabled={!this.sampleIsValid() || isDisabled}
       >
@@ -1169,7 +1169,7 @@ export default class SampleDetails extends React.Component {
     const saveAndCloseBtn = belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
     return (
       <ButtonToolbar>
-        <Button bsStyle="primary" onClick={() => DetailActions.close(sample)}>
+        <Button bsStyle="danger" onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}

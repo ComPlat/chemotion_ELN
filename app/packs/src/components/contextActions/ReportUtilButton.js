@@ -60,7 +60,7 @@ const ReportUtilButton = ({ customClass }) => {
 
   return (
     <Dropdown id="format-dropdown">
-      <Dropdown.Toggle className={customClass || 'btn-success'}>
+      <Dropdown.Toggle className={customClass || 'btn-default'}>
         <i className="fa fa-file-text-o" style={{ marginRight: 4 }} />
         <i className="fa fa-pencil" style={{ marginRight: 4 }} />
         <i className="fa fa-percent" />

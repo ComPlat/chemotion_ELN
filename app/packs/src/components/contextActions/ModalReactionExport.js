@@ -20,8 +20,8 @@ export default class ModalReactionExport extends React.Component {
       <ButtonToolbar>
         <div className="pull-right">
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
-            <Button bsStyle="warning" id="md-export-dropdown"
+            <Button bsStyle="warning" onClick={onHide}>Cancel</Button>
+            <Button bsStyle="primary" id="md-export-dropdown"
                 title="Reaction Smiles CSV Export" onClick={this.handleClick}>
                 Smiles Export
             </Button>

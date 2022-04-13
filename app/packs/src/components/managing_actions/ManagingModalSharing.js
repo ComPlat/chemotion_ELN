@@ -414,7 +414,7 @@ export default class ManagingModalSharing extends React.Component {
         </FormGroup>
         {this.selectUsers()}
         <br/>
-        <Button id="create-sync-shared-col-btn" bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
+        <Button id="create-sync-shared-col-btn" bsStyle="primary" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
       </div>
     )
   }

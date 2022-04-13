@@ -188,14 +188,14 @@ export default class ModalExportCollection extends React.Component {
   renderButtonBar() {
     const { onHide } = this.props;
     const { processing } = this.state;
-    const bStyle = processing === true ? 'danger' : 'warning';
+    const bStyle = processing === true ? 'danger' : 'primary';
     const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
     const bTitle = processing === true ? 'Exporting' : 'Export ZIP';
     return (
       <ButtonToolbar>
         <div className="pull-right">
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
+            <Button bsStyle="warning" onClick={onHide}>Cancel</Button>
             <Button
               bsStyle={bStyle}
               id="md-export-dropdown"

@@ -124,7 +124,7 @@ export default class MySharedCollections extends React.Component {
     if(node.label == "My Shared Collections") {
       return (
         <div className="root-actions">
-          <Button bsSize="xsmall" bsStyle="warning"
+          <Button bsSize="xsmall" bsStyle="success"
             onClick={this.bulkUpdate.bind(this)}>
             Update
           </Button>

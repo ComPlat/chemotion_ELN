@@ -163,7 +163,7 @@ const GeneralMaterialGroup = ({
   const addSampleButton = (
     <Button
       disabled={!permitOn(reaction)}
-      bsStyle="success"
+      bsStyle="primary"
       bsSize="xs"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
@@ -217,7 +217,7 @@ const SolventsMaterialGroup = ({
   const addSampleButton = (
     <Button
       disabled={!permitOn(reaction)}
-      bsStyle="success"
+      bsStyle="primary"
       bsSize="xs"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >

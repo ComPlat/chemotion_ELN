@@ -39,7 +39,7 @@ export default class ConfirmClose extends Component {
           >Yes
           </Button>
           <Button
-            bsStyle="warning"
+            bsStyle="primary"
             bsSize="xsmall"
             onClick={() => this.setState({ showTooltip: false })}
           >No

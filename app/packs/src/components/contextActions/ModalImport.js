@@ -81,8 +81,8 @@ export default class ModalImport extends React.Component {
         {this.dropzoneOrfilePreview()}
         &nbsp;
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          <Button bsStyle="warning" onClick={() => onHide()}>Cancel</Button>
+          <Button bsStyle="primary" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
         </ButtonToolbar>
       </div>
     )

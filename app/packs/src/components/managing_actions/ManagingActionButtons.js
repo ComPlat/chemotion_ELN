@@ -35,7 +35,7 @@ MoveOrAssignButton.defaultProps = {
 
 const RemoveOrDeleteButton = ({ removeDisabled, deleteDisabled, onClick, customClass }) => (
   <DropdownButton
-    bsStyle={customClass ? null : 'warning'}
+    bsStyle={customClass ? null : 'danger'}
     className={customClass}
     title={<i className="fa fa-minus-square" />}
     id="remove-or-delete-btn"
@@ -66,7 +66,7 @@ RemoveOrDeleteButton.defaultProps = {
 
 const ShareButton = ({ isDisabled, customClass, onClick }) => (
   <Button
-    bsStyle={customClass ? null : 'info'}
+    bsStyle={customClass ? null : 'primary'}
     id="share-btn"
     disabled={isDisabled}
     onClick={() => onClick('share')}

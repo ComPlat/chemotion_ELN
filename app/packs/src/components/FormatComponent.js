@@ -69,7 +69,7 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
     <Button
       key="saveBtn"
       onClick={onSave}
-      bsStyle="warning"
+      bsStyle="success"
       bsSize="xsmall"
       className="button-right"
     >

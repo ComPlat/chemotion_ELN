@@ -245,7 +245,7 @@ export default class ReactionDetailsContainers extends Component {
         <Button
           className="button-right"
           bsSize="xsmall"
-          bsStyle="success"
+          bsStyle="primary"
           onClick={this.handleAdd}
         >
           Add analysis

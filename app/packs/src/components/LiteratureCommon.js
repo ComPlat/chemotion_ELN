@@ -34,7 +34,7 @@ const isLiteratureValid = literature => (
 
 const AddButton = ({ onLiteratureAdd, literature, title }) => (
   <Button
-    bsStyle="success"
+    bsStyle="primary"
     bsSize="small"
     onClick={() => onLiteratureAdd(literature)}
     style={{ marginTop: 2 }}

@@ -144,7 +144,7 @@ export default class ScreenDetails extends Component {
         <ConfirmClose el={screen} />
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+          <Button bsStyle="primary" bsSize="xsmall" className="button-right"
                   onClick={() => this.handleSubmit()}
                   style={{display: saveBtnDisplay}} >
             <i className="fa fa-floppy-o "></i>
@@ -315,8 +315,8 @@ export default class ScreenDetails extends Component {
              {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
+            <Button bsStyle="danger" onClick={() => DetailActions.close(screen)}>Close</Button>
+            <Button bsStyle="primary" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
         </Panel.Body>
       </Panel>

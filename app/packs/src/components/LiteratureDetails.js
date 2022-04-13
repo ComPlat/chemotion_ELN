@@ -482,7 +482,7 @@ export default class LiteratureDetails extends Component {
                       </Col>
                       <Col md={1} style={{ paddingRight: 0 }}>
                         <Button
-                          bsStyle="success"
+                          bsStyle="primary"
                           bsSize="small"
                           style={{ marginTop: 2 }}
                           onClick={this.fetchDOIMetadata}

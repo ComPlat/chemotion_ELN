@@ -213,7 +213,7 @@ export default class Search extends React.Component {
 
     const buttonAfter = (
       <ButtonGroup>
-        <Button bsStyle={customClass ? null : 'primary'} className={customClass} onClick={() => this.showStructureEditor()}>
+        <Button bsStyle={customClass ? null : 'info'} className={customClass} onClick={() => this.showStructureEditor()}>
           <Glyphicon glyph="pencil" id="AutoCompletedrawAddon" />
         </Button>
         <Button bsStyle={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>

@@ -99,7 +99,7 @@ export default class ManagingModalCollectionActions extends React.Component {
         Create collection &lsquo;{newLabel}&rsquo; and Submit
       </Button>
     ) : (
-      <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!selected}>
+      <Button bsStyle="success" onClick={this.handleSubmit} disabled={!selected}>
           Submit
       </Button>
     );

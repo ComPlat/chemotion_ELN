@@ -150,7 +150,7 @@ export default class WellplateDetails extends Component {
         <ElementCollectionLabels element={wellplate} placement="right" />
         <ConfirmClose el={wellplate} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: saveBtnDisplay }}>
+          <Button bsStyle="primary" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: saveBtnDisplay }}>
             <i className="fa fa-floppy-o " />
           </Button>
         </OverlayTrigger>
@@ -256,14 +256,14 @@ export default class WellplateDetails extends Component {
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>
+            <Button bsStyle="danger" onClick={() => DetailActions.close(wellplate)}>
               Close
             </Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+            <Button bsStyle="primary" onClick={() => this.handleSubmit()}>
               {submitLabel}
             </Button>
             {exportButton}
-            <Button bsStyle="primary" onClick={() => this.handlePrint()}>
+            <Button bsStyle="info" onClick={() => this.handlePrint()}>
               Print Wells
             </Button>
           </ButtonToolbar>

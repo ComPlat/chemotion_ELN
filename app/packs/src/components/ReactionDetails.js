@@ -289,7 +289,7 @@ export default class ReactionDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
           <Button
-            bsStyle="warning"
+            bsStyle="primary"
             bsSize="xsmall"
             className="button-right"
             onClick={() => this.handleSubmit(true)}
@@ -302,7 +302,7 @@ export default class ReactionDetails extends Component {
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+          <Button bsStyle="primary" bsSize="xsmall" className="button-right"
               onClick={() => this.handleSubmit()}
               disabled={!permitOn(reaction) || !this.reactionIsValid()}
               style={{display: hasChanged}} >
@@ -493,10 +493,10 @@ export default class ReactionDetails extends Component {
           </Tabs>
           <hr />
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
+            <Button bsStyle="danger" onClick={() => DetailActions.close(reaction)}>
               Close
             </Button>
-            <Button id="submit-reaction-btn" bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
+            <Button id="submit-reaction-btn" bsStyle="primary" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
               {submitLabel}
             </Button>
             {exportButton}

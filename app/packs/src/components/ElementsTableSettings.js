@@ -178,6 +178,7 @@ export default class ElementsTableSettings extends React.Component {
       >
         <Button
           bsSize="xsmall"
+          bsStyle="info"
           style={{ margin: '10px 10px 10px 0', float: 'right' }}
         >
           <i className="fa fa-sliders" />

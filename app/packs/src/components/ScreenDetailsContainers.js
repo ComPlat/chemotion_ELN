@@ -69,7 +69,7 @@ export default class ScreenDetailsContainers extends Component {
     const {readOnly} = this.props;
     if(! readOnly) {
       return (
-          <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+          <Button className="button-right" bsSize="xsmall" bsStyle="primary" onClick={() => this.handleAdd()}>
             Add analysis
           </Button>
       )

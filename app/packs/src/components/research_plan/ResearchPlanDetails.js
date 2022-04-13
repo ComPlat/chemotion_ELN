@@ -395,7 +395,7 @@ export default class ResearchPlanDetails extends Component {
         <ElementCollectionLabels element={researchPlan} placement="right" />
         <ConfirmClose el={researchPlan} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
+          <Button bsStyle="primary" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -485,9 +485,9 @@ export default class ResearchPlanDetails extends Component {
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
+            <Button bsStyle="danger" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
-              researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
+              researchPlan.changed ? <Button bsStyle="primary" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
             }
           </ButtonToolbar>
         </Panel.Body>

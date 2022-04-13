@@ -31,7 +31,7 @@ const clickToReset = () => {
 
 const ResetBtn = () => (
   <Button
-    bsStyle="info"
+    bsStyle="warning"
     bsSize="xsmall"
     className="button-right"
     onClick={clickToReset}
@@ -65,7 +65,7 @@ const GenerateReportBtn = ({ allState, updateQueue }) => {
   return (
     !processingReport
       ? <Button
-        bsStyle="primary"
+        bsStyle="success"
         bsSize="xsmall"
         className="button-right"
         disabled={!(showGeneReportBtn && hasObj)}
@@ -74,7 +74,7 @@ const GenerateReportBtn = ({ allState, updateQueue }) => {
         <span><i className="fa fa-file-text-o" /> Generate</span>
       </Button>
       : <Button
-        bsStyle="danger"
+        bsStyle="warning"
         bsSize="xsmall"
         className="button-right"
       >

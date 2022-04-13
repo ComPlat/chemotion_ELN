@@ -151,7 +151,7 @@ export default class SampleDetailsContainers extends Component {
       <Button
         className="button-right"
         bsSize="xsmall"
-        bsStyle="success"
+        bsStyle="primary"
         onClick={this.handleAdd}
         disabled={!sample.can_update}
       >

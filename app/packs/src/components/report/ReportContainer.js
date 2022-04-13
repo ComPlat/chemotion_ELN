@@ -126,7 +126,7 @@ export default class ReportContainer extends Component {
     const archivesTitle = this.archivesTitle();
     return (
       <Panel
-        bsStyle="default"
+        bsStyle="primary"
       >
         <Panel.Heading>{this.panelHeader()}</Panel.Heading>
         <Tabs
