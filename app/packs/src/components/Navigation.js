@@ -30,7 +30,8 @@ export default class Navigation extends React.Component {
         component: "",
         action: null,
         listSharedCollections: false,
-      }
+      },
+      omniauthProviders: []
     }
     this.onChange = this.onChange.bind(this);
     this.onUIChange = this.onUIChange.bind(this);
@@ -43,6 +44,7 @@ export default class Navigation extends React.Component {
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
     UserActions.fetchGenericEls();
+    UserActions.fetchOmniauthProviders();
   }
 
   componentWillUnmount() {
@@ -61,6 +63,11 @@ export default class Navigation extends React.Component {
     if (this.state.genericEls === null) {
       this.setState({
         genericEls: state.genericEls
+      });
+    }
+    if (state.omniauthProviders !== this.state.omniauthProviders) {
+      this.setState({
+        omniauthProviders: state.omniauthProviders
       });
     }
   }
@@ -118,7 +125,7 @@ export default class Navigation extends React.Component {
   }
 
   render() {
-    const { modalProps, showAdvancedSearch, genericEls } = this.state;
+    const { modalProps, showAdvancedSearch, genericEls, omniauthProviders } = this.state;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (this.state.currentUser
@@ -140,7 +147,7 @@ export default class Navigation extends React.Component {
           <Nav navbar className='navbar-form'>
             <Search noSubmit={true} />
           </Nav>
-          <NavNewSession authenticityToken={this.token()}/>
+          <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders}/>
           <div style={{clear: "both"}} />
         </Navbar>
     )

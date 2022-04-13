@@ -1,0 +1,22 @@
+pre {
+    &:before {
+        counter-reset: listing;
+    }
+
+    code {
+        display: block;
+        counter-increment: listing;
+    }
+
+    code:before {
+        content: counter(listing);
+        display: inline-block;
+
+        width: 4em;
+        padding-right: 1em;
+        margin-right: 1em;
+
+        text-align: right;
+        border-right: 1px solid silver;
+    }
+}

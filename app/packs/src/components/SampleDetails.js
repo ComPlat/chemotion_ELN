@@ -63,7 +63,8 @@ import NotificationActions from './actions/NotificationActions';
 import MatrixCheck from './common/MatrixCheck';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
 import NmrSimTab from './nmr_sim/NmrSimTab';
-
+import FastInput from './FastInput';
+import ScifinderSearch from './scifinder/ScifinderSearch';
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
 
@@ -116,6 +117,7 @@ export default class SampleDetails extends React.Component {
       pageMessage: null,
       visible: Immutable.List(),
       startExport: false,
+      sfn: UIStore.getState().hasSfn,
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -138,6 +140,7 @@ export default class SampleDetails extends React.Component {
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.decoupleChanged = this.decoupleChanged.bind(this);
+    this.handleFastInput = this.handleFastInput.bind(this);
   }
 
   componentDidMount() {
@@ -227,6 +230,13 @@ export default class SampleDetails extends React.Component {
     this.setState({ showInchikey: !showInchikey });
   }
 
+  handleFastInput(smi) {
+    this.setState({ showChemicalIdentifiers: true }, () => {
+      this.smilesInput.value = smi;
+      this.handleMoleculeBySmile();
+    });
+  }
+
   handleMoleculeBySmile() {
     const smi = this.smilesInput.value;
     const { sample } = this.state;
@@ -234,8 +244,9 @@ export default class SampleDetails extends React.Component {
     MoleculesFetcher.fetchBySmi(smi)
       .then((result) => {
         if (!result || result == null) {
-          // eslint-disable-next-line no-alert
-          alert('Cannot create molecule with this smiles!');
+          NotificationActions.add({
+            title: 'Error on Sample creation', message: `Cannot create molecule with this smiles! [${smi}]`, level: 'error', position: 'tc'
+          });
         } else {
           sample.molfile = result.molfile;
           sample.molecule_id = result.id;
@@ -252,7 +263,7 @@ export default class SampleDetails extends React.Component {
         }
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      }).finally(() => LoadingActions.stop());
   }
 
   decoupleMolecule() {
@@ -538,6 +549,7 @@ export default class SampleDetails extends React.Component {
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={sample} />
+        {sample.isNew ? <FastInput fnHandle={this.handleFastInput} /> : null}
         {decoupleCb}
         <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
@@ -1337,6 +1349,7 @@ export default class SampleDetails extends React.Component {
               tabTitles={tabTitlesMap}
               onTabPositionChanged={this.onTabPositionChanged}
             />
+            {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
               {tabContents}
             </Tabs>

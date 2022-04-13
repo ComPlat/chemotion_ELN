@@ -125,6 +125,8 @@ module AttachmentJcampProcess
     att = Attachment.new(
       filename: meta_filename,
       file_path: meta_tmp.path,
+      attachable_id: attachable_id,
+      attachable_type: 'Container',
       created_by: created_by,
       created_for: created_for,
       content_type: content_type
@@ -133,7 +135,6 @@ module AttachmentJcampProcess
     att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'
     att.set_json if ext == 'json'
-    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att.update!(storage: Rails.configuration.storage.primary_store)
     att
   end

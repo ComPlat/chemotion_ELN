@@ -1,0 +1,20 @@
+development:
+  :url:
+  :profile:
+  :secret_key:
+  :timeout:
+  :ext:
+
+test:
+  :url:
+  :profile:
+  :secret_key:
+  :timeout:
+  :ext:
+
+production:
+  :url:
+  :profile:
+  :secret_key:
+  :timeout:
+  :ext:

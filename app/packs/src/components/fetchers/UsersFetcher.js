@@ -27,6 +27,15 @@ export default class UsersFetcher {
     });
   }
 
+  static fetchOmniauthProviders() {
+    return fetch('/api/v1/public/omniauth_providers.json', {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
+
   static fetchUsersByName(name) {
     const promise = fetch(`/api/v1/users/name.json?name=${name}`, {
       credentials: 'same-origin'
@@ -137,6 +146,14 @@ export default class UsersFetcher {
     return promise;
   }
 
+  static fetchUserOmniauthProviders() {
+    return fetch('/api/v1/users/omniauth_providers.json', {
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   static updateGroup(params = {}) {
     const promise = fetch(`/api/v1/groups/upd/${params.id}`, {
       credentials: 'same-origin',
@@ -212,6 +229,16 @@ export default class UsersFetcher {
       console.log(errorMessage);
     });
 
+    return promise;
+  }
+
+  static scifinderCredential() {
+    const promise = fetch('/api/v1/users/scifinder', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
     return promise;
   }
 }

@@ -35,7 +35,8 @@ export default class AnalysisEditor extends React.Component {
     this.state = {
       fetchedNames: Object.keys(fetchedTemplates),
       predefinedTemplateNames: predefinedTemplateNames && predefinedTemplateNames.toJS(),
-      fetchedPredefinedTemplates
+      fetchedPredefinedTemplates,
+      updateTemplate: false
     };
 
     this.fetchPredefinedTemplates = this.fetchPredefinedTemplates.bind(this);
@@ -56,6 +57,28 @@ export default class AnalysisEditor extends React.Component {
     const { template } = this.props;
     const namesToFetch = Object.values(template).flat();
     this.fetchPredefinedTemplates(namesToFetch);
+  }
+
+  componentDidUpdate(prevProps) {
+    const { template } = this.props;
+    const namesToFetch = Object.values(template).flat();
+
+    if (!this.state.updateTemplate && Object.keys(template).length !== 0) {
+      // this.fetchPredefinedTemplates(namesToFetch);
+      TextTemplateActions.fetchPredefinedTemplateByNames(namesToFetch);
+
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({
+        updateTemplate: true
+      });
+    } else if (this.props.template !== prevProps.template && this.state.updateTemplate) {
+      const prevnamesToFetch = Object.values(prevProps.template).flat();
+
+      if (prevnamesToFetch.length !== namesToFetch.length) {
+        // this.fetchPredefinedTemplates(namesToFetch);
+        TextTemplateActions.fetchPredefinedTemplateByNames(namesToFetch);
+      }
+    }
   }
 
   componentWillUnmount() {

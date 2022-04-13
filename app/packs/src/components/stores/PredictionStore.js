@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { difference, uniq } from 'lodash';
 
 import alt from '../alt';
 import PredictionActions from '../actions/PredictionActions';
@@ -50,8 +50,9 @@ class PredictionStore {
     if (!samples) return null;
     const defaultSmis = this.defaultEls.map(x => x.molecule.cano_smiles);
     const rspSmis = samples.map(x => x.molecule.cano_smiles);
-    let uniqLoadSmis = _.difference(rspSmis, defaultSmis);
-    uniqLoadSmis = [...new Set(uniqLoadSmis)];
+    let uniqLoadSmis = difference(rspSmis, defaultSmis);
+    uniqLoadSmis = uniq(uniqLoadSmis);
+
     let inputEls = samples.filter((x, idx) => ( // avoid 2 samples with the same smiles
       rspSmis.indexOf(x.molecule.cano_smiles) === idx
     ));

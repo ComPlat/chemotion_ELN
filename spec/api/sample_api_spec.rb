@@ -305,7 +305,8 @@ describe Chemotion::SampleAPI do
               is_new: true,
               is_deleted: false,
               name: 'new'
-            }
+            },
+            collection_id: user.collections[1][:id]
           }
         end
 
@@ -328,7 +329,7 @@ describe Chemotion::SampleAPI do
             expect(s.attributes.symbolize_keys[:boiling_point].last).to eq(v) if k.to_s == 'boiling_point_lowerbound'
             expect(s.attributes.symbolize_keys[:melting_point].first).to eq(v) if k.to_s == 'melting_point_upperbound'
             expect(s.attributes.symbolize_keys[:melting_point].last).to eq(v) if k.to_s == 'melting_point_lowerbound'
-            expect(s.attributes.symbolize_keys[k]).to eq(v) unless k.to_s.include? 'bound'
+            expect(s.attributes.symbolize_keys[k]).to eq(v) unless k.to_s.include?('bound') || k.to_s.include?('collection_id')
           end
 
           expect(s.attributes.symbolize_keys[:solvent]).to eq([])

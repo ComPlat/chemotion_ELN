@@ -5,6 +5,37 @@
 ## [vMAJOR.MINOR.PATCH]
 > yyyy-mm-dd
 
+* Features and Improvements:
+  * fast input: sample creation
+    - users can create samples by entering the CAS Registry Number or SMILES
+  * SciFinder-n Search: integrate SciFinder-n into ELN and user can search in SciFinder for substances/reactions/references/suppliers by structure
+
+# [v1.1.3]
+> 2022-04-05
+
+* Fixes
+  * npx-audit and Gem patches 
+  * migration 
+  * reaction prediction UI
+
+
+## [v1.1.2]
+> 2022-03-25
+
+* Fixes
+  * upd chemspectra client: XRD d-value 
+  * add product to reaction 
+
+
+## [v1.1.1]
+> 2022-03-08
+
+* Fixes
+  * uniq sample short-label while creating reaction 
+  * customized toolbar refresh issue in quill editor
+  * rendering of the group list when deleting multiple groups
+  * permission to add elements to sync-collections
+
 
 ## [v1.1.0]
 > 2022-01-18
@@ -46,7 +77,7 @@
   * collection import with sample missing molecule_name: use default value
   * structure editors: added public/editors to ease set up
   * node post-install fx to resolve node_modules path when located outside of app (docker)
-   
+
 
 
 ## [v1.0.2]

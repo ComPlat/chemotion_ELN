@@ -18,7 +18,8 @@ class UserStore {
       segmentKlasses: [],
       dsKlasses: [],
       unitsSystem: {},
-      matriceConfigs: []
+      matriceConfigs: [],
+      omniauthProviders: []
     };
 
     this.bindListeners({
@@ -34,7 +35,8 @@ class UserStore {
       handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
       handleSegementKlasses: UserActions.fetchSegmentKlasses,
       handleDatasetKlasses: UserActions.fetchDatasetKlasses,
-      handleUnitsSystem: UserActions.fetchUnitsSystem
+      handleUnitsSystem: UserActions.fetchUnitsSystem,
+      handleOmniauthProviders: UserActions.fetchOmniauthProviders
     });
   }
 
@@ -104,6 +106,10 @@ class UserStore {
 
   handleUnitsSystem(result) {
     this.state.unitsSystem = result;
+  }
+
+  handleOmniauthProviders(result) {
+    this.state.omniauthProviders = result.omniauth_providers;
   }
 }
 

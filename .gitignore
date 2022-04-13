@@ -34,6 +34,7 @@
 /config/user_props.yml
 /config/profile_default.yml
 /config/compute_props.yml
+/config/converter.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml
@@ -41,6 +42,8 @@
 /config/spectra.yml
 /config/editors.yml
 /config/inference.yml
+/config/omniauth.yml
+/config/scifinder_n.yml
 
 /node_modules
 
