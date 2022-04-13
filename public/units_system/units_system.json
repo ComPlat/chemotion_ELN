@@ -24,18 +24,6 @@
     },
     {
       "type": "numeric",
-      "field": "amount_enzyme",
-      "label": "Amount enzyme as nmol/min",
-      "default": "",
-      "position": 30,
-      "placeholder": "amount enzyme as nmol/min",
-      "units": [
-        { "key": "u", "label": "U" },
-        { "key": "mu", "label": "mU" }
-      ]
-    },
-    {
-      "type": "numeric",
       "field": "molarity",
       "label": "Chem. concentration (Molarity)",
       "default": "",
@@ -44,8 +32,8 @@
       "units": [
         { "key": "mol_l", "label": "mol/L (M)", "nm": 1 },
         { "key": "mmol_l", "label": "mmol/L (mM)", "nm": 1000 },
-        { "key": "nmol_l", "label": "nmol/L (nM)", "nm": 1000000 },
-        { "key": "pmol_l", "label": "pmol/L (pM)", "nm": 1000000000 }
+        { "key": "umol_l", "label": "µmol/L (µM)", "nm": 1000000 },
+        { "key": "nmol_l", "label": "nmol/L (nM)", "nm": 1000000000 }
       ]
     },
     {
@@ -67,7 +55,7 @@
       "position": 60,
       "placeholder": "concentration",
       "units": [
-        { "key": "ng_l", "label": "ng/L", "nm": 1000000 },
+        { "key": "ug_l", "label": "µg/L", "nm": 1000000 },
         { "key": "mg_l", "label": "mg/L", "nm": 1000 },
         { "key": "g_l", "label": "g/L", "nm": 1 }
       ]
@@ -82,7 +70,8 @@
       "units": [
         { "key": "s_m", "label": "S/m", "nm": 1 }
       ]
-    },{
+    },
+    {
       "type": "numeric",
       "field": "current",
       "label": "Current",
@@ -177,8 +166,10 @@
       "position": 90,
       "placeholder": "Enzyme activity",
       "units": [
-        { "key": "u_l", "label": "U/L", "nm": 1 },
-        { "key": "u_ml", "label": "U/mL", "nm": 1000 }
+        { "key": "katal", "label": "kat", "nm": 1 },
+        { "key": "mkatal", "label": "mkat", "nm": 1000 },
+        { "key": "ukatal", "label": "µkat", "nm": 1000000 },
+        { "key": "nkatal", "label": "nkat", "nm": 1000000000 }
       ]
     },
     {
@@ -191,7 +182,7 @@
       "units": [
         { "key": "ul_min", "label": "µl/min", "nm": 1000000 },
         { "key": "ml_min", "label": "ml/min", "nm": 1000 },
-        { "key": "l_m", "label": "l/m", "nm": 1 }
+        { "key": "l_m", "label": "l/min", "nm": 1 }
       ]
     },
     {
@@ -225,8 +216,8 @@
       "position": 110,
       "placeholder": "length",
       "units": [
-        { "key": "pm", "label": "pm", "nm": 100000 },
-        { "key": "nm", "label": "nm", "nm": 10000 },
+        { "key": "nm", "label": "nm", "nm": 1000000000 },
+        { "key": "um", "label": "µm", "nm": 1000000 },
         { "key": "mm", "label": "mm", "nm": 1000 },
         { "key": "cm", "label": "cm", "nm": 100 },
         { "key": "m", "label": "m", "nm": 1  }
