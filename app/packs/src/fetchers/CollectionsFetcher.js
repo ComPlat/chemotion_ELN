@@ -321,8 +321,8 @@ export default class CollectionsFetcher {
     }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchTabsLayout() {
-    let promise = fetch('/api/v1/segments/tabs', {
+  static fetchTabsLayout(params) {
+    let promise = fetch('/api/v1/collections/tab_segments/' + params.id, {
       credentials: 'same-origin'
     })
       .then((response) => {
@@ -334,5 +334,21 @@ export default class CollectionsFetcher {
       });
 
     return promise;
+  }
+
+  static createTabsLayout(params) {
+    return fetch('/api/v1/collections/tabs/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: params.currentCollectionId,
+        segments: params.layoutSegments
+      })
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

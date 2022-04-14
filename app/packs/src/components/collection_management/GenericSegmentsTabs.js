@@ -1,47 +1,44 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
+import { Button, ListGroup, ListGroupItem, Modal } from 'react-bootstrap';
 import CollectionStore from '../stores/CollectionStore';
+import CollectionActions from '../actions/CollectionActions';
+import Immutable from 'immutable';
+import TabLayoutContainer from '../TabLayoutContainer';
+import { isEmpty } from 'lodash';
 
 export default class GenericSegmentsTabs extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      active: {id: null},
-      deleted_ids: [],
-
+      showModal: false,
+      currentCollectionId: 0,
+      layout: {},
       tree: {
         label: 'My Collections',
         id: -1,
         children: [{}]
       },
-      modalProps: {
-        show: false,
-        title: "",
-        component: "",
-        action: null,
-        collection: {},
-        selectUsers: true,
-        isChange: false
-      }
-    }
+      currentTab: 'sample',
+      currentNode: {}
+    };
 
     this.onStoreChange = this.onStoreChange.bind(this);
+    this.handleSave = this.handleSave.bind(this);
   }
 
   componentDidMount() {
-    CollectionStore.listen(this.onStoreChange)
-    CollectionActions.fetchUnsharedCollectionRoots()
+    CollectionStore.listen(this.onStoreChange);
+    CollectionActions.fetchUnsharedCollectionRoots();
   }
 
   componentWillUnmount() {
-    CollectionStore.unlisten(this.onStoreChange)
+    CollectionStore.unlisten(this.onStoreChange);
   }
 
   onStoreChange(state) {
     let children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
-    console.log("child:==", children);
 
     this.setState({
       tree: {
@@ -52,207 +49,159 @@ export default class GenericSegmentsTabs extends React.Component {
     });
   }
 
+  onClickNode(node) {
+    this.setState({ currentCollectionId: node.id });
+    this.handleModalOptions(this.state.showModal);
+  }
+
+  getArrayFromLayout = (layout, availableTabs) => {
+    const layoutKeys = Object.keys(layout);
+    const enabled = availableTabs.filter(val => layoutKeys.includes(val));
+    const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
+    const visible = [];
+    const hidden = [];
+
+    enabled.forEach((key) => {
+      const order = layout[key];
+      if (order < 0) { hidden[Math.abs(order)] = key; }
+      if (order > 0) { visible[order] = key; }
+    });
+
+    leftover.forEach(key => hidden.push(key));
+
+    let first = null;
+    if (visible.length === 0) {
+      first = hidden.filter(n => n !== undefined)[0];
+      if (first) {
+        visible.push(first);
+      }
+    }
+    if (hidden.length === 0) {
+      hidden.push('hidden');
+    }
+
+    return {
+      visible: Immutable.List(visible.filter(n => n !== undefined)),
+      hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
+    };
+  };
+
   handleChange(tree) {
     this.setState({
-      tree: tree,
-      isChange: true
+      tree: tree
     });
   }
 
-  isActive(node) {
-    return node === this.state.active ? "node is-active" : "node";
-  }
-
-  hasChildren(node) {
-    return node.children && node.children.length > 0
-  }
-
-  label(node) {
-    if(node.id == -1) {
-      return (
-        <div className="root-label">
-          My Collections
-        </div>
-      )
+  onClicked(node) {
+    let layout = {};
+    if (!isEmpty(node.tabs_segment['sample'])){
+      layout = node.tabs_segment['sample'];
+      // layout = node.tabs_segment[this.state.currentTab];
     } else {
-      return (
-        <FormControl className="collection-label" type="text"
-          value={node.label || ''}
-          onChange={(e)=>{this.handleLabelChange(e,node)}}
-        />
-      )
+      layout = {
+        analyses: -1,
+        literature: 3,
+        properties: 1,
+        qc_curation: 2,
+        references: -3,
+        results: -2
+      };
     }
+    const availableTabs = ['properties', 'analyses', 'references', 'results', 'qc_curation'];
+    const { visible, hidden } = this.getArrayFromLayout(layout, availableTabs);
+    layout = { visible: visible, hidden: hidden };
+    this.setState({ layout, currentNode: node });
+    this.onClickNode(node);
   }
 
-  handleLabelChange(e,node) {
-    node.label = e.target.value;
-    this.setState({
-      tree: this.state.tree
+  handleModalOptions(showModal) {
+    this.setState({ showModal: !showModal });
+  }
+
+  currentTab(key){
+    const tabTitles = {
+      0: 'sample',
+      1: 'reaction',
+      2: 'wellplate',
+      3: 'screen'
+    };
+    this.setState({ currentTab: tabTitles[key] });
+  }
+
+  handleSave() {
+    const { visible, hidden } = this.layout.state;
+    const { currentCollectionId } = this.state;
+    const layout = {};
+    visible.forEach((value, index) => {
+      layout[value] = (index + 1);
     });
-  }
-
-  // TODO: confirmation before start the updating process?
-  bulkUpdate() {
-    // filter empty objects
-    let collections = this.state.tree.children.filter((child) => {
-      return child.label
+    hidden.filter(val => val !== 'hidden').forEach((value, index) => {
+      layout[value] = (-index - 1);
     });
-
-    let params = {
-      collections: collections,
-      deleted_ids: this.state.deleted_ids
-    }
-
-    CollectionActions.bulkUpdateUnsharedCollections(params);
-  }
-
-  actions(node) {
-    if(node.id == -1) {
-      const { isChange } = this.state;
-      return (
-        <div className="root-actions">
-          { isChange && <Button id="my-collections-update-btn" bsSize="xsmall" bsStyle="warning" onClick={this.bulkUpdate.bind(this)}> Save </Button> }
-          {this.addButton(node)}
-        </div>
-      )
-    } else {
-      return (
-        <ButtonGroup className="actions">
-          <Button id="tab-layout-btn" bsSize="xsmall" bsStyle="primary" disabled={node.isNew === true}
-            onClick={()=>this.changeTabLayout(node)}>
-              <i className="fa fa-plus"></i>
-          </Button>
-        </ButtonGroup>
-      )
-    }
-  }
-
-  changeTabLayout(node){
-    let { modalProps, active } = this.state;
-    // modalProps.title = action == "CreateSync"
-    //   ? "Synchronize '"+node.label+"'"
-    //   : "Edit Synchronization"
-    // modalProps.show = true
-    // modalProps.action = action
-    // modalProps.collection = node
-    // modalProps.selectUsers =  action == "CreateSync"
-    //   ? true
-    //   : false
-    // active = node
-    this.setState({ modalProps, active });
-  }
-
-  addButton(node) {
-    return (
-      <Button id={`mycol_${node.id}`} bsSize="xsmall" bsStyle="success" onClick={this.addSubcollection.bind(this, node)}>
-        <i className="fa fa-plus"></i>
-      </Button>
-    )
-  }
-
-  addSubcollection(node) {
-    if(node.children) {
-      node.children.push({
-        id: Math.random(),
-        label: 'New Collection',
-        isNew: true
-      });
-    } else {
-      node.children = [{
-        id: Math.random(),
-        label: 'New Collection',
-        isNew: true
-      }];
-    }
-  }
-
-  appendChildrenToParent(parent, children) {
-    if(children.length > 0) {
-      children.forEach((child) => {
-        parent.children.push(child);
-      });
-    } else if (parent.label == 'My Collections') {
-      parent.children.push({});
-    }
-  }
-
-  findParentById(root, id) {
-    if(!root.children) {
-      root.children = [];
-      return null;
-    }
-
-    let children = root.children;
-
-    for(let i = 0; i < children.length; i++) {
-      if(children[i].id == id) {
-        return root;
-      } else {
-        let parent = this.findParentById(children[i], id);
-        if(parent) {
-          return parent
-        }
-      }
-    }
-  }
-
-  onClickNode(node) {
-    if (node.is_locked) {
-      this.setState({
-        active: {id: null}
-      });
-    } else {
-      this.setState({
-        active: node
-      });
-    }
-  }
-
-  handleModalHide() {
-    this.setState({
-      modalProps: {
-        show: false,
-        title: "",
-        component: "",
-        action: null,
-        collection: {},
-        selectUsers: true,
-      }
-    });
+    // const layoutSegments = { [this.state.currentTab]: layout };
+    const layoutSegments = { sample: layout };
+    const params = { layoutSegments, currentCollectionId };
+    CollectionActions.createTabsSegment(params);
+    this.handleModalOptions(this.state.showModal);
+    this.state.tree.children.find(c => c.id === currentCollectionId).tabs_segment = layoutSegments;
   }
 
   renderNode(node) {
-    if(!Object.keys(node).length == 0) {
+    if (!Object.keys(node).length == 0) {
       return (
         <div>
-          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
-            {this.label(node)}
-            {this.actions(node)}
+          <span className='node'>
+            <ListGroup>
+              <ListGroupItem action onClick={() => this.onClicked(node)} style={{ width: 280, height: 35 }}>
+                {node.label}
+              </ListGroupItem>
+            </ListGroup>
           </span>
         </div>
       );
     }
   }
+
   render() {
-    let mPs = this.state.modalProps
-    let mPsC = mPs.collection
+    const { showModal, tree, layout } = this.state;
+    const tabTitlesMap = {
+      qc_curation: 'qc curation',
+      computed_props: 'computed props',
+      nmr_sim: 'NMR Simulation'
+    };
+    const isElementDetails = true;
     return (
       <div className="tree">
         <Tree
           paddingLeft={20}
-          tree={this.state.tree}
-          isNodeCollapsed={this.isNodeCollapsed}
+          tree={tree}
+          isElementDetails
           onChange={this.handleChange.bind(this)}
           renderNode={this.renderNode.bind(this)}
         />
-        <Modal animation show={mPs.show} onHide={this.handleModalHide.bind(this)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Tab Layout</Modal.Title>
+        <Modal animation show={showModal}>
+          <Modal.Header>
+            <Modal.Title>Sample Tab Layout</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            </Modal.Body>
+            <div>
+              <div>
+                <TabLayoutContainer
+                  visible={layout.visible}
+                  hidden={layout.hidden}
+                  tabTitles={tabTitlesMap}
+                  isElementDetails
+                  ref={(n) => { this.layout = n; }}
+                />
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer style={{ textAlign: 'left' }}>
+            <Button bsStyle="warning" onClick={this.handleSave}>Save</Button>
+            <Button bsStyle="primary" onClick={() => this.handleModalOptions(showModal)}>Close</Button>
+          </Modal.Footer>
         </Modal>
       </div>
-    )
+    );
   }
 }

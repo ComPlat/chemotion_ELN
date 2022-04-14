@@ -10,6 +10,7 @@ import _ from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
+import UIStore from './stores/UIStore';
 
 const getNodeText = (node) => {
   if (['string', 'number'].includes(typeof node)) return node;
@@ -93,8 +94,11 @@ export default class ElementDetailSortTab extends Component {
 
   onChangeUser(state) {
     const { availableTabs, addInventoryTab } = this.props;
-    const layout = (state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]) || {};
+    const currentCollection = UIStore.getState().currentCollection;
+    const tabs = currentCollection.tabs_segment;
+    const layout = tabs.hasOwnProperty(`${this.type}`) ? tabs[`${this.type}`] : ((state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]) || {});
     const { visible, hidden } = getArrayFromLayout(layout, availableTabs, addInventoryTab);
+
     this.setState(
       { visible, hidden },
       () => this.props.onTabPositionChanged(visible)
