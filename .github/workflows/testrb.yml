@@ -58,7 +58,8 @@ jobs:
       - name: db
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
-            /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:migrate db:test:prepare db:seed > /dev/null"
+            /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:migrate db:test:prepare  > /dev/null"
+            /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:seed > /dev/null"
 
       - name: rb test
         uses: nick-invision/retry@v2
