@@ -7,10 +7,8 @@
 
 * Features and Improvements:
 
-
-
-## [v1.2.0-pre]
-> 2022-04-05
+## [v1.2.0]
+> 2022-04-14
 
 * Features and Improvements:
   * fast input: sample creation
@@ -18,6 +16,13 @@
   * SciFinder-n Search: integrate SciFinder-n into ELN and user can search in SciFinder for substances/reactions/references/suppliers by structure
   * analytics converter integration
   * OIDC signin
+
+
+# [v1.1.4]
+> 2022-04-14
+
+* Fixes
+  * Ketcher icons missing (since 1.1.3)
 
 
 # [v1.1.3]
