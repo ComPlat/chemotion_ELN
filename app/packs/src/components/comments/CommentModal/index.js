@@ -4,6 +4,7 @@ import { Button, ButtonToolbar, FormControl, Modal, Table, Glyphicon } from 'rea
 import { Confirm } from 'react-confirm-bootstrap';
 import Draggable from 'react-draggable';
 import CommentFetcher from '../../fetchers/CommentFetcher';
+import ElementActions from '../../actions/ElementActions';
 import LoadingActions from '../../actions/LoadingActions';
 import UserStore from '../../stores/UserStore';
 import CommentDetails from '../CommentDetails';
@@ -65,6 +66,7 @@ export default class CommentModal extends Component {
       .then(() => {
         this.props.fetchComments(element);
         this.scrollToTop();
+        ElementActions.refreshElements(element.type);
         this.setState({ commentBody: '' }, () => {
           LoadingActions.stop();
         });
@@ -99,6 +101,7 @@ export default class CommentModal extends Component {
     CommentFetcher.delete(comment)
       .then(() => {
         this.props.fetchComments(element);
+        ElementActions.refreshElements(element.type);
         this.setState({ commentBody: '' });
       })
       .catch((errorMessage) => {
