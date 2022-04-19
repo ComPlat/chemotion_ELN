@@ -815,7 +815,7 @@ class ElementActions {
   // -- General --
 
   refreshElements(type) {
-    return type
+    return type;
   }
 
   deleteElements(options) {
