@@ -1,6 +1,14 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ListGroup, ListGroupItem, Modal } from 'react-bootstrap';
+import {
+  Button,
+  FormControl,
+  ListGroup,
+  ListGroupItem,
+  Modal,
+  Nav,
+  NavItem,
+} from 'react-bootstrap';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
 import Immutable from 'immutable';
@@ -13,19 +21,21 @@ export default class GenericSegmentsTabs extends React.Component {
 
     this.state = {
       showModal: false,
-      currentCollectionId: 0,
+      selectModal: false,
+      currentCollection: {},
       layout: {},
       tree: {
         label: 'My Collections',
         id: -1,
         children: [{}]
       },
-      currentTab: 'sample',
-      currentNode: {}
+      currentTab: 'sample'
     };
 
     this.onStoreChange = this.onStoreChange.bind(this);
     this.handleSave = this.handleSave.bind(this);
+    this.handleSelectNav = this.handleSelectNav.bind(this);
+    this.clickedOnBack = this.clickedOnBack.bind(this);
   }
 
   componentDidMount() {
@@ -50,8 +60,8 @@ export default class GenericSegmentsTabs extends React.Component {
   }
 
   onClickNode(node) {
-    this.setState({ currentCollectionId: node.id });
-    this.handleModalOptions(this.state.showModal);
+    this.setState({ currentCollection: node });
+    this.handleSelectModalOptions(this.state.selectModal);
   }
 
   getArrayFromLayout = (layout, availableTabs) => {
@@ -93,10 +103,40 @@ export default class GenericSegmentsTabs extends React.Component {
   }
 
   onClicked(node) {
+    this.setState({ currentCollection: node });
+    this.onClickNode(node);
+  }
+
+  handleModalOptions(showModal) {
+    this.setState({ showModal: !showModal });
+  }
+
+  handleSelectModalOptions(selectModal) {
+    this.setState({ selectModal: !selectModal });
+  }
+
+  selectCurrentTab(key) {
+    const tabTitles = {
+      0: 'sample',
+      1: 'reaction',
+      2: 'wellplate',
+      3: 'screen'
+    };
+    this.setState({ currentTab: tabTitles[key] });
+    return tabTitles[key];
+  }
+
+  clickedOnBack() {
+    this.handleModalOptions(this.state.showModal);
+    this.handleSelectModalOptions(this.state.selectModal);
+  }
+
+  handleSelectNav(eventKey) {
+    const currentTab = this.selectCurrentTab(eventKey);
     let layout = {};
-    if (!isEmpty(node.tabs_segment['sample'])){
-      layout = node.tabs_segment['sample'];
-      // layout = node.tabs_segment[this.state.currentTab];
+    const node = this.state.currentCollection;
+    if (!isEmpty(node.tabs_segment[currentTab])){
+      layout = node.tabs_segment[currentTab];
     } else {
       layout = {
         analyses: -1,
@@ -109,28 +149,14 @@ export default class GenericSegmentsTabs extends React.Component {
     }
     const availableTabs = ['properties', 'analyses', 'references', 'results', 'qc_curation'];
     const { visible, hidden } = this.getArrayFromLayout(layout, availableTabs);
-    layout = { visible: visible, hidden: hidden };
-    this.setState({ layout, currentNode: node });
-    this.onClickNode(node);
-  }
-
-  handleModalOptions(showModal) {
-    this.setState({ showModal: !showModal });
-  }
-
-  currentTab(key){
-    const tabTitles = {
-      0: 'sample',
-      1: 'reaction',
-      2: 'wellplate',
-      3: 'screen'
-    };
-    this.setState({ currentTab: tabTitles[key] });
+    layout = { visible, hidden };
+    this.setState({ layout });
+    this.clickedOnBack();
   }
 
   handleSave() {
     const { visible, hidden } = this.layout.state;
-    const { currentCollectionId } = this.state;
+    const { currentCollection } = this.state;
     const layout = {};
     visible.forEach((value, index) => {
       layout[value] = (index + 1);
@@ -138,32 +164,48 @@ export default class GenericSegmentsTabs extends React.Component {
     hidden.filter(val => val !== 'hidden').forEach((value, index) => {
       layout[value] = (-index - 1);
     });
-    // const layoutSegments = { [this.state.currentTab]: layout };
-    const layoutSegments = { sample: layout };
+    const layoutSegments = { [this.state.currentTab]: layout };
+    const currentCollectionId = currentCollection.id;
     const params = { layoutSegments, currentCollectionId };
     CollectionActions.createTabsSegment(params);
     this.handleModalOptions(this.state.showModal);
     this.state.tree.children.find(c => c.id === currentCollectionId).tabs_segment = layoutSegments;
   }
 
+  label(node) {
+    if (node.label === 'My Collections') {
+      return (
+        <div className="root-label">My Collections</div>
+      );
+    }
+    return (
+      <FormControl className="collection-label" type="text" value={node.label || ''} disabled/>
+    );
+  }
+
+  isActive(node) {
+    return node === this.state.active ? 'node is-active' : 'node';
+  }
+
   renderNode(node) {
     if (!Object.keys(node).length == 0) {
-      return (
-        <div>
-          <span className='node'>
-            <ListGroup>
-              <ListGroupItem action onClick={() => this.onClicked(node)} style={{ width: 280, height: 35 }}>
-                {node.label}
-              </ListGroupItem>
-            </ListGroup>
+      if (node.is_locked) {
+        return (
+          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+            {this.label(node)}
           </span>
-        </div>
+        );
+      }
+      return (
+        <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+          {this.label(node)}
+        </span>
       );
     }
   }
 
   render() {
-    const { showModal, tree, layout } = this.state;
+    const { showModal, tree, layout, selectModal } = this.state;
     const tabTitlesMap = {
       qc_curation: 'qc curation',
       computed_props: 'computed props',
@@ -173,7 +215,7 @@ export default class GenericSegmentsTabs extends React.Component {
     return (
       <div className="tree">
         <Tree
-          paddingLeft={20}
+          paddingLeft={30}
           tree={tree}
           isElementDetails
           onChange={this.handleChange.bind(this)}
@@ -181,7 +223,7 @@ export default class GenericSegmentsTabs extends React.Component {
         />
         <Modal animation show={showModal}>
           <Modal.Header>
-            <Modal.Title>Sample Tab Layout</Modal.Title>
+            <Modal.Title>{this.state.currentTab} tab layout</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div>
@@ -197,8 +239,29 @@ export default class GenericSegmentsTabs extends React.Component {
             </div>
           </Modal.Body>
           <Modal.Footer style={{ textAlign: 'left' }}>
+            <Button bsStyle="primary" onClick={this.clickedOnBack}>Back</Button>
             <Button bsStyle="warning" onClick={this.handleSave}>Save</Button>
             <Button bsStyle="primary" onClick={() => this.handleModalOptions(showModal)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+        <Modal animation show={selectModal}>
+          <Modal.Header>
+            <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div>
+              <div>
+                <Nav bsStyle="pills" stacked onSelect={this.handleSelectNav}>
+                  <NavItem eventKey={0}>Sample</NavItem>
+                  <NavItem eventKey={1}>Reaction</NavItem>
+                  <NavItem eventKey={2}>Wellplate</NavItem>
+                  <NavItem eventKey={3}>Screen</NavItem>
+                </Nav>
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer style={{ textAlign: 'left' }}>
+            <Button bsStyle="primary" onClick={() => this.handleSelectModalOptions(selectModal)}>Close</Button>
           </Modal.Footer>
         </Modal>
       </div>
