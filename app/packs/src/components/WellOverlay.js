@@ -51,10 +51,9 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
   }];
 
   return(
-    <div style={{width: 220, height: 850}}>
+    <div style={{width: 220, height: 750}}>
       {renderWellContent(well, removeSampleFromWell)}
       <div>
-        <hr style={{marginTop: 28, marginBottom: 10}}/>
         <Select
           id="label"
           name="label"
@@ -62,14 +61,14 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
           options={labels}
           value={well.label}
           onChange={e => handleWellLabel(e)}
+          style={{top: '2px', bottom: '2px'}}
         />
-        &nbsp;
         <FormGroup>
           <ControlLabel>Readout</ControlLabel>
           <FormControl componentClass="textarea"
             disabled={true}
             value={well.readout || ''}
-            style={{height: 80}}
+            style={{height: 60}}
           />
         </FormGroup>
         <FormGroup>
@@ -77,10 +76,10 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
           <FormControl componentClass="textarea"
             disabled={true}
             value={sampleImportedReadout(sample) || ''}
-            style={{height: 80}}
+            style={{height: 60}}
           />
         </FormGroup>
-        <FormGroup style={{ top: '50px' }} controlId="colorInput">
+        <FormGroup  controlId="colorInput">
           <Col componentClass={ControlLabel} sm={3}>
             Select Color
           </Col>
@@ -124,11 +123,11 @@ const title = (handleClose) => {
 const renderWellContent = (well, removeSampleFromWell) => {
   const {sample} = well;
   let svg, moleculeName, removeButton = '';
-  const namesStyle= {textAlign: 'center', marginTop: 5};
+  const namesStyle= {textAlign: 'center', marginTop: 2, marginLeft: -12, marginRight: -12};
   const svgContainerStyle = {
     borderRadius: '50%',
-    height: 200,
-    width: 200,
+    height: 190,
+    width: 190,
     border: '6px solid lightgray',
     textAlign: 'center',
     verticalAlign: 'middle',
