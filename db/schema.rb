@@ -92,6 +92,98 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "chemscanner_molecules", id: :serial, force: :cascade do |t|
+    t.integer "scheme_id", null: false
+    t.integer "external_id"
+    t.integer "clone_from"
+    t.string "mdl"
+    t.string "cano_smiles"
+    t.string "label"
+    t.string "abbreviation"
+    t.string "description"
+    t.jsonb "aliases", default: {}
+    t.jsonb "details", default: {}
+    t.jsonb "extended_metadata", default: {}
+    t.boolean "is_approved", default: false
+    t.integer "imported_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.string "inchistring"
+    t.string "inchikey"
+  end
+
+  create_table "chemscanner_reaction_steps", id: :serial, force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "reaction_external_id", null: false
+    t.integer "reagent_ids", default: [], array: true
+    t.string "reagent_smiles", default: [], array: true
+    t.integer "step_number", null: false
+    t.string "description"
+    t.string "temperature"
+    t.string "time"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "chemscanner_reactions", id: :serial, force: :cascade do |t|
+    t.integer "scheme_id", null: false
+    t.integer "external_id", null: false
+    t.integer "clone_from"
+    t.string "description"
+    t.string "temperature"
+    t.string "time"
+    t.string "status"
+    t.float "yield"
+    t.jsonb "details", default: {}
+    t.jsonb "extended_metadata", default: {}
+    t.boolean "is_approved", default: false
+    t.integer "imported_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "chemscanner_reactions_molecules", id: :serial, force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "molecule_id", null: false
+    t.string "type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "chemscanner_schemes", id: :serial, force: :cascade do |t|
+    t.integer "source_id", null: false
+    t.boolean "is_approved", default: false
+    t.jsonb "extended_metadata", default: {}
+    t.integer "index", default: 0
+    t.string "image_data", default: ""
+    t.string "version", default: ""
+    t.integer "created_by", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "chemscanner_source_hierarchies", id: false, force: :cascade do |t|
+    t.integer "ancestor_id", null: false
+    t.integer "descendant_id", null: false
+    t.integer "generations", null: false
+    t.index ["ancestor_id", "descendant_id", "generations"], name: "chemscanner_source_anc_desc_idx", unique: true
+    t.index ["descendant_id"], name: "chemscanner_source_desc_idx"
+  end
+
+  create_table "chemscanner_sources", id: :serial, force: :cascade do |t|
+    t.integer "parent_id"
+    t.integer "file_id", null: false
+    t.jsonb "extended_metadata", default: {}
+    t.integer "created_by", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
     t.string "source"
     t.integer "source_id"
@@ -676,16 +768,16 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
-    t.string "searchable_type"
     t.integer "searchable_id"
+    t.string "searchable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
   create_table "predictions", id: :serial, force: :cascade do |t|
-    t.string "predictable_type"
     t.integer "predictable_id"
+    t.string "predictable_type"
     t.jsonb "decision", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -790,7 +882,7 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.datetime "updated_at", null: false
     t.string "template", default: "standard"
     t.text "mol_serials", default: "--- []\n"
-    t.text "si_reaction_settings", default: "---\nName: true\nCAS: true\nFormula: true\nSmiles: true\nInCHI: true\nMolecular Mass: true\nExact Mass: true\nEA: true\n"
+    t.text "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
     t.text "prd_atts", default: "--- []\n"
     t.integer "report_templates_id"
     t.index ["author_id"], name: "index_reports_on_author_id"
@@ -1037,11 +1129,11 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
   create_table "text_templates", id: :serial, force: :cascade do |t|
     t.string "type"
     t.integer "user_id", null: false
-    t.string "name"
     t.jsonb "data", default: {}
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name"
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"

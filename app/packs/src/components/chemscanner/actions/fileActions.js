@@ -1,71 +1,57 @@
-/* eslint-disable no-prototype-builtins */
-
-import { Map, List, fromJS } from 'immutable';
+import { fromJS } from 'immutable';
 import uuid from 'uuid';
 
-import * as types from '../actions/ActionTypes';
+import * as types from './ActionTypes';
 import { CALL_API } from '../middleware/api';
 
-const scanFileNormalizer = (res, store, type) => {
-  const { embedded } = res;
-  if (!embedded || embedded.constructor !== Array) return res;
+import { isPngImage, isSvgImage } from '../utils';
 
-  let files = List();
-  let scannedItems = List();
+export const scanFileNormalizer = (res, store) => {
+  const { schemes } = res;
+  if (!schemes) return fromJS(res);
+
   const cddInstance = store.getState().get('chemdrawInstance');
-  const display = type === types.SCAN_FILE_FOR_MOLECULES ? 'molecules' : 'reactions';
+  if (!cddInstance) return fromJS(res);
 
-  embedded.forEach((file) => {
-    let fileInfo = Map({ name: file.name, uid: file.uid });
-    let cds = List();
-    let fileItems = List();
-    const fileUid = file.uid;
+  schemes.filter(s => s.imageData).forEach((scheme) => {
+    const { imageData } = scheme;
+    const isPng = isPngImage(imageData);
+    const isSvg = isSvgImage(imageData);
 
-    (file.cds || []).forEach((cd) => {
-      let cdItems = List();
+    if (isPng || isSvg) {
+      const type = isPng ? 'image/png' : 'image/svg+xml';
 
-      cd.info.forEach((item) => {
-        let immuItem = fromJS(item);
-        immuItem = immuItem.set('fileUid', fileUid);
-        immuItem = immuItem.set('cdUid', cd.cdUid);
+      const blob = new Blob([imageData], { type });
+      /* eslint-disable-next-line no-param-reassign */
+      scheme.imageData = window.URL.createObjectURL(blob);
 
-        cdItems = cdItems.push(immuItem);
-      });
+      /* eslint-disable-next-line no-param-reassign */
+      scheme.isSaved = true;
 
-      const cdInfo = { cdUid: cd.cdUid };
-      cdInfo[display] = cdItems.map(item => item.get('id'));
-      fileItems = fileItems.concat(cdItems);
+      return;
+    }
 
-      if (cd.hasOwnProperty('svg')) cdInfo.svg = cd.svg;
-      if (cddInstance) {
-        if (cd.hasOwnProperty('b64cdx')) {
-          cddInstance.loadB64CDX(cd.b64cdx);
-          const b64png = cddInstance.g.instanceHub.chemDraw.documentToPreviewPNG();
-          cdInfo.b64png = `data:image/png;base64,${b64png}`;
-          cddInstance.clear();
-        }
-        if (cd.hasOwnProperty('cdxml')) {
-          cddInstance.loadCDXML(cd.cdxml);
-          const b64png = cddInstance.g.instanceHub.chemDraw.documentToPreviewPNG();
-          cdInfo.b64png = `data:image/png;base64,${b64png}`;
-          cddInstance.clear();
-        }
-      }
+    const cdxmlRegex = new RegExp('<?xml.*');
 
-      cds = cds.push(Map(cdInfo));
-    });
+    if (cdxmlRegex.test(scheme.imageData)) {
+      cddInstance.loadCDXML(imageData);
+    } else {
+      cddInstance.loadB64CDX(imageData);
+    }
 
-    fileInfo = fileInfo.set('cds', cds);
-    fileInfo = fileInfo.set('display', display);
+    const b64png = cddInstance.g.instanceHub.chemDraw.documentToPreviewPNG();
+    const pngb64 = `data:image/png;base64,${b64png}`;
+    cddInstance.clear();
 
-    files = files.push(fileInfo);
-    scannedItems = scannedItems.concat(fileItems);
+    /* eslint-disable-next-line no-param-reassign */
+    scheme.pictureData = pngb64;
+
+    const blob = new Blob([pngb64], { type: 'image/png' });
+    /* eslint-disable-next-line no-param-reassign */
+    scheme.imageData = window.URL.createObjectURL(blob);
   });
 
-  return Map({
-    files,
-    [display]: scannedItems
-  });
+  return fromJS(res);
 };
 
 export const scanFile = (files, getMol) => (dispatch) => {
@@ -77,7 +63,7 @@ export const scanFile = (files, getMol) => (dispatch) => {
   return dispatch({
     type: actionType,
     [CALL_API]: {
-      endpoint: '/api/v1/chemscanner/embedded/upload',
+      endpoint: '/api/v1/public_chemscanner/upload',
       normalizer: scanFileNormalizer,
       options: {
         credentials: 'same-origin',
@@ -88,4 +74,40 @@ export const scanFile = (files, getMol) => (dispatch) => {
   });
 };
 
-export const removeFile = fileUid => ({ type: types.REMOVE_FILE, fileUid });
+export const updateReagents = (reactionId, updateInfo) => dispatch => (
+  dispatch({
+    type: types.UPDATE_REAGENTS_SMILES,
+    [CALL_API]: {
+      endpoint: '/api/v1/chemscanner/reagent_smiles',
+      options: {
+        credentials: 'same-origin',
+        method: 'post',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reactionId, updateInfo })
+      }
+    },
+  })
+);
+
+export const saveImage = imageList => dispatch => (
+  dispatch({
+    type: types.SAVE_PNG,
+    [CALL_API]: {
+      endpoint: '/api/v1/chemscanner_storage/save_png',
+      options: {
+        credentials: 'same-origin',
+        method: 'post',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ image_list: imageList })
+      }
+    },
+  })
+);
+
+export const removeFile = fileUid => ({ type: types.HIDE_FILE, fileUid });

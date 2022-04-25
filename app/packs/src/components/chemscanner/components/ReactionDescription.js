@@ -4,21 +4,28 @@ import PropTypes from 'prop-types';
 import { Label } from 'react-bootstrap';
 
 import MoleculeDescription from './MoleculeDescription';
+import EditableText from './EditableText';
 
 export default class ReactionDescription extends React.Component {
   constructor(props) {
     super(props);
 
-    this.toggleResin = this.toggleResin.bind(this);
+    this.updateReactionField = this.updateReactionField.bind(this);
+    this.updateMoleculeField = this.updateMoleculeField.bind(this);
   }
 
-  toggleResin(molId, atomId) {
-    const { reaction, toggleResin } = this.props;
-    toggleResin(reaction.get('id'), molId, atomId);
+  updateReactionField(id, field, value) {
+    this.props.updateItemField(id, 'reactions', field, value);
+  }
+
+  updateMoleculeField(id, field, value) {
+    this.props.updateItemField(id, 'molecules', field, value);
   }
 
   render() {
-    const { reaction } = this.props;
+    const {
+      reaction, reactants, reagents, solvents, products, toggleAliasPolymer
+    } = this.props;
 
     const rDesc = {
       description: reaction.get('description'),
@@ -47,11 +54,11 @@ export default class ReactionDescription extends React.Component {
     const statusLabel = <Label bsStyle={statusClass}>{status}</Label>;
 
     const steps = reaction.get('steps').toJS();
-    const rId = reaction.get('id');
+    const rId = reaction.get('externalId');
 
     return (
-      <div className="scanned-reaction-desc">
-        <div>
+      <React.Fragment>
+        <div style={{ maxWidth: '30%' }}>
           <Label>reaction</Label>
           <ul>
             <li key="scanned-reaction-status">
@@ -60,15 +67,58 @@ export default class ReactionDescription extends React.Component {
             </li>
             {Object.keys(rDesc).map(k => (
               <li key={k}>
-                <b>{`${k}: `}</b>
-                {rDesc[k]}
+                <EditableText
+                  field={k}
+                  value={rDesc[k].toString()}
+                  id={reaction.get('id')}
+                  onFinishUpdate={this.updateReactionField}
+                />
               </li>
             ))}
           </ul>
         </div>
+        {reactants.map((m, idx) => (
+          <MoleculeDescription
+            key={`reactant_${m.get('externalId')}`}
+            label={`Reactant ${idx + 1}`}
+            molecule={m}
+            toggleAliasPolymer={toggleAliasPolymer}
+            updateMoleculeField={this.updateMoleculeField}
+          />
+        ))}
+        {reagents.filter(m => m.get('externalId')).map((m, idx) => (
+          <MoleculeDescription
+            key={`reagent_${m.get('externalId')}`}
+            label={`Reagent ${idx + 1}`}
+            molecule={m}
+            toggleAliasPolymer={toggleAliasPolymer}
+            updateMoleculeField={this.updateMoleculeField}
+          />
+        ))}
+        {solvents.filter(m => m.get('externalId')).map((m, idx) => (
+          <MoleculeDescription
+            key={`solvent_${m.get('externalId')}`}
+            label={`Solvent ${idx + 1}`}
+            molecule={m}
+            toggleAliasPolymer={toggleAliasPolymer}
+            updateMoleculeField={this.updateMoleculeField}
+          />
+        ))}
+        {products.map((m, idx) => (
+          <MoleculeDescription
+            key={`product_${m.get('externalId')}`}
+            label={`Product ${idx + 1}`}
+            molecule={m}
+            toggleAliasPolymer={toggleAliasPolymer}
+            updateMoleculeField={this.updateMoleculeField}
+          />
+        ))}
         {steps.map(step => (
-          <div key={`reaction-${rId}-${step.number}`}>
-            <Label bsStyle="info">step {step.number}</Label>
+          <div
+            key={`reaction-${rId}-${step.stepNumber}`}
+            style={{ maxWidth: '40%' }}
+          >
+            <Label bsStyle="info">step {step.stepNumber}</Label>
             <ul>
               {
                 ['description', 'temperature', 'time'].map((prop) => {
@@ -78,8 +128,12 @@ export default class ReactionDescription extends React.Component {
 
                   return (
                     <li key={key}>
-                      <b>{prop}: </b>
-                      {val}
+                      <EditableText
+                        field={prop}
+                        value={val}
+                        id={reaction.get('id')}
+                        onFinishUpdate={this.updateReactionField}
+                      />
                     </li>
                   );
                 })
@@ -87,30 +141,25 @@ export default class ReactionDescription extends React.Component {
               <li key={`reaction-${rId}-step-${step.number}-reagents`}>
                 <b>reagents: </b>
                 <ul>
-                  {step.reagents.map(x => <li key={`${rId}-${step.number}-${x}`}>{x}</li>)}
+                  {step.reagentSmiles.map(x => (
+                    <li key={`${rId}-${step.number}-${x}`}>{x}</li>
+                  ))}
                 </ul>
               </li>
             </ul>
           </div>
         ))}
-        {['reactants', 'reagents', 'products'].reduce((arr, group) => {
-          const groupMol = reaction.get(group);
-          return arr.concat(groupMol.map((m, idx) => (
-            <MoleculeDescription
-              key={m.get('id')}
-              label={`${group.slice(0, -1)} ${idx + 1}`}
-              molecule={m}
-              toggleResin={this.toggleResin}
-            />
-          )));
-        }, [])}
-      </div>
+      </React.Fragment>
     );
   }
 }
 
 ReactionDescription.propTypes = {
   reaction: PropTypes.instanceOf(Immutable.Map).isRequired,
-  toggleResin: PropTypes.func.isRequired,
+  reactants: PropTypes.instanceOf(Immutable.List).isRequired,
+  reagents: PropTypes.instanceOf(Immutable.List).isRequired,
+  solvents: PropTypes.instanceOf(Immutable.List).isRequired,
+  products: PropTypes.instanceOf(Immutable.List).isRequired,
+  toggleAliasPolymer: PropTypes.func.isRequired,
+  updateItemField: PropTypes.func.isRequired,
 };
-

@@ -1,0 +1,12 @@
+# NOTE: if using TCP as transport, use 127.0.0.1 instead of 'localhost'
+# http://api.zeromq.org/2-1:zmq-tcp - address must be numeric representation
+
+development:
+  :transport: 'ipc'
+  :endpoint: '/tmp/node_ketcher'
+  :ketcher: 'http://localhost:3000/ketcher'
+
+production:
+  :transport: 'ipc'
+  :endpoint: '/tmp/node_ketcher'
+  :ketcher: 'http://localhost:3000/ketcher'

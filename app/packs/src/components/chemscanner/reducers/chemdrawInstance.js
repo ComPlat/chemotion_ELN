@@ -1,11 +1,8 @@
 import * as types from '../actions/ActionTypes';
+import { createReducer } from '../utils';
 
-const chemdrawInstance = (state = null, action) => {
-  if (action.type === types.SET_CDD_INSTANCE) {
-    return action.cdd;
-  }
-
-  return state;
-};
+const chemdrawInstance = createReducer(null, {
+  [types.SET_CDD_INSTANCE]: (state, action) => action.cdd,
+});
 
 export default chemdrawInstance;
