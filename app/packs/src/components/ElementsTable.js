@@ -33,7 +33,8 @@ export default class ElementsTable extends React.Component {
       page: null,
       pages: null,
       perPage: null,
-      totalElements: null
+      totalElements: null,
+      beta: {}
     };
 
     this.onChange = this.onChange.bind(this);
@@ -99,7 +100,8 @@ export default class ElementsTable extends React.Component {
         },
         productOnly,
         inlineEdit,
-        advancedSearch: isAdvS
+        advancedSearch: isAdvS,
+        beta: state.beta || {}
       });
     }
   }
@@ -312,7 +314,11 @@ export default class ElementsTable extends React.Component {
     const dateIcon = <i className={`fa ${btnIcon}`} />;
 
     let inlineEditSwitch = null;
-    if (type != 'research_plan') {
+
+    const beta = this.state.beta
+    const showInlineEditSwitch = beta.inlineEdit && beta.inlineEdit.includes(type) 
+    
+    if (showInlineEditSwitch) {
       inlineEditSwitch = (
         <div
           style={{

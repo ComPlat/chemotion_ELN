@@ -1,0 +1,10 @@
+development:
+  inline-edit:
+    - sample
+    - reaction
+    - wellplate
+    - screen
+
+test:
+
+production:
