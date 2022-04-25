@@ -7,48 +7,31 @@ class GraphqlController < ApplicationController
   # but you'll have to authenticate your user separately
   protect_from_forgery except: :execute
 
+  include ExceptionHandler
+
   def execute
-    variables = prepare_variables(params[:variables])
+    variables = ensure_hash(params[:variables])
     query = params[:query]
     operation_name = params[:operationName]
     context = {
-      # Query context goes here, for example:
-      # current_user: current_user,
+      current_user: current_user
     }
     result = ChemotionSchema.execute(query, variables: variables, context: context, operation_name: operation_name)
     render json: result
-  rescue StandardError => e
-    raise e unless Rails.env.development?
-
-    handle_error_in_development(e)
   end
 
   private
 
-  # Handle variables in form data, JSON body, or a blank value
-  def prepare_variables(variables_param)
-    case variables_param
+  def ensure_hash(ambiguous_param)
+    return {} if ambiguous_param.nil?
+
+    case ambiguous_param
     when String
-      if variables_param.present?
-        JSON.parse(variables_param) || {}
-      else
-        {}
-      end
-    when Hash
-      variables_param
-    when ActionController::Parameters
-      variables_param.to_unsafe_hash # GraphQL-Ruby will validate name and type of incoming variables.
-    when nil
-      {}
+      ambiguous_param.present? ? ensure_hash(JSON.parse(ambiguous_param)) : {}
+    when Hash, ActionController::Parameters
+      ambiguous_param
     else
-      raise ArgumentError, "Unexpected parameter: #{variables_param}"
+      raise ArgumentError, "Unexpected parameter: #{ambiguous_param}"
     end
-  end
-
-  def handle_error_in_development(error)
-    logger.error error.message
-    logger.error error.backtrace.join("\n")
-
-    render json: { errors: [{ message: error.message, backtrace: error.backtrace }], data: {} }, status: 500
   end
 end
