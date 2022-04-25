@@ -1291,10 +1291,10 @@
     regenerator-transform "^0.13.3"
     reselect "^4.0.0"
 
-"@complat/react-spectra-editor@0.10.14-alpha.0":
-  version "0.10.14-alpha.0"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-0.10.14-alpha.0.tgz#2ff63af32fd7d506bd03b14ff3bf7110fd76ac4c"
-  integrity sha512-kpkswaWDPpRpbixp4kentrChtSnKIjOrD5VsFfCFqj9xuEQSg4yfVN1lf8+8/tSS61S2nc3O3LIMw5xaY+HirA==
+"@complat/react-spectra-editor@0.10.14-beta.0":
+  version "0.10.14-beta.0"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-0.10.14-beta.0.tgz#3a618f300cd05f76c0aa4552c8e94f9ffa4f5979"
+  integrity sha512-3exmwyg9Td29WfUoESveRi6nZPlsT/BpATQKydZ5mtCjLQCrXv24MQjIlDP0ETMIXMXp1yNygDn2SDvlOUa6Tg==
   dependencies:
     "@material-ui/core" "^3.9.3"
     "@material-ui/icons" "^3.0.2"
