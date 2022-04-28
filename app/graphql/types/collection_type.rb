@@ -12,7 +12,6 @@ module Types
     field :element_detail_level, Int, description: 'Element detail level'
     field :screen_detail_level, Int, description: 'Screen detail level'
     field :position, Int, description: 'Position'
-    field :deleted_at, GraphQL::Types::ISO8601DateTime, description: 'DeletedAt of object'
     field :is_locked, Boolean, description: 'Collection is locked?'
     field :is_synchronized, Boolean, null: false, description: 'Collection is locked?'
   end

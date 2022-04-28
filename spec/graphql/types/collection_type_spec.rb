@@ -23,7 +23,6 @@ RSpec.describe Types::CollectionType do
 
   it { is_expected.to define_gql_field(:position).with_type(GraphQL::Types::Int) }
   it { is_expected.to define_gql_field(:is_locked).with_type(GraphQL::Types::Boolean) }
-  it { is_expected.to define_gql_field(:deleted_at).with_type(GraphQL::Types::ISO8601DateTime) }
 
   it { is_expected.to define_gql_field(:is_synchronized).with_type(GraphQL::Types::Boolean) }
   it { is_expected.not_to may_return_null(:is_synchronized) }
