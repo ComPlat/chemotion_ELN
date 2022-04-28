@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# :nocov:
 module Types
   module BaseInterface
     include GraphQL::Schema::Interface
@@ -9,3 +10,4 @@ module Types
     field_class Types::BaseField
   end
 end
+# :nocov:

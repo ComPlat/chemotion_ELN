@@ -2,7 +2,7 @@
 
 module GraphqlCommon
   def ready?(**_args)
-    raise Errors::AuthenticationError, 'Unauthorized' if current_user.blank?
+    raise Errors::AuthenticationError, 'User is unauthorized' if current_user.blank?
 
     true
   end

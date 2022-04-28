@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# :nocov:
 module Types
   module NodeType
     include Types::BaseInterface
@@ -7,3 +8,4 @@ module Types
     include GraphQL::Types::Relay::NodeBehaviors
   end
 end
+# :nocov:

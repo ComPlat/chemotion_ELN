@@ -34,4 +34,23 @@ class GraphqlController < ApplicationController
       raise ArgumentError, "Unexpected parameter: #{ambiguous_param}"
     end
   end
+
+  def current_user
+    return if current_token.blank?
+
+    @current_user ||= begin
+      decoded_token = JsonWebToken.decode(current_token)
+      user_id = decoded_token[:user_id]
+
+      User.find_by!(id: user_id)
+    end
+  end
+
+  def current_token
+    request.headers['Authorization'].split.last if token_in_header?
+  end
+
+  def token_in_header?
+    request.headers['Authorization'].present?
+  end
 end
