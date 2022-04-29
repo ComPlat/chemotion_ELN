@@ -41,4 +41,5 @@ RSpec.describe Types::SampleType do
   it { is_expected.to define_gql_field(:molecular_mass).with_type(GraphQL::Types::Float) }
   it { is_expected.to define_gql_field(:sum_formula).with_type(GraphQL::Types::String) }
   it { is_expected.to define_gql_field(:solvent).with_type(GraphQL::Types::JSON) }
+  it { is_expected.to define_gql_field(:molecule).with_type(Types::MoleculeType) }
 end

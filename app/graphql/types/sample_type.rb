@@ -32,5 +32,6 @@ module Types
     field :molecular_mass, Float, description: 'Molecular mass of sample'
     field :sum_formula, String, description: 'Sum formula'
     field :solvent, GraphQL::Types::JSON, description: 'Solvent'
+    field :molecule, Types::MoleculeType, description: 'Molecule'
   end
 end
