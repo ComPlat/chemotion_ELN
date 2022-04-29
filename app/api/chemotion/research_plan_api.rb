@@ -11,16 +11,35 @@ module Chemotion
         requires :imageId, type: String, desc: 'The id of the original image in uuid format'        
       end
       get do        
-         files=Dir.glob("public/images/research_plans/"+params[:imageId]+"_annotation*");
+       
+        binding.pry
+        attachmentId=params[:imageId];
+        attachment=Attachment.find_by(key: attachmentId)
+
+     
+        datafolder=Rails.configuration.storage.stores[attachment.storage.to_sym][:data_folder];
+        datafolder=datafolder+"/"+attachment.bucket+"/";
+        
+        files=Dir.glob(datafolder+params[:imageId]+"_annotation*");
+        
          version=0;
+         latestAnnotation="";
          if files.length>0
           files=files.sort_by{ |name| [name[/\d+/].to_i, name] };
           latestAnnotation=files[files.length-1];
           version=latestAnnotation.split(/[.\s]/)[latestAnnotation.split(/[.\s]/).length-2];
           version=version.split("v")[version.split("v").length-1]
          end
-         {version:version}
+       
+         f=File.open(latestAnnotation);    
+         annotationContent=  f.read;
+         {version:version,
+          uri_to_annotation:latestAnnotation,
+          annotation:annotationContent
+        }
       end
+
+      
 
 
       desc 'Update annotation of image'
