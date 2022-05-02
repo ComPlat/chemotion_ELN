@@ -117,11 +117,12 @@ module Chemotion
     #
     
     # tmp assets fix
-    spritepng = 'sprite.png'
-    sprite_file = Rails.public_path.join(spritepng)
-    FileUtils.rm(sprite_file) if File.exist?(sprite_file)
+    sprite_file = Rails.public_path.join('sprite.png')
     sprite_source = Rails.public_path.join('assets', 'ketcherails','sprite*.png' )
     new_sprite = Dir.glob(sprite_source).max_by{ |f| File.mtime(f)}
-    FileUtils.ln_s(new_sprite, sprite_file) if new_sprite.present?
+    if new_sprite.present?
+      FileUtils.rm(sprite_file) if File.exist?(sprite_file)
+      FileUtils.ln_s(new_sprite, sprite_file) 
+    end
   end
 end
