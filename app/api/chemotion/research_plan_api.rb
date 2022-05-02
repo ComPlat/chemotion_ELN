@@ -6,22 +6,23 @@ module Chemotion
     helpers ContainerHelpers
 
     namespace :annotation do
-      desc 'Get the latest version of an annotation of an image'
+      desc 'Get the latest version of an annotation of an attachment'
       params do        
-        requires :imageId, type: String, desc: 'The id of the original image in uuid format'        
+        requires :imageId, type: String, desc: 'The id of the attachment in uuid format'        
       end
       get do        
        
         binding.pry
         attachmentId=params[:imageId];
         attachment=Attachment.find_by(key: attachmentId)
+        if attachment!=nil
+          datafolder=Rails.configuration.storage.stores[attachment.storage.to_sym][:data_folder];
+          datafolder=datafolder+"/"+attachment.bucket+"/";          
+          files=Dir.glob(datafolder+params[:imageId]+"_annotation*");
+        else
+          files=Dir.glob("public/images/research_plans/"+attachmentId+"_annotation_*");               
+        end
 
-     
-        datafolder=Rails.configuration.storage.stores[attachment.storage.to_sym][:data_folder];
-        datafolder=datafolder+"/"+attachment.bucket+"/";
-        
-        files=Dir.glob(datafolder+params[:imageId]+"_annotation*");
-        
          version=0;
          latestAnnotation="";
          if files.length>0
