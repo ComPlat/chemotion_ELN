@@ -8,7 +8,6 @@ import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 import uniqueId from 'react-html-id';
 import CustomTextEditor from '../common/CustomTextEditor';
-import CustomHeader from './CustomHeader';
 
 // regexp to parse tap separated paste from the clipboard
 const defaultParsePaste = str => (
@@ -393,12 +392,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       editable: true,
       cellEditor: 'agTextCellEditor',
       cellClass: 'cell-figure',
-      headerComponentFramework: CustomHeader,
-      headerComponentParams: {
-        // methods to call within CustomHeader to rename column name
-        onHandleRenameClick: this.handleRenameClick.bind(this),
-        onHandleColumnModalShow: this.handleColumnNameModalShow.bind(this)
-      }
     };
 
     return (

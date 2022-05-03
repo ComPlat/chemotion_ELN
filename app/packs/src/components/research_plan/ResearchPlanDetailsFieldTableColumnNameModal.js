@@ -69,7 +69,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
         <Modal.Body >
           <div>
             <FormGroup validationState={validationState}>
-              <ControlLabel>Column name</ControlLabel>
+              <ControlLabel>Colum name</ControlLabel>
               <FormControl
                 type="text"
                 value={columnNameValue}
