@@ -483,9 +483,7 @@ export default class CollectionTree extends React.Component {
   subtrees(roots, label, isRemote, visible = true) {
 
     const subtrees = roots && roots.map((root, index) => {
-    //   return <CollectionSubtree root={root} key={index} isRemote={isRemote}/>
-    // })
-      return (this.collectionSubTree(root, label, isRemote, visible));
+      return <CollectionSubtree root={root} key={index} isRemote={isRemote}/>
     });
 
     let subtreesVisible = visible ? "" : "none"
@@ -503,6 +501,7 @@ export default class CollectionTree extends React.Component {
     return (
       <div className="take-ownership-btn">
         <Button id="collection-management-button" bsSize="xsmall" bsStyle="danger"
+          title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
           onClick={() => this.handleCollectionManagementToggle()}>
           <i className="fa fa-cog"></i>
         </Button>

@@ -1,14 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import {
-  Button,
-  FormControl,
-  ListGroup,
-  ListGroupItem,
-  Modal,
-  Nav,
-  NavItem,
-} from 'react-bootstrap';
+import { Button, FormControl, Modal, Nav, NavItem } from 'react-bootstrap';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
 import Immutable from 'immutable';
@@ -225,17 +217,19 @@ export default class GenericSegmentsTabs extends React.Component {
           <Modal.Header>
             <Modal.Title>{this.state.currentTab} tab layout</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
-            <div>
-              <div>
-                <TabLayoutContainer
-                  visible={layout.visible}
-                  hidden={layout.hidden}
-                  tabTitles={tabTitlesMap}
-                  isElementDetails
-                  ref={(n) => { this.layout = n; }}
-                />
-              </div>
+          <Modal.Body style={{ paddingBottom: '2px' }}>
+            <div style={{ paddingBottom: '2px' }}>
+              <TabLayoutContainer
+                visible={layout.visible}
+                hidden={layout.hidden}
+                tabTitles={tabTitlesMap}
+                isElementDetails
+                ref={(n) => { this.layout = n; }}
+              />
+            </div>
+            <hr />
+            <div className="alert alert-info" role="alert">
+              <p style={{ fontSize: '10px' }}>Drag and drop to select the order of segment tab layout.</p>
             </div>
           </Modal.Body>
           <Modal.Footer style={{ textAlign: 'left' }}>
@@ -248,16 +242,16 @@ export default class GenericSegmentsTabs extends React.Component {
           <Modal.Header>
             <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
-            <div>
-              <div>
-                <Nav bsStyle="pills" stacked onSelect={this.handleSelectNav}>
-                  <NavItem eventKey={0}>Sample</NavItem>
-                  <NavItem eventKey={1}>Reaction</NavItem>
-                  <NavItem eventKey={2}>Wellplate</NavItem>
-                  <NavItem eventKey={3}>Screen</NavItem>
-                </Nav>
-              </div>
+          <Modal.Body style={{ paddingBottom: '2px' }}>
+            <Nav bsStyle="pills" stacked onSelect={this.handleSelectNav}>
+              <NavItem eventKey={0}>Sample</NavItem>
+              <NavItem eventKey={1}>Reaction</NavItem>
+              <NavItem eventKey={2}>Wellplate</NavItem>
+              <NavItem eventKey={3}>Screen</NavItem>
+            </Nav>
+            <hr />
+            <div className="alert alert-info" role="alert">
+              <p style={{ fontSize: '10.5px' }}>For the selected collection you can adjust the visibility of segment tabs and their order for each of the above items.</p>
             </div>
           </Modal.Body>
           <Modal.Footer style={{ textAlign: 'left' }}>
