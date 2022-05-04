@@ -1,3 +1,5 @@
+require 'moneta'
+
 module Chemotion
   class SearchAPI < Grape::API
     include Grape::Kaminari
@@ -36,6 +38,23 @@ module Chemotion
         optional :molecule_sort, type: Boolean, default: false
         optional :per_page, type: Integer, default: 7
         optional :is_public, type: Boolean, default: false
+      end
+
+      def delete_user_cache
+        @cache.delete(current_user_id)
+      end
+
+      def check_request_forbidden
+        @cache = Moneta::Adapters::Memcached.new
+        error!('403 Unauthorized', 403) if user_cache
+      end
+
+      def set_current_user
+        @cache.store(current_user_id, 'value')
+      end
+
+      def user_cache
+        return true if @cache[current_user_id] === 'value'
       end
 
       def page_size
@@ -312,6 +331,7 @@ module Chemotion
             ids: element_list
           }
         end
+        delete_user_cache
         result
       end
 
@@ -472,6 +492,8 @@ module Chemotion
 
         after_validation do
           set_var
+          check_request_forbidden
+          set_current_user
         end
 
         post do
@@ -495,6 +517,8 @@ module Chemotion
 
         after_validation do
           set_var
+          check_request_forbidden
+          set_current_user
         end
 
         post do
@@ -518,6 +542,8 @@ module Chemotion
 
         after_validation do
           set_var
+          check_request_forbidden
+          set_current_user
         end
 
         post do
@@ -544,6 +570,8 @@ module Chemotion
 
         after_validation do
           set_var
+          check_request_forbidden
+          set_current_user
         end
 
         post do
@@ -578,6 +606,8 @@ module Chemotion
 
         after_validation do
           set_var
+          check_request_forbidden
+          set_current_user
         end
 
         post do
@@ -605,6 +635,8 @@ module Chemotion
 
         after_validation do
           set_var
+          check_request_forbidden
+          set_current_user
         end
 
         post do
