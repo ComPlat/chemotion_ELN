@@ -271,6 +271,11 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForLoadingChange(changeEvent)
         );
         break;
+      case 'coefficientChanged':
+        this.onReactionChange(
+          this.updatedReactionForCoefficientChange(changeEvent)
+        );
+        break;
       case 'amountTypeChanged':
         this.onReactionChange(
           this.updatedReactionForAmountTypeChange(changeEvent)
@@ -397,6 +402,16 @@ export default class ReactionDetailsScheme extends Component {
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
+  updatedReactionForCoefficientChange(changeEvent) {
+    const { sampleID, coefficient } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
+
+    updatedSample.coefficient = coefficient;
+    this.updatedReactionForEquivalentChange(changeEvent);
+
+    return this.updatedReactionWithSample(this.updatedSamplesForCoefficientChange.bind(this), updatedSample);
+  }
+
   updatedReactionForEquivalentChange(changeEvent) {
     const { sampleID, equivalent } = changeEvent;
     const updatedSample = this.props.reaction.sampleById(sampleID);
@@ -447,7 +462,9 @@ export default class ReactionDetailsScheme extends Component {
     // mass check apply to 'polymers' only
     if (!updatedS.contains_residues) {
       mFull = referenceM.amount_mol * mwb;
-      if (updatedS.amount_g > mFull) {
+      const maxTheoAmount = referenceM.amount_mol * (updatedS.coefficient / referenceM.coefficient)* mwb;
+      // updated condition according to the new theoritical yield value(maxTheoAmount replaced mFull in if condition below)- till requirements checked again by another chemitst (Adam - 25/08/2021)
+      if (updatedS.amount_g > maxTheoAmount) {
         errorMsg = 'Experimental mass value is more than possible\n' +
         'by 100% conversion! Please check your data.';
       }
@@ -524,10 +541,11 @@ export default class ReactionDetailsScheme extends Component {
                 this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
                 return sample;
               }
-              sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+              sample.maxAmount = referenceMaterial.amount_mol * (sample.coefficient / referenceMaterial.coefficient) * sample.molecule_molecular_weight;
+              sample.equivalent = sample.amount_g / sample.maxAmount;
             } else {
               if (!lockEquivColumn) {
-                sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+                sample.equivalent = sample.amount_g / sample.maxAmount;
               } else {
                 if (referenceMaterial && referenceMaterial.amount_value) {
                   sample.setAmountAndNormalizeToGram({
@@ -553,7 +571,8 @@ export default class ReactionDetailsScheme extends Component {
         } else {
           if (!lockEquivColumn || materialGroup === 'products') {
             // calculate equivalent, don't touch real amount
-            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+            sample.maxAmount = referenceMaterial.amount_mol * (sample.coefficient / referenceMaterial.coefficient) * sample.molecule_molecular_weight;
+            sample.equivalent = sample.amount_g / sample.maxAmount;
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
             if (referenceMaterial && referenceMaterial.amount_value) {
@@ -565,30 +584,38 @@ export default class ReactionDetailsScheme extends Component {
           }
         }
 
-        if (materialGroup === 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
+        if (materialGroup === 'starting_materials') {
+          // eslint-disable-next-line no-param-reassign
+          sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+        } else if (materialGroup === 'products' && (sample.equivalent < 0.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
+          // if (materialGroup === 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
+          // eslint-disable-next-line no-param-reassign
           sample.equivalent = 1.0;
-        }
-        if (materialGroup === 'products' && (sample.amount_mol === 0 || referenceMaterial.amount_mol === 0)) {
+        } else if (materialGroup === 'products' && (sample.amount_mol === 0 || referenceMaterial.amount_mol === 0)) {
+          // eslint-disable-next-line no-param-reassign
           sample.equivalent = 0.0;
+        } else if (materialGroup === 'products' && sample.amount_g > sample.maxAmount) {
+          // eslint-disable-next-line no-param-reassign
+          sample.equivalent = 1;
+          const errorMsg = 'Experimental mass value is more than possible\n' +
+          'by 100% conversion! Please check your data.';
+          NotificationActions.add({
+            message: errorMsg,
+            level: 'error',
+          });
         }
       }
 
       if (materialGroup === 'products') {
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
-          sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
-        }
-      }
-
-      if (materialGroup === 'products') {
-        if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
-          sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
+          sample.maxAmount = referenceMaterial.amount_mol * (sample.coefficient / referenceMaterial.coefficient) * sample.molecule_molecular_weight;
         }
       }
       return sample;
     });
   }
 
-  updatedSamplesForEquivalentChange(samples, updatedSample) {
+  updatedSamplesForEquivalentChange(samples, updatedSample, materialGroup) {
     const { referenceMaterial } = this.props.reaction;
     return samples.map((sample) => {
       if (sample.id === updatedSample.id && updatedSample.equivalent) {
@@ -604,9 +631,23 @@ export default class ReactionDetailsScheme extends Component {
             unit: 'mol'
           });
         }
-      }
-      if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
-        sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
+      } else if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
+        /* eslint-disable no-param-reassign, no-unused-expressions */
+        if (materialGroup === 'products') {
+          sample.maxAmount = referenceMaterial.amount_mol * (sample.coefficient / referenceMaterial.coefficient) * sample.molecule_molecular_weight;
+          sample.maxAmount !== 0 ? (sample.equivalent = sample.amount_g / sample.maxAmount) : 0;
+          if (sample.amount_g > sample.maxAmount) {
+            sample.equivalent = 1;
+            const errorMsg = 'Experimental mass value is more than possible\n' +
+            'by 100% conversion! Please check your data.';
+            NotificationActions.add({
+              message: errorMsg,
+              level: 'error',
+            });
+          }
+        } else {
+          referenceMaterial.amount_mol !== 0 ? (sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol) : 1;
+        }
       }
       return sample;
     });
@@ -624,6 +665,26 @@ export default class ReactionDetailsScheme extends Component {
 
   updatedSamplesForShowLabelChange(samples, referenceMaterial) {
     return samples;
+  }
+
+  /* eslint-disable class-methods-use-this, no-param-reassign */
+  updatedSamplesForCoefficientChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        // set sampple.coefficient to default value, if user set coeff. value to zero
+        if (updatedSample.coefficient % 1 !== 0 || updatedSample.coefficient === 0) {
+          updatedSample.coefficient = 1;
+          sample.coefficient = updatedSample.coefficient;
+          NotificationActions.add({
+            message: 'Please set non-zero & non-decimal value for reaction coefficient',
+            level: 'error'
+          });
+        } else {
+          sample.coefficient = updatedSample.coefficient;
+        }
+      }
+      return sample;
+    });
   }
 
   updatedSamplesForReferenceChange(samples, referenceMaterial) {
@@ -710,7 +771,9 @@ export default class ReactionDetailsScheme extends Component {
             sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
               * (sample.molecule.molecular_weight - referenceMaterial.molecule.molecular_weight));
           } else {
-            sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
+            // 
+            sample.maxAmount = referenceMaterial.amount_mol * (sample.coefficient / referenceMaterial.coefficient) * sample.molecule_molecular_weight;
+            // sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
           }
         }
       });
