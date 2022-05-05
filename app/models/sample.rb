@@ -229,6 +229,10 @@ class Sample < ApplicationRecord
     self.molecule ? self.molecule.iupac_name : ''
   end
 
+  def molecule_molecular_weight
+    self.molecule ? self.molecule.molecular_weight : ''
+  end
+
   def molecule_inchistring
     self.molecule ? self.molecule.inchistring : ''
   end

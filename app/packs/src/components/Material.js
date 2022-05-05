@@ -109,6 +109,7 @@ class Material extends Component {
     this.createParagraph = this.createParagraph.bind(this);
     this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
+    this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
   }
 
   handleMaterialClick(sample) {
@@ -230,6 +231,7 @@ class Material extends Component {
           >
             <div>
               <FormControl
+                name='yield'
                 type="text"
                 bsClass="bs-form--compact form-control"
                 bsSize="small"
@@ -318,6 +320,19 @@ class Material extends Component {
         type: 'amountTypeChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
+      };
+      this.props.onChange(event);
+    }
+  }
+
+  handleCoefficientChange(e) {
+    const coefficient = e.value;
+    if (this.props.onChange) {
+      const event = {
+        coefficient,
+        type: 'coefficientChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId()
       };
       this.props.onChange(event);
     }
@@ -446,6 +461,11 @@ class Material extends Component {
     const metricPrefixesMolConc = ['m', 'n'];
     const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
 
+    const inputsStyle = {
+      paddingRight: 2,
+      paddingLeft: 2,
+    };
+
     return (
       <tr className="general-material">
         {compose(connectDragSource, connectDropTarget)(
@@ -455,18 +475,31 @@ class Material extends Component {
           { dropEffect: 'copy' }
         )}
 
-        <td style={{ width: '25%', maxWidth: '50px' }}>
+        <td style={{ width: '22%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
 
         {this.materialRef(material)}
 
-        <td>
+        <td style={{ inputsStyle }}>
           {this.materialShowLabel(material)}
         </td>
 
-        <td>
+        <td style={{ inputsStyle }}>
           {this.switchTargetReal(isTarget)}
+        </td>
+
+        <td style={{ width: '1%', maxWidth: '5px' }}>
+          <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
+            <div>
+              <NumeralInputWithUnitsCompo
+                key={material.id}
+                value={material.coefficient}
+                onChange={this.handleCoefficientChange}
+                name="coefficient"
+              />
+            </div>
+          </OverlayTrigger>
         </td>
 
         <td>
@@ -483,6 +516,7 @@ class Material extends Component {
                 onChange={this.handleAmountUnitChange}
                 onMetricsChange={this.handleMetricsChange}
                 bsStyle={material.error_mass ? 'error' : massBsStyle}
+                name="molecular-weight"
               />
             </div>
           </OverlayTrigger>
