@@ -327,7 +327,7 @@ module Chemotion
             file_text += "#{att.filename} #{att.checksum}\n"
           end
           hyperlinks_text = ""
-          JSON.parse(@container.extended_metadata.fetch('hyperlinks', nil)).each do |link|
+          JSON.parse(@container.extended_metadata.fetch('hyperlinks', '[]')).each do |link|
             hyperlinks_text += "#{link} \n"
           end
           zip.put_next_entry "dataset_description.txt"
