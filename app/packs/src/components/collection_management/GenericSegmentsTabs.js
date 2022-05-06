@@ -229,7 +229,9 @@ export default class GenericSegmentsTabs extends React.Component {
             </div>
             <hr />
             <div className="alert alert-info" role="alert">
-              <p style={{ fontSize: '10px' }}>Drag and drop to select the order of segment tab layout.</p>
+              <p style={{ fontSize: '11px' }}>
+                Drag and drop to select the order of segment tab layout. Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
+              </p>
             </div>
           </Modal.Body>
           <Modal.Footer style={{ textAlign: 'left' }}>
