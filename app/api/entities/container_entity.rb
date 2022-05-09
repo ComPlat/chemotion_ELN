@@ -48,9 +48,12 @@ module Entities
       attachments = attachments.select do |a|
         a.thumb == true && a.attachable_type == 'Container' && container_ids.include?(a.attachable_id)
       end
+      
       image_atts = attachments.select do |a_img|
         a_img&.content_type&.match(Regexp.union(%w[jpg jpeg png tiff]))
       end
+
+      image_atts = image_atts.sort_by{ |a_img| a_img[:id] }.reverse
 
       attachment = image_atts[0] || attachments[0]
 
