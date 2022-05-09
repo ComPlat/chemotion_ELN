@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstrap';
 import update from 'immutability-helper';
+import Aviator from 'aviator';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
@@ -16,7 +17,6 @@ import SampleTaskInbox from 'src/apps/mydb/collections/sampleTaskInbox/SampleTas
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
-import Aviator from 'aviator';
 
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 

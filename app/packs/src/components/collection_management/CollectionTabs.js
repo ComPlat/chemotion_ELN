@@ -1,17 +1,19 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import { Button, FormControl, Modal, Nav, NavItem } from 'react-bootstrap';
+import { isEmpty } from 'lodash';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
-import Immutable from 'immutable';
 import TabLayoutContainer from '../TabLayoutContainer';
-import { isEmpty } from 'lodash';
+import UserStore from '../stores/UserStore';
+import { filterTabLayout, getArrayFromLayout } from '../ElementDetailSortTab';
 
-export default class GenericSegmentsTabs extends React.Component {
+export default class CollectionTabs extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      profileData: {},
       showModal: false,
       selectModal: false,
       currentCollection: {},
@@ -28,11 +30,13 @@ export default class GenericSegmentsTabs extends React.Component {
     this.handleSave = this.handleSave.bind(this);
     this.handleSelectNav = this.handleSelectNav.bind(this);
     this.clickedOnBack = this.clickedOnBack.bind(this);
+    this.onUserStoreChange = this.onUserStoreChange.bind(this);
   }
 
   componentDidMount() {
     CollectionStore.listen(this.onStoreChange);
     CollectionActions.fetchUnsharedCollectionRoots();
+    UserStore.listen(this.onUserStoreChange);
   }
 
   componentWillUnmount() {
@@ -51,42 +55,15 @@ export default class GenericSegmentsTabs extends React.Component {
     });
   }
 
+  onUserStoreChange(state) {
+    const data = (state.profile && state.profile.data) || {};
+    this.setState({ profileData: data });
+  }
+
   onClickNode(node) {
     this.setState({ currentCollection: node });
     this.handleSelectModalOptions(this.state.selectModal);
   }
-
-  getArrayFromLayout = (layout, availableTabs) => {
-    const layoutKeys = Object.keys(layout);
-    const enabled = availableTabs.filter(val => layoutKeys.includes(val));
-    const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
-    const visible = [];
-    const hidden = [];
-
-    enabled.forEach((key) => {
-      const order = layout[key];
-      if (order < 0) { hidden[Math.abs(order)] = key; }
-      if (order > 0) { visible[order] = key; }
-    });
-
-    leftover.forEach(key => hidden.push(key));
-
-    let first = null;
-    if (visible.length === 0) {
-      first = hidden.filter(n => n !== undefined)[0];
-      if (first) {
-        visible.push(first);
-      }
-    }
-    if (hidden.length === 0) {
-      hidden.push('hidden');
-    }
-
-    return {
-      visible: Immutable.List(visible.filter(n => n !== undefined)),
-      hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
-    };
-  };
 
   handleChange(tree) {
     this.setState({
@@ -127,35 +104,22 @@ export default class GenericSegmentsTabs extends React.Component {
     const currentTab = this.selectCurrentTab(eventKey);
     let layout = {};
     const node = this.state.currentCollection;
-    if (!isEmpty(node.tabs_segment[currentTab])){
+    const profileLayout = this.state.profileData[`layout_detail_${currentTab}`];
+    const availableTabs = profileLayout && Object.keys(profileLayout);
+    if (!isEmpty(node.tabs_segment[currentTab])) {
       layout = node.tabs_segment[currentTab];
     } else {
-      layout = {
-        analyses: -1,
-        literature: 3,
-        properties: 1,
-        qc_curation: 2,
-        references: -3,
-        results: -2
-      };
+      layout = profileLayout;
     }
-    const availableTabs = ['properties', 'analyses', 'references', 'results', 'qc_curation'];
-    const { visible, hidden } = this.getArrayFromLayout(layout, availableTabs);
+    const { visible, hidden } = getArrayFromLayout(layout, availableTabs);
     layout = { visible, hidden };
     this.setState({ layout });
     this.clickedOnBack();
   }
 
   handleSave() {
-    const { visible, hidden } = this.layout.state;
     const { currentCollection } = this.state;
-    const layout = {};
-    visible.forEach((value, index) => {
-      layout[value] = (index + 1);
-    });
-    hidden.filter(val => val !== 'hidden').forEach((value, index) => {
-      layout[value] = (-index - 1);
-    });
+    const layout = filterTabLayout(this.layout.state);
     const layoutSegments = { [this.state.currentTab]: layout };
     const currentCollectionId = currentCollection.id;
     const params = { layoutSegments, currentCollectionId };
