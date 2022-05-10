@@ -54,7 +54,8 @@ describe Chemotion::SyncCollectionAPI do
 
         it 'does return the sync_collections_user' do
           response_body = JSON.parse response.body
-          expect(response.body['sync_collections_user']).not_to be_empty
+
+          expect(response_body['sync_collections_user']).not_to be_empty
           expect(response_body['sync_collections_user']).to include(sc2_1.as_json(json_options))
         end
       end
