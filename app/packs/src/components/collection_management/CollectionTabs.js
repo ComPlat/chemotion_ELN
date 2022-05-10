@@ -7,6 +7,7 @@ import CollectionActions from '../actions/CollectionActions';
 import TabLayoutContainer from '../TabLayoutContainer';
 import UserStore from '../stores/UserStore';
 import { filterTabLayout, getArrayFromLayout } from '../ElementDetailSortTab';
+import UserActions from '../actions/UserActions';
 
 export default class CollectionTabs extends React.Component {
   constructor(props) {
@@ -35,12 +36,14 @@ export default class CollectionTabs extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onStoreChange);
-    CollectionActions.fetchUnsharedCollectionRoots();
     UserStore.listen(this.onUserStoreChange);
+    UserActions.fetchProfile();
+    CollectionActions.fetchUnsharedCollectionRoots();
   }
 
   componentWillUnmount() {
     CollectionStore.unlisten(this.onStoreChange);
+    UserStore.unlisten(this.onUserStoreChange);
   }
 
   onStoreChange(state) {
@@ -57,6 +60,9 @@ export default class CollectionTabs extends React.Component {
 
   onUserStoreChange(state) {
     const data = (state.profile && state.profile.data) || {};
+    if (!data) {
+      UserActions.fetchProfile();
+    }
     this.setState({ profileData: data });
   }
 
