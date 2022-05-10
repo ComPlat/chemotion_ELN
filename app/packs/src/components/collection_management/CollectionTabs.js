@@ -104,8 +104,9 @@ export default class CollectionTabs extends React.Component {
     const currentTab = this.selectCurrentTab(eventKey);
     let layout = {};
     const node = this.state.currentCollection;
-    const profileLayout = this.state.profileData[`layout_detail_${currentTab}`];
-    const availableTabs = profileLayout && Object.keys(profileLayout);
+    const profileData = this.state.profileData;
+    const profileLayout = (profileData && profileData[`layout_detail_${currentTab}`]) || {};
+    const availableTabs = (profileLayout && Object.keys(profileLayout)) || {};
     if (!isEmpty(node.tabs_segment[currentTab])) {
       layout = node.tabs_segment[currentTab];
     } else {
