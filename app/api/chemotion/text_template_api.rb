@@ -8,8 +8,13 @@ module Chemotion
         requires :type, type: String, desc: 'element type'
       end
       get :by_type do
-        template = DEF_ELS.include?(params[:type]) ? current_user.send(params[:type] + '_text_template') : ElementTextTemplate.where(user_id: current_user.id, name: params[:type])&.first
-        { "#{params[:type]}": template.nil? ? {} : template.data }
+        template = if params[:type].in?(DEF_ELS)
+          current_user.send(params[:type] + '_text_template')
+        else
+          ElementTextTemplate.find_by(user_id: current_user.id, name: params[:type])
+        end
+
+        { "#{params[:type]}": template&.data || {} }
       end
 
       params do
@@ -17,19 +22,15 @@ module Chemotion
         requires :data, type: Hash, desc: 'Text template details'
       end
       put :update do
-        if DEF_ELS.include?(params[:type])
-          template = current_user.send(params[:type] + '_text_template')
-          template.update!(data: params['data'])
+        template = if params[:type].in?(DEF_ELS)
+          current_user.send(params[:type] + '_text_template')
         else
-          template = ElementTextTemplate.where(user_id: current_user.id, name: params[:type])&.first
-          if template.nil?
-            template = ElementTextTemplate.new
-            template.name = params[:type]
-            template.user_id = current_user.id
-          end
-          template.data = params['data']
-          template.save!
+          ElementTextTemplate.find_or_initialize_by(user_id: current_user.id, name: params[:type])
         end
+        template.data = params['data']
+        template.save!
+
+        present template, with: Entities::TextTemplateEntity
       end
 
       desc 'Get predefined templates with paging'
@@ -39,7 +40,9 @@ module Chemotion
 
       desc 'Get predefined templates by name'
       get :by_name do
-        PredefinedTextTemplate.where(name: params['name'])
+        template = PredefinedTextTemplate.where(name: params['name'])
+
+        present template, with: Entities::TextTemplateEntity
       end
 
       delete :by_name do
@@ -49,26 +52,27 @@ module Chemotion
         error!('404 Not found', 404) if template.nil?
 
         template.destroy
+
+        present template, with: Entities::TextTemplateEntity
       end
 
       desc 'Update predefined text template'
       params do
         requires :id, type: Integer, desc: "Text template ID"
-        requires :user_id, type: Integer, desc: "User ID"
         requires :name, type: String, desc: "Unique predefined template name"
         optional :data, type: Hash, desc: "Text template details"
       end
       put :predefined_text_template do
-        error!('401 Unauthorized', 401) if Admin.find(current_user.id).nil?
+        error!('401 Unauthorized', 401) unless Admin.exists?(id: current_user.id)
 
-        template = PredefinedTextTemplate.find(params["id"])
+        template = PredefinedTextTemplate.find_by(id: params["id"])
         error!('404 Not found', 404) if template.nil?
 
         template.update!(
           name: params["name"] || "",
           data: params["data"] || {}
         )
-        template
+        present template, with: Entities::TextTemplateEntity
       end
 
       desc 'Create predefined text template'
@@ -77,13 +81,15 @@ module Chemotion
         optional :data, type: Hash, desc: "Text template details"
       end
       post :predefined_text_template do
-        error!('401 Unauthorized', 401) if Admin.find(current_user.id).nil?
+        error!('401 Unauthorized', 401) unless Admin.exists?(current_user.id)
 
-        PredefinedTextTemplate.create(
+        template = PredefinedTextTemplate.create(
           name: params["name"],
           user_id: current_user.id,
           data: params["data"] || {}
         )
+
+        present template, with: Entities::TextTemplateEntity
       end
     end
   end
