@@ -1,4 +1,5 @@
 
+
 # Chemotion_ELN Changelog
 
 
@@ -6,6 +7,17 @@
 > yyyy-mm-dd
 
 * Features and Improvements:
+
+
+## [v1.2.1]
+> 2022-05-10
+
+* Fixes
+  * export dataset attachments with no hyperlink present
+  * analysis: preview latest processed image
+  * rails patch upd
+  * npx audit fix
+
 
 ## [v1.2.0]
 > 2022-04-14
