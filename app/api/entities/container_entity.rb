@@ -1,6 +1,10 @@
+# frozen_string_literal: true
+
 module Entities
-  class ContainerEntity < Grape::Entity
+  class ContainerEntity < ApplicationEntity
     expose :big_tree, merge: true
+
+    private
 
     def big_tree(container = object)
       dataset_ids = {}
@@ -41,8 +45,6 @@ module Entities
       end
       bt
     end
-
-    private
 
     def preview_img(container_ids, attachments)
       attachments = attachments.select do |a|

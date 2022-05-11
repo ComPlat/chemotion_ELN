@@ -10,11 +10,11 @@ class ElementSerializer < ActiveModel::Serializer
   has_many :segments
 
   def created_at
-    object.created_at.strftime('%d.%m.%Y, %H:%M')
+    object.created_at.strftime('%d.%m.%Y, %H:%M:%S')
   end
 
   def updated_at
-    object.updated_at.strftime('%d.%m.%Y, %H:%M')
+    object.updated_at.strftime('%d.%m.%Y, %H:%M:%S')
   end
 
   def el_type
@@ -51,7 +51,7 @@ class ElementSerializer < ActiveModel::Serializer
   end
 
   def properties
-    object.properties['layers']&.keys.each do |key|
+    (object.properties['layers']&.keys || []).each do |key|
       # layer = object.properties[key]
       field_sample_molecules = object.properties['layers'][key]['fields'].select { |ss| ss['type'] == 'drag_sample' || ss['type'] == 'drag_molecule' }
       field_sample_molecules.each do |field|

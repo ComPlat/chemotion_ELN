@@ -72,27 +72,14 @@ module Chemotion
       end
 
       # desc: return true if the detail level allow to access the column
-      def filter_with_detail_level(table:, column:, sample_detail_level:,
-        reaction_detail_level:,  **_)
+      def filter_with_detail_level(table:, column:, sample_detail_level:, reaction_detail_level:,  **_)
         # TODO filter according to columns
-        case table
-        when 'samples'
-          if sample_detail_level > 0
-            true
-          elsif column == 'external_label'
-            true
-          else
-            false
-          end
-        when 'reactions'
-          if reaction_detail_level > -1
-            true
-          else
-            false
-          end
-        else
-          true
-        end
+
+        return true unless table.in?(%w[samples reactions])
+        return true if table == 'samples' && (sample_detail_level > 0 || column == 'external_label')
+        return true if table == 'reactions' && reaction_detail_level > -1
+
+        false
       end
 
       def advanced_search(c_id = @c_id, dl = @dl)
@@ -160,156 +147,120 @@ module Chemotion
         element_scope
       end
 
-      def serialize_samples samples, page, search_method, molecule_sort
-        return { data: [], size: 0 } if samples.empty?
-        samples_size = samples.size
-        samplelist = []
-        sample_serializer_selector =
-        lambda { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
+      def serialize_samples sample_ids, page, search_method, molecule_sort
+        return { data: [], size: 0 } if sample_ids.empty?
 
-        if search_method != 'advanced' && molecule_sort == true
+        samples_size = sample_ids.size
+        samplelist = []
+
+
+        if molecule_sort == true
           # Sorting by molecule for non-advanced search
           molecule_scope =
-            Molecule.joins(:samples).where('samples.id IN (?)', samples)
+            Molecule.joins(:samples).where('samples.id IN (?)', sample_ids)
                     .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
                     .order(:sum_formular)
-          molecule_scope = molecule_scope.page(page).per(page_size).includes(
-            :tag, collections: :sync_collections_users
-          )
-          sample_scope = Sample.includes(
-            :residues, :molecule, :tag, :container
-          ).find(samples)
+          molecule_scope = molecule_scope.page(page).per(page_size)
+          samples = Sample.includes(:tag, :molecule).find(sample_ids)
           samples_size = molecule_scope.size
           molecule_scope.each do |molecule|
-            next if molecule.nil?
-            samplesGroup = sample_scope.select {|v| v.molecule_id == molecule.id}
+            samplesGroup = samples.select { |sample| sample.molecule_id == molecule.id }
             samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
             samplesGroup.each do |sample|
-            serialized_sample = sample_serializer_selector.call(sample)
-            samplelist.push(serialized_sample)
+              serialized_sample = Entities::SampleEntity.represent(sample, displayed_in_list: true).serializable_hash
+              samplelist.push(serialized_sample)
             end
           end
-          samplelist
         else
-          id_array = Kaminari.paginate_array(samples).page(page).per(page_size)
+          id_array = Kaminari.paginate_array(sample_ids).page(page).per(page_size)
           ids = id_array.join(',')
-          paging_samples = Sample.includes(
-            :residues, :tag,
-            collections: :sync_collections_users,
-            molecule: :tag
-          ).where(
-            id: id_array
-          ).order("position(','||id::text||',' in ',#{ids},')").to_a
-
-          if search_method == 'advanced'
-            # sort by order - advanced search
-            paging_samples.each do |sample|
-              next if sample.nil?
-              serialized_sample = ElementListPermissionProxy.new(current_user, sample, user_ids).serialized
-              samplelist.push(serialized_sample)
-            end
-          else
-            paging_samples.each do |sample|
-              next if sample.nil?
-              serialized_sample = sample_serializer_selector.call(sample)
-              samplelist.push(serialized_sample)
-            end
-          end
-          samplelist
+          Sample.includes(:tag, :molecule)
+                .where(id: id_array)
+                .order("position(','||id::text||',' in ',#{ids},')")
+                .each do |sample|
+                  samplelist.push(Entities::SampleEntity.represent(sample, displayed_in_list: true).serializable_hash)
+                end
         end
 
         return {
           data: samplelist,
           size: samples_size
         }
-
       end
 
       def serialization_by_elements_and_page(elements, page = 1, molecule_sort = false)
-        samples = elements.fetch(:samples, [])
-        reactions = elements.fetch(:reactions, [])
-        wellplates = elements.fetch(:wellplates, [])
-        screens = elements.fetch(:screens, [])
-        samples_data = serialize_samples(samples, page, search_by_method, molecule_sort)
-        serialized_samples = samples_data[:data]
-        samples_size = samples_data[:size]
+        element_ids = elements.fetch(:element_ids, [])
+        reaction_ids = elements.fetch(:reaction_ids, [])
+        sample_ids = elements.fetch(:sample_ids, [])
+        samples_data = serialize_samples(sample_ids, page, search_by_method, molecule_sort)
+        screen_ids = elements.fetch(:screen_ids, [])
+        wellplate_ids = elements.fetch(:wellplate_ids, [])
 
-        ids = Kaminari.paginate_array(reactions).page(page).per(page_size)
-        serialized_reactions = Reaction.includes(
-          :literatures, :tag,
-          reactions_starting_material_samples: :sample,
-          reactions_solvent_samples: :sample,
-          reactions_reactant_samples: :sample,
-          reactions_product_samples: :sample,
-          container: :attachments
-        ).find(ids).map {|s|
-          ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys
-        }
+        paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
+        serialized_reactions = Reaction.find(paginated_reaction_ids).map do |reaction|
+          Entities::ReactionEntity.represent(reaction, displayed_in_list: true).serializable_hash
+        end
 
-        ids = Kaminari.paginate_array(wellplates).page(page).per(page_size)
-        klass = "WellplateListSerializer::Level#{@dl_wp}".constantize
-        serialized_wellplates = Wellplate.includes(
-          collections: :sync_collections_users,
-          wells: :sample
-        ).find(ids).map{ |s|
-          klass.new(s,1).serializable_hash.deep_symbolize_keys
-        }
+        paginated_wellplate_ids = Kaminari.paginate_array(wellplate_ids).page(page).per(page_size)
+        serialized_wellplates = Wellplate.find(paginated_wellplate_ids).map do |wellplate|
+          Entities::WellplateEntity.represent(wellplate, displayed_in_list: true).serializable_hash
+        end
 
-        ids = Kaminari.paginate_array(screens).page(page).per(page_size)
-        serialized_screens = Screen.includes(
-          collections: :sync_collections_users
-        ).find(ids).map{ |s|
-          ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys
-        }
+        paginated_screen_ids = Kaminari.paginate_array(screen_ids).page(page).per(page_size)
+        serialized_screens = Screen.find(paginated_screen_ids).map do |screen|
+          Entities::ScreenEntity.represent(screen, displayed_in_list: true).serializable_hash
+        end
 
         result = {
           samples: {
-            elements: serialized_samples,
-            totalElements: samples_size,
+            elements: samples_data[:data],
+            totalElements: samples_data[:size],
             page: page,
-            pages: pages(samples_size),
+            pages: pages(samples_data[:size]),
             perPage: page_size,
-            ids: samples
+            ids: sample_ids
           },
           reactions: {
             elements: serialized_reactions,
-            totalElements: reactions.size,
+            totalElements: reaction_ids.size,
             page: page,
-            pages: pages(reactions.size),
+            pages: pages(reaction_ids.size),
             perPage: page_size,
-            ids: reactions
+            ids: reaction_ids
           },
           wellplates: {
             elements: serialized_wellplates,
-            totalElements: wellplates.size,
+            totalElements: wellplate_ids.size,
             page: page,
-            pages: pages(wellplates.size),
+            pages: pages(wellplate_ids.size),
             perPage: page_size,
-            ids: wellplates
+            ids: wellplate_ids
           },
           screens: {
             elements: serialized_screens,
-            totalElements: screens.size,
+            totalElements: screen_ids.size,
             page: page,
-            pages: pages(screens.size),
+            pages: pages(screen_ids.size),
             perPage: page_size,
-            ids: screens
+            ids: screen_ids
           }
         }
 
         klasses = ElementKlass.where(is_active: true, is_generic: true)
         klasses.each do |klass|
-          element_list = Element.where(id: elements.fetch(:elements, []), element_klass_id: klass.id).pluck :id
-          ids = Kaminari.paginate_array(element_list).page(page).per(page_size)
-          serialized_elements = Element.includes(collections: :sync_collections_users).find(ids).map{ |s| ElementSerializer.new(s).serializable_hash.deep_symbolize_keys }
+          element_ids_for_klass = Element.where(id: element_ids, element_klass_id: klass.id).pluck(:id)
+          paginated_element_ids = Kaminari.paginate_array(element_ids_for_klass).page(page).per(page_size)
+          serialized_elements = Element.find(paginated_element_ids).map do |element|
+            Entities::ElementEntity.represent(element, displayed_in_list: true).serializable_hash
+          end
 
           result["#{klass.name}s"] = {
             elements: serialized_elements,
-            totalElements: element_list.size,
+            totalElements: element_ids_for_klass.size,
             page: page,
-            pages: pages(element_list.size),
+            pages: pages(element_ids_for_klass.size),
             perPage: page_size,
-            ids: element_list
+            ids: element_ids_for_klass
           }
         end
         result
@@ -392,72 +343,55 @@ module Chemotion
       def elements_by_scope(scope, collection_id = @c_id)
         elements = {}
         user_samples = Sample.by_collection_id(collection_id)
-          .includes(molecule: :tag)
-        user_reactions = Reaction.by_collection_id(collection_id).includes(
-          :literatures, :tag,
-          reactions_starting_material_samples: :sample,
-          reactions_solvent_samples: :sample,
-          reactions_reactant_samples: :sample,
-          reactions_product_samples: :sample,
-        )
-        user_wellplates = Wellplate.by_collection_id(collection_id).includes(
-          wells: :sample
-        )
+        user_reactions = Reaction.by_collection_id(collection_id)
+        user_wellplates = Wellplate.by_collection_id(collection_id)
         user_screens = Screen.by_collection_id(collection_id)
-
         user_elements = Element.by_collection_id(collection_id)
+
         case scope&.first
         when Sample
-          elements[:samples] = scope&.pluck(:id)
-          elements[:reactions] = (
-            user_reactions.by_sample_ids(scope&.map(&:id)).pluck(:id)
-          ).uniq
-          elements[:wellplates] = user_wellplates.by_sample_ids(scope&.map(&:id)).uniq.pluck(:id)
-          elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
-          elements[:elements] = (
-            user_elements.by_sample_ids(scope&.map(&:id)).pluck(:id)
-          ).uniq
+          elements[:sample_ids] = scope&.ids
+          elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).uniq.pluck(:id)
+          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
+          elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Reaction
-          elements[:reactions] = scope&.pluck(:id)
-          elements[:samples] = user_samples.by_reaction_ids(scope&.map(&:id)).pluck(:id).uniq
-          elements[:wellplates] = user_wellplates.by_sample_ids(elements[:samples]).uniq.pluck(:id)
-          elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
+          elements[:reaction_ids] = scope&.ids
+          elements[:sample_ids] = user_samples.by_reaction_ids(elements[:reaction_ids]).pluck(:id).uniq
+          elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).uniq.pluck(:id)
+          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
         when Wellplate
-          elements[:wellplates] = scope&.pluck(:id)
-          elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
-          elements[:samples] = user_samples.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
-          elements[:reactions] = (
-            user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
-          ).uniq
+          elements[:wellplate_ids] = scope&.ids
+          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
+          elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
+          elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Screen
-          elements[:screens] = scope&.pluck(:id)
-          elements[:wellplates] = user_wellplates.by_screen_ids(scope).uniq.pluck(:id)
-          elements[:samples] = user_samples.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
-          elements[:reactions] = (
-            user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
-          ).uniq.pluck(:id)
+          elements[:screen_ids] = scope&.ids
+          elements[:wellplate_ids] = user_wellplates.by_screen_ids(elements[:screen_ids]).uniq.pluck(:id)
+          elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
+          elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id)
         when Element
-          elements[:elements] = scope&.pluck(:id)
-          sids = ElementsSample.where(element_id: elements[:elements]).pluck :sample_id
-          elements[:samples] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
+          elements[:element_ids] = scope&.ids
+          sample_ids = ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
+          elements[:sample_ids] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
         when AllElementSearch::Results
           # TODO check this samples_ids + molecules_ids ????
-          elements[:samples] = (scope&.samples_ids + scope&.molecules_ids)
-          elements[:reactions] = (
+          elements[:sample_ids] = (scope&.samples_ids + scope&.molecules_ids)
+          elements[:reaction_ids] = (
             scope&.reactions_ids +
-            user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
+            user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id)
           ).uniq
 
-          elements[:wellplates] = (
+          elements[:wellplate_ids] = (
             scope&.wellplates_ids +
-            user_wellplates.by_sample_ids(elements[:samples]).pluck(:id)
+            user_wellplates.by_sample_ids(elements[:sample_ids]).pluck(:id)
           ).uniq
 
-          elements[:screens] = (
+          elements[:screen_ids] = (
             scope&.screens_ids +
-            user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
+            user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
           ).uniq
-          elements[:elements] = (scope&.element_ids).uniq
+          elements[:element_ids] = (scope&.element_ids).uniq
         end
         elements
       end

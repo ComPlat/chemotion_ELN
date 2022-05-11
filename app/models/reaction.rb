@@ -92,7 +92,7 @@ class Reaction < ApplicationRecord
   scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
   scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
-  scope :by_sample_ids, ->(ids) { joins(:reactions_samples).where('samples.id IN (?)', ids) }
+  scope :by_sample_ids, ->(ids) { joins(:reactions_samples).where(reactions_samples: { id: ids }) }
   scope :by_status, ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
   scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }

@@ -11,5 +11,9 @@ module Entities
         expose field, format_with: :eln_timestamp
       end
     end
+
+    def displayed_in_list?
+      options[:displayed_in_list] == true
+    end
   end
 end

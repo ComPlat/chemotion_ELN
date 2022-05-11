@@ -1,11 +1,32 @@
 # frozen_string_literal: true
 
 module Entities
-  class MoleculeEntity < Grape::Entity
-    expose :id, :inchikey, :inchistring, :density, :molecular_weight, :molfile, :melting_point, :boiling_point, :sum_formular, :names, :iupac_name, :molecule_svg_file, :is_partial, :exact_molecular_weight, :cano_smiles, :cas, :molfile_version, :molecule_names
+  class MoleculeEntity < ApplicationEntity
+    expose(
+      :boiling_point,
+      :cano_smiles,
+      :cas,
+      :density,
+      :exact_molecular_weight,
+      :id,
+      :inchikey,
+      :inchistring,
+      :is_partial,
+      :iupac_name,
+      :melting_point,
+      :molecular_weight,
+      :molecule_names,
+      :molecule_svg_file,
+      :molfile,
+      :molfile_version,
+      :names,
+      :sum_formular,
+    )
 
     def molfile
-      object.molfile&.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace) if object.respond_to? :molfile
+      return unless object.respond_to?(:molfile)
+
+      object.molfile&.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace)
     end
   end
 end
