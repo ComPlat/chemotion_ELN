@@ -43,34 +43,45 @@ module Chemotion
           .locked.unshared.roots.order('label ASC')
       end
 
+      set_sync_disabled = Proc.new do |parent, child_list, obj|
+        if child_list.any? { |child| child['is_sync_disabled'] } || parent.present? && parent['is_sync_disabled']
+          parent['is_sync_disabled'] = true if parent.present?
+          obj['is_sync_disabled'] = true
+          child_list.each { |item| puts item['is_sync_disabled'] = true }
+        end
+      end
+
       get_child = Proc.new do |children, collects|
         children.each do |obj|
-          child = collects.select { |dt| dt['ancestry'] == obj['ancestry_root']}
-          get_child.call(child, collects) if child.count>0
-          obj[:children] = child
+          child_list = collects.select { |dt| dt['ancestry'] == obj['ancestry_root'] }
+          parent = collects.find { |e| e['ancestry_root'] == obj['ancestry'] }
+          set_sync_disabled.call(parent, child_list, obj)
+          get_child.call(child_list, collects) if child_list.count.positive?
+          set_sync_disabled.call(parent, child_list, obj)
+          obj[:children] = child_list
         end
       end
 
       build_tree = Proc.new do |collects, delete_empty_root|
         col_tree = []
-        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
-        get_child.call(col_tree,collects)
-        col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
+        collects.collect { |obj| col_tree.push(obj) if obj['ancestry'].nil? }
+        get_child.call(col_tree, collects)
+        col_tree.select! { |col| col[:children].count.positive? } if delete_empty_root
         Entities::CollectionRootEntity.represent(col_tree, serializable: true)
       end
 
-      desc "Return all unlocked unshared serialized collection roots of current user"
+      desc 'Return all unlocked unshared serialized collection roots of current user'
       get :roots do
         collects = Collection.where(user_id: current_user.id).unlocked.unshared.order('id')
         .select(
           <<~SQL
             id, label, ancestry, is_synchronized, permission_level, position, collection_shared_names(user_id, id) as shared_names,
-            reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked,is_shared,
+            reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked,is_shared, is_synchronized AS is_sync_disabled,
             case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
           SQL
         )
         .as_json
-        build_tree.call(collects,false)
+        build_tree.call(collects, false)
       end
 
       desc "Return all shared serialized collections"
@@ -85,7 +96,7 @@ module Chemotion
           SQL
         )
         .as_json
-        build_tree.call(collects,true)
+        build_tree.call(collects, true)
       end
 
       desc "Return all remote serialized collections"

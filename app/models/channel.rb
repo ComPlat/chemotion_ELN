@@ -33,6 +33,7 @@ class Channel < ApplicationRecord
   COLLECTION_ZIP_FAIL = 'Collection Import and Export Failure'
   CHEM_SPECTRA_NOTIFICATION = 'Chem Spectra Notification'
   ASSIGN_INBOX_TO_SAMPLE = 'Assign Inbox Attachment to Sample'
+  COLLECTION_TAKE_OWNERSHIP_FAIL_SAMPLE_IN_MULTIPLE_COLLECTIONS = 'Collection Take Ownership Fails Because Sample Belongs To Multiple Collections'
 
   class << self
     def build_message(**args)

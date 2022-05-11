@@ -46,5 +46,9 @@ module Entities
         obj['shared_by']
     end
     expose :children, as: 'children', using: Entities::CollectionRootEntity
+
+    expose :is_sync_disabled do |obj|
+        obj['is_sync_disabled']
+    end
   end
 end
