@@ -95,47 +95,11 @@ module Chemotion
         @attachment.read_file
       end
 
-      desc "Download the zip attachment file"
-      get 'zip/:container_id' do
-        env['api.format'] = :binary
-        content_type('application/zip, application/octet-stream')
-        filename = URI.escape("#{@container.parent&.name.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
-        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
-        zip = Zip::OutputStream.write_buffer do |zip|
-          @container.attachments.each do |att|
-            zip.put_next_entry att.filename
-            zip.write att.read_file
-          end
-          file_text = "";
-          @container.attachments.each do |att|
-            file_text += "#{att.filename} #{att.checksum}\n"
-          end
-          hyperlinks_text = ""
-          JSON.parse(@container.extended_metadata.fetch('hyperlinks', nil)).each do |link|
-            hyperlinks_text += "#{link} \n"
-          end
-          zip.put_next_entry "dataset_description.txt"
-          zip.write <<~DESC
-          dataset name: #{@container.name}
-          instrument: #{@container.extended_metadata.fetch('instrument', nil)}
-          description:
-          #{@container.description}
-
-          Files:
-          #{file_text}
-          Hyperlinks:
-          #{hyperlinks_text}
-          DESC
-        end
-        zip.rewind
-        zip.read
-      end
-
       desc 'Upload attachments'
       params do
         requires :file, type: File
-        optional :attachable_id, type: Integer, default: 0
-        optional :attachable_type, type: String
+        requires :attachable_id, type: Integer, default: 0
+        requires :attachable_type, type: String
       end
       post 'upload_attachments' do
         file = params[:file]

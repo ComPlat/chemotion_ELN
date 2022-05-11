@@ -112,7 +112,7 @@ const routes = {
     },
     '/:genericElID': 'showOrNew'
   },
-  '/grantPermission': {
+  '/grant_permission': {
     target: {
       showGrantPermission: routesUtils.grantPermissionShowOrNew
     },

@@ -35,6 +35,12 @@ export default class GrantPermission extends React.Component {
   }
 
   render() {
+    const queryStringValue = queryString.parse(window.location.search.substring(1));
+    let isValid = queryStringValue && queryStringValue.client_id && queryStringValue.client_name && queryStringValue.returnUrl;
+    if(!isValid){
+      return  <Col md={7} className="small-col" style={{ color: "red" }}>Your params are not valid.</Col>;
+    }
+
     return this.state.currentUser ? (
       <div className="new_user" >
         <input name="utf8" value="✓" type="hidden" />
@@ -54,7 +60,7 @@ export default class GrantPermission extends React.Component {
     ) : (
       <Col md={7} className="small-col">
         <div className="new_user"  >
-          <p>Are you sure to grant permission for application ABC XYZ?</p>
+          <p>Are you sure to grant permission for application {queryStringValue.client_name}?</p>
           <Button bsSize="xsmall" type="button" onClick={() => this.grantPermission()} >
             <i className="fa fa-plus" />Grant Permission
           </Button>

@@ -3,6 +3,7 @@ module Chemotion
     include Grape::Kaminari
 
     resource :partner_app do
+      desc 'Get all partner apps'
       get do
         data = PartnerApp.all.order(:id)
         { partner_apps: data }
