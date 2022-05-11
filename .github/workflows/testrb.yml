@@ -61,6 +61,7 @@ jobs:
             /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:migrate db:test:prepare  > /dev/null"
             /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:seed > /dev/null"
 
+      - uses: niden/actions-memcached@v7
       - name: rb test
         uses: nick-invision/retry@v2
         with:
