@@ -35,14 +35,13 @@ module Chemotion
             use :ui_state_params
           end
         end
-        before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
-          @wellplates = Wellplate.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @wellplates).read?
-        end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          { wellplates: @wellplates.map { |w| WellplateSerializer.new(w).serializable_hash.deep_symbolize_keys } }
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          wellplates = Wellplate.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, wellplates).read?
+
+          present wellplates, with: Entities::Wellplate, root: :wellplates
         end
       end
 
@@ -88,7 +87,9 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
+        wellplates = paginate(scope)
+
+        present wellplates, with: Entities::WellplateEntity, displayed_in_list: true
       end
 
       desc 'Return serialized wellplate by id'
@@ -103,7 +104,7 @@ module Chemotion
         get do
           wellplate = Wellplate.find(params[:id])
           {
-            wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized,
+            wellplate: Entities::WellplateEntity.represent(wellplate),
             attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
           }
         end
@@ -119,7 +120,7 @@ module Chemotion
         end
 
         delete do
-          Wellplate.find(params[:id]).destroy
+          present Wellplate.find(params[:id]).destroy, with: Entities::WellplateEntity
         end
       end
 
@@ -149,7 +150,7 @@ module Chemotion
           kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
+          present wellplate, with: Entities::WellplateEntity, root: :wellplate
         end
       end
 
@@ -177,7 +178,7 @@ module Chemotion
         kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
+        present wellplate, with: Entities::WellplateEntity, root: :wellplate
       end
 
       namespace :subwellplates do
@@ -192,6 +193,9 @@ module Chemotion
           Wellplate.where(id: wellplate_ids).each do |wellplate|
             wellplate.create_subwellplate current_user, col_id, true
           end
+
+          # Frontend does not use the return value of this api, so we do not need to supply one
+          {}
         end
       end
 
@@ -214,7 +218,7 @@ module Chemotion
               import.process!
               wellplate = import.wellplate
               {
-                wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized,
+                wellplate: Entities::WellplateEntity.represent(wellplate),
                 attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
               }
             rescue StandardError => e
