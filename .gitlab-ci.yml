@@ -83,6 +83,7 @@ testrb:
     - .before_scripting
   stage: unit
   script:
+    - /bin/bash -l -c "sudo service memcached start"
     - /bin/bash -l -c "bundle install"
     - /bin/bash -l -c "bundle list"
     - /bin/bash -l -c "yarn install"
