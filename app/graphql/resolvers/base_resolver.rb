@@ -2,6 +2,6 @@
 
 module Resolvers
   class BaseResolver < GraphQL::Schema::Resolver
-    include GraphqlCommon
+    include GraphqlAuthentication
   end
 end

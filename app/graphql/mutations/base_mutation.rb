@@ -2,6 +2,6 @@
 
 module Mutations
   class BaseMutation < GraphQL::Schema::Mutation
-    include GraphqlCommon
+    include GraphqlAuthentication
   end
 end
