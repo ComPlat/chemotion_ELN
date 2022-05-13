@@ -7,6 +7,7 @@ import CollectionActions from '../actions/CollectionActions';
 import TabLayoutContainer from '../TabLayoutContainer';
 import UserStore from '../stores/UserStore';
 import { filterTabLayout, getArrayFromLayout } from '../ElementDetailSortTab';
+import { elementList } from '../contextActions/CreateButton';
 import UserActions from '../actions/UserActions';
 
 export default class CollectionTabs extends React.Component {
@@ -90,24 +91,14 @@ export default class CollectionTabs extends React.Component {
     this.setState({ selectModal: !selectModal });
   }
 
-  selectCurrentTab(key) {
-    const tabTitles = {
-      0: 'sample',
-      1: 'reaction',
-      2: 'wellplate',
-      3: 'screen'
-    };
-    this.setState({ currentTab: tabTitles[key] });
-    return tabTitles[key];
-  }
-
   clickedOnBack() {
     this.handleModalOptions(this.state.showModal);
     this.handleSelectModalOptions(this.state.selectModal);
   }
 
-  handleSelectNav(eventKey) {
-    const currentTab = this.selectCurrentTab(eventKey);
+  handleSelectNav(event) {
+    const currentTab = event;
+    this.setState({ currentTab });
     let layout = {};
     const node = this.state.currentCollection;
     const profileData = this.state.profileData;
@@ -169,6 +160,12 @@ export default class CollectionTabs extends React.Component {
 
   render() {
     const { showModal, tree, layout, selectModal } = this.state;
+    const { elements, genericEls, itemTables } = elementList();
+
+    elements.concat(genericEls).forEach((el) => {
+      itemTables.push(<NavItem eventKey={el.name}>{el.label}</NavItem>);
+    });
+
     const tabTitlesMap = {
       qc_curation: 'qc curation',
       computed_props: 'computed props',
@@ -217,10 +214,7 @@ export default class CollectionTabs extends React.Component {
           </Modal.Header>
           <Modal.Body style={{ paddingBottom: '2px' }}>
             <Nav bsStyle="pills" stacked onSelect={this.handleSelectNav}>
-              <NavItem eventKey={0}>Sample</NavItem>
-              <NavItem eventKey={1}>Reaction</NavItem>
-              <NavItem eventKey={2}>Wellplate</NavItem>
-              <NavItem eventKey={3}>Screen</NavItem>
+              {itemTables}
             </Nav>
             <hr />
             <div className="alert alert-info" role="alert">
