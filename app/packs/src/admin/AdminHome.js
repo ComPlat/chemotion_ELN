@@ -20,6 +20,7 @@ import DatasetElementAdmin from './DatasetElementAdmin';
 import DelayedJobs from './DelayedJobs';
 import TemplateManagement from './TemplateManagement';
 import ConverterAdmin from './converter/AdminApp';
+import PartnerAppManagement from './PartnerAppManagement';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -80,6 +81,8 @@ class AdminHome extends React.Component {
       return this.renderDelayedJobs();
     } else if (pageIndex === 14) {
       return this.renderConverterAdmin();
+    } else if (pageIndex === 15) {
+      return this.renderPartnerAppManagement();
     }
 
     return (<div />);
@@ -110,6 +113,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
             <NavItem eventKey={12}>Report-template Management</NavItem>
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
+            <NavItem eventKey={15}>Partner App Management </NavItem>
           </Nav>
         </Col>
       </div>
@@ -220,6 +224,15 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <TemplateManagement />
+      </Col>
+    );
+  }
+
+  renderPartnerAppManagement() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <PartnerAppManagement />
       </Col>
     );
   }

@@ -491,4 +491,24 @@ export default class AttachmentFetcher {
 
     return promise;
   }
+
+  static redirectToUrl(redirect_url, attachment_id) {
+    let promise = fetch(`/api/v1/attachments/${attachment_id}/redirect_url`, {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ redirect_url }),
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

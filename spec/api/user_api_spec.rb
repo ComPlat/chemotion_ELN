@@ -202,5 +202,106 @@ describe Chemotion::UserAPI do
         ).to match_array([p2.id, p3.id])
       end
     end
+
+    describe 'POST /api/v1/users/token' do
+      let(:params) do
+        {
+          'client_id' => '1',
+          'client_name' => '3rd App'
+        }
+      end
+
+      before do
+        post '/api/v1/users/token', params: params
+      end
+
+      it 'Grant permission for 3rd App' do
+        expect(
+          JSON.parse(response.body)
+        ).not_to be_empty
+
+        expect(
+          Token.where(client_id: '1', user_id: p1.id)
+        ).not_to be_empty
+
+        expect(
+          JsonWebToken.decode(JSON.parse(response.body)['token'])['client_id']
+        ).to eq('1')
+
+        expect(
+          JsonWebToken.decode(JSON.parse(response.body)['token'])['current_user_id']
+        ).to eq(p1.id)
+
+        expect(
+          JsonWebToken.decode(JSON.parse(response.body)['refresh_token'])
+        ).not_to be_empty
+      end
+    end
+
+    describe 'DELETE /api/v1/users/token/refresh_token' do
+      let(:token) { create(:token, user_id: p1.id) }
+
+      before do
+        delete '/api/v1/users/token/' + token[:id].to_s
+      end
+
+      it 'Delete token by id' do
+        expect(
+          JSON.parse(response.body)
+        ).not_to be_empty
+
+        expect(
+          Token.where(client_id: '123', user_id: p1.id)
+        ).to be_empty
+
+        cache = Moneta::Adapters::Memcached.new if cache.nil?
+
+        expect(
+          cache[token[:token]]
+        ).to eq(p1['id'].to_s)
+      end
+    end
+
+    describe 'POST /api/v1/users/token/refresh_token' do
+      let(:token) {
+        create(
+          :token,
+          client_id: '123',
+          user_id: p1.id,
+          token: JsonWebToken.encode(client_id: '123', current_user_id: p1.id, exp: 1.hours.from_now),
+          refresh_token: JsonWebToken.encode(client_id: '123', current_user_id: p1.id, exp: 1.weeks.from_now)
+        )}
+      let(:params) do
+        {
+          'refresh_token' => token.refresh_token
+        }
+      end
+
+      before do
+        post '/api/v1/users/token/refresh_token', params: params
+      end
+
+      it 'Generate new token' do
+        expect(
+          JSON.parse(response.body)
+        ).not_to be_empty
+
+        expect(
+          Token.where(client_id: '123', user_id: p1.id)
+        ).not_to be_empty
+
+        expect(
+          JsonWebToken.decode(JSON.parse(response.body)['token'])['client_id']
+        ).to eq('123')
+
+        expect(
+          JsonWebToken.decode(JSON.parse(response.body)['token'])['current_user_id']
+        ).to eq(p1.id)
+
+        expect(
+          JsonWebToken.decode(JSON.parse(response.body)['refresh_token'])
+        ).not_to be_empty
+      end
+    end
   end
 end

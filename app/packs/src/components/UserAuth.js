@@ -579,6 +579,7 @@ export default class UserAuth extends Component {
                 Disable for now as there is no subsciption channel yet (Paggy) */}
             <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
+            <MenuItem eventKey="8" href="token_management" >My token list</MenuItem>
           </NavDropdown>
           <NavItem onClick={() => this.logout()} style={{ marginRight: '5px' }} className="" title="Log out">
             <Glyphicon glyph="log-out" />

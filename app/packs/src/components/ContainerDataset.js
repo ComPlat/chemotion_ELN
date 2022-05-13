@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, Overlay } from 'react-bootstrap';
+import { Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, Overlay, ButtonGroup } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
+import Select from 'react-select'
 import { findIndex, cloneDeep } from 'lodash';
 
 import Utils from './utils/Functions';
@@ -16,6 +17,7 @@ import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
 import ChildOverlay from './managing_actions/ChildOverlay';
 
 import HyperLinksSection from './common/HyperLinksSection';
+import PartnerAppFetcher from './fetchers/PartnerAppFetcher'
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -26,7 +28,9 @@ export default class ContainerDataset extends Component {
       instruments: null,
       valueBeforeFocus: null,
       timeoutReference: null,
-      link: null
+      link: null,
+      partnerAppOptions: [],
+      partnerApp: null
     };
 
     this.timeout = 6e2; // 600ms timeout for input typing
@@ -34,10 +38,21 @@ export default class ContainerDataset extends Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
+    this.handleRedirectWithToken = this.handleRedirectWithToken.bind(this);
   }
 
   componentDidMount() {
     this.createAttachmentPreviews(this.state.dataset_container);
+    this.getPartnerApps();
+  }
+
+  getPartnerApps() {
+    PartnerAppFetcher.getPartnerApps().then((result) => {
+      this.setState({
+        partnerApp: result.partner_apps[0],
+        partnerAppOptions: result.partner_apps
+      });
+    });
   }
 
   createAttachmentPreviews(dataset_container) {
@@ -100,6 +115,12 @@ export default class ContainerDataset extends Component {
 
   handleAttachmentDownload(attachment) {
     Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
+  }
+
+  handleRedirectWithToken(redirect_url, attachment) {
+    AttachmentFetcher.redirectToUrl(redirect_url, attachment.id).then((result) => {
+      window.open(result, '_blank');
+    })
   }
 
   handleAttachmentRemove(attachment) {
@@ -165,7 +186,8 @@ export default class ContainerDataset extends Component {
             <td style={{ verticalAlign: 'middle' }}>
               <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
               {this.removeAttachmentButton(attachment)} &nbsp;
-              {this.attachmentBackToInboxButton(attachment)}
+              {this.attachmentBackToInboxButton(attachment)}&nbsp;
+              {this.redirectButton(attachment)}&nbsp;
             </td>
           </tr>
         </tbody>
@@ -208,6 +230,33 @@ export default class ContainerDataset extends Component {
         </Button>
       );
     }
+  }
+
+  redirectButton(attachment) {
+    const { partnerAppOptions, partnerApp } = this.state;
+    const options = partnerAppOptions.map(x => ({ value: x.url, label: x.name }));
+    const { readOnly, disabled } = this.props;
+    if (!readOnly && !disabled) {
+      return (
+        <ButtonGroup style={{width: 150}}>
+          <Select
+            name='status'
+            multi={false}
+            value={partnerApp}
+            options={options}
+            disabled={readOnly || disabled}
+            onChange={this.handlePartnerAppChange.bind(this)}
+          />
+          <Button bsSize="xsmall" bsStyle="info" onClick={() => this.handleRedirectWithToken(partnerApp, attachment)}>
+            <i className="fa fa-external-link" />
+          </Button>
+        </ButtonGroup>
+      );
+    }
+  }
+
+  handlePartnerAppChange(event) {
+    this.setState({partnerApp: event.value})
   }
 
   attachmentBackToInboxButton(attachment) {
@@ -455,7 +504,7 @@ export default class ContainerDataset extends Component {
           {this.dropzone()}
           {this.attachments()}
           <HyperLinksSection data={dataset_container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
-          disabled={disabled}></HyperLinksSection>
+            disabled={disabled}></HyperLinksSection>
         </Col>
       </Row>
     );

@@ -9,6 +9,7 @@ import rXr from './extra/routesXroutes';
 import * as routesUtils from './routesUtils';
 import UIFetcher from './fetchers/UIFetcher';
 import klasses from '../../../../config/klasses.json';
+import GrantPermission from './GrantPermission';
 
 
 const allRoutes = (r) => {
@@ -110,6 +111,18 @@ const routes = {
       showOrNew: routesUtils.genericElShowOrNew
     },
     '/:genericElID': 'showOrNew'
+  },
+  '/grant_permission': {
+    target: {
+      showGrantPermission: routesUtils.grantPermissionShowOrNew
+    },
+    '/': 'showGrantPermission',
+  },
+  '/token_management': {
+    target: {
+      showTokenList: routesUtils.tokenShowTokenList
+    },
+    '/': 'showTokenList'  
   }
 };
 
