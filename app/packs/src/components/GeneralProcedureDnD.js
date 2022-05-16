@@ -4,6 +4,8 @@ import { compose } from 'redux';
 import { Tooltip, OverlayTrigger } from 'react-bootstrap';
 import DragDropItemTypes from './DragDropItemTypes';
 import DetailActions from './actions/DetailActions';
+import ElementActions from './actions/ElementActions.js';
+import { UrlSilentNavigation } from './utils/ElementUtils';
 
 const updRxnOriName = (oriRxn, sourceTag) => {
   const nextRxn = oriRxn;
@@ -46,11 +48,16 @@ const dndStyle = (canDrop, isOver) => {
   return style;
 };
 
+const showReaction = (reaction) => {
+  UrlSilentNavigation(reaction);
+  ElementActions.fetchReactionById(reaction.id);
+}
+
 const GpContent = ({ reaction }) => (
   reaction.origin && reaction.origin.short_label
     ? <span className="c-bs-primary gp-content">
       <span className="spacer-10" />
-      {reaction.origin.short_label}
+      <a role="link" onClick={() => {showReaction(reaction.origin)}}>{reaction.origin.short_label}</a>
     </span>
     : null
 );
