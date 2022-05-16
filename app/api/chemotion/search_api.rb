@@ -161,7 +161,7 @@ module Chemotion
                     .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
                     .order(:sum_formular)
           molecule_scope = molecule_scope.page(page).per(page_size)
-          samples = Sample.includes(:tag, :molecule).find(sample_ids)
+          samples = Sample.includes_for_list_display.find(sample_ids)
           samples_size = molecule_scope.size
           molecule_scope.each do |molecule|
             samplesGroup = samples.select { |sample| sample.molecule_id == molecule.id }
@@ -174,7 +174,7 @@ module Chemotion
         else
           id_array = Kaminari.paginate_array(sample_ids).page(page).per(page_size)
           ids = id_array.join(',')
-          Sample.includes(:tag, :molecule)
+          Sample.includes_for_list_display
                 .where(id: id_array)
                 .order("position(','||id::text||',' in ',#{ids},')")
                 .each do |sample|
@@ -274,50 +274,50 @@ module Chemotion
         return if !(search_method =~ /advanced|structure/) && !arg.presence
         dl_s = dl[:sample_detail_level] || 0
         scope = case search_method
-        when 'polymer_type'
-          if dl_s > 0
-            Sample.by_collection_id(c_id).order("samples.updated_at DESC")
-                  .by_residues_custom_info('polymer_type', arg)
-          else
-            Sample.none
-          end
-        when 'sum_formula', 'sample_external_label'
-          if dl_s > -1
-            Sample.by_collection_id(c_id).order("samples.updated_at DESC")
-                  .search_by(search_method, arg)
-          else
-            Sample.none
-          end
-        when 'iupac_name', 'inchistring', 'inchikey', 'cano_smiles',
-             'sample_name', 'sample_short_label'
-          if dl_s > 0
-            Sample.by_collection_id(c_id).order("samples.updated_at DESC")
-                  .search_by(search_method, arg)
-          else
-            Sample.none
-          end
-        when 'reaction_name', 'reaction_short_label', 'reaction_status', 'reaction_rinchi_string'
-          Reaction.by_collection_id(c_id).search_by(search_method, arg)
-        when 'wellplate_name'
-          Wellplate.by_collection_id(c_id).search_by(search_method, arg)
-        when 'screen_name'
-          Screen.by_collection_id(c_id).search_by(search_method, arg)
-        when 'substring'
-          # NB we'll have to split the content of the pg_search_document into
-          # MW + external_label (dl_s = 0) and the other info only available
-          # from dl_s > 0. For now one can use the suggested search instead.
-          if dl_s > 0
-            AllElementSearch.new(arg).search_by_substring.by_collection_id(c_id, current_user)
-          else
-            AllElementSearch::Results.new(Sample.none)
-          end
-        when 'structure'
-          sample_structure_search
-        when 'advanced'
-          advanced_search(c_id)
-        when 'elements'
-          elements_search(c_id)
-        end
+                when 'polymer_type'
+                  if dl_s > 0
+                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                          .by_residues_custom_info('polymer_type', arg)
+                  else
+                    Sample.none
+                  end
+                when 'sum_formula', 'sample_external_label'
+                  if dl_s > -1
+                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                          .search_by(search_method, arg)
+                  else
+                    Sample.none
+                  end
+                when 'iupac_name', 'inchistring', 'inchikey', 'cano_smiles',
+                     'sample_name', 'sample_short_label'
+                  if dl_s > 0
+                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                          .search_by(search_method, arg)
+                  else
+                    Sample.none
+                  end
+                when 'reaction_name', 'reaction_short_label', 'reaction_status', 'reaction_rinchi_string'
+                  Reaction.by_collection_id(c_id).search_by(search_method, arg)
+                when 'wellplate_name'
+                  Wellplate.by_collection_id(c_id).search_by(search_method, arg)
+                when 'screen_name'
+                  Screen.by_collection_id(c_id).search_by(search_method, arg)
+                when 'substring'
+                  # NB we'll have to split the content of the pg_search_document into
+                  # MW + external_label (dl_s = 0) and the other info only available
+                  # from dl_s > 0. For now one can use the suggested search instead.
+                  if dl_s > 0
+                    AllElementSearch.new(arg).search_by_substring.by_collection_id(c_id, current_user)
+                  else
+                    AllElementSearch::Results.new(Sample.none)
+                  end
+                when 'structure'
+                  sample_structure_search
+                when 'advanced'
+                  advanced_search(c_id)
+                when 'elements'
+                  elements_search(c_id)
+                end
 
         if search_method == 'advanced' && molecule_sort == false
           arg_value_str = adv_params.first['value'].split(/(\r)?\n|,/).map(&:strip)
