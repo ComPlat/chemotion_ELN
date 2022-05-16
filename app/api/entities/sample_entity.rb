@@ -3,7 +3,6 @@
 module Entities
   class SampleEntity < ApplicationEntity
     expose(
-      :_contains_residues,
       :decoupled,
       :density,
       :external_label,
@@ -28,6 +27,7 @@ module Entities
     )
 
     expose(
+      :_contains_residues,
       :boiling_point,
       :can_copy,
       :can_publish,
@@ -49,10 +49,7 @@ module Entities
       unless: ->(instance, options) { displayed_in_list? }
     )
 
-    with_options(format_with: :eln_timestamp) do
-      expose :created_at
-      expose :updated_at
-    end
+    expose_timestamps
 
     expose :analyses, using: 'Entities::ContainerEntity', unless: ->(instance, options) { displayed_in_list? }
     expose :code_log, using: 'Entities::CodeLogEntity', unless: ->(instance, options) { displayed_in_list? }

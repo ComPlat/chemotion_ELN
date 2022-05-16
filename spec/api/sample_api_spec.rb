@@ -534,13 +534,9 @@ describe Chemotion::SampleAPI do
 
         it 'is able to import new samples' do
           # puts response.body
-          expect(
-            JSON.parse(response.body)['data'].collect do |e|
-              [e['id'], e['name']]
-            end
-          ).to match_array(
-            Sample.pluck(:id, :name)
-          )
+          ids_from_response = JSON.parse(response.body)['data']
+          ids_from_db = Sample.pluck(:id)
+          expect(ids_from_response).to match_array(ids_from_db)
 
           expect(
             JSON.parse(response.body)['data'].count

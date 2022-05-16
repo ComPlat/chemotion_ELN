@@ -15,13 +15,15 @@ module Entities
       :iupac_name,
       :melting_point,
       :molecular_weight,
-      :molecule_names,
       :molecule_svg_file,
       :molfile,
       :molfile_version,
       :names,
       :sum_formular,
     )
+
+    expose :molecule_names, using: 'Entities::MoleculeNameEntity', unless: ->(instance, options) { displayed_in_list? }
+
 
     def molfile
       return unless object.respond_to?(:molfile)
