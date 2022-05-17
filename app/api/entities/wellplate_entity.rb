@@ -34,7 +34,7 @@ module Entities
     end
 
     def wells
-      displayed_in_list? ? [] : object.ordered_wells
+      displayed_in_list? ? [] : object.ordered_wells.includes(:sample)
     end
 
     def type
