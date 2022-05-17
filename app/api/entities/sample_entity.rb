@@ -73,15 +73,15 @@ module Entities
     end
 
     def can_update
-      options[:policy] && options[:policy].try(:update?)
+      (options[:policy] && options[:policy].try(:update?)) || false
     end
 
     def can_copy
-      options[:policy] && options[:policy].try(:copy?)
+      (options[:policy] && options[:policy].try(:copy?)) || false
     end
 
     def can_publish
-      options[:policy] && options[:policy].try(:destroy?)
+      (options[:policy] && options[:policy].try(:destroy?)) || false
     end
 
     def children_count
