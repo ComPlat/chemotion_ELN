@@ -8,9 +8,9 @@ module Entities
       :name, 
       :body, 
       :thumb_svg,
-      :research_plan_metadata
     )
     expose :container, using: 'Entities::ContainerEntity'
+    expose :research_plan_metadata, using: 'Entities::ResearchPlanMetadataEntity'
     expose :segments, using: 'Entities::SegmentEntity'
     expose :wellplates, using: 'Entities::WellplateEntity'
 

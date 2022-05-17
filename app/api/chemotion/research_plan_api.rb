@@ -37,6 +37,8 @@ module Chemotion
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
+
+        scope = scope.includes_for_list_display
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at
         scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
@@ -44,7 +46,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
+        present paginate(scope), with: Entities::ResearchPlanEntity, displayed_in_list: true
       end
 
       desc 'Create a research plan'
@@ -88,7 +90,7 @@ module Chemotion
           research_plan.collections << all_coll
         end
 
-        research_plan
+        present research_plan, with: Entities::ResearchPlanEntity
       end
 
       namespace :table_schemas do
@@ -112,7 +114,7 @@ module Chemotion
           table_schema.creator = current_user
           table_schema.save!
 
-          table_schema
+          present table_schema, with: Entities::ResearchPlanTableSchemaEntity
         end
 
         desc 'Delete table schema'
@@ -121,7 +123,7 @@ module Chemotion
             error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
           end
           delete do
-            ResearchPlanTableSchema.find(params[:id]).destroy
+            present ResearchPlanTableSchema.find(params[:id]).destroy, with: Entities::ResearchPlanTableSchemaEntity
           end
         end
       end
@@ -143,7 +145,7 @@ module Chemotion
             subject: ''
           ) if research_plan.research_plan_metadata.nil?
           {
-            research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
+            research_plan: Entities::ResearchPlanEntity.represent(research_plan),
             attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
           }
         end
@@ -173,7 +175,7 @@ module Chemotion
             research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
           end
-          { research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized }
+          present research_plan, with: Entities::ResearchPlanEntity, root: :research_plan
         end
       end
 
@@ -197,7 +199,7 @@ module Chemotion
         svg_file.write(svg)
         svg_file.close
 
-        {svg_path: svg_file_name}
+        { svg_path: svg_file_name }
       end
 
       desc 'Save image file to filesystem'
@@ -301,14 +303,9 @@ module Chemotion
           exporter = Usecases::ResearchPlans::ImportWellplateAsTable.new(research_plan, wellplate)
           begin
             exporter.execute!
-            # TODO: Refactor this massively ugly fallback to be in a more convenient place
-            # (i.e. the serializer/entity or maybe return a null element from the model)
-            research_plan.build_research_plan_metadata(
-              title: research_plan.name,
-              subject: ''
-            ) if research_plan.research_plan_metadata.nil?
+
             {
-              research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
+              research_plan: Entities::ResearchPlanEntity.represent(research_plan),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
           rescue StandardError => e
@@ -334,14 +331,9 @@ module Chemotion
           exporter = Usecases::ResearchPlans::ImportTableFromSpreadsheet.new(research_plan, attachment)
           begin
             exporter.execute!
-            # TODO: Refactor this massively ugly fallback to be in a more convenient place
-            # (i.e. the serializer/entity or maybe return a null element from the model)
-            research_plan.build_research_plan_metadata(
-              title: research_plan.name,
-              subject: ''
-            ) if research_plan.research_plan_metadata.nil?
+
             {
-              research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
+              research_plan: Entities::ResearchPlanEntity.represent(research_plan),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
           rescue StandardError => e
