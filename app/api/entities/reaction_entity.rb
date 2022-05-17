@@ -84,9 +84,12 @@ module Entities
       'reaction'
     end
 
-    # TODO: Figure out how the policy adjusts whether the object is updateable or not
     def can_update
-      false
+      (options[:policy] && options[:policy].try(:update?)) || false
+    end
+
+    def can_copy
+      (options[:policy] && options[:policy].try(:copy?)) || false
     end
   end
 end
