@@ -80,6 +80,8 @@ module Chemotion
             end
           end
           molecule.attributes.merge(temp_svg: File.exist?(svg_process[:svg_file_path]) && svg_process[:svg_file_name], ob_log: babel_info[:ob_log])
+
+          present molecule, with: Entities::MoleculeEntity
         end
       end
 
@@ -152,6 +154,8 @@ module Chemotion
             ob = molecule&.ob_log
           end
           molecule&.attributes&.merge(temp_svg: svg_name, ob_log: ob)
+
+          present molecule, with: Entities::MoleculeEntity
         end
       end
 
@@ -185,6 +189,8 @@ module Chemotion
           end
         end
         molecule&.attributes&.merge(temp_svg: svg_process[:svg_file_name], ob_log: ob)
+
+        present molecule, with: Entities::MoleculeEntity
       end
 
       desc 'return CAS of the molecule'
@@ -195,7 +201,8 @@ module Chemotion
         inchikey = params[:inchikey]
         molecule = Molecule.find_by(inchikey: inchikey)
         molecule.load_cas if molecule
-        molecule
+
+        present molecule, with: Entities::MoleculeEntity
       end
 
       desc 'return names of the molecule'
@@ -255,12 +262,12 @@ module Chemotion
         error!('Unauthorized to delete molecule name!', 401) unless current_user&.molecule_editor
 
         if params[:name_id] == -1
-          mn = MoleculeName.create(molecule_id: params[:id], user_id: current_user.id, description: "#{params[:description]} #{current_user.id}", name: params[:name])
+          molecule_name = MoleculeName.create(molecule_id: params[:id], user_id: current_user.id, description: "#{params[:description]} #{current_user.id}", name: params[:name])
         else
-          mn = MoleculeName.find(params[:name_id])
-          mn.update!(name: params[:name]) if mn.present?
+          molecule_name = MoleculeName.find(params[:name_id])
+          molecule_name.update!(name: params[:name]) if molecule_name.present?
         end
-        mn
+        present molecule_name, with: Entities::MoleculeNameEntity
       rescue StandardError => e
         return {}
       end
