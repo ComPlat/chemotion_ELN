@@ -19,15 +19,11 @@ module Chemotion
         messages = NotifyMessage.where(receiver_id: current_user.id)
         messages = messages.where(is_ack: params[:is_ack]) if params[:is_ack] < 9
         message_list = present(messages, with: Entities::MessageEntity, root: 'messages')
-
         message_list[:version] = ENV['VERSION_ASSETS'] if ENV['VERSION_ASSETS']
 
-        Notification.where(
-          id: messages.where(channel_type: 5).pluck(:id)
-        ).each do |notification|
+        Notification.where(id: messages.where(channel_type: 5).ids).each do |notification|
           notification.update!(is_ack: 1)
         end
-        message_list
       end
 
       desc 'Return spectra messages of the current user'
@@ -40,7 +36,8 @@ module Chemotion
         messages.where(channel_type: 8).each do |msg|
           Notification.find(msg.id)&.update!(is_ack: 1)
         end
-        messages
+
+        present messages, with: Entities::MessageEntity, root: :messages
       end
 
       desc 'Return channels'
@@ -79,13 +76,15 @@ module Chemotion
         put do
           return if params[:ids].nil?
 
-          notifs = Notification.find(params[:ids])
+          notifications = Notification.find(params[:ids])
           params_arr = { is_ack: 1 }
-          notifs.each do |notif|
+          notifications.each do |notif|
             next if notif.user_id != current_user.id
 
             notif.update!(params_arr)
           end
+
+          present notifications, with: Entities::NotificationEntity
         end
       end
 
@@ -99,15 +98,13 @@ module Chemotion
           channel = Channel.find(params[:channel_id])
           return if channel.nil?
 
-          if params[:subscribe]
-            sub_attr = {
-              channel_id: channel.id,
-              user_id: current_user.id
-            }
-            Subscription.create(sub_attr)
+          subscription = if params[:subscribe]
+            Subscription.create(channel_id: channel.id, user_id: current_user.id)
           else
             Subscription.find_by(channel_id: channel.id, user_id: current_user.id).destroy
           end
+
+          present subscription, with: Entities::SubscriptionEntity
         end
       end
 
@@ -125,7 +122,8 @@ module Chemotion
             message_from: current_user.id,
             message_to: params[:user_ids]
           )
-          { message: message }
+
+          present message, with: Entities::MessageEntity, root: :message
         end
       end
 
@@ -140,7 +138,7 @@ module Chemotion
             channel_id: channel.id,
             user_id: current_user.id
           }
-          Subscription.create(subscribe_attr)
+          present Subscription.create(subscribe_attr), with: Entities::SubscriptionEntity
         end
       end
     end
