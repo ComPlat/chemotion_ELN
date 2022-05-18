@@ -1,0 +1,13 @@
+.wellplate-overlay {
+  width: 200px;
+  margin-top: 2px;
+  margin-right: -12px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.wellplate-overlay:hover{
+  overflow: visible;
+  white-space: normal;
+  height: auto;
+}
