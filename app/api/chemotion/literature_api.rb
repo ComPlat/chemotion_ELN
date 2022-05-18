@@ -8,8 +8,7 @@ module Chemotion
     helpers do
       def citation_for_elements(id = params[:element_id], type = @element_klass, cat = 'detail')
         return Literature.none unless id.present?
-
-        Literature.by_element_attributes_and_cat(id, type, cat).add_user_info
+        Literature.by_element_attributes_and_cat(id, type, cat).with_user_info
       end
     end
 
@@ -47,7 +46,13 @@ module Chemotion
       end
 
       get do
-        { literatures: citation_for_elements }
+        present(
+          citation_for_elements,
+          with: Entities::LiteratureEntity,
+          root: :literatures,
+          with_element_count: true,
+          with_user_info: true
+        )
       end
 
       desc 'create a literature entry'
@@ -95,7 +100,14 @@ module Chemotion
           @element.touch
         end
 
-        { literatures: citation_for_elements }
+        present(
+          citation_for_elements,
+          with: Entities::LiteratureEntity,
+          root: :literatures,
+          with_element_count: true,
+          with_user_info: true
+        )
+
       end
 
       params do
@@ -112,6 +124,8 @@ module Chemotion
           element_id: params[:element_id],
           category: 'detail'
         )&.destroy!
+
+        {}
       end
 
       namespace :collection do
@@ -129,11 +143,16 @@ module Chemotion
           sample_ids = @dl_s > 1 ? @c.sample_ids : []
           reaction_ids = @dl_r > 1 ? @c.reaction_ids : []
           research_plan_ids = @dl_rp > 1 ? @c.research_plan_ids : []
+          collection_references = Literature.by_element_attributes_and_cat(@c_id, 'Collection', 'detail').group_by_element
+          sample_references = Literature.by_element_attributes_and_cat(sample_ids, 'Sample', 'detail').group_by_element
+          reaction_references = Literature.by_element_attributes_and_cat(reaction_ids, 'Reaction', 'detail').group_by_element
+          research_plan_references = Literature.by_element_attributes_and_cat(research_plan_ids, 'ResearchPlan', 'detail').group_by_element
+
           {
-            collectionRefs: Literature.by_element_attributes_and_cat(@c_id, 'Collection', 'detail').group_by_element,
-            sampleRefs: Literature.by_element_attributes_and_cat(sample_ids, 'Sample', 'detail').group_by_element,
-            reactionRefs: Literature.by_element_attributes_and_cat(reaction_ids, 'Reaction', 'detail').group_by_element,
-            researchPlanRefs: Literature.by_element_attributes_and_cat(research_plan_ids, 'ResearchPlan', 'detail').group_by_element,
+            collectionRefs: Entities::LiteratureEntity.represent(collection_references, with_element_count: true),
+            sampleRefs: Entities::LiteratureEntity.represent(sample_references, with_element_count: true),
+            reactionRefs: Entities::LiteratureEntity.represent(reaction_references, with_element_count: true),
+            researchPlanRefs: Entities::LiteratureEntity.represent(research_plan_references, with_element_count: true)
           }
         end
       end
@@ -198,9 +217,15 @@ module Chemotion
             end
           end
 
-          # { selectedRefs: LiteralGroup.by_element_ids_and_cat(@sids, @rids, @cat).order(element_updated_at: :desc)  }
-          { selectedRefs: Literature.by_element_attributes_and_cat(@sids, 'Sample', @cat).add_element_and_user_info +
-            Literature.by_element_attributes_and_cat(@rids, 'Reaction', @cat).add_element_and_user_info }
+          sample_references = Literature.by_element_attributes_and_cat(@sids, 'Sample', @cat).with_element_and_user_info
+          reaction_references = Literature.by_element_attributes_and_cat(@rids, 'Reaction', @cat).with_element_and_user_info
+
+          present(
+            sample_references + reaction_references,
+            with: Entities::LiteratureEntity,
+            root: :selectedRefs,
+            with_element_and_user_info: true
+          )
         end
       end
 

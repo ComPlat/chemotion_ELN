@@ -6,9 +6,9 @@ module Entities
       I18n.l(datetime, format: :eln_timestamp)
     end
 
-    def self.expose_timestamps(timestamp_fields: %i[created_at updated_at])
+    def self.expose_timestamps(timestamp_fields: %i[created_at updated_at], **additional_args)
       timestamp_fields.each do |field|
-        expose field, format_with: :eln_timestamp
+        expose field, format_with: :eln_timestamp, **additional_args
       end
     end
 
