@@ -20,6 +20,7 @@ const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFr
               show={show}
               target={target}
               placement={placement}
+              style={{ position: 'sticky', top: 0, overflow: 'scroll' }}
               onHide={() => handleClose()} >
       <Popover title={title(handleClose)} id={'wellpop'+well.id}>
         {content(well, removeSampleFromWell, handleWellLabel, handleColorPicker, selectedColor, saveColorCode)}
@@ -51,7 +52,7 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
   }];
 
   return(
-    <div style={{width: 220, height: 750}}>
+    <div style={{ width: 220, height: 650 }}>
       {renderWellContent(well, removeSampleFromWell)}
       <div>
         <Select
@@ -61,14 +62,14 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
           options={labels}
           value={well.label}
           onChange={e => handleWellLabel(e)}
-          style={{top: '2px', bottom: '2px'}}
+          style={{ top: '2px', bottom: '2px' }}
         />
         <FormGroup>
           <ControlLabel>Readout</ControlLabel>
           <FormControl componentClass="textarea"
             disabled={true}
             value={well.readout || ''}
-            style={{height: 60}}
+            style={{ height: 50 }}
           />
         </FormGroup>
         <FormGroup>
@@ -76,17 +77,18 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
           <FormControl componentClass="textarea"
             disabled={true}
             value={sampleImportedReadout(sample) || ''}
-            style={{height: 60}}
+            style={{ height: 50 }}
           />
         </FormGroup>
-        <FormGroup  controlId="colorInput">
-          <Col componentClass={ControlLabel} sm={3}>
-            Select Color
+        <FormGroup>
+          <Col style={{ marginLeft: '-15px' }} class="row row-no-gutters" componentClass={ControlLabel} sm={3}>
+            Select&nbsp;Color
           </Col>
-          <Col sm={9}>
+          <Col sm={9} style={{ marginLeft: '35px', width: '65%' }}>
             <InputGroup>
               <InputGroup.Addon style={bcStyle}></InputGroup.Addon>
               <FormControl
+                class="input-sm"
                 type="text"
                 readOnly
                 value={selectedColor || well.color_code}
@@ -94,12 +96,10 @@ const content = (well, removeSampleFromWell, handleWellLabel, handleColorPicker,
             </InputGroup>
           </Col>
         </FormGroup>
-        <FormGroup controlId="formHorizontalPicker">
-          <Col sm={12}>
-            <CirclePicker width="132%" onChangeComplete={e => handleColorPicker(e)} />
-          </Col>
+        <FormGroup controlId="formHorizontalPicker" style={{ marginTop: '60px' }}>
+          <CirclePicker circleSize={17} width="100%" onChangeComplete={e => handleColorPicker(e)} />
         </FormGroup>
-        <ButtonGroup style={{ top: '10px', bottom: '10px' }}>
+        <ButtonGroup style={{ bottom: '5x' }}>
           <Button style={{ left: '80px' }} onClick={saveColorCode}>Save</Button>
         </ButtonGroup>
       </div>
@@ -123,7 +123,7 @@ const title = (handleClose) => {
 const renderWellContent = (well, removeSampleFromWell) => {
   const {sample} = well;
   let svg, moleculeName, removeButton = '';
-  const namesStyle= {textAlign: 'center', marginTop: 2, marginLeft: -12, marginRight: -12};
+
   const svgContainerStyle = {
     borderRadius: '50%',
     height: 190,
@@ -149,11 +149,13 @@ const renderWellContent = (well, removeSampleFromWell) => {
       <div style={svgContainerStyle}>
         {svg}
       </div>
-      <div style={namesStyle}>
+      <div className="wellplate-overlay">
         {sampleName(sample)}<br/>
         {moleculeName}<br/>
       </div>
-      {removeButton}
+        <div>
+          {removeButton}
+      </div>
     </div>
   );
 }
