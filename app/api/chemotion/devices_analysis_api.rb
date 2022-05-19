@@ -36,7 +36,8 @@ module Chemotion
         device = Device.find(params[:device_id])
         device.devices_analyses << analysis
         device.save!
-        analysis
+
+        present analysis, with: Entities::DevicesAnalysisEntity, root: :devices_analysis
       end
 
       desc "get Devices Analysis"
@@ -45,20 +46,16 @@ module Chemotion
       end
       route_param :id do
         get do
-          analysis = DevicesAnalysis.find(params[:id])
-          if analysis.nil?
-            error!("404 Analysis of Device not found", 404)
-          else
-            analysis
+          analysis = DevicesAnalysis.find_by(params[:id])
+            if analysis
+              present analysis, with: Entities::DevicesAnalysisEntity, root: :devices_analysis
+            else
+              error!("404 Analysis of Device not found", 404)
+            end
           end
         end
       end
       
-      desc "get Devices Analyses"
-      get do
-        DevicesAnalysis.all
-      end
-
       desc "Update analysis"
       params do
         requires :id, type: Integer, desc: "device analysis id"
@@ -104,7 +101,7 @@ module Chemotion
 
             analysis.save!
             # FIXME how to prevent this extra query? data has changed!
-            DevicesAnalysis.find(params[:id])
+            present DevicesAnalysis.find(params[:id]), with: Entities::DevicesAnalysisEntity, root: :devices_analysis
           end
         end
       end
