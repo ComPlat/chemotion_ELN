@@ -92,7 +92,7 @@ const changeAttribute = (attributes, event, attribute, value) => {
 const applyAttribute = (node, event, attributes, attribute) => {
   if (typeof attribute === 'string') {
     changeAttribute(attributes, event, attribute, true);
-  } else if (typeof attribute === 'function'){
+  } else if (typeof attribute === 'function') {
     attribute(node, event, attributes);
   }
 };
@@ -223,4 +223,4 @@ export {
   markdownToDelta
 };
 
-/*eslint-enable no-param-reassign*/
+/* eslint-enable no-param-reassign */

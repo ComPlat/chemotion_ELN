@@ -177,9 +177,9 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
             </tbody>
           )})
         : null
-    )
-  }
-  const table = (dataRows) => (
+    );
+  };
+  const table = dataRows => (
     <Table striped condensed hover>
       <thead>
         <tr>
@@ -240,8 +240,8 @@ const SolventContent = ({ show, solvents, solvent }) => {
   return (
     show
       ? <div>
-          <h4 className="display-inline"> Solvent(s): </h4>
-          {displayContent()}
+        <h4 className="display-inline"> Solvent(s): </h4>
+        {displayContent()}
         </div>
       : null
   );
