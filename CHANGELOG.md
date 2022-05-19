@@ -2,6 +2,9 @@
 
 # Chemotion_ELN Changelog
 
+> yyyy-mm-dd
+
+* dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
 
 ## [vMAJOR.MINOR.PATCH]
 > yyyy-mm-dd
