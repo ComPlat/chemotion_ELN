@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
 import { Modal, Well, Button } from 'react-bootstrap';
@@ -103,6 +104,23 @@ class ViewSpectra extends React.Component {
       default:
         return [{ insert: `${label}, ` }];
     }
+  }
+
+  onDSSelectChange(e) {
+    const { value } = e;
+    const { spcInfos } = this.state;
+    const sis = spcInfos.filter(x => x.idDt === value);
+    const si = sis.length > 0 ? sis[0] : spcInfos[0];
+    SpectraActions.SelectIdx(si.idx);
+  }
+
+  getDSList() {
+    const { sample } = this.props;
+    const { spcInfos } = this.state;
+    const spcDts = spcInfos.map(e => e.idDt);
+    const dcs = sample.datasetContainers();
+    const dcss = dcs.filter(e => spcDts.includes(e.id));
+    return dcss;
   }
 
   getContent() {
@@ -549,14 +567,14 @@ class ViewSpectra extends React.Component {
           !isExist
             ? this.renderInvalid()
             : <SpectraEditor
-              entity={entity}
-              others={others}
-              operations={operations}
-              forecast={forecast}
-              molSvg={sample.svgPath}
-              descriptions={descriptions}
-              canChangeDescription={true}
-              onDescriptionChanged={this.onSpectraDescriptionChanged}
+                entity={entity}
+                others={others}
+                operations={operations}
+                forecast={forecast}
+                molSvg={sample.svgPath}
+                descriptions={descriptions}
+                canChangeDescription
+                onDescriptionChanged={this.onSpectraDescriptionChanged}
             />
         }
       </Modal.Body>
@@ -568,8 +586,11 @@ class ViewSpectra extends React.Component {
     const si = this.getSpcInfo();
     if (!si) return null;
     const modalTitle = si ? `Spectra Editor - ${si.title}` : '';
-    const options = spcInfos.map(x => ({ value: x.idx, label: x.label }));
+    const options = spcInfos.filter(x => x.idDt === si.idDt)
+      .map(x => ({ value: x.idx, label: x.label }));
     const onSelectChange = e => SpectraActions.SelectIdx(e.value);
+    const dses = this.getDSList();
+    const dsOptions = dses.map(x => ({ value: x.id, label: x.name }));
 
     return (
       <div className="spectra-editor-title">
@@ -577,6 +598,13 @@ class ViewSpectra extends React.Component {
           { modalTitle }
         </span>
         <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }} >
+          <Select
+            options={dsOptions}
+            value={si.idDt}
+            clearable={false}
+            style={{ width: 200 }}
+            onChange={e => this.onDSSelectChange(e)}
+          />
           <Select
             options={options}
             value={idx}
@@ -603,19 +631,19 @@ class ViewSpectra extends React.Component {
     const { spcInfos, spcIdx } = this.state;
     const sis = spcInfos.filter(x => x.idx === spcIdx);
     const si = sis.length > 0 ? sis[0] : spcInfos[0];
-    const { sample}  = this.props
+    const { sample } = this.props;
     sample.analysesContainers().forEach((ae) => {
       if (ae.id !== si.idAe) return;
       ae.children.forEach((ai) => {
         if (ai.id !== si.idAi) return;
-        ai.extended_metadata.content.ops =value.ops;
+        ai.extended_metadata.content.ops = value.ops;
       });
     });
   }
 
   render() {
     const { showModal } = this.state;
-    
+
     const { jcamp, predictions, idx } = this.getContent();
     const dialogClassName = 'spectra-editor-dialog';
     // WORKAROUND: react-stickydiv duplicates elements.
