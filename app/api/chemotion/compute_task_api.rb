@@ -3,7 +3,9 @@ module Chemotion
     resource :compute_tasks do
       desc 'Return all computational tasks.'
       get :all, each_serializer: ComputedPropsSerializer do
-        ComputedProp.where(creator: current_user.id).order(updated_at: :desc)
+        computed_props = ComputedProp.where(creator: current_user.id).order(updated_at: :desc)
+
+        present computed_props, with: Entities::ComputedPropEntity, root: :compute_tasks
       end
 
       desc "Handle task by id"
@@ -16,7 +18,7 @@ module Chemotion
         end
 
         desc 'Check task status.'
-        get :check, root: 'check', each_serializer: ComputedPropsSerializer do
+        get :check do
           task = ComputedProp.find(params[:id])
 
           cconfig = Rails.configuration.compute_config
@@ -31,11 +33,11 @@ module Chemotion
             task.save!
           end
 
-          [task]
+          present task, with: Entities::ComputedPropEntity, root: :check
         end
 
         desc 'Revoke task.'
-        get :revoke, root: 'revoke', each_serializer: ComputedPropsSerializer do
+        get :revoke do
           task = ComputedProp.find(params[:id])
 
           cconfig = Rails.configuration.compute_config
@@ -50,7 +52,7 @@ module Chemotion
             task.save!
           end
 
-          [task]
+          present task, with: Entities::ComputedPropEntity, root: :revoke
         end
       end
 
@@ -64,7 +66,7 @@ module Chemotion
         end
 
         delete do
-          ComputedProp.find(params[:id]).destroy
+          present ComputedProp.find(params[:id]).destroy, with: Entities::ComputedPropEntity
         end
       end
     end
