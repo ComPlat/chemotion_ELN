@@ -1,8 +1,6 @@
 import Aviator from 'aviator';
 import _ from 'lodash';
-import {
-  deltaToMarkdown, markdownToDelta
-} from './deltaMarkdownConverter';
+import { deltaToMarkdown, markdownToDelta } from './deltaMarkdownConverter';
 import { searchAndReplace } from './markdownUtils';
 
 import UIStore from '../stores/UIStore';
@@ -82,9 +80,6 @@ const countHWithinBracket = (peakContent) => {
 
   const simpleCount = bracketContent[1].match(/(^|[^\w])(\d+(\.\d+)?)\s*H\b/);
   if (simpleCount) { return parseFloat(simpleCount[2], 10); }
-
-  // const xCount = bracketContent[1].match(/(\d+(\.\d+)?)\s*(×|x)\s*./);
-  // if (xCount) { return parseFloat(xCount[1], 10); }
 
   return false;
 };
