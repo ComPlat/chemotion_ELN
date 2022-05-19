@@ -5,6 +5,8 @@
 > yyyy-mm-dd
 
 * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
+* report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
+
 
 ## [vMAJOR.MINOR.PATCH]
 > yyyy-mm-dd
