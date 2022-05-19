@@ -84,7 +84,7 @@ module Reporter
         delta = []
         obj.products.each_with_index do |p, idx|
           delta = delta +
-                  sample_molecule_name_delta(p, font_size, true, idx, @std_rxn) +
+                  sample_molecule_name_delta(p, font_size, true, idx, @std_rxn, @template) +
                   [{ 'attributes' => { 'font-size' => font_size },
                      'insert' => ' (' }] +
                   mol_serial_delta(p[:molecule][:id], font_size) +
@@ -400,7 +400,7 @@ module Reporter
       def synthesis_delta
         synthesis_name_delta +
           single_description_delta +
-          (@std_rxn ? [{"insert"=>"\n"}] : materials_table_delta) +
+          (@std_rxn || @template == 'supporting_information' ? [{"insert"=>"\n"}] : materials_table_delta) +
           obsv_tlc_delta +
           (@std_rxn ? [{"insert"=>"\n"}] : []) +
           product_analyses_delta +
@@ -409,12 +409,13 @@ module Reporter
       end
 
       def synthesis_name_delta
-        return [] if @std_rxn && !["gp", "parts"].include?(obj.role)
+        return [] if (@std_rxn && !["gp", "parts"].include?(obj.role)) || (@template == 'supporting_information' && ['parts'].include?(obj.role))
+
         [{"insert"=>"#{title}: "}]
       end
 
       def single_description_delta
-        return [] if ["gp", "parts"].include?(obj.role)
+        return [] if ["gp"].include?(obj.role)
         delta_desc = obj.description.deep_stringify_keys["ops"]
         clean_desc = remove_redundant_space_break(delta_desc)
         return (@std_rxn ? [] : [{"insert"=>"\n"}]) + clean_desc + (@std_rxn ? [] : [{"insert"=>"\n"}])
@@ -580,11 +581,11 @@ module Reporter
         snm
       end
 
-      def sample_molecule_name_delta(sample, font_size = 12, bold = false, idx = 1, std_rxn = false)
+      def sample_molecule_name_delta(sample, font_size = 12, bold = false, idx = 1, std_rxn = false, template = nil)
         showed_nm = sample[:showed_name] || sample[:iupac_name] || nil
         if showed_nm.present?
           snm = showed_nm.to_s
-          snm = capitalize_first_letter(snm) if std_rxn && idx == 0 && snm
+          snm = capitalize_first_letter(snm) if (std_rxn || template == 'supporting_information') && idx == 0 && snm
           [{ 'attributes' => { 'bold' => bold, 'font-size' => font_size },
              'insert' => snm }]
         else

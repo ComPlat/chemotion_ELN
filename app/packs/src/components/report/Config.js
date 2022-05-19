@@ -6,8 +6,6 @@ import {
 } from 'react-bootstrap';
 import ReportActions from '../actions/ReportActions';
 import CheckBoxs from '../common/CheckBoxs';
-import { array } from 'prop-types';
-
 
 const imgFormatOpts = () => (
   [
@@ -87,9 +85,7 @@ const onTemplateChange = (e) => {
 };
 
 function TemplateRender(template, options) {
-  const templateOpts = options.map(item => {
-    return { id: item.id, label: item.name, value: item.report_type }
-  })
+  const templateOpts = options.map(item => ({ id: item.id, label: item.name, value: item.report_type }));
 
   return (
     <Row>
@@ -104,7 +100,7 @@ function TemplateRender(template, options) {
       </Col>
       <Col md={6} sm={12} />
     </Row>
-  )
+  );
 }
 
 const toggleConfigs = (text, checked) => {
@@ -139,7 +135,6 @@ const suiConfig = ({ template, configs, fileName, checkedAllConfigs,
 const suiStdRxnConfig = ({
   template, configs, fileName, checkedAllConfigs, fileDescription, options
 }) => {
-
   const filteredConfigs = configs.filter(c => c.text === 'Show all chemicals in schemes (unchecked to show products only)');
   return (
     <div>
@@ -158,37 +153,45 @@ const suiStdRxnConfig = ({
   );
 };
 
-const stdConfig = ({ template, configs, fileName, checkedAllConfigs,
-  imgFormat, fileDescription, options }) => {
-  return (
-    <div>
-      <br />
-      {TemplateRender(template, options)}
-      <br />
-      <FileName fileName={fileName} />
-      <FileDescription fileDescription={fileDescription} />
-      <CheckBoxs
-        items={configs}
-        toggleCheckbox={toggleConfigs}
-        toggleCheckAll={toggleConfigsAll}
-        checkedAll={checkedAllConfigs}
-      />
-      <ImgFormat imgFormat={imgFormat} />
-    </div>
-  );
-};
+const stdConfig = ({
+  template,
+  configs,
+  fileName,
+  checkedAllConfigs,
+  imgFormat,
+  fileDescription,
+  options
+}) => (
+  <div>
+    <br />
+    {TemplateRender(template, options)}
+    <br />
+    <FileName fileName={fileName} />
+    <FileDescription fileDescription={fileDescription} />
+    <CheckBoxs
+      items={configs}
+      toggleCheckbox={toggleConfigs}
+      toggleCheckAll={toggleConfigsAll}
+      checkedAll={checkedAllConfigs}
+    />
+    <ImgFormat imgFormat={imgFormat} />
+  </div>
+);
 
-const spcConfig = ({ template, fileName, fileDescription, options }) => {
-  return (
-    <div>
-      <br />
-      {TemplateRender(template, options)}
-      <br />
-      <FileName fileName={fileName} />
-      <FileDescription fileDescription={fileDescription} />
-    </div>
-  );
-};
+const spcConfig = ({
+  template,
+  fileName,
+  fileDescription,
+  options
+}) => (
+  <div>
+    <br />
+    {TemplateRender(template, options)}
+    <br />
+    <FileName fileName={fileName} />
+    <FileDescription fileDescription={fileDescription} />
+  </div>
+);
 
 const rxlConfig = props => spcConfig(props);
 

@@ -1,6 +1,12 @@
 import React from 'react';
-import { Button, Label, PanelGroup, Panel, OverlayTrigger,
-  Tooltip } from 'react-bootstrap';
+import {
+  Button,
+  Label,
+  PanelGroup,
+  Panel,
+  OverlayTrigger,
+  Tooltip
+} from 'react-bootstrap';
 import ReportActions from '../actions/ReportActions';
 import LoadingActions from '../actions/LoadingActions';
 import UIActions from '../actions/UIActions';

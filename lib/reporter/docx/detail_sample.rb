@@ -57,7 +57,7 @@ module Reporter
         end
         output
       end
-      
+
       def init_item
         item = []
         need_rxn_desc = @spl_settings[:reaction_description]

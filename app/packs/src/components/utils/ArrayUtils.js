@@ -1,8 +1,8 @@
-const Immutable = require('immutable');
+import { uniq } from 'lodash';
 
 export default class ArrayUtils {
   static pushUniq(list, value) {
-    if(!list.includes(value)) {
+    if (!list.includes(value)) {
       return list.push(value);
     }
   }
@@ -51,7 +51,7 @@ export default class ArrayUtils {
 
   static uniqSortById(items) {
     let ids = items.map(a => a.id);
-    ids = [...new Set(ids)].sort((a, b) => a - b);
+    ids = uniq(ids).sort((a, b) => a - b);
     const output = ids.map(id => (
       items.find(item => item.id === id)
     )).filter(r => r);
