@@ -1,6 +1,9 @@
 
 # Chemotion_ELN Changelog
 
+> yyyy-mm-dd
+
+* dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
 
 ## [vMAJOR.MINOR.PATCH]
 > yyyy-mm-dd
@@ -14,8 +17,8 @@
 > 2022-04-05
 
 * Fixes
-  * npx-audit and Gem patches 
-  * migration 
+  * npx-audit and Gem patches
+  * migration
   * reaction prediction UI
 
 
@@ -23,15 +26,15 @@
 > 2022-03-25
 
 * Fixes
-  * upd chemspectra client: XRD d-value 
-  * add product to reaction 
+  * upd chemspectra client: XRD d-value
+  * add product to reaction
 
 
 ## [v1.1.1]
 > 2022-03-08
 
 * Fixes
-  * uniq sample short-label while creating reaction 
+  * uniq sample short-label while creating reaction
   * customized toolbar refresh issue in quill editor
   * rendering of the group list when deleting multiple groups
   * permission to add elements to sync-collections
