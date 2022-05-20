@@ -54,13 +54,12 @@ class TabLayoutCell extends Component {
           </div>
         </td>
       </tr>
-
     ) : (
-      <td className={isHidden ? 'hidden-layout' : ''}>
-        <div><OverlayTrigger delayShow={500} placement="top" overlay={<Tooltip id="_tooltip_history" className="left_tooltip">{ttl}<br />{ttd}</Tooltip>}><i className={iconCell} /></OverlayTrigger></div>
-      </td>
-
-
+      <tr>
+        <td className={isHidden ? 'hidden-layout' : ''}>
+          <div><OverlayTrigger delayShow={500} placement="top" overlay={<Tooltip id="_tooltip_history" className="left_tooltip">{ttl}<br />{ttd}</Tooltip>}><i className={iconCell} /></OverlayTrigger></div>
+        </td>
+      </tr>
     );
 
     if (sourceType === '') {

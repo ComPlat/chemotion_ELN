@@ -13,7 +13,7 @@ class API < Grape::API
   helpers do
 
     def current_user
-      @current_user ||= API::WardenAuthentication.new(env).current_user
+      @current_user ||= ::WardenAuthentication.new(env).current_user
     end
 
     def user_ids
@@ -141,6 +141,7 @@ class API < Grape::API
   mount Chemotion::ReportTemplateAPI
   mount Chemotion::PrivateNoteAPI
   mount Chemotion::NmrdbAPI
+  mount Chemotion::MeasurementsAPI
   mount Chemotion::ConverterAPI
 
   add_swagger_documentation(info: {
