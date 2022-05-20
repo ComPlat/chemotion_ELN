@@ -268,20 +268,23 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-                  begin
-                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(params[:collection_id]).reactions
-                  rescue ActiveRecord::RecordNotFound
-                    Reaction.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.reactions
-                  rescue ActiveRecord::RecordNotFound
-                    Reaction.none
-                  end
-                else
-                  Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-                end.includes(:tag, collections: :sync_collections_users).order('created_at DESC')
+          begin
+            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+              .find(params[:collection_id])
+              .reactions
+          rescue ActiveRecord::RecordNotFound
+            Reaction.none
+          end
+        elsif params[:sync_collection_id]
+          begin
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
+              .collection.reactions
+          rescue ActiveRecord::RecordNotFound
+            Reaction.none
+          end
+        else
+          Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+        end.includes(:tag, collections: :sync_collections_users).order("created_at DESC")
 
         from = params[:from_date]
         to = params[:to_date]

@@ -17,19 +17,16 @@ const ElementContainer = ({ connectDragSource, sourceType }) => {
       { dropEffect: 'copy' },
     );
   } else if (sourceType === DragDropItemTypes.GENERALPROCEDURE) {
-    return connectDragSource(
-      <span className="fa fa-home dnd-arrow-enable text-info" />,
-    );
-  } else if (sourceType === DragDropItemTypes.WELLPLATE || sourceType === DragDropItemTypes.REACTION) {
-    return connectDragSource(
-      <span className="fa fa-arrows dnd-arrow-enable text-info" />,
-    );
+    return connectDragSource(<span className="fa fa-home dnd-arrow-enable text-info" />);
+  } else if (sourceType === DragDropItemTypes.WELLPLATE ||
+             sourceType === DragDropItemTypes.REACTION ||
+             sourceType === DragDropItemTypes.RESEARCH_PLAN) {
+    return connectDragSource(<span className="fa fa-arrows dnd-arrow-enable text-info" />);
   }
   return <span className="fa fa-arrows dnd-arrow-disable" />;
 };
 
-export default DragSource(props => props.sourceType, listSource,
-  collectSource)(ElementContainer);
+export default DragSource(props => props.sourceType, listSource, collectSource)(ElementContainer);
 
 ElementContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
