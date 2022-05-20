@@ -6,6 +6,7 @@ require 'spec_helper'
 require File.expand_path('../config/environment', __dir__)
 require 'rspec/rails'
 # require 'capybara/rails'
+require 'database_cleaner'
 
 require 'devise'
 # Add additional requires below this line. Rails is not loaded until this point!

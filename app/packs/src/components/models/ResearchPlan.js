@@ -2,6 +2,7 @@ import { isEmpty } from 'lodash';
 import Element from './Element';
 import Container from './Container';
 import Segment from './Segment';
+import Wellplate from './Wellplate';
 
 const uuidv4 = require('uuid/v4');
 
@@ -56,6 +57,7 @@ export default class ResearchPlan extends Element {
       changed: true,
       can_update: true,
       attachments: [],
+      wellplates: [],
       segments: []
     });
   }
@@ -66,6 +68,7 @@ export default class ResearchPlan extends Element {
       body: this.body,
       attachments: this.attachments,
       container: this.container,
+      wellplate_ids: this.wellplateIDs,
       segments: this.segments.map(s => s.serialize())
     });
   }
@@ -156,6 +159,10 @@ export default class ResearchPlan extends Element {
     }
   }
 
+  get wellplateIDs() {
+    return this.wellplates.map(wp => wp.id);
+  }
+
   get svgPath() {
     for (let i = 0; i < this.body.length; i += 1) {
       if (this.body[i].type === 'ketcher') {
@@ -184,5 +191,13 @@ export default class ResearchPlan extends Element {
 
   get segments() {
     return this._segments || [];
+  }
+
+  set wellplates(wellplates) {
+    this._wellplates = (wellplates && wellplates.map(w => new Wellplate(w))) || [];
+  }
+
+  get wellplates() {
+    return this._wellplates || [];
   }
 }

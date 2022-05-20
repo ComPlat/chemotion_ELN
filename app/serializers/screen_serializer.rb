@@ -2,6 +2,7 @@ class ScreenSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Screen.new.base_attributes
 
   has_many :wellplates
+  has_many :research_plans
   has_one :container, serializer: ContainerSerializer
   has_one :tag
   has_many :segments
@@ -11,10 +12,10 @@ class ScreenSerializer < ActiveModel::Serializer
   end
 
   def created_at
-    object.created_at.strftime("%d.%m.%Y, %H:%M")
+    object.created_at.strftime('%d.%m.%Y, %H:%M:%S')
   end
   def updated_at
-    object.updated_at.strftime("%d.%m.%Y, %H:%M")
+    object.updated_at.strftime('%d.%m.%Y, %H:%M:%S')
   end
 
   def type
@@ -38,5 +39,9 @@ class ScreenSerializer::Level10 < ScreenSerializer
 
   def wellplates
     object.wellplates.map{ |s| "WellplateSerializer::Level#{@nested_dl[:wellplate]}".constantize.new(s, @nested_dl).serializable_hash }
+  end
+
+  def research_plans
+    object.research_plans.map{ |s| "ResearchPlanSerializer::Level#{@nested_dl[:research_plan]}".constantize.new(s, @nested_dl).serializable_hash }
   end
 end

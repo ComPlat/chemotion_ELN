@@ -10,7 +10,6 @@ import ResearchPlanDetailsFieldImage from './ResearchPlanDetailsFieldImage';
 import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from './ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from './ResearchPlanDetailsFieldReaction';
-import CustomTextEditor from '../common/CustomTextEditor';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
@@ -60,7 +59,7 @@ export default class ResearchPlanDetailsField extends Component {
         break;
       case 'table':
         field.value.columns.forEach((item)=> {
-          item.editor = CustomTextEditor
+          item.cellEditor = 'agTextCellEditor';
           return item;
         });
         label = 'Table';

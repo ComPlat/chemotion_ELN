@@ -151,9 +151,13 @@ tags
 tags.temp
 .vscode/*
 
+/spec/examples.txt
+
+# ignore vendor files
+vendor/cache/*
+.idea/*
 .*.swp
 
-spec/examples.txt
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
@@ -171,3 +175,5 @@ vendor/bundle/*
 vendor/cache/*
 .idea/*
 .devcontainer
+.docker-sync/
+

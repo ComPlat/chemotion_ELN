@@ -109,8 +109,8 @@ export default class Wellplate extends Component {
   }
 
   toggleOverlay(key, well) {
-    const {showOverlay, overlayWell} = this.state;
-    if (showOverlay && overlayWell == well) {
+    const { showOverlay, overlayWell } = this.state;
+    if (showOverlay && overlayWell === well) {
       this.hideOverlay();
     } else {
       this.showOverlay(key, well);
@@ -118,8 +118,8 @@ export default class Wellplate extends Component {
   }
 
   isWellActive(well) {
-    const {showOverlay, overlayWell} = this.state;
-    return (showOverlay && overlayWell == well);
+    const { showOverlay, overlayWell } = this.state;
+    return (showOverlay && overlayWell === well);
   }
 
   saveColorCode() {
@@ -138,14 +138,14 @@ export default class Wellplate extends Component {
   }
 
   render() {
-    const {wells, size, cols, width, handleWellsChange} = this.props;
-    const {showOverlay, overlayTarget, overlayWell, overlayPlacement, selectedColor} = this.state;
+    const { wells, readoutTitles, size, cols, width, handleWellsChange} = this.props;
+    const { showOverlay, overlayTarget, overlayWell, overlayPlacement, selectedColor} = this.state;
     const style = {
       width: (cols + 1) * width,
       height: ((size / cols) + 1) * width
     };
     const containerStyle = {
-      width: width,
+      width,
       height: width,
       fontSize: 8
     };
@@ -156,35 +156,34 @@ export default class Wellplate extends Component {
           size={size}
           cols={cols}
           width={width}
-          type={'horizontal'}
-          />
+          type="horizontal"
+        />
         <WellplateLabels
           size={size}
           cols={cols}
           width={width}
-          type={'vertical'}
-          />
-        {wells.map((well, key) => {
-          return (
-            <div
-              key={key}
-              ref={key}
-              onClick={event => this.toggleOverlay(key, well)}
-              >
-              <WellContainer
-                well={well}
-                style={containerStyle}
-                swapWells={(firstWell, secondWell) => this.swapWells(firstWell, secondWell)}
-                dropSample={(sample, wellId) => this.dropSample(sample, wellId)}
-                active={this.isWellActive(well)}
-                hideOverlay={() => this.hideOverlay()}
-                />
-            </div>
-          );
-        })}
+          type="vertical"
+        />
+        {wells.map((well, key) => (
+          <div
+            key={key}
+            ref={key}
+            onClick={event => this.toggleOverlay(key, well)}
+          >
+            <WellContainer
+              well={well}
+              style={containerStyle}
+              swapWells={(firstWell, secondWell) => this.swapWells(firstWell, secondWell)}
+              dropSample={(sample, wellId) => this.dropSample(sample, wellId)}
+              active={this.isWellActive(well)}
+              hideOverlay={() => this.hideOverlay()}
+            />
+          </div>
+        ))}
         <WellOverlay
           show={showOverlay}
           well={overlayWell}
+          readoutTitles={readoutTitles}
           selectedColor={selectedColor}
           placement={overlayPlacement}
           target={() => ReactDOM.findDOMNode(this.refs[overlayTarget]).children[0]}
@@ -200,7 +199,9 @@ export default class Wellplate extends Component {
 }
 
 Wellplate.propTypes = {
+  show: PropTypes.bool.isRequired,
   size: PropTypes.number.isRequired,
-  wells: PropTypes.array.isRequired,
+  width: PropTypes.number.isRequired,
+  cols: PropTypes.number.isRequired,
   handleWellsChange: PropTypes.func.isRequired
 };

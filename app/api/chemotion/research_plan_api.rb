@@ -136,6 +136,8 @@ module Chemotion
         end
         get do
           research_plan = ResearchPlan.find(params[:id])
+          # TODO: Refactor this massively ugly fallback to be in a more convenient place
+          # (i.e. the serializer/entity or maybe return a null element from the model)
           research_plan.build_research_plan_metadata(
             title: research_plan.name,
             subject: ''
@@ -152,6 +154,7 @@ module Chemotion
         requires :id, type: Integer, desc: 'Research plan id'
         optional :name, type: String, desc: 'Research plan name'
         optional :body, type: Array, desc: 'Research plan body'
+        optional :wellplate_ids, type: Array, desc: 'Research plan Wellplates'
         requires :container, type: Hash, desc: 'Research plan analyses'
         optional :segments, type: Array, desc: 'Segments'
       end
@@ -278,6 +281,72 @@ module Chemotion
           export = Export::ExportResearchPlanTable.new
           export.generate_sheet(field['value']['columns'], field['value']['rows'])
           export.read
+        end
+      end
+
+      desc 'Import Wellplate as table into a research plan'
+      params do
+        requires :id, type: Integer, desc: 'Research plan id'
+        requires :wellplate_id, type: String, desc: 'Wellplate id'
+      end
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).update?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:wellplate_id])).read?
+        end
+
+        post 'import_wellplate/:wellplate_id' do
+          wellplate = Wellplate.find(params[:wellplate_id])
+          research_plan = ResearchPlan.find(params[:id])
+          exporter = Usecases::ResearchPlans::ImportWellplateAsTable.new(research_plan, wellplate)
+          begin
+            exporter.execute!
+            # TODO: Refactor this massively ugly fallback to be in a more convenient place
+            # (i.e. the serializer/entity or maybe return a null element from the model)
+            research_plan.build_research_plan_metadata(
+              title: research_plan.name,
+              subject: ''
+            ) if research_plan.research_plan_metadata.nil?
+            {
+              research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
+              attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
+            }
+          rescue StandardError => e
+            error!(e, 500)
+          end
+        end
+      end
+
+      desc 'Import table from spreadsheet into a research plan'
+      params do
+        requires :id, type: Integer, desc: 'Research plan id'
+        requires :attachment_id, type: String, desc: 'Wellplate id'
+      end
+      route_param :id do
+        before do
+          research_plan = ResearchPlan.find(params[:id])
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, research_plan).update?
+        end
+
+        post 'import_table/:attachment_id' do
+          research_plan = ResearchPlan.find(params[:id])
+          attachment = research_plan.attachments.find(params[:attachment_id])
+          exporter = Usecases::ResearchPlans::ImportTableFromSpreadsheet.new(research_plan, attachment)
+          begin
+            exporter.execute!
+            # TODO: Refactor this massively ugly fallback to be in a more convenient place
+            # (i.e. the serializer/entity or maybe return a null element from the model)
+            research_plan.build_research_plan_metadata(
+              title: research_plan.name,
+              subject: ''
+            ) if research_plan.research_plan_metadata.nil?
+            {
+              research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
+              attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
+            }
+          rescue StandardError => e
+            error!(e, 500)
+          end
         end
       end
     end

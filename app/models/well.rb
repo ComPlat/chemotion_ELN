@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: wells
@@ -9,9 +11,9 @@
 #  position_y   :integer
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
-#  readout      :string
 #  additive     :string
 #  deleted_at   :datetime
+#  readouts     :jsonb
 #  label        :string           default("Molecular structure"), not null
 #  color_code   :string
 #
@@ -31,5 +33,18 @@ class Well < ApplicationRecord
 
   def self.get_samples_in_wellplates(wellplate_ids)
     where(wellplate_id: wellplate_ids).pluck(:sample_id).compact.uniq
+  end
+
+  def readouts
+    read_attribute(:readouts) || []
+  end
+
+  # translates well position within wellplate: X=2 Y=3 -> C2
+  def alphanumeric_position
+    return 'n/a' if position_x.nil? || position_y.nil?
+
+    row = ('A'..'Z').to_a[position_y - 1]
+
+    "#{row}#{position_x}"
   end
 end

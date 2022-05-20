@@ -1,14 +1,18 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: wellplates
 #
-#  id          :integer          not null, primary key
-#  name        :string
-#  size        :integer
-#  description :string
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#  deleted_at  :datetime
+#  id             :integer          not null, primary key
+#  name           :string
+#  size           :integer
+#  description    :string
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  deleted_at     :datetime
+#  short_label    :string
+#  readout_titles :jsonb
 #
 # Indexes
 #
@@ -49,18 +53,17 @@ class Wellplate < ApplicationRecord
   pg_search_scope :search_by_substring, against: :name,
                                         associated_against: {
                                           samples: :name,
-                                          molecules: [
-                                            :iupac_name,
-                                            :inchistring,
-                                            :cano_smiles
+                                          molecules: %i[
+                                            iupac_name
+                                            inchistring
+                                            cano_smiles
                                           ]
                                         },
-                                        using: {trigram: {threshold:  0.0001}}
+                                        using: { trigram: { threshold: 0.0001 } }
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :by_sample_ids, -> (ids) { joins(:samples).where('samples.id in (?)', ids) }
-  scope :by_screen_ids, -> (ids) { joins(:screens).where('screens.id in (?)', ids) }
-
+  scope :by_sample_ids, ->(ids) { joins(:samples).where('samples.id in (?)', ids) }
+  scope :by_screen_ids, ->(ids) { joins(:screens).where('screens.id in (?)', ids) }
 
   has_many :collections_wellplates, dependent: :destroy
   has_many :collections, through: :collections_wellplates
@@ -69,12 +72,17 @@ class Wellplate < ApplicationRecord
   has_many :samples, through: :wells
   has_many :molecules, through: :samples
 
+  has_many :attachments, as: :attachable
+
   has_many :screens_wellplates, dependent: :destroy
   has_many :screens, through: :screens_wellplates
 
+  has_many :research_plans_wellplates, dependent: :destroy
+  has_many :research_plans, through: :research_plans_wellplates
+
   has_many :sync_collections_users, through: :collections
 
-  has_one :container, :as => :containable
+  has_one :container, as: :containable
 
   accepts_nested_attributes_for :collections_wellplates
 
@@ -83,13 +91,13 @@ class Wellplate < ApplicationRecord
   end
 
   def analyses
-    self.container ? self.container.analyses : []
+    container ? container.analyses : []
   end
 
-  def create_subwellplate user, collection_ids, copy_ea = false
+  def create_subwellplate(user, collection_ids, _copy_ea = false)
     # Split Wellplate, based on the code from SplitSample
-    subwellplate = self.dup
-    subwellplate.name = "#{self.name}-Split"
+    subwellplate = dup
+    subwellplate.name = "#{name}-Split"
     collections = (
       Collection.where(id: collection_ids) | Collection.where(user_id: user, label: 'All', is_locked: true)
     )
@@ -98,12 +106,12 @@ class Wellplate < ApplicationRecord
     subwellplate.save! && subwellplate
 
     # Split Wells and Samples
-    wells = (
-      Well.where(wellplate_id: self.id).order('id')
-    )
-    subwell_ary = Array.new
-    wells.each { |w|
-      subsample_id = nil;
+    wells =
+      Well.where(wellplate_id: id).order('id')
+
+    subwell_ary = []
+    wells.each do |w|
+      subsample_id = nil
       if w.sample
         begin
           # Call Sample.create_subsample to perform SampleSplit
@@ -112,19 +120,30 @@ class Wellplate < ApplicationRecord
         end
       end
       subwell = Well.create!(
-          wellplate_id: subwellplate.id,
-          sample_id: subsample_id,
-          readout: w.readout,
-          additive: w.additive,
-          position_x: w.position_x,
-          position_y: w.position_y,
-        )
+        wellplate_id: subwellplate.id,
+        sample_id: subsample_id,
+        readouts: w.readouts,
+        additive: w.additive,
+        position_x: w.position_x,
+        position_y: w.position_y
+      )
       subwell_ary.push(subwell)
-    }
-    if subwell_ary.length > 0
-      subwellplate.update!(wells: subwell_ary)
     end
 
+    subwellplate.update!(wells: subwell_ary) if subwell_ary.present?
+
     subwellplate
+  end
+
+  def ordered_wells
+    wells.order(position_y: :asc, position_x: :asc)
+  end
+
+  def set_short_label(user:) # rubocop:disable Naming/AccessorMethodName
+    prefix = 'WP'
+    counter = user.increment_counter 'wellplates'
+    user_label = user.name_abbreviation
+
+    update_attributes(short_label: "#{user_label}-#{prefix}#{counter}")
   end
 end

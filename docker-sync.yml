@@ -1,0 +1,15 @@
+version: "2"
+options:
+  verbose: true
+syncs:
+  dev-sync: #tip: add -sync and you keep consistent names as a convention
+    src: .
+    sync_host_ip: 'localhost'
+    sync_host_port: 10872
+    sync_userid: 1000
+    sync_groupid: 1000
+    # TODO: get sync to work
+    sync_strategy: 'rsync'
+    # TODO: test if excludes are correct
+    # sync_excludes: ['node_modules', 'tmp/cache/']
+    sync_excludes: ['.git', 'backup', 'uploads', 'public', '.gitignore', 'node_modules', 'tmp', '.env']

@@ -36,7 +36,7 @@ describe Chemotion::ResearchPlanAPI do
       let(:rp) { create(:research_plan) }
       let!(:research_plan_metadata) { create(:research_plan_metadata) }
 
-   before do
+      before do
         rp.research_plan_metadata = research_plan_metadata
         CollectionsResearchPlan.create!(research_plan: rp, collection: c)
       end
@@ -86,6 +86,44 @@ describe Chemotion::ResearchPlanAPI do
           rp = ResearchPlan.find_by(name: 'test')
           expect(rp.creator).to eq(user)
         end
+      end
+    end
+
+    describe 'POST /api/v1/research_plans/:id/import_wellplate/:wellplate_id' do
+      let(:collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
+      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3) }
+      let(:research_plan) { create(:research_plan, creator: user) }
+      let(:params) { { research_plan_id: research_plan.id } }
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
+        CollectionsResearchPlan.create!(research_plan: research_plan, collection: collection)
+
+        post "/api/v1/research_plans/#{research_plan.id}/import_wellplate/#{wellplate.id}", params: params, as: :json
+      end
+
+      it 'imports the wellplate as table into the research plan body' do
+        response_body = JSON.parse(response.body)
+        table = response_body.dig('research_plan', 'body').last
+
+        expect(response_body.key?('error')).to be false
+
+        rows = table['value']['rows']
+        columns = table['value']['columns']
+
+        expect(table['type']).to eq 'table'
+
+        expect(rows.size).to eq 12 * 8
+        expect(columns.size).to eq 8 # coordinate + 3*2 readout spalten
+
+        names = columns.map { |column| column['headerName'] }
+        expect(names).to eq ['Position', 'Sample', 'Readout 1 Value', 'Readout 1 Unit', 'Readout 2 Value', 'Readout 2 Unit', 'Readout 3 Value', 'Readout 3 Unit']
+
+        first_row = rows.first
+        first_readout = wellplate.wells.first.readouts.first
+
+        expect(first_row['readout_1_value']).to eq first_readout['value']
+        expect(first_row['readout_1_unit']).to eq first_readout['unit']
       end
     end
   end

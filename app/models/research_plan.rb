@@ -31,6 +31,12 @@ class ResearchPlan < ApplicationRecord
   has_many :collections, through: :collections_research_plans
   has_many :attachments, as: :attachable
 
+  has_many :research_plans_wellplates, dependent: :destroy
+  has_many :wellplates, through: :research_plans_wellplates
+
+  has_many :research_plans_screens, dependent: :destroy
+  has_many :screens, through: :research_plans_screens
+
   before_destroy :delete_attachment
   accepts_nested_attributes_for :collections_research_plans
 

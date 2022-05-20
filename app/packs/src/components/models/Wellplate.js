@@ -1,3 +1,4 @@
+import React from 'react';
 import Element from './Element';
 import Well from './Well';
 import Sample from './Sample';
@@ -6,7 +7,7 @@ import Segment from './Segment';
 
 export default class Wellplate extends Element {
   constructor(args) {
-    super(args)
+    super(args);
     this.wells = this.initWellsWithPosition(this.wells, 96);
     this._checksum = this.checksum();
   }
@@ -20,8 +21,10 @@ export default class Wellplate extends Element {
         size: 96,
         description: Wellplate.quillDefault(),
         wells: [],
+        readout_titles: [],
         container: Container.init(),
-        segments: []
+        segments: [],
+        attachments: []
       }
     )
   }
@@ -33,7 +36,8 @@ export default class Wellplate extends Element {
 
     let wells = samples.map(sample => {
       return new Well({
-        sample: sample
+        sample: sample,
+        readouts: []
       });
     })
 
@@ -45,8 +49,10 @@ export default class Wellplate extends Element {
         size: 96,
         description: Wellplate.quillDefault(),
         wells: wells,
+        readout_titles: [],
         container: Container.init(),
-        segments: []
+        segments: [],
+        attachments: [],
       }
     )
   }
@@ -89,38 +95,40 @@ export default class Wellplate extends Element {
       size: this.size,
       description: this.description,
       wells: this.wells.map(w => w.serialize()),
+      readout_titles: this.readout_titles,
       container: this.container,
+      attachments: this.attachments,
       segments: this.segments.map(s => s.serialize())
-    })
+    });
   }
-
 
   // ---
 
   initWellsWithPosition(wells, size) {
     const placeholdersCount = size - wells.length;
     const placeholders = Array(placeholdersCount).fill({});
-    let allWells = wells.concat(placeholders);
+    const allWells = wells.concat(placeholders);
     return allWells.map((well, i) => this.initWellWithPositionByIndex(well, i));
   }
 
   initWellWithPositionByIndex(well, i) {
     return {
       ...well,
-      position: this.calculatePositionOfWellByIndex(i)
-    }
+      position: this.calculatePositionOfWellByIndex(i),
+      readouts: well.readouts || []
+    };
   }
 
-  calculatePositionOfWellByIndex(i) {
+  calculatePositionOfWellByIndex(i) { // eslint-disable-line class-methods-use-this
     const cols = 12;
-    let remainder = (i + 1) % cols;
+    const remainder = (i + 1) % cols;
     return {
-      x: (remainder == 0) ? cols : remainder,
+      x: (remainder === 0) ? cols : remainder,
       y: Math.floor(i / cols) + 1
     };
   }
 
   title() {
-    return this.name;
+    return `${this.short_label}     ${this.name}`;
   }
 }

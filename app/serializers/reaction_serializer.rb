@@ -38,7 +38,7 @@ class ReactionSerializer < ActiveModel::Serializer
   end
 
   def created_at
-    object.created_at.strftime("%d.%m.%Y, %H:%M")
+    object.created_at.strftime('%d.%m.%Y, %H:%M')
   end
 
   def updated_at

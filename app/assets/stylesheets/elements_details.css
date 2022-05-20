@@ -40,10 +40,6 @@
   max-height: calc(100vh - 240px);
 }
 
-.eln-panel-detail .wellplate-detail {
-  width: 980px;
-}
-
 .center {
   position: absolute;
   top: 50%;
