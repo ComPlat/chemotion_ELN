@@ -8,10 +8,23 @@
 
 * Features and Improvements:
   * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
+  * Screens:
+    * Research Plans may be added to Screens
+    * Associated Research Plans may be edited from Screens
+  * Research Plans:
+    * Wellplates may be added to Research Plans
+  * Wellplates:
+    * Add short label with user prefix and user's Wellplate count
+    * Wells have multiple readouts now
+    * Add title for readouts and display of multiple readouts in designer and list
+    * Add attachments
+    * Add import for well data from .xlsx and import template .xlsx
+
 
 * Fixes
   * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
   * Reference Style improvement [Reference Style improvement #695](https://github.com/ComPlat/chemotion_ELN/issues/695)
+  * Adjust docker setup to work on mac
 
 
 ## [v1.2.1]
