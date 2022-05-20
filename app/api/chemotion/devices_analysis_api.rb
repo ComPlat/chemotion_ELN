@@ -47,11 +47,10 @@ module Chemotion
       route_param :id do
         get do
           analysis = DevicesAnalysis.find_by(params[:id])
-            if analysis
-              present analysis, with: Entities::DevicesAnalysisEntity, root: :devices_analysis
-            else
-              error!("404 Analysis of Device not found", 404)
-            end
+          if analysis
+            present analysis, with: Entities::DevicesAnalysisEntity, root: :devices_analysis
+          else
+            error!("404 Analysis of Device not found", 404)
           end
         end
       end
