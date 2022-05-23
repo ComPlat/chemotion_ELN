@@ -17,7 +17,7 @@ jobs:
         pg_database_test: [chemotion_test]
         pg_password: [123456]
     container:
-      image: complat/complat-ubuntu-runner:development-5.44c4f24b
+      image: complat/complat-ubuntu-runner:development-5.ba0e49c5
     env:
       HOME: /home/gitlab-runner
 
