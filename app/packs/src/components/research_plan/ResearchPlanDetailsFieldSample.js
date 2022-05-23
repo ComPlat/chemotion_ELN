@@ -91,7 +91,8 @@ class ResearchPlanDetailsFieldSample extends Component {
       <div className="research-plan-field-image">
         {link}
         <div className="image-container">
-          <img src={sample.svgPath} alt={title} />
+        <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
+            <img src={sample.svgPath} alt={title} /> </a>
           <SampleName sample={sample} />
         </div>
       </div>
