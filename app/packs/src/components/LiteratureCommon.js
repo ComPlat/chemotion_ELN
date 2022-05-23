@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormControl, OverlayTrigger, Tooltip, Popover } from 'react-bootstrap';
+import { Button, FormControl, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 import Literature from './models/Literature';
 import { CitationType, CitationTypeMap } from './CitationType';
@@ -96,12 +96,9 @@ const doiValid = (doi) => {
 
 const literatureContent = (literature, onlyText) => {
   let content;
-  if (literature.refs && literature.refs.citation) {
-    content = (
-      <div>
-        {literature.refs.citation.format('bibliography', { format: 'text', template: 'apa' })}
-      </div>
-    );
+  if (literature.refs && literature.refs.bibliography) {
+    const { bibliography } = literature.refs;
+    content = bibliography;
   } else if (literature.refs && literature.refs.bibtex) {
     let litBibtex = literature.refs.bibtex;
     if (litBibtex.split('{').length > 1) {
@@ -165,7 +162,7 @@ const groupByCitation = literatures => (
     return ((a.id === b.id) ? (a.user_id - b.user_id) : (a.id - b.id));
   }).reduce((acc, currentValue, i, array) => {
     // duplicate first row of each literature group
-    acc.push(currentValue)
+    acc.push(currentValue);
     if (i > 0) {
       const a = literatures.get(array[i]);
       const b = literatures.get(array[i - 1]);

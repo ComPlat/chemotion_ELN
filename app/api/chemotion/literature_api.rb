@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class LiteratureAPI < Grape::API
     helpers CollectionHelpers
@@ -6,12 +8,12 @@ module Chemotion
     helpers do
       def citation_for_elements(id = params[:element_id], type = @element_klass, cat = 'detail')
         return Literature.none unless id.present?
+
         Literature.by_element_attributes_and_cat(id, type, cat).add_user_info
       end
     end
 
     resource :literatures do
-
       after_validation do
         unless request.url =~ /doi\/metadata|ui_state|collection/
           @element_klass = params[:element_type].classify
@@ -26,7 +28,7 @@ module Chemotion
         end
       end
 
-      desc "Update type of literals by element"
+      desc 'Update type of literals by element'
       params do
         requires :element_id, type: Integer
         requires :element_type, type: String, values: %w[sample reaction research_plan]
@@ -38,7 +40,7 @@ module Chemotion
         { literatures: citation_for_elements(params[:element_id], @element_klass, 'detail') }
       end
 
-      desc "Return the literature list for the given element"
+      desc 'Return the literature list for the given element'
       params do
         requires :element_id, type: Integer
         requires :element_type, type: String, values: %w[sample reaction research_plan]
@@ -62,6 +64,7 @@ module Chemotion
           optional :isbn, type: String
           optional :refs, type: Hash do
             optional :bibtex, type: String
+            optional :bibliography, type: String
           end
         end
       end
@@ -163,7 +166,7 @@ module Chemotion
           error!(404) unless @c
           @sids = @dl_s > 1 ? @c.samples.by_ui_state(declared(params)[:sample]).pluck(:id) : []
           @rids = @dl_r > 1 ? @c.reactions.by_ui_state(declared(params)[:reaction]).pluck(:id) : []
-          @cat = "detail"
+          @cat = 'detail'
         end
 
         post do
@@ -197,13 +200,12 @@ module Chemotion
 
           # { selectedRefs: LiteralGroup.by_element_ids_and_cat(@sids, @rids, @cat).order(element_updated_at: :desc)  }
           { selectedRefs: Literature.by_element_attributes_and_cat(@sids, 'Sample', @cat).add_element_and_user_info +
-              Literature.by_element_attributes_and_cat(@rids, 'Reaction', @cat).add_element_and_user_info }
+            Literature.by_element_attributes_and_cat(@rids, 'Reaction', @cat).add_element_and_user_info }
         end
       end
 
-
       namespace :doi do
-        desc "get metadata from a doi input"
+        desc 'get metadata from a doi input'
         params do
           requires :doi, type: String
         end
@@ -216,7 +218,7 @@ module Chemotion
         end
 
         get :metadata do
-          connection = Faraday.new(url: "https://dx.doi.org") do |f|
+          connection = Faraday.new(url: 'https://dx.doi.org') do |f|
             f.use FaradayMiddleware::FollowRedirects
             # f.headers = { 'Accept' => 'text/bibliography; style=bibtex'}
             f.headers = { 'Accept' => 'application/x-bibtex' }
@@ -224,12 +226,12 @@ module Chemotion
           end
           resp = connection.get { |req| req.url("/10.#{@doi_prefix}/#{@doi_suffix}") }
           unless resp.success?
-            error!({ error: reason_phrase } , resp.status)
+            error!({ error: reason_phrase }, resp.status)
           end
           resp_json = begin
                         JSON.parse(BibTeX.parse(resp.body).to_json)
                       rescue StandardError => e
-                        error!(e , 503)
+                        error!(e, 503)
                       end
           { bibtex: resp.body, BTjson: resp_json }
         end

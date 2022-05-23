@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { ListGroup, ListGroupItem, Button, Row, Col, Tooltip } from 'react-bootstrap';
+import { ListGroup, ListGroupItem, Button, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
 import { Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType } from './LiteratureCommon';
@@ -22,17 +22,6 @@ require('@citation-js/plugin-isbn');
 const notification = message => ({
   title: 'Add Literature', message, level: 'error', dismissible: 'button', autoDismiss: 5, position: 'tr', uid: uuid.v4()
 });
-
-const clipboardTooltip = () => (
-  <Tooltip id="assign_button">copy to clipboard</Tooltip>
-);
-
-const sameConseqLiteratureId = (citations, sortedIds, i) => {
-  if (i === 0) { return false; }
-  const a = citations.get(sortedIds[i])
-  const b = citations.get(sortedIds[i-1])
-  return (a.id === b.id)
-};
 
 const checkElementStatus = (element) => {
   const type = element.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -85,7 +74,7 @@ export default class DetailsTabLiteratures extends Component {
   handleInputChange(type, event) {
     const { literature } = this.state;
     const { value } = event.target;
-    literature[type] = value.trim();
+    literature[type] = value;
     this.setState(prevState => ({ ...prevState, literature }));
   }
 
@@ -144,7 +133,7 @@ export default class DetailsTabLiteratures extends Component {
         doi: sanitizeDoi(doi),
         url: url.trim().replace(/ +/g, ' '),
         title: title.trim().replace(/ +/g, ' '),
-        isbn
+        isbn: isbn.trim()
       };
       const objliterature = new Literature(newlit);
       element.literatures = element.literatures.set(objliterature.id, objliterature);
@@ -162,7 +151,7 @@ export default class DetailsTabLiteratures extends Component {
           doi: sanitizeDoi(doi),
           url: url.trim().replace(/ +/g, ' '),
           title: title.trim().replace(/ +/g, ' '),
-          isbn
+          isbn: isbn.trim()
         },
       }).then((literatures) => {
         this.setState(() => ({
@@ -193,7 +182,6 @@ export default class DetailsTabLiteratures extends Component {
     NotificationActions.removeByUid('literature');
     LoadingActions.start();
     Cite.async(sanitizeDoi(doi)).then((json) => {
-      LoadingActions.stop();
       if (json.data && json.data.length > 0) {
         const data = json.data[0];
         const citation = new Cite(data);
@@ -204,14 +192,15 @@ export default class DetailsTabLiteratures extends Component {
             doi,
             title: data.title || '',
             year: (data && data.issued && data.issued['date-parts'][0]) || '',
-            refs: { citation, bibtex: citation.format('bibtex') }
+            refs: { citation, bibtex: citation.format('bibtex'), bibliography: json.format('bibliography') }
           }
         }));
         this.handleLiteratureAdd(this.state.literature);
       }
     }).catch((errorMessage) => {
-      LoadingActions.stop();
       NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`));
+    }).finally(() => {
+      LoadingActions.stop();
     });
   }
 
@@ -219,10 +208,8 @@ export default class DetailsTabLiteratures extends Component {
     NotificationActions.removeByUid('literature');
     LoadingActions.start();
     Cite.async(isbn).then((json) => {
-      LoadingActions.stop();
       if (json.data && json.data.length > 0) {
         const data = json.data[0];
-        const citation = new Cite(data);
         this.setState(prevState => ({
           ...prevState,
           literature: {
@@ -231,14 +218,15 @@ export default class DetailsTabLiteratures extends Component {
             title: data.title || '',
             year: (data && data.issued && data.issued['date-parts'][0]) || '',
             url: (data && data.URL) || '',
-            refs: { citation, bibtex: citation.format('bibtex') }
+            refs: { citation: json, bibtex: json.format('bibtex'), bibliography: json.format('bibliography') }
           }
         }));
         this.handleLiteratureAdd(this.state.literature);
       }
     }).catch((errorMessage) => {
-      LoadingActions.stop();
       NotificationActions.add(notification(`unable to fetch metadata for this ISBN: ${isbn}, error: ${errorMessage}`));
+    }).finally(() => {
+      LoadingActions.stop();
     });
   }
 
