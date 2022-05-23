@@ -121,27 +121,25 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        scope = if params[:collection_id]
-                  begin
-                    collection_id = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(params[:collection_id])&.id
-                    Element.joins(:element_klass, :collections_elements).where('element_klasses.name = ? and collections_elements.collection_id = ?', params[:el_type], collection_id)
-                  rescue ActiveRecord::RecordNotFound
-                    Element.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    collection_id = current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection&.id
-                    Element.joins(:element_klass, :collections_elements).where('element_klasses.name = ? and collections_elements.collection_id = (?)', params[:el_type], collection_id)
-                  rescue ActiveRecord::RecordNotFound
-                    Element.none
-                  end
-                else
-                  Element.none
-                end.includes(:tag, collections: :sync_collections_users).order('created_at DESC')
+        collection_id =
+          if params[:collection_id]
+            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: params[:collection_id])&.id
+          elsif params[:sync_collection_id]
+            current_user.all_sync_in_collections_users.find_by(id: params[:sync_collection_id])&.collection&.id
+          end
+
+        scope =
+          if collection_id
+            Element.joins(:element_klass, :collections_elements).where(element_klasses: { name: params[:el_type] }, collections_elements: { collection_id: collection_id })
+          else
+            Element.none
+          end
 
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
+
+        scope = scope.order('created_at DESC')
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at
         scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
@@ -149,7 +147,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
+        present paginate(scope), with: Entities::ElementEntity
       end
 
       desc 'Return serialized element by id'
@@ -164,7 +162,7 @@ module Chemotion
         get do
           element = Element.find(params[:id])
           {
-            element: ElementPermissionProxy.new(current_user, element, user_ids).serialized,
+            element: Entities::ElementEntity.represent(element),
             attachments: Entities::AttachmentEntity.represent(element.attachments)
           }
         end
@@ -209,7 +207,8 @@ module Chemotion
         element.container = update_datamodel(params[:container])
         element.save!
         element.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        element
+
+        present element, with: Entities::ElementEntity
       end
 
       desc 'Update element by id'
@@ -247,8 +246,9 @@ module Chemotion
             element.update(attributes)
           end
           element.save_segments(segments: params[:segments], current_user_id: current_user.id)
+
           {
-            element: ElementPermissionProxy.new(current_user, element, user_ids).serialized,
+            element: Entities::ElementEntity.represent(element),
             attachments: Entities::AttachmentEntity.represent(element.attachments)
           }
         end

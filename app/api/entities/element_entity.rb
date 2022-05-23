@@ -15,10 +15,7 @@ module Entities
       :uuid,
     )
 
-    with_options(format_with: :eln_timestamp) do
-      expose :created_at
-      expose :updated_at
-    end
+    expose_timestamps
 
     expose :container, using: 'Entities::ContainerEntity'
     expose :element_klass, using: 'Entities::ElementKlassEntity'
