@@ -57,7 +57,7 @@ module Chemotion
             level: 'success'
           )
 
-          dataset
+          present dataset, with: Entities::ContainerEntity, root: :container
         end
       end
     end
