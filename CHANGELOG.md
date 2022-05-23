@@ -2,14 +2,30 @@
 
 # Chemotion_ELN Changelog
 
-> yyyy-mm-dd
-
-* dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
-* report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
-
 
 ## [vMAJOR.MINOR.PATCH]
 > yyyy-mm-dd
+
+* Features and Improvements:
+  * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPl
+at/chemotion_ELN/issues/715)
+
+* Fixes
+  * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
+
+
+## [v1.2.1]
+> 2022-05-10
+
+* Fixes
+  * export dataset attachments with no hyperlink present
+  * analysis: preview latest processed image
+  * rails patch upd
+  * npx audit fix
+
+
+## [v1.2.0]
+> 2022-04-14
 
 * Features and Improvements:
 * Fixes
