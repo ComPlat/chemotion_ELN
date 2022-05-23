@@ -7,11 +7,11 @@
 > yyyy-mm-dd
 
 * Features and Improvements:
-  * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPl
-at/chemotion_ELN/issues/715)
+  * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
 
 * Fixes
   * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
+  * Reference Style improvement [Reference Style improvement #695](https://github.com/ComPlat/chemotion_ELN/issues/695)
 
 
 ## [v1.2.1]
