@@ -50,7 +50,7 @@ module Chemotion
           citation_for_elements,
           with: Entities::LiteratureEntity,
           root: :literatures,
-          with_element_count: true,
+          with_element_count: false,
           with_user_info: true
         )
       end
@@ -104,7 +104,7 @@ module Chemotion
           citation_for_elements,
           with: Entities::LiteratureEntity,
           root: :literatures,
-          with_element_count: true,
+          with_element_count: false,
           with_user_info: true
         )
 

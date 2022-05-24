@@ -20,7 +20,7 @@ module SampleLevelReportSerializable
 
     def literatures
       Literature.by_element_attributes_and_cat(id, 'Sample', 'detail')
-                .add_user_info
+                .with_user_info
     end
   end
 

@@ -13,7 +13,7 @@ module ReactionLevelReportSerializable
 
     def literatures
       Literature.by_element_attributes_and_cat(id, 'Reaction', 'detail')
-                .add_user_info
+                .with_user_info
     end
   end
 end

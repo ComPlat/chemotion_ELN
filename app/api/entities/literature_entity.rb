@@ -13,7 +13,7 @@ module Entities
     # see Literature.group_by_element
     expose :count, if: ->(instance, options) { options[:with_element_count] }
 
-    # see Literature.add_user_info
+    # see Literature.with_user_info
     expose(
       :literal_id,
       :user_id,
@@ -37,7 +37,7 @@ module Entities
       timestamp_fields: [:element_updated_at],
       if: ->(instance, options) { options[:with_element_and_user_info] }
       )
-    
+
     def type
       'literature'
     end
