@@ -65,17 +65,12 @@ module Chemotion
         requires :cnt_only, type: Boolean, desc: 'return count number only'
       end
       get do
-        if current_user
-          unless current_user.container
-            current_user.container = Container.create(name: 'inbox', container_type: 'root')
-          end
-          # unlinked_attachments = Attachment.where(attachable_id: nil, attachable_type: 'Container', created_for: current_user.id)
-          inbox = InboxSerializer.new(current_user.container)
-          if params[:cnt_only]
-            { inbox: { inbox_count: inbox.inbox_count } }
-          else
-            inbox
-          end
+        current_user.container = Container.create(name: 'inbox', container_type: 'root') unless current_user.container
+
+        if params[:cnt_only]
+          present current_user.container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
+        else
+          present current_user.container, with: Entities::InboxEntity, root: :inbox
         end
       end
     end
@@ -171,16 +166,17 @@ module Chemotion
 
       desc 'Delete Attachment'
       delete ':attachment_id' do
-        @attachment.delete
+        present @attachment.delete, with: Entities::AttachmentEntity, root: :attachment
       end
 
       desc 'Delete container id of attachment'
       delete 'link/:attachment_id' do
         @attachment.attachable_id = nil
         @attachment.attachable_type = 'Container'
-        @attachment.save!
+        present @attachment.save!, with: Entities::AttachmentEntity, root: :attachment
       end
 
+      # TODO: Remove this endpoint. It is not used by the FE
       desc 'Upload attachments'
       post 'upload_dataset_attachments' do
         params.each do |_file_id, file|
@@ -441,6 +437,8 @@ module Chemotion
             att.save
           end
         end
+
+        {} # FE does not use the result
       end
 
       desc 'Save spectra to file'
