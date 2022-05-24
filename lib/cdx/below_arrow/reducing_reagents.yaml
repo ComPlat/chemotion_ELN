@@ -15,7 +15,7 @@
 "Di-tert-butyl 1,4-Dihydro-2,6-dimethyl-3,5-pyridinedicarboxylate": "O=C(C1=C(C)NC(C)=C(C(OC(C)(C)C)=O)C1)OC(C)(C)C"
 "DL-Dithiothreitol": "SC[C@H]([C@@H](CO)O)S"
 "Ethyl Chloroglyoxylate": "O=C(Cl)C(OCC)=O"
-"Lithium Aluminum Hydride": "[Li+].[Al+3].[H-].[H-].[H-].[H-]"
+"Lithium Aluminium Hydride": "[Li+].[AlH4-]"
 "Lithium Borohydride ": "[Li+].[BH4-]"
 "Lithium Triethylborohydride": "CC[BH-](CC)CC.[Li+]"
 "Lithium Tri-tert-butoxyaluminum Hydride": "CC(O[Al](OC(C)(C)C)OC(C)(C)C)(C)C.[Li+].[H-]"

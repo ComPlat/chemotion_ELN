@@ -1,4 +1,4 @@
-import { Map, List } from 'immutable';
+import { List } from 'immutable';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import 'whatwg-fetch';
@@ -35,10 +35,16 @@ import HelpPopover from './HelpPopover';
 import NotificationContainer from '../containers/NotificationContainer';
 
 import {
-  extractReaction,
+  extractMoleculeFromGroup,
   generateExcelMoleculeRow,
   generateExcelReactionRow
 } from '../utils';
+
+import {
+  getSchemeMolecules,
+  getReactionReagents,
+  getReactionGroups
+} from '../reactionUtils';
 
 const SUPPORTED_FILE_TYPES = ['cdx', 'cdxml', 'doc', 'docx', 'xml', 'zip'];
 
@@ -66,15 +72,65 @@ export default class HeaderMenu extends Component {
   constructor(props) {
     super(props);
 
+    this.state = {
+      disabled: true,
+      selectedReactionId: 0,
+      selectedSolvents: [],
+      selectedReagents: []
+    };
+
     this.clickUploadMolecule = this.clickUploadMolecule.bind(this);
     this.clickUploadReaction = this.clickUploadReaction.bind(this);
 
     this.scanFilesForMolecules = this.scanFilesForMolecules.bind(this);
     this.scanFilesForReactions = this.scanFilesForReactions.bind(this);
-    this.addReagents = this.addReagents.bind(this);
+    this.updateReagents = this.updateReagents.bind(this);
 
     this.exportCml = this.exportCml.bind(this);
     this.exportExcel = this.exportExcel.bind(this);
+
+    this.changeScannedFileView = this.changeScannedFileView.bind(this);
+    this.changeAbbreviationView = this.changeAbbreviationView.bind(this);
+    this.changeFileStorageView = this.changeFileStorageView.bind(this);
+    this.changeArchivedManagementView = this.changeArchivedManagementView.bind(this);
+
+    this.solventValues = Object.keys(solvents).map(k => solvents[k]);
+    this.allReagentValues = Object.keys(allReagents).map(k => allReagents[k]);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const { reactions, molecules } = nextProps;
+
+    let rId = this.state.selectedReactionId;
+    const selectedR = reactions.filter(r => r.get('selected'));
+    const disabled = selectedR.size !== 1 || !selectedR.get(0).get('id');
+
+    const selectedReagents = [];
+    const selectedSolvents = [];
+
+    if (!disabled && selectedR.size === 1) {
+      const reaction = selectedR.get(0);
+      rId = reaction.get('id');
+      const reactionMolecules = getSchemeMolecules(reaction, molecules);
+      const reagents = getReactionReagents(reaction, reactionMolecules);
+
+      reagents.forEach((m) => {
+        const canoSmiles = m.get('canoSmiles');
+
+        if (this.solventValues.includes(canoSmiles)) {
+          selectedSolvents.push(canoSmiles);
+        } else if (this.allReagentValues.includes(canoSmiles)) {
+          selectedReagents.push(canoSmiles);
+        }
+      });
+    }
+
+    this.setState({
+      selectedReactionId: rId,
+      selectedSolvents,
+      selectedReagents,
+      disabled
+    });
   }
 
   exportCml() {
@@ -83,24 +139,34 @@ export default class HeaderMenu extends Component {
     let selectedR = reactions.filter(r => r.get('selected'));
     let selectedM = molecules.filter(r => r.get('selected'));
     if (selectedR.size === 0 && selectedM.size === 0) {
-      selectedR = reactions;
-      selectedM = molecules;
+      selectedR = reactions.filter(r => r.get('externalId'));
+      selectedM = molecules.filter(m => m.get('externalId'));
     }
 
-    const simpleReactions = selectedR.toJS().map(r => ({
-      ...extractReaction(r),
-      yield: r.yield || '',
-      time: r.time || '',
-      temperature: r.temperature || '',
-      description: r.description || ''
-    }));
+    const simpleReactions = selectedR.map((r) => {
+      const {
+        reactants, reagents, solvents, products
+      } = getReactionGroups(r, molecules);
+
+      return {
+        id: r.get('id'),
+        reactants: extractMoleculeFromGroup(reactants.toJS()),
+        reagents: extractMoleculeFromGroup(reagents.toJS()),
+        solvents: extractMoleculeFromGroup(solvents.toJS()),
+        products: extractMoleculeFromGroup(products.toJS()),
+        yield: r.get('yield') || '',
+        time: r.get('time') || '',
+        temperature: r.get('temperature') || '',
+        description: r.get('description') || ''
+      };
+    });
 
     const simpleMolecules = selectedM.toJS().map(m => ({
       id: m.id,
       mdl: m.mdl,
     }));
 
-    fetch('/api/v1/chemscanner/export/cml', {
+    fetch('/api/v1/public_chemscanner/export/cml', {
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
@@ -135,8 +201,8 @@ export default class HeaderMenu extends Component {
     let selectedR = reactions.filter(r => r.get('selected'));
     let selectedM = molecules.filter(r => r.get('selected'));
     if (selectedR.size === 0 && selectedM.size === 0) {
-      selectedR = reactions;
-      selectedM = molecules;
+      selectedR = reactions.filter(r => r.get('externalId'));
+      selectedM = molecules.filter(m => m.get('externalId'));
     }
 
     const wb = {};
@@ -147,14 +213,26 @@ export default class HeaderMenu extends Component {
     const moleculeRows = selectedM.toJS().reduce((rows, mol) => {
       rows.push(generateExcelMoleculeRow(mol));
       return rows;
-    }, [['Smiles', 'MDL', 'Description']]);
+    }, [['Smiles', 'MDL', 'InChI', 'InChIKey', 'Description']]);
     const moleculeWs = XLSX.utils.aoa_to_sheet(moleculeRows);
     wb.SheetNames.push(moleculeSheet);
     wb.Sheets[moleculeSheet] = moleculeWs;
 
     const reactionSheet = 'Reactions';
-    const reactionRows = selectedR.toJS().reduce((rows, reaction) => {
+    const reactionRows = selectedR.reduce((rows, immuReaction) => {
+      const reaction = immuReaction.toJS();
+
+      const {
+        reactants, reagents, solvents, products
+      } = getReactionGroups(immuReaction, molecules);
+
+      reaction.reactants = reactants;
+      reaction.reagents = reagents;
+      reaction.solvents = solvents;
+      reaction.products = products;
+
       rows.push(generateExcelReactionRow(reaction));
+
       return rows;
     }, [[
       'ReactionSmiles', 'Temperature', 'Yield', 'Time',
@@ -201,9 +279,19 @@ export default class HeaderMenu extends Component {
     this.reactionInput.value = '';
   }
 
-  addReagents({ value, type }) {
-    const { addSmi, reactions } = this.props;
-    addSmi(reactions, value, type);
+  updateReagents({ value, type }) {
+    const { updateReagents } = this.props;
+    const { selectedReactionId } = this.state;
+
+    const newSmiles = value.split(',');
+    const selectedType = `selected${type[0].toUpperCase()}${type.substring(1)}`;
+    const selectedSmiles = this.state[selectedType];
+
+    const removedSmiles = selectedSmiles.filter(smi => !newSmiles.includes(smi));
+    const addedSmiles = newSmiles.filter(smi => !selectedSmiles.includes(smi));
+
+    const updateInfo = { add: addedSmiles, remove: removedSmiles };
+    updateReagents(selectedReactionId, updateInfo);
   }
 
   clickUploadMolecule() {
@@ -216,24 +304,27 @@ export default class HeaderMenu extends Component {
     document.getElementById('chemscanner-scan-file-dd').click();
   }
 
+  changeScannedFileView() {
+    this.props.changeScannedFileView();
+  }
+
+  changeAbbreviationView() {
+    this.props.changeAbbreviationView();
+  }
+
+  changeFileStorageView() {
+    this.props.changeFileStorageView();
+  }
+
+  changeArchivedManagementView() {
+    this.props.changeArchivedManagementView();
+  }
+
   render() {
-    const {
-      ui, reactions, cleanUp, toggleAbbView,
-    } = this.props;
+    const { cleanUp } = this.props;
+    const { disabled, selectedReagents, selectedSolvents } = this.state;
 
-    const isAbb = ui.get('abbView');
-    const switchText = isAbb ? 'Extracted Items' : 'Abbreviation Management';
-    // const partition = partitionSolventsReagents(value);
-    const selectedR = reactions.filter(r => r.get('selected'));
-    const disabled = selectedR.size === 0;
-    const selectedReagents = (
-      disabled ? [] : (selectedR.getIn([0, 'addedReagentsSmi']) || List()).toArray()
-    );
-    const selectedSolvents = (
-      disabled ? [] : (selectedR.getIn([0, 'addedSolventsSmi']) || List()).toArray()
-    );
-
-    const helpPopover = <HelpPopover />;
+    const helpPopover = <HelpPopover style={{ maxWidth: '800px' }} />;
 
     return (
       <div className="chemscanner-menu">
@@ -284,29 +375,52 @@ export default class HeaderMenu extends Component {
             obj={solvents}
             type="solvents"
             value={selectedSolvents}
-            onSelect={this.addReagents}
+            onSelect={this.updateReagents}
           />
         </div>
         <div style={{ width: '200px' }}>
           <SmiSelect
             disabled={disabled}
             obj={allReagents}
-            onSelect={this.addReagents}
+            onSelect={this.updateReagents}
             value={selectedReagents}
             type="reagents"
             optionHeight={80}
           />
         </div>
-        <ButtonGroup>
+        <ButtonGroup style={{ marginRight: '5px' }}>
           <DropdownButton title="Export" id="chemscanner-export-dd">
             <MenuItem eventKey="1" onSelect={this.exportCml}>CML</MenuItem>
             <MenuItem eventKey="2" onSelect={this.exportExcel}>Excel</MenuItem>
           </DropdownButton>
         </ButtonGroup>
-        &nbsp;
-        &nbsp;
         <ButtonGroup>
-          <Button onClick={toggleAbbView}>{switchText}</Button>
+          <DropdownButton title="View" id="chemscanner-export-dd">
+            <MenuItem
+              eventKey="1"
+              onSelect={this.changeScannedFileView}
+            >
+              Scanned Files
+            </MenuItem>
+            <MenuItem
+              eventKey="2"
+              onSelect={this.changeAbbreviationView}
+            >
+              Abbreviation/Superatom
+            </MenuItem>
+            <MenuItem
+              eventKey="3"
+              onSelect={this.changeFileStorageView}
+            >
+              File Storage
+            </MenuItem>
+            <MenuItem
+              eventKey="4"
+              onSelect={this.changeArchivedManagementView}
+            >
+              Archived Management
+            </MenuItem>
+          </DropdownButton>
         </ButtonGroup>
       </div>
     );
@@ -314,12 +428,14 @@ export default class HeaderMenu extends Component {
 }
 
 HeaderMenu.propTypes = {
-  ui: PropTypes.instanceOf(Map).isRequired,
   reactions: PropTypes.instanceOf(List).isRequired,
   molecules: PropTypes.instanceOf(List).isRequired,
   scanFile: PropTypes.func.isRequired,
   showNotification: PropTypes.func.isRequired,
   cleanUp: PropTypes.func.isRequired,
-  toggleAbbView: PropTypes.func.isRequired,
-  addSmi: PropTypes.func.isRequired,
+  changeScannedFileView: PropTypes.func.isRequired,
+  changeAbbreviationView: PropTypes.func.isRequired,
+  changeFileStorageView: PropTypes.func.isRequired,
+  changeArchivedManagementView: PropTypes.func.isRequired,
+  updateReagents: PropTypes.func.isRequired,
 };

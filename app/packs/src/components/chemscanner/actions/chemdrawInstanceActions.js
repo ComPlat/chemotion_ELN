@@ -1,4 +1,4 @@
-import * as types from '../actions/ActionTypes';
+import * as types from './ActionTypes';
 
 const setCddInstance = cdd => ({ type: types.SET_CDD_INSTANCE, cdd });
 

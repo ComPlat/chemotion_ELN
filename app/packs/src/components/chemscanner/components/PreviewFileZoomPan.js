@@ -13,26 +13,55 @@ export default class PreviewFileZoomPan extends React.PureComponent {
   constructor() {
     super();
 
+    this.state = {
+      type: '',
+      imageContent: ''
+    };
+
     this.setPreviewRef = (el) => {
       this.previewDiv = el;
     };
 
     this.isSvg = true;
     this.centeringImage = this.centeringImage.bind(this);
+    this.displayURL = this.displayURL.bind(this);
   }
 
   componentDidMount() {
-    setTimeout(this.centeringImage, 200);
+    // setTimeout(this.centeringImage, 300);
+
+    const { imageURL } = this.props;
+    this.displayURL(imageURL);
+  }
+
+  componentWillReceiveProps(newProps) {
+    const { imageURL } = newProps;
+    this.displayURL(imageURL);
   }
 
   componentDidUpdate() {
-    setTimeout(this.centeringImage, 200);
+    setTimeout(this.centeringImage, 300);
+  }
+
+  displayURL(url) {
+    fetch(url).then(r => r.blob()).then((blob) => {
+      const myReader = new FileReader();
+      const { type } = blob;
+
+      myReader.onload = () => {
+        this.setState({ imageContent: myReader.result, type }, this.centeringImage);
+      };
+
+      myReader.readAsText(blob);
+    });
   }
 
   centeringImage() {
     const svgEl = this.previewDiv.querySelector('#svg-file-container');
     const imgSelector = this.isSvg ? 'g > svg' : '#png-img-svg';
     const imgEl = svgEl.querySelector(imgSelector);
+    if (!imgEl) return;
+
     const svgWidth = Math.floor(svgEl.getBoundingClientRect().width);
 
     let imgWidth;
@@ -74,24 +103,28 @@ export default class PreviewFileZoomPan extends React.PureComponent {
   }
 
   render() {
-    const { content, duration } = this.props;
-    if (!content) return <span />;
+    const { duration } = this.props;
+    const { imageContent, type } = this.state;
 
-    let svg = content;
-    if (content.startsWith('data:image/png;base64')) {
+    if (imageContent.length === 0 || type.length === 0) return <span />;
+
+    let svg = imageContent;
+
+    if (type === 'image/png') {
       this.isSvg = false;
+
       svg = `
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-          <image id="png-img-svg" xlink:href="${content}" width="100%" height="100%" />
+          <image id="png-img-svg" xlink:href="${imageContent}" width="100%" height="100%" />
         </svg>
       `;
     } else {
-      svg = content;
+      svg = imageContent;
     }
 
     let dummyImg = (<span />);
     if (!this.isSvg) {
-      dummyImg = (<img id="dummy-img" alt="" src={content} />);
+      dummyImg = (<img id="dummy-img" alt="" src={imageContent} />);
     }
 
     return (
@@ -112,11 +145,10 @@ export default class PreviewFileZoomPan extends React.PureComponent {
 }
 
 PreviewFileZoomPan.propTypes = {
-  content: PropTypes.string,
+  imageURL: PropTypes.string.isRequired,
   duration: PropTypes.number,
 };
 
 PreviewFileZoomPan.defaultProps = {
-  content: '',
   duration: 200,
 };

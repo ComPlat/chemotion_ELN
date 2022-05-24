@@ -11,6 +11,20 @@ module Chemotion
         end
       end
 
+      namespace :all_as_tree do
+        desc "Return the 'All' collection of the current user"
+        get do
+          current_user.collections.arrange_serializable do |parent, children|
+            {
+              title: parent.label,
+              value: parent.id,
+              key: parent.id,
+              children: children
+            }
+          end
+        end
+      end
+
       desc "Return collection by id"
       params do
         requires :id, type: Integer, desc: "Collection id"

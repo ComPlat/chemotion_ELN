@@ -1,13 +1,27 @@
-export const generateExcelReactionRow = (reaction) => {
-  const reactionSmiles = reaction.smi.split('>').map(smis => smis.split('.'));
-  reactionSmiles[1] = reactionSmiles[1].concat(
-    reaction.addedReagentsSmi || [],
-    reaction.addedSolventsSmi || []
-  );
+/* eslint-disable no-prototype-builtins */
+import { fromJS } from 'immutable';
 
-  const reactantsSdf = reaction.reactants.map(m => m.mdl).join('\n$$$$\n');
-  const reagentsSdf = reaction.reagents.map(m => m.mdl).join('\n$$$$\n');
-  const productsSdf = reaction.products.map(m => m.mdl).join('\n$$$$\n');
+export const generateExcelReactionRow = (reaction) => {
+  const {
+    reactants, reagents, solvents, products
+  } = reaction;
+
+  const reactantSmiles = reactants.map(m => m.get('canoSmiles')).join('.');
+  const productSmiles = products.map(m => m.get('canoSmiles')).join('.');
+
+  const reagentSmiles = reagents.concat(solvents).map(m => (
+    m.get('canoSmiles')
+  )).join('.');
+
+  const reactionSmiles = [
+    reactantSmiles,
+    reagentSmiles,
+    productSmiles,
+  ].join('>');
+
+  const reactantsSdf = reactants.map(m => m.get('mdl')).join('\n$$$$\n');
+  const reagentsSdf = reagents.map(m => m.get('mdl')).join('\n$$$$\n');
+  const productsSdf = products.map(m => m.get('mdl')).join('\n$$$$\n');
 
   const assembleDesc = (arr, m, idx) => {
     if (!m.description) return arr;
@@ -18,8 +32,8 @@ export const generateExcelReactionRow = (reaction) => {
     ]);
   };
 
-  const reactantsDesc = reaction.reactants.reduce(assembleDesc, []).join('\n');
-  const productsDesc = reaction.products.reduce(assembleDesc, []).join('\n');
+  const reactantsDesc = reactants.reduce(assembleDesc, []).join('\n');
+  const productsDesc = products.reduce(assembleDesc, []).join('\n');
 
   const reactionSteps = reaction.steps.reduce((arr, step) => {
     const lines = ['description', 'temperature', 'time'].reduce((lineArr, prop) => {
@@ -31,13 +45,13 @@ export const generateExcelReactionRow = (reaction) => {
     }, []);
 
     lines.unshift(`step ${step.number}`);
-    lines.push(`  reagents: ${step.reagents.join(',')}`);
+    lines.push(`  reagents: ${step.reagentSmiles.join(',')}`);
 
     return arr.concat(lines);
   }, []).join('\n');
 
   return [
-    reactionSmiles.map(smis => smis.join('.')).join('>'),
+    reactionSmiles,
     reaction.temperature,
     reaction.yield,
     reaction.time,
@@ -54,10 +68,12 @@ export const generateExcelReactionRow = (reaction) => {
 export const generateExcelMoleculeRow = mol => ([
   mol.smi,
   mol.mdl,
+  mol.inchistring,
+  mol.inchikey,
   mol.description
 ]);
 
-const extractMoleculeFromGroup = molGroup => molGroup.map(m => ({
+export const extractMoleculeFromGroup = molGroup => molGroup.map(m => ({
   id: m.id,
   mdl: m.mdl,
   description: m.description,
@@ -84,3 +100,63 @@ export const extractReactionFromId = (reactions, rid) => {
   return extractReaction(reaction);
 };
 
+export const createReducer = (initialState, handlers) => (
+  function reducer(state = initialState, action) {
+    if (handlers.hasOwnProperty(action.type)) {
+      return handlers[action.type](state, action);
+    }
+
+    return state;
+  }
+);
+
+export const sortMoleculesByClone = (molecules) => {
+  const cloneMap = {};
+  const cloneCountMap = {};
+
+  const rootMolecules = [];
+  const childrenMolecules = [];
+
+  molecules.forEach((m, idx) => {
+    const cloneFrom = m.get('cloneFrom');
+
+    if (cloneFrom) {
+      cloneMap[idx] = cloneFrom;
+      const count = cloneCountMap[cloneFrom] || 0;
+      cloneCountMap[cloneFrom] = count + 1;
+      childrenMolecules.push(m);
+    } else {
+      rootMolecules.push(m);
+    }
+  });
+
+  const newMolecules = new Array(molecules.size).fill(0);
+
+  let pos = 0;
+  const positionMap = {};
+  rootMolecules.forEach((m) => {
+    const extId = m.get('externalId');
+    newMolecules[pos] = m;
+    positionMap[extId] = pos;
+    pos += (cloneCountMap[extId] || 0) + 1;
+  });
+
+  const positionCountMap = {};
+  childrenMolecules.forEach((m) => {
+    const cloneFrom = m.get('cloneFrom');
+    pos = positionCountMap[cloneFrom] || 0;
+    newMolecules[positionMap[cloneFrom] + pos + 1] = m;
+    positionCountMap[cloneFrom] = pos + 1;
+  });
+
+  return fromJS(newMolecules);
+};
+
+export const isPngImage = (imageData) => {
+  const pngB64Begin = 'data:image/png;base64';
+  return RegExp(`${pngB64Begin},.*`).test(imageData);
+};
+
+export const isSvgImage = imageData => (
+  RegExp('.*<svg').test(imageData.slice(0, 200))
+);

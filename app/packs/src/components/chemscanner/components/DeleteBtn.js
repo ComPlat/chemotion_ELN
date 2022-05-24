@@ -15,9 +15,12 @@ export default class DeleteBtn extends React.Component {
   }
 
   render() {
+    const { pullLeft } = this.props;
+    const className = pullLeft ? 'left-btn' : 'right-btn';
+
     return (
       <button
-        className="right-btn btn btn-xs"
+        className={`${className} btn btn-xs`}
         onClick={this.onClick}
       >
         <i className="fa fa-times" />
@@ -28,5 +31,10 @@ export default class DeleteBtn extends React.Component {
 
 DeleteBtn.propTypes = {
   onClick: PropTypes.func.isRequired,
+  pullLeft: PropTypes.bool,
   param: PropTypes.object.isRequired // eslint-disable-line react/forbid-prop-types
+};
+
+DeleteBtn.defaultProps = {
+  pullLeft: false,
 };
