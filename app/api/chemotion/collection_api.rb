@@ -7,7 +7,7 @@ module Chemotion
       namespace :all do
         desc "Return the 'All' collection of the current user"
         get do
-          Collection.get_all_collection_for_user(current_user.id)
+          present Collection.get_all_collection_for_user(current_user.id), with: Entities::CollectionEntity, root: :collection
         end
       end
 
@@ -17,7 +17,7 @@ module Chemotion
       end
       route_param :id, requirements: { id: /[0-9]*/ } do
         get do
-          Collection.find(params[:id])
+          present Collection.find(params[:id]), with: Entities::CollectionEntity, root: :collection
         end
       end
 
@@ -103,6 +103,7 @@ module Chemotion
         build_tree.call(collects,true)
       end
 
+      # TODO: check if this endpoint is really obsolete
       desc "Bulk update and/or create new collections"
       patch '/' do
         Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids])
@@ -111,6 +112,7 @@ module Chemotion
       desc "reject a shared collections"
       patch '/reject_shared' do
         Collection.reject_shared(current_user.id, params[:id])
+        {} # result is not used by FE
       end
 
       namespace :shared do
@@ -130,6 +132,7 @@ module Chemotion
 
         put ':id' do
           Collection.shared(current_user.id).find(params[:id]).update!(params[:collection_attributes])
+          {} # result is not used by FE
         end
 
         desc "Create shared collections"
@@ -234,6 +237,8 @@ module Chemotion
             message_from: current_user.id, message_to: uids,
             data_args: { 'shared_by': current_user.name }, level: 'info'
           )
+
+          {} # result is not used by FE
         end
       end
 
@@ -387,6 +392,7 @@ module Chemotion
 
         post do
           Collection.create(user_id: current_user.id, label: params[:label])
+          {} # result is not used by FE
         end
       end
 
