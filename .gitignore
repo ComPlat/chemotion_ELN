@@ -151,7 +151,8 @@ tags
 tags.temp
 .vscode/*
 
-/spec/examples.txt
+coverage
+spec/examples.txt
 
 # ignore vendor files
 vendor/cache/*

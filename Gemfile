@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
 gem 'aasm'
@@ -62,12 +64,12 @@ gem 'net-sftp'
 gem 'net-ssh'
 gem 'nokogiri'
 
-gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
 gem 'omniauth', '~> 1.9.1'
 gem 'omniauth-github', '~> 1.4.0'
+gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth_openid_connect'
-gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
+gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
 
 gem 'pandoc-ruby'
 gem 'paranoia', '~> 2.0'
@@ -107,7 +109,7 @@ gem 'thumbnailer', git: 'https://github.com/merlin-p/thumbnailer.git'
 gem 'turbo-sprockets-rails4'
 
 gem 'uglifier', '>= 4.0.0'
-#gem 'webpacker', '~> 6.0.0.beta.6'
+# gem 'webpacker', '~> 6.0.0.beta.6'
 gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
 
@@ -129,7 +131,7 @@ group :development do
 
   gem 'memory_profiler'
 
-#  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
+  #  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rspec', require: false
@@ -182,6 +184,8 @@ group :test do
 
   gem 'rspec-repeat'
 
+  gem 'simplecov', require: false
+
   gem 'webdrivers', '~> 4.1.2'
   gem 'webmock'
 end
@@ -189,8 +193,5 @@ end
 # gem 'nmr_sim', git: 'https://github.com/ComPlat/nmr_sim', ref: 'e2f91776aafd8eb1fa9d88c8ec2291b02201f222', group: [:plugins,:development, :test, :production]
 
 # Chemotion plugins: list your ELN specific plugin gems in the Gemfile.plugin
-eln_plugin = File.join(File.dirname(__FILE__), "Gemfile.plugin")
-if File.exists?(eln_plugin)
-  eval_gemfile eln_plugin
-end
-
+eln_plugin = File.join(File.dirname(__FILE__), 'Gemfile.plugin')
+eval_gemfile eln_plugin if File.exist?(eln_plugin)
