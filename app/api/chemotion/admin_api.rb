@@ -348,7 +348,7 @@ module Chemotion
 
           user.update!(account_active: params[:account_active]) unless params[:account_active].nil?
 
-          user
+          present user, with: Entities::UserEntity
         end
       end
 
@@ -371,7 +371,8 @@ module Chemotion
           klass.save!
           klass.reload
           klass.create_klasses_revision(current_user.id) if params[:is_release] == true
-          klass
+
+          present klass, with: Entities::ElementKlassEntity
         end
       end
 
@@ -436,7 +437,8 @@ module Chemotion
           klass.desc = params[:desc] if params[:desc].present?
           klass.place = place
           klass.save!
-          klass
+
+          present klass, with: Entities::ElementKlassEntity
         end
       end
 
@@ -456,7 +458,7 @@ module Chemotion
           klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
           File.write(klass_names_file, klasses)
 
-          klass
+          present klass, with: Entities::ElementKlassEntity
         end
       end
 
@@ -514,6 +516,8 @@ module Chemotion
           klass = SegmentKlass.create!(attributes)
           klass.reload
           klass.create_klasses_revision(current_user.id)
+
+          {} # FE does not use the result
         rescue ActiveRecord::RecordInvalid => e
           { error: e.message }
         end
@@ -542,6 +546,8 @@ module Chemotion
           attributes.delete(:id)
           attributes[:place] = place
           @segment&.update!(attributes)
+
+          {} # FE does not use the result
         end
       end
 
@@ -556,7 +562,7 @@ module Chemotion
           error!('Segment is invalid. Please re-select.', 500) if @segment.nil?
         end
         post do
-          @segment&.update!(is_active: params[:is_active])
+          present @segment&.update!(is_active: params[:is_active]), with: Entities::SegmentKlassEntity
         end
       end
 
@@ -569,6 +575,7 @@ module Chemotion
         get do
           klass = params[:klass].constantize.find_by(id: params[:id])
           list = klass.send("#{params[:klass].underscore}es_revisions") unless klass.nil?
+
           present list.sort_by(&:released_at).reverse, with: Entities::KlassRevisionEntity, root: 'revisions'
         end
       end
@@ -579,9 +586,10 @@ module Chemotion
           optional :is_active, type: Boolean, desc: 'Active or Inactive Segment'
         end
         get do
-          list = SegmentKlass.where(is_active: params[:is_active]) if params[:is_active].present?
-          list = SegmentKlass.all unless params[:is_active].present?
-          present list.sort_by(&:place), with: Entities::SegmentKlassEntity, root: 'klass'
+          list = params[:is_active].present? ? SegmentKlass.where(is_active: params[:is_active]) : SegmentKlass.all
+          list.order(place: :asc)
+
+          present list, with: Entities::SegmentKlassEntity, root: 'klass'
         end
       end
 
@@ -607,10 +615,12 @@ module Chemotion
           @segment.save!
           @segment.reload
           @segment.create_klasses_revision(current_user.id) if params[:is_release] == true
-          @segment
+
+          present @segment, with: Entities::SegmentKlassEntity
         end
       end
 
+      # TODO: Endpoint is currently unused
       namespace :delete_segment_klass do
         desc 'delete Generic Segment Klass'
         route_param :id do
@@ -636,6 +646,7 @@ module Chemotion
           error!('Revision is invalid.', 404) if revision.nil?
           error!('Can not delete the active revision.', 405) if revision.uuid == klass.uuid
           revision&.destroy!
+
           status 201
         end
       end
@@ -646,9 +657,10 @@ module Chemotion
           optional :is_active, type: Boolean, desc: 'Active or Inactive Dataset'
         end
         get do
-          list = DatasetKlass.where(is_active: params[:is_active]) if params[:is_active].present?
-          list = DatasetKlass.all unless params[:is_active].present?
-          present list.sort_by(&:place), with: Entities::DatasetKlassEntity, root: 'klass'
+          list = params[:is_active].present? ? DatasetKlass.where(is_active: params[:is_active]) : DatasetKlass.all
+          list.order(place: :asc)
+
+          present list, with: Entities::DatasetKlassEntity, root: 'klass'
         end
       end
 
@@ -664,6 +676,8 @@ module Chemotion
         end
         post do
           @dataset&.update!(is_active: params[:is_active])
+
+          {} # result is not used by FE
         end
       end
 
@@ -688,7 +702,8 @@ module Chemotion
           @klass.save!
           @klass.reload
           @klass.create_klasses_revision(current_user.id) if params[:is_release] == true
-          @klass
+
+          present @klass, with: Entities::DatasetKlassEntity
         end
       end
 
@@ -711,9 +726,23 @@ module Chemotion
             requires :name, type: String
           end
           get do
-            unless params[:name].nil? || params[:name].empty?
-              { users: User.where(type: params[:type]).by_name(params[:name]).limit(3)
-                           .select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type') }
+            if params[:name].present?
+              users = User.where(type: params[:type])
+                          .by_name(params[:name])
+                          .limit(3)
+                          .select(
+                            'first_name',
+                            'last_name',
+                            'name',
+                            'id',
+                            'name_abbreviation',
+                            'name_abbreviation as abb',
+                            'type as user_type')
+                          .map(&:attributes)
+
+              { users: users }
+            else
+              { users: [] }
             end
           end
         end
@@ -846,10 +875,15 @@ module Chemotion
             requires :name, type: String
           end
           get do
-            if params[:name].nil? || params[:name].empty?
-              { users: [] }
+            if params[:name].present?
+              users = User.where(type: %w[Person Group])
+                          .by_name(params[:name])
+                          .limit(5)
+                          .select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type')
+                          .map(&:attributes)
+              { users: users }
             else
-              { users: User.where(type: %w[Person Group]).by_name(params[:name]).limit(5).select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type') }
+              { users: [] }
             end
           end
         end
@@ -955,6 +989,8 @@ module Chemotion
 
           put do
             Delayed::Job.find(params[:id]).update_columns(run_at: 1.minutes.from_now, failed_at: nil)
+
+            {} # FE does not use the result
           end
         end
       end

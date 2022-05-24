@@ -1,11 +1,18 @@
 # frozen_string_literal: true
 
 module Entities
-  # DatasetKlassEntity
-  class DatasetKlassEntity < Grape::Entity
-    expose :id, :uuid, :ols_term_id, :label, :desc, :properties_template, :properties_release, :is_active, :place, :released_at
-    def released_at
-      object.released_at&.strftime('%d.%m.%Y, %H:%M')
-    end
+  class DatasetKlassEntity < ApplicationEntity
+    expose(
+      :desc
+      :id
+      :is_active
+      :label
+      :ols_term_id
+      :place
+      :properties_release
+      :properties_template
+      :uuid
+    )
+    expose_timestamps(timestamp_fields: [:released_at])
   end
 end
