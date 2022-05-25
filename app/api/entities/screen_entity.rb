@@ -3,14 +3,14 @@
 module Entities
   class ScreenEntity < ApplicationEntity
     expose(
-      :collaborator, 
+      :collaborator,
       :conditions,
-      :description, 
-      :id, 
-      :name, 
-      :requirements, 
-      :result, 
-      :type, 
+      :description,
+      :id,
+      :name,
+      :requirements,
+      :result,
+      :type,
     )
 
     expose_timestamps

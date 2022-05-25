@@ -49,7 +49,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ScreenEntity
+        present paginate(scope), with: Entities::ScreenEntity, root: :screens
       end
 
       desc "Return serialized screen by id"
