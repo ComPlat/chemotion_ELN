@@ -26,7 +26,6 @@ Capybara.register_driver :selenium do |app|
   options.add_argument('--headless') unless ENV['USE_HEAD']
   options.add_argument('--no-sandbox')
 
-
   Capybara::Selenium::Driver.new(
     app,
     browser: :chrome,
@@ -39,7 +38,7 @@ hostname = 'http://pubchem.ncbi.nlm.nih.gov'
 inchi_path = '/rest/pug/compound/inchikey/'
 
 RSpec.configure do |config|
-  config.example_status_persistence_file_path = "spec/examples.txt"
+  # config.example_status_persistence_file_path = "spec/examples.txt"
 
   config.include FactoryBot::Syntax::Methods
 
