@@ -23,7 +23,7 @@ module Chemotion
           end
         end
         post do
-          Usecases::Wellplates::BulkCreate.new(params, current_user.id).execute!
+          Usecases::Wellplates::BulkCreate.new(params, current_user).execute!
           body false
         end
       end
