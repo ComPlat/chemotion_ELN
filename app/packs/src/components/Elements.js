@@ -37,9 +37,9 @@ export default class Elements extends Component {
     let page = null;
 
     if (currentElement) {
-      md = 5;
+      md = 4;
       page = (
-        <Col md={7} className="small-col">
+        <Col md={8} className="small-col">
           <ElementDetails currentElement={currentElement} />
         </Col>
       );
