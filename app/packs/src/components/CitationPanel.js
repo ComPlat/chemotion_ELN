@@ -51,7 +51,7 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate) => {
               </Button>
             </OverlayTrigger>
             {changeTypeBtn(litype, id, fnUpdate)}
-            <Button bsStyle="danger"><i className="fa fa-trash-o" aria-hidden="true" onClick={() => fnDelete(citation)} /></Button>
+            <Button bsStyle="danger"  onClick={() => fnDelete(citation)} ><i className="fa fa-trash-o" aria-hidden="true"/></Button>
           </ButtonGroup>
         </div>
       </div>
