@@ -94,7 +94,7 @@ module Chemotion
 
         wellplates = paginate(scope)
 
-        present wellplates, with: Entities::WellplateEntity, displayed_in_list: true
+        present wellplates, with: Entities::WellplateEntity, displayed_in_list: true, root: :wellplates
       end
 
       desc 'Return serialized wellplate by id'
