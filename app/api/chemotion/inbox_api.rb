@@ -21,7 +21,7 @@ module Chemotion
           res = samples.map do |s|
             { id: s.id, name: s.name, short_label: s.short_label, type: rs.find { |r| r.sample_id == s.id }&.type&.sub(/^Reactions/, '')&.sub(/Sample/, '') }
           end
-          res
+          { samples: res }
         end
 
         desc 'assign attachment to sample'

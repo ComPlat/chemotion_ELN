@@ -46,7 +46,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ResearchPlanEntity, displayed_in_list: true
+        present paginate(scope), with: Entities::ResearchPlanEntity, displayed_in_list: true, root: :research_plans
       end
 
       desc 'Create a research plan'

@@ -298,7 +298,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ReactionEntity, displayed_in_list: true
+        present paginate(scope), with: Entities::ReactionEntity, displayed_in_list: true, root: :reactions
       end
 
       desc 'Return serialized reaction by id'

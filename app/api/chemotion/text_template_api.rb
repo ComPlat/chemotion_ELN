@@ -35,14 +35,14 @@ module Chemotion
 
       desc 'Get predefined templates with paging'
       get :predefinedNames do
-        PredefinedTextTemplate.order(id: :desc).pluck(:name)
+        { text_templates: PredefinedTextTemplate.order(id: :desc).pluck(:name) }
       end
 
       desc 'Get predefined templates by name'
       get :by_name do
         template = PredefinedTextTemplate.where(name: params['name'])
 
-        present template, with: Entities::TextTemplateEntity
+        present template, with: Entities::TextTemplateEntity, root: :text_templates
       end
 
       delete :by_name do

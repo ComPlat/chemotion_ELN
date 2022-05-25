@@ -39,8 +39,9 @@ module Chemotion
 
       desc "Return all locked and unshared serialized collection roots of current user"
       get :locked do
-        current_user.collections.includes(:shared_users)
-          .locked.unshared.roots.order('label ASC')
+        roots = current_user.collections.includes(:shared_users).locked.unshared.roots.order(label: :asc)
+
+        present roots, with: Entities::CollectionEntity, root: :collections
       end
 
       get_child = Proc.new do |children, collects|
@@ -56,7 +57,7 @@ module Chemotion
         collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
         get_child.call(col_tree,collects)
         col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
-        Entities::CollectionRootEntity.represent(col_tree, serializable: true)
+        Entities::CollectionRootEntity.represent(col_tree, serializable: true, root: :collections)
       end
 
       desc "Return all unlocked unshared serialized collection roots of current user"

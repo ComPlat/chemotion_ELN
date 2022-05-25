@@ -220,12 +220,11 @@ module Chemotion
         user_id = current_user.id
         mol.create_molecule_name_by_user(new_name, user_id) if new_name.present?
 
-        mol.molecule_names.map do |mn|
-          {
-            value: mn.id, label: mn.name,
-            desc: mn.description, mid: mn.molecule_id
-          }
+        molecules = mol.molecule_names.map do |mn|
+          { value: mn.id, label: mn.name, desc: mn.description, mid: mn.molecule_id }
         end
+
+        { molecules: molecules }
       end
 
       desc 'return molecule by InChiKey'

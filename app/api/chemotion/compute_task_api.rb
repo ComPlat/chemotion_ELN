@@ -2,7 +2,7 @@ module Chemotion
   class ComputeTaskAPI < Grape::API
     resource :compute_tasks do
       desc 'Return all computational tasks.'
-      get :all, each_serializer: ComputedPropsSerializer do
+      get :all do
         computed_props = ComputedProp.where(creator: current_user.id).order(updated_at: :desc)
 
         present computed_props, with: Entities::ComputedPropEntity, root: :compute_tasks

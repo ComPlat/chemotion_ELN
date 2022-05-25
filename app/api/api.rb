@@ -6,7 +6,7 @@ class API < Grape::API
   format :json
   prefix :api
   version 'v1'
-  formatter :json, Grape::Formatter::ActiveModelSerializers
+  # formatter :json, Grape::Formatter::ActiveModelSerializers
 
   # TODO needs to be tested,
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
