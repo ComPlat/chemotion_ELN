@@ -1,3 +1,5 @@
+require "uri"
+
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
@@ -107,9 +109,14 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
+  uri = URI.parse("#{ENV['HOST_URL'] || 'http://localhost'}")
+  scheme = uri.scheme   || 'https'
+  host   = uri.host     || 'localhost'
+  port   = uri.port     || 443
+
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.delivery_method = :smtp
-  config.action_mailer.default_url_options = { host: ENV['SMTP_HOST']}
+  config.action_mailer.default_url_options = { host: host, protocol: scheme, port: port }
   config.action_mailer.smtp_settings = {
     :address              => ENV["SMTP_ADDRESS"],
     :port                 => ENV["SMTP_PORT"],
@@ -121,4 +128,7 @@ Rails.application.configure do
     :openssl_verify_mode  => ENV['SMTP_SSL_MODE']
   }
 
+  if (ENV["SMTP_ADDRESS"] || '').empty? || ENV["DISABLE_MAIL_DELIVERY"].present?
+    config.action_mailer.perform_deliveries = false
+  end
 end

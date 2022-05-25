@@ -1,3 +1,5 @@
+require "uri"
+
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
@@ -55,9 +57,28 @@ Rails.application.configure do
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
 
+  uri = URI.parse("#{ENV['HOST_URL'] || 'http://localhost'}")
+  scheme = uri.scheme   || 'http'
+  host   = uri.host     || 'localhost'
+  port   = uri.port     || 80
+
+  config.action_mailer.raise_delivery_errors = true
   config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = { :address => "localhost", :port => 1025 }
-  #config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+  config.action_mailer.default_url_options = { host: host, protocol: scheme, port: port }
+  config.action_mailer.smtp_settings = {
+    :address              => ENV["SMTP_ADDRESS"] || "localhost",
+    :port                 => ENV["SMTP_PORT"] || 1025,
+    :user_name            => ENV['SMTP_USERNAME'],
+    :domain               => ENV['SMTP_DOMAIN'],
+    :password             => ENV['SMTP_PASSWORD'],
+    :authentication       => ENV['SMTP_AUTH'] && ENV['SMTP_AUTH'].to_sym,
+    :enable_starttls_auto => ENV['SMTP_TLS'] && ENV['SMTP_TLS'].match(/true/),
+    :openssl_verify_mode  => ENV['SMTP_SSL_MODE']
+  }
+
+  if (ENV["SMTP_ADDRESS"] || '').empty? || ENV["DISABLE_MAIL_DELIVERY"].present?
+    config.action_mailer.perform_deliveries = false
+  end
 
 #  TurboSprockets.configure do |config|
 #    config.precompiler.enabled = false
