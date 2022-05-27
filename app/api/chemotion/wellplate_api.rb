@@ -23,7 +23,7 @@ module Chemotion
           end
         end
         post do
-          Usecases::Wellplates::BulkCreate.new(params, current_user).execute!
+          Usecases::Wellplates::BulkCreate.new(declared(params, include_missing: false), current_user).execute!
           body false
         end
       end
@@ -39,13 +39,13 @@ module Chemotion
         post do
           cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
           wellplates = Wellplate
-                        .includes_for_list_display
-                        .by_collection_id(cid)
-                        .by_ui_state(params[:ui_state])
-                        .for_user(current_user.id)
+                       .includes_for_list_display
+                       .by_collection_id(cid)
+                       .by_ui_state(params[:ui_state])
+                       .for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, wellplates).read?
 
-          present wellplates, with: Entities::Wellplate, root: :wellplates, displayed_in_list: true
+          present wellplates, with: Entities::WellplateEntity, root: :wellplates, displayed_in_list: true
         end
       end
 
@@ -175,7 +175,7 @@ module Chemotion
         params.delete(:container)
 
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user).execute!
-        wellplate.container =  update_datamodel(container)
+        wellplate.container = update_datamodel(container)
 
         wellplate.save!
 
@@ -218,8 +218,8 @@ module Chemotion
           put do
             wellplate_id = params[:wellplate_id]
             attachment_id = params[:attachment_id]
-            import = Import::ImportWellplateSpreadsheet.new(wellplate_id: wellplate_id, attachment_id: attachment_id)
             begin
+              import = Import::ImportWellplateSpreadsheet.new(wellplate_id: wellplate_id, attachment_id: attachment_id)
               import.process!
               wellplate = import.wellplate
               {
@@ -234,7 +234,7 @@ module Chemotion
       end
 
       namespace :well_label do
-        desc "update well label"
+        desc 'update well label'
         params do
           requires :id, type: Integer
           requires :label, type: String
@@ -250,7 +250,7 @@ module Chemotion
       end
 
       namespace :well_color_code do
-        desc "add or update color code"
+        desc 'add or update color code'
         params do
           requires :id, type: Integer
           requires :color_code, type: String
