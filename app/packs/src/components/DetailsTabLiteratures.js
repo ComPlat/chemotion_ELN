@@ -30,7 +30,7 @@ const clipboardTooltip = () => (
 const sameConseqLiteratureId = (citations, sortedIds, i) => {
   if (i === 0) { return false; }
   const a = citations.get(sortedIds[i])
-  const b = citations.get(sortedIds[i-1])
+  const b = citations.get(sortedIds[i - 1])
   return (a.id === b.id)
 };
 
@@ -85,8 +85,11 @@ export default class DetailsTabLiteratures extends Component {
   handleInputChange(type, event) {
     const { literature } = this.state;
     const { value } = event.target;
-    literature[type] = value.trim();
-    this.setState(prevState => ({ ...prevState, literature }));
+   
+    if (value.trim().length > 0) {
+      literature[type] = value;
+      this.setState(prevState => ({ ...prevState, literature }));
+    }
   }
 
   handleTypeUpdate(updId, rType) {
@@ -138,7 +141,7 @@ export default class DetailsTabLiteratures extends Component {
       doi, url, title, isbn
     } = literature;
     if (element.isNew === true && element.type === 'reaction'
-    && element.literatures && element.literatures.size > 0) {
+      && element.literatures && element.literatures.size > 0) {
       const newlit = {
         ...literature,
         doi: sanitizeDoi(doi),
