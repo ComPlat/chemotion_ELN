@@ -3,11 +3,37 @@ import { Checkbox, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, Inpu
 import uuid from 'uuid';
 import { filter } from 'lodash';
 import Select from 'react-select';
+import Select3 from 'react-select3';
 import Dropzone from 'react-dropzone';
 import GenericElDropTarget from './GenericElDropTarget';
 import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
 import TableRecord from './TableRecord';
 import Utils from '../utils/Functions';
+
+const selectInlineStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    minHeight: '30px',
+    height: '30px'
+  }),
+  valueContainer: (provided, state) => ({
+    ...provided,
+    height: '30px',
+    padding: '4px 10px',
+    fontSize: '12px'
+  }),
+  input: (provided, state) => ({
+    ...provided,
+    margin: '0px'
+  }),
+  indicatorSeparator: state => ({
+    display: 'none'
+  }),
+  indicatorsContainer: (provided, state) => ({
+    ...provided,
+    height: '30px'
+  })
+};
 
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const GenTextFormula = (opt) => {
@@ -34,7 +60,7 @@ const GenTextFormula = (opt) => {
   });
   return (
     <FormGroup className="text_generic_properties">
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <FormControl
         type="text"
         value={subs.join('')}
@@ -58,7 +84,7 @@ const GenPropertiesTextArea = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup className="text_generic_properties">
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <FormControl
         componentClass="textarea"
         value={opt.value}
@@ -107,7 +133,7 @@ const GenPropertiesUpload = (opt) => {
 
   return (
     <FormGroup className="text_generic_properties">
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <FormControl.Static style={{ paddingBottom: '0px' }}>
         <Dropzone
           id="dropzone"
@@ -137,7 +163,7 @@ const GenPropertiesText = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup className="text_generic_properties">
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <FormControl
         type="text"
         value={opt.value}
@@ -159,7 +185,7 @@ const GenPropertiesCheckbox = opt => (
       onChange={opt.onChange}
       disabled={opt.readOnly}
     >
-      <FormControl.Static>{opt.label}</FormControl.Static>
+      {!opt.inline && <FormControl.Static>{opt.label}</FormControl.Static>}
     </Checkbox>
   </FormGroup>
 );
@@ -172,18 +198,33 @@ const GenPropertiesSelect = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
-      {fieldHeader}
-      <Select
-        isClearable
-        menuContainerStyle={{ position: 'absolute' }}
-        name={opt.field}
-        multi={false}
-        options={options}
-        value={opt.value}
-        onChange={opt.onChange}
-        className={className}
-        disabled={opt.readOnly}
-      />
+      {!opt.inline && fieldHeader}
+      {!opt.inline &&
+        <Select
+          isClearable
+          menuContainerStyle={{ position: 'absolute' }}
+          name={opt.field}
+          multi={false}
+          options={options}
+          value={opt.value}
+          onChange={opt.onChange}
+          className={className}
+          disabled={opt.readOnly}
+        />
+      }
+      {opt.inline &&
+        <Select3
+          classNamePrefix="react-select"
+          isClearable={true}
+          name={opt.field}
+          options={options}
+          value={opt.value}
+          onChange={opt.onChange}
+          isDisabled={opt.readOnly}
+          styles={opt.inline ? selectInlineStyles : {}}
+          menuPortalTarget={opt.inline ? document.body : null}
+        />
+      }
     </FormGroup>
   );
 };
@@ -224,7 +265,7 @@ const GenPropertiesCalculate = (opt) => {
   const fieldHeader = opt.label === '' ? null : (<FieldLabel label={opt.label} desc={opt.description} />);
   return (
     <FormGroup>
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <InputGroup>
         <FormControl
           type="text"
@@ -265,7 +306,7 @@ const GenPropertiesNumber = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <FormControl
         type="number"
         value={opt.value}
@@ -286,7 +327,7 @@ const GenPropertiesSystemDefined = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <InputGroup>
         <FormControl
           type="number"
@@ -312,7 +353,7 @@ const GenPropertiesTable = (opt) => {
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
   return (
     <FormGroup>
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <TableRecord key={`grid_${opt.f_obj.field}`} opt={opt} />
     </FormGroup>
   );
@@ -337,7 +378,7 @@ const GenPropertiesInputGroup = (opt) => {
   });
   return (
     <FormGroup>
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <InputGroup style={{ display: 'flex' }}>
         {subs}
       </InputGroup>
@@ -368,7 +409,7 @@ const GenPropertiesDrop = (opt) => {
 
   return (
     <FormGroup>
-      {fieldHeader}
+      {!opt.inline && fieldHeader}
       <FormControl.Static style={{ paddingBottom: '0px' }}>
         <div className={className}>
           <GenericElDropTarget opt={opt} onDrop={opt.onChange} />

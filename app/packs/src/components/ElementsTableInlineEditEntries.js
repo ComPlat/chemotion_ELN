@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import { Table, Button, FormGroup } from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
@@ -14,7 +15,8 @@ import WellplateInlineHead from './WellplateInlineHead'
 import WellplateInlineProperties from './WellplateInlineProperties'
 import ScreenInlineHead from './ScreenInlineHead'
 import ScreenInlineProperties from './ScreenInlineProperties'
-
+import GenericElInlineHead from './generic/GenericElInlineHead'
+import GenericElInlineProperties from './generic/GenericElInlineProperties'
 
 export default class ElementsTableInlineEditEntries extends Component {
   constructor(props) {
@@ -88,6 +90,15 @@ export default class ElementsTableInlineEditEntries extends Component {
           ElementActions.updateScreen(screen, closeView, refreshElements)
         }
       })
+    } else {
+      elements.map(genericEl => {
+        if(genericEl.isNew) {
+          ElementActions.createGenericEl(genericEl, closeView, refreshElements)
+          ElementActions.changeElementProperty(genericEl, 'is_new', false)
+        } else {
+          ElementActions.updateGenericEl(genericEl, closeView, refreshElements)
+        }
+      })
     }
   }
 
@@ -128,6 +139,7 @@ export default class ElementsTableInlineEditEntries extends Component {
             {type == 'reaction' && <ReactionInlineHead />}
             {type == 'wellplate' && <WellplateInlineHead />}
             {type == 'screen' && <ScreenInlineHead />}
+            {!['sample', 'reaction', 'wellplate', 'screen'].includes(type) && <GenericElInlineHead type={type} />}
             <th style={{ width: 63 }}>
               {this.renderButtons()}
             </th>
@@ -144,6 +156,8 @@ export default class ElementsTableInlineEditEntries extends Component {
                 return <WellplateInlineProperties key={index} wellplate={element} onCopy={this.handleCopy} onSave={this.handleSave} showDetails={this.showDetails} />
               } else if (type == 'screen') {
                 return <ScreenInlineProperties key={index} screen={element} onCopy={this.handleCopy} onSave={this.handleSave} showDetails={this.showDetails} />
+              } else {
+                return <GenericElInlineProperties key={index} genericEl={element} onCopy={this.handleCopy} onSave={this.handleSave} showDetails={this.showDetails} />
               }
             })
           }
@@ -152,3 +166,8 @@ export default class ElementsTableInlineEditEntries extends Component {
     )
   }
 }
+
+ElementsTableInlineEditEntries.propTypes = {
+  elements: PropTypes.array,
+  type: PropTypes.string
+};

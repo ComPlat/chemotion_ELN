@@ -610,11 +610,15 @@ class ElementStore {
     this.changeCurrentElement(result);
   }
 
-  handleCreateGenericEl(genericEl) {
+  handleCreateGenericEl({ genericEl, closeView, refreshElements }) {
     UserActions.fetchCurrentUser();
-    this.handleRefreshElements((genericEl.element_klass && genericEl.element_klass.name) || 'genericEl');
-    //this.handleRefreshElements('genericEl');
-    this.navigateToNewElement(genericEl, 'GenericEl');
+    if (refreshElements) {
+      this.handleRefreshElements((genericEl.element_klass && genericEl.element_klass.name) || 'genericEl');
+      //this.handleRefreshElements('genericEl');
+    }
+    if (!closeView) {
+      this.navigateToNewElement(genericEl, 'GenericEl');
+    }
   }
 
   handleFetchSamplesByCollectionId(result) {
@@ -1247,8 +1251,10 @@ class ElementStore {
         }
         break;
       default:
-        this.changeCurrentElement(element);
-        this.handleRefreshElements(element.type);
+        if (refreshElements) {
+          this.changeCurrentElement(element);
+          this.handleRefreshElements(element.type);
+        }
         break;
     }
 

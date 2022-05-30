@@ -9,6 +9,7 @@ import deepEqual from 'deep-equal';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import ElementActions from './actions/ElementActions';
+import UserStore from './stores/UserStore';
 
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
@@ -419,12 +420,19 @@ export default class ElementsTable extends React.Component {
         )
       }
     } else {
-      elementsTableEntries = (
-        <ElementsTableEntries
-          elements={elements} currentElement={currentElement}
-          showDragColumn={!overview} ui={ui}
-        />
-      )
+      const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
+      if (inlineEdit && genericEls.find(el => el.name == type)) {
+        elementsTableEntries = (
+          <ElementsTableInlineEditEntries elements={elements} type={type} />
+        )
+      } else {
+        elementsTableEntries = (
+          <ElementsTableEntries
+            elements={elements} currentElement={currentElement}
+            showDragColumn={!overview} ui={ui}
+          />
+        )
+      }
     }
 
     return (

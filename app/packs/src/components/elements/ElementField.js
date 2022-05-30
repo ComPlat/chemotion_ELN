@@ -329,4 +329,4 @@ ElementField.propTypes = {
 
 ElementField.defaultProps = { genericType: 'Element', unitsSystem: [] };
 
-export { ElementField, ElementFieldTypes };
+export { ElementField, BaseFieldTypes, ElementFieldTypes };

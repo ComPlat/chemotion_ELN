@@ -270,9 +270,8 @@ class SampleStereoAbsInput extends Component {
           options={absOptions}
           onChange={this.handleUpdate.bind(this)}
           value={value}
-            styles={inline ? selectInlineStyles : {}}
+          styles={inline ? selectInlineStyles : {}}
           menuPortalTarget={inline ? document.body : null}
-          styles={{ menuPortal: base => ({ ...base, zIndex: 10 }) }}
         />
       </FormGroup>
     );

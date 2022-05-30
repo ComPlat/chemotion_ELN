@@ -218,18 +218,18 @@ class ElementActions {
     };
   }
 
-  createGenericEl(params) {
+  createGenericEl(params, closeView = false, refreshElements = true) {
     return (dispatch) => {
       GenericElsFetcher.create(params)
-        .then((result) => { dispatch(result); })
+        .then((result) => { dispatch({ genericEl: result, closeView, refreshElements }) })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
-  updateGenericEl(params) {
+  updateGenericEl(params, closeView = false, refreshElements = true) {
     return (dispatch) => {
       GenericElsFetcher.update(params)
-        .then((result) => { dispatch(result); })
+        .then((result) => { dispatch({ element: result, closeView, refreshElements }) })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
