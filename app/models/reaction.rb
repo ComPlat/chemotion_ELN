@@ -92,11 +92,11 @@ class Reaction < ApplicationRecord
   scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
   scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
-  scope :by_sample_ids, ->(ids) { joins(:reactions_samples).where(reactions_samples: { id: ids }) }
+  scope :by_sample_ids, ->(ids) { joins(:reactions_samples).where(reactions_samples: { sample_id: ids }) }
   scope :by_status, ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
   scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }
-  scope :includes_for_list_display, ->() { includes(:tag) }
+  scope :includes_for_list_display, -> { includes(:tag) }
 
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions
@@ -149,52 +149,53 @@ class Reaction < ApplicationRecord
 
   after_create :update_counter
 
-  has_one :container, :as => :containable
+  has_one :container, as: :containable
 
   def self.get_associated_samples(reaction_ids)
     ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
   end
 
   def analyses
-    self.container ? self.container.analyses : []
+    container ? container.analyses : []
   end
 
   def auto_format_temperature!
     valueUnitCheck = (temperature['valueUnit'] =~ /^(°C|°F|K)$/).present?
-    temperature['valueUnit'] = '°C' if (!valueUnitCheck)
+    temperature['valueUnit'] = '°C' unless valueUnitCheck
 
     temperature['data'].each do |t|
       valid_time = (t['time'] =~ /^((?:\d\d):[0-5]\d:[0-5]\d$)/i).present?
-      t['time'] = '00:00:00' if (!valid_time)
+      t['time'] = '00:00:00' unless valid_time
       t['value'] = t['value'].gsub(/[^0-9.-]/, '')
     end
   end
 
   def temperature_display
-    userText = temperature["userText"]
-    return userText if (userText != "")
+    userText = temperature['userText']
+    return userText if userText != ''
 
-    return '' if (temperature["data"].length == 0)
+    return '' if temperature['data'].empty?
 
-    arrayData = temperature["data"]
-    maxTemp = (arrayData.max_by { |x| x["value"] })["value"]
-    minTemp = (arrayData.min_by { |x| x["value"] })["value"]
+    arrayData = temperature['data']
+    maxTemp = (arrayData.max_by { |x| x['value'] })['value']
+    minTemp = (arrayData.min_by { |x| x['value'] })['value']
 
-    return ""  if (minTemp == nil || maxTemp == nil)
-    return minTemp + " ~ " + maxTemp
+    return '' if minTemp.nil? || maxTemp.nil?
+
+    minTemp + ' ~ ' + maxTemp
   end
 
   def temperature_display_with_unit
     tp = temperature_display
-    tp.length != 0 ? tp + " " + temperature["valueUnit"] : ""
+    !tp.empty? ? tp + ' ' + temperature['valueUnit'] : ''
   end
 
   def description_contents
-    return description["ops"].map{|s| s["insert"]}.join()
+    description['ops'].map { |s| s['insert'] }.join
   end
 
   def observation_contents
-    return observation["ops"].map{|s| s["insert"]}.join()
+    observation['ops'].map { |s| s['insert'] }.join
   end
 
   def update_svg_file!
@@ -247,12 +248,12 @@ class Reaction < ApplicationRecord
   end
 
   def yield_amount(sample_id)
-    ReactionsProductSample.find_by(reaction_id: self.id, sample_id: sample_id).try(:equivalent)
+    ReactionsProductSample.find_by(reaction_id: id, sample_id: sample_id).try(:equivalent)
   end
 
   def solvents_in_svg
-    names = solvents.map{ |s| s.preferred_label }
-    return names && names.length > 0 ? names : [solvent]
+    names = solvents.map(&:preferred_label)
+    names && !names.empty? ? names : [solvent]
   end
 
   def cleanup_array_fields
@@ -267,7 +268,7 @@ class Reaction < ApplicationRecord
   end
 
   def update_counter
-    self.creator.increment_counter 'reactions'
+    creator.increment_counter 'reactions'
   end
 
   def scrub

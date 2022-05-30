@@ -131,6 +131,7 @@ RSpec.configure do |config|
 
   RSpec::Expectations.configuration.warn_about_potential_false_positives = false
 
+  config.filter_run_when_matching :focus
   config.order = :random
   Kernel.srand config.seed
 
