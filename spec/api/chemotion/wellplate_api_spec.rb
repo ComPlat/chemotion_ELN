@@ -208,7 +208,7 @@ describe Chemotion::WellplateAPI do
   end
 
   describe 'POST /api/v1/wellplates/subwellplates' do
-    pending 'spec is missing because ??'
+    pending 'TODO: Add missing spec'
   end
 
   describe 'PUT /api/v1/wellplates/import_spreadsheet/:id' do
@@ -260,10 +260,10 @@ describe Chemotion::WellplateAPI do
   end
 
   describe 'POST /api/v1/wellplates/well_label' do
-    pending 'spec is missing because ??'
+    pending 'TODO: Add missing spec'
   end
 
   describe 'POST /api/v1/wellplates/well_color_code' do
-    pending 'spec is missing because ??'
+    pending 'TODO: Add missing spec'
   end
 end
