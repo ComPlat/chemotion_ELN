@@ -74,7 +74,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'returns a list of user labels' do
-        expect(parsed_json['labels'].length).to eq(2)
+        expect(parsed_json_response['labels'].length).to eq(2)
       end
     end
 
@@ -84,7 +84,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'returns an empty list of user labels' do
-        expect(parsed_json['labels'].length).to eq(0)
+        expect(parsed_json_response['labels'].length).to eq(0)
       end
     end
   end
@@ -186,7 +186,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'returns an updated group' do
-        expect(parsed_json['group']['users'].first['id']).to eq(alternative_user.id)
+        expect(parsed_json_response['group']['users'].first['id']).to eq(alternative_user.id)
       end
     end
 
@@ -206,7 +206,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'returns the id of destroyed group' do
-        expect(parsed_json['destroyed_id']).to eq(group.id)
+        expect(parsed_json_response['destroyed_id']).to eq(group.id)
       end
     end
 
@@ -237,7 +237,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'returns with unauthorized message' do
-        expect(parsed_json['error']).to eq('401 Unauthorized')
+        expect(parsed_json_response['error']).to eq('401 Unauthorized')
       end
     end
   end
