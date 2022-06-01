@@ -3,6 +3,7 @@ class ResearchPlanSerializer < ActiveModel::Serializer
   attributes *(DetailLevels::ResearchPlan.new.base_attributes + ['research_plan_metadata'])
 
   has_one :container, :serializer => ContainerSerializer
+  has_one :tag
   has_many :wellplates, :serializer => WellplateSerializer
   has_many :segments
 
