@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_09_182512) do
+ActiveRecord::Schema.define(version: 2022_05_30_094704) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -914,6 +914,8 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
+    t.string "state"
+    t.string "color"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"

@@ -513,7 +513,7 @@ export default class SampleForm extends React.Component {
           </tr>
 
           <tr>
-            <td colSpan="4">
+            <td colSpan="6">
               <div className="name-form">
                 <div style={{ width: '25%' }}>
                   {this.textInput(sample, 'name', 'Name')}
@@ -521,7 +521,7 @@ export default class SampleForm extends React.Component {
                 <div style={{ width: '25%', paddingLeft: '5px' }}>
                   {this.textInput(sample, 'external_label', 'External label')}
                 </div>
-                <div style={{ width: '25%', paddingLeft: '5px' }}>
+                <div style={{ width: '30%', paddingLeft: '5px' }}>
                   <TextRangeWithAddon
                     field="boiling_point"
                     label="Boiling point"
@@ -532,7 +532,7 @@ export default class SampleForm extends React.Component {
                     tipOnText="Use space-separated value to input a Temperature range"
                   />
                 </div>
-                <div style={{ width: '25%', paddingLeft: '5px' }}>
+                <div style={{ width: '30%', paddingLeft: '5px' }}>
                   <TextRangeWithAddon
                     field="melting_point"
                     label="Melting point"
@@ -542,6 +542,12 @@ export default class SampleForm extends React.Component {
                     onChange={this.handleRangeChanged}
                     tipOnText="Use space-separated value to input a Temperature range"
                   />
+                </div>
+                <div style={{ width: '20%', paddingLeft: '5px' }}>
+                  {this.textInput(sample, 'color', 'Color')}
+                </div>
+                <div style={{ width: '20%', paddingLeft: '5px' }}>
+                  {this.textInput(sample, 'state', 'State at RT')}
                 </div>
                 {/* <div style={{ width: '40%' }}>
                   <label htmlFor="solventInput">Solvent</label>

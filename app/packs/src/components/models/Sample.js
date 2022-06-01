@@ -189,7 +189,9 @@ export default class Sample extends Element {
       decoupled: false,
       molecular_mass: 0,
       sum_formula: '',
-      xref: {}
+      xref: {},
+      color: '',
+      state: ''
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -319,9 +321,27 @@ export default class Sample extends Element {
       molecular_mass: this.molecular_mass,
       sum_formula: this.sum_formula,
       segments: this.segments.map(s => s.serialize()),
+      color: this.color,
+      state: this.state,
     });
 
     return serialized;
+  }
+
+  get color() {
+    return this._color;
+  }
+
+  set color(color) {
+    this._color = color;
+  }
+
+  get state() {
+    return this._state;
+  }
+
+  set state(state) {
+    this._state = state;
   }
 
   get is_top_secret() {

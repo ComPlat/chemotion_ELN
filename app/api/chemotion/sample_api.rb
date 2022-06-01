@@ -85,6 +85,8 @@ module Chemotion
                 density: { field: 'density', displayName: 'Density' },
                 melting_point: { field: 'melting_point', displayName: 'Melting Point' },
                 boiling_point: { field: 'boiling_point', displayName: 'Boiling Point' },
+                color: { field: 'color', displayName: 'Color' },
+                state: { field: 'state', displayName: 'State at RT' }
               },
               current_user_id: current_user.id)
             sdf_import.find_or_create_mol_by_batch
@@ -305,6 +307,8 @@ module Chemotion
         optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :color, type: String
+        optional :state, type: String
         #use :root_container_params
       end
 
@@ -424,6 +428,8 @@ module Chemotion
         optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :color, type: String
+        optional :state, type: String
       end
       post do
         molecule_id = params[:decoupled] && params[:molfile].blank? ? Molecule.find_or_create_dummy&.id : params[:molecule_id]
@@ -454,7 +460,9 @@ module Chemotion
           molecule_name_id: params[:molecule_name_id],
           decoupled: params[:decoupled],
           molecular_mass: params[:molecular_mass],
-          sum_formula: params[:sum_formula]
+          sum_formula: params[:sum_formula],
+          color: params[:color],
+          state: params[:state]
         }
 
         boiling_point_lowerbound = params['boiling_point_lowerbound'].blank? ? -Float::INFINITY : params['boiling_point_lowerbound']
