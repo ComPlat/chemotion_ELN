@@ -20,12 +20,16 @@ module Entities
     def extended_metadata
       return unless object.extended_metadata
 
-      report = (object.extended_metadata['report'] == true || object.extended_metadata == true)
+      report = (object.extended_metadata['report'] == 'true' || object.extended_metadata == 'true')
 
       {}.tap do |metadata|
         metadata[:report] = report
-        metadata[:content] = metadata['content'] if metadata['content'].present?
-        metadata[:hyperlinks] = metadata['hyperlinks'] if metadata['hyperlinks'].present?
+        if object.extended_metadata['content'].present?
+          metadata[:content] = object.extended_metadata['content']
+        end
+        if object.extended_metadata['hyperlinks'].present?
+          metadata[:hyperlinks] = metadata['hyperlinks']
+        end
       end
     end
 
