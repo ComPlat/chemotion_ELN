@@ -167,7 +167,7 @@ module Chemotion
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)
         end
 
-        present screen, with: Entities::ScreenEntity
+        present screen, with: Entities::ScreenEntity, root: :screen
       end
     end
   end
