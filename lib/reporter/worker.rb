@@ -79,7 +79,15 @@ module Reporter
     def extract(objects)
       objects.map do |tag|
         e = tag['type'].camelize.constantize.find(tag['id'])
-        ElementReportPermissionProxy.new(@author, e, user_ids).serialized
+        serializer =
+          case e
+          when Sample
+            Entities::SampleReportEntity.represent(e)
+          when Reaction
+            Entities::ReactionReportEntity.represent(e)
+          end
+
+        serializer.serializable_hash
       end
     end
 

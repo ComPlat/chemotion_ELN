@@ -1,6 +1,6 @@
-class Material < Sample
-  attr_accessor :reference, :show_label, :equivalent, :container, :position, :waste, :coefficient
-end
+# frozen_string_literal: true
+
+# TODO: remove this class
 
 class MaterialSerializer < SampleSerializer
   attributes :reference, :show_label, :equivalent, :container, :position, :waste, :coefficient

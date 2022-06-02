@@ -38,12 +38,12 @@ module Entities
 
     expose :code_log, using: 'Entities::CodeLogEntity'
     expose :container, using: 'Entities::ContainerEntity'
-    expose :products, using: 'Entities::MaterialEntity'
-    expose :purification_solvents, using: 'Entities::MaterialEntity'
-    expose :reactants, using: 'Entities::MaterialEntity'
+    expose :products, using: 'Entities::ReactionMaterialEntity'
+    expose :purification_solvents, using: 'Entities::ReactionMaterialEntity'
+    expose :reactants, using: 'Entities::ReactionMaterialEntity'
     expose :segments, using: 'Entities::SegmentEntity'
-    expose :solvents, using: 'Entities::MaterialEntity'
-    expose :starting_materials, using: 'Entities::MaterialEntity'
+    expose :solvents, using: 'Entities::ReactionMaterialEntity'
+    expose :starting_materials, using: 'Entities::ReactionMaterialEntity'
     expose :tag, using: 'Entities::ElementTagEntity'
 
     private

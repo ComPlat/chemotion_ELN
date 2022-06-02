@@ -3,7 +3,6 @@
 module Entities
   class ReportEntity < ApplicationEntity
     # This entity requires an additional parameter for the current user
-    #
 
     expose(
       :configs,
