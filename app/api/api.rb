@@ -6,11 +6,17 @@ class API < Grape::API
   format :json
   prefix :api
   version 'v1'
-  # formatter :json, Grape::Formatter::ActiveModelSerializers
 
   # TODO needs to be tested,
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do
+    def present(*args)
+      options = args.count > 1 ? args.extract_options! : {}
+
+      options.merge!(current_user: current_user)
+
+      super(*args, options)
+    end
 
     def current_user
       @current_user ||= ::WardenAuthentication.new(env).current_user

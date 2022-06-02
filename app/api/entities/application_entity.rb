@@ -2,6 +2,12 @@
 
 module Entities
   class ApplicationEntity < Grape::Entity
+    class MissingCurrentUserError < StandardError
+      def initialize(message = '%s requires a current user to work properly', object)
+        super(format(message, object.class))
+      end
+    end
+
     format_with(:eln_timestamp) do |datetime|
       I18n.l(datetime, format: :eln_timestamp)
     end
@@ -14,6 +20,11 @@ module Entities
 
     def displayed_in_list?
       options[:displayed_in_list] == true
+    end
+
+    def current_user
+      raise MissingCurrentUserError unless options[:current_user]
+      options[:current_user]
     end
   end
 end

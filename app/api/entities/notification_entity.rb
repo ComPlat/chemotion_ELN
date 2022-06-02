@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Entities
-  class NotificationEntity
+  class NotificationEntity < ApplicationEntity
     expose(
       :id,
       :is_ack,

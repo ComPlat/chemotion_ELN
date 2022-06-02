@@ -35,7 +35,7 @@ module Entities
 
     def is_remote
       object.is_shared &&
-        (scope && (object.shared_by_id != scope.current_user.id))
+        (object.shared_by_id != current_user.id)
     end
 
     def descendant_ids
