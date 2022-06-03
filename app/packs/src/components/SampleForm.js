@@ -547,7 +547,7 @@ export default class SampleForm extends React.Component {
                   {this.textInput(sample, 'color', 'Color')}
                 </div>
                 <div style={{ width: '20%', paddingLeft: '5px' }}>
-                  {this.textInput(sample, 'state', 'State at RT')}
+                  {this.textInput(sample, 'aggregateState', 'State at RT')}
                 </div>
                 {/* <div style={{ width: '40%' }}>
                   <label htmlFor="solventInput">Solvent</label>

@@ -914,7 +914,7 @@ ActiveRecord::Schema.define(version: 2022_05_30_094704) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
-    t.string "state"
+    t.string "aggregateState"
     t.string "color"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"

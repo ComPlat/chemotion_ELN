@@ -191,7 +191,7 @@ export default class Sample extends Element {
       sum_formula: '',
       xref: {},
       color: '',
-      state: ''
+      aggregateState: ''
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -322,7 +322,7 @@ export default class Sample extends Element {
       sum_formula: this.sum_formula,
       segments: this.segments.map(s => s.serialize()),
       color: this.color,
-      state: this.state,
+      aggregateState: this.aggregateState,
     });
 
     return serialized;
@@ -336,12 +336,12 @@ export default class Sample extends Element {
     this._color = color;
   }
 
-  get state() {
-    return this._state;
+  get aggregateState() {
+    return this._aggregateState;
   }
 
-  set state(state) {
-    this._state = state;
+  set aggregateState(aggregateState) {
+    this._aggregateState = aggregateState;
   }
 
   get is_top_secret() {

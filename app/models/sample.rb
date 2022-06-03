@@ -42,7 +42,7 @@
 #  molecular_mass      :float
 #  sum_formula         :string
 #  solvent             :jsonb
-#  state               :string
+#  aggregateState      :string
 #  color               :string
 #
 # Indexes
