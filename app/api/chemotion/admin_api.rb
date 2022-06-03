@@ -978,7 +978,11 @@ module Chemotion
       resource :jobs do
         desc 'list queued delayed jobs'
         get do
-          present Delayed::Job.select('id, queue, handler, run_at, failed_at, attempts, priority, last_error'), with: Entities::JobEntity
+          present(
+            Delayed::Job.select('id, queue, handler, run_at, failed_at, attempts, priority, last_error'),
+            with: Entities::JobEntity,
+            root: :jobs
+          )
         end
 
         namespace :restart do
