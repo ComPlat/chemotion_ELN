@@ -84,7 +84,7 @@ module Chemotion
             notif.update!(params_arr)
           end
 
-          present notifications, with: Entities::NotificationEntity
+          present notifications, with: Entities::NotificationEntity, root: :ack
         end
       end
 
@@ -124,21 +124,6 @@ module Chemotion
           )
 
           present message, with: Entities::MessageEntity, root: :message
-        end
-      end
-
-      namespace :subscribe do
-        desc 'subscribe a channel'
-        params do
-          requires :channel_id, type: Integer, desc: 'notification ids'
-        end
-        post do
-          channel = Channel.find(params[:channel_id])
-          subscribe_attr = {
-            channel_id: channel.id,
-            user_id: current_user.id
-          }
-          present Subscription.create(subscribe_attr), with: Entities::SubscriptionEntity
         end
       end
     end

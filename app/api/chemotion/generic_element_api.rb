@@ -208,7 +208,7 @@ module Chemotion
         element.save!
         element.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-        present element, with: Entities::ElementEntity
+        present element, with: Entities::ElementEntity, root: :element
       end
 
       desc 'Update element by id'
