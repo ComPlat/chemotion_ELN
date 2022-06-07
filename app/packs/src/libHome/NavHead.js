@@ -12,7 +12,11 @@ const NavHead = () => {
         <MenuItem divider />
         <MenuItem eventKey='15' href={isHome ? '/' : '/home'} target="_self">{isHome ? 'ELN' : 'Home'}</MenuItem>
         <MenuItem divider />
+<<<<<<< HEAD
         <MenuItem eventKey='16' href="https://github.com/Allenskywalker92/ChemotionURIHandler/tree/main/ChemotionURLHandler/Release" target="_blank">Download URL handler </MenuItem>
+=======
+        <MenuItem eventKey='16' href="https://github.com/Allenskywalker92/ChemotionURIHandler/tree/main/urlhandler.app.setup/Debug" target="_blank">Download URL handler </MenuItem>
+>>>>>>> 1277-using-gemshrine-file-service
         <MenuItem divider />
         <MenuItem eventKey='15' href="/about" target="_self">About</MenuItem>
       </NavDropdown>

@@ -14,13 +14,17 @@ jobs:
         pg_database: [chemotion_test]
         pg_password: [123456]
     container: 
-      image: complat/complat-ubuntu-runner:development-5.44c4f24b
+      image: complat/complat-ubuntu-runner:development-5.ba0e49c5
     env:
       HOME: /home/gitlab-runner
 
     services:
       postgres:
+<<<<<<< HEAD
         image: postgres:12-alpine
+=======
+        postgres:12-alpine
+>>>>>>> 1277-using-gemshrine-file-service
         ports:
           - 5432:5432
         env:

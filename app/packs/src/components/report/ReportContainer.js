@@ -118,9 +118,9 @@ export default class ReportContainer extends Component {
     } = this.state;
 
     let { template } = this.state;
-    if (templateOpts.length > 0 &&  template && typeof template != 'object') {
-      let templateOpt = templateOpts.find(x => x.id == template || x.report_type == template);
-      template =  { id: templateOpt.id, label: templateOpt.name, value: templateOpt.report_type };
+    if (templateOpts.length > 0 && template && typeof template != 'object') {
+      const templateOpt = templateOpts.find(x => x.id == template || x.report_type == template);
+      template = { id: templateOpt.id, label: templateOpt.name, value: templateOpt.report_type };
     }
 
     const archivesTitle = this.archivesTitle();
@@ -143,7 +143,7 @@ export default class ReportContainer extends Component {
               checkedAllConfigs={checkedAllConfigs}
               template={template}
               handleTemplateChanged={this.handleTemplateChanged}
-              options = {templateOpts}
+              options={templateOpts}
             />
           </Tab>
           <Tab eventKey={1} title="Setting">

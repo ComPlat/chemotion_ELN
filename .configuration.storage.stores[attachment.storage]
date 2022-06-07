@@ -1,0 +1,31 @@
+=> [32m#<Local:0x00007f2541d9d010[0m
+ @attachment[32m=[0m
+  [32m#<Attachment:0x0000560fb38e2678[0m
+   id: [1;34m10[0m,
+   attachable_id: [1;34m2[0m,
+   filename: [31m[1;31m"[0m[31mProfilBild.png[1;31m"[0m[31m[0m,
+   identifier: [31m[1;31m"[0m[31m8279012f-af36-49da-80be-99fa8029ceb0[1;31m"[0m[31m[0m,
+   checksum: [31m[1;31m"[0m[31m8e79a4fac1a5678d9fd12370bbc262f2[1;31m"[0m[31m[0m,
+   storage: [31m[1;31m"[0m[31mlocal[1;31m"[0m[31m[0m,
+   created_by: [1;34m1[0m,
+   created_for: [1;34m1[0m,
+   version: [1;34m0[0m,
+   created_at: [1;34;4mFri[0m, [1;34m29[0m [1;34;4mApr[0m [1;34m2022[0m [1;34m13[0m:[1;34m53[0m:[1;34m35[0m [1;34;4mUTC[0m [1;34m+00[0m:[1;34m00[0m,
+   updated_at: [1;34;4mFri[0m, [1;34m29[0m [1;34;4mApr[0m [1;34m2022[0m [1;34m13[0m:[1;34m53[0m:[1;34m35[0m [1;34;4mUTC[0m [1;34m+00[0m:[1;34m00[0m,
+   content_type: [31m[1;31m"[0m[31mimage/png[1;31m"[0m[31m[0m,
+   bucket: [31m[1;31m"[0m[31m1[1;31m"[0m[31m[0m,
+   key: [31m[1;31m"[0m[31m01255524-b5d9-4528-bd2b-00dac353200c[1;31m"[0m[31m[0m,
+   thumb: [1;36mtrue[0m,
+   folder: [1;36mnil[0m,
+   attachable_type: [31m[1;31m"[0m[31mResearchPlan[1;31m"[0m[31m[0m,
+   aasm_state: [31m[1;31m"[0m[31mnon_jcamp[1;31m"[0m[31m[0m,
+   filesize: [1;34m29111[0m[32m>[0m,
+ @data_folder[32m=[0m[31m[1;31m"[0m[31m/home/chemotion/chemotion_ELN/uploads/development[1;31m"[0m[31m[0m,
+ @primary_store[32m=[0m[31m[1;31m"[0m[31mlocal[1;31m"[0m[31m[0m,
+ @secondary_store[32m=[0m[31m[1;31m"[0m[31m[1;31m"[0m[31m[0m,
+ @store_config[32m=[0m{[33m:data_folder[0m=>[31m[1;31m"[0m[31muploads/development[1;31m"[0m[31m[0m, [33m:thumbnail_folder[0m=>[31m[1;31m"[0m[31muploads/development[1;31m"[0m[31m[0m},
+ @store_configs[32m=[0m
+  {[33m:tmp[0m=>{[33m:data_folder[0m=>[31m[1;31m"[0m[31mtmp/uploads/development[1;31m"[0m[31m[0m, [33m:thumbnail_folder[0m=>[31m[1;31m"[0m[31mtmp/uploads/development[1;31m"[0m[31m[0m},
+   [33m:local[0m=>{[33m:data_folder[0m=>[31m[1;31m"[0m[31muploads/development[1;31m"[0m[31m[0m, [33m:thumbnail_folder[0m=>[31m[1;31m"[0m[31muploads/development[1;31m"[0m[31m[0m},
+   [33m:local_user[0m=>{[33m:data_folder[0m=>[31m[1;31m"[0m[31muploadNew/users[1;31m"[0m[31m[0m, [33m:thumbnail_folder[0m=>[31m[1;31m"[0m[31muploadNew/thumbnails/users[1;31m"[0m[31m[0m},
+   [33m:local_dataset[0m=>{[33m:data_folder[0m=>[31m[1;31m"[0m[31muploads/datasets[1;31m"[0m[31m[0m, [33m:thumbnail_folder[0m=>[31m[1;31m"[0m[31muploads/datasets[1;31m"[0m[31m[0m}}[32m>[0m

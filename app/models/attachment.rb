@@ -23,7 +23,10 @@
 #  filesize        :bigint
 #  attachment_data :jsonb
 #  is_editing      :boolean          default(FALSE)
+<<<<<<< HEAD
 #  log_data        :jsonb
+=======
+>>>>>>> 1277-using-gemshrine-file-service
 #
 # Indexes
 #
@@ -33,7 +36,11 @@
 
 
 class Attachment < ApplicationRecord
+<<<<<<< HEAD
   has_logidze
+=======
+  has_logidze  ignore_log_data: true
+>>>>>>> 1277-using-gemshrine-file-service
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
@@ -54,7 +61,7 @@ class Attachment < ApplicationRecord
   after_create :reload, on: :create
   # after_create :store_file_and_thumbnail_for_dup, if: :duplicated
 
-  after_destroy :delete_file_and_thumbnail
+  before_destroy :delete_file_and_thumbnail
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template
@@ -250,7 +257,17 @@ class Attachment < ApplicationRecord
   end
 
   def delete_file_and_thumbnail
+<<<<<<< HEAD
     self.attachment_attacher.destroy
+=======
+    self.reload_log_data
+    for numb in 1..self.log_size do
+      att = self.at(version: numb)
+      att.attachment_attacher.destroy
+    end
+   
+    attachment_attacher.destroy
+>>>>>>> 1277-using-gemshrine-file-service
   end
 
   def move_from_store(from_store = self.storage_was)

@@ -53,9 +53,11 @@ module Reporter
         ops.each do |op|
           head = op["insert"] && op["insert"]['image'].blank? ? op['insert'].gsub(/^[\u00A0\s]+/, '') : op['insert']
           break if head.present?
+
           ops = ops[1..-1]
         end
         return [] if ops.blank?
+
         ops[0]['insert'] = head
         ops
       end
@@ -65,9 +67,11 @@ module Reporter
         ops.reverse.each do |op|
           tail = op["insert"] && op["insert"]['image'].blank? ? op['insert'].gsub(/[\u00A0\s]*[,.;]*[\u00A0\s]*$/, '') : op['insert']
           break if tail.present?
+
           ops = ops[0..-2]
         end
         return [] if ops.blank?
+
         ops[-1]['insert'] = tail
         ops
       end
@@ -84,6 +88,7 @@ module Reporter
 
       def remove_redundant_space_break(ops) # ensure one line
         return [{ 'insert' => '' }] unless ops
+
         ops.map.with_index do |op, i|
           if op["insert"] && op["insert"]['image'].blank?
             op["insert"] = op["insert"].gsub(/[\u00A0\s]{2,}/, " ")

@@ -261,6 +261,9 @@ describe 'Reporter::Docx::DetailReaction instance' do
       expect(target.send(:synthesis_delta)).to eq(
         [
           { 'insert' => "#{tit}: " },
+          { 'insert' => "\n" },
+          { 'insert' => 'correct description' },
+          { 'insert' => "\n" },
           { 'insert' => '{A|' },
           { 'attributes' => { 'bold' => 'true', 'font-size' => 12 }, 'insert' => serial },
           { 'insert' => '} ' },

@@ -115,8 +115,25 @@ export default class ContainerDataset extends Component {
     this.setState({ dataset_container });
     EditorFetcher.getToken({ attachment_id: attachment.id }).then((result) => {
       if (result.token) {
+<<<<<<< HEAD
         console.log(window.location.origin)
         window.open(`chemotion://${encodeURI(window.location.origin)}/api/v1/public/download?token=${result.token}`, '_blank').focus();
+=======
+        window.open(`chemotion://${window.location.protocol}//${window.location.host}/api/v1/public/download?token=${result.token}`, '_blank').focus();
+      }
+      this.forceUpdate();
+    });
+  }
+
+  handleViewLog(attachment) {
+    let { dataset_container } = this.state;
+    let entity = dataset_container.attachments.filter(x => x.id == attachment.id);
+    entity.is_editing = true;
+    this.setState({ dataset_container });
+    EditorFetcher.getToken({ attachment_id: attachment.id }).then((result) => {
+      if (result.token) {
+        window.open(`chemotion://${window.location.protocol}//${window.location.host}/api/v1/public/download?token=${result.token}`, '_blank').focus();
+>>>>>>> 1277-using-gemshrine-file-service
       }
       this.forceUpdate();
     });
@@ -256,7 +273,11 @@ export default class ContainerDataset extends Component {
 
   renderAttachmentVersionsButton(attachment) {
     const { readOnly } = this.props;
+<<<<<<< HEAD
     if (!readOnly && !attachment.is_new && !attachment.is_editing) {
+=======
+    if (!readOnly && !attachment.is_new) {
+>>>>>>> 1277-using-gemshrine-file-service
       return (
         <Button bsSize="xsmall" bsStyle="warning" onClick={() => this.handleShowAttachmentVersionModal(attachment.id)}>
           <i className="fa fa-history" />
@@ -461,6 +482,7 @@ export default class ContainerDataset extends Component {
                 value={dataset_container.name || ''}
                 disabled={readOnly || disabled}
                 onChange={event => this.handleInputChange('name', event)}
+<<<<<<< HEAD
               />
             </FormGroup>
             <FormGroup controlId="datasetInstrument">
@@ -473,6 +495,20 @@ export default class ContainerDataset extends Component {
                 ref={(input) => { this.autoComplete = input; }}
                 autoComplete="off"
               />
+=======
+              />
+            </FormGroup>
+            <FormGroup controlId="datasetInstrument">
+              <ControlLabel>Instrument</ControlLabel>
+              <FormControl
+                type="text"
+                value={dataset_container.extended_metadata['instrument'] || ''}
+                disabled={readOnly || disabled}
+                onChange={event => this.handleInstrumentValueChange(event, this.doneInstrumentTyping)}
+                ref={(input) => { this.autoComplete = input; }}
+                autoComplete="off"
+              />
+>>>>>>> 1277-using-gemshrine-file-service
               <Overlay
                 placement="bottom"
                 style={{

@@ -331,7 +331,17 @@ module Chemotion
         content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
+<<<<<<< HEAD
         uploaded_file = @attachment.at(version: params[:version].to_i).attachment_attacher.file
+=======
+        
+        uploaded_file = if params[:version].nil?
+                           @attachment.attachment_attacher.file
+                        else
+                          @attachment.reload_log_data
+                          @attachment.at(version: params[:version].to_i).attachment_attacher.file
+                        end
+>>>>>>> 1277-using-gemshrine-file-service
         data = uploaded_file.read
         uploaded_file.close
 
@@ -342,11 +352,21 @@ module Chemotion
       get ':attachment_id/versions' do
         content_type "application/octet-stream"
 
+<<<<<<< HEAD
       versions = []
         for numb in 1..@attachment.log_size do
           versions.push @attachment.at(version: numb)
         end
         
+=======
+        versions = []
+        @attachment.reload_log_data
+        for numb in 1..@attachment.log_size do
+          att = @attachment.at(version: numb)
+          att.updated_at = Time.strptime("#{@attachment.log_data.versions[numb-1].data['ts']}", '%Q')
+          versions.push att
+        end
+>>>>>>> 1277-using-gemshrine-file-service
         Entities::AttachmentEntity.represent(versions)
       end
 
@@ -366,7 +386,7 @@ module Chemotion
             file_text += "#{att.filename} #{att.checksum}\n"
           end
           hyperlinks_text = ""
-          JSON.parse(@container.extended_metadata.fetch('hyperlinks', nil)).each do |link|
+          JSON.parse(@container.extended_metadata.fetch('hyperlinks', '[]')).each do |link|
             hyperlinks_text += "#{link} \n"
           end
           zip.put_next_entry "dataset_description.txt"

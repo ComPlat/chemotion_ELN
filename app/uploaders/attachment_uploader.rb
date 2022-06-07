@@ -1,5 +1,9 @@
 class AttachmentUploader < Shrine
+<<<<<<< HEAD
   MAX_SIZE = Rails.configuration.storage.maximum_size * 1024 * 1024 # 10 MB
+=======
+  # MAX_SIZE = Rails.configuration.storage.maximum_size * 1024 * 1024 # 10 MB
+>>>>>>> 1277-using-gemshrine-file-service
 
   plugin :derivatives
   plugin :keep_files, replaced: true
