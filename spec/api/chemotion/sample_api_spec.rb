@@ -468,6 +468,27 @@ describe Chemotion::SampleAPI do
     end
   end
 
+  describe 'GET /api/v1/samples/fetchByShortLabel/:shortLabel' do
+    let(:sample) { create(:sample, short_label: 'FOOBAR', creator: user, collections: [collection]) }
+    let(:short_label) { 'FOOBAR' }
+    let(:expected_response) do
+      {
+        'sample_id' => sample.id,
+        'collection_id' => collection.id
+      }
+    end
+
+    before do
+      sample
+    end
+
+    it 'returns the sample_id and the collection_id' do
+      get "/api/v1/samples/findByShortLabel/#{short_label}.json"
+
+      expect(parsed_json_response).to eq(expected_response)
+    end
+  end
+
   describe 'PUT /api/v1/samples/:id' do
     let(:sample) { create(:sample) }
 
@@ -736,4 +757,5 @@ describe Chemotion::SampleAPI do
       end
     end
   end
+
 end
