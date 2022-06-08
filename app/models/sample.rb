@@ -195,6 +195,7 @@ class Sample < ApplicationRecord
 
   has_one :container, as: :containable
   has_one :well, dependent: :destroy
+  has_one :inventories, as: :inventoriable
 
   has_many :wellplates, through: :well
   has_many :residues, dependent: :destroy

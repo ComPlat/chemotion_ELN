@@ -67,6 +67,8 @@ import FastInput from './FastInput';
 import ScifinderSearch from './scifinder/ScifinderSearch';
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
+import InventoryTab from './InventoryTab';
+
 
 const MWPrecision = 6;
 
@@ -749,6 +751,8 @@ export default class SampleDetails extends React.Component {
   moleculeCas() {
     const { sample, isCasLoading } = this.state;
     const { molecule, xref } = sample;
+    console.log(molecule);
+    console.log(sample);
     const cas = xref ? xref.cas : '';
     const casLabel = cas && cas.label ? cas.label : '';
     let casArr = [];
@@ -981,6 +985,22 @@ export default class SampleDetails extends React.Component {
         <EditUserLabels element={sample} />
         {this.elementalPropertiesItem(sample)}
         {this.chemicalIdentifiersItem(sample)}
+      </Tab>
+    );
+  }
+
+  sampleInventoryTab(ind) {
+    const sample = this.state.sample || {};
+
+    return (
+      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+        <ListGroupItem>
+          <InventoryTab
+            element={sample}
+            // disabled={!reaction.can_update}
+          />
+        </ListGroupItem>
+        <EditUserLabels element={sample} />
       </Tab>
     );
   }
@@ -1258,7 +1278,8 @@ export default class SampleDetails extends React.Component {
       analyses: this.sampleContainerTab('analyses'),
       references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
-      qc_curation: this.qualityCheckTab('qc_curation')
+      qc_curation: this.qualityCheckTab('qc_curation'),
+      inventory: this.sampleInventoryTab('inventory')
     };
 
     if (this.enableComputedProps) {

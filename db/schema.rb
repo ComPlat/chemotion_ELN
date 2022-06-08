@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_09_182512) do
+ActiveRecord::Schema.define(version: 2022_04_08_134429) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -454,6 +454,13 @@ ActiveRecord::Schema.define(version: 2022_03_09_182512) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.time "deleted_at"
+  end
+
+  create_table "inventories", force: :cascade do |t|
+    t.jsonb "inventory_parameters"
+    t.integer "inventoriable_id"
+    t.string "inventoriable_type"
+    t.index ["inventoriable_type", "inventoriable_id"], name: "index_inventories_on_inventoriable_type_and_inventoriable_id"
   end
 
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|

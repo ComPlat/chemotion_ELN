@@ -48,7 +48,7 @@ module PubChem
     options = {
       :timeout => 10,
       :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
-      :body => { "inchikey"=>"#{inchikeys.join(',')}" },
+      :body => { "inchikey"=>"#{inchikeys}" },
     }
     HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/property/InChIKey/JSON', options).body
   rescue StandardError => e
