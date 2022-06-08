@@ -65,6 +65,26 @@ module Chemotion
           screen = Screen.find(params[:id])
           present screen, with: Entities::ScreenEntity, root: :screen
         end
+
+        namespace :add_research_plan do
+          params do
+            requires :collection_id, type: Integer
+          end
+
+          post do
+            screen = Screen.find(params[:id])
+            collection = current_user.collections.find(params[:collection_id])
+            number = screen.research_plans.size + 1
+            screen.research_plans << ResearchPlan.new(
+              body: [],
+              collections: [collection],
+              creator: current_user,
+              name: "New Research Plan #{number} for #{screen.name}",
+            )
+
+            present screen, with: Entities::ScreenEntity, root: :screen
+          end
+        end
       end
 
       desc "Update screen by id"

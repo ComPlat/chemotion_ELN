@@ -97,6 +97,34 @@ describe Chemotion::ScreenAPI do
     end
   end
 
+  describe 'POST /api/v1/screens/:id/add_research_plan' do
+    let(:request_body) do
+      {
+        collection_id: collection.id
+      }
+    end
+    let(:expected_response) do
+      Entities::ScreenEntity.represent(screen, root: :screen).to_json
+    end
+
+    before do
+      CollectionsScreen.create!(screen: screen, collection: collection)
+    end
+
+    it 'adds an empty research plan to the screen' do
+      expect do
+        post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+      end.to change(screen.research_plans, :count).by(1)
+    end
+
+    it 'returns the serialized screen' do
+      post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+
+      expect(response.status).to eq 201
+      expect(response.body).to eq(expected_response)
+    end
+  end
+
   describe 'PUT /api/v1/screens/{id}' do
     let(:container) { create(:container) }
     let(:screen) { create(:screen, name: 'Testname', container: container) }
