@@ -23,17 +23,19 @@
 #  name_abbreviation      :string(12)
 #  type                   :string           default("Person")
 #  reaction_name_prefix   :string(3)        default("R")
-#  layout                 :hstore           not null
 #  confirmation_token     :string
 #  confirmed_at           :datetime
 #  confirmation_sent_at   :datetime
 #  unconfirmed_email      :string
+#  layout                 :hstore           not null
 #  selected_device_id     :integer
 #  failed_attempts        :integer          default(0), not null
 #  unlock_token           :string
 #  locked_at              :datetime
 #  account_active         :boolean
 #  matrix                 :integer          default(0)
+#  omniauth_provider      :string
+#  omniauth_uid           :string
 #
 # Indexes
 #
@@ -48,10 +50,9 @@
 class User < ApplicationRecord
   attr_writer :login
   acts_as_paranoid
-  # Include default devise modules. Others available are:
-  # :lockable, :timeoutable and :omniauthable
+  # Include default devise modules. Others available are: :timeoutable
   devise :database_authenticatable, :registerable, :confirmable,
-         :recoverable, :rememberable, :trackable, :validatable, :lockable, authentication_keys: [:login]
+         :recoverable, :rememberable, :trackable, :validatable, :lockable, :omniauthable, authentication_keys: [:login]
   has_one :profile, dependent: :destroy
   has_one :container, as: :containable
 
@@ -152,7 +153,7 @@ class User < ApplicationRecord
     format_abbr = name_abbr_config[:format_abbr].presence || format_abbr_default.presence
     format_err_msg = name_abbr_config[:format_abbr_err_msg].presence || format_err_msg_default.presence
 
-    return if name_abbreviation.match?(format_abbr)
+    return if name_abbreviation&.match?(format_abbr)
 
     errors.add(:name_abbreviation, format_err_msg)
   end
@@ -343,6 +344,29 @@ class User < ApplicationRecord
     end
   end
 
+  def self.from_omniauth(provider, uid, email, first_name, last_name)
+    where(omniauth_provider: provider, omniauth_uid: uid).first_or_create do |user|
+      # update the email, the first_name, and the last_name on every login
+      user.email = email
+      user.first_name = first_name
+      user.last_name = last_name
+      user.password = Devise.friendly_token[0,20]
+    end
+  end
+
+  def link_omniauth(provider, uid)
+    if User.where(omniauth_provider: provider, omniauth_uid: uid).exists?
+      return nil
+    else
+      self.omniauth_provider = provider
+      self.omniauth_uid = uid
+      self.save
+    end
+  end
+
+  def password_required?
+    super && omniauth_provider.blank?
+  end
 
   private
 
@@ -351,6 +375,7 @@ class User < ApplicationRecord
   # - move it around in collection tree
   # - add subcollections
   # - delete it
+
   def create_all_collection
     Collection.create(user: self, label: 'All', is_locked: true, position: 0)
   end

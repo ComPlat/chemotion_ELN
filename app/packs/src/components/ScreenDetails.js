@@ -20,6 +20,7 @@ import ConfirmClose from './common/ConfirmClose';
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
+import PrivateNoteElement from './PrivateNoteElement';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -238,6 +239,7 @@ export default class ScreenDetails extends Component {
                     disabled={screen.isMethodDisabled('description')}
                   />
                 </FormGroup>
+                <PrivateNoteElement element={screen} disabled={screen.can_update}/> {/*For samples and reactions (<element>): disabled={!<element>.can_update} */}
               </td>
             </tr>
           </tbody></table>

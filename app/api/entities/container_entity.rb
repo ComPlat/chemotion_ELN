@@ -48,9 +48,12 @@ module Entities
       attachments = attachments.select do |a|
         a.thumb == true && a.attachable_type == 'Container' && container_ids.include?(a.attachable_id)
       end
+      
       image_atts = attachments.select do |a_img|
         a_img&.content_type&.match(Regexp.union(%w[jpg jpeg png tiff]))
       end
+
+      image_atts = image_atts.sort_by{ |a_img| a_img[:id] }.reverse
 
       attachment = image_atts[0] || attachments[0]
 
@@ -66,9 +69,8 @@ module Entities
     def get_extended_metadata(container)
       ext_mdata = container.extended_metadata || {}
       ext_mdata['report'] = (ext_mdata['report'] == 'true') || (ext_mdata == true)
-      if ext_mdata['content'].present?
-        ext_mdata['content'] = JSON.parse(ext_mdata['content'])
-      end
+      ext_mdata['content'] = JSON.parse(ext_mdata['content'])  if ext_mdata['content'].present?
+      ext_mdata['hyperlinks'] = JSON.parse(ext_mdata['hyperlinks']) if ext_mdata['hyperlinks'].present?
       ext_mdata
     end
   end

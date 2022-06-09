@@ -22,7 +22,7 @@ export default class Search extends React.Component {
       elementType: 'all',
       showStructureEditor: false,
       queryMolfile: null,
-      searchType: 'similar',
+      searchType: 'sub',
       tanimotoThreshold: 0.7,
       showGenericElCriteria: false,
       genericEl: null

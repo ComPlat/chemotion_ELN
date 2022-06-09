@@ -1,4 +1,4 @@
-class Matrice<%= @module_name.camelize%> < ActiveRecord::Migration
+class Matrice<%= @module_name.camelize%> < ActiveRecord::Migration[5.2]
   def change
     Matrice.create(
       name: '<%= @module_name.camelize(:lower)%>',

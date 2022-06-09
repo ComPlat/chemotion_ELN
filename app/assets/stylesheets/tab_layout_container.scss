@@ -2,7 +2,7 @@ table.layout-container {
   td {
     font-size: 25pt;
     color: #337ab7;
-    border: 1px solid #ddd;
+    border: 1px solid #C8C8C8;
     div {
       text-align: center;
       width: 50px;
@@ -10,7 +10,7 @@ table.layout-container {
   }
 
   .hidden-layout {
-    background-color: #f7f7f7;
+    background-color: #ddd;
     color: #555555;
   }
 }

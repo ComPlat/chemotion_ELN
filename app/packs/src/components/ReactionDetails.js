@@ -6,6 +6,7 @@ import {
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
+import uuid from 'uuid';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
@@ -33,6 +34,7 @@ import { permitOn } from './common/uis';
 import { addSegmentTabs } from './generic/SegmentDetails';
 import Immutable from 'immutable';
 import ElementDetailSortTab from './ElementDetailSortTab';
+import ScifinderSearch from './scifinder/ScifinderSearch';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -44,6 +46,7 @@ export default class ReactionDetails extends Component {
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       visible: Immutable.List(),
+      sfn: UIStore.getState().hasSfn,
     };
 
     // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
@@ -485,6 +488,7 @@ export default class ReactionDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
+          {this.state.sfn ? <ScifinderSearch el={reaction} /> : null}
           <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab">
             {tabContents}
           </Tabs>

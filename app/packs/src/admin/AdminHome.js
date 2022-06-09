@@ -19,6 +19,7 @@ import SegmentElementAdmin from './SegmentElementAdmin';
 import DatasetElementAdmin from './DatasetElementAdmin';
 import DelayedJobs from './DelayedJobs';
 import TemplateManagement from './TemplateManagement';
+import ConverterAdmin from './converter/AdminApp';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -77,6 +78,8 @@ class AdminHome extends React.Component {
       return this.renderTemplateManagement();
     } else if (pageIndex === 13) {
       return this.renderDelayedJobs();
+    } else if (pageIndex === 14) {
+      return this.renderConverterAdmin();
     }
 
     return (<div />);
@@ -94,16 +97,17 @@ class AdminHome extends React.Component {
           <Nav bsStyle="pills" stacked activeKey={pageIndex} onSelect={this.handleSelect}>
             <NavItem eventKey={0}>Dashboard</NavItem>
             <NavItem eventKey={1}>User Management</NavItem>
-            <NavItem eventKey={2}>Message Publish</NavItem>
-            <NavItem eventKey={3}>Data Collector</NavItem>
             <NavItem eventKey={4}>Groups &amp; Devices</NavItem>
-            <NavItem eventKey={5}>Load OLS Terms</NavItem>
+            <NavItem eventKey={3}>Data Collector</NavItem>
             <NavItem eventKey={6}>NoVNC Settings</NavItem>
+            <NavItem eventKey={14}>Converter Profiles </NavItem>
             <NavItem eventKey={7}>UI features</NavItem>
             <NavItem eventKey={8}>Text Templates</NavItem>
             <NavItem eventKey={9}>Generic Elements (BETA)</NavItem>
             <NavItem eventKey={10}>Generic Segment (BETA)</NavItem>
             <NavItem eventKey={11}>Generic Dataset (BETA)</NavItem>
+            <NavItem eventKey={2}>Message Publish</NavItem>
+            <NavItem eventKey={5}>Load OLS Terms</NavItem>
             <NavItem eventKey={12}>Report-template Management</NavItem>
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
           </Nav>
@@ -198,6 +202,15 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <DelayedJobs />
+      </Col>
+    );
+  }
+
+  renderConverterAdmin() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <ConverterAdmin />
       </Col>
     );
   }

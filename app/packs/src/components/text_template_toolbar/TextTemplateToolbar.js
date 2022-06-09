@@ -52,11 +52,11 @@ const TextTemplateToolbar = ({
             applyTemplate(predefinedTemplate.data || {});
           }
         };
-
+        const dropdownLabel = dropdownNames[label];
         return (
           <ToolbarDropdown
             key={`dd_${label}`}
-            label={label}
+            label={label !== '' ? label : `${dropdownLabel[0]} `}
             items={items}
             onSelect={onSelect}
           />

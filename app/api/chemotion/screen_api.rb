@@ -144,9 +144,17 @@ module Chemotion
         kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        collection = Collection.find(params[:collection_id])
-        CollectionsScreen.create(screen: screen, collection: collection)
-        CollectionsScreen.create(screen: screen, collection: Collection.get_all_collection_for_user(current_user.id))
+        collection = Collection.where(id: params[:collection_id]).take
+        CollectionsScreen.create(screen: screen, collection: collection) if collection.present?
+
+        is_shared_collection = false
+        unless collection.present?
+          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
+          is_shared_collection = true if sync_collection.present?
+          CollectionsScreen.create(screen: screen, collection: Collection.find(sync_collection['collection_id'])) if sync_collection.present?
+        end
+
+        CollectionsScreen.create(screen: screen, collection: Collection.get_all_collection_for_user(current_user.id)) unless is_shared_collection
 
         params[:wellplate_ids].each do |id|
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)

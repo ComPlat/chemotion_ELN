@@ -63,6 +63,11 @@ gem 'net-ssh'
 gem 'nokogiri'
 
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
+gem 'omniauth', '~> 1.9.1'
+gem 'omniauth-github', '~> 1.4.0'
+gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
+gem 'omniauth_openid_connect'
+gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
 
 gem 'pandoc-ruby'
 gem 'paranoia', '~> 2.0'
@@ -105,6 +110,10 @@ gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
 
 gem 'yaml_db'
+gem "shrine", "~> 3.0"
+gem "image_processing", "~> 1.8"
+
+gem "logidze", "~> 1.1"
 
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser

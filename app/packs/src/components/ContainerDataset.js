@@ -14,6 +14,10 @@ import { absOlsTermId } from '../admin/generic/Utils';
 import InboxActions from './actions/InboxActions';
 import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
 import ChildOverlay from './managing_actions/ChildOverlay';
+import EditorFetcher from './fetchers/EditorFetcher';
+import AttachmentVersionsModal from './AttachmentVersionsModal';
+
+import HyperLinksSection from './common/HyperLinksSection';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -23,11 +27,19 @@ export default class ContainerDataset extends Component {
       dataset_container: dataset_container,
       instruments: null,
       valueBeforeFocus: null,
-      timeoutReference: null
+      timeoutReference: null,
+      link: null,
+      attachmentVersions: [],
+      attachmentVersionsModalShow: false
     };
+
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleAddLink = this.handleAddLink.bind(this);
+    this.handleRemoveLink = this.handleRemoveLink.bind(this);
+    this.handleEditLocally = this.handleEditLocally.bind(this);
+    this.handleModalHide = this.handleModalHide.bind(this);
   }
 
   componentDidMount() {
@@ -57,7 +69,7 @@ export default class ContainerDataset extends Component {
   handleInputChange(type, event) {
     const { dataset_container } = this.state;
     const { value } = event.target;
-    switch(type) {
+    switch (type) {
       case 'name':
         dataset_container.name = value;
         break;
@@ -93,7 +105,33 @@ export default class ContainerDataset extends Component {
   }
 
   handleAttachmentDownload(attachment) {
-    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
+  }
+
+  handleEditLocally(attachment) {
+    let { dataset_container } = this.state;
+    let entity = dataset_container.attachments.filter(x => x.id == attachment.id);
+    entity.is_editing = true;
+    this.setState({ dataset_container });
+    EditorFetcher.getToken({ attachment_id: attachment.id }).then((result) => {
+      if (result.token) {
+        window.open(`chemotion://${window.location.protocol}//${window.location.host}/api/v1/public/download?token=${result.token}`, '_blank').focus();
+      }
+      this.forceUpdate();
+    });
+  }
+
+  handleViewLog(attachment) {
+    let { dataset_container } = this.state;
+    let entity = dataset_container.attachments.filter(x => x.id == attachment.id);
+    entity.is_editing = true;
+    this.setState({ dataset_container });
+    EditorFetcher.getToken({ attachment_id: attachment.id }).then((result) => {
+      if (result.token) {
+        window.open(`chemotion://${window.location.protocol}//${window.location.host}/api/v1/public/download?token=${result.token}`, '_blank').focus();
+      }
+      this.forceUpdate();
+    });
   }
 
   handleAttachmentRemove(attachment) {
@@ -115,11 +153,11 @@ export default class ContainerDataset extends Component {
   }
 
   handleUndo(attachment) {
-    const {dataset_container} = this.state;
+    const { dataset_container } = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
 
     dataset_container.attachments[index].is_deleted = false;
-    this.setState({dataset_container});
+    this.setState({ dataset_container });
   }
 
   handleSave() {
@@ -159,7 +197,9 @@ export default class ContainerDataset extends Component {
             <td style={{ verticalAlign: 'middle' }}>
               <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
               {this.removeAttachmentButton(attachment)} &nbsp;
-              {this.attachmentBackToInboxButton(attachment)}
+              {this.attachmentBackToInboxButton(attachment)} &nbsp;
+              {this.renderEditLocallyButton(attachment)} &nbsp;
+              {this.renderAttachmentVersionsButton(attachment)} &nbsp;
             </td>
           </tr>
         </tbody>
@@ -195,7 +235,7 @@ export default class ContainerDataset extends Component {
 
   removeAttachmentButton(attachment) {
     const { readOnly, disabled } = this.props;
-    if (!readOnly && !disabled) {
+    if (!readOnly && !disabled && !attachment.is_editing) {
       return (
         <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
           <i className="fa fa-trash-o" />
@@ -206,7 +246,7 @@ export default class ContainerDataset extends Component {
 
   attachmentBackToInboxButton(attachment) {
     const { readOnly } = this.props;
-    if (!readOnly && !attachment.is_new) {
+    if (!readOnly && !attachment.is_new && !attachment.is_editing) {
       return (
         <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentBackToInbox(attachment)}>
           <i className="fa fa-backward" />
@@ -215,8 +255,36 @@ export default class ContainerDataset extends Component {
     }
   }
 
+  renderEditLocallyButton(attachment) {
+    const { readOnly } = this.props;
+    if (!readOnly && !attachment.is_new && !attachment.is_editing) {
+      return (
+        <Button bsSize="xsmall" bsStyle="info" onClick={() => this.handleEditLocally(attachment)}>
+          <i className="fa fa-edit" />
+        </Button>
+      );
+    }
+  }
+
+  renderAttachmentVersionsButton(attachment) {
+    const { readOnly } = this.props;
+    if (!readOnly && !attachment.is_new) {
+      return (
+        <Button bsSize="xsmall" bsStyle="warning" onClick={() => this.handleShowAttachmentVersionModal(attachment.id)}>
+          <i className="fa fa-history" />
+        </Button>
+      );
+    }
+  }
+
+  handleShowAttachmentVersionModal(attachment_id) {
+    AttachmentFetcher.fetchAttachmentVersions(attachment_id).then(respone => {
+      this.setState({ attachmentVersions: respone.attachments, attachmentVersionsModalShow: true });
+    })
+  }
+
   dropzone() {
-    const {readOnly, disabled} = this.props;
+    const { readOnly, disabled } = this.props;
     if (!readOnly && !disabled) {
       return (
         <Dropzone
@@ -230,7 +298,6 @@ export default class ContainerDataset extends Component {
       );
     }
   }
-
 
   resetInstrumentComponent() {
     const { dataset_container } = this.state;
@@ -283,9 +350,9 @@ export default class ContainerDataset extends Component {
     }
     this.setState({
       value,
-      timeoutReference: setTimeout(function(){
-                                    doneInstrumentTyping()
-                                  }, this.timeout)
+      timeoutReference: setTimeout(function () {
+        doneInstrumentTyping()
+      }, this.timeout)
     });
     this.handleInputChange('instrument', event);
   }
@@ -331,7 +398,7 @@ export default class ContainerDataset extends Component {
     if (instruments) {
       return (
         <div>
-          { instruments.map((instrument, index) => {
+          {instruments.map((instrument, index) => {
             return (
               <ListGroupItem
                 onClick={() => this.selectInstrument()}
@@ -350,8 +417,33 @@ export default class ContainerDataset extends Component {
     return (<div />);
   }
 
+  handleAddLink(link) {
+    const { dataset_container } = this.state;
+    if (dataset_container.extended_metadata['hyperlinks'] == null) {
+      dataset_container.extended_metadata['hyperlinks'] = [link];
+    } else {
+      dataset_container.extended_metadata['hyperlinks'].push(link);
+    }
+    this.setState({ dataset_container });
+  }
+
+  handleRemoveLink(link) {
+    const { dataset_container } = this.state;
+    var index = dataset_container.extended_metadata['hyperlinks'].indexOf(link);
+    if (index !== -1) {
+      dataset_container.extended_metadata['hyperlinks'].splice(index, 1);
+    }
+    this.setState({ dataset_container });
+  }
+
+  handleModalHide() {
+    this.setState({ attachmentVersions: [], attachmentVersionsModalShow: false });
+    // https://github.com/react-bootstrap/react-bootstrap/issues/1137
+    document.body.className = document.body.className.replace('modal-open', '');
+  }
+
   render() {
-    const { dataset_container, showInstruments } = this.state;
+    const { dataset_container, showInstruments, attachmentVersionsModalShow, attachmentVersions } = this.state;
     const { readOnly, disabled, kind } = this.props;
     const overlayAttributes = {
       style: {
@@ -371,66 +463,81 @@ export default class ContainerDataset extends Component {
     }
 
     return (
-      <Row>
-        <Col md={6} className="col-base">
-          <FormGroup controlId="datasetName">
-            <ControlLabel>Name</ControlLabel>
-            <FormControl
-              type="text"
-              value={dataset_container.name || ''}
-              disabled={readOnly || disabled}
-              onChange={event => this.handleInputChange('name', event)}
-            />
-          </FormGroup>
-          <FormGroup controlId="datasetInstrument">
-            <ControlLabel>Instrument</ControlLabel>
-            <FormControl
-              type="text"
-              value={dataset_container.extended_metadata['instrument'] || ''}
-              disabled={readOnly || disabled}
-              onChange={event => this.handleInstrumentValueChange(event, this.doneInstrumentTyping)}
-              ref={(input) => { this.autoComplete = input; }}
-              autoComplete="off"
-            />
-            <Overlay
-              placement="bottom"
-              style={{
-                marginTop: 80, width: 398, height: 10, maxHeight: 20
-              }}
-              show={showInstruments}
-              container={this}
-              rootClose
-              onHide={() => this.abortAutoSelection()}
-            >
-              <ChildOverlay
-                dataList={this.renderInstruments()}
-                overlayAttributes={overlayAttributes}
+      <div>
+        <Row>
+          <Col md={6} className="col-base">
+            <FormGroup controlId="datasetName">
+              <ControlLabel>Name</ControlLabel>
+              <FormControl
+                type="text"
+                value={dataset_container.name || ''}
+                disabled={readOnly || disabled}
+                onChange={event => this.handleInputChange('name', event)}
               />
-            </Overlay>
-          </FormGroup>
-          <FormGroup controlId="datasetDescription">
-            <ControlLabel>Description</ControlLabel>
-            <FormControl
-              componentClass="textarea"
-              value={dataset_container.description || ''}
-              disabled={readOnly || disabled}
-              onChange={event => this.handleInputChange('description', event)}
-              rows={4}
+            </FormGroup>
+            <FormGroup controlId="datasetInstrument">
+              <ControlLabel>Instrument</ControlLabel>
+              <FormControl
+                type="text"
+                value={dataset_container.extended_metadata['instrument'] || ''}
+                disabled={readOnly || disabled}
+                onChange={event => this.handleInstrumentValueChange(event, this.doneInstrumentTyping)}
+                ref={(input) => { this.autoComplete = input; }}
+                autoComplete="off"
+              />
+              <Overlay
+                placement="bottom"
+                style={{
+                  marginTop: 80, width: 398, height: 10, maxHeight: 20
+                }}
+                show={showInstruments}
+                container={this}
+                rootClose
+                onHide={() => this.abortAutoSelection()}
+              >
+                <ChildOverlay
+                  dataList={this.renderInstruments()}
+                  overlayAttributes={overlayAttributes}
+                />
+              </Overlay>
+            </FormGroup>
+            <FormGroup controlId="datasetDescription">
+              <ControlLabel>Description</ControlLabel>
+              <FormControl
+                componentClass="textarea"
+                value={dataset_container.description || ''}
+                disabled={readOnly || disabled}
+                onChange={event => this.handleInputChange('description', event)}
+                rows={4}
+              />
+            </FormGroup>
+            <GenericDSDetails
+              kind={kind}
+              genericDS={dataset_container.dataset}
+              klass={klass}
+              onChange={this.handleInputChange}
             />
-          </FormGroup>
-          <GenericDSDetails
-            kind={kind}
-            genericDS={dataset_container.dataset}
-            klass={klass}
-            onChange={this.handleInputChange}
-          />
-        </Col>
-        <Col md={6} className="col-full">
-          <label>Attachments</label>
-          {this.dropzone()}
-          {this.attachments()}
-        </Col>
-      </Row>
+            <GenericDSDetails
+              kind={kind}
+              genericDS={dataset_container.dataset}
+              klass={klass}
+              onChange={this.handleInputChange}
+            />
+          </Col>
+          <Col md={6} className="col-full">
+            <label>Attachments: </label>
+            {this.dropzone()}
+            {this.attachments()}
+            <HyperLinksSection data={dataset_container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
+              disabled={disabled}></HyperLinksSection>
+          </Col>
+        </Row>
+        <AttachmentVersionsModal
+          onHide={this.handleModalHide}
+          show={attachmentVersionsModalShow}
+          readOnly={this.props.readOnly}
+          data={attachmentVersions}
+          disabled={disabled}></AttachmentVersionsModal></div>
     );
   }
 }

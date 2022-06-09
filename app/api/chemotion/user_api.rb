@@ -34,6 +34,13 @@ module Chemotion
         present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices'
       end
 
+      namespace :omniauth_providers do
+        desc "get omniauth providers"
+        get do
+          { providers: Devise.omniauth_configs.keys, current_user: current_user }
+        end
+      end
+
       namespace :save_label do
         desc 'create or update user labels'
         params do
@@ -71,6 +78,13 @@ module Chemotion
           counters = current_user.counters
           counters[params[:type]] = params[:counter]
           current_user.update(counters: counters)
+        end
+      end
+
+      namespace :scifinder do
+        desc 'scifinder-n credential'
+        get do
+          ScifinderNCredential.find_by(created_by: current_user.id) || {}
         end
       end
 

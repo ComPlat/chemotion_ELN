@@ -38,6 +38,13 @@ module Chemotion
         end
       end
 
+      namespace :omniauth_providers do
+        desc "get omniauth providers"
+        get do
+          Devise.omniauth_configs.keys
+        end
+      end
+
       namespace :download do
         desc 'download file for editoring'
         before do
@@ -53,7 +60,10 @@ module Chemotion
           @user = User.find_by(id: user_id)
           error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
 
-          header['Content-Disposition'] = "attachment; filename=" + @attachment.filename
+          error!('400 Bad Request', 400) if @attachment[:is_editing]
+          @attachment.is_editing = true
+          @attachment.save!
+          header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
           env['api.format'] = :binary
           @attachment.read_file
         end
@@ -182,6 +192,79 @@ module Chemotion
           return unless params[:domain].present?
           Swot::school_name(params[:domain]).presence ||
             Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
+        end
+      end
+      namespace :done do
+        desc 'done editing a document'
+        params do
+          requires :token, type: String, desc: 'Token'
+          optional :file, type: File, desc: 'Attachment file'
+        end
+        post do
+          content_type 'application/octet-stream'
+          payload = JWT.decode(params[:token], Rails.application.secrets.secret_key_base) unless params[:token].nil?
+          error!('401 Unauthorized', 401) if payload&.length.zero?
+          att_id = payload[0]['att_id']&.to_i
+          user_id = payload[0]['user_id']&.to_i
+          @attachment = Attachment.find_by(id: att_id)
+          @user = User.find_by(id: user_id)
+          error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
+
+          data_args = { 'filename': @attachment[:filename] }
+          message = Message.create_msg_notification(
+            channel_subject: Channel::DONE_EDIT_LOCALLY, message_from: user_id, data_args: data_args,attach_id: att_id
+          )
+
+          @attachment.is_editing = false
+          if params[:file].nil?
+            @attachment.save!
+            return true
+          end
+          
+          @attachment[:key] = SecureRandom.uuid
+          @attachment[:identifier] = @attachment[:key]
+          @attachment.attachment_attacher.attach(File.open(params[:file][:tempfile].path, binmode: true))
+          begin
+            return false unless @attachment.valid?
+
+            @attachment.attachment_attacher.create_derivatives
+            @attachment[:aasm_state] = 'queueing'
+            @attachment.save!
+          ensure
+            params[:file][:tempfile].close
+            params[:file][:tempfile].unlink
+          end
+
+          true
+        end
+      end
+      
+      namespace :refresh_token do
+        desc 'Resresh token for editing locally'
+        get do
+          content_type 'application/octet-stream'
+          pattern = /^Bearer /
+          header  = request.headers['Authorization']
+          token = header.gsub(pattern, '') if header && header.match(pattern)
+          payload = JWT.decode(token, Rails.application.secrets.secret_key_base) unless token.nil?
+          error!('401 Unauthorized', 401) if payload&.length.zero?
+          att_id = payload[0]['att_id']&.to_i
+          user_id = payload[0]['user_id']&.to_i
+          @attachment = Attachment.find_by(id: att_id)
+          @user = User.find_by(id: user_id)
+          error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
+
+          @attachment.is_editing = true
+          @attachment.save!
+
+          payload = {
+            att_id: @attachment.id,
+            user_id: user_id,
+            exp: (Time.now + 1.hours).to_i
+          }
+
+          token = JWT.encode payload, Rails.application.secrets.secret_key_base
+          { "token": token }
         end
       end
     end

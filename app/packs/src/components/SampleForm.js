@@ -176,6 +176,8 @@ export default class SampleForm extends React.Component {
       { label: 'any', value: 'any' },
       { label: 'rac', value: 'rac' },
       { label: 'meso', value: 'meso' },
+      { label: 'delta', value: 'delta' },
+      { label: 'lambda', value: 'lambda' },
       { label: '(S)', value: '(S)' },
       { label: '(R)', value: '(R)' },
       { label: '(Sp)', value: '(Sp)' },
@@ -478,12 +480,6 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  samplePrivateNote(sample) {
-    return (
-      <PrivateNoteElement element={sample} disabled={!sample.can_update} />
-    );
-  }
-
   render() {
     const sample = this.props.sample || {};
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
@@ -628,7 +624,7 @@ export default class SampleForm extends React.Component {
           </tr>
           <tr>
             <td colSpan="4">
-              {this.samplePrivateNote(sample)}
+              <PrivateNoteElement element={sample} disabled={!sample.can_update} />
             </td>
           </tr>
           {this.props.customizableField()}

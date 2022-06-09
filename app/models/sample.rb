@@ -63,7 +63,7 @@ class Sample < ApplicationRecord
   include Taggable
   include Segmentable
 
-  STEREO_ABS = ['any', 'rac', 'meso', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)'].freeze
+  STEREO_ABS = ['any', 'rac', 'meso', 'delta', 'lambda', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)', '(Ra)'].freeze
   STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para', 'cis', 'trans', 'fac', 'mer'].freeze
   STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }.freeze
 

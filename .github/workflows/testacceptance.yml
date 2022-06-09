@@ -17,13 +17,13 @@ jobs:
         pg_database_test: [chemotion_test]
         pg_password: [123456]
     container:
-      image: complat/complat-ubuntu-runner:development-5.9abbcea9.squashed
+      image: complat/complat-ubuntu-runner:development-5.ba0e49c5
     env:
       HOME: /home/gitlab-runner
 
     services:
       postgres:
-        image: postgres
+        postgres:12-alpine
         ports:
           - 5433:5432
         env:
@@ -46,7 +46,7 @@ jobs:
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
             echo "POSTGRES"
-            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role_test }} LOGIN CREATEDB NOSUPERUSER PASSWORD '${{ matrix.pg_password }}'"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role_test }} LOGIN CREATEDB SUPERUSER PASSWORD '${{ matrix.pg_password }}'"
             psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE ${{ matrix.pg_database_test }} OWNER ${{ matrix.pg_role_test }};"
             psql -d postgresql://${{ matrix.pg_role_test }}:${{ matrix.pg_password }}@postgres/${{ matrix.pg_database_test }} -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 

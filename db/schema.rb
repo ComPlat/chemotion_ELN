@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_01_16_164546) do
+ActiveRecord::Schema.define(version: 2022_03_09_182512) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -69,6 +69,7 @@ ActiveRecord::Schema.define(version: 2022_01_16_164546) do
     t.string "attachable_type"
     t.string "aasm_state"
     t.bigint "filesize"
+    t.jsonb "attachment_data"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -921,6 +922,15 @@ ActiveRecord::Schema.define(version: 2022_01_16_164546) do
     t.index ["user_id"], name: "index_samples_on_user_id"
   end
 
+  create_table "scifinder_n_credentials", force: :cascade do |t|
+    t.string "access_token", null: false
+    t.string "refresh_token"
+    t.datetime "expires_at", null: false
+    t.integer "created_by", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by"], name: "uni_scifinder_n_credentials", unique: true
+  end
+
   create_table "screens", id: :serial, force: :cascade do |t|
     t.string "description"
     t.string "name"
@@ -1093,6 +1103,8 @@ ActiveRecord::Schema.define(version: 2022_01_16_164546) do
     t.datetime "locked_at"
     t.boolean "account_active"
     t.integer "matrix", default: 0
+    t.string "omniauth_provider"
+    t.string "omniauth_uid"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
