@@ -1018,6 +1018,8 @@ class ElementStore {
           elements.screens.totalElements += 1
           break;
         default:
+          elements[`${element.type}s`].elements.push(element)
+          elements[`${element.type}s`].totalElements += 1
           break;
       }
     } else {
