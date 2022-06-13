@@ -367,6 +367,10 @@ GEM
     grape-swagger-representable (0.2.2)
       grape-swagger (>= 0.31.0)
       representable
+    graphiql-rails (1.8.0)
+      railties
+      sprockets-rails
+    graphql (2.0.9)
     haml (5.1.2)
       temple (>= 0.8.0)
       tilt
@@ -394,6 +398,7 @@ GEM
       concurrent-ruby (~> 1.0)
     i18n_data (0.8.0)
     ice_nine (0.11.2)
+    interactor (3.1.2)
     jaro_winkler (1.5.3)
     jbuilder (2.8.0)
       activesupport (>= 4.2.0)
@@ -820,10 +825,13 @@ DEPENDENCIES
   grape-swagger-entity (~> 0.3)
   grape-swagger-rails
   grape-swagger-representable (~> 0.2)
+  graphiql-rails
+  graphql
   haml-rails (~> 1.0)
   hashie-forbidden_attributes
   httparty
   inchi-gem (= 1.06.1)!
+  interactor (~> 3.0)
   jbuilder (~> 2.0)
   jquery-rails
   jwt

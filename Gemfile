@@ -115,6 +115,8 @@ gem 'moneta'
 gem 'dalli'
 
 gem 'simple_command'
+gem 'graphql'
+gem "interactor", "~> 3.0"
 
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser
@@ -197,3 +199,5 @@ if File.exists?(eln_plugin)
   eval_gemfile eln_plugin
 end
 
+
+gem 'graphiql-rails', group: :development

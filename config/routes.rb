@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  if Rails.env.development?
+    mount GraphiQL::Rails::Engine, at: "/graphiql", graphql_path: "/graphql"
+  end
+  post "/graphql", to: "graphql#execute"
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
     # devise_for :users, controllers: { registrations: 'users/registrations' }, skip: [:registrations]
     as :user do

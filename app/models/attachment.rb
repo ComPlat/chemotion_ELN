@@ -10,7 +10,7 @@
 #  storage         :string(20)       default("tmp")
 #  created_by      :integer          not null
 #  created_for     :integer
-#  version         :integer          default(0)
+#  version         :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  content_type    :string
@@ -21,6 +21,9 @@
 #  attachable_type :string
 #  aasm_state      :string
 #  filesize        :bigint
+#  attachment_data :jsonb
+#  is_editing      :boolean          default(FALSE)
+#  log_data        :jsonb
 #
 # Indexes
 #
