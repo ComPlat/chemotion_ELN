@@ -193,7 +193,7 @@ private
 
   def self.convert_to_percents elements
     elements.each do |key, value|
-      elements[key] = sprintf('%.2f',(value.to_d * 100.0)) # convert to % and format to show 2 d.p.
+      elements[key] = (value.to_d * 100.0).round 2 # convert to %
     end
   end
 
