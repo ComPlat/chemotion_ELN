@@ -19,14 +19,6 @@ export default class ElementalComposition extends React.Component {
 
     keys.map(function(key, index) {
       let value = elemental_composition.data[key];
-      // adding significant figures to value if needed - no decimal places, add .00; 1 decimal place, add 0;
-      const regexp = /^\d+$/; // regex for an integer (no decimal places)
-      const regexp1 = /\.\d{0,1}$/; // regex to search for a value with ONLY ONE decimal place
-      if (value.match(regexp)) {
-        value += '.00'
-      } else if (value.match(regexp1)){
-        value += '0'
-      }
       elements.push(
         <span className="data-item" key={key}>
           <strong>
