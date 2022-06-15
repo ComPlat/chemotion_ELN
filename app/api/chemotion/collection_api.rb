@@ -506,6 +506,11 @@ module Chemotion
       end
 
       namespace :tabs do
+        after_validation do
+          @collection = Collection.find(params[:id])
+          error!('404 Collection with given id not found', 404) if @collection.nil?
+          error!('401 Unauthorized', 401) unless @collection.user_id == current_user.id
+        end
         desc 'insert tab segments'
         params do
           requires :id, type: Integer, desc: 'collection id'
@@ -516,6 +521,18 @@ module Chemotion
           tabs = collection.tabs_segment.merge(params[:segments])
           collection.update(tabs_segment: tabs)
           collection
+        end
+
+        desc 'Update tab segment'
+        params do
+          requires :id, type: Integer, desc: 'Collection id'
+          optional :segment, type: String, desc: 'Tab segment type'
+        end
+
+        patch do
+          updated_segment = @collection.tabs_segment.except!(params[:segment])
+          @collection.update(tabs_segment: updated_segment)
+          status 204
         end
       end
     end

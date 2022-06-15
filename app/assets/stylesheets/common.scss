@@ -181,6 +181,12 @@
   }
 }
 
+.collection-tab-modal {
+  .modal-dialog {
+    width: auto;
+  }
+}
+
 .status-select {
   .Select-menu-outer {
     z-index: 30;

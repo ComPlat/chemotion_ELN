@@ -17,6 +17,15 @@ export default class TabLayoutContainer extends React.Component {
     this.moveLayout = this.moveLayout.bind(this);
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props !== prevProps) {
+      this.setState({
+        visible: this.props.visible,
+        hidden: this.props.hidden
+      });
+    }
+  }
+
   moveLayout(dragItem, hoverItem) {
     let { visible, hidden } = this.state;
 
@@ -48,7 +57,7 @@ export default class TabLayoutContainer extends React.Component {
 
   render() {
     const { visible, hidden } = this.state;
-    const { isElementDetails, tabTitles } = this.props;
+    const { isElementDetails, tabTitles, isCollectionTab } = this.props;
     let moveLayout = this.moveLayout;
     const visibleCells = visible.map((cell, index) => {
       const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
@@ -61,6 +70,7 @@ export default class TabLayoutContainer extends React.Component {
             isHidden={false}
             moveLayout={moveLayout}
             title={tabTitles[cell] || defTitle}
+            isCollectionTab={isCollectionTab}
           />
         </td>
       );
@@ -77,6 +87,7 @@ export default class TabLayoutContainer extends React.Component {
             isHidden
             moveLayout={moveLayout}
             title={tabTitles[cell] || defTitle}
+            isCollectionTab={isCollectionTab}
           />
         </td>
       );
@@ -84,7 +95,7 @@ export default class TabLayoutContainer extends React.Component {
 
     return (
       <table className="layout-container">
-        <tbody>
+        <tbody style={{ textAlign: 'left' }}>
           <tr>{visibleCells}</tr>
           <tr>{hiddenCells}</tr>
         </tbody>

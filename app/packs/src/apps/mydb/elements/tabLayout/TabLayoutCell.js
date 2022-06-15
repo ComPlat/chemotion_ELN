@@ -29,6 +29,7 @@ class TabLayoutCell extends Component {
       isElementDetails,
       isHidden,
       title,
+      isCollectionTab
     } = this.props;
 
     const styleObj = {
@@ -52,7 +53,7 @@ class TabLayoutCell extends Component {
       cellDescription = genericElement.desc;
     }
 
-    const content = isElementDetails ? (
+    let content = isElementDetails ? (
       <div style={{ width: '100%' }}>
         <p style={styleObj}>{title === 'hidden' ? '-' : title}</p>
       </div>
@@ -62,6 +63,14 @@ class TabLayoutCell extends Component {
           {isHidden ? "\u00A0" : ''}
         </i>
       </div>
+    );
+
+    content = isCollectionTab ? (
+      <div style={{ width: 'auto' }}>
+        <i style={styleObj}>{title === 'hidden' ? '-' : title}</i>
+      </div>
+    ) : (
+      content
     );
 
     return connectDragSource(connectDropTarget(content), { dropEffect: 'copy' });

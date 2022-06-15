@@ -350,4 +350,20 @@ export default class CollectionsFetcher {
     }).then(response => response)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static updateTabsLayout(params) {
+    return fetch('/api/v1/collections/tabs/', {
+      credentials: 'same-origin',
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: params.currentCollectionId,
+        segment: params.segment
+      })
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }
