@@ -6,19 +6,6 @@ import LoadingActions from '../actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
-
-import {
-  Button, ButtonGroup,
-  Col, ControlLabel,
-  FormGroup,
-  Glyphicon,
-  ListGroup, ListGroupItem,
-  Overlay, OverlayTrigger,
-  Popover,
-  Row,
-  Tooltip
-} from 'react-bootstrap';
-import { last, findKey, values } from 'lodash';
 import { previewAttachmentImage } from './../utils/imageHelper';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
@@ -117,22 +104,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderImageEditModal(){
     const { onDrop } = this.state;
     const { onDelete } = this.state;
-    return <ImageEditModal
-    imageName={this.state.imageName}
-    imageElementId='rpa_helper_id'
-    isShow={this.state.imageEditModalShown}
-    handleSave={(f)=>{
-      this.state.onDrop(f);
-      this.setState({imageEditModalShown:false});
-      onDelete(this.state.choosenAttachment)    
-    }
-    
-    }
-    handleOnClose={()=>{
-      this.setState({imageEditModalShown:false});
-      document.getElementById('rpa_helper_id').remove();
-    }}
-    />    
+    return null;
   }
 
   renderAnnotateImageButton(attachment){

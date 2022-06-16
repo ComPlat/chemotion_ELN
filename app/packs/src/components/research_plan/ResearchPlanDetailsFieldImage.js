@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { Button, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
-import ImageEditModal from './ImageEditModal';
 import logger from 'redux-logger';
 import { Left } from 'react-bootstrap/lib/Media';
 import ImageAnnotationModalSVG from './ImageAnnotationModalSVG';

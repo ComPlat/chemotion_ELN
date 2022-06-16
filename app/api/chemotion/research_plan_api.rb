@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class ResearchPlanAPI < Grape::API
     include Grape::Kaminari
@@ -10,9 +12,7 @@ module Chemotion
       params do        
         requires :imageId, type: String, desc: 'The id of the attachment in uuid format'        
       end
-      get do        
-       
-        binding.pry
+      get do                     
         attachmentId=params[:imageId];
         attachment=Attachment.find_by(key: attachmentId)
         if attachment!=nil
@@ -70,23 +70,25 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        else
-          # All collection of current_user
-          ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order("created_at DESC")
+        scope = if params[:collection_id]    
+          
+          
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).research_plans
+                  rescue ActiveRecord::RecordNotFound
+                    ResearchPlan.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
+                  rescue ActiveRecord::RecordNotFound
+                    ResearchPlan.none
+                  end
+                else
+                  # All collection of current_user
+                  ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+        end.order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -98,7 +100,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map { |s| ElementPermissionProxy.new(current_user, s, user_ids).serialized }
       end
 
       desc 'Create a research plan'
@@ -114,14 +116,12 @@ module Chemotion
           name: params[:name],
           body: params[:body]
         }
-
+        
         research_plan = ResearchPlan.new attributes
         research_plan.creator = current_user
         research_plan.container = update_datamodel(params[:container])
         research_plan.save!
         research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
-
-
         if params[:collection_id]
           collection = current_user.collections.where(id: params[:collection_id]).take
           research_plan.collections << collection if collection.present?
@@ -187,15 +187,15 @@ module Chemotion
         end
         get do
           research_plan = ResearchPlan.find(params[:id])
-          # TODO: Refactor this massively ugly fallback to be in a more convenient place
-          # (i.e. the serializer/entity or maybe return a null element from the model)
-          research_plan.build_research_plan_metadata(
-            title: research_plan.name,
-            subject: ''
-          ) if research_plan.research_plan_metadata.nil?
+          if research_plan.research_plan_metadata.nil?
+            research_plan.build_research_plan_metadata(
+              title: research_plan.name,
+              subject: ''
+            )
+          end
           {
             research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized,
-            attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
+            attachments: Entities::AttachmentEntity.represent(research_plan.attachments)
           }
         end
       end
@@ -247,9 +247,9 @@ module Chemotion
         svg_file = File.new(svg_file_path, 'w+')
         svg_file.write(svg)
         svg_file.close
-
-        {svg_path: svg_file_name}
-      end     
+        
+        { svg_path: svg_file_name }
+      end
 
       desc 'Save image file to filesystem'
       params do
@@ -293,7 +293,7 @@ module Chemotion
       desc 'Export research plan by id'
       params do
         requires :id, type: Integer, desc: 'Research plan id'
-        optional :export_format, type: Symbol, desc: 'Export format', values: [:docx, :odt, :html, :markdown, :latex]
+        optional :export_format, type: Symbol, desc: 'Export format', values: %i[docx odt html markdown latex]
       end
       route_param :id do
         before do
@@ -314,7 +314,7 @@ module Chemotion
             content_type 'application/octet-stream'
 
             # init the export object
-            if [:html, :markdown, :latex].include? params[:export_format]
+            if %i[html markdown latex].include? params[:export_format]
               header['Content-Disposition'] = "attachment; filename=\"#{research_plan.name}.zip\""
               present export.to_zip
             else
