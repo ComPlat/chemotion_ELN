@@ -172,3 +172,5 @@ vendor/cache/*
 .idea/*
 .devcontainer
 shrine/*
+public/svgedit-master/
+public/svgedit/node_modules/
