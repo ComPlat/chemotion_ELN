@@ -67,6 +67,7 @@ import FastInput from './FastInput';
 import ScifinderSearch from './scifinder/ScifinderSearch';
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
+import MeasurementsTab from './MeasurementsTab';
 
 const MWPrecision = 6;
 
@@ -1045,6 +1046,22 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  measurementsTab(index) {
+    let sample = this.state.sample || {};
+
+    return (
+      <Tab
+        eventKey={index}
+        title="Measurements"
+        key={`Measurements${sample.id.toString()}`}
+      >
+        <ListGroupItem style={{ paddingBottom: 20 }}>
+          <MeasurementsTab sample={sample} />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   moleculeComputedProps(ind) {
     const { sample } = this.state;
     const key = "computed_props_" + sample.id.toString();
@@ -1258,7 +1275,8 @@ export default class SampleDetails extends React.Component {
       analyses: this.sampleContainerTab('analyses'),
       references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
-      qc_curation: this.qualityCheckTab('qc_curation')
+      qc_curation: this.qualityCheckTab('qc_curation'),
+      measurements: this.measurementsTab('measurements')
     };
 
     if (this.enableComputedProps) {
@@ -1273,7 +1291,8 @@ export default class SampleDetails extends React.Component {
       literature: 'References',
       qc_curation: 'qc curation',
       computed_props: 'computed props',
-      nmr_sim: 'NMR Simulation'
+      nmr_sim: 'NMR Simulation',
+      measurements: 'Measurements!'
     };
 
     for (let j = 0; j < XTabs.count; j += 1) {

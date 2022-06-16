@@ -223,7 +223,7 @@ describe Chemotion::ReportAPI do
         }
         post(
            '/api/v1/reports/export_samples_from_selections',
-           params: params.to_json, 
+           params: params.to_json,
            headers: {
              'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
              'CONTENT_TYPE' => 'application/json'

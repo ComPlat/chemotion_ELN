@@ -1,7 +1,7 @@
 class WellSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Well.new.base_attributes
 
-  has_one :sample
+  has_one :sample, serializer: SampleSerializer
 
   def position
     #wrap position_x and y to position object
@@ -24,6 +24,8 @@ class WellSerializer < ActiveModel::Serializer
 end
 
 class WellSerializer::Level10 < WellSerializer
+  has_one :sample
+
   alias_method :original_initialize, :initialize
   def initialize(element, nested_detail_levels)
     original_initialize(element)

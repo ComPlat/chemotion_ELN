@@ -263,6 +263,20 @@ module Chemotion
         end
       end
 
+      namespace :findByShortLabel do
+        desc 'Fetch sample id and collection based on short label'
+        params do
+          requires :short_label, type: String, desc: 'Unique short label of sample'
+        end
+        route_param :short_label do
+          get do
+            finder = Usecases::Samples::FindByShortLabel.new(params[:short_label], current_user)
+
+            finder.result
+          end
+        end
+      end
+
       desc "Update sample by id"
       params do
         requires :id, type: Integer, desc: "Sample id"

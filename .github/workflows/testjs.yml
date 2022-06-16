@@ -14,7 +14,7 @@ jobs:
         pg_database: [chemotion_test]
         pg_password: [123456]
     container: 
-      image: complat/complat-ubuntu-runner:development-5.ba0e49c5
+      image: complat/complat-ubuntu-runner:development-5.biology
     env:
       HOME: /home/gitlab-runner
 
@@ -39,7 +39,7 @@ jobs:
           POSTGRES_PORT: 5432
 
         run: |
-            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/ComPlat/chemotion_ELN.git 
+            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/$(echo $GITHUB_REPOSITORY).git
 
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
