@@ -1,5 +1,7 @@
 class AttachmentUploader < Shrine
   # MAX_SIZE = Rails.configuration.storage.maximum_size * 1024 * 1024 # 10 MB
+  require 'helpers/annotation/annotation_creator';
+  require 'helpers/annotation/mini_magick_image_analyser';
 
   plugin :derivatives
   plugin :keep_files, replaced: true
@@ -40,10 +42,8 @@ class AttachmentUploader < Shrine
 
   # plugins and uploading logic
   Attacher.derivatives do |original|
-    begin    
-      
+    begin
 
-    
       file_extension = File.extname(file.id)&.downcase
       file_extension = '.jpg' if file_extension == '.jpeg'
       file_basename = File.basename(file.metadata['filename'], '.*')
@@ -64,45 +64,17 @@ class AttachmentUploader < Shrine
         result[:thumbnail] = File.open(thumb_path, 'rb')
         record[:thumb] = true
 
-     
-      ##generate annotation
-   #   file_basename = File.basename(file.metadata['filename'], '.*')
-   #   annotationTmpPath = "#{dir}/#{file_basename}.annotation.svg"
-   #   tmp = Tempfile.new([file_basename, file_extension], encoding: 'ascii-8bit')
-   #   tmp.write file.read
-   #   tmp.rewind
-      
-      
-      
-    #  image=MiniMagick::Image.open(original.path);
-    #  width=image[:width];
-    #  height=image[:height];     
 
-    #  initialImageAnnotation="<svg "+
-    #  "  width=\"#{width}\" "+
-    #  "  height=\"#{height}\" "+
-    #  "  xmlns=\"http://www.w3.org/2000/svg\" "+
-    #  "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
-    #  "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
-    #  "    <g class=\"layer\">"+
-    #  "      <title>Image</title>"+
-    #  "      <image height=\"#{height}\"  "+
-    #  "      id=\"original_image\" "+
-    #  "      width=\"#{width}\" "+
-    #  "      xlink:href=\"#{file.id}\"/>"+
-    #  "    </g>"+
-    #  "    <g class=\"layer\">"+
-    #  "      <title>Annotation</title>"+    
-    #  "      id=\"annotation\" "+
-    #  "    </g>"+
-    #  "</svg>";          
-    #  File.open(annotationTmpPath, 'w') { |file| file.write(initialImageAnnotation) };
-
-
-    #  result[:annotation] = File.open(annotationTmpPath, 'rb')
-        
 
       end
+      binding.pry
+      creator=AnnotationCreator.new();
+      result=creator.createDerivative(
+        "#{dir}/#{file_basename}.annotation.png",
+        original,
+        @context[:record].id,
+        result);
+
       result
     ensure
       tmp.close
