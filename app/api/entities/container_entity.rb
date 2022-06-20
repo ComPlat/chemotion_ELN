@@ -36,16 +36,22 @@ module Entities
     private
 
     def preview_img
-      thumbnail_attachment = object.attachments.find_by(thumb: true, content_type: THUMBNAIL_CONTENT_TYPES)
-      return no_preview_image_available unless thumbnail_attachment
+      attachments_with_thumbnail = object.attachments.where(thumb: true)
+      return no_preview_image_available unless attachments_with_thumbnail.exists?
 
-      preview_image = thumbnail_attachment.read_thumbnail
+      latest_image_attachment = attachments_with_thumbnails
+                                .where(content_type: THUMBNAIL_CONTENT_TYPES)
+                                .order(updated_at: :desc)
+                                .first
+
+      attachment = latest_image_attachment || attachments_with_thumbnail.first
+      preview_image = attachment.read_thumbnail
       return no_preview_image_available unless preview_image
 
       {
         preview: Base64.encode64(preview_image),
-        id: thumbnail_attachment.id,
-        filename: thumbnail_attachment.filename
+        id: attachment.id,
+        filename: attachment.filename
       }
     end
 
