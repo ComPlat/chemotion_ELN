@@ -274,7 +274,6 @@ module Chemotion
             error_messages = []
             attach.attachment_attacher.attach(File.open(file_path, binmode: true))
             if attach.valid?
-              binding.pry
               attach.save!
               attach.attachment_attacher.create_derivatives
               attach.save!

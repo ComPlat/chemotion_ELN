@@ -67,7 +67,6 @@ class AttachmentUploader < Shrine
 
 
       end
-      binding.pry
       creator=AnnotationCreator.new();
       result=creator.createDerivative(
         "#{dir}/#{file_basename}.annotation.png",
