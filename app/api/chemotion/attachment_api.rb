@@ -102,29 +102,6 @@ module Chemotion
           attach_ary = []
           rp_attach_ary = []
           params[:files].each do |file|
-            if (tempfile = file[:tempfile])
-              a = Attachment.new(
-                bucket: file[:container_id],
-                filename: file[:filename],
-                file_path: file[:tempfile],
-                created_by: current_user.id,
-                created_for: current_user.id,
-                content_type: file[:type],
-                attachable_type: attachable_type,
-                attachable_id: attachable_id
-              )
-              begin
-                a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-                if a.valid?
-                  a.attachment_attacher.create_derivatives
-                  a.save!
-                  attach_ary.push(a.id)
-                  rp_attach_ary.push(a.id) if %w[ResearchPlan Element].include?(attachable_type)
-                end
-              ensure
-                tempfile.close
-                tempfile.unlink
-              end
             next unless (tempfile = file[:tempfile])
 
             a = Attachment.new(
@@ -137,10 +114,15 @@ module Chemotion
               attachable_type: attachable_type,
               attachable_id: attachable_id
             )
+
             begin
-              a.save!
-              attach_ary.push(a.id)
-              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
+              a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+              if a.valid?
+                a.attachment_attacher.create_derivatives
+                a.save!
+                attach_ary.push(a.id)
+                rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
+              end
             ensure
               tempfile.close
               tempfile.unlink
@@ -292,6 +274,8 @@ module Chemotion
             error_messages = []
             attach.attachment_attacher.attach(File.open(file_path, binmode: true))
             if attach.valid?
+              binding.pry
+              attach.save!
               attach.attachment_attacher.create_derivatives
               attach.save!
             else
@@ -339,7 +323,7 @@ module Chemotion
             end
           end
         end
-     
+
         true
       end
 
@@ -351,7 +335,7 @@ module Chemotion
         content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-        
+
         uploaded_file = if params[:version].nil?
                            @attachment.attachment_attacher.file
                         else
@@ -367,6 +351,7 @@ module Chemotion
       desc "Get all versions of a attachments"
       get ':attachment_id/versions' do
         content_type "application/octet-stream"
+
         versions = []
         @attachment.reload_log_data
         for numb in 1..@attachment.log_size do
@@ -375,20 +360,6 @@ module Chemotion
           versions.push att
         end
         Entities::AttachmentEntity.represent(versions)
-      end
-
-      desc "getAnnotationOfAttachment"
-      get ':attachment_id/annotation' do
-        content_type "application/octet-stream"                 
-        att = Attachment.find(params[:attachment_id]);
-        error!("could not find attachment with id", 400) if !att;      
-        error!("could not find annotation of attachment ", 400) if !att.attachment_data||!att.attachment_data['derivatives']||!att.attachment_data['derivatives']['annotation']||!att.attachment_data['derivatives']['annotation']['id']; 
-        locationOfAnnotation=att.attachment_data['derivatives']['annotation']['id'];
-        back=File.open(locationOfAnnotation, 'rb') if File.exist?(locationOfAnnotation);
-        error!("could not find annotation of attachment (file not found)", 400) if !back;      
-        annotationSvg=back.read;
-        annotationSvg
-        
       end
 
       desc "Download the zip attachment file"
@@ -416,7 +387,6 @@ module Chemotion
           instrument: #{@container.extended_metadata.fetch('instrument', nil)}
           description:
           #{@container.description}
-
           Files:
           #{file_text}
           Hyperlinks:
@@ -450,7 +420,6 @@ module Chemotion
           sample short label: #{@sample.short_label}
           sample id: #{@sample.id}
           analyses count: #{@sample.analyses&.length || 0}
-
           Files:
           DESC
 
@@ -472,7 +441,7 @@ module Chemotion
       end
 
       desc 'Return image attachment'
-      get 'image/:attachment_id' do      
+      get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
         content_type @attachment.content_type
         header['Content-Disposition'] = "attachment; filename=" + sfilename
@@ -623,6 +592,7 @@ module Chemotion
         end
       end
     end
+
   end
 end
-end
+
