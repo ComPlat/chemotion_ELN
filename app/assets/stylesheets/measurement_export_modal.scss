@@ -2,4 +2,9 @@
   .measurementSelector {
     margin: 0px !important;
   }
+
+  .measurementExportModal__body {
+    max-height: 600px;
+    overflow-y: scroll;
+  }
 }
