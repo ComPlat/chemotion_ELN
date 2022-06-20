@@ -36,7 +36,14 @@ module Chemotion
       end
       put do
         Literal.find(params[:id])&.update(litype: params[:litype])
-        { literatures: citation_for_elements(params[:element_id], @element_klass, 'detail') }
+
+        present(
+          citation_for_elements,
+          with: Entities::LiteratureEntity,
+          root: :literatures,
+          with_element_count: false,
+          with_user_info: true
+        )
       end
 
       desc 'Return the literature list for the given element'
