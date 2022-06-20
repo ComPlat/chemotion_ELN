@@ -34,12 +34,23 @@ class MeasurementCandidate extends Component {
     );
   }
 
+  _canExport() {
+    return this.props.sample_identifier &&
+      this.props.description &&
+      this.props.value &&
+      this.props.unit;
+  }
+
   render() {
+    if (!this._canExport()) {
+      return null;
+    }
+
     return (
       <tr>
         <td>{this._selector()}</td>
         <td>{this.props.sample_identifier}</td>
-        <td>{this.props.description} {this.props.value}{this.props.unit}</td>
+        <td>{this.props.description} {this.props.value} {this.props.unit}</td>
         <td>{this._status()}</td>
       </tr>
     );
@@ -128,7 +139,7 @@ export default class ResearchPlanDetailsFieldTableMeasurementExportModal extends
             Export measurements to samples
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body >
+        <Modal.Body className='measurementExportModal__body'>
           <table className="table">
             <thead>
               <tr>
