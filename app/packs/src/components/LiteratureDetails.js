@@ -114,7 +114,7 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
         const citation = rows.get(id);
         const prevCit = (k > 0) ? rows.get(ids[k - 1]) : null;
         const sameRef = prevCit && prevCit.id === citation.id;
-        const sameElement = prevCit && prevCit.element_id === citation.element_id &&  prevCit.element_type === citation.element_type;
+        const sameElement = prevCit && prevCit.element_id === citation.element_id && prevCit.element_type === citation.element_type;
         return sameRef && sameElement ? (
           <tr key={`header-${id}-${citation.id}`} className={`collapse cit_${citation.id}-${citation.element_type}_${citation.element_id}`}>
             <td />
@@ -138,23 +138,6 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
               <Citation literature={citation} />
             </td>
             <td>
-              <Button
-                data-toggle="collapse"
-                data-target={`.cit_${citation.id}-${citation.element_type}_${citation.element_id}`}
-                bsSize="sm"
-              >
-                <Glyphicon
-                  glyph={   true  ? 'chevron-right' : 'chevron-down' }
-                  title="Collapse/Uncollapse"
-                  // onClick={() => this.collapseSample(sampleCollapseAll)}
-                  style={{
-                    // fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#337ab7',
-                    top: 0
-                  }}
-                />
-              </Button>
             </td>
           </tr>
         );
@@ -211,7 +194,7 @@ export default class LiteratureDetails extends Component {
     const { currentCollection, sorting } = state;
 
     if (cCol && currentCollection &&
-        (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
+      (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
     ) {
       LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
 
@@ -398,14 +381,22 @@ export default class LiteratureDetails extends Component {
               collapsible="true"
             >
               <Panel.Heading>
-                <Panel.Title toggle>
-                  References for Samples
-                  <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                    <Button bsSize="xsmall" active className="button-right clipboardBtn" onClick={stopEvent} data-clipboard-text={contentSamples} >
-                      <i className="fa fa-clipboard" />
-                    </Button>
-                  </OverlayTrigger>
-                </Panel.Title>
+                <Row>
+                  <Col md={11} style={{ paddingRight: 0 }}>
+                    <Panel.Title toggle>
+                      References for Samples
+                    </Panel.Title>
+                  </Col>
+                  <Col md={1}>
+                    <Panel.Title>
+                      <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
+                        <Button bsSize="xsmall" active className="button-right clipboardBtn" data-clipboard-text={contentSamples} >
+                          <i className="fa fa-clipboard" />
+                        </Button>
+                      </OverlayTrigger>
+                    </Panel.Title>
+                  </Col>
+                </Row>
               </Panel.Heading>
               <Panel.Body collapsible="true">
                 <Table>
@@ -429,14 +420,22 @@ export default class LiteratureDetails extends Component {
               collapsible="true"
             >
               <Panel.Heading>
-                <Panel.Title toggle>
-                  References for Reactions
-                  <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                    <Button bsSize="xsmall" active className="button-right clipboardBtn" onClick={stopEvent} data-clipboard-text={contentReactions} >
-                      <i className="fa fa-clipboard" />
-                    </Button>
-                  </OverlayTrigger>
-                </Panel.Title>
+                <Row>
+                  <Col md={11} style={{ paddingRight: 0 }}>
+                    <Panel.Title toggle>
+                      References for Reactions
+                    </Panel.Title>
+                  </Col>
+                  <Col md={1}>
+                    <Panel.Title>
+                      <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
+                        <Button bsSize="xsmall" active className="button-right clipboardBtn" data-clipboard-text={contentReactions} >
+                          <i className="fa fa-clipboard" />
+                        </Button>
+                      </OverlayTrigger>
+                    </Panel.Title>
+                  </Col>
+                </Row>
               </Panel.Heading>
               <Panel.Body collapsible="true">
                 <Table>
@@ -460,14 +459,22 @@ export default class LiteratureDetails extends Component {
               collapsible="true"
             >
               <Panel.Heading>
-                <Panel.Title toggle>
-                  References for selected Elements
-                  <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                    <Button bsSize="xsmall" active className="button-right clipboardBtn" onClick={stopEvent} data-clipboard-text={contentElements} >
-                      <i className="fa fa-clipboard" />
-                    </Button>
-                  </OverlayTrigger>
-                </Panel.Title>
+                <Row>
+                  <Col md={11} style={{ paddingRight: 0 }}>
+                    <Panel.Title toggle>
+                      References for selected Elements
+                    </Panel.Title>
+                  </Col>
+                  <Col md={1}>
+                    <Panel.Title>
+                      <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
+                        <Button bsSize="xsmall" active className="button-right clipboardBtn" data-clipboard-text={contentElements} >
+                          <i className="fa fa-clipboard" />
+                        </Button>
+                      </OverlayTrigger>
+                    </Panel.Title>
+                  </Col>
+                </Row>
               </Panel.Heading>
               <Panel.Body collapsible="true">
                 <ListGroup>
@@ -501,7 +508,7 @@ export default class LiteratureDetails extends Component {
                         <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="url" placeholder="URL..." />
                       </Col>
                       <Col md={1}>
-                        <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} title="add citation to selection"/>
+                        <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} title="add citation to selection" />
                       </Col>
                     </Row>
                   </ListGroupItem>

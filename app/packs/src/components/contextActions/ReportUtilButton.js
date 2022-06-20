@@ -74,7 +74,7 @@ const ReportUtilButton = ({ customClass }) => {
           Format Analyses
         </MenuItem>
         <MenuItem onSelect={ElementActions.showLiteratureDetail} title="Reference Manager">
-          Literature
+          Reference Manager
         </MenuItem>
         {graph}
         {task}
