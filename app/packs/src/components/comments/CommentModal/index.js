@@ -207,7 +207,6 @@ export default class CommentModal extends Component {
           show={showCommentModal}
           onHide={() => this.props.toggleCommentModal(false)}
           bsSize="large"
-          backdrop="static"
         >
           <Modal.Header closeButton>
             <Modal.Title>Comments on:  {formatSection(section)}</Modal.Title>
@@ -230,7 +229,7 @@ export default class CommentModal extends Component {
               </div>
 
               {
-                allComments && allComments.length > 1 &&
+                allComments && allComments.length > 0 &&
                 <Button onClick={this.toggleCollapse} id="detailsBtn">
                   <span>Details </span>
                   <Glyphicon
@@ -248,7 +247,7 @@ export default class CommentModal extends Component {
               }
 
               {
-              commentsCollapseAll && (allComments && allComments.length > 1) &&
+              commentsCollapseAll && (allComments && allComments.length > 0) &&
               <CommentDetails
                 section={section}
                 element={element}
