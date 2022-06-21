@@ -57,7 +57,6 @@ class Attachment < ApplicationRecord
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template
-  
 
   scope :where_research_plan, lambda { |c_id|
     where(attachable_id: c_id, attachable_type: 'ResearchPlan')
@@ -71,7 +70,7 @@ class Attachment < ApplicationRecord
     where(attachable_id: r_id, attachable_type: 'Report')
   }
 
-  scope :where_template, lambda { 
+  scope :where_template, lambda {
     where(attachable_type: 'Template')
   }
 
@@ -239,7 +238,7 @@ class Attachment < ApplicationRecord
       self.thumb_data = store.read_thumb
     end
     stored = store.store_file
-    self.thumb = store.store_thumb if stored 
+    self.thumb = store.store_thumb if stored
     self.save if stored
     stored
   end

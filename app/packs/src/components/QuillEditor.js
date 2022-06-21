@@ -233,6 +233,7 @@ export default class QuillEditor extends React.Component {
             if (Object.keys(element) == 'specialCharacters') {
               return (
                 <OverlayTrigger
+                  key={`element_overlay_${element}`}
                   trigger="click"
                   placement="bottom"
                   rootClose

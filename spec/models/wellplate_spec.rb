@@ -5,16 +5,17 @@ require 'rails_helper'
 RSpec.describe Wellplate, type: :model do
   let!(:collection) { create(:collection) }
   let!(:screen)     { create(:screen, collections: [collection]) }
-  let!(:wellplate)  do
-    create(:wellplate, collections: [collection], screens: [screen])
+  let!(:research_plan) { create(:research_plan, collections: [collection]) }
+  let!(:wellplate) do
+    create(:wellplate, collections: [collection], screens: [screen], research_plans: [research_plan])
   end
-  let!(:sample)     { create(:sample, collections: [collection]) }
-  let!(:well)       do
+  let!(:sample) { create(:sample, collections: [collection]) }
+  let!(:well) do
     create(:well, sample_id: sample.id, wellplate_id: wellplate.id)
   end
 
   describe 'creation' do
-    it 'is possible to create a valid screen' do
+    it 'is possible to create a valid wellplate' do
       expect(wellplate.valid?).to be(true)
     end
   end
@@ -26,6 +27,8 @@ RSpec.describe Wellplate, type: :model do
       ).not_to be_nil
       expect(wellplate.wells.pluck(:id)).to include(well.id)
       expect(wellplate.samples.pluck(:id)).to include(sample.id)
+      expect(wellplate.screens.pluck(:id)).to include(screen.id)
+      expect(wellplate.research_plans.pluck(:id)).to include(research_plan.id)
       expect(
         collection.collections_wellplates.find_by(wellplate_id: wellplate.id)
       ).not_to be_nil

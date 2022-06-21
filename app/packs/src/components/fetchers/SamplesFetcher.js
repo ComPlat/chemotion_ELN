@@ -61,6 +61,16 @@ export default class SamplesFetcher {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'samples', Sample);
   }
 
+  static findByShortLabel(shortLabel) {
+    return fetch(
+      `/api/v1/samples/findByShortLabel/${shortLabel}.json`,
+      {
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      }
+    ).then((response) => response.json()).catch(errorMessage => console.log(errorMessage))
+  }
+
   static update(sample) {
     const files = AttachmentFetcher.getFileListfrom(sample.container);
     const promise = () => fetch(`/api/v1/samples/${sample.id}`, {

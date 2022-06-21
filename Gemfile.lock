@@ -219,7 +219,7 @@ GEM
     bindata (2.4.10)
     binding_of_caller (0.8.0)
       debug_inspector (>= 0.0.1)
-    bootsnap (1.5.1)
+    bootsnap (1.7.3)
       msgpack (~> 1.0)
     bootstrap-kaminari-views (0.0.5)
       kaminari (>= 0.13)
