@@ -2,7 +2,7 @@ import Aviator from 'aviator';
 import equal from 'deep-equal';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton, MenuItem, FormGroup, ControlLabel, FormControl, HelpBlock } from 'react-bootstrap';
+import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton, MenuItem } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import LoadingActions from '../actions/LoadingActions';
 import MeasurementsFetcher from '../fetchers/MeasurementsFetcher';

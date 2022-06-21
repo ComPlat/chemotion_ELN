@@ -1,16 +1,24 @@
 import Aviator from 'aviator';
-import { researchPlanShowOrNew } from './routesUtils';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { observer } from 'mobx-react';
 
-export default class MeasurementsTable extends Component {
+import { StoreContext } from '../mobx-stores/RootStore';
+import { researchPlanShowOrNew } from './routesUtils';
+
+class MeasurementsTable extends Component {
+  static propTypes = {
+    sample: PropTypes.object.isRequired,
+  };
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
   };
 
   // currently only research plan is supported as source
   navigateToSource(measurement) {
-    const { params, uri } = Aviator.getCurrentRequest();
+    const { uri } = Aviator.getCurrentRequest();
     Aviator.navigate(`${uri}/${measurement.source_type}/${measurement.source_id}`, { silent: true });
     if (measurement.source_type == 'research_plan') {
       researchPlanShowOrNew({ params: { research_planID: measurement.source_id } });
@@ -25,15 +33,20 @@ export default class MeasurementsTable extends Component {
   //       Use list view for deleting individual measurements
 
   rows() {
-    const rows = [];
-    return this.props.samplesWithMeasurements.map(sample => {
-      const columnsForRow = [this._sampleOutput(sample)];
+    const measurementsStore = this.context.measurementsStore;
+    let sample_ids = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
+    return sample_ids.map(sample_id => {
+      let sample_header = measurementsStore.sampleHeader(sample_id);
+      const columnsForRow = [this._sampleOutput(sample_header)];
 
       this._uniqueDescriptions().forEach((description, index) => {
-        const measurements = this._measurementsWithDescription(sample.measurements, description);
+        const measurements = this._measurementsWithDescription(
+          measurementsStore.measurementsForSample(sample_id),
+          description
+        );
 
         const descriptionColumn = (
-          <td className={`measurementTable--Sample--sortedReadout`} key={`MeasurementTableSampleSortedReadout${sample.id}.${index}`}>
+          <td className={`measurementTable--Sample--sortedReadout`} key={`MeasurementTableSampleSortedReadout${sample_id}.${index}`}>
             <ul className="list-unstyled">
               {measurements}
             </ul>
@@ -43,7 +56,7 @@ export default class MeasurementsTable extends Component {
       });
 
       return (
-        <tr className="measurementTable--Sample" key={`MeasurementTableSample${sample.id}`}>
+        <tr className="measurementTable--Sample" key={`MeasurementTableSample${sample_id}`}>
           {columnsForRow}
         </tr>
       );
@@ -69,19 +82,19 @@ export default class MeasurementsTable extends Component {
 
   _uniqueDescriptions() {
     const descriptions = {};
-    this.props.samplesWithMeasurements.forEach(sample => {
-      sample.measurements.forEach(measurement => {
-        descriptions[measurement.description] = 1
-      })
-    });
+    const measurementsStore = this.context.measurementsStore;
+    let sample_ids = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
+    measurementsStore
+      .measurementsForSamples(sample_ids)
+      .forEach(measurement => descriptions[measurement.description] = 1);
 
     return Object.keys(descriptions).sort();
   }
 
-  _sampleOutput(sample) {
+  _sampleOutput(sampleHeader) {
     return (
-      <th className="measurementTable--Sample--name" key={`MeasurementTableSampleName${sample.id}`}>
-        {`${sample.short_label} ${sample.name}`}
+      <th className="measurementTable--Sample--name" key={`MeasurementTableSampleName${sampleHeader.id}`}>
+        {`${sampleHeader.short_label} ${sampleHeader.name}`}
       </th>
     );
   }
@@ -114,6 +127,4 @@ export default class MeasurementsTable extends Component {
     }
   }
 }
-MeasurementsTable.propTypes = {
-  samplesWithMeasurements: PropTypes.array.isRequired
-};
+export default observer(MeasurementsTable);

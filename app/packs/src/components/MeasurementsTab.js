@@ -1,17 +1,23 @@
-import MeasurementsFetcher from './fetchers/MeasurementsFetcher';
-import MeasurementsTable from './MeasurementsTable';
-import MeasurementsList from './MeasurementsList';
-
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonGroup } from 'react-bootstrap';
+import { observer } from 'mobx-react';
 
-export default class MeasurementsTab extends Component {
+import { StoreContext } from '../mobx-stores/RootStore';
+import MeasurementsTable from './MeasurementsTable';
+import MeasurementsList from './MeasurementsList';
+
+class MeasurementsTab extends Component {
+  static propTypes = {
+    sample: PropTypes.object.isRequired
+  };
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
       displayMode: 'table',
-      samplesWithMeasurements: []
+      loading: false
     };
   }
 
@@ -20,9 +26,12 @@ export default class MeasurementsTab extends Component {
   }
 
   loadSampleData() {
-    MeasurementsFetcher.fetchMeasurementHierarchy(this.props.sample).then(samples => {
-      this.setState({ samplesWithMeasurements: samples });
-    });
+    const measurementsStore = this.context.measurementsStore;
+    this.setState({ loading: true });
+    measurementsStore.loadDataForSample(
+      this.props.sample.id,
+      () => this.setState({ loading: false })
+    );
   }
 
   renderDisplaySwitcher() {
@@ -45,23 +54,21 @@ export default class MeasurementsTab extends Component {
   }
 
   render() {
-    if (this.state.samplesWithMeasurements.length == 0) {
+    console.debug('MeasurementsTab.render');
+    const measurementsStore = this.context.measurementsStore;
+    if (this.state.loading) {
+      return (<h2>Loading measurements...</h2>);
+    }
+    if (!measurementsStore.dataForSampleAvailable(this.props.sample)) {
       return (<span>No measurements recorded for this sample</span>);
     }
 
     const displaySwitcher = this.renderDisplaySwitcher();
 
-    let displayData = null;
-    if (this.state.displayMode == 'table') {
-      displayData = (<MeasurementsTable samplesWithMeasurements={this.state.samplesWithMeasurements} />);
-    } else {
-      displayData = (
-        <MeasurementsList
-          onDelete={this.loadSampleData.bind(this)}
-          samplesWithMeasurements={this.state.samplesWithMeasurements}
-        />
-      );
-    }
+    let displayData =
+      this.state.displayMode == 'table'
+        ? <MeasurementsTable sample={this.props.sample} />
+        : <MeasurementsList sample={this.props.sample} />;
 
     return (
       <div>
@@ -71,6 +78,4 @@ export default class MeasurementsTab extends Component {
     );
   }
 }
-MeasurementsTab.propTypes = {
-  sample: PropTypes.object.isRequired
-};
+export default observer(MeasurementsTab);
