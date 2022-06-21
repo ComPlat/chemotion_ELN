@@ -64,7 +64,9 @@ export default class BaseFetcher {
     return fetch(api.concat(addQuery), {
       credentials: 'same-origin'
     }).then(response => (
-      response.json().then(json => ({
+      response.json().
+      then(json => ({
+      
         elements: json[type].map(r => (new ElKlass(r))),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
         page: parseInt(response.headers.get('X-Page'), 10),

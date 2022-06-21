@@ -58,8 +58,10 @@ export default class ResearchPlansFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(researchPlan.serialize())
-    }).then(response => response.json()).then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-      .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
+    })
+    .then(response => response.json())
+    .then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
+    .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
       console.log(errorMessage);
     });
     

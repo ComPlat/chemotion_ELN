@@ -347,7 +347,6 @@ module Chemotion
       desc "Get all versions of a attachments"
       get ':attachment_id/versions' do
         content_type "application/octet-stream"
-
         versions = []
         @attachment.reload_log_data
         for numb in 1..@attachment.log_size do
@@ -356,6 +355,20 @@ module Chemotion
           versions.push att
         end
         Entities::AttachmentEntity.represent(versions)
+      end
+
+      desc "getAnnotationOfAttachment"
+      get ':attachment_id/annotation' do
+        content_type "application/octet-stream"                 
+        att = Attachment.find(params[:attachment_id]);
+        error!("could not find attachment with id", 400) if !att;      
+        error!("could not find annotation of attachment ", 400) if !att.attachment_data||!att.attachment_data['derivatives']||!att.attachment_data['derivatives']['annotation']||!att.attachment_data['derivatives']['annotation']['id']; 
+        locationOfAnnotation=att.attachment_data['derivatives']['annotation']['id'];
+        back=File.open(locationOfAnnotation, 'rb') if File.exist?(locationOfAnnotation);
+        error!("could not find annotation of attachment (file not found)", 400) if !back;      
+        annotationSvg=back.read;
+        annotationSvg
+        
       end
 
       desc "Download the zip attachment file"
@@ -439,7 +452,7 @@ module Chemotion
       end
 
       desc 'Return image attachment'
-      get 'image/:attachment_id' do
+      get 'image/:attachment_id' do      
         sfilename = @attachment.key + @attachment.extname
         content_type @attachment.content_type
         header['Content-Disposition'] = "attachment; filename=" + sfilename

@@ -6,7 +6,6 @@ import { last, findKey, values } from 'lodash';
 import EditorFetcher from '../fetchers/EditorFetcher';
 import ImageModal from '../common/ImageModal';
 import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
-import ImageEditModal from './ImageEditModal';
 import { previewAttachmentImage } from './../utils/imageHelper';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
@@ -99,22 +98,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderImageEditModal(){
     const { onDrop } = this.state;
     const { onDelete } = this.state;
-    return <ImageEditModal
-    imageName={this.state.imageName}
-    imageElementId='rpa_helper_id'
-    isShow={this.state.imageEditModalShown}
-    handleSave={(f)=>{
-      this.state.onDrop(f);
-      this.setState({imageEditModalShown:false});
-      onDelete(this.state.choosenAttachment)    
-    }
-    
-    }
-    handleOnClose={()=>{
-      this.setState({imageEditModalShown:false});
-      document.getElementById('rpa_helper_id').remove();
-    }}
-    />    
+    return null;
   }
 
   renderAnnotateImageButton(attachment){
