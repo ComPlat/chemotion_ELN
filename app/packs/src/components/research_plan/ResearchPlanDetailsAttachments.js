@@ -8,10 +8,24 @@ import React, { Component } from 'react';
 import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
 import { previewAttachmentImage } from './../utils/imageHelper';
 
+import {
+  Button, ButtonGroup,
+  Col, ControlLabel,
+  FormGroup,
+  Glyphicon,
+  ListGroup, ListGroupItem,
+  Overlay, OverlayTrigger,
+  Popover,
+  Row,
+  Tooltip
+} from 'react-bootstrap';
+
+
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const annotateTooltip = <Tooltip id="annotate_tooltip">Annotate image</Tooltip>;
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
+
 
 export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
@@ -23,7 +37,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.state = {
       attachmentEditor: false,
       extension: null,
-      imageEditModalShown:false,
+      imageEditModalShown: false,
       showImportConfirm: []
     };
     this.editorInitial = this.editorInitial.bind(this);
@@ -56,8 +70,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return docType;
   }
 
-  isImageFile(fileName){
-    const acceptedImageTypes=["png","jpg","bmp","tif","svg","jpeg"];
+  isImageFile(fileName) {
+    const acceptedImageTypes = ["png", "jpg", "bmp", "tif", "svg", "jpeg"];
     const dataType = last(fileName.split('.'));
     return acceptedImageTypes.includes(dataType);
   }
@@ -101,34 +115,36 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  renderImageEditModal(){
+  renderImageEditModal() {
     const { onDrop } = this.state;
     const { onDelete } = this.state;
     return null;
   }
 
-  renderAnnotateImageButton(attachment){
-   
-     if(!this.isImageFile(attachment.filename)){
-       return null;
-     }
-     return (
-      <OverlayTrigger placement="top" overlay={annotateTooltip} >
+  renderAnnotateImageButton(attachment) {
+
+    if (!this.isImageFile(attachment.filename)) {
+      return null;
+    }
+    return (
+      <OverlayTrigger placement="top"  >
         <Button
-        bsSize="xsmall"
-        bsStyle="warning"
-        className="button-right"
-        onClick={() => {
-          
-          var target=document.createElement('img');         
-          target.id='rpa_helper_id';
-          target.src='/api/v1/attachments/'.concat(attachment.id)
-          target.style={display:'none'}
-          document.body.appendChild(target);
-          this.setState(
-            {imageEditModalShown:true,
-            choosenAttachment:attachment,
-            imageName:attachment.filename});                  
+          bsSize="xsmall"
+          bsStyle="warning"
+          className="button-right"
+          onClick={() => {
+
+            var target = document.createElement('img');
+            target.id = 'rpa_helper_id';
+            target.src = '/api/v1/attachments/'.concat(attachment.id)
+            target.style = { display: 'none' }
+            document.body.appendChild(target);
+            this.setState(
+              {
+                imageEditModalShown: true,
+                choosenAttachment: attachment,
+                imageName: attachment.filename
+              });
           }}>
           <i className="fa fa-pencil" aria-hidden="true" />
         </Button>
@@ -154,11 +170,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
 
     if (attachment.is_deleted) {
-      return (        
+      return (
         <div>
           <Row>
-         
-            <Col md={1} />            
+
+            <Col md={1} />
             <Col md={9}>
               <strike>{attachment.filename}</strike>
             </Col>
@@ -352,20 +368,20 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   render() {
-    
+
     return (
-    
+
       <Row>
         <Col md={12}>
           <FormGroup>
-            <ControlLabel>Files</ControlLabel>      
-            {this.renderImageEditModal()}                       
+            <ControlLabel>Files</ControlLabel>
+            {this.renderImageEditModal()}
             {this.renderAttachments()}
             {this.renderDropzone()}
           </FormGroup>
         </Col>
       </Row>
-       
+
     );
   }
 }
@@ -384,5 +400,5 @@ ResearchPlanDetailsAttachments.propTypes = {
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => {}
+  onAttachmentImportComplete: () => { }
 };
