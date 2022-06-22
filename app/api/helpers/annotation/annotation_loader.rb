@@ -9,8 +9,8 @@ class AnnotationLoader
         locationOfAnnotation=att.attachment_data['derivatives']['annotation']['id'];
         back=File.open(locationOfAnnotation, 'rb') if File.exist?(locationOfAnnotation);
         raise "could not find annotation of attachment (file not found)" if !back;
-        annotationSvg=back.read;
-        annotationSvg
+        return back.read;
+
     end
 
 

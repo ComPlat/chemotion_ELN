@@ -39,25 +39,24 @@ class AnnotationCreator
     end
 
     def createAnnotationString(height,width,id)
-        svgString=initialImageAnnotation="<svg "+
-        "  width=\"#{width}\" "+
-        "  height=\"#{height}\" "+
-        "  xmlns=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
-        "    <g class=\"layer\">"+
-        "      <title>Image</title>"+
-        "      <image height=\"#{height}\"  "+
-        "      id=\"original_image\" "+
-        "      width=\"#{width}\" "+
-        "      xlink:href=\"/api/v1/attachments/image/#{id}\"/>"+
-        "    </g>"+
-        "    <g class=\"layer\">"+
-        "      <title>Annotation</title>"+
-        "      id=\"annotation\" "+
-        "    </g>"+
-        "</svg>";
-        svgString
+        return '<svg '+
+        '  width=\"#{width}\" '+
+        '  height=\"#{height}\" '+
+        '  xmlns=\"http://www.w3.org/2000/svg\" '+
+        '  xmlns:svg=\"http://www.w3.org/2000/svg\" '+
+        '  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> '+
+        '    <g class=\"layer\">'+
+        '      <title>Image</title>'+
+        '      <image height=\"#{height}\"  '+
+        '      id=\"original_image\" '+
+        '      width=\"#{width}\" '+
+        '      xlink:href=\"/api/v1/attachments/image/#{id}\"/>'+
+        '    </g>'+
+        '    <g class=\"layer\">'+
+        '      <title>Annotation</title>'+
+        '      id=\"annotation\" '+
+        '    </g>'+
+        '</svg>';
     end
 
 end
