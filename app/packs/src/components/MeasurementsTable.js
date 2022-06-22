@@ -35,18 +35,20 @@ class MeasurementsTable extends Component {
   rows() {
     const measurementsStore = this.context.measurementsStore;
     let sample_ids = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
-    return sample_ids.map(sample_id => {
-      let sample_header = measurementsStore.sampleHeader(sample_id);
-      const columnsForRow = [this._sampleOutput(sample_header)];
+    return sample_ids.map(sampleId => {
+      if (!measurementsStore.dataForSampleAvailable(sampleId)) { return null; }
+
+      let sampleHeader = measurementsStore.sampleHeader(sampleId);
+      const columnsForRow = [this._sampleOutput(sampleHeader)];
 
       this._uniqueDescriptions().forEach((description, index) => {
         const measurements = this._measurementsWithDescription(
-          measurementsStore.measurementsForSample(sample_id),
+          measurementsStore.measurementsForSample(sampleId),
           description
         );
 
         const descriptionColumn = (
-          <td className={`measurementTable--Sample--sortedReadout`} key={`MeasurementTableSampleSortedReadout${sample_id}.${index}`}>
+          <td className={`measurementTable--Sample--sortedReadout`} key={`MeasurementTableSampleSortedReadout${sampleId}.${index}`}>
             <ul className="list-unstyled">
               {measurements}
             </ul>
@@ -56,7 +58,7 @@ class MeasurementsTable extends Component {
       });
 
       return (
-        <tr className="measurementTable--Sample" key={`MeasurementTableSample${sample_id}`}>
+        <tr className="measurementTable--Sample" key={`MeasurementTableSample${sampleId}`}>
           {columnsForRow}
         </tr>
       );
@@ -82,10 +84,9 @@ class MeasurementsTable extends Component {
 
   _uniqueDescriptions() {
     const descriptions = {};
-    const measurementsStore = this.context.measurementsStore;
-    let sample_ids = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
-    measurementsStore
-      .measurementsForSamples(sample_ids)
+    let sampleIds = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
+    this.context.measurements
+      .measurementsForSamples(sampleIds)
       .forEach(measurement => descriptions[measurement.description] = 1);
 
     return Object.keys(descriptions).sort();

@@ -22,13 +22,12 @@ class MeasurementsTab extends Component {
   }
 
   componentDidMount() {
-    this.loadSampleData();
+    this.loadMeasurementsForSample();
   }
 
-  loadSampleData() {
-    const measurementsStore = this.context.measurementsStore;
+  loadMeasurementsForSample() {
     this.setState({ loading: true });
-    measurementsStore.loadDataForSample(
+    this.context.measurements.loadMeasurementsForSample(
       this.props.sample.id,
       () => this.setState({ loading: false })
     );
@@ -54,12 +53,10 @@ class MeasurementsTab extends Component {
   }
 
   render() {
-    console.debug('MeasurementsTab.render');
-    const measurementsStore = this.context.measurementsStore;
     if (this.state.loading) {
       return (<h2>Loading measurements...</h2>);
     }
-    if (!measurementsStore.dataForSampleAvailable(this.props.sample)) {
+    if (!this.context.measurements.dataForSampleHierarchyAvailable(this.props.sample)) {
       return (<span>No measurements recorded for this sample</span>);
     }
 

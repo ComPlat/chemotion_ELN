@@ -33,31 +33,48 @@ export const MeasurementsStore = types
       self.sampleHeaders.set(sampleHeader.id, sampleHeader);
       measurements.forEach(measurement => self.measurements.set(measurement.id, measurement));
     },
-    loadDataForSample(sample_id, afterComplete = () => {}) {
+    loadMeasurementsForSample(sampleId, afterComplete = () => {}) {
       // this is a very simple implementation
       // for more complex cases we should use the generator version.
       // see https://mobx-state-tree.js.org/concepts/async-actions for more details.
-      MeasurementsFetcher.fetchMeasurementHierarchy(sample_id)
+      MeasurementsFetcher.fetchMeasurementHierarchy(sampleId)
         .then(result => result.forEach(entry => self.addMeasurementsForSample(entry)))
         .then(afterComplete())
+    },
+    deleteMeasurement(id, afterComplete = () => {}) {
+      let measurement = self.measurements.get(id);
+      if (!measurement) { return null; }
+
+      MeasurementsFetcher.deleteMeasurement(id).then(result => {
+        if (result.success) { self.deleteMeasurementFromStore(id); }
+        afterComplete();
+      });
+    },
+    deleteMeasurementFromStore(id) {
+      let measurementToDelete = self.measurements.get(id);
+      let isLastMeasurementForSample = values(self.measurements).filter(measurement => measurement.header == measurementToDelete.header).length == 1
+      if (isLastMeasurementForSample) {
+        self.sampleHeaders.delete(measurementToDelete.header.id);
+      }
+      self.measurements.delete(id);
     }
   }))
   .views(self => ({
-    dataForSampleAvailable(sample) {
-      let sample_ids = [...sample.ancestor_ids, sample.id].filter(a => a);
-      let available_sample_ids = keys(self.sampleHeaders);
-      console.debug('sample ids:', sample_ids);
-      console.debug('available sample ids: ', available_sample_ids);
+    dataForSampleHierarchyAvailable(sample) {
+      let sampleIds = [...sample.ancestor_ids, sample.id].filter(a => a);
 
-      return sample_ids.some(sample_id => available_sample_ids.includes(sample_id));
+      return sampleIds.some(sampleId => self.dataForSampleAvailable(sampleId));
     },
-    sampleHeader(sample_id) {
-      return self.sampleHeaders.get(sample_id);
+    dataForSampleAvailable(sampleId) {
+      return keys(self.sampleHeaders).includes(sampleId.toString())
     },
-    measurementsForSamples(sample_ids) {
-      return values(self.measurements).filter(measurement => sample_ids.includes(measurement.header.id));
+    sampleHeader(sampleId) {
+      return self.sampleHeaders.get(sampleId);
     },
-    measurementsForSample(sample_id) {
-      return values(self.measurements).filter(measurement => measurement.sample_id == sample_id);
+    measurementsForSamples(sampleIds) {
+      return values(self.measurements).filter(measurement => sampleIds.includes(measurement.header.id));
+    },
+    measurementsForSample(sampleId) {
+      return values(self.measurements).filter(measurement => measurement.header.id == sampleId);
     }
   }));
