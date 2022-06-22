@@ -78,7 +78,7 @@ export default class CollectionSubtree extends React.Component {
     }
 
     let { visibleRootsIds } = CollectionStore.getState();
-    return (visibleRootsIds.indexOf(node.id) > -1)
+    return (visibleRootsIds.indexOf(node.uid) > -1)
   }
 
   selectedCssClass() {
@@ -109,8 +109,11 @@ export default class CollectionSubtree extends React.Component {
   }
 
   expandButton() {
-    let icon = this.state.visible ? 'minus' : 'plus';
+    let { visibleRootsIds } = CollectionStore.getState();
 
+
+    // let icon = this.state.visible ? 'minus' : 'plus';
+    let icon = (visibleRootsIds.indexOf(this.state.root.uid) > -1) ? 'minus' : 'plus';
     if (this.hasChildren()) {
       return (
         <Glyphicon
@@ -153,8 +156,9 @@ export default class CollectionSubtree extends React.Component {
     const { root } = this.state;
     let { visible } = this.state;
     const uiState = UIStore.getState();
-
-    visible = visible || this.isVisible(root, uiState);
+    visible = this.isVisible(root, uiState) || visible;
+      if (this.isVisible(root, uiState) == true){
+    }
     this.setState({ visible });
     let collectionID = 'all';
     if (root.label === 'All' && root.is_locked) {
@@ -164,9 +168,9 @@ export default class CollectionSubtree extends React.Component {
     }
     const url = (this.props.root.sharer)
       ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
-      : `/collection/${root.id}/${this.urlForCurrentElement()}`;
+      : `/temp_collections/shared/${root.collection_id}/${this.urlForCurrentElement()}`;
     Aviator.navigate(url, { silent: true });
-    collectionID = this.state.root.id;
+    collectionID = this.state.root.collection_id || this.state.root.id;
     const collShow = this.props.root.sharer ? scollectionShow : collectionShow;
     collShow({ params: { collectionID } });
   }
@@ -189,28 +193,24 @@ export default class CollectionSubtree extends React.Component {
     this.setState({ visible: visible })
 
     let { visibleRootsIds } = CollectionStore.getState()
-    if (visible) {
-      visibleRootsIds.push(root.id)
-    } else {
-      let descendantIds = root.descendant_ids
-        ? root.descendant_ids
-        : root.children.map(function (s) { return s.id })
-      descendantIds.push(root.id)
-      visibleRootsIds = visibleRootsIds.filter(x => descendantIds.indexOf(x) == -1)
-    }
+
+    visibleRootsIds = root.descendant_ids
+      ? root.descendant_ids
+      : [root.uid]
 
     // Remove duplicate
     let newIds = Array.from(new Set(visibleRootsIds))
-    CollectionActions.updateCollectrionTree(newIds)
+    // let newIds = Array.from(visibleRootsIds)
+    CollectionActions.updateCollectrionTree(visibleRootsIds)
   }
 
   synchronizedIcon() {
-    let sharedUsers = this.state.root.sync_collections_users
+    let sharedUsers = this.state.root.collection_acls;
     return (
       sharedUsers && sharedUsers.length > 0
-        ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers })}>
-          <i className="fa fa-share-alt" style={{ float: "right" }}></i>
-        </OverlayTrigger>
+        ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers})}>
+            <i className="fa fa-share-alt" style={{ float: "right" }}></i>
+          </OverlayTrigger>
         : null
     )
   }
