@@ -8,19 +8,19 @@
 #  content          :string
 #  created_by       :integer          not null
 #  section          :string
+#  status           :string           default("Pending")
+#  submitter        :string
+#  resolver_name    :string
 #  commentable_id   :integer
 #  commentable_type :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
-#  status           :string           default("Pending")
-#  submitter        :string
-#  resolver_name    :string
 #
 # Indexes
 #
-#  index_comment_on_user                                  (created_by)
 #  index_comments_on_commentable_type_and_commentable_id  (commentable_type,commentable_id)
 #  index_comments_on_section                              (section)
+#  index_comments_on_user                                 (created_by)
 #
 
 class Comment < ActiveRecord::Base
