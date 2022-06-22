@@ -29,6 +29,7 @@ export default class ManagingModalSharing extends React.Component {
       wellplateDetailLevel: props.wellplateDetailLevel,
       screenDetailLevel: props.screenDetailLevel,
       elementDetailLevel: props.elementDetailLevel,
+      label: props.label,
       selectedUsers: null,
     }
 
@@ -185,7 +186,7 @@ export default class ManagingModalSharing extends React.Component {
 
   handleSharing() {
     const {
-      permissionLevel, sampleDetailLevel, reactionDetailLevel,
+      permissionLevel, sampleDetailLevel, reactionDetailLevel, label,
       wellplateDetailLevel, screenDetailLevel, elementDetailLevel
     } = this.state;
 
@@ -197,7 +198,8 @@ export default class ManagingModalSharing extends React.Component {
         reaction_detail_level: reactionDetailLevel,
         wellplate_detail_level: wellplateDetailLevel,
         screen_detail_level: screenDetailLevel,
-        element_detail_level: elementDetailLevel
+        element_detail_level: elementDetailLevel,
+        label: label
       },
     };
 
@@ -265,7 +267,14 @@ export default class ManagingModalSharing extends React.Component {
     });
   }
 
-  handleDLChange(e, elementType) {
+  handleLabelChange(e) {
+    let val = e.target.value;
+    this.setState({
+      label: val
+    });
+  }
+
+  handleDLChange(e,elementType){
     let val = e.target.value
     let state = {}
     state[elementType + 'DetailLevel'] = val
@@ -408,6 +417,13 @@ export default class ManagingModalSharing extends React.Component {
             value={this.state.elementDetailLevel || ''}>
             <option value='10'>Everything</option>
           </FormControl>
+        </FormGroup>
+        <FormGroup controlId="label">
+          <ControlLabel>Label</ControlLabel>
+          <FormControl id="label" type="text" placeholder="Label" name="label"
+             value={this.state.label || ''}
+             onChange={(e) => { this.handleLabelChange(e); }}
+          />
         </FormGroup>
         {this.selectUsers()}
         <br />
