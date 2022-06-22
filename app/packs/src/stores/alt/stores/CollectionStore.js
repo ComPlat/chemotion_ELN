@@ -5,6 +5,8 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 class CollectionStore {
   constructor() {
     this.state = {
+      myCollections: [],
+      sharedCollections: [],
       genericEls: [],
       unsharedRoots: [],
       sharedRoots: [],
@@ -17,6 +19,8 @@ class CollectionStore {
 
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,
+      handleFetchMyCollections: CollectionActions.fetchMyCollections,
+      handleFetchCollectionsSharedWithMe: CollectionActions.fetchCollectionsSharedWithMe,
       //handleFetchGenericEls: CollectionActions.fetchGenericEls,
       handleFetchLockedCollectionRoots: CollectionActions.fetchLockedCollectionRoots,
       handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
@@ -52,6 +56,14 @@ class CollectionStore {
 
   handleFetchLockedCollectionRoots(results) {
     this.state.lockedRoots = results.collections;
+  }
+
+  handleFetchMyCollections(results) {
+    this.state.myCollections = results.all;
+  }
+
+  handleFetchCollectionsSharedWithMe(results) {
+    this.state.sharedCollections = results.shared;
   }
 
   handleFetchUnsharedCollectionRoots(results) {
