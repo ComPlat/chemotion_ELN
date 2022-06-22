@@ -71,7 +71,6 @@ import CommentSection from './comments/CommentSection';
 import ElementDetailSortTab from './ElementDetailSortTab';
 import { addSegmentTabs } from './generic/SegmentDetails';
 import MeasurementsTab from './MeasurementsTab';
-import CommentSection from './comments/CommentSection';
 
 const MWPrecision = 6;
 
