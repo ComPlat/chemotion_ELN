@@ -16,8 +16,10 @@ import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
 import ChildOverlay from './managing_actions/ChildOverlay';
 import EditorFetcher from './fetchers/EditorFetcher';
 import AttachmentVersionsModal from './AttachmentVersionsModal';
+import ImageAnnotationModalSVG from './research_plan/ImageAnnotationModalSVG'
 
 import HyperLinksSection from './common/HyperLinksSection';
+import { T } from 'antd/lib/upload/utils';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -30,7 +32,8 @@ export default class ContainerDataset extends Component {
       timeoutReference: null,
       link: null,
       attachmentVersions: [],
-      attachmentVersionsModalShow: false
+      attachmentVersionsModalShow: false,
+      imageEditModalShown: false
     };
 
     this.timeout = 6e2; // 600ms timeout for input typing
@@ -200,6 +203,8 @@ export default class ContainerDataset extends Component {
               {this.attachmentBackToInboxButton(attachment)} &nbsp;
               {this.renderEditLocallyButton(attachment)} &nbsp;
               {this.renderAttachmentVersionsButton(attachment)} &nbsp;
+              {this.renderImageAnnotationButton(attachment)} &nbsp;
+
             </td>
           </tr>
         </tbody>
@@ -273,6 +278,19 @@ export default class ContainerDataset extends Component {
         <Button bsSize="xsmall" bsStyle="warning" onClick={() => this.handleShowAttachmentVersionModal(attachment.id)}>
           <i className="fa fa-history" />
         </Button>
+      );
+    }
+  }
+  renderImageAnnotationButton(attachment) {
+    const { readOnly } = this.props;
+    if (!readOnly && !attachment.is_new) {
+      return (
+        <Button bsSize="xsmall" bsStyle="warning" onClick={() => this.setState({
+          imageEditModalShown: true,
+          choosenAttachment: attachment
+        })}>
+          <i className="fa fa-pencil" />
+        </Button >
       );
     }
   }
@@ -532,6 +550,17 @@ export default class ContainerDataset extends Component {
               disabled={disabled}></HyperLinksSection>
           </Col>
         </Row>
+        <ImageAnnotationModalSVG
+          attachment={this.state.choosenAttachment}
+          imageName={''}
+          file={''}
+          dataSrc={''}
+          isShow={this.state.imageEditModalShown}
+          handleSave={() => {
+
+          }}
+          handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
+        />
         <AttachmentVersionsModal
           onHide={this.handleModalHide}
           show={attachmentVersionsModalShow}
