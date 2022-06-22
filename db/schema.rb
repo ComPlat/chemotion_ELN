@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_04_08_113102) do
+ActiveRecord::Schema.define(version: 2022_05_24_103036) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -102,6 +102,23 @@ ActiveRecord::Schema.define(version: 2022_04_08_113102) do
     t.index ["source", "source_id"], name: "index_code_logs_on_source_and_source_id"
   end
 
+  create_table "collection_acls", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "collection_id", null: false
+    t.string "label"
+    t.integer "permission_level", default: 0
+    t.integer "sample_detail_level", default: 0
+    t.integer "reaction_detail_level", default: 0
+    t.integer "wellplate_detail_level", default: 0
+    t.integer "screen_detail_level", default: 0
+    t.integer "researchplan_detail_level", default: 10
+    t.integer "element_detail_level", default: 10
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["collection_id"], name: "index_collection_acls_on_collection_id"
+    t.index ["user_id"], name: "index_collection_acls_on_user_id"
+  end
+
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ancestry"
@@ -121,6 +138,7 @@ ActiveRecord::Schema.define(version: 2022_04_08_113102) do
     t.boolean "is_synchronized", default: false, null: false
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
+    t.jsonb "tabs_segment", default: {}
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["user_id"], name: "index_collections_on_user_id"
@@ -693,16 +711,16 @@ ActiveRecord::Schema.define(version: 2022_04_08_113102) do
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
-    t.integer "searchable_id"
     t.string "searchable_type"
+    t.integer "searchable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
   create_table "predictions", id: :serial, force: :cascade do |t|
-    t.integer "predictable_id"
     t.string "predictable_type"
+    t.integer "predictable_id"
     t.jsonb "decision", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -1187,9 +1205,9 @@ ActiveRecord::Schema.define(version: 2022_04_08_113102) do
     t.integer "position_y"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "readout"
     t.string "additive"
     t.datetime "deleted_at"
-    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.string "label", default: "Molecular structure", null: false
     t.string "color_code"
     t.index ["deleted_at"], name: "index_wells_on_deleted_at"

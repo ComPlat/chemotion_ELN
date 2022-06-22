@@ -6,7 +6,7 @@ module Usecases
       def initialize(**params)
         @params = params
         @collection_attributes = @params.fetch(:collection_attributes, {})
-        @current_user_id = @collection_attributes[:shared_by_id]
+        @current_user_id = @collection_attributes[:user_id]
       end
 
       def execute!
@@ -26,19 +26,6 @@ module Usecases
 
           sample_ids = (sample_ids + associated_sample_ids).uniq
           wellplate_ids = (wellplate_ids + associated_wellplate_ids).uniq
-
-          # find or create and assign parent collection ()
-          root_label = format('with %s', c.user.name_abbreviation)
-          root_collection_attributes = {
-            user_id: @collection_attributes[:user_id],
-            shared_by_id: @current_user_id,
-            is_locked: true,
-            is_shared: true
-          }
-
-          rc = Collection.only_deleted.find_by(**root_collection_attributes)&.restore
-          rc ||= Collection.find_or_create_by(**root_collection_attributes, label: root_label)
-          c.update(parent: rc)
 
           sample_ids.each do |sample_id|
             CollectionsSample.create(collection_id: c.id, sample_id: sample_id)
@@ -65,6 +52,20 @@ module Usecases
               CollectionsElement.create(collection_id: c.id, element_id: element_id, element_type: k)
             end
           end
+
+          c_acl = CollectionAcl.find_or_create_by(
+            user_id: @params[:shared_to_id],
+            collection_id: c.id
+          )
+
+          c_acl.update_attributes(
+            permission_level: @collection_attributes['permission_level'],
+            sample_detail_level: @collection_attributes['sample_detail_level'],
+            reaction_detail_level: @collection_attributes['reaction_detail_level'],
+            wellplate_detail_level: @collection_attributes['wellplate_detail_level'],
+            screen_detail_level: @collection_attributes['screen_detail_level'],
+            label: @collection_attributes['label']
+          )
 
           # SendSharingNotificationJob.perform_later(@user, '')
         end

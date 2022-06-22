@@ -42,6 +42,24 @@ class CollectionActions {
       });};
   }
 
+  fetchMyCollections() {
+    return (dispatch) => { CollectionsFetcher.fetchMyCollections()
+      .then((roots) => {
+        dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  fetchCollectionsSharedWithMe() {
+    return (dispatch) => { CollectionsFetcher.fetchCollectionsSharedWithMe()
+      .then((roots) => {
+        dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   fetchSharedCollectionRoots() {
     return (dispatch) => { CollectionsFetcher.fetchSharedRoots()
       .then((roots) => {

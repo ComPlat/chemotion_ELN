@@ -21,6 +21,7 @@
 #  is_synchronized           :boolean          default(FALSE), not null
 #  researchplan_detail_level :integer          default(10)
 #  element_detail_level      :integer          default(10)
+#  tabs_segment              :jsonb
 #
 # Indexes
 #
@@ -49,6 +50,7 @@ class Collection < ApplicationRecord
   has_many :elements, through: :collections_elements
 
   has_many :sync_collections_users,  foreign_key: :collection_id, dependent: :destroy
+  has_many :collection_acls, foreign_key: :collection_id, dependent: :destroy
   has_many :shared_users, through: :sync_collections_users, source: :user
 
   # A collection is locked if it is not allowed to rename or rearrange it
@@ -57,7 +59,8 @@ class Collection < ApplicationRecord
 
   scope :ordered, -> { order("position ASC") }
   scope :unshared, -> { where(is_shared: false) }
-  scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
+  # scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
+  scope :shared, ->(user_id) { where('is_shared = ?', true) }
   scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
   scope :belongs_to_or_shared_by, ->(user_id, with_group = false) do
     if with_group.present?
