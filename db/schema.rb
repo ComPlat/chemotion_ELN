@@ -1231,9 +1231,9 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.datetime "updated_at", null: false
     t.string "additive"
     t.datetime "deleted_at"
-    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.string "label", default: "Molecular structure", null: false
     t.string "color_code"
+    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.index ["deleted_at"], name: "index_wells_on_deleted_at"
     t.index ["sample_id"], name: "index_wells_on_sample_id"
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
