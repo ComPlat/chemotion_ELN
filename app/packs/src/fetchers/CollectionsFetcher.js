@@ -48,6 +48,29 @@ export default class CollectionsFetcher {
 
     return promise;
   }
+  static fetchMyCollections() {
+    let promise = fetch('/api/v1/temp_collections/all', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static fetchCollectionsSharedWithMe() {
+    let promise = fetch('/api/v1/temp_collections/shared', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
 
   static fetchMyRoots() {
     let promise = fetch('/api/v1/temp_collections/all', {
