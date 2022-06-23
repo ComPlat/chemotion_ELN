@@ -83,10 +83,18 @@ class Mailcollector
           created_for: helper.recipient.id,
           content_type: attachment.mime_type
           )
-        a.save!
+        
+        ActiveRecord::Base.transaction do
+          a.save!
+      
+          a.attachment_attacher.attach(File.open(attachment.path, binmode: true))
+          if a.valid?
+            a.save!
+          else
+            raise ActiveRecord::Rollback
+          end
+        end
         a.update!(attachable: dataset)
-        primary_store = Rails.configuration.storage.primary_store
-        a.update!(storage: primary_store)
       end
     rescue => e
       log_error 'Error on mailcollector handle_new_message:'

@@ -52,21 +52,28 @@ module GenericHelpers
           a = Attachment.new(
             bucket: file[:container_id],
             filename: fobj['filename'],
-            file_path: file[:tempfile],
             created_by: user_id,
             created_for: user_id,
             content_type: file[:type],
             attachable_type: map_info[key]['type'],
             attachable_id: element.id
           )
-          begin
-            a.save!
-
-            update_properties_upload(element, element.properties, a, pa)
-            attach_ary.push(a.id)
-          ensure
-            tempfile.close
-            tempfile.unlink
+          ActiveRecord::Base.transaction do
+            begin
+              a.save!
+      
+              a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+              if a.valid?
+                a.save!
+                update_properties_upload(element, element.properties, a, pa)
+                attach_ary.push(a.id)
+              else
+                raise ActiveRecord::Rollback
+              end
+            ensure
+              tempfile.close
+              tempfile.unlink
+            end
           end
         end
       end
@@ -83,19 +90,27 @@ module GenericHelpers
         a = Attachment.new(
           bucket: file[:container_id],
           filename: file[:filename],
-          file_path: file[:tempfile],
           created_by: user_id,
           created_for: user_id,
           content_type: file[:type],
           attachable_type: type,
           attachable_id: id
         )
-        begin
-          a.save!
-          attach_ary.push(a.id)
-        ensure
-          tempfile.close
-          tempfile.unlink
+        ActiveRecord::Base.transaction do
+          begin
+            a.save!
+    
+            a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+            if a.valid?
+              a.save!
+              attach_ary.push(a.id)
+            else
+              raise ActiveRecord::Rollback
+            end
+          ensure
+            tempfile.close
+            tempfile.unlink
+          end
         end
       end
     end

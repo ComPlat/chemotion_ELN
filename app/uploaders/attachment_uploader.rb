@@ -2,14 +2,19 @@ class AttachmentUploader < Shrine
   # MAX_SIZE = Rails.configuration.storage.maximum_size * 1024 * 1024 # 10 MB
   require 'helpers/annotation/annotation_creator';
   require 'helpers/annotation/mini_magick_image_analyser';
+# frozen_string_literal: true
+
+class AttachmentUploader < Shrine
+  MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024 # 10 MB
 
   plugin :derivatives
   plugin :keep_files, replaced: true
   plugin :validation_helpers
   plugin :pretty_location
-  # Attacher.validate do
-  #   validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.storage.maximum_size} MB"
-  # end
+
+  Attacher.validate do
+    validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
+  end
 
   def is_integer?
     !!(self =~ /\A[-+]?[0-9]+\z/)
@@ -41,11 +46,11 @@ class AttachmentUploader < Shrine
   end
 
   # plugins and uploading logic
-  Attacher.derivatives do |original|
-    begin
-
-      file_extension = File.extname(file.id)&.downcase
-      file_extension = '.jpg' if file_extension == '.jpeg'
+  Attacher.derivatives do |_original|
+    file_extension = File.extname(file.id)&.downcase
+    file_path = _original.path
+    if file_extension == '.jpeg'
+      file_extension = '.jpg'
       file_basename = File.basename(file.metadata['filename'], '.*')
       tmp = Tempfile.new([file_basename, file_extension], encoding: 'ascii-8bit')
       tmp.write file.read
@@ -80,3 +85,4 @@ class AttachmentUploader < Shrine
     end
   end
 end
+

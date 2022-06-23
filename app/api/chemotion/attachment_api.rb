@@ -115,7 +115,6 @@ module Chemotion
               attachable_type: attachable_type,
               attachable_id: attachable_id
             )
-
             begin
               a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
               if a.valid?
@@ -273,13 +272,18 @@ module Chemotion
               content_type: MIME::Types.type_for(file_name)[0].to_s
             )
             error_messages = []
-            attach.attachment_attacher.attach(File.open(file_path, binmode: true))
-            if attach.valid?
+            ActiveRecord::Base.transaction do
               attach.save!
-              attach.attachment_attacher.create_derivatives
-              attach.save!
-            else
-              error_messages.push(attach.errors.to_h[:attachment])
+
+              attach.attachment_attacher.attach(File.open(file_path, binmode: true))
+              if attach.valid?
+                attach.attachment_attacher.create_derivatives
+                attach.save!
+              else
+                error_messages.push(attach.errors.to_h[:attachment])
+
+                raise ActiveRecord::Rollback
+              end
             end
 
             return { ok: true, error_messages: error_messages }
@@ -310,16 +314,22 @@ module Chemotion
                 content_type: file[:type],
                 attachable_type: 'Container'
               )
-            begin
-              attach.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
-              if attach.valid?
-                attach.attachment_attacher.create_derivatives
+            ActiveRecord::Base.transaction do
+              begin
                 attach.save!
-                attach_ary.push(attach.id)
+
+                attach.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
+                if attach.valid?
+                  attach.attachment_attacher.create_derivatives
+                  attach.save!
+                  attach_ary.push(attach.id)
+                else
+                  raise ActiveRecord::Rollback
+                end
+              ensure
+                tempfile.close
+                tempfile.unlink
               end
-            ensure
-              tempfile.close
-              tempfile.unlink
             end
           end
         end
@@ -335,7 +345,6 @@ module Chemotion
         content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-
         uploaded_file = if params[:version].nil?
                            @attachment.attachment_attacher.file
                         else

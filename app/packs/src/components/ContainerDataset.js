@@ -204,7 +204,6 @@ export default class ContainerDataset extends Component {
               {this.renderEditLocallyButton(attachment)} &nbsp;
               {this.renderAttachmentVersionsButton(attachment)} &nbsp;
               {this.renderImageAnnotationButton(attachment)} &nbsp;
-
             </td>
           </tr>
         </tbody>
@@ -566,7 +565,7 @@ export default class ContainerDataset extends Component {
           show={attachmentVersionsModalShow}
           readOnly={this.props.readOnly}
           data={attachmentVersions}
-          disabled={disabled}></AttachmentVersionsModal></div>
+          disabled={disabled}></AttachmentVersionsModal></div >
     );
   }
 }
