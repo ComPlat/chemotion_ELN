@@ -39,7 +39,7 @@ module Entities
       attachments_with_thumbnail = object.attachments.where(thumb: true)
       return no_preview_image_available unless attachments_with_thumbnail.exists?
 
-      latest_image_attachment = attachments_with_thumbnails
+      latest_image_attachment = attachments_with_thumbnail
                                 .where(content_type: THUMBNAIL_CONTENT_TYPES)
                                 .order(updated_at: :desc)
                                 .first

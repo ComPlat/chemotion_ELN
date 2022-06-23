@@ -821,7 +821,6 @@ DEPENDENCIES
   fx
   gitlab-styles
   grape (~> 1.2.3)
-  grape-active_model_serializers
   grape-entity
   grape-kaminari
   grape-swagger
