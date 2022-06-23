@@ -79,7 +79,7 @@ module Reporter
     def extract(objects)
       objects.map do |tag|
         e = tag['type'].camelize.constantize.find(tag['id'])
-        serializer =
+        entity =
           case e
           when Sample
             Entities::SampleReportEntity.represent(e)
@@ -87,7 +87,7 @@ module Reporter
             Entities::ReactionReportEntity.represent(e)
           end
 
-        serializer.serializable_hash
+        entity.serializable_hash
       end
     end
 

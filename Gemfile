@@ -38,7 +38,6 @@ gem 'fx'
 
 gem 'gitlab-styles', require: false
 gem 'grape', '~>1.2.3'
-gem 'grape-active_model_serializers'
 gem 'grape-entity'
 gem 'grape-kaminari'
 gem 'grape-swagger'

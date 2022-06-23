@@ -139,7 +139,7 @@ module Chemotion
         get do
           research_plan = ResearchPlan.find(params[:id])
           # TODO: Refactor this massively ugly fallback to be in a more convenient place
-          # (i.e. the serializer/entity or maybe return a null element from the model)
+          # (i.e. the entity or maybe return a null element from the model)
           research_plan.build_research_plan_metadata(
             title: research_plan.name,
             subject: ''
