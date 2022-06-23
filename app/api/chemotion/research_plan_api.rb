@@ -7,58 +7,6 @@ module Chemotion
     helpers CollectionHelpers
     helpers ContainerHelpers
 
-    namespace :annotation do
-      desc 'Get the latest version of an annotation of an attachment'
-      params do        
-        requires :imageId, type: String, desc: 'The id of the attachment in uuid format'        
-      end
-      get do                     
-        attachmentId=params[:imageId];
-        attachment=Attachment.find_by(key: attachmentId)
-        if attachment!=nil
-          datafolder=Rails.configuration.storage.stores[attachment.storage.to_sym][:data_folder];
-          datafolder=datafolder+"/"+attachment.bucket+"/";          
-          files=Dir.glob(datafolder+params[:imageId]+"_annotation*");
-        else
-          files=Dir.glob("public/images/research_plans/"+attachmentId+"_annotation_*");               
-        end
-
-         version=0;
-         latestAnnotation="";
-         if files.length>0
-          files=files.sort_by{ |name| [name[/\d+/].to_i, name] };
-          latestAnnotation=files[files.length-1];
-          version=latestAnnotation.split(/[.\s]/)[latestAnnotation.split(/[.\s]/).length-2];
-          version=version.split("v")[version.split("v").length-1]
-         end
-       
-         f=File.open(latestAnnotation);    
-         annotationContent=  f.read;
-         {version:version,
-          uri_to_annotation:latestAnnotation,
-          annotation:annotationContent
-        }
-      end
-
-      
-
-
-      desc 'Update annotation of image'
-      params do
-        requires :annotation, type: String , desc: 'the annotation to the image. the original image is embedded as a link. The string must be a svg string'
-        requires :imageId, type: String, desc: 'The id of the original image in uuid format'
-        requires :version, type:Integer, desc: 'the current version of the annotation'
-      end
-      post  do
-        annotation=params[:annotation];
-        imageid=params[:imageId].split(/[.\s]/)[params[:imageId].split(/[.\s]/).length-2];
-       
-        public_path_annotation=imageid+"_annotation_v"+((params[:version]+1).to_s) +".svg";                  
-        fileName="public/images/research_plans/"+public_path_annotation;        
-        File.open(fileName, 'w') { |file| file.write(params[:annotation]) }   
-      end
-    end
-
     namespace :research_plans do
       desc 'Return serialized research plans of current user'
       params do
@@ -70,9 +18,9 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        scope = if params[:collection_id]    
-          
-          
+        scope = if params[:collection_id]
+
+
                   begin
                     Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
                               .find(params[:collection_id]).research_plans
@@ -116,7 +64,7 @@ module Chemotion
           name: params[:name],
           body: params[:body]
         }
-        
+
         research_plan = ResearchPlan.new attributes
         research_plan.creator = current_user
         research_plan.container = update_datamodel(params[:container])
@@ -247,7 +195,7 @@ module Chemotion
         svg_file = File.new(svg_file_path, 'w+')
         svg_file.write(svg)
         svg_file.close
-        
+
         { svg_path: svg_file_name }
       end
 
@@ -257,34 +205,16 @@ module Chemotion
       end
       post :image do
         file_name = params[:file][:filename]
-        file_extname = File.extname(file_name)  
-        uuid=SecureRandom.uuid; 
+        file_extname = File.extname(file_name)
+        uuid=SecureRandom.uuid;
         public_name = "#{uuid}#{file_extname}"
         public_path = "public/images/research_plans/#{public_name}"
 
         File.open(public_path, 'wb') do |file|
            file.write(params[:file][:tempfile].read)
         end
-        
-        imageRest="/images/research_plans/#{public_name}";
-        initialImageAnnotation="<svg "+
-        "  width=\"#{params[:width]}\" "+
-        "  height=\"#{params[:height]}\" "+
-        "  xmlns=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
-        "    <g class=\"layer\">"+
-        "      <title>Image</title>"+
-        "      <image height=\"#{params[:height]}\" "+
-        "      id=\"svg_2\" "+
-        "      width=\"#{params[:width]}\" "+
-        "      xlink:href=\""+imageRest+"\"/>"+
-        "    </g>"+
-        "</svg>";        
-        annotationFile = "public/images/research_plans/#{uuid}_annotation_v0.svg"
-      
-        File.open(annotationFile, 'w') { |file| file.write(initialImageAnnotation) };
-        {             
+
+        {
           file_name: file_name,
           public_name: public_name
         }
