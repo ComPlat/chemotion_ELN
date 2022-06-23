@@ -20,6 +20,8 @@ import {
   Tooltip
 } from 'react-bootstrap';
 
+import { last, findKey, values } from 'lodash';
+
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
