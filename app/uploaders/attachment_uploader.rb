@@ -60,25 +60,24 @@ class AttachmentUploader < Shrine
                   rescue
                     nil
                   end
-      result = {}
-      if thumbnail.present?
+    end
+    result = {}
+    if thumbnail.present?
         dir = File.dirname(thumbnail)
         thumb_path = "#{dir}/#{file_basename}.thumb.jpg"
         FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
         FileUtils.move(thumbnail, thumb_path)
         result[:thumbnail] = File.open(thumb_path, 'rb')
         record[:thumb] = true
-
-
-      end
-      creator=AnnotationCreator.new();
-      result=creator.createDerivative(
+    end
+    creator=AnnotationCreator.new();
+    result=creator.createDerivative(
         "#{dir}/#{file_basename}.annotation.png",
         original,
         @context[:record].id,
         result);
 
-      result
+    result
     ensure
       tmp.close
       tmp.unlink
