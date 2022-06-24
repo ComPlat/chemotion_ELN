@@ -13,6 +13,7 @@ const setReactionByType = (reaction, type, value) => {
       break;
     case 'description':
       reaction.description = value;
+      options = { schemaChanged: false }
       break;
     case 'purification':
       reaction.purification = value;
