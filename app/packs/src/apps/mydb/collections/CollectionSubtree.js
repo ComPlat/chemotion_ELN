@@ -9,6 +9,7 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import GatePushBtn from 'src/components/common/GatePushBtn';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -153,6 +154,7 @@ export default class CollectionSubtree extends React.Component {
       return;
     }
 
+    const { currentUser } = UserStore.getState();
     const { root } = this.state;
     let { visible } = this.state;
     const uiState = UIStore.getState();
@@ -166,12 +168,16 @@ export default class CollectionSubtree extends React.Component {
       collectionShow({ params: { collectionID } });
       return;
     }
-    const url = (this.props.root.sharer)
-      ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
-      : `/temp_collections/shared/${root.collection_id}/${this.urlForCurrentElement()}`;
+
+    const shared =
+      (this.props.root.user_id == currentUser.id && this.props.root.collection_id) ? true : false;
+    const url = (shared)
+      ? `/temp_collections/shared/${root.collection_id}/${this.urlForCurrentElement()}`
+      : `/temp_collections/${root.id}/${this.urlForCurrentElement()}`;
+
     Aviator.navigate(url, { silent: true });
     collectionID = this.state.root.collection_id || this.state.root.id;
-    const collShow = this.props.root.sharer ? scollectionShow : collectionShow;
+    const collShow = shared ? scollectionShow : collectionShow;
     collShow({ params: { collectionID } });
   }
 
