@@ -43,7 +43,7 @@ module Chemotion
             commentable_type: params[:commentable_type]
           ).order(:status, :section, created_at: :desc)
 
-          present comments, with: Entities::CommentEntity, root: 'comment'
+          present comments, with: Entities::CommentEntity, root: 'comments'
         else
           error!('401 Unauthorized', 401)
         end
