@@ -93,6 +93,7 @@ class Molecule < ApplicationRecord
       pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
       molecule.molfile = is_partial && partial_molfile || molfile
       molecule.assign_molecule_data(babel_info, pubchem_info)
+      PubchemLcssJob.set(queue: 'execute_pubchem_lcss', run_at: 10.minutes.from_now).perform_later if Delayed::Job.where(queue: 'execute_pubchem_lcss', run_at: 2.hours.ago..DateTime.now).empty?
     end
     molecule.ob_log = babel_info[:ob_log]
     molecule
