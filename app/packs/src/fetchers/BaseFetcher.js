@@ -47,16 +47,16 @@ export default class BaseFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false, type = 'samples', ElKlass) {
+  static fetchByCollectionId(id, queryParams = {}, isShared = false, type = 'samples', ElKlass) {
     const page = queryParams.page || 1;
     const perPage = queryParams.per_page || UIStore.getState().number_of_results;
     const filterCreatedAt = queryParams.filterCreatedAt === true ? '&filter_created_at=true' : '&filter_created_at=false';
     const fromDate = queryParams.fromDate ? `&from_date=${queryParams.fromDate.unix()}` : '';
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
     const product_only = queryParams.productOnly === true ? `&product_only=true` : '&product_only=false';
-    const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}` +
-              `collection_id=${id}&page=${page}&per_page=${perPage}&` +
-              `${fromDate}${toDate}${filterCreatedAt}${product_only}`;
+    const api = `/api/v1/${type}.json?collection_id=${id}&page=${page}&per_page=${perPage}&` +
+      `${fromDate}${toDate}${filterCreatedAt}${product_only}&is_shared=${isShared}`;
+
     let addQuery = type === 'samples' ?
       `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`
       : '';
