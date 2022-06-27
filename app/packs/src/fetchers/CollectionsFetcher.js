@@ -129,7 +129,7 @@ export default class CollectionsFetcher {
   }
 
   static createSync(params) {
-    return fetch('/api/v1/syncCollections/', {
+    return fetch('/api/v1/temp_collections/synced/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
