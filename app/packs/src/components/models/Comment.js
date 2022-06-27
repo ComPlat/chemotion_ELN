@@ -70,6 +70,14 @@ export default class Comment extends Element {
     this._resolver_name = resolver_name;
   }
 
+  get section() {
+    return this._section;
+  }
+
+  set section(section) {
+    this._section = section;
+  }
+
   serialize() {
     return super.serialize({
       content: this.content,
@@ -79,6 +87,7 @@ export default class Comment extends Element {
       status: this.status,
       submitter: this.submitter,
       resolver_name: this.resolver_name,
+      section: this.section,
     });
   }
 }
