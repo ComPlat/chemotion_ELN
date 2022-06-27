@@ -148,10 +148,12 @@ export default class CollectionTree extends React.Component {
       let children = []
       let label = ''
       let user = {}
+      let uid = -1;
       collection.collection_acls.forEach((acl) => {
         children.push(acl);
         label = `with ${acl.user.initials}`;
         user = acl.user;
+        uid = acl.id;
       })
       const sameSharedTo = collections.find(c => (c.label == label));
       if (sameSharedTo) {
@@ -159,6 +161,7 @@ export default class CollectionTree extends React.Component {
       } else {
         let sharedCollection = {}
         sharedCollection.id = collection.id;
+        sharedCollection.uid = uid;
         sharedCollection.label = label;
         sharedCollection.shared_to = user;
         sharedCollection.children = children;

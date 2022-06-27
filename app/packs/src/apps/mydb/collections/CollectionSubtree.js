@@ -113,8 +113,7 @@ export default class CollectionSubtree extends React.Component {
     let { visibleRootsIds } = CollectionStore.getState();
 
 
-    // let icon = this.state.visible ? 'minus' : 'plus';
-    let icon = (visibleRootsIds.indexOf(this.state.root.uid) > -1) ? 'minus' : 'plus';
+    let icon = this.state.visible ? 'minus' : 'plus';
     if (this.hasChildren()) {
       return (
         <Glyphicon
@@ -171,9 +170,11 @@ export default class CollectionSubtree extends React.Component {
 
     const shared =
       (this.props.root.user_id == currentUser.id && this.props.root.collection_id) ? true : false;
+    const collectionId = shared ? root.collection_id : root.id;
+    if (collectionId === undefined) return;
     const url = (shared)
-      ? `/temp_collections/shared/${root.collection_id}/${this.urlForCurrentElement()}`
-      : `/temp_collections/${root.id}/${this.urlForCurrentElement()}`;
+      ? `/temp_collections/shared/${collectionId}/${this.urlForCurrentElement()}`
+      : `/temp_collections/${collectionId}/${this.urlForCurrentElement()}`;
 
     Aviator.navigate(url, { silent: true });
     collectionID = this.state.root.collection_id || this.state.root.id;
