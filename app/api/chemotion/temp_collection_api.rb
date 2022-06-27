@@ -6,12 +6,12 @@ module Chemotion
       namespace :all do
         desc "Return the 'All' collection of the current user"
         get do
-          Collection.where(user_id: current_user.id)
-                    .joins('left join collection_acls acls on acls.collection_id = collections.id')
-                    .includes(collection_acls: :user)
+          collections = Collection.where(user_id: current_user.id)
+                                  .joins('left join collection_acls acls on acls.collection_id = collections.id')
+                                  .includes(collection_acls: :user)
+          collections.distinct
         end
       end
-      Collection.joins(:collection_acls).find_by('collection_acls.user_id = ? and collection_acls.collection_id = ?', 5, 205)
 
       desc 'Return collection by id'
       params do
@@ -128,7 +128,7 @@ module Chemotion
               User.where(email: val).pluck :id
             end
           end.flatten.compact.uniq
-          puts 'okay000000'
+
           Usecases::Sharing::ShareWithUsers.new(
             user_ids: uids,
             sample_ids: @sample_ids,
@@ -143,6 +143,62 @@ module Chemotion
             channel_subject: Channel::SHARED_COLLECTION_WITH_ME,
             message_from: current_user.id, message_to: uids,
             data_args: { 'shared_by': current_user.name }, level: 'info'
+          )
+        end
+      end
+
+      namespace :synced do
+        desc 'Create Sync collections'
+        params do
+          requires :collection_attributes, type: Hash do
+            requires :permission_level, type: Integer
+            requires :sample_detail_level, type: Integer
+            requires :reaction_detail_level, type: Integer
+            requires :wellplate_detail_level, type: Integer
+            requires :screen_detail_level, type: Integer
+            requires :element_detail_level, type: Integer
+          end
+          requires :user_ids, type: Array
+          requires :id, type: Integer
+        end
+
+        after_validation do
+          c = Collection.where(is_shared: false, id: params[:id], user_id: current_user.id).first
+          if c
+            samples =   c.samples
+            reactions = c.reactions
+            wellplates = c.wellplates
+            screens = c.screens
+
+            top_secret_sample = samples.pluck(:is_top_secret).any?
+            top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
+            top_secret_wellplate = wellplates.flat_map(&:samples).map(&:is_top_secret).any?
+            top_secret_screen = screens.flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any?
+
+            is_top_secret = top_secret_sample || top_secret_wellplate || top_secret_reaction || top_secret_screen
+
+            error!('401 Unauthorized', 401) if is_top_secret
+          end
+        end
+
+        post do
+          uids = params[:user_ids].map do |user_id|
+            val = user_id[:value].to_s.downcase
+            if /^[0-9]+$/.match?(val)
+              val.to_i
+            else
+              User.where(email: val).pluck :id
+            end
+          end.flatten.compact.uniq
+
+          params[:user_ids] = uids
+          Usecases::Sharing::SyncWithUsers.new(params).execute!
+
+          c = Collection.find_by(id: params[:id])
+          Message.create_msg_notification(
+          channel_subject: Channel::SYNCHRONIZED_COLLECTION_WITH_ME,
+          message_from: current_user.id, message_to: uids,
+          data_args: { synchronized_by: current_user.name, collection_name: c.label }, level: 'info'
           )
         end
       end
