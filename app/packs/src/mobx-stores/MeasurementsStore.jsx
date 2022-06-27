@@ -26,9 +26,12 @@ export const MeasurementsStore = types
     measurements: types.map(Measurement)
   })
   .actions(self => ({
-    addMeasurementsForSample(rawData) {
+    _storeMeasurementsForSample(rawData) {
       let sampleHeader = SampleHeaderForMeasurement.create({ id: rawData.id, name: rawData.name, short_label: rawData.short_label });
-      let measurements = rawData.measurements.map(measurement => Measurement.create({ ...measurement, header: sampleHeader.id }));
+      let measurements =
+        rawData
+          .measurements
+          .map(rawMeasurement => Measurement.create({ ...rawMeasurement, header: sampleHeader.id }));
 
       self.sampleHeaders.set(sampleHeader.id, sampleHeader);
       measurements.forEach(measurement => self.measurements.set(measurement.id, measurement));
@@ -38,25 +41,29 @@ export const MeasurementsStore = types
       // for more complex cases we should use the generator version.
       // see https://mobx-state-tree.js.org/concepts/async-actions for more details.
       MeasurementsFetcher.fetchMeasurementHierarchy(sampleId)
-        .then(result => result.forEach(entry => self.addMeasurementsForSample(entry)))
-        .then(afterComplete())
+        .then(result => result.forEach(entry => self._storeMeasurementsForSample(entry)))
+        .then(result => afterComplete())
     },
     deleteMeasurement(id, afterComplete = () => {}) {
       let measurement = self.measurements.get(id);
       if (!measurement) { return null; }
 
       MeasurementsFetcher.deleteMeasurement(id).then(result => {
-        if (result.success) { self.deleteMeasurementFromStore(id); }
+        if (result.success) { self._deleteMeasurementFromStore(id); }
         afterComplete();
       });
     },
-    deleteMeasurementFromStore(id) {
+    _deleteMeasurementFromStore(id) {
       let measurementToDelete = self.measurements.get(id);
       let isLastMeasurementForSample = values(self.measurements).filter(measurement => measurement.header == measurementToDelete.header).length == 1
       if (isLastMeasurementForSample) {
         self.sampleHeaders.delete(measurementToDelete.header.id);
       }
       self.measurements.delete(id);
+    },
+    createMeasurements(candidates, researchPlanId, afterComplete = (result) => {}) {
+      MeasurementsFetcher.createMeasurements(candidates, researchPlanId)
+        .then(result => afterComplete(result))
     }
   }))
   .views(self => ({

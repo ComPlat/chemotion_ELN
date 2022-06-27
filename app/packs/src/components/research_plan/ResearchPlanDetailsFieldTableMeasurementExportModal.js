@@ -4,10 +4,24 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton, MenuItem } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
+import { observer } from 'mobx-react';
+
 import LoadingActions from '../actions/LoadingActions';
-import MeasurementsFetcher from '../fetchers/MeasurementsFetcher';
+import { StoreContext } from '../../mobx-stores/RootStore';
 
 class MeasurementCandidate extends Component {
+  static propTypes = {
+    description: PropTypes.string,
+    errors: PropTypes.array,
+    id: PropTypes.number,
+    onChange: PropTypes.func.isRequired,
+    sample_identifier: PropTypes.string,
+    selected: PropTypes.bool.isRequired,
+    unit: PropTypes.string,
+    uuid: PropTypes.string.isRequired,
+    value: PropTypes.string,
+  };
+
   constructor(props) {
     super(props);
   }
@@ -56,19 +70,15 @@ class MeasurementCandidate extends Component {
     );
   }
 }
-MeasurementCandidate.propTypes = {
-  description: PropTypes.string,
-  errors: PropTypes.array,
-  id: PropTypes.number,
-  onChange: PropTypes.func.isRequired,
-  sample_identifier: PropTypes.string,
-  selected: PropTypes.bool.isRequired,
-  unit: PropTypes.string,
-  uuid: PropTypes.string.isRequired,
-  value: PropTypes.string,
-};
 
-export default class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
+class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
+  static propTypes = {
+    show: PropTypes.bool,
+    onHide: PropTypes.func.isRequired,
+    rows: PropTypes.array.isRequired,
+    columns: PropTypes.array.isRequired,
+  };
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -104,22 +114,25 @@ export default class ResearchPlanDetailsFieldTableMeasurementExportModal extends
       return;
     }
     LoadingActions.start();
-    MeasurementsFetcher.createMeasurements(selectedCandidates, this.state.researchPlanId).then((result) => {
-      result.forEach((measurement) => {
-        var index = measurementCandidates.findIndex(candidate => candidate.uuid === measurement.uuid);
-        if (index > -1) { // safeguard to make sure the script does not crash if for whatever reason the candidate can not be found
-          if (measurement.errors.length === 0) {
-            measurementCandidates[index].id = measurement.id
-            measurementCandidates[index].selected = false
-          } else {
-            measurement.errors.forEach(error => measurementCandidates[index].errors.push(error))
+    this.context.measurements.createMeasurements(
+      selectedCandidates,
+      this.state.researchPlanId,
+      (result) => {
+        result.forEach((measurement) => {
+          var index = measurementCandidates.findIndex(candidate => candidate.uuid === measurement.uuid);
+          if (index > -1) { // safeguard to make sure the script does not crash if for whatever reason the candidate can not be found
+            if (measurement.errors.length === 0) {
+              measurementCandidates[index].id = measurement.id
+              measurementCandidates[index].selected = false
+            } else {
+              measurement.errors.forEach(error => measurementCandidates[index].errors.push(error))
+            }
           }
-        }
-      });
-      this.setState({ measurementCandidates });
-      LoadingActions.stop();
-    });
-
+        });
+        this.setState({ measurementCandidates });
+        LoadingActions.stop();
+      }
+    );
   }
 
   readyForSubmit() {
@@ -308,9 +321,4 @@ export default class ResearchPlanDetailsFieldTableMeasurementExportModal extends
   }
 }
 
-ResearchPlanDetailsFieldTableMeasurementExportModal.propTypes = {
-  show: PropTypes.bool,
-  onHide: PropTypes.func.isRequired,
-  rows: PropTypes.array.isRequired,
-  columns: PropTypes.array.isRequired,
-};
+export default observer(ResearchPlanDetailsFieldTableMeasurementExportModal);
