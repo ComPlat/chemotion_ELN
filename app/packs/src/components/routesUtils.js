@@ -29,8 +29,7 @@ const collectionShow = (e) => {
       UIActions.selectCollectionWithoutUpdating(collection);
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
-        collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me });
+        collectionId: collection.id});
     } else {
       UIActions.selectCollection(collection);
     }
@@ -63,14 +62,13 @@ const scollectionShow = (e) => {
   collectionPromise = CollectionStore.findBySId(collectionId);
 
   collectionPromise.then((result) => {
-    const collection = result.sync_collections_user;
+    const collection = result.collection;
 
     if (currentSearchSelection) {
       UIActions.selectCollectionWithoutUpdating(collection);
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
-        collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me });
+        collectionId: collection.id});
     } else {
       UIActions.selectSyncCollection(collection);
     }

@@ -139,7 +139,7 @@ class CollectionStore {
     // if not loaded already fetch collection from backend
     if(!foundCollection) {
       // TODO maybe move to CollectionsFetcher
-      promise = fetch('/api/v1/collections/' + collectionId, {
+      promise = fetch('/api/v1/temp_collections/' + collectionId, {
         credentials: 'same-origin',
         method: 'GET'
       }).then((response) => {
@@ -163,7 +163,7 @@ class CollectionStore {
     }).pop();
     let promise;
     if(!foundCollection) {
-      promise = fetch('/api/v1/syncCollections/' + collectionId, {
+      promise = fetch('/api/v1/temp_collections/shared/' + collectionId, {
         credentials: 'same-origin',
         method: 'GET'
       }).then((response) => {
