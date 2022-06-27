@@ -297,7 +297,7 @@ class UIStore {
     this.state[element.type].currentId = element.id;
   }
 
-  handleSelectCollection(collection, hasChanged = false) {
+  handleSelectCollection(collection, hasChanged = false, isShared) {
     const state = this.state;
     const isSync = collection.is_sync_to_me ? true : false;
     const { filterCreatedAt, fromDate, toDate, productOnly } = state;
@@ -305,7 +305,6 @@ class UIStore {
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
       hasChanged = hasChanged || state.currentCollection.id != collection.id;
-      hasChanged = hasChanged || isSync != state.isSync;
       hasChanged = hasChanged || state.currentSearchSelection != null;
       hasChanged = hasChanged || state.currentSearchByID != null;
     }
@@ -325,41 +324,40 @@ class UIStore {
 
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
-
         if (state.currentSearchByID) {
           this.handleSelectCollectionForSearchById(layout, collection);
         } else {
           if (layout.sample && layout.sample > 0) {
             ElementActions.fetchSamplesByCollectionId(
               collection.id, Object.assign(params, { page: state.sample.page }),
-              isSync, ElementStore.getState().moleculeSort
+              isShared, ElementStore.getState().moleculeSort
             );
           }
           if (layout.reaction && layout.reaction > 0) {
             ElementActions.fetchReactionsByCollectionId(
               collection.id, Object.assign(params, { page: state.reaction.page }),
-              isSync
+              isShared
             );
           }
           if (layout.wellplate && layout.wellplate > 0) {
             ElementActions.fetchWellplatesByCollectionId(
               collection.id, Object.assign(params, { page: state.wellplate.page }),
-              isSync
+              isShared
             );
           }
           if (layout.screen && layout.screen > 0) {
             ElementActions.fetchScreensByCollectionId(
               collection.id, Object.assign(params, { page: state.screen.page }),
-              isSync
+              isShared
             );
           }
-          if (!isSync && layout.research_plan && layout.research_plan > 0) {
+          if (!isShared && layout.research_plan && layout.research_plan > 0) {
             ElementActions.fetchResearchPlansByCollectionId(
               collection.id,
               Object.assign(params, { page: state.research_plan.page }),
             );
           }
-          if (!isSync && layout.cell_line && layout.cell_line > 0) {
+          if (!isShared && layout.cell_line && layout.cell_line > 0) {
             ElementActions.fetchCellLinesByCollectionId(
               collection.id,
               Object.assign(params, { page: state.cell_line.page }),
@@ -434,7 +432,8 @@ class UIStore {
   }
 
   handleSelectSyncCollection(collection) {
-    this.handleSelectCollection(collection)
+    const isShared = true
+    this.handleSelectCollection(collection, false, isShared)
   }
 
   // FIXME this method is also defined in ElementStore
