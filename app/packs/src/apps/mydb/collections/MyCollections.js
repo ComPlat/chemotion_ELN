@@ -44,8 +44,8 @@ export default class MyCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
-
+    let children = state.myCollections.length > 0 ? state.myCollections : [{}];
+    children = children.filter(c => (c.is_shared === false));
     this.setState({
       tree: {
         label: 'My Collections',
@@ -155,7 +155,7 @@ export default class MyCollections extends React.Component {
   }
 
   renderSync(node) {
-    let syncOut = node.sync_collections_users;
+    let syncOut = node.collection_acls;
     let users = [];
 
     if (syncOut) {
@@ -163,7 +163,7 @@ export default class MyCollections extends React.Component {
         return (
           <div className="node">
             <span key={ind} className="collection-sync-info">
-              <UserInfoIcon type={collection.type} /> {collection.name}
+              <UserInfoIcon type={collection.user.type} /> {collection.user.name}
               &nbsp; <PermissionIcons pl={collection.permission_level} />
             </span>
             <ButtonGroup className="actions">
@@ -191,7 +191,7 @@ export default class MyCollections extends React.Component {
   doSync(node, action) {
     let { modalProps, active } = this.state
     modalProps.title = action == "CreateSync"
-      ? "Synchronize '" + node.label + "'"
+      ? "Share '" + node.label + "'"
       : "Edit Synchronization"
     modalProps.show = true
     modalProps.action = action

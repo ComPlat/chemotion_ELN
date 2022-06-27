@@ -157,9 +157,9 @@ export default class CollectionSubtree extends React.Component {
     const { root } = this.state;
     let { visible } = this.state;
     const uiState = UIStore.getState();
-    visible = this.isVisible(root, uiState) || visible;
-      if (this.isVisible(root, uiState) == true){
-    }
+    // visible = this.isVisible(root, uiState) || visible;
+    //   if (this.isVisible(root, uiState) == true){
+    // }
     this.setState({ visible });
     let collectionID = 'all';
     if (root.label === 'All' && root.is_locked) {
@@ -212,7 +212,10 @@ export default class CollectionSubtree extends React.Component {
   }
 
   synchronizedIcon() {
-    let sharedUsers = this.state.root.collection_acls;
+    let collectionAcls = this.state.root.collection_acls;
+    if (collectionAcls === undefined) return;
+    let sharedUsers = [];
+    collectionAcls.forEach(c => sharedUsers.push(c.user))
     return (
       sharedUsers && sharedUsers.length > 0
         ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers})}>

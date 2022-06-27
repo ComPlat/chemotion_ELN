@@ -10,38 +10,24 @@ module Usecases
       def execute!
         ActiveRecord::Base.transaction do
           collection_attributes = @params.fetch(:collection_attributes, {})
-          keys = SyncCollectionsUser.attribute_names - %w[id fake_ancestry]
-          sync_collection_attributes = collection_attributes.select do |k, _v|
+          keys = CollectionAcl.attribute_names - %w[id fake_ancestry]
+          acl_collection_attributes = collection_attributes.select do |k, _v|
             k.to_s.match(/#{keys.join('|')}/)
           end
-          sync_collections_user = SyncCollectionsUser.find_or_create_by(
-            user_id: sync_collection_attributes['user_id'],
-            collection_id: sync_collection_attributes['collection_id'],
-            shared_by_id: sync_collection_attributes['shared_by_id']
+          acl_col = CollectionAcl.find_or_create_by(
+            user_id: acl_collection_attributes['user_id'],
+            collection_id: acl_collection_attributes['collection_id']
           )
-          sync_collections_user.update(
-            permission_level: sync_collection_attributes['permission_level'],
-            sample_detail_level: sync_collection_attributes['sample_detail_level'],
-            reaction_detail_level: sync_collection_attributes['reaction_detail_level'],
-            wellplate_detail_level: sync_collection_attributes['wellplate_detail_level'],
-            screen_detail_level: sync_collection_attributes['screen_detail_level'],
-            label: sync_collection_attributes['label']
+          acl_col.update_attributes(
+            permission_level: acl_collection_attributes['permission_level'],
+            sample_detail_level: acl_collection_attributes['sample_detail_level'],
+            reaction_detail_level: acl_collection_attributes['reaction_detail_level'],
+            wellplate_detail_level: acl_collection_attributes['wellplate_detail_level'],
+            screen_detail_level: acl_collection_attributes['screen_detail_level'],
+            label: acl_collection_attributes['label']
           )
-
-          current_user_id = collection_attributes.fetch(:shared_by_id)
 
           # find or create and assign parent collection ()
-          root_label = format('with %s', sync_collections_user.user.name_abbreviation)
-          root_collection_attributes = {
-            label: root_label,
-            user_id: collection_attributes[:user_id],
-            shared_by_id: current_user_id,
-            is_locked: true,
-            is_shared: true
-          }
-
-          rc = Collection.find_or_create_by(root_collection_attributes)
-          sync_collections_user.update(fake_ancestry: rc.id.to_s)
 
           # SendSharingNotificationJob.perform_later(@user, '')
         end
