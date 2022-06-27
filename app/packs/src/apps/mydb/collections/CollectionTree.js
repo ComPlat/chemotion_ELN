@@ -104,7 +104,8 @@ export default class CollectionTree extends React.Component {
 
   sharedSubtrees() {
     let { sharedRoots, sharedToCollectionVisible, myCollections } = this.state;
-    const collections = [];
+    myCollections = myCollections.filter(c => (c.is_shared === true));
+    let collections = [];
     let sharedCollectionRoots = {};
     myCollections.forEach((collection) => {
       let children = []
@@ -115,8 +116,12 @@ export default class CollectionTree extends React.Component {
         label = `with ${acl.user.initials}`;
         user = acl.user;
       })
-      if (collection.collection_acls.length > 0){
+      const sameSharedTo = collections.find(c => (c.label == label));
+      if (sameSharedTo) {
+        children.forEach(c => sameSharedTo.children.push(c))
+      } else {
         let sharedCollection = {}
+        sharedCollection.id = collection.id;
         sharedCollection.label = label;
         sharedCollection.shared_to = user;
         sharedCollection.children = children;
@@ -148,7 +153,7 @@ export default class CollectionTree extends React.Component {
       </div>
     )
     return this.subtrees(sharedCollectionRoots, subTreeLabels,
-      false, sharedToCollectionVisible)
+      false, sharedToCollectionVisible, 'shared_to')
   }
 
   remoteSubtrees() {
@@ -203,7 +208,7 @@ export default class CollectionTree extends React.Component {
     )
 
     return this.subtrees(labelledRoots, subTreeLabels,
-      false, sharedWithCollectionVisible)
+      false, sharedWithCollectionVisible, 'shared_by')
   }
 
   inboxSubtrees() {
@@ -253,24 +258,28 @@ export default class CollectionTree extends React.Component {
   sharedWithMeSubtrees() {
     let { syncInRoots, syncCollectionVisible, sharedCollections } = this.state
     syncInRoots = this.removeOrphanRoots(syncInRoots)
+    sharedCollections = sharedCollections.filter(c => (c.shared_by !== null));
 
     const collections = [];
     let sharedLabelledRoots = {};
     sharedCollections.forEach((collection) => {
       let children = [];
-      let label = '';
+      let label = `by ${collection.shared_by.initials}`;
       let user = {};
       let uid = -1;
       collection.collection_acls.forEach((acl) => {
         children.push(acl);
-        label = `by ${acl.user.initials}`;
         user = acl.user;
         uid = acl.id;
       })
-      if (collection.collection_acls.length > 0){
-        let sharedCollection = {};
-        sharedCollection.label = label;
+
+      const sameSharedTo = collections.find(c => (c.label == label));
+      if (sameSharedTo) {
+        children.forEach(c => sameSharedTo.children.push(c))
+      } else {
+        let sharedCollection = {}
         sharedCollection.uid = uid;
+        sharedCollection.label = label;
         sharedCollection.shared_to = user;
         sharedCollection.shared_by = collection.shared_by;
         sharedCollection.children = children;
@@ -302,7 +311,7 @@ export default class CollectionTree extends React.Component {
     )
 
     return this.subtrees(labelledRoots, subTreeLabels,
-      false, syncCollectionVisible)
+      false, syncCollectionVisible, 'shared_by')
   }
 
 
@@ -324,10 +333,11 @@ export default class CollectionTree extends React.Component {
     return name.toLowerCase()
   }
 
-  subtrees(roots, label, isRemote, visible = true) {
+  subtrees(roots, label, isRemote, visible = true, sharedToOrBy) {
+
     if (roots.length == undefined ) return <div />
     let subtrees = roots.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} isRemote={isRemote} />
+      return <CollectionSubtree root={root} key={index} isRemote={isRemote} sharedToOrBy={sharedToOrBy} />
     })
 
     let subtreesVisible = visible ? "" : "none"

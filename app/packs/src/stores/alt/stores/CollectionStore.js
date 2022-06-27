@@ -145,7 +145,7 @@ class CollectionStore {
     }).pop();
     let promise;
     if (!foundCollection) {
-      promise = fetch('/api/v1/syncCollections/' + collectionId, {
+      promise = fetch('/api/v1/temp_collections/shared/' + collectionId, {
         credentials: 'same-origin',
         method: 'GET'
       }).then((response) => {
