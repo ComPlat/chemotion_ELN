@@ -282,15 +282,15 @@ class ElementActions {
         .then((result) => {
           dispatch({ui_state: ui_state, name: name});
         }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+        console.log(errorMessage);
+      });
     };
   }
-  
-  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
+
+  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsShared = false,
     moleculeSort = false) {
     return (dispatch) => {
-      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, moleculeSort)
+      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsShared, moleculeSort)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
