@@ -302,6 +302,10 @@ class User < ApplicationRecord
     CollectionAcl.where('user_id = ?', id)
   end
 
+  def acl_collection_by_id(col_id)
+    Collection.joins(:collection_acls)
+              .find_by('collection_acls.user_id = ? and collection_acls.collection_id = ?', id, col_id)
+  end
   def current_affiliations
     Affiliation.joins(
       'INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id'

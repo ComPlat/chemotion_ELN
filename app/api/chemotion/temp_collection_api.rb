@@ -11,20 +11,34 @@ module Chemotion
                     .includes(collection_acls: :user)
         end
       end
-      namespace :shared do
-        desc 'Return the collection shared with current user'
-        get do
-          Collection.joins(:collection_acls).includes(:user).where('collection_acls.user_id = ?', current_user.id)
-        end
+      Collection.joins(:collection_acls).find_by('collection_acls.user_id = ? and collection_acls.collection_id = ?', 5, 205)
 
+      desc 'Return collection by id'
+      params do
+        requires :id, type: Integer, desc: 'Collection id'
+      end
+      route_param :id, requirements: { id: /[0-9]*/ } do
+        get do
+          Collection.find(params[:id])
+        end
+      end
+
+      namespace :shared do
         desc 'Return shared collection by id'
         params do
           requires :id, type: Integer, desc: 'Collection id'
         end
         route_param :id, requirements: { id: /[0-9]*/ } do
           get do
-            current_user.all_acl_collection_users.find(params[:id])
+            current_user.acl_collection_by_id(params[:id])
           end
+        end
+      end
+
+      namespace :shared do
+        desc 'Return the collection shared with current user'
+        get do
+          Collection.joins(:collection_acls).includes(:user).where('collection_acls.user_id = ?', current_user.id)
         end
 
         desc 'Create shared collections'

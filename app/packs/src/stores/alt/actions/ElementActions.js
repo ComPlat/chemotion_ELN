@@ -242,10 +242,10 @@ class ElementActions {
     };
   }
 
-  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
+  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsShared = false,
     moleculeSort = false) {
     return (dispatch) => {
-      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, moleculeSort)
+      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsShared, moleculeSort)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {

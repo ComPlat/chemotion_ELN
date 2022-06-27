@@ -30,7 +30,7 @@ class ElementPermissionProxy
     sc= @sync_collections
     # if user owns none of the collections which include the element, return minimum level
     @dl = 0
-    return @dl if c.empty? && sc.empty?
+    return @dl if c.empty?
 
     # Fall 1: User gehört eine unshared Collection, die das Element enthält -> alles
     # Fall 2: User besitzt mindestens einen Share, der das Element enthält...von diesen Shares nutzt man das maximale

@@ -278,7 +278,7 @@ class UIStore {
     this.state[element.type].currentId = element.id;
   }
 
-  handleSelectCollection(collection, hasChanged = false) {
+  handleSelectCollection(collection, hasChanged = false, isShared) {
     const state = this.state;
     const isSync = collection.is_sync_to_me ? true : false;
     const { filterCreatedAt, fromDate, toDate, productOnly } = state;
@@ -286,7 +286,6 @@ class UIStore {
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
       hasChanged = hasChanged || state.currentCollection.id != collection.id;
-      hasChanged = hasChanged || isSync != state.isSync;
       hasChanged = hasChanged || state.currentSearchSelection != null;
     }
 
@@ -308,7 +307,7 @@ class UIStore {
         if (layout.sample && layout.sample > 0) {
           ElementActions.fetchSamplesByCollectionId(
             collection.id, Object.assign(params, { page: state.sample.page }),
-            isSync, ElementStore.getState().moleculeSort
+            isShared, ElementStore.getState().moleculeSort
           );
         }
         if (layout.reaction && layout.reaction > 0) {
@@ -352,7 +351,8 @@ class UIStore {
   }
 
   handleSelectSyncCollection(collection) {
-    this.handleSelectCollection(collection)
+    const isShared = true
+    this.handleSelectCollection(collection, false, isShared)
   }
 
   // FIXME this method is also defined in ElementStore
