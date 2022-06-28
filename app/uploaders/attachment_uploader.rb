@@ -69,12 +69,13 @@ class AttachmentUploader < Shrine
         result[:thumbnail] = File.open(thumb_path, 'rb')
         record[:thumb] = true
     end
+
     creator=AnnotationCreator.new();
     result=creator.createDerivative(
-        "#{dir}/#{file_basename}.annotation.png",
-        original,
-        @context[:record].id,
-        result);
+      "#{dir}/#{file_basename}.annotation.png",
+      original,
+      @context[:record].id,
+      result);
 
     result
     ensure

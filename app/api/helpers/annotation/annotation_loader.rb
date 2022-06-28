@@ -17,9 +17,9 @@ class AnnotationLoader
 
 
     def isAnnotationJsonAbsent(attachment_data)
-        !attachment_data||
-        !attachment_data['derivatives']||
-        !attachment_data['derivatives']['annotation']||
-        !attachment_data['derivatives']['annotation']['id']
+        return !attachment_data||
+            !attachment_data['derivatives']||
+            !attachment_data['derivatives']['annotation']||
+            !attachment_data['derivatives']['annotation']['id']
     end
 end
