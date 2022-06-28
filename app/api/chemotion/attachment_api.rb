@@ -115,6 +115,7 @@ module Chemotion
               attachable_type: attachable_type,
               attachable_id: attachable_id
             )
+
             begin
               a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
               if a.valid?
@@ -345,6 +346,7 @@ module Chemotion
         content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
+
         uploaded_file = if params[:version].nil?
                            @attachment.attachment_attacher.file
                         else

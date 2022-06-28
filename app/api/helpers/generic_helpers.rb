@@ -61,7 +61,7 @@ module GenericHelpers
           ActiveRecord::Base.transaction do
             begin
               a.save!
-      
+
               a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
               if a.valid?
                 a.save!
@@ -99,9 +99,10 @@ module GenericHelpers
         ActiveRecord::Base.transaction do
           begin
             a.save!
-    
+
             a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
             if a.valid?
+              a.attachment_attacher.create_derivatives
               a.save!
               attach_ary.push(a.id)
             else

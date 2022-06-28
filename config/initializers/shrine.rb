@@ -3,8 +3,8 @@ require "shrine/storage/file_system"
 shrine_storage = Rails.application.config_for :shrine_config
 
 Shrine.storages = {
-  cache: Shrine::Storage::FileSystem.new(shrine_storage[:store]), # temporary
-  store: Shrine::Storage::FileSystem.new(shrine_storage[:cache]) # permanent
+  cache: Shrine::Storage::FileSystem.new(shrine_storage[:cache]), # temporary
+  store: Shrine::Storage::FileSystem.new(shrine_storage[:store]) # permanent
 }
 
 Shrine.plugin :activerecord           # loads Active Record integration
