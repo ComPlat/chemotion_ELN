@@ -1,3 +1,7 @@
+export const filePreview = (file) => {
+  return file.type.split('/')[0] === 'image' ? file.preview : '/images/wild_card/not_available.svg';
+};
+
 export const formatSection = (section, type = '') => {
   const words = type ? section.replace(`${type}_`, '').split('_') : section.replace('_header', '').split('_');
 
