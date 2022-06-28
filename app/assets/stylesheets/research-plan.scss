@@ -133,6 +133,7 @@
     width: 100%;
     border: 3px dashed lightgray;
     display: flex;
+    cursor:pointer;
     .zone {
         margin: auto;
         color: grey;
@@ -146,9 +147,9 @@
     display: flex;
     cursor: not-allowed;
     background-color: #e8e8e8;
+    pointer-events: none;
     .zone {
         margin: auto;
         color: grey;
-        pointer-events: none;
     }
 }
