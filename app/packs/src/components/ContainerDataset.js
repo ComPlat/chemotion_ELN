@@ -137,7 +137,7 @@ export default class ContainerDataset extends Component {
 
   listGroupItem(attachment) {
     const { disabled } = this.props;
-    const preview = (attachment.preview ? (<tr><td rowSpan="2" width="128"><img src={attachment.preview} alt="" /></td></tr>) : (
+    const preview = (attachment.preview ? (<tr><td rowSpan="2" width="128"><img style={{ width: '85%', display: 'block' }} src={attachment.preview} alt="" /></td></tr>) : (
       <tr><td rowSpan="2" width="128"><img style={{ width: '128px', display: 'block' }} alt="" /></td></tr>
     ));
     if (attachment.is_deleted) {
