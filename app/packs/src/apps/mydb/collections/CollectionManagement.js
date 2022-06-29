@@ -12,8 +12,7 @@ const CollectionManagement = () => {
     <Tab eventKey={0} key={0} title="My Collections"><MyCollections /></Tab>,
     <Tab eventKey={1} key={1} title="My Shared Collections"><MySharedCollections /></Tab>,
     <Tab eventKey={2} key={2} title="Collections shared with me "><SharedWithMeCollections /></Tab>,
-    <Tab eventKey={3} key={3} title="Collections synchronized with me "><SyncWithMeCollections /></Tab>,
-    <Tab eventKey={4} key={4} title="Collection Tabs"><CollectionTabs /></Tab>
+    <Tab eventKey={3} key={3} title="Collection Tabs"><CollectionTabs /></Tab>
   ];
 
   return (
