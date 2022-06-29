@@ -16,8 +16,9 @@ module SVG
     TIME_UNIT = {
       'se' => 'sec',
       'mi' => 'min',
-      'ho' => 'hr',
-      'hr' => 'hr',
+      'ho' => 'h',
+      'hr' => 'h',
+      'h' => 'h',
       'da' => 'd',
       'we' => 'w',
       'mo' => 'm',
@@ -372,7 +373,7 @@ module SVG
       materials.each do |m|
         material, = *separate_material_yield(m)
         svg = inner_file_content(material)
-        vb = svg && svg['viewBox']&.split(/\s+/)&.map(&:to_i) || [0, 0, 0, 0]
+        vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || [0, 0, 0, 0]
         max < vb[3] && (max = vb[3])
       end
       max
@@ -473,7 +474,7 @@ module SVG
 
         material, = *separate_material_yield(m)
         svg = inner_file_content(material)
-        vb = svg['viewBox']&.split(/\s+/)&.map(&:to_i) || []
+        vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || []
         unless vb.empty?
           x_shift = group_width + 10 - vb[0]
           y_shift = (y_center + vb[3] / 2).round
@@ -519,8 +520,9 @@ module SVG
         end
         material, yield_amount = *separate_material_yield(m)
         svg = inner_file_content(material)
-        vb = svg && svg['viewBox']&.split(/\s+/)&.map(&:to_i) || []
+        vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || []
         unless vb.empty?
+
           x_shift = group_width + 10 - vb[0]
           y_shift = (y_center - vb[3] / 2).round
           yield_svg = ''
