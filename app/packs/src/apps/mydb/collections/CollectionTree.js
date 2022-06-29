@@ -14,6 +14,7 @@ import InboxStore from 'src/stores/alt/stores/InboxStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import SampleTaskNavigationElement from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskNavigationElement';
 import SampleTaskInbox from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskInbox';
+import { filterMySharedCollection, filterSharedWithMeCollection } from './CollectionTreeStructure'
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
@@ -141,34 +142,9 @@ export default class CollectionTree extends React.Component {
 
   sharedSubtrees() {
     let { sharedRoots, sharedToCollectionVisible, myCollections } = this.state;
-    myCollections = myCollections.filter(c => (c.is_shared === true));
-    let collections = [];
-    let sharedCollectionRoots = {};
-    myCollections.forEach((collection) => {
-      let children = []
-      let label = ''
-      let user = {}
-      let uid = -1;
-      collection.collection_acls.forEach((acl) => {
-        children.push(acl);
-        label = `with ${acl.user.initials}`;
-        user = acl.user;
-        uid = acl.id;
-      })
-      const sameSharedTo = collections.find(c => (c.label == label));
-      if (sameSharedTo) {
-        children.forEach(c => sameSharedTo.children.push(c))
-      } else {
-        let sharedCollection = {}
-        sharedCollection.id = collection.id;
-        sharedCollection.uid = uid;
-        sharedCollection.label = label;
-        sharedCollection.shared_to = user;
-        sharedCollection.children = children;
-        collections.push(sharedCollection);
-      }
-    });
+    let collections = filterMySharedCollection(myCollections);
 
+    let sharedCollectionRoots = {};
     if (collections.length > 0) {
       sharedCollectionRoots = collections.map(e => {
         return update(e, {
@@ -296,37 +272,9 @@ export default class CollectionTree extends React.Component {
 
   // remoteSyncInSubtrees() {
   sharedWithMeSubtrees() {
-    let { syncInRoots, syncCollectionVisible, sharedCollections } = this.state
-    syncInRoots = this.removeOrphanRoots(syncInRoots)
-    sharedCollections = sharedCollections.filter(c => (c.shared_by !== null));
-
-    const collections = [];
+    let { syncCollectionVisible, sharedCollections } = this.state
+    let collections = filterSharedWithMeCollection(sharedCollections);
     let sharedLabelledRoots = {};
-    sharedCollections.forEach((collection) => {
-      let children = [];
-      let label = `by ${collection.shared_by.initials}`;
-      let user = {};
-      let uid = -1;
-      collection.collection_acls.forEach((acl) => {
-        children.push(acl);
-        user = acl.user;
-        uid = acl.id;
-      })
-
-      const sameSharedTo = collections.find(c => (c.label == label));
-      if (sameSharedTo) {
-        children.forEach(c => sameSharedTo.children.push(c))
-      } else {
-        let sharedCollection = {}
-        sharedCollection.uid = uid;
-        sharedCollection.label = label;
-        sharedCollection.shared_to = user;
-        sharedCollection.shared_by = collection.shared_by;
-        sharedCollection.children = children;
-        collections.push(sharedCollection);
-      }
-    });
-
     sharedLabelledRoots = collections.map(e => {
       return update(e, {
         label: {
