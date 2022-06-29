@@ -4,6 +4,7 @@ import { Button, ButtonGroup, FormControl, Modal } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import { filterMySharedCollection } from '../CollectionTreeStructure';
 
 export default class MySharedCollections extends React.Component {
   constructor(props) {
@@ -31,7 +32,7 @@ export default class MySharedCollections extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onStoreChange)
-    CollectionActions.fetchSharedCollectionRoots()
+    CollectionActions.fetchMyCollections()
   }
 
   componentWillUnmount() {
@@ -39,7 +40,8 @@ export default class MySharedCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.sharedRoots.length > 0 ? state.sharedRoots : [{}];
+    let children = state.myCollections.length > 0 ? state.myCollections : [{}];
+    children = filterMySharedCollection(children);
 
     this.setState({
       tree: {
