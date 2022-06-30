@@ -5,15 +5,9 @@ module CollectionHelpers
   #  if current_user is associated to it (owned or shared)
   #  or to the sync_collections_user
   # return 0 if no association
-  def fetch_collection_id_w_current_user(id, is_sync = false)
-    if is_sync
-      SyncCollectionsUser.find_by(
-        id: id.to_i, user_id: user_ids
-      )&.collection_id
-    else
+  def fetch_collection_id_w_current_user(id)
       (Collection.find_by(id: id.to_i, user_id: user_ids) ||
-        Collection.find_by(id: id.to_i, shared_by_id: current_user.id))&.id
-    end.to_i
+        Collection.find_by(id: id.to_i, shared_by_id: current_user.id))&.id.to_i
   end
 
   def fetch_collection_w_current_user(id, is_sync = false)

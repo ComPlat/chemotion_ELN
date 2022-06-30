@@ -74,12 +74,11 @@ module Chemotion
           end
           requires :currentCollection, type: Hash do
             requires :id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
           end
         end
 
         after_validation do
-          @cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
+          @cid = fetch_collection_id_w_current_user(params[:currentCollection][:id])
           samples = Sample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:sample]).for_user_n_groups(user_ids)
           reactions = Reaction.by_collection_id(@cid).by_ui_state(params[:elements_filter][:reaction]).for_user_n_groups(user_ids)
           wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
