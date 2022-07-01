@@ -16,7 +16,12 @@ const objToKeyValPairs = (obj = []) => (
   }, {})
 );
 
-const stdPreviews = ({ previewObjs, splSettings, rxnSettings, configs }) => {
+const stdPreviews = ({
+  previewObjs,
+  splSettings,
+  rxnSettings,
+  configs
+}) => {
   const splSettingsPairs = objToKeyValPairs(splSettings);
   const rxnSettingsPairs = objToKeyValPairs(rxnSettings);
   const configsPairs = objToKeyValPairs(configs);

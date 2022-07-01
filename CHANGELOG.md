@@ -1,4 +1,5 @@
 
+
 # Chemotion_ELN Changelog
 
 
@@ -6,16 +7,60 @@
 > yyyy-mm-dd
 
 * Features and Improvements:
+  * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
+  * Screens:
+    * Research Plans may be added to Screens
+    * Associated Research Plans may be edited from Screens
+  * Research Plans:
+    * Wellplates may be added to Research Plans
+  * Wellplates:
+    * Add short label with user prefix and user's Wellplate count
+    * Wells have multiple readouts now
+    * Add title for readouts and display of multiple readouts in designer and list
+    * Add attachments
+    * Add import for well data from .xlsx and import template .xlsx
+
+
+* Fixes
+  * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
+  * Reference Style improvement [Reference Style improvement #695](https://github.com/ComPlat/chemotion_ELN/issues/695)
+  * Adjust docker setup to work on mac
+
+
+## [v1.2.1]
+> 2022-05-10
+
+* Fixes
+  * export dataset attachments with no hyperlink present
+  * analysis: preview latest processed image
+  * rails patch upd
+  * npx audit fix
+
+
+## [v1.2.0]
+> 2022-04-14
+
+* Features and Improvements:
   * fast input: sample creation
     - users can create samples by entering the CAS Registry Number or SMILES
   * SciFinder-n Search: integrate SciFinder-n into ELN and user can search in SciFinder for substances/reactions/references/suppliers by structure
+  * analytics converter integration
+  * OIDC signin
 
-# [v1.1.3]
+
+## [v1.1.4]
+> 2022-04-14
+
+* Fixes
+  * Ketcher icons missing (since 1.1.3)
+
+
+## [v1.1.3]
 > 2022-04-05
 
 * Fixes
-  * npx-audit and Gem patches 
-  * migration 
+  * npx-audit and Gem patches
+  * migration
   * reaction prediction UI
 
 
@@ -23,15 +68,15 @@
 > 2022-03-25
 
 * Fixes
-  * upd chemspectra client: XRD d-value 
-  * add product to reaction 
+  * upd chemspectra client: XRD d-value
+  * add product to reaction
 
 
 ## [v1.1.1]
 > 2022-03-08
 
 * Fixes
-  * uniq sample short-label while creating reaction 
+  * uniq sample short-label while creating reaction
   * customized toolbar refresh issue in quill editor
   * rendering of the group list when deleting multiple groups
   * permission to add elements to sync-collections

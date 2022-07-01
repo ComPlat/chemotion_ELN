@@ -26,13 +26,13 @@ export default class ElementalComposition extends React.Component {
           </strong>
           &nbsp;
           &nbsp;
-          {value}
+          {Number(value).toFixed(2)}
           &nbsp;
           &nbsp;
         </span>
       );
     });
-
+    
     return elements;
   }
 

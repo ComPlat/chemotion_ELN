@@ -1,23 +1,26 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem } from 'react-bootstrap';
-import { findIndex } from 'lodash';
+import { unionBy, findIndex } from 'lodash';
+import Immutable from 'immutable';
 import ElementCollectionLabels from '../ElementCollectionLabels';
 import UIActions from '../actions/UIActions';
 import ElementActions from '../actions/ElementActions';
+import ElementStore from '../stores/ElementStore';
 import DetailActions from '../actions/DetailActions';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import ResearchPlansLiteratures from '../DetailsTabLiteratures';
+import ResearchPlanWellplates from '../ResearchPlanWellplates';
 import ResearchPlansMetadata from '../DetailsTabMetadata';
 import Attachment from '../models/Attachment';
 import Utils from '../utils/Functions';
 import LoadingActions from '../actions/LoadingActions';
 import ConfirmClose from '../common/ConfirmClose';
+import ResearchPlan from '../models/ResearchPlan';
 import ResearchPlanDetailsAttachments from './ResearchPlanDetailsAttachments';
 import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from './ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
-import Immutable from 'immutable';
 import ElementDetailSortTab from '../ElementDetailSortTab';
 import { addSegmentTabs } from '../generic/SegmentDetails';
 import PrivateNoteElement from '../PrivateNoteElement';
@@ -45,6 +48,10 @@ export default class ResearchPlanDetails extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     const { researchPlan } = nextProps;
     this.setState({ researchPlan });
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
   }
 
   toggleFullScreen() {
@@ -147,7 +154,7 @@ export default class ResearchPlanDetails extends Component {
   handleAttachmentDrop(files) {
     const { researchPlan } = this.state;
     researchPlan.changed = true;
-    files.map((file) => {
+    files.forEach((file) => {
       const attachment = Attachment.fromFile(file);
       researchPlan.attachments.push(attachment);
     });
@@ -169,8 +176,8 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  handleAttachmentDownload(attachment) {
-    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+  handleAttachmentDownload(attachment) { // eslint-disable-line class-methods-use-this
+    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
   }
 
   handleAttachmentEdit(attachment) {
@@ -194,24 +201,57 @@ export default class ResearchPlanDetails extends Component {
     ResearchPlansFetcher.exportTable(researchPlan, field);
   }
 
+  dropWellplate(wellplate) {
+    const { researchPlan } = this.state;
+    researchPlan.changed = true;
+    researchPlan.wellplates = unionBy(researchPlan.wellplates, [wellplate], 'id');
+    this.setState({ researchPlan });
+  }
+
+  deleteWellplate(wellplate) {
+    const { researchPlan } = this.state;
+    researchPlan.changed = true;
+    const wellplateIndex = researchPlan.wellplates.indexOf(wellplate);
+    researchPlan.wellplates.splice(wellplateIndex, 1);
+    this.setState({ researchPlan });
+  }
+
+  importWellplate(wellplateId) {
+    const { researchPlan } = this.state;
+    researchPlan.changed = true;
+
+    LoadingActions.start();
+    ElementActions.importWellplateIntoResearchPlan(
+      researchPlan.id,
+      wellplateId,
+      () => {
+        this.setState({ activeTab: 0 });
+        LoadingActions.stop();
+      }
+    );
+  }
+
+  // eslint-disable-next-line class-methods-use-this
   newItemByType(fieldName, value, type) {
     switch (fieldName) {
       case 'description':
         return {
           description: value,
           descriptionType: type
-        }
+        };
       case 'alternate_identifier':
         return {
           alternateIdentifier: value,
           alternateIdentifierType: type
-        }
+        };
       case 'related_identifier':
         return {
           relatedIdentifier: value,
           relatedIdentifierType: type
-        }
-      }
+        };
+      default:
+        return {};
+    }
   }
 
   handleCopyToMetadata(id, fieldName) {
@@ -219,7 +259,7 @@ export default class ResearchPlanDetails extends Component {
     const researchPlanMetadata = researchPlan.research_plan_metadata;
     const args = { research_plan_id: researchPlanMetadata.research_plan_id };
     const index = researchPlan.body.findIndex(field => field.id === id);
-    const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || ''
+    const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || '';
     if (fieldName === 'name') {
       researchPlanMetadata.title = researchPlan.name;
       args.title = researchPlan.name.trim();
@@ -227,13 +267,14 @@ export default class ResearchPlanDetails extends Component {
       researchPlanMetadata.subject = value;
       args.subject = value;
     } else {
-      const type = researchPlan.body[index]?.title?.trim() || ''
-      const newItem = this.newItemByType(fieldName, value, type)
+      const type = researchPlan.body[index]?.title?.trim() || '';
+      const newItem = this.newItemByType(fieldName, value, type);
 
-      const currentCollection = researchPlanMetadata[fieldName] ? researchPlanMetadata[fieldName] : []
-      const newCollection = currentCollection.concat(newItem)
-      researchPlanMetadata[fieldName] = newCollection
-      args[`${fieldName}`] = researchPlanMetadata[fieldName]
+      const currentCollection = researchPlanMetadata[fieldName] ?
+        researchPlanMetadata[fieldName] : [];
+      const newCollection = currentCollection.concat(newItem);
+      researchPlanMetadata[fieldName] = newCollection;
+      args[`${fieldName}`] = researchPlanMetadata[fieldName];
     }
 
     ResearchPlansFetcher.postResearchPlanMetadata(args).then((result) => {
@@ -243,6 +284,9 @@ export default class ResearchPlanDetails extends Component {
     });
   }
 
+  handleAttachmentImportComplete() {
+    this.setState({ activeTab: 0 });
+  }
   // render functions
 
   renderExportButton(disabled) {
@@ -276,13 +320,9 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  renderResearchPlanMain(researchPlan, update) {
-    return researchPlan.mode === 'edit' ? this.renderPropertiesTab(researchPlan, update) :
-      this.renderResearchPlanTab(researchPlan, update);
-  }
-
-  renderResearchPlanTab(researchPlan, update) {
+  renderResearchPlanMain(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
     const { name, body, changed } = researchPlan;
+    const edit = researchPlan.mode === 'edit';
     return (
       <ListGroup fill="true">
         <ListGroupItem >
@@ -291,7 +331,7 @@ export default class ResearchPlanDetails extends Component {
             value={name}
             disabled={researchPlan.isMethodDisabled('name')}
             onChange={this.handleNameChange}
-            edit={false}
+            edit={edit}
           />
           <ResearchPlanDetailsBody
             body={body}
@@ -303,14 +343,20 @@ export default class ResearchPlanDetails extends Component {
             onExport={this.handleExportField.bind(this)}
             onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             update={update}
-            edit={false}
+            edit={edit}
+            copyableFields={[
+              { title: 'Subject', fieldName: 'subject' },
+              { title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
+              { title: 'Related Identifier', fieldName: 'related_identifier' },
+              { title: 'Description', fieldName: 'description' }
+            ]}
           />
         </ListGroupItem>
       </ListGroup>
     );
-  }
+  } /* eslint-enable */
 
-  renderPropertiesTab(researchPlan, update) {
+  renderPropertiesTab(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
     const { name, body } = researchPlan;
     return (
       <ListGroup fill="true">
@@ -345,7 +391,7 @@ export default class ResearchPlanDetails extends Component {
         </ListGroupItem>
       </ListGroup>
     );
-  }
+  } /* eslint-enable */
 
   renderAnalysesTab(researchPlan) {
     return (
@@ -362,24 +408,25 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  renderAttachmentsTab(researchPlan) {
-    const { attachments } = researchPlan;
+  renderAttachmentsTab(researchPlan) { /* eslint-disable react/jsx-no-bind */
     return (
       <ListGroup fill="true">
         <ListGroupItem >
           <ResearchPlanDetailsAttachments
-            attachments={attachments}
+            researchPlan={researchPlan}
+            attachments={researchPlan.attachments}
             onDrop={this.handleAttachmentDrop.bind(this)}
             onDelete={this.handleAttachmentDelete.bind(this)}
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
             onDownload={this.handleAttachmentDownload.bind(this)}
+            onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
             onEdit={this.handleAttachmentEdit.bind(this)}
             readOnly={false}
           />
         </ListGroupItem>
       </ListGroup>
     );
-  }
+  } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
@@ -406,10 +453,6 @@ export default class ResearchPlanDetails extends Component {
         </OverlayTrigger>
       </Panel.Heading>
     );
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
   }
 
   render() {
@@ -445,6 +488,17 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlansLiteratures element={researchPlan} />
         </Tab>
       ),
+      wellplates: (
+        <Tab eventKey="wellplates" title="Wellplates" key={`wellplates_${researchPlan.id}`}>
+          <ResearchPlanWellplates
+            researchPlan={researchPlan}
+            wellplates={researchPlan.wellplates}
+            dropWellplate={wellplate => this.dropWellplate(wellplate)}
+            deleteWellplate={wellplate => this.deleteWellplate(wellplate)}
+            importWellplate={wellplate => this.importWellplate(wellplate)}
+          />
+        </Tab>
+      ),
       metadata: (
         <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
           <ResearchPlansMetadata
@@ -459,6 +513,8 @@ export default class ResearchPlanDetails extends Component {
       research_plan: 'Research Plan',
       analyses: 'Analyses',
       attachments: 'Attachments',
+      literature: 'Literature',
+      wellplates: 'Wellplates',
       references: 'References',
       metadata: 'Metadata',
     };
@@ -497,6 +553,6 @@ export default class ResearchPlanDetails extends Component {
 }
 
 ResearchPlanDetails.propTypes = {
-  researchPlan: PropTypes.object.isRequired,
+  researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
   toggleFullScreen: PropTypes.func.isRequired,
 };

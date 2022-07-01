@@ -221,4 +221,46 @@ export default class ResearchPlansFetcher {
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static importWellplate(id, wellplateId) {
+    return fetch(
+      `/api/v1/research_plans/${id}/import_wellplate/${wellplateId}`,
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: '{}'
+      }
+    ).then(response => response.json())
+     .then(json => {
+      const updatedResearchPlan = new ResearchPlan(json.research_plan);
+        updatedResearchPlan._checksum = updatedResearchPlan.checksum();
+        updatedResearchPlan.attachments = json.attachments;
+        return updatedResearchPlan;
+     }).catch((errorMessage) => { console.log(errorMessage);});
+  }
+
+  static importTableFromSpreadsheet(id, attachmentId) {
+    return fetch(
+      `/api/v1/research_plans/${id}/import_table/${attachmentId}`,
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: '{}'
+      }
+    ).then(response => response.json())
+     .then(json => {
+      const updatedResearchPlan = new ResearchPlan(json.research_plan);
+        updatedResearchPlan._checksum = updatedResearchPlan.checksum();
+        updatedResearchPlan.attachments = json.attachments;
+        return updatedResearchPlan;
+     }).catch((errorMessage) => { console.log(errorMessage);});
+  }
 }

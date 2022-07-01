@@ -26,9 +26,13 @@ export default class Element {
   }
 
   checksum(fieldsToOmit = []) {
+    const tThis = this;
+    if (tThis.type === 'screen' && tThis.research_plans !== undefined) {
+      tThis.rp_ids = _.map(tThis.research_plans, rp => ({ id: rp.id }));
+    }
     return sha256(JSON.stringify(_.omit(_.omit(
-      this,
-      ['_checksum', 'belongTo', 'matGroup', 'molecule_names', 'equivalent', '_equivalent', 'formulaChanged', ...fieldsToOmit],
+      tThis,
+      ['_checksum', 'belongTo', 'matGroup', 'molecule_names', 'equivalent', '_equivalent', 'formulaChanged', 'research_plans', ...fieldsToOmit],
     ), _.isEmpty)));
   }
 

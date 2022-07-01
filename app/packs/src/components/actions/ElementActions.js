@@ -56,7 +56,7 @@ class ElementActions {
     return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
   }
 
-  createDevice () {
+  createDevice() {
     return null
   }
 
@@ -73,7 +73,7 @@ class ElementActions {
   }
 
   toggleDeviceType(device, type) {
-    return (dispatch) => dispatch({device, type})
+    return (dispatch) => dispatch({ device, type })
   }
 
   saveDevice(device) {
@@ -92,39 +92,39 @@ class ElementActions {
   }
 
   addSampleToDevice(sample, device, options) {
-    return (dispatch) => dispatch({sample, device, options})
+    return (dispatch) => dispatch({ sample, device, options })
   }
 
   addSampleWithAnalysisToDevice(sample, analysis, device) {
-    return (dispatch) => dispatch({sample, analysis, device})
+    return (dispatch) => dispatch({ sample, analysis, device })
   }
 
   removeSampleFromDevice(sample, device) {
-    return (dispatch) => dispatch({sample, device})
+    return (dispatch) => dispatch({ sample, device })
   }
 
   toggleTypeOfDeviceSample(device, sample, type) {
-    return (dispatch) => dispatch({device, sample, type})
+    return (dispatch) => dispatch({ device, sample, type })
   }
 
   changeDeviceProp(device, prop, value) {
-    return (dispatch) => dispatch({device, prop, value})
+    return (dispatch) => dispatch({ device, prop, value })
   }
 
   fetchDeviceAnalysisById(analysisId) {
     return (dispatch) => {
       DeviceFetcher.fetchAnalysisById(analysisId)
-      .then(analysis => {
-        DeviceFetcher.fetchById(analysis.deviceId)
-        .then(device => {
-          dispatch({analysis, device})
+        .then(analysis => {
+          DeviceFetcher.fetchById(analysis.deviceId)
+            .then(device => {
+              dispatch({ analysis, device })
+            })
         })
-      })
     }
   }
 
   openDeviceAnalysis(device, type) {
-    return (dispatch) => dispatch({device, type})
+    return (dispatch) => dispatch({ device, type })
   }
 
   saveDeviceAnalysis(analysis) {
@@ -138,9 +138,9 @@ class ElementActions {
   createDeviceAnalysis(deviceId, analysisType) {
     return (dispatch) => {
       DeviceFetcher.fetchById(deviceId)
-      .then((device) => {
-        dispatch({device, analysisType})
-      })
+        .then((device) => {
+          dispatch({ device, analysisType })
+        })
     }
   }
 
@@ -152,21 +152,21 @@ class ElementActions {
   duplicateAnalysisExperiment(analysis, experiment) {
     return (dispatch) =>
       DeviceFetcher.fetchById(analysis.deviceId)
-      .then((device) => {
-        dispatch({device, analysis, experiment})
-      })
+        .then((device) => {
+          dispatch({ device, analysis, experiment })
+        })
   }
 
   changeAnalysisExperimentProp(analysis, experiment, prop, value) {
-    return (dispatch) => dispatch({analysis, experiment, prop, value})
+    return (dispatch) => dispatch({ analysis, experiment, prop, value })
   }
 
   deleteAnalysisExperiment(analysis, experiment) {
     return (dispatch) =>
       DeviceFetcher.fetchById(analysis.deviceId)
-      .then((device) => {
-        dispatch({device, analysis, experiment})
-      })
+        .then((device) => {
+          dispatch({ device, analysis, experiment })
+        })
   }
 
   showDeviceControl() {
@@ -181,7 +181,7 @@ class ElementActions {
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function(notificationObject) { uid = notificationObject.uid; }
+      onAdd: function (notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
@@ -236,76 +236,91 @@ class ElementActions {
   }
 
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
-      moleculeSort = false) {
+    moleculeSort = false) {
     return (dispatch) => {
       SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, moleculeSort)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
-  fetchReactionsByCollectionId(id, queryParams={}, collectionIsSync = false) {
-    return (dispatch) => { ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+  fetchReactionsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
-  fetchWellplatesByCollectionId(id, queryParams={}, collectionIsSync = false) {
-    return (dispatch) => { WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+  fetchWellplatesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
-  fetchScreensByCollectionId(id, queryParams={}, collectionIsSync = false) {
-    return (dispatch) => { ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+  fetchScreensByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
 
-  fetchResearchPlansByCollectionId(id, queryParams={}, collectionIsSync = false) {
-    return (dispatch) => { ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+  fetchResearchPlansByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   // -- Samples --
 
   fetchSampleById(id) {
-    return (dispatch) => { SamplesFetcher.fetchById(id)
+    return (dispatch) => {
+      SamplesFetcher.fetchById(id)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   createSample(params, closeView = false) {
-    return (dispatch) => { SamplesFetcher.create(params)
+    return (dispatch) => {
+      SamplesFetcher.create(params)
       .then((result) => {
         dispatch({ element: result, closeView })
-      });};
+      });
+    };
   }
 
   createSampleForReaction(sample, reaction, materialGroup) {
-    return (dispatch) => { SamplesFetcher.create(sample)
+    return (dispatch) => {
+      SamplesFetcher.create(sample)
       .then((newSample) => {
-        dispatch({newSample, reaction, materialGroup})
-      });};
+        dispatch({ newSample, reaction, materialGroup })
+      });
+    };
   }
 
   handleSvgReactionChange(reaction) {
@@ -325,7 +340,8 @@ class ElementActions {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
 
-    return () => { ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
+    return () => {
+      ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
       .then((result) => {
         reaction.reaction_svg_file = result.reaction_svg;
       }).catch((errorMessage) => {
@@ -335,57 +351,66 @@ class ElementActions {
   }
 
   editReactionSample(reactionID, sampleID) {
-    return (dispatch) => { SamplesFetcher.fetchById(sampleID)
+    return (dispatch) => {
+      SamplesFetcher.fetchById(sampleID)
       .then((result) => {
-        dispatch({sample: result, reaction: reactionID });
+        dispatch({ sample: result, reaction: reactionID });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   updateSampleForReaction(sample, reaction, closeView = true) {
-    return (dispatch) => { SamplesFetcher.update(sample)
+    return (dispatch) => {
+      SamplesFetcher.update(sample)
       .then((newSample) => {
         reaction.updateMaterial(newSample);
         reaction.changed = true;
         dispatch({ reaction, sample: newSample, closeView })
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   updateSample(params, closeView = false) {
-    return (dispatch) => { SamplesFetcher.update(params)
+    return (dispatch) => {
+      SamplesFetcher.update(params)
       .then((result) => {
         dispatch({ element: result, closeView })
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   generateEmptySample(collection_id) {
-    return  Sample.buildEmpty(collection_id)
+    return Sample.buildEmpty(collection_id)
   }
 
   splitAsSubsamples(ui_state) {
-    return (dispatch) => { SamplesFetcher.splitAsSubsamples(ui_state)
+    return (dispatch) => {
+      SamplesFetcher.splitAsSubsamples(ui_state)
       .then((result) => {
         dispatch(ui_state);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   copySampleFromClipboard(collection_id) {
-    return  collection_id;
+    return collection_id;
   }
 
   addSampleToMaterialGroup(params) {
-    return  params;
+    return params;
   }
 
   showReactionMaterial(params) {
-    return (dispatch) => { SamplesFetcher.fetchById(params.sample.id)
+    return (dispatch) => {
+      SamplesFetcher.fetchById(params.sample.id)
       .then((result) => {
         params.sample = result
         dispatch(params);
@@ -396,12 +421,14 @@ class ElementActions {
   }
 
   importSamplesFromFile(params) {
-    return (dispatch) => { SamplesFetcher.importSamplesFromFile(params)
+    return (dispatch) => {
+      SamplesFetcher.importSamplesFromFile(params)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   importReactionsFromChemScanner(params) {
@@ -415,66 +442,72 @@ class ElementActions {
   }
 
   importSamplesFromFileConfirm(params) {
-    return (dispatch) => { SamplesFetcher.importSamplesFromFileConfirm(params)
+    return (dispatch) => {
+      SamplesFetcher.importSamplesFromFileConfirm(params)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   // -- Molecules --
 
   fetchMoleculeByMolfile(molfile, svg_file = null) {
-    return (dispatch) => { MoleculesFetcher.fetchByMolfile(molfile, svg_file)
+    return (dispatch) => {
+      MoleculesFetcher.fetchByMolfile(molfile, svg_file)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   // -- Reactions --
 
   fetchReactionById(id) {
-    return (dispatch) => { ReactionsFetcher.fetchById(id)
+    return (dispatch) => {
+      ReactionsFetcher.fetchById(id)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   tryFetchReactionById(id) {
     return (dispatch) => {
       ReactionsFetcher.fetchById(id)
-                      .then((result) => {
-                        dispatch(result)
-                      }).catch((errorMessage) => {
-                        console.log(errorMessage)
-                      })
+        .then((result) => {
+          dispatch(result)
+        }).catch((errorMessage) => {
+          console.log(errorMessage)
+        })
     }
   }
 
   tryFetchWellplateById(id) {
     return (dispatch) => {
       WellplatesFetcher.fetchById(id)
-                      .then((result) => {
-                        dispatch(result)
-                      }).catch((errorMessage) => {
-                        console.log(errorMessage)
-                      })
+        .then((result) => {
+          dispatch(result)
+        }).catch((errorMessage) => {
+          console.log(errorMessage)
+        })
     }
   }
 
   tryFetchGenericElById(id) {
     return (dispatch) => {
       GenericElsFetcher.fetchById(id)
-                      .then((result) => {
-                        dispatch(result)
-                      }).catch((errorMessage) => {
-                        console.log(errorMessage)
-                      })
+        .then((result) => {
+          dispatch(result)
+        }).catch((errorMessage) => {
+          console.log(errorMessage)
+        })
     }
   }
   closeWarning() {
@@ -482,41 +515,49 @@ class ElementActions {
   }
 
   createReaction(params) {
-    return (dispatch) => { ReactionsFetcher.create(params)
+    return (dispatch) => {
+      ReactionsFetcher.create(params)
       .then((result) => {
         dispatch(result)
-      });};
+      });
+    };
   }
 
   updateReaction(params, closeView = false) {
-    return (dispatch) => { ReactionsFetcher.update(params)
+    return (dispatch) => {
+      ReactionsFetcher.update(params)
       .then((result) => {
         dispatch({ element: result, closeView })
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   generateEmptyReaction(collection_id) {
-    return  Reaction.buildEmpty(collection_id)
+    return Reaction.buildEmpty(collection_id)
   }
 
   copyReactionFromId(id) {
-    return (dispatch) => { ReactionsFetcher.fetchById(id)
-    .then((result) => {
-      dispatch(result);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });};
+    return (dispatch) => {
+      ReactionsFetcher.fetchById(id)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
   copyReaction(reaction, colId) {
-    return (dispatch) => { ReactionsFetcher.fetchById(reaction.id)
+    return (dispatch) => {
+      ReactionsFetcher.fetchById(reaction.id)
       .then((result) => {
         dispatch({ reaction: result, colId: colId });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   copyElement(element, colId) {
@@ -526,18 +567,18 @@ class ElementActions {
   }
 
   openReactionDetails(reaction) {
-    return  reaction;
+    return reaction;
   }
 
   // -- Wellplates --
   splitAsSubwellplates(ui_state) {
     return (dispatch) => {
       WellplatesFetcher.splitAsSubwellplates(ui_state)
-      .then((result) => {
-        dispatch(ui_state);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(ui_state);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -545,134 +586,171 @@ class ElementActions {
     let { collection_id, samples, wellplateCount } = params;
 
     // wellplateCount correction
-    if(wellplateCount > Math.ceil(samples.length / 96)) {
+    if (wellplateCount > Math.ceil(samples.length / 96)) {
       wellplateCount = Math.ceil(samples.length / 96)
     }
 
     // build wellplate objects from samples
     let wellplates = [];
-    _.range(wellplateCount ).forEach((i) => {
-      wellplates[i] = Wellplate.buildFromSamplesAndCollectionId(_.compact(samples.slice(96*i, 96*(i+1))), collection_id).serialize();
+    _.range(wellplateCount).forEach((i) => {
+      wellplates[i] = Wellplate.buildFromSamplesAndCollectionId(_.compact(samples.slice(96 * i, 96 * (i + 1))), collection_id).serialize();
     });
 
-    return (dispatch) => { WellplatesFetcher.bulkCreateWellplates({wellplates: wellplates})
+    return (dispatch) => {
+      WellplatesFetcher.bulkCreateWellplates({ wellplates: wellplates })
       .then(() => {
         dispatch();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   generateWellplateFromClipboard(collection_id) {
-    return  collection_id;
+    return collection_id;
   }
 
   generateEmptyWellplate(collection_id) {
-    return  Wellplate.buildEmpty(collection_id);
+    return Wellplate.buildEmpty(collection_id);
   }
 
   createWellplate(wellplate) {
-    return (dispatch) => { WellplatesFetcher.create(wellplate)
+    return (dispatch) => {
+      WellplatesFetcher.create(wellplate)
       .then(result => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   editWellplateSample(wellplateID, sampleID) {
-    return (dispatch) => { SamplesFetcher.fetchById(sampleID)
+    return (dispatch) => {
+      SamplesFetcher.fetchById(sampleID)
       .then((result) => {
-        dispatch({sample: result, wellplate: wellplateID });
+        dispatch({ sample: result, wellplate: wellplateID });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   updateWellplate(wellplate) {
-    return (dispatch) => { WellplatesFetcher.update(wellplate)
+    return (dispatch) => {
+      WellplatesFetcher.update(wellplate)
       .then(result => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   updateSampleForWellplate(sample, wellplate) {
-    return (dispatch) => { SamplesFetcher.update(sample)
+    return (dispatch) => {
+      SamplesFetcher.update(sample)
       .then((newSample) => {
         dispatch(wellplate)
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   fetchWellplateById(id) {
-    return (dispatch) => { WellplatesFetcher.fetchById(id)
+    return (dispatch) => {
+      WellplatesFetcher.fetchById(id)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
+  }
+
+  importWellplateSpreadsheet(wellplateId, attachmentId) {
+    return (dispatch) => {
+      WellplatesFetcher.importWellplateSpreadsheet(wellplateId, attachmentId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
 
   // -- Screens --
 
   generateScreenFromClipboard(collection_id) {
-    return  collection_id;
+    return collection_id;
   }
 
 
   fetchScreenById(id) {
-    return (dispatch) => { ScreensFetcher.fetchById(id)
+    return (dispatch) => {
+      ScreensFetcher.fetchById(id)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   generateEmptyScreen(collection_id) {
-    return  Screen.buildEmpty(collection_id);
+    return Screen.buildEmpty(collection_id);
   }
 
   createScreen(params) {
-    return (dispatch) => { ScreensFetcher.create(params)
+    return (dispatch) => {
+      ScreensFetcher.create(params)
       .then(result => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   updateScreen(params) {
-    return (dispatch) => { ScreensFetcher.update(params)
+    return (dispatch) => {
+      ScreensFetcher.update(params)
       .then(result => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   // -- ResearchPlans --
 
   fetchResearchPlanById(id) {
-    return (dispatch) => { ResearchPlansFetcher.fetchById(id)
+    return (dispatch) => {
+      ResearchPlansFetcher.fetchById(id)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
   }
 
   updateResearchPlan(params) {
-    return (dispatch) => { ResearchPlansFetcher.update(params)
+    return (dispatch) => {
+      ResearchPlansFetcher.update(params)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
+  }
+
+  updateEmbeddedResearchPlan(params) {
+    return (dispatch) => { dispatch(params); };
   }
 
   generateEmptyResearchPlan(collection_id) {
@@ -680,17 +758,37 @@ class ElementActions {
   }
 
   createResearchPlan(params) {
-    return (dispatch) => { ResearchPlansFetcher.create(params)
+    return (dispatch) => {
+      ResearchPlansFetcher.create(params)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      });
+    };
+  }
+
+  importWellplateIntoResearchPlan(researchPlanId, wellplateId, afterComplete = () => {}) {
+    return (dispatch) => {
+      ResearchPlansFetcher.importWellplate(researchPlanId, wellplateId)
+        .then((result) => { dispatch(result); })
+        .then(() => { afterComplete(); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  importTableFromSpreadsheet(researchPlanId, attachmentId, afterComplete = () => {}) {
+    return (dispatch) => {
+      ResearchPlansFetcher.importTableFromSpreadsheet(researchPlanId, attachmentId)
+        .then((result) => { dispatch(result); })
+        .then(() => { afterComplete(); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 
   // -- Report --
   showReportContainer() {
-    return  Report.buildEmpty()
+    return Report.buildEmpty()
   }
 
   showFormatContainer() {
@@ -717,18 +815,19 @@ class ElementActions {
   // -- General --
 
   refreshElements(type) {
-    return  type
+    return type
   }
 
   deleteElements(options) {
-    return  (dispatch)=> {
-    dispatch(options);
-    UIActions.uncheckWholeSelection();
-    UserActions.fetchCurrentUser();}
+    return (dispatch) => {
+      dispatch(options);
+      UIActions.uncheckWholeSelection();
+      UserActions.fetchCurrentUser();
+    }
   }
 
   removeElements() {
-    return  ;
+    return;
   }
 
   // Current Element
@@ -780,11 +879,11 @@ class ElementActions {
   updateContainerContent(params) {
     return (dispatch) => {
       ContainerFetcher.updateContainerContent(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
