@@ -3,6 +3,8 @@
 # Class for creating an annotation via the builder pattern
 class AnnotationCreator
 
+    require_relative 'mini_magick_image_analyser';
+
     def initialize(imageAnalyzer=nil)
         if imageAnalyzer
             @imageAnalyzer=imageAnalyzer;
