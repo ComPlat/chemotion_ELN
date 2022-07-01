@@ -11,8 +11,7 @@ class AnnotationCreator
         end
     end
 
-    def createDerivative(tmpPath,originalFile,dbId,result)
-
+    def createDerivative(tmpPath,originalFile,dbId,result,record)
         tmpFile=createTmpFile(tmpPath,File.basename(originalFile,".*"));
 
         dimension=getImageDimension(originalFile);
@@ -39,24 +38,24 @@ class AnnotationCreator
     end
 
     def createAnnotationString(height,width,id)
-        return '<svg '+
-        '  width=\"#{width}\" '+
-        '  height=\"#{height}\" '+
-        '  xmlns=\"http://www.w3.org/2000/svg\" '+
-        '  xmlns:svg=\"http://www.w3.org/2000/svg\" '+
-        '  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> '+
-        '    <g class=\"layer\">'+
-        '      <title>Image</title>'+
-        '      <image height=\"#{height}\"  '+
-        '      id=\"original_image\" '+
-        '      width=\"#{width}\" '+
-        '      xlink:href=\"/api/v1/attachments/image/#{id}\"/>'+
-        '    </g>'+
-        '    <g class=\"layer\">'+
-        '      <title>Annotation</title>'+
-        '      id=\"annotation\" '+
-        '    </g>'+
-        '</svg>';
+        return "<svg "+
+        "  width=\"#{width}\" "+
+        "  height=\"#{height}\" "+
+        "  xmlns=\"http://www.w3.org/2000/svg\" "+
+        "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
+        "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
+        "    <g class=\"layer\">"+
+        "      <title>Image</title>"+
+        "      <image height=\"#{height}\"  "+
+        "      id=\"original_image\" "+
+        "      width=\"#{width}\" "+
+        "      xlink:href=\"/api/v1/attachments/image/#{id}\"/>"+
+        "    </g>"+
+        "    <g class=\"layer\">"+
+        "      <title>Annotation</title>"+
+        "      id=\"annotation\" "+
+        "    </g>"+
+        "</svg>";
     end
 
 end
