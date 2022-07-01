@@ -50,28 +50,18 @@ class AttachmentUploader < Shrine
     file_path = AttachmentUploader.createTmpFile(file_basename,file_extension,file)
 
     result={};
-binding.pry
-
-    tnc=ThumbnailCreator.new();
-
-    result=tnc.createDerivative(
-      "#{file_path}",
-      _original,
-      @context[:record].id,
-      result,record)
 
 
-    creator=AnnotationCreator.new();
-    binding.pry
-    result=creator.createDerivative(
-      "#{file_path}",
-      _original,
-      @context[:record].id,
-      result,record);
+    factory = DerivativeBuilderFactory.new;
+    builders=factory.createDerivativeBuilders(file_extension);
+    builders.each { |builder|
+      builder.createDerivative(
+        "#{file_path}",
+        _original,
+        @context[:record].id,
+        result,record);}
 
-
-
-    result
+    return result
   end
 
   def self.createTmpFile(file_basename,file_extension,file)
