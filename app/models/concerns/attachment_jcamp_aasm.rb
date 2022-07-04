@@ -15,7 +15,7 @@ module AttachmentJcampAasm
     aasm do
       state :idle, initial: true
       state :queueing, :regenerating, :done
-      state :peaked, :edited, :backup, :image, :json
+      state :peaked, :edited, :backup, :image, :json, :csv
       state :failure
       state :non_jcamp
       state :oo_editing
@@ -64,6 +64,10 @@ module AttachmentJcampAasm
 
       event :set_json do
         transitions from: %i[idle peaked non_jcamp], to: :json
+      end
+
+      event :set_csv do
+        transitions from: %i[idle peaked non_jcamp], to: :csv
       end
 
       event :set_failure do
@@ -135,6 +139,7 @@ module AttachmentJcampProcess
     att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'
     att.set_json if ext == 'json'
+    att.set_csv if ext == 'csv'
     att.update!(storage: Rails.configuration.storage.primary_store)
     att
   end
@@ -150,6 +155,10 @@ module AttachmentJcampProcess
 
   def generate_json_att(json_tmp, addon, to_edit = false)
     generate_att(json_tmp, addon, to_edit, 'json')
+  end
+
+  def generate_csv_att(csv_tmp, addon, to_edit = false)
+    generate_att(csv_tmp, addon, to_edit, 'csv')
   end
 
   def build_params(params = {})
@@ -184,7 +193,7 @@ module AttachmentJcampProcess
 
   def create_process(is_regen)
     params = build_params
-    tmp_jcamp, tmp_img, spc_type = Tempfile.create('molfile') do |t_molfile|
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = Tempfile.create('molfile') do |t_molfile|
       if attachable&.root_element.is_a?(Sample)
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind
@@ -203,19 +212,47 @@ module AttachmentJcampProcess
       )
     end
 
-    jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
-    jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-    img_att = generate_img_att(tmp_img, 'peak')
-    set_done
-    delete_tmps([tmp_jcamp, tmp_img])
-    delete_related_imgs(img_att)
-    delete_edit_peak_after_done
-    jcamp_att
+    if spc_type == 'bagit'
+      jcamp_att = nil
+      tmp_to_deleted = []
+      tmp_img_to_deleted = []
+      arr_jcamp.each_with_index do |jcamp, idx|
+        curr_jcamp_att = generate_jcamp_att(jcamp, "#{idx+1}_bagit")
+        curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
+        curr_tmp_img = arr_img[idx]
+        img_att = generate_img_att(curr_tmp_img, "#{idx+1}_bagit")
+        tmp_to_deleted.push(jcamp, curr_tmp_img)
+        tmp_img_to_deleted.push(img_att)
+
+        curr_tmp_csv = arr_csv[idx]
+        csv_att = generate_csv_att(curr_tmp_csv, "#{idx+1}_bagit")
+        tmp_to_deleted.push(curr_tmp_csv)
+        
+        if idx == 0
+          jcamp_att = curr_jcamp_att
+        end
+      end
+      set_done
+      delete_tmps(tmp_to_deleted)
+      delete_related_arr_img(tmp_img_to_deleted)
+      delete_edit_peak_after_done
+      jcamp_att
+    else
+      jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
+      jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
+      img_att = generate_img_att(tmp_img, 'peak')
+      set_done
+      delete_tmps([tmp_jcamp, tmp_img])
+      delete_related_imgs(img_att)
+      delete_edit_peak_after_done
+      jcamp_att
+    end
+
   end
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, spc_type = Tempfile.create('molfile') do |t_molfile|
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = Tempfile.create('molfile') do |t_molfile|
       if attachable&.root_element.is_a?(Sample)
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind
@@ -236,8 +273,18 @@ module AttachmentJcampProcess
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
     jcamp_att.update_prediction(params, spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'edit', true)
+    
+    tmp_file_to_deleted = [tmp_jcamp, tmp_img]
+
+    unless arr_csv.nil? || arr_csv.length == 0
+      curr_tmp_csv = arr_csv[0]
+      csv_att = generate_csv_att(curr_tmp_csv, 'edit', false)
+      tmp_file_to_deleted.push(*arr_csv)
+      delete_related_csv(csv_att)
+    end
+    
     set_backup
-    delete_tmps([tmp_jcamp, tmp_img])
+    delete_tmps(tmp_file_to_deleted)
     delete_related_imgs(img_att)
     delete_edit_peak_after_done
     jcamp_att
@@ -267,7 +314,7 @@ module AttachmentJcampProcess
 
   def fname_wo_ext(target)
     parts = target.filename_parts
-    ending = parts.length == 2 ? -2 : -3
+    ending = (parts.length == 2 || parts.length == 3) ? -2 : -3
     parts[0..ending].join('_')
   end
 
@@ -280,6 +327,40 @@ module AttachmentJcampProcess
       is_delete = (
         att.image? &&
           att.id != img_att.id &&
+          valid_name == fname_wo_ext(att)
+      )
+      att.delete if is_delete
+    end
+  end
+
+  def delete_related_arr_img(arr_img)
+    return unless arr_img
+
+    arr_img.each do |img_att|
+      next unless img_att
+
+      atts = Attachment.where(attachable_id: attachable_id)
+      valid_name = fname_wo_ext(img_att)
+      atts.each do |att|
+        is_delete = (
+          att.image? &&
+            att.id != img_att.id &&
+            valid_name == fname_wo_ext(att)
+        )
+        att.delete if is_delete
+      end
+    end
+  end
+
+  def delete_related_csv(csv_att)
+    return unless csv_att
+
+    atts = Attachment.where(attachable_id: attachable_id)
+    valid_name = fname_wo_ext(self)
+    atts.each do |att|
+      is_delete = (
+        att.csv? &&
+          att.id != csv_att.id &&
           valid_name == fname_wo_ext(att)
       )
       att.delete if is_delete

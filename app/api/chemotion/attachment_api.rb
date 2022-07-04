@@ -485,6 +485,8 @@ module Chemotion
         optional :predict, type: String
         optional :keep_pred, type: Boolean
         optional :waveLength, type: String
+        optional :cyclicvolta, type: String
+        optional :curveIdx, type: Integer
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(

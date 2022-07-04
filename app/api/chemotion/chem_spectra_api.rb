@@ -103,6 +103,8 @@ module Chemotion
           optional :predict, type: String
           optional :molfile
           optional :waveLength, type: String
+          optional :cyclicvolta, type: String
+          optional :curveIdx, type: Integer
         end
         post 'save' do
           env['api.format'] = :binary

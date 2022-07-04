@@ -25,7 +25,13 @@ module Chemotion
     # Gen module
     module Util
       def self.generate_tmp_file(content, ext = nil, binmode = false)
-        fname = ext == 'png' ? ['jcamp', '.png'] : ['jcamp']
+        # fname = ext == 'png' ? ['jcamp', '.png'] : ['jcamp']
+        fname = ['jcamp']
+        if ext == 'png'
+          fname = ['jcamp', '.png']
+        elsif ext == 'csv'
+          fname = ['jcamp', '.csv']
+        end
         integration = Tempfile.new(fname)
         integration.binmode if binmode
         integration.write(content)
@@ -38,20 +44,28 @@ module Chemotion
       end
 
       def self.extract_zip(rsp_io)
-        tmp_jcamp = nil
-        tmp_img = nil
+        arr_jcamp = []
+        arr_img = []
+        arr_csv = []
         Zip::InputStream.open(rsp_io) do |io|
           while (entry = io.get_next_entry)
             ext = extract_ext(entry)
             data = entry.get_input_stream.read.force_encoding('UTF-8')
             if %w[png].include?(ext)
               tmp_img = generate_tmp_file(data, ext)
+              arr_img.push(tmp_img)
             elsif %w[dx jdx jcamp mzml raw cdf zip].include?(ext.downcase)
               tmp_jcamp = generate_tmp_file(data, ext)
+              arr_jcamp.push(tmp_jcamp)
+            elsif %w[csv].include?(ext)
+              tmp_csv = generate_tmp_file(data, ext)
+              arr_csv.push(tmp_csv)
             end
           end
         end
-        [tmp_jcamp, tmp_img]
+        tmp_jcamp = arr_jcamp.first
+        tmp_img = arr_img.first
+        [tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv]
       end
     end
   end
@@ -85,7 +99,9 @@ module Chemotion
           integration: params[:integration],
           multiplicity: params[:multiplicity],
           fname: params[:fname] || (params[:file] && params[:file].try(:[], :filename)),
-          wave_length: params[:wave_length]
+          wave_length: params[:wave_length],
+          cyclic_volta: params[:cyclicvolta],
+          jcamp_idx: params[:curve_idx],
         }
       end
 
