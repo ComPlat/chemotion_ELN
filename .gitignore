@@ -177,3 +177,4 @@ vendor/cache/*
 .devcontainer
 .docker-sync/
 
+public/sprite.png
