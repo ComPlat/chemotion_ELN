@@ -142,6 +142,7 @@ class Reaction < ApplicationRecord
 
   before_save :update_svg_file!
   before_save :cleanup_array_fields
+  before_save :scrub
   before_save :auto_format_temperature!
   before_create :auto_set_short_label
 
@@ -266,5 +267,20 @@ class Reaction < ApplicationRecord
 
   def update_counter
     self.creator.increment_counter 'reactions'
+  end
+
+  def scrub
+    if temperature&.fetch('userText', nil).present?
+      self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
+    end
+    if conditions.present?
+      self.conditions = scrubber(conditions)
+    end
+  end
+
+  private
+
+  def scrubber(value)
+    Loofah.scrub_fragment(value, :strip).to_s
   end
 end
