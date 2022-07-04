@@ -73,11 +73,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
     if (!hasAuth(reaction.id)) {
       return noAuth(reaction);
     }
-    const { edit } = this.props;
-    const title = reaction.title();
-    let link;
-    if (edit) { link = <p>{title}</p> }
-    else { link = <p>{reaction.name}</p> }
+    const link = <p>{reaction.title()}</p>;
     
     return (
       <div className="research-plan-field-reaction">
