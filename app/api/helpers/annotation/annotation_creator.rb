@@ -2,62 +2,48 @@
 
 # Class for creating an annotation via the builder pattern
 class AnnotationCreator
+  require_relative 'mini_magick_image_analyser'
 
-    require_relative 'mini_magick_image_analyser';
+  def initialize(image_analyzer = nil)
+    @image_analyzer = image_analyzer || MiniMagickImageAnalyser.new
+  end
 
-    def initialize(imageAnalyzer=nil)
-        if imageAnalyzer
-            @imageAnalyzer=imageAnalyzer;
-        else
-            @imageAnalyzer=MiniMagickImageAnalyser.new;
-        end
+  def create_derivative(tmp_path, original_file, db_id, result, _record)
+    tmp_file = create_tmp_file(tmp_path, File.basename(original_file, '.*'))
+    dimension = get_image_dimension(original_file)
+    svg_string = create_annotation_string(dimension[0], dimension[1], db_id)
+    File.open(tmp_file.path, 'w') { |file| file.write(svg_string) }
+    result[:annotation] = File.open(tmp_file.path, 'rb')
+    result
+  end
+
+  def create_tmp_file(tmp_path, original_file_name)
+    annotation_tmp_path = "#{tmp_path}/#{original_file_name}.annotation.svg"
+    Tempfile.new(annotation_tmp_path, encoding: 'ascii-8bit')
+  end
+
+  def get_image_dimension(original)
+    @image_analyzer.get_image_dimension(original.path)
+  end
+
+  def create_annotation_string(height, width, id)
+    '<svg ' \
+      "  width=\"#{width}\" " \
+      "  height=\"#{height}\" " \
+      '  xmlns="http://www.w3.org/2000/svg" ' \
+      '  xmlns:svg="http://www.w3.org/2000/svg" ' \
+      '  xmlns:xlink="http://www.w3.org/1999/xlink"> ' \
+      '    <g class="layer">' \
+      '      <title>Image</title>' \
+      "      <image height=\"#{height}\"  " \
+      '      id="original_image" ' \
+      "      width=\"#{width}\" " \
+      "      xlink:href=\"/api/v1/attachments/image/#{id}\"/>" \
+      '    </g>' \
+      '    <g class="layer">' \
+      '      <title>Annotation</title>' \
+      '      id="annotation" ' \
+      '    </g>' \
+      '</svg>'
     end
-
-    def createDerivative(tmpPath,originalFile,dbId,result,record)
-        tmpFile=createTmpFile(tmpPath,File.basename(originalFile,".*"));
-
-        dimension=getImageDimension(originalFile);
-
-        svgString=createAnnotationString(dimension[0],dimension[1],dbId);
-
-        File.open(tmpFile.path, 'w') { |file| file.write(svgString) };
-
-        result[:annotation] = File.open(tmpFile.path, 'rb')
-
-        return result;
-
-    end
-
-
-    def createTmpFile(tmpPath,originalFileName)
-        annotationTmpPath = "#{tmpPath}/#{originalFileName}.annotation.svg"
-        return Tempfile.new(annotationTmpPath, encoding: 'ascii-8bit');
-
-    end
-
-    def getImageDimension(original)
-        @imageAnalyzer.getImageDimension(original.path)
-    end
-
-    def createAnnotationString(height,width,id)
-        return "<svg "+
-        "  width=\"#{width}\" "+
-        "  height=\"#{height}\" "+
-        "  xmlns=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:svg=\"http://www.w3.org/2000/svg\" "+
-        "  xmlns:xlink=\"http://www.w3.org/1999/xlink\"> "+
-        "    <g class=\"layer\">"+
-        "      <title>Image</title>"+
-        "      <image height=\"#{height}\"  "+
-        "      id=\"original_image\" "+
-        "      width=\"#{width}\" "+
-        "      xlink:href=\"/api/v1/attachments/image/#{id}\"/>"+
-        "    </g>"+
-        "    <g class=\"layer\">"+
-        "      <title>Annotation</title>"+
-        "      id=\"annotation\" "+
-        "    </g>"+
-        "</svg>";
-    end
-
 end

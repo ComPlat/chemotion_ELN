@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
 class AnnotationUpdater
-    def updateAnnotation(annotationSvgString,attachmentId)
-        att = Attachment.find(attachmentId);
-        sanitizedSvgString=sanitizeSvgString(annotationSvgString);
-        locationOfSvgFile=saveSvgStringToFileSystem(sanitizedSvgString,att);
-    end
+  def update_annotation(annotation_svg_string, attachment_id)
+    att = Attachment.find(attachment_id)
+    sanitized_svg_string = sanitize_svg_string(annotation_svg_string)
+    save_svg_string_to_file_system(sanitized_svg_string, att)
+  end
 
-    def sanitizeSvgString(svgString)
-        return svgString;
-    end
+  def sanitize_svg_string(svg_string)
+    svg_string
+  end
 
-    def saveSvgStringToFileSystem(sanitizedSvgString,attachment)
-        location=attachment.attachment_data['derivatives']['annotation']['id'];
-        f = File.new(location, 'w')
-        f.write(sanitizedSvgString)
-        f.close
-        return location;
-    end
+  def save_svg_string_to_file_system(sanitized_svg_string, attachment)
+    location = attachment.attachment_data['derivatives']['annotation']['id']
+    f = File.new(location, 'w')
+    f.write(sanitized_svg_string)
+    f.close
+    location
+  end
 end
