@@ -80,20 +80,33 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (edit) {
       link = (
         <p>
-          Sample:
-          <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
-            {title}
-          </a>
+          Sample: {title}
         </p>
       );
+    }
+    let image;
+    if (sample.svgPath) {
+      image = (
+      <div className="image-container">
+        <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
+          <img src={sample.svgPath} alt={title} />
+        </a>
+        <SampleName sample={sample} />
+      </div>)
+    }
+    // render name of sample if no image exists
+    else {
+      image = (
+      <div className="image-container">
+        <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
+          {title}
+        </a>     
+      </div>)
     }
     return (
       <div className="research-plan-field-image">
         {link}
-        <div className="image-container">
-          <img src={sample.svgPath} alt={title} />
-          <SampleName sample={sample} />
-        </div>
+        {image}
       </div>
     );
   }
