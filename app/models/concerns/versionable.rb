@@ -41,7 +41,7 @@ module Versionable
         old_value = version_value(key, base[key])
         new_value = version_value(key, value)
 
-        if old_value.is_a?(Hash) || new_value.is_a?(Hash)
+        if (old_value.is_a?(Hash) || new_value.is_a?(Hash)) && key != 'temperature'
           # fix nil cases
           old_value ||= {}
           new_value ||= {}
@@ -126,6 +126,10 @@ module Versionable
       'Stop'
     when 'observation'
       'Additional information for publication and purification details'
+    when 'temperature'
+      'Temperature'
+    when 'solvent'
+      'Solvent'
     else
       if self.class.columns_hash[attribute].type.in?(%i[hstore jsonb])
         label_hash = {}
@@ -158,6 +162,8 @@ module Versionable
                   :quill
                 elsif self.class.name == 'Container' && key == 'kind'
                   :treeselect
+                elsif self.class.name == 'Sample' && key == 'sample_svg_file'
+                  :svg
                 else
                   :string
                 end
@@ -176,6 +182,12 @@ module Versionable
         :date
       when 'melting_point', 'boiling_point'
         :numrange
+      when 'solvent'
+        :solvent
+      when 'sample_svg_file'
+        :svg
+      when 'temperature'
+        :temperature
       else
         :string
       end
