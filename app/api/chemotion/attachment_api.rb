@@ -5,6 +5,7 @@ require 'barby/barcode/qr_code'
 require 'barby/outputter/svg_outputter'
 require 'digest'
 require 'helpers/annotation/annotation_loader'
+require 'helpers/annotation/annotation_updater'
 
 module Chemotion
   class AttachmentAPI < Grape::API
@@ -373,6 +374,19 @@ module Chemotion
         loader = AnnotationLoader .new
 
         return loader.get_annotation_of_attachment(params[:attachment_id])
+      end
+
+      desc 'update_annotation_of_attachment'
+      post ':attachment_id/annotation' do
+        params do
+          require :updated_svg_string, type: String
+        end
+
+        updater = AnnotationUpdater.new
+        updater.update_annotation(
+          params['updated_svg_string'],
+          params['attachment_id'].to_i
+        )
       end
 
       desc 'Download the zip attachment file'
