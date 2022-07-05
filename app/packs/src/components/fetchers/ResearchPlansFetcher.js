@@ -48,21 +48,20 @@ export default class ResearchPlansFetcher {
     return promise;
   }
 
-  static update(researchPlan) {
-    const containerFiles = AttachmentFetcher.getFileListfrom(researchPlan.container);
-    const researchPlanUdateProcess = () => fetch(`/api/v1/research_plans/${researchPlan.id}`, {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(researchPlan.serialize())
-    })
-    .then(response => response.json())
-    .then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-    .then(() => {
-     researchPlan.attachments
+  static updateGeneralRPData(researchPlan){
+    return fetch(`/api/v1/research_plans/${researchPlan.id}`, {
+          credentials: 'same-origin',
+          method: 'put',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(researchPlan.serialize())
+        })
+  }
+
+static updateAnnotations(researchPlan ){
+    researchPlan.attachments
       .filter((attach => attach.hasOwnProperty('updatedAnnotation')))
       .forEach(attach => {
         let data = new FormData();
@@ -76,10 +75,19 @@ export default class ResearchPlansFetcher {
           console.log(errorMessage);
         })
       })
-    })
-    .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+
+}
+
+
+
+  static update(researchPlan) {
+    const containerFiles = AttachmentFetcher.getFileListfrom(researchPlan.container);
+    const researchPlanUdateProcess = () => ResearchPlansFetcher.updateGeneralRPData(researchPlan)
+      .then(response => response.json())
+      .then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
+      .then(() => {ResearchPlansFetcher.updateAnnotations(researchPlan)})
+      .then(() => this.fetchById(json.research_plan.id)))
+      .catch((errorMessage) => {console.log(errorMessage);});
 
     if (containerFiles.length > 0) {
       let tasks = [];
