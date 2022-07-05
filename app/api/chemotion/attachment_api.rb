@@ -368,11 +368,11 @@ module Chemotion
         Entities::AttachmentEntity.represent(versions)
       end
 
-      desc 'getAnnotationOfAttachment'
+      desc 'get_annotation_of_attachment'
       get ':attachment_id/annotation' do
         loader = AnnotationLoader .new
 
-        return loader.getAnnotationOfAttachment(params[:attachment_id])
+        return loader.get_annotation_of_attachment(params[:attachment_id])
       end
 
       desc 'Download the zip attachment file'
