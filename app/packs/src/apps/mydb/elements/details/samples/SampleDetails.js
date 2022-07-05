@@ -115,15 +115,15 @@ export default class SampleDetails extends React.Component {
       showElementalComposition: false,
       showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
-      qrCodeSVG: '',
+      qrCodeSVG: "",
       isCasLoading: false,
       validCas: true,
       showMolfileModal: false,
       trackMolfile: props.sample.molfile,
       smileReadonly: !(
-        typeof props.sample.molecule.inchikey === 'undefined'
-        || props.sample.molecule.inchikey == null
-        || props.sample.molecule.inchikey === 'DUMMY'
+        typeof props.sample.molecule.inchikey === "undefined" ||
+        props.sample.molecule.inchikey == null ||
+        props.sample.molecule.inchikey === "DUMMY"
       ),
       quickCreator: false,
       showInchikey: false,
@@ -133,16 +133,17 @@ export default class SampleDetails extends React.Component {
       sfn: UIStore.getState().hasSfn,
     };
 
-    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-    this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
+    const currentUser =
+      (UserStore.getState() && UserStore.getState().currentUser) || {};
+    this.enableComputedProps = MatrixCheck(currentUser.matrix, "computedProp");
     this.enableSampleDecoupled = MatrixCheck(
       currentUser.matrix,
-      'sampleDecoupled'
+      "sampleDecoupled"
     );
-    this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
+    this.enableNmrSim = MatrixCheck(currentUser.matrix, "nmrSim");
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.clipboard = new Clipboard('.clipboardBtn');
+    this.clipboard = new Clipboard(".clipboardBtn");
     this.isCASNumberValid = this.isCASNumberValid.bind(this);
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
@@ -157,6 +158,7 @@ export default class SampleDetails extends React.Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.decoupleChanged = this.decoupleChanged.bind(this);
     this.handleFastInput = this.handleFastInput.bind(this);
+    this.updateGrandparent = this.updateGrandparent.bind(this);
   }
 
   componentDidMount() {
@@ -168,11 +170,11 @@ export default class SampleDetails extends React.Component {
   // eslint-disable-next-line camelcase
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (
-      (nextProps.sample.isNew
-        && (typeof nextProps.sample.molfile === 'undefined'
-          || (nextProps.sample.molfile || '').length === 0))
-      || (typeof nextProps.sample.molfile !== 'undefined'
-        && nextProps.sample.molecule.inchikey === 'DUMMY')
+      (nextProps.sample.isNew &&
+        (typeof nextProps.sample.molfile === "undefined" ||
+          (nextProps.sample.molfile || "").length === 0)) ||
+      (typeof nextProps.sample.molfile !== "undefined" &&
+        nextProps.sample.molecule.inchikey === "DUMMY")
     ) {
       this.setState({
         smileReadonly: false,
@@ -215,6 +217,19 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  updateGrandparent(name, kind, value) {
+    let { sample } = this.state;
+    sample[name] = value;
+    if ((name == "boiling_point" || name == "melting_point") && value) {
+      // remove parenthesis
+      value = value.replace(/[\])}[{(]/g, "");
+      let temperatureArr = value.split(",");
+      sample.updateRange(name, temperatureArr[0], temperatureArr[1]);
+    }
+
+    this.setState({ sample });
+  }
+
   handleFastInput(smi, cas) {
     this.setState({ showChemicalIdentifiers: true }, () => {
       this.smilesInput.value = smi;
@@ -230,10 +245,10 @@ export default class SampleDetails extends React.Component {
       .then((result) => {
         if (!result || result == null) {
           NotificationActions.add({
-            title: 'Error on Sample creation',
+            title: "Error on Sample creation",
             message: `Cannot create molecule with entered Smiles/CAS! [${smi}]`,
-            level: 'error',
-            position: 'tc',
+            level: "error",
+            position: "tc",
           });
         } else {
           sample.molfile = result.molfile;
@@ -250,7 +265,7 @@ export default class SampleDetails extends React.Component {
             smileReadonly: true,
             pageMessage: result.ob_log,
           });
-          ElementActions.refreshElements('sample');
+          ElementActions.refreshElements("sample");
         }
       })
       .catch((errorMessage) => {
@@ -264,12 +279,12 @@ export default class SampleDetails extends React.Component {
     const { sample, validCas } = this.state;
     this.checkMolfileChange();
     if (!validCas) {
-      sample.xref = { ...sample.xref, cas: '' };
+      sample.xref = { ...sample.xref, cas: "" };
     }
     if (!decoupleCheck(sample)) return;
-    if (!rangeCheck('boiling_point', sample)) return;
-    if (!rangeCheck('melting_point', sample)) return;
-    if (sample.belongTo && sample.belongTo.type === 'reaction') {
+    if (!rangeCheck("boiling_point", sample)) return;
+    if (!rangeCheck("melting_point", sample)) return;
+    if (sample.belongTo && sample.belongTo.type === "reaction") {
       const reaction = sample.belongTo;
       reaction.editedSample = sample;
       const materialGroup = sample.matGroup;
@@ -278,7 +293,7 @@ export default class SampleDetails extends React.Component {
       } else {
         ElementActions.updateSampleForReaction(sample, reaction, closeView);
       }
-    } else if (sample.belongTo && sample.belongTo.type === 'wellplate') {
+    } else if (sample.belongTo && sample.belongTo.type === "wellplate") {
       const wellplate = sample.belongTo;
       ElementActions.updateSampleForWellplate(sample, wellplate);
     } else if (sample.isNew) {
@@ -337,7 +352,7 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSelect(eventKey) {
-    UIActions.selectTab({ tabKey: eventKey, type: 'sample' });
+    UIActions.selectTab({ tabKey: eventKey, type: "sample" });
     this.fetchQcWhenNeeded(eventKey);
   }
 
@@ -370,14 +385,19 @@ export default class SampleDetails extends React.Component {
   };
 
   // eslint-disable-next-line camelcase
-  handleStructureEditorSave = (molfile, svg_file = null, config = null, editor = 'ketcher') => {
+  handleStructureEditorSave = (
+    molfile,
+    svg_file = null,
+    config = null,
+    editor = "ketcher"
+  ) => {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = config && sample.molecule ? config.smiles : null;
-    sample.contains_residues = molfile.indexOf(' R# ') > -1;
+    sample.contains_residues = molfile.indexOf(" R# ") > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
-    if (!smiles || smiles === '') {
+    if (!smiles || smiles === "") {
       MoleculesFetcher.fetchByMolfile(
         molfile,
         svg_file,
@@ -396,7 +416,7 @@ export default class SampleDetails extends React.Component {
         })
         .catch((errorMessage) => {
           // eslint-disable-next-line no-alert
-          alert('Cannot create molecule!');
+          alert("Cannot create molecule!");
           console.log(
             `handleStructureEditorSave exception of fetchByMolfile: ${errorMessage}`
           );
@@ -406,7 +426,7 @@ export default class SampleDetails extends React.Component {
         .then((result) => {
           if (!result || result == null) {
             // eslint-disable-next-line no-alert
-            alert('Cannot create molecule!');
+            alert("Cannot create molecule!");
           } else {
             sample.molecule = result;
             sample.molecule_id = result.id;
@@ -420,7 +440,7 @@ export default class SampleDetails extends React.Component {
         })
         .catch((errorMessage) => {
           // eslint-disable-next-line no-alert
-          alert('Cannot create molecule!');
+          alert("Cannot create molecule!");
           console.log(
             `handleStructureEditorSave exception of fetchBySmi: ${errorMessage}`
           );
@@ -444,8 +464,8 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.props;
     // !sample.isNew to allow setting mp & bp for new samples
     if (trackMolfile !== sample.molfile && !sample.isNew) {
-      sample.updateRange('boiling_point', '', '');
-      sample.updateRange('melting_point', '', '');
+      sample.updateRange("boiling_point", "", "");
+      sample.updateRange("melting_point", "", "");
       this.setState({ sample });
     }
   }
@@ -474,19 +494,21 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     sample.decoupled = e.target.checked;
     if (!sample.decoupled) {
-      sample.sum_formula = '';
+      sample.sum_formula = "";
     } else {
-      if (sample.sum_formula.trim() === '') { sample.sum_formula = 'undefined structure'; }
+      if (sample.sum_formula.trim() === "") {
+        sample.sum_formula = "undefined structure";
+      }
       if (
-        sample.residues
-        && sample.residues[0]
-        && sample.residues[0].custom_info
+        sample.residues &&
+        sample.residues[0] &&
+        sample.residues[0].custom_info
       ) {
-        sample.residues[0].custom_info.polymer_type = 'self_defined';
+        sample.residues[0].custom_info.polymer_type = "self_defined";
         delete sample.residues[0].custom_info.surface_type;
       }
     }
-    if (!sample.decoupled && (sample.molfile || '') === '') {
+    if (!sample.decoupled && (sample.molfile || "") === "") {
       this.handleSampleChanged(sample);
     } else {
       this.handleSampleChanged(sample, this.decoupleMolecule);
@@ -500,13 +522,13 @@ export default class SampleDetails extends React.Component {
 
   svgOrLoading(sample) {
     const { loadingMolecule } = this.state;
-    let svgPath = '';
+    let svgPath = "";
     if (loadingMolecule) {
-      svgPath = '/images/wild_card/loading-bubbles.svg';
+      svgPath = "/images/wild_card/loading-bubbles.svg";
     } else {
       ({ svgPath } = sample);
     }
-    const className = svgPath ? 'svg-container' : 'svg-container-empty';
+    const className = svgPath ? "svg-container" : "svg-container-empty";
     return sample.can_update ? (
       <div
         aria-hidden="true"
@@ -529,7 +551,7 @@ export default class SampleDetails extends React.Component {
     if (mw) {
       return <ClipboardCopyText text={`${mw.toFixed(MWPrecision)} g/mol`} />;
     }
-    return '';
+    return "";
   }
 
   sampleExactMW() {
@@ -542,25 +564,27 @@ export default class SampleDetails extends React.Component {
         />
       );
     }
-    return '';
+    return "";
   }
 
   sampleHeader() {
     const { sample } = this.state;
-    const saveBtnDisplay = sample.isEdited ? '' : 'none';
+    const saveBtnDisplay = sample.isEdited ? "" : "none";
     const titleTooltip = `Created at: ${sample.created_at} \n Updated at: ${sample.updated_at}`;
 
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection
-      && currentCollection.is_shared === false
-      && currentCollection.is_locked === false
-      && currentCollection.label !== 'All'
-      ? currentCollection.id
-      : null;
+    const defCol =
+      currentCollection &&
+      currentCollection.is_shared === false &&
+      currentCollection.is_locked === false &&
+      currentCollection.label !== "All"
+        ? currentCollection.id
+        : null;
 
-    const copyBtn = sample.can_copy && !sample.isNew ? (
-      <CopyElementModal element={sample} defCol={defCol} />
-    ) : null;
+    const copyBtn =
+      sample.can_copy && !sample.isNew ? (
+        <CopyElementModal element={sample} defCol={defCol} />
+      ) : null;
 
     const colLabel = sample.isNew ? null : (
       <ElementCollectionLabels
@@ -570,15 +594,16 @@ export default class SampleDetails extends React.Component {
       />
     );
 
-    const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
-      <Checkbox
-        className="sample-header-decouple"
-        checked={sample.decoupled}
-        onChange={(e) => this.decoupleChanged(e)}
-      >
-        Decoupled
-      </Checkbox>
-    ) : null;
+    const decoupleCb =
+      sample.can_update && this.enableSampleDecoupled ? (
+        <Checkbox
+          className="sample-header-decouple"
+          checked={sample.decoupled}
+          onChange={(e) => this.decoupleChanged(e)}
+        >
+          Decoupled
+        </Checkbox>
+      ) : null;
 
     const { toggleFullScreen } = this.props;
 
@@ -644,7 +669,7 @@ export default class SampleDetails extends React.Component {
         <PrintCodeButton element={sample} />
         {sample.isNew ? <FastInput fnHandle={this.handleFastInput} /> : null}
         {decoupleCb}
-        <div style={{ display: 'inline-block', marginLeft: '10px' }}>
+        <div style={{ display: "inline-block", marginLeft: "10px" }}>
           <ElementReactionLabels
             element={sample}
             key={`${sample.id}_reactions`}
@@ -663,35 +688,41 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo() {
     const { sample } = this.state;
-    const style = { height: '200px' };
-    let pubchemLcss = (sample.pubchem_tag
-        && sample.pubchem_tag.pubchem_lcss
-        && sample.pubchem_tag.pubchem_lcss.Record)
-      || null;
+    const style = { height: "200px" };
+    let pubchemLcss =
+      (sample.pubchem_tag &&
+        sample.pubchem_tag.pubchem_lcss &&
+        sample.pubchem_tag.pubchem_lcss.Record) ||
+      null;
     if (pubchemLcss && pubchemLcss.Reference) {
       const echa = pubchemLcss.Reference.filter(
-        (e) => e.SourceName === 'European Chemicals Agency (ECHA)'
+        (e) => e.SourceName === "European Chemicals Agency (ECHA)"
       ).map((e) => e.ReferenceNumber);
       if (echa.length > 0) {
-        pubchemLcss = pubchemLcss.Section.find(
-          (e) => e.TOCHeading === 'Safety and Hazards'
-        ) || [];
-        pubchemLcss = pubchemLcss.Section.find(
-          (e) => e.TOCHeading === 'Hazards Identification'
-        ) || [];
-        pubchemLcss = pubchemLcss.Section[0].Information.filter(
-          (e) => echa.includes(e.ReferenceNumber)
-        ) || null;
+        pubchemLcss =
+          pubchemLcss.Section.find(
+            (e) => e.TOCHeading === "Safety and Hazards"
+          ) || [];
+        pubchemLcss =
+          pubchemLcss.Section.find(
+            (e) => e.TOCHeading === "Hazards Identification"
+          ) || [];
+        pubchemLcss =
+          pubchemLcss.Section[0].Information.filter((e) =>
+            echa.includes(e.ReferenceNumber)
+          ) || null;
       } else pubchemLcss = null;
     }
-    const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid
-      ? sample.pubchem_tag.pubchem_cid
-      : 0;
-    const lcssSign = pubchemLcss && !sample.decoupled ? (
-      <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} />
-    ) : (
-      <div />
-    );
+    const pubchemCid =
+      sample.pubchem_tag && sample.pubchem_tag.pubchem_cid
+        ? sample.pubchem_tag.pubchem_cid
+        : 0;
+    const lcssSign =
+      pubchemLcss && !sample.decoupled ? (
+        <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} />
+      ) : (
+        <div />
+      );
 
     return (
       <Row style={style}>
@@ -711,14 +742,14 @@ export default class SampleDetails extends React.Component {
   moleculeInchi(sample) {
     const { showInchikey } = this.state;
     if (
-      typeof this.inchistringInput !== 'undefined'
-      && this.inchistringInput
-      && typeof sample.molecule_inchistring !== 'undefined'
-      && sample.molecule_inchistring
+      typeof this.inchistringInput !== "undefined" &&
+      this.inchistringInput &&
+      typeof sample.molecule_inchistring !== "undefined" &&
+      sample.molecule_inchistring
     ) {
       this.inchistringInput.value = sample.molecule_inchistring;
     }
-    const inchiLabel = showInchikey ? 'InChIKey' : 'InChI';
+    const inchiLabel = showInchikey ? "InChIKey" : "InChI";
     const inchiTooltip = (
       <Tooltip id="inchi_tooltip">toggle InChI/InChIKey</Tooltip>
     );
@@ -742,7 +773,7 @@ export default class SampleDetails extends React.Component {
             value={
               (showInchikey
                 ? sample.molecule_inchikey
-                : sample.molecule_inchistring) || ''
+                : sample.molecule_inchistring) || ""
             }
             disabled
             readOnly
@@ -756,7 +787,7 @@ export default class SampleDetails extends React.Component {
               data-clipboard-text={
                 (showInchikey
                   ? sample.molecule_inchikey
-                  : sample.molecule_inchistring) || ' '
+                  : sample.molecule_inchistring) || " "
               }
             >
               <i className="fa fa-clipboard" />
@@ -770,11 +801,11 @@ export default class SampleDetails extends React.Component {
   moleculeCanoSmiles(sample) {
     const { smileReadonly } = this.state;
     if (
-      smileReadonly
-      && typeof this.smilesInput !== 'undefined'
-      && this.smilesInput
-      && typeof sample.molecule_cano_smiles !== 'undefined'
-      && sample.molecule_cano_smiles
+      smileReadonly &&
+      typeof this.smilesInput !== "undefined" &&
+      this.smilesInput &&
+      typeof sample.molecule_cano_smiles !== "undefined" &&
+      sample.molecule_cano_smiles
     ) {
       this.smilesInput.value = sample.molecule_cano_smiles;
     }
@@ -788,7 +819,7 @@ export default class SampleDetails extends React.Component {
             inputRef={(m) => {
               this.smilesInput = m;
             }}
-            defaultValue={sample.molecule_cano_smiles || ''}
+            defaultValue={sample.molecule_cano_smiles || ""}
             disabled={smileReadonly}
             readOnly={smileReadonly}
           />
@@ -798,7 +829,7 @@ export default class SampleDetails extends React.Component {
             <Button
               active
               className="clipboardBtn"
-              data-clipboard-text={sample.molecule_cano_smiles || ' '}
+              data-clipboard-text={sample.molecule_cano_smiles || " "}
             >
               <i className="fa fa-clipboard" />
             </Button>
@@ -824,18 +855,18 @@ export default class SampleDetails extends React.Component {
 
   moleculeMolfile(sample) {
     if (
-      typeof this.molfileInput !== 'undefined'
-      && this.molfileInput
-      && typeof sample.molfile !== 'undefined'
-      && sample.molfile
+      typeof this.molfileInput !== "undefined" &&
+      this.molfileInput &&
+      typeof sample.molfile !== "undefined" &&
+      sample.molfile
     ) {
       this.molfileInput.value = sample.molfile;
     }
 
     const textAreaStyle = {
-      height: '35px',
-      overflow: 'auto',
-      whiteSpace: 'pre',
+      height: "35px",
+      overflow: "auto",
+      whiteSpace: "pre",
     };
 
     return (
@@ -848,7 +879,7 @@ export default class SampleDetails extends React.Component {
             inputRef={(m) => {
               this.molfileInput = m;
             }}
-            defaultValue={sample.molfile || ''}
+            defaultValue={sample.molfile || ""}
             disabled
             readOnly
           />
@@ -858,7 +889,7 @@ export default class SampleDetails extends React.Component {
             <Button
               active
               className="clipboardBtn"
-              data-clipboard-text={sample.molfile || ' '}
+              data-clipboard-text={sample.molfile || " "}
             >
               <i className="fa fa-clipboard" />
             </Button>
@@ -891,8 +922,8 @@ export default class SampleDetails extends React.Component {
   moleculeCas() {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
-    const cas = xref ? xref.cas : '';
-    const casLabel = cas && cas.label ? cas.label : '';
+    const cas = xref ? xref.cas : "";
+    const casLabel = cas && cas.label ? cas.label : "";
     let casArr = [];
     if (molecule && molecule.cas) {
       casArr = molecule.cas
@@ -905,13 +936,14 @@ export default class SampleDetails extends React.Component {
     if (cas && casArr) {
       const casObject = [{ label: cas, value: cas }];
       const valuesArr = casArr.map(({ value }) => value) || [];
-      casArr = cas !== '' && !valuesArr.includes(cas)
-        ? casArr.concat(casObject)
-        : casArr;
+      casArr =
+        cas !== "" && !valuesArr.includes(cas)
+          ? casArr.concat(casObject)
+          : casArr;
     }
     const onChange = (e) => this.updateCas(e);
     const onOpen = (e) => this.onCasSelectOpen(e, casArr);
-    const validate = () => this.isCASNumberValid(cas || '', true);
+    const validate = () => this.isCASNumberValid(cas || "", true);
     const errorMessage = (
       <span className="text-danger">Cas number is invalid</span>
     );
@@ -946,7 +978,7 @@ export default class SampleDetails extends React.Component {
             </OverlayTrigger>
           </InputGroup.Button>
         </InputGroup>
-        <div style={{ marginTop: '-11px' }}>
+        <div style={{ marginTop: "-11px" }}>
           {!validCas ? errorMessage : null}
         </div>
       </div>
@@ -955,7 +987,7 @@ export default class SampleDetails extends React.Component {
 
   updateCas(e) {
     const { sample } = this.state;
-    const value = e ? e.value : '';
+    const value = e ? e.value : "";
     sample.xref = { ...sample.xref, cas: value };
     this.setState({ sample });
   }
@@ -982,7 +1014,7 @@ export default class SampleDetails extends React.Component {
             <ControlLabel>{key}</ControlLabel>
             <FormControl
               type="text"
-              defaultValue={customKeys[key] || ''}
+              defaultValue={customKeys[key] || ""}
               onChange={(e) => this.updateKey(key, e)}
             />
           </FormGroup>
@@ -1002,12 +1034,12 @@ export default class SampleDetails extends React.Component {
     const { showElementalComposition } = this.state;
     let label;
     if (sample.contains_residues) {
-      label = 'Polymer section';
+      label = "Polymer section";
       if (!showElementalComposition) {
-        label += ' / Elemental composition';
+        label += " / Elemental composition";
       }
     } else {
-      label = 'Elemental composition';
+      label = "Elemental composition";
     }
 
     return (
@@ -1107,7 +1139,7 @@ export default class SampleDetails extends React.Component {
       <div
         width="100%"
         className={classNames({
-          'chem-identifiers-section': true,
+          "chem-identifiers-section": true,
           decoupled: sample.decoupled,
         })}
       >
@@ -1196,7 +1228,7 @@ export default class SampleDetails extends React.Component {
             <InputGroup>
               <FormControl
                 type="text"
-                value={sample.imported_readout || ''}
+                value={sample.imported_readout || ""}
                 disabled
                 readOnly
               />
@@ -1244,7 +1276,7 @@ export default class SampleDetails extends React.Component {
   }
 
   fetchQcWhenNeeded(key) {
-    if (key !== 'qc_curation') return;
+    if (key !== "qc_curation") return;
     const { infers } = QcStore.getState();
     const { sample } = this.state;
     let isInStore = false;
@@ -1272,15 +1304,17 @@ export default class SampleDetails extends React.Component {
 
   historyTab(ind) {
     const { sample } = this.state;
-    if (!sample) { return null; }
+    if (!sample) {
+      return null;
+    }
     return (
-      <Tab
-        eventKey={ind}
-        title="History"
-        key={`${sample.id}_${ind}`}
-      >
+      <Tab eventKey={ind} title="History" key={`${sample.id}_${ind}`}>
         <ListGroupItem style={{ paddingBottom: 20 }}>
-          <VersionsTable type="samples" id={sample.id} />
+          <VersionsTable
+            type="samples"
+            id={sample.id}
+            updateGrandparent={this.updateGrandparent}
+          />
         </ListGroupItem>
       </Tab>
     );
@@ -1307,16 +1341,16 @@ export default class SampleDetails extends React.Component {
   sampleIsValid() {
     const { sample, loadingMolecule, quickCreator } = this.state;
     return (
-      (sample.isValid && !loadingMolecule)
-      || sample.is_scoped === true
-      || quickCreator
+      (sample.isValid && !loadingMolecule) ||
+      sample.is_scoped === true ||
+      quickCreator
     );
   }
 
   saveBtn(sample, closeView = false) {
-    let submitLabel = sample && sample.isNew ? 'Create' : 'Save';
+    let submitLabel = sample && sample.isNew ? "Create" : "Save";
     const isDisabled = !sample.can_update;
-    if (closeView) submitLabel += ' and close';
+    if (closeView) submitLabel += " and close";
 
     return (
       <Button
@@ -1332,25 +1366,27 @@ export default class SampleDetails extends React.Component {
 
   sampleFooter() {
     const { sample, startExport } = this.state;
-    const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
+    const belongToReaction =
+      sample.belongTo && sample.belongTo.type === "reaction";
     const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
-    const downloadAnalysesBtn = sample.isNew || !hasAnalyses ? null : (
-      <Button
-        bsStyle="info"
-        disabled={!this.sampleIsValid()}
-        onClick={() => this.handleExportAnalyses(sample)}
-      >
-        Download Analysis
-        {' '}
-        {startExport ? (
-          <span>
-            <i className="fa fa-spin fa-spinner" />
-          </span>
-        ) : null}
-      </Button>
-    );
+    const downloadAnalysesBtn =
+      sample.isNew || !hasAnalyses ? null : (
+        <Button
+          bsStyle="info"
+          disabled={!this.sampleIsValid()}
+          onClick={() => this.handleExportAnalyses(sample)}
+        >
+          Download Analysis{" "}
+          {startExport ? (
+            <span>
+              <i className="fa fa-spin fa-spinner" />
+            </span>
+          ) : null}
+        </Button>
+      );
 
-    const saveAndCloseBtn = belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
+    const saveAndCloseBtn =
+      belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
     return (
       <ButtonToolbar>
         <Button bsStyle="primary" onClick={() => DetailActions.close(sample)}>
@@ -1384,10 +1420,10 @@ export default class SampleDetails extends React.Component {
   renderMolfileModal() {
     const { showMolfileModal } = this.state;
     const textAreaStyle = {
-      width: '500px',
-      height: '640px',
-      margin: '30px',
-      whiteSpace: 'pre-line',
+      width: "500px",
+      height: "640px",
+      margin: "30px",
+      whiteSpace: "pre-line",
     };
     if (showMolfileModal) {
       return (
@@ -1407,7 +1443,7 @@ export default class SampleDetails extends React.Component {
                   style={textAreaStyle}
                   readOnly
                   disabled
-                  defaultValue={this.molfileInput.value || ''}
+                  defaultValue={this.molfileInput.value || ""}
                 />
               </FormGroup>
             </div>
@@ -1424,33 +1460,31 @@ export default class SampleDetails extends React.Component {
   }
 
   render() {
-    const {
-      sample, visible, activeTab, sfn
-    } = this.state;
+    const { sample, visible, activeTab, sfn } = this.state;
     const tabContentsMap = {
-      properties: this.samplePropertiesTab('properties'),
-      analyses: this.sampleContainerTab('analyses'),
+      properties: this.samplePropertiesTab("properties"),
+      analyses: this.sampleContainerTab("analyses"),
       references: this.sampleLiteratureTab(),
-      results: this.sampleImportReadoutTab('results'),
-      qc_curation: this.qualityCheckTab('qc_curation'),
-      measurements: this.measurementsTab('measurements'),
-      history: this.historyTab('history'),
+      results: this.sampleImportReadoutTab("results"),
+      qc_curation: this.qualityCheckTab("qc_curation"),
+      measurements: this.measurementsTab("measurements"),
+      history: this.historyTab("history"),
     };
-
     if (this.enableComputedProps) {
-      tabContentsMap.computed_props = this.moleculeComputedProps('computed_props');
+      tabContentsMap.computed_props =
+        this.moleculeComputedProps("computed_props");
     }
 
     if (this.enableNmrSim) {
-      tabContentsMap.nmr_sim = this.nmrSimTab('nmr_sim');
+      tabContentsMap.nmr_sim = this.nmrSimTab("nmr_sim");
     }
 
     const tabTitlesMap = {
-      literature: 'References',
-      qc_curation: 'QC curation',
-      computed_props: 'computed props',
-      nmr_sim: 'NMR Simulation',
-      measurements: 'Measurements',
+      literature: "References",
+      qc_curation: "QC curation",
+      computed_props: "computed props",
+      nmr_sim: "NMR Simulation",
+      measurements: "Measurements",
     };
 
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
@@ -1464,7 +1498,8 @@ export default class SampleDetails extends React.Component {
       stb.push(value);
     });
 
-    let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+    let segmentKlasses =
+      (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
     segmentKlasses = segmentKlasses.filter(
       (s) => s.element_klass && s.element_klass.name === sample.type
     );
@@ -1484,11 +1519,12 @@ export default class SampleDetails extends React.Component {
     });
 
     const { pageMessage } = this.state;
-    const messageBlock = pageMessage
-      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0) ? (
+    const messageBlock =
+      pageMessage &&
+      (pageMessage.error.length > 0 || pageMessage.warning.length > 0) ? (
         <Alert
           bsStyle="warning"
-          style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}
+          style={{ marginBottom: "unset", padding: "5px", marginTop: "10px" }}
         >
           <strong>Structure Alert</strong>
           &nbsp;
@@ -1509,13 +1545,14 @@ export default class SampleDetails extends React.Component {
         </Alert>
       ) : null;
 
-    const currentActiveTab = (activeTab !== 0 && stb.indexOf(activeTab) > -1 && activeTab)
-      || visible.get(0);
+    const currentActiveTab =
+      (activeTab !== 0 && stb.indexOf(activeTab) > -1 && activeTab) ||
+      visible.get(0);
 
     return (
       <Panel
         className="eln-panel-detail"
-        bsStyle={sample.isPendingToSave ? 'info' : 'primary'}
+        bsStyle={sample.isPendingToSave ? "info" : "primary"}
       >
         <Panel.Heading>
           {this.sampleHeader()}
