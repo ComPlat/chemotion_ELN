@@ -50,7 +50,7 @@ export default class ResearchPlansFetcher {
 
   static update(researchPlan) {
     const containerFiles = AttachmentFetcher.getFileListfrom(researchPlan.container);
-    const promise = () => fetch(`/api/v1/research_plans/${researchPlan.id}`, {
+    const researchPlanUdateProcess = () => fetch(`/api/v1/research_plans/${researchPlan.id}`, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -61,18 +61,34 @@ export default class ResearchPlansFetcher {
     })
     .then(response => response.json())
     .then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
+    .then(() => {
+     researchPlan.attachments
+      .filter((attach => attach.hasOwnProperty('updatedAnnotation')))
+      .forEach(attach => {
+        let data = new FormData();
+        data.append('updated_svg_string', attach.updatedAnnotation);
+        fetch('/api/v1/attachments/'+attach.id+'/annotation', {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        })
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        })
+      })
+    })
     .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
       console.log(errorMessage);
     });
-    
+
     if (containerFiles.length > 0) {
       let tasks = [];
       containerFiles.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
       return Promise.all(tasks).then(() => {
-        return promise();
+        return researchPlanUdateProcess();
       });
     }
-    return promise();
+    return researchPlanUdateProcess();
   }
 
   static updateSVGFile(svg_file, isChemdraw = false) {
@@ -94,16 +110,16 @@ export default class ResearchPlansFetcher {
 
   static updateImageFile(image_file, replace) {
     var data = new FormData();
-    data.append('file', image_file);  
+    data.append('file', image_file);
     data.append('width',image_file.dimension[0]);
-    data.append('height',image_file.dimension[1]); 
+    data.append('height',image_file.dimension[1]);
     if (replace) {
       data.append('replace', replace);
     }
 
-   
 
-  
+
+
     let promise = ()=> fetch('/api/v1/research_plans/image', {
       credentials: 'same-origin',
       method: 'post',
