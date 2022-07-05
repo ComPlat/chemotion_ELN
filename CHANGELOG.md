@@ -7,6 +7,13 @@
 > yyyy-mm-dd
 
 * Features and Improvements:
+* Fixes
+
+
+## [v1.3.0]
+> 2022-07-05
+
+* Features and Improvements:
   * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
   * Screens:
     * Research Plans may be added to Screens
@@ -19,12 +26,20 @@
     * Add title for readouts and display of multiple readouts in designer and list
     * Add attachments
     * Add import for well data from .xlsx and import template .xlsx
-
+  * Collection Tag for research-plan screen (https://github.com/ComPlat/chemotion_ELN/pull/774)
+  * Chemspectra : Cyclic Voltametry (Warning: upd chem-spectra-app service to 0.10.14)
+ 
 
 * Fixes
   * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
   * Reference Style improvement [Reference Style improvement #695](https://github.com/ComPlat/chemotion_ELN/issues/695)
   * Adjust docker setup to work on mac
+  * prevent unecessary building of reaction svg on description text input (https://github.com/ComPlat/chemotion_ELN/issues/759)
+  * elemental composition value with 2 decimals (https://github.com/ComPlat/chemotion_ELN/issues/739)
+  * reference Manager issues (https://github.com/ComPlat/chemotion_ELN/issues/708 https://github.com/ComPlat/chemotion_ELN/issues/756 )
+  * Missing attachment preview in research plan (https://github.com/ComPlat/chemotion_ELN/issues/751)
+
+
 
 
 ## [v1.2.1]
