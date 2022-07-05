@@ -66,7 +66,6 @@ class AttachmentUploader < Shrine
     result = {}
     factory = DerivativeBuilderFactory.new
     builders = factory.createDerivativeBuilders(file_extension)
-    binding.pry
     builders.each do |builder|
       builder.create_derivative(
         file_path.to_s,
