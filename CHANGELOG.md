@@ -28,6 +28,8 @@
     * Add import for well data from .xlsx and import template .xlsx
   * Collection Tag for research-plan screen (https://github.com/ComPlat/chemotion_ELN/pull/774)
   * Chemspectra : Cyclic Voltametry (Warning: upd chem-spectra-app service to 0.10.14)
+  * ResearchPlan link to reactions and samples (https://github.com/ComPlat/chemotion_ELN/issues/666)
+  * No reaction-svg when no material present (https://github.com/ComPlat/chemotion_ELN/issues/691)
  
 
 * Fixes
