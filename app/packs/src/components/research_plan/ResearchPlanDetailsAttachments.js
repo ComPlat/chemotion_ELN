@@ -129,7 +129,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       return null;
     }
     return (
-      <OverlayTrigger placement="top"  >
+      <OverlayTrigger placement="top" overlay={annotateTooltip}  >
         <Button
           bsSize="xsmall"
           bsStyle="warning"
@@ -230,6 +230,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 bsStyle="primary"
                 onClick={() => this.props.onDownload(attachment)}
               >
+
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
