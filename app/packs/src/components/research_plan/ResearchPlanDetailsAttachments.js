@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
 import { previewAttachmentImage } from './../utils/imageHelper';
+import ImageAnnotationModalSVG from './ImageAnnotationModalSVG'
 
 import {
   Button, ButtonGroup,
@@ -118,9 +119,20 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImageEditModal() {
-    const { onDrop } = this.state;
-    const { onDelete } = this.state;
-    return null;
+    return (
+      < ImageAnnotationModalSVG
+        attachment={this.state.choosenAttachment}
+        isShow={this.state.imageEditModalShown}
+        handleSave={
+          () => {
+            let newAnnotation = document.getElementById("svgEditId").contentWindow.svgEditor.svgCanvas.getSvgString();
+            this.state.choosenAttachment.updatedAnnotation=newAnnotation;
+            this.setState({ imageEditModalShown: false });
+          }
+        }
+        handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
+      />
+    );
   }
 
   renderAnnotateImageButton(attachment) {
@@ -135,12 +147,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
           bsStyle="warning"
           className="button-right"
           onClick={() => {
-
-            var target = document.createElement('img');
-            target.id = 'rpa_helper_id';
-            target.src = '/api/v1/attachments/'.concat(attachment.id)
-            target.style = { display: 'none' }
-            document.body.appendChild(target);
             this.setState(
               {
                 imageEditModalShown: true,

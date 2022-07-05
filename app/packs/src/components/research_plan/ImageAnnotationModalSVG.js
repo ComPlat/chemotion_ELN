@@ -38,7 +38,7 @@ export default class ImageAnnotationModalSVG extends Component {
         </Modal.Body>
         <Modal.Footer style={{ textAlign: 'left' }}>
           <Button bsStyle="primary" onClick={() => this.props.handleOnClose()}>Close</Button>
-          <Button bsStyle="warning" onClick={() => this.saveAnnotation()}>Save</Button>
+          <Button bsStyle="warning" onClick={() => this.props.handleSave()}>Save</Button>
         </Modal.Footer>
       </Modal>
     );
