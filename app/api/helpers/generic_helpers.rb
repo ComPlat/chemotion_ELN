@@ -11,7 +11,7 @@ module GenericHelpers
       field_uploads = layer['fields'].select { |ss| ss['type'] == 'upload' }
       field_uploads.each do |field|
         (field['value'] && field['value']['files'] || []).each do |file|
-          uploads.push({ layer: key, field: field['field'], uid: file['uid'], filename: file['filename'] })
+          uploads.push(layer: key, field: field['field'], uid: file['uid'], filename: file['filename'])
         end
       end
     end
@@ -48,33 +48,31 @@ module GenericHelpers
       map_info[key]['files'].each do |fobj|
         file = (files || []).select { |ff| ff['filename'] == fobj['uid'] }&.first
         pa = uploads.select { |ss| ss[:uid] == file[:filename] }&.first || nil
-        if (tempfile = file[:tempfile])
-          a = Attachment.new(
-            bucket: file[:container_id],
-            filename: fobj['filename'],
-            created_by: user_id,
-            created_for: user_id,
-            content_type: file[:type],
-            attachable_type: map_info[key]['type'],
-            attachable_id: element.id
-          )
-          ActiveRecord::Base.transaction do
-            begin
-              a.save!
+        next unless (tempfile = file[:tempfile])
 
-              a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-              if a.valid?
-                a.save!
-                update_properties_upload(element, element.properties, a, pa)
-                attach_ary.push(a.id)
-              else
-                raise ActiveRecord::Rollback
-              end
-            ensure
-              tempfile.close
-              tempfile.unlink
-            end
+        a = Attachment.new(
+          bucket: file[:container_id],
+          filename: fobj['filename'],
+          created_by: user_id,
+          created_for: user_id,
+          content_type: file[:type],
+          attachable_type: map_info[key]['type'],
+          attachable_id: element.id
+        )
+        ActiveRecord::Base.transaction do
+          a.save!
+
+          a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+          if a.valid?
+            a.save!
+            update_properties_upload(element, element.properties, a, pa)
+            attach_ary.push(a.id)
+          else
+            raise ActiveRecord::Rollback
           end
+        ensure
+          tempfile.close
+          tempfile.unlink
         end
       end
       element.send("#{type.downcase}s_revisions")&.last&.destroy!
@@ -86,33 +84,30 @@ module GenericHelpers
   def create_attachments(files, del_files, type, id, user_id)
     attach_ary = []
     (files || []).each do |file|
-      if (tempfile = file[:tempfile])
-        a = Attachment.new(
-          bucket: file[:container_id],
-          filename: file[:filename],
-          created_by: user_id,
-          created_for: user_id,
-          content_type: file[:type],
-          attachable_type: type,
-          attachable_id: id
-        )
-        ActiveRecord::Base.transaction do
-          begin
-            a.save!
+      next unless (tempfile = file[:tempfile])
 
-            a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-            if a.valid?
-              a.attachment_attacher.create_derivatives
-              a.save!
-              attach_ary.push(a.id)
-            else
-              raise ActiveRecord::Rollback
-            end
-          ensure
-            tempfile.close
-            tempfile.unlink
-          end
+      a = Attachment.new(
+        bucket: file[:container_id],
+        filename: file[:filename],
+        created_by: user_id,
+        created_for: user_id,
+        content_type: file[:type],
+        attachable_type: type,
+        attachable_id: id
+      )
+      ActiveRecord::Base.transaction do
+        a.save!
+        a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+        if a.valid?
+          a.attachment_attacher.create_derivatives
+          a.save!
+          attach_ary.push(a.id)
+        else
+          raise ActiveRecord::Rollback
         end
+      ensure
+        tempfile.close
+        tempfile.unlink
       end
     end
     Attachment.where('id IN (?) AND attachable_type = (?)', del_files.map!(&:to_i), type).update_all(attachable_id: nil) unless (del_files || []).empty?

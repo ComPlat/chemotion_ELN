@@ -57,7 +57,7 @@ module Import
               end
             ensure
               tmp.close
-              tmp.unlink   # deletes the temp file
+              tmp.unlink # deletes the temp file
             end
           when %r{^images/(samples|reactions|molecules|research_plans)/(\w{1,128}\.\w{1,4})}
             tmp_file = Tempfile.new

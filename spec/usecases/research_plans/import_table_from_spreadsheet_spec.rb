@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
-  let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template.xlsx') }
+  let(:file_path) { Rails.root.join('public/xlsx/wellplate_import_template.xlsx') }
   let(:file_name) { File.basename(file_path) }
   let(:attachment) do
     FactoryBot.create(:attachment, filename: file_name, file_path: file_path, attachment: File.open(file_path, binmode: true))
@@ -22,18 +22,19 @@ RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
   end
 
   context 'with valid data' do
-    let(:header_names) {
+    let(:header_names) do
       [
-        'Position', 
-        'sample_ID',
-        'External Compound Label/ID', 
+        'Position',
+        'Sample',
+        'External Compound Label/ID',
         'Smiles',
-        'Readout1_Value', 
-        'Readout1_Unit', 
-        'Readout2_Value', 
+        'Readout1_Value',
+        'Readout1_Unit',
+        'Readout2_Value',
         'Readout2_Unit'
       ]
-    }
+    end
+
     before do
       importer.execute!
       research_plan.reload
@@ -48,7 +49,7 @@ RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
       rows = research_plan.body.last['value']['rows']
       rows.each_with_index do |row, index|
         expect(row['Position']).to eq index_to_position(index)
-        expect(row['sample_ID']).to eq (10000 + index + 1)
+        expect(row['Sample']).to eq nil
         expect(row['External Compound Label/ID']).to eq nil
         expect(row['Smiles']).to eq nil
         expect(row['Readout1_Value'].to_f).to eq "0.#{index + 1}".to_f

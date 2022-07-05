@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'ImportWellplateSpreadsheet' do
-  let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template.xlsx') }
+  let(:file_path) { Rails.root.join('public/xlsx/wellplate_import_template.xlsx') }
   let(:file_name) { File.basename(file_path) }
   let!(:attachment) do
     FactoryBot.create(:attachment, filename: file_name, file_path: file_path, attachment: File.open(file_path, binmode: true))
@@ -29,7 +29,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
     let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_headers.xlsx') }
 
     it 'raises an exception' do
-      error_message = ["'Position' must be in cell A1.", "'sample_ID' must be in cell B1."].join("\n")
+      error_message = ["'Position' must be in cell A1.", "'Sample' must be in cell B1."].join("\n")
 
       expect { import.process! }.to raise_error(StandardError, error_message)
     end

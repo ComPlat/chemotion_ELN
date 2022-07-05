@@ -22,7 +22,7 @@ describe 'Copy reaction' do
   let(:product3) { create(:sample, name: 'Product3', real_amount_value: 4.671, molecule: m2) }
   let(:reaction3) { create(:reaction, status: 'Successful', short_label: 'Reaction3') }
 
-  let!(:col) { create(:collection, user_id: user1.id, label: 'Col1') }
+  let!(:col) { create(:collection, user_id: user1.id, label: 'Col3') }
 
   let!(:root_share) { create(:collection, user: user1, shared_by_id: user2.id, is_shared: true, is_locked: true) }
   let!(:cshare) { create(:collection, user: user1, label: 'share-col', permission_level: 10, sample_detail_level: 10, reaction_detail_level: 10, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
@@ -83,7 +83,7 @@ describe 'Copy reaction' do
   end
 
   it 'to same collection', js: true do
-    find_by_id('tree-id-Col1').click
+    find_by_id('tree-id-Col3').click
     first('i.icon-reaction').click
     first('i.c-bs-success').click
     first('i.fa-clone').click
@@ -103,7 +103,7 @@ describe 'Copy reaction' do
     find_all('input[type="text"]')[2].set('Col2')
     find_by_id('my-collections-update-btn').click
     find_by_id('col-mgnt-btn').click
-    find_by_id('tree-id-Col1').click
+    find_by_id('tree-id-Col3').click
     first('i.icon-reaction').click
     first('i.c-bs-success').click
     first('i.fa-clone').click
@@ -119,7 +119,7 @@ describe 'Copy reaction' do
 
   context 'from own collection' do
     before do
-      sign_in(user1)
+      # sign_in(user1)
 
       fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
       svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
@@ -149,7 +149,6 @@ describe 'Copy reaction' do
 
   context 'from shared-with-me collection' do
     before do
-      sign_in(user1)
       fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
       svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
       `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
@@ -178,7 +177,7 @@ describe 'Copy reaction' do
       find('span.glyphicon-plus').click
       find_by_id('tree-id-Col2-shared').click
       find('i.icon-reaction').click
-      find('div.preview-table', text: '*** ***', exact_text: true).click
+      find('div.preview-table').click
       expect(page).not_to have_button('copy-element-btn')
     end
   end

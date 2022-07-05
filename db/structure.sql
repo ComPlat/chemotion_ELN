@@ -216,12 +216,17 @@ CREATE FUNCTION public.literatures_by_element(element_type text, element_id inte
     LANGUAGE sql
     AS $_$
 <<<<<<< HEAD
+<<<<<<< HEAD
    select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
    where l.literature_id = l2.id
 =======
    select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
    where l.literature_id = l2.id
 >>>>>>> d8125e6db90c6306b8f91b98a511774e9e062045
+=======
+   select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+   where l.literature_id = l2.id 
+>>>>>>> 55e3ed158f4df04cac2c899eff71894841670cec
    and l.element_type = $1 and l.element_id = $2
  $_$;
 
@@ -6342,12 +6347,16 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20210920171211'),
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 ('20210921114420'),
 >>>>>>> 62e9fb82612fc18b60712bab46481e58939aa0ba
 =======
 ('20210921114420'),
 >>>>>>> d8125e6db90c6306b8f91b98a511774e9e062045
+=======
+('20210921114420'),
+>>>>>>> 55e3ed158f4df04cac2c899eff71894841670cec
 ('20210921114428'),
 ('20210924095106'),
 ('20211105091019'),
@@ -6355,11 +6364,14 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20211115222715'),
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ('20211117234000'),
 =======
 >>>>>>> 62e9fb82612fc18b60712bab46481e58939aa0ba
 =======
 >>>>>>> d8125e6db90c6306b8f91b98a511774e9e062045
+=======
+>>>>>>> 55e3ed158f4df04cac2c899eff71894841670cec
 ('20211117235010'),
 ('20211118112711'),
 ('20211122142906'),
