@@ -10,8 +10,6 @@ import SamplesFetcher from '../fetchers/SamplesFetcher';
 import uniqueId from 'react-html-id';
 import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
-import uniqueId from 'react-html-id';
-import CustomTextEditor from '../common/CustomTextEditor';
 import CustomHeader from './CustomHeader';
 import { Row, Col, Button } from 'react-bootstrap';
 

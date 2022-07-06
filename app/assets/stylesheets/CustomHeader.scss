@@ -1,6 +1,15 @@
+div[role=columnheader] {
+  display: grid;
+
+}
+
 .customHeaderLabel {
   float: left;
   margin: 0 0 0 3px;
+}
+
+.sortHeader {
+  float: right;
 }
 
 .customSortUpLabel {
@@ -10,7 +19,7 @@
 
 .customSortDownLabel {
   float: left;
-  margin: 0;
+  margin: 0 0 0 3px;
 }
 
 .customSortRemoveLabel {
