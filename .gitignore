@@ -179,3 +179,4 @@ vendor/cache/*
 
 shrine/*
 config/shrine_config.yml
+public/sprite.png

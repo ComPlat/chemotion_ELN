@@ -22,7 +22,7 @@ import {
 } from 'react-bootstrap';
 
 import { last, findKey, values } from 'lodash';
-
+import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
@@ -44,10 +44,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
       showImportConfirm: []
     };
     this.editorInitial = this.editorInitial.bind(this);
+    this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
   }
 
   componentDidMount() {
     this.editorInitial();
+    this.createAttachmentPreviews();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.attachments !== prevProps.attachments) {
+      this.createAttachmentPreviews();
+    }
   }
 
   editorInitial() {
@@ -97,6 +105,23 @@ export default class ResearchPlanDetailsAttachments extends Component {
           alert('Unauthorized to edit this file.');
         }
       });
+  }
+
+  createAttachmentPreviews() {
+    const { attachments } = this.props;
+    attachments.map((attachment) => {
+      if (attachment.thumb) {
+        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then((result) => {
+          if (result != null) {
+            attachment.preview = `data:image/png;base64,${result}`;
+          }
+        });
+      }
+      else {
+        attachment.preview = '/images/wild_card/not_available.svg';
+      }
+      return attachment;
+    });
   }
 
   onImport(attachment) {
@@ -169,8 +194,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const hasPop = false;
     const fetchNeeded = false;
     const fetchId = attachment.id;
-
-    const previewImg = previewAttachmentImage(attachment);
     const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
 
     const docType = this.documentType(attachment.filename);
@@ -211,11 +234,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
                   imageStyle={imageStyle}
                   hasPop={hasPop}
                   previewObject={{
-                    src: previewImg
+                    src: attachment.preview,
                   }}
                   popObject={{
                     title: attachment.filename,
-                    src: previewImg,
+                    src: attachment.preview,
                     fetchNeeded,
                     fetchId
                   }}
@@ -282,14 +305,14 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderDropzone() {
 
     return (
-      <div className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}>
-        <Dropzone
-          onDrop={files => this.props.onDrop(files)}
-          className="zone"
-        >
+      <Dropzone
+        onDrop={files => this.props.onDrop(files)}
+        className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}
+      >
+        <div className="zone">
           Drop Files, or Click to Select.
-        </Dropzone>
-      </div>
+        </div>
+      </Dropzone>
     );
   }
 

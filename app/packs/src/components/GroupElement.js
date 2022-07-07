@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonGroup, OverlayTrigger, Popover, Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Panel, Form, FormControl, FormGroup, ControlLabel, Col, Row } from 'react-bootstrap';
+import { ButtonGroup, OverlayTrigger, Popover, Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Tooltip, Panel, Form, FormControl, FormGroup, ControlLabel, Col, Row } from 'react-bootstrap';
 import UsersFetcher from './fetchers/UsersFetcher';
 import Select from 'react-select';
 import _ from 'lodash';
@@ -99,9 +99,7 @@ export default class GroupElement extends React.Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(groupRec, userRec)}>
-            <i className="fa fa-trash-o" />
-          </Button>
+          <Button bsSize="xsmall" type="button" bsStyle="danger" className="fa fa-trash-o" onClick={() => this.confirmDelete(groupRec, userRec)} />
         </OverlayTrigger>
       </ButtonGroup>
     );
@@ -112,9 +110,15 @@ export default class GroupElement extends React.Component {
     if (group.admins && group.admins.length > 0 && group.admins[0].id === this.state.currentUser.id) {
       return (
         <td>
-          <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" onClick={this.toggleUsers} />&nbsp;&nbsp;
-          <Button bsSize="xsmall" type="button" bsStyle="success" className="fa fa-plus" onClick={this.toggleRowAdd} />&nbsp;&nbsp;
-          {this.renderDeleteButton('group', group)}
+          <OverlayTrigger placement='top' overlay={<Tooltip>View users</Tooltip>}>
+            <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" onClick={this.toggleUsers} />
+          </OverlayTrigger>
+          <OverlayTrigger placement='top' overlay={<Tooltip>Add user</Tooltip>}>
+            <Button bsSize="xsmall" type="button" bsStyle="success" className="fa fa-plus" onClick={this.toggleRowAdd} />
+          </OverlayTrigger>
+          <OverlayTrigger placement='top' overlay={<Tooltip>Remove group</Tooltip>}>
+            {this.renderDeleteButton('group', group)}
+          </OverlayTrigger>
           <span className={'collapse' + (showRowAdd ? 'in' : '')}>
             <Select.AsyncCreatable
               multi

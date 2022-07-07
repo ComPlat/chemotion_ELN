@@ -73,28 +73,18 @@ class ResearchPlanDetailsFieldReaction extends Component {
     if (!hasAuth(reaction.id)) {
       return noAuth(reaction);
     }
-    const { edit } = this.props;
-    const title = reaction.title();
-    let link;
-    if (edit) {
-      link = (
-        <p className="float-left">
-          Reaction:
-          <a role="link" tabIndex={0} onClick={() => this.showReaction()} style={{ cursor: 'pointer' }}>
-            {title}
-          </a>
-        </p>
-      );
-    }
+    const link = <p>{reaction.title()}</p>;
+    
     return (
       <div className="research-plan-field-reaction">
-        {link}
         <div className="image-container">
           <img src={reaction.svgPath} alt={title} />
-          <p>{reaction.name}</p>
+          <a role="link" tabIndex={0} onClick={() => this.showReaction()} style={{ cursor: 'pointer' }}>
+          {link}
+          </a>
         </div>
       </div>
-    );
+      );
   }
 
   renderEdit() {

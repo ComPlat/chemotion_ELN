@@ -410,7 +410,7 @@ export default class AttachmentFetcher {
     }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static saveSpectrum(attId, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr) {
+  static saveSpectrum(attId, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx) {
     const params = {
       attachmentId: attId,
       peaksStr,
@@ -423,7 +423,9 @@ export default class AttachmentFetcher {
       multiplicity,
       predict,
       keepPred,
-      waveLength: waveLengthStr
+      waveLength: waveLengthStr,
+      cyclicvolta: cyclicvolta,
+      curveIdx: curveIdx
     };
 
     const promise = fetch(

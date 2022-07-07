@@ -48,6 +48,7 @@ class Molecule < ApplicationRecord
 
   before_save :sanitize_molfile
   after_create :create_molecule_names
+  after_create :get_lcss
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
 
   validates_uniqueness_of :inchikey, scope: :is_partial
@@ -94,6 +95,7 @@ class Molecule < ApplicationRecord
       molecule.molfile = is_partial && partial_molfile || molfile
       molecule.assign_molecule_data(babel_info, pubchem_info)
     end
+ 
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end
@@ -166,7 +168,7 @@ class Molecule < ApplicationRecord
 
   def attach_svg svg_data
     return unless svg_data.match /\A<\?xml/
-
+    
     svg_file_name = if self.is_partial
       "#{SecureRandom.hex(64)}Part.svg"
     else
@@ -175,7 +177,8 @@ class Molecule < ApplicationRecord
     svg_file_path = "public/images/molecules/#{svg_file_name}"
 
     svg_file = File.new(svg_file_path, 'w+')
-    svg_file.write(svg_data)
+    scrubbed = Loofah.scrub_fragment(svg_data, :strip).to_s
+    svg_file.write(scrubbed)
     svg_file.close
 
     self.molecule_svg_file = svg_file_name
@@ -221,6 +224,16 @@ class Molecule < ApplicationRecord
       end
     end
     molecule_names.create(name: sum_formular, description: 'sum_formular')
+  end
+
+  def get_lcss
+    delayed_jobs = Delayed::Job.where(queue: 'single_pubchem_lcss')
+    if delayed_jobs.empty?
+      PubchemSingleLcssJob.perform_later self
+    else
+      last_job = delayed_jobs.last
+      PubchemSingleLcssJob.set(run_at: last_job.created_at + 1.seconds).perform_later self
+    end
   end
 
   def create_molecule_name_by_user(new_name, user_id)

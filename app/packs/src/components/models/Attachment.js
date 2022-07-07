@@ -1,17 +1,16 @@
 import Element from './Element';
+import { filePreview } from '../../helper/index';
 
 export default class Attachment extends Element {
-
   static fromFile(file) {
-    return new Attachment(
-      {
-        file: file,
-        name: file.name,
-        filename: file.name,
-        identifier: file.id,
-        is_deleted: false,
-      }
-    )
+    return new Attachment({
+      file,
+      name: file.name,
+      filename: file.name,
+      identifier: file.id,
+      is_deleted: false,
+      preview: filePreview(file),
+    });
   }
 
   get preview() {
@@ -30,7 +29,6 @@ export default class Attachment extends Element {
       thumb: this.thumb,
       content_type: this.content_type,
       is_deleted: this.is_deleted,
-    })
+    });
   }
-
 }
