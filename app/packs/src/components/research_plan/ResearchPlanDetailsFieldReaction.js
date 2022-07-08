@@ -78,7 +78,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
     return (
       <div className="research-plan-field-reaction">
         <div className="image-container">
-          <img src={reaction.svgPath} alt={title} />
+          <img src={reaction.svgPath} alt={reaction.title()} />
           <a role="link" tabIndex={0} onClick={() => this.showReaction()} style={{ cursor: 'pointer' }}>
           {link}
           </a>
