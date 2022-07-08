@@ -194,7 +194,7 @@ export default class WellplatesFetcher {
   }
 
   static updateWellColorCode(params) {
-    let promise = fetch('/api/v1/wellplates/well_color_code', {
+    const promise = fetch('/api/v1/wellplates/well_color_code', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -209,6 +209,7 @@ export default class WellplatesFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
+    return promise;
   }
 
   static importWellplateSpreadsheet(wellplateId, attachmentId) {
