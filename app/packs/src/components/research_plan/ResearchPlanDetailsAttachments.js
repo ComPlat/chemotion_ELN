@@ -145,7 +145,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   renderImageEditModal() {
     return (
-      < ImageAnnotationModalSVG
+      <ImageAnnotationModalSVG
         attachment={this.state.choosenAttachment}
         isShow={this.state.imageEditModalShown}
         handleSave={
