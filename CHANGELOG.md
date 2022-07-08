@@ -10,6 +10,15 @@
 * Fixes
 
 
+# [v1.3.1-pre]
+> 2022-07-07
+
+* Features and Improvements:
+
+* Fixes:
+  * reaction title on research-plan (https://github.com/ComPlat/chemotion_ELN/issues/787)
+
+
 ## [v1.3.0]
 > 2022-07-05
 
