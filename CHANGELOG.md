@@ -17,6 +17,7 @@
 
 * Fixes:
   * reaction title on research-plan (https://github.com/ComPlat/chemotion_ELN/issues/787)
+  * Well details scrolling (https://github.com/ComPlat/chemotion_ELN/issues/669)
 
 
 ## [v1.3.0]

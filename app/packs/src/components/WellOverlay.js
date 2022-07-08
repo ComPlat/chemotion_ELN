@@ -30,27 +30,25 @@ const handleSampleClick = (sample) => {
 }
 
 const renderWellContent = (well, removeSampleFromWell) => {
-  const { sample } = well;
-  let svg = '';
-  let moleculeName = '';
-  let removeButton = '';
-  const namesStyle = { textAlign: 'center', marginTop: 5 };
+  const {sample} = well;
+  let svg, moleculeName, removeButton = '';
+
   const svgContainerStyle = {
     borderRadius: '50%',
-    height: 200,
-    width: 200,
+    height: 190,
+    width: 190,
     border: '6px solid lightgray',
     textAlign: 'center',
     verticalAlign: 'middle',
     lineHeight: 2
   };
   if (sample) {
-    svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
+    svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath}/>;
     moleculeName = sample.molecule.iupac_name;
     removeButton = (
       <div className="pull-right">
         <Button bsSize="xsmall" bsStyle="danger" onClick={() => removeSampleFromWell(well)}>
-          <span className="fa fa-trash-o" />
+          <span className="fa fa-trash-o"></span>
         </Button>
       </div>
     );
@@ -60,14 +58,16 @@ const renderWellContent = (well, removeSampleFromWell) => {
       <div style={svgContainerStyle}>
         {svg}
       </div>
-      <div style={namesStyle}>
-        {sampleName(sample)}<br />
-        {moleculeName}<br />
+      <div className="wellplate-overlay">
+        {sampleName(sample)}<br/>
+        {moleculeName}<br/>
       </div>
-      {removeButton}
+      <div>
+        {removeButton}
+      </div>
     </div>
   );
-};
+}
 
 const sampleImportedReadout = sample => (sample ? sample.imported_readout : '');
 
@@ -96,11 +96,10 @@ const content = (
     disabled: (wellLabels.some(item => item !== 'Molecular structure'))
   }];
 
-  return (
-    <div style={{ width: 220, height: 850 }}>
+  return(
+    <div style={{ width: 220, height: 650 }}>
       {renderWellContent(well, removeSampleFromWell)}
       <div>
-        <hr style={{ marginTop: 28, marginBottom: 10 }} />
         <Select
           id="label"
           name="label"
@@ -108,8 +107,8 @@ const content = (
           options={labels}
           value={well.label}
           onChange={e => handleWellLabel(e)}
+          style={{ top: '2px', bottom: '2px' }}
         />
-        &nbsp;
         <FormGroup>
           {readouts && readouts.map((readout, index) => (
             <div key={`readout_${readout.id}`}>
@@ -135,14 +134,15 @@ const content = (
             style={{ height: 50 }}
           />
         </FormGroup>
-        <FormGroup style={{ top: '50px' }} controlId="colorInput">
-          <Col componentClass={ControlLabel} sm={3}>
-            Select Color
+        <FormGroup>
+          <Col style={{ marginLeft: '-15px' }} class="row row-no-gutters" componentClass={ControlLabel} sm={3}>
+            Select&nbsp;Color
           </Col>
-          <Col sm={9}>
+          <Col sm={9} style={{ marginLeft: '35px', width: '65%' }}>
             <InputGroup>
               <InputGroup.Addon style={bcStyle} />
               <FormControl
+                class="input-sm"
                 type="text"
                 readOnly
                 value={selectedColor || well.color_code}
@@ -150,12 +150,10 @@ const content = (
             </InputGroup>
           </Col>
         </FormGroup>
-        <FormGroup controlId="formHorizontalPicker">
-          <Col sm={12}>
-            <CirclePicker width="132%" onChangeComplete={e => handleColorPicker(e)} />
-          </Col>
+        <FormGroup controlId="formHorizontalPicker" style={{ marginTop: '60px' }}>
+          <CirclePicker circleSize={17} width="100%" onChangeComplete={e => handleColorPicker(e)} />
         </FormGroup>
-        <ButtonGroup style={{ top: '10px', bottom: '10px' }}>
+        <ButtonGroup style={{ bottom: '5x' }}>
           <Button style={{ left: '80px' }} onClick={saveColorCode}>Save</Button>
         </ButtonGroup>
       </div>
@@ -163,16 +161,18 @@ const content = (
   );
 };
 
-const title = handleClose => (
-  <div>
-    Well Details zzz
-    <span className="pull-right" style={{ marginRight: -8, marginTop: -3 }}>
-      <Button bsSize="xsmall" onClick={() => handleClose()}>
-        <i className="fa fa-times" />
-      </Button>
-    </span>
-  </div>
-);
+const title = (handleClose) => {
+  return(
+    <div>
+      Well Details
+      <span className='pull-right' style={{marginRight: -8, marginTop: -3}}>
+        <Button bsSize='xsmall' onClick={() => handleClose()}>
+          <i className="fa fa-times"></i>
+        </Button>
+      </span>
+    </div>
+  )
+}
 
 const WellOverlay = ({
   show, well, readoutTitles, placement, target, handleClose, removeSampleFromWell, handleWellLabel,
@@ -183,6 +183,7 @@ const WellOverlay = ({
     show={show}
     target={target}
     placement={placement}
+    style={{ position: 'sticky', top: 0, overflow: 'scroll' }}
     onHide={() => handleClose()}
   >
     <Popover title={title(handleClose)} id={`wellpop${well.id}`}>
