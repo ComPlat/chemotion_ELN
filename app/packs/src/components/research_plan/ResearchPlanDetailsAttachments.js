@@ -153,6 +153,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
             let newAnnotation = document.getElementById("svgEditId").contentWindow.svgEditor.svgCanvas.getSvgString();
             this.state.choosenAttachment.updatedAnnotation=newAnnotation;
             this.setState({ imageEditModalShown: false });
+            this.props.onEdit(this.state.choosenAttachment);
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}

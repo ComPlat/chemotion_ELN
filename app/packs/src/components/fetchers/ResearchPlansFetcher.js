@@ -60,23 +60,22 @@ export default class ResearchPlansFetcher {
         })
   }
 
-static updateAnnotations(researchPlan ){
-    researchPlan.attachments
-      .filter((attach => attach.hasOwnProperty('updatedAnnotation')))
-      .forEach(attach => {
-        let data = new FormData();
-        data.append('updated_svg_string', attach.updatedAnnotation);
-        fetch('/api/v1/attachments/'+attach.id+'/annotation', {
-          credentials: 'same-origin',
-          method: 'post',
-          body: data
+  static updateAnnotations(researchPlan ){
+      researchPlan.attachments
+        .filter((attach => attach.hasOwnProperty('updatedAnnotation')))
+        .forEach(attach => {
+          let data = new FormData();
+          data.append('updated_svg_string', attach.updatedAnnotation);
+          fetch('/api/v1/attachments/'+attach.id+'/annotation', {
+            credentials: 'same-origin',
+            method: 'post',
+            body: data
+          })
+          .catch((errorMessage) => {
+            console.log(errorMessage);
+          })
         })
-        .catch((errorMessage) => {
-          console.log(errorMessage);
-        })
-      })
-
-}
+  }
 
 
 

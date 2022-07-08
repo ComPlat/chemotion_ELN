@@ -187,6 +187,7 @@ export default class ResearchPlanDetails extends Component {
     researchPlan.attachments.map((currentAttachment) => {
       if (currentAttachment.id === attachment.id) return attachment;
     });
+    researchPlan.changed = true;
     this.setState({ researchPlan });
     this.forceUpdate();
   }
