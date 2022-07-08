@@ -23,16 +23,21 @@ export default class ImageAnnotationModalSVG extends Component {
             width="100%"
             height="800"
             onLoad={() => {
+              let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;
+              svgEditor.setBackground('white');
               let attachment = this.props.attachment;
-              fetch('/api/v1/attachments/' + attachment.id + "/annotation")
+              if(attachment.updatedAnnotation){
+                svgEditor.svgCanvas.setSvgString(attachment.updatedAnnotation);
+              }else{
+                fetch('/api/v1/attachments/' + attachment.id + "/annotation")
                 .then(res => {
                   return res.text().then(text => {
-                    let svgEditor = document.getElementById("svgEditId").contentWindow.svgEditor;
-                    svgEditor.setBackground('white');
                     let svgString = decodeURIComponent(JSON.parse(text));
                     svgEditor.svgCanvas.setSvgString(svgString);
                   })
                 })
+              }
+
             }}
           />
         </Modal.Body>
