@@ -300,7 +300,7 @@ export default class CollectionsFetcher {
       },
       body: JSON.stringify(params)
     }).then((response) => {
-      NotificationActions.notifyExImportStatus('export', response.status);
+      NotificationActions.notifyExImportStatus('Collection export', response.status);
       if (response.ok) { return true; }
       throw new Error(response.status);
     }).catch((errorMessage) => { throw new Error(errorMessage); });
@@ -315,7 +315,7 @@ export default class CollectionsFetcher {
       method: 'POST',
       body: data
     }).then((response) => {
-      NotificationActions.notifyExImportStatus('import', response.status);
+      NotificationActions.notifyExImportStatus('Collection import', response.status);
       if (response.ok) { return true; }
       throw new Error(response.status);
     }).catch((errorMessage) => { console.log(errorMessage); });

@@ -350,46 +350,20 @@ module Chemotion
 
       desc "Download the zip attachment file by sample_id"
       get 'sample_analyses/:sample_id' do
-        env['api.format'] = :binary
-        content_type('application/zip, application/octet-stream')
-        #@sample = Sample.find(params[:sample_id])
-        filename = URI.escape("#{@sample.short_label}-analytical-files.zip")
-        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
-        zip = Zip::OutputStream.write_buffer do |zip|
+        tts = @sample.analyses&.map { |a| a.children&.map { |d| d.attachments&.map{ |at| at.filesize } } }&.flatten&.reduce(:+) || 0
+        if tts > 300_000_000
+          DownloadAnalysesJob.perform_later(@sample.id, current_user.id, false)
+          nil
+        else
+          env['api.format'] = :binary
+          content_type('application/zip, application/octet-stream')
+          filename = URI.escape("#{@sample.short_label}-analytical-files.zip")
+          header('Content-Disposition', "attachment; filename=\"#{filename}\"")
+          zip = DownloadAnalysesJob.perform_now(@sample.id, current_user.id, true)
+          zip.rewind
+          zip.read
 
-          @sample.analyses.each do |analysis|
-            analysis.children.each do |dataset|
-              dataset.attachments.each do |att|
-                zip.put_next_entry att.filename
-                zip.write att.read_file
-              end
-            end
-          end
-
-          zip.put_next_entry "sample_#{@sample.short_label} analytical_files.txt"
-          zip.write <<~DESC
-          sample short label: #{@sample.short_label}
-          sample id: #{@sample.id}
-          analyses count: #{@sample.analyses&.length || 0}
-
-          Files:
-          DESC
-
-          @sample.analyses&.each do |analysis|
-            zip.write "analysis name: #{analysis.name}\n"
-            zip.write "analysis type: #{analysis.extended_metadata.fetch('kind', nil)}\n\n"
-            analysis.children.each do |dataset|
-              zip.write "dataset: #{dataset.name}\n"
-              zip.write "instrument: #{dataset.extended_metadata.fetch('instrument', nil)}\n\n"
-              dataset.attachments.each do |att|
-                zip.write "#{att.filename}   #{att.checksum}\n"
-              end
-            end
-            zip.write "\n"
-          end
         end
-        zip.rewind
-        zip.read
       end
 
       desc 'Return image attachment'

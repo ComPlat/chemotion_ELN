@@ -368,23 +368,32 @@ export default class AttachmentFetcher {
       method: 'GET',
     }).then((response) => {
       const disposition = response.headers.get('Content-Disposition');
-      if (disposition && disposition.indexOf('attachment') !== -1) {
-        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        const matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) {
-          fileName = matches[1].replace(/['"]/g, '');
+      if (disposition != null) {
+        if (disposition && disposition.indexOf('attachment') !== -1) {
+          const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          const matches = filenameRegex.exec(disposition);
+          if (matches != null && matches[1]) {
+            fileName = matches[1].replace(/['"]/g, '');
+          }
         }
+
+        return response.blob();
       }
-      return response.blob();
+      else {
+        NotificationActions.notifyExImportStatus('Analysis download', 204);
+        return null;
+      }
     }).then((blob) => {
-      const a = document.createElement('a');
-      a.style = 'display: none';
-      document.body.appendChild(a);
-      const url = window.URL.createObjectURL(blob);
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      if (blob && blob.type != null) {
+        const a = document.createElement('a');
+        a.style = 'display: none';
+        document.body.appendChild(a);
+        const url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
     }).catch((errorMessage) => { console.log(errorMessage); });
   }
 

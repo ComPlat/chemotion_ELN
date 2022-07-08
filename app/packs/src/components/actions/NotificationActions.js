@@ -21,9 +21,9 @@ class NotificationActions {
     return message;
   }
 
-  notifyExImportStatus(type, status) {
+  notifyExImportStatus(title, status) {
     const params = {
-      title: `Collection ${type}`,
+      title: title,
       message: "The task has been submitted: this might take a while but you will be notified as soon as it is completed.",
       level: "info",
       dismissible: true,
