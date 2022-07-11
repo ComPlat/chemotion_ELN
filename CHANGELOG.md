@@ -10,14 +10,15 @@
 * Fixes
 
 
-# [v1.3.1-pre]
-> 2022-07-07
+# [v1.3.1]
+> 2022-07-11
 
 * Features and Improvements:
+  * Download of large dataset as background job to avoid timeout (https://github.com/ComPlat/chemotion_ELN/issues/785)
 
 * Fixes:
-  * reaction title on research-plan (https://github.com/ComPlat/chemotion_ELN/issues/787)
-  * Well details scrolling (https://github.com/ComPlat/chemotion_ELN/issues/669)
+  * Reaction title on research-plan (https://github.com/ComPlat/chemotion_ELN/issues/787)
+  * Well-details scrolling (https://github.com/ComPlat/chemotion_ELN/issues/669)
 
 
 ## [v1.3.0]
