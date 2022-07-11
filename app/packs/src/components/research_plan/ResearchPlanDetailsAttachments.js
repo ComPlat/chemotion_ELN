@@ -27,6 +27,7 @@ import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const annotateTooltip = <Tooltip id="annotate_tooltip">Annotate image</Tooltip>;
+const annotateTooltipNotSaved = <Tooltip id="annotate_tooltip">Please save the research plan to annotate the image</Tooltip>;
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 
@@ -162,13 +163,46 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderAnnotateImageButton(attachment) {
-
     if (!this.isImageFile(attachment.filename)) {
       return null;
     }
     return (
-      <OverlayTrigger placement="top" overlay={annotateTooltip}  >
+      attachment.isNew?
+      this.renderInactiveAnnotationButton(attachment)
+      :
+      this.renderActiveAnnotationButton(attachment)
+    );
+  }
+
+  renderActiveAnnotationButton(attachment) {
+    return (
+      <OverlayTrigger placement="top" overlay={annotateTooltip}>
+      <Button
+        bsSize="xsmall"
+        bsStyle="warning"
+        className="button-right"
+        disabled={attachment.isNew}
+        onClick={() => {
+          this.setState(
+            {
+              imageEditModalShown: true,
+              choosenAttachment: attachment,
+              imageName: attachment.filename
+            });
+        } }>
+        <i className="fa fa-pencil" aria-hidden="true" />
+      </Button>
+    </OverlayTrigger>
+    );
+  }
+
+  renderInactiveAnnotationButton(attachment) {
+    return (
+      <OverlayTrigger overlay={annotateTooltipNotSaved}>
+      <span className="button-right">
         <Button
+          disabled
+          style={{ pointerEvents: 'none' }}
           bsSize="xsmall"
           bsStyle="warning"
           className="button-right"
@@ -179,12 +213,17 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 choosenAttachment: attachment,
                 imageName: attachment.filename
               });
-          }}>
+          } }>
           <i className="fa fa-pencil" aria-hidden="true" />
         </Button>
-      </OverlayTrigger>
+      </span>
+    </OverlayTrigger>
     );
   }
+
+
+
+
 
   renderListGroupItem(attachment) {
     const { attachmentEditor, extension } = this.state;

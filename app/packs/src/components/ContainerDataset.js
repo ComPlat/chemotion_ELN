@@ -549,17 +549,22 @@ export default class ContainerDataset extends Component {
               disabled={disabled}></HyperLinksSection>
           </Col>
         </Row>
-        <ImageAnnotationModalSVG
-          attachment={this.state.choosenAttachment}
-          imageName={''}
-          file={''}
-          dataSrc={''}
-          isShow={this.state.imageEditModalShown}
-          handleSave={() => {
+      <ImageAnnotationModalSVG
+        attachment={this.state.choosenAttachment}
+        isShow={this.state.imageEditModalShown}
+        handleSave={
+          () => {
+            let newAnnotation = document.getElementById("svgEditId").contentWindow.svgEditor.svgCanvas.getSvgString();
+            this.state.choosenAttachment.updatedAnnotation=newAnnotation;
+            this.setState({ imageEditModalShown: false });
+            this.props.onChange(this.handleInputChange);
+          }
+        }
+        handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
+      />
 
-          }}
-          handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
-        />
+
+
         <AttachmentVersionsModal
           onHide={this.handleModalHide}
           show={attachmentVersionsModalShow}
