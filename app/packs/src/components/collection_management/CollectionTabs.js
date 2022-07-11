@@ -1,7 +1,7 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import { Button, FormControl, Modal, Col } from 'react-bootstrap';
-import { isEmpty } from 'lodash';
+import _, { isEmpty } from 'lodash';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
 import TabLayoutContainer from '../TabLayoutContainer';
@@ -90,6 +90,9 @@ export default class CollectionTabs extends React.Component {
       const availableTabs = (layout && Object.keys(layout)) || {};
       if (!isEmpty(node.tabs_segment[element.name])) {
         const nodeTabs = node.tabs_segment[element.name];
+        const collectiveOptions = [...nodeTabs.visible, ...nodeTabs.hidden]
+        const difference = _.difference(availableTabs, collectiveOptions)
+        nodeTabs.hidden = [...difference, ...nodeTabs.hidden]
         layout = nodeTabs;
       } else {
         const { visible, hidden } = getArrayFromLayout(layout, availableTabs);
@@ -212,7 +215,7 @@ export default class CollectionTabs extends React.Component {
           <Modal.Header>
             <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
           </Modal.Header>
-          <Modal.Body style={{ paddingTop: '2px', paddingBottom: '2px' }}>
+          <Modal.Body style={{ paddingTop: '2px', paddingBottom: '2px' }} className="collection-tab-modal-body">
             {layouts.map((lay, index) => {
               var callbackRef = node => this.tabRef[index] = node;
               return (
@@ -234,7 +237,8 @@ export default class CollectionTabs extends React.Component {
               );
              })
             }
-            <hr />
+          </Modal.Body>
+          <Modal.Footer style={{ textAlign: 'left' }}>
             <div className="alert alert-info" role="alert" style={{ width: 'fit-content' }}>
               <p style={{ fontSize: '10.5px' }}>
                 For the selected collection you can adjust the visibility of segment tabs and their order for each of the above items.
@@ -242,8 +246,6 @@ export default class CollectionTabs extends React.Component {
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
               </p>
             </div>
-          </Modal.Body>
-          <Modal.Footer style={{ textAlign: 'left' }}>
             <Button bsStyle="primary" onClick={() => this.handleSave(selectModal)}>Save</Button>
             <Button bsStyle="primary" onClick={() => this.resetLayout()}>Reset</Button>
           </Modal.Footer>
