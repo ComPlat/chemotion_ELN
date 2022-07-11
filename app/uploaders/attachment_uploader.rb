@@ -38,38 +38,38 @@ class AttachmentUploader < Shrine
   end
 
   # plugins and uploading logic
-  Attacher.derivatives do |_original|
-    file_extension = AttachmentUploader.getFileExtension(file.id)
+  Attacher.derivatives do |original|
+    file_extension = AttachmentUploader.get_file_extension(file.id)
 
     file_basename = File.basename(file.metadata['filename'], '.*')
 
-    file_path = AttachmentUploader.createTmpFile(file_basename, file_extension, file)
+    file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
 
-    AttachmentUploader.create_derivatives(file_extension, file_path, _original, @context[:record].id, record)
+    AttachmentUploader.create_derivatives(file_extension, file_path, original, @context[:record].id, record)
   end
 
-  def self.createTmpFile(file_basename, file_extension, file)
+  def self.create_tmp_file(file_basename, file_extension, file)
     tmp = Tempfile.new([file_basename, file_extension], encoding: 'ascii-8bit')
     tmp.write file.read
     tmp.rewind
     tmp.path
   end
 
-  def self.getFileExtension(fileName)
-    file_extension = File.extname(fileName)&.downcase
+  def self.get_file_extension(file_name)
+    file_extension = File.extname(file_name)&.downcase
     file_extension = '.jpg' if file_extension == '.jpeg'
 
     file_extension
   end
 
-  def self.create_derivatives(file_extension, file_path, _original, attachment_id, record)
+  def self.create_derivatives(file_extension, file_path, original, attachment_id, record)
     result = {}
     factory = DerivativeBuilderFactory.new
-    builders = factory.createDerivativeBuilders(file_extension)
+    builders = factory.create_derivative_builders(file_extension)
     builders.each do |builder|
       builder.create_derivative(
         file_path.to_s,
-        _original,
+        original,
         attachment_id,
         result, record
       )

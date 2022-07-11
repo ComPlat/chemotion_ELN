@@ -6,25 +6,25 @@ describe DerivativeBuilderFactory do
         describe '-> create' do
             it '-> not supported datatype' do
                 factory=DerivativeBuilderFactory.new
-                builders=factory.createDerivativeBuilders('');
+                builders=factory.create_derivative_builders('');
                 assert_equal(0,builders.length());
             end
 
             it '->png' do
                 factory=DerivativeBuilderFactory.new
-                builders=factory.createDerivativeBuilders('png');
+                builders=factory.create_derivative_builders('png');
                 assert_equal(2,builders.length());
 
                 assert_equal("ThumbnailCreator",builders[0].class.name);
                 assert_equal("AnnotationCreator",builders[1].class.name);
 
-                builders=factory.createDerivativeBuilders('PNG');
+                builders=factory.create_derivative_builders('PNG');
                 assert_equal(2,builders.length());
 
                 assert_equal("ThumbnailCreator",builders[0].class.name);
                 assert_equal("AnnotationCreator",builders[1].class.name);
 
-                builders=factory.createDerivativeBuilders('.png');
+                builders=factory.create_derivative_builders('.png');
                 assert_equal(2,builders.length());
 
                 assert_equal("ThumbnailCreator",builders[0].class.name);

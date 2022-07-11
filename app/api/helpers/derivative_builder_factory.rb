@@ -2,21 +2,27 @@
 
 # Class for creating a builder for a specific derivative
 class DerivativeBuilderFactory
-   require 'helpers/annotation/annotation_creator';
-   require 'helpers/thumbnail/thumbnail_creator';
+  require 'helpers/annotation/annotation_creator'
+  require 'helpers/thumbnail/thumbnail_creator'
 
-   def createDerivativeBuilders(dataType)
-      builders=[];
+  def initialize(supported_formats_map = nil)
+    @supported_formats_map = supported_formats_map || {
+      'ThumbnailCreator' => ThumbnailCreator.supported_formats,
+      'AnnotationCreator' =>
+        %w[jpg png svg]
+    }
+  end
 
-      dataType=dataType.sub('.','');
-      dataType=dataType.downcase;
-      if(dataType=='png')
-         builders[0]=ThumbnailCreator.new();
-         builders[1]=AnnotationCreator.new();
-      end
+  def create_derivative_builders(data_type_in)
+    builders = []
+    data_type = data_type_in.sub('.', '').downcase
+    possible_creators.each do |creator|
+      builders.append(creator.constantize.new) if @supported_formats_map[creator].include? data_type
+    end
+    builders
+  end
 
-      return builders;
-   end
-
-
+  def possible_creators
+    %w[ThumbnailCreator AnnotationCreator]
+  end
 end

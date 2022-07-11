@@ -260,7 +260,6 @@ module Chemotion
               outfile.write(buff)
             end
           end
-
           if file_checksum == params[:checksum]
             attach = Attachment.new(
               bucket: 1,
@@ -274,6 +273,7 @@ module Chemotion
             )
             error_messages = []
             ActiveRecord::Base.transaction do
+
               attach.save!
 
               attach.attachment_attacher.attach(File.open(file_path, binmode: true))

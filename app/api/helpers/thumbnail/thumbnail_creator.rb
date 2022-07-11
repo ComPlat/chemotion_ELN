@@ -10,18 +10,24 @@ class ThumbnailCreator
     @thumbnailer = thumbnailer || ThumbnailerWrapper.new
   end
 
-  def create_derivative(tmp_path, _original_file, _db_id, result, record)
-    thumbnail = @thumbnailer.create_thumbnail(tmp_path)
-    if thumbnail.present?
-      dir = File.dirname(thumbnail)
-      thumb_path = "#{dir}/#{record.identifier}.thumb.jpg"
-      FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
-      FileUtils.move(thumbnail, thumb_path)
-      result[:thumbnail] = File.open(thumb_path, 'rb')
-      record[:thumb] = true
-    end
+  def self.supported_formats
+    Thumbnailer.supported_formats.map {|x| x.to_s }
+  end
 
+  def create_derivative(tmp_path, _original_file, _db_id, result, record)
+    begin
+      thumbnail = @thumbnailer.create_thumbnail(tmp_path)
+      if thumbnail.present?
+        dir = File.dirname(thumbnail)
+        thumb_path = "#{dir}/#{record.identifier}.thumb.jpg"
+        FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+        FileUtils.move(thumbnail, thumb_path)
+        result[:thumbnail] = File.open(thumb_path, 'rb')
+        record[:thumb] = true
+      end
+    end
     result
+
   end
 
   class ThumbnailerWrapper
