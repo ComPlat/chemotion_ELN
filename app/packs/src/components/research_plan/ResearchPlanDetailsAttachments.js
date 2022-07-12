@@ -8,6 +8,7 @@ import React, { Component } from 'react';
 import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
 import { previewAttachmentImage } from './../utils/imageHelper';
 import ImageAnnotationModalSVG from './ImageAnnotationModalSVG'
+import ImageAnnotationEditButton from './ImageAnnotationEditButton';
 
 import {
   Button, ButtonGroup,
@@ -16,7 +17,6 @@ import {
   Glyphicon,
   ListGroup, ListGroupItem,
   Overlay, OverlayTrigger,
-  Popover,
   Row,
   Tooltip
 } from 'react-bootstrap';
@@ -26,8 +26,6 @@ import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
-const annotateTooltip = <Tooltip id="annotate_tooltip">Annotate image</Tooltip>;
-const annotateTooltipNotSaved = <Tooltip id="annotate_tooltip">Please save the research plan to annotate the image</Tooltip>;
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 
@@ -167,63 +165,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
       return null;
     }
     return (
-      attachment.isNew?
-      this.renderInactiveAnnotationButton(attachment)
-      :
-      this.renderActiveAnnotationButton(attachment)
+      <ImageAnnotationEditButton
+        parent={this}
+        attachment={attachment}
+      />
     );
   }
-
-  renderActiveAnnotationButton(attachment) {
-    return (
-      <OverlayTrigger placement="top" overlay={annotateTooltip}>
-      <Button
-        bsSize="xsmall"
-        bsStyle="warning"
-        className="button-right"
-        disabled={attachment.isNew}
-        onClick={() => {
-          this.setState(
-            {
-              imageEditModalShown: true,
-              choosenAttachment: attachment,
-              imageName: attachment.filename
-            });
-        } }>
-        <i className="fa fa-pencil" aria-hidden="true" />
-      </Button>
-    </OverlayTrigger>
-    );
-  }
-
-  renderInactiveAnnotationButton(attachment) {
-    return (
-      <OverlayTrigger overlay={annotateTooltipNotSaved}>
-      <span className="button-right">
-        <Button
-          disabled
-          style={{ pointerEvents: 'none' }}
-          bsSize="xsmall"
-          bsStyle="warning"
-          className="button-right"
-          onClick={() => {
-            this.setState(
-              {
-                imageEditModalShown: true,
-                choosenAttachment: attachment,
-                imageName: attachment.filename
-              });
-          } }>
-          <i className="fa fa-pencil" aria-hidden="true" />
-        </Button>
-      </span>
-    </OverlayTrigger>
-    );
-  }
-
-
-
-
 
   renderListGroupItem(attachment) {
     const { attachmentEditor, extension } = this.state;
