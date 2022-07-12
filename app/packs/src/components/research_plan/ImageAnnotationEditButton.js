@@ -23,7 +23,7 @@ export default class ImageAnnotationEditButton extends Component {
       <Button
         bsSize="xsmall"
         bsStyle="warning"
-        className="button-right"
+        className={this.props.horizontalAlignment?this.props.horizontalAlignment:""}
         onClick={() => {
           this.props.parent.setState(
             {
@@ -41,13 +41,12 @@ export default class ImageAnnotationEditButton extends Component {
   renderInactiveAnnotationButton(attachment) {
     return (
       <OverlayTrigger overlay={<Tooltip id="annotate_tooltip">Please save the research plan to annotate the image</Tooltip>}>
-      <span className="button-right">
+      <span  className={this.props.horizontalAlignment?this.props.horizontalAlignment:""}>
         <Button
           disabled
           style={{ pointerEvents: 'none' }}
           bsSize="xsmall"
           bsStyle="warning"
-          className="button-right"
         >
           <i className="fa fa-pencil" aria-hidden="true" />
         </Button>
@@ -59,4 +58,5 @@ export default class ImageAnnotationEditButton extends Component {
 ImageAnnotationEditButton.propTypes = {
   attachment: PropTypes.object.isRequired,
   parent: PropTypes.object.isRequired,
+  horizontalAlignment: PropTypes.string
 };

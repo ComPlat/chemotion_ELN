@@ -168,6 +168,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       <ImageAnnotationEditButton
         parent={this}
         attachment={attachment}
+        horizontalAlignment="button-right"
       />
     );
   }

@@ -17,6 +17,7 @@ import ChildOverlay from './managing_actions/ChildOverlay';
 import EditorFetcher from './fetchers/EditorFetcher';
 import AttachmentVersionsModal from './AttachmentVersionsModal';
 import ImageAnnotationModalSVG from './research_plan/ImageAnnotationModalSVG'
+import ImageAnnotationEditButton from './research_plan/ImageAnnotationEditButton'
 
 import HyperLinksSection from './common/HyperLinksSection';
 import { T } from 'antd/lib/upload/utils';
@@ -284,12 +285,10 @@ export default class ContainerDataset extends Component {
     const { readOnly } = this.props;
     if (!readOnly && !attachment.is_new) {
       return (
-        <Button bsSize="xsmall" bsStyle="warning" onClick={() => this.setState({
-          imageEditModalShown: true,
-          choosenAttachment: attachment
-        })}>
-          <i className="fa fa-pencil" />
-        </Button >
+      <ImageAnnotationEditButton
+        parent={this}
+        attachment={attachment}
+      />
       );
     }
   }
