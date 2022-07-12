@@ -24,7 +24,6 @@ export default class CollectionTabs extends React.Component {
     this.state = {
       profileData: {},
       showModal: false,
-      selectModal: false,
       currentCollection: {},
       canReset: [],
       layouts: [],
@@ -83,7 +82,7 @@ export default class CollectionTabs extends React.Component {
   onClickNode(node) {
     const { layouts, profileData } = this.state;
     this.setState({ currentCollection: node });
-    this.handleSelectModalOptions(this.state.selectModal);
+    this.handleModalOptions(this.state.showModal);
     let layout = {};
     elements.forEach((element, index) => {
       layout = (profileData && profileData[`layout_detail_${element.name}`]) || {};
@@ -92,7 +91,9 @@ export default class CollectionTabs extends React.Component {
         const nodeTabs = node.tabs_segment[element.name];
         const collectiveOptions = [...nodeTabs.visible, ...nodeTabs.hidden]
         const difference = _.difference(availableTabs, collectiveOptions)
-        nodeTabs.hidden = [...difference, ...nodeTabs.hidden]
+        if (difference != undefined){
+          nodeTabs.hidden = [...difference, ...nodeTabs.hidden]
+        }
         layout = nodeTabs;
       } else {
         const { visible, hidden } = getArrayFromLayout(layout, availableTabs);
@@ -108,10 +109,6 @@ export default class CollectionTabs extends React.Component {
     this.setState({
       tree: tree
     });
-  }
-
-  handleModalOptions(showModal) {
-    this.setState({ showModal: !showModal });
   }
 
   handleCanReset(index, canResetValue) {
@@ -139,11 +136,11 @@ export default class CollectionTabs extends React.Component {
     this.setState({ layouts });
   }
 
-  handleSelectModalOptions(selectModal) {
-    this.setState({ selectModal: !selectModal });
+  handleModalOptions(showModal) {
+    this.setState({ showModal: !showModal });
   }
 
-  handleSave(selectModal) {
+  handleSave(showModal) {
     const { currentCollection } = this.state;
     let layoutSegments = {};
     elements.map((_e, index) => {
@@ -154,13 +151,12 @@ export default class CollectionTabs extends React.Component {
     });
     const params = { layoutSegments, currentCollectionId: currentCollection.id };
     CollectionActions.createTabsSegment(params);
-    this.setState({ selectModal: !selectModal });
+    this.setState({ showModal: !showModal });
     this.state.tree.children.find(c => c.id === currentCollection.id).tabs_segment = layoutSegments;
   }
 
   clickedOnBack() {
     this.handleModalOptions(this.state.showModal);
-    this.handleSelectModalOptions(this.state.selectModal);
   }
 
   label(node) {
@@ -196,7 +192,7 @@ export default class CollectionTabs extends React.Component {
   }
 
   render() {
-    const { tree, selectModal, layouts } = this.state;
+    const { tree, showModal, layouts } = this.state;
     const tabTitlesMap = {
       qc_curation: 'qc curation',
       computed_props: 'computed props',
@@ -211,8 +207,8 @@ export default class CollectionTabs extends React.Component {
           onChange={this.handleChange.bind(this)}
           renderNode={this.renderNode.bind(this)}
         />
-        <Modal className="collection-tab-modal" animation show={selectModal}>
-          <Modal.Header>
+        <Modal className="collection-tab-modal" animation show={showModal} onHide={() => this.handleModalOptions(showModal)}>
+          <Modal.Header closeButton>
             <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
           </Modal.Header>
           <Modal.Body style={{ paddingTop: '2px', paddingBottom: '2px' }} className="collection-tab-modal-body">
@@ -246,7 +242,7 @@ export default class CollectionTabs extends React.Component {
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
               </p>
             </div>
-            <Button bsStyle="primary" onClick={() => this.handleSave(selectModal)}>Save</Button>
+            <Button bsStyle="primary" onClick={() => this.handleSave(showModal)}>Save</Button>
             <Button bsStyle="primary" onClick={() => this.resetLayout()}>Reset</Button>
           </Modal.Footer>
         </Modal>
