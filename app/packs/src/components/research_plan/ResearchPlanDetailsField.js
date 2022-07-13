@@ -49,6 +49,7 @@ export default class ResearchPlanDetailsField extends Component {
         label = 'Image';
         component =
           (<ResearchPlanDetailsFieldImage
+            attachments={this.props.attachments}
             key={field.id}
             field={field}
             index={index}
@@ -192,5 +193,6 @@ ResearchPlanDetailsField.propTypes = {
   isNew: PropTypes.bool,
   copyableFields: PropTypes.arrayOf(PropTypes.object),
   update: PropTypes.bool,
-  edit: PropTypes.bool
+  edit: PropTypes.bool,
+  attachments:PropTypes.array
 };

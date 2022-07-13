@@ -321,7 +321,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   renderResearchPlanMain(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
-    const { name, body, changed } = researchPlan;
+    const { name, body, changed,attachments } = researchPlan;
     const edit = researchPlan.mode === 'edit';
     return (
       <ListGroup fill="true">
@@ -335,6 +335,7 @@ export default class ResearchPlanDetails extends Component {
           />
           <ResearchPlanDetailsBody
             body={body}
+            attachments={attachments}
             disabled={researchPlan.isMethodDisabled('body')}
             onChange={this.handleBodyChange}
             onDrop={this.handleBodyDrop.bind(this)}
