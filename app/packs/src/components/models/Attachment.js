@@ -3,14 +3,21 @@ import { filePreview } from '../../helper/index';
 
 export default class Attachment extends Element {
   static fromFile(file) {
-    return new Attachment({
-      file,
-      name: file.name,
-      filename: file.name,
-      identifier: file.id,
-      is_deleted: false,
-      preview: filePreview(file),
-    });
+    return new Attachment(
+      {
+        file: file,
+        name: file.name,
+        filename: file.name,
+        is_deleted: false,
+        preview: filePreview(file),
+        is_image_field: false
+      }
+    )
+  }
+
+  constructor(args) {
+    super(args);
+    this.identifier=this.id;
   }
 
   get preview() {

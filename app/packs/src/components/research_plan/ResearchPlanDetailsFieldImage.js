@@ -2,19 +2,29 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
+import Attachment from '../models/Attachment';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import AttachmentFetcher from '../fetchers/AttachmentFetcher';
+import ImageFileDropHandler from './ImageFileDropHandler';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
-  handleDrop(files) {
-    const { field, onChange } = this.props;
-    const imageFile = files[0];
-    const replace = field.value.public_name;
 
-    // upload new image
-    ResearchPlansFetcher.updateImageFile(imageFile, replace).then((value) => {
-      // update research plan
-      onChange(value, field.id);
-    });
+  constructor(props) {
+    super(props);
+    this.state = { attachments: props.attachments }
+  }
+
+  componentDidMount() {
+    this.generateSrcOfImage(this.props.field.value.public_name);
+
+  }
+
+  handleDrop(files) {
+    if (files.length == 0) { return;}
+    let handler = new ImageFileDropHandler();
+    let value = handler.handleDrop(files, this.props.field, this.state.attachments);
+    this.generateSrcOfImage(value.public_name);
+    this.props.onChange(value, this.props.field.id, this.state.attachments);
   }
 
   handleResizeChange(event) {
@@ -27,12 +37,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const { field } = this.props;
     let content;
     if (field.value.public_name) {
-      const src = `/images/research_plans/${field.value.public_name}`;
       const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
-      || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+        || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
       content = (
         <div className="image-container">
-          <img style={style} src={src} alt={field.value.file_name} />
+          <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
         </div>
       );
     } else {
@@ -66,21 +75,38 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     );
   }
 
+  generateSrcOfImage(public_name) {
+    if (!public_name) { return; }
+    let src;
+    if (public_name.startsWith('blob')) {
+      this.setState({ imageSrc: public_name });
+    }
+    else if (public_name.includes('.')) {
+      src = `/images/research_plans/${public_name}`;
+      this.setState({ imageSrc: src });
+    }
+    else {
+      this.props.fetchImageBlob(public_name)
+        .then(data => { this.setState({ imageSrc: data }) });
+    }
+  }
+
+
+
   renderStatic() {
     const { field } = this.props;
     if (typeof (field.value.public_name) === 'undefined'
-    || field.value.public_name === null) {
+      || field.value.public_name === null) {
       return (
         <div />
       );
     }
-    const src = `/images/research_plans/${field.value.public_name}`;
     const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
-    || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+      || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
 
     return (
       <div className="image-container">
-        <img style={style} src={src} alt={field.value.file_name} />
+        <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
       </div>
     );
   }
@@ -94,9 +120,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 }
 
 ResearchPlanDetailsFieldImage.propTypes = {
+  fetchImageBlob: PropTypes.func,
   field: PropTypes.object,
   index: PropTypes.number,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   edit: PropTypes.bool,
+  attachments: PropTypes.array
 };
