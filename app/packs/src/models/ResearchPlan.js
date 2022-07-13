@@ -200,4 +200,18 @@ export default class ResearchPlan extends Element {
   get wellplates() {
     return this._wellplates || [];
   }
+
+  addAttachments(attachmentsIn) {
+    for (let i = 0; i < attachmentsIn.length; i++) {
+      let alreadyIn = false;
+      for (let j = 0; j < this.attachments.length; j++) {
+        if (attachmentsIn[i] && attachmentsIn[i].identifier === this.attachments[j].identifier) {
+          alreadyIn = true;
+        }
+      }
+      if (!alreadyIn) {
+        this.attachments.push(attachmentsIn[i]);
+      }
+    }
+  }
 }

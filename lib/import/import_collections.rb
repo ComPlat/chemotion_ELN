@@ -34,7 +34,6 @@ module Import
               transferred: true,
               created_by: @current_user_id,
               created_for: @current_user_id,
-              filename: Regexp.last_match(1),
               key: SecureRandom.uuid,
               filename: file_name
             )
@@ -57,7 +56,7 @@ module Import
               end
             ensure
               tmp.close
-              tmp.unlink   # deletes the temp file
+              tmp.unlink # deletes the temp file
             end
           when %r{^images/(samples|reactions|molecules|research_plans)/(\w{1,128}\.\w{1,4})}
             tmp_file = Tempfile.new
@@ -67,6 +66,8 @@ module Import
           end
         end
       end
+      update_researchplan_body(attachments)
+
       @attachments = attachments.map(&:id)
       attachments = []
       att.close!
@@ -442,14 +443,17 @@ module Import
 
     def import_attachments
       primary_store = Rails.configuration.storage.primary_store
+
       @data.fetch('Attachment', {}).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type')
         attachable_uuid = fields.fetch('attachable_id')
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
-
         file_name =  "#{fields.fetch('identifier')}#{File.extname(fields.fetch('filename'))}"
-        attachment = Attachment.where(id: @attachments, filename: file_name).first
+        file_name_without_ext = File.basename(file_name, File.extname(file_name))
+        attachment = Attachment.where(id: @attachments,filename: file_name).first
+        attachment = Attachment.where(id: @attachments,filename: file_name_without_ext).first unless attachment
+
         attachment.update!(
           attachable: attachable,
           transferred: true,
@@ -562,6 +566,18 @@ module Import
         associations << instance unless instance.nil?
       end
       associations
+    end
+
+    def update_researchplan_body(attachments)
+      @data['ResearchPlan']&.each do |_attr_name, attr_value|
+        image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
+        image_fields.each do |field|
+
+          new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
+          field['value']['public_name'] = new_att['identifier']
+          field['value']['file_name'] = new_att['filename']
+        end
+      end
     end
   end
 end

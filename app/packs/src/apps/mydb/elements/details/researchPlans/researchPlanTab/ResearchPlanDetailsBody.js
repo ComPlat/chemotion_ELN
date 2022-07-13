@@ -15,24 +15,45 @@ export default class ResearchPlanDetailsBody extends Component {
 
     let tableIndex = 0;
     const fields = body.map((field, index) => {
-      const item = (<Field
-        key={field.id}
-        field={field}
-        index={index}
-        disabled={disabled}
-        onChange={onChange.bind(this)}
-        onDrop={onDrop.bind(this)}
-        onDelete={onDelete.bind(this)}
-        onExport={onExport.bind(this)}
-        onCopyToMetadata={onCopyToMetadata.bind(this)}
-        update={update}
-        edit={edit}
-        tableIndex={tableIndex}
-        isNew={isNew}
-        copyableFields={copyableFields}
-      />);
-
+      let item;
+      if (field.type === 'image') {
+        item = (<Field
+          attachments={this.props.attachments}
+          key={field.id}
+          field={field}
+          index={index}
+          disabled={disabled}
+          onChange={onChange.bind(this)}
+          onDrop={onDrop.bind(this)}
+          onDelete={onDelete.bind(this)}
+          onExport={onExport.bind(this)}
+          onCopyToMetadata={onCopyToMetadata.bind(this)}
+          update={update}
+          edit={edit}
+          tableIndex={tableIndex}
+          isNew={isNew}
+          copyableFields={copyableFields}
+        />);
+      } else {
+        item = (<Field
+          key={field.id}
+          field={field}
+          index={index}
+          disabled={disabled}
+          onChange={onChange.bind(this)}
+          onDrop={onDrop.bind(this)}
+          onDelete={onDelete.bind(this)}
+          onExport={onExport.bind(this)}
+          onCopyToMetadata={onCopyToMetadata.bind(this)}
+          update={update}
+          edit={edit}
+          tableIndex={tableIndex}
+          isNew={isNew}
+          copyableFields={copyableFields}
+        />);
+      }
       if (field.type === 'table') tableIndex++;
+
 
       return item;
     });
@@ -77,5 +98,6 @@ ResearchPlanDetailsBody.propTypes = {
   update: PropTypes.bool,
   edit: PropTypes.bool,
   isNew: PropTypes.bool,
-  copyableFields: PropTypes.arrayOf(PropTypes.object)
+  copyableFields: PropTypes.arrayOf(PropTypes.object),
+  attachments: PropTypes.array
 };
