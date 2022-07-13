@@ -13,17 +13,17 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   handleDrop(files) {
-    let file=files[0];
+    let file = files[0];
     const { field, onChange } = this.props;
 
-    let attachments=this.state.attachments;
+    let attachments = this.state.attachments;
     const attachment = Attachment.fromFile(file);
     attachments.push(attachment);
 
-   let value={
-          file_name: attachment.name,
-          public_name: file.preview
-        }
+    let value = {
+      file_name: attachment.name,
+      public_name: file.preview
+    }
 
     onChange(value, field.id);
 
@@ -39,7 +39,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const { field } = this.props;
     let content;
     if (field.value.public_name) {
-      const src = `/images/research_plans/${field.value.public_name}`;
+      let src = this.generateSrcOfImage(field);
+
       const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
         || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
       content = (
@@ -78,6 +79,20 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     );
   }
 
+  generateSrcOfImage(field) {
+    let src;
+    if (field.value.public_name.startsWith('blob')) {
+      src = field.value.public_name;
+    }
+    else if (false) {
+      // image is fetched by the server
+    }
+    else {
+      src = `/images/research_plans/${field.value.public_name}`;
+    }
+    return src;
+  }
+
   renderStatic() {
     const { field } = this.props;
     if (typeof (field.value.public_name) === 'undefined'
@@ -86,7 +101,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         <div />
       );
     }
-    const src = `/images/research_plans/${field.value.public_name}`;
+    const src = generateSrcOfImage(field);
     const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
       || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
 
