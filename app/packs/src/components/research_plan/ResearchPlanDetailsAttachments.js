@@ -19,6 +19,7 @@ import {
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import { previewAttachmentImage } from './../utils/imageHelper';
+import AttachmentFilter from './AttachmentFilter';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
@@ -204,9 +205,15 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderAttachments() {
     const { attachments } = this.props;
     if (attachments && attachments.length > 0) {
+
+      let filter=new AttachmentFilter();
+      let filteredAttachments=filter.removeAttachmentsWhichAreInBody(
+        this.props.researchPlan.body,
+        this.props.researchPlan.attachments);
+
       return (
         <ListGroup>
-          {attachments.map(attachment => (
+          {filteredAttachments.map(attachment => (
             <ListGroupItem key={attachment.id}>
               {this.renderListGroupItem(attachment)}
             </ListGroupItem>
@@ -347,5 +354,5 @@ ResearchPlanDetailsAttachments.propTypes = {
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => {}
+  onAttachmentImportComplete: () => { }
 };

@@ -114,7 +114,7 @@ module Chemotion
               attachable_type: attachable_type,
               attachable_id: attachable_id
             )
-            
+
             begin
               a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
               if a.valid?
@@ -140,6 +140,7 @@ module Chemotion
     resource :attachments do
       before do
         @attachment = Attachment.find_by(id: params[:attachment_id])
+        @attachment = Attachment.find_by(identifier: params[:attachment_id]) if @attachment == nil
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless @attachment
@@ -333,7 +334,7 @@ module Chemotion
             end
           end
         end
-     
+
         true
       end
 
@@ -345,7 +346,7 @@ module Chemotion
         content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-        
+
         uploaded_file = if params[:version].nil?
                            @attachment.attachment_attacher.file
                         else

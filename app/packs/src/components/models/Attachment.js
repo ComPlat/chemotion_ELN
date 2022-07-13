@@ -8,10 +8,15 @@ export default class Attachment extends Element {
         file: file,
         name: file.name,
         filename: file.name,
-        identifier: file.id,
         is_deleted: false,
+        is_image_field: false
       }
     )
+  }
+
+  constructor(args) {
+    super(args);
+    this.identifier=this.id;
   }
 
   get preview() {
