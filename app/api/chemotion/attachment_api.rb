@@ -47,6 +47,7 @@ module Chemotion
     resource :attachments do
       before do
         @attachment = Attachment.find_by(id: params[:attachment_id])
+        @attachment = Attachment.find_by(identifier: params[:attachment_id]) if @attachment == nil
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless writable?(@attachment)
@@ -175,8 +176,6 @@ module Chemotion
             tempfile.unlink
           end
         end
-        TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
-                              .perform_later(attach_ary)
 
         true
       end

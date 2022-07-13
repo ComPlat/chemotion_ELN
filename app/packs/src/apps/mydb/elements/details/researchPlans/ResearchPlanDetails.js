@@ -23,6 +23,7 @@ import ResearchPlanDetailsContainers from 'src/apps/mydb/elements/details/resear
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
+import ResearchPlanBodyOperation from './ResearchPlanBodyOperation';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -118,12 +119,23 @@ export default class ResearchPlanDetails extends Component {
 
   // handle body actions
 
-  handleBodyChange(value, id) {
+  handleBodyChange(value, id, attachments) {
     const { researchPlan } = this.state;
+    for (let i = 0; i < researchPlan.attachments.length; i++) {
+      if ((researchPlan.attachments[i].identifier && researchPlan.attachments[i].identifier === value.old_value) ||
+        (researchPlan.attachments[i].file && researchPlan.attachments[i].file.preview === value.old_value)) {
+        researchPlan.attachments[i].is_deleted = true;
+        researchPlan.attachments[i].is_image_field = true;
+      }
+    }
+
+    researchPlan.addAttachments(attachments);
+
     const index = researchPlan.body.findIndex(field => field.id === id);
     researchPlan.body[index].value = value;
     researchPlan.changed = true;
     this.setState({ researchPlan });
+
   }
 
   handleBodyDrop(source, target) {
@@ -140,11 +152,10 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  handleBodyDelete(id) {
+  handleBodyDelete(id, attachments) {
     const { researchPlan } = this.state;
-    const index = researchPlan.body.findIndex(field => field.id === id);
-    researchPlan.body.splice(index, 1);
-    researchPlan.changed = true;
+    let bodyOperation = new ResearchPlanBodyOperation();
+    bodyOperation.deleteBodyPart(id, researchPlan);
     this.setState({ researchPlan });
   }
 
@@ -320,7 +331,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   renderResearchPlanMain(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
-    const { name, body, changed } = researchPlan;
+    const { name, body, changed, attachments } = researchPlan;
     const edit = researchPlan.mode === 'edit';
     return (
       <ListGroup fill="true">
@@ -334,6 +345,7 @@ export default class ResearchPlanDetails extends Component {
           />
           <ResearchPlanDetailsBody
             body={body}
+            attachments={attachments}
             disabled={researchPlan.isMethodDisabled('body')}
             onChange={this.handleBodyChange}
             onDrop={this.handleBodyDrop.bind(this)}
