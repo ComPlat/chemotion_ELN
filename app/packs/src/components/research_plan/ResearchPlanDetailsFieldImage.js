@@ -101,7 +101,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         <div />
       );
     }
-    const src = generateSrcOfImage(field);
+    const src = this.generateSrcOfImage(field);
     const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
       || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
 
