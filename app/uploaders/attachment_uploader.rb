@@ -4,6 +4,7 @@ class AttachmentUploader < Shrine
   require 'helpers/annotation/annotation_creator'
   require 'helpers/thumbnail/thumbnail_creator'
   require 'helpers/annotation/mini_magick_image_analyser'
+  require 'helpers/derivative_builder_factory'
 
   MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024 # 10 MB
 
@@ -63,8 +64,10 @@ class AttachmentUploader < Shrine
   end
 
   def self.create_derivatives(file_extension, file_path, original, attachment_id, record)
+binding.pry
     result = {}
     factory = DerivativeBuilderFactory.new
+
     builders = factory.create_derivative_builders(file_extension)
     builders.each do |builder|
       builder.create_derivative(
