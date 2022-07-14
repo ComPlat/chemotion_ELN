@@ -204,6 +204,26 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderAttachments() {
     const { attachments } = this.props;
     if (attachments && attachments.length > 0) {
+
+      let uuidsToSubstract = [];
+      //attachemts - json body
+      for (let i = 0; i < this.props.researchPlan.body.length; i++) {
+        if (this.props.researchPlan.body[i]['type'] == 'image') {
+          uuidsToSubstract.push(this.props.researchPlan.body[i]['id'])
+        }
+      }
+
+      for (let i = attachments.length - 1; i >= 0; i--) {
+        let attachment = attachments[i];
+        if (uuidsToSubstract.includes(attachment.identifier)) {
+          attachments.slice(i);
+        }
+      }
+
+      //extract all image UUIDs from json body
+
+      //clear all attachments from array with uuids
+
       return (
         <ListGroup>
           {attachments.map(attachment => (
@@ -347,5 +367,5 @@ ResearchPlanDetailsAttachments.propTypes = {
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => {}
+  onAttachmentImportComplete: () => { }
 };
