@@ -556,7 +556,7 @@ export default class ContainerDataset extends Component {
             let newAnnotation = document.getElementById("svgEditId").contentWindow.svgEditor.svgCanvas.getSvgString();
             this.state.choosenAttachment.updatedAnnotation=newAnnotation;
             this.setState({ imageEditModalShown: false });
-            this.props.onChange(this.handleInputChange);
+            this.props.onChange(this.props.dataset_container);
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
