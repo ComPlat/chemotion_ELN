@@ -64,7 +64,6 @@ class AttachmentUploader < Shrine
   end
 
   def self.create_derivatives(file_extension, file_path, original, attachment_id, record)
-binding.pry
     result = {}
     factory = DerivativeBuilderFactory.new
 
