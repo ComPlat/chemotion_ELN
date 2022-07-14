@@ -518,8 +518,7 @@ module Chemotion
         end
         post do
           collection = Collection.find(params[:id])
-          tabs = collection.tabs_segment.merge(params[:segments])
-          collection.update(tabs_segment: tabs)
+          collection.update(tabs_segment: params[:segments])
           collection
         end
 
