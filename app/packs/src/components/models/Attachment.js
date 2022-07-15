@@ -15,7 +15,7 @@ export default class Attachment extends Element {
 
   constructor(args) {
     super(args);
-    this.identifier=id;
+    this.identifier=this.id;
   }
 
   get preview() {
