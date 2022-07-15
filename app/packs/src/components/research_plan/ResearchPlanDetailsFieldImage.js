@@ -15,14 +15,20 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   handleDrop(files) {
     let file = files[0];
     const { field, onChange } = this.props;
+    const replace = field.value.public_name;
 
     let attachments = this.state.attachments;
     const attachment = Attachment.fromFile(file);
-    attachments.push(attachment);
+    if(replace){
+
+    }else{
+      attachments.push(attachment);
+    }
 
     let value = {
       file_name: attachment.name,
-      public_name: file.preview
+      public_name: file.preview,
+      identifier:attachment.identifier
     }
 
     onChange(value, field.id);

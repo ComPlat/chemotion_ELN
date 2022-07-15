@@ -61,7 +61,7 @@ module GenericHelpers
           ActiveRecord::Base.transaction do
             begin
               a.save!
-      
+
               a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
               if a.valid?
                 a.save!
@@ -83,9 +83,11 @@ module GenericHelpers
     attach_ary
   end
 
-  def create_attachments(files, del_files, type, id, user_id)
+  def create_attachments(files, del_files, type, id, identifier, user_id)
     attach_ary = []
+    file_counter=0
     (files || []).each do |file|
+
       if (tempfile = file[:tempfile])
         a = Attachment.new(
           bucket: file[:container_id],
@@ -93,13 +95,14 @@ module GenericHelpers
           created_by: user_id,
           created_for: user_id,
           content_type: file[:type],
+          identifier:  identifier[file_counter],
           attachable_type: type,
           attachable_id: id
         )
         ActiveRecord::Base.transaction do
           begin
             a.save!
-    
+
             a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
             if a.valid?
               a.attachment_attacher.create_derivatives
@@ -114,6 +117,7 @@ module GenericHelpers
           end
         end
       end
+      file_counter+=file_counter
     end
     Attachment.where('id IN (?) AND attachable_type = (?)', del_files.map!(&:to_i), type).update_all(attachable_id: nil) unless (del_files || []).empty?
     attach_ary
