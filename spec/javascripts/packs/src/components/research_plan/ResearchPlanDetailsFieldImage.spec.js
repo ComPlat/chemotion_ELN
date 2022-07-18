@@ -11,16 +11,58 @@ import ResearchPlan from '../../../../../../app/packs/src/components/models/Rese
 Enzyme.configure({ adapter: new Adapter() });
 
 describe('ResearchPlanDetailsFieldImage', () => {
-  const wrapper = rpFieldImage => shallow(<ResearchPlanDetailsFieldImage/>);
-  it('just a test', () => {
 
-      let rp= ResearchPlan.buildEmpty();
+  it('no image choosen (static)', () => {
+    let rp = ResearchPlan.buildEmpty();
 
-      rp.field.value={};
-      rp.field.value.public_name="undefined";
-      expect(<ResearchPlanDetailsFieldImage field={field}/>).toBeDefined();
-      let a=wrapper();
-      expect(wrapper.instance().test()).toEqual("Hallo");
+    rp.value = {};
+    rp.value.public_name = null;
+
+    let wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} />);
+
+    expect(wrapper.find("img").length).toEqual(0);
+  });
+
+  it('temporary image in blob (static)', () => {
+    let rp = ResearchPlan.buildEmpty();
+
+    rp.value = {};
+    rp.value.public_name = "blob://...";
+    rp.value.file_name = "myFile.png";
+
+    let wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} />);
+
+    expect(wrapper.find("img").length).toEqual(1);
+    expect(wrapper.find('img').prop('src')).toEqual("blob://...");
+  });
+
+  it('deprecated image (static)', () => {
+    let rp = ResearchPlan.buildEmpty();
+
+    rp.value = {};
+    rp.value.public_name = "xxx.png";
+    rp.value.file_name = "xxx.png";
+
+    let wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} />);
+
+    expect(wrapper.find("img").length).toEqual(1);
+    expect(wrapper.find('img').prop('src')).toEqual("/images/research_plans/xxx.png");
+  });
+
+  it('image from attachment on server (static)', () => {
+    let rp = ResearchPlan.buildEmpty();
+
+    rp.value = {};
+    rp.value.public_name = "xxx";
+    rp.value.file_name = "xxx";
+
+    let wrapper = shallow(<ResearchPlanDetailsFieldImage
+      field={rp}
+      fetchImageBlob={(public_name) => { const promise = () => {return Promise.resolve('A');}}
+      } />);
+
+    expect(wrapper.find("img").length).toEqual(1);
+    expect(wrapper.find('img').prop('src')).toEqual("xxx");
   });
 
 });
