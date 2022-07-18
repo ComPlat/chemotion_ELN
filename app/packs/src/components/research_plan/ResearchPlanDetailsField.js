@@ -10,6 +10,7 @@ import ResearchPlanDetailsFieldImage from './ResearchPlanDetailsFieldImage';
 import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from './ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from './ResearchPlanDetailsFieldReaction';
+import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
@@ -56,10 +57,20 @@ export default class ResearchPlanDetailsField extends Component {
             disabled={disabled}
             onChange={onChange.bind(this)}
             edit={edit}
+            fetchImageBlob={(public_name) => {
+              const promise =AttachmentFetcher.fetchImageAttachment({ id: public_name })
+                .then((result) => {
+                  if (result.data != null) {
+                    return Promise.resolve(result.data);
+                  }
+                });
+              return promise;
+            }
+            }
           />);
         break;
       case 'table':
-        field.value.columns.forEach((item)=> {
+        field.value.columns.forEach((item) => {
           item.cellEditor = 'agTextCellEditor';
           return item;
         });
@@ -194,5 +205,5 @@ ResearchPlanDetailsField.propTypes = {
   copyableFields: PropTypes.arrayOf(PropTypes.object),
   update: PropTypes.bool,
   edit: PropTypes.bool,
-  attachments:PropTypes.array
+  attachments: PropTypes.array
 };

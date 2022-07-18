@@ -4,12 +4,18 @@ import Dropzone from 'react-dropzone';
 import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import Attachment from '../models/Attachment';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
 
   constructor(props) {
     super(props);
     this.state = { attachments: props.attachments }
+  }
+
+  componentDidMount() {
+    this.generateSrcOfImage(this.props.field.value.public_name);
+
   }
 
   handleDrop(files) {
@@ -19,18 +25,18 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
     let attachments = this.state.attachments;
     const attachment = Attachment.fromFile(file);
-    if(replace){
+    if (replace) {
 
-    }else{
+    } else {
       attachments.push(attachment);
     }
 
     let value = {
       file_name: attachment.name,
       public_name: file.preview,
-      identifier:attachment.identifier
+      identifier: attachment.identifier
     }
-
+    this.generateSrcOfImage(value.public_name);
     onChange(value, field.id);
 
   }
@@ -45,13 +51,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const { field } = this.props;
     let content;
     if (field.value.public_name) {
-      let src = this.generateSrcOfImage(field);
-
       const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
         || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
       content = (
         <div className="image-container">
-          <img style={style} src={src} alt={field.value.file_name} />
+          <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
         </div>
       );
     } else {
@@ -85,19 +89,23 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     );
   }
 
-  generateSrcOfImage(field) {
+  generateSrcOfImage(public_name) {
+    if (!public_name) { return; }
     let src;
-    if (field.value.public_name.startsWith('blob')) {
-      src = field.value.public_name;
+    if (public_name.startsWith('blob')) {
+      this.setState({ imageSrc: public_name });
     }
-    else if (false) {
-      // image is fetched by the server
+    else if (public_name.includes('.')) {
+      src = `/images/research_plans/${public_name}`;
+      this.setState({ imageSrc: src });
     }
     else {
-      src = `/images/research_plans/${field.value.public_name}`;
+      this.props.fetchImageBlob(public_name)
+        .then(data => { this.setState({ imageSrc: data }) });
     }
-    return src;
   }
+
+
 
   renderStatic() {
     const { field } = this.props;
@@ -107,13 +115,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         <div />
       );
     }
-    const src = this.generateSrcOfImage(field);
     const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
       || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
 
     return (
       <div className="image-container">
-        <img style={style} src={src} alt={field.value.file_name} />
+        <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
       </div>
     );
   }
@@ -127,6 +134,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 }
 
 ResearchPlanDetailsFieldImage.propTypes = {
+  fetchImageBlob: PropTypes.func,
   field: PropTypes.object,
   index: PropTypes.number,
   disabled: PropTypes.bool,
