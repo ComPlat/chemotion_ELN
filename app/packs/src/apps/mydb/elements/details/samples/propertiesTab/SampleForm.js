@@ -32,6 +32,7 @@ export default class SampleForm extends React.Component {
     this.showStructureEditor = this.showStructureEditor.bind(this);
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
+    this.handleMetricsChange = this.handleMetricsChange.bind(this);
   }
 
   // eslint-disable-next-line camelcase
@@ -364,14 +365,32 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  handleMetricsChange(e) {
+    this.props.sample.setUnitMetrics(e.metricUnit, e.metricPrefix);
+  }
+
   numInput(
     sample, field, unit, prefixes, precision, label, ref = '',
     disabled = false, title = '', block = false, notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
-
-    const mpx = unit === 'l' ? prefixes[1] : unit === 'mol' ? prefixes[2] : prefixes[0];
+    const metricPrefixes = ['m', 'n', 'u'];
+    let metric = unit === 'l' ? prefixes[1] : unit === 'mol' ? prefixes[2] : prefixes[0];
+    if(sample){
+      switch(field) {
+        case 'amount_g':
+          metric = (sample.metrics && sample.metrics.length > 2 && metricPrefixes.indexOf(sample.metrics[0]) > -1) ? sample.metrics[0] : 'm';
+          break;
+        case 'amount_mol':
+          metric = (sample.metrics && sample.metrics.length > 2 && metricPrefixes.indexOf(sample.metrics[2]) > -1) ? sample.metrics[2] : 'm';
+          break;
+          case 'amount_l':
+            metric = (sample.metrics && sample.metrics.length > 3 && metricPrefixes.indexOf(sample.metrics[3]) > -1) ? sample.metrics[3] : 'm';
+            break;
+      }
+    }
+    
     return (
       <td key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
@@ -379,7 +398,7 @@ export default class SampleForm extends React.Component {
           unit={unit}
           label={label}
           ref={ref}
-          metricPrefix={mpx}
+          metricPrefix={metric}
           metricPrefixes={prefixes}
           precision={precision}
           title={title}
@@ -387,6 +406,7 @@ export default class SampleForm extends React.Component {
           block={block}
           bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
           onChange={e => this.handleFieldChanged(field, e)}
+          onMetricsChange={e => this.handleMetricsChange(e)}
           id={`numInput_${field}`}
         />
       </td>
@@ -431,7 +451,7 @@ export default class SampleForm extends React.Component {
       //     4, 'Amount', 'massMgInput', isDisabled, ''));
       // } else {
       content.push(this.numInput(
-        sample, 'amount_g', 'g', ['m', 'n'],
+        sample, 'amount_g', 'g', ['m', 'n', 'u' ],
         4, 'Amount', 'massMgInput', isDisabled, ''
       ));
 
