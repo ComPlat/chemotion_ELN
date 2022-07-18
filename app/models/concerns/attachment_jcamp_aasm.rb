@@ -240,9 +240,13 @@ module AttachmentJcampProcess
     else
       jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
       jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-      img_att = generate_img_att(tmp_img, 'peak')
+      img_att = generate_img_att(arr_img, 'peak')
+      
+      tmp_file_to_deleted = [tmp_jcamp, tmp_img]
+      tmp_file_to_deleted.push(*arr_img)
+      
       set_done
-      delete_tmps([tmp_jcamp, tmp_img])
+      delete_tmps(tmp_file_to_deleted)
       delete_related_imgs(img_att)
       delete_edit_peak_after_done
       jcamp_att
