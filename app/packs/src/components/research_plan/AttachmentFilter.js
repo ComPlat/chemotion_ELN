@@ -12,9 +12,7 @@ export default class AttachmentFilter {
       let attachment = attachments[i];
 
       if (uuidsToSubstract.includes(attachment.identifier)) {
-        console.log(attachments.length)
         attachments.splice(i,1);
-        console.log(attachments.length)
       }
     }
     return attachments;

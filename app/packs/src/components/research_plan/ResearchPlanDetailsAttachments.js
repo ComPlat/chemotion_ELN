@@ -207,9 +207,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
     if (attachments && attachments.length > 0) {
 
       let filter=new AttachmentFilter();
-      let filteredAttachments=filter.removeAttachmentsWhichAreInBody(this.props.researchPlan.body, this.props.researchPlan.attachments)
-
-
+      let filteredAttachments=filter.removeAttachmentsWhichAreInBody(
+        this.props.researchPlan.body,
+        this.props.researchPlan.attachments);
 
       return (
         <ListGroup>

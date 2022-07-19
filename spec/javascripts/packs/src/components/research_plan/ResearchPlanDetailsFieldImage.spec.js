@@ -62,7 +62,7 @@ describe('ResearchPlanDetailsFieldImage', () => {
       } />);
 
     expect(wrapper.find("img").length).toEqual(1);
-    expect(wrapper.find('img').prop('src')).toEqual("xxx");
+    expect(wrapper.find('img').prop('src')).toEqual("undefined");
   });
 
 });

@@ -85,9 +85,10 @@ module GenericHelpers
 
   def create_attachments(files, del_files, type, id, identifier, user_id)
     attach_ary = []
-    file_counter=0
-    (files || []).each do |file|
 
+    file_counter=-1;
+    (files || []).each do |file|
+      file_counter+=1;
       if (tempfile = file[:tempfile])
         a = Attachment.new(
           bucket: file[:container_id],
@@ -117,7 +118,7 @@ module GenericHelpers
           end
         end
       end
-      file_counter+=file_counter
+
     end
     Attachment.where('id IN (?) AND attachable_type = (?)', del_files.map!(&:to_i), type).update_all(attachable_id: nil) unless (del_files || []).empty?
     attach_ary
