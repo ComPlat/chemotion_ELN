@@ -34,7 +34,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       old_value: replace
     }
     this.generateSrcOfImage(value.public_name);
-    onChange(value, field.id);
+    onChange(value, field.id,attachments);
 
   }
 
