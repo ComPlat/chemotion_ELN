@@ -121,6 +121,11 @@ export default class ResearchPlanDetails extends Component {
 
   handleBodyChange(value, id) {
     const { researchPlan } = this.state;
+    for (let i = 0; i<researchPlan.attachments.length; i++) {
+      if (researchPlan.attachments[i].identifier&&researchPlan.attachments[i].identifier === value.old_value) {
+        researchPlan.attachments[i].is_deleted = true;
+      }
+    }
     const index = researchPlan.body.findIndex(field => field.id === id);
     researchPlan.body[index].value = value;
     researchPlan.changed = true;
@@ -321,7 +326,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   renderResearchPlanMain(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
-    const { name, body, changed,attachments } = researchPlan;
+    const { name, body, changed, attachments } = researchPlan;
     const edit = researchPlan.mode === 'edit';
     return (
       <ListGroup fill="true">

@@ -1,9 +1,10 @@
 export default class AttachmentFilter {
 
   removeAttachmentsWhichAreInBody(rpBody, attachments) {
+    let attachmentsCopy= attachments.map((x) => x);
     let uuidsToSubstract = this.getUUIDsfromBody(rpBody);
-    attachments = this.filterAttachments(attachments, uuidsToSubstract);
-    return attachments;
+    attachmentsCopy = this.filterAttachments(attachmentsCopy, uuidsToSubstract);
+    return attachmentsCopy;
   }
 
   filterAttachments(attachments, uuidsToSubstract) {

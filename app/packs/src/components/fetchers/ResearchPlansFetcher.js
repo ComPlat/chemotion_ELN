@@ -56,6 +56,7 @@ export default class ResearchPlansFetcher {
         if(element['value']['identifier']){
             researchPlan.body[i]['value']['public_name']=element['value']['identifier'];
             delete researchPlan.body[i]['value']['identifier'];
+            delete researchPlan.body[i]['value']['old_value'];
         }
       }
     }

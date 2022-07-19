@@ -25,16 +25,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
     let attachments = this.state.attachments;
     const attachment = Attachment.fromFile(file);
-    if (replace) {
 
-    } else {
-      attachments.push(attachment);
-    }
-
+    attachments.push(attachment);
     let value = {
       file_name: attachment.name,
       public_name: file.preview,
-      identifier: attachment.identifier
+      identifier: attachment.identifier,
+      old_value: replace
     }
     this.generateSrcOfImage(value.public_name);
     onChange(value, field.id);
