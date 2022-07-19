@@ -1,7 +1,7 @@
 export default class AttachmentFilter {
 
   removeAttachmentsWhichAreInBody(rpBody, attachments) {
-    let attachmentsCopy= attachments.map((x) => x);
+    let attachmentsCopy= attachments.filter(x => !x.is_image_field).map((x) => x);
     let uuidsToSubstract = this.getUUIDsfromBody(rpBody);
     attachmentsCopy = this.filterAttachments(attachmentsCopy, uuidsToSubstract);
     return attachmentsCopy;

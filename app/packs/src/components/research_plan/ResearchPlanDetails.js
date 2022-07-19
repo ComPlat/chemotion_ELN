@@ -121,9 +121,11 @@ export default class ResearchPlanDetails extends Component {
 
   handleBodyChange(value, id) {
     const { researchPlan } = this.state;
-    for (let i = 0; i<researchPlan.attachments.length; i++) {
-      if (researchPlan.attachments[i].identifier&&researchPlan.attachments[i].identifier === value.old_value) {
+    for (let i = 0; i < researchPlan.attachments.length; i++) {
+      if ((researchPlan.attachments[i].identifier && researchPlan.attachments[i].identifier === value.old_value) ||
+          (researchPlan.attachments[i].file && researchPlan.attachments[i].file.preview === value.old_value)) {
         researchPlan.attachments[i].is_deleted = true;
+        researchPlan.attachments[i].is_image_field = true;
       }
     }
     const index = researchPlan.body.findIndex(field => field.id === id);

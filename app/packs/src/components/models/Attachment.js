@@ -9,6 +9,7 @@ export default class Attachment extends Element {
         name: file.name,
         filename: file.name,
         is_deleted: false,
+        is_image_field: false
       }
     )
   }

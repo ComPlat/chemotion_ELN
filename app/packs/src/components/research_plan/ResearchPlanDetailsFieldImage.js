@@ -24,8 +24,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const replace = field.value.public_name;
 
     let attachments = this.state.attachments;
-    const attachment = Attachment.fromFile(file);
-
+    let attachment = Attachment.fromFile(file);
+    attachment.is_image_field = true;
     attachments.push(attachment);
     let value = {
       file_name: attachment.name,
