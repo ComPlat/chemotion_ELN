@@ -19,6 +19,7 @@ import {
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import { previewAttachmentImage } from './../utils/imageHelper';
+import AttachmentFilter from './AttachmentFilter';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
@@ -205,28 +206,14 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { attachments } = this.props;
     if (attachments && attachments.length > 0) {
 
-      let uuidsToSubstract = [];
-      //attachemts - json body
-      for (let i = 0; i < this.props.researchPlan.body.length; i++) {
-        if (this.props.researchPlan.body[i]['type'] == 'image') {
-          uuidsToSubstract.push(this.props.researchPlan.body[i]['id'])
-        }
-      }
+      let filter=new AttachmentFilter();
+      let filteredAttachments=filter.removeAttachmentsWhichAreInBody(this.props.researchPlan.body, this.props.researchPlan.attachments)
 
-      for (let i = attachments.length - 1; i >= 0; i--) {
-        let attachment = attachments[i];
-        if (uuidsToSubstract.includes(attachment.identifier)) {
-          attachments.slice(i);
-        }
-      }
 
-      //extract all image UUIDs from json body
-
-      //clear all attachments from array with uuids
 
       return (
         <ListGroup>
-          {attachments.map(attachment => (
+          {filteredAttachments.map(attachment => (
             <ListGroupItem key={attachment.id}>
               {this.renderListGroupItem(attachment)}
             </ListGroupItem>
