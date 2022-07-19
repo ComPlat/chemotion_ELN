@@ -119,7 +119,7 @@ export default class ResearchPlanDetails extends Component {
 
   // handle body actions
 
-  handleBodyChange(value, id) {
+  handleBodyChange(value, id, attachments) {
     const { researchPlan } = this.state;
     for (let i = 0; i < researchPlan.attachments.length; i++) {
       if ((researchPlan.attachments[i].identifier && researchPlan.attachments[i].identifier === value.old_value) ||
@@ -128,10 +128,14 @@ export default class ResearchPlanDetails extends Component {
         researchPlan.attachments[i].is_image_field = true;
       }
     }
+
+    researchPlan.addAttachments(attachments);
+
     const index = researchPlan.body.findIndex(field => field.id === id);
     researchPlan.body[index].value = value;
     researchPlan.changed = true;
     this.setState({ researchPlan });
+
   }
 
   handleBodyDrop(source, target) {
