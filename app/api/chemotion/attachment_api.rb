@@ -419,7 +419,7 @@ module Chemotion
         { files: files }
       end
 
-      desc 'Regenrate spectra'
+      desc 'Regenerate spectra'
       params do
         requires :original, type: Array[Integer]
         requires :generated, type: Array[Integer]
@@ -441,6 +441,39 @@ module Chemotion
             att.save
           end
         end
+      end
+
+      desc 'Regenerate edited spectra'
+      params do
+        requires :edited, type: Array[Integer]
+        optional :molfile, type: String
+      end
+      post 'regenerate_edited_spectrum' do
+        pm = to_rails_snake_case(params)
+
+        molfile = pm[:molfile]
+        t_molfile = Tempfile.create('molfile')
+        t_molfile.write(molfile)
+        t_molfile.rewind
+        
+        atts = Attachment.where(id: pm[:edited])
+        atts.each do |att|
+          next unless att
+          if writable?(att)
+            abs_path = att.abs_path
+
+            # TODO: do not use abs_path
+            result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
+                abs_path, t_molfile.path
+            )
+            att.file_data = result
+            att.rewrite_file_data!
+          end
+        end
+        t_molfile.close
+        t_molfile.unlink
+
+        { status: true }
       end
 
       desc 'Save spectra to file'
