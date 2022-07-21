@@ -101,6 +101,7 @@ const content = (
       {renderWellContent(well, removeSampleFromWell)}
       <div>
         <Select
+          className="well-overlay-select"
           id="label"
           name="label"
           multi

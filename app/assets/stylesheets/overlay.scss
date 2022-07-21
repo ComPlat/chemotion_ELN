@@ -11,3 +11,9 @@
   white-space: normal;
   height: auto;
 }
+
+.well-overlay-select {
+  .Select-menu-outer {
+    z-index: 10;
+  }
+}
