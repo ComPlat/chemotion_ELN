@@ -5,6 +5,7 @@ import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import Attachment from '../models/Attachment';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import AttachmentFetcher from '../fetchers/AttachmentFetcher';
+import ImageFileDropHandler from './ImageFileDropHandler';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
 
@@ -19,26 +20,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   handleDrop(files) {
-    let file = files[0];
-    const { field, onChange } = this.props;
-    const replace = field.value.public_name;
-
-    let attachments = this.state.attachments;
-    let attachment = Attachment.fromFile(file);
-    if (replace) {
-      attachment.ancestor=replace;
-    }
-    attachment.is_image_field = true;
-    attachments.push(attachment);
-    let value = {
-      file_name: attachment.name,
-      public_name: file.preview,
-      identifier: attachment.identifier,
-      old_value: replace
-    }
+    if (files.length == 0) { return;}
+    let handler = new ImageFileDropHandler();
+    let value = handler.handleDrop(files, this.props.field, this.state.attachments);
     this.generateSrcOfImage(value.public_name);
-    onChange(value, field.id, attachments);
-
+    this.props.onChange(value, this.props.field.id, this.state.attachments);
   }
 
   handleResizeChange(event) {
