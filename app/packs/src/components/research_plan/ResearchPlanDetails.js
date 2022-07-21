@@ -123,7 +123,7 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = this.state;
     for (let i = 0; i < researchPlan.attachments.length; i++) {
       if ((researchPlan.attachments[i].identifier && researchPlan.attachments[i].identifier === value.old_value) ||
-          (researchPlan.attachments[i].file && researchPlan.attachments[i].file.preview === value.old_value)) {
+        (researchPlan.attachments[i].file && researchPlan.attachments[i].file.preview === value.old_value)) {
         researchPlan.attachments[i].is_deleted = true;
         researchPlan.attachments[i].is_image_field = true;
       }
@@ -152,9 +152,31 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  handleBodyDelete(id) {
+  markAttachmentDeleted(identifier, attachments) {
+    if (!identifier) { return; }
+    let attachment = this.getAttachmentByIdentifier(attachments, identifier)
+    if (attachment) {
+      attachment.is_deleted = true;
+      attachment.is_image_field = true;
+      this.markAttachmentDeleted(attachment.ancestor, attachments)
+    }
+  }
+
+  getAttachmentByIdentifier(attachments, identifier) {
+    for (let i = 0; i < attachments.length; i++) {
+      if (attachments[i].identifier === identifier) {
+        return attachments[i]
+      }
+    }
+  }
+
+  handleBodyDelete(id, attachments) {
     const { researchPlan } = this.state;
     const index = researchPlan.body.findIndex(field => field.id === id);
+    let identifier = researchPlan.body[index].value.identifier;
+    this.markAttachmentDeleted(identifier, attachments)
+
+
     researchPlan.body.splice(index, 1);
     researchPlan.changed = true;
     this.setState({ researchPlan });

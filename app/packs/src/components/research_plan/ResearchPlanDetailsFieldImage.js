@@ -25,6 +25,9 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
     let attachments = this.state.attachments;
     let attachment = Attachment.fromFile(file);
+    if (replace) {
+      attachment.ancestor=replace;
+    }
     attachment.is_image_field = true;
     attachments.push(attachment);
     let value = {
@@ -34,7 +37,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       old_value: replace
     }
     this.generateSrcOfImage(value.public_name);
-    onChange(value, field.id,attachments);
+    onChange(value, field.id, attachments);
 
   }
 
