@@ -24,6 +24,7 @@ import ResearchPlanDetailsContainers from './ResearchPlanDetailsContainers';
 import ElementDetailSortTab from '../ElementDetailSortTab';
 import { addSegmentTabs } from '../generic/SegmentDetails';
 import PrivateNoteElement from '../PrivateNoteElement';
+import ResearchPlanBodyOperation from './ResearchPlanBodyOperation';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -152,33 +153,10 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  markAttachmentDeleted(identifier, attachments) {
-    if (!identifier) { return; }
-    let attachment = this.getAttachmentByIdentifier(attachments, identifier)
-    if (attachment) {
-      attachment.is_deleted = true;
-      attachment.is_image_field = true;
-      this.markAttachmentDeleted(attachment.ancestor, attachments)
-    }
-  }
-
-  getAttachmentByIdentifier(attachments, identifier) {
-    for (let i = 0; i < attachments.length; i++) {
-      if (attachments[i].identifier === identifier) {
-        return attachments[i]
-      }
-    }
-  }
-
   handleBodyDelete(id, attachments) {
     const { researchPlan } = this.state;
-    const index = researchPlan.body.findIndex(field => field.id === id);
-    let identifier = researchPlan.body[index].value.identifier;
-    this.markAttachmentDeleted(identifier, attachments)
-
-
-    researchPlan.body.splice(index, 1);
-    researchPlan.changed = true;
+    let bodyOperation = new ResearchPlanBodyOperation();
+    bodyOperation.deleteBodyPart(id, researchPlan);
     this.setState({ researchPlan });
   }
 
