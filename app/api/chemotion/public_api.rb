@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class PublicAPI < Grape::API
     helpers do
@@ -14,7 +16,7 @@ module Chemotion
           data_args['comment'] = ' an error has occurred while force saving the document, please review your changes.'
           level = 'error'
         end
-        message = Message.create_msg_notification(
+        Message.create_msg_notification(
           channel_subject: Channel::EDITOR_CALLBACK, message_from: user.id,
           data_args: data_args, attach_id: attachment.id, research_plan_id: attachment.attachable_id, level: level
         )
@@ -27,9 +29,9 @@ module Chemotion
       end
 
       namespace :element_klasses_name do
-        desc "get klasses"
+        desc 'get klasses'
         params do
-          optional :generic_only, type: Boolean, desc: "list generic element only"
+          optional :generic_only, type: Boolean, desc: 'list generic element only'
         end
         get do
           list = ElementKlass.where(is_active: true) if params[:generic_only].present? && params[:generic_only] == true
@@ -39,7 +41,7 @@ module Chemotion
       end
 
       namespace :omniauth_providers do
-        desc "get omniauth providers"
+        desc 'get omniauth providers'
         get do
           Devise.omniauth_configs.keys
         end
@@ -51,7 +53,7 @@ module Chemotion
           error!('401 Unauthorized', 401) if params[:token].nil?
         end
         get do
-          content_type "application/octet-stream"
+          content_type 'application/octet-stream'
           payload = JWT.decode(params[:token], Rails.application.secrets.secret_key_base) unless params[:token].nil?
           error!('401 Unauthorized', 401) if payload&.length == 0
           att_id = payload[0]['att_id']&.to_i
@@ -59,8 +61,7 @@ module Chemotion
           @attachment = Attachment.find_by(id: att_id)
           @user = User.find_by(id: user_id)
           error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-
-          header['Content-Disposition'] = "attachment; filename=" + @attachment.filename
+          header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
           env['api.format'] = :binary
           @attachment.read_file
         end
@@ -149,44 +150,51 @@ module Chemotion
 
           cp.status = params[:code]&.downcase
 
-          ComputedProp.from_raw(cp.id, params[:data])
-
+          begin
+            ComputedProp.from_raw(cp.id, params[:data])
+          rescue StandardError => e
+            Rails.logger.error("ComputedProp calculation fail: #{e.message}")
+            cp.status = 'failure'
+            cp.save!
+          end
+          cp = ComputedProp.find(params[:compute_id])
           Message.create_msg_notification(
             channel_subject: Channel::COMPUTED_PROPS_NOTIFICATION, message_from: cp.creator,
-            data_args: { sample_id: cp.sample_id, status: params[:code]&.downcase }, cprop: ComputedProp.find(cp.id),
-            level: 'success'
+            data_args: { sample_id: cp.sample_id, status: cp.status }, cprop: ComputedProp.find(cp.id),
+            level: %w[success completed].include?(cp.status) ? 'success' : 'error'
           )
         end
       end
 
       namespace :affiliations do
         params do
-          optional :domain, type: String, desc: "email domain", regexp: /\A([a-z\d\-]+\.)+[a-z]{2,64}\z/i
+          optional :domain, type: String, desc: 'email domain', regexp: /\A([a-z\d\-]+\.)+[a-z]{2,64}\z/i
         end
 
-        desc "Return all countries available"
-        get "countries" do
+        desc 'Return all countries available'
+        get 'countries' do
           ISO3166::Country.all_translated
         end
 
-        desc "Return all current organizations"
-        get "organizations" do
-          Affiliation.pluck("DISTINCT organization")
+        desc 'Return all current organizations'
+        get 'organizations' do
+          Affiliation.pluck('DISTINCT organization')
         end
 
-        desc "Return all current departments"
-        get "departments" do
-          Affiliation.pluck("DISTINCT department")
+        desc 'Return all current departments'
+        get 'departments' do
+          Affiliation.pluck('DISTINCT department')
         end
 
-        desc "Return all current groups"
-        get "groups" do
-          Affiliation.pluck("DISTINCT affiliations.group")
+        desc 'Return all current groups'
+        get 'groups' do
+          Affiliation.pluck('DISTINCT affiliations.group')
         end
 
-        desc "return organization's name from email domain"
-        get "swot" do
+        desc "Return organization's name from email domain"
+        get 'swot' do
           return unless params[:domain].present?
+
           Swot::school_name(params[:domain]).presence ||
             Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
         end
@@ -195,10 +203,10 @@ module Chemotion
 
     namespace :upload do
       before do
-        error!('Unauthorized' , 401) unless TokenAuthentication.new(request, with_remote_addr: true).is_successful?
+        error!('Unauthorized', 401) unless TokenAuthentication.new(request, with_remote_addr: true).is_successful?
       end
       resource :attachments do
-        desc "Upload files"
+        desc 'Upload files'
         params do
           requires :recipient_email, type: String
           requires :subject, type: String
@@ -212,8 +220,7 @@ module Chemotion
           token = request.headers['Auth-Token'] || request.params['auth_token']
           key = AuthenticationKey.find_by(token: token)
 
-
-          helper = CollectorHelper.new(key.user.email , recipient_email)
+          helper = CollectorHelper.new(key.user.email, recipient_email)
 
           if helper.sender_recipient_known?
             dataset = helper.prepare_new_dataset(subject)

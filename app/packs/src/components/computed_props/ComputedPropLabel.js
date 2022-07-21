@@ -16,7 +16,7 @@ const ComputedPropLabel = ({ cprops }) => {
 
   let statusIcon = '';
   const style = {};
-  if (status === 'success') {
+  if (['success','completed'].includes(status)) {
     statusIcon = 'fa-calculator';
     style.color = 'green';
   } else if (status === 'pending') {
@@ -25,6 +25,9 @@ const ComputedPropLabel = ({ cprops }) => {
   } else if (status === 'started') {
     statusIcon = 'fa-spinner fa-spin';
     style.color = '#5bc0de';
+  } else if (status === 'failure') {
+    statusIcon = 'fa-calculator';
+    style.color = 'black';
   }
 
   return (
