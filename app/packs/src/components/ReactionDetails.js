@@ -250,12 +250,13 @@ export default class ReactionDetails extends Component {
       return false;
     } else {
       const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg' ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
-      return (
+      if(reaction.hasMaterials()) {
+        return (
         <SvgFileZoomPan
           duration={300}
           resize={true}
           {...svgProps}
-        />)
+        />)}
     }
   }
 

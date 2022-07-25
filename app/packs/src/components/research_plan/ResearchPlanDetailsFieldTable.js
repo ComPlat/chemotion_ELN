@@ -1,13 +1,16 @@
-import React, { Component } from 'react';
+import Aviator from 'aviator';
+import ElementActions from '../actions/ElementActions';
 import PropTypes from 'prop-types';
-import { Row, Col, Button } from 'react-bootstrap';
+import React, { Component } from 'react';
 import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal';
+import ResearchPlanDetailsFieldTableMeasurementExportModal from './ResearchPlanDetailsFieldTableMeasurementExportModal';
 import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import SamplesFetcher from '../fetchers/SamplesFetcher';
+import uniqueId from 'react-html-id';
 import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
-import uniqueId from 'react-html-id';
-import CustomTextEditor from '../common/CustomTextEditor';
+import { Row, Col, Button } from 'react-bootstrap';
 
 // regexp to parse tap separated paste from the clipboard
 const defaultParsePaste = str => (
@@ -25,6 +28,9 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         colId: null
       },
       schemaModal: {
+        show: false
+      },
+      measurementExportModal: {
         show: false
       },
       selection: {},
@@ -48,12 +54,15 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
   buildColumn(columnName) {
     return {
+      cellEditor: 'agTextCellEditor',
+      colId: columnName,
+      editable: true,
+      field: columnName,
+      headerName: columnName,
       key: columnName,
       name: columnName,
-      editable: true,
       resizable: true,
       width: 200,
-      editor: CustomTextEditor
     };
   }
 
@@ -98,10 +107,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const { gridApi, columnApi } = this.state
 
     let columnDefs = gridApi.getColumnDefs();
-    columnDefs.push({
-      headerName: columnName,
-      field: columnName,
-    });
+    columnDefs.push(this.buildColumn(columnName));
     gridApi.setColumnDefs(columnDefs);
     field.value.columns = gridApi.getColumnDefs();
     field.value.columnStates = columnApi.getColumnState();
@@ -174,6 +180,22 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
   }
 
+  _handleMeasurementExportModalShow() {
+    this.setState({
+      measurementExportModal: {
+        show: true
+      }
+    });
+  }
+
+  _handleMeasurementExportModalHide() {
+    this.setState({
+      measurementExportModal: {
+        show: false
+      }
+    });
+  }
+
   handleSchemasModalUse(schema) {
     const { field, onChange } = this.props;
 
@@ -232,23 +254,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     let rowData = [];
     gridApi.forEachNode(node => rowData.push(node.data));
     field.value.rows = rowData
-
-    onChange(field.value, field.id);
-  }
-
-  addNewColumn() {
-    const { field, onChange } = this.props;
-    const { gridApi, columnApi } = this.state
-
-    let columnDefs = gridApi.getColumnDefs();
-    let columnName = this.nextUniqueId();
-    columnDefs.push({
-      headerName: columnName,
-      field: columnName,
-    });
-    gridApi.setColumnDefs(columnDefs);
-    field.value.columns = gridApi.getColumnDefs();
-    field.value.columnStates = columnApi.getColumnState();
 
     onChange(field.value, field.id);
   }
@@ -382,7 +387,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   renderEdit() {
     const { field, onExport } = this.props;
     const { rows, columns } = field.value;
-    const { columnNameModal, schemaModal, isDisable } = this.state;
+    const { columnNameModal, schemaModal, measurementExportModal, isDisable } = this.state;
 
     let contextMenuId = this.nextUniqueId();
     const defaultColDef = {
@@ -390,7 +395,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       rowDrag: true,
       sortable: true,
       editable: true,
-      cellEditor: 'agTextCellEditor',
       cellClass: 'cell-figure',
     };
 
@@ -426,36 +430,41 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             <ContextMenu id={contextMenuId}>
               <MenuItem onClick={this.handlePaste.bind(this)}>
                 Paste
-            </MenuItem>
+              </MenuItem>
               <MenuItem onClick={this.handleRenameClick.bind(this)}>
                 Rename column
-            </MenuItem>
+              </MenuItem>
               <MenuItem divider />
               <MenuItem onClick={this.handleInsertColumnClick.bind(this)}>
                 Add new column
-            </MenuItem>
+              </MenuItem>
               <MenuItem onClick={this.addNewRow.bind(this)}>
                 Add new row
-            </MenuItem>
+              </MenuItem>
               <MenuItem divider />
               <MenuItem onClick={this.removeThisColumn.bind(this)}>
                 Remove this column
-            </MenuItem>
+              </MenuItem>
               <MenuItem onClick={this.removeThisRow.bind(this)}>
                 Remove this row
-            </MenuItem>
+              </MenuItem>
             </ContextMenu>
           </div>
         </div>
 
         <div className='research-plan-table-toolbar'>
           <Row>
-            <Col xs={3}>
+            <Col xs={4}>
               <Button bsSize='xsmall' onClick={this.handleSchemaModalShow.bind(this)}>
                 Table schemas
               </Button>
             </Col>
-            <Col xs={3} xsOffset={6}>
+            <Col xs={4}>
+              <Button bsSize='xsmall' onClick={this._handleMeasurementExportModalShow.bind(this)}>
+                Export Measurements
+              </Button>
+            </Col>
+            <Col xs={4}>
               <Button bsSize='xsmall' onClick={() => onExport(field)}>
                 Export as Excel
               </Button>
@@ -473,6 +482,11 @@ export default class ResearchPlanDetailsFieldTable extends Component {
           onHide={this.handleSchemasModalHide.bind(this)}
           onUse={this.handleSchemasModalUse.bind(this)}
           onDelete={this.handleSchemasModalDelete.bind(this)} />
+        <ResearchPlanDetailsFieldTableMeasurementExportModal
+          show={measurementExportModal.show}
+          onHide={this._handleMeasurementExportModalHide.bind(this)}
+          rows={rows}
+          columns={columns} />
       </div>
     );
   }
@@ -487,7 +501,17 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
     const tr = rows.map((row, index) => {
       const td = columns.map((column) => {
-        return <td style={{ 'height': '37px' }} key={column.colId}>{row[column.colId]}</td>;
+        let cellContent = row[column.colId];
+        let cellContentIsShortLabel = column.headerName == 'Sample' && (cellContent || '').length > 3;
+        if (cellContentIsShortLabel) {
+          let shortLabel = cellContent;
+          cellContent = <a
+            onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(shortLabel) }}
+          >
+            {shortLabel}
+          </a>
+        }
+        return <td style={{ 'height': '37px' }} key={column.colId}>{cellContent}</td>;
       });
       return (
         <tr key={index}>
@@ -515,6 +539,19 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       return this.renderEdit();
     }
     return this.renderStatic();
+  }
+
+  openSampleByShortLabel(shortLabel) {
+    console.debug('opening Sample by short label', shortLabel);
+    SamplesFetcher.findByShortLabel(shortLabel).then((result) => {
+      console.debug('got Result', result);
+      if (result.sample_id && result.collection_id) {
+        Aviator.navigate(`api/v1/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
+        ElementActions.fetchSampleById(result.sample_id);
+      } else {
+        console.debug('No valid data returned for short label', shortLabel, result);
+      }
+    });
   }
 }
 

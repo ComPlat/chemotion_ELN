@@ -7,11 +7,52 @@
 > yyyy-mm-dd
 
 * Features and Improvements:
-  * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPl
-at/chemotion_ELN/issues/715)
+* Fixes
+
+
+# [v1.3.1-pre]
+> 2022-07-07
+
+* Features and Improvements:
+  * Download of large dataset as background job to avoid timeout (https://github.com/ComPlat/chemotion_ELN/issues/785)
+
+* Fixes:
+  * Reaction title on research-plan (https://github.com/ComPlat/chemotion_ELN/issues/787)
+  * Well-details scrolling (https://github.com/ComPlat/chemotion_ELN/issues/669)
+
+
+## [v1.3.0]
+> 2022-07-05
+
+* Features and Improvements:
+  * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
+  * Screens:
+    * Research Plans may be added to Screens
+    * Associated Research Plans may be edited from Screens
+  * Research Plans:
+    * Wellplates may be added to Research Plans
+  * Wellplates:
+    * Add short label with user prefix and user's Wellplate count
+    * Wells have multiple readouts now
+    * Add title for readouts and display of multiple readouts in designer and list
+    * Add attachments
+    * Add import for well data from .xlsx and import template .xlsx
+  * Collection Tag for research-plan screen (https://github.com/ComPlat/chemotion_ELN/pull/774)
+  * Chemspectra : Cyclic Voltametry (Warning: upd chem-spectra-app service to 0.10.14)
+  * ResearchPlan link to reactions and samples (https://github.com/ComPlat/chemotion_ELN/issues/666)
+  * No reaction-svg when no material present (https://github.com/ComPlat/chemotion_ELN/issues/691)
+ 
 
 * Fixes
   * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
+  * Reference Style improvement [Reference Style improvement #695](https://github.com/ComPlat/chemotion_ELN/issues/695)
+  * Adjust docker setup to work on mac
+  * prevent unecessary building of reaction svg on description text input (https://github.com/ComPlat/chemotion_ELN/issues/759)
+  * elemental composition value with 2 decimals (https://github.com/ComPlat/chemotion_ELN/issues/739)
+  * reference Manager issues (https://github.com/ComPlat/chemotion_ELN/issues/708 https://github.com/ComPlat/chemotion_ELN/issues/756 )
+  * Missing attachment preview in research plan (https://github.com/ComPlat/chemotion_ELN/issues/751)
+
+
 
 
 ## [v1.2.1]
@@ -35,14 +76,14 @@ at/chemotion_ELN/issues/715)
   * OIDC signin
 
 
-# [v1.1.4]
+## [v1.1.4]
 > 2022-04-14
 
 * Fixes
   * Ketcher icons missing (since 1.1.3)
 
 
-# [v1.1.3]
+## [v1.1.3]
 > 2022-04-05
 
 * Fixes

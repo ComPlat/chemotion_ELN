@@ -98,35 +98,36 @@ module Chemotion
       post 'update_attachments_attachable' do
         attachable_type = params[:attachable_type]
         attachable_id = params[:attachable_id]
-        unless params[:files].empty?
+        if params.fetch(:files, []).any?
           attach_ary = []
           rp_attach_ary = []
           params[:files].each do |file|
-            if (tempfile = file[:tempfile])
-              a = Attachment.new(
-                bucket: file[:container_id],
-                filename: file[:filename],
-                file_path: file[:tempfile],
-                created_by: current_user.id,
-                created_for: current_user.id,
-                content_type: file[:type],
-                attachable_type: attachable_type,
-                attachable_id: attachable_id
-              )
-              begin
-                a.save!
-                attach_ary.push(a.id)
-                rp_attach_ary.push(a.id) if %w[ResearchPlan Element].include?(attachable_type)
-              ensure
-                tempfile.close
-                tempfile.unlink
-              end
+            next unless (tempfile = file[:tempfile])
+
+            a = Attachment.new(
+              bucket: file[:container_id],
+              filename: file[:filename],
+              file_path: file[:tempfile],
+              created_by: current_user.id,
+              created_for: current_user.id,
+              content_type: file[:type],
+              attachable_type: attachable_type,
+              attachable_id: attachable_id
+            )
+            begin
+              a.save!
+              attach_ary.push(a.id)
+              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
+            ensure
+              tempfile.close
+              tempfile.unlink
             end
           end
-          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) unless rp_attach_ary.empty?
-          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) unless attach_ary.empty?
+
+          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) if rp_attach_ary.any?
+          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) if attach_ary.any?
         end
-        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) unless params[:del_files].empty?
+        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) if params[:del_files].any?
         true
       end
     end
@@ -349,46 +350,20 @@ module Chemotion
 
       desc "Download the zip attachment file by sample_id"
       get 'sample_analyses/:sample_id' do
-        env['api.format'] = :binary
-        content_type('application/zip, application/octet-stream')
-        #@sample = Sample.find(params[:sample_id])
-        filename = URI.escape("#{@sample.short_label}-analytical-files.zip")
-        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
-        zip = Zip::OutputStream.write_buffer do |zip|
+        tts = @sample.analyses&.map { |a| a.children&.map { |d| d.attachments&.map{ |at| at.filesize } } }&.flatten&.reduce(:+) || 0
+        if tts > 300_000_000
+          DownloadAnalysesJob.perform_later(@sample.id, current_user.id, false)
+          nil
+        else
+          env['api.format'] = :binary
+          content_type('application/zip, application/octet-stream')
+          filename = URI.escape("#{@sample.short_label}-analytical-files.zip")
+          header('Content-Disposition', "attachment; filename=\"#{filename}\"")
+          zip = DownloadAnalysesJob.perform_now(@sample.id, current_user.id, true)
+          zip.rewind
+          zip.read
 
-          @sample.analyses.each do |analysis|
-            analysis.children.each do |dataset|
-              dataset.attachments.each do |att|
-                zip.put_next_entry att.filename
-                zip.write att.read_file
-              end
-            end
-          end
-
-          zip.put_next_entry "sample_#{@sample.short_label} analytical_files.txt"
-          zip.write <<~DESC
-          sample short label: #{@sample.short_label}
-          sample id: #{@sample.id}
-          analyses count: #{@sample.analyses&.length || 0}
-
-          Files:
-          DESC
-
-          @sample.analyses&.each do |analysis|
-            zip.write "analysis name: #{analysis.name}\n"
-            zip.write "analysis type: #{analysis.extended_metadata.fetch('kind', nil)}\n\n"
-            analysis.children.each do |dataset|
-              zip.write "dataset: #{dataset.name}\n"
-              zip.write "instrument: #{dataset.extended_metadata.fetch('instrument', nil)}\n\n"
-              dataset.attachments.each do |att|
-                zip.write "#{att.filename}   #{att.checksum}\n"
-              end
-            end
-            zip.write "\n"
-          end
         end
-        zip.rewind
-        zip.read
       end
 
       desc 'Return image attachment'
@@ -484,6 +459,8 @@ module Chemotion
         optional :predict, type: String
         optional :keep_pred, type: Boolean
         optional :waveLength, type: String
+        optional :cyclicvolta, type: String
+        optional :curveIdx, type: Integer
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(
