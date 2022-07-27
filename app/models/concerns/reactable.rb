@@ -10,10 +10,16 @@ module Reactable
     return unless ref_record.id != id
 
     amount = sample.real_amount_value && sample.real_amount_value != 0 ? sample.amount_mmol(:real) : sample.amount_mmol
-    amount = sample.amount_mg(:real) if is_a? ReactionsProductSample
+
+    case self
+    when ReactionsProductSample
+      amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
+      ref_amount = ref_record.sample.amount_mmol(:target) * (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+    else
+      amount = sample.real_amount_value && sample.real_amount_value != 0 ? sample.amount_mmol(:real) : sample.amount_mmol
+      ref_amount = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0 ? ref_record.sample.amount_mmol(:real) : ref_record.sample.amount_mmol
+    end
     
-    ref_amount = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0 ? ref_record.sample.amount_mmol(:real) : ref_record.sample.amount_mmol
-    ref_amount = ref_record.sample.amount_mmol(:target)*(self[:coefficient]/ref_record[:coefficient])*sample.molecule_molecular_weight if is_a? ReactionsProductSample
-    update_attribute :equivalent, ref_amount.zero? ? 0 : (amount / ref_amount <= 1 ? amount / ref_amount : 1)
+    update_attribute(:equivalent, ref_amount.zero? ? 0 : (amount / ref_amount))
   end
 end
