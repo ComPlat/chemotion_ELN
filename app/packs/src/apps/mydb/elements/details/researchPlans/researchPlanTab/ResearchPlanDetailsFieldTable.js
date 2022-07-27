@@ -521,7 +521,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             </a>
           }
         }
-        if(column.headerName == 'Reaction') {
+        else if (column.headerName == 'Reaction') {
           let cellContentIsShortLabel = column.headerName == 'Reaction' && (cellContent || '').length > 3;
           if (cellContentIsShortLabel) {
             let shortLabel = cellContent;
