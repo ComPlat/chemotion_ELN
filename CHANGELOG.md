@@ -7,40 +7,6 @@
 > yyyy-mm-dd
 
 * Features and Improvements:
-  * dataset selection in chemspectra viewer [dataset selection in chemspectra viewer #715](https://github.com/ComPlat/chemotion_ELN/issues/715)
-  * Screens:
-    * Research Plans may be added to Screens
-    * Associated Research Plans may be edited from Screens
-  * Research Plans:
-    * Wellplates may be added to Research Plans
-  * Wellplates:
-    * Add short label with user prefix and user's Wellplate count
-    * Wells have multiple readouts now
-    * Add title for readouts and display of multiple readouts in designer and list
-    * Add attachments
-    * Add import for well data from .xlsx and import template .xlsx
-
-
-* Fixes
-  * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
-  * Reference Style improvement [Reference Style improvement #695](https://github.com/ComPlat/chemotion_ELN/issues/695)
-  * Adjust docker setup to work on mac
-
-
-## [v1.2.1]
-> 2022-05-10
-
-* Fixes
-  * export dataset attachments with no hyperlink present
-  * analysis: preview latest processed image
-  * rails patch upd
-  * npx audit fix
-
-
-## [v1.2.0]
-> 2022-04-14
-
-* Features and Improvements:
 * Fixes
 
 
@@ -75,7 +41,7 @@
   * Chemspectra : Cyclic Voltametry (Warning: upd chem-spectra-app service to 0.10.14)
   * ResearchPlan link to reactions and samples (https://github.com/ComPlat/chemotion_ELN/issues/666)
   * No reaction-svg when no material present (https://github.com/ComPlat/chemotion_ELN/issues/691)
- 
+
 
 * Fixes
   * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
@@ -430,6 +396,38 @@
   * common chemical structure templates
   * synchronized collections
   * added full-screeen button to element view
+  * database and attachments backups
+  * better import feature
+  * advanced export options
+  * generate reports in .doc format
+  * different naming for reaction product
+  * add concentration to sample in solution
+  * updates in reporting system
+  * molecular weight calculation in real time Ketcherails v0.1.1
+  * molecular weight calculation for selected structure part in
+    real time Ketcherails v0.1.1
+  * warning for user when editing parent/child sample: parent/child samples
+    structures are not automatically updated
+  * reactants are not appearing in the samples list anymore
+  * added more details to sample analyses header
+  * style and user interface improvements
+  * zooming of reactions SVGs
+
+* Fixes
+  * user created samples counter is not decremented on deletion
+  * add material for reaction
+  * do not show non-saved collection in collection tree
+  * edit sample from reaction
+  * better scaling of sample and reaction SVG images
+  * multiple bug fixes
+
+
+## [v0.1.0]
+> 2016-05-31: https://github.com/ComPlat/chemotion_ELN/releases/tag/v0.1.0
+
+* Features
+  * ELN for (organic) chemistry
+ton to element view
   * database and attachments backups
   * better import feature
   * advanced export options
