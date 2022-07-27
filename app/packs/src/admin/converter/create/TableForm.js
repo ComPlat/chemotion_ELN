@@ -1,6 +1,6 @@
 import React from 'react';
 
-import TableColumn from './TableColumn';
+import TableColumn from 'src/admin/converter/create/TableColumn';
 
 const TableForm = (props) => {
   const {

@@ -1,6 +1,6 @@
-import BaseFetcher from './BaseFetcher'
-import Device from '../models/Device'
-import DeviceAnalysis from '../models/DeviceAnalysis'
+import BaseFetcher from 'src/components/fetchers/BaseFetcher'
+import Device from 'src/components/models/Device'
+import DeviceAnalysis from 'src/components/models/DeviceAnalysis'
 import _ from 'lodash'
 
 export default class DeviceFetcher {

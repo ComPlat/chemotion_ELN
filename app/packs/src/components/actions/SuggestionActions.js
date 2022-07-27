@@ -1,5 +1,5 @@
-import alt from '../alt';
-import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
+import alt from 'src/components/alt';
+import SuggestionsFetcher from 'src/components/fetchers/SuggestionsFetcher';
 
 class SuggestionActions {
   fetchSuggestions(endpoint, query) {

@@ -4,10 +4,10 @@ import React, { Component } from 'react';
 import scriptLoader from 'react-async-script-loader';
 import { Grid, Row, Col } from 'react-bootstrap';
 
-import AbbreviationContainer from '../containers/AbbreviationContainer';
-import HeaderMenuContainer from '../containers/HeaderMenuContainer';
-import MainContentContainer from '../containers/MainContentContainer';
-import LoadingModalContainer from '../containers/LoadingModalContainer';
+import AbbreviationContainer from 'src/components/chemscanner/containers/AbbreviationContainer';
+import HeaderMenuContainer from 'src/components/chemscanner/containers/HeaderMenuContainer';
+import MainContentContainer from 'src/components/chemscanner/containers/MainContentContainer';
+import LoadingModalContainer from 'src/components/chemscanner/containers/LoadingModalContainer';
 
 class Root extends Component {
   componentDidMount() {

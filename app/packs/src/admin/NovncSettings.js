@@ -4,9 +4,9 @@ import PropTypes from 'prop-types';
 import { Panel, Button, Table, Modal, Tooltip, OverlayTrigger, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
-import NotificationActions from '../components/actions/NotificationActions';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
-import NovncConfigContainer from '../admin/NovncConfigContainer';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import NovncConfigContainer from 'src/admin/NovncConfigContainer';
 
 const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
 const tipRemoveConfig = <Tooltip id="remove_tooltip">remove config</Tooltip>;

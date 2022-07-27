@@ -1,8 +1,8 @@
-import alt from '../alt';
-import CollectionsFetcher from '../fetchers/CollectionsFetcher';
-import UsersFetcher from '../fetchers/UsersFetcher';
-import UIStore from '../stores/UIStore';
-import Utils from '../utils/Functions';
+import alt from 'src/components/alt';
+import CollectionsFetcher from 'src/components/fetchers/CollectionsFetcher';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import UIStore from 'src/components/stores/UIStore';
+import Utils from 'src/components/utils/Functions';
 
 class CollectionActions {
   fetchGenericEls() {

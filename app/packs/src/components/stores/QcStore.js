@@ -1,5 +1,5 @@
-import alt from '../alt';
-import QcActions from '../actions/QcActions';
+import alt from 'src/components/alt';
+import QcActions from 'src/components/actions/QcActions';
 
 class QcStore {
   constructor() {

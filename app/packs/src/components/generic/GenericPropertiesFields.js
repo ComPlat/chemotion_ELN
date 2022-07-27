@@ -4,10 +4,10 @@ import uuid from 'uuid';
 import { filter } from 'lodash';
 import Select from 'react-select';
 import Dropzone from 'react-dropzone';
-import GenericElDropTarget from './GenericElDropTarget';
-import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
-import TableRecord from './TableRecord';
-import Utils from '../utils/Functions';
+import GenericElDropTarget from 'src/components/generic/GenericElDropTarget';
+import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from 'src/admin/generic/Utils';
+import TableRecord from 'src/components/generic/TableRecord';
+import Utils from 'src/components/utils/Functions';
 
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const GenTextFormula = (opt) => {

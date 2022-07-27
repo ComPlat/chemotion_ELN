@@ -1,5 +1,5 @@
-import alt from '../alt';
-import PermissionsFetcher from '../fetchers/PermissionsFetcher';
+import alt from 'src/components/alt';
+import PermissionsFetcher from 'src/components/fetchers/PermissionsFetcher';
 
 class PermissionActions {
   fetchPermissionStatus(params) {

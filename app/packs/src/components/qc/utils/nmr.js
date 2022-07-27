@@ -1,11 +1,11 @@
-import { numFormat, makeDav } from './common';
+import { numFormat, makeDav } from 'src/components/qc/utils/common';
 
-import { contentToText } from '../../utils/quillFormat';
+import { contentToText } from 'src/components/utils/quillFormat';
 import {
   atomCountInFormula,
   atomCountInNMRDescription,
   atomCountCInNMRDescription,
-} from '../../utils/ElementUtils';
+} from 'src/components/utils/ElementUtils';
 
 const countSignal = (shifts) => {
   const numAll = shifts.length;

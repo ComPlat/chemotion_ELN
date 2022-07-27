@@ -1,4 +1,4 @@
-import Element from './Element';
+import Element from 'src/components/models/Element';
 
 export default class Format extends Element {
   static buildEmpty() {

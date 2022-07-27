@@ -1,9 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import MainContent from '../components/MainContent';
+import MainContent from 'src/components/chemscanner/components/MainContent';
 
-import { removeFile } from '../actions/fileActions';
+import { removeFile } from 'src/components/chemscanner/actions/fileActions';
 
 const MainContentContainer = props => <MainContent {...props} />;
 

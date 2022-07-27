@@ -1,4 +1,4 @@
-import StructureEditor from '../models/StructureEditor';
+import StructureEditor from 'src/components/models/StructureEditor';
 
 const EditorListParams = [
   {

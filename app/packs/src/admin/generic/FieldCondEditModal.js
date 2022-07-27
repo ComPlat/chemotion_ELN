@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 import { Modal, Button } from 'react-bootstrap';
-import GenericSubField from '../../components/models/GenericSubField';
-import LayerSelect from '../../components/generic/LayerSelect';
-import FieldSelect from '../../components/generic/FieldSelect';
+import GenericSubField from 'src/components/models/GenericSubField';
+import LayerSelect from 'src/components/generic/LayerSelect';
+import FieldSelect from 'src/components/generic/FieldSelect';
 
 const AddRowBtn = ({ addRow }) => (
   <Button active onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>

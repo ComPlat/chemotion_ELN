@@ -2,9 +2,9 @@ import React from 'react';
 import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab } from 'react-bootstrap';
 import Select from 'react-select';
 import { CSVReader } from 'react-papaparse';
-import UsersFetcher from '../components/fetchers/UsersFetcher';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
-import MessagesFetcher from '../components/fetchers/MessagesFetcher';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import MessagesFetcher from 'src/components/fetchers/MessagesFetcher';
 
 const loadUserByName = (input) => {
   if (!input) {

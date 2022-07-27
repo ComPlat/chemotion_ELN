@@ -1,12 +1,12 @@
 import Aviator from 'aviator';
-import ElementActions from '../actions/ElementActions';
+import ElementActions from 'src/components/actions/ElementActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import ResearchPlanDetailsFieldTableColumnNameModal from './ResearchPlanDetailsFieldTableColumnNameModal';
-import ResearchPlanDetailsFieldTableMeasurementExportModal from './ResearchPlanDetailsFieldTableMeasurementExportModal';
-import ResearchPlanDetailsFieldTableSchemasModal from './ResearchPlanDetailsFieldTableSchemasModal';
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
-import SamplesFetcher from '../fetchers/SamplesFetcher';
+import ResearchPlanDetailsFieldTableColumnNameModal from 'src/components/research_plan/ResearchPlanDetailsFieldTableColumnNameModal';
+import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/components/research_plan/ResearchPlanDetailsFieldTableMeasurementExportModal';
+import ResearchPlanDetailsFieldTableSchemasModal from 'src/components/research_plan/ResearchPlanDetailsFieldTableSchemasModal';
+import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
+import SamplesFetcher from 'src/components/fetchers/SamplesFetcher';
 import uniqueId from 'react-html-id';
 import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";

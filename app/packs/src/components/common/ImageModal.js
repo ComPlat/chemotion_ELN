@@ -1,8 +1,8 @@
 import React, { Component, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Button } from 'react-bootstrap';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
-import { stopEvent } from '../utils/DomHelper';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import { stopEvent } from 'src/components/utils/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;

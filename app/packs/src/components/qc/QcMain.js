@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 
-import QcContent from './components/QcContent';
-import QcActions from '../actions/QcActions';
-import QcStore from '../stores/QcStore';
-import UserStore from '../stores/UserStore';
+import QcContent from 'src/components/qc/components/QcContent';
+import QcActions from 'src/components/actions/QcActions';
+import QcStore from 'src/components/stores/QcStore';
+import UserStore from 'src/components/stores/UserStore';
 
 class QcMain extends Component {
   constructor(props) {

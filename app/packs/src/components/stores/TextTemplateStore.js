@@ -1,8 +1,8 @@
 import { Map, OrderedSet, fromJS } from 'immutable';
 
-import alt from '../alt';
+import alt from 'src/components/alt';
 
-import TextTemplateActions from '../actions/TextTemplateActions';
+import TextTemplateActions from 'src/components/actions/TextTemplateActions';
 
 class TextTemplateStore {
   constructor() {

@@ -4,8 +4,8 @@ import { connect } from 'react-redux';
 
 import { Alert } from 'react-bootstrap';
 
-import { scanFile } from '../actions/fileActions';
-import * as types from '../actions/ActionTypes';
+import { scanFile } from 'src/components/chemscanner/actions/fileActions';
+import * as types from 'src/components/chemscanner/actions/ActionTypes';
 
 class Notification extends React.Component {
   constructor(props) {

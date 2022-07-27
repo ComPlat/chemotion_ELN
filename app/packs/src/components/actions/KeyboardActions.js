@@ -1,4 +1,4 @@
-import alt from '../alt'
+import alt from 'src/components/alt'
 
 class KeyboardActions {
   documentKeyDown(keyCode) {

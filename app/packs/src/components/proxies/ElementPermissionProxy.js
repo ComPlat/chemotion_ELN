@@ -1,4 +1,4 @@
-import Element from '../models/Element';
+import Element from 'src/components/models/Element';
 import _ from 'lodash';
 
 export default class ElementPermissionProxy {

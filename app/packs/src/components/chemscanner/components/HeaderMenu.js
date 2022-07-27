@@ -12,33 +12,33 @@ import {
   OverlayTrigger
 } from 'react-bootstrap';
 
-import { catalyst } from '../../staticDropdownOptions/reagents/catalyst';
-import { chiralAuxiliaries } from '../../staticDropdownOptions/reagents/chiral_auxiliaries';
-import { couplingReagents } from '../../staticDropdownOptions/reagents/coupling_reagents';
-import { fluorination } from '../../staticDropdownOptions/reagents/fluorination';
-import { halogenationBrClI } from '../../staticDropdownOptions/reagents/halogenation_BrClI';
-import { ionicLiquids } from '../../staticDropdownOptions/reagents/ionic_liquids';
-import { lewisAcids } from '../../staticDropdownOptions/reagents/lewis_acids';
-import { ligands } from '../../staticDropdownOptions/reagents/ligands';
-import { metallorganics } from '../../staticDropdownOptions/reagents/metallorganics';
-import { orgBases } from '../../staticDropdownOptions/reagents/org_bases';
-import { organoboron } from '../../staticDropdownOptions/reagents/organoboron';
-import { organocatalysts } from '../../staticDropdownOptions/reagents/organocatalysts';
-import { oxidation } from '../../staticDropdownOptions/reagents/oxidation';
-import { phaseTransferReagents } from '../../staticDropdownOptions/reagents/phase_transfer_reagents';
-import { reducingReagents } from '../../staticDropdownOptions/reagents/reducing_reagents';
-import { solvents } from '../../staticDropdownOptions/reagents/solvents';
+import { catalyst } from 'src/components/staticDropdownOptions/reagents/catalyst';
+import { chiralAuxiliaries } from 'src/components/staticDropdownOptions/reagents/chiral_auxiliaries';
+import { couplingReagents } from 'src/components/staticDropdownOptions/reagents/coupling_reagents';
+import { fluorination } from 'src/components/staticDropdownOptions/reagents/fluorination';
+import { halogenationBrClI } from 'src/components/staticDropdownOptions/reagents/halogenation_BrClI';
+import { ionicLiquids } from 'src/components/staticDropdownOptions/reagents/ionic_liquids';
+import { lewisAcids } from 'src/components/staticDropdownOptions/reagents/lewis_acids';
+import { ligands } from 'src/components/staticDropdownOptions/reagents/ligands';
+import { metallorganics } from 'src/components/staticDropdownOptions/reagents/metallorganics';
+import { orgBases } from 'src/components/staticDropdownOptions/reagents/org_bases';
+import { organoboron } from 'src/components/staticDropdownOptions/reagents/organoboron';
+import { organocatalysts } from 'src/components/staticDropdownOptions/reagents/organocatalysts';
+import { oxidation } from 'src/components/staticDropdownOptions/reagents/oxidation';
+import { phaseTransferReagents } from 'src/components/staticDropdownOptions/reagents/phase_transfer_reagents';
+import { reducingReagents } from 'src/components/staticDropdownOptions/reagents/reducing_reagents';
+import { solvents } from 'src/components/staticDropdownOptions/reagents/solvents';
 
-import SmiSelect from './SmiSelect';
-import HelpPopover from './HelpPopover';
+import SmiSelect from 'src/components/chemscanner/components/SmiSelect';
+import HelpPopover from 'src/components/chemscanner/components/HelpPopover';
 
-import NotificationContainer from '../containers/NotificationContainer';
+import NotificationContainer from 'src/components/chemscanner/containers/NotificationContainer';
 
 import {
   extractReaction,
   generateExcelMoleculeRow,
   generateExcelReactionRow
-} from '../utils';
+} from 'src/components/chemscanner/utils';
 
 const SUPPORTED_FILE_TYPES = ['cdx', 'cdxml', 'doc', 'docx', 'xml', 'zip'];
 

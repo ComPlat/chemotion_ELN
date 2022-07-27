@@ -1,5 +1,5 @@
 import { Map } from 'immutable';
-import * as types from '../actions/ActionTypes';
+import * as types from 'src/components/chemscanner/actions/ActionTypes';
 
 const defaultState = Map({
   abbView: false,

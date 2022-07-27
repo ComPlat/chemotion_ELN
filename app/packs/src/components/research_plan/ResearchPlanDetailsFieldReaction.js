@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from '../DragDropItemTypes';
-import ElementActions from '../actions/ElementActions';
-import { UrlSilentNavigation } from '../utils/ElementUtils';
-import ReactionsFetcher from '../fetchers/ReactionsFetcher';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import ElementActions from 'src/components/actions/ElementActions';
+import { UrlSilentNavigation } from 'src/components/utils/ElementUtils';
+import ReactionsFetcher from 'src/components/fetchers/ReactionsFetcher';
 
 const spec = {
   drop(props, monitor) {

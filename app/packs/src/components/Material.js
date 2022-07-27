@@ -3,15 +3,15 @@ import PropTypes from 'prop-types';
 import { Checkbox, Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import DragDropItemTypes from './DragDropItemTypes';
-import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
-import SampleName from './common/SampleName';
-import ElementActions from './actions/ElementActions';
-import { UrlSilentNavigation, SampleCode } from './utils/ElementUtils';
-import { correctPrefix, validDigit } from './utils/MathUtils';
-import Reaction from './models/Reaction';
-import Sample from './models/Sample';
-import { permitCls, permitOn } from './common/uis';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo';
+import SampleName from 'src/components/common/SampleName';
+import ElementActions from 'src/components/actions/ElementActions';
+import { UrlSilentNavigation, SampleCode } from 'src/components/utils/ElementUtils';
+import { correctPrefix, validDigit } from 'src/components/utils/MathUtils';
+import Reaction from 'src/components/models/Reaction';
+import Sample from 'src/components/models/Sample';
+import { permitCls, permitOn } from 'src/components/common/uis';
 
 const matSource = {
   beginDrag(props) {

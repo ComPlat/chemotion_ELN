@@ -6,13 +6,13 @@ import {
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 
-import { elementShowOrNew } from '../routesUtils';
-import UIStore from '../stores/UIStore';
-import UserStore from '../stores/UserStore';
-import ElementActions from '../actions/ElementActions';
-import ClipboardActions from '../actions/ClipboardActions';
-import SamplesFetcher from '../fetchers/SamplesFetcher';
-import MatrixCheck from '../common/MatrixCheck';
+import { elementShowOrNew } from 'src/components/routesUtils';
+import UIStore from 'src/components/stores/UIStore';
+import UserStore from 'src/components/stores/UserStore';
+import ElementActions from 'src/components/actions/ElementActions';
+import ClipboardActions from 'src/components/actions/ClipboardActions';
+import SamplesFetcher from 'src/components/fetchers/SamplesFetcher';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 
 export default class CreateButton extends React.Component {
   constructor(props) {

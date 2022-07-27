@@ -4,18 +4,18 @@ import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
 import { findIndex, cloneDeep } from 'lodash';
 
-import Utils from './utils/Functions';
-import Attachment from './models/Attachment';
-import AttachmentFetcher from './fetchers/AttachmentFetcher';
-import UserStore from './stores/UserStore';
-import GenericDS from './models/GenericDS';
-import GenericDSDetails from './generic/GenericDSDetails';
-import { absOlsTermId } from '../admin/generic/Utils';
-import InboxActions from './actions/InboxActions';
-import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
-import ChildOverlay from './managing_actions/ChildOverlay';
+import Utils from 'src/components/utils/Functions';
+import Attachment from 'src/components/models/Attachment';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import UserStore from 'src/components/stores/UserStore';
+import GenericDS from 'src/components/models/GenericDS';
+import GenericDSDetails from 'src/components/generic/GenericDSDetails';
+import { absOlsTermId } from 'src/admin/generic/Utils';
+import InboxActions from 'src/components/actions/InboxActions';
+import InstrumentsFetcher from 'src/components/fetchers/InstrumentsFetcher';
+import ChildOverlay from 'src/components/managing_actions/ChildOverlay';
 
-import HyperLinksSection from './common/HyperLinksSection';
+import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 export default class ContainerDataset extends Component {
   constructor(props) {

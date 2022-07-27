@@ -4,7 +4,7 @@ import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { CirclePicker } from 'react-color';
-import { wellplateShowSample } from './routesUtils';
+import { wellplateShowSample } from 'src/components/routesUtils';
 
 const sampleName = (sample) => { /* eslint-disable camelcase */
   if (sample) {

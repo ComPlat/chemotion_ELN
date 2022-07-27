@@ -3,10 +3,10 @@ import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, Bu
 import Select from 'react-select';
 import moment from 'moment';
 import { findIndex, filter } from 'lodash';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
 
-import AdminGroupElement from './AdminGroupElement';
-import AdminDeviceElement from './AdminDeviceElement';
+import AdminGroupElement from 'src/admin/AdminGroupElement';
+import AdminDeviceElement from 'src/admin/AdminDeviceElement';
 export default class GroupsDevices extends React.Component {
   constructor(props) {
     super(props);

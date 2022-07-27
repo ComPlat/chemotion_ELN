@@ -1,8 +1,8 @@
 import base64 from 'base-64';
 import { FN } from '@complat/react-spectra-editor';
 
-import alt from '../alt';
-import SpectraActions from '../actions/SpectraActions';
+import alt from 'src/components/alt';
+import SpectraActions from 'src/components/actions/SpectraActions';
 
 const defaultPred = {
   outline: {},

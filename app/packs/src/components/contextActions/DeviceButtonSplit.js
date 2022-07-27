@@ -1,11 +1,11 @@
 import React from 'react'
 import {ButtonGroup, OverlayTrigger, Tooltip, DropdownButton, Button, MenuItem} from 'react-bootstrap'
-import UIActions from './../actions/UIActions'
-import ElementActions from './../actions/ElementActions'
-import UserActions from './../actions/UserActions'
-import ElementStore from './../stores/ElementStore'
-import UserStore from './../stores/UserStore'
-import UIStore from './../stores/UIStore'
+import UIActions from 'src/components/actions/UIActions'
+import ElementActions from 'src/components/actions/ElementActions'
+import UserActions from 'src/components/actions/UserActions'
+import ElementStore from 'src/components/stores/ElementStore'
+import UserStore from 'src/components/stores/UserStore'
+import UIStore from 'src/components/stores/UIStore'
 import connectToStores from 'alt-utils/lib/connectToStores'
 
 const DeviceButtonSplit = ({devices, selectedDeviceId}) => {

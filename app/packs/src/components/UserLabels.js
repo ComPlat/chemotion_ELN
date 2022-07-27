@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 import { Modal, Checkbox, Table, thead, tr, th, td, Col, Badge, Panel, ButtonGroup, Button, Form, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
-import UsersFetcher from './fetchers/UsersFetcher';
-import NotificationActions from './actions/NotificationActions';
-import UserActions from './actions/UserActions';
-import UserStore from './stores/UserStore';
-import MatrixCheck from './common/MatrixCheck';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import UserActions from 'src/components/actions/UserActions';
+import UserStore from 'src/components/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 
 const UL_FUNC_NAME = 'userLabel';
 

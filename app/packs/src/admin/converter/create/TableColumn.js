@@ -1,9 +1,9 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import { Button, Row, Col } from 'react-bootstrap';
-import ColumnSelect from '../common/ColumnSelect';
-import OperatorSelect from '../common/OperatorSelect';
-import { ButtonTooltip } from '../../../admin/generic/Utils';
+import ColumnSelect from 'src/admin/converter/common/ColumnSelect';
+import OperatorSelect from 'src/admin/converter/common/OperatorSelect';
+import { ButtonTooltip } from 'src/admin/generic/Utils';
 
 
 const TableColumn = (props) => {

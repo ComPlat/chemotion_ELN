@@ -1,6 +1,6 @@
-import alt from '../alt';
-import SamplesFetcher from '../fetchers/SamplesFetcher';
-import WellplatesFetcher from '../fetchers/WellplatesFetcher';
+import alt from 'src/components/alt';
+import SamplesFetcher from 'src/components/fetchers/SamplesFetcher';
+import WellplatesFetcher from 'src/components/fetchers/WellplatesFetcher';
 
 
 class ClipboardActions {

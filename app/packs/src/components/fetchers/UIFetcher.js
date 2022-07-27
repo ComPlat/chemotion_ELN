@@ -1,8 +1,8 @@
 import 'whatwg-fetch';
 import { camelizeKeys } from 'humps';
 
-import Sample from '../models/Sample';
-import Reaction from '../models/Reaction';
+import Sample from 'src/components/models/Sample';
+import Reaction from 'src/components/models/Reaction';
 
 export default class UIFetcher {
   static initialize() {

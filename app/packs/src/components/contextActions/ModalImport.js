@@ -1,9 +1,9 @@
 import React from 'react';
 import {Button, ButtonToolbar, Input} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import UIStore from '../stores/UIStore';
+import UIStore from 'src/components/stores/UIStore';
 
-import NotificationActions from '../actions/NotificationActions';
+import NotificationActions from 'src/components/actions/NotificationActions';
 
 export default class ModalImport extends React.Component {
   constructor(props) {

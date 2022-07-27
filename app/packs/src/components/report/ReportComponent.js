@@ -1,9 +1,9 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
-import ReportActions from '../actions/ReportActions';
-import UIActions from '../actions/UIActions';
-import DetailActions from '../actions/DetailActions';
-import paramize from './Paramize';
+import ReportActions from 'src/components/actions/ReportActions';
+import UIActions from 'src/components/actions/UIActions';
+import DetailActions from 'src/components/actions/DetailActions';
+import paramize from 'src/components/report/Paramize';
 
 const clickToClose = (report) => {
   DetailActions.close(report);

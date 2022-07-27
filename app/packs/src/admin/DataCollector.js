@@ -5,8 +5,8 @@ import { Panel, Button, Table, Modal, Tooltip, OverlayTrigger, FormControl, Inpu
 import { startsWith, endsWith } from 'lodash';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
-import NotificationActions from '../components/actions/NotificationActions';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
 
 const tipCopyClipboard = <Tooltip id="copy_tooltip">copy to clipboard</Tooltip>;
 const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;

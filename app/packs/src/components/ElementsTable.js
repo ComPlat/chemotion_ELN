@@ -6,15 +6,15 @@ import {
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
 
-import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
-import ElementActions from './actions/ElementActions';
+import UIStore from 'src/components/stores/UIStore';
+import UIActions from 'src/components/actions/UIActions';
+import ElementActions from 'src/components/actions/ElementActions';
 
-import ElementStore from './stores/ElementStore';
-import ElementAllCheckbox from './ElementAllCheckbox';
-import ElementsTableEntries from './ElementsTableEntries';
-import ElementsTableSampleEntries from './ElementsTableSampleEntries';
-import Switch from './Switch';
+import ElementStore from 'src/components/stores/ElementStore';
+import ElementAllCheckbox from 'src/components/ElementAllCheckbox';
+import ElementsTableEntries from 'src/components/ElementsTableEntries';
+import ElementsTableSampleEntries from 'src/components/ElementsTableSampleEntries';
+import Switch from 'src/components/Switch';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {

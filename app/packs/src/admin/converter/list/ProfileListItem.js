@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Button, ButtonGroup, OverlayTrigger, Popover } from 'react-bootstrap';
 
-import { ButtonTooltip } from '../../../admin/generic/Utils';
+import { ButtonTooltip } from 'src/admin/generic/Utils';
 
 const renderDeleteButton = (deleteProfile) => {
   const popover = (

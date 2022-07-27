@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Button, Row, Col } from 'react-bootstrap';
-import TableColumn from './TableColumn';
+import TableColumn from 'src/admin/converter/edit/TableColumn';
 
 class TableForm extends Component {
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import Root from '../components/Root';
-import setCddInstance from '../actions/chemdrawInstanceActions';
+import Root from 'src/components/chemscanner/components/Root';
+import setCddInstance from 'src/components/chemscanner/actions/chemdrawInstanceActions';
 
 const RootContainer = props => <Root {...props} />;
 

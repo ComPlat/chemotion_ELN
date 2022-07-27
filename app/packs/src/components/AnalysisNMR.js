@@ -4,9 +4,9 @@ import{
   Button, Radio, Checkbox, PanelGroup, Panel
 } from 'react-bootstrap'
 import Select from 'react-select'
-import ElementActions from './actions/ElementActions'
-import DetailActions from './actions/DetailActions'
-import {solvents, experiments} from './staticDropdownOptions/device_options'
+import ElementActions from 'src/components/actions/ElementActions'
+import DetailActions from 'src/components/actions/DetailActions'
+import {solvents, experiments} from 'src/components/staticDropdownOptions/device_options'
 
 const AnalysisNMR = ({analysis}) => {
   const styleByExperimentState = (experiment) => {

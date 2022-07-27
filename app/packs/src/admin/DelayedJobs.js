@@ -1,6 +1,6 @@
 import { Button, OverlayTrigger, Panel, Table, Tooltip } from 'react-bootstrap';
 import React, { Component } from 'react';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
 
 const tipRestartJob = <Tooltip id="restart_tooltip">Update run_at</Tooltip>;
 

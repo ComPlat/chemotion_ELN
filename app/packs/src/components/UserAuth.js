@@ -6,15 +6,15 @@ import moment from 'moment';
 import Select from 'react-select';
 import _ from 'lodash';
 
-import UserActions from './actions/UserActions';
-import UserStore from './stores/UserStore';
-import Functions from './utils/Functions';
-import UsersFetcher from './fetchers/UsersFetcher';
-import MessagesFetcher from './fetchers/MessagesFetcher';
-import NotificationActions from '../components/actions/NotificationActions';
-import { UserLabelModal } from '../components/UserLabels';
-import MatrixCheck from '../components/common/MatrixCheck';
-import GroupElement from './GroupElement';
+import UserActions from 'src/components/actions/UserActions';
+import UserStore from 'src/components/stores/UserStore';
+import Functions from 'src/components/utils/Functions';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import MessagesFetcher from 'src/components/fetchers/MessagesFetcher';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import { UserLabelModal } from 'src/components/UserLabels';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import GroupElement from 'src/components/GroupElement';
 
 export default class UserAuth extends Component {
   constructor(props) {

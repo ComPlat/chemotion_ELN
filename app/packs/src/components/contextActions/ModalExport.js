@@ -1,9 +1,9 @@
 import React from 'react';
 import { Button, ButtonToolbar, DropdownButton, MenuItem } from 'react-bootstrap';
-import CheckBoxs from '../common/CheckBoxs';
-import UIStore from './../stores/UIStore';
-import UserStore from './../stores/UserStore';
-import ReportsFetcher from './../fetchers/ReportsFetcher';
+import CheckBoxs from 'src/components/common/CheckBoxs';
+import UIStore from 'src/components/stores/UIStore';
+import UserStore from 'src/components/stores/UserStore';
+import ReportsFetcher from 'src/components/fetchers/ReportsFetcher';
 
 const filterUIState = (uiState) => {
   const {

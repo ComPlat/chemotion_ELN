@@ -6,7 +6,7 @@ import 'whatwg-fetch';
 
 // import * as types from '../actions/ActionTypes';
 // import { CALL_API } from '../middleware/api';
-import AbbreviationManagement from '../components/AbbreviationManagement';
+import AbbreviationManagement from 'src/components/chemscanner/components/AbbreviationManagement';
 
 function RemoveRowBtn({ onClick, node }) {
   const col = node.columnApi.getColumn('abb');

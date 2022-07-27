@@ -1,5 +1,5 @@
-import alt from '../alt';
-import KeyboardActions from '../actions/KeyboardActions';
+import alt from 'src/components/alt';
+import KeyboardActions from 'src/components/actions/KeyboardActions';
 
 class KeyboardStore {
   constructor() {

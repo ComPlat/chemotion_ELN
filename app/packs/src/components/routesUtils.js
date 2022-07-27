@@ -1,9 +1,9 @@
-import UIStore from './stores/UIStore';
-import CollectionStore from './stores/CollectionStore';
-import UIActions from './actions/UIActions';
-import UserActions from './actions/UserActions';
-import ElementActions from './actions/ElementActions';
-import UserStore from './stores/UserStore';
+import UIStore from 'src/components/stores/UIStore';
+import CollectionStore from 'src/components/stores/CollectionStore';
+import UIActions from 'src/components/actions/UIActions';
+import UserActions from 'src/components/actions/UserActions';
+import ElementActions from 'src/components/actions/ElementActions';
+import UserStore from 'src/components/stores/UserStore';
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();

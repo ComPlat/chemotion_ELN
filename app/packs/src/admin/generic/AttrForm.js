@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tooltip } from 'react-bootstrap';
-import KlassAttrForm from './KlassAttrForm';
-import SegmentAttrForm from './SegmentAttrForm';
+import KlassAttrForm from 'src/admin/generic/KlassAttrForm';
+import SegmentAttrForm from 'src/admin/generic/SegmentAttrForm';
 
 const TipActive = type => <Tooltip id="active_button">This {type} is deactivated, press button to [activate]</Tooltip>;
 const TipInActive = type => <Tooltip id="disable_button">This {type} is activated, press button to [deactivate]</Tooltip>;

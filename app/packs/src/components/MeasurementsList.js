@@ -4,10 +4,10 @@ import PropTypes from 'prop-types';
 import { Button, Glyphicon } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 
-import { StoreContext } from '../mobx-stores/RootStore';
-import { researchPlanShowOrNew } from './routesUtils';
-import ConfirmDeletionModal from './ConfirmDeletionModal';
-import LoadingActions from './actions/LoadingActions';
+import { StoreContext } from 'src/mobx-stores/RootStore';
+import { researchPlanShowOrNew } from 'src/components/routesUtils';
+import ConfirmDeletionModal from 'src/components/ConfirmDeletionModal';
+import LoadingActions from 'src/components/actions/LoadingActions';
 
 class MeasurementsList extends Component {
   static propTypes = {

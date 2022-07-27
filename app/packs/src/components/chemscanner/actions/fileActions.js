@@ -3,8 +3,8 @@
 import { Map, List, fromJS } from 'immutable';
 import uuid from 'uuid';
 
-import * as types from '../actions/ActionTypes';
-import { CALL_API } from '../middleware/api';
+import * as types from 'src/components/chemscanner/actions/ActionTypes';
+import { CALL_API } from 'src/components/chemscanner/middleware/api';
 
 const scanFileNormalizer = (res, store, type) => {
   const { embedded } = res;

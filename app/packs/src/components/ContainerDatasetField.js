@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
-import InboxActions from './actions/InboxActions';
-import DragDropItemTypes from './DragDropItemTypes';
-import AttachmentFetcher from './fetchers/AttachmentFetcher';
-import { GenericDSMisType, absOlsTermId } from '../admin/generic/Utils';
+import InboxActions from 'src/components/actions/InboxActions';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import { GenericDSMisType, absOlsTermId } from 'src/admin/generic/Utils';
 
 const dataTarget = {
   canDrop(props, monitor) {

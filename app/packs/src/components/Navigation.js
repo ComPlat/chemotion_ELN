@@ -1,19 +1,19 @@
 import React from 'react';
 import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
-import UserAuth from './UserAuth';
-import Search from './search/Search';
-import ManagingActions from './managing_actions/ManagingActions';
-import ContextActions from './contextActions/ContextActions';
-import UserStore from './stores/UserStore';
-import UIStore from './stores/UIStore'
-import UserActions from './actions/UserActions';
-import UIActions from './actions/UIActions';
-import ElementActions from './actions/ElementActions';
-import NavNewSession from '../libHome/NavNewSession'
-import NavHead from '../libHome/NavHead'
-import DocumentHelper from '../components/utils/DocumentHelper';
-import NavigationModal from './NavigationModal';
-import SearchFilter from './search/SearchFilter.js'
+import UserAuth from 'src/components/UserAuth';
+import Search from 'src/components/search/Search';
+import ManagingActions from 'src/components/managing_actions/ManagingActions';
+import ContextActions from 'src/components/contextActions/ContextActions';
+import UserStore from 'src/components/stores/UserStore';
+import UIStore from 'src/components/stores/UIStore'
+import UserActions from 'src/components/actions/UserActions';
+import UIActions from 'src/components/actions/UIActions';
+import ElementActions from 'src/components/actions/ElementActions';
+import NavNewSession from 'src/libHome/NavNewSession'
+import NavHead from 'src/libHome/NavHead'
+import DocumentHelper from 'src/components/utils/DocumentHelper';
+import NavigationModal from 'src/components/NavigationModal';
+import SearchFilter from 'src/components/search/SearchFilter.js'
 
 const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
 

@@ -1,11 +1,11 @@
 import 'whatwg-fetch';
 import _ from 'lodash';
-import ResearchPlan from '../models/ResearchPlan';
-import AttachmentFetcher from './AttachmentFetcher';
-import BaseFetcher from './BaseFetcher';
-import GenericElsFetcher from './GenericElsFetcher';
+import ResearchPlan from 'src/components/models/ResearchPlan';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
 
-import { getFileName, downloadBlob } from '../utils/FetcherHelper'
+import { getFileName, downloadBlob } from 'src/components/utils/FetcherHelper'
 
 export default class ResearchPlansFetcher {
   static fetchById(id) {

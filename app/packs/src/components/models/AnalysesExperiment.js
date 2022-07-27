@@ -1,4 +1,4 @@
-import Element from './Element'
+import Element from 'src/components/models/Element'
 import uuid from 'uuid';
 
 export default class AnalysesExperiment extends Element{

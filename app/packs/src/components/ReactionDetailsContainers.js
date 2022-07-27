@@ -6,22 +6,22 @@ import {
   Button,
   OverlayTrigger, SplitButton, ButtonGroup, MenuItem, Tooltip
 } from 'react-bootstrap';
-import Container from './models/Container';
-import ContainerComponent from './ContainerComponent';
-import PrintCodeButton from './common/PrintCodeButton';
-import QuillViewer from './QuillViewer';
-import ImageModal from './common/ImageModal';
-import { hNmrCount, cNmrCount, instrumentText } from './utils/ElementUtils';
-import { contentToText } from './utils/quillFormat';
-import { chmoConversions } from './OlsComponent';
-import { previewContainerImage } from './utils/imageHelper';
-import { JcampIds, BuildSpcInfos } from './utils/SpectraHelper';
-import UIStore from './stores/UIStore';
-import SpectraActions from './actions/SpectraActions';
-import LoadingActions from './actions/LoadingActions';
-import ViewSpectra from './ViewSpectra';
+import Container from 'src/components/models/Container';
+import ContainerComponent from 'src/components/ContainerComponent';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import QuillViewer from 'src/components/QuillViewer';
+import ImageModal from 'src/components/common/ImageModal';
+import { hNmrCount, cNmrCount, instrumentText } from 'src/components/utils/ElementUtils';
+import { contentToText } from 'src/components/utils/quillFormat';
+import { chmoConversions } from 'src/components/OlsComponent';
+import { previewContainerImage } from 'src/components/utils/imageHelper';
+import { JcampIds, BuildSpcInfos } from 'src/components/utils/SpectraHelper';
+import UIStore from 'src/components/stores/UIStore';
+import SpectraActions from 'src/components/actions/SpectraActions';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import ViewSpectra from 'src/components/ViewSpectra';
 
-import TextTemplateActions from './actions/TextTemplateActions';
+import TextTemplateActions from 'src/components/actions/TextTemplateActions';
 
 const nmrMsg = (reaction, container) => {
   if (container.extended_metadata &&

@@ -1,5 +1,5 @@
 import React from 'react';
-import ObjRow from './OrdersDnD';
+import ObjRow from 'src/components/report/OrdersDnD';
 
 const allContent = ({ selectedObjs, template }) => (
   selectedObjs.map(obj => (

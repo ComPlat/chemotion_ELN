@@ -5,11 +5,11 @@ import {FormGroup,InputGroup,FormControl, Overlay, ListGroup, ListGroupItem}
 import debounce from 'es6-promise-debounce';
 import { isString } from 'lodash';
 
-import KeyboardActions from '../actions/KeyboardActions';
-import KeyboardStore from '../stores/KeyboardStore';
+import KeyboardActions from 'src/components/actions/KeyboardActions';
+import KeyboardStore from 'src/components/stores/KeyboardStore';
 
-import UIActions from '../actions/UIActions';
-import UIStore from '../stores/UIStore';
+import UIActions from 'src/components/actions/UIActions';
+import UIStore from 'src/components/stores/UIStore';
 
 export default class AutoCompleteInput extends React.Component {
 

@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
-import ScannedMolecules from '../components/ScannedMolecules';
-import ScannedReactions from '../components/ScannedReactions';
+import ScannedMolecules from 'src/components/chemscanner/components/ScannedMolecules';
+import ScannedReactions from 'src/components/chemscanner/components/ScannedReactions';
 
 import {
   removeMolecule,
@@ -14,7 +14,7 @@ import {
   selectReaction,
   toggleResinInReaction,
   toggleMoleculeResin
-} from '../actions/scannedItemActions';
+} from 'src/components/chemscanner/actions/scannedItemActions';
 
 const ScannedItemsContainer = (props) => {
   const { display } = props;

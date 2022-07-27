@@ -1,6 +1,6 @@
-import Element from './Element';
-import DeviceAnalysis from './DeviceAnalysis';
-import DeviceSample from './DeviceSample';
+import Element from 'src/components/models/Element';
+import DeviceAnalysis from 'src/components/models/DeviceAnalysis';
+import DeviceSample from 'src/components/models/DeviceSample';
 
 export default class Device extends Element{
   constructor({id, title, code, types, user_id, samples, devices_analyses}) {

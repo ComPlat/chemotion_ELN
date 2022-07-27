@@ -2,7 +2,7 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import { Button, Row, Col } from 'react-bootstrap';
-import { ButtonTooltip } from '../../../admin/generic/Utils';
+import { ButtonTooltip } from 'src/admin/generic/Utils';
 
 const HeaderForm = (props) => {
   const {

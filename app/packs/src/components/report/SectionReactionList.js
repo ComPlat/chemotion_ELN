@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Tooltip, OverlayTrigger } from 'react-bootstrap';
-import { UserSerial } from '../utils/ReportHelper';
+import { UserSerial } from 'src/components/utils/ReportHelper';
 
 const rlRowTp = (content, rowId) => (
   <Tooltip id={rowId}>

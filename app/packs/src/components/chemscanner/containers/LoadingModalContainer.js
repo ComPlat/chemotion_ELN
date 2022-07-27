@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import LoadingModal from '../components/LoadingModal';
+import LoadingModal from 'src/components/chemscanner/components/LoadingModal';
 
 const LoadingModalContainer = props => <LoadingModal {...props} />;
 

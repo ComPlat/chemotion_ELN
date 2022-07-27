@@ -1,5 +1,5 @@
-import alt from '../alt';
-import NmrSimActions from '../actions/NmrSimActions';
+import alt from 'src/components/alt';
+import NmrSimActions from 'src/components/actions/NmrSimActions';
 
 import Jcampconverter from 'jcampconverter';
 

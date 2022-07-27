@@ -3,8 +3,8 @@ import { Panel, Table, FormGroup, Checkbox, FormControl, Button, Modal, Col, For
 import uuid from 'uuid';
 import Select from 'react-select';
 import JSONInput from 'react-json-editor-ajrm';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
-import NotificationActions from '../components/actions/NotificationActions';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import NotificationActions from 'src/components/actions/NotificationActions';
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;

@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
-import alt from '../alt';
-import ComputeTaskFetcher from '../fetchers/ComputeTaskFetcher';
+import alt from 'src/components/alt';
+import ComputeTaskFetcher from 'src/components/fetchers/ComputeTaskFetcher';
 
 class ComputeTaskActions {
   fetchAll() {

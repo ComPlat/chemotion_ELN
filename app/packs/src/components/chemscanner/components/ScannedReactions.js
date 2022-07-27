@@ -4,12 +4,12 @@ import React from 'react';
 import { ListGroup, ListGroupItem } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
-import DeleteBtn from './DeleteBtn';
-import SelectBtn from './SelectBtn';
-import CopyClipboardBtn from './CopyClipboardBtn';
-import EditCommentBtn from './EditCommentBtn';
-import ReactionDescription from './ReactionDescription';
-import ReactionDetails from './ReactionDetails';
+import DeleteBtn from 'src/components/chemscanner/components/DeleteBtn';
+import SelectBtn from 'src/components/chemscanner/components/SelectBtn';
+import CopyClipboardBtn from 'src/components/chemscanner/components/CopyClipboardBtn';
+import EditCommentBtn from 'src/components/chemscanner/components/EditCommentBtn';
+import ReactionDescription from 'src/components/chemscanner/components/ReactionDescription';
+import ReactionDetails from 'src/components/chemscanner/components/ReactionDetails';
 
 const renderSvg = (svg) => {
   let newSvg = svg.replace(/<rect.*\/>/, '');

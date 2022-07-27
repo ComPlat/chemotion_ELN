@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import InboxActions from '../actions/InboxActions';
-import DragDropItemTypes from '../DragDropItemTypes';
-import Utils from '../utils/Functions';
+import InboxActions from 'src/components/actions/InboxActions';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import Utils from 'src/components/utils/Functions';
 
-import MoveToAnalysisButton from './MoveToAnalysisButton';
-import InboxStore from '../stores/InboxStore';
-import ArrayUtils from '../utils/ArrayUtils';
+import MoveToAnalysisButton from 'src/components/inbox/MoveToAnalysisButton';
+import InboxStore from 'src/components//stores/InboxStore';
+import ArrayUtils from 'src/components//utils/ArrayUtils';
 
 const dataSource = {
   beginDrag(props) {

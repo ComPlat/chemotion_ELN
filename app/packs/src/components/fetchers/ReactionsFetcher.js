@@ -2,13 +2,13 @@ import 'whatwg-fetch';
 import { indexOf, split } from 'lodash';
 import Immutable from 'immutable';
 
-import BaseFetcher from './BaseFetcher';
-import Reaction from '../models/Reaction';
-import UIStore from '../stores/UIStore';
-import NotificationActions from '../actions/NotificationActions';
-import AttachmentFetcher from './AttachmentFetcher';
-import Literature from '../models/Literature';
-import GenericElsFetcher from './GenericElsFetcher';
+import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import Reaction from 'src/components/models/Reaction';
+import UIStore from 'src/components/stores/UIStore';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import Literature from 'src/components/models/Literature';
+import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {

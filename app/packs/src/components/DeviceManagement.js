@@ -3,10 +3,10 @@ import connectToStores from 'alt-utils/lib/connectToStores'
 import {
   PanelGroup, Panel, ButtonGroup, Button, Row, Col, ControlLabel, FormControl
 } from 'react-bootstrap';
-import ElementActions from './actions/ElementActions'
-import UIActions from './actions/UIActions'
-import ElementStore from './stores/ElementStore'
-import UIStore from './stores/UIStore'
+import ElementActions from 'src/components/actions/ElementActions'
+import UIActions from 'src/components/actions/UIActions'
+import ElementStore from 'src/components/stores/ElementStore'
+import UIStore from 'src/components/stores/UIStore'
 
 const DeviceManagement = ({devices, activeAccordionDevice}) => {
   const handleCloseDeviceManagement = () => {

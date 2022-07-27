@@ -2,16 +2,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Glyphicon, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import VirtualizedSelect from 'react-virtualized-select';
-import Material from './Material';
-import MaterialCalculations from './MaterialCalculations';
-import ElementActions from './actions/ElementActions';
-import MoleculesFetcher from './fetchers/MoleculesFetcher';
-import Molecule from './models/Molecule';
-import Reaction from './models/Reaction';
-import { defaultMultiSolventsSmilesOptions } from './staticDropdownOptions/options';
-import { ionic_liquids } from './staticDropdownOptions/ionic_liquids';
-import { reagents_kombi } from './staticDropdownOptions/reagents_kombi';
-import { permitOn } from './common/uis';
+import Material from 'src/components/Material';
+import MaterialCalculations from 'src/components/MaterialCalculations';
+import ElementActions from 'src/components/actions/ElementActions';
+import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher';
+import Molecule from 'src/components/models/Molecule';
+import Reaction from 'src/components/models/Reaction';
+import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';
+import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
+import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
+import { permitOn } from 'src/components/common/uis';
 
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,

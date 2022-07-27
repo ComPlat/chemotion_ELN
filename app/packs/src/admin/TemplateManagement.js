@@ -1,6 +1,6 @@
 import React from 'react';
 import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, ButtonGroup, Tooltip, OverlayTrigger, Popover, FormControl } from 'react-bootstrap';
-import ReportTemplateFetcher from '../components/fetchers/ReportTemplateFetcher';
+import ReportTemplateFetcher from 'src/components/fetchers/ReportTemplateFetcher';
 import Dropzone from 'react-dropzone';
 import Select from 'react-select';
 

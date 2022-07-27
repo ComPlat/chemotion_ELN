@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Button } from 'react-bootstrap';
-import Container from '../models/Container';
-import ContainerComponent from '../ContainerComponent';
-import TextTemplateActions from '../actions/TextTemplateActions';
+import Container from 'src/components/models/Container';
+import ContainerComponent from 'src/components/ContainerComponent';
+import TextTemplateActions from 'src/components/actions/TextTemplateActions';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {

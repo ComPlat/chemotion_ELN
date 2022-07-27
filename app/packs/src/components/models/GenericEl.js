@@ -1,8 +1,8 @@
 import { isEmpty, filter } from 'lodash';
-import Element from './Element';
-import Container from './Container';
-import UserStore from '../stores/UserStore';
-import Segment from './Segment';
+import Element from 'src/components/models/Element';
+import Container from 'src/components/models/Container';
+import UserStore from 'src/components/stores/UserStore';
+import Segment from 'src/components/models/Segment';
 
 export default class GenericEl extends Element {
 

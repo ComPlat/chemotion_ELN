@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Form, FormGroup, Modal, Button } from 'react-bootstrap';
-import { Content } from './AttrForm';
+import { Content } from 'src/admin/generic/AttrForm';
 
 export default class AttrCopyModal extends Component {
   constructor(props) {

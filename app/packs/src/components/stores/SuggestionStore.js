@@ -1,5 +1,5 @@
-import alt from '../alt';
-import SuggestionActions from '../actions/SuggestionActions';
+import alt from 'src/components/alt';
+import SuggestionActions from 'src/components/actions/SuggestionActions';
 
 class SuggestionStore {
   constructor() {

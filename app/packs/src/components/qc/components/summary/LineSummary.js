@@ -6,7 +6,7 @@ import {
   BadgeSuccess,
   BadgeFail,
   BadgeDefault,
-} from './common';
+} from 'src/components/qc/components/summary/common';
 
 /*
 const tpUv = (

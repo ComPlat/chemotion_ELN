@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import { DropTarget } from 'react-dnd';
 import { Tooltip, OverlayTrigger, Popover, Button } from 'react-bootstrap';
-import { previewAttachmentImage } from '../utils/imageHelper';
+import { previewAttachmentImage } from 'src/components/utils/imageHelper';
 
 const base = (opt, iconClass, onDrop = () => {}, params = {}) => {
   if (opt.value && opt.value.el_id) {

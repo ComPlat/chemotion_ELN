@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
-import ReportActions from '../actions/ReportActions';
+import ReportActions from 'src/components/actions/ReportActions';
 
 const TitleProduct = ({ prd, molSerials }) => {
   const molId = prd.molId;

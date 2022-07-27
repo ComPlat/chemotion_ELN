@@ -1,11 +1,11 @@
 import { List, fromJS } from 'immutable';
-import alt from '../alt';
+import alt from 'src/components/alt';
 
-import UIActions from '../actions/UIActions';
-import ElementActions from '../actions/ElementActions';
-import ElementStore from './ElementStore';
-import UserStore from './UserStore';
-import ArrayUtils from '../utils/ArrayUtils';
+import UIActions from 'src/components/actions/UIActions';
+import ElementActions from 'src/components/actions/ElementActions';
+import ElementStore from 'src/components/stores/ElementStore';
+import UserStore from 'src/components/stores/UserStore';
+import ArrayUtils from 'src/components/utils/ArrayUtils';
 
 class UIStore {
   constructor() {

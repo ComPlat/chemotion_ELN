@@ -1,8 +1,8 @@
 import 'whatwg-fetch';
 import _ from 'lodash';
-import Sample from '../models/Sample';
-import Reaction from '../models/Reaction';
-import NotificationActions from '../actions/NotificationActions';
+import Sample from 'src/components/models/Sample';
+import Reaction from 'src/components/models/Reaction';
+import NotificationActions from 'src/components/actions/NotificationActions';
 
 export default class ReportsFetcher {
   static fetchArchives() {

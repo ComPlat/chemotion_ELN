@@ -4,10 +4,10 @@ import PropTypes from 'prop-types';
 import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
-import { ButtonTooltip, genUnitSup } from '../../admin/generic/Utils';
-import GroupFields from './GroupFields';
-import TextFormula from '../generic/TextFormula';
-import TableDef from '../generic/TableDef';
+import { ButtonTooltip, genUnitSup } from 'src/admin/generic/Utils';
+import GroupFields from 'src/components/elements/GroupFields';
+import TextFormula from 'src/components/generic/TextFormula';
+import TableDef from 'src/components/generic/TableDef';
 
 const BaseFieldTypes = [
   { value: 'integer', name: 'integer', label: 'Integer' },

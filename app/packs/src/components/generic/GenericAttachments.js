@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { FormGroup, Button, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
-import EditorFetcher from '../fetchers/EditorFetcher';
-import ImageModal from '../common/ImageModal';
-import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
-import { previewAttachmentImage } from './../utils/imageHelper';
-import Utils from '../utils/Functions';
-import NotificationActions from '../actions/NotificationActions';
+import EditorFetcher from 'src/components/fetchers/EditorFetcher';
+import ImageModal from 'src/components/common/ImageModal';
+import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
+import { previewAttachmentImage } from 'src/components/utils/imageHelper';
+import Utils from 'src/components/utils/Functions';
+import NotificationActions from 'src/components/actions/NotificationActions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;

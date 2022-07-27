@@ -2,13 +2,13 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
 import Aviator from 'aviator';
-import UIStore from '../stores/UIStore';
-import { researchPlanShowOrNew } from '../routesUtils';
-import ElementCollectionLabels from '../ElementCollectionLabels';
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
-import ResearchPlan from '../models/ResearchPlan';
-import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
-import ResearchPlanDetailsName from './ResearchPlanDetailsName';
+import UIStore from 'src/components/stores/UIStore';
+import { researchPlanShowOrNew } from 'src/components/routesUtils';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
+import ResearchPlan from 'src/components/models/ResearchPlan';
+import ResearchPlanDetailsBody from 'src/components/research_plan/ResearchPlanDetailsBody';
+import ResearchPlanDetailsName from 'src/components/research_plan/ResearchPlanDetailsName';
 
 export default class EmbeddedResearchPlanDetails extends Component {
   constructor(props) {

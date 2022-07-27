@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
-import Container from './models/Container';
-import UIStore from './stores/UIStore';
-import ArrayUtils from './utils/ArrayUtils';
-import { reOrderArr } from './utils/DndControl';
-import ViewSpectra from './ViewSpectra';
+import Container from 'src/components/models/Container';
+import UIStore from 'src/components/stores/UIStore';
+import ArrayUtils from 'src/components/utils/ArrayUtils';
+import { reOrderArr } from 'src/components/utils/DndControl';
+import ViewSpectra from 'src/components/ViewSpectra';
 import {
   RndNotAvailable, RndNoAnalyses,
   RndOrder, RndEdit
-} from './SampleDetailsContainersCom';
+} from 'src/components/SampleDetailsContainersCom';
 
-import TextTemplateActions from './actions/TextTemplateActions';
+import TextTemplateActions from 'src/components/actions/TextTemplateActions';
 
 export default class SampleDetailsContainers extends Component {
   constructor(props) {

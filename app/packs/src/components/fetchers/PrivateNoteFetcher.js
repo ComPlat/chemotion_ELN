@@ -1,5 +1,5 @@
 import 'whatwg-fetch';
-import PrivateNote from '../models/PrivateNote';
+import PrivateNote from 'src/components/models/PrivateNote';
 
 // improved function for classifying strings - to fix research_plan being an invalid noteable type
 // takes into account any _ in strings and returns string: String_test => StringTest

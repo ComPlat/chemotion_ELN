@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Navbar, FormGroup, ControlLabel, FormControl, Button } from 'react-bootstrap';
-import MoleculeModeratorComponent from './MoleculeModeratorComponent';
-import MoleculesFetcher from './fetchers/MoleculesFetcher';
-import Notifications from './Notifications';
-import LoadingModal from './common/LoadingModal';
-import LoadingActions from './actions/LoadingActions';
-import NotificationActions from './actions/NotificationActions';
+import MoleculeModeratorComponent from 'src/components/MoleculeModeratorComponent';
+import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher';
+import Notifications from 'src/components/Notifications';
+import LoadingModal from 'src/components/common/LoadingModal';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import NotificationActions from 'src/components/actions/NotificationActions';
 
 const pageNav = (
   <Navbar fixedTop>

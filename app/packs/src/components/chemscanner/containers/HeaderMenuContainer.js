@@ -2,12 +2,12 @@ import { pascalize } from 'humps';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { scanFile } from '../actions/fileActions';
-import * as types from '../actions/ActionTypes';
-import HeaderMenu from '../components/HeaderMenu';
-import { CALL_API } from '../middleware/api';
+import { scanFile } from 'src/components/chemscanner/actions/fileActions';
+import * as types from 'src/components/chemscanner/actions/ActionTypes';
+import HeaderMenu from 'src/components/chemscanner/components/HeaderMenu';
+import { CALL_API } from 'src/components/chemscanner/middleware/api';
 
-import { extractReaction } from '../utils';
+import { extractReaction } from 'src/components/chemscanner/utils';
 
 const HeaderMenuContainer = props => <HeaderMenu {...props} />;
 

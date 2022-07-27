@@ -1,4 +1,4 @@
-import * as types from '../actions/ActionTypes';
+import * as types from 'src/components/chemscanner/actions/ActionTypes';
 
 export const removeMolecule = (id, fileUid, cdUid) => ({
   type: types.REMOVE_MOLECULE, id, fileUid, cdUid

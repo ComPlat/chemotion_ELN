@@ -7,9 +7,9 @@ import {
 import 'whatwg-fetch';
 import Quagga from 'quagga';
 import QrReader from 'react-qr-reader';
-import UIActions from '../actions/UIActions';
-import Utils from '../utils/Functions';
-import UIStore from '../stores/UIStore';
+import UIActions from 'src/components/actions/UIActions';
+import Utils from 'src/components/utils/Functions';
+import UIStore from 'src/components/stores/UIStore';
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {

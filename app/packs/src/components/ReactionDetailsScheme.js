@@ -6,25 +6,25 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 import Delta from 'quill-delta';
-import MaterialGroupContainer from './MaterialGroupContainer';
-import Sample from './models/Sample';
-import Reaction from './models/Reaction';
-import Molecule from './models/Molecule';
-import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
-import ReactionDetailsPurification from './ReactionDetailsPurification';
+import MaterialGroupContainer from 'src/components/MaterialGroupContainer';
+import Sample from 'src/components/models/Sample';
+import Reaction from 'src/components/models/Reaction';
+import Molecule from 'src/components/models/Molecule';
+import ReactionDetailsMainProperties from 'src/components/ReactionDetailsMainProperties';
+import ReactionDetailsPurification from 'src/components/ReactionDetailsPurification';
 
-import QuillViewer from './QuillViewer';
-import ReactionDescriptionEditor from './ReactionDescriptionEditor';
+import QuillViewer from 'src/components/QuillViewer';
+import ReactionDescriptionEditor from 'src/components/ReactionDescriptionEditor';
 
-import GeneralProcedureDnd from './GeneralProcedureDnD';
-import { rolesOptions, conditionsOptions } from './staticDropdownOptions/options';
-import OlsTreeSelect from './OlsComponent';
-import ReactionDetailsDuration from './ReactionDetailsDuration';
-import { permitOn } from './common/uis';
+import GeneralProcedureDnd from 'src/components/GeneralProcedureDnD';
+import { rolesOptions, conditionsOptions } from 'src/components/staticDropdownOptions/options';
+import OlsTreeSelect from 'src/components/OlsComponent';
+import ReactionDetailsDuration from 'src/components/ReactionDetailsDuration';
+import { permitOn } from 'src/components/common/uis';
 
-import NotificationActions from './actions/NotificationActions';
-import TextTemplateActions from './actions/TextTemplateActions';
-import TextTemplateStore from './stores/TextTemplateStore';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import TextTemplateActions from 'src/components/actions/TextTemplateActions';
+import TextTemplateStore from 'src/components/stores/TextTemplateStore';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {

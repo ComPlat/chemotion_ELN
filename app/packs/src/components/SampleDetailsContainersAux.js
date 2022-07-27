@@ -4,18 +4,18 @@ import {
   Button, Checkbox, OverlayTrigger, Tooltip,
   MenuItem, SplitButton, ButtonGroup
 } from 'react-bootstrap';
-import QuillViewer from './QuillViewer';
-import PrintCodeButton from './common/PrintCodeButton';
-import { stopBubble } from './utils/DomHelper';
-import ImageModal from './common/ImageModal';
-import SpectraActions from './actions/SpectraActions';
-import LoadingActions from './actions/LoadingActions';
-import { BuildSpcInfos, JcampIds } from './utils/SpectraHelper';
-import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from './utils/ElementUtils';
-import { contentToText } from './utils/quillFormat';
-import UIStore from './stores/UIStore';
-import { chmoConversions } from './OlsComponent';
-import { previewContainerImage } from './utils/imageHelper';
+import QuillViewer from 'src/components/QuillViewer';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import { stopBubble } from 'src/components/utils/DomHelper';
+import ImageModal from 'src/components/common/ImageModal';
+import SpectraActions from 'src/components/actions/SpectraActions';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import { BuildSpcInfos, JcampIds } from 'src/components/utils/SpectraHelper';
+import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/components/utils/ElementUtils';
+import { contentToText } from 'src/components/utils/quillFormat';
+import UIStore from 'src/components/stores/UIStore';
+import { chmoConversions } from 'src/components/OlsComponent';
+import { previewContainerImage } from 'src/components/utils/imageHelper';
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>

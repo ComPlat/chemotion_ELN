@@ -1,10 +1,10 @@
 import 'whatwg-fetch';
 import { camelizeKeys, decamelizeKeys } from 'humps';
 
-import Attachment from '../models/Attachment';
-import NotificationActions from '../actions/NotificationActions';
+import Attachment from 'src/components/models/Attachment';
+import NotificationActions from 'src/components/actions/NotificationActions';
 import SparkMD5 from 'spark-md5';
-import LoadingActions from '../actions/LoadingActions';
+import LoadingActions from 'src/components/actions/LoadingActions';
 
 const fileFromAttachment = (attachment, containerId) => {
   const { file } = attachment;

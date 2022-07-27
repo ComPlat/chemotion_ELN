@@ -5,12 +5,12 @@ import {
 } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import VirtualizedSelect from 'react-virtualized-select';
-import DragDropItemTypes from './DragDropItemTypes';
-import Sample from './models/Sample';
-import Molecule from './models/Molecule';
-import MoleculesFetcher from './fetchers/MoleculesFetcher';
-import { ionic_liquids } from './staticDropdownOptions/ionic_liquids';
-import { defaultMultiSolventsSmilesOptions } from './staticDropdownOptions/options';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import Sample from 'src/components/models/Sample';
+import Molecule from 'src/components/models/Molecule';
+import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher';
+import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
+import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';
 
 const target = {
   drop(tagProps, monitor) {

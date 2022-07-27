@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from '../DragDropItemTypes';
-import ElementActions from '../actions/ElementActions';
-import { UrlSilentNavigation } from '../utils/ElementUtils';
-import SampleName from '../common/SampleName';
-import SamplesFetcher from '../fetchers/SamplesFetcher';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import ElementActions from 'src/components/actions/ElementActions';
+import { UrlSilentNavigation } from 'src/components/utils/ElementUtils';
+import SampleName from 'src/components/common/SampleName';
+import SamplesFetcher from 'src/components/fetchers/SamplesFetcher';
 
 const spec = {
   drop(props, monitor) {

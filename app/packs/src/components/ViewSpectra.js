@@ -6,11 +6,11 @@ import Select from 'react-select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
 
-import LoadingActions from './actions/LoadingActions';
-import SpectraActions from './actions/SpectraActions';
-import SpectraStore from './stores/SpectraStore';
-import { SpectraOps } from './utils/quillToolbarSymbol';
-import ResearchPlan from './models/ResearchPlan';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import SpectraActions from 'src/components/actions/SpectraActions';
+import SpectraStore from 'src/components/stores/SpectraStore';
+import { SpectraOps } from 'src/components/utils/quillToolbarSymbol';
+import ResearchPlan from 'src/components/models/ResearchPlan';
 
 const rmRefreshed = (analysis) => {
   if (!analysis) return analysis;

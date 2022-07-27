@@ -5,12 +5,12 @@ import RFB from '@novnc/novnc/lib/rfb';
 import { uniq } from 'lodash';
 // import Immutable from 'immutable';
 
-import Navigation from './Navigation';
-import DeviceActions from '../components/actions/UserActions';
-import DeviceStore from '../components/stores/UserStore';
-import FocusNovnc from '../components/FocusNovnc';
-import { ConnectedBtn, DisconnectedBtn } from '../components/NovncStatus';
-import UsersFetcher from '../components/fetchers/UsersFetcher';
+import Navigation from 'src/libCnC/Navigation';
+import DeviceActions from 'src/components/actions/UserActions';
+import DeviceStore from 'src/components/stores/UserStore';
+import FocusNovnc from 'src/components/FocusNovnc';
+import { ConnectedBtn, DisconnectedBtn } from 'src/components/NovncStatus';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;

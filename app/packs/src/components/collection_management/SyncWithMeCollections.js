@@ -1,8 +1,8 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import { Button, ButtonGroup, FormControl, OverlayTrigger, Popover } from 'react-bootstrap';
-import CollectionStore from '../stores/CollectionStore';
-import CollectionActions from '../actions/CollectionActions';
+import CollectionStore from 'src/components/stores/CollectionStore';
+import CollectionActions from 'src/components/actions/CollectionActions';
 
 export default class SyncWithMeCollections extends React.Component {
   constructor(props) {

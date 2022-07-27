@@ -1,7 +1,7 @@
 import { combineReducers } from 'redux';
-import files from './files';
-import chemdrawItems from './chemdrawItems';
-import images from './images';
+import files from 'src/components/chemscanner/actions/files';
+import chemdrawItems from 'src/components/chemscanner/actions/chemdrawItems';
+import images from 'src/components/chemscanner/actions/images';
 
 export default combineReducers({
   files,

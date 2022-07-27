@@ -1,13 +1,13 @@
 import 'whatwg-fetch';
 
-import Sample from '../models/Sample';
-import UIStore from '../stores/UIStore';
-import NotificationActions from '../actions/NotificationActions';
-import AttachmentFetcher from './AttachmentFetcher';
-import BaseFetcher from './BaseFetcher';
-import GenericElsFetcher from './GenericElsFetcher';
+import Sample from 'src/components/models/Sample';
+import UIStore from 'src/components/stores/UIStore';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
 
-import Container from '../models/Container';
+import Container from 'src/components/models/Container';
 
 export default class SamplesFetcher {
   static fetchSamplesByUIStateAndLimit(params) {

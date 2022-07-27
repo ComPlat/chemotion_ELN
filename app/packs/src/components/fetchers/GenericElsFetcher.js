@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
-import GenericEl from '../models/GenericEl';
-import AttachmentFetcher from './AttachmentFetcher';
-import BaseFetcher from './BaseFetcher';
+import GenericEl from 'src/components/models/GenericEl';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import BaseFetcher from 'src/components/fetchers/BaseFetcher';
 
 export default class GenericElsFetcher {
   static fetchElementKlass(klassName) {

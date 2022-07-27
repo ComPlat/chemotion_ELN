@@ -1,16 +1,16 @@
 import Immutable from 'immutable';
 import React from 'react';
 import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import KeyboardActions from './actions/KeyboardActions';
-import UIActions from './actions/UIActions';
-import UserActions from './actions/UserActions';
-import MatrixCheck from './common/MatrixCheck';
-import ElementsTable from './ElementsTable';
-import ElementsTableSettings from './ElementsTableSettings';
-import ElementStore from './stores/ElementStore';
-import UIStore from './stores/UIStore';
-import UserStore from './stores/UserStore';
-import ArrayUtils from './utils/ArrayUtils';
+import KeyboardActions from 'src/components/actions/KeyboardActions';
+import UIActions from 'src/components/actions/UIActions';
+import UserActions from 'src/components/actions/UserActions';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import ElementsTable from 'src/components/ElementsTable';
+import ElementsTableSettings from 'src/components/ElementsTableSettings';
+import ElementStore from 'src/components/stores/ElementStore';
+import UIStore from 'src/components/stores/UIStore';
+import UserStore from 'src/components/stores/UserStore';
+import ArrayUtils from 'src/components/utils/ArrayUtils';
 
 
 function getSortedHash(inputHash) {

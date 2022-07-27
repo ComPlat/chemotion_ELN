@@ -2,12 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col, Table, ListGroup, ListGroupItem, Button, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import Utils from '../utils/Functions';
+import Utils from 'src/components/utils/Functions';
 
-import InboxActions from '../actions/InboxActions';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
-import Attachment from '../models/Attachment';
-import Container from '../models/Container';
+import InboxActions from 'src/components/actions/InboxActions';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import Attachment from 'src/components/models/Attachment';
+import Container from 'src/components/models/Container';
 
 export default class UnsortedDataset extends React.Component {
   constructor(props) {

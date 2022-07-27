@@ -6,13 +6,13 @@ import PropTypes from 'prop-types';
 import { Panel, Col, PanelGroup, Row } from 'react-bootstrap';
 import { sortBy, findIndex } from 'lodash';
 import uuid from 'uuid';
-import { genUnits, unitConversion } from '../../admin/generic/Utils';
-import Attachment from '../models/Attachment';
+import { genUnits, unitConversion } from 'src/admin/generic/Utils';
+import Attachment from 'src/components/models/Attachment';
 import {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,
   GenPropertiesNumber, GenPropertiesSystemDefined, GenPropertiesInputGroup, GenPropertiesDrop,
   GenPropertiesTextArea, GenPropertiesUpload, GenDummy, GenTextFormula, GenPropertiesTable
-} from './GenericPropertiesFields';
+} from 'src/components/generic/GenericPropertiesFields';
 
 const UploadInputChange = (properties, event, field, layer) => {
   const files = [];

@@ -4,16 +4,16 @@ import {
   Form, FormControl, Radio, Grid, Row, Col
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import AutoCompleteInput from './AutoCompleteInput';
-import StructureEditorModal from '../structure_editor/StructureEditorModal';
-import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
-import ElementActions from '../actions/ElementActions';
-import UIStore from '../stores/UIStore';
-import UIActions from '../actions/UIActions';
-import UserStore from '../stores/UserStore';
-import GenericElCriteriaModal from '../generic/GenericElCriteriaModal';
-import GenericElCriteria from '../generic/GenericElCriteria';
-import { clsInputGroup } from '../../admin/generic/Utils';
+import AutoCompleteInput from 'src/components/search/AutoCompleteInput';
+import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
+import SuggestionsFetcher from 'src/components/fetchers/SuggestionsFetcher';
+import ElementActions from 'src/components/actions/ElementActions';
+import UIStore from 'src/components/stores/UIStore';
+import UIActions from 'src/components/actions/UIActions';
+import UserStore from 'src/components/stores/UserStore';
+import GenericElCriteriaModal from 'src/components/generic/GenericElCriteriaModal';
+import GenericElCriteria from 'src/components/generic/GenericElCriteria';
+import { clsInputGroup } from 'src/admin/generic/Utils';
 
 export default class Search extends React.Component {
   constructor(props) {

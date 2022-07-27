@@ -1,7 +1,7 @@
 import { difference, uniq } from 'lodash';
 
-import alt from '../alt';
-import PredictionActions from '../actions/PredictionActions';
+import alt from 'src/components/alt';
+import PredictionActions from 'src/components/actions/PredictionActions';
 
 class PredictionStore {
   constructor() {

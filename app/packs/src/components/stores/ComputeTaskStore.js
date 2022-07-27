@@ -1,6 +1,6 @@
-import alt from '../alt';
+import alt from 'src/components/alt';
 
-import ComputeTaskActions from '../actions/ComputeTaskActions';
+import ComputeTaskActions from 'src/components/actions/ComputeTaskActions';
 
 class ComputeTaskStore {
   constructor() {

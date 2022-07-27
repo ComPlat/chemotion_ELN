@@ -6,12 +6,12 @@ import Delta from 'quill-delta';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
 
-import Element from './Element';
-import Sample from './Sample';
-import Container from './Container';
+import Element from 'src/components/models/Element';
+import Sample from 'src/components/models/Sample';
+import Container from 'src/components/models/Container';
 
-import UserStore from '../stores/UserStore';
-import Segment from './Segment';
+import UserStore from 'src/components/stores/UserStore';
+import Segment from 'src/components/models/Segment';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 

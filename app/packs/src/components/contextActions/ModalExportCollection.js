@@ -1,7 +1,7 @@
 import React from 'react';
 import {Button, ButtonToolbar} from 'react-bootstrap';
-import UIStore from './../stores/UIStore';
-import CollectionStore from './../stores/CollectionStore';
+import UIStore from 'src/components/stores/UIStore';
+import CollectionStore from 'src/components/stores/CollectionStore';
 
 export default class ModalExportCollection extends React.Component {
   constructor(props) {

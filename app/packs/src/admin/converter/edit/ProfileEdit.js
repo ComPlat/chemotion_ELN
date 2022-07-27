@@ -3,11 +3,11 @@
 import React, { Component } from "react"
 import { Button, Popover, ButtonGroup, OverlayTrigger, Panel, Row, Col } from 'react-bootstrap';
 
-import FirstRowIsHeaderInput from './FirstRowIsHeaderInput';
-import HeaderForm from './HeaderForm';
-import TableForm from './TableForm';
-import IdentifierForm from './IdentifierForm';
-import { ButtonTooltip } from '../../../admin/generic/Utils';
+import FirstRowIsHeaderInput from 'src/admin/converter/edit/FirstRowIsHeaderInput';
+import HeaderForm from 'src/admin/converter/edit/HeaderForm';
+import TableForm from 'src/admin/converter/edit/TableForm';
+import IdentifierForm from 'src/admin/converter/edit/IdentifierForm';
+import { ButtonTooltip } from 'src/admin/generic/Utils';
 
 const renderCancelButton = (backProfileList) => {
   const popover = (

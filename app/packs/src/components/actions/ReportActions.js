@@ -1,10 +1,10 @@
 import _ from 'lodash';
-import alt from '../alt';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
-import ReportsFetcher from '../fetchers/ReportsFetcher';
-import ReportTemplateFetcher from '../fetchers/ReportTemplateFetcher';
-import UIFetcher from '../fetchers/UIFetcher';
-import { GetTypeIds, LoadPreviewIds } from '../utils/ReportHelper';
+import alt from 'src/components/alt';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import ReportsFetcher from 'src/components/fetchers/ReportsFetcher';
+import ReportTemplateFetcher from 'src/components/fetchers/ReportTemplateFetcher';
+import UIFetcher from 'src/components/fetchers/UIFetcher';
+import { GetTypeIds, LoadPreviewIds } from 'src/components/utils/ReportHelper';
 
 class ReportActions {
   updateImgFormat = value => value

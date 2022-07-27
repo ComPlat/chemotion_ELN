@@ -1,4 +1,4 @@
-import Element from './Element';
+import Element from 'src/components/models/Element';
 // import Dataset from './Dataset';
 
 export default class Analysis extends Element {

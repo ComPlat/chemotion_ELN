@@ -4,9 +4,9 @@ import _ from 'lodash';
 
 import { Button, ButtonToolbar } from 'react-bootstrap';
 
-import { ChemScanner, store } from '../chemscanner/ChemScanner';
+import { ChemScanner, store } from 'src/components/chemscanner/ChemScanner';
 
-import ElementActions from '../actions/ElementActions';
+import ElementActions from 'src/components/actions/ElementActions';
 
 export default class ModalImportChemScanner extends React.Component {
   constructor(props) {

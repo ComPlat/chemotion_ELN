@@ -6,10 +6,10 @@ import {
   Panel
 } from 'react-bootstrap';
 
-import PreviewFileZoomPan from './PreviewFileZoomPan';
-import ScannedItemsContainer from '../containers/ScannedItemsContainer';
+import PreviewFileZoomPan from 'src/components/chemscanner/components/PreviewFileZoomPan';
+import ScannedItemsContainer from 'src/components/chemscanner/containers/ScannedItemsContainer';
 
-import DeleteBtn from './DeleteBtn';
+import DeleteBtn from 'src/components/chemscanner/components/DeleteBtn';
 
 const MainContent = (props) => {
   const { files, modal, removeFile } = props;

@@ -1,6 +1,6 @@
 import { List } from 'immutable';
 
-import * as types from '../actions/ActionTypes';
+import * as types from 'src/components/chemscanner/actions/ActionTypes';
 
 export default function reactions(state = List(), action) {
   switch (action.type) {

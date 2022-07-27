@@ -4,8 +4,8 @@ import _ from 'lodash';
 import { AgGridReact } from 'ag-grid-react';
 import { Checkbox } from 'react-bootstrap';
 
-import Sample from '../models/Sample';
-import SampleName from '../common/SampleName';
+import Sample from 'src/components/models/Sample';
+import SampleName from 'src/components/common/SampleName';
 
 function floatFormatter(params) {
   if (isNaN(params.value)) {

@@ -1,5 +1,5 @@
-import alt from '../alt';
-import NmrSimFetcher from '../fetchers/NmrSimFetcher';
+import alt from 'src/components/alt';
+import NmrSimFetcher from 'src/components/fetchers/NmrSimFetcher';
 
 class NmrSimActions {
   updateNmrdb(type, needToFetch, id) {

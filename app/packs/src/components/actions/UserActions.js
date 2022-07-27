@@ -1,10 +1,10 @@
-import alt from '../alt';
-import UsersFetcher from '../fetchers/UsersFetcher';
-import SegmentsFetcher from '../fetchers/SegmentsFetcher';
-import GenericDSsFetcher from '../fetchers/GenericDSsFetcher';
+import alt from 'src/components/alt';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import SegmentsFetcher from 'src/components/fetchers/SegmentsFetcher';
+import GenericDSsFetcher from 'src/components/fetchers/GenericDSsFetcher';
 
 import cookie from 'react-cookie'
-import DocumentHelper from '../utils/DocumentHelper';
+import DocumentHelper from 'src/components/utils/DocumentHelper';
 
 class UserActions {
   fetchOlsRxno() {

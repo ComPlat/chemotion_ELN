@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 
-import RootContainer from './containers/RootContainer';
-import configureStore from './store/configureStore';
+import RootContainer from 'src/components/chemscanner/containers/RootContainer';
+import configureStore from 'src/components/chemscanner/store/configureStore';
 
 export const store = configureStore();
 

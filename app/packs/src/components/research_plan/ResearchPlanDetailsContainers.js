@@ -1,19 +1,19 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
-import Container from '../models/Container';
-import ContainerComponent from '../ContainerComponent';
-import QuillViewer from '../QuillViewer';
-import ImageModal from '../common/ImageModal';
-import { instrumentText } from '../utils/ElementUtils';
-import { previewContainerImage } from './../utils/imageHelper';
-import { JcampIds, BuildSpcInfos } from '../utils/SpectraHelper';
-import UIStore from '../stores/UIStore';
-import SpectraActions from '../actions/SpectraActions';
-import LoadingActions from '../actions/LoadingActions';
-import ViewSpectra from '../ViewSpectra';
+import Container from 'src/components/models/Container';
+import ContainerComponent from 'src/components/ContainerComponent';
+import QuillViewer from 'src/components/QuillViewer';
+import ImageModal from 'src/components/common/ImageModal';
+import { instrumentText } from 'src/components/utils/ElementUtils';
+import { previewContainerImage } from 'src/components/utils/imageHelper';
+import { JcampIds, BuildSpcInfos } from 'src/components/utils/SpectraHelper';
+import UIStore from 'src/components/stores/UIStore';
+import SpectraActions from 'src/components/actions/SpectraActions';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import ViewSpectra from 'src/components/ViewSpectra';
 
-import TextTemplateActions from '../actions/TextTemplateActions';
+import TextTemplateActions from 'src/components/actions/TextTemplateActions';
 
 const SpectraEditorBtn = ({
   element, spcInfo, hasJcamp, hasChemSpectra,

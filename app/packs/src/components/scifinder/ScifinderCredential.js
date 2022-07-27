@@ -4,8 +4,8 @@ import ReactDOM from 'react-dom';
 import { Button, Panel, Row, Col } from 'react-bootstrap';
 import moment from 'moment';
 import uuid from 'uuid';
-import UsersFetcher from '../fetchers/UsersFetcher';
-import NotificationActions from '../actions/NotificationActions';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import NotificationActions from 'src/components/actions/NotificationActions';
 
 const ScifinderCredential = () => {
   const [credential, setCredential] = useState({});

@@ -5,14 +5,14 @@ import Select from 'react-select';
 
 import {debounce} from 'lodash';
 
-import SharingShortcuts from '../sharing/SharingShortcuts';
+import SharingShortcuts from 'src/components/sharing/SharingShortcuts';
 
-import CollectionActions from '../actions/CollectionActions';
-import UserActions from '../actions/UserActions';
-import UIStore from '../stores/UIStore';
-import UserStore from '../stores/UserStore';
-import UsersFetcher from '../fetchers/UsersFetcher';
-import MatrixCheck from '../common/MatrixCheck';
+import CollectionActions from 'src/components/actions/CollectionActions';
+import UserActions from 'src/components/actions/UserActions';
+import UIStore from 'src/components/stores/UIStore';
+import UserStore from 'src/components/stores/UserStore';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import klasses from '../../../../../config/klasses.json';
 
 export default class ManagingModalSharing extends React.Component {

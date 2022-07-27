@@ -1,5 +1,5 @@
-import alt from '../alt';
-import ClipboardActions from '../actions/ClipboardActions';
+import alt from 'src/components/alt';
+import ClipboardActions from 'src/components/actions/ClipboardActions';
 import Aviator from 'aviator';
 
 class ClipboardStore {

@@ -4,10 +4,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Col } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
-import { GenProperties, LayersLayout } from '../../components/generic/GenericElCommon';
-import LoadingActions from '../../components/actions/LoadingActions';
-import { ButtonTooltip, ButtonConfirm, unitConversion, inputEventVal, genUnits } from './Utils';
-import Utils from '../../components/utils/Functions';
+import { GenProperties, LayersLayout } from 'src/components/generic/GenericElCommon';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import { ButtonTooltip, ButtonConfirm, unitConversion, inputEventVal, genUnits } from 'src/admin/generic/Utils';
+import Utils from 'src/components/utils/Functions';
 
 export default class Preview extends Component {
   constructor(props) {

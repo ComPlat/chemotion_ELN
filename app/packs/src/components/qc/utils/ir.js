@@ -1,4 +1,4 @@
-import { makeDav } from './common';
+import { makeDav } from 'src/components/qc/utils/common';
 
 const makeQck = () => ({});
 

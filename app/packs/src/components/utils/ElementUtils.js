@@ -1,9 +1,9 @@
 import Aviator from 'aviator';
 import _ from 'lodash';
-import { deltaToMarkdown, markdownToDelta } from './deltaMarkdownConverter';
-import { searchAndReplace } from './markdownUtils';
+import { deltaToMarkdown, markdownToDelta } from 'src/components/utils/deltaMarkdownConverter';
+import { searchAndReplace } from 'src/components/utils/markdownUtils';
 
-import UIStore from '../stores/UIStore';
+import UIStore from 'src/components/stores/UIStore';
 
 const rfValueFormat = (input) => {
   if (typeof input !== 'string') { return input; }

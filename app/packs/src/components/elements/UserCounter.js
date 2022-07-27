@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Row, Col, Panel, Button, FormControl } from 'react-bootstrap';
 import uuid from 'uuid';
-import UserStore from '../stores/UserStore';
-import UserActions from '../actions/UserActions';
-import AdminFetcher from '../fetchers/AdminFetcher';
-import UsersFetcher from '../fetchers/UsersFetcher';
+import UserStore from 'src/components/stores/UserStore';
+import UserActions from 'src/components/actions/UserActions';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
 
 export default class UserCounter extends Component {
   constructor(props) {

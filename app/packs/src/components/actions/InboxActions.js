@@ -1,8 +1,7 @@
-/* eslint-disable class-methods-use-this */
-import alt from '../alt';
-import InboxFetcher from '../fetchers/InboxFetcher';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
-import ContainerFetcher from '../fetchers/ContainerFetcher';
+import alt from 'src/components/alt';
+import InboxFetcher from 'src/components/fetchers/InboxFetcher';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import ContainerFetcher from 'src/components/fetchers/ContainerFetcher';
 
 class InboxActions {
   deleteContainerLinkUnselected(params) {

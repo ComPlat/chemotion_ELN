@@ -3,21 +3,21 @@ import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge,
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy, orderBy } from 'lodash';
-import LoadingModal from '../components/common/LoadingModal';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
-import { ElementField } from '../components/elements/ElementField';
-import LoadingActions from '../components/actions/LoadingActions';
-import AttrNewModal from './generic/AttrNewModal';
-import AttrEditModal from './generic/AttrEditModal';
-import AttrCopyModal from './generic/AttrCopyModal';
-import FieldCondEditModal from './generic/FieldCondEditModal';
-import TemplateJsonModal from './generic/TemplateJsonModal';
-import LayerAttrEditModal from './generic/LayerAttrEditModal';
-import LayerAttrNewModal from './generic/LayerAttrNewModal';
-import SelectAttrNewModal from './generic/SelectAttrNewModal';
-import UploadModal from './generic/UploadModal';
-import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
-import Preview from './generic/Preview';
+import LoadingModal from 'src/components/common/LoadingModal';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import { ElementField } from 'src/components/elements/ElementField';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import AttrNewModal from 'src/admin/generic/AttrNewModal';
+import AttrEditModal from 'src/admin/generic/AttrEditModal';
+import AttrCopyModal from 'src/admin/generic/AttrCopyModal';
+import FieldCondEditModal from 'src/admin/generic/FieldCondEditModal';
+import TemplateJsonModal from 'src/admin/generic/TemplateJsonModal';
+import LayerAttrEditModal from 'src/admin/generic/LayerAttrEditModal';
+import LayerAttrNewModal from 'src/admin/generic/LayerAttrNewModal';
+import SelectAttrNewModal from 'src/admin/generic/SelectAttrNewModal';
+import UploadModal from 'src/admin/generic/UploadModal';
+import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from 'src/admin/generic/Utils';
+import Preview from 'src/admin/generic/Preview';
 
 const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
 const validateInput = (element) => {

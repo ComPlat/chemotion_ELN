@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DragSource, DropTarget } from 'react-dnd';
-import DragDropItemTypes from './DragDropItemTypes';
-import Well from './Well';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import Well from 'src/components/Well';
 
 const wellSource = {
   beginDrag(props) {

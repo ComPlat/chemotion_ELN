@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Form, FormGroup, Modal, Button, OverlayTrigger } from 'react-bootstrap';
-import { Content, TipActive, TipInActive, TipDelete } from './AttrForm';
+import { Content, TipActive, TipInActive, TipDelete } from 'src/admin/generic/AttrForm';
 
 export default class AttrEditModal extends Component {
   constructor(props) {

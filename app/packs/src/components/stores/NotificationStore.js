@@ -1,6 +1,6 @@
-import alt from '../alt';
-import NotificationActions from '../actions/NotificationActions';
-import ElementActions from '../actions/ElementActions';
+import alt from 'src/components/alt';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import ElementActions from 'src/components/actions/ElementActions';
 
 
 class NotificationStore {

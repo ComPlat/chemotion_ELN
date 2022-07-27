@@ -3,10 +3,10 @@
 import React, { Component } from 'react';
 import { Tabs, Tab, Button, Row, Col, Panel, Popover, ButtonGroup, OverlayTrigger } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
-import HeaderForm from './HeaderForm';
-import TableForm from './TableForm';
-import IdentifierForm from './IdentifierForm';
-import { ButtonTooltip } from '../../../admin/generic/Utils';
+import HeaderForm from 'src/admin/converter/create/HeaderForm';
+import TableForm from 'src/admin/converter/create/TableForm';
+import IdentifierForm from 'src/admin/converter/create/IdentifierForm';
+import { ButtonTooltip } from 'src/admin/generic/Utils';
 
 const renderCancelButton = (backProfileList) => {
   const popover = (

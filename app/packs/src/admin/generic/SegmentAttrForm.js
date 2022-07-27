@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Form, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
-import AdminFetcher from '../../components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
 
 export default class SegmentAttrForm extends Component {
   constructor() {

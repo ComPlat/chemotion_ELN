@@ -2,7 +2,7 @@ import React from 'react';
 // import PropTypes from 'prop-types';
 import { Table } from 'react-bootstrap';
 
-import EditableCell from './EditableCell'
+import EditableCell from 'src/components/lineChart/EditableCell'
 
 export default class EditableTable extends React.Component {
   constructor(props) {

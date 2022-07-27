@@ -1,13 +1,13 @@
 import moment from 'moment';
 import _ from 'lodash';
-import alt from '../alt';
-import ReportActions from '../actions/ReportActions';
-import Utils from '../utils/Functions';
-import ArrayUtils from '../utils/ArrayUtils';
-import UserActions from '../actions/UserActions';
-import UserStore from './UserStore';
-import { reOrderArr } from '../utils/DndControl';
-import { UpdateSelectedObjs, OrderPreviewObjs } from '../utils/ReportHelper';
+import alt from 'src/components/alt';
+import ReportActions from 'src/components/actions/ReportActions';
+import Utils from 'src/components/utils/Functions';
+import ArrayUtils from 'src/components/utils/ArrayUtils';
+import UserActions from 'src/components/actions/UserActions';
+import UserStore from 'src/components/stores/UserStore';
+import { reOrderArr } from 'src/components/utils/DndControl';
+import { UpdateSelectedObjs, OrderPreviewObjs } from 'src/components/utils/ReportHelper';
 
 class ReportStore {
   constructor() {

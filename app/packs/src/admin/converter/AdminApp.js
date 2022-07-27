@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import { Button } from 'react-bootstrap';
-import ConverterApi from '../../components/fetchers/ConverterFetcher';
-import ProfileNewModal from './create/ProfileNewModal';
+import ConverterApi from 'src/components/fetchers/ConverterFetcher';
+import ProfileNewModal from 'src/admin/converter/create/ProfileNewModal';
 
-import ProfileList from './list/ProfileList';
-import ProfileEdit from './edit/ProfileEdit';
-import ProfileCreate from './create/ProfileCreate';
+import ProfileList from 'src/admin/converter/list/ProfileList';
+import ProfileEdit from 'src/admin/converter/edit/ProfileEdit';
+import ProfileCreate from 'src/admin/converter/create/ProfileCreate';
 
 
 const initTable = (tableData) => {

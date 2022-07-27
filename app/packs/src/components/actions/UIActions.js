@@ -1,5 +1,5 @@
-import alt from '../alt';
-import UIFetcher from '../fetchers/UIFetcher';
+import alt from 'src/components/alt';
+import UIFetcher from 'src/components/fetchers/UIFetcher';
 
 // An element object has a type and an id, e.g., {type: 'sample', id: 1}
 class UIActions {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ButtonGroup, OverlayTrigger, Tooltip, Button, Table, Panel } from 'react-bootstrap';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
-import DeleteGroupDeviceButton from './DeleteGroupDeviceButton';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import DeleteGroupDeviceButton from 'src/admin/DeleteGroupDeviceButton';
 
 export default class AdminDeviceElement extends React.Component {
   constructor(props) {

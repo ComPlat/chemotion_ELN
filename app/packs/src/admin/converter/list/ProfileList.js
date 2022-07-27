@@ -1,6 +1,6 @@
 import React from 'react';
 import { Panel, Table } from 'react-bootstrap';
-import ProfileListItem from './ProfileListItem';
+import ProfileListItem from 'src/admin/converter/list/ProfileListItem';
 
 const ProfileList = (props) => {
   const {

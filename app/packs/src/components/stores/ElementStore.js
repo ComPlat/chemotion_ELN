@@ -6,45 +6,45 @@ import {
   filter
 } from 'lodash';
 import Aviator from 'aviator';
-import alt from '../alt';
-import UserStore from './UserStore';
-import ElementActions from '../actions/ElementActions';
-import CollectionActions from '../actions/CollectionActions';
-import LoadingActions from '../actions/LoadingActions';
-import UIActions from '../actions/UIActions';
-import UserActions from '../actions/UserActions';
-import UIStore from './UIStore';
-import ClipboardStore from './ClipboardStore';
-import Sample from '../models/Sample';
-import Reaction from '../models/Reaction';
-import Wellplate from '../models/Wellplate';
-import Screen from '../models/Screen';
+import alt from 'src/components/alt';
+import UserStore from 'src/components/stores/UserStore';
+import ElementActions from 'src/components/actions/ElementActions';
+import CollectionActions from 'src/components/actions/CollectionActions';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import UIActions from 'src/components/actions/UIActions';
+import UserActions from 'src/components/actions/UserActions';
+import UIStore from 'src/components/stores/UIStore';
+import ClipboardStore from 'src/components/stores/ClipboardStore';
+import Sample from 'src/components/models/Sample';
+import Reaction from 'src/components/models/Reaction';
+import Wellplate from 'src/components/models/Wellplate';
+import Screen from 'src/components/models/Screen';
 
-import Device from '../models/Device';
-import Container from '../models/Container';
-import AnalysesExperiment from '../models/AnalysesExperiment';
-import DeviceAnalysis from '../models/DeviceAnalysis';
-import DeviceSample from '../models/DeviceSample';
-import SamplesFetcher from '../fetchers/SamplesFetcher';
-import DeviceFetcher from '../fetchers/DeviceFetcher';
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
-import WellplatesFetcher from '../fetchers/WellplatesFetcher';
-import ScreensFetcher from '../fetchers/ScreensFetcher';
-import ModalImportConfirm from '../contextActions/ModalImportConfirm';
+import Device from 'src/components/models/Device';
+import Container from 'src/components/models/Container';
+import AnalysesExperiment from 'src/components/models/AnalysesExperiment';
+import DeviceAnalysis from 'src/components/models/DeviceAnalysis';
+import DeviceSample from 'src/components/models/DeviceSample';
+import SamplesFetcher from 'src/components/fetchers/SamplesFetcher';
+import DeviceFetcher from 'src/components/fetchers/DeviceFetcher';
+import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
+import WellplatesFetcher from 'src/components/fetchers/WellplatesFetcher';
+import ScreensFetcher from 'src/components/fetchers/ScreensFetcher';
+import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
 
-import { extraThing } from '../utils/Functions';
-import Xlisteners from '../extra/ElementStoreXlisteners';
-import Xhandlers from '../extra/ElementStoreXhandlers';
-import Xstate from '../extra/ElementStoreXstate';
-import { elementShowOrNew } from '../routesUtils';
+import { extraThing } from 'src/components/utils/Functions';
+import Xlisteners from 'src/components/extra/ElementStoreXlisteners';
+import Xhandlers from 'src/components/extra/ElementStoreXhandlers';
+import Xstate from 'src/components/extra/ElementStoreXstate';
+import { elementShowOrNew } from 'src/components/routesUtils';
 
-import DetailActions from '../actions/DetailActions';
-import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
-import { chmoConversions } from '../OlsComponent';
-import MatrixCheck from '../common/MatrixCheck';
-import GenericEl from '../models/GenericEl';
+import DetailActions from 'src/components/actions/DetailActions';
+import { SameEleTypId, UrlSilentNavigation } from 'src/components/utils/ElementUtils';
+import { chmoConversions } from 'src/components/OlsComponent';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import GenericEl from 'src/components/models/GenericEl';
 
-import MessagesFetcher from '../fetchers/MessagesFetcher';
+import MessagesFetcher from 'src/components/fetchers/MessagesFetcher';
 
 const fetchOls = (elementType) => {
   switch (elementType) {

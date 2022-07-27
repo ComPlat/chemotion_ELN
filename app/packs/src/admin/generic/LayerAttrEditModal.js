@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, Modal, Button } from 'react-bootstrap';
-import LayerAttrForm from './LayerAttrForm';
+import LayerAttrForm from 'src/admin/generic/LayerAttrForm';
 
 export default class LayerAttrEditModal extends Component {
   constructor(props) {

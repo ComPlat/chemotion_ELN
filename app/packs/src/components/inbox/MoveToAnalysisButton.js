@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Tooltip } from 'react-bootstrap';
-import InboxFetcher from '../fetchers/InboxFetcher';
-import InboxActions from '../actions/InboxActions';
-import DragDropItemTypes from '../DragDropItemTypes';
+import InboxFetcher from 'src/components/fetchers/InboxFetcher';
+import InboxActions from 'src/components/actions/InboxActions';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
 export default class MoveToAnalysisButton extends React.Component {
   constructor(props) {

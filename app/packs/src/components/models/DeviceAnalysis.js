@@ -1,5 +1,5 @@
-import Element from './Element'
-import AnalysesExperiment from './AnalysesExperiment'
+import Element from 'src/components/models/Element'
+import AnalysesExperiment from 'src/components/models/AnalysesExperiment'
 import _ from 'lodash'
 
 export default class DeviceAnalysis extends Element{

@@ -1,11 +1,11 @@
 import Dropzone from 'react-dropzone';
-import EditorFetcher from '../fetchers/EditorFetcher';
-import ElementActions from '../actions/ElementActions';
-import ImageModal from '../common/ImageModal';
-import LoadingActions from '../actions/LoadingActions';
+import EditorFetcher from 'src/components/fetchers/EditorFetcher';
+import ElementActions from 'src/components/actions/ElementActions';
+import ImageModal from 'src/components/common/ImageModal';
+import LoadingActions from 'src/components/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
+import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import {
   Button, ButtonGroup,
   Col, ControlLabel,
@@ -18,7 +18,7 @@ import {
   Tooltip
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;

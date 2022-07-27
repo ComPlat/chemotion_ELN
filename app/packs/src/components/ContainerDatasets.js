@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 // import PropTypes from 'prop-types';
 import { ListGroup, ListGroupItem, Button, Well } from 'react-bootstrap';
-import ContainerDatasetModal from './ContainerDatasetModal';
-import ContainerDatasetField from './ContainerDatasetField';
-import Container from './models/Container';
-import AttachmentDropzone from './AttachmentDropzone';
+import ContainerDatasetModal from 'src/components/ContainerDatasetModal';
+import ContainerDatasetField from 'src/components/ContainerDatasetField';
+import Container from 'src/components/models/Container';
+import AttachmentDropzone from 'src/components/AttachmentDropzone';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {

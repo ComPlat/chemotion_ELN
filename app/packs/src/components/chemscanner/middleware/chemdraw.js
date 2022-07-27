@@ -1,6 +1,6 @@
-import * as types from '../actions/ActionTypes';
-import { CALL_API } from './api';
-import { extractReactionFromId } from '../utils';
+import * as types from 'src/components/chemscanner/actions/ActionTypes';
+import { CALL_API } from 'src/components/chemscanner/middleware/api';
+import { extractReactionFromId } from 'src/components/chemscanner/utils';
 
 const cleanUpPromise = (cddInstance, mdl) => {
   const loadPromise = new Promise((resolve) => {

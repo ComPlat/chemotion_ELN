@@ -1,9 +1,9 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
 
-import api from '../middleware/api';
-import chemdraw from '../middleware/chemdraw';
-import rootReducer from '../reducers/index';
+import api from 'src/components/chemscanner/middleware/api';
+import chemdraw from 'src/components/chemscanner/middleware/chemdraw';
+import rootReducer from 'src/components/chemscanner/reducers/index';
 
 const configureStore = (preloadedState) => {
   const store = createStore(

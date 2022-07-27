@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Label } from 'react-bootstrap';
 
-import MoleculeDescription from './MoleculeDescription';
+import MoleculeDescription from 'src/components/chemscanner/components/MoleculeDescription';
 
 export default class ReactionDescription extends React.Component {
   constructor(props) {

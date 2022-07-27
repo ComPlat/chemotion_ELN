@@ -4,7 +4,7 @@ import { Modal } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
-import { stopEvent } from '../utils/DomHelper';
+import { stopEvent } from 'src/components/utils/DomHelper';
 
 export default class SvgWithModal extends Component {
   constructor(props) {

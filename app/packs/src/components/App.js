@@ -5,20 +5,20 @@ import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 import Aviator from 'aviator';
 
-import Navigation from './Navigation';
-import CollectionTree from './CollectionTree';
-import CollectionManagement from './CollectionManagement';
-import Elements from './Elements';
-import initRoutes from './routes';
-import Notifications from './Notifications';
-import LoadingModal from './common/LoadingModal';
-import UIActions from './actions/UIActions';
-import UserActions from './actions/UserActions';
-import KeyboardActions from './actions/KeyboardActions';
-import UIStore from './stores/UIStore';
-import InboxModal from './inbox/InboxModal';
-import ProgressModal from './common/ProgressModal';
-import { RootStore, StoreContext } from '../mobx-stores/RootStore';
+import Navigation from 'src/components/Navigation';
+import CollectionTree from 'src/components/CollectionTree';
+import CollectionManagement from 'src/components/CollectionManagement';
+import Elements from 'src/components/Elements';
+import initRoutes from 'src/components/routes';
+import Notifications from 'src/components/Notifications';
+import LoadingModal from 'src/components/common/LoadingModal';
+import UIActions from 'src/components/actions/UIActions';
+import UserActions from 'src/components/actions/UserActions';
+import KeyboardActions from 'src/components/actions/KeyboardActions';
+import UIStore from 'src/components/stores/UIStore';
+import InboxModal from 'src/components/inbox/InboxModal';
+import ProgressModal from 'src/components/common/ProgressModal';
+import { RootStore, StoreContext } from 'src/mobx-stores/RootStore';
 
 class App extends Component {
   constructor(_props) {

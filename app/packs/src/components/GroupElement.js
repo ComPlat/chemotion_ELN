@@ -1,6 +1,6 @@
 import React from 'react';
 import { ButtonGroup, OverlayTrigger, Popover, Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Tooltip, Panel, Form, FormControl, FormGroup, ControlLabel, Col, Row } from 'react-bootstrap';
-import UsersFetcher from './fetchers/UsersFetcher';
+import UsersFetcher from 'src/components/fetchers/UsersFetcher';
 import Select from 'react-select';
 import _ from 'lodash';
 

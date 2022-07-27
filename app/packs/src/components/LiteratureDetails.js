@@ -26,16 +26,16 @@ import {
   sortByElement,
   LiteralType,
   literatureContent
-} from './LiteratureCommon';
-import Literature from './models/Literature';
-import LiteratureMap from './models/LiteratureMap';
-import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
-import UIStore from './stores/UIStore';
-import UserStore from './stores/UserStore';
-import DetailActions from './actions/DetailActions';
-import PanelHeader from './common/PanelHeader';
-import { stopEvent } from './utils/DomHelper';
-import NotificationActions from './actions/NotificationActions';
+} from 'src/components/LiteratureCommon';
+import Literature from 'src/components/models/Literature';
+import LiteratureMap from 'src/components/models/LiteratureMap';
+import LiteraturesFetcher from 'src/components/fetchers/LiteraturesFetcher';
+import UIStore from 'src/components/stores/UIStore';
+import UserStore from 'src/components/stores/UserStore';
+import DetailActions from 'src/components/actions/DetailActions';
+import PanelHeader from 'src/components/common/PanelHeader';
+import { stopEvent } from 'src/components/utils/DomHelper';
+import NotificationActions from 'src/components/actions/NotificationActions';
 
 const Cite = require('citation-js');
 

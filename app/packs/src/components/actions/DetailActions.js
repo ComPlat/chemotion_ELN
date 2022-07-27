@@ -1,6 +1,6 @@
-import alt from '../alt'
+import alt from 'src/components/alt'
 import _ from 'lodash'
-import MoleculesFetcher from '../fetchers/MoleculesFetcher'
+import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher'
 
 class DetailActions {
   select(index) {

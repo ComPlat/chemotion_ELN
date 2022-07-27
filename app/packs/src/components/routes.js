@@ -1,13 +1,13 @@
-import UIStore from './stores/UIStore';
-import ElementStore from './stores/ElementStore';
-import CollectionStore from './stores/CollectionStore';
-import UserStore from './stores/UserStore';
-import UIActions from './actions/UIActions';
-import UserActions from './actions/UserActions';
-import ElementActions from './actions/ElementActions';
-import rXr from './extra/routesXroutes';
-import * as routesUtils from './routesUtils';
-import UIFetcher from './fetchers/UIFetcher';
+import UIStore from 'src/components/stores/UIStore';
+import ElementStore from 'src/components/stores/ElementStore';
+import CollectionStore from 'src/components/stores/CollectionStore';
+import UserStore from 'src/components/stores/UserStore';
+import UIActions from 'src/components/actions/UIActions';
+import UserActions from 'src/components/actions/UserActions';
+import ElementActions from 'src/components/actions/ElementActions';
+import rXr from 'src/components/extra/routesXroutes';
+import * as routesUtils from 'src/components/routesUtils';
+import UIFetcher from 'src/components/fetchers/UIFetcher';
 import klasses from '../../../../config/klasses.json';
 
 

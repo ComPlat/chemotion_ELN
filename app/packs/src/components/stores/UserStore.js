@@ -1,6 +1,6 @@
-import alt from '../alt';
+import alt from 'src/components/alt';
 import _ from 'lodash';
-import UserActions from '../actions/UserActions';
+import UserActions from 'src/components/actions/UserActions';
 
 class UserStore {
   constructor() {

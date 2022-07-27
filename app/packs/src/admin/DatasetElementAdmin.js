@@ -3,18 +3,18 @@ import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge,
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy } from 'lodash';
-import LoadingModal from '../components/common/LoadingModal';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
-import { ElementField } from '../components/elements/ElementField';
-import LoadingActions from '../components/actions/LoadingActions';
-import TemplateJsonModal from './generic/TemplateJsonModal';
-import LayerAttrEditModal from './generic/LayerAttrEditModal';
-import LayerAttrNewModal from './generic/LayerAttrNewModal';
-import FieldCondEditModal from './generic/FieldCondEditModal';
-import SelectAttrNewModal from './generic/SelectAttrNewModal';
-import Preview from './generic/Preview';
-import UploadModal from './generic/UploadModal';
-import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
+import LoadingModal from 'src/components/common/LoadingModal';
+import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import { ElementField } from 'src/components/elements/ElementField';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import TemplateJsonModal from 'src/admin/generic/TemplateJsonModal';
+import LayerAttrEditModal from 'src/admin/generic/LayerAttrEditModal';
+import LayerAttrNewModal from 'src/admin/generic/LayerAttrNewModal';
+import FieldCondEditModal from 'src/admin/generic/FieldCondEditModal';
+import SelectAttrNewModal from 'src/admin/generic/SelectAttrNewModal';
+import Preview from 'src/admin/generic/Preview';
+import UploadModal from 'src/admin/generic/UploadModal';
+import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from 'src/admin/generic/Utils';
 
 const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
 export default class DatasetElementAdmin extends React.Component {

@@ -2,7 +2,7 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import { Button, Row, Col } from 'react-bootstrap';
-import IdentifierInput from './IdentifierInput';
+import IdentifierInput from 'src/admin/converter/create/IdentifierInput';
 
 const IdentifierForm = props => (
   <div>

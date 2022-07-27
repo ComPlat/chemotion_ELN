@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Input, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
-import ElementalComposition from './ElementalComposition'
-import ElementalCompositionCustom from './ElementalCompositionCustom'
+import ElementalComposition from 'src/components/ElementalComposition'
+import ElementalCompositionCustom from 'src/components/ElementalCompositionCustom'
 
 export default class ElementalCompositionGroup extends React.Component {
 

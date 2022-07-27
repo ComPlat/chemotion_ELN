@@ -1,4 +1,4 @@
-import Element from './Element';
+import Element from 'src/components/models/Element';
 
 export default class Segment extends Element {
   static buildEmpty(klass) {

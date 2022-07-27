@@ -1,5 +1,5 @@
-import alt from '../alt';
-import PermissionActions from '../actions/PermissionActions';
+import alt from 'src/components/alt';
+import PermissionActions from 'src/components/actions/PermissionActions';
 
 class PermissionStore {
   constructor() {

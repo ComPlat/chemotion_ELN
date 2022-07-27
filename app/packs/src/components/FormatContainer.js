@@ -3,13 +3,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
-import FormatComponent from './FormatComponent';
-import ReportActions from './actions/ReportActions';
-import DetailActions from './actions/DetailActions';
-import ElementActions from './actions/ElementActions';
-import UIStore from './stores/UIStore';
-import ReportStore from './stores/ReportStore';
-import { formatAnalysisContent } from './utils/ElementUtils';
+import FormatComponent from 'src/components/FormatComponent';
+import ReportActions from 'src/components/actions/ReportActions';
+import DetailActions from 'src/components/actions/DetailActions';
+import ElementActions from 'src/components/actions/ElementActions';
+import UIStore from 'src/components/stores/UIStore';
+import ReportStore from 'src/components/stores/ReportStore';
+import { formatAnalysisContent } from 'src/components/utils/ElementUtils';
 
 function extractAnalyses(listEls) {
   const listObjs = [];

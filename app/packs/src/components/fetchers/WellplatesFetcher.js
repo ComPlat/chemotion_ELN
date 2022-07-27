@@ -1,9 +1,9 @@
 import 'whatwg-fetch';
-import Wellplate from '../models/Wellplate';
-import AttachmentFetcher from './AttachmentFetcher';
-import BaseFetcher from './BaseFetcher';
-import GenericElsFetcher from './GenericElsFetcher';
-import NotificationActions from '../actions/NotificationActions';
+import Wellplate from 'src/components/models/Wellplate';
+import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
+import NotificationActions from 'src/components/actions/NotificationActions';
 
 export default class WellplatesFetcher {
   static fetchById(id) {

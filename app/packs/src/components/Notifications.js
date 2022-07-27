@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import NotificationSystem from 'react-notification-system';
 import connectToStores from 'alt-utils/lib/connectToStores';
 
-import NotificationActions from './actions/NotificationActions';
-import NotificationStore from './stores/NotificationStore';
+import NotificationActions from 'src/components/actions/NotificationActions';
+import NotificationStore from 'src/components/stores/NotificationStore';
 
 class Notifications extends Component {
   componentDidMount() {

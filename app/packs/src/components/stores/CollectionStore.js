@@ -1,10 +1,10 @@
-import alt from '../alt';
-import CollectionActions from '../actions/CollectionActions';
+import alt from 'src/components/alt';
+import CollectionActions from 'src/components/actions/CollectionActions';
 
-import {extraThing} from '../utils/Functions';
-import Xlisteners from '../extra/CollectionStoreXlisteners';
-import Xhandlers from '../extra/CollectionStoreXhandlers';
-import Xstate from '../extra/CollectionStoreXstate';
+import {extraThing} from 'src/components/utils/Functions';
+import Xlisteners from 'src/components/extra/CollectionStoreXlisteners';
+import Xhandlers from 'src/components/extra/CollectionStoreXhandlers';
+import Xstate from 'src/components/extra/CollectionStoreXstate';
 
 
 

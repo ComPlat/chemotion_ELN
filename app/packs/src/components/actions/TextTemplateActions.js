@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
-import alt from '../alt';
-import TextTemplatesFetcher from '../fetchers/TextTemplatesFetcher';
+import alt from 'src/components/alt';
+import TextTemplatesFetcher from 'src/components/fetchers/TextTemplatesFetcher';
 
 class TextTemplateActions {
   fetchTextTemplates(elementName) {

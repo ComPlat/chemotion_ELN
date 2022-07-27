@@ -1,9 +1,9 @@
-import alt from '../alt';
-import LoadingActions from '../actions/LoadingActions';
-import ReportActions from '../actions/ReportActions';
-import ElementActions from '../actions/ElementActions';
-import InboxActions from '../actions/InboxActions';
-import PredictionActions from '../actions/PredictionActions';
+import alt from 'src/components/alt';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import ReportActions from 'src/components/actions/ReportActions';
+import ElementActions from 'src/components/actions/ElementActions';
+import InboxActions from 'src/components/actions/InboxActions';
+import PredictionActions from 'src/components/actions/PredictionActions';
 
 class LoadingStore {
   constructor() {

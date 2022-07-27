@@ -10,7 +10,7 @@ import {
   Row,
   Col
 } from 'react-bootstrap';
-import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher';
+import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
 
 require('@citation-js/plugin-isbn');
 

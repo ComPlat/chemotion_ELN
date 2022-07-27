@@ -7,10 +7,10 @@ import {
   OverlayTrigger,
   Tooltip
 } from 'react-bootstrap';
-import ReportActions from '../actions/ReportActions';
-import LoadingActions from '../actions/LoadingActions';
-import UIActions from '../actions/UIActions';
-import { stopBubble } from '../utils/DomHelper';
+import ReportActions from 'src/components/actions/ReportActions';
+import LoadingActions from 'src/components/actions/LoadingActions';
+import UIActions from 'src/components/actions/UIActions';
+import { stopBubble } from 'src/components/utils/DomHelper';
 
 const fileDescription = archive => (
   archive.file_description

@@ -3,21 +3,21 @@ import SVG from 'react-inlinesvg';
 import { Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
 import classnames from 'classnames';
 
-import ElementContainer from './ElementContainer';
-import ElementCheckbox from './ElementCheckbox';
-import ElementCollectionLabels from './ElementCollectionLabels';
-import ElementAnalysesLabels from './ElementAnalysesLabels';
-import ArrayUtils from './utils/ArrayUtils';
+import ElementContainer from 'src/components/ElementContainer';
+import ElementCheckbox from 'src/components/ElementCheckbox';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
+import ArrayUtils from 'src/components/utils/ArrayUtils';
 
-import UIStore from './stores/UIStore';
-import ElementStore from './stores/ElementStore';
-import KeyboardStore from './stores/KeyboardStore';
+import UIStore from 'src/components/stores/UIStore';
+import ElementStore from 'src/components/stores/ElementStore';
+import KeyboardStore from 'src/components/stores/KeyboardStore';
 
-import DragDropItemTypes from './DragDropItemTypes';
-import XTdCont from './extra/ElementsTableEntriesXTdCont';
-import { elementShowOrNew } from './routesUtils';
-import SvgWithPopover from './common/SvgWithPopover';
-import UserStore from './stores/UserStore';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import XTdCont from 'src/components/extra/ElementsTableEntriesXTdCont';
+import { elementShowOrNew } from 'src/components/routesUtils';
+import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import UserStore from 'src/components/stores/UserStore';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {

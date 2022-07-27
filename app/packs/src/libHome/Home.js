@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Grid, Row } from 'react-bootstrap';
 
-import Navigation from '../components/Navigation'
-import XHome from '../components/extra/HomeXHome'
-import WelcomeMessage from '../components/WelcomeMessage';
+import Navigation from 'src/components/Navigation'
+import XHome from 'src/components/extra/HomeXHome'
+import WelcomeMessage from 'src/components/WelcomeMessage';
 
 const extraHomes = () => {
   const homes = [];

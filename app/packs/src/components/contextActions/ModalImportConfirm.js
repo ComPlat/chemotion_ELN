@@ -8,7 +8,7 @@ import {
 } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
-import ElementActions from '../actions/ElementActions';
+import ElementActions from 'src/components/actions/ElementActions';
 
 
 const MyCell = ({col,data,rowIndex, ...props})=>{

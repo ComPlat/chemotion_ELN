@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {PanelGroup, Panel, Button, Row, Col} from 'react-bootstrap';
-import Container from './models/Container';
-import ContainerComponent from './ContainerComponent';
-import PrintCodeButton from './common/PrintCodeButton'
+import Container from 'src/components/models/Container';
+import ContainerComponent from 'src/components/ContainerComponent';
+import PrintCodeButton from 'src/components/common/PrintCodeButton'
 
-import TextTemplateActions from './actions/TextTemplateActions';
+import TextTemplateActions from 'src/components/actions/TextTemplateActions';
 
 export default class WellplateDetailsContainers extends Component {
   constructor(props) {

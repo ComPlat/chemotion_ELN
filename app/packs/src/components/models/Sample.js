@@ -1,12 +1,12 @@
 import React from 'react';
 import _ from 'lodash';
 
-import Element from './Element';
-import Molecule from './Molecule';
-import UserActions from '../actions/UserActions';
-import UserStore from '../stores/UserStore';
-import Container from './Container.js';
-import Segment from './Segment';
+import Element from 'src/components/models/Element';
+import Molecule from 'src/components/models/Molecule';
+import UserActions from 'src/components/actions/UserActions';
+import UserStore from 'src/components/stores/UserStore';
+import Container from 'src/components/models/Container.js';
+import Segment from 'src/components/models/Segment';
 
 const prepareRangeBound = (args, field) => {
   const argsNew = args;

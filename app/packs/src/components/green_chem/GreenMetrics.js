@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
-import Reaction from '../models/Reaction';
+import Reaction from 'src/components/models/Reaction';
 
 function getWaste(samples) {
   return samples.filter(s => s.waste);

@@ -9,16 +9,16 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 
-import TextTemplateStore from './stores/TextTemplateStore';
-import TextTemplateActions from './actions/TextTemplateActions';
+import TextTemplateStore from 'src/components/stores/TextTemplateStore';
+import TextTemplateActions from 'src/components/actions/TextTemplateActions';
 
-import ContainerDatasets from './ContainerDatasets';
-import QuillViewer from './QuillViewer';
-import OlsTreeSelect from './OlsComponent';
-import { confirmOptions } from './staticDropdownOptions/options';
+import ContainerDatasets from 'src/components/ContainerDatasets';
+import QuillViewer from 'src/components/QuillViewer';
+import OlsTreeSelect from 'src/components/OlsComponent';
+import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 
-import AnalysisEditor from './AnalysisEditor';
-import HyperLinksSection from './common/HyperLinksSection';
+import AnalysisEditor from 'src/components/AnalysisEditor';
+import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 export default class ContainerComponent extends Component {
   constructor(props) {

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
-import { metPreConv, metPrefSymbols } from './utils/metricPrefix';
+import { metPreConv, metPrefSymbols } from 'src/components/utils/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {

@@ -1,11 +1,10 @@
 import _ from 'lodash';
-import alt from '../alt';
-import InboxActions from '../actions/InboxActions';
-import ElementActions from '../actions/ElementActions';
-import DetailActions from '../actions/DetailActions';
-import ElementStore from './ElementStore';
-import ArrayUtils from '../utils/ArrayUtils';
-
+import alt from 'src/components/alt';
+import InboxActions from 'src/components/actions/InboxActions';
+import ElementActions from 'src/components/actions/ElementActions';
+import DetailActions from 'src/components/actions/DetailActions';
+import ElementStore from 'src/components/stores/ElementStore';
+import ArrayUtils from 'src/components/utils/ArrayUtils';
 
 class InboxStore {
   constructor() {

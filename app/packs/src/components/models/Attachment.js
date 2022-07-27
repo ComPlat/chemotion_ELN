@@ -1,5 +1,5 @@
-import Element from './Element';
-import { filePreview } from '../../helper/index';
+import Element from 'src/components/models/Element';
+import { filePreview } from 'src/helper/index';
 
 export default class Attachment extends Element {
   static fromFile(file) {

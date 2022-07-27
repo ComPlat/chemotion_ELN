@@ -1,9 +1,9 @@
 import React from 'react';
 import {Button, ButtonToolbar, Radio, FormGroup} from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import UIStore from './../stores/UIStore';
-import UserStore from './../stores/UserStore';
-import ReportsFetcher from './../fetchers/ReportsFetcher';
+import UIStore from 'src/components/stores/UIStore';
+import UserStore from 'src/components/stores/UserStore';
+import ReportsFetcher from 'src/components/fetchers/ReportsFetcher';
 
 export default class ModalReactionExport extends React.Component {
   constructor(props) {

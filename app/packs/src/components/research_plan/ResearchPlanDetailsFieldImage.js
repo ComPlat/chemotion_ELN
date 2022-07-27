@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   handleDrop(files) {

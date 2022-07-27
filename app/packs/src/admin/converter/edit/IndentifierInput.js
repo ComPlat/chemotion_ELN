@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { Component } from 'react';
 import { Row, Col } from 'react-bootstrap';
-import { ButtonTooltip } from '../../../admin/generic/Utils';
+import { ButtonTooltip } from 'src/admin/generic/Utils';
 
 class IndentifierInput extends Component {
   constructor(props) {
