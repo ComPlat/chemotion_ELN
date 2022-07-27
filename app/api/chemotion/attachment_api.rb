@@ -381,7 +381,6 @@ module Chemotion
         params do
           require :updated_svg_string, type: String
         end
-
         updater = AnnotationUpdater.new
         updater.update_annotation(
           params['updated_svg_string'],

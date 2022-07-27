@@ -45,5 +45,5 @@ class AnnotationCreator
       '      id="annotation" ' \
       '    </g>' \
       '</svg>'
-    end
+  end
 end
