@@ -10,9 +10,9 @@ RSpec.describe JsonWebToken do
     'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0MiwiZXhwIjoxNjY1NDA0MTI1fQ.jd-274lUfOejePcgYFOMQwiLuYanADMHhlFAPpAte_I'
   end
   let(:expected_timestamp) { 1_665_404_125 }
-  let(:token_generated_time)  { Time.local(2022, 4, 10, 12, 15, 25) }
-  let(:token_expiration_time) { Time.local(2022, 10, 10, 12, 15, 25) }
-  let(:token_expired_time)    { Time.local(2022, 10, 10, 12, 15, 25) }
+  let(:token_generated_time)  { Time.utc(2022, 4, 10, 12, 15, 25) }
+  let(:token_expiration_time) { Time.utc(2022, 10, 10, 12, 15, 25) }
+  let(:token_expired_time)    { Time.utc(2022, 10, 10, 12, 15, 25) }
 
   describe '.encode' do
     subject(:encoded_token) { described_class.encode(payload, exp) }
