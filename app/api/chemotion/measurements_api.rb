@@ -71,7 +71,8 @@ module Chemotion
           }
           results << entry if entry[:measurements].any?
         end
-        results
+
+        { measurements: results }
       end
 
       # params do

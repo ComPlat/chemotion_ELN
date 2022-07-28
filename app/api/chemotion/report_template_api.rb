@@ -20,8 +20,8 @@ module Chemotion
       desc 'Return template by id'
       get ':id' do
         report_template = ReportTemplate.includes(:attachment).find(params[:id])
-        entity = Entities::ReportTemplateEntity.represent(report_template, serializable: true)
-        { template: entity }
+
+        present report_template, with: Entities::ReportTemplateEntity, root: :template
       end
 
       desc 'Update new template'

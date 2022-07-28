@@ -34,14 +34,6 @@ Layout/AlignArguments:
     - 'app/api/chemotion/sample_api.rb'
     - 'app/api/entities/sample_attr_entity.rb'
     - 'app/models/user.rb'
-    - 'app/serializers/analyses_experiment_serializer.rb'
-    - 'app/serializers/collection_remote_serializer.rb'
-    - 'app/serializers/collection_serializer.rb'
-    - 'app/serializers/literature_serializer.rb'
-    - 'app/serializers/molecule_list_serializer.rb'
-    - 'app/serializers/sync_collection_remote_serializer.rb'
-    - 'app/serializers/sync_collections_user_serializer.rb'
-    - 'app/serializers/user_serializer.rb'
 
 # Offense count: 56
 # Cop supports --auto-correct.
@@ -53,7 +45,6 @@ Layout/AlignHash:
   Exclude:
     - 'app/api/chemotion/attachment_api.rb'
     - 'app/api/chemotion/sample_api.rb'
-    - 'app/serializers/inbox_serializer.rb'
     - 'config/environments/production.rb'
     - 'lib/reporter/docx/detail_reaction.rb'
     - 'lib/tasks/auto_annotate_models.rake'
@@ -75,7 +66,6 @@ Layout/CaseIndentation:
     - 'app/api/chemotion/element_api.rb'
     - 'app/api/chemotion/search_api.rb'
     - 'app/models/report.rb'
-    - 'app/serializers/analyses_experiment_serializer.rb'
     - 'lib/cdx/helper.rb'
     - 'lib/reporter/docx/detail_reaction.rb'
 
@@ -128,7 +118,6 @@ Layout/DotPosition:
     - 'app/api/chemotion/screen_api.rb'
     - 'app/api/chemotion/wellplate_api.rb'
     - 'app/models/concerns/element_codes.rb'
-    - 'app/serializers/reaction_serializer.rb'
 
 # Offense count: 23
 # Cop supports --auto-correct.
@@ -159,8 +148,6 @@ Layout/EmptyLineBetweenDefs:
     - 'app/proxies/element_permission_proxy.rb'
     - 'app/serializers/detail_levels/sample.rb'
     - 'app/serializers/reaction_level_report_serializable.rb'
-    - 'app/serializers/research_plan_serializer.rb'
-    - 'app/serializers/screen_serializer.rb'
     - 'lib/export/export_json.rb'
 
 # Offense count: 35
@@ -186,7 +173,6 @@ Layout/EmptyLinesAroundAccessModifier:
 Layout/EmptyLinesAroundArguments:
   Exclude:
     - 'app/api/chemotion/sample_api.rb'
-    - 'app/serializers/literature_serializer.rb'
 
 # Offense count: 24
 # Cop supports --auto-correct.
@@ -318,7 +304,6 @@ Layout/IndentationConsistency:
     - 'app/models/concerns/analysis_codes.rb'
     - 'app/pdfs/analysis_pdf.rb'
     - 'app/pdfs/code_pdf.rb'
-    - 'app/serializers/inbox_serializer.rb'
     - 'lib/cdx/helper.rb'
     - 'lib/slackistrano_custom_messaging.rb'
 
@@ -387,7 +372,6 @@ Layout/SpaceAroundEqualsInParameterDefault:
   Exclude:
     - 'app/api/helpers/profile_helpers.rb'
     - 'app/policies/element_policy.rb'
-    - 'app/serializers/reaction_serializer.rb'
     - 'app/serializers/sample_level_serializable.rb'
     - 'app/serializers/sample_policy_serializable.rb'
     - 'lib/chemotion/chemdraw_svg_processor.rb'
@@ -546,9 +530,6 @@ Layout/TrailingWhitespace:
     - 'app/jobs/collect_file_from_sftp_job.rb'
     - 'app/models/concerns/reaction_rinchi.rb'
     - 'app/models/literal.rb'
-    - 'app/serializers/analyses_experiment_serializer.rb'
-    - 'app/serializers/device_serializer.rb'
-    - 'app/serializers/devices_analysis_serializer.rb'
     - 'lib/tasks/data/ver_20170215133510.rake'
     - 'lib/tasks/data/ver_20190508000006_copy_rp_thumbnail_to_pub.rake'
 
@@ -562,18 +543,12 @@ Lint/AmbiguousOperator:
   Exclude:
     - 'app/serializers/reaction_level_report_serializable.rb'
     - 'app/serializers/reaction_level_serializable.rb'
-    - 'app/serializers/reaction_serializer.rb'
     - 'app/serializers/research_plan_level_serializable.rb'
-    - 'app/serializers/research_plan_serializer.rb'
     - 'app/serializers/sample_level_report_serializable.rb'
     - 'app/serializers/sample_level_serializable.rb'
-    - 'app/serializers/sample_serializer.rb'
     - 'app/serializers/screen_level_serializable.rb'
-    - 'app/serializers/screen_serializer.rb'
     - 'app/serializers/well_level_serializable.rb'
-    - 'app/serializers/well_serializer.rb'
     - 'app/serializers/wellplate_level_serializable.rb'
-    - 'app/serializers/wellplate_serializer.rb'
 
 # Offense count: 2
 Lint/AmbiguousRegexpLiteral:
@@ -1030,11 +1005,6 @@ Security/YAMLLoad:
 # SupportedStyles: prefer_alias, prefer_alias_method
 Style/Alias:
   Exclude:
-    - 'app/serializers/reaction_serializer.rb'
-    - 'app/serializers/research_plan_serializer.rb'
-    - 'app/serializers/screen_serializer.rb'
-    - 'app/serializers/well_serializer.rb'
-    - 'app/serializers/wellplate_serializer.rb'
 
 # Offense count: 4
 # Cop supports --auto-correct.
@@ -1205,7 +1175,6 @@ Style/EmptyLiteral:
     - 'app/api/chemotion/attachment_api.rb'
     - 'app/api/chemotion/element_api.rb'
     - 'app/models/wellplate.rb'
-    - 'app/serializers/inbox_serializer.rb'
     - 'lib/reporter/docx/detail_reaction.rb'
     - 'lib/reporter/docx/document.rb'
     - 'lib/reporter/spectrum/document.rb'
@@ -1830,7 +1799,6 @@ Style/UnlessElse:
   Exclude:
     - 'app/api/chemotion/user_api.rb'
     - 'app/api/entities/sample_attr_entity.rb'
-    - 'app/serializers/sample_serializer.rb'
     - 'lib/export/export_collections.rb'
 
 # Offense count: 2

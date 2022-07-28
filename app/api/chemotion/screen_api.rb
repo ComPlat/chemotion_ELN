@@ -49,7 +49,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
+        present paginate(scope), with: Entities::ScreenEntity, root: :screens
       end
 
       desc "Return serialized screen by id"
@@ -63,7 +63,27 @@ module Chemotion
 
         get do
           screen = Screen.find(params[:id])
-          {screen: ElementPermissionProxy.new(current_user, screen, user_ids).serialized}
+          present screen, with: Entities::ScreenEntity, root: :screen
+        end
+
+        namespace :add_research_plan do
+          params do
+            requires :collection_id, type: Integer
+          end
+
+          post do
+            screen = Screen.find(params[:id])
+            collection = current_user.collections.find(params[:collection_id])
+            number = screen.research_plans.size + 1
+            screen.research_plans << ResearchPlan.new(
+              body: [],
+              collections: [collection],
+              creator: current_user,
+              name: "New Research Plan #{number} for #{screen.name}",
+            )
+
+            present screen, with: Entities::ScreenEntity, root: :screen
+          end
         end
       end
 
@@ -108,7 +128,8 @@ module Chemotion
           (old_wellplate_ids - params[:wellplate_ids]).each do |id|
             ScreensWellplate.where(wellplate_id: id, screen_id: params[:id]).destroy_all
           end
-          {screen: ElementPermissionProxy.new(current_user, screen, user_ids).serialized}
+
+          present screen, with: Entities::ScreenEntity, root: :screen
         end
       end
 
@@ -165,7 +186,8 @@ module Chemotion
         params[:wellplate_ids].each do |id|
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)
         end
-        screen
+
+        present screen, with: Entities::ScreenEntity, root: :screen
       end
     end
   end

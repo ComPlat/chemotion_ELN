@@ -6,6 +6,7 @@ import UIStore from './stores/UIStore';
 import { wellplateShowOrNew } from './routesUtils';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import WellplatesFetcher from './fetchers/WellplatesFetcher';
+import ResearchPlan from './models/ResearchPlan';
 import Wellplate from './models/Wellplate';
 
 export default class EmbeddedWellplate extends Component {
@@ -239,8 +240,8 @@ export default class EmbeddedWellplate extends Component {
 }
 
 EmbeddedWellplate.propTypes = {
+  researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
   wellplate: PropTypes.instanceOf(Wellplate).isRequired,
-  canImport: PropTypes.bool.isRequired,
   importWellplate: PropTypes.func.isRequired,
   deleteWellplate: PropTypes.func.isRequired,
 };

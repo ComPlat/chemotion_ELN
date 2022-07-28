@@ -363,7 +363,7 @@ ResearchPlanDetailsAttachments.propTypes = {
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
   onDownload: PropTypes.func.isRequired,
-  onAttachmentImportComplete: PropTypes,
+  onAttachmentImportComplete: PropTypes.func,
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired
 };
