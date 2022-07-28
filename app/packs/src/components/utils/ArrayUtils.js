@@ -14,9 +14,9 @@ export default class ArrayUtils {
   }
 
   static removeFromListByIndex(list, index) {
-    if(index != -1) {
-      return list.delete(index);
-    } else {
+    if (index != -1) {
+      return list.splice(index, 1);
+    }else {
       return list;
     }
   }

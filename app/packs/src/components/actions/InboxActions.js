@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import alt from '../alt';
 import InboxFetcher from '../fetchers/InboxFetcher';
 import AttachmentFetcher from '../fetchers/AttachmentFetcher';
@@ -15,6 +16,18 @@ class InboxActions {
 
   toggleInboxModal() {
     return null
+  }
+
+  checkedAll(params) {
+    return params;
+  }
+
+  handleCheckedAll(params) {
+    return params;
+  }
+
+  checkedIds(params) {
+    return params;
   }
 
   fetchInbox() {

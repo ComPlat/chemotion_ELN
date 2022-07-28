@@ -8,6 +8,8 @@ import DragDropItemTypes from '../DragDropItemTypes';
 import Utils from '../utils/Functions';
 
 import MoveToAnalysisButton from './MoveToAnalysisButton';
+import InboxStore from '../stores/InboxStore';
+import ArrayUtils from '../utils/ArrayUtils';
 
 const dataSource = {
   beginDrag(props) {
@@ -27,15 +29,40 @@ const handleAttachmentDownload = attachment => Utils.downloadFile({
 class AttachmentContainer extends Component {
   constructor(props) {
     super(props);
+    const inboxState = InboxStore.getState();
     this.state = {
       deletingTooltip: false,
-    };
-  }
+      checkedIds: inboxState.checkedIds
 
+    };
+    this.toggleAttachmentsCheckbox = this.toggleAttachmentsCheckbox.bind(this);
+    this.isAttachmentChecked = this.isAttachmentChecked.bind(this);
+  }
 
   toggleTooltip() {
     this.setState(prevState => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
   }
+
+  toggleAttachmentsCheckbox(id) {
+    const { checkedIds } = this.state;
+    const params = {
+      type: false,
+      ids: id,
+      range: 'child'
+    };
+
+    if (ArrayUtils.isValNotInArray(checkedIds || [], params.ids)) {
+      params.type = true;
+    }
+    InboxActions.checkedIds(params);
+    InboxActions.checkedAll(params);
+  }
+
+  isAttachmentChecked(attachment) {
+    const { checkedIds } = this.state;
+    return (ArrayUtils.isValInArray(checkedIds || [], attachment.id));
+  }
+
 
   render() {
     const { connectDragSource, sourceType, attachment, largerInbox } = this.props;
@@ -84,6 +111,15 @@ class AttachmentContainer extends Component {
       </span>
     );
 
+    const attachmentId = attachment.id;
+    const checkBox = (
+      <input
+        type="checkbox"
+        checked={this.isAttachmentChecked(attachment)}
+        onChange={() => this.toggleAttachmentsCheckbox(attachmentId)}
+      />
+    );
+
     const filenameTooltip = (
       <Tooltip
         id="filename_tooltip"
@@ -97,6 +133,7 @@ class AttachmentContainer extends Component {
 
     return connectDragSource(
       <div style={textStyle}>
+        {checkBox}
         &nbsp;&nbsp;{trash}&nbsp;
         <i className="fa fa-download" onClick={() => handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />
         &nbsp;&nbsp;

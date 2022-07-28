@@ -1,23 +1,33 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
 
 import AttachmentContainer from './AttachmentContainer';
 import DragDropItemTypes from '../DragDropItemTypes';
 
 import Container from '../models/Container';
 import UnsortedDatasetModal from './UnsortedDatasetModal';
+import InboxStore from '../stores/InboxStore';
+import InboxActions from '../actions/InboxActions';
 
 export default class UnsortedBox extends React.Component {
   constructor(props) {
     super(props);
+
+    const inboxState = InboxStore.getState();
+
     this.state = {
       visible: false,
+      checkedAll: inboxState.checkedAll,
+      checkedIds: inboxState.checkedIds,
+      deletingTooltip: false,
       modal: {
         show: false,
         datasetContainer: null
       }
     };
+    this.toggleSelectAllCheckbox = this.toggleSelectAllCheckbox.bind(this);
+    this.deleteCheckedAttachment = this.deleteCheckedAttachment.bind(this);
   }
 
   handleFileModalOpen(datasetContainer) {
@@ -41,9 +51,98 @@ export default class UnsortedBox extends React.Component {
     this.handleFileModalOpen(datasetContainer);
   }
 
+  hasChecked() {
+    const { checkedAll } = this.state;
+    return checkedAll;
+  }
+
+  toggleSelectAllCheckbox() {
+    const { checkedAll } = this.state;
+    const params = {
+      type: false,
+      range: 'all'
+    };
+    if (!checkedAll) {
+      params.type = true;
+    }
+    this.setState(prevState => ({ ...prevState.inboxState, checkedAll: !this.state.checkedAll }));
+    InboxActions.checkedAll(params);
+    InboxActions.checkedIds(params);
+  }
+
+  toggleTooltip() {
+    this.setState(prevState => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
+  }
+
+  deleteCheckedAttachment(unsortedBox) {
+    const { checkedIds } = this.state;
+    checkedIds.forEach((checkedId) => {
+      // eslint-disable-next-line array-callback-return
+      unsortedBox.map((attachment) => {
+        if (checkedId === attachment.id) {
+          InboxActions.deleteAttachment(attachment);
+        }
+      });
+    });
+    checkedIds.length = 0;
+    this.toggleTooltip();
+    this.setState({ checkedAll: false });
+  }
+
   render() {
     const { unsorted_box, largerInbox } = this.props;
-    const { visible, modal } = this.state;
+    const { visible, modal, checkedAll } = this.state;
+
+    const renderCheckAll = (
+      <div>
+        <input
+          type="checkbox"
+          checked={checkedAll}
+          onChange={this.toggleSelectAllCheckbox}
+        />
+        <span
+          className="g-marginLeft--10"
+          style={{ fontWeight: 'bold' }}
+        >
+          {this.hasChecked() ? 'Deselect all' : 'Select all' }
+        </span>
+      </div>
+    );
+
+    const trash = (
+      <span>
+        <i
+          className="fa fa-trash-o"
+          aria-hidden="true"
+          onClick={() => this.toggleTooltip()}
+          style={{ cursor: 'pointer' }}
+        >
+          &nbsp;
+        </i>
+        {this.state.deletingTooltip ? (
+          <Tooltip placement="bottom" className="in" id="tooltip-bottom">
+            Delete this attachment?
+            <ButtonGroup>
+              <Button
+                bsStyle="danger"
+                bsSize="xsmall"
+                onClick={() => this.deleteCheckedAttachment(unsorted_box)}
+              >
+                Yes
+              </Button>
+              <Button
+                bsStyle="warning"
+                bsSize="xsmall"
+                onClick={() => this.toggleTooltip()}
+              >
+                No
+              </Button>
+            </ButtonGroup>
+          </Tooltip>
+        ) : null}
+      </span>
+    );
+
 
     const attachments = visible ? unsorted_box.map((attachment) => {
       return (
@@ -86,6 +185,18 @@ export default class UnsortedBox extends React.Component {
           {' '}
           {uploadButton}
         </div>
+        <table>
+          <tbody>
+            <tr>
+              <td style={{ width: '80%', paddingRight: '30px' }}>
+                <div>{visible ? renderCheckAll : null}</div>
+              </td>
+              <td style={{ width: '20%' }}>
+                <div>{visible ? trash : null}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
         <div> {attachments} </div>
         {uploadModal}
       </div>
