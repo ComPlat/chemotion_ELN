@@ -1,77 +1,62 @@
+# frozen_string_literal: true
+
 module Entities
-  class ContainerEntity < Grape::Entity
-    expose :big_tree, merge: true
+  class ContainerEntity < ApplicationEntity
+    THUMBNAIL_CONTENT_TYPES = %w[image/jpg image/jpeg image/png image/tiff].freeze
+    expose(
+      :id,
+      :name,
+      :container_type,
+      :description,
+      :extended_metadata,
+      :preview_img
+    )
 
-    def big_tree(container = object)
-      dataset_ids = {}
-      bt = container.attributes.slice('id', 'container_type', 'name')
-      bt['children'] = container.hash_tree[container].map do |c1, c2s|
-        as = c1.attributes.slice('id', 'container_type', 'name')
-        ## mapping analysis element
-        as['children'] = c2s.map do |c2, c3s|
-          a = c2.attributes.slice('id', 'container_type', 'name', 'description')
-          a['extended_metadata'] = get_extended_metadata(c2)
-          dids = []
-          ## mapping datasets
-          a['children'] = c3s.map do |c3, _|
-            ds = c3.attributes.slice('id', 'container_type', 'name', 'description')
-            dids << ds['id']
-            ds['extended_metadata'] = get_extended_metadata(c3)
-            ds
-          end
-          dataset_ids[a['id']] = dids
-          a['preview_img'] = dids
-          a
+    expose :attachments, using: 'Entities::AttachmentEntity'
+    expose :code_log, using: 'Entities::CodeLogEntity'
+    expose :children, using: 'Entities::ContainerEntity'
+    expose :dataset, using: 'Entities::DatasetEntity'
+
+    def extended_metadata
+      return unless object.extended_metadata
+
+      report = (object.extended_metadata['report'] == 'true' || object.extended_metadata == 'true')
+
+      {}.tap do |metadata|
+        metadata[:report] = report
+        if object.extended_metadata['content'].present?
+          metadata[:content] = JSON.parse(object.extended_metadata['content'])
         end
-        as
-      end
-
-      attachments = Attachment.where_container(dataset_ids.values.flatten).to_a
-      code_logs = CodeLog.where(source_id: dataset_ids.keys, source: 'container').to_a
-
-      bt.dig('children', 0, 'children')&.each do |analysis|
-        analysis['preview_img'] = preview_img(dataset_ids[analysis['id']], attachments)
-        analysis['code_log'] = code_logs.find { |cl| cl.source_id == analysis['id'] }.attributes
-        analysis['children'].each do |ds_entity|
-          atts = attachments.select { |a| a.attachable_id == ds_entity['id'] }
-          ds_entity['attachments'] = Entities::AttachmentEntity.represent(atts)
-          gds = Dataset.find_by(element_type: 'Container', element_id: ds_entity['id'])
-          ds_entity['dataset'] = Entities::DatasetEntity.represent(gds) if gds.present?
+        if object.extended_metadata['hyperlinks'].present?
+          metadata[:hyperlinks] = JSON.parse(metadata['hyperlinks'])
         end
       end
-      bt
     end
 
     private
 
-    def preview_img(container_ids, attachments)
-      attachments = attachments.select do |a|
-        a.thumb == true && a.attachable_type == 'Container' && container_ids.include?(a.attachable_id)
-      end
-      
-      image_atts = attachments.select do |a_img|
-        a_img&.content_type&.match(Regexp.union(%w[jpg jpeg png tiff]))
-      end
+    def preview_img
+      attachments_with_thumbnail = object.attachments.where(thumb: true)
+      return no_preview_image_available unless attachments_with_thumbnail.exists?
 
-      image_atts = image_atts.sort_by{ |a_img| a_img[:id] }.reverse
+      latest_image_attachment = attachments_with_thumbnail
+                                .where(content_type: THUMBNAIL_CONTENT_TYPES)
+                                .order(updated_at: :desc)
+                                .first
 
-      attachment = image_atts[0] || attachments[0]
+      attachment = latest_image_attachment || attachments_with_thumbnail.first
+      preview_image = attachment.read_thumbnail
+      return no_preview_image_available unless preview_image
 
-      preview = attachment.read_thumbnail if attachment
-      result = if preview
-        { preview: Base64.encode64(preview), id: attachment.id, filename: attachment.filename }
-      else
-        { preview: 'not available', id: nil, filename: nil }
-      end
-      result
+      {
+        preview: Base64.encode64(preview_image),
+        id: attachment.id,
+        filename: attachment.filename
+      }
     end
 
-    def get_extended_metadata(container)
-      ext_mdata = container.extended_metadata || {}
-      ext_mdata['report'] = (ext_mdata['report'] == 'true') || (ext_mdata == true)
-      ext_mdata['content'] = JSON.parse(ext_mdata['content'])  if ext_mdata['content'].present?
-      ext_mdata['hyperlinks'] = JSON.parse(ext_mdata['hyperlinks']) if ext_mdata['hyperlinks'].present?
-      ext_mdata
+    def no_preview_image_available
+      { preview: 'not available', id: nil, filename: nil }
     end
   end
 end

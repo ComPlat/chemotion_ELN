@@ -177,18 +177,19 @@ module Chemotion
       desc 'return all reports of the user'
       params do
       end
-      get :all, each_serializer: ReportSerializer do
-        current_user.reports.order(updated_at: :desc)
+      get :all do
+        reports = current_user.reports.order(updated_at: :desc)
+        present reports, with: Entities::ReportEntity, root: :archives, current_user: current_user
       end
 
       desc 'return reports which can be downloaded now'
       params do
         requires :ids, type: Array[Integer]
       end
-      post :downloadable, each_serializer: ReportSerializer do
-        return current_user.reports.select do |r|
-          params[:ids].include?(r.id) && r.generated_at.present?
-        end
+      post :downloadable do
+        reports = current_user.reports.where(id: params[:ids]).where.not(generated_at: nil)
+
+        present reports, with: Entities::ReportEntity, root: :archives, current_user: current_user
       end
 
       desc 'delete an archive'
@@ -219,7 +220,7 @@ module Chemotion
       requires :templateId, type: String
       optional :fileDescription
     end
-    post :reports, each_serializer: ReportSerializer do
+    post :reports do
       spl_settings = hashize(params[:splSettings])
       rxn_settings = hashize(params[:rxnSettings])
       si_rxn_settings = hashize(params[:siRxnSettings])
@@ -246,7 +247,8 @@ module Chemotion
       report = Report.create(attributes)
       current_user.reports << report
       report.create_docx
-      report
+
+      present report, with: Entities::ReportEntity, root: :report
     end
 
     resource :download_report do

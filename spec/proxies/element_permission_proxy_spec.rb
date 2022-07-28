@@ -29,19 +29,6 @@ RSpec.describe ElementPermissionProxy do
           expect(subject.send(:detail_level_for_element)).to eq 3
         end
       end
-
-      describe 'serialized' do
-        context 'when detail level for sample is 0' do
-          before do
-            c1.update(sample_detail_level: 0)
-            c2.update(sample_detail_level: 0)
-          end
-
-          it 'returns restricted version of serialized sample' do
-            expect(subject.serialized).to include(is_restricted: true)
-          end
-        end
-      end
     end
 
     context 'when element belongs to one or more unshared user collections' do
@@ -53,12 +40,6 @@ RSpec.describe ElementPermissionProxy do
       describe 'detail_level_for_element' do
         it 'returns maximal sample detail level' do
           expect(subject.send(:detail_level_for_element)).to eq 10
-        end
-      end
-
-      describe 'serialized' do
-        it 'returns serialized sample with no restrictions' do
-          expect(subject.serialized).to include(is_restricted: false)
         end
       end
     end

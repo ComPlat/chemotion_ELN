@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'open-uri'
-# require './helpers'
+#require './helpers'
 
 module Chemotion
   class SampleAPI < Grape::API
@@ -17,9 +17,9 @@ module Chemotion
 
       # TODO Refactoring: Use Grape Entities
       namespace :ui_state do
-        desc 'Get samples by UI state'
+        desc "Get samples by UI state"
         params do
-          requires :ui_state, type: Hash, desc: 'Selected samples from the UI' do
+          requires :ui_state, type: Hash, desc: "Selected samples from the UI" do
             optional :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
@@ -28,7 +28,7 @@ module Chemotion
             optional :collection_id, type: Integer
             optional :is_sync_to_me, type: Boolean, default: false
           end
-          optional :limit, type: Integer, desc: 'Limit number of samples'
+          optional :limit, type: Integer, desc: "Limit number of samples"
         end
 
         before do
@@ -40,14 +40,15 @@ module Chemotion
         # we are using POST because the fetchers don't support GET requests with body data
         post do
           @samples = @samples.limit(params[:limit]) if params[:limit]
-          { samples: @samples.map{ |s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}  }
+
+          present @samples, with: Entities::SampleEntity, root: :samples
         end
       end
 
       namespace :subsamples do
-        desc 'Split Samples into Subsamples'
+        desc "Split Samples into Subsamples"
         params do
-          requires :ui_state, type: Hash, desc: 'Selected samples from the UI'
+          requires :ui_state, type: Hash, desc: "Selected samples from the UI"
         end
         post do
           ui_state = params[:ui_state]
@@ -56,11 +57,13 @@ module Chemotion
           Sample.where(id: sample_ids).each do |sample|
             subsample = sample.create_subsample current_user, col_id, true
           end
+
+          {} # JS layer does not use the reply
         end
       end
 
       namespace :import do
-        desc 'Import Samples from a File'
+        desc "Import Samples from a File"
 
         before do
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
@@ -99,15 +102,25 @@ module Chemotion
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          import = Import::ImportSamples.new.from_file(params[:file][:tempfile].path,
-                                                       params[:currentCollectionId], current_user.id).process
+          import_result = Import::ImportSamples.new.from_file(
+            params[:file][:tempfile].path,
+            params[:currentCollectionId], current_user.id
+          ).process
+
+          if import_result[:status] == 'ok'
+            # the FE does not actually use the returned data, just the number of elements.
+            # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js handleNotificationImportSamplesFromFile
+            import_result[:data] = import_result[:data].map(&:id)
+          end
+
+          import_result
         end
       end
 
       namespace :confirm_import do
-        desc 'Create Samples from an Array of inchikeys'
+        desc "Create Samples from an Array of inchikeys"
         params do
-          requires :rows, type: Array, desc: 'Selected Molecule from the UI'
+          requires :rows, type: Array, desc: "Selected Molecule from the UI"
           requires :currentCollectionId, type: Integer
           requires :mapped_keys, type: Hash
         end
@@ -147,7 +160,7 @@ module Chemotion
 
       get do
         own_collection = false
-        scope = Sample.none
+        sample_scope = Sample.none
         if params[:collection_id]
           begin
             c = Collection.belongs_to_or_shared_by(
@@ -157,7 +170,7 @@ module Chemotion
             !c.is_shared && (c.shared_by_id != current_user.id) &&
               (own_collection = true)
 
-            scope = Collection.belongs_to_or_shared_by(
+            sample_scope = Collection.belongs_to_or_shared_by(
               current_user.id, current_user.group_ids
             ).find(params[:collection_id]).samples
           rescue ActiveRecord::RecordNotFound
@@ -169,80 +182,63 @@ module Chemotion
             c = current_user.all_sync_in_collections_users
                             .find(params[:sync_collection_id])
 
-            scope = c.collection.samples
+            sample_scope = c.collection.samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         else
           # All collection
           own_collection = true
-          scope = Sample.for_user(current_user.id).distinct
+          sample_scope = Sample.for_user(current_user.id).distinct
         end
-        scope = scope.includes(
-          :residues, :tag, :molecule_name, :comments,
-          collections: :sync_collections_users,
-          molecule: :tag
-        )
+        sample_scope = sample_scope.includes_for_list_display
         prod_only = params[:product_only] || false
-        scope = if prod_only
-                  scope.product_only
+        sample_scope = if prod_only
+                  sample_scope.product_only
                 else
-                  scope.distinct.sample_or_startmat_or_products
+                  sample_scope.distinct.sample_or_startmat_or_products
                 end
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        scope = scope.samples_created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.samples_created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.samples_updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.samples_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        sample_scope = sample_scope.samples_created_time_from(Time.at(from)) if from && by_created_at
+        sample_scope = sample_scope.samples_created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        sample_scope = sample_scope.samples_updated_time_from(Time.at(from)) if from && !by_created_at
+        sample_scope = sample_scope.samples_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
-        reset_pagination_page(scope)
-        sample_serializer_selector =
-          if own_collection
-            ->(s) { Entities::SampleEntity::Level10.represent(s) }
-          else
-            lambda do |s|
-              ElementListPermissionProxy.new(current_user, s, user_ids).serialized
-            end
-          end
-
+        reset_pagination_page(sample_scope)
         samplelist = []
+
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
-                           .where(id: (scope.pluck :molecule_id))
+                           .where(id: (sample_scope.pluck :molecule_id))
                            .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
                            .order(:sum_formular)
           reset_pagination_page(molecule_scope)
           paginate(molecule_scope).each do |molecule|
-            next if molecule.nil?
-
-            samplesGroup = scope.select { |v| v.molecule_id == molecule.id }
+            samplesGroup = sample_scope.select {|v| v.molecule_id == molecule.id}
             samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
             samplesGroup.each do |sample|
-              serialized_sample = sample_serializer_selector.call(sample)
-              samplelist.push(serialized_sample)
+              samplelist.push(Entities::SampleEntity.represent(sample, displayed_in_list: true))
             end
           end
         else
-          scope = scope.order('updated_at DESC')
-          paginate(scope).each do |sample|
-            next if sample.nil?
-
-            serialized_sample = sample_serializer_selector.call(sample)
-            samplelist.push(serialized_sample)
+          sample_scope = sample_scope.order('updated_at DESC')
+          paginate(sample_scope).each do |sample|
+            samplelist.push(Entities::SampleEntity.represent(sample, displayed_in_list: true))
           end
         end
+
         return {
           samples: samplelist,
-          samples_count: scope.count
+          samples_count: sample_scope.count
         }
       end
 
-      desc 'Return serialized sample by id'
+      desc "Return serialized sample by id"
       params do
-        requires :id, type: Integer, desc: 'Sample id'
+        requires :id, type: Integer, desc: "Sample id"
       end
       route_param :id do
         before do
@@ -252,18 +248,9 @@ module Chemotion
 
         get do
           sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container)
-                         .find(params[:id])
+                        .find(params[:id])
 
-          var_detail_level = db_exec_detail_level_for_sample(current_user.id, sample.id)
-          nested_detail_levels = {}
-          nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
-          nested_detail_levels[:wellplate] = [var_detail_level[0]['detail_level_wellplate'].to_i]
-
-          klass = "Entities::SampleEntity::Level#{nested_detail_levels[:sample]}".constantize
-          opt = { nested_dl: nested_detail_levels, policy: @element_policy, current_user: current_user, serializable: true }
-          serialized_sample = klass.represent(sample, opt)
-
-          { sample: serialized_sample }
+          present sample, with: Entities::SampleEntity, policy: @element_policy, root: :sample
         end
       end
 
@@ -281,30 +268,30 @@ module Chemotion
         end
       end
 
-      desc 'Update sample by id'
+      desc "Update sample by id"
       params do
-        requires :id, type: Integer, desc: 'Sample id'
-        optional :name, type: String, desc: 'Sample name'
-        optional :external_label, type: String, desc: 'Sample external label'
-        optional :imported_readout, type: String, desc: 'Sample Imported Readout'
-        optional :target_amount_value, type: Float, desc: 'Sample target amount_value'
-        optional :target_amount_unit, type: String, desc: 'Sample target amount_unit'
-        optional :real_amount_value, type: Float, desc: 'Sample real amount_value'
-        optional :real_amount_unit, type: String, desc: 'Sample real amount_unit'
-        optional :molarity_value, type: Float, desc: 'Sample molarity value'
-        optional :molarity_unit, type: String, desc: 'Sample real amount_unit'
-        optional :description, type: String, desc: 'Sample description'
-        optional :purity, type: Float, desc: 'Sample purity'
-        optional :solvent, type: Array[Hash], desc: 'Sample solvent'
-        optional :location, type: String, desc: 'Sample location'
-        optional :molfile, type: String, desc: 'Sample molfile'
-        optional :sample_svg_file, type: String, desc: 'Sample SVG file'
+        requires :id, type: Integer, desc: "Sample id"
+        optional :name, type: String, desc: "Sample name"
+        optional :external_label, type: String, desc: "Sample external label"
+        optional :imported_readout, type: String, desc: "Sample Imported Readout"
+        optional :target_amount_value, type: Float, desc: "Sample target amount_value"
+        optional :target_amount_unit, type: String, desc: "Sample target amount_unit"
+        optional :real_amount_value, type: Float, desc: "Sample real amount_value"
+        optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
+        optional :molarity_value, type: Float, desc: "Sample molarity value"
+        optional :molarity_unit, type: String, desc: "Sample real amount_unit"
+        optional :description, type: String, desc: "Sample description"
+        optional :purity, type: Float, desc: "Sample purity"
+        optional :solvent, type: Array[Hash], desc: "Sample solvent"
+        optional :location, type: String, desc: "Sample location"
+        optional :molfile, type: String, desc: "Sample molfile"
+        optional :sample_svg_file, type: String, desc: "Sample SVG file"
         # optional :molecule, type: Hash, desc: "Sample molecule" do
-        # optional :id, type: Integer
+          # optional :id, type: Integer
         # end
         optional :molecule_id, type: Integer
-        optional :is_top_secret, type: Boolean, desc: 'Sample is marked as top secret?'
-        optional :density, type: Float, desc: 'Sample density'
+        optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
+        optional :density, type: Float, desc: "Sample density"
         optional :boiling_point_upperbound, type: Float, desc: 'upper bound of sample boiling point'
         optional :boiling_point_lowerbound, type: Float, desc: 'lower bound of sample boiling point'
         optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
@@ -323,7 +310,7 @@ module Chemotion
         optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
-        # use :root_container_params
+        #use :root_container_params
       end
 
       route_param :id do
@@ -340,7 +327,7 @@ module Chemotion
           update_datamodel(attributes[:container])
           attributes.delete(:container)
 
-          update_element_labels(@sample, attributes[:user_labels], current_user.id)
+          update_element_labels(@sample,attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
           attributes.delete(:segments)
 
@@ -382,7 +369,7 @@ module Chemotion
           #   end
           # end
 
-          # save to profile
+          #save to profile
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
@@ -391,41 +378,33 @@ module Chemotion
           nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
           nested_detail_levels[:wellplate] = [var_detail_level[0]['detail_level_wellplate'].to_i]
 
-          klass = "Entities::SampleEntity::Level#{nested_detail_levels[:sample]}".constantize
-          opt = {
-            nested_dl: nested_detail_levels,
-            policy: @element_policy,
-            current_user: current_user, serializable: true
-          }
-          serialized_sample = klass.represent(@sample, opt)
-
-          { sample: serialized_sample }
+          present @sample, with: Entities::SampleEntity, policy: @element_policy, root: :sample
         end
       end
 
-      desc 'Create a sample'
+      desc "Create a sample"
       params do
-        optional :name, type: String, desc: 'Sample name'
-        optional :short_label, type: String, desc: 'Sample short label'
-        optional :external_label, type: String, desc: 'Sample external label'
-        optional :imported_readout, type: String, desc: 'Sample Imported Readout'
-        requires :target_amount_value, type: Float, desc: 'Sample target amount_value'
-        requires :target_amount_unit, type: String, desc: 'Sample target amount_unit'
-        optional :real_amount_value, type: Float, desc: 'Sample real amount_value'
-        optional :real_amount_unit, type: String, desc: 'Sample real amount_unit'
-        optional :molarity_value, type: Float, desc: 'Sample molarity value'
-        optional :molarity_unit, type: String, desc: 'Sample real amount_unit'
-        requires :description, type: String, desc: 'Sample description'
-        requires :purity, type: Float, desc: 'Sample purity'
+        optional :name, type: String, desc: "Sample name"
+        optional :short_label, type: String, desc: "Sample short label"
+        optional :external_label, type: String, desc: "Sample external label"
+        optional :imported_readout, type: String, desc: "Sample Imported Readout"
+        requires :target_amount_value, type: Float, desc: "Sample target amount_value"
+        requires :target_amount_unit, type: String, desc: "Sample target amount_unit"
+        optional :real_amount_value, type: Float, desc: "Sample real amount_value"
+        optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
+        optional :molarity_value, type: Float, desc: "Sample molarity value"
+        optional :molarity_unit, type: String, desc: "Sample real amount_unit"
+        requires :description, type: String, desc: "Sample description"
+        requires :purity, type: Float, desc: "Sample purity"
         # requires :solvent, type: String, desc: "Sample solvent"
-        optional :solvent, type: Array[Hash], desc: 'Sample solvent'
-        requires :location, type: String, desc: 'Sample location'
-        optional :molfile, type: String, desc: 'Sample molfile'
-        optional :sample_svg_file, type: String, desc: 'Sample SVG file'
-        # optional :molecule, type: Hash, desc: "Sample molecule"
-        optional :collection_id, type: Integer, desc: 'Collection id'
-        requires :is_top_secret, type: Boolean, desc: 'Sample is marked as top secret?'
-        optional :density, type: Float, desc: 'Sample density'
+        optional :solvent, type: Array[Hash], desc: "Sample solvent"
+        requires :location, type: String, desc: "Sample location"
+        optional :molfile, type: String, desc: "Sample molfile"
+        optional :sample_svg_file, type: String, desc: "Sample SVG file"
+        #optional :molecule, type: Hash, desc: "Sample molecule"
+        optional :collection_id, type: Integer, desc: "Collection id"
+        requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
+        optional :density, type: Float, desc: "Sample density"
         optional :boiling_point_upperbound, type: Float, desc: 'upper bound of sample boiling point'
         optional :boiling_point_lowerbound, type: Float, desc: 'lower bound of sample boiling point'
         optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
@@ -541,16 +520,16 @@ module Chemotion
         #   end
         # end
 
-        # save to profile
+        #save to profile
         kinds = sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        sample
+        present sample, with: Entities::SampleEntity
       end
 
-      desc 'Delete a sample by id'
+      desc "Delete a sample by id"
       params do
-        requires :id, type: Integer, desc: 'Sample id'
+        requires :id, type: Integer, desc: "Sample id"
       end
       route_param :id do
         before do
