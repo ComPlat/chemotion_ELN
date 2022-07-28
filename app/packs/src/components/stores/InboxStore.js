@@ -4,6 +4,8 @@ import InboxActions from '../actions/InboxActions';
 import ElementActions from '../actions/ElementActions';
 import DetailActions from '../actions/DetailActions';
 import ElementStore from './ElementStore';
+import ArrayUtils from '../utils/ArrayUtils';
+
 
 class InboxStore {
   constructor() {
@@ -12,6 +14,8 @@ class InboxStore {
       cache: [],
       deleteEl: null,
       numberOfAttachments: 0,
+      checkedIds: [],
+      checkedAll: false,
       inboxModalVisible: false
     };
 
@@ -26,6 +30,8 @@ class InboxStore {
       handleDeleteContainer: InboxActions.deleteContainer,
       handleBackToInbox: InboxActions.backToInbox,
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
+      handleCheckedAll: InboxActions.checkedAll,
+      handleCheckedIds: InboxActions.checkedIds,
 
       handleUpdateCreateElementDict: [
         ElementActions.createSample,
@@ -202,6 +208,28 @@ class InboxStore {
     });
     count += inbox.unlinked_attachments.length
     this.state.numberOfAttachments = count;
+  }
+
+  handleCheckedAll(params) {
+    const { checkedAll } = this.state;
+    this.setState(({ checkedAll: params.type }));
+    return checkedAll;
+  }
+
+  handleCheckedIds(params) {
+    const { inbox, checkedIds } = this.state;
+    const unlikedAttachments = inbox.unlinked_attachments;
+    if (params.type && params.range === 'child') {
+      ArrayUtils.pushUniq(checkedIds, params.ids);
+    } else if (params.type === false && params.range === 'child') {
+      ArrayUtils.removeFromListByValue(checkedIds || [], params.ids);
+    } else if (params.range === 'all' && params.type === true) {
+      unlikedAttachments.map(attachment => ArrayUtils.pushUniq(checkedIds, attachment.id));
+      this.handleCheckedAll(params);
+    } else if (params.range === 'all' && params.type === false) {
+      unlikedAttachments.map(attachment => ArrayUtils.removeFromListByValue(checkedIds || [], attachment.id));
+      this.handleCheckedAll(params);
+    }
   }
 }
 
