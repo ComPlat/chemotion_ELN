@@ -97,6 +97,8 @@ gem 'sassc-rails', '~> 2.1.2'
 gem 'scenic'
 gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master'
+gem 'sentry-rails'
+gem 'sentry-ruby'
 gem 'swot', git: 'https://github.com/leereilly/swot.git', branch: 'master', ref: 'bfe392b4cd52f62fbc1d83156020275719783dd1'
 gem 'sys-filesystem'
 

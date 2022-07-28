@@ -672,6 +672,11 @@ GEM
       childprocess (>= 0.5, < 3.0)
       rubyzip (~> 1.2, >= 1.2.2)
     semantic_range (3.0.0)
+    sentry-rails (5.4.1)
+      railties (>= 5.0)
+      sentry-ruby (~> 5.4.1)
+    sentry-ruby (5.4.1)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
     sexp_processor (4.15.1)
     sixarm_ruby_unaccent (1.2.0)
     slackistrano (3.8.4)
@@ -873,6 +878,8 @@ DEPENDENCIES
   scenic
   schmooze
   semacode!
+  sentry-rails
+  sentry-ruby
   slackistrano
   spring
   stackprof
