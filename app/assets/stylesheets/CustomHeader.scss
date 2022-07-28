@@ -1,0 +1,33 @@
+div[role=columnheader] {
+  display: grid;
+
+}
+
+.customHeaderLabel {
+  float: left;
+  margin: 0 0 0 3px;
+}
+
+.sortHeader {
+  float: right;
+}
+
+.customSortUpLabel {
+  float: left;
+  margin: 0 0 0 3px;
+}
+
+.customSortDownLabel {
+  float: left;
+  margin: 0 0 0 3px;
+}
+
+.customSortRemoveLabel {
+  float: left;
+  margin: 0 0 0 3px;
+  font-size: 11px;
+}
+
+.sort_active {
+  color:#5bc0de;
+}

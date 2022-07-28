@@ -10,7 +10,9 @@ import SamplesFetcher from '../fetchers/SamplesFetcher';
 import uniqueId from 'react-html-id';
 import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
+import CustomHeader from './CustomHeader';
 import { Row, Col, Button } from 'react-bootstrap';
+
 
 // regexp to parse tap separated paste from the clipboard
 const defaultParsePaste = str => (
@@ -396,6 +398,10 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       sortable: true,
       editable: true,
       cellClass: 'cell-figure',
+      headerComponentFramework: CustomHeader,
+      headerComponentParams: {
+        handleColumnNameModalShow: this.handleColumnNameModalShow.bind(this)
+      }
     };
 
     return (
