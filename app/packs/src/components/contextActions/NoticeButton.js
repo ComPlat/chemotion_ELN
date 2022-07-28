@@ -2,7 +2,7 @@ import React from 'react';
 import { PanelGroup, Panel, Button, Modal, Table } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
-import MessagesFetcher from 'src/components/fetchers/MessagesFetcher';
+import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import CollectionActions from 'src/components/actions/CollectionActions';
 import NotificationActions from 'src/components/actions/NotificationActions';
 import InboxActions from 'src/components/actions/InboxActions';
@@ -73,7 +73,7 @@ const handleNotification = (nots, act, needCallback = true) => {
           ElementActions.fetchResearchPlanById(parseInt(n.content.research_plan_id, 10));
           break;
         default:
-          //
+        //
       }
     }
   });
@@ -301,7 +301,7 @@ export default class NoticeButton extends React.Component {
                     </Button>
                   </td>
                   <td width="90%">
-                    { not.content.data }
+                    {not.content.data}
                     <br />
                     {changeUrl(not.content.url, not.content.url_title)}
                   </td>
@@ -317,7 +317,7 @@ export default class NoticeButton extends React.Component {
       <PanelGroup
         id="panel-group-modal-body"
       >
-        { bMessages }
+        {bMessages}
       </PanelGroup>
     );
   }
@@ -355,15 +355,15 @@ export default class NoticeButton extends React.Component {
       <div>
         {
           noticeNum <= 0 ? <span className="badge badge-pill">{noticeNum}</span> :
-          <Button
-            id="notice-button"
-            bsStyle={btnStyle}
-            onClick={this.handleShow}
-            style={{ height: '34px', width: '36px' }}
-          >
-            <i className={btnClass} />&nbsp;
-            <span className="badge badge-pill" style={{ top: '6px', left: '-10px', fontSize: '8px' }}>{noticeNum}</span>
-          </Button>
+            <Button
+              id="notice-button"
+              bsStyle={btnStyle}
+              onClick={this.handleShow}
+              style={{ height: '34px', width: '36px' }}
+            >
+              <i className={btnClass} />&nbsp;
+              <span className="badge badge-pill" style={{ top: '6px', left: '-10px', fontSize: '8px' }}>{noticeNum}</span>
+            </Button>
         }
         {this.renderModal()}
       </div>

@@ -1,7 +1,7 @@
 import { keys, values } from 'mobx';
 import { types } from 'mobx-state-tree';
 
-import MeasurementsFetcher from '../components/fetchers/MeasurementsFetcher';
+import MeasurementsFetcher from 'src/fetchers/MeasurementsFetcher';
 
 const SampleHeaderForMeasurement = types.model({
   id: types.identifierNumber,

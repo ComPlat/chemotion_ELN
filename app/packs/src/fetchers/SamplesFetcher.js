@@ -3,9 +3,9 @@ import 'whatwg-fetch';
 import Sample from 'src/components/models/Sample';
 import UIStore from 'src/components/stores/UIStore';
 import NotificationActions from 'src/components/actions/NotificationActions';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/components/fetchers/BaseFetcher';
-import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 import Container from 'src/components/models/Container';
 

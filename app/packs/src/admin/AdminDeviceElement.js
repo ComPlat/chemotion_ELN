@@ -1,6 +1,6 @@
 import React from 'react';
 import { ButtonGroup, OverlayTrigger, Tooltip, Button, Table, Panel } from 'react-bootstrap';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 import DeleteGroupDeviceButton from 'src/admin/DeleteGroupDeviceButton';
 
 export default class AdminDeviceElement extends React.Component {
@@ -71,10 +71,10 @@ export default class AdminDeviceElement extends React.Component {
 
         <ButtonGroup>
           <DeleteGroupDeviceButton rootType={'Device'}
-                             groupRec={device}
-                             isRoot={true}
-                             currentState={this.state}
-                             onChangeDeviceData={this.props.onChangeDeviceData} />
+            groupRec={device}
+            isRoot={true}
+            currentState={this.state}
+            onChangeDeviceData={this.props.onChangeDeviceData} />
         </ButtonGroup>
       </td>
     );
@@ -110,13 +110,13 @@ export default class AdminDeviceElement extends React.Component {
                       <td width="30%">{u.name}</td>
                       <td width="10%">{u.initials}</td>
                       <td width="20%">{u.type}</td>
-                      <td width="15%">{ }</td>
+                      <td width="15%">{}</td>
                       <td width="20%"><DeleteGroupDeviceButton rootType='Device'
-                                                         actionType='Person'
-                                                         groupRec={deviceElement}
-                                                         userRec={u}
-                                                         currentState={this.state}
-                                                         onChangeDeviceData={this.props.onChangeDeviceData} /></td>
+                        actionType='Person'
+                        groupRec={deviceElement}
+                        userRec={u}
+                        currentState={this.state}
+                        onChangeDeviceData={this.props.onChangeDeviceData} /></td>
                     </tr>
                   ))}
                 </tbody>

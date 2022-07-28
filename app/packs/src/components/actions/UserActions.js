@@ -1,7 +1,7 @@
 import alt from 'src/components/alt';
-import UsersFetcher from 'src/components/fetchers/UsersFetcher';
-import SegmentsFetcher from 'src/components/fetchers/SegmentsFetcher';
-import GenericDSsFetcher from 'src/components/fetchers/GenericDSsFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import SegmentsFetcher from 'src/fetchers/SegmentsFetcher';
+import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 
 import cookie from 'react-cookie'
 import DocumentHelper from 'src/components/utils/DocumentHelper';
@@ -21,30 +21,34 @@ class UserActions {
   fetchOlsChmo() {
     return (dispatch) => {
       UsersFetcher.fetchOls('chmo')
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   fetchCurrentUser() {
-    return (dispatch) => { UsersFetcher.fetchCurrentUser()
-      .then((result) => {
-        dispatch(result.user);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
+    return (dispatch) => {
+      UsersFetcher.fetchCurrentUser()
+        .then((result) => {
+          dispatch(result.user);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
   fetchGenericEls() {
-    return (dispatch) => { UsersFetcher.fetchElementKlasses()
-      .then((roots) => {
-        dispatch(roots);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
+    return (dispatch) => {
+      UsersFetcher.fetchElementKlasses()
+        .then((roots) => {
+          dispatch(roots);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
 
@@ -52,13 +56,13 @@ class UserActions {
     fetch('/users/sign_out', {
       method: 'delete',
       credentials: 'same-origin',
-      data: {authenticity_token: DocumentHelper.getMetaContent("csrf-token")}
+      data: { authenticity_token: DocumentHelper.getMetaContent("csrf-token") }
     })
-    .then(response => {
-      if (response.status == 204) {
-        location.reload();
-      }
-    });
+      .then(response => {
+        if (response.status == 204) {
+          location.reload();
+        }
+      });
   }
 
   fetchProfile() {
@@ -70,16 +74,18 @@ class UserActions {
   }
 
   selectTab(tab) {
-    return  tab;
+    return tab;
   }
 
   updateUserProfile(params) {
-    return (dispatch) => { UsersFetcher.updateUserProfile(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
+    return (dispatch) => {
+      UsersFetcher.updateUserProfile(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
   fetchUserLabels() {
@@ -135,7 +141,8 @@ class UserActions {
   }
 
   fetchUnitsSystem() {
-    return (dispatch) => { fetch('/units_system/units_system.json', {
+    return (dispatch) => {
+      fetch('/units_system/units_system.json', {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'cache-control': 'no-cache' }

@@ -9,7 +9,7 @@ import Sample from 'src/components/models/Sample';
 import Reaction from 'src/components/models/Reaction';
 import ResearchPlan from 'src/components/models/ResearchPlan';
 import Literature from 'src/components/models/Literature';
-import LiteraturesFetcher from 'src/components/fetchers/LiteraturesFetcher';
+import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UserStore from 'src/components/stores/UserStore';
 import NotificationActions from 'src/components/actions/NotificationActions';
 import LoadingActions from 'src/components/actions/LoadingActions';
@@ -127,7 +127,7 @@ export default class DetailsTabLiteratures extends Component {
       doi, url, title, isbn
     } = literature;
     if (element.isNew === true && element.type === 'reaction'
-    && element.literatures && element.literatures.size > 0) {
+      && element.literatures && element.literatures.size > 0) {
       const newlit = {
         ...literature,
         doi: sanitizeDoi(doi),

@@ -2,9 +2,9 @@ import React from 'react';
 import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab } from 'react-bootstrap';
 import Select from 'react-select';
 import { CSVReader } from 'react-papaparse';
-import UsersFetcher from 'src/components/fetchers/UsersFetcher';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
-import MessagesFetcher from 'src/components/fetchers/MessagesFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
+import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 const loadUserByName = (input) => {
   if (!input) {
@@ -881,8 +881,8 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          { renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id) }
-          { renderReConfirmButton(g.unconfirmed_email, g.id) }
+          {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
+          {renderReConfirmButton(g.unconfirmed_email, g.id)}
         </td>
         <td width="12%"> {g.name} </td>
         <td width="6%"> {g.initials} </td>
@@ -907,16 +907,16 @@ export default class UserManagement extends React.Component {
         <Panel>
           <Table>
             <thead>
-              { tcolumn }
+              {tcolumn}
             </thead>
             <tbody>
-              { tbody }
+              {tbody}
             </tbody>
           </Table>
         </Panel>
-        { this.renderMessageModal() }
-        { this.renderNewUserModal() }
-        { this.renderEditUserModal() }
+        {this.renderMessageModal()}
+        {this.renderNewUserModal()}
+        {this.renderEditUserModal()}
       </div>
     );
   }

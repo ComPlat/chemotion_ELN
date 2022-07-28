@@ -5,7 +5,7 @@ import Aviator from 'aviator';
 import UIStore from 'src/components/stores/UIStore';
 import { wellplateShowOrNew } from 'src/components/routesUtils';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
-import WellplatesFetcher from 'src/components/fetchers/WellplatesFetcher';
+import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ResearchPlan from 'src/components/models/ResearchPlan';
 import Wellplate from 'src/components/models/Wellplate';
 

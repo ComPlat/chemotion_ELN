@@ -1,7 +1,7 @@
 import base64 from 'base-64';
 
 import alt from 'src/components/alt';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 class SpectraActions {
   ToggleModal() {
@@ -36,7 +36,7 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx=0) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0) {
     return (dispatch) => {
       AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx)
         .then((fetchedFiles) => {
@@ -69,19 +69,19 @@ class SpectraActions {
         spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity,
         predict, targetPeaks, layout, keepPred
       ).then((fetchedFiles) => {
-          dispatch({ fetchedFiles, spcInfo });
-          cb();
-        }).catch((errorMessage) => {
-          console.log(errorMessage); // eslint-disable-line
-        });
+        dispatch({ fetchedFiles, spcInfo });
+        cb();
+      }).catch((errorMessage) => {
+        console.log(errorMessage); // eslint-disable-line
+      });
     };
   }
 
-  SelectIdx(spcIdx, arrSpcIdx=[]) {
+  SelectIdx(spcIdx, arrSpcIdx = []) {
     return { spcIdx, arrSpcIdx };
   }
 
-  AddOthers(payload)  {
+  AddOthers(payload) {
     const jcamps = payload.jcamps || [];
     const jcamp = jcamps[0];
 

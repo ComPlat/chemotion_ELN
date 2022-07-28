@@ -1,16 +1,16 @@
 import alt from 'src/components/alt';
-import NmrSimFetcher from 'src/components/fetchers/NmrSimFetcher';
+import NmrSimFetcher from 'src/fetchers/NmrSimFetcher';
 
 class NmrSimActions {
   updateNmrdb(type, needToFetch, id) {
     if (needToFetch) {
       return (dispatch) => {
         NmrSimFetcher.fetchNmrdbById(id)
-        .then((result) => {
-          dispatch({ type, spectrum: result });
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+          .then((result) => {
+            dispatch({ type, spectrum: result });
+          }).catch((errorMessage) => {
+            console.log(errorMessage);
+          });
       };
     }
     const spectrum = false;

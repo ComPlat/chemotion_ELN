@@ -1,4 +1,4 @@
-import BaseFetcher from 'src/components/fetchers/BaseFetcher'
+import BaseFetcher from 'src/fetchers/BaseFetcher'
 import Device from 'src/components/models/Device'
 import DeviceAnalysis from 'src/components/models/DeviceAnalysis'
 import _ from 'lodash'
@@ -50,18 +50,18 @@ export default class DeviceFetcher {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: `/api/v1/devices/${device.id}`,
       requestMethod: 'DELETE',
-      jsonTranformation: (json) => {new Device(json.device)}
+      jsonTranformation: (json) => { new Device(json.device) }
     })
   }
-  
-  static fetchAnalysisById(analysisId) { 
+
+  static fetchAnalysisById(analysisId) {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: `/api/v1/devices_analysis/${analysisId}`,
       requestMethod: 'GET',
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
     })
   }
-  
+
   static createAnalysis(analysis) {
     return BaseFetcher.withBodyData({
       apiEndpoint: `/api/v1/devices_analysis`,
@@ -70,9 +70,9 @@ export default class DeviceFetcher {
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
     })
   }
-  
+
   static updateAnalysis(analysis) {
-    const {deviceId, sampleId, analysisType, experiments} = analysis
+    const { deviceId, sampleId, analysisType, experiments } = analysis
     return BaseFetcher.withBodyData({
       apiEndpoint: `/api/v1/devices_analysis/${analysis.id}`,
       requestMethod: 'PUT',

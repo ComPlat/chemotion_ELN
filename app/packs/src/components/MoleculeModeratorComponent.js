@@ -4,7 +4,7 @@ import { Col, Panel, Button, Row, FormControl, Table, Popover, ButtonGroup, Moda
 import SVG from 'react-inlinesvg';
 import { findIndex } from 'lodash';
 import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
-import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
 export default class MoleculeModeratorComponent extends Component {
   constructor(props) {
@@ -46,7 +46,7 @@ export default class MoleculeModeratorComponent extends Component {
       show: true
     });
   }
- 
+
   onSaveName() {
     const { molecule } = this.props;
     const { molNames, molName, isNew } = this.state;
@@ -136,10 +136,10 @@ export default class MoleculeModeratorComponent extends Component {
         delete this molecule name <br />
         <div className="btn-toolbar">
           <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(nameObj)}>
-          Yes
+            Yes
           </Button><span>&nbsp;&nbsp;</span>
           <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
-          No
+            No
           </Button>
         </div>
       </Popover>
@@ -246,9 +246,9 @@ export default class MoleculeModeratorComponent extends Component {
       <tr key={`row_${na.id}`} id={`row_${na.id}`}>
         <td>{i + 1}</td>
         <td>
-          { this.renderDeleteButton(na) }
+          {this.renderDeleteButton(na)}
           &nbsp;
-          { this.renderEditButton(na) }
+          {this.renderEditButton(na)}
         </td>
         <td>{na.description}</td>
         <td>{na.name}</td>
@@ -296,7 +296,7 @@ export default class MoleculeModeratorComponent extends Component {
                   </Table>
                 </Col>
               </Row>
-              { this.renderModal() }
+              {this.renderModal()}
             </Panel.Body>
           </Panel>
         </div>

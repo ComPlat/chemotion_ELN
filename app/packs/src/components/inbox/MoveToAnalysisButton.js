@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Tooltip } from 'react-bootstrap';
-import InboxFetcher from 'src/components/fetchers/InboxFetcher';
+import InboxFetcher from 'src/fetchers/InboxFetcher';
 import InboxActions from 'src/components/actions/InboxActions';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
@@ -84,9 +84,9 @@ export default class MoveToAnalysisButton extends React.Component {
     return (
       <div>
         Move to Sample:<br />
-        { matchingAnalyses.map(sample => (
+        {matchingAnalyses.map(sample => (
           this.renderMoveButton(attachment, sample)
-          )) }
+        ))}
       </div>
     );
   }

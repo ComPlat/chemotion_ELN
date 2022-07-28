@@ -6,13 +6,13 @@ import { findIndex, cloneDeep } from 'lodash';
 
 import Utils from 'src/components/utils/Functions';
 import Attachment from 'src/components/models/Attachment';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/components/stores/UserStore';
 import GenericDS from 'src/components/models/GenericDS';
 import GenericDSDetails from 'src/components/generic/GenericDSDetails';
 import { absOlsTermId } from 'src/admin/generic/Utils';
 import InboxActions from 'src/components/actions/InboxActions';
-import InstrumentsFetcher from 'src/components/fetchers/InstrumentsFetcher';
+import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import ChildOverlay from 'src/components/managing_actions/ChildOverlay';
 
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
@@ -455,7 +455,7 @@ export default class ContainerDataset extends Component {
           {this.dropzone()}
           {this.attachments()}
           <HyperLinksSection data={dataset_container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
-          disabled={disabled}></HyperLinksSection>
+            disabled={disabled}></HyperLinksSection>
         </Col>
       </Row>
     );

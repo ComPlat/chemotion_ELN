@@ -9,8 +9,8 @@ import _ from 'lodash';
 import UserActions from 'src/components/actions/UserActions';
 import UserStore from 'src/components/stores/UserStore';
 import Functions from 'src/components/utils/Functions';
-import UsersFetcher from 'src/components/fetchers/UsersFetcher';
-import MessagesFetcher from 'src/components/fetchers/MessagesFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/components/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -50,7 +50,7 @@ export default class UserAuth extends Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
-    
+
   }
 
   componentDidMount() {
@@ -70,7 +70,7 @@ export default class UserAuth extends Component {
 
   logout() {
     UserActions.logout();
-  }  
+  }
 
   promptTextCreator(label) {
     return ("Share with \"" + label + "\"");
@@ -154,7 +154,7 @@ export default class UserAuth extends Component {
   // tooltip of yes/no confirmation
   handleClick() {
     this.setState({ show: !this.state.show });
-  } 
+  }
 
   // inputs of create new group
   handleInputChange(type, ev) {
@@ -245,7 +245,7 @@ export default class UserAuth extends Component {
     this.setState({ currentGroups });
   };
 
-  handleDeleteUser =(groupRec, userRec) => {
+  handleDeleteUser = (groupRec, userRec) => {
     let { currentGroups, currentUser } = this.state;
     UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, rm_users: [userRec.id] })
       .then((result) => {
@@ -258,8 +258,8 @@ export default class UserAuth extends Component {
           currentGroups.splice(idx, 1, result.group);
         }
         this.setState({ currentGroups: currentGroups });
-      });    
-  }  
+      });
+  }
 
   // render modal
   renderModal() {
@@ -277,10 +277,10 @@ export default class UserAuth extends Component {
     } else {
       tBodyGroups = currentGroups ? currentGroups.map(g => (
         <GroupElement groupElement={g} key={g.id} currentState={this.state}
-        currentGroup={this.state.currentGroups}
-        onDeleteGroup={this.handleDeleteGroup}
-        onDeleteUser={this.handleDeleteUser}
-        onChangeData={this.handleChange}></GroupElement>
+          currentGroup={this.state.currentGroups}
+          onDeleteGroup={this.handleDeleteGroup}
+          onDeleteUser={this.handleDeleteUser}
+          onChangeData={this.handleChange}></GroupElement>
       )) : '';
     }
 

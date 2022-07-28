@@ -3,7 +3,7 @@ import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, Bu
 import Select from 'react-select';
 import moment from 'moment';
 import { findIndex, filter } from 'lodash';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 import AdminGroupElement from 'src/admin/AdminGroupElement';
 import AdminDeviceElement from 'src/admin/AdminDeviceElement';
@@ -425,7 +425,7 @@ export default class GroupsDevices extends React.Component {
     } else {
       tbody = groups.map((g, idx) => (
         <AdminGroupElement groupElement={g} index={idx} currentState={this.state}
-        onChangeGroupData={this.handleGroupChange} onShowModal={this.handleShowModal}></AdminGroupElement>
+          onChangeGroupData={this.handleGroupChange} onShowModal={this.handleShowModal}></AdminGroupElement>
       ));
     }
 
@@ -449,7 +449,7 @@ export default class GroupsDevices extends React.Component {
               <th width="20%">Email</th>
             </tr>
           </thead>
-          { tbody }
+          {tbody}
         </Table>
       </Panel>
     );
@@ -464,7 +464,7 @@ export default class GroupsDevices extends React.Component {
     } else {
       tbody = devices && devices.map((device, idx) => (
         <AdminDeviceElement deviceElement={device} index={idx} currentState={this.state}
-        onChangeDeviceData={this.handleDeviceChange} onShowModal={this.handleShowModal} onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}></AdminDeviceElement>
+          onChangeDeviceData={this.handleDeviceChange} onShowModal={this.handleShowModal} onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}></AdminDeviceElement>
       ));
     }
 
@@ -486,7 +486,7 @@ export default class GroupsDevices extends React.Component {
               <th width="28%">Email</th>
             </tr>
           </thead>
-          { tbody }
+          {tbody}
         </Table>
       </Panel>
     );
@@ -544,7 +544,7 @@ export default class GroupsDevices extends React.Component {
                   />
                 </FormGroup>
                 <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
-                  Create new { rootType === 'Group' ? 'group' : 'device' }
+                  Create new {rootType === 'Group' ? 'group' : 'device'}
                 </Button>
               </Form>
             </Panel.Body>
@@ -798,11 +798,11 @@ export default class GroupsDevices extends React.Component {
   render() {
     return (
       <div className="list-container-bottom">
-        { this.renderGroups() }
-        { this.renderDevices() }
-        { this.renderModal() }
-        { this.renderCreateModal() }
-        { this.renderDeviceMetadataModal() }
+        {this.renderGroups()}
+        {this.renderDevices()}
+        {this.renderModal()}
+        {this.renderCreateModal()}
+        {this.renderDeviceMetadataModal()}
       </div>
     );
   }

@@ -5,8 +5,8 @@ import Tree from 'antd/lib/tree';
 import { ButtonToolbar, Button } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 
-import UsersFetcher from 'src/components/fetchers/UsersFetcher';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 import CollapsePanel from 'antd/lib/collapse/CollapsePanel';
 import { difference } from 'lodash';
 

@@ -4,7 +4,7 @@ import { InputGroup, OverlayTrigger, FormGroup, SplitButton, Tooltip, MenuItem }
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import NotificationActions from 'src/components/actions/NotificationActions';
-import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 import LoadingActions from 'src/components/actions/LoadingActions';
 
 const apiCall = (cas, src = 'cas') => (src === 'cas' ? `https://commonchemistry.cas.org/api/detail?cas_rn=${cas}` : `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${cas}/property/CanonicalSMILES/JSON`);

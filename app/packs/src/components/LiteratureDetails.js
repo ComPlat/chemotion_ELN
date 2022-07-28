@@ -29,7 +29,7 @@ import {
 } from 'src/components/LiteratureCommon';
 import Literature from 'src/components/models/Literature';
 import LiteratureMap from 'src/components/models/LiteratureMap';
-import LiteraturesFetcher from 'src/components/fetchers/LiteraturesFetcher';
+import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/components/stores/UIStore';
 import UserStore from 'src/components/stores/UserStore';
 import DetailActions from 'src/components/actions/DetailActions';

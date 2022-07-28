@@ -5,7 +5,7 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/components/utils/Functions';
 
 import InboxActions from 'src/components/actions/InboxActions';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Attachment from 'src/components/models/Attachment';
 import Container from 'src/components/models/Container';
 
@@ -40,7 +40,7 @@ export default class UnsortedDataset extends React.Component {
   }
 
   handleAttachmentDownload(attachment) {
-    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
   }
 
   handleAttachmentRemove(attachment) {
@@ -98,7 +98,7 @@ export default class UnsortedDataset extends React.Component {
         <tbody>
           <tr>
             <td>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
             </td>
           </tr>
           <tr>
@@ -117,11 +117,11 @@ export default class UnsortedDataset extends React.Component {
       return (
         <ListGroup>
           {datasetContainer.attachments.map((attachment) => {
-          return (
-            <ListGroupItem key={attachment.id}>
-              {this.listGroupItem(attachment)}
-            </ListGroupItem>
-          );
+            return (
+              <ListGroupItem key={attachment.id}>
+                {this.listGroupItem(attachment)}
+              </ListGroupItem>
+            );
           })}
         </ListGroup>
       );

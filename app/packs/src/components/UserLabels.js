@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Modal, Checkbox, Table, thead, tr, th, td, Col, Badge, Panel, ButtonGroup, Button, Form, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
-import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/components/actions/NotificationActions';
 import UserActions from 'src/components/actions/UserActions';
 import UserStore from 'src/components/stores/UserStore';
@@ -190,7 +190,7 @@ class UserLabelModal extends Component {
               </tr>
             </thead>
             <tbody>
-              { this.renderUserLabels() }
+              {this.renderUserLabels()}
             </tbody>
           </Table>
         </Panel>

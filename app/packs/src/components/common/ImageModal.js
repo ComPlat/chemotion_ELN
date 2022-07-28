@@ -1,7 +1,7 @@
 import React, { Component, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Button } from 'react-bootstrap';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/components/utils/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
 
@@ -57,7 +57,7 @@ export default class ImageModal extends Component {
   }
 
   changePage(offset) {
-    this.setState({pageIndex:(this.state.pageIndex+offset)});
+    this.setState({ pageIndex: (this.state.pageIndex + offset) });
   }
 
   previousPage() {

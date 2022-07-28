@@ -6,7 +6,7 @@ import {
 import PropTypes from 'prop-types';
 import AutoCompleteInput from 'src/components/search/AutoCompleteInput';
 import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
-import SuggestionsFetcher from 'src/components/fetchers/SuggestionsFetcher';
+import SuggestionsFetcher from 'src/fetchers/SuggestionsFetcher';
 import ElementActions from 'src/components/actions/ElementActions';
 import UIStore from 'src/components/stores/UIStore';
 import UIActions from 'src/components/actions/UIActions';

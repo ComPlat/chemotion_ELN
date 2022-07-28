@@ -1,9 +1,9 @@
 import 'whatwg-fetch';
 import Screen from 'src/components/models/Screen';
 import UIStore from 'src/components/stores/UIStore'
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher'
-import BaseFetcher from 'src/components/fetchers/BaseFetcher';
-import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher'
+import BaseFetcher from 'src/fetchers/BaseFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 export default class ScreensFetcher {
   static fetchById(id) {

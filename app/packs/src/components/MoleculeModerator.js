@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Navbar, FormGroup, ControlLabel, FormControl, Button } from 'react-bootstrap';
 import MoleculeModeratorComponent from 'src/components/MoleculeModeratorComponent';
-import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import Notifications from 'src/components/Notifications';
 import LoadingModal from 'src/components/common/LoadingModal';
 import LoadingActions from 'src/components/actions/LoadingActions';

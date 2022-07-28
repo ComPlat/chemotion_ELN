@@ -1,6 +1,6 @@
 import React from 'react';
 import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, ButtonGroup, Tooltip, OverlayTrigger, Popover, FormControl } from 'react-bootstrap';
-import ReportTemplateFetcher from 'src/components/fetchers/ReportTemplateFetcher';
+import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
 import Dropzone from 'react-dropzone';
 import Select from 'react-select';
 
@@ -404,8 +404,8 @@ export default class TemplateManagement extends React.Component {
             </tbody>
           </Table>
         </Panel>
-        { this.renderNewTemplateModal()}
-        { this.renderEditTemplateModal()}
+        {this.renderNewTemplateModal()}
+        {this.renderEditTemplateModal()}
       </div>
     );
   }

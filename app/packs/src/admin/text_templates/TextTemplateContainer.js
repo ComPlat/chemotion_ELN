@@ -1,6 +1,6 @@
 import React from 'react';
 
-import TextTemplatesFetcher from 'src/components/fetchers/TextTemplatesFetcher';
+import TextTemplatesFetcher from 'src/fetchers/TextTemplatesFetcher';
 import TextTemplate from 'src/admin/text_templates/TextTemplate';
 
 export default class TextTemplateContainer extends React.Component {

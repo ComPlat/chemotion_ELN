@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 import GenericEl from 'src/components/models/GenericEl';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 
 export default class GenericElsFetcher {
   static fetchElementKlass(klassName) {
@@ -96,7 +96,7 @@ export default class GenericElsFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-      
+
     if (files.length > 0) {
       let tasks = [];
       files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));

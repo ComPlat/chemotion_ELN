@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Button } from 'react-bootstrap';
-import ConverterApi from 'src/components/fetchers/ConverterFetcher';
+import ConverterApi from 'src/fetchers/ConverterFetcher';
 import ProfileNewModal from 'src/admin/converter/create/ProfileNewModal';
 
 import ProfileList from 'src/admin/converter/list/ProfileList';
@@ -115,7 +115,7 @@ class AdminApp extends Component {
 
 
   hideUploadModal() {
-    this.setState({ uploadModal: false, uploadType:'' });
+    this.setState({ uploadModal: false, uploadType: '' });
   }
 
   showEditView(index, identifier) {
@@ -423,7 +423,7 @@ class AdminApp extends Component {
       table: {},
       currentIdentifier: '',
       currentIndex: -1,
-     });
+    });
   }
 
   createProfile(event) {

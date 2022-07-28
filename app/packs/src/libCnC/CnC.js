@@ -10,7 +10,7 @@ import DeviceActions from 'src/components/actions/UserActions';
 import DeviceStore from 'src/components/stores/UserStore';
 import FocusNovnc from 'src/components/FocusNovnc';
 import { ConnectedBtn, DisconnectedBtn } from 'src/components/NovncStatus';
-import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;
@@ -62,9 +62,9 @@ class CnC extends React.Component {
 
   shouldComponentUpdate(nextState) {
     return this.state.connected !== nextState.connected
-    || this.state.rfb !== nextState.rfb
-    || this.state.selected.id !== nextState.selected.id
-    || this.state.isNotFocused !== nextState.isNotFocused;
+      || this.state.rfb !== nextState.rfb
+      || this.state.selected.id !== nextState.selected.id
+      || this.state.isNotFocused !== nextState.isNotFocused;
   }
 
   componentWillUnmount() {

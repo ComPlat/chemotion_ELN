@@ -1,5 +1,5 @@
 import alt from 'src/components/alt';
-import UIFetcher from 'src/components/fetchers/UIFetcher';
+import UIFetcher from 'src/fetchers/UIFetcher';
 
 // An element object has a type and an id, e.g., {type: 'sample', id: 1}
 class UIActions {
@@ -12,15 +12,15 @@ class UIActions {
   }
 
   showCollectionManagement() {
-    return  null;
+    return null;
   }
 
   toggleCollectionManagement() {
-    return  null;
+    return null;
   }
 
   showElements() {
-    return  null;
+    return null;
   }
 
   showDeviceManagement() {
@@ -44,74 +44,74 @@ class UIActions {
   }
 
   selectCollection(collection) {
-    return  collection
+    return collection
   }
 
   selectSyncCollection(syncCollection) {
-    return  syncCollection
+    return syncCollection
   }
 
   checkAllElements(params) {
-    return  params;
+    return params;
   }
 
   toggleShowPreviews(show) {
-    return  show;
+    return show;
   }
 
   checkElement(params) {
-    return  params;
+    return params;
   }
 
   uncheckAllElements(params) {
-    return  params;
+    return params;
   }
 
   uncheckWholeSelection() {
-    return  null;
+    return null;
   }
 
   uncheckElement(element) {
-    return  element;
+    return element;
   }
 
   selectElement(element) {
-    return  element;
+    return element;
   }
 
   deselectAllElementsOfType(type) {
-    return  type;
+    return type;
   }
 
   deselectAllElements() {
-    return  null;
+    return null;
   }
 
   setPagination(pagination) {
-    return  pagination;
+    return pagination;
   }
 
   setSearchSelection(selection) {
-    return  selection;
+    return selection;
   }
 
   selectCollectionWithoutUpdating(collection) {
-    return  collection;
+    return collection;
   }
 
   clearSearchSelection() {
-    return  null;
+    return null;
   }
 
   changeNumberOfResultsShown(value) {
-    return  value;
+    return value;
   }
 
-  updateModalProps(params){
+  updateModalProps(params) {
     return params
   }
 
-  hideModal(){
+  hideModal() {
     return null
   }
 

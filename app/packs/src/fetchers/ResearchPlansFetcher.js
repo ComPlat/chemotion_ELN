@@ -1,17 +1,17 @@
 import 'whatwg-fetch';
 import _ from 'lodash';
 import ResearchPlan from 'src/components/models/ResearchPlan';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/components/fetchers/BaseFetcher';
-import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 import { getFileName, downloadBlob } from 'src/components/utils/FetcherHelper'
 
 export default class ResearchPlansFetcher {
   static fetchById(id) {
     let promise = fetch('/api/v1/research_plans/' + id + '.json', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -28,7 +28,7 @@ export default class ResearchPlansFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams={}, isSync = false) {
+  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'research_plans', ResearchPlan);
   }
 
@@ -43,8 +43,8 @@ export default class ResearchPlansFetcher {
       body: JSON.stringify(researchPlan.serialize())
     }).then(response => response.json()).then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
       .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+        console.log(errorMessage);
+      });
     return promise;
   }
 
@@ -60,9 +60,9 @@ export default class ResearchPlansFetcher {
       body: JSON.stringify(researchPlan.serialize())
     }).then(response => response.json()).then(json => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
       .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    
+        console.log(errorMessage);
+      });
+
     if (containerFiles.length > 0) {
       let tasks = [];
       containerFiles.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
@@ -74,7 +74,7 @@ export default class ResearchPlansFetcher {
   }
 
   static updateSVGFile(svg_file, isChemdraw = false) {
-    let promise = ()=> fetch('/api/v1/research_plans/svg', {
+    let promise = () => fetch('/api/v1/research_plans/svg', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -98,7 +98,7 @@ export default class ResearchPlansFetcher {
       data.append('replace', replace);
     }
 
-    let promise = ()=> fetch('/api/v1/research_plans/image', {
+    let promise = () => fetch('/api/v1/research_plans/image', {
       credentials: 'same-origin',
       method: 'post',
       body: data
@@ -235,12 +235,12 @@ export default class ResearchPlansFetcher {
         body: '{}'
       }
     ).then(response => response.json())
-     .then(json => {
-      const updatedResearchPlan = new ResearchPlan(json.research_plan);
+      .then(json => {
+        const updatedResearchPlan = new ResearchPlan(json.research_plan);
         updatedResearchPlan._checksum = updatedResearchPlan.checksum();
         updatedResearchPlan.attachments = json.attachments;
         return updatedResearchPlan;
-     }).catch((errorMessage) => { console.log(errorMessage);});
+      }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static importTableFromSpreadsheet(id, attachmentId) {
@@ -256,11 +256,11 @@ export default class ResearchPlansFetcher {
         body: '{}'
       }
     ).then(response => response.json())
-     .then(json => {
-      const updatedResearchPlan = new ResearchPlan(json.research_plan);
+      .then(json => {
+        const updatedResearchPlan = new ResearchPlan(json.research_plan);
         updatedResearchPlan._checksum = updatedResearchPlan.checksum();
         updatedResearchPlan.attachments = json.attachments;
         return updatedResearchPlan;
-     }).catch((errorMessage) => { console.log(errorMessage);});
+      }).catch((errorMessage) => { console.log(errorMessage); });
   }
 }

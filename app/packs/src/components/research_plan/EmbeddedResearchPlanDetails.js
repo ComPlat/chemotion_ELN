@@ -5,7 +5,7 @@ import Aviator from 'aviator';
 import UIStore from 'src/components/stores/UIStore';
 import { researchPlanShowOrNew } from 'src/components/routesUtils';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
-import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlan from 'src/components/models/ResearchPlan';
 import ResearchPlanDetailsBody from 'src/components/research_plan/ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from 'src/components/research_plan/ResearchPlanDetailsName';
@@ -252,7 +252,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
           placement="bottom"
           onHide={() => this.setState({ confirmRemove: false })}
         >
-          { popover }
+          {popover}
         </Overlay>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => saveResearchPlan(researchPlan)} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>

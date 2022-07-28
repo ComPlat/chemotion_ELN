@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import { Button, Panel, Row, Col } from 'react-bootstrap';
 import moment from 'moment';
 import uuid from 'uuid';
-import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/components/actions/NotificationActions';
 
 const ScifinderCredential = () => {
@@ -28,7 +28,7 @@ const ScifinderCredential = () => {
         <Row>
           <Col sm={4}><b style={{ float: 'right' }}>Current token will expire at</b></Col>
           <Col sm={4}>
-            { credential.expires_at ? `${moment(credential.expires_at).format('YYYY-MM-DD HH:mm:ss')} UTC` : '' }
+            {credential.expires_at ? `${moment(credential.expires_at).format('YYYY-MM-DD HH:mm:ss')} UTC` : ''}
           </Col>
           <Col sm={4}><Button bsStyle="primary" href={`${window.location.origin}/users/auth/oauth2`}>Get token</Button></Col>
         </Row>

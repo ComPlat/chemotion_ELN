@@ -1,5 +1,5 @@
 import 'whatwg-fetch';
-import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 
 export default class AdminFetcher {
   static fetchUnitsSystem() {

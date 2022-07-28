@@ -1,6 +1,6 @@
 import { Button, OverlayTrigger, Panel, Table, Tooltip } from 'react-bootstrap';
 import React, { Component } from 'react';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 const tipRestartJob = <Tooltip id="restart_tooltip">Update run_at</Tooltip>;
 
@@ -88,10 +88,10 @@ export default class DelayedJobs extends Component {
           </Panel.Heading>
           <Table responsive hover bordered>
             <thead>
-              { tcolumn }
+              {tcolumn}
             </thead>
             <tbody>
-              { tbody }
+              {tbody}
             </tbody>
           </Table>
         </Panel>

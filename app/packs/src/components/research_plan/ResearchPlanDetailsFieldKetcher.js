@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Glyphicon } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
 
 export default class ResearchPlanDetailsFieldKetcher extends Component {
@@ -43,7 +43,7 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
 
     const smiles = config ? config.smiles : null;
 
-    this.setState({loadingMolecule: true});
+    this.setState({ loadingMolecule: true });
 
     const isChemdraw = !!smiles;
 
@@ -100,7 +100,7 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
   renderStatic() {
     const { field } = this.props;
     if (typeof (field.value.svg_file) === 'undefined'
-    || field.value.svg_file === null) {
+      || field.value.svg_file === null) {
       return (
         <div />
       );

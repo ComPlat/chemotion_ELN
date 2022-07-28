@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon, Popover, Overlay } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
-import EditorFetcher from 'src/components/fetchers/EditorFetcher';
+import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageModal from 'src/components/common/ImageModal';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import { previewAttachmentImage } from 'src/components/utils/imageHelper';
@@ -170,7 +170,7 @@ export default class WellplateDetailsAttachments extends Component {
             onHide={() => this.hideImportConfirm(attachment.id)}
             target={this.importButtonRefs[attachment.id]}
           >
-            { confirmTooltip }
+            {confirmTooltip}
           </Overlay>
 
         </div>
@@ -298,7 +298,7 @@ export default class WellplateDetailsAttachments extends Component {
               <ListGroupItem key={attachment.id}>
                 {this.renderListGroupItem(attachment)}
               </ListGroupItem>
-              ))}
+            ))}
           </ListGroup>
         </div>
       );

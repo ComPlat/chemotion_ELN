@@ -5,19 +5,19 @@ import UIActions from 'src/components/actions/UIActions';
 import UserActions from 'src/components/actions/UserActions';
 
 import NotificationActions from 'src/components/actions/NotificationActions';
-import UIFetcher from 'src/components/fetchers/UIFetcher';
-import SamplesFetcher from 'src/components/fetchers/SamplesFetcher';
-import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher';
-import ReactionsFetcher from 'src/components/fetchers/ReactionsFetcher';
-import WellplatesFetcher from 'src/components/fetchers/WellplatesFetcher';
-import CollectionsFetcher from 'src/components/fetchers/CollectionsFetcher';
-import ScreensFetcher from 'src/components/fetchers/ScreensFetcher';
-import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
-import SearchFetcher from 'src/components/fetchers/SearchFetcher';
-import DeviceFetcher from 'src/components/fetchers/DeviceFetcher';
-import ContainerFetcher from 'src/components/fetchers/ContainerFetcher';
-import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
-import PrivateNoteFetcher from 'src/components/fetchers/PrivateNoteFetcher'
+import UIFetcher from 'src/fetchers/UIFetcher';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
+import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
+import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import ScreensFetcher from 'src/fetchers/ScreensFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import SearchFetcher from 'src/fetchers/SearchFetcher';
+import DeviceFetcher from 'src/fetchers/DeviceFetcher';
+import ContainerFetcher from 'src/fetchers/ContainerFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
 
 import GenericEl from 'src/components/models/GenericEl';
 import Sample from 'src/components/models/Sample';
@@ -32,7 +32,7 @@ import ComputeTask from 'src/components/models/ComputeTask';
 import DeviceControl from 'src/components/models/DeviceControl';
 import LiteratureMap from 'src/components/models/LiteratureMap';
 import Prediction from 'src/components/models/Prediction';
-import ReactionSvgFetcher from 'src/components/fetchers/ReactionSvgFetcher';
+import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 
 import _ from 'lodash';
 

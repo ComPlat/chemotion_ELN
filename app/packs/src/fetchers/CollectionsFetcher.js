@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
-import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 import NotificationActions from 'src/components/actions/NotificationActions';
-import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import { downloadBlob } from 'src/components/utils/FetcherHelper';
 
 export default class CollectionsFetcher {
@@ -37,8 +37,8 @@ export default class CollectionsFetcher {
 
   static fetchUnsharedRoots() {
     let promise = fetch('/api/v1/collections/roots.json', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -52,8 +52,8 @@ export default class CollectionsFetcher {
 
   static fetchSharedRoots() {
     let promise = fetch('/api/v1/collections/shared_roots.json', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -67,8 +67,8 @@ export default class CollectionsFetcher {
 
   static fetchRemoteRoots() {
     let promise = fetch('/api/v1/collections/remote_roots.json', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -81,8 +81,8 @@ export default class CollectionsFetcher {
   }
   static fetchSyncRemoteRoots() {
     let promise = fetch('/api/v1/syncCollections/sync_remote_roots.json', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {

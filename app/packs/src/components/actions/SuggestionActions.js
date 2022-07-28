@@ -1,14 +1,16 @@
 import alt from 'src/components/alt';
-import SuggestionsFetcher from 'src/components/fetchers/SuggestionsFetcher';
+import SuggestionsFetcher from 'src/fetchers/SuggestionsFetcher';
 
 class SuggestionActions {
   fetchSuggestions(endpoint, query) {
-    return (dispatch) => {  SuggestionsFetcher.fetchSuggestions(endpoint, query)
-      .then((suggestions) => {
-        dispatch(suggestions);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
+    return (dispatch) => {
+      SuggestionsFetcher.fetchSuggestions(endpoint, query)
+        .then((suggestions) => {
+          dispatch(suggestions);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 }
 

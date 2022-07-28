@@ -25,11 +25,11 @@ import Container from 'src/components/models/Container';
 import AnalysesExperiment from 'src/components/models/AnalysesExperiment';
 import DeviceAnalysis from 'src/components/models/DeviceAnalysis';
 import DeviceSample from 'src/components/models/DeviceSample';
-import SamplesFetcher from 'src/components/fetchers/SamplesFetcher';
-import DeviceFetcher from 'src/components/fetchers/DeviceFetcher';
-import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
-import WellplatesFetcher from 'src/components/fetchers/WellplatesFetcher';
-import ScreensFetcher from 'src/components/fetchers/ScreensFetcher';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import DeviceFetcher from 'src/fetchers/DeviceFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
+import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
 
 import { extraThing } from 'src/components/utils/Functions';
@@ -44,7 +44,7 @@ import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/components/models/GenericEl';
 
-import MessagesFetcher from 'src/components/fetchers/MessagesFetcher';
+import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 const fetchOls = (elementType) => {
   switch (elementType) {

@@ -4,7 +4,7 @@ import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy } from 'lodash';
 import LoadingModal from 'src/components/common/LoadingModal';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { ElementField } from 'src/components/elements/ElementField';
 import LoadingActions from 'src/components/actions/LoadingActions';
 import TemplateJsonModal from 'src/admin/generic/TemplateJsonModal';
@@ -407,7 +407,7 @@ export default class DatasetElementAdmin extends React.Component {
     if (!validateLayerInput(updates)) return;
     const { element } = this.state;
     let layer = element && element.properties_template
-    && element.properties_template.layers[layerKey];
+      && element.properties_template.layers[layerKey];
     layer = { ...layer, ...updates };
     element.properties_template.layers[`${layer.key}`] = layer;
     notification({ title: `Layer [${layer.key}]`, lvl: 'info', msg: 'This updates of this layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.' });
@@ -539,7 +539,7 @@ export default class DatasetElementAdmin extends React.Component {
     const selects = [];
     Object.keys(element.properties_template.select_options).forEach((key) => {
       const soptions = (element.properties_template.select_options[key]
-      && element.properties_template.select_options[key].options) || [];
+        && element.properties_template.select_options[key].options) || [];
       const options = soptions.map(f => (
         <div key={`${f.key}_${key}`} style={{ marginTop: '10px' }}>
           <FormGroup bsSize="sm" controlId={`frmCtrlSelectOption_${f.key}`}>
@@ -602,7 +602,7 @@ export default class DatasetElementAdmin extends React.Component {
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
-          <Panel.Body><div>{ selects }</div></Panel.Body>
+          <Panel.Body><div>{selects}</div></Panel.Body>
         </Panel>
       </div>
     );
@@ -683,7 +683,7 @@ export default class DatasetElementAdmin extends React.Component {
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
-          <Panel.Body><div>{ layers }</div></Panel.Body>
+          <Panel.Body><div>{layers}</div></Panel.Body>
         </Panel>
       </div>
     );
@@ -699,7 +699,7 @@ export default class DatasetElementAdmin extends React.Component {
           <td>
             {
               e.is_active ? <ButtonTooltip tip="click to de-active this dataset template (currently active)" fnClick={this.handleDeActive} element={e} fa="fa-check" bs="success" />
-              : <ButtonTooltip tip="click to active this dataset template (currently deactive)" fnClick={this.handleDeActive} element={e} fa="fa-ban" bs="danger" />
+                : <ButtonTooltip tip="click to active this dataset template (currently deactive)" fnClick={this.handleDeActive} element={e} fa="fa-ban" bs="danger" />
             }
           </td>
           <td>
@@ -723,7 +723,7 @@ export default class DatasetElementAdmin extends React.Component {
                 <th width="18%">Released at</th>
               </tr>
             </thead>
-            { tbody }
+            {tbody}
           </Table>
         </Panel.Heading>
       </Panel>
@@ -774,8 +774,8 @@ export default class DatasetElementAdmin extends React.Component {
     return (
       <div>
         <div className="list-container-bottom">
-          { this.renderList() }
-          { this.renderPropPanel() }
+          {this.renderList()}
+          {this.renderPropPanel()}
           <SelectAttrNewModal
             showModal={this.state.showAddSelect}
             fnClose={this.handleSelectClose}

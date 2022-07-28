@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, ButtonGroup, Popover, OverlayTrigger } from 'react-bootstrap';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 export default class DeleteGroupDeviceButton extends React.Component {
   constructor(props) {
@@ -54,7 +54,7 @@ export default class DeleteGroupDeviceButton extends React.Component {
   }
 
   render() {
-    const {rootType, actionType, groupRec, userRec, isRoot} = this.props;
+    const { rootType, actionType, groupRec, userRec, isRoot } = this.props;
     let msg = 'remove yourself from the group';
     if (rootType === 'Group' && isRoot) {
       msg = `remove group: ${groupRec.name}`;

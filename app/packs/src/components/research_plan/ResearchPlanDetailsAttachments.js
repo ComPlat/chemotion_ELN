@@ -1,5 +1,5 @@
 import Dropzone from 'react-dropzone';
-import EditorFetcher from 'src/components/fetchers/EditorFetcher';
+import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/components/actions/ElementActions';
 import ImageModal from 'src/components/common/ImageModal';
 import LoadingActions from 'src/components/actions/LoadingActions';
@@ -18,7 +18,7 @@ import {
   Tooltip
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;

@@ -9,7 +9,7 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import { notification, genUnits, toBool, toNum, unitConversion } from 'src/admin/generic/Utils';
 import { organizeSubValues } from 'src/admin/generic/collate';
 import PreviewModal from 'src/components/generic/PreviewModal';
-import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 const addSegmentTabs = (element, onChange, contentMap) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};

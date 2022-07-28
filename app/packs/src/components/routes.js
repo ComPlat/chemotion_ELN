@@ -7,7 +7,7 @@ import UserActions from 'src/components/actions/UserActions';
 import ElementActions from 'src/components/actions/ElementActions';
 import rXr from 'src/components/extra/routesXroutes';
 import * as routesUtils from 'src/components/routesUtils';
-import UIFetcher from 'src/components/fetchers/UIFetcher';
+import UIFetcher from 'src/fetchers/UIFetcher';
 import klasses from '../../../../config/klasses.json';
 
 
@@ -113,8 +113,8 @@ const routes = {
   }
 };
 
-  // const { klasses } = UIStore.getState();
-  // console.log(klasses);
+// const { klasses } = UIStore.getState();
+// console.log(klasses);
 
 
 // UIFetcher.initialize()
@@ -131,7 +131,7 @@ klasses && klasses.forEach((klass) => {
 });
 
 
-export default function() {
+export default function () {
   Aviator.root = '/mydb';
   Aviator.pushStateEnabled = true;
   Aviator.setRoutes(allRoutes(routes));

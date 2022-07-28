@@ -1,6 +1,6 @@
 import React from 'react';
 import { ButtonGroup, OverlayTrigger, Popover, Tooltip, Button, Table, Panel } from 'react-bootstrap';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { findIndex } from 'lodash';
 import DeleteGroupDeviceButton from 'src/admin/DeleteGroupDeviceButton';
 
@@ -89,10 +89,10 @@ export default class AdminGroupElement extends React.Component {
         </ButtonGroup>&nbsp;&nbsp;
         <ButtonGroup>
           <DeleteGroupDeviceButton rootType={'Group'}
-                             groupRec={group}
-                             isRoot={true}
-                             currentState={this.state}
-                             onChangeGroupData={this.props.onChangeGroupData} />
+            groupRec={group}
+            isRoot={true}
+            currentState={this.state}
+            onChangeGroupData={this.props.onChangeGroupData} />
         </ButtonGroup>
       </td>
     );
@@ -115,11 +115,11 @@ export default class AdminGroupElement extends React.Component {
             </Button>
           </OverlayTrigger>
           <DeleteGroupDeviceButton rootType={'Group'}
-                             actionType={'Person'}
-                             groupRec={group}
-                             userRec={user}
-                             currentState={this.state}
-                             onChangeGroupData={this.props.onChangeGroupData} />
+            actionType={'Person'}
+            groupRec={group}
+            userRec={user}
+            currentState={this.state}
+            onChangeGroupData={this.props.onChangeGroupData} />
         </ButtonGroup>
         &nbsp;&nbsp;
       </td>
@@ -184,15 +184,15 @@ export default class AdminGroupElement extends React.Component {
                       <td width="5%">{i + 1}</td>
                       <td width="20%">{u.name}</td>
                       <td width="10%">{u.initials}</td>
-                      <td width="20%">{ }</td>
-                      <td width="15%">{ }</td>
+                      <td width="20%">{}</td>
+                      <td width="15%">{}</td>
                       <td width="30%">
                         <DeleteGroupDeviceButton rootType={'Group'}
-                                           actionType={'Device'}
-                                           groupRec={groupElement}
-                                           userRec={u}
-                                           currentState={this.state}
-                                           onChangeGroupData={this.props.onChangeGroupData} /></td>
+                          actionType={'Device'}
+                          groupRec={groupElement}
+                          userRec={u}
+                          currentState={this.state}
+                          onChangeGroupData={this.props.onChangeGroupData} /></td>
                     </tr>
                   ))}
                 </tbody>

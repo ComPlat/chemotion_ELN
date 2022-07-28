@@ -8,7 +8,7 @@ import UIActions from 'src/components/actions/UIActions';
 import ElementActions from 'src/components/actions/ElementActions';
 import ElementStore from 'src/components/stores/ElementStore';
 import DetailActions from 'src/components/actions/DetailActions';
-import ResearchPlansFetcher from 'src/components/fetchers/ResearchPlansFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlansLiteratures from 'src/components/DetailsTabLiteratures';
 import ResearchPlanWellplates from 'src/components/ResearchPlanWellplates';
 import ResearchPlansMetadata from 'src/components/DetailsTabMetadata';

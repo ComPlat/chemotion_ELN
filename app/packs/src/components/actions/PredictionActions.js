@@ -1,8 +1,8 @@
 import _ from 'lodash';
 
 import alt from 'src/components/alt';
-import UIFetcher from 'src/components/fetchers/UIFetcher';
-import PredictionsFetcher from 'src/components/fetchers/PredictionsFetcher';
+import UIFetcher from 'src/fetchers/UIFetcher';
+import PredictionsFetcher from 'src/fetchers/PredictionsFetcher';
 
 class PredictionActions {
   infer(targets, template) { // eslint-disable-line class-methods-use-this

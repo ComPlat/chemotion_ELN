@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import alt from 'src/components/alt';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
-import ReportsFetcher from 'src/components/fetchers/ReportsFetcher';
-import ReportTemplateFetcher from 'src/components/fetchers/ReportTemplateFetcher';
-import UIFetcher from 'src/components/fetchers/UIFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import ReportsFetcher from 'src/fetchers/ReportsFetcher';
+import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
+import UIFetcher from 'src/fetchers/UIFetcher';
 import { GetTypeIds, LoadPreviewIds } from 'src/components/utils/ReportHelper';
 
 class ReportActions {

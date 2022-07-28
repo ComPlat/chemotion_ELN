@@ -20,7 +20,7 @@ import { organizeSubValues } from 'src/admin/generic/collate';
 import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import PreviewModal from 'src/components/generic/PreviewModal';
-import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -120,7 +120,7 @@ export default class GenericElDetails extends Component {
             newProps.layers[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
           }
           if ((newProps.layers[key].fields[idx].type === 'drag_sample' && genericEl.properties.layers[key].fields[curIdx].type === 'drag_sample')
-          || (newProps.layers[key].fields[idx].type === 'drag_molecule' && genericEl.properties.layers[key].fields[curIdx].type === 'drag_molecule')) {
+            || (newProps.layers[key].fields[idx].type === 'drag_molecule' && genericEl.properties.layers[key].fields[curIdx].type === 'drag_molecule')) {
             if (typeof curVal !== 'undefined') newProps.layers[key].fields[idx].value = curVal;
           }
           if (newProps.layers[key].fields[idx].type === 'system-defined') {
@@ -400,7 +400,7 @@ export default class GenericElDetails extends Component {
     const iconClass = (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false &&
-    currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
     const copyBtn = (genericEl.can_copy && !genericEl.isNew) ? (
       <CopyElementModal element={genericEl} defCol={defCol} />
     ) : null;

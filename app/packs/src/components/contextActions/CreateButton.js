@@ -11,7 +11,7 @@ import UIStore from 'src/components/stores/UIStore';
 import UserStore from 'src/components/stores/UserStore';
 import ElementActions from 'src/components/actions/ElementActions';
 import ClipboardActions from 'src/components/actions/ClipboardActions';
-import SamplesFetcher from 'src/components/fetchers/SamplesFetcher';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
 export default class CreateButton extends React.Component {
@@ -174,21 +174,21 @@ export default class CreateButton extends React.Component {
   }
 
   noSampleSelected() {
-    const {sample} = UIStore.getState()
+    const { sample } = UIStore.getState()
     return sample.checkedIds.size == 0 && sample.checkedAll == false
   }
 
   isAllCollection() {
-    const {currentCollection} = UIStore.getState()
+    const { currentCollection } = UIStore.getState()
     return currentCollection && currentCollection.label == 'All'
   }
 
   createElementOfType(type) {
-    const {currentCollection,isSync} = UIStore.getState();
+    const { currentCollection, isSync } = UIStore.getState();
     const uri = isSync
       ? `/scollection/${currentCollection.id}/${type}/new`
       : `/collection/${currentCollection.id}/${type}/new`;
-    Aviator.navigate(uri, { silent: true} );
+    Aviator.navigate(uri, { silent: true });
     const e = { type, params: { collectionID: currentCollection.id } };
     e.params[`${type}ID`] = 'new'
     const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
@@ -264,7 +264,7 @@ export default class CreateButton extends React.Component {
           <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
           <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
           <MenuItem onSelect={() => this.splitSelectionAsSubsamples()}
-                    disabled={this.noSampleSelected() || this.isAllCollection()}>
+            disabled={this.noSampleSelected() || this.isAllCollection()}>
             Split Sample
           </MenuItem>
           <MenuItem
@@ -274,7 +274,7 @@ export default class CreateButton extends React.Component {
             Split Wellplate
           </MenuItem>
         </SplitButton>
-    </div>
+      </div>
     )
   }
 }

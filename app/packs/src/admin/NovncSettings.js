@@ -5,22 +5,22 @@ import { Panel, Button, Table, Modal, Tooltip, OverlayTrigger, Row, Col } from '
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import NotificationActions from 'src/components/actions/NotificationActions';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NovncConfigContainer from 'src/admin/NovncConfigContainer';
 
 const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
 const tipRemoveConfig = <Tooltip id="remove_tooltip">remove config</Tooltip>;
 const Notification = props =>
-  (
-    NotificationActions.add({
-      title: `Device [${props.device.name}]`,
-      message: props.msg,
-      level: props.lvl,
-      position: 'tc',
-      dismissible: 'button',
-      uid: uuid.v4()
-    })
-  );
+(
+  NotificationActions.add({
+    title: `Device [${props.device.name}]`,
+    message: props.msg,
+    level: props.lvl,
+    position: 'tc',
+    dismissible: 'button',
+    uid: uuid.v4()
+  })
+);
 const NotificationError = props => Notification({ ...props, lvl: 'error' });
 
 class ModelConfig extends Component {
@@ -364,14 +364,14 @@ export default class NovncSettings extends Component {
           </Panel.Heading>
           <Table responsive hover bordered>
             <thead>
-              { tcolumn }
+              {tcolumn}
             </thead>
             <tbody>
-              { tbody }
+              {tbody}
             </tbody>
           </Table>
         </Panel>
-        { this.renderConfiModal() }
+        {this.renderConfiModal()}
       </div>
     );
   }

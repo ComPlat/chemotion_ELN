@@ -25,7 +25,7 @@ import UIStore from 'src/components/stores/UIStore';
 import UIActions from 'src/components/actions/UIActions';
 import { setReactionByType } from 'src/components/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/components/routesUtils';
-import ReactionSvgFetcher from 'src/components/fetchers/ReactionSvgFetcher';
+import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/components/utils/ElementUtils';
 import ExportSamplesBtn from 'src/components/ExportSamplesBtn';
@@ -59,7 +59,7 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    if(!reaction.reaction_svg_file) {
+    if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
   }
@@ -75,9 +75,9 @@ export default class ReactionDetails extends Component {
     const nextReaction = nextProps.reaction;
 
     if (nextReaction.id !== reaction.id ||
-        nextReaction.updated_at !== reaction.updated_at ||
-        nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
-        nextReaction.changed || nextReaction.editedSample) {
+      nextReaction.updated_at !== reaction.updated_at ||
+      nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
+      nextReaction.changed || nextReaction.editedSample) {
       this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
     }
   }
@@ -124,13 +124,13 @@ export default class ReactionDetails extends Component {
   }
 
   reactionIsValid() {
-    const {reaction} = this.state;
+    const { reaction } = this.state;
     return reaction.hasMaterials() && reaction.SMGroupValid();
   }
 
-  handleReactionChange(reaction, options={}) {
+  handleReactionChange(reaction, options = {}) {
     reaction.changed = true;
-    if(options.schemaChanged) {
+    if (options.schemaChanged) {
       this.setState({ reaction }, () => this.updateReactionSvg());
     } else {
       this.setState({ reaction });
@@ -158,11 +158,11 @@ export default class ReactionDetails extends Component {
     const uri = Aviator.getCurrentURI();
     const uriArray = uri.split(/\//);
     Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
-    sampleShowOrNew({ params: { sampleID: product.id} });
+    sampleShowOrNew({ params: { sampleID: product.id } });
   }
 
   handleProductChange(product, cb) {
-    let {reaction} = this.state
+    let { reaction } = this.state
 
     reaction.updateMaterial(product)
     reaction.changed = true
@@ -176,9 +176,9 @@ export default class ReactionDetails extends Component {
         Analysis:
         &nbsp;
         <span className="pseudo-link"
-           onClick={() => this.handleProductClick(product)}
-           style={{cursor: 'pointer'}}
-           title="Open sample window">
+          onClick={() => this.handleProductClick(product)}
+          style={{ cursor: 'pointer' }}
+          title="Open sample window">
           <i className="icon-sample" />&nbsp;{product.title()}
         </span>
       </span>
@@ -234,8 +234,8 @@ export default class ReactionDetails extends Component {
   extraTab(ind) {
     const reaction = this.state.reaction || {};
     const num = ind;
-    const NoName = XTabs["content"+num];
-    const TabName = XTabs["title"+num];
+    const NoName = XTabs["content" + num];
+    const TabName = XTabs["title" + num];
     return (
       <Tab eventKey={ind + 5} title={TabName} key={`sampleDetailsTab${ind + 3}`} >
         <ListGroupItem style={{ paddingBottom: 20 }}>
@@ -246,17 +246,18 @@ export default class ReactionDetails extends Component {
   }
 
   reactionSVG(reaction) {
-    if(!reaction.svgPath) {
+    if (!reaction.svgPath) {
       return false;
     } else {
       const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg' ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
-      if(reaction.hasMaterials()) {
+      if (reaction.hasMaterials()) {
         return (
-        <SvgFileZoomPan
-          duration={300}
-          resize={true}
-          {...svgProps}
-        />)}
+          <SvgFileZoomPan
+            duration={300}
+            resize={true}
+            {...svgProps}
+          />)
+      }
     }
   }
 
@@ -285,11 +286,11 @@ export default class ReactionDetails extends Component {
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span><i className="icon-reaction"/>&nbsp;{reaction.title()}</span>
+          <span><i className="icon-reaction" />&nbsp;{reaction.title()}</span>
         </OverlayTrigger>
         <ConfirmClose el={reaction} />
         <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
+          overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
           <Button
             bsStyle="warning"
             bsSize="xsmall"
@@ -303,11 +304,11 @@ export default class ReactionDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
+          overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-              onClick={() => this.handleSubmit()}
-              disabled={!permitOn(reaction) || !this.reactionIsValid()}
-              style={{display: hasChanged}} >
+            onClick={() => this.handleSubmit()}
+            disabled={!permitOn(reaction) || !this.reactionIsValid()}
+            style={{ display: hasChanged }} >
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
@@ -345,17 +346,17 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-cogs" />
           </Button>
         </OverlayTrigger>
-        <div style={{display: "inline-block", marginLeft: "10px"}}>
+        <div style={{ display: "inline-block", marginLeft: "10px" }}>
           {colLabel}
-          <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
+          <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
         </div>
-        <PrintCodeButton element={reaction}/>
+        <PrintCodeButton element={reaction} />
       </div>
     );
   }
 
   handleSelect(key) {
-    UIActions.selectTab({tabKey: key, type: 'reaction'});
+    UIActions.selectTab({ tabKey: key, type: 'reaction' });
     this.setState({
       activeTab: key
     })
@@ -404,12 +405,12 @@ export default class ReactionDetails extends Component {
     const { visible } = this.state;
     const tabContentsMap = {
       scheme: (
-        <Tab eventKey="scheme" title="Scheme"  key={`scheme_${reaction.id}`}>
+        <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
           <ReactionDetailsScheme
             reaction={reaction}
             onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
-            />
+          />
         </Tab>
       ),
       properties: (
@@ -479,7 +480,7 @@ export default class ReactionDetails extends Component {
 
     return (
       <Panel className="eln-panel-detail"
-             bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
+        bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
         <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
         <Panel.Body>
           {this.reactionSVG(reaction)}

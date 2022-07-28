@@ -4,7 +4,7 @@ import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy, orderBy } from 'lodash';
 import LoadingModal from 'src/components/common/LoadingModal';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { ElementField } from 'src/components/elements/ElementField';
 import LoadingActions from 'src/components/actions/LoadingActions';
 import AttrNewModal from 'src/admin/generic/AttrNewModal';
@@ -422,7 +422,7 @@ export default class GenericElementAdmin extends React.Component {
     if (!validateLayerInput(updates)) return;
     const { element } = this.state;
     let layer = element && element.properties_template
-    && element.properties_template.layers[layerKey];
+      && element.properties_template.layers[layerKey];
     layer = { ...layer, ...updates };
     element.properties_template.layers[`${layer.key}`] = layer;
     notification({ title: `Layer [${layer.key}]`, lvl: 'info', msg: 'This updates of this layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.' });
@@ -738,7 +738,7 @@ export default class GenericElementAdmin extends React.Component {
           </Panel.Heading>
           <Panel.Body>
             <div>
-              { selects }
+              {selects}
             </div>
           </Panel.Body>
         </Panel>
@@ -827,7 +827,7 @@ export default class GenericElementAdmin extends React.Component {
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
-          <Panel.Body><div>{ layers }</div></Panel.Body>
+          <Panel.Body><div>{layers}</div></Panel.Body>
         </Panel>
       </div>
     );
@@ -919,7 +919,7 @@ export default class GenericElementAdmin extends React.Component {
                 <th width="18%">Released at</th>
               </tr>
             </thead>
-            { tbody }
+            {tbody}
           </Table>
         </Panel.Heading>
       </Panel>
@@ -941,8 +941,8 @@ export default class GenericElementAdmin extends React.Component {
         &nbsp;
         <br />
         <div className="list-container-bottom">
-          { this.renderList() }
-          { this.renderPropPanel() }
+          {this.renderList()}
+          {this.renderPropPanel()}
           <SelectAttrNewModal
             showModal={this.state.showAddSelect}
             fnClose={this.handleSelectClose}

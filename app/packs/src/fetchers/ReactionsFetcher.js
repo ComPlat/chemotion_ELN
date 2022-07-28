@@ -2,13 +2,13 @@ import 'whatwg-fetch';
 import { indexOf, split } from 'lodash';
 import Immutable from 'immutable';
 
-import BaseFetcher from 'src/components/fetchers/BaseFetcher';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 import Reaction from 'src/components/models/Reaction';
 import UIStore from 'src/components/stores/UIStore';
 import NotificationActions from 'src/components/actions/NotificationActions';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/components/models/Literature';
-import GenericElsFetcher from 'src/components/fetchers/GenericElsFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -60,8 +60,8 @@ export default class ReactionsFetcher {
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
         .then(() => this.fetchById(json.reaction.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
 
     if (allFiles.length > 0) {
       let tasks = [];

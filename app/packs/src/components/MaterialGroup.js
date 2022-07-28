@@ -5,7 +5,7 @@ import VirtualizedSelect from 'react-virtualized-select';
 import Material from 'src/components/Material';
 import MaterialCalculations from 'src/components/MaterialCalculations';
 import ElementActions from 'src/components/actions/ElementActions';
-import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import Molecule from 'src/components/models/Molecule';
 import Reaction from 'src/components/models/Reaction';
 import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';
@@ -40,8 +40,8 @@ const MaterialGroup = ({
       ));
 
       if (materialGroup === 'products' &&
-          material.adjusted_loading &&
-          material.error_mass) {
+        material.adjusted_loading &&
+        material.error_mass) {
         contents.push((
           <MaterialCalculations
             material={material}
@@ -54,7 +54,7 @@ const MaterialGroup = ({
   }
 
   if (materialGroup === 'solvents' ||
-      materialGroup === 'purification_solvents') {
+    materialGroup === 'purification_solvents') {
     return (
       <SolventsMaterialGroup
         contents={contents}
@@ -182,7 +182,7 @@ const GeneralMaterialGroup = ({
           <col style={{ width: '2%' }} />
           <col style={{ width: showLoadingColumn ? '9%' : '10%' }} />
           <col style={{ width: showLoadingColumn ? '11%' : '12%' }} />
-          { showLoadingColumn && <col style={{ width: '11%' }} /> }
+          {showLoadingColumn && <col style={{ width: '11%' }} />}
           <col style={{ width: showLoadingColumn ? '11%' : '12%' }} />
           <col style={{ width: showLoadingColumn ? '12%' : '13%' }} />
         </colgroup>
@@ -190,16 +190,16 @@ const GeneralMaterialGroup = ({
           <tr>
             <th>{addSampleButton}</th>
             <th>{headers.group}</th>
-            { isReactants && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th> }
-            { !isReactants && <th>{refTHead}</th> }
+            {isReactants && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>}
+            {!isReactants && <th>{refTHead}</th>}
             <th>{headers.show_label}</th>
-            { !isReactants && <th>{headers.tr}</th> }
-            { !isReactants && <th>{headers.amount}</th> }
-            { !isReactants && <th /> }
-            { !isReactants && <th /> }
-            { showLoadingColumn && !isReactants && <th>{headers.loading}</th> }
-            { !isReactants && <th>{headers.concn}</th> }
-            {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
+            {!isReactants && <th>{headers.tr}</th>}
+            {!isReactants && <th>{headers.amount}</th>}
+            {!isReactants && <th />}
+            {!isReactants && <th />}
+            {showLoadingColumn && !isReactants && <th>{headers.loading}</th>}
+            {!isReactants && <th>{headers.concn}</th>}
+            {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th>}
           </tr>
         </thead>
         <tbody>

@@ -4,7 +4,7 @@ import React from 'react';
 import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
-import MoleculesFetcher from 'src/components/fetchers/MoleculesFetcher';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import NotificationActions from 'src/components/actions/NotificationActions';
 import LoadingActions from 'src/components/actions/LoadingActions';
 

@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import { Button, Panel, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
-import UsersFetcher from 'src/components/fetchers/UsersFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/components/actions/NotificationActions';
 
 const OmniauthCredential = () => {

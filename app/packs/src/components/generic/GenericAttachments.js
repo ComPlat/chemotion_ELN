@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { FormGroup, Button, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
-import EditorFetcher from 'src/components/fetchers/EditorFetcher';
+import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageModal from 'src/components/common/ImageModal';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import { previewAttachmentImage } from 'src/components/utils/imageHelper';
@@ -152,7 +152,7 @@ export default class GenericAttachments extends Component {
             <ListGroupItem key={attachment.id}>
               {this.renderListGroupItem(attachment)}
             </ListGroupItem>
-            ))}
+          ))}
         </ListGroup>
       );
     }

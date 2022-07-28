@@ -6,7 +6,7 @@ import { startsWith, endsWith } from 'lodash';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import NotificationActions from 'src/components/actions/NotificationActions';
-import AdminFetcher from 'src/components/fetchers/AdminFetcher';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 const tipCopyClipboard = <Tooltip id="copy_tooltip">copy to clipboard</Tooltip>;
 const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
@@ -15,70 +15,70 @@ const tipTestConnect = <Tooltip id="test_tooltip">test connection</Tooltip>;
 const optionsMethod = ['filewatchersftp', 'filewatcherlocal', 'folderwatchersftp', 'folderwatcherlocal'];
 const optionsAuth = ['password', 'keyfile'];
 const Notification = props =>
-  (
-    NotificationActions.add({
-      title: `Device [${props.device.name}]`,
-      message: props.msg,
-      level: props.lvl,
-      position: 'tc',
-      dismissible: 'button',
-      uid: uuid.v4()
-    })
-  );
+(
+  NotificationActions.add({
+    title: `Device [${props.device.name}]`,
+    message: props.msg,
+    level: props.lvl,
+    position: 'tc',
+    dismissible: 'button',
+    uid: uuid.v4()
+  })
+);
 const NotificationError = props => Notification({ ...props, lvl: 'error' });
 const NotificationWarn = props => Notification({ ...props, lvl: 'warning' });
 const ListLocalCollector = props =>
-  (
-    <div style={{ margin: '5px', padding: '5px', border: 'thin dashed darkred' }}>
-      <h6 style={{ margin: 'unset' }}><b>Local Collector Dir Configurtaion</b></h6>
-      {
-        props.localCollector.map((c, i) => (
-          <div key={uuid.v4()}>
-            <FormGroup bsSize="small" style={{ marginBottom: 'unset' }}>
-              <InputGroup>
-                <InputGroup.Button>
-                  <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
-                    <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
-                      <i className="fa fa-clipboard" />
-                    </Button>
-                  </OverlayTrigger>
-                </InputGroup.Button>
-                <FormControl
-                  id={`copy-input-${i}`}
-                  type="text"
-                  value={c.path}
-                  readOnly
-                  style={{ backgroundColor: 'unset', border: 'unset', boxShadow: 'none' }}
-                />
-              </InputGroup>
-            </FormGroup>
-          </div>
-        ))
-      }
-    </div>
-  );
+(
+  <div style={{ margin: '5px', padding: '5px', border: 'thin dashed darkred' }}>
+    <h6 style={{ margin: 'unset' }}><b>Local Collector Dir Configurtaion</b></h6>
+    {
+      props.localCollector.map((c, i) => (
+        <div key={uuid.v4()}>
+          <FormGroup bsSize="small" style={{ marginBottom: 'unset' }}>
+            <InputGroup>
+              <InputGroup.Button>
+                <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
+                  <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
+                    <i className="fa fa-clipboard" />
+                  </Button>
+                </OverlayTrigger>
+              </InputGroup.Button>
+              <FormControl
+                id={`copy-input-${i}`}
+                type="text"
+                value={c.path}
+                readOnly
+                style={{ backgroundColor: 'unset', border: 'unset', boxShadow: 'none' }}
+              />
+            </InputGroup>
+          </FormGroup>
+        </div>
+      ))
+    }
+  </div>
+);
 
 ListLocalCollector.propTypes = {
   localCollector: PropTypes.arrayOf(PropTypes.object).isRequired
 };
 
 const DropdownSelection = props =>
-  (
-    <DropdownButton
-      title={props.selected || props.placeholder}
-      key={props.selected}
-      id={`dropdown-${uuid.v4()}`}
-      onSelect={props.onSelect}
-    >
-      {
-        props.options.map(element => (
-          <MenuItem key={element} eventKey={element} disabled={props.disabled}>
-            {element}
-          </MenuItem>
-        ))
-        }
-    </DropdownButton>
-  );
+(
+  <DropdownButton
+    title={props.selected || props.placeholder}
+    key={props.selected}
+    id={`dropdown-${uuid.v4()}`}
+    onSelect={props.onSelect}
+  >
+    {
+      props.options.map(element => (
+        <MenuItem key={element} eventKey={element} disabled={props.disabled}>
+          {element}
+        </MenuItem>
+      ))
+    }
+  </DropdownButton>
+);
 
 DropdownSelection.propTypes = {
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -100,7 +100,7 @@ class ModelConfig extends Component {
     this.state = {
       selectedMethod: props.device.data.method || null,
       selectedAuth: (props.device.data.method_params && props.device.data.method_params.authen)
-      || 'password',
+        || 'password',
     };
     this.handleSave = this.handleSave.bind(this);
     this.handleSelectMethod = this.handleSelectMethod.bind(this);
@@ -531,7 +531,7 @@ export default class DataCollector extends Component {
         <td> {(device.data && device.data.method_params ? device.data.method_params.dir : '')} </td>
         <td>
           {(device.data && device.data.method_params && device.data.method_params.number_of_files ?
-          device.data.method_params.number_of_files : 0)}
+            device.data.method_params.number_of_files : 0)}
         </td>
         <td> {device.id} </td>
       </tr>
@@ -547,14 +547,14 @@ export default class DataCollector extends Component {
           </Panel.Heading>
           <Table responsive hover bordered>
             <thead>
-              { tcolumn }
+              {tcolumn}
             </thead>
             <tbody>
-              { tbody }
+              {tbody}
             </tbody>
           </Table>
         </Panel>
-        { this.renderConfiModal() }
+        {this.renderConfiModal()}
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import alt from 'src/components/alt';
-import AttachmentFetcher from 'src/components/fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 class QcActions {
   setLoading() {

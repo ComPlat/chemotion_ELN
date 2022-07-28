@@ -1,14 +1,16 @@
 import alt from 'src/components/alt';
-import PermissionsFetcher from 'src/components/fetchers/PermissionsFetcher';
+import PermissionsFetcher from 'src/fetchers/PermissionsFetcher';
 
 class PermissionActions {
   fetchPermissionStatus(params) {
-    return (dispatch) => { PermissionsFetcher.fetchPermissionStatus(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
+    return (dispatch) => {
+      PermissionsFetcher.fetchPermissionStatus(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
 }
