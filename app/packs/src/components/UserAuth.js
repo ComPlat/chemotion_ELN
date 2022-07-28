@@ -6,12 +6,12 @@ import moment from 'moment';
 import Select from 'react-select';
 import _ from 'lodash';
 
-import UserActions from 'src/components/actions/UserActions';
-import UserStore from 'src/components/stores/UserStore';
+import UserActions from 'src/alt-stores/actions/UserActions';
+import UserStore from 'src/alt-stores/stores/UserStore';
 import Functions from 'src/components/utils/Functions';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import NotificationActions from 'src/components/actions/NotificationActions';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GroupElement from 'src/components/GroupElement';

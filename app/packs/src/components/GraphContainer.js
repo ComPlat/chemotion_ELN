@@ -4,10 +4,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Button, Accordion } from 'react-bootstrap';
 
-import ReportActions from 'src/components/actions/ReportActions';
-import DetailActions from 'src/components/actions/DetailActions';
-import UIStore from 'src/components/stores/UIStore';
-import ReportStore from 'src/components/stores/ReportStore';
+import ReportActions from 'src/alt-stores/actions/ReportActions';
+import DetailActions from 'src/alt-stores/actions/DetailActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import ReportStore from 'src/alt-stores/stores/ReportStore';
 
 import ComputedPropsGraphContainer from 'src/components/computed_props/ComputedPropsGraphContainer';
 

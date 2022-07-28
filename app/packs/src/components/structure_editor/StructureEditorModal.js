@@ -9,8 +9,8 @@ import {
   ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
-import UserStore from 'src/components/stores/UserStore';
-import UIStore from 'src/components/stores/UIStore';
+import UserStore from 'src/alt-stores/stores/UserStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structure_editor/StructureEditorSet';
 import ChemDrawEditor from 'src/components/structure_editor/ChemDrawEditor';

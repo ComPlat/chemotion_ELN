@@ -8,12 +8,12 @@ import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import { stopBubble } from 'src/components/utils/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
-import SpectraActions from 'src/components/actions/SpectraActions';
-import LoadingActions from 'src/components/actions/LoadingActions';
+import SpectraActions from 'src/alt-stores/actions/SpectraActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import { BuildSpcInfos, JcampIds } from 'src/components/utils/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/components/utils/ElementUtils';
 import { contentToText } from 'src/components/utils/quillFormat';
-import UIStore from 'src/components/stores/UIStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { previewContainerImage } from 'src/components/utils/imageHelper';
 

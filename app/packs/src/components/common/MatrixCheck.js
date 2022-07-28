@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import UIStore from 'src/components/stores/UIStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 
 const UserMatrixCheck = (matrix = 0, id = 0) => {
   if (matrix <= 0 || id <= 0) {

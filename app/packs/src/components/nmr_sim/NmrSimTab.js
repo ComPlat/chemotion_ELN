@@ -2,8 +2,8 @@ import React from 'react';
 import { Button, ButtonToolbar, ListGroup, ListGroupItem } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-import NmrSimActions from 'src/components/actions/NmrSimActions';
-import NmrSimStore from 'src/components/stores/NmrSimStore';
+import NmrSimActions from 'src/alt-stores/actions/NmrSimActions';
+import NmrSimStore from 'src/alt-stores/stores/NmrSimStore';
 import LineChartWrapper from 'src/components/nmr_sim/LineChartWrapper';
 import { ViewAtNmrdb, LinkToNmrdb } from 'src/components/nmr_sim/NmrdbReference';
 

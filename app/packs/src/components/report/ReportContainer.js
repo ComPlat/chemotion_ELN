@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Panel, Tabs, Tab } from 'react-bootstrap';
-import LoadingActions from 'src/components/actions/LoadingActions';
-import ReportActions from 'src/components/actions/ReportActions';
-import ReportStore from 'src/components/stores/ReportStore';
-import UIStore from 'src/components/stores/UIStore';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import ReportActions from 'src/alt-stores/actions/ReportActions';
+import ReportStore from 'src/alt-stores/stores/ReportStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 import Setting from 'src/components/report/Setting';
 import Previews from 'src/components/report/Previews';
 import Orders from 'src/components/report/Orders';

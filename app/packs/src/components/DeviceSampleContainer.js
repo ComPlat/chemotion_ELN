@@ -1,7 +1,7 @@
 import React from 'react'
 import {DropTarget} from 'react-dnd'
 import DragDropItemTypes from 'src/components/DragDropItemTypes'
-import ElementActions from 'src/components/actions/ElementActions'
+import ElementActions from 'src/alt-stores/actions/ElementActions'
 import {ButtonGroup, Button} from 'react-bootstrap';
 import { chmoConversions } from 'src/components/OlsComponent';
 

@@ -5,7 +5,7 @@ import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
 import AttachmentContainer from 'src/components/inbox/AttachmentContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import InboxActions from 'src/components/actions/InboxActions';
+import InboxActions from 'src/alt-stores/actions/InboxActions';
 
 const dataSource = {
   beginDrag(props) {

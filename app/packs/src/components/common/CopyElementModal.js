@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import { Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 
-import ClipboardActions from 'src/components/actions/ClipboardActions';
+import ClipboardActions from 'src/alt-stores/actions/ClipboardActions';
 import CollectionSelect from 'src/components/common/CollectionSelect';
-import NotificationActions from 'src/components/actions/NotificationActions';
-import ElementActions from 'src/components/actions/ElementActions';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
 
 const Notification = props =>
   (

@@ -1,8 +1,8 @@
 import React from 'react';
 import {Label, Modal, Button} from 'react-bootstrap';
 
-import ElementActions from 'src/components/actions/ElementActions';
-import ElementStore from 'src/components/stores/ElementStore';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
+import ElementStore from 'src/alt-stores/stores/ElementStore';
 
 export default class ElementReactionLabels extends React.Component {
   constructor(props) {

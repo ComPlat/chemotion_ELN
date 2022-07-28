@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
-import UserStore from 'src/components/stores/UserStore';
+import UserStore from 'src/alt-stores/stores/UserStore';
 
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 

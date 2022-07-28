@@ -1,6 +1,6 @@
 import React from 'react';
 import {ButtonGroup, Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
-import ElementActions from 'src/components/actions/ElementActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
 
 
 const tooltip = <Tooltip id="device_button">Device-measurement</Tooltip>

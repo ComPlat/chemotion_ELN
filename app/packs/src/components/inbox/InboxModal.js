@@ -2,9 +2,9 @@ import React from 'react';
 import Draggable from 'react-draggable';
 import { Badge, Button, Panel, Glyphicon } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import InboxStore from 'src/components/stores/InboxStore';
-import InboxActions from 'src/components/actions/InboxActions';
-import LoadingActions from 'src/components/actions/LoadingActions';
+import InboxStore from 'src/alt-stores/stores/InboxStore';
+import InboxActions from 'src/alt-stores/actions/InboxActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 
 import DeviceBox from 'src/components/inbox/DeviceBox';
 import UnsortedBox from 'src/components/inbox/UnsortedBox';

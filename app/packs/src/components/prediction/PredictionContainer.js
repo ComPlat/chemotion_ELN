@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Tabs, Tab } from 'react-bootstrap';
-import PredictionActions from 'src/components/actions/PredictionActions';
-import PredictionStore from 'src/components/stores/PredictionStore';
-import UIStore from 'src/components/stores/UIStore';
+import PredictionActions from 'src/alt-stores/actions/PredictionActions';
+import PredictionStore from 'src/alt-stores/stores/PredictionStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 
 import Content from 'src/components/prediction/Content';
 import PanelHeader from 'src/components/common/PanelHeader';

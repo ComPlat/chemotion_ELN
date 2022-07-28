@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-import DetailActions from 'src/components/actions/DetailActions';
+import DetailActions from 'src/alt-stores/actions/DetailActions';
 
 export default class ConfirmClose extends Component {
   constructor(props) {

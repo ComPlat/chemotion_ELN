@@ -6,11 +6,11 @@ import {
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
 
-import UIStore from 'src/components/stores/UIStore';
-import UIActions from 'src/components/actions/UIActions';
-import ElementActions from 'src/components/actions/ElementActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import UIActions from 'src/alt-stores/actions/UIActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
 
-import ElementStore from 'src/components/stores/ElementStore';
+import ElementStore from 'src/alt-stores/stores/ElementStore';
 import ElementAllCheckbox from 'src/components/ElementAllCheckbox';
 import ElementsTableEntries from 'src/components/ElementsTableEntries';
 import ElementsTableSampleEntries from 'src/components/ElementsTableSampleEntries';

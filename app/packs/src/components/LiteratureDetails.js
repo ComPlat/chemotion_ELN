@@ -30,12 +30,12 @@ import {
 import Literature from 'src/models/Literature';
 import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
-import UIStore from 'src/components/stores/UIStore';
-import UserStore from 'src/components/stores/UserStore';
-import DetailActions from 'src/components/actions/DetailActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import UserStore from 'src/alt-stores/stores/UserStore';
+import DetailActions from 'src/alt-stores/actions/DetailActions';
 import PanelHeader from 'src/components/common/PanelHeader';
 import { stopEvent } from 'src/components/utils/DomHelper';
-import NotificationActions from 'src/components/actions/NotificationActions';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
 
 const Cite = require('citation-js');
 

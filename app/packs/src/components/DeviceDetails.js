@@ -1,8 +1,8 @@
 import React from 'react'
 import {Panel, PanelGroup , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import DeviceSampleContainer from 'src/components/DeviceSampleContainer'
-import ElementActions from 'src/components/actions/ElementActions'
-import DetailActions from 'src/components/actions/DetailActions'
+import ElementActions from 'src/alt-stores/actions/ElementActions'
+import DetailActions from 'src/alt-stores/actions/DetailActions'
 import DeviceManagement from 'src/components/DeviceManagement'
 
 

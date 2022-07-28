@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import UIStore from 'src/components/stores/UIStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 import { wellplateShowOrNew } from 'src/components/routesUtils';
 import EmbeddedWellplate from 'src/components/EmbeddedWellplate';
 import Wellplate from 'src/models/Wellplate';

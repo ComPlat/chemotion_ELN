@@ -4,7 +4,7 @@ import uuid from 'uuid';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import { Tooltip, OverlayTrigger, Popover } from 'react-bootstrap';
-import UIStore from 'src/components/stores/UIStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 
 const handleSampleClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();

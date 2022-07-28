@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 
-import NotificationActions from 'src/components/actions/NotificationActions';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
 
 export default class ReportTemplateFetcher {
 

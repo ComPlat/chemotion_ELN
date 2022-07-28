@@ -2,9 +2,9 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import { Dropdown, Button, MenuItem, Glyphicon } from 'react-bootstrap';
 
-import CollectionActions from 'src/components/actions/CollectionActions';
-import ElementActions from 'src/components/actions/ElementActions';
-import UIActions from 'src/components/actions/UIActions';
+import CollectionActions from 'src/alt-stores/actions/CollectionActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
+import UIActions from 'src/alt-stores/actions/UIActions';
 import ModalImport from 'src/components/contextActions/ModalImport';
 import ModalImportChemScanner from 'src/components/contextActions/ModalImportChemScanner';
 import ModalExport from 'src/components/contextActions/ModalExport';

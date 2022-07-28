@@ -2,8 +2,8 @@ import React from 'react';
 import Tree from 'react-ui-tree';
 import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managing_actions/ManagingModalSharing';
-import CollectionStore from 'src/components/stores/CollectionStore';
-import CollectionActions from 'src/components/actions/CollectionActions';
+import CollectionStore from 'src/alt-stores/stores/CollectionStore';
+import CollectionActions from 'src/alt-stores/actions/CollectionActions';
 import UserInfoIcon from 'src/components/UserInfoIcon';
 import PermissionIcons from 'src/components/PermissionIcons'
 

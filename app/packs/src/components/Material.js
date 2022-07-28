@@ -6,7 +6,7 @@ import { compose } from 'redux';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo';
 import SampleName from 'src/components/common/SampleName';
-import ElementActions from 'src/components/actions/ElementActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
 import { UrlSilentNavigation, SampleCode } from 'src/components/utils/ElementUtils';
 import { correctPrefix, validDigit } from 'src/components/utils/MathUtils';
 import Reaction from 'src/models/Reaction';

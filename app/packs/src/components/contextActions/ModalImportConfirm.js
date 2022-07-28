@@ -8,7 +8,7 @@ import {
 } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
-import ElementActions from 'src/components/actions/ElementActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
 
 
 const MyCell = ({col,data,rowIndex, ...props})=>{
@@ -206,7 +206,7 @@ export default class ModalImportConfirm extends React.Component {
             editable:  false,
             filter: 'number',
             width: 300,
-            resizable: true 
+            resizable: true
           },
         }
 

@@ -9,8 +9,8 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 
-import TextTemplateStore from 'src/components/stores/TextTemplateStore';
-import TextTemplateActions from 'src/components/actions/TextTemplateActions';
+import TextTemplateStore from 'src/alt-stores/stores/TextTemplateStore';
+import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';
 
 import ContainerDatasets from 'src/components/ContainerDatasets';
 import QuillViewer from 'src/components/QuillViewer';
@@ -36,7 +36,7 @@ export default class ContainerComponent extends Component {
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
-    
+
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
   }
@@ -106,7 +106,7 @@ export default class ContainerComponent extends Component {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
   }
-  
+
   handleAddLink(link) {
     const { container } = this.state;
     if (container.extended_metadata['hyperlinks'] == null) {

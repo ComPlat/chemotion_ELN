@@ -3,8 +3,8 @@ import _ from 'lodash';
 import PropTypes from 'prop-types';
 import { Dropdown, MenuItem } from 'react-bootstrap';
 
-import ElementActions from 'src/components/actions/ElementActions';
-import UserStore from 'src/components/stores/UserStore';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
+import UserStore from 'src/alt-stores/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
 const showReportContainer = () => {

@@ -1,15 +1,15 @@
 import React from 'react';
 import { Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstrap';
 import update from 'immutability-helper';
-import CollectionStore from 'src/components/stores/CollectionStore';
-import CollectionActions from 'src/components/actions/CollectionActions';
+import CollectionStore from 'src/alt-stores/stores/CollectionStore';
+import CollectionActions from 'src/alt-stores/actions/CollectionActions';
 import CollectionSubtree from 'src/components/CollectionSubtree';
-import UIActions from 'src/components/actions/UIActions';
-import InboxActions from 'src/components/actions/InboxActions';
-import LoadingActions from 'src/components/actions/LoadingActions';
-import UIStore from 'src/components/stores/UIStore';
-import ElementStore from 'src/components/stores/ElementStore';
-import InboxStore from 'src/components/stores/InboxStore';
+import UIActions from 'src/alt-stores/actions/UIActions';
+import InboxActions from 'src/alt-stores/actions/InboxActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import ElementStore from 'src/alt-stores/stores/ElementStore';
+import InboxStore from 'src/alt-stores/stores/InboxStore';
 import Xdiv from 'src/components/extra/CollectionTreeXdiv';
 import UserInfos from 'src/components/UserInfos';
 

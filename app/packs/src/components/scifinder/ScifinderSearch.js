@@ -5,8 +5,8 @@ import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import NotificationActions from 'src/components/actions/NotificationActions';
-import LoadingActions from 'src/components/actions/LoadingActions';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 
 const notify = (params) => {
   NotificationActions.add({

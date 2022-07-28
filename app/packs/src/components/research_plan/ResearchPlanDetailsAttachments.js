@@ -1,8 +1,8 @@
 import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import ElementActions from 'src/components/actions/ElementActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
 import ImageModal from 'src/components/common/ImageModal';
-import LoadingActions from 'src/components/actions/LoadingActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';

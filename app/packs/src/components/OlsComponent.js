@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import TreeSelect from 'antd/lib/tree-select';
 import PropTypes from 'prop-types';
-import UserStore from 'src/components/stores/UserStore';
+import UserStore from 'src/alt-stores/stores/UserStore';
 
 const filterTreeNode = (input, child) => {
   return String(child.props.search && child.props.search.toLowerCase()).indexOf(input && input.toLowerCase()) !== -1;

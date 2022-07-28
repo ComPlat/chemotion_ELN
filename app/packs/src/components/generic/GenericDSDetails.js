@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { findIndex, cloneDeep } from 'lodash';
 import { Panel, Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import UserStore from 'src/components/stores/UserStore';
+import UserStore from 'src/alt-stores/stores/UserStore';
 import { LayersLayout } from 'src/components/generic/GenericElCommon';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { genUnits, toBool, toNum, unitConversion, absOlsTermLabel } from 'src/admin/generic/Utils';

@@ -1,15 +1,15 @@
 import Immutable from 'immutable';
 import React from 'react';
 import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import KeyboardActions from 'src/components/actions/KeyboardActions';
-import UIActions from 'src/components/actions/UIActions';
-import UserActions from 'src/components/actions/UserActions';
+import KeyboardActions from 'src/alt-stores/actions/KeyboardActions';
+import UIActions from 'src/alt-stores/actions/UIActions';
+import UserActions from 'src/alt-stores/actions/UserActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ElementsTable from 'src/components/ElementsTable';
 import ElementsTableSettings from 'src/components/ElementsTableSettings';
-import ElementStore from 'src/components/stores/ElementStore';
-import UIStore from 'src/components/stores/UIStore';
-import UserStore from 'src/components/stores/UserStore';
+import ElementStore from 'src/alt-stores/stores/ElementStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import UserStore from 'src/alt-stores/stores/UserStore';
 import ArrayUtils from 'src/components/utils/ArrayUtils';
 
 

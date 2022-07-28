@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { Row, Col } from 'react-bootstrap';
-import UIActions from 'src/components/actions/UIActions';
-import PredictionActions from 'src/components/actions/PredictionActions';
+import UIActions from 'src/alt-stores/actions/UIActions';
+import PredictionActions from 'src/alt-stores/actions/PredictionActions';
 import ContentInputs from 'src/components/prediction/ContentInputs';
 import ContentOutputs from 'src/components/prediction/ContentOutputs';
 

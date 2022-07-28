@@ -4,11 +4,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import FormatComponent from 'src/components/FormatComponent';
-import ReportActions from 'src/components/actions/ReportActions';
-import DetailActions from 'src/components/actions/DetailActions';
-import ElementActions from 'src/components/actions/ElementActions';
-import UIStore from 'src/components/stores/UIStore';
-import ReportStore from 'src/components/stores/ReportStore';
+import ReportActions from 'src/alt-stores/actions/ReportActions';
+import DetailActions from 'src/alt-stores/actions/DetailActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import ReportStore from 'src/alt-stores/stores/ReportStore';
 import { formatAnalysisContent } from 'src/components/utils/ElementUtils';
 
 function extractAnalyses(listEls) {

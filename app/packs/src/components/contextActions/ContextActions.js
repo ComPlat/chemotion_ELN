@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ButtonGroup } from 'react-bootstrap';
-import UIStore from 'src/components/stores/UIStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 import CreateButton from 'src/components/contextActions/CreateButton';
 import ReportUtilButton from 'src/components/contextActions/ReportUtilButton';
 import ExportImportButton from 'src/components/contextActions/ExportImportButton';
@@ -37,7 +37,7 @@ export default class ContextActions extends React.Component {
 
   isCreateDisabled() {
     const {currentCollection} = this.state.uiState;
-    return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked) || 
+    return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked) ||
     (currentCollection.is_shared && currentCollection.is_synchronized == false) ||  (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write)) ;
   }
 

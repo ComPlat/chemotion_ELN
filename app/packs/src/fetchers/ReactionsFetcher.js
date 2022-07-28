@@ -4,8 +4,8 @@ import Immutable from 'immutable';
 
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import Reaction from 'src/models/Reaction';
-import UIStore from 'src/components/stores/UIStore';
-import NotificationActions from 'src/components/actions/NotificationActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';

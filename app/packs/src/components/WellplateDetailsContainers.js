@@ -5,7 +5,7 @@ import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton'
 
-import TextTemplateActions from 'src/components/actions/TextTemplateActions';
+import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';
 
 export default class WellplateDetailsContainers extends Component {
   constructor(props) {

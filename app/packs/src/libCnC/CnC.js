@@ -6,8 +6,8 @@ import { uniq } from 'lodash';
 // import Immutable from 'immutable';
 
 import Navigation from 'src/libCnC/Navigation';
-import DeviceActions from 'src/components/actions/UserActions';
-import DeviceStore from 'src/components/stores/UserStore';
+import DeviceActions from 'src/alt-stores/actions/UserActions';
+import DeviceStore from 'src/alt-stores/stores/UserStore';
 import FocusNovnc from 'src/components/FocusNovnc';
 import { ConnectedBtn, DisconnectedBtn } from 'src/components/NovncStatus';
 import UsersFetcher from 'src/fetchers/UsersFetcher';

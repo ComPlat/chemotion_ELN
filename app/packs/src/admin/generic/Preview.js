@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { Badge, Col } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
 import { GenProperties, LayersLayout } from 'src/components/generic/GenericElCommon';
-import LoadingActions from 'src/components/actions/LoadingActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import { ButtonTooltip, ButtonConfirm, unitConversion, inputEventVal, genUnits } from 'src/admin/generic/Utils';
 import Utils from 'src/components/utils/Functions';
 

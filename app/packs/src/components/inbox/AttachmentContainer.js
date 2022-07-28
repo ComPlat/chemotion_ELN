@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import InboxActions from 'src/components/actions/InboxActions';
+import InboxActions from 'src/alt-stores/actions/InboxActions';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import Utils from 'src/components/utils/Functions';
 
 import MoveToAnalysisButton from 'src/components/inbox/MoveToAnalysisButton';
-import InboxStore from 'src/components//stores/InboxStore';
+import InboxStore from 'src/alt-stores/stores/InboxStore';
 import ArrayUtils from 'src/components//utils/ArrayUtils';
 
 const dataSource = {
@@ -143,7 +143,7 @@ class AttachmentContainer extends Component {
             largerInbox={largerInbox}
             sourceType={sourceType}
           />
-          ) : null }
+        ) : null}
         <OverlayTrigger placement="top" overlay={filenameTooltip} >
           <span
             className="text-info fa fa-arrows"
@@ -153,7 +153,7 @@ class AttachmentContainer extends Component {
           </span>
         </OverlayTrigger>
         <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-          {moment(attachment.created_at).format('DD.MM.YYYY HH:mm') }
+          {moment(attachment.created_at).format('DD.MM.YYYY HH:mm')}
         </span>
       </div>,
       { dropEffect: 'move' }

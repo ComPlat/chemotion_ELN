@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Panel, Button, Table, Modal, Tooltip, OverlayTrigger, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
-import NotificationActions from 'src/components/actions/NotificationActions';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NovncConfigContainer from 'src/admin/NovncConfigContainer';
 

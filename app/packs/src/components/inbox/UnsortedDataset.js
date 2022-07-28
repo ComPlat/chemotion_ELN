@@ -4,7 +4,7 @@ import { Row, Col, Table, ListGroup, ListGroupItem, Button, ButtonToolbar } from
 import Dropzone from 'react-dropzone';
 import Utils from 'src/components/utils/Functions';
 
-import InboxActions from 'src/components/actions/InboxActions';
+import InboxActions from 'src/alt-stores/actions/InboxActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Attachment from 'src/models/Attachment';
 import Container from 'src/models/Container';

@@ -3,7 +3,7 @@ import { Col } from 'react-bootstrap';
 
 import List from 'src/components/List';
 import ElementDetails from 'src/components/ElementDetails';
-import ElementStore from 'src/components/stores/ElementStore';
+import ElementStore from 'src/alt-stores/stores/ElementStore';
 
 export default class Elements extends Component {
   constructor(props) {

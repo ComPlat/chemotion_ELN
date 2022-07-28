@@ -7,10 +7,10 @@ import {
 import Aviator from 'aviator';
 
 import { elementShowOrNew } from 'src/components/routesUtils';
-import UIStore from 'src/components/stores/UIStore';
-import UserStore from 'src/components/stores/UserStore';
-import ElementActions from 'src/components/actions/ElementActions';
-import ClipboardActions from 'src/components/actions/ClipboardActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import UserStore from 'src/alt-stores/stores/UserStore';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
+import ClipboardActions from 'src/alt-stores/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 

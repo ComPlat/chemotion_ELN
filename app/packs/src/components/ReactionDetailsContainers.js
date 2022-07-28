@@ -16,12 +16,12 @@ import { contentToText } from 'src/components/utils/quillFormat';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { previewContainerImage } from 'src/components/utils/imageHelper';
 import { JcampIds, BuildSpcInfos } from 'src/components/utils/SpectraHelper';
-import UIStore from 'src/components/stores/UIStore';
-import SpectraActions from 'src/components/actions/SpectraActions';
-import LoadingActions from 'src/components/actions/LoadingActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import SpectraActions from 'src/alt-stores/actions/SpectraActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import ViewSpectra from 'src/components/ViewSpectra';
 
-import TextTemplateActions from 'src/components/actions/TextTemplateActions';
+import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';
 
 const nmrMsg = (reaction, container) => {
   if (container.extended_metadata &&

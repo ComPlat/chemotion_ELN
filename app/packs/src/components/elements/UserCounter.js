@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Row, Col, Panel, Button, FormControl } from 'react-bootstrap';
 import uuid from 'uuid';
-import UserStore from 'src/components/stores/UserStore';
-import UserActions from 'src/components/actions/UserActions';
+import UserStore from 'src/alt-stores/stores/UserStore';
+import UserActions from 'src/alt-stores/actions/UserActions';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 

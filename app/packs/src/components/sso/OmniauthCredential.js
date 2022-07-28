@@ -5,7 +5,7 @@ import { Button, Panel, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import NotificationActions from 'src/components/actions/NotificationActions';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
 
 const OmniauthCredential = () => {
   const [provider, setProvider] = useState('');

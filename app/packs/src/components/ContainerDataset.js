@@ -7,11 +7,11 @@ import { findIndex, cloneDeep } from 'lodash';
 import Utils from 'src/components/utils/Functions';
 import Attachment from 'src/models/Attachment';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import UserStore from 'src/components/stores/UserStore';
+import UserStore from 'src/alt-stores/stores/UserStore';
 import GenericDS from 'src/models/GenericDS';
 import GenericDSDetails from 'src/components/generic/GenericDSDetails';
 import { absOlsTermId } from 'src/admin/generic/Utils';
-import InboxActions from 'src/components/actions/InboxActions';
+import InboxActions from 'src/alt-stores/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import ChildOverlay from 'src/components/managing_actions/ChildOverlay';
 

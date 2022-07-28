@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {Button, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
-import UIStore from 'src/components/stores/UIStore';
-import CollectionStore from 'src/components/stores/CollectionStore';
-import CollectionActions from 'src/components/actions/CollectionActions';
+import UIStore from 'src/alt-stores/stores/UIStore';
+import CollectionStore from 'src/alt-stores/stores/CollectionStore';
+import CollectionActions from 'src/alt-stores/actions/CollectionActions';
 import ReactDOM from 'react-dom';
 import Select from 'react-select'
 

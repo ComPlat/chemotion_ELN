@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import ElementActions from 'src/components/actions/ElementActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
 import { UrlSilentNavigation } from 'src/components/utils/ElementUtils';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 

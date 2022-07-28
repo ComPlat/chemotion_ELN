@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Modal } from 'react-bootstrap';
-import LoadingStore from 'src/components/stores/LoadingStore';
+import LoadingStore from 'src/alt-stores/stores/LoadingStore';
 
 export default class LoadingModal extends Component {
   constructor(props) {

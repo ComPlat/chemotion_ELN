@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { findIndex } from 'lodash';
-import CollectionStore from 'src/components/stores/CollectionStore';
+import CollectionStore from 'src/alt-stores/stores/CollectionStore';
 export default class CollectionSelect extends React.Component {
   constructor(props) {
     super(props);

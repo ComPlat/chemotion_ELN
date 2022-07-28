@@ -6,7 +6,7 @@ import { findIndex, filter, sortBy } from 'lodash';
 import LoadingModal from 'src/components/common/LoadingModal';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { ElementField } from 'src/components/elements/ElementField';
-import LoadingActions from 'src/components/actions/LoadingActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import TemplateJsonModal from 'src/admin/generic/TemplateJsonModal';
 import LayerAttrEditModal from 'src/admin/generic/LayerAttrEditModal';
 import LayerAttrNewModal from 'src/admin/generic/LayerAttrNewModal';

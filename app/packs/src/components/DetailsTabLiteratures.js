@@ -10,9 +10,9 @@ import Reaction from 'src/models/Reaction';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
-import UserStore from 'src/components/stores/UserStore';
-import NotificationActions from 'src/components/actions/NotificationActions';
-import LoadingActions from 'src/components/actions/LoadingActions';
+import UserStore from 'src/alt-stores/stores/UserStore';
+import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import CitationPanel from 'src/components/CitationPanel';
 import { CitationTypeMap } from 'src/components/CitationType';
 

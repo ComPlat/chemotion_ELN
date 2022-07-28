@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ButtonGroup, Button, ControlLabel } from 'react-bootstrap';
 
-import ElementActions from 'src/components/actions/ElementActions';
+import ElementActions from 'src/alt-stores/actions/ElementActions';
 
 import ComputedPropsGraphContainer from 'src/components/computed_props/ComputedPropsGraphContainer';
 import SampleComputedProps from 'src/components/computed_props/SampleComputedProps';

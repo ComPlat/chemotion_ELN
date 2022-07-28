@@ -7,9 +7,9 @@ import {
 import 'whatwg-fetch';
 import Quagga from 'quagga';
 import QrReader from 'react-qr-reader';
-import UIActions from 'src/components/actions/UIActions';
+import UIActions from 'src/alt-stores/actions/UIActions';
 import Utils from 'src/components/utils/Functions';
-import UIStore from 'src/components/stores/UIStore';
+import UIStore from 'src/alt-stores/stores/UIStore';
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
@@ -119,7 +119,7 @@ export default class ScanCodeButton extends React.Component {
     if(codeInput) {
       data = codeInput;
     }
-    
+
     if(!data) {
       return;
     }
@@ -185,7 +185,7 @@ export default class ScanCodeButton extends React.Component {
                 ref={(scanInput) => { this.scanInput = scanInput; }}
                 onClick={() => this.handleScan()}
               />
-              
+
               <div id="barcode-scanner" {...this.state.showQrReader && {style : {display: 'none'}}}></div>
               {this.qrReader(this.state)}
             </div>

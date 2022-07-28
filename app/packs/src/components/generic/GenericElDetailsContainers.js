@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Button } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/ContainerComponent';
-import TextTemplateActions from 'src/components/actions/TextTemplateActions';
+import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {

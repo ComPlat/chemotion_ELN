@@ -4,7 +4,7 @@ import {
   FormGroup, OverlayTrigger, ControlLabel, FormControl, Tooltip,
   Row, Col
 } from 'react-bootstrap';
-import ReportActions from 'src/components/actions/ReportActions';
+import ReportActions from 'src/alt-stores/actions/ReportActions';
 import CheckBoxs from 'src/components/common/CheckBoxs';
 
 const imgFormatOpts = () => (
