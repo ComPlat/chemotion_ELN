@@ -10,7 +10,7 @@ import ElementsTableSettings from 'src/components/ElementsTableSettings';
 import ElementStore from 'src/alt-stores/stores/ElementStore';
 import UIStore from 'src/alt-stores/stores/UIStore';
 import UserStore from 'src/alt-stores/stores/UserStore';
-import ArrayUtils from 'src/components/utils/ArrayUtils';
+import ArrayUtils from 'src/utility_functions/ArrayUtils';
 
 
 function getSortedHash(inputHash) {
@@ -76,11 +76,11 @@ export default class List extends React.Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     return nextProps.overview !== this.props.overview ||
-    nextProps.showReport !== this.props.showReport ||
-    nextProps.totalElements !== this.state.totalElements ||
-    nextState.visible !== this.state.visible ||
-    nextState.hidden !== this.state.hidden ||
-    nextState.currentTab !== this.state.currentTab;
+      nextProps.showReport !== this.props.showReport ||
+      nextProps.totalElements !== this.state.totalElements ||
+      nextState.visible !== this.state.visible ||
+      nextState.hidden !== this.state.hidden ||
+      nextState.currentTab !== this.state.currentTab;
   }
 
   componentWillUnmount() {
@@ -201,7 +201,7 @@ export default class List extends React.Component {
 
       if (!constEls.includes(value)) {
         const genericEl = (this.state.genericEls &&
-                           this.state.genericEls.find(el => el.name === value)) || {};
+          this.state.genericEls.find(el => el.name === value)) || {};
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
         ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{genericEl.label}<br />{genericEl.desc}</Tooltip>);
       }
@@ -214,7 +214,7 @@ export default class List extends React.Component {
           </OverlayTrigger>
           <span style={{ paddingLeft: 5 }}>
             {elementState.totalElements &&
-                      elementState.totalElements[`${value}s`]}
+              elementState.totalElements[`${value}s`]}
             ({totalCheckedElements[value] || 0})
           </span>
         </NavItem>

@@ -1,8 +1,8 @@
 import { FN } from '@complat/react-spectra-editor';
 
 import { makeDav } from 'src/components/qc/utils/common';
-import { contentToText } from 'src/components/utils/quillFormat';
-import { emwInStr } from 'src/components/utils/ElementUtils';
+import { contentToText } from 'src/utility_functions/quillFormat';
+import { emwInStr } from 'src/utility_functions/ElementUtils';
 
 const emm = s => s.molecule_exact_molecular_weight.toFixed(2);
 

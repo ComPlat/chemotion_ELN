@@ -14,7 +14,7 @@ import GraphContainer from 'src/components/GraphContainer';
 import ComputeTaskContainer from 'src/components/ComputeTaskContainer';
 import DetailActions from 'src/alt-stores/actions/DetailActions';
 import ElementStore from 'src/alt-stores/stores/ElementStore';
-import { SameEleTypId } from 'src/components/utils/ElementUtils';
+import { SameEleTypId } from 'src/utility_functions/ElementUtils';
 import LiteratureDetails from 'src/components/LiteratureDetails';
 import PredictionContainer from 'src/components/prediction/PredictionContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
@@ -150,7 +150,7 @@ export default class ElementDetails extends Component {
     if (spectraMsg) {
       const { showedSpcMsgID } = this.state;
       if (!showedSpcMsgID || showedSpcMsgID !== spectraMsg.message_id) {
-        this.setState({showedSpcMsgID: spectraMsg.message_id})
+        this.setState({ showedSpcMsgID: spectraMsg.message_id })
         alert(spectraMsg.content.data);
       }
     }

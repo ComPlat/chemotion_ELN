@@ -6,16 +6,16 @@ import {
 } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import { stopBubble } from 'src/components/utils/DomHelper';
+import { stopBubble } from 'src/utility_functions/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/alt-stores/actions/SpectraActions';
 import LoadingActions from 'src/alt-stores/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds } from 'src/components/utils/SpectraHelper';
-import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/components/utils/ElementUtils';
-import { contentToText } from 'src/components/utils/quillFormat';
+import { BuildSpcInfos, JcampIds } from 'src/utility_functions/SpectraHelper';
+import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utility_functions/ElementUtils';
+import { contentToText } from 'src/utility_functions/quillFormat';
 import UIStore from 'src/alt-stores/stores/UIStore';
 import { chmoConversions } from 'src/components/OlsComponent';
-import { previewContainerImage } from 'src/components/utils/imageHelper';
+import { previewContainerImage } from 'src/utility_functions/imageHelper';
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>
@@ -36,8 +36,8 @@ const qCheckMsg = (sample, container) => {
     ((typeof container.extended_metadata.kind === 'undefined' || container.extended_metadata.kind == null ||
       container.extended_metadata.kind.split('|').length < 2) ||
       (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId
-      && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId
-      && !container.extended_metadata.kind.split('|')[1].includes('mass spectrometry'))
+        && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId
+        && !container.extended_metadata.kind.split('|')[1].includes('mass spectrometry'))
     )) {
     return '';
   }
@@ -63,7 +63,7 @@ const SpectraEditorBtn = ({
   <OverlayTrigger
     placement="bottom"
     delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess' }</Tooltip>}
+    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
   >{spcInfos.length > 0 ? (
     <ButtonGroup className="button-right">
       <SplitButton
@@ -183,9 +183,9 @@ const HeaderDeleted = ({ container, handleUndo, mode }) => {
   return (
     <div className="analysis-header-delete">
       <strike>
-        { container.name }
-        { kind }
-        { status }
+        {container.name}
+        {kind}
+        {status}
       </strike>
       <div className="button-right undo-middle">
         {undoBtn(container, mode, handleUndo)}

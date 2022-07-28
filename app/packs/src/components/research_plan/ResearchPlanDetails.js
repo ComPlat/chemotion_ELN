@@ -13,7 +13,7 @@ import ResearchPlansLiteratures from 'src/components/DetailsTabLiteratures';
 import ResearchPlanWellplates from 'src/components/ResearchPlanWellplates';
 import ResearchPlansMetadata from 'src/components/DetailsTabMetadata';
 import Attachment from 'src/models/Attachment';
-import Utils from 'src/components/utils/Functions';
+import Utils from 'src/utility_functions/Functions';
 import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ResearchPlan from 'src/models/ResearchPlan';

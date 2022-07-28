@@ -1,7 +1,7 @@
 import Aviator from 'aviator';
 import _ from 'lodash';
-import { deltaToMarkdown, markdownToDelta } from 'src/components/utils/deltaMarkdownConverter';
-import { searchAndReplace } from 'src/components/utils/markdownUtils';
+import { deltaToMarkdown, markdownToDelta } from 'src/utility_functions/deltaMarkdownConverter';
+import { searchAndReplace } from 'src/utility_functions/markdownUtils';
 
 import UIStore from 'src/alt-stores/stores/UIStore';
 
@@ -448,13 +448,13 @@ const SampleCode = (index, materialGp) => {
 
 const instrumentText = (analysis) => {
   if (typeof analysis === 'undefined' || analysis == null ||
-      typeof analysis.children === 'undefined' || analysis.children == null || analysis.children.length === 0) {
+    typeof analysis.children === 'undefined' || analysis.children == null || analysis.children.length === 0) {
     return '';
   }
   let ttlIns = [];
   if (analysis.children && analysis.children.length > 0) {
     ttlIns = _.filter(analysis.children, o => o.extended_metadata &&
-       o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
+      o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
   }
   return ` Instrument: ${ttlIns.length}/${analysis.children.length}`;
 };

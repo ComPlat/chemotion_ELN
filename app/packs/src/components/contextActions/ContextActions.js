@@ -9,7 +9,7 @@ import ScanCodeButton from 'src/components/contextActions/ScanCodeButton';
 import NoticeButton from 'src/components/contextActions/NoticeButton';
 import InboxButton from 'src/components/contextActions/InboxButton';
 //import DeviceButton from './DeviceButton'
-import { PermissionConst } from 'src/components/utils/PermissionConst';
+import { PermissionConst } from 'src/utility_functions/PermissionConst';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -36,18 +36,18 @@ export default class ContextActions extends React.Component {
   }
 
   isCreateDisabled() {
-    const {currentCollection} = this.state.uiState;
+    const { currentCollection } = this.state.uiState;
     return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked) ||
-    (currentCollection.is_shared && currentCollection.is_synchronized == false) ||  (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write)) ;
+      (currentCollection.is_shared && currentCollection.is_synchronized == false) || (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write));
   }
 
   isDisabled() {
-    const {currentCollection} = this.state.uiState
+    const { currentCollection } = this.state.uiState
 
     if (currentCollection) {
-      if ((currentCollection.label == 'All'  && currentCollection.is_locked) ||
-          (currentCollection.is_shared == true && currentCollection.permission_level < PermissionConst.ImportElements))
-      return true
+      if ((currentCollection.label == 'All' && currentCollection.is_locked) ||
+        (currentCollection.is_shared == true && currentCollection.permission_level < PermissionConst.ImportElements))
+        return true
     }
 
     return false

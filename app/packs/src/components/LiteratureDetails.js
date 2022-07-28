@@ -34,7 +34,7 @@ import UIStore from 'src/alt-stores/stores/UIStore';
 import UserStore from 'src/alt-stores/stores/UserStore';
 import DetailActions from 'src/alt-stores/actions/DetailActions';
 import PanelHeader from 'src/components/common/PanelHeader';
-import { stopEvent } from 'src/components/utils/DomHelper';
+import { stopEvent } from 'src/utility_functions/DomHelper';
 import NotificationActions from 'src/alt-stores/actions/NotificationActions';
 
 const Cite = require('citation-js');

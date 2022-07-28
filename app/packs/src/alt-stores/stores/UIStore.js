@@ -5,7 +5,7 @@ import UIActions from 'src/alt-stores/actions/UIActions';
 import ElementActions from 'src/alt-stores/actions/ElementActions';
 import ElementStore from 'src/alt-stores/stores/ElementStore';
 import UserStore from 'src/alt-stores/stores/UserStore';
-import ArrayUtils from 'src/components/utils/ArrayUtils';
+import ArrayUtils from 'src/utility_functions/ArrayUtils';
 
 class UIStore {
   constructor() {
@@ -154,7 +154,7 @@ class UIStore {
     this.state.showCollectionManagement = false;
   }
 
-  handleSelectTab(params={}) {
+  handleSelectTab(params = {}) {
     let type = params.type || "sample"
     let tabKey = params.tabKey || 0
     this.state[type].activeTab = tabKey;
@@ -167,8 +167,8 @@ class UIStore {
   handleCheckAllElements(params) {
     this.waitFor(ElementStore.dispatchToken);
 
-    let {type, range} = params;
-    let {elements} = ElementStore.getState();
+    let { type, range } = params;
+    let { elements } = ElementStore.getState();
 
     if (range == 'all') {
       if (this.state.currentSearchSelection && elements[type + "s"].ids) {
@@ -183,16 +183,16 @@ class UIStore {
       }
     } else if (range == 'current') {
       let curPageIds = elements[type + "s"].elements.reduce(
-        function(a, b) { return a.concat(b); }, []
+        function (a, b) { return a.concat(b); }, []
       ).map((e) => { return e.id });
       this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = List();
       let checked = this.state[type].checkedIds
       // Remove duplicates, conserve sorting
-      if(checked.size > 0) {
-        let checkedMap = checked.reduce(function(mp,e){ mp[e]=1; return mp }, {})
-        for(var i = 0; i < curPageIds.length; i++){
-          if(!checkedMap[curPageIds[i]]) {
+      if (checked.size > 0) {
+        let checkedMap = checked.reduce(function (mp, e) { mp[e] = 1; return mp }, {})
+        for (var i = 0; i < curPageIds.length; i++) {
+          if (!checkedMap[curPageIds[i]]) {
             checked = checked.push(curPageIds[i]);
           }
         }
@@ -216,7 +216,7 @@ class UIStore {
   }
 
   handleUncheckAllElements(params) {
-    let {type, range} = params;
+    let { type, range } = params;
 
     this.state[type].checkedAll = false;
     this.state[type].checkedIds = List();
@@ -229,13 +229,13 @@ class UIStore {
     this.handleUncheckAllElements({ type: 'reaction', range: 'all' });
     this.handleUncheckAllElements({ type: 'wellplate', range: 'all' });
     this.handleUncheckAllElements({ type: 'research_plan', range: 'all' });
-    this.state.klasses && this.state.klasses.forEach((klass) => {this.handleUncheckAllElements({ type: klass, range: 'all' });});
+    this.state.klasses && this.state.klasses.forEach((klass) => { this.handleUncheckAllElements({ type: klass, range: 'all' }); });
   }
 
   handleCheckElement(element) {
     let type = element.type;
 
-    if(this.state[type].checkedAll) {
+    if (this.state[type].checkedAll) {
       this.state[type].uncheckedIds =
         ArrayUtils.removeFromListByValue(this.state[type].uncheckedIds,
           element.id);
@@ -250,8 +250,7 @@ class UIStore {
   handleUncheckElement(element) {
     let type = element.type;
 
-    if(this.state[type].checkedAll)
-    {
+    if (this.state[type].checkedAll) {
       this.state[type].uncheckedIds =
         ArrayUtils.pushUniq(this.state[type].uncheckedIds, element.id);
     }
@@ -289,13 +288,13 @@ class UIStore {
       hasChanged = hasChanged || state.currentSearchSelection != null;
     }
 
-    if (collection['clearSearch']){
+    if (collection['clearSearch']) {
       this.handleClearSearchSelection();
       hasChanged = true;
       collection['clearSearch'] = undefined;
     }
 
-    if(hasChanged && !collection.noFetch) {
+    if (hasChanged && !collection.noFetch) {
       this.state.isSync = isSync;
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
@@ -356,7 +355,7 @@ class UIStore {
 
   // FIXME this method is also defined in ElementStore
   handleSetPagination(pagination) {
-    let {type, page} = pagination;
+    let { type, page } = pagination;
     this.state[type].page = page;
   }
 
@@ -377,12 +376,12 @@ class UIStore {
   handleChangeNumberOfResultsShown(value) {
     this.state.number_of_results = value;
   }
-  handleShowModalChange(params){
+  handleShowModalChange(params) {
     this.state.showModal = params.show ? true : false
     this.state.modalParams = params
   }
 
-  handleHideModal(){
+  handleHideModal() {
     this.state.showModal = false
     this.state.modalParams = {
       show: false,

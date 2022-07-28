@@ -49,7 +49,7 @@ import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 import SampleForm from 'src/components/SampleForm';
 import ComputedPropsContainer from 'src/components/computed_props/ComputedPropsContainer';
 import ComputedPropLabel from 'src/components/computed_props/ComputedPropLabel';
-import Utils from 'src/components/utils/Functions';
+import Utils from 'src/utility_functions/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import SampleDetailsLiteratures from 'src/components/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';

@@ -6,7 +6,7 @@ import UserStore from 'src/alt-stores/stores/UserStore';
 import UserActions from 'src/alt-stores/actions/UserActions';
 
 import NavNewSession from 'src/libHome/NavNewSession';
-import DocumentHelper from 'src/components/utils/DocumentHelper';
+import DocumentHelper from 'src/utility_functions/DocumentHelper';
 
 const NavHead = () => (
   <Navbar.Brand>
@@ -52,7 +52,7 @@ export default class Navigation extends React.Component {
   navHeader() {
     return (
       <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{cursor: "pointer"}}>
+        <Navbar.Text style={{ cursor: "pointer" }}>
           <i
             className="fa fa-list"
             style={{ fontStyle: "normal" }}

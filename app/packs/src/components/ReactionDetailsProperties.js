@@ -10,7 +10,7 @@ import Clipboard from 'clipboard';
 import { dangerousProductsOptions } from 'src/components/staticDropdownOptions/options';
 import ReactionDetailsMainProperties from 'src/components/ReactionDetailsMainProperties';
 import StringTag from 'src/components/StringTag';
-import { solventsTL } from 'src/components/utils/reactionPredefined';
+import { solventsTL } from 'src/utility_functions/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { permitOn } from 'src/components/common/uis';
 
@@ -124,7 +124,7 @@ export default class ReactionDetailsProperties extends Component {
                         title=""
                         onSelect={this.handleOnSolventSelect}
                       >
-                        { solventsItems }
+                        {solventsItems}
                       </DropdownButton>
                       <FormControl
                         style={{ zIndex: 0 }}

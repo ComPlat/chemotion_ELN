@@ -2,12 +2,12 @@ import moment from 'moment';
 import _ from 'lodash';
 import alt from 'src/alt-stores/alt';
 import ReportActions from 'src/alt-stores/actions/ReportActions';
-import Utils from 'src/components/utils/Functions';
-import ArrayUtils from 'src/components/utils/ArrayUtils';
+import Utils from 'src/utility_functions/Functions';
+import ArrayUtils from 'src/utility_functions/ArrayUtils';
 import UserActions from 'src/alt-stores/actions/UserActions';
 import UserStore from 'src/alt-stores/stores/UserStore';
-import { reOrderArr } from 'src/components/utils/DndControl';
-import { UpdateSelectedObjs, OrderPreviewObjs } from 'src/components/utils/ReportHelper';
+import { reOrderArr } from 'src/utility_functions/DndControl';
+import { UpdateSelectedObjs, OrderPreviewObjs } from 'src/utility_functions/ReportHelper';
 
 class ReportStore {
   constructor() {
@@ -104,7 +104,8 @@ class ReportStore {
     const newSelectedObjs = this.orderObjsForTemplate(value);
     // const molSerials = this.updMolSerials(newSelectedObjs, value);
     const newPrdAtts = this.extractPrdAtts(newSelectedObjs);
-    this.setState({ template: value,
+    this.setState({
+      template: value,
       fileName: this.initFileName(value),
       selectedObjs: newSelectedObjs,
       prdAtts: newPrdAtts,
@@ -490,16 +491,22 @@ class ReportStore {
     if (target.type === 'sample') {
       const tmpSDTags = dTags.sampleIds.filter(e => e !== target.id);
       const tmpSSTags = sTags.sampleIds.filter(e => e !== target.id);
-      dTags = { sampleIds: [...tmpSDTags, ...tmpSSTags],
-        reactionIds: [...dTags.reactionIds, ...sTags.reactionIds] };
+      dTags = {
+        sampleIds: [...tmpSDTags, ...tmpSSTags],
+        reactionIds: [...dTags.reactionIds, ...sTags.reactionIds]
+      };
     } else if (target.type === 'reaction') {
       const tmpRDTags = dTags.reactionIds.filter(e => e !== target.id);
       const tmpRSTags = sTags.reactionIds.filter(e => e !== target.id);
-      dTags = { sampleIds: [...dTags.sampleIds, ...sTags.sampleIds],
-        reactionIds: [...tmpRDTags, ...tmpRSTags] };
+      dTags = {
+        sampleIds: [...dTags.sampleIds, ...sTags.sampleIds],
+        reactionIds: [...tmpRDTags, ...tmpRSTags]
+      };
     }
-    dTags = { sampleIds: [...new Set(dTags.sampleIds)],
-      reactionIds: [...new Set(dTags.reactionIds)] };
+    dTags = {
+      sampleIds: [...new Set(dTags.sampleIds)],
+      reactionIds: [...new Set(dTags.reactionIds)]
+    };
     sTags = { sampleIds: [], reactionIds: [] };
     const newObjs = UpdateSelectedObjs(sTags, currentObjs, dTags, currentObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);

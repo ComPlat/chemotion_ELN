@@ -4,7 +4,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
 import UIFetcher from 'src/fetchers/UIFetcher';
-import { GetTypeIds, LoadPreviewIds } from 'src/components/utils/ReportHelper';
+import { GetTypeIds, LoadPreviewIds } from 'src/utility_functions/ReportHelper';
 
 class ReportActions {
   updateImgFormat = value => value

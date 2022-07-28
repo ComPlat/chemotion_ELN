@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import JSONInput from 'react-json-editor-ajrm';
 import { Form, FormGroup, Modal, Button } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import Utils from 'src/components/utils/Functions';
+import Utils from 'src/utility_functions/Functions';
 
 export default class TemplateJsonModal extends React.Component {
   constructor(props) {

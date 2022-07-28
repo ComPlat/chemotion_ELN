@@ -4,7 +4,7 @@ import InboxActions from 'src/alt-stores/actions/InboxActions';
 import ElementActions from 'src/alt-stores/actions/ElementActions';
 import DetailActions from 'src/alt-stores/actions/DetailActions';
 import ElementStore from 'src/alt-stores/stores/ElementStore';
-import ArrayUtils from 'src/components/utils/ArrayUtils';
+import ArrayUtils from 'src/utility_functions/ArrayUtils';
 
 class InboxStore {
   constructor() {
@@ -100,7 +100,7 @@ class InboxStore {
 
     inbox.children.forEach(device_box => {
       var index = device_box.children.indexOf(dataset)
-      if(index != -1){
+      if (index != -1) {
         device_box.children[index].attachments.forEach(attachment => {
           this.state.cache.push(attachment)
         })
@@ -125,8 +125,8 @@ class InboxStore {
   }
 
   handleBackToInbox(attachment) {
-    var attachments = this.state.cache.filter(function(item) {
-      if (item.id == attachment.id){
+    var attachments = this.state.cache.filter(function (item) {
+      if (item.id == attachment.id) {
         return item
       }
     })
@@ -135,7 +135,7 @@ class InboxStore {
       var index = this.state.cache.indexOf(attachments[0])
       this.state.cache.splice(index, 1)
       InboxActions.fetchInbox()
-    }else{
+    } else {
       InboxActions.deleteContainerLink(attachment)
     }
   }
@@ -166,12 +166,12 @@ class InboxStore {
     }
   }
 
-  handleClose({deleteEl, force}) {
+  handleClose({ deleteEl, force }) {
     this.state.deleteEl = deleteEl
   }
 
   handleConfirmDelete(confirm) {
-    if(confirm){
+    if (confirm) {
       this.handleUpdateCreateElement(this.state.deleteEl)
     }
     this.state.deleteEl = null

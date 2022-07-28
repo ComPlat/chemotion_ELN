@@ -5,7 +5,7 @@ import { OverlayTrigger, Popover } from 'react-bootstrap';
 
 import Delta from 'quill-delta';
 
-import { formatAnalysisContent } from 'src/components/utils/ElementUtils';
+import { formatAnalysisContent } from 'src/utility_functions/ElementUtils';
 
 import TextTemplateStore from 'src/alt-stores/stores/TextTemplateStore';
 import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';

@@ -2,7 +2,7 @@ import React, { Component, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Button } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import { stopEvent } from 'src/components/utils/DomHelper';
+import { stopEvent } from 'src/utility_functions/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;

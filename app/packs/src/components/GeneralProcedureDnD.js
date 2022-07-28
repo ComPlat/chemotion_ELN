@@ -5,7 +5,7 @@ import { Tooltip, OverlayTrigger } from 'react-bootstrap';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import DetailActions from 'src/alt-stores/actions/DetailActions';
 import ElementActions from 'src/alt-stores/actions/ElementActions.js';
-import { UrlSilentNavigation } from 'src/components/utils/ElementUtils';
+import { UrlSilentNavigation } from 'src/utility_functions/ElementUtils';
 
 const updRxnOriName = (oriRxn, sourceTag) => {
   const nextRxn = oriRxn;

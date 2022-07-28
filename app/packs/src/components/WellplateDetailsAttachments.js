@@ -6,8 +6,8 @@ import { last, findKey, values } from 'lodash';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageModal from 'src/components/common/ImageModal';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
-import { previewAttachmentImage } from 'src/components/utils/imageHelper';
-import Utils from 'src/components/utils/Functions';
+import { previewAttachmentImage } from 'src/utility_functions/imageHelper';
+import Utils from 'src/utility_functions/Functions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;

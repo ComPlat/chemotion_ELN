@@ -2,7 +2,7 @@ import 'whatwg-fetch';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import NotificationActions from 'src/alt-stores/actions/NotificationActions';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import { downloadBlob } from 'src/components/utils/FetcherHelper';
+import { downloadBlob } from 'src/utility_functions/FetcherHelper';
 
 export default class CollectionsFetcher {
   static takeOwnership(params) {

@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col, Table, ListGroup, ListGroupItem, Button, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import Utils from 'src/components/utils/Functions';
+import Utils from 'src/utility_functions/Functions';
 
 import InboxActions from 'src/alt-stores/actions/InboxActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';

@@ -18,7 +18,7 @@ import WellplateDetailsContainers from 'src/components/WellplateDetailsContainer
 import WellplateDetailsAttachments from 'src/components/WellplateDetailsAttachments';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import Attachment from 'src/models/Attachment';
-import Utils from 'src/components/utils/Functions';
+import Utils from 'src/utility_functions/Functions';
 import UIStore from 'src/alt-stores/stores/UIStore';
 import UIActions from 'src/alt-stores/actions/UIActions';
 import ConfirmClose from 'src/components/common/ConfirmClose';

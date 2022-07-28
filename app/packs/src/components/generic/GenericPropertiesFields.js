@@ -7,7 +7,7 @@ import Dropzone from 'react-dropzone';
 import GenericElDropTarget from 'src/components/generic/GenericElDropTarget';
 import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from 'src/admin/generic/Utils';
 import TableRecord from 'src/components/generic/TableRecord';
-import Utils from 'src/components/utils/Functions';
+import Utils from 'src/utility_functions/Functions';
 
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const GenTextFormula = (opt) => {
@@ -125,7 +125,7 @@ const GenPropertiesUpload = (opt) => {
           <ListGroupItem key={attachment.id} className="generic_files">
             {renderListGroupItem(opt, attachment)}
           </ListGroupItem>
-          ))}
+        ))}
       </ListGroup>
     </FormGroup>
   );

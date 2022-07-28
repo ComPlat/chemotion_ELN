@@ -4,7 +4,7 @@ import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
 import { findIndex, cloneDeep } from 'lodash';
 
-import Utils from 'src/components/utils/Functions';
+import Utils from 'src/utility_functions/Functions';
 import Attachment from 'src/models/Attachment';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/alt-stores/stores/UserStore';

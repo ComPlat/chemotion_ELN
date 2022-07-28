@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import UIStore from 'src/alt-stores/stores/UIStore';
-import ArrayUtils from 'src/components/utils/ArrayUtils';
-import { reOrderArr } from 'src/components/utils/DndControl';
+import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import { reOrderArr } from 'src/utility_functions/DndControl';
 import ViewSpectra from 'src/components/ViewSpectra';
 import {
   RndNotAvailable, RndNoAnalyses,

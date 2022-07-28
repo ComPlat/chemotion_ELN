@@ -1,7 +1,7 @@
 import alt from 'src/alt-stores/alt';
 import CollectionActions from 'src/alt-stores/actions/CollectionActions';
 
-import {extraThing} from 'src/components/utils/Functions';
+import { extraThing } from 'src/utility_functions/Functions';
 import Xlisteners from 'src/components/extra/CollectionStoreXlisteners';
 import Xhandlers from 'src/components/extra/CollectionStoreXhandlers';
 import Xstate from 'src/components/extra/CollectionStoreXstate';
@@ -21,10 +21,10 @@ class CollectionStore {
       ...extraThing(Xstate)
     };
 
-    for (let i = 0 ; i < Xlisteners.count; i++){
-     Object.keys(Xlisteners["content"+i]).map((k)=>{
+    for (let i = 0; i < Xlisteners.count; i++) {
+      Object.keys(Xlisteners["content" + i]).map((k) => {
         this.bindAction(Xlisteners["content" + i][k],
-                        Xhandlers["content" + i][k].bind(this))
+          Xhandlers["content" + i][k].bind(this))
       });
     }
 
@@ -96,7 +96,7 @@ class CollectionStore {
 
   handleUpdateSharedCollection() {
     CollectionActions.fetchSharedCollectionRoots();
-    }
+  }
 
   handleCreateUnsharedCollection(results) {
     CollectionActions.fetchUnsharedCollectionRoots();
@@ -125,7 +125,7 @@ class CollectionStore {
     let promise;
 
     // if not loaded already fetch collection from backend
-    if(!foundCollection) {
+    if (!foundCollection) {
       // TODO maybe move to CollectionsFetcher
       promise = fetch('/api/v1/collections/' + collectionId, {
         credentials: 'same-origin',
@@ -139,7 +139,7 @@ class CollectionStore {
       });
     } else {
       promise = new Promise((resolve) => {
-        resolve({collection: foundCollection});
+        resolve({ collection: foundCollection });
       });
     }
     return promise;
@@ -150,7 +150,7 @@ class CollectionStore {
       return root.id == collectionId;
     }).pop();
     let promise;
-    if(!foundCollection) {
+    if (!foundCollection) {
       promise = fetch('/api/v1/syncCollections/' + collectionId, {
         credentials: 'same-origin',
         method: 'GET'
@@ -163,7 +163,7 @@ class CollectionStore {
       });
     } else {
       promise = new Promise((resolve) => {
-        resolve({collection: foundCollection});
+        resolve({ collection: foundCollection });
       });
     }
     return promise;
@@ -181,7 +181,7 @@ class CollectionStore {
     let promise;
 
     // if not loaded already fetch collection from backend
-    if(!foundCollection) {
+    if (!foundCollection) {
       promise = fetch('/api/v1/collections/all/', {
         credentials: 'same-origin',
         method: 'GET'
@@ -194,7 +194,7 @@ class CollectionStore {
       });
     } else {
       promise = new Promise((resolve) => {
-        resolve({collection: foundCollection});
+        resolve({ collection: foundCollection });
       });
     }
     return promise;

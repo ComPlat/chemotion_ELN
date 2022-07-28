@@ -11,7 +11,7 @@ import UIActions from 'src/alt-stores/actions/UIActions';
 import ElementActions from 'src/alt-stores/actions/ElementActions';
 import NavNewSession from 'src/libHome/NavNewSession'
 import NavHead from 'src/libHome/NavHead'
-import DocumentHelper from 'src/components/utils/DocumentHelper';
+import DocumentHelper from 'src/utility_functions/DocumentHelper';
 import NavigationModal from 'src/components/NavigationModal';
 import SearchFilter from 'src/components/search/SearchFilter.js'
 
@@ -54,8 +54,8 @@ export default class Navigation extends React.Component {
 
   onChange(state) {
     let newId = state.currentUser ? state.currentUser.id : null
-    let oldId =this.state.currentUser ?  this.state.currentUser.id : null
-    if (newId !== oldId){
+    let oldId = this.state.currentUser ? this.state.currentUser.id : null
+    if (newId !== oldId) {
       this.setState({
         currentUser: state.currentUser
       });
@@ -83,7 +83,7 @@ export default class Navigation extends React.Component {
     this.props.toggleCollectionTree();
   }
 
-  token(){
+  token() {
     return DocumentHelper.getMetaContent("csrf-token")
   }
 
@@ -112,10 +112,10 @@ export default class Navigation extends React.Component {
   navHeader() {
     return (
       <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{cursor: "pointer"}}>
+        <Navbar.Text style={{ cursor: "pointer" }}>
           <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-            <i  className="fa fa-list" style={{fontStyle: "normal"}}
-                onClick={this.toggleCollectionTree} />
+            <i className="fa fa-list" style={{ fontStyle: "normal" }}
+              onClick={this.toggleCollectionTree} />
           </OverlayTrigger>
         </Navbar.Text>
         <Navbar.Text />
@@ -130,26 +130,26 @@ export default class Navigation extends React.Component {
     const { customClass } = (profile && profile.data) || {};
     return (this.state.currentUser
       ? <Navbar fluid className='navbar-custom'>
-          {this.navHeader()}
-          <Nav navbar className='navbar-form'>
-            <Search />
-            <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
-            <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
-            <NavigationModal {...modalProps} />
-          </Nav>
-          <UserAuth/>
-          <div style={{clear: "both"}} />
-          <SearchFilter searchFunc={this.advancedSearch}
-            show={showAdvancedSearch}/>
-        </Navbar>
+        {this.navHeader()}
+        <Nav navbar className='navbar-form'>
+          <Search />
+          <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
+          <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
+          <NavigationModal {...modalProps} />
+        </Nav>
+        <UserAuth />
+        <div style={{ clear: "both" }} />
+        <SearchFilter searchFunc={this.advancedSearch}
+          show={showAdvancedSearch} />
+      </Navbar>
       : <Navbar fluid className='navbar-custom'>
-          {this.navHeader()}
-          <Nav navbar className='navbar-form'>
-            <Search noSubmit={true} />
-          </Nav>
-          <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders}/>
-          <div style={{clear: "both"}} />
-        </Navbar>
+        {this.navHeader()}
+        <Nav navbar className='navbar-form'>
+          <Search noSubmit={true} />
+        </Nav>
+        <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} />
+        <div style={{ clear: "both" }} />
+      </Navbar>
     )
   }
 }
