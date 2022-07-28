@@ -5,7 +5,7 @@ import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
 import AttachmentContainer from 'src/components/inbox/AttachmentContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
-import Container from 'src/components/models/Container';
+import Container from 'src/models/Container';
 import UnsortedDatasetModal from 'src/components/inbox/UnsortedDatasetModal';
 import InboxStore from 'src/components/stores/InboxStore';
 import InboxActions from 'src/components/actions/InboxActions';
@@ -155,7 +155,7 @@ export default class UnsortedBox extends React.Component {
       );
     })
       :
-    <div />;
+      <div />;
 
     const folderClass = `fa fa-folder${visible ? '-open' : ''}`;
 

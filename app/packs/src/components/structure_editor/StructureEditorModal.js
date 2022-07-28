@@ -11,7 +11,7 @@ import {
 import Select from 'react-select';
 import UserStore from 'src/components/stores/UserStore';
 import UIStore from 'src/components/stores/UIStore';
-import StructureEditor from 'src/components/models/StructureEditor';
+import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structure_editor/StructureEditorSet';
 import ChemDrawEditor from 'src/components/structure_editor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structure_editor/MarvinjsEditor';

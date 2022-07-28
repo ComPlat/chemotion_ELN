@@ -3,7 +3,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import Numeral from 'numeral';
-import GenericSubField from 'src/components/models/GenericSubField';
+import GenericSubField from 'src/models/GenericSubField';
 import { AddRowBtn, DelRowBtn, DnDRowBtn, NullRowBtn } from 'src/components/generic/GridBtn';
 import { ColumnHeader, ColumnRow, NoRow } from 'src/components/generic/GridEntry';
 import UConverterRenderer from 'src/components/generic/UConverterRenderer';

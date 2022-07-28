@@ -1,10 +1,10 @@
 import 'whatwg-fetch';
-import Sample from 'src/components/models/Sample';
-import Reaction from 'src/components/models/Reaction';
-import Wellplate from 'src/components/models/Wellplate';
-import Screen from 'src/components/models/Screen';
-import GenericEl from 'src/components/models/GenericEl';
-import ResearchPlan from 'src/components/models/ResearchPlan';
+import Sample from 'src/models/Sample';
+import Reaction from 'src/models/Reaction';
+import Wellplate from 'src/models/Wellplate';
+import Screen from 'src/models/Screen';
+import GenericEl from 'src/models/GenericEl';
+import ResearchPlan from 'src/models/ResearchPlan';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
@@ -57,7 +57,7 @@ export default class SearchFetcher {
                 result.research_plans.elements = research_plans.elements.map(s => (new ResearchPlan(s)));
               } else { result.research_plans = { elements: [], totalElements: 0, ids: [] }; }
               break;
-              default:
+            default:
               result[`${key}`].elements = json[`${key}`].elements.map(s => (new GenericEl(s)));
           }
         });

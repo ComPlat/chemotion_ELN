@@ -1,4 +1,4 @@
-import Element from 'src/components/models/Element';
+import Element from 'src/models/Element';
 
 export default class Prediction extends Element {
   static buildEmpty() {

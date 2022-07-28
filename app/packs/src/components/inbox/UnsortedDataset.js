@@ -6,8 +6,8 @@ import Utils from 'src/components/utils/Functions';
 
 import InboxActions from 'src/components/actions/InboxActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import Attachment from 'src/components/models/Attachment';
-import Container from 'src/components/models/Container';
+import Attachment from 'src/models/Attachment';
+import Container from 'src/models/Container';
 
 export default class UnsortedDataset extends React.Component {
   constructor(props) {

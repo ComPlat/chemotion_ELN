@@ -1,7 +1,7 @@
-import Element from 'src/components/models/Element';
-import Wellplate from 'src/components/models/Wellplate';
-import Container from 'src/components/models/Container';
-import Segment from 'src/components/models/Segment';
+import Element from 'src/models/Element';
+import Wellplate from 'src/models/Wellplate';
+import Container from 'src/models/Container';
+import Segment from 'src/models/Segment';
 
 export default class Screen extends Element {
   static buildEmpty(collectionID) {

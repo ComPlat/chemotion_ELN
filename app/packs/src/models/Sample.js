@@ -1,12 +1,12 @@
 import React from 'react';
 import _ from 'lodash';
 
-import Element from 'src/components/models/Element';
-import Molecule from 'src/components/models/Molecule';
+import Element from 'src/models/Element';
+import Molecule from 'src/models/Molecule';
 import UserActions from 'src/components/actions/UserActions';
 import UserStore from 'src/components/stores/UserStore';
-import Container from 'src/components/models/Container.js';
-import Segment from 'src/components/models/Segment';
+import Container from 'src/models/Container.js';
+import Segment from 'src/models/Segment';
 
 const prepareRangeBound = (args, field) => {
   const argsNew = args;
@@ -50,7 +50,7 @@ export default class Sample extends Element {
     if (sample.name) { newSample.name = sample.name; }
     if (sample.external_label) { newSample.external_label = sample.external_label; }
 
-    if(structure_only) {
+    if (structure_only) {
       newSample.filterSampleData();
       newSample.filterResidueData(true);
     } else {
@@ -334,25 +334,25 @@ export default class Sample extends Element {
 
   set contains_residues(value) {
     this._contains_residues = value;
-    if(value) {
-      if(!this.residues.length) {
+    if (value) {
+      if (!this.residues.length) {
 
         this.setDefaultResidue();
       } else {
         this.residues[0]._destroy = undefined;
       }
 
-      this.elemental_compositions.map(function(item) {
-        if(item.composition_type == 'formula')
+      this.elemental_compositions.map(function (item) {
+        if (item.composition_type == 'formula')
           item._destroy = true;
       });
     } else {
       // this.sample_svg_file = '';
-      if(this.residues.length)
+      if (this.residues.length)
         this.residues[0]._destroy = true; // delete residue info
 
-      this.elemental_compositions.map(function(item) {
-        if(item.composition_type == 'loading')
+      this.elemental_compositions.map(function (item) {
+        if (item.composition_type == 'loading')
           item._destroy = true;
       });
     }
@@ -366,16 +366,16 @@ export default class Sample extends Element {
     const profile = UserStore.getState().profile
     const show_external_name = profile ? profile.show_external_name : false
     const external_label = this.external_label;
-    const extLabelClass =  this.highlight_label(!selected);
-    const nameClass =  this.highlight_label(false);
+    const extLabelClass = this.highlight_label(!selected);
+    const nameClass = this.highlight_label(false);
     const short_label = this.name
       ? <span>
-          <span>{this.short_label}</span>
-          <span className={nameClass}>{`  ${this.name}`}</span>
-        </span>
+        <span>{this.short_label}</span>
+        <span className={nameClass}>{`  ${this.name}`}</span>
+      </span>
       : this.short_label
 
-    if(show_external_name) {
+    if (show_external_name) {
       return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
     } else {
       return short_label;
@@ -384,7 +384,7 @@ export default class Sample extends Element {
 
   highlight_label(gray) {
     let cssClass = null;
-    if(!gray) {
+    if (!gray) {
       cssClass = 'label--bold';
     } else {
       cssClass = 'label--bold c-text--grey';
@@ -596,7 +596,7 @@ export default class Sample extends Element {
   // amount proxy
 
   get amount() {
-    return({
+    return ({
       value: this.amount_value,
       unit: this.amount_unit
     })
@@ -607,7 +607,7 @@ export default class Sample extends Element {
   }
 
   set amount_value(amount_value) {
-    if(this.amountType === 'real') {
+    if (this.amountType === 'real') {
       this.real_amount_value = amount_value;
     } else {
       this.target_amount_value = amount_value;
@@ -619,7 +619,7 @@ export default class Sample extends Element {
   }
 
   set amount_unit(amount_unit) {
-    if(this.amountType === 'real') {
+    if (this.amountType === 'real') {
       this.real_amount_unit = amount_unit;
     } else {
       this.target_amount_unit = amount_unit;
@@ -689,7 +689,7 @@ export default class Sample extends Element {
   // Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
-    if(this.contains_residues) {
+    if (this.contains_residues) {
       let loading = this.residues[0].custom_info.loading;
       switch (unit) {
         case 'g':
@@ -773,7 +773,7 @@ export default class Sample extends Element {
 
   get molecule_iupac_name() {
     return this.molecule_name_hash && this.molecule_name_hash.label
-     || this.molecule && this.molecule.iupac_name;
+      || this.molecule && this.molecule.iupac_name;
   }
 
   set molecule_iupac_name(iupac_name) {
@@ -854,25 +854,25 @@ export default class Sample extends Element {
   }
 
   get loading() {
-    if(this.contains_residues) {
+    if (this.contains_residues) {
       return this.residues[0].custom_info.loading;
     }
     return false;
   }
 
   set loading(loading) {
-    if(this.contains_residues) { this.residues[0].custom_info.loading = loading; }
+    if (this.contains_residues) { this.residues[0].custom_info.loading = loading; }
   }
 
   get external_loading() {
-    if(this.contains_residues) {
+    if (this.contains_residues) {
       return this.residues[0].custom_info.external_loading;
     }
     return false;
   }
 
   set external_loading(loading) {
-    if(this.contains_residues) {
+    if (this.contains_residues) {
       this.residues[0].custom_info.external_loading = loading;
     }
   }
@@ -884,9 +884,9 @@ export default class Sample extends Element {
   }
 
 
-  get isValid(){
+  get isValid() {
     return (this && ((this.molfile && !this.decoupled) || this.decoupled) &&
-            !this.error_loading && !this.error_polymer_type);
+      !this.error_loading && !this.error_polymer_type);
   }
 
   get svgPath() {
@@ -947,7 +947,7 @@ export default class Sample extends Element {
   }
 
   //Container & Analyses routines
-  addAnalysis(analysis){
+  addAnalysis(analysis) {
     this.container.children.filter(
       element => ~element.container_type.indexOf('analyses')
     )[0].children.push(analysis);

@@ -7,7 +7,7 @@ import { purificationOptions } from 'src/components/staticDropdownOptions/option
 import MaterialGroupContainer from 'src/components/MaterialGroupContainer';
 import QuillEditor from 'src/components/QuillEditor';
 import QuillViewer from 'src/components/QuillViewer';
-import Sample from 'src/components/models/Sample';
+import Sample from 'src/models/Sample';
 import { observationPurification, solventsTL } from 'src/components/utils/reactionPredefined';
 import { permitOn } from 'src/components/common/uis';
 import PrivateNoteElement from 'src/components/PrivateNoteElement';

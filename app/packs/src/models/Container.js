@@ -1,4 +1,4 @@
-import Element from 'src/components/models/Element';
+import Element from 'src/models/Element';
 
 export default class Container extends Element {
   static buildEmpty() {
@@ -15,7 +15,7 @@ export default class Container extends Element {
     });
   }
 
-  static buildAnalysis(kind='other',name='') {
+  static buildAnalysis(kind = 'other', name = '') {
     var analysis = this.buildEmpty()
     analysis.container_type = "analysis"
     analysis.extended_metadata['kind'] = kind
@@ -23,7 +23,7 @@ export default class Container extends Element {
     return analysis
   }
 
-  static init(){
+  static init() {
     var root = this.buildEmpty();
     root.container_type = 'root';
 
@@ -36,8 +36,8 @@ export default class Container extends Element {
   }
 
   name() {
-      return this.name;
-    }
+    return this.name;
+  }
 
   serialize() {
     return super.serialize({

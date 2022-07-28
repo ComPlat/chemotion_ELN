@@ -2,7 +2,7 @@
 import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import React from 'react';
-import GenericSubField from 'src/components/models/GenericSubField';
+import GenericSubField from 'src/models/GenericSubField';
 import { AddRowBtn, DelRowBtn } from 'src/components/generic/GridBtn';
 import TypeSelect from 'src/components/generic/TypeSelect';
 import DefinedRenderer from 'src/components/generic/DefinedRenderer';

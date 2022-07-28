@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import { MaterialGroup } from 'src/components/MaterialGroup';
-import Reaction from 'src/components/models/Reaction';
+import Reaction from 'src/models/Reaction';
 
 
 const target = {

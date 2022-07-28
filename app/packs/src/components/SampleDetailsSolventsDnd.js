@@ -6,8 +6,8 @@ import {
 import { DropTarget } from 'react-dnd';
 import VirtualizedSelect from 'react-virtualized-select';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import Sample from 'src/components/models/Sample';
-import Molecule from 'src/components/models/Molecule';
+import Sample from 'src/models/Sample';
+import Molecule from 'src/models/Molecule';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';

@@ -3,7 +3,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
-import StructureEditor from 'src/components/models/StructureEditor';
+import StructureEditor from 'src/models/StructureEditor';
 import loadScripts from 'src/components/structure_editor/loadScripts';
 
 const LoadingModal = (props) => {
@@ -53,7 +53,7 @@ class ChemDrawEditor extends React.Component {
   loaded() {
     const { editor } = this.props;
     const { id } = editor;
-    const extConf = editor.extConf || { };
+    const extConf = editor.extConf || {};
     if (!extConf.properties) extConf.properties = { StyleSheet: 'ACS Document 1996', chemservice: 'https://chemdrawdirect.perkinelmer.cloud/rest' };
     const licenseUrl = editor.license || '';
     perkinelmer.ChemdrawWebManager.attach({

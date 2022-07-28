@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
-import Container from 'src/components/models/Container';
+import Container from 'src/models/Container';
 import UIStore from 'src/components/stores/UIStore';
 import ArrayUtils from 'src/components/utils/ArrayUtils';
 import { reOrderArr } from 'src/components/utils/DndControl';
@@ -135,7 +135,8 @@ export default class SampleDetailsContainers extends Component {
   handleAccordionOpen(newKey) {
     this.setState((prevState) => {
       const prevKey = prevState.activeAnalysis;
-      return { ...prevState,
+      return {
+        ...prevState,
         mode: 'edit',
         activeAnalysis: prevKey === newKey ? 0 : newKey,
       };
@@ -231,7 +232,7 @@ export default class SampleDetailsContainers extends Component {
 
       return (
         <div>
-          { content }
+          {content}
           <ViewSpectra
             sample={sample}
             handleSampleChanged={handleSampleChanged}

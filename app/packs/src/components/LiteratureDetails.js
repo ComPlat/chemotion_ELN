@@ -27,8 +27,8 @@ import {
   LiteralType,
   literatureContent
 } from 'src/components/LiteratureCommon';
-import Literature from 'src/components/models/Literature';
-import LiteratureMap from 'src/components/models/LiteratureMap';
+import Literature from 'src/models/Literature';
+import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/components/stores/UIStore';
 import UserStore from 'src/components/stores/UserStore';

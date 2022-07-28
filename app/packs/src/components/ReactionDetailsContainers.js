@@ -6,7 +6,7 @@ import {
   Button,
   OverlayTrigger, SplitButton, ButtonGroup, MenuItem, Tooltip
 } from 'react-bootstrap';
-import Container from 'src/components/models/Container';
+import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import QuillViewer from 'src/components/QuillViewer';
@@ -25,9 +25,9 @@ import TextTemplateActions from 'src/components/actions/TextTemplateActions';
 
 const nmrMsg = (reaction, container) => {
   if (container.extended_metadata &&
-      (typeof container.extended_metadata.kind === 'undefined' ||
+    (typeof container.extended_metadata.kind === 'undefined' ||
       (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId)
-      )) {
+    )) {
     return '';
   }
   const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
@@ -84,7 +84,7 @@ const SpectraEditorBtn = ({
     >
       <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
     </Button>
-    )}
+  )}
   </OverlayTrigger>
 );
 
@@ -312,7 +312,7 @@ export default class ReactionDetailsContainers extends Component {
                 <span style={{ float: 'left', marginRight: '5px' }}>
                   Content:
                 </span>
-                <QuillViewer value={contentOneLine}  />
+                <QuillViewer value={contentOneLine} />
               </div>
 
             </div>

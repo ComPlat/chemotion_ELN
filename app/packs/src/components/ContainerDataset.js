@@ -5,10 +5,10 @@ import debounce from 'es6-promise-debounce';
 import { findIndex, cloneDeep } from 'lodash';
 
 import Utils from 'src/components/utils/Functions';
-import Attachment from 'src/components/models/Attachment';
+import Attachment from 'src/models/Attachment';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/components/stores/UserStore';
-import GenericDS from 'src/components/models/GenericDS';
+import GenericDS from 'src/models/GenericDS';
 import GenericDSDetails from 'src/components/generic/GenericDSDetails';
 import { absOlsTermId } from 'src/admin/generic/Utils';
 import InboxActions from 'src/components/actions/InboxActions';

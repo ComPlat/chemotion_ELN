@@ -5,7 +5,7 @@ import LoadingActions from 'src/components/actions/LoadingActions';
 import ElementActions from 'src/components/actions/ElementActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import ResearchPlan from 'src/components/models/ResearchPlan';
+import ResearchPlan from 'src/models/ResearchPlan';
 import UIStore from 'src/components/stores/UIStore';
 import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';

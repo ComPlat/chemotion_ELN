@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
-import Reaction from 'src/components/models/Reaction';
+import Reaction from 'src/models/Reaction';
 import GreenMaterialGroup from 'src/components/green_chem/GreenMaterialGroup';
 import { UrlSilentNavigation } from 'src/components/utils/ElementUtils';
 import ElementActions from 'src/components/actions/ElementActions';

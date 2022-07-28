@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import _ from 'lodash';
-import ResearchPlan from 'src/components/models/ResearchPlan';
+import ResearchPlan from 'src/models/ResearchPlan';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';

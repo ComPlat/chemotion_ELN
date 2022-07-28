@@ -7,9 +7,9 @@ import {
 import Select from 'react-select';
 import Delta from 'quill-delta';
 import MaterialGroupContainer from 'src/components/MaterialGroupContainer';
-import Sample from 'src/components/models/Sample';
-import Reaction from 'src/components/models/Reaction';
-import Molecule from 'src/components/models/Molecule';
+import Sample from 'src/models/Sample';
+import Reaction from 'src/models/Reaction';
+import Molecule from 'src/models/Molecule';
 import ReactionDetailsMainProperties from 'src/components/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/components/ReactionDetailsPurification';
 
@@ -106,7 +106,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   insertSolventExtLabel(splitSample, materialGroup, external_label) {
-    if(external_label && materialGroup === 'solvents' && !splitSample.external_label) {
+    if (external_label && materialGroup === 'solvents' && !splitSample.external_label) {
       splitSample.external_label = external_label;
     }
   }
@@ -287,11 +287,11 @@ export default class ReactionDetailsScheme extends Component {
         );
         break;
       case 'externalLabelCompleted':
-        const {reaction} = this.state;
-        this.onReactionChange(reaction, {schemaChanged: true});
+        const { reaction } = this.state;
+        this.onReactionChange(reaction, { schemaChanged: true });
         break;
       case 'addToDesc':
-        this.addSampleTo(changeEvent,  'description');
+        this.addSampleTo(changeEvent, 'description');
         this.addSampleTo(changeEvent, 'observation');
         break;
       default:
@@ -407,7 +407,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   calculateEquivalent(refM, updatedSample) {
-    if(!refM.contains_residues) {
+    if (!refM.contains_residues) {
       NotificationActions.add({
         message: 'Cannot perform calculations for loading and equivalent',
         level: 'error'
@@ -416,7 +416,7 @@ export default class ReactionDetailsScheme extends Component {
       return 1.0;
     }
 
-    if(!refM.loading){
+    if (!refM.loading) {
       NotificationActions.add({
         message: 'Please set non-zero starting material loading',
         level: 'error'
@@ -432,7 +432,7 @@ export default class ReactionDetailsScheme extends Component {
     let mw_diff = mwb - mwa;
     let equivalent = (1000.0 / loading) * (mass_koef - 1.0) / mw_diff;
 
-    if(equivalent < 0.0 || equivalent > 1.0 || isNaN(equivalent) || !isFinite(equivalent)){
+    if (equivalent < 0.0 || equivalent > 1.0 || isNaN(equivalent) || !isFinite(equivalent)) {
       equivalent = 1.0;
     }
 
@@ -449,7 +449,7 @@ export default class ReactionDetailsScheme extends Component {
       mFull = referenceM.amount_mol * mwb;
       if (updatedS.amount_g > mFull) {
         errorMsg = 'Experimental mass value is more than possible\n' +
-        'by 100% conversion! Please check your data.';
+          'by 100% conversion! Please check your data.';
       }
     } else {
       const mwa = referenceM.decoupled ? (referenceM.molecular_mass || 0) : referenceM.molecule.molecular_weight;
@@ -789,7 +789,7 @@ export default class ReactionDetailsScheme extends Component {
             />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
-            { this.solventCollapseBtn() }
+            {this.solventCollapseBtn()}
             <Collapse in={this.state.open}>
               <div>
                 <MaterialGroupContainer
@@ -811,7 +811,7 @@ export default class ReactionDetailsScheme extends Component {
             </Collapse>
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
-            { this.conditionsCollapseBtn() }
+            {this.conditionsCollapseBtn()}
             <Collapse in={this.state.cCon}>
               <div>
                 <Select
@@ -868,7 +868,7 @@ export default class ReactionDetailsScheme extends Component {
                       permitOn(reaction) ?
                         <ReactionDescriptionEditor
                           height="100%"
-                          reactQuillRef = {this.reactQuillRef}
+                          reactQuillRef={this.reactQuillRef}
                           template={reactionDescTemplate}
                           value={reaction.description}
                           updateTextTemplates={this.updateTextTemplates}

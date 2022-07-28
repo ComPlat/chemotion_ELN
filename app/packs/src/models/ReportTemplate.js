@@ -1,8 +1,8 @@
-import Element from 'src/components/models/Element';
+import Element from 'src/models/Element';
 
 export default class ReportTemplate extends Element {
 
-  constructor({id, name, report_type, attachment, attachment_id}) {
+  constructor({ id, name, report_type, attachment, attachment_id }) {
     const reportTemplate = {
       id,
       name,

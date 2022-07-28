@@ -3,11 +3,11 @@ import { indexOf, split } from 'lodash';
 import Immutable from 'immutable';
 
 import BaseFetcher from 'src/fetchers/BaseFetcher';
-import Reaction from 'src/components/models/Reaction';
+import Reaction from 'src/models/Reaction';
 import UIStore from 'src/components/stores/UIStore';
 import NotificationActions from 'src/components/actions/NotificationActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import Literature from 'src/components/models/Literature';
+import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 // TODO: Extract common base functionality into BaseFetcher

@@ -1,5 +1,5 @@
 import 'whatwg-fetch';
-import GenericEl from 'src/components/models/GenericEl';
+import GenericEl from 'src/models/GenericEl';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 

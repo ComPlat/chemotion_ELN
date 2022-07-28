@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, FormControl, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
-import Literature from 'src/components/models/Literature';
+import Literature from 'src/models/Literature';
 import { CitationType, CitationTypeMap } from 'src/components/CitationType';
 
 const RefByUserInfo = ({ info, litype }) => {

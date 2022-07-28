@@ -1,4 +1,4 @@
-import Element from 'src/components/models/Element';
+import Element from 'src/models/Element';
 // import Dataset from './Dataset';
 
 export default class Analysis extends Element {
@@ -43,7 +43,7 @@ export default class Analysis extends Element {
 
   updateDataset(changedDataset) {
     this._datasets.find(dataset => {
-      if(dataset.id == changedDataset.id) {
+      if (dataset.id == changedDataset.id) {
         const datasetId = this.datasets.indexOf(dataset);
         this.datasets[datasetId] = changedDataset;
       }

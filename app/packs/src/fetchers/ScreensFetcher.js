@@ -1,5 +1,5 @@
 import 'whatwg-fetch';
-import Screen from 'src/components/models/Screen';
+import Screen from 'src/models/Screen';
 import UIStore from 'src/components/stores/UIStore'
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher'
 import BaseFetcher from 'src/fetchers/BaseFetcher';

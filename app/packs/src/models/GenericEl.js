@@ -1,8 +1,8 @@
 import { isEmpty, filter } from 'lodash';
-import Element from 'src/components/models/Element';
-import Container from 'src/components/models/Container';
+import Element from 'src/models/Element';
+import Container from 'src/models/Container';
 import UserStore from 'src/components/stores/UserStore';
-import Segment from 'src/components/models/Segment';
+import Segment from 'src/models/Segment';
 
 export default class GenericEl extends Element {
 
@@ -133,7 +133,7 @@ export default class GenericEl extends Element {
   }
 
   title() {
-    return `${this.short_label}     ${this.name}` ;
+    return `${this.short_label}     ${this.name}`;
   }
 
   get isPendingToSave() {

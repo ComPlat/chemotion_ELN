@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import uuid from 'uuid';
-import StructureDef from 'src/components/models/StructureDef';
+import StructureDef from 'src/models/StructureDef';
 
 export default class StructureEditor {
   constructor(args) {

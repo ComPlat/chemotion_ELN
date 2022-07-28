@@ -6,7 +6,7 @@ import UIStore from 'src/components/stores/UIStore';
 import { researchPlanShowOrNew } from 'src/components/routesUtils';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
-import ResearchPlan from 'src/components/models/ResearchPlan';
+import ResearchPlan from 'src/models/ResearchPlan';
 import ResearchPlanDetailsBody from 'src/components/research_plan/ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from 'src/components/research_plan/ResearchPlanDetailsName';
 

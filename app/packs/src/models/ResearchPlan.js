@@ -1,8 +1,8 @@
 import { isEmpty } from 'lodash';
-import Element from 'src/components/models/Element';
-import Container from 'src/components/models/Container';
-import Segment from 'src/components/models/Segment';
-import Wellplate from 'src/components/models/Wellplate';
+import Element from 'src/models/Element';
+import Container from 'src/models/Container';
+import Segment from 'src/models/Segment';
+import Wellplate from 'src/models/Wellplate';
 
 const uuidv4 = require('uuid/v4');
 

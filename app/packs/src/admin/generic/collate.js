@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { unitConversion } from 'src/admin/generic/Utils';
-import GenericSubField from 'src/components/models/GenericSubField';
+import GenericSubField from 'src/models/GenericSubField';
 
 const collateValues = (currentFields, previousFields, previousValues) => {
   const result = [];
@@ -43,7 +43,7 @@ const collateValues = (currentFields, previousFields, previousValues) => {
           newSub[preKey] = { value: '', value_system: curr.value_system };
         }
         newSub[preKey].value =
-        unitConversion(curr.option_layer, newSub[preKey].value_system, newSub[preKey].value);
+          unitConversion(curr.option_layer, newSub[preKey].value_system, newSub[preKey].value);
       }
     });
     result.push(newSub);

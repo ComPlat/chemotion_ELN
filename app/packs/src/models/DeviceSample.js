@@ -1,9 +1,9 @@
-import Element from 'src/components/models/Element';
+import Element from 'src/models/Element';
 import uuid from 'uuid';
 
-export default class DeviceSample extends Element{
-  constructor({id, device_id, sample_id, types, short_label}) {
-    const deviceSample= {
+export default class DeviceSample extends Element {
+  constructor({ id, device_id, sample_id, types, short_label }) {
+    const deviceSample = {
       id,
       deviceId: device_id,
       sampleId: sample_id,
@@ -12,7 +12,7 @@ export default class DeviceSample extends Element{
     }
     super(deviceSample)
   }
-  
+
   static buildEmpty(deviceId, sample) {
     return new DeviceSample({
       id: uuid.v1(),
@@ -22,9 +22,9 @@ export default class DeviceSample extends Element{
       types: [],
     })
   }
-  
+
   serialize() {
-    const serialized = super.serialize({ 
+    const serialized = super.serialize({
       id: this.id,
       device_id: this.deviceId,
       sample_id: this.sampleId,

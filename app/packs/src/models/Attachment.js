@@ -1,4 +1,4 @@
-import Element from 'src/components/models/Element';
+import Element from 'src/models/Element';
 import { filePreview } from 'src/helper/index';
 
 export default class Attachment extends Element {

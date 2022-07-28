@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import Immutable from 'immutable';
-import Literature from 'src/components/models/Literature';
+import Literature from 'src/models/Literature';
 
 export default class LiteraturesFetcher {
   static fetchElementReferences(element) {

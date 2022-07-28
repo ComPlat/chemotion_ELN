@@ -4,7 +4,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
-import PrivateNote from 'src/components/models/PrivateNote';
+import PrivateNote from 'src/models/PrivateNote';
 
 export default class PrivateNoteElement extends React.Component {
   constructor(props) {

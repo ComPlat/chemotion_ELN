@@ -1,14 +1,14 @@
 import 'whatwg-fetch';
 import _ from 'lodash';
-import Sample from 'src/components/models/Sample';
-import Reaction from 'src/components/models/Reaction';
+import Sample from 'src/models/Sample';
+import Reaction from 'src/models/Reaction';
 import NotificationActions from 'src/components/actions/NotificationActions';
 
 export default class ReportsFetcher {
   static fetchArchives() {
     let promise = fetch('/api/v1/archives/all', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -22,11 +22,11 @@ export default class ReportsFetcher {
 
   static deleteArchive(archive_id) {
     let promise = fetch(`/api/v1/archives/${archive_id}`, {
-        credentials: 'same-origin',
-        method: 'DELETE',
-      })
+      credentials: 'same-origin',
+      method: 'DELETE',
+    })
       .then((response) => {
-        if (response.status == 200) {return archive_id }
+        if (response.status == 200) { return archive_id }
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -36,14 +36,14 @@ export default class ReportsFetcher {
 
   static fetchDownloadable(ids) {
     let promise = fetch('/api/v1/archives/downloadable/', {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ids: ids}),
-      })
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ids: ids }),
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -67,8 +67,8 @@ export default class ReportsFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      if(json.error) {
-        NotificationActions.add( {
+      if (json.error) {
+        NotificationActions.add({
           title: json.error,
           message: 'Please reload the page to try it again!',
           level: 'error',

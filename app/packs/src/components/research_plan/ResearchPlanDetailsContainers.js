@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
-import Container from 'src/components/models/Container';
+import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
@@ -58,7 +58,7 @@ const SpectraEditorBtn = ({
     >
       <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
     </Button>
-    )}
+  )}
   </OverlayTrigger>
 );
 

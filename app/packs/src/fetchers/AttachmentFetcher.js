@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 import { camelizeKeys, decamelizeKeys } from 'humps';
 
-import Attachment from 'src/components/models/Attachment';
+import Attachment from 'src/models/Attachment';
 import NotificationActions from 'src/components/actions/NotificationActions';
 import SparkMD5 from 'spark-md5';
 import LoadingActions from 'src/components/actions/LoadingActions';
@@ -213,21 +213,21 @@ export default class AttachmentFetcher {
       body: JSON.stringify({ filename: filename, key: key, checksum: checksum }),
     }).then(response => response.json())
       .then((response) => {
-      LoadingActions.stopLoadingWithProgress(filename);
-      if (response.ok == false) {
-        let msg = 'Files uploading failed: ';
-        if (response.status == 413) {
-          msg += 'File size limit exceeded.';
-        } else {
-          msg += response.statusText;
-        }
+        LoadingActions.stopLoadingWithProgress(filename);
+        if (response.ok == false) {
+          let msg = 'Files uploading failed: ';
+          if (response.status == 413) {
+            msg += 'File size limit exceeded.';
+          } else {
+            msg += response.statusText;
+          }
 
-        NotificationActions.add({
-          message: msg,
-          level: 'error'
-        });
-      }
-    })
+          NotificationActions.add({
+            message: msg,
+            level: 'error'
+          });
+        }
+      })
   };
 
   static uploadChunk(chunk, counter, key, progress, filename) {
@@ -268,7 +268,7 @@ export default class AttachmentFetcher {
     let totalStep = chunksCount + 1;
     for (let counter = 1; counter <= chunksCount; counter++) {
       let chunk = file.slice(beginingOfTheChunk, endOfTheChunk);
-      tasks.push(this.uploadChunk(chunk, counter, key, counter/totalStep, file.name)());
+      tasks.push(this.uploadChunk(chunk, counter, key, counter / totalStep, file.name)());
       spark.append(await this.getFileContent(chunk));
       beginingOfTheChunk = endOfTheChunk;
       endOfTheChunk += chunkSize;

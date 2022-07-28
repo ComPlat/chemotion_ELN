@@ -17,7 +17,7 @@ import WellplateProperties from 'src/components/WellplateProperties';
 import WellplateDetailsContainers from 'src/components/WellplateDetailsContainers';
 import WellplateDetailsAttachments from 'src/components/WellplateDetailsAttachments';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import Attachment from 'src/components/models/Attachment';
+import Attachment from 'src/models/Attachment';
 import Utils from 'src/components/utils/Functions';
 import UIStore from 'src/components/stores/UIStore';
 import UIActions from 'src/components/actions/UIActions';

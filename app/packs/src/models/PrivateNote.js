@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle,  camelcase, semi,  no-unused-vars */
-import Element from 'src/components/models/Element';
+import Element from 'src/models/Element';
 
 export default class PrivateNote extends Element {
   static buildEmpty() {

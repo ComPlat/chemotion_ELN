@@ -6,8 +6,8 @@ import UIStore from 'src/components/stores/UIStore';
 import { wellplateShowOrNew } from 'src/components/routesUtils';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
-import ResearchPlan from 'src/components/models/ResearchPlan';
-import Wellplate from 'src/components/models/Wellplate';
+import ResearchPlan from 'src/models/ResearchPlan';
+import Wellplate from 'src/models/Wellplate';
 
 export default class EmbeddedWellplate extends Component {
   constructor(props) {

@@ -1,7 +1,7 @@
-import Element from 'src/components/models/Element'
+import Element from 'src/models/Element'
 import uuid from 'uuid';
 
-export default class AnalysesExperiment extends Element{
+export default class AnalysesExperiment extends Element {
   constructor({
     id, devices_analysis_id, holder_id, status, solvent, experiment, priority, on_day, sample_analysis_id,
     number_of_scans, sweep_width, time, analysis_barcode, sample_short_label, sample_id, devices_sample_id
@@ -49,7 +49,7 @@ export default class AnalysesExperiment extends Element{
   }
 
   serialize() {
-    const serialized = super.serialize({ 
+    const serialized = super.serialize({
       devices_analysis_id: this.deviceAnalysisId,
       holder_id: this.holderId,
       status: this.status,
@@ -68,23 +68,23 @@ export default class AnalysesExperiment extends Element{
   }
 
   buildConfig() {
-      const configMap = {
-        'SOLVENT': this.solvent,
-        'EXPERIMENT': this.experiment,
-        'NAME': this.sampleShortLabel,
-        'BARCODE': this.analysisBarcode,
-        'PARAMETERS': `ns, ${this.numberOfScans}, sw, ${this.sweepWidth}`
-      }
-      const conditionedNight = !this.onDay ? {'NIGHT': null} : {}
-      const conditionedPriority = this.priority ? {'PRIORITY': null} : {}
-      return {
-        sample_id: this.sampleId,
-        data: [{
+    const configMap = {
+      'SOLVENT': this.solvent,
+      'EXPERIMENT': this.experiment,
+      'NAME': this.sampleShortLabel,
+      'BARCODE': this.analysisBarcode,
+      'PARAMETERS': `ns, ${this.numberOfScans}, sw, ${this.sweepWidth}`
+    }
+    const conditionedNight = !this.onDay ? { 'NIGHT': null } : {}
+    const conditionedPriority = this.priority ? { 'PRIORITY': null } : {}
+    return {
+      sample_id: this.sampleId,
+      data: [{
         ...configMap,
         ...conditionedNight,
         ...conditionedPriority
-        }]
-      }
+      }]
+    }
   }
 }
 

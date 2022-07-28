@@ -6,12 +6,12 @@ import Delta from 'quill-delta';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
 
-import Element from 'src/components/models/Element';
-import Sample from 'src/components/models/Sample';
-import Container from 'src/components/models/Container';
+import Element from 'src/models/Element';
+import Sample from 'src/models/Sample';
+import Container from 'src/models/Container';
 
 import UserStore from 'src/components/stores/UserStore';
-import Segment from 'src/components/models/Segment';
+import Segment from 'src/models/Segment';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -324,7 +324,7 @@ export default class Reaction extends Element {
       return temperature
     }
 
-    temperature.data.forEach(function(data, index, theArray) {
+    temperature.data.forEach(function (data, index, theArray) {
       theArray[index].value = convertFunc(newUnit, data.value).toFixed(2)
     })
 
@@ -546,7 +546,7 @@ export default class Reaction extends Element {
       material.amountType = 'real';
 
       // we don't want to copy loading from sample
-      if(material.contains_residues) {
+      if (material.contains_residues) {
         material.loading = 0.0;
       }
 
@@ -624,7 +624,7 @@ export default class Reaction extends Element {
   namePolicy(material, oldGroup, newGroup) {
     this.rebuildProductName();
 
-    if (oldGroup && oldGroup == "products"){
+    if (oldGroup && oldGroup == "products") {
       // Blank name if FROM "products"
       material.name = "";
       return 0;
@@ -638,7 +638,7 @@ export default class Reaction extends Element {
 
   rebuildProductName() {
     let short_label = this.short_label
-    this.products.forEach(function(product, index, arr) {
+    this.products.forEach(function (product, index, arr) {
       let productName = String.fromCharCode('A'.charCodeAt(0) + index);
       arr[index].name = short_label + "-" + productName;
     })
@@ -647,7 +647,7 @@ export default class Reaction extends Element {
   rebuildReference(material) {
     if (this.referenceMaterial) {
       let referenceMaterial = this.referenceMaterial
-      let reference = this.starting_materials.find(function(m) {
+      let reference = this.starting_materials.find(function (m) {
         return referenceMaterial.id === m.id;
       })
 
@@ -662,7 +662,7 @@ export default class Reaction extends Element {
       }
     }
 
-    this.products.forEach(function(product, index, arr) {
+    this.products.forEach(function (product, index, arr) {
       arr[index].reference = false;
     })
   }
@@ -704,14 +704,14 @@ export default class Reaction extends Element {
   }
 
   _updateEquivalentForMaterial(sample) {
-    if(this.referenceMaterial && this.referenceMaterial.amount_mol) {
+    if (this.referenceMaterial && this.referenceMaterial.amount_mol) {
       sample.equivalent = sample.amount_mol / this.referenceMaterial.amount_mol;
     }
   }
 
   get svgPath() {
-    if(this.reaction_svg_file && this.reaction_svg_file != '***' ) {
-      if(this.reaction_svg_file.includes('<svg')) {
+    if (this.reaction_svg_file && this.reaction_svg_file != '***') {
+      if (this.reaction_svg_file.includes('<svg')) {
         return this.reaction_svg_file
       } else if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
         return `/images/reactions/${this.reaction_svg_file}`
@@ -724,7 +724,7 @@ export default class Reaction extends Element {
   SMGroupValid() {
     let result = true;
     this.starting_materials.map((sample) => {
-      if(!sample.isValid)
+      if (!sample.isValid)
         result = false;
     });
 
@@ -799,9 +799,9 @@ export default class Reaction extends Element {
   get totalVolume() {
     let totalVolume = 0.0;
     const materials = [...this.starting_materials,
-                        ...this.reactants,
-                        ...this.products,
-                        ...this.solvents];
+    ...this.reactants,
+    ...this.products,
+    ...this.solvents];
     materials.map(m => totalVolume += m.amount_l);
     return totalVolume;
   }

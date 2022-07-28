@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Button, Row, Col } from 'react-bootstrap';
 import { sortBy } from 'lodash';
 import { GenProperties, GenPropertiesLayerSearchCriteria } from 'src/components/generic/GenericElCommon';
-import GenericEl from 'src/components/models/GenericEl';
+import GenericEl from 'src/models/GenericEl';
 
 const buildCriteria = (props) => {
   const { genericEl } = props;
@@ -165,6 +165,6 @@ GenericElCriteria.propTypes = {
 
 GenericElCriteria.defaultProps = {
   genericEl: null,
-  onHide: () => { },
-  onSearch: () => { }
+  onHide: () => {},
+  onSearch: () => {}
 };

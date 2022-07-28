@@ -1,9 +1,9 @@
-import Element from 'src/components/models/Element';
-import DeviceAnalysis from 'src/components/models/DeviceAnalysis';
-import DeviceSample from 'src/components/models/DeviceSample';
+import Element from 'src/models/Element';
+import DeviceAnalysis from 'src/models/DeviceAnalysis';
+import DeviceSample from 'src/models/DeviceSample';
 
-export default class Device extends Element{
-  constructor({id, title, code, types, user_id, samples, devices_analyses}) {
+export default class Device extends Element {
+  constructor({ id, title, code, types, user_id, samples, devices_analyses }) {
     const device = {
       id,
       title,
@@ -16,7 +16,7 @@ export default class Device extends Element{
     }
     super(device)
   }
-  
+
   checksum() {
     return super.checksum(
       ['user_id', 'id', 'is_new', 'isNew', 'isEdited', 'isPendingToSave', 'devicesAnalyses', 'samples']
@@ -33,9 +33,9 @@ export default class Device extends Element{
       devices_analyses: []
     })
   }
-  
+
   serialize() {
-    const serialized = super.serialize({ 
+    const serialized = super.serialize({
       id: this.id,
       code: this.code,
       types: this.types,

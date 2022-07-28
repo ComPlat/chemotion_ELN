@@ -19,19 +19,19 @@ import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
 
-import GenericEl from 'src/components/models/GenericEl';
-import Sample from 'src/components/models/Sample';
-import Reaction from 'src/components/models/Reaction';
-import Wellplate from 'src/components/models/Wellplate';
-import Screen from 'src/components/models/Screen';
-import ResearchPlan from 'src/components/models/ResearchPlan';
-import Report from 'src/components/models/Report';
-import Format from 'src/components/models/Format';
-import Graph from 'src/components/models/Graph';
-import ComputeTask from 'src/components/models/ComputeTask';
-import DeviceControl from 'src/components/models/DeviceControl';
-import LiteratureMap from 'src/components/models/LiteratureMap';
-import Prediction from 'src/components/models/Prediction';
+import GenericEl from 'src/models/GenericEl';
+import Sample from 'src/models/Sample';
+import Reaction from 'src/models/Reaction';
+import Wellplate from 'src/models/Wellplate';
+import Screen from 'src/models/Screen';
+import ResearchPlan from 'src/models/ResearchPlan';
+import Report from 'src/models/Report';
+import Format from 'src/models/Format';
+import Graph from 'src/models/Graph';
+import ComputeTask from 'src/models/ComputeTask';
+import DeviceControl from 'src/models/DeviceControl';
+import LiteratureMap from 'src/models/LiteratureMap';
+import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 
 import _ from 'lodash';

@@ -1,5 +1,5 @@
-import Element from 'src/components/models/Element';
-import Sample from 'src/components/models/Sample';
+import Element from 'src/models/Element';
+import Sample from 'src/models/Sample';
 
 export default class Well extends Element {
   serialize() {

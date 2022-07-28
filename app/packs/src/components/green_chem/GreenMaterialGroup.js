@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { AgGridReact } from 'ag-grid-react';
 import { Checkbox } from 'react-bootstrap';
 
-import Sample from 'src/components/models/Sample';
+import Sample from 'src/models/Sample';
 import SampleName from 'src/components/common/SampleName';
 
 function floatFormatter(params) {
@@ -36,8 +36,8 @@ function MaterialNameWithIupac({ group, node }) {
   } else {
     moleculeIupacName = material.molecule_iupac_name;
     materialName = material.title() === '' ?
-          <SampleName sample={material} /> :
-          material.title();
+      <SampleName sample={material} /> :
+      material.title();
   }
 
   return (

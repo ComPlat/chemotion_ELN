@@ -10,7 +10,7 @@ import LoadingActions from 'src/components/actions/LoadingActions';
 import SpectraActions from 'src/components/actions/SpectraActions';
 import SpectraStore from 'src/components/stores/SpectraStore';
 import { SpectraOps } from 'src/components/utils/quillToolbarSymbol';
-import ResearchPlan from 'src/components/models/ResearchPlan';
+import ResearchPlan from 'src/models/ResearchPlan';
 
 const rmRefreshed = (analysis) => {
   if (!analysis) return analysis;
@@ -142,7 +142,7 @@ class ViewSpectra extends React.Component {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -170,7 +170,7 @@ class ViewSpectra extends React.Component {
     }
   }
 
-  getSpcInfo(curveIdx=0) {
+  getSpcInfo(curveIdx = 0) {
     const { spcInfos, spcIdx, arrSpcIdx } = this.state;
     let selectedIdx = spcIdx;
     if (arrSpcIdx.length > 0) {
@@ -574,7 +574,7 @@ class ViewSpectra extends React.Component {
 
     return (
       <div className="card-box">
-        { content }
+        {content}
       </div>
     );
   }
@@ -595,7 +595,7 @@ class ViewSpectra extends React.Component {
 
     return (
       <div className="card-box">
-        { content }
+        {content}
       </div>
     );
   }
@@ -640,16 +640,16 @@ class ViewSpectra extends React.Component {
           !isExist && multiEntities.length == 0
             ? this.renderInvalid()
             : <SpectraEditor
-                entity={currEntity}
-                multiEntities={multiEntities}
-                entityFileNames={entityFileNames}
-                others={others}
-                operations={operations}
-                forecast={forecast}
-                molSvg={sample.svgPath}
-                descriptions={descriptions}
-                canChangeDescription
-                onDescriptionChanged={this.onSpectraDescriptionChanged}
+              entity={currEntity}
+              multiEntities={multiEntities}
+              entityFileNames={entityFileNames}
+              others={others}
+              operations={operations}
+              forecast={forecast}
+              molSvg={sample.svgPath}
+              descriptions={descriptions}
+              canChangeDescription
+              onDescriptionChanged={this.onSpectraDescriptionChanged}
             />
         }
       </Modal.Body>
@@ -680,7 +680,7 @@ class ViewSpectra extends React.Component {
     return (
       <div className="spectra-editor-title">
         <span className="txt-spectra-editor-title">
-          { modalTitle }
+          {modalTitle}
         </span>
         <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }} >
           <Select

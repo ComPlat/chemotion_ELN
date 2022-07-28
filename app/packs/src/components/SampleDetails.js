@@ -39,8 +39,8 @@ import XTabs from 'src/components/extra/SampleDetailsXTabs';
 
 import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
 
-import Sample from 'src/components/models/Sample';
-import Container from 'src/components/models/Container';
+import Sample from 'src/models/Sample';
+import Container from 'src/models/Container';
 import PolymerSection from 'src/components/PolymerSection';
 import ElementalCompositionGroup from 'src/components/ElementalCompositionGroup';
 import ToggleSection from 'src/components/common/ToggleSection';

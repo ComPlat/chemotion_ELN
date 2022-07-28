@@ -1,9 +1,9 @@
 import React from 'react';
-import Element from 'src/components/models/Element';
-import Well from 'src/components/models/Well';
-import Sample from 'src/components/models/Sample';
-import Container from 'src/components/models/Container.js';
-import Segment from 'src/components/models/Segment';
+import Element from 'src/models/Element';
+import Well from 'src/models/Well';
+import Sample from 'src/models/Sample';
+import Container from 'src/models/Container.js';
+import Segment from 'src/models/Segment';
 
 export default class Wellplate extends Element {
   constructor(args) {

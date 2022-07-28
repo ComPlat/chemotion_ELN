@@ -15,16 +15,16 @@ import UIActions from 'src/components/actions/UIActions';
 import UserActions from 'src/components/actions/UserActions';
 import UIStore from 'src/components/stores/UIStore';
 import ClipboardStore from 'src/components/stores/ClipboardStore';
-import Sample from 'src/components/models/Sample';
-import Reaction from 'src/components/models/Reaction';
-import Wellplate from 'src/components/models/Wellplate';
-import Screen from 'src/components/models/Screen';
+import Sample from 'src/models/Sample';
+import Reaction from 'src/models/Reaction';
+import Wellplate from 'src/models/Wellplate';
+import Screen from 'src/models/Screen';
 
-import Device from 'src/components/models/Device';
-import Container from 'src/components/models/Container';
-import AnalysesExperiment from 'src/components/models/AnalysesExperiment';
-import DeviceAnalysis from 'src/components/models/DeviceAnalysis';
-import DeviceSample from 'src/components/models/DeviceSample';
+import Device from 'src/models/Device';
+import Container from 'src/models/Container';
+import AnalysesExperiment from 'src/models/AnalysesExperiment';
+import DeviceAnalysis from 'src/models/DeviceAnalysis';
+import DeviceSample from 'src/models/DeviceSample';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
@@ -42,7 +42,7 @@ import DetailActions from 'src/components/actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from 'src/components/utils/ElementUtils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import GenericEl from 'src/components/models/GenericEl';
+import GenericEl from 'src/models/GenericEl';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 

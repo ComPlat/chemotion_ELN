@@ -7,7 +7,7 @@ import {
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
 
-import Screen from 'src/components/models/Screen';
+import Screen from 'src/models/Screen';
 
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import ScreenWellplates from 'src/components/ScreenWellplates';

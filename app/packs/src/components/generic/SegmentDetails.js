@@ -4,7 +4,7 @@ import { findIndex, cloneDeep } from 'lodash';
 import { Panel, Button, ButtonToolbar, OverlayTrigger, Tooltip, Tab } from 'react-bootstrap';
 import UserStore from 'src/components/stores/UserStore';
 import { LayersLayout, UploadInputChange } from 'src/components/generic/GenericElCommon';
-import Segment from 'src/components/models/Segment';
+import Segment from 'src/models/Segment';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { notification, genUnits, toBool, toNum, unitConversion } from 'src/admin/generic/Utils';
 import { organizeSubValues } from 'src/admin/generic/collate';

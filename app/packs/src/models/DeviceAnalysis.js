@@ -1,10 +1,10 @@
-import Element from 'src/components/models/Element'
-import AnalysesExperiment from 'src/components/models/AnalysesExperiment'
+import Element from 'src/models/Element'
+import AnalysesExperiment from 'src/models/AnalysesExperiment'
 import _ from 'lodash'
 
-export default class DeviceAnalysis extends Element{
+export default class DeviceAnalysis extends Element {
   constructor({
-     id, device_id, analysis_type, title, experiments
+    id, device_id, analysis_type, title, experiments
   }) {
     const analysis = {
       id: id,
@@ -26,7 +26,7 @@ export default class DeviceAnalysis extends Element{
       title: `${deviceId}: NMR`,
     })
   }
- 
+
   serialize() {
     const serialized = super.serialize({
       device_id: this.deviceId,
@@ -34,6 +34,6 @@ export default class DeviceAnalysis extends Element{
       analysis_type: this.analysisType,
       title: this.title,
     })
-    return serialized 
+    return serialized
   }
 }

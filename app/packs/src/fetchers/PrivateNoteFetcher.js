@@ -1,12 +1,12 @@
 import 'whatwg-fetch';
-import PrivateNote from 'src/components/models/PrivateNote';
+import PrivateNote from 'src/models/PrivateNote';
 
 // improved function for classifying strings - to fix research_plan being an invalid noteable type
 // takes into account any _ in strings and returns string: String_test => StringTest
 function classify(string) {
   if (string.includes('_')) {
     var substrings = string.split('_');
-    for (let i=0; i<substrings.length; i++) {
+    for (let i = 0; i < substrings.length; i++) {
       substrings[i] = substrings[i].charAt(0).toUpperCase() + substrings[i].slice(1);
     }
     string = substrings.join('')
