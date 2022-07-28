@@ -27,7 +27,7 @@ describe Chemotion::InboxAPI do
 
         before { get "/api/v1/inbox/samples?search_string=#{search_string}" }
 
-        it 'return fitting samples' do 
+        it 'return fitting samples' do
           expect(JSON.parse(response.body)['samples'].size).to eq(2)
         end
       end
@@ -46,7 +46,6 @@ describe Chemotion::InboxAPI do
           before { post "/api/v1/inbox/samples/#{sample_2.id}", params: params, as: :json }
 
           it 'return moved samples' do
-            puts response.body
             expect(JSON.parse(response.body)['container']['container_type']).to eq('dataset')
             expect(JSON.parse(response.body)['container']['attachments'].count).to eq(1)
           end

@@ -42,8 +42,8 @@ export default class ScreensFetcher {
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
         .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
 
     if (files.length > 0) {
       let tasks = [];
@@ -69,8 +69,8 @@ export default class ScreensFetcher {
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
         .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
 
     if (files.length > 0) {
       let tasks = [];
@@ -80,5 +80,20 @@ export default class ScreensFetcher {
       });
     }
     return promise();
+  }
+
+  static addResearchPlan(screen_id, collection_id) {
+    return fetch(
+      `/api/v1/screens/${screen_id}/add_research_plan`,
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ collection_id })
+      }
+    ).then(response => response.json()).catch(errorMessage => console.log(errorMessage));
   }
 }

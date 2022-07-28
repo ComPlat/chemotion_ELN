@@ -31,3 +31,6 @@
 
 en:
   hello: "Hello world"
+  time:
+    formats:
+      eln_timestamp: '%d.%m.%Y, %H:%M:%S'

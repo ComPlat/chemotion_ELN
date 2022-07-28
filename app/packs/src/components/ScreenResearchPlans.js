@@ -1,12 +1,15 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import DragDropItemTypes from './DragDropItemTypes';
-import UIStore from './stores/UIStore';
-import { researchPlanShowOrNew } from './routesUtils';
-import ResearchPlan from './models/ResearchPlan';
 import EmbeddedResearchPlanDetails from './research_plan/EmbeddedResearchPlanDetails';
+import LoadingActions from './actions/LoadingActions';
+import ElementActions from './actions/ElementActions';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import ResearchPlan from './models/ResearchPlan';
+import UIStore from './stores/UIStore';
+import { Button } from 'react-bootstrap';
+import { DropTarget } from 'react-dnd';
+import { researchPlanShowOrNew } from './routesUtils';
 
 const target = {
   drop(props, monitor) {
@@ -51,6 +54,30 @@ class ScreenResearchPlans extends Component {
       </div>);
   }
 
+  handleAddResearchPlan() {
+    const { currentCollection } = UIStore.getState();
+    const collection_id = currentCollection.id;
+    const screen_id = this.getScreenIdFromPath();
+    if (screen_id == -1) { return }
+    LoadingActions.start();
+
+    ElementActions.addResearchPlanToScreen(
+      screen_id,
+      collection_id,
+      () => LoadingActions.stop()
+    );
+  }
+
+  getScreenIdFromPath() {
+    const currentURI = Aviator.getCurrentURI();
+
+    const screenMatch = currentURI.match(/\/screen\/(\d+)/);
+    if (screenMatch) {
+      return screenMatch[1];
+    } else {
+      return -1;
+    }
+  }
 
   render() {
     const {
@@ -70,6 +97,15 @@ class ScreenResearchPlans extends Component {
             saveResearchPlan={saveResearchPlan}
           />
         ))}
+        <Button
+          bsSize="xsmall"
+          bsStyle="success"
+          className="button-right"
+          onClick={this.handleAddResearchPlan.bind(this)}
+          type="button"
+        >
+          Add new research plan
+        </Button>
       </div>);
   }
 }

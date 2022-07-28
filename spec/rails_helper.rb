@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+require 'simplecov'
+
+SimpleCov.start 'rails' do
+  add_group 'REST API', 'app/api'
+  add_filter 'app/graphql/chemotion_schema.rb'
+  add_filter 'app/channels'
+end
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV['RAILS_ENV'] ||= 'test'
 require 'spec_helper'

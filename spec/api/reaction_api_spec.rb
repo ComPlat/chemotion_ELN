@@ -126,7 +126,7 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    describe 'PUT /api/v1/reactions', focus: true do
+    describe 'PUT /api/v1/reactions' do
       let(:collection_1) do
         Collection.create!(label: 'Collection #1', user: user)
       end
@@ -297,9 +297,8 @@ describe Chemotion::ReactionAPI do
 
         before do
           put("/api/v1/reactions/#{reaction_1.id}.json",
-            params: params.to_json,
-            headers: { 'CONTENT_TYPE' => 'application/json' }
-          )
+              params: params.to_json,
+              headers: { 'CONTENT_TYPE' => 'application/json' })
         end
 
         let(:r) { Reaction.find(reaction_1.id) }
@@ -320,7 +319,7 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    describe 'POST /api/v1/reactions', focus: true do
+    describe 'POST /api/v1/reactions' do
       let(:collection_1) do
         Collection.create!(label: 'Collection #1', user: user)
       end
@@ -354,7 +353,7 @@ describe Chemotion::ReactionAPI do
               'reactants' => [
                 'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336',
                 'name' => 'Copied Sample',
-                'solvent' => [{:label=>'Acetone', :smiles=>'CC(C)=O', :ratio=>'100'}],
+                'solvent' => [{ label: 'Acetone', smiles: 'CC(C)=O', ratio: '100' }],
                 'target_amount_unit' => 'mg',
                 'target_amount_value' => 86.09596,
                 'reference' => false,
@@ -371,9 +370,8 @@ describe Chemotion::ReactionAPI do
 
         before do
           post('/api/v1/reactions.json',
-            params: params.to_json,
-            headers: { 'CONTENT_TYPE' => 'application/json' }
-          )
+               params: params.to_json,
+               headers: { 'CONTENT_TYPE' => 'application/json' })
         end
 
         let(:r) { Reaction.find_by(name: 'r001') }

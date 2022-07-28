@@ -10,6 +10,7 @@ import alt from '../alt';
 import UserStore from './UserStore';
 import ElementActions from '../actions/ElementActions';
 import CollectionActions from '../actions/CollectionActions';
+import LoadingActions from '../actions/LoadingActions';
 import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
@@ -117,10 +118,10 @@ class ElementStore {
 
 
 
-    for (let i = 0; i < Xlisteners.count; i++){
-      Object.keys(Xlisteners["content"+i]).map((k) => {
+    for (let i = 0; i < Xlisteners.count; i++) {
+      Object.keys(Xlisteners["content" + i]).map((k) => {
         this.bindAction(Xlisteners["content" + i][k],
-                        Xhandlers["content" + i][k].bind(this))
+          Xhandlers["content" + i][k].bind(this))
       });
     }
 
@@ -200,6 +201,7 @@ class ElementStore {
       handleGenerateScreenFromClipboard:
         ElementActions.generateScreenFromClipboard,
 
+      handleAddResearchPlanToScreen: ElementActions.addResearchPlanToScreen,
       handleFetchScreenById: ElementActions.fetchScreenById,
       handleCreateScreen: ElementActions.createScreen,
 
@@ -275,12 +277,12 @@ class ElementStore {
   }
 
   findDeviceIndexById(deviceId) {
-    const {devices} = this.state.elements['devices']
+    const { devices } = this.state.elements['devices']
     return devices.findIndex((e) => e.id === deviceId)
   }
 
   handleSaveDevice(device) {
-    const {devices} = this.state.elements['devices']
+    const { devices } = this.state.elements['devices']
     const deviceKey = devices.findIndex((e) => e._checksum === device._checksum)
     if (deviceKey === -1) {
       this.state.elements['devices'].devices.push(device)
@@ -289,7 +291,7 @@ class ElementStore {
     }
   }
 
-  handleToggleDeviceType({device, type}) {
+  handleToggleDeviceType({ device, type }) {
     if (device.types.includes(type)) {
       device.types = device.types.filter((e) => e !== type)
     } else {
@@ -300,7 +302,7 @@ class ElementStore {
   }
 
   handleCreateDevice() {
-    const {devices} = this.state.elements['devices']
+    const { devices } = this.state.elements['devices']
     const newDevice = Device.buildEmpty()
     const newKey = devices.length
     this.state.elements['devices'].activeAccordionDevice = newKey
@@ -308,20 +310,20 @@ class ElementStore {
   }
 
   handleDeleteDevice(device) {
-    const {devices, activeAccordionDevice} = this.state.elements['devices']
+    const { devices, activeAccordionDevice } = this.state.elements['devices']
     this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
   }
 
-  handleAddSampleToDevice({sample, device, options = {save: false}}) {
+  handleAddSampleToDevice({ sample, device, options = { save: false } }) {
     const deviceSample = DeviceSample.buildEmpty(device.id, sample)
     device.samples.push(deviceSample)
-    if(options.save) {
+    if (options.save) {
       ElementActions.saveDevice(device)
       ElementActions.fetchDeviceById.defer(device.id)
     }
   }
 
-  handleAddSampleWithAnalysisToDevice({sample, analysis, device}) {
+  handleAddSampleWithAnalysisToDevice({ sample, analysis, device }) {
     // Note: #735
     // this handleAddSampleWithAnalysisToDevice is unused so far but we still update '1H NMR' to the new type from OLS-chmo
     // and 'NMR'(type) of DeviceSample as well
@@ -329,26 +331,26 @@ class ElementStore {
     switch (kind) {
       case chmoConversions.nmr_1h.termId:
         // add sample to device
-        const deviceSample = DeviceSample.buildEmpty(device.id, {id: sample.id, short_label: sample.short_label})
+        const deviceSample = DeviceSample.buildEmpty(device.id, { id: sample.id, short_label: sample.short_label })
         deviceSample.types = [chmoConversions.nmr_1h.value]
         device.samples.push(deviceSample)
         DeviceFetcher.update(device)
-        .then(device => {
-          const savedDeviceSample = last(device.samples)
-          // add sampleAnalysis to experiments
-          let deviceAnalysis = device.devicesAnalyses.find(a => a.analysisType === chmoConversions.nmr_1h.value)
-          if(!deviceAnalysis) {
-            deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, chmoConversions.nmr_1h.value)
-          }
-          const newExperiment = AnalysesExperiment.buildEmpty(sample.id, sample.short_label, analysis.id, savedDeviceSample.id)
-          deviceAnalysis.experiments.push(newExperiment)
-          ElementActions.saveDeviceAnalysis.defer(deviceAnalysis)
-        })
+          .then(device => {
+            const savedDeviceSample = last(device.samples)
+            // add sampleAnalysis to experiments
+            let deviceAnalysis = device.devicesAnalyses.find(a => a.analysisType === chmoConversions.nmr_1h.value)
+            if (!deviceAnalysis) {
+              deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, chmoConversions.nmr_1h.value)
+            }
+            const newExperiment = AnalysesExperiment.buildEmpty(sample.id, sample.short_label, analysis.id, savedDeviceSample.id)
+            deviceAnalysis.experiments.push(newExperiment)
+            ElementActions.saveDeviceAnalysis.defer(deviceAnalysis)
+          })
         break
     }
   }
 
-  handleToggleTypeOfDeviceSample({device, sample, type}) {
+  handleToggleTypeOfDeviceSample({ device, sample, type }) {
     const sampleKey = device.samples.findIndex(s => s.id === sample.id)
     if (sample.types.includes(type)) {
       sample.types = sample.types.filter(t => t !== type)
@@ -358,10 +360,10 @@ class ElementStore {
     device.samples[sampleKey] = sample
   }
 
-  handleOpenDeviceAnalysis({device, type}){
-    switch(type) {
+  handleOpenDeviceAnalysis({ device, type }) {
+    switch (type) {
       case "NMR":
-        const {currentCollection, isSync} = UIStore.getState();
+        const { currentCollection, isSync } = UIStore.getState();
         const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR")
 
         // update Device in case of sample was added by dnd and device was not saved
@@ -383,13 +385,13 @@ class ElementStore {
     }
   }
 
-  handleRemoveSampleFromDevice({sample, device}) {
+  handleRemoveSampleFromDevice({ sample, device }) {
     device.samples = device.samples.filter((e) => e.id !== sample.id)
     const deviceKey = this.findDeviceIndexById(device.id)
     this.state.elements['devices'].devices[deviceKey] = device
   }
 
-  handleChangeDeviceProp({device, prop, value}) {
+  handleChangeDeviceProp({ device, prop, value }) {
     device[prop] = value
     const deviceKey = this.findDeviceIndexById(device.id)
     this.state.elements['devices'].devices[deviceKey] = device
@@ -407,79 +409,79 @@ class ElementStore {
     this.state.elements['devices'].selectedDeviceId = deviceId
   }
 
-//TODO move these in Element Action ??
+  //TODO move these in Element Action ??
   createSampleAnalysis(sampleId, type) {
     return new Promise((resolve, reject) => {
       SamplesFetcher.fetchById(sampleId)
-      .then(sample => {
-        let analysis = Container.buildAnalysis(chmoConversions.others.value);
-        switch (type) {
-          case chmoConversions.nmr_1h.termId:
-            analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value)
-            break
-        }
-        sample.addAnalysis(analysis)
-        SamplesFetcher.update(sample)
-        resolve(analysis)
-      })
+        .then(sample => {
+          let analysis = Container.buildAnalysis(chmoConversions.others.value);
+          switch (type) {
+            case chmoConversions.nmr_1h.termId:
+              analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value)
+              break
+          }
+          sample.addAnalysis(analysis)
+          SamplesFetcher.update(sample)
+          resolve(analysis)
+        })
     })
   }
 
-  createAnalysisExperiment (deviceSample, deviceAnalysis) {
+  createAnalysisExperiment(deviceSample, deviceAnalysis) {
     return new Promise((resolve, reject) => {
       this.createSampleAnalysis(deviceSample.sampleId, deviceAnalysis.analysisType)
-      .then(sampleAnalysis => {
-        const experiment = AnalysesExperiment.buildEmpty(
-          deviceSample.sampleId,
-          deviceSample.shortLabel,
-          sampleAnalysis.id,
-          deviceSample.id
-        )
-        resolve(experiment)
-      })
+        .then(sampleAnalysis => {
+          const experiment = AnalysesExperiment.buildEmpty(
+            deviceSample.sampleId,
+            deviceSample.shortLabel,
+            sampleAnalysis.id,
+            deviceSample.id
+          )
+          resolve(experiment)
+        })
     })
   }
 
-  handleCreateDeviceAnalysis({device, analysisType}) {
+  handleCreateDeviceAnalysis({ device, analysisType }) {
     const analysis = DeviceAnalysis.buildEmpty(device.id, analysisType)
     const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysisType))
     const promises = samplesOfAnalysisType.map(s => this.createAnalysisExperiment(s, analysis))
     Promise.all(promises)
-    .then(experiments => {
-      experiments.map(experiment => analysis.experiments.push(experiment))
-      ElementActions.saveDeviceAnalysis(analysis)
-    })
+      .then(experiments => {
+        experiments.map(experiment => analysis.experiments.push(experiment))
+        ElementActions.saveDeviceAnalysis(analysis)
+      })
   }
 
-  handleFetchDeviceAnalysisById({analysis, device}) {
-    const {experiments} = analysis
+  handleFetchDeviceAnalysisById({ analysis, device }) {
+    const { experiments } = analysis
     const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysis.analysisType))
     const samplesWithoutOld = slice(samplesOfAnalysisType, experiments.length)
     const promises = samplesWithoutOld.map(s => this.createAnalysisExperiment(s, analysis))
     Promise.all(promises)
-    .then(experiments => {
-      experiments.map(experiment => analysis.experiments.push(experiment))
-      ElementActions.saveDeviceAnalysis(analysis)
-    })
+      .then(experiments => {
+        experiments.map(experiment => analysis.experiments.push(experiment))
+        ElementActions.saveDeviceAnalysis(analysis)
+      })
   }
 
   handleSaveDeviceAnalysis(analysis) {
-    const {currentCollection, isSync} = UIStore.getState();
+    const { currentCollection, isSync } = UIStore.getState();
     this.state.currentElement = analysis
 
-    Aviator.navigate( isSync
+    Aviator.navigate(isSync
       ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
       : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
     )
   }
 
-  handleChangeAnalysisExperimentProp({analysis, experiment, prop, value}) {
+  handleChangeAnalysisExperimentProp({ analysis, experiment, prop, value }) {
     const experimentKey = analysis.experiments.findIndex((e) => e.id === experiment.id)
     analysis.experiments[experimentKey][prop] = value
     this.state.currentElement = analysis
   }
 
-  handleDeleteAnalysisExperiment({device, analysis, experiment}) {
+  handleDeleteAnalysisExperiment({ device, analysis, experiment }) {
     const sample = device.samples.find(s => s.id === experiment.deviceSampleId)
     const sampleKey = device.samples.findIndex(s => s.id === experiment.deviceSampleId)
     device.samples[sampleKey].types = sample.types.filter(t => t !== analysis.analysisType)
@@ -487,9 +489,9 @@ class ElementStore {
     ElementActions.fetchDeviceAnalysisById.defer(analysis.id)
   }
 
-  handleDuplicateAnalysisExperiment({device, analysis, experiment}) {
+  handleDuplicateAnalysisExperiment({ device, analysis, experiment }) {
     const sample = device.samples.find(s => s.id === experiment.deviceSampleId)
-    const newSample = DeviceSample.buildEmpty(analysis.deviceId, {id: sample.sampleId, short_label: sample.shortLabel})
+    const newSample = DeviceSample.buildEmpty(analysis.deviceId, { id: sample.sampleId, short_label: sample.shortLabel })
     newSample.types = [analysis.analysisType]
     device.samples.push(newSample)
     ElementActions.saveDevice(device)
@@ -634,7 +636,7 @@ class ElementStore {
 
   handleFetchSampleById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.changeCurrentElement( result );
+      this.changeCurrentElement(result);
     }
   }
 
@@ -763,7 +765,7 @@ class ElementStore {
   }
 
   handleImportSamplesFromFile(data) {
-    if (data.sdf){
+    if (data.sdf) {
       UIActions.updateModalProps.defer({
         show: true,
         component: ModalImportConfirm,
@@ -785,7 +787,7 @@ class ElementStore {
   }
 
   handleImportSamplesFromFileConfirm(data) {
-    if (data.sdf){
+    if (data.sdf) {
       this.handleRefreshElements('sample');
     }
   }
@@ -831,6 +833,12 @@ class ElementStore {
     //this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
   }
   // -- Screens --
+
+  handleAddResearchPlanToScreen(screen) {
+    fetchOls('screen');
+    this.handleRefreshElements('screen');
+    this.navigateToNewElement(screen);
+  }
 
   handleFetchScreenById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
@@ -888,12 +896,12 @@ class ElementStore {
     if (!this.state.currentElement || (this.state.currentElement && this.state.currentElement._checksum) != result._checksum) {
       this.changeCurrentElement(result);
       this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
-    //  this.navigateToNewElement(result);
+      //  this.navigateToNewElement(result);
     }
   }
 
   refreshReactionsListForSpecificReaction(newReaction) {
-    return this.state.elements.reactions.elements.map( reaction => {
+    return this.state.elements.reactions.elements.map(reaction => {
       return reaction.id === newReaction.id
         ? newReaction
         : reaction
@@ -960,7 +968,7 @@ class ElementStore {
 
   // -- Generic --
 
-  navigateToNewElement(element = {}, klassType='') {
+  navigateToNewElement(element = {}, klassType = '') {
     this.waitFor(UIStore.dispatchToken);
     const { type, id } = element;
     const { uri, namedParams } = Aviator.getCurrentRequest();
@@ -981,7 +989,7 @@ class ElementStore {
     const newElementOfSameTypeIsPresent =
       currentElement && currentElement.isNew && currentElement.type ==
       element.type;
-    if(!newElementOfSameTypeIsPresent) {
+    if (!newElementOfSameTypeIsPresent) {
       this.changeCurrentElement(element);
     }
   }
@@ -1047,7 +1055,7 @@ class ElementStore {
       const messages = result.messages;
       if (messages && messages.length > 0) {
         const lastMsg = messages[0]
-        this.setState({spectraMsg: lastMsg})
+        this.setState({ spectraMsg: lastMsg })
       }
     })
   }
@@ -1088,7 +1096,7 @@ class ElementStore {
 
   handleConfirmDelete(confirm) {
     const deleteEl = this.state.deletingElement
-    if(confirm) {
+    if (confirm) {
       this.deleteCurrentElement(deleteEl)
     }
     this.setState({ deletingElement: null })
@@ -1317,8 +1325,8 @@ class ElementStore {
   deleteCurrentElement(deleteEl) {
     const newSelecteds = this.deleteElement(deleteEl)
     let left = this.state.activeKey - 1
-    if ( left < 0 ) left = 0;
-    this.setState({  selecteds: newSelecteds });
+    if (left < 0) left = 0;
+    this.setState({ selecteds: newSelecteds });
     this.resetCurrentElement(left, newSelecteds);
   }
 

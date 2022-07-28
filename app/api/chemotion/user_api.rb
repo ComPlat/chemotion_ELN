@@ -59,12 +59,14 @@ module Chemotion
             description: params[:description],
             color: params[:color]
           }
+          label = nil
           if params[:id].present?
             label = UserLabel.find(params[:id])
             label.update!(attr)
           else
-            UserLabel.create!(attr)
+            label = UserLabel.create!(attr)
           end
+          present label, with: Entities::UserLabelEntity
         end
       end
 
@@ -78,13 +80,15 @@ module Chemotion
           counters = current_user.counters
           counters[params[:type]] = params[:counter]
           current_user.update(counters: counters)
+
+          present current_user, with: Entities::UserEntity
         end
       end
 
       namespace :scifinder do
         desc 'scifinder-n credential'
         get do
-          ScifinderNCredential.find_by(created_by: current_user.id) || {}
+          present(ScifinderNCredential.find_by(created_by: current_user.id) || {}, with: Entities::ScifinderNCredentialEntity)
         end
       end
 

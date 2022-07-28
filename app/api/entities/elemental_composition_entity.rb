@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 module Entities
-  class ElementalCompositionEntity < Grape::Entity
+  class ElementalCompositionEntity < ApplicationEntity
     expose :id, documentation: { type: "Integer", desc: "ElementalComposition's unique id"}
     expose :data, :loading, :description, :composition_type
 

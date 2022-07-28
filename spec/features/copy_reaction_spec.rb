@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# TODO: tried to fix this spec, however spec/support/login_macros.rb appears to be broken
 require 'rails_helper'
 
 describe 'Copy reaction' do

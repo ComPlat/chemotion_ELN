@@ -38,7 +38,8 @@ module Chemotion
         # we are using POST because the fetchers don't support GET requests with body data
         post do
           @samples = @samples.limit(params[:limit]) if params[:limit]
-          { samples: @samples.map{ |s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}  }
+
+          present @samples, with: Entities::SampleEntity, root: :samples
         end
       end
 
@@ -54,6 +55,8 @@ module Chemotion
           Sample.where(id: sample_ids).each do |sample|
             subsample = sample.create_subsample current_user, col_id, true
           end
+
+          {} # JS layer does not use the reply
         end
       end
 
@@ -97,8 +100,18 @@ module Chemotion
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          import = Import::ImportSamples.new.from_file(params[:file][:tempfile].path,
-            params[:currentCollectionId], current_user.id).process
+          import_result = Import::ImportSamples.new.from_file(
+            params[:file][:tempfile].path,
+            params[:currentCollectionId], current_user.id
+          ).process
+
+          if import_result[:status] == 'ok'
+            # the FE does not actually use the returned data, just the number of elements.
+            # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js handleNotificationImportSamplesFromFile
+            import_result[:data] = import_result[:data].map(&:id)
+          end
+
+          import_result
         end
       end
 
@@ -145,7 +158,7 @@ module Chemotion
 
       get do
         own_collection = false
-        scope = Sample.none
+        sample_scope = Sample.none
         if params[:collection_id]
           begin
             c = Collection.belongs_to_or_shared_by(
@@ -155,7 +168,7 @@ module Chemotion
             !c.is_shared && (c.shared_by_id != current_user.id) &&
               (own_collection = true)
 
-            scope = Collection.belongs_to_or_shared_by(
+            sample_scope = Collection.belongs_to_or_shared_by(
               current_user.id, current_user.group_ids
             ).find(params[:collection_id]).samples
           rescue ActiveRecord::RecordNotFound
@@ -167,72 +180,57 @@ module Chemotion
             c = current_user.all_sync_in_collections_users
                             .find(params[:sync_collection_id])
 
-            scope = c.collection.samples
+            sample_scope = c.collection.samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         else
           # All collection
           own_collection = true
-          scope = Sample.for_user(current_user.id).distinct
+          sample_scope = Sample.for_user(current_user.id).distinct
         end
-        scope = scope.includes(
-          :residues, :tag, :molecule_name,
-          collections: :sync_collections_users,
-          molecule: :tag
-        )
+        sample_scope = sample_scope.includes_for_list_display
         prod_only = params[:product_only] || false
-        scope = if prod_only
-                  scope.product_only
+        sample_scope = if prod_only
+                  sample_scope.product_only
                 else
-                  scope.distinct.sample_or_startmat_or_products
+                  sample_scope.distinct.sample_or_startmat_or_products
                 end
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        scope = scope.samples_created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.samples_created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.samples_updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.samples_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        sample_scope = sample_scope.samples_created_time_from(Time.at(from)) if from && by_created_at
+        sample_scope = sample_scope.samples_created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        sample_scope = sample_scope.samples_updated_time_from(Time.at(from)) if from && !by_created_at
+        sample_scope = sample_scope.samples_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
-        reset_pagination_page(scope)
-        sample_serializer_selector =
-          if own_collection
-            ->(s) { Entities::SampleEntity::Level10.represent(s) }
-          else
-            lambda do |s|
-              ElementListPermissionProxy.new(current_user, s, user_ids).serialized
-            end
-          end
-
+        reset_pagination_page(sample_scope)
         samplelist = []
+
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
-                           .where(id: (scope.pluck :molecule_id))
+                           .where(id: (sample_scope.pluck :molecule_id))
                            .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
                            .order(:sum_formular)
           reset_pagination_page(molecule_scope)
           paginate(molecule_scope).each do |molecule|
-            next if molecule.nil?
-            samplesGroup = scope.select {|v| v.molecule_id == molecule.id}
+            samplesGroup = sample_scope.select {|v| v.molecule_id == molecule.id}
             samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
             samplesGroup.each do |sample|
-            serialized_sample = sample_serializer_selector.call(sample)
-            samplelist.push(serialized_sample)
+              samplelist.push(Entities::SampleEntity.represent(sample, displayed_in_list: true))
             end
           end
         else
-          scope = scope.order('updated_at DESC')
-          paginate(scope).each do |sample|
-            next if sample.nil?
-            serialized_sample = sample_serializer_selector.call(sample)
-            samplelist.push(serialized_sample)
+          sample_scope = sample_scope.order('updated_at DESC')
+          paginate(sample_scope).each do |sample|
+            samplelist.push(Entities::SampleEntity.represent(sample, displayed_in_list: true))
           end
         end
+
         return {
           samples: samplelist,
-          samples_count: scope.count
+          samples_count: sample_scope.count
         }
       end
 
@@ -250,16 +248,7 @@ module Chemotion
           sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
 
-          var_detail_level = db_exec_detail_level_for_sample(current_user.id, sample.id)
-          nested_detail_levels = {}
-          nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
-          nested_detail_levels[:wellplate] = [ var_detail_level[0]['detail_level_wellplate'].to_i ]
-
-          klass = "Entities::SampleEntity::Level#{nested_detail_levels[:sample]}".constantize
-          opt = { nested_dl: nested_detail_levels, policy: @element_policy, current_user: current_user, serializable: true }
-          serialized_sample = klass.represent(sample, opt)
-
-          {sample: serialized_sample}
+          present sample, with: Entities::SampleEntity, policy: @element_policy, root: :sample
         end
       end
 
@@ -385,15 +374,7 @@ module Chemotion
           nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
           nested_detail_levels[:wellplate] = [var_detail_level[0]['detail_level_wellplate'].to_i]
 
-          klass = "Entities::SampleEntity::Level#{nested_detail_levels[:sample]}".constantize
-          opt = {
-            nested_dl: nested_detail_levels,
-            policy: @element_policy,
-            current_user: current_user, serializable: true
-          }
-          serialized_sample = klass.represent(@sample, opt)
-
-          { sample: serialized_sample }
+          present @sample, with: Entities::SampleEntity, policy: @element_policy, root: :sample
         end
       end
 
@@ -537,7 +518,7 @@ module Chemotion
         kinds = sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        sample
+        present sample, with: Entities::SampleEntity
       end
 
       desc "Delete a sample by id"

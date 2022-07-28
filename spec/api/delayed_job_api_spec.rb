@@ -10,9 +10,7 @@ describe Chemotion::AdminAPI do
 
     describe 'DelayedJob' do
       before(:all) do
-        jobObj = RefreshElementTagJob.new
-        jobObj.perform
-        Delayed::Job.enqueue jobObj
+        RefreshElementTagJob.perform_later
       end
 
       it 'list queued jobs' do
@@ -20,16 +18,14 @@ describe Chemotion::AdminAPI do
         json_response = JSON.parse(response.body)
         expect(json_response).not_to be_empty
         expect(response.status).to eq 200
+        expect(json_response['jobs'].size).to eq 1
       end
 
       # in test Delayed Jobs will not automatically recover from errors -> rescue
       xit 'let job fail' do
-        jobObjFail = TestFailureJob.new
-        jobObjFail.perform
-      rescue RuntimeError => e
-        Delayed::Job.enqueue jobObjFail
+        TestFailureJob.perform_later
         success, failure = Delayed::Worker.new.work_off
-        expect([success, failure]).to eq [2, 2]
+        expect([success, failure]).to eq [1, 1]
       end
 
       it 'restart (failed) job' do
