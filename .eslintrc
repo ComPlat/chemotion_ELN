@@ -8,7 +8,10 @@
     "browser": true,
     "node": true
   },
-  "extends": ["airbnb", "plugin:react/recommended"],
+  "extends": [
+    "airbnb",
+    "plugin:react/recommended"
+  ],
   "rules": {
     "no-console": ["off"],
     "comma-dangle": [1,"only-multiline"],
@@ -18,5 +21,12 @@
       "error",
       { "allowSameFolder": false, "rootDir": "app/packs" }
     ]
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": ["app/packs"]
+      }
+    }
   }
 }
