@@ -4,11 +4,11 @@ import UserAuth from 'src/components/UserAuth';
 import Search from 'src/components/search/Search';
 import ManagingActions from 'src/components/managing_actions/ManagingActions';
 import ContextActions from 'src/components/contextActions/ContextActions';
-import UserStore from 'src/alt-stores/stores/UserStore';
-import UIStore from 'src/alt-stores/stores/UIStore'
-import UserActions from 'src/alt-stores/actions/UserActions';
-import UIActions from 'src/alt-stores/actions/UIActions';
-import ElementActions from 'src/alt-stores/actions/ElementActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore'
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import NavNewSession from 'src/libHome/NavNewSession'
 import NavHead from 'src/libHome/NavHead'
 import DocumentHelper from 'src/utilities/DocumentHelper';

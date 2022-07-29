@@ -8,12 +8,12 @@ import ImageModal from 'src/components/common/ImageModal';
 import { instrumentText } from 'src/utilities/ElementUtils';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import { JcampIds, BuildSpcInfos } from 'src/utilities/SpectraHelper';
-import UIStore from 'src/alt-stores/stores/UIStore';
-import SpectraActions from 'src/alt-stores/actions/SpectraActions';
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import SpectraActions from 'src/stores/alt/actions/SpectraActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ViewSpectra from 'src/components/ViewSpectra';
 
-import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 const SpectraEditorBtn = ({
   element, spcInfo, hasJcamp, hasChemSpectra,

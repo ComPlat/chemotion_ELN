@@ -9,8 +9,8 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 
-import TextTemplateStore from 'src/alt-stores/stores/TextTemplateStore';
-import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';
+import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 import ContainerDatasets from 'src/components/ContainerDatasets';
 import QuillViewer from 'src/components/QuillViewer';

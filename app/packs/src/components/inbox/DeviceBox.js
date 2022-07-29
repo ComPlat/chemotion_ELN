@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 
 import DatasetContainer from 'src/components/inbox/DatasetContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import InboxActions from 'src/alt-stores/actions/InboxActions';
-import InboxStore from 'src/alt-stores/stores/InboxStore';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
 
 export default class DeviceBox extends React.Component {
   constructor(props) {

@@ -4,7 +4,7 @@ import uuid from 'uuid';
 import Select from 'react-select';
 import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;

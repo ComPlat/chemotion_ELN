@@ -3,7 +3,7 @@ import Wellplate from 'src/models/Wellplate';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class WellplatesFetcher {
   static fetchById(id) {

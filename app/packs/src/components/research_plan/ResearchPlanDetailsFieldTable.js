@@ -1,5 +1,5 @@
 import Aviator from 'aviator';
-import ElementActions from 'src/alt-stores/actions/ElementActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import ResearchPlanDetailsFieldTableColumnNameModal from 'src/components/research_plan/ResearchPlanDetailsFieldTableColumnNameModal';

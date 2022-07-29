@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { searchAndReplace } from 'src/utilities/markdownUtils';
 
-import UIStore from 'src/alt-stores/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const rfValueFormat = (input) => {
   if (typeof input !== 'string') { return input; }

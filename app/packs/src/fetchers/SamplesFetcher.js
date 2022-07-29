@@ -1,8 +1,8 @@
 import 'whatwg-fetch';
 
 import Sample from 'src/models/Sample';
-import UIStore from 'src/alt-stores/stores/UIStore';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';

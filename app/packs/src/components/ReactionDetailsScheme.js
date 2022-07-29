@@ -22,9 +22,9 @@ import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/components/ReactionDetailsDuration';
 import { permitOn } from 'src/components/common/uis';
 
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
-import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';
-import TextTemplateStore from 'src/alt-stores/stores/TextTemplateStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {

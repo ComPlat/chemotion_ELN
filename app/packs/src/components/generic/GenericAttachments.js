@@ -8,7 +8,7 @@ import ImageModal from 'src/components/common/ImageModal';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import { previewAttachmentImage } from 'src/utilities/imageHelper';
 import Utils from 'src/utilities/Functions';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;

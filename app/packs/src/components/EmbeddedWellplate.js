@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Glyphicon } from 'react-bootstrap';
 import Aviator from 'aviator';
-import UIStore from 'src/alt-stores/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { wellplateShowOrNew } from 'src/components/routesUtils';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';

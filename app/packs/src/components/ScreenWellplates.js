@@ -4,7 +4,7 @@ import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import UIStore from 'src/alt-stores/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { wellplateShowOrNew } from 'src/components/routesUtils';
 import QuillViewer from 'src/components/QuillViewer';
 

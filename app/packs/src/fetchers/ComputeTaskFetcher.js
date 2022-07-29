@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 import { camelizeKeys } from 'humps';
 
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class ComputeTaskFetcher {
   static fetchAll() {

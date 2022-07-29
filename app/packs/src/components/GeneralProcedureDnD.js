@@ -3,8 +3,8 @@ import { DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import { Tooltip, OverlayTrigger } from 'react-bootstrap';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import DetailActions from 'src/alt-stores/actions/DetailActions';
-import ElementActions from 'src/alt-stores/actions/ElementActions.js';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions.js';
 import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 
 const updRxnOriName = (oriRxn, sourceTag) => {

@@ -10,7 +10,7 @@ import Element from 'src/models/Element';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
 
-import UserStore from 'src/alt-stores/stores/UserStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 
 const TemperatureUnit = ['°C', '°F', 'K'];

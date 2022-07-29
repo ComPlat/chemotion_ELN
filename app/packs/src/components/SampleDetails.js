@@ -17,16 +17,16 @@ import uuid from 'uuid';
 import classNames from 'classnames';
 import Immutable from 'immutable';
 
-import ElementActions from 'src/alt-stores/actions/ElementActions';
-import ElementStore from 'src/alt-stores/stores/ElementStore';
-import DetailActions from 'src/alt-stores/actions/DetailActions';
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import UIStore from 'src/alt-stores/stores/UIStore';
-import UserStore from 'src/alt-stores/stores/UserStore';
-import UIActions from 'src/alt-stores/actions/UIActions';
-import QcActions from 'src/alt-stores/actions/QcActions';
-import QcStore from 'src/alt-stores/stores/QcStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import QcActions from 'src/stores/alt/actions/QcActions';
+import QcStore from 'src/stores/alt/stores/QcStore';
 
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
@@ -59,7 +59,7 @@ import { chmoConversions } from 'src/components/OlsComponent';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 import CopyElementModal from 'src/components/common/CopyElementModal';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NmrSimTab from 'src/components/nmr_sim/NmrSimTab';

@@ -4,9 +4,9 @@ import { Modal, Checkbox, Table, thead, tr, th, td, Col, Badge, Panel, ButtonGro
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
-import UserActions from 'src/alt-stores/actions/UserActions';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
 const UL_FUNC_NAME = 'userLabel';

@@ -1,5 +1,5 @@
 import React from 'react';
-import UIActions from 'src/alt-stores/actions/UIActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 export default class ElementCheckbox extends React.Component {
   constructor(props) {

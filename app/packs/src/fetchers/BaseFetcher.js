@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 
-import UIStore from 'src/alt-stores/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class BaseFetcher {
   /**

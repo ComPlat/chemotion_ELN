@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
-import UIActions from 'src/alt-stores/actions/UIActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 function NavigationModal({
   show, title, component, customModal, ...props

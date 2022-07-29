@@ -7,10 +7,10 @@ import { debounce } from 'lodash';
 
 import SharingShortcuts from 'src/components/sharing/SharingShortcuts';
 
-import CollectionActions from 'src/alt-stores/actions/CollectionActions';
-import UserActions from 'src/alt-stores/actions/UserActions';
-import UIStore from 'src/alt-stores/stores/UIStore';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import klasses from '../../../../../config/klasses.json';

@@ -9,15 +9,15 @@ import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 
-import UIStore from 'src/alt-stores/stores/UIStore';
-import ElementStore from 'src/alt-stores/stores/ElementStore';
-import KeyboardStore from 'src/alt-stores/stores/KeyboardStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import XTdCont from 'src/components/extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from 'src/components/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {

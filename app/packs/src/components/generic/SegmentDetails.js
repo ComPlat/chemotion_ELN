@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { findIndex, cloneDeep } from 'lodash';
 import { Panel, Button, ButtonToolbar, OverlayTrigger, Tooltip, Tab } from 'react-bootstrap';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { LayersLayout, UploadInputChange } from 'src/components/generic/GenericElCommon';
 import Segment from 'src/models/Segment';
 import MatrixCheck from 'src/components/common/MatrixCheck';

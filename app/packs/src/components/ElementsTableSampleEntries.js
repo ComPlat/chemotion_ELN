@@ -13,9 +13,9 @@ import ComputedPropLabel from 'src/components/computed_props/ComputedPropLabel';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementContainer from 'src/components/ElementContainer';
 
-import UIStore from 'src/alt-stores/stores/UIStore';
-import ElementStore from 'src/alt-stores/stores/ElementStore';
-import KeyboardStore from 'src/alt-stores/stores/KeyboardStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import SampleName from 'src/components/common/SampleName';

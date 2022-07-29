@@ -7,7 +7,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { researchPlanShowOrNew } from 'src/components/routesUtils';
 import ConfirmDeletionModal from 'src/components/ConfirmDeletionModal';
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 class MeasurementsList extends Component {
   static propTypes = {

@@ -2,8 +2,8 @@ import React from 'react';
 import { Nav, Navbar, MenuItem, NavDropdown } from 'react-bootstrap';
 
 import UserAuth from 'src/components/UserAuth';
-import UserStore from 'src/alt-stores/stores/UserStore';
-import UserActions from 'src/alt-stores/actions/UserActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
 
 import NavNewSession from 'src/libHome/NavNewSession';
 import DocumentHelper from 'src/utilities/DocumentHelper';

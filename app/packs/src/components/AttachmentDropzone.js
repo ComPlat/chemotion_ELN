@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import InboxActions from 'src/alt-stores/actions/InboxActions';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
 
 const dataTarget = {
   canDrop(props, monitor) {

@@ -3,11 +3,11 @@ import { PanelGroup, Panel, Button, Modal, Table } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import CollectionActions from 'src/alt-stores/actions/CollectionActions';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
-import InboxActions from 'src/alt-stores/actions/InboxActions';
-import ReportActions from 'src/alt-stores/actions/ReportActions';
-import ElementActions from 'src/alt-stores/actions/ElementActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
+import ReportActions from 'src/stores/alt/actions/ReportActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 const changeUrl = (url, urlTitle) => (url ? <a href={url} target="_blank" rel="noopener noreferrer">{urlTitle || url}</a> : <span />);
 

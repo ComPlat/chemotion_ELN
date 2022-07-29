@@ -5,11 +5,11 @@ import _ from 'lodash';
 
 import TabLayoutContainer from 'src/components/TabLayoutContainer';
 
-import UserActions from 'src/alt-stores/actions/UserActions';
-import UIActions from 'src/alt-stores/actions/UIActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
-import UIStore from 'src/alt-stores/stores/UIStore';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class ElementsTableSettings extends React.Component {
   constructor(props) {

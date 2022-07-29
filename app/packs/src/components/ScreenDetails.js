@@ -14,16 +14,16 @@ import ScreenWellplates from 'src/components/ScreenWellplates';
 import ScreenResearchPlans from 'src/components/ScreenResearchPlans';
 import QuillEditor from 'src/components/QuillEditor';
 import ScreenDetailsContainers from 'src/components/ScreenDetailsContainers';
-import ElementActions from 'src/alt-stores/actions/ElementActions';
-import DetailActions from 'src/alt-stores/actions/DetailActions';
-import UIStore from 'src/alt-stores/stores/UIStore';
-import UIActions from 'src/alt-stores/actions/UIActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PrivateNoteElement from 'src/components/PrivateNoteElement';
 
 export default class ScreenDetails extends Component {

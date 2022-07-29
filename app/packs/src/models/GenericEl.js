@@ -1,7 +1,7 @@
 import { isEmpty, filter } from 'lodash';
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 
 export default class GenericEl extends Element {

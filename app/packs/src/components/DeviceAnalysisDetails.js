@@ -1,8 +1,8 @@
 import React from 'react'
 import {Panel , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import DeviceSampleContainer from 'src/components/DeviceSampleContainer'
-import ElementActions from 'src/alt-stores/actions/ElementActions'
-import DetailActions from 'src/alt-stores/actions/DetailActions'
+import ElementActions from 'src/stores/alt/actions/ElementActions'
+import DetailActions from 'src/stores/alt/actions/DetailActions'
 import AnalysisNMR from 'src/components/AnalysisNMR'
 
 const DeviceAnalysisDetails = ({analysis, toggleFullScreen}) => {

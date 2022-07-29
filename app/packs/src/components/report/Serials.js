@@ -3,7 +3,7 @@ import SVG from 'react-inlinesvg';
 import { Panel } from 'react-bootstrap';
 import Formula from 'src/components/common/Formula';
 import CommonInput from 'src/components/common/CommonInput';
-import ReportActions from 'src/alt-stores/actions/ReportActions';
+import ReportActions from 'src/stores/alt/actions/ReportActions';
 
 const Serial = ({ serial, counter }) => {
   if (!serial) return null;

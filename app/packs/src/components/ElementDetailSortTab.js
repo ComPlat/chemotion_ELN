@@ -6,8 +6,8 @@ import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
 import _ from 'lodash';
-import UserStore from 'src/alt-stores/stores/UserStore';
-import UserActions from 'src/alt-stores/actions/UserActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/components/TabLayoutContainer';
 
 const getNodeText = (node) => {

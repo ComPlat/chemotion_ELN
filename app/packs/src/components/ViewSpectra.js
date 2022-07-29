@@ -6,9 +6,9 @@ import Select from 'react-select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
 
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
-import SpectraActions from 'src/alt-stores/actions/SpectraActions';
-import SpectraStore from 'src/alt-stores/stores/SpectraStore';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import SpectraActions from 'src/stores/alt/actions/SpectraActions';
+import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
 

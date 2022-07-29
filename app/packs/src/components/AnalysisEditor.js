@@ -7,8 +7,8 @@ import Delta from 'quill-delta';
 
 import { formatAnalysisContent } from 'src/utilities/ElementUtils';
 
-import TextTemplateStore from 'src/alt-stores/stores/TextTemplateStore';
-import TextTemplateActions from 'src/alt-stores/actions/TextTemplateActions';
+import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 import DynamicToolbarEditor from 'src/components/react_quill/DynamicToolbarEditor';
 import ToolbarIcon from 'src/components/react_quill/ToolbarIcon';

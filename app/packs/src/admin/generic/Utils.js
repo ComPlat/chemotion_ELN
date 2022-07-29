@@ -4,8 +4,8 @@ import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip, Popover, ControlLabel } from 'react-bootstrap';
 import uuid from 'uuid';
 import { findIndex } from 'lodash';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
 class GenericDummy {

@@ -5,7 +5,7 @@ import { Button, Panel, Row, Col } from 'react-bootstrap';
 import moment from 'moment';
 import uuid from 'uuid';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const ScifinderCredential = () => {
   const [credential, setCredential] = useState({});

@@ -5,8 +5,8 @@ import MoleculeModeratorComponent from 'src/components/MoleculeModeratorComponen
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import Notifications from 'src/components/Notifications';
 import LoadingModal from 'src/components/common/LoadingModal';
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const pageNav = (
   <Navbar fixedTop>

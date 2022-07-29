@@ -7,8 +7,8 @@ import {
   Grid, Row, Col, Button, ControlLabel, Form, FormGroup, FormControl
 } from 'react-bootstrap';
 
-import UserStore from 'src/alt-stores/stores/UserStore';
-import UserActions from 'src/alt-stores/actions/UserActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
 
 import ComputedPropsGraph from 'src/components/computed_props/ComputedPropsGraph';
 import GraphReferenceTable from 'src/components/computed_props/GraphReferenceTable';

@@ -4,7 +4,7 @@ import { Button, Glyphicon, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import VirtualizedSelect from 'react-virtualized-select';
 import Material from 'src/components/Material';
 import MaterialCalculations from 'src/components/MaterialCalculations';
-import ElementActions from 'src/alt-stores/actions/ElementActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import Molecule from 'src/models/Molecule';
 import Reaction from 'src/models/Reaction';

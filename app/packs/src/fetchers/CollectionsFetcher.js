@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import { downloadBlob } from 'src/utilities/FetcherHelper';
 

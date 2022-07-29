@@ -6,7 +6,7 @@ import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton, MenuItem } f
 import { v4 as uuidv4 } from 'uuid';
 import { observer } from 'mobx-react';
 
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 class MeasurementCandidate extends Component {

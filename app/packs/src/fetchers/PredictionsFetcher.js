@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class PredictionsFetcher {
   static fetchInfer(smis, template) {

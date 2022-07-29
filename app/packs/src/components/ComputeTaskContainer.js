@@ -2,11 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Button, Table } from 'react-bootstrap';
 
-import ComputeTaskActions from 'src/alt-stores/actions/ComputeTaskActions';
-import DetailActions from 'src/alt-stores/actions/DetailActions';
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import ComputeTaskActions from 'src/stores/alt/actions/ComputeTaskActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import ComputeTaskStore from 'src/alt-stores/stores/ComputeTaskStore';
+import ComputeTaskStore from 'src/stores/alt/stores/ComputeTaskStore';
 import ComputeTask from 'src/components/ComputeTask';
 
 export default class ComputeTaskContainer extends React.Component {

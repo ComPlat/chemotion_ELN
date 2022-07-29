@@ -7,10 +7,10 @@ import {
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import { findIndex } from 'lodash';
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
-import ElementActions from 'src/alt-stores/actions/ElementActions';
-import DetailActions from 'src/alt-stores/actions/DetailActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
 import Wellplate from 'src/components/Wellplate';
 import WellplateList from 'src/components/WellplateList';
 import WellplateProperties from 'src/components/WellplateProperties';
@@ -19,8 +19,8 @@ import WellplateDetailsAttachments from 'src/components/WellplateDetailsAttachme
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import Attachment from 'src/models/Attachment';
 import Utils from 'src/utilities/Functions';
-import UIStore from 'src/alt-stores/stores/UIStore';
-import UIActions from 'src/alt-stores/actions/UIActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ExportSamplesBtn from 'src/components/ExportSamplesBtn';
 import ElementDetailSortTab from 'src/components/ElementDetailSortTab';

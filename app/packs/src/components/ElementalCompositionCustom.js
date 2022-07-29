@@ -1,7 +1,7 @@
 import React from 'react';
 import {FormControl} from 'react-bootstrap';
 import NumeralInput from 'src/components/NumeralInput';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 var _ = require('lodash');
 
 export default class ElementalCompositionCustom extends React.Component {

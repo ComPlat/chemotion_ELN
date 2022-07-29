@@ -4,8 +4,8 @@ import{
   Button, Radio, Checkbox, PanelGroup, Panel
 } from 'react-bootstrap'
 import Select from 'react-select'
-import ElementActions from 'src/alt-stores/actions/ElementActions'
-import DetailActions from 'src/alt-stores/actions/DetailActions'
+import ElementActions from 'src/stores/alt/actions/ElementActions'
+import DetailActions from 'src/stores/alt/actions/DetailActions'
 import {solvents, experiments} from 'src/components/staticDropdownOptions/device_options'
 
 const AnalysisNMR = ({analysis}) => {

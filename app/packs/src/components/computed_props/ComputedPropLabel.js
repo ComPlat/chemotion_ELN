@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 
-import UserStore from 'src/alt-stores/stores/UserStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
 const ComputedPropLabel = ({ cprops }) => {

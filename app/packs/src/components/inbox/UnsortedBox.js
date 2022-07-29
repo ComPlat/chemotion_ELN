@@ -7,8 +7,8 @@ import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
 import Container from 'src/models/Container';
 import UnsortedDatasetModal from 'src/components/inbox/UnsortedDatasetModal';
-import InboxStore from 'src/alt-stores/stores/InboxStore';
-import InboxActions from 'src/alt-stores/actions/InboxActions';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
 
 export default class UnsortedBox extends React.Component {
   constructor(props) {

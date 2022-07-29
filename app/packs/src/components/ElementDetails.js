@@ -12,13 +12,13 @@ import ReportContainer from 'src/components/report/ReportContainer';
 import FormatContainer from 'src/components/FormatContainer';
 import GraphContainer from 'src/components/GraphContainer';
 import ComputeTaskContainer from 'src/components/ComputeTaskContainer';
-import DetailActions from 'src/alt-stores/actions/DetailActions';
-import ElementStore from 'src/alt-stores/stores/ElementStore';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import { SameEleTypId } from 'src/utilities/ElementUtils';
 import LiteratureDetails from 'src/components/LiteratureDetails';
 import PredictionContainer from 'src/components/prediction/PredictionContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 const tabInfoHash = {
   report: {

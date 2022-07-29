@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import Screen from 'src/models/Screen';
-import UIStore from 'src/alt-stores/stores/UIStore'
+import UIStore from 'src/stores/alt/stores/UIStore'
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher'
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';

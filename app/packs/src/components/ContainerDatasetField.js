@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
-import InboxActions from 'src/alt-stores/actions/InboxActions';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { GenericDSMisType, absOlsTermId } from 'src/admin/generic/Utils';

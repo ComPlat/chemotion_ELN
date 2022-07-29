@@ -3,8 +3,8 @@ import _ from 'lodash';
 
 import Element from 'src/models/Element';
 import Molecule from 'src/models/Molecule';
-import UserActions from 'src/alt-stores/actions/UserActions';
-import UserStore from 'src/alt-stores/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import Container from 'src/models/Container.js';
 import Segment from 'src/models/Segment';
 

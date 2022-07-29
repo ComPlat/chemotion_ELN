@@ -1,12 +1,12 @@
 import Aviator from 'aviator';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import EmbeddedResearchPlanDetails from 'src/components/research_plan/EmbeddedResearchPlanDetails';
-import LoadingActions from 'src/alt-stores/actions/LoadingActions';
-import ElementActions from 'src/alt-stores/actions/ElementActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import ResearchPlan from 'src/models/ResearchPlan';
-import UIStore from 'src/alt-stores/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import { researchPlanShowOrNew } from 'src/components/routesUtils';

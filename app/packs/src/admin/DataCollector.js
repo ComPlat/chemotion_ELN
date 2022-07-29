@@ -5,7 +5,7 @@ import { Panel, Button, Table, Modal, Tooltip, OverlayTrigger, FormControl, Inpu
 import { startsWith, endsWith } from 'lodash';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
-import NotificationActions from 'src/alt-stores/actions/NotificationActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 const tipCopyClipboard = <Tooltip id="copy_tooltip">copy to clipboard</Tooltip>;

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ButtonGroup } from 'react-bootstrap';
-import UIStore from 'src/alt-stores/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import CreateButton from 'src/components/contextActions/CreateButton';
 import ReportUtilButton from 'src/components/contextActions/ReportUtilButton';
 import ExportImportButton from 'src/components/contextActions/ExportImportButton';
