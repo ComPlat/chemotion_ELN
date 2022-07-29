@@ -757,5 +757,4 @@ describe Chemotion::SampleAPI do
       end
     end
   end
-
 end

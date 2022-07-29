@@ -51,4 +51,5 @@ RSpec.configure do |config|
   config.include CapybaraHelpers
   config.include ReportHelpers
   config.include PubchemHelpers
+  config.include ActiveSupport::Testing::TimeHelpers
 end
