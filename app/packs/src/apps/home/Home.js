@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { Grid, Row } from 'react-bootstrap';
 
 import Navigation from 'src/components/Navigation'
@@ -39,8 +38,4 @@ class Home extends Component {
   }
 }
 
-// $(document).ready(function() {
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('Home');
-  if (domElement) { ReactDOM.render(<Home />, domElement); }
-});
+export default Home;

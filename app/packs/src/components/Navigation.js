@@ -9,8 +9,8 @@ import UIStore from 'src/stores/alt/stores/UIStore'
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import NavNewSession from 'src/libHome/NavNewSession'
-import NavHead from 'src/libHome/NavHead'
+import NavNewSession from 'src/apps/home/NavNewSession'
+import NavHead from 'src/apps/home/NavHead'
 import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/NavigationModal';
 import SearchFilter from 'src/components/search/SearchFilter.js'
