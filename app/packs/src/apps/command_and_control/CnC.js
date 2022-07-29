@@ -1,16 +1,14 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Grid, Row, Col } from 'react-bootstrap';
 import RFB from '@novnc/novnc/lib/rfb';
+import { Grid, Row, Col } from 'react-bootstrap';
 import { uniq } from 'lodash';
-// import Immutable from 'immutable';
 
-import Navigation from 'src/libCnC/Navigation';
 import DeviceActions from 'src/stores/alt/actions/UserActions';
 import DeviceStore from 'src/stores/alt/stores/UserStore';
 import FocusNovnc from 'src/components/FocusNovnc';
-import { ConnectedBtn, DisconnectedBtn } from 'src/components/NovncStatus';
+import Navigation from 'src/apps/command_and_control/Navigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import { ConnectedBtn, DisconnectedBtn } from 'src/components/NovncStatus';
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;
@@ -271,7 +269,5 @@ class CnC extends React.Component {
     );
   }
 }
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('CnC');
-  if (domElement) { ReactDOM.render(<CnC />, domElement); }
-});
+
+export default CnC;

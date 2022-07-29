@@ -2,7 +2,7 @@
 
 var React = require('react');
 var Home = require('src/apps/home');
-var CnC = require('../src/libCnC/CnC');
+var CnC = require('src/apps/command_and_control');
 var AdminHome = require('../src/admin/AdminHome');
 var ChemScanner = require('src/apps/chemscanner/');
 var ChemSpectra = require('../src/components/chemspectra/ChemSpectra');
