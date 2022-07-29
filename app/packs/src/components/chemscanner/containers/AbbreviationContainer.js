@@ -4,8 +4,6 @@ import React from 'react';
 import { Button } from 'react-bootstrap';
 import 'whatwg-fetch';
 
-// import * as types from '../actions/ActionTypes';
-// import { CALL_API } from '../middleware/api';
 import AbbreviationManagement from 'src/components/chemscanner/components/AbbreviationManagement';
 
 function RemoveRowBtn({ onClick, node }) {

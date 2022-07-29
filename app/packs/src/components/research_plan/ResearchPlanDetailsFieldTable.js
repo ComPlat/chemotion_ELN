@@ -1,17 +1,18 @@
 import Aviator from 'aviator';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
+import uniqueId from 'react-html-id';
+import { AgGridReact } from 'ag-grid-react';
+import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
+import { Row, Col, Button } from 'react-bootstrap';
+
+import CustomHeader from 'src/components/research_plan/CustomHeader';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ResearchPlanDetailsFieldTableColumnNameModal from 'src/components/research_plan/ResearchPlanDetailsFieldTableColumnNameModal';
 import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/components/research_plan/ResearchPlanDetailsFieldTableMeasurementExportModal';
 import ResearchPlanDetailsFieldTableSchemasModal from 'src/components/research_plan/ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import uniqueId from 'react-html-id';
-import { AgGridReact } from 'ag-grid-react';
-import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
-import CustomHeader from './CustomHeader';
-import { Row, Col, Button } from 'react-bootstrap';
 
 
 // regexp to parse tap separated paste from the clipboard

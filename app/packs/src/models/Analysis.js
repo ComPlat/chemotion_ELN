@@ -1,5 +1,4 @@
 import Element from 'src/models/Element';
-// import Dataset from './Dataset';
 
 export default class Analysis extends Element {
   static buildEmpty() {
