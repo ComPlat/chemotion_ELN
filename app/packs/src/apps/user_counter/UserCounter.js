@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
-import { Row, Col, Panel, Button, FormControl } from 'react-bootstrap';
 import uuid from 'uuid';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
-import AdminFetcher from 'src/fetchers/AdminFetcher';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
+import { Row, Col, Panel, Button, FormControl } from 'react-bootstrap';
 
-export default class UserCounter extends Component {
+import AdminFetcher from 'src/fetchers/AdminFetcher';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import UserStore from 'src/stores/alt/stores/UserStore';
+
+class UserCounter extends Component {
   constructor(props) {
     super(props);
     this.state = { currentUser: null, klasses: [] };
@@ -98,7 +98,4 @@ export default class UserCounter extends Component {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('UserCounter');
-  if (domElement) { ReactDOM.render(<UserCounter />, domElement); }
-});
+export default UserCounter;
