@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, ButtonGroup } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 
-import { StoreContext } from 'src/mobx-stores/RootStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import MeasurementsTable from 'src/components/MeasurementsTable';
 import MeasurementsList from 'src/components/MeasurementsList';
 

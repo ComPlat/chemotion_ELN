@@ -18,7 +18,7 @@ import KeyboardActions from 'src/alt-stores/actions/KeyboardActions';
 import UIStore from 'src/alt-stores/stores/UIStore';
 import InboxModal from 'src/components/inbox/InboxModal';
 import ProgressModal from 'src/components/common/ProgressModal';
-import { RootStore, StoreContext } from 'src/mobx-stores/RootStore';
+import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
 
 class App extends Component {
   constructor(_props) {

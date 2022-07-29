@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { observer } from 'mobx-react';
 
 import LoadingActions from 'src/alt-stores/actions/LoadingActions';
-import { StoreContext } from 'src/mobx-stores/RootStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 class MeasurementCandidate extends Component {
   static propTypes = {

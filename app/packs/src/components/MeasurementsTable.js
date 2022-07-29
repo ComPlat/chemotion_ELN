@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { observer } from 'mobx-react';
 
-import { StoreContext } from 'src/mobx-stores/RootStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { researchPlanShowOrNew } from 'src/components/routesUtils';
 
 class MeasurementsTable extends Component {
