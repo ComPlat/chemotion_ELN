@@ -1,6 +1,5 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Button, Panel, Row, Col } from 'react-bootstrap';
 import moment from 'moment';
 import uuid from 'uuid';
@@ -38,8 +37,3 @@ const ScifinderCredential = () => {
 };
 
 export default ScifinderCredential;
-
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('ScifinderCredential');
-  if (domElement) { ReactDOM.render(<ScifinderCredential />, domElement); }
-});
