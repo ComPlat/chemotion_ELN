@@ -193,24 +193,10 @@ module AttachmentJcampProcess
 
   def create_process(is_regen)
     params = build_params
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = Tempfile.create('molfile') do |t_molfile|
-      if attachable&.root_element.is_a?(Sample)
-        t_molfile.write(attachable.root_element.molecule.molfile)
-        t_molfile.rewind
-      end
-      Chemotion::Jcamp::Create.spectrum(
-        abs_path, t_molfile.path, is_regen, params
-      )
-    end
+    
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
 
-    if tmp_img.nil? && spc_type.nil? && tmp_jcamp['invalid_molfile'] == true
-      # add message when invalid molfile
-      Message.create_msg_notification(
-        channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
-        message_from: attachable.root_element.created_by,
-        data_args: { 'msg': 'Invalid molfile' }
-      )
-    end
+    check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
 
     if spc_type == 'bagit'
       jcamp_att = nil
@@ -256,24 +242,10 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = Tempfile.create('molfile') do |t_molfile|
-      if attachable&.root_element.is_a?(Sample)
-        t_molfile.write(attachable.root_element.molecule.molfile)
-        t_molfile.rewind
-      end
-      Chemotion::Jcamp::Create.spectrum(
-        abs_path, t_molfile.path, is_regen, params
-      )
-    end
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
 
-    if tmp_img.nil? && spc_type.nil? && tmp_jcamp['invalid_molfile'] == true
-      # add message when invalid molfile
-      Message.create_msg_notification(
-        channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
-        message_from: attachable.root_element.created_by,
-        data_args: { 'msg': 'Invalid molfile' }
-      )
-    end
+    check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
+    
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
     jcamp_att.update_prediction(params, spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'edit', true)
@@ -292,6 +264,29 @@ module AttachmentJcampProcess
     delete_related_imgs(img_att)
     delete_edit_peak_after_done
     jcamp_att
+  end
+
+  def check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
+    if tmp_img.nil? && spc_type.nil? && tmp_jcamp['invalid_molfile'] == true
+      # add message when invalid molfile
+      Message.create_msg_notification(
+        channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
+        message_from: attachable.root_element.created_by,
+        data_args: { 'msg': 'Invalid molfile' }
+      )
+    end
+  end
+
+  def generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = Tempfile.create('molfile') do |t_molfile|
+      if attachable&.root_element.is_a?(Sample)
+        t_molfile.write(attachable.root_element.molecule.molfile)
+        t_molfile.rewind
+      end
+      Chemotion::Jcamp::Create.spectrum(
+        abs_path, t_molfile.path, is_regen, params
+      )
+    end
   end
 
   def generate_spectrum(is_create = false, is_regen = false, params = {})
