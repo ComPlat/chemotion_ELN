@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { Navbar, FormGroup, ControlLabel, FormControl, Button } from 'react-bootstrap';
-import MoleculeModeratorComponent from 'src/components/MoleculeModeratorComponent';
-import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import Notifications from 'src/components/Notifications';
-import LoadingModal from 'src/components/common/LoadingModal';
+
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import LoadingModal from 'src/components/common/LoadingModal';
+import MoleculeModeratorComponent from 'src/apps/molecule_moderator/MoleculeModeratorComponent';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import Notifications from 'src/components/Notifications';
 
 const pageNav = (
   <Navbar fixedTop>
@@ -140,7 +140,4 @@ class MoleculeModerator extends Component {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('MoleculeModerator');
-  if (domElement) ReactDOM.render(<MoleculeModerator />, domElement);
-});
+export default MoleculeModerator;

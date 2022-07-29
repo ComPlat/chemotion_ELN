@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Col, Panel, Button, Row, FormControl, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, FormGroup, InputGroup } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
+import { Col, Panel, Button, Row, FormControl, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, FormGroup, InputGroup } from 'react-bootstrap';
 import { findIndex } from 'lodash';
-import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
+
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
 
 export default class MoleculeModeratorComponent extends Component {
   constructor(props) {
