@@ -5,7 +5,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
-import { getFileName, downloadBlob } from 'src/utility_functions/FetcherHelper'
+import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper'
 
 export default class ResearchPlansFetcher {
   static fetchById(id) {

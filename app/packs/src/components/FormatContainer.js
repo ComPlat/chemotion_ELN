@@ -9,7 +9,7 @@ import DetailActions from 'src/alt-stores/actions/DetailActions';
 import ElementActions from 'src/alt-stores/actions/ElementActions';
 import UIStore from 'src/alt-stores/stores/UIStore';
 import ReportStore from 'src/alt-stores/stores/ReportStore';
-import { formatAnalysisContent } from 'src/utility_functions/ElementUtils';
+import { formatAnalysisContent } from 'src/utilities/ElementUtils';
 
 function extractAnalyses(listEls) {
   const listObjs = [];

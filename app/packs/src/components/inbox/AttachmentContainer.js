@@ -5,11 +5,11 @@ import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import InboxActions from 'src/alt-stores/actions/InboxActions';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import Utils from 'src/utility_functions/Functions';
+import Utils from 'src/utilities/Functions';
 
 import MoveToAnalysisButton from 'src/components/inbox/MoveToAnalysisButton';
 import InboxStore from 'src/alt-stores/stores/InboxStore';
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 const dataSource = {
   beginDrag(props) {

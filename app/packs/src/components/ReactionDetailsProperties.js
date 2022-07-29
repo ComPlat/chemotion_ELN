@@ -10,7 +10,7 @@ import Clipboard from 'clipboard';
 import { dangerousProductsOptions } from 'src/components/staticDropdownOptions/options';
 import ReactionDetailsMainProperties from 'src/components/ReactionDetailsMainProperties';
 import StringTag from 'src/components/StringTag';
-import { solventsTL } from 'src/utility_functions/reactionPredefined';
+import { solventsTL } from 'src/utilities/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { permitOn } from 'src/components/common/uis';
 

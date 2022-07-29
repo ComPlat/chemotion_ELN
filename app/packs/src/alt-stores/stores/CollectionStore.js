@@ -1,7 +1,7 @@
 import alt from 'src/alt-stores/alt';
 import CollectionActions from 'src/alt-stores/actions/CollectionActions';
 
-import { extraThing } from 'src/utility_functions/Functions';
+import { extraThing } from 'src/utilities/Functions';
 import Xlisteners from 'src/components/extra/CollectionStoreXlisteners';
 import Xhandlers from 'src/components/extra/CollectionStoreXhandlers';
 import Xstate from 'src/components/extra/CollectionStoreXstate';

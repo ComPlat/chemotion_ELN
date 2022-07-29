@@ -4,7 +4,7 @@ import SegmentsFetcher from 'src/fetchers/SegmentsFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 
 import cookie from 'react-cookie'
-import DocumentHelper from 'src/utility_functions/DocumentHelper';
+import DocumentHelper from 'src/utilities/DocumentHelper';
 
 class UserActions {
   fetchOlsRxno() {

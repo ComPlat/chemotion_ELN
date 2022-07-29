@@ -6,16 +6,16 @@ import {
 } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import { stopBubble } from 'src/utility_functions/DomHelper';
+import { stopBubble } from 'src/utilities/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/alt-stores/actions/SpectraActions';
 import LoadingActions from 'src/alt-stores/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds } from 'src/utility_functions/SpectraHelper';
-import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utility_functions/ElementUtils';
-import { contentToText } from 'src/utility_functions/quillFormat';
+import { BuildSpcInfos, JcampIds } from 'src/utilities/SpectraHelper';
+import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
+import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/alt-stores/stores/UIStore';
 import { chmoConversions } from 'src/components/OlsComponent';
-import { previewContainerImage } from 'src/utility_functions/imageHelper';
+import { previewContainerImage } from 'src/utilities/imageHelper';
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>

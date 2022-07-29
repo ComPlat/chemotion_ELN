@@ -9,7 +9,7 @@ import TreeSelect from 'antd/lib/tree-select';
 import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import SpectraActions from 'src/alt-stores/actions/SpectraActions';
 import SpectraStore from 'src/alt-stores/stores/SpectraStore';
-import { SpectraOps } from 'src/utility_functions/quillToolbarSymbol';
+import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
 
 const rmRefreshed = (analysis) => {

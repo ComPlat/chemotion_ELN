@@ -8,7 +8,7 @@ import _ from 'lodash';
 
 import UserActions from 'src/alt-stores/actions/UserActions';
 import UserStore from 'src/alt-stores/stores/UserStore';
-import Functions from 'src/utility_functions/Functions';
+import Functions from 'src/utilities/Functions';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/alt-stores/actions/NotificationActions';

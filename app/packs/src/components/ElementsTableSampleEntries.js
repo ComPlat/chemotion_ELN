@@ -10,7 +10,7 @@ import GenericElementLabels from 'src/components/generic/GenericElementLabels';
 import PubchemLabels from 'src/components/PubchemLabels';
 import ChemrepoLabels from 'src/components/ChemrepoLabels';
 import ComputedPropLabel from 'src/components/computed_props/ComputedPropLabel';
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementContainer from 'src/components/ElementContainer';
 
 import UIStore from 'src/alt-stores/stores/UIStore';

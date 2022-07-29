@@ -10,7 +10,7 @@ import ElementsTableSettings from 'src/components/ElementsTableSettings';
 import ElementStore from 'src/alt-stores/stores/ElementStore';
 import UIStore from 'src/alt-stores/stores/UIStore';
 import UserStore from 'src/alt-stores/stores/UserStore';
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 
 function getSortedHash(inputHash) {

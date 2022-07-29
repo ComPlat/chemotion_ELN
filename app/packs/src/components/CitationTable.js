@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Button, Glyphicon, PanelGroup, Panel, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { uniq } from 'lodash';
 import Immutable from 'immutable';
-import { stopEvent } from 'src/utility_functions/DomHelper';
+import { stopEvent } from 'src/utilities/DomHelper';
 import { Citation, CitationUserRow, literatureContent } from 'src/components/LiteratureCommon';
 
 const citePan = (props) => {

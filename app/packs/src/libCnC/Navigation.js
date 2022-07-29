@@ -6,7 +6,7 @@ import UserStore from 'src/alt-stores/stores/UserStore';
 import UserActions from 'src/alt-stores/actions/UserActions';
 
 import NavNewSession from 'src/libHome/NavNewSession';
-import DocumentHelper from 'src/utility_functions/DocumentHelper';
+import DocumentHelper from 'src/utilities/DocumentHelper';
 
 const NavHead = () => (
   <Navbar.Brand>

@@ -10,7 +10,7 @@ import {
 import ReportActions from 'src/alt-stores/actions/ReportActions';
 import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import UIActions from 'src/alt-stores/actions/UIActions';
-import { stopBubble } from 'src/utility_functions/DomHelper';
+import { stopBubble } from 'src/utilities/DomHelper';
 
 const fileDescription = archive => (
   archive.file_description

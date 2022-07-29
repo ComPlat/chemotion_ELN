@@ -4,7 +4,7 @@ import InboxActions from 'src/alt-stores/actions/InboxActions';
 import ElementActions from 'src/alt-stores/actions/ElementActions';
 import DetailActions from 'src/alt-stores/actions/DetailActions';
 import ElementStore from 'src/alt-stores/stores/ElementStore';
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 class InboxStore {
   constructor() {

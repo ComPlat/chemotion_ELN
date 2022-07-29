@@ -2,11 +2,11 @@ import React from 'react';
 import _ from 'lodash';
 import { SVGContent } from 'src/components/report/SectionReaction';
 import QuillViewer from 'src/components/QuillViewer';
-import { fixDigit, validDigit } from 'src/utility_functions/MathUtils';
-import { rmOpsRedundantSpaceBreak, frontBreak } from 'src/utility_functions/quillFormat';
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
-import { Alphabet } from 'src/utility_functions/ElementUtils';
-import { UserSerial, CapitalizeFirstLetter } from 'src/utility_functions/ReportHelper';
+import { fixDigit, validDigit } from 'src/utilities/MathUtils';
+import { rmOpsRedundantSpaceBreak, frontBreak } from 'src/utilities/quillFormat';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import { Alphabet } from 'src/utilities/ElementUtils';
+import { UserSerial, CapitalizeFirstLetter } from 'src/utilities/ReportHelper';
 
 const onlyBlank = (target) => {
   if (target.length === 0) return true;

@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
 
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 import TabLayoutCell from 'src/components/TabLayoutCell';
 
 export default class TabLayoutContainer extends React.Component {

@@ -14,7 +14,7 @@ import GraphContainer from 'src/components/GraphContainer';
 import ComputeTaskContainer from 'src/components/ComputeTaskContainer';
 import DetailActions from 'src/alt-stores/actions/DetailActions';
 import ElementStore from 'src/alt-stores/stores/ElementStore';
-import { SameEleTypId } from 'src/utility_functions/ElementUtils';
+import { SameEleTypId } from 'src/utilities/ElementUtils';
 import LiteratureDetails from 'src/components/LiteratureDetails';
 import PredictionContainer from 'src/components/prediction/PredictionContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';

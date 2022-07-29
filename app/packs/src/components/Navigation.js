@@ -11,7 +11,7 @@ import UIActions from 'src/alt-stores/actions/UIActions';
 import ElementActions from 'src/alt-stores/actions/ElementActions';
 import NavNewSession from 'src/libHome/NavNewSession'
 import NavHead from 'src/libHome/NavHead'
-import DocumentHelper from 'src/utility_functions/DocumentHelper';
+import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/NavigationModal';
 import SearchFilter from 'src/components/search/SearchFilter.js'
 

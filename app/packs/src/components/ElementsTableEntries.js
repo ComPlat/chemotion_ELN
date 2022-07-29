@@ -7,7 +7,7 @@ import ElementContainer from 'src/components/ElementContainer';
 import ElementCheckbox from 'src/components/ElementCheckbox';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 import UIStore from 'src/alt-stores/stores/UIStore';
 import ElementStore from 'src/alt-stores/stores/ElementStore';

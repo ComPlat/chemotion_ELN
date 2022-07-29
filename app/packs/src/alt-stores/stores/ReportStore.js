@@ -2,12 +2,12 @@ import moment from 'moment';
 import _ from 'lodash';
 import alt from 'src/alt-stores/alt';
 import ReportActions from 'src/alt-stores/actions/ReportActions';
-import Utils from 'src/utility_functions/Functions';
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import Utils from 'src/utilities/Functions';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 import UserActions from 'src/alt-stores/actions/UserActions';
 import UserStore from 'src/alt-stores/stores/UserStore';
-import { reOrderArr } from 'src/utility_functions/DndControl';
-import { UpdateSelectedObjs, OrderPreviewObjs } from 'src/utility_functions/ReportHelper';
+import { reOrderArr } from 'src/utilities/DndControl';
+import { UpdateSelectedObjs, OrderPreviewObjs } from 'src/utilities/ReportHelper';
 
 class ReportStore {
   constructor() {

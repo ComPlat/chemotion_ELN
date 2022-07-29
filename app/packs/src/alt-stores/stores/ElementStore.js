@@ -32,14 +32,14 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
 
-import { extraThing } from 'src/utility_functions/Functions';
+import { extraThing } from 'src/utilities/Functions';
 import Xlisteners from 'src/components/extra/ElementStoreXlisteners';
 import Xhandlers from 'src/components/extra/ElementStoreXhandlers';
 import Xstate from 'src/components/extra/ElementStoreXstate';
 import { elementShowOrNew } from 'src/components/routesUtils';
 
 import DetailActions from 'src/alt-stores/actions/DetailActions';
-import { SameEleTypId, UrlSilentNavigation } from 'src/utility_functions/ElementUtils';
+import { SameEleTypId, UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';

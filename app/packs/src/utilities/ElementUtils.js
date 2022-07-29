@@ -1,7 +1,7 @@
 import Aviator from 'aviator';
 import _ from 'lodash';
-import { deltaToMarkdown, markdownToDelta } from 'src/utility_functions/deltaMarkdownConverter';
-import { searchAndReplace } from 'src/utility_functions/markdownUtils';
+import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
+import { searchAndReplace } from 'src/utilities/markdownUtils';
 
 import UIStore from 'src/alt-stores/stores/UIStore';
 

@@ -7,7 +7,7 @@ import { cloneDeep } from 'lodash';
 import { GenProperties, LayersLayout } from 'src/components/generic/GenericElCommon';
 import LoadingActions from 'src/alt-stores/actions/LoadingActions';
 import { ButtonTooltip, ButtonConfirm, unitConversion, inputEventVal, genUnits } from 'src/admin/generic/Utils';
-import Utils from 'src/utility_functions/Functions';
+import Utils from 'src/utilities/Functions';
 
 export default class Preview extends Component {
   constructor(props) {

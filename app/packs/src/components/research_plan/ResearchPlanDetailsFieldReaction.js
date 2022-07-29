@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import ElementActions from 'src/alt-stores/actions/ElementActions';
-import { UrlSilentNavigation } from 'src/utility_functions/ElementUtils';
+import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
 const spec = {

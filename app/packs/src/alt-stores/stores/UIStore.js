@@ -5,7 +5,7 @@ import UIActions from 'src/alt-stores/actions/UIActions';
 import ElementActions from 'src/alt-stores/actions/ElementActions';
 import ElementStore from 'src/alt-stores/stores/ElementStore';
 import UserStore from 'src/alt-stores/stores/UserStore';
-import ArrayUtils from 'src/utility_functions/ArrayUtils';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 class UIStore {
   constructor() {
