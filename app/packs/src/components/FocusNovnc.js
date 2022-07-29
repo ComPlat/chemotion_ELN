@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonToolbar, Button, ButtonGroup, Label } from 'react-bootstrap';
+import { ButtonToolbar, Button, ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 export default class FocusNovnc extends React.Component {
@@ -48,11 +48,11 @@ export default class FocusNovnc extends React.Component {
     const UsersConnected = () => (
       <span className="title">
         <i className="fa fa-eye">
-          { this.props.watching }
+          {this.props.watching}
         </i>
-          &nbsp;
+        &nbsp;
         <i className="fa fa-pencil-square-o">
-          { this.props.using }
+          {this.props.using}
         </i>
       </span>);
 
@@ -74,7 +74,7 @@ export default class FocusNovnc extends React.Component {
           </span>
         </Button>
 
-        { connected ? <UsersConnected /> : null }
+        {connected ? <UsersConnected /> : null}
       </ButtonToolbar>
 
     );

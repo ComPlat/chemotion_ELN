@@ -2,7 +2,7 @@
 object-property-newline, semi, react/no-unused-prop-types, react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { FormGroup, ControlLabel, FormControl, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
 import PrivateNote from 'src/models/PrivateNote';
 

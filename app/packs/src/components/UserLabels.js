@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Checkbox, Table, thead, tr, th, td, Col, Badge, Panel, ButtonGroup, Button, Form, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
+import { Modal, Checkbox, Table, Col, Badge, Panel, ButtonGroup, Button, Form, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';

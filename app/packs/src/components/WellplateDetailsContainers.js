@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { PanelGroup, Panel, Button, Row, Col } from 'react-bootstrap';
+import { PanelGroup, Panel, Button } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton'

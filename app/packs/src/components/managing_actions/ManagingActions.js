@@ -14,12 +14,11 @@ import ManagingModalDelete from 'src/components/managing_actions/ManagingModalDe
 import ManagingModalRemove from 'src/components/managing_actions/ManagingModalRemove';
 import ManagingModalTopSecret from 'src/components/managing_actions/ManagingModalTopSecret';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import MatrixCheck from 'src/components/common/MatrixCheck';
 import klasses from '../../../../../config/klasses.json';
 
 const upState = (state) => {
   const { sample, reaction, screen, wellplate, research_plan } = state;
-  const stateObj  = {
+  const stateObj = {
     sample: {
       checkedAll: sample ? sample.checkedAll : false,
       checkedIds: sample ? sample.checkedIds : List(),
@@ -46,9 +45,6 @@ const upState = (state) => {
       uncheckedIds: research_plan ? research_plan.uncheckedIds : List(),
     }
   };
-
-  // const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-  //  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
 
   // eslint-disable-next-line no-unused-expressions
   klasses && klasses.forEach((klass) => {
@@ -154,7 +150,7 @@ export default class ManagingActions extends React.Component {
   checkUIState(state) {
     const genericNames = (this.state.genericEls && this.state.genericEls.map(el => el.name)) || [];
     const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].concat(genericNames);
-    const result = elNames.find(el => ( this.state[el] && state[el] && (
+    const result = elNames.find(el => (this.state[el] && state[el] && (
       state[el].checkedIds !== this.state[el].checkedIds ||
       state[el].checkedAll !== this.state[el].checkedAll ||
       state[el].uncheckedIds !== this.state[el].uncheckedIds
@@ -164,9 +160,9 @@ export default class ManagingActions extends React.Component {
 
   handleButtonClick(type) {
     const modalProps = { show: true, action: '', listSharedCollections: false };
-    switch(type) {
+    switch (type) {
       case 'share':
-        if(!this.state.is_top_secret) {
+        if (!this.state.is_top_secret) {
           modalProps.title = "Sharing";
           modalProps.component = ManagingModalSharing;
         } else {

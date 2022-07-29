@@ -1,6 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react/prop-types */
-import React, { Component } from "react"
+import React from "react"
 import { Button, Popover, ButtonGroup, OverlayTrigger, Panel, Row, Col } from 'react-bootstrap';
 
 import FirstRowIsHeaderInput from 'src/admin/converter/edit/FirstRowIsHeaderInput';

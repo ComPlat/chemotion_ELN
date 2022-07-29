@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import StickyDiv from 'react-stickydiv';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 import SampleDetails from 'src/components/SampleDetails';
@@ -14,7 +13,6 @@ import GraphContainer from 'src/components/GraphContainer';
 import ComputeTaskContainer from 'src/components/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import { SameEleTypId } from 'src/utilities/ElementUtils';
 import LiteratureDetails from 'src/components/LiteratureDetails';
 import PredictionContainer from 'src/components/prediction/PredictionContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
@@ -106,16 +104,7 @@ export default class ElementDetails extends Component {
     window.scrollTo(window.scrollX, window.scrollY + 1);
     // imitate scroll event to make StickyDiv element visible in current area
     ElementStore.listen(this.onDetailChange);
-    // if (this.props.currentElement !== null) {
-    //   // DetailActions.changeCurrentElement.defer(null, this.props.currentElement);
-    // }
   }
-
-  // componentWillReceiveProps(nextProps) {
-  //   if (!SameEleTypId(this.props.currentElement, nextProps.currentElement)) {
-  //     // DetailActions.changeCurrentElement.defer(this.props.currentElement, nextProps.currentElement);
-  //   }
-  // }
 
   shouldComponentUpdate(nextProps, nextState) {
     return true;
@@ -288,7 +277,3 @@ export default class ElementDetails extends Component {
     );
   }
 }
-
-// ElementDetails.propTypes = {
-//   currentElement: PropTypes.shape.isRequired
-// };

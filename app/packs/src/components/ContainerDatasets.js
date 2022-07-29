@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-// import PropTypes from 'prop-types';
 import { ListGroup, ListGroupItem, Button, Well } from 'react-bootstrap';
 import ContainerDatasetModal from 'src/components/ContainerDatasetModal';
 import ContainerDatasetField from 'src/components/ContainerDatasetField';

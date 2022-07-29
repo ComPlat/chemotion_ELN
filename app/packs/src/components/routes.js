@@ -1,13 +1,5 @@
-import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import rXr from 'src/components/extra/routesXroutes';
 import * as routesUtils from 'src/components/routesUtils';
-import UIFetcher from 'src/fetchers/UIFetcher';
 import klasses from '../../../../config/klasses.json';
 
 
@@ -112,16 +104,6 @@ const routes = {
     '/:genericElID': 'showOrNew'
   }
 };
-
-// const { klasses } = UIStore.getState();
-// console.log(klasses);
-
-
-// UIFetcher.initialize()
-//   .then((result) => {
-//     console.log(result);
-//     const klasses = result.klasses || [];
-//   });
 
 klasses && klasses.forEach((klass) => {
   const item = {};

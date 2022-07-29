@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import Select from 'react-select';
 
-import { debounce } from 'lodash';
-
 import SharingShortcuts from 'src/components/sharing/SharingShortcuts';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -39,7 +37,6 @@ export default class ManagingModalSharing extends React.Component {
     this.handleSharing = this.handleSharing.bind(this);
     this.promptTextCreator = this.promptTextCreator.bind(this);
 
-    // this.loadUserByName = debounce(this.loadUserByName.bind(this), 300);
     this.loadUserByName = this.loadUserByName.bind(this);
   }
 

@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Col, Panel, ListGroupItem, ButtonToolbar, Button,
+  Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
-import uuid from 'uuid';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';

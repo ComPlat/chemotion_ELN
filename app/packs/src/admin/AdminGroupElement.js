@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonGroup, OverlayTrigger, Popover, Tooltip, Button, Table, Panel } from 'react-bootstrap';
+import { ButtonGroup, OverlayTrigger, Tooltip, Button, Table, Panel } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { findIndex } from 'lodash';
 import DeleteGroupDeviceButton from 'src/admin/DeleteGroupDeviceButton';

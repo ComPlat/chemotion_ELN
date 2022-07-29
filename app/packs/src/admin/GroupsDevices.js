@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, ButtonGroup, FormControl, Popover, OverlayTrigger, Col, Row } from 'react-bootstrap';
+import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, FormControl, OverlayTrigger, Col, Row } from 'react-bootstrap';
 import Select from 'react-select';
 import moment from 'moment';
 import { findIndex, filter } from 'lodash';

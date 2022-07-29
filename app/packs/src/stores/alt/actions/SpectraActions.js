@@ -1,5 +1,3 @@
-import base64 from 'base-64';
-
 import alt from 'src/stores/alt/alt';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 

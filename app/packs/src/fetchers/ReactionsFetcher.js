@@ -1,11 +1,9 @@
 import 'whatwg-fetch';
-import { indexOf, split } from 'lodash';
 import Immutable from 'immutable';
 
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import Reaction from 'src/models/Reaction';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';

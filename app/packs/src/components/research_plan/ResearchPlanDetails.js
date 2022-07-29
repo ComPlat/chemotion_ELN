@@ -6,7 +6,6 @@ import Immutable from 'immutable';
 import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlansLiteratures from 'src/components/DetailsTabLiteratures';

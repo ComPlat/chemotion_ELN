@@ -1,13 +1,11 @@
 import React from 'react';
 import { Row, Col, DropdownButton, MenuItem } from 'react-bootstrap';
-import TreeSelect from 'antd/lib/tree-select';
 import Tree from 'antd/lib/tree';
 import { ButtonToolbar, Button } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
-import CollapsePanel from 'antd/lib/collapse/CollapsePanel';
 import { difference } from 'lodash';
 
 const checkItem = (enableIds, disableIds, enable, idkey, checkStrictly) => {

@@ -4,8 +4,6 @@ import { AgGridReact } from 'ag-grid-react';
 
 import Reaction from 'src/models/Reaction';
 import GreenMaterialGroup from 'src/components/green_chem/GreenMaterialGroup';
-import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import GreenMetrics from 'src/components/green_chem/GreenMetrics';
 

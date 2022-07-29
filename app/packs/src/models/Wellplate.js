@@ -1,7 +1,5 @@
-import React from 'react';
 import Element from 'src/models/Element';
 import Well from 'src/models/Well';
-import Sample from 'src/models/Sample';
 import Container from 'src/models/Container.js';
 import Segment from 'src/models/Segment';
 

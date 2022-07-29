@@ -1,8 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button, FormControl, Glyphicon
-} from 'react-bootstrap';
+import { Button, FormControl } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import VirtualizedSelect from 'react-virtualized-select';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';

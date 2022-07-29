@@ -13,7 +13,6 @@ import {
   Glyphicon,
   ListGroup, ListGroupItem,
   Overlay, OverlayTrigger,
-  Popover,
   Row,
   Tooltip
 } from 'react-bootstrap';

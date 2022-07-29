@@ -1,5 +1,5 @@
 import 'whatwg-fetch';
-import { camelizeKeys, decamelizeKeys } from 'humps';
+import { decamelizeKeys } from 'humps';
 
 import Attachment from 'src/models/Attachment';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';

@@ -1,7 +1,5 @@
 import 'whatwg-fetch';
 import _ from 'lodash';
-import Sample from 'src/models/Sample';
-import Reaction from 'src/models/Reaction';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class ReportsFetcher {

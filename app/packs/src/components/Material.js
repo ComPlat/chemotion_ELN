@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Checkbox, Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
