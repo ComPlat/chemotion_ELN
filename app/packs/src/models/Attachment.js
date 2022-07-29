@@ -1,7 +1,10 @@
 import Element from 'src/models/Element';
-import { filePreview } from 'src/helper/index';
 
 export default class Attachment extends Element {
+  filePreview(file) {
+    return file.type.split('/')[0] === 'image' ? file.preview : '/images/wild_card/not_available.svg';
+  };
+
   static fromFile(file) {
     return new Attachment({
       file,
