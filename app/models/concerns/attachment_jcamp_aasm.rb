@@ -240,9 +240,13 @@ module AttachmentJcampProcess
     else
       jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
       jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-      img_att = generate_img_att(tmp_img, 'peak')
+      img_att = generate_img_att(arr_img, 'peak')
+      
+      tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
+      tmp_files_to_be_deleted.push(*arr_img)
+      
       set_done
-      delete_tmps([tmp_jcamp, tmp_img])
+      delete_tmps(tmp_files_to_be_deleted)
       delete_related_imgs(img_att)
       delete_edit_peak_after_done
       jcamp_att
@@ -274,17 +278,17 @@ module AttachmentJcampProcess
     jcamp_att.update_prediction(params, spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'edit', true)
     
-    tmp_file_to_deleted = [tmp_jcamp, tmp_img]
+    tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
 
     unless arr_csv.nil? || arr_csv.length == 0
       curr_tmp_csv = arr_csv[0]
       csv_att = generate_csv_att(curr_tmp_csv, 'edit', false)
-      tmp_file_to_deleted.push(*arr_csv)
+      tmp_files_to_be_deleted.push(*arr_csv)
       delete_related_csv(csv_att)
     end
     
     set_backup
-    delete_tmps(tmp_file_to_deleted)
+    delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att)
     delete_edit_peak_after_done
     jcamp_att
