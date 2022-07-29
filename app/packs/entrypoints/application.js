@@ -1,10 +1,10 @@
 // see https://github.com/rackt/react-router/issues/1067
 
 var React = require('react');
-var Home = require('../src/apps/home');
+var Home = require('src/apps/home');
 var CnC = require('../src/libCnC/CnC');
 var AdminHome = require('../src/admin/AdminHome');
-var ChemScanner = require('../src/components/chemscanner/ChemScanner');
+var ChemScanner = require('src/apps/chemscanner/');
 var ChemSpectra = require('../src/components/chemspectra/ChemSpectra');
 var ChemSpectraEditor = require('../src/components/chemspectra/ChemSpectraEditor');
 var MoleculeModerator = require('../src/components/MoleculeModerator');

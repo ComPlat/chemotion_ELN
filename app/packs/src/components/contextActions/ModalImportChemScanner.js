@@ -4,7 +4,7 @@ import _ from 'lodash';
 
 import { Button, ButtonToolbar } from 'react-bootstrap';
 
-import { ChemScanner, store } from 'src/components/chemscanner/ChemScanner';
+import ChemScanner, { store } from 'src/apps/chemscanner/components/ChemScanner';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
