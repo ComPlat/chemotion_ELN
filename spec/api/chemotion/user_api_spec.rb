@@ -51,16 +51,42 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/users/current' do
-    let(:expected_response) do
-      Entities::UserEntity.represent(user, root: :user).to_json
+    context 'when authorization runs via session' do
+      let(:expected_response) do
+        Entities::UserEntity.represent(user, root: :user).to_json
+      end
+
+      before do
+        get '/api/v1/users/current'
+      end
+
+      it 'returns current user' do
+        expect(response.body).to eq(expected_response)
+      end
     end
 
-    before do
-      get '/api/v1/users/current'
-    end
+    context 'when authorization runs via jwt' do
+      include_context 'api request jwt context'
 
-    it 'returns current user' do
-      expect(response.body).to eq(expected_response)
+      let(:expected_response) do
+        Entities::UserEntity.represent(jwt_user, root: :user).to_json
+      end
+
+      before do
+        get '/api/v1/users/current', headers: jwt_request_header
+      end
+
+      it 'returns current user' do
+        expect(response.body).to eq(expected_response)
+      end
+
+      context 'when token is invalid' do
+        let(:jwt_token) { 42 }
+
+        it 'returns 401 unauthorized status code' do
+          expect(response.status).to eq 401
+        end
+      end
     end
   end
 

@@ -1,4 +1,6 @@
-#module API
+# frozen_string_literal: true
+
+# module API
 require 'grape-entity'
 require 'grape-swagger'
 
@@ -19,7 +21,32 @@ class API < Grape::API
     end
 
     def current_user
-      @current_user ||= ::WardenAuthentication.new(env).current_user
+      @current_user ||= detect_current_user
+    end
+
+    def detect_current_user
+      detect_current_user_from_session || detect_current_user_from_jwt
+    end
+
+    def detect_current_user_from_session
+      ::WardenAuthentication.new(env).current_user
+    end
+
+    def detect_current_user_from_jwt
+      decoded_token = JsonWebToken.decode(current_token)
+      user_id = decoded_token[:user_id]
+
+      User.find_by!(id: user_id)
+    rescue StandardError
+      nil
+    end
+
+    def current_token
+      request.headers['Authorization'].split.last if token_in_header?
+    end
+
+    def token_in_header?
+      request.headers['Authorization'].present?
     end
 
     def user_ids
