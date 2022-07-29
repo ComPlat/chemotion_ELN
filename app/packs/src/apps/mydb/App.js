@@ -1,24 +1,18 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { Col, Grid, Row } from 'react-bootstrap';
-import { DragDropContext } from 'react-dnd';
-import HTML5Backend from 'react-dnd-html5-backend';
-import Aviator from 'aviator';
 
-import Navigation from 'src/components/Navigation';
-import CollectionTree from 'src/components/CollectionTree';
 import CollectionManagement from 'src/components/CollectionManagement';
+import CollectionTree from 'src/components/CollectionTree';
 import Elements from 'src/components/Elements';
-import initRoutes from 'src/components/routes';
-import Notifications from 'src/components/Notifications';
-import LoadingModal from 'src/components/common/LoadingModal';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
-import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import InboxModal from 'src/components/inbox/InboxModal';
+import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
+import LoadingModal from 'src/components/common/LoadingModal';
+import Navigation from 'src/components/Navigation';
+import Notifications from 'src/components/Notifications';
 import ProgressModal from 'src/components/common/ProgressModal';
-import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
 
 class App extends Component {
   constructor(_props) {
@@ -124,19 +118,4 @@ class App extends Component {
   }
 }
 
-const AppWithDnD = DragDropContext(HTML5Backend)(App);
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('app');
-  if (domElement) {
-    ReactDOM.render(
-      <StoreContext.Provider value={RootStore.create({})}>
-        <AppWithDnD />
-      </StoreContext.Provider>,
-      domElement
-    );
-    initRoutes();
-    Aviator.dispatch();
-  }
-});
+export default App;
