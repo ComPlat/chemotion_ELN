@@ -132,7 +132,7 @@
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
-    "test": "mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
+    "test": "NODE_PATH=./app/packs yarn mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
   },
   "license": "MIT",
   "engines": {
