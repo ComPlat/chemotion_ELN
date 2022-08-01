@@ -9,7 +9,7 @@ module Entities
     end
 
     format_with(:eln_timestamp) do |datetime|
-      I18n.l(datetime, format: :eln_timestamp)
+      datetime.present? ? I18n.l(datetime, format: :eln_timestamp) : nil
     end
 
     def self.expose_timestamps(timestamp_fields: %i[created_at updated_at], **additional_args)
