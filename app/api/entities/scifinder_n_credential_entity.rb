@@ -8,9 +8,6 @@ module Entities
       :refresh_token
     )
 
-    with_options(format_with: :eln_default) do
-      expose :created_at
-      expose :updated_at
-    end
+    expose_timestamps
   end
 end
