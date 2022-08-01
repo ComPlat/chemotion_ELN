@@ -1,6 +1,5 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
 import { Button, Panel, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
@@ -52,7 +51,4 @@ const OmniauthCredential = () => {
 
 export default OmniauthCredential;
 
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('OmniauthCredential');
-  if (domElement) { ReactDOM.render(<OmniauthCredential />, domElement); }
-});
+
