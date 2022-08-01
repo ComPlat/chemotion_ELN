@@ -338,6 +338,12 @@ export const purificationOptions = [{
 }, {
   label: 'Crystallisation',
   value: 'Crystallisation'
+}, {
+  label: 'Recrystallisation',
+  value: 'Recrystallisation'
+}, {
+  label: 'Dialysis',
+  value: 'Dialysis'
 }];
 
 export const statusOptions = [{
