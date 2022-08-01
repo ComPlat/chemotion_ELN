@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { Panel, Col, PanelGroup, Row } from 'react-bootstrap';
 import { sortBy, findIndex } from 'lodash';
 import uuid from 'uuid';
-import { genUnits, unitConversion } from 'src/admin/generic/Utils';
+import { genUnits, unitConversion } from 'src/apps/admin/generic/Utils';
 import Attachment from 'src/models/Attachment';
 import {
   GenPropertiesText, GenPropertiesCheckbox, GenPropertiesSelect, GenPropertiesCalculate,

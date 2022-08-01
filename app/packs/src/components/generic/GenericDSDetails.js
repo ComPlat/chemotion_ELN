@@ -6,7 +6,7 @@ import { Panel, Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-boo
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { LayersLayout } from 'src/components/generic/GenericElCommon';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import { genUnits, toBool, toNum, unitConversion, absOlsTermLabel } from 'src/admin/generic/Utils';
+import { genUnits, toBool, toNum, unitConversion, absOlsTermLabel } from 'src/apps/admin/generic/Utils';
 
 class GenericDSDetails extends Component {
   constructor(props) {

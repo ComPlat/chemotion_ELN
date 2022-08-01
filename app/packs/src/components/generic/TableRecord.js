@@ -7,7 +7,7 @@ import GenericSubField from 'src/models/GenericSubField';
 import { AddRowBtn, DelRowBtn, DnDRowBtn, NullRowBtn } from 'src/components/generic/GridBtn';
 import { ColumnHeader, ColumnRow, NoRow } from 'src/components/generic/GridEntry';
 import UConverterRenderer from 'src/components/generic/UConverterRenderer';
-import { genUnits, unitConversion, molOptions, samOptions } from 'src/admin/generic/Utils';
+import { genUnits, unitConversion, molOptions, samOptions } from 'src/apps/admin/generic/Utils';
 import DropRenderer from 'src/components/generic/DropRenderer';
 import DropTextRenderer from 'src/components/generic/DropTextRenderer';
 import DropLinkRenderer from 'src/components/generic/DropLinkRenderer';

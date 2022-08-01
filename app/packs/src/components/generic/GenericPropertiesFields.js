@@ -5,7 +5,7 @@ import { filter } from 'lodash';
 import Select from 'react-select';
 import Dropzone from 'react-dropzone';
 import GenericElDropTarget from 'src/components/generic/GenericElDropTarget';
-import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from 'src/admin/generic/Utils';
+import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from 'src/apps/admin/generic/Utils';
 import TableRecord from 'src/components/generic/TableRecord';
 import Utils from 'src/utilities/Functions';
 

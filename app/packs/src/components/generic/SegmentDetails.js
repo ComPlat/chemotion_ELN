@@ -6,8 +6,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { LayersLayout, UploadInputChange } from 'src/components/generic/GenericElCommon';
 import Segment from 'src/models/Segment';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import { notification, genUnits, toBool, toNum, unitConversion } from 'src/admin/generic/Utils';
-import { organizeSubValues } from 'src/admin/generic/collate';
+import { notification, genUnits, toBool, toNum, unitConversion } from 'src/apps/admin/generic/Utils';
+import { organizeSubValues } from 'src/apps/admin/generic/collate';
 import PreviewModal from 'src/components/generic/PreviewModal';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 

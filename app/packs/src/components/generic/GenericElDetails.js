@@ -15,8 +15,8 @@ import { GenProperties, LayersLayout, UploadInputChange } from 'src/components/g
 import GenericEl from 'src/models/GenericEl';
 import Attachment from 'src/models/Attachment';
 import CopyElementModal from 'src/components/common/CopyElementModal';
-import { notification, genUnits, toBool, toNum, unitConversion } from 'src/admin/generic/Utils';
-import { organizeSubValues } from 'src/admin/generic/collate';
+import { notification, genUnits, toBool, toNum, unitConversion } from 'src/apps/admin/generic/Utils';
+import { organizeSubValues } from 'src/apps/admin/generic/collate';
 import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import PreviewModal from 'src/components/generic/PreviewModal';

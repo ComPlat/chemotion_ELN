@@ -5,7 +5,7 @@ import { DropTarget } from 'react-dnd';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import { GenericDSMisType, absOlsTermId } from 'src/admin/generic/Utils';
+import { GenericDSMisType, absOlsTermId } from 'src/apps/admin/generic/Utils';
 
 const dataTarget = {
   canDrop(props, monitor) {

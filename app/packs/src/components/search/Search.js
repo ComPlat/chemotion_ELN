@@ -13,7 +13,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericElCriteriaModal from 'src/components/generic/GenericElCriteriaModal';
 import GenericElCriteria from 'src/components/generic/GenericElCriteria';
-import { clsInputGroup } from 'src/admin/generic/Utils';
+import { clsInputGroup } from 'src/apps/admin/generic/Utils';
 
 export default class Search extends React.Component {
   constructor(props) {
