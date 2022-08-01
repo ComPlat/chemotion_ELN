@@ -67,6 +67,15 @@ module Import
           end
         end
       end
+      @data['ResearchPlan'].each do |attr_name, attr_value|
+        image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
+        image_fields.each do |field|
+          new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
+          field['value']['public_name'] = new_att['identifier']
+          field['value']['file_name'] = new_att['filename']
+        end
+      end
+
       @attachments = attachments.map(&:id)
       attachments = []
       att.close!
