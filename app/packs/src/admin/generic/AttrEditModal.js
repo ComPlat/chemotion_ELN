@@ -15,7 +15,8 @@ export default class AttrEditModal extends Component {
       case 'Segment': {
         const updates = {
           label: this.formRef.current.k_label.value.trim(),
-          desc: this.formRef.current.k_desc.value.trim()
+          desc: this.formRef.current.k_desc.value.trim(),
+          identifier: this.formRef.current.k_identifier.value.trim()
         };
         fnUpdate(element, updates);
         break;

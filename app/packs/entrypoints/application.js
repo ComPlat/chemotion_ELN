@@ -11,5 +11,7 @@ var MoleculeModerator = require('../src/components/MoleculeModerator');
 var OmniauthCredential = require('../src/components/sso/OmniauthCredential');
 var UserCounter = require('../src/components/elements/UserCounter');
 var ScifinderCredential = require('../src/components/scifinder/ScifinderCredential');
+var GenericElementAdmin = require('../src/admin/GenericElementAdmin');
+var SegmentElementAdmin = require('../src/admin/SegmentElementAdmin');
+var DatasetElementAdmin = require('../src/admin/DatasetElementAdmin');
 var mydb = require('../src/components/App');
-

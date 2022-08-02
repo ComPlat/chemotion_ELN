@@ -16,6 +16,7 @@
 #  uuid                :string
 #  properties_release  :jsonb
 #  released_at         :datetime
+#  identifier          :string
 #
 
 class SegmentKlass < ApplicationRecord

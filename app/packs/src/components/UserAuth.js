@@ -50,7 +50,7 @@ export default class UserAuth extends Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
-    
+
   }
 
   componentDidMount() {
@@ -70,7 +70,7 @@ export default class UserAuth extends Component {
 
   logout() {
     UserActions.logout();
-  }  
+  }
 
   promptTextCreator(label) {
     return ("Share with \"" + label + "\"");
@@ -154,7 +154,7 @@ export default class UserAuth extends Component {
   // tooltip of yes/no confirmation
   handleClick() {
     this.setState({ show: !this.state.show });
-  } 
+  }
 
   // inputs of create new group
   handleInputChange(type, ev) {
@@ -258,8 +258,8 @@ export default class UserAuth extends Component {
           currentGroups.splice(idx, 1, result.group);
         }
         this.setState({ currentGroups: currentGroups });
-      });    
-  }  
+      });
+  }
 
   // render modal
   renderModal() {
@@ -579,6 +579,7 @@ export default class UserAuth extends Component {
                 Disable for now as there is no subsciption channel yet (Paggy) */}
             <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
+            <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
           </NavDropdown>
           <NavItem onClick={() => this.logout()} style={{ marginRight: '5px' }} className="" title="Log out">
             <Glyphicon glyph="log-out" />

@@ -26,7 +26,7 @@ module GenericRevisions
 
   def delete_attachments
     att_ids = []
-    properties['layers'].keys.each do |key|
+    properties && properties['layers'].keys.each do |key|
       layer = properties['layers'][key]
       field_uploads = layer['fields'].select { |ss| ss['type'] == 'upload' }
       field_uploads.each do |field|

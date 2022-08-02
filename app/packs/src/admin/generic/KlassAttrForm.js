@@ -44,8 +44,8 @@ export default class KlassAttrForm extends Component {
             <FormControl type="text" defaultValue={element.icon_name} inputRef={(ref) => { this.k_iconname = ref; }} />
           </InputGroup>
           <div className="help">
-            Icon is used to represent a particular element<br />
-            Please use the icon code from<Button bsStyle="link" bsSize="xsmall" href="https://fontawesome.com/v4.7/icons/" target="_blank">Font Awesome 4</Button>
+            Icon is used to represent a particular element. Please use the icon code from<Button bsStyle="link" bsSize="xsmall" href="https://fontawesome.com/v4.7/icons/" target="_blank">Font Awesome 4</Button><br />
+            The icon code format is like &lsquo; fa fa-abc &rsquo;.
           </div>
         </FormGroup>
         <FormGroup controlId="formControlDescription">
