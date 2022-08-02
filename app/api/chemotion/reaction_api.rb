@@ -47,7 +47,6 @@ module ReactionHelpers
 
   def update_materials_for_reaction(reaction, material_attributes, current_user)
     collections = reaction.collections
-    materials = OpenStruct.new(material_attributes)
     materials = {
       starting_material: Array(material_attributes['starting_materials']).map { |m| OSample.new(m) },
       reactant: Array(material_attributes['reactants']).map { |m| OSample.new(m) },
