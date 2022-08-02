@@ -95,7 +95,7 @@ class Molecule < ApplicationRecord
       molecule.molfile = is_partial && partial_molfile || molfile
       molecule.assign_molecule_data(babel_info, pubchem_info)
     end
- 
+
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end
@@ -168,7 +168,7 @@ class Molecule < ApplicationRecord
 
   def attach_svg svg_data
     return unless svg_data.match /\A<\?xml/
-    
+
     svg_file_name = if self.is_partial
       "#{SecureRandom.hex(64)}Part.svg"
     else
@@ -177,8 +177,9 @@ class Molecule < ApplicationRecord
     svg_file_path = "public/images/molecules/#{svg_file_name}"
 
     svg_file = File.new(svg_file_path, 'w+')
-    scrubbed = Loofah.scrub_fragment(svg_data, :strip).to_s
-    svg_file.write(scrubbed)
+    # scrubbed = Loofah.scrub_fragment(svg_data, :strip).to_s
+    # svg_file.write(scrubbed)
+    svg_file.write(svg_data)
     svg_file.close
 
     self.molecule_svg_file = svg_file_name

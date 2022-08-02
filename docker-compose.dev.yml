@@ -34,7 +34,7 @@ services:
       - 'postgres'
     environment:
       - 'WEBPACKER_DEV_SERVER_HOST=webpacker'
-      - 'WEBPACKER_DEV_SERVER_PORT=3035'
+      - 'WEBPACKER_DEV_SERVER_PORT=3036'
       - 'NODE_MODULES_PATH=/home/chemotion-dev/node_modules/' # required for the asset pipeline to find the node modules
     ports: # expose default rails port to host machine
       - "3000:3000"
@@ -50,16 +50,16 @@ services:
       dockerfile: 'Dockerfile.chemotion-dev'
     environment:
       - 'WEBPACKER_DEV_SERVER_HOST=webpacker'
-      - 'WEBPACKER_DEV_SERVER_PORT=3035'
+      - 'WEBPACKER_DEV_SERVER_PORT=3036'
       - 'NODE_MODULES_PATH=/home/chemotion-dev/node_modules/' # required for the asset pipeline to find the node modules
       - 'WEBPACKER_NODE_MODULES_BIN_PATH=/node_modules/.bin' # required for webpacker to find the yarn binary
     volumes:
       - 'homedir:/home/chemotion-dev/'
       - '.:/home/chemotion-dev/app'
     ports: # expose webpacker dev server port to app container
-      - '3035:3035'
+      - '3036:3036'
     expose:
-      - '3035'
+      - '3036'
     working_dir: "/home/chemotion-dev/app"
     command: './run-js-dev.sh'
 

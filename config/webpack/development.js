@@ -5,7 +5,7 @@ const { merge } = require('@rails/webpacker');
 const webpackConfig = require('./base');
 const developmentConfig = {
   devServer: {
-    port: '3035',
+    port: '3036',
     host: '0.0.0.0',
     compress: true,
     hot: true,

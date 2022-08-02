@@ -4,13 +4,14 @@ require 'json'
 
 module Import
   class ImportCollections
-    def initialize(att, current_user_id)
+    def initialize(att, current_user_id, gt = false, col_id = nil)
       @att = att
       @current_user_id = current_user_id
-
+      @gt = gt
       @data = nil
       @instances = {}
       @attachments = []
+      @col_id = col_id
       @col_all = Collection.get_all_collection_for_user(current_user_id)
       @images = {}
       @svg_files = []
@@ -57,18 +58,20 @@ module Import
 
     def import
       ActiveRecord::Base.transaction do
-        import_collections
+        gate_collection if @gt == true
+        import_collections if @gt == false
         import_samples
         import_residues
         import_reactions
         import_reactions_samples
-        import_wellplates
-        import_wells
-        import_screens
-        import_research_plans
+        import_wellplates if @gt == false
+        import_wells if @gt == false
+        import_screens if @gt == false
+        import_research_plans if @gt == false
         import_containers
         import_attachments
         import_literals
+        import_segments
       end
     end
 
@@ -114,6 +117,15 @@ module Import
         # add collection to @instances map
         update_instances!(uuid, collection)
       end
+    end
+
+    def gate_collection
+      collection = Collection.find(@col_id)
+      @uuid = nil
+      @data.fetch('Collection', {}).each do |uuid, fields|
+        @uuid = uuid
+      end
+      update_instances!(@uuid, collection)
     end
 
     def fetch_bound(value)
@@ -444,6 +456,57 @@ module Import
         # add attachment to the @instances map
         update_instances!(uuid, attachment)
         attachment.regenerate_thumbnail
+      end
+    end
+
+    def import_segments
+      begin
+        @data.fetch('Segment', {}).each do |uuid, fields|
+          klass_id = fields["segment_klass_id"]
+          sk_obj = @data.fetch('SegmentKlass', {})[klass_id]
+          sk_id = sk_obj["identifier"]
+          ek_obj = @data.fetch('ElementKlass').fetch(sk_obj["element_klass_id"])
+          element_klass = ElementKlass.find_by(name: ek_obj['name']) if ek_obj.present?
+          next if element_klass.nil? || ek_obj.nil? || ek_obj['is_generic'] == true
+          element_uuid = fields.fetch('element_id')
+          element_type = fields.fetch('element_type')
+          element = @instances.fetch(element_type).fetch(element_uuid)
+          segment_klass = SegmentKlass.find_by(identifier: sk_id)
+          next if @gt == true && segment_klass.nil?
+
+          segment_klass = SegmentKlass.create!(sk_obj.slice(
+              'label',
+              'desc',
+              'properties_template',
+              'is_active',
+              'place',
+              'properties_release',
+              'uuid',
+              'identifier',
+              'sync_time'
+            ).merge(
+              element_klass: element_klass,
+              created_by: @current_user_id,
+              released_at: DateTime.now
+            )
+          ) if segment_klass.nil?
+          Segment.create!(
+            fields.slice(
+              'properties',
+              'created_at',
+              'updated_at'
+            ).merge(
+              created_by: @current_user_id,
+              element: element,
+              segment_klass: segment_klass,
+              uuid: SecureRandom.uuid,
+              klass_uuid: segment_klass.uuid
+            )
+          )
+        end
+      rescue StandardError => error
+        Rails.logger.error(e.backtrace)
+        raise
       end
     end
 

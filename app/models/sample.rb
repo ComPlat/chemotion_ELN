@@ -37,6 +37,7 @@
 #  molecule_name_id    :integer
 #  molfile_version     :string(20)
 #  stereo              :jsonb
+#  mol_rdkit           :string
 #  metrics             :string           default("mmm")
 #  decoupled           :boolean          default(FALSE), not null
 #  molecular_mass      :float
@@ -346,16 +347,16 @@ class Sample < ApplicationRecord
     return unless svg.present?
 
     svg_file_name = "#{SecureRandom.hex(64)}.svg"
-
     if svg =~ /TMPFILE[0-9a-f]{64}.svg/
-      src = full_svg_path(svg.to_s)
-      return unless File.exist?(src)
+      svg_path = Rails.public_path.join('images', 'samples', svg.to_s).to_s
+      FileUtils.mv(svg_path, svg_path.gsub(/(TMPFILE\S+)/, svg_file_name))
 
-      svg = File.read(src)
-      FileUtils.remove(src)
-    end
-    if svg.start_with?('<?xml', '<svg')
-      File.write(full_svg_path(svg_file_name), scrub(svg))
+      self.sample_svg_file = svg_file_name
+    elsif svg.start_with?('<?xml')
+      svg_path = Rails.public_path.join('images', 'samples', svg_file_name)
+      svg_file = File.new(svg_path, 'w+')
+      svg_file.write(svg)
+      svg_file.close
       self.sample_svg_file = svg_file_name
     end
   end

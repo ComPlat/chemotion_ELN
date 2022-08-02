@@ -230,7 +230,8 @@ module SVG
       @solvents = (options[:solvents] || []).select(&:present?)
       @temperature = options[:temperature]
       @duration = options[:duration]
-      @conditions = Loofah.scrub_fragment(options[:conditions], :strip).to_s if options[:conditions].present?
+      @conditions = options[:conditions]
+      # @conditions = Loofah.scrub_fragment(options[:conditions], :strip).to_s if options[:conditions].present?
       @pas = options[:preserve_aspect_ratio]
       @show_yield = options[:show_yield]
       @box_width = options[:supporting_information] ? 2000 : 1560
@@ -373,7 +374,7 @@ module SVG
       materials.each do |m|
         material, = *separate_material_yield(m)
         svg = inner_file_content(material)
-        vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || [0, 0, 0, 0]
+        vb = svg && svg['viewBox']&.split(/\s+/)&.map(&:to_i) || [0, 0, 0, 0]
         max < vb[3] && (max = vb[3])
       end
       max
@@ -474,7 +475,7 @@ module SVG
 
         material, = *separate_material_yield(m)
         svg = inner_file_content(material)
-        vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || []
+        vb = svg['viewBox']&.split(/\s+/)&.map(&:to_i) || []
         unless vb.empty?
           x_shift = group_width + 10 - vb[0]
           y_shift = (y_center + vb[3] / 2).round
@@ -520,7 +521,7 @@ module SVG
         end
         material, yield_amount = *separate_material_yield(m)
         svg = inner_file_content(material)
-        vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || []
+        vb = svg && svg['viewBox']&.split(/\s+/)&.map(&:to_i) || []
         unless vb.empty?
 
           x_shift = group_width + 10 - vb[0]

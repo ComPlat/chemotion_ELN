@@ -106,8 +106,8 @@ module Chemotion
           post do
             Delayed::Job.where(queue: @queue).destroy_all
             Delayed::Job.where(queue: @move_queue).destroy_all
-            GateTransferJob.set(queue: @queue)
-                           .perform_later(@collection.id, @url, @req_headers)
+            ## GateTransferJob.set(queue: @queue).perform_now(@collection.id, @url, @req_headers)
+            TransferRepoJob.set(queue: @queue).perform_now(@collection.id, current_user.id, @url, @req_headers)
             status 202
           end
 

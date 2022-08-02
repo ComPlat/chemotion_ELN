@@ -44,6 +44,9 @@ Rails.application.routes.draw do
     get 'mydb/*any', to: 'pages#welcome'
     get 'mydb', to: 'pages#welcome'
     get 'molecule_moderator', to: 'pages#molecule_moderator'
+    get 'generic_elements_admin', to: 'pages#gea'
+    get 'generic_segments_admin', to: 'pages#gsa'
+    get 'generic_datasets_admin', to: 'pages#gda'
   end
 
   # Standalone page for ChemScanner

@@ -143,7 +143,7 @@ class Reaction < ApplicationRecord
 
   before_save :update_svg_file!
   before_save :cleanup_array_fields
-  before_save :scrub
+  # before_save :scrub
   before_save :auto_format_temperature!
   before_create :auto_set_short_label
 

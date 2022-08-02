@@ -2,15 +2,11 @@ import 'whatwg-fetch';
 import GenericEl from '../models/GenericEl';
 import AttachmentFetcher from './AttachmentFetcher';
 import BaseFetcher from './BaseFetcher';
+import GenericBaseFetcher from './GenericBaseFetcher';
 
-export default class GenericElsFetcher {
-  static fetchElementKlass(klassName) {
-    return fetch(`/api/v1/generic_elements/klass.json?name=${klassName}`, {
-      credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-  }
+export default class GenericElsFetcher extends GenericBaseFetcher {
+  static exec(path, method) { return super.exec(`generic_elements/${path}`, method); }
+  static execData(params, path) { return super.execData(params, `generic_elements/${path}`); }
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'generic_elements', GenericEl);
@@ -96,7 +92,7 @@ export default class GenericElsFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-      
+
     if (files.length > 0) {
       let tasks = [];
       files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
@@ -115,21 +111,35 @@ export default class GenericElsFetcher {
     return this.updateOrCreate(genericEl, 'create');
   }
 
-  static fetchElementRevisions(id) {
-    return BaseFetcher.withoutBodyData({
-      apiEndpoint: `/api/v1/generic_elements/element_revisions.json?id=${id}`, requestMethod: 'GET', jsonTranformation: json => json
-    });
+  static createElementKlass(params) {
+    return this.execData(params, 'create_element_klass');
   }
 
-  static deleteRevisions(params) {
-    return BaseFetcher.withBodyData({
-      apiEndpoint: '/api/v1/generic_elements/delete_revision', requestMethod: 'POST', bodyData: params, jsonTranformation: json => json
-    });
+  static fetchElementRevisions(id) {
+    return this.exec(`element_revisions.json?id=${id}`, 'GET');
+  }
+
+  static fetchElementKlasses() {
+    return this.exec('klasses_all.json', 'GET');
+  }
+
+  static fetchElementKlass(klassName) {
+    return this.exec(`klass.json?name=${klassName}`, 'GET');
   }
 
   static fetchSegmentRevisions(id) {
-    return BaseFetcher.withoutBodyData({
-      apiEndpoint: `/api/v1/generic_elements/segment_revisions.json?id=${id}`, requestMethod: 'GET', jsonTranformation: json => json
-    });
+    return this.exec(`segment_revisions.json?id=${id}`, 'GET');
+  }
+
+  static deleteRevisions(params) {
+    return this.execData(params, 'delete_revision');
+  }
+
+  static updateElementKlass(params) {
+    return this.execData(params, 'update_element_klass');
+  }
+
+  static updateGElTemplates(params) {
+    return super.updateTemplate({ ...params, klass: 'ElementKlass' }, 'update_element_template');
   }
 }

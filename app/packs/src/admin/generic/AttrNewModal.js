@@ -16,7 +16,8 @@ export default class AttrNewModal extends Component {
         const element = {
           label: this.formRef.current.k_label.value.trim(),
           desc: this.formRef.current.k_desc.value.trim(),
-          element_klass: this.formRef.current.k_klass.value
+          element_klass: this.formRef.current.k_klass.value,
+          identifier: this.formRef.current.k_identifier.value.trim()
         };
         fnCreate(element);
         break;

@@ -138,6 +138,10 @@ class User < ApplicationRecord
     super && account_active
   end
 
+  def generic_admin
+    profile&.data&.fetch('generic_admin', {})
+  end
+
   def name_abbr_config
     @name_abbr_config ||= Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
   end

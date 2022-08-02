@@ -11,6 +11,7 @@ module Entities
       :properties_release,
       :properties_template,
       :uuid,
+      :identifier
     )
     expose :element_klass, using: Entities::ElementKlassEntity
     expose_timestamps(timestamp_fields: [:released_at])
