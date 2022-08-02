@@ -213,30 +213,9 @@ module AttachmentJcampProcess
     end
 
     if spc_type == 'bagit'
-      jcamp_att = nil
-      tmp_to_deleted = []
-      tmp_img_to_deleted = []
-      arr_jcamp.each_with_index do |jcamp, idx|
-        curr_jcamp_att = generate_jcamp_att(jcamp, "#{idx+1}_bagit")
-        curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-        curr_tmp_img = arr_img[idx]
-        img_att = generate_img_att(curr_tmp_img, "#{idx+1}_bagit")
-        tmp_to_deleted.push(jcamp, curr_tmp_img)
-        tmp_img_to_deleted.push(img_att)
-
-        curr_tmp_csv = arr_csv[idx]
-        csv_att = generate_csv_att(curr_tmp_csv, "#{idx+1}_bagit")
-        tmp_to_deleted.push(curr_tmp_csv)
-        
-        if idx == 0
-          jcamp_att = curr_jcamp_att
-        end
-      end
-      set_done
-      delete_tmps(tmp_to_deleted)
-      delete_related_arr_img(tmp_img_to_deleted)
-      delete_edit_peak_after_done
-      jcamp_att
+      read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen)
+    elsif arr_jcamp.count > 1
+      read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
     else
       jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
       jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
@@ -300,6 +279,66 @@ module AttachmentJcampProcess
     set_failure
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
     Rails.logger.error(e)
+  end
+
+  def read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
+    jcamp_att = nil
+    tmp_to_be_deleted = []
+    tmp_img_to_deleted = []
+    
+    arr_jcamp.each_with_index do |jcamp, idx|
+      file_name_to_generate = ''
+      if idx == 0
+        file_name_to_generate = 'peak'
+      else
+        file_name_to_generate = "processed_#{idx}"
+      end
+
+      curr_jcamp_att = generate_jcamp_att(jcamp, file_name_to_generate)
+      curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
+      if idx == 0
+        jcamp_att = curr_jcamp_att
+      end
+
+      curr_tmp_img = arr_img[idx]
+      img_att = generate_img_att(curr_tmp_img, file_name_to_generate)
+      
+      tmp_to_be_deleted.push(jcamp, curr_tmp_img)
+      tmp_img_to_deleted.push(img_att)
+    end
+
+    set_done
+    delete_tmps(tmp_to_be_deleted)
+    delete_related_arr_img(tmp_img_to_deleted)
+    delete_edit_peak_after_done
+    jcamp_att
+  end
+
+  def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen)
+    jcamp_att = nil
+    tmp_to_be_deleted = []
+    tmp_img_to_deleted = []
+    arr_jcamp.each_with_index do |jcamp, idx|
+      curr_jcamp_att = generate_jcamp_att(jcamp, "#{idx+1}_bagit")
+      curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
+      curr_tmp_img = arr_img[idx]
+      img_att = generate_img_att(curr_tmp_img, "#{idx+1}_bagit")
+      tmp_to_be_deleted.push(jcamp, curr_tmp_img)
+      tmp_img_to_deleted.push(img_att)
+
+      curr_tmp_csv = arr_csv[idx]
+      csv_att = generate_csv_att(curr_tmp_csv, "#{idx+1}_bagit")
+      tmp_to_be_deleted.push(curr_tmp_csv)
+      
+      if idx == 0
+        jcamp_att = curr_jcamp_att
+      end
+    end
+    set_done
+    delete_tmps(tmp_to_be_deleted)
+    delete_related_arr_img(tmp_img_to_deleted)
+    delete_edit_peak_after_done
+    jcamp_att
   end
 
   def delete_tmps(tmp_arr)
