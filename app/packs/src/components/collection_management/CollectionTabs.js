@@ -6,7 +6,7 @@ import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
 import TabLayoutContainer from '../TabLayoutContainer';
 import UserStore from '../stores/UserStore';
-import { getArrayFromLayout } from '../ElementDetailSortTab';
+import { filterTabLayout, getArrayFromLayout } from '../ElementDetailSortTab';
 import UserActions from '../actions/UserActions';
 
 const elements = [
@@ -89,13 +89,8 @@ export default class CollectionTabs extends React.Component {
       const availableTabs = (layout && Object.keys(layout)) || {};
       if (!isEmpty(node.tabs_segment[element.name])) {
         const nodeTabs = node.tabs_segment[element.name];
-        nodeTabs.hidden && (nodeTabs.hidden.forEach((value) => {
-          let indexOf = availableTabs.indexOf(value)
-          if (indexOf > -1) {
-            availableTabs.splice(indexOf, 1);
-          }
-        }))
-        layout = nodeTabs;
+        const { visible, hidden } = getArrayFromLayout(nodeTabs, availableTabs);
+        layout = { visible, hidden };
       } else {
         const { visible, hidden } = getArrayFromLayout(layout, availableTabs);
         layout = { visible, hidden };
@@ -145,9 +140,7 @@ export default class CollectionTabs extends React.Component {
     const { currentCollection } = this.state;
     let layoutSegments = {};
     elements.map((_e, index) => {
-      const { visible, hidden } = this.tabRef[index].state;
-      let layout = {};
-      layout = { visible, hidden };
+      const layout = filterTabLayout(this.tabRef[index].state);
       layoutSegments = { ...layoutSegments, [elements[index].name]: layout };
     });
     const params = { layoutSegments, currentCollectionId: currentCollection.id };

@@ -35,7 +35,6 @@ set :linked_files, fetch(:linked_files, []).push(
   'config/database.yml',
   'config/storage.yml',
   'config/user_props.yml',
-  'config/datacollectors.yml',
   'config/secrets.yml',
   # 'config/spectra.yml',
   '.env'
