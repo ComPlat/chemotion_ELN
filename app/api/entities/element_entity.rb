@@ -3,7 +3,6 @@
 module Entities
   class ElementEntity < ApplicationEntity
     expose(
-      :can_copy,
       :container,
       :created_by,
       :id,
@@ -15,12 +14,17 @@ module Entities
       :uuid,
     )
 
+    expose(
+      :can_copy,
+      unless: ->(instance, options) { displayed_in_list? }
+    )
+
     expose_timestamps
 
-    expose :container, using: 'Entities::ContainerEntity'
+    expose :container, using: 'Entities::ContainerEntity', unless: ->(instance, options) { displayed_in_list? }
+    expose :segments, using: 'Entities::SegmentEntity', unless: ->(instance, options) { displayed_in_list? }
     expose :element_klass, using: 'Entities::ElementKlassEntity'
     expose :tag, using: 'Entities::ElementTagEntity'
-    expose :segments, using: 'Entities::SegmentEntity'
 
     private
 

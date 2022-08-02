@@ -68,7 +68,7 @@ module SampleAssociationHelpers
 
   def update_sample_association(element, properties, current_user)
     sds = []
-    properties['layers'].keys.each do |key|
+    properties && properties['layers'].keys.each do |key|
       layer = properties['layers'][key]
       field_samples = layer['fields'].select { |ss| ss['type'] == 'drag_sample' }
       field_samples.each do |field|

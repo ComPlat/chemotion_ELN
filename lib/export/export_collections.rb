@@ -1,11 +1,12 @@
 module Export
   class ExportCollections
 
-    def initialize(export_id, collection_ids, format, nested)
+    def initialize(export_id, collection_ids, format = 'zip', nested = false, gt = false)
       @export_id = export_id
       @collection_ids = collection_ids
       @format = format
       @nested = nested
+      @gt = gt
 
       @file_path = Rails.public_path.join( format, "#{export_id}.#{format}")
       @schema_file_path = Rails.public_path.join( 'json', 'schema.json')
@@ -13,6 +14,7 @@ module Export
       @data = {}
       @uuids = {}
       @attachments = []
+      @segments = []
       @images = []
     end
 
@@ -83,6 +85,7 @@ module Export
 
         # write the zip file to public/zip/
         File.write(@file_path, zip.read)
+        @file_path
       end
     end
 
@@ -99,6 +102,9 @@ module Export
         collections += descendants
       end
 
+      # fetch_element_klasses
+      # fetch_segment_klasses
+
       # loop over all collections
       collections.each do |collection|
         # fetch collection
@@ -108,9 +114,9 @@ module Export
 
         fetch_samples collection
         fetch_reactions collection
-        fetch_wellplates collection
-        fetch_screens collection
-        fetch_research_plans collection
+        fetch_wellplates collection unless @gt == false
+        fetch_screens collection unless @gt == false
+        fetch_research_plans collection unless @gt == false
       end
     end
 
@@ -141,9 +147,12 @@ module Export
           'molecule_id' => 'Molecule',
           'user_id' => 'User'
         })
+
         fetch_many(sample.residues, {
           'sample_id' => 'Sample',
         })
+
+        @segments += fetch_segments(sample)
 
         # fetch containers, attachments and literature
         fetch_containers(sample)
@@ -180,6 +189,8 @@ module Export
             'sample_id' => 'Sample',
           })
         end
+
+        @segments += fetch_segments(reaction)
 
         # fetch containers, attachments and literature
         fetch_containers(reaction)
@@ -304,6 +315,33 @@ module Export
       end
     end
 
+    def fetch_element_klasses
+      klasses = ElementKlass.where(is_active: true, is_generic: false)
+      fetch_many(klasses, {'created_by' => 'User'})
+    end
+
+    def fetch_segment_klasses
+      klasses = SegmentKlass.where(is_active: true)
+      fetch_many(klasses, {'created_by' => 'User'})
+    end
+
+    def fetch_segments(element)
+      element_type = element.class.name
+      segments = Segment.where("element_id = ? AND element_type = ?", element.id, element_type)
+      segments.each do |segment|
+        segment = fetch_properties(segment)
+        fetch_one(segment.segment_klass.element_klass)
+        fetch_one(segment.segment_klass, {
+          'element_klass_id' => 'ElementKlass'
+        })
+        fetch_one(segment, {
+          'element_id' => segment.element_type,
+          'segment_klass_id' => 'SegmentKlass',
+          'created_by' => 'User'
+        })
+      end
+    end
+
     def fetch_literals(element)
       element_type = element.class.name
 
@@ -317,6 +355,61 @@ module Export
           'user_id' => 'User'
         })
       end
+    end
+
+    def fetch_properties(instance)
+#byebug
+      properties = instance.properties
+      properties['layers'].keys.each do |key|
+        layer = properties['layers'][key]
+
+        # field_samples = layer['fields'].select { |ss| ss['type'] == 'drag_sample' }  -- TODO for elements
+        # field_elements = layer['fields'].select { |ss| ss['type'] == 'drag_element' }  -- TODO for elements
+
+        field_molecules = layer['fields'].select { |ss| ss['type'] == 'drag_molecule' }
+        field_molecules.each do |field|
+          idx = properties['layers'][key]['fields'].index(field)
+          id = field["value"] && field["value"]["el_id"] unless idx.nil?
+          mol = Molecule.find(id) unless id.nil?
+          properties['layers'][key]['fields'][idx]['value']['el_id'] = fetch_one(mol) unless mol.nil?
+        end
+
+        field_uploads = layer['fields'].select { |ss| ss['type'] == 'upload' }
+        field_uploads.each do |upload|
+          idx = properties['layers'][key]['fields'].index(upload)
+          files = upload["value"] && upload["value"]["files"]
+          files&.each_with_index do |fi, fdx|
+            att = Attachment.find(fi['aid'])
+            @attachments += [att]
+            properties['layers'][key]['fields'][idx]['value']['files'][fdx]['aid'] = fetch_one(att, {'attachable_id' => 'Segment'}) unless att.nil?
+          end
+        end
+
+        field_tables = properties['layers'][key]['fields'].select { |ss| ss['type'] == 'table' }
+        field_tables&.each do |field|
+          next unless field['sub_values'].present? && field['sub_fields'].present?
+          # field_table_samples = field['sub_fields'].select { |ss| ss['type'] == 'drag_sample' }  -- not available yet
+          # field_table_uploads = field['sub_fields'].select { |ss| ss['type'] == 'upload' }       -- not available yet
+          field_table_molecules = field['sub_fields'].select { |ss| ss['type'] == 'drag_molecule' }
+          if field_table_molecules.present?
+            col_ids = field_table_molecules.map { |x| x.values[0] }
+            col_ids.each do |col_id|
+              field['sub_values'].each do |sub_value|
+                next unless sub_value[col_id].present? && sub_value[col_id]['value'].present? && sub_value[col_id]['value']['el_id'].present?
+
+                svalue = sub_value[col_id]['value']
+                next unless svalue['el_id'].present? && svalue['el_inchikey'].present?
+
+                tmol = Molecule.find_by(id: svalue['el_id'])
+                sub_value[col_id]['value']['el_id'] = fetch_one(tmol) unless tmol.nil?
+              end
+            end
+          end
+        end
+
+      end
+      instance.properties = properties
+      instance
     end
 
     def fetch_many(instances, foreign_keys = {})
@@ -359,8 +452,13 @@ module Export
             raise 'Instance with non nil deleted_at in export'
           end
 
-          @data[type][uuid] = instance.as_json().except('id').merge(update)
+          if (@gt == true)
+            @data[type][uuid] = instance.as_json().merge(update)
+          else
+            @data[type][uuid] = instance.as_json().except('id').merge(update)
+          end
         end
+        uuid
       end
     end
 

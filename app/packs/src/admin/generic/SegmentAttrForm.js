@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Form, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
+import { Button, Form, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
-import AdminFetcher from '../../components/fetchers/AdminFetcher';
+import GenericElsFetcher from '../../components/fetchers/GenericElsFetcher';
 
 export default class SegmentAttrForm extends Component {
   constructor() {
@@ -11,7 +11,7 @@ export default class SegmentAttrForm extends Component {
   }
 
   componentDidMount() {
-    AdminFetcher.fetchElementKlasses()
+    GenericElsFetcher.fetchElementKlasses()
       .then((result) => {
         const klassOptions = result.klass.sort((a, b) => a.place - b.place)
           .map(k => (<option key={uuid.v4()} value={k.id}>{k.label}</option>));
@@ -44,12 +44,20 @@ export default class SegmentAttrForm extends Component {
             </FormControl>
           </InputGroup>
         </FormGroup>
+        <FormGroup controlId="formControlRepo">
+          <InputGroup>
+            <InputGroup.Addon>Transfer to Chemotion Repository</InputGroup.Addon>
+            <FormControl type="text" defaultValue={element.identifier} inputRef={(ref) => { this.k_identifier = ref; }} />
+          </InputGroup>
+          <div className="help">
+            <b>Transfer to Chemotion Repository: </b> Assign a Chemotion Repository Template Identifier for data transfer. You can find the released templates from<Button bsStyle="link" bsSize="xsmall" href="https://www.chemotion-repository.net" target="_blank">Chemotion Repoitory</Button>and copy/paste the identifier here.
+          </div>
+        </FormGroup>
       </Form>
     );
   }
 }
 
 SegmentAttrForm.propTypes = {
-  element: PropTypes.object.isRequired,
-  editable: PropTypes.bool.isRequired,
+  element: PropTypes.object.isRequired, editable: PropTypes.bool.isRequired,
 };

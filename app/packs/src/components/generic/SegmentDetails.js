@@ -26,7 +26,7 @@ const addSegmentTabs = (element, onChange, contentMap) => {
     const idx = findIndex(element.segments, o => o.segment_klass_id === klass.id);
     let segment = {};
     if (idx > -1) {
-      segment = element.segments[idx];
+      segment = new Segment(element.segments[idx]); // element.segments[idx];
     } else {
       segment = Segment.buildEmpty(cloneDeep(klass));
     }
@@ -278,12 +278,12 @@ class SegmentDetails extends Component {
 
   render() {
     const { segment, klass } = this.props;
-    const hisBtn = segment.is_new ? null : (
+    const hisBtn = (!segment || (segment.is_new || !segment.can_update)) ? null : (
       <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_history">click to view the history</Tooltip>}>
         <Button bsSize="xsmall" className="generic_btn_default" onClick={() => this.setState({ showHistory: true })}><i className="fa fa-book" aria-hidden="true" />&nbsp;History</Button>
       </OverlayTrigger>
     );
-    const reloadBtn = (segment && (typeof segment.klass_uuid === 'undefined' || segment.klass_uuid === klass.uuid || segment.is_new)) ? null : (
+    const reloadBtn = (segment && ((typeof segment.klass_uuid === 'undefined' || segment.klass_uuid === klass.uuid || segment.is_new) || !segment.can_update)) ? null : (
       <OverlayTrigger placement="top" overlay={<Tooltip id="_tooltip_reload">click to reload the template</Tooltip>}>
         <Button bsSize="xsmall" bsStyle="primary" onClick={() => this.handleReload()}><i className="fa fa-refresh" aria-hidden="true" />&nbsp;Reload</Button>
       </OverlayTrigger>

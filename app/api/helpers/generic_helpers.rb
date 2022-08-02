@@ -4,6 +4,24 @@
 module GenericHelpers
   extend Grape::API::Helpers
 
+  def authenticate_admin!(type)
+    error!('401 Unauthorized', 401) unless current_user.generic_admin[type]
+  end
+
+  def fetch_klass(name, id)
+    klz = name.constantize.find(id)
+    error!("#{name.gsub(/(Klass)/, '')} is invalid. Please re-select.", 500) if klz.nil?
+    klz
+  end
+
+  def generate_klass_file
+    klass_dir = File.join(Rails.root, 'data')
+    !File.directory?(klass_dir) && FileUtils.mkdir_p(klass_dir)
+    klass_names_file = File.join(klass_dir, 'klasses.json')
+    klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
+    File.write(klass_names_file, klasses)
+  end
+
   def fetch_properties_uploads(properties)
     uploads = []
     properties['layers'].keys.each do |key|

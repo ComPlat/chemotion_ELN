@@ -1,10 +1,15 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
 import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, Tabs, Tab } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy, orderBy } from 'lodash';
+import Notifications from '../components/Notifications';
 import LoadingModal from '../components/common/LoadingModal';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
+import GenericElsFetcher from '../components/fetchers/GenericElsFetcher';
+import UsersFetcher from '../components/fetchers/UsersFetcher';
 import { ElementField } from '../components/elements/ElementField';
 import LoadingActions from '../components/actions/LoadingActions';
 import AttrNewModal from './generic/AttrNewModal';
@@ -17,7 +22,9 @@ import LayerAttrNewModal from './generic/LayerAttrNewModal';
 import SelectAttrNewModal from './generic/SelectAttrNewModal';
 import Preview from './generic/Preview';
 import UploadModal from './generic/UploadModal';
-import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
+import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from './generic/Utils';
+import { GenericAdminNav, GenericAdminUnauth } from './GenericAdminNav';
+import RepoKlassHubModal from './generic/RepoKlassHubModal';
 
 const validateKlass = klass => (/\b[a-z]{3,5}\b/g.test(klass));
 const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
@@ -54,42 +61,28 @@ export default class GenericElementAdmin extends React.Component {
       layer: {},
       selectOptions: [],
       unitsSystem: {},
-      showPropModal: false,
-      showNewLayer: false,
-      showEditLayer: false,
-      showAddSelect: false,
-      showNewKlass: false,
-      showEditKlass: false,
-      showCopyKlass: false,
-      showFieldCond: false,
-      showUpload: false,
-      showJson: false,
+      show: { tab: '', modal: '' },
       propTabKey: 1,
       revisions: [],
+      user: {}
     };
 
     this.clipboard = new Clipboard('.clipboardBtn');
     this.fetchElements = this.fetchElements.bind(this);
     this.handlePropShow = this.handlePropShow.bind(this);
-    this.handlePropClose = this.handlePropClose.bind(this);
     this.onInputNewField = this.onInputNewField.bind(this);
     this.onInputNewOption = this.onInputNewOption.bind(this);
-    this.addLayer = this.addLayer.bind(this);
     this.addSelection = this.addSelection.bind(this);
     this.editLayer = this.editLayer.bind(this);
-    this.newKlass = this.newKlass.bind(this);
     this.editKlass = this.editKlass.bind(this);
     this.copyKlass = this.copyKlass.bind(this);
     this.newField = this.newField.bind(this);
     this.newOption = this.newOption.bind(this);
     this.updSubField = this.updSubField.bind(this);
     this.updLayerSubField = this.updLayerSubField.bind(this);
-    this.handleSelectClose = this.handleSelectClose.bind(this);
-    this.handleNewLayerClose = this.handleNewLayerClose.bind(this);
-    this.handleLayerClose = this.handleLayerClose.bind(this);
-    this.handleNewKlassClose = this.handleNewKlassClose.bind(this);
-    this.handleKlassClose = this.handleKlassClose.bind(this);
-    this.handleCopyKlassClose = this.handleCopyKlassClose.bind(this);
+    this.handleShowState = this.handleShowState.bind(this);
+    this.closeModal = this.closeModal.bind(this);
+    this.handleSelectClose = this.handleSelectClose.bind(this); // ?
     this.handleCreateLayer = this.handleCreateLayer.bind(this);
     this.handleUpdateLayer = this.handleUpdateLayer.bind(this);
     this.handleCreateKlass = this.handleCreateKlass.bind(this);
@@ -101,11 +94,9 @@ export default class GenericElementAdmin extends React.Component {
     this.onFieldDrop = this.onFieldDrop.bind(this);
     this.onFieldMove = this.onFieldMove.bind(this);
     this.onShowFieldCond = this.onShowFieldCond.bind(this);
-    this.handleFieldCondClose = this.handleFieldCondClose.bind(this);
     this.onFieldInputChange = this.onFieldInputChange.bind(this);
     this.onOptionInputChange = this.onOptionInputChange.bind(this);
     this.showJsonModal = this.showJsonModal.bind(this);
-    this.hideJsonModal = this.hideJsonModal.bind(this);
     this.handleUpdateJson = this.handleUpdateJson.bind(this);
     this.fetchConfigs = this.fetchConfigs.bind(this);
     this.handleCond = this.handleCond.bind(this);
@@ -116,13 +107,19 @@ export default class GenericElementAdmin extends React.Component {
     this.delRevision = this.delRevision.bind(this);
     this.fetchRevisions = this.fetchRevisions.bind(this);
     this.handleUploadShow = this.handleUploadShow.bind(this);
-    this.handleUploadClose = this.handleUploadClose.bind(this);
     this.handleUploadTemplate = this.handleUploadTemplate.bind(this);
   }
 
   componentDidMount() {
     this.fetchElements();
     this.fetchConfigs();
+    UsersFetcher.fetchCurrentUser().then((result) => {
+      if (!result.error) {
+        this.setState({ user: result.user });
+      }
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
 
   componentWillUnmount() {
@@ -155,7 +152,14 @@ export default class GenericElementAdmin extends React.Component {
   }
 
   onShowFieldCond(field, lk) {
-    this.setState({ showFieldCond: true, fieldObj: field, layerKey: lk });
+    const { element } = this.state;
+    const layer = (element && element.properties_template
+      && element.properties_template.layers[lk]);
+    if (!field && layer && layer.wf) {
+      notification({ title: `Layer [${lk}]`, lvl: 'warning', msg: 'Layer Restriction can not be set on workflow layer!' });
+    } else {
+      this.setState({ show: this.getShowState('modal', 'FieldCond'), fieldObj: field, layerKey: lk });
+    }
   }
 
   onFieldDrop(e) {
@@ -259,6 +263,8 @@ export default class GenericElementAdmin extends React.Component {
     this.setState({ newOptionKey: e.target.value });
   }
 
+  getShowState(att, val) { return { ...this.state.show, [att]: val }; }
+
   retriveRevision(revision, cb) {
     const { element } = this.state;
     element.properties_template = revision;
@@ -275,44 +281,32 @@ export default class GenericElementAdmin extends React.Component {
     this.setState({ element });
   }
 
-  handleFieldCondClose() {
-    this.setState({ showFieldCond: false });
-  }
-
   handleCond(lk) {
     this.onShowFieldCond(null, lk);
   }
 
-  addLayer() {
-    this.setState({ showNewLayer: true });
-  }
-
-  addSelection() {
+  addSelection() { // ??
     this.setState({ showAddSelect: true });
   }
 
   showJsonModal(element) {
-    this.setState({ element, showJson: true });
-  }
-
-  hideJsonModal() {
-    this.setState({ showJson: false });
+    this.setState({ show: this.getShowState('modal', 'Json'), element });
   }
 
   editLayer(e) {
-    this.setState({ showEditLayer: true, layerKey: e.layerKey });
+    this.setState({ show: this.getShowState('modal', 'EditLayer'), layerKey: e.layerKey });
   }
 
   newKlass() {
-    this.setState({ showNewKlass: true });
+    this.setState({ show: 'NewKlass' });
   }
 
   editKlass(element) {
-    this.setState({ showEditKlass: true, element });
+    this.setState({ show: this.getShowState('modal', 'EditKlass'), element });
   }
 
   copyKlass(element) {
-    this.setState({ showCopyKlass: true, element });
+    this.setState({ show: this.getShowState('modal', 'CopyKlass'), element });
   }
 
   handleUploadShow() {
@@ -367,33 +361,14 @@ export default class GenericElementAdmin extends React.Component {
     this.setState({ element });
   }
 
-  handleNewLayerClose() {
-    this.setState({ showNewLayer: false });
-  }
-
-  handleLayerClose() {
-    this.setState({ showEditLayer: false });
-  }
-
-  handleNewKlassClose() {
-    this.setState({ showNewKlass: false });
-  }
-
-  handleKlassClose() {
-    this.setState({ showEditKlass: false });
-  }
-
-  handleCopyKlassClose() {
-    this.setState({ showCopyKlass: false });
-  }
-
-  handleUploadClose() {
-    this.setState({ showUpload: false });
-  }
-
   handleSelectClose() {
     this.setState({ showAddSelect: false });
   }
+
+  handleShowState(att, val, cb = () => {}) {
+    this.setState({ show: this.getShowState(att, val) }, cb);
+  }
+  closeModal(cb = () => {}) { this.handleShowState('modal', '', cb); }
 
   handleAddSelect(selectName) {
     const { element } = this.state;
@@ -406,18 +381,23 @@ export default class GenericElementAdmin extends React.Component {
     return false;
   }
 
-  handleCreateLayer(layer) {
+  handleCreateLayer(_layer) {
+    const layer = _layer;
     if (!validateLayerInput(layer)) return;
     const { element } = this.state;
     if (element && element.properties_template && element.properties_template.layers[`${layer.key}`]) {
       notification({ title: `Layer [${layer.key}]`, lvl: 'error', msg: 'This Layer is already taken. Please choose another one.' });
       return;
     }
+    const sortedLayers = sortBy(element.properties_template.layers, ['position']);
+    layer.position = (!layer.position && sortedLayers.length < 1) ?
+      100 : parseInt((sortedLayers.slice(-1)[0] || { position: 100 }).position, 10) + 10;
     element.properties_template.layers[`${layer.key}`] = layer;
     notification({ title: `Layer [${layer.key}]`, lvl: 'info', msg: 'This new layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.' });
-    this.setState({ showNewLayer: false, element, layerKey: layer.key });
+    this.setState({ show: this.getShowState('modal', ''), element, layerKey: layer.key });
   }
 
+  // @ts-check
   handleUpdateLayer(layerKey, updates) {
     if (!validateLayerInput(updates)) return;
     const { element } = this.state;
@@ -426,7 +406,7 @@ export default class GenericElementAdmin extends React.Component {
     layer = { ...layer, ...updates };
     element.properties_template.layers[`${layer.key}`] = layer;
     notification({ title: `Layer [${layer.key}]`, lvl: 'info', msg: 'This updates of this layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.' });
-    this.setState({ showEditLayer: false, element });
+    this.setState({ show: this.getShowState('modal', ''), element });
   }
 
   handleCreateKlass(element) {
@@ -441,15 +421,13 @@ export default class GenericElementAdmin extends React.Component {
       notification({ title: `Element [${element.name}]`, lvl: 'error', msg: 'This Element is already taken. Please choose another one.' });
       return;
     }
-    AdminFetcher.createElementKlass(element)
+    GenericElsFetcher.createElementKlass(element)
       .then((result) => {
         if (result.error) {
           notification({ title: `Element [${element.name}]`, lvl: 'error', msg: result.error });
         } else {
           notification({ title: `Element [${element.name}]`, lvl: 'info', msg: 'Created successfully' });
-          this.handleNewKlassClose();
-          this.handleCopyKlassClose();
-          this.fetchElements();
+          this.closeModal(this.fetchElements);
         }
       }).catch((errorMessage) => {
         console.log(errorMessage);
@@ -459,14 +437,13 @@ export default class GenericElementAdmin extends React.Component {
   handleUpdateKlass(element, updates) {
     const inputs = { ...element, ...updates };
     if (!validateInput(inputs)) return;
-    AdminFetcher.updateElementKlass(inputs)
+    GenericElsFetcher.updateElementKlass(inputs)
       .then((result) => {
         if (result.error) {
           notification({ title: `Element [${inputs.name}]`, lvl: 'error', msg: result.error });
         } else {
           notification({ title: `Element [${inputs.name}]`, lvl: 'info', msg: 'Updated successfully' });
-          this.handleKlassClose();
-          this.fetchElements();
+          this.closeModal(this.fetchElements);
         }
       }).catch((errorMessage) => {
         console.log(errorMessage);
@@ -474,45 +451,45 @@ export default class GenericElementAdmin extends React.Component {
   }
 
   handleActivateKlass(id, isActive) {
-    AdminFetcher.activeInActiveElementKlass({ klass_id: id, is_active: !isActive })
+    GenericElsFetcher.deActivateKlass({ id, is_active: !isActive, klass: 'ElementKlass' })
       .then((result) => {
+        if (result.error) {
+          notification({ title: `${isActive ? 'deactivate' : 'activate'} Element failed`, lvl: 'error', msg: result.error });
+        } else {
         notification({ title: `Element [${result.name}]`, lvl: 'info', msg: `Element is ${result.is_active ? 'active' : 'deactive'} now` });
-        this.handleKlassClose();
-        this.fetchElements();
+        this.closeModal(this.fetchElements);
+        }
       });
   }
 
   handleDeleteKlass(element) {
-    AdminFetcher.deleteElementKlass({ klass_id: element.id })
+    GenericElsFetcher.deleteKlass({ id: element.id, klass: 'ElementKlass' })
       .then(() => {
-        notification({ title: `Element [${element.name}]`, lvl: 'info', msg: 'Deleted successfully' });
-        this.handleKlassClose();
-        this.fetchElements();
+        if (result.error) {
+          notification({ title: `Element [${element.name}]`, lvl: 'error', msg: result.error });
+        } else {
+          notification({ title: `Element [${element.name}]`, lvl: 'info', msg: 'Deleted successfully' });
+          this.closeModal(this.fetchElements);
+        }
       });
   }
 
   handleUpdateJson(propertiesTemplate) {
     const { element } = this.state;
     element.properties_template = propertiesTemplate;
-    this.setState({
-      element,
-      showJson: false
-    });
+    this.setState({ element, show: this.getShowState('modal', '') });
     this.handleSubmit(false);
   }
 
   fetchConfigs() {
-    AdminFetcher.fetchUnitsSystem().then((result) => { this.setState({ unitsSystem: result }); });
-  }
-
-  handlePropClose() {
-    this.setState({ showPropModal: false });
+    GenericElsFetcher.fetchUnitsSystem()
+      .then((result) => { this.setState({ unitsSystem: result }); });
   }
 
   fetchRevisions() {
     const { element } = this.state;
     if (element && element.id) {
-      AdminFetcher.fetchKlassRevisions(element.id, 'ElementKlass')
+      GenericElsFetcher.fetchKlassRevisions(element.id, 'ElementKlass')
         .then((result) => {
           let curr = Object.assign({}, { ...element.properties_template });
           curr = Object.assign({}, { properties_release: curr }, { uuid: 'current' });
@@ -524,7 +501,7 @@ export default class GenericElementAdmin extends React.Component {
 
   delRevision(params) {
     const { element } = this.state;
-    AdminFetcher.deleteKlassRevision({ id: params.id, klass_id: element.id, klass: 'ElementKlass' })
+    GenericElsFetcher.deleteKlassRevision({ id: params.id, klass_id: element.id, klass: 'ElementKlass' })
       .then((response) => {
         if (response.error) {
           notification({ title: 'Delete Revision', lvl: 'error', msg: response.error });
@@ -546,7 +523,7 @@ export default class GenericElementAdmin extends React.Component {
       const selectOptions = Object.keys(element.properties_template.select_options)
         .map(key => ({ value: key, name: key, label: key }));
       this.setState({
-        element, selectOptions, showPropModal: true, propTabKey: 1
+        element, selectOptions, show: this.getShowState('tab', 'PropModal'), propTabKey: 1
       });
     }
   }
@@ -554,17 +531,17 @@ export default class GenericElementAdmin extends React.Component {
   handleUploadTemplate(properties, message, valid) {
     const { element } = this.state;
     if (valid === false) {
-      this.setState({ showUpload: false });
+      this.closeModal();
       notification({ title: `Upload Template for Element [${element.name}] Failed`, autoDismiss: 30, lvl: 'error', msg: message });
     } else {
       element.properties_template = properties;
-      this.setState({ element, showUpload: false });
+      this.setState({ element, show: this.getShowState('modal', '') });
       notification({ title: `Upload template to Element [${element.label}]`, lvl: 'info', msg: 'The templates has been uploaded, please save it.' });
     }
   }
 
   fetchElements() {
-    AdminFetcher.fetchElementKlasses()
+    GenericElsFetcher.fetchElementKlasses()
       .then((result) => {
         this.setState({ elements: result.klass.filter(k => k.is_generic) });
       });
@@ -586,19 +563,25 @@ export default class GenericElementAdmin extends React.Component {
         return fd;
       });
       sortedFields = sortBy(sortedFields, l => l.position);
+      // element.properties_template.layers[key].wf_position = 0; // ? @TO-CHECK
       element.properties_template.layers[key].fields = sortedFields;
     });
-
+    // TO-CHECK
+    //
     element.is_release = isRelease;
-    AdminFetcher.updateGElTemplates(element)
+    GenericElsFetcher.updateGElTemplates(element)
       .then((result) => {
-        if (isRelease === true) {
-          notification({ title: `Update Element [${element.name}] template`, lvl: 'info', msg: 'Saved and Released successfully' });
+        if (result.error) {
+          notification({ title: `Update Element [${element.name}] template`, lvl: 'error', msg: result.error });
         } else {
-          notification({ title: `Update Element [${element.name}] template`, lvl: 'info', msg: 'Saved successfully' });
+          if (isRelease === true) {
+            notification({ title: `Update Element [${element.name}] template`, lvl: 'info', msg: 'Saved and Released successfully' });
+          } else {
+            notification({ title: `Update Element [${element.name}] template`, lvl: 'info', msg: 'Saved successfully' });
+          }
+          this.fetchElements();
+          this.setState({ element: result }, () => LoadingActions.stop());
         }
-        this.fetchElements();
-        this.setState({ element: result }, () => LoadingActions.stop());
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -823,7 +806,7 @@ export default class GenericElementAdmin extends React.Component {
             <Panel.Title>
               Layers
               <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new layer</Tooltip>}>
-                <Button className="button-right" bsSize="xs" onClick={() => this.addLayer()}>Add new layer&nbsp;<i className="fa fa-plus" aria-hidden="true" /></Button>
+                <Button className="button-right" bsSize="xs" onClick={() => this.handleShowState('modal', 'NewLayer')}>Add new layer&nbsp;<i className="fa fa-plus" aria-hidden="true" /></Button>
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
@@ -835,19 +818,20 @@ export default class GenericElementAdmin extends React.Component {
 
   renderPropPanel() {
     const {
-      element, showPropModal, revisions, propTabKey
+      element, show, revisions, propTabKey
     } = this.state;
+    const showPropModal = show.tab === 'PropModal';
     if (showPropModal) {
       return (
-        <Tabs activeKey={propTabKey} id="uncontrolled-tab-example" onSelect={this.propTabSelect}>
+        <Tabs activeKey={propTabKey} id="elements-prop-tabs" onSelect={this.propTabSelect}>
           <Tab eventKey={1} title="Template">
-            <Panel show={showPropModal.toString()}>
+            <Panel>
               <Panel.Heading>
                 <b>{`Template of Element [${element.name}]`}</b>&nbsp;
                 <span className="generic_version">{`ver.: ${element.uuid}`}</span>
                 <span className="generic_version_draft">{element.uuid === element.properties_template.uuid ? '' : `draft: ${element.properties_template.uuid}`}</span>
                 <span className="button-right" >
-                  <ButtonTooltip tip="Upload Element template in JSON format" fnClick={this.handleUploadShow} element={element} place="top" fa="fa-upload" />&nbsp;
+                  <ButtonTooltip tip="Upload Element template in JSON format" fnClick={() => this.handleShowState('modal', 'Upload')} element={element} place="top" fa="fa-upload" />&nbsp;
                   <ButtonTooltip txt="Save and Release" tip="Save and Release template" fnClick={() => this.handleSubmit(true)} fa="fa-floppy-o" place="top" bs="primary" />&nbsp;
                   <ButtonTooltip txt="Save as draft" tip="Save template as draft" fnClick={() => this.handleSubmit(false)} fa="fa-floppy-o" place="top" bs="primary" />
                 </span>
@@ -883,19 +867,19 @@ export default class GenericElementAdmin extends React.Component {
             <ButtonTooltip tip="Edit Element attributes" element={e} fnClick={this.editKlass} />
             &nbsp;
           </td>
-          <td>{e.name}</td>
-          <td>{e.klass_prefix}</td>
           <td>
             {
               e.is_active ? <i className="fa fa-check" aria-hidden="true" style={{ color: 'green' }} /> : <i className="fa fa-ban" aria-hidden="true" style={{ color: 'red' }} />
             }
           </td>
+          <td>{e.name}</td>
+          <td>{e.klass_prefix}</td>
           <td>{e.label}</td>
           <td><i className={e.icon_name} /></td>
           <td>{e.desc}</td>
           <td>
             <ButtonTooltip tip="Edit Element template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
-            <ButtonTooltip tip="Edit Element template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" />
+            {/* <ButtonTooltip tip="Edit Element template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" /> */}
           </td>
           <td>{e.released_at} (UTC)</td>
         </tr>
@@ -909,9 +893,9 @@ export default class GenericElementAdmin extends React.Component {
               <tr style={{ backgroundColor: '#ddd' }}>
                 <th width="4%">#</th>
                 <th width="6%">Actions</th>
+                <th width="8%">Active</th>
                 <th width="10%">Element</th>
                 <th width="6%">Prefix</th>
-                <th width="8%">Active</th>
                 <th width="12%">Element Label</th>
                 <th width="6%">Icon</th>
                 <th width="16%">Description</th>
@@ -927,87 +911,102 @@ export default class GenericElementAdmin extends React.Component {
   }
 
   render() {
-    const { element, layerKey } = this.state;
+    const { element, layerKey, user } = this.state;
+    if (!user.generic_admin || !user.generic_admin.elements) {
+      return <GenericAdminUnauth userName={user.name} text="GenericElements" />;
+    }
     const layer = (element && element.properties_template
       && element.properties_template.layers[layerKey]) || {};
-
-    const sortedLayers = (element && element.properties_template && element.properties_template.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
+    const layers = (element && element.properties_template
+      && element.properties_template.layers) || {};
+    const sortedLayers = sortBy(layers, l => l.position) || [];
 
     return (
-      <div>
-        <Button bsStyle="primary" bsSize="small" onClick={() => this.newKlass()}>
-          New Element&nbsp;<i className="fa fa-plus" aria-hidden="true" />
-        </Button>
-        &nbsp;
-        <br />
-        <div className="list-container-bottom">
-          { this.renderList() }
-          { this.renderPropPanel() }
-          <SelectAttrNewModal
-            showModal={this.state.showAddSelect}
-            fnClose={this.handleSelectClose}
-            fnCreate={this.handleAddSelect}
-          />
-          <LayerAttrNewModal
-            showModal={this.state.showNewLayer}
-            fnClose={this.handleNewLayerClose}
-            fnCreate={this.handleCreateLayer}
-          />
-          <LayerAttrEditModal
-            showModal={this.state.showEditLayer}
-            layer={layer}
-            fnClose={this.handleLayerClose}
-            fnUpdate={this.handleUpdateLayer}
-          />
-          <TemplateJsonModal
-            showModal={this.state.showJson}
-            fnClose={this.hideJsonModal}
-            fnUpdate={this.handleUpdateJson}
-            element={this.state.element}
-          />
-          <AttrNewModal
-            content="Element"
-            showModal={this.state.showNewKlass}
-            fnClose={this.handleNewKlassClose}
-            fnCreate={this.handleCreateKlass}
-          />
-          <AttrEditModal
-            content="Element"
-            showModal={this.state.showEditKlass}
-            element={this.state.element}
-            fnClose={this.handleKlassClose}
-            fnDelete={this.handleDeleteKlass}
-            fnActivate={this.handleActivateKlass}
-            fnUpdate={this.handleUpdateKlass}
-          />
-          <FieldCondEditModal
-            showModal={this.state.showFieldCond}
-            layer={layer}
-            allLayers={sortedLayers}
-            layerKey={this.state.layerKey}
-            updSub={this.updSubField}
-            updLayer={this.updLayerSubField}
-            field={this.state.fieldObj}
-            element={this.state.element}
-            fnClose={this.handleFieldCondClose}
-          />
-          <AttrCopyModal
-            content="Element"
-            showModal={this.state.showCopyKlass}
-            element={this.state.element}
-            fnClose={this.handleCopyKlassClose}
-            fnCopy={this.handleCreateKlass}
-          />
-          <UploadModal
-            content="Generic Elements"
-            klass="ElementKlass"
-            showModal={this.state.showUpload}
-            fnClose={this.handleUploadClose}
-            fnUpload={this.handleUploadTemplate}
-          />
+      <div style={{ width: '90vw', margin: 'auto' }}>
+        <GenericAdminNav userName={user.name} text="GenericElements" />
+        <hr />
+        <div style={{ marginTop: '60px' }}>
+          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'NewKlass')}>
+            New Element&nbsp;<i className="fa fa-plus" aria-hidden="true" />
+          </Button>
+          &nbsp;
+          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'REPO')}>
+            Fetch from Chemotion Repository&nbsp;<i className="fa fa-reply" aria-hidden="true" />
+          </Button>
+          <span>The order of the list is: Active(active, inactive), Element(in alphabetical order), Prefix(in alphabetical order)</span>
+          <br />
+          <div className="list-container-bottom mgmt_table">
+            { this.renderList() }
+            { this.renderPropPanel() }
+            <LayerAttrNewModal
+              showModal={this.state.show.modal === 'NewLayer'}
+              fnClose={this.closeModal}
+              fnCreate={this.handleCreateLayer}
+            />
+            <LayerAttrEditModal
+              showModal={this.state.show.modal === 'EditLayer'}
+              layer={layer}
+              fnClose={this.closeModal}
+              fnUpdate={this.handleUpdateLayer}
+            />
+            <TemplateJsonModal
+              showModal={this.state.show.modal === 'Json'}
+              fnClose={this.closeModal}
+              fnUpdate={this.handleUpdateJson}
+              element={this.state.element}
+            />
+            <AttrNewModal
+              content="Element"
+              showModal={this.state.show.modal === 'NewKlass'}
+              fnClose={this.closeModal}
+              fnCreate={this.handleCreateKlass}
+            />
+            <AttrEditModal
+              content="Element"
+              showModal={this.state.show.modal === 'EditKlass'}
+              element={this.state.element}
+              fnClose={this.closeModal}
+              fnDelete={this.handleDeleteKlass}
+              fnActivate={this.handleActivateKlass}
+              fnUpdate={this.handleUpdateKlass}
+            />
+            <FieldCondEditModal
+              showModal={this.state.show.modal === 'FieldCond'}
+              layer={layer}
+              allLayers={sortedLayers}
+              layerKey={this.state.layerKey}
+              updSub={this.updSubField}
+              updLayer={this.updLayerSubField}
+              field={this.state.fieldObj}
+              element={this.state.element}
+              fnClose={this.closeModal}
+            />
+            <AttrCopyModal
+              content="Element"
+              showModal={this.state.show.modal === 'CopyKlass'}
+              element={this.state.element}
+              fnClose={this.closeModal}
+              fnCopy={this.handleCreateKlass}
+            />
+            <UploadModal
+              content="Generic Elements"
+              klass="ElementKlass"
+              showModal={this.state.show.modal === 'Upload'}
+              fnClose={this.closeModal}
+              fnUpload={this.handleUploadTemplate}
+            />
+            <RepoKlassHubModal showModal={this.state.show.modal === 'REPO'} fnClose={this.closeModal} />
+          </div>
         </div>
+        <Notifications />
         <LoadingModal />
       </div>
     );
   }
 }
+
+const GenericElementAdminDnD = DragDropContext(HTML5Backend)(GenericElementAdmin);
+document.addEventListener('DOMContentLoaded', () => {
+  const domElement = document.getElementById('GenericElementAdmin');
+  if (domElement) ReactDOM.render(<GenericElementAdminDnD />, domElement);
+});

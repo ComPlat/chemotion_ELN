@@ -8,6 +8,17 @@ import NotificationActions from '../../components/actions/NotificationActions';
 import UserStore from '../../components/stores/UserStore';
 import MatrixCheck from '../../components/common/MatrixCheck';
 
+const wfLayerMark = (props) => {
+  if (props && props.flow) {
+    return (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip">A workflow is defined.</Tooltip>}>
+        <i className="fa fa-sitemap" aria-hidden="true" />
+      </OverlayTrigger>
+    );
+  }
+  return null;
+};
+
 class GenericDummy {
   constructor() {
     this.type = 'dummy';
@@ -298,5 +309,5 @@ export {
   ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel, GenericDummy,
   validateLayerInput, validateSelectList, notification, genUnitsSystem, genUnits, genUnit,
   unitConvToBase, unitConversion, toBool, toNum, genUnitSup, absOlsTermId, absOlsTermLabel, reUnit,
-  clsInputGroup, inputEventVal, molOptions, samOptions
+  clsInputGroup, inputEventVal, molOptions, samOptions, wfLayerMark
 };

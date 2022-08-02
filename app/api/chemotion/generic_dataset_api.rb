@@ -4,9 +4,20 @@ module Chemotion
 
     resource :generic_dataset do
       namespace :klasses do
-        desc "get dataset klasses"
+        desc 'get dataset klasses'
         get do
           list = DatasetKlass.where(is_active: true)
+          present list.sort_by(&:place), with: Entities::DatasetKlassEntity, root: 'klass'
+        end
+      end
+
+      namespace :list_dataset_klass do
+        desc 'list Generic Dataset Klass'
+        params do
+          optional :is_active, type: Boolean, desc: 'Active or Inactive Dataset'
+        end
+        get do
+          list = params[:is_active].present? ? DatasetKlass.where(is_active: params[:is_active]) : DatasetKlass.all
           present list.sort_by(&:place), with: Entities::DatasetKlassEntity, root: 'klass'
         end
       end

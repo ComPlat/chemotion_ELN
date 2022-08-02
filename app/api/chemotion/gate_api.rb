@@ -5,6 +5,7 @@ module Chemotion
       def self.parse(value)
         URI.parse value
       end
+
       def self.parsed?(value)
         value.is_a? URI::HTTP
       end
@@ -106,8 +107,9 @@ module Chemotion
           post do
             Delayed::Job.where(queue: @queue).destroy_all
             Delayed::Job.where(queue: @move_queue).destroy_all
-            GateTransferJob.set(queue: @queue)
-                           .perform_later(@collection.id, @url, @req_headers)
+            # GateTransferJob.set(queue: @queue).perform_later(@collection.id, @url, @req_headers)
+            TransferRepoJob.set(queue: @queue).perform_now(@collection.id, current_user.id, @url, @req_headers)
+
             status 202
           end
 
@@ -168,6 +170,78 @@ module Chemotion
           end
           # TODO: delayed_jobs this
           new_attachments.each { |att| att.update!(storage: primary_store) }
+          status(200)
+        end
+      end
+
+
+      desc <<~DESC
+        receive sample and reaction data from a remote eln and import them into a designated
+        collection according to JWT info. (authentication through JWT)
+      DESC
+      namespace :receiving_zip do
+        params do
+          requires :data, type: File
+        end
+
+        before do
+          http_token = if request.headers['Authorization'].present?
+                         request.headers['Authorization'].split(' ').last
+                       end
+          error!('Unauthorized', 401) unless http_token
+          secret = Rails.application.secrets.secret_key_base
+          begin
+            @auth_token = HashWithIndifferentAccess.new(
+              JWT.decode(http_token, secret)[0]
+            )
+          rescue JWT::VerificationError, JWT::DecodeError, JWT::ExpiredSignature => e
+            error!("#{e}", 401)
+          end
+          @user = Person.find_by(email: @auth_token[:iss])
+          error!('Unauthorized', 401) unless @user
+          @collection = Collection.find_by(
+            id: @auth_token[:collection], user_id: @user.id, is_shared: false
+          )
+          error!('Unauthorized access to collection', 401) unless @collection
+
+          @origin = @auth_token["origin"]
+        end
+
+        post do
+          db_file = params[:data]&.fetch('tempfile', nil)
+          # file = params[:file]
+          tempfile = db_file
+          att = Attachment.new(
+            filename: params[:data][:filename],
+            key: File.basename(tempfile.path),
+            file_path: tempfile,
+            created_by: @user.id,
+            created_for: @user.id,
+            content_type: 'application/zip'
+          )
+          begin
+            att.save!
+          ensure
+            tempfile.close
+            tempfile.unlink
+          end
+
+          begin
+            import = Import::ImportCollections.new(att, @user.id, true, @collection.id, @origin)
+            import.extract
+            import.import!
+          rescue => e
+            Delayed::Worker.logger.error e
+            Message.create_msg_notification(
+              channel_subject: Channel::COLLECTION_ZIP_FAIL,
+              message_from: @user_id,
+              data_args: { col_labels: '', operation: 'import' },
+              autoDismiss: 5
+            )
+            @success = false
+          ensure
+            att&.destroy!
+          end
           status(200)
         end
       end
