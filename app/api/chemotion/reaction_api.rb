@@ -46,7 +46,6 @@ module ReactionHelpers
   end
 
   def update_materials_for_reaction(reaction, material_attributes, current_user)
-    collections = reaction.collections
     materials = {
       starting_material: Array(material_attributes['starting_materials']).map { |m| OSample.new(m) },
       reactant: Array(material_attributes['reactants']).map { |m| OSample.new(m) },
@@ -68,7 +67,7 @@ module ReactionHelpers
               parent_sample = Sample.find(sample.parent_id)
 
               # TODO: extract subsample method
-              subsample = parent_sample.create_subsample(current_user, collections, true)
+              subsample = parent_sample.create_subsample(current_user, reaction.collections, true)
 
               # Use 'reactant' or 'solvent' as short_label
               subsample.short_label = fixed_label if fixed_label
@@ -119,7 +118,7 @@ module ReactionHelpers
               # add new data container
               new_sample.container = update_datamodel(container_info)
 
-              new_sample.collections << collections
+              new_sample.collections << reaction.collections
               new_sample.save!
               new_sample.save_segments(segments: sample.segments, current_user_id: current_user.id)
               included_sample_ids << new_sample.id
