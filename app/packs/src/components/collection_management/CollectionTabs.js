@@ -137,16 +137,20 @@ export default class CollectionTabs extends React.Component {
   }
 
   handleSave(showModal) {
-    const { currentCollection } = this.state;
+    const cCol = this.state.currentCollection;
     let layoutSegments = {};
     elements.map((_e, index) => {
       const layout = filterTabLayout(this.tabRef[index].state);
       layoutSegments = { ...layoutSegments, [elements[index].name]: layout };
     });
-    const params = { layoutSegments, currentCollectionId: currentCollection.id };
+    const params = { layoutSegments, currentCollectionId: cCol.id };
     CollectionActions.createTabsSegment(params);
     this.setState({ showModal: !showModal });
-    this.state.tree.children.find(c => c.id === currentCollection.id).tabs_segment = layoutSegments;
+    if (cCol.ancestry){
+      this.state.tree.children.find(c => c.id === parseInt(cCol.ancestry)).children.find(ch => ch.id === cCol.id).tabs_segment = layoutSegments;
+    } else {
+      this.state.tree.children.find(c => c.id === cCol.id).tabs_segment = layoutSegments;
+    }
   }
 
   clickedOnBack() {
