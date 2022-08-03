@@ -24,6 +24,7 @@ import Preview from './generic/Preview';
 import UploadModal from './generic/UploadModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from './generic/Utils';
 import { GenericAdminNav, GenericAdminUnauth } from './GenericAdminNav';
+import RepoKlassHubModal from './generic/RepoKlassHubModal';
 
 const validateKlass = klass => (/\b[a-z]{3,5}\b/g.test(klass));
 const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
@@ -929,6 +930,9 @@ export default class GenericElementAdmin extends React.Component {
             New Element&nbsp;<i className="fa fa-plus" aria-hidden="true" />
           </Button>
           &nbsp;
+          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'REPO')}>
+            Fetch from Chemotion Repository&nbsp;<i className="fa fa-reply" aria-hidden="true" />
+          </Button>
           <span>The order of the list is: Active(active, inactive), Element(in alphabetical order), Prefix(in alphabetical order)</span>
           <br />
           <div className="list-container-bottom mgmt_table">
@@ -991,6 +995,7 @@ export default class GenericElementAdmin extends React.Component {
               fnClose={this.closeModal}
               fnUpload={this.handleUploadTemplate}
             />
+            <RepoKlassHubModal showModal={this.state.show.modal === 'REPO'} fnClose={this.closeModal} />
           </div>
         </div>
         <Notifications />
