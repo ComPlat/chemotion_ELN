@@ -56,14 +56,15 @@ module ReactionHelpers
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
-        fixed_label = material_group =~ /solvents?|reactants?/ && $&
-        reactions_sample_klass = "Reactions#{material_group.to_s.camelize}Sample"
+        material_group = material_group.to_s
+        fixed_label = material_group if %w[reactant solvent].include?(material_group)
+        reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
         samples.each_with_index do |sample, idx|
           sample.position = idx if sample.position.nil?
-          sample.reference = false if material_group === 'solvent' && sample.reference == true
+          sample.reference = false if material_group == 'solvent' && sample.reference == true
           # create new subsample
           if sample.is_new
-            if sample.parent_id && material_group != 'products'
+            if sample.parent_id && material_group != 'product'
               parent_sample = Sample.find(sample.parent_id)
 
               # TODO: extract subsample method
