@@ -426,20 +426,16 @@ module Chemotion
       end
       post 'regenerate_spectrum' do
         pm = to_rails_snake_case(params)
-        pm[:generated].each do |g_id|
-          att = Attachment.find(g_id)
-          next unless att
-          can_delete = writable?(att)
-          att.destroy if can_delete
+        Attachment.where(id: pm[:generated]).each do |att|
+          next unless writable?(att)
+
+          att.destroy
         end
-        pm[:original].each do |o_id|
-          att = Attachment.find(o_id)
-          next unless att
-          can_write = writable?(att)
-          if can_write
-            att.set_regenerating
-            att.save
-          end
+        Attachment.where(id: pm[:original]).each do |att|
+          next unless writable?(att)
+
+          att.set_regenerating
+          att.save
         end
       end
 
@@ -455,20 +451,16 @@ module Chemotion
         t_molfile = Tempfile.create('molfile')
         t_molfile.write(molfile)
         t_molfile.rewind
-        
-        atts = Attachment.where(id: pm[:edited])
-        atts.each do |att|
-          next unless att
-          if writable?(att)
-            abs_path = att.abs_path
 
-            # TODO: do not use abs_path
-            result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
-                abs_path, t_molfile.path
-            )
-            att.file_data = result
-            att.rewrite_file_data!
-          end
+        Attachment.where(id: pm[:edited]).each do |att|
+          next unless writable?(att)
+
+          # TODO: do not use abs_path
+          result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
+            att.abs_path, t_molfile.path
+          )
+          att.file_data = result
+          att.rewrite_file_data!
         end
         t_molfile.close
         t_molfile.unlink
