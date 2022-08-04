@@ -92,7 +92,7 @@ const ScifinderSearch = (props) => {
   return (
     <OverlayTrigger trigger="click" placement="left" overlay={popoverSettings} rootClose>
       <Button className="button-right" style={{ padding: '0px' }}>
-        <img src="/images/sfn-horizontal-logo-header.svg" style={{ width: '5vw' }} alt="SciFinder-n" />
+        <div style={{ fontSize: '1.2vmin', padding: '2px', color: '#337ab7' }}><i className="fa fa-search" aria-hidden="true" />&nbsp;CAS content</div>
       </Button>
     </OverlayTrigger>
   );
