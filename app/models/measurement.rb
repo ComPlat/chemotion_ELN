@@ -31,8 +31,6 @@ class Measurement < ApplicationRecord
   belongs_to :sample, optional: false
   belongs_to :source, polymorphic: true
 
-  validate :data_is_unique, on: :create
-
   before_save :strip_whitespaces
 
   private
@@ -41,11 +39,5 @@ class Measurement < ApplicationRecord
     self.description.strip!
     self.unit.strip!
     self.source_type.strip! # should not be needed but it's still user input...
-  end
-
-  def data_is_unique
-    if (Measurement.where(sample: sample, value: value, unit: unit, source: source).any?)
-      errors.add(:value, 'Measurement with same data already exists')
-    end
   end
 end
