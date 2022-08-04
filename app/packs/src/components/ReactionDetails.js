@@ -13,7 +13,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReactionDetailsLiteratures from 'src/components/DetailsTabLiteratures';
 import ReactionDetailsContainers from 'src/components/ReactionDetailsContainers';
-import SampleDetailsContainers from 'src/components/SampleDetailsContainers';
+import SampleDetailsContainers from 'src/components/elements/samples/analyses_tab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/components/ReactionDetailsScheme';
 import ReactionDetailsProperties from 'src/components/ReactionDetailsProperties';
 import GreenChemistry from 'src/components/green_chem/GreenChemistry';

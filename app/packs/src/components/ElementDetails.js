@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import StickyDiv from 'react-stickydiv';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
-import SampleDetails from 'src/components/SampleDetails';
+import SampleDetails from 'src/components/elements/samples/SampleDetails';
 import DeviceDetails from 'src/components/DeviceDetails';
 import ReactionDetails from 'src/components/ReactionDetails';
 import WellplateDetails from 'src/components/WellplateDetails';
