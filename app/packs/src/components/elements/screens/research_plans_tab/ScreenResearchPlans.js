@@ -1,6 +1,6 @@
 import Aviator from 'aviator';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import EmbeddedResearchPlanDetails from 'src/components/research_plan/EmbeddedResearchPlanDetails';
+import EmbeddedResearchPlanDetails from 'src/components/elements/screens/research_plans_tab/EmbeddedResearchPlanDetails';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import PropTypes from 'prop-types';

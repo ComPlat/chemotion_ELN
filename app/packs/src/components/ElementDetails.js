@@ -1,22 +1,22 @@
-import React, { Component } from 'react';
-import StickyDiv from 'react-stickydiv';
-import { Tabs, Tab, Label, Button } from 'react-bootstrap';
-import SampleDetails from 'src/components/elements/samples/SampleDetails';
-import DeviceDetails from 'src/components/DeviceDetails';
-import ReactionDetails from 'src/components/elements/reactions/ReactionDetails';
-import WellplateDetails from 'src/components/WellplateDetails';
-import ScreenDetails from 'src/components/ScreenDetails';
-import ResearchPlanDetails from 'src/components/research_plan/ResearchPlanDetails';
-import ReportContainer from 'src/components/report/ReportContainer';
-import FormatContainer from 'src/components/FormatContainer';
-import GraphContainer from 'src/components/GraphContainer';
 import ComputeTaskContainer from 'src/components/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import DeviceDetails from 'src/components/DeviceDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import FormatContainer from 'src/components/FormatContainer';
+import GenericElDetails from 'src/components/generic/GenericElDetails';
+import GraphContainer from 'src/components/GraphContainer';
 import LiteratureDetails from 'src/components/LiteratureDetails';
 import PredictionContainer from 'src/components/prediction/PredictionContainer';
-import GenericElDetails from 'src/components/generic/GenericElDetails';
+import React, { Component } from 'react';
+import ReactionDetails from 'src/components/elements/reactions/ReactionDetails';
+import ReportContainer from 'src/components/report/ReportContainer';
+import ResearchPlanDetails from 'src/components/research_plan/ResearchPlanDetails';
+import SampleDetails from 'src/components/elements/samples/SampleDetails';
+import ScreenDetails from 'src/components/elements/screens/ScreenDetails';
+import StickyDiv from 'react-stickydiv';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import WellplateDetails from 'src/components/WellplateDetails';
+import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 
 const tabInfoHash = {
   report: {

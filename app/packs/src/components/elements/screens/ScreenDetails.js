@@ -7,24 +7,23 @@ import {
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
 
-import Screen from 'src/models/Screen';
-
-import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
-import ScreenWellplates from 'src/components/ScreenWellplates';
-import ScreenResearchPlans from 'src/components/ScreenResearchPlans';
-import QuillEditor from 'src/components/QuillEditor';
-import ScreenDetailsContainers from 'src/components/ScreenDetailsContainers';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
-import DetailActions from 'src/stores/alt/actions/DetailActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ConfirmClose from 'src/components/common/ConfirmClose';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
 import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
-import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import PrivateNoteElement from 'src/components/PrivateNoteElement';
+import QuillEditor from 'src/components/QuillEditor';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import Screen from 'src/models/Screen';
+import ScreenDetailsContainers from 'src/components/elements/screens/analyses_tab/ScreenDetailsContainers';
+import ScreenResearchPlans from 'src/components/elements/screens/research_plans_tab/ScreenResearchPlans';
+import ScreenWellplates from 'src/components/elements/screens/ScreenWellplates';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
