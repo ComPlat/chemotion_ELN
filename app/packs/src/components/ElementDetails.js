@@ -1,6 +1,6 @@
 import ComputeTaskContainer from 'src/components/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import DeviceDetails from 'src/components/DeviceDetails';
+import DeviceDetails from 'src/components/elements/devices/DeviceDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import FormatContainer from 'src/components/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';

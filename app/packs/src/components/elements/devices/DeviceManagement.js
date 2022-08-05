@@ -1,18 +1,18 @@
-import React, {Component} from 'react'
+import React, { Component } from 'react'
 import connectToStores from 'alt-utils/lib/connectToStores'
 import {
-  PanelGroup, Panel, ButtonGroup, Button, Row, Col, ControlLabel, FormControl
+  PanelGroup, Panel, ButtonGroup, Button, ControlLabel, FormControl
 } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions'
 import UIActions from 'src/stores/alt/actions/UIActions'
 import ElementStore from 'src/stores/alt/stores/ElementStore'
 import UIStore from 'src/stores/alt/stores/UIStore'
 
-const DeviceManagement = ({devices, activeAccordionDevice}) => {
+const DeviceManagement = ({ devices, activeAccordionDevice }) => {
   const handleCloseDeviceManagement = () => {
     UIActions.closeDeviceManagement()
-    const {currentCollection} = UIStore.getState()
-    if( currentCollection == null || currentCollection.label == 'All' ) {
+    const { currentCollection } = UIStore.getState()
+    if (currentCollection == null || currentCollection.label == 'All') {
       Aviator.navigate(`/collection/all/${urlForCurrentElement()}`)
     } else {
       Aviator.navigate(`/collection/${currentCollection.id}/${urlForCurrentElement()}`)
@@ -20,12 +20,12 @@ const DeviceManagement = ({devices, activeAccordionDevice}) => {
   }
 
   const urlForCurrentElement = () => {
-    const {currentElement} = ElementStore.getState()
-    if(currentElement) {
-      if(currentElement.isNew) {
+    const { currentElement } = ElementStore.getState()
+    if (currentElement) {
+      if (currentElement.isNew) {
         return `${currentElement.type}/new`
       }
-      else{
+      else {
         return `${currentElement.type}/${currentElement.id}`
       }
     }
@@ -37,14 +37,14 @@ const DeviceManagement = ({devices, activeAccordionDevice}) => {
   return (
     <div>
       <h1
-        style={{margin: 0, float: "left"}}
+        style={{ margin: 0, float: "left" }}
       >
         Device-Management
       </h1>
       <Button
         bsSize="xsmall"
         bsStyle="danger"
-        style={{margin: "10px"}}
+        style={{ margin: "10px" }}
         onClick={() => handleCloseDeviceManagement()}
       >
         <i className="fa fa-times"></i>
@@ -70,43 +70,43 @@ DeviceManagement.getPropsFromStores = () => {
 
 export default connectToStores(DeviceManagement)
 
-const Devices = ({devices, activeAccordionDevice}) => {
+const Devices = ({ devices, activeAccordionDevice }) => {
   const styleByDeviceState = (device) => {
     return device.isNew || device.isEdited
       ? "info"
       : "default"
   }
-  if(devices.length > 0) {
+  if (devices.length > 0) {
     return (
-        <PanelGroup defaultActiveKey={0} activeKey={activeAccordionDevice} accordion>
-          {devices.map(
-            (device, key) =>
-              <Panel
-                eventKey={key}
-                key={key}
-                onClick={() => ElementActions.changeActiveAccordionDevice(key)}
-                bsStyle={styleByDeviceState(device)}
-              >
-                <Panel.Heading>{<DeviceHeader device={device}/>}</Panel.Heading>
-                <Panel.Body>
-                  <Device
-                    device={device}
-                  />
-                </Panel.Body>
-              </Panel>
-          )}
-        </PanelGroup>
+      <PanelGroup defaultActiveKey={0} activeKey={activeAccordionDevice} accordion>
+        {devices.map(
+          (device, key) =>
+            <Panel
+              eventKey={key}
+              key={key}
+              onClick={() => ElementActions.changeActiveAccordionDevice(key)}
+              bsStyle={styleByDeviceState(device)}
+            >
+              <Panel.Heading>{<DeviceHeader device={device} />}</Panel.Heading>
+              <Panel.Body>
+                <Device
+                  device={device}
+                />
+              </Panel.Body>
+            </Panel>
+        )}
+      </PanelGroup>
     )
   } else {
     return (
-        <p>
-          There are currently no Devices.
-        </p>
+      <p>
+        There are currently no Devices.
+      </p>
     )
   }
 }
 
-const Device = ({device}) => {
+const Device = ({ device }) => {
   const styleBySelectedType = (type) => {
     return device.types.includes(type)
       ? "primary"
@@ -148,7 +148,7 @@ const Device = ({device}) => {
         onChange={(e) => handleChangeDeviceProp("code", e.target.value)}
         style={bottomSpacer}
       />
-      <ControlLabel>Types</ControlLabel><br/>
+      <ControlLabel>Types</ControlLabel><br />
       <ButtonGroup
         style={bottomSpacer}
       >
@@ -177,9 +177,9 @@ const Device = ({device}) => {
           IR
         </Button>
       </ButtonGroup>
-      <br/>
+      <br />
       <Button
-        style={{marginTop: "5px"}}
+        style={{ marginTop: "5px" }}
         onClick={(e) => handleSave()}
       >
         Save
@@ -188,9 +188,9 @@ const Device = ({device}) => {
   )
 }
 
-const DeviceHeader = ({device, state, onChangeState}) => {
+const DeviceHeader = ({ device, state, onChangeState }) => {
   const handleRemoveDevice = (e) => {
-    if(confirm('Delete the Device?')) {
+    if (confirm('Delete the Device?')) {
       ElementActions.deleteDevice(device)
     }
     e.preventDefault()

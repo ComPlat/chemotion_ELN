@@ -2,7 +2,7 @@ import React from 'react'
 import { Panel, PanelGroup, ButtonToolbar, Button, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import ElementActions from 'src/stores/alt/actions/ElementActions'
 import DetailActions from 'src/stores/alt/actions/DetailActions'
-import DeviceManagement from 'src/components/DeviceManagement'
+import DeviceManagement from 'src/components/elements/devices/DeviceManagement'
 
 
 const DeviceDetails = ({ device, toggleFullScreen }) => {
