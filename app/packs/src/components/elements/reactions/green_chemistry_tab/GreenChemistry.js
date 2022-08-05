@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
 import Reaction from 'src/models/Reaction';
-import GreenMaterialGroup from 'src/components/green_chem/GreenMaterialGroup';
+import GreenMaterialGroup from 'src/components/elements/reactions/green_chemistry_tab/GreenMaterialGroup';
+import GreenMetrics from 'src/components/elements/reactions/green_chemistry_tab/GreenMetrics';
 
-import GreenMetrics from 'src/components/green_chem/GreenMetrics';
 
 export default class GreenChemistry extends Component {
   constructor() {

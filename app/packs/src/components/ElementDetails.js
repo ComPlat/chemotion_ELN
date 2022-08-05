@@ -3,7 +3,7 @@ import StickyDiv from 'react-stickydiv';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 import SampleDetails from 'src/components/elements/samples/SampleDetails';
 import DeviceDetails from 'src/components/DeviceDetails';
-import ReactionDetails from 'src/components/ReactionDetails';
+import ReactionDetails from 'src/components/elements/reactions/ReactionDetails';
 import WellplateDetails from 'src/components/WellplateDetails';
 import ScreenDetails from 'src/components/ScreenDetails';
 import ResearchPlanDetails from 'src/components/research_plan/ResearchPlanDetails';

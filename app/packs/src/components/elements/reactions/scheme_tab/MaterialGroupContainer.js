@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import { MaterialGroup } from 'src/components/MaterialGroup';
+import { MaterialGroup } from 'src/components/elements/reactions/scheme_tab/MaterialGroup';
 import Reaction from 'src/models/Reaction';
 
 
