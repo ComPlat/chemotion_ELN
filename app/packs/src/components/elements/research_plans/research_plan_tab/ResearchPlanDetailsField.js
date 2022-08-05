@@ -2,14 +2,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonGroup, Row, Col, ControlLabel, Tooltip, OverlayTrigger, DropdownButton, MenuItem } from 'react-bootstrap';
-import ResearchPlanDetailsDragSource from 'src/components/research_plan/ResearchPlanDetailsDragSource';
-import ResearchPlanDetailsDropTarget from 'src/components/research_plan/ResearchPlanDetailsDropTarget';
-import ResearchPlanDetailsFieldRichText from 'src/components/research_plan/ResearchPlanDetailsFieldRichText';
-import ResearchPlanDetailsFieldKetcher from 'src/components/research_plan/ResearchPlanDetailsFieldKetcher';
-import ResearchPlanDetailsFieldImage from 'src/components/research_plan/ResearchPlanDetailsFieldImage';
-import ResearchPlanDetailsFieldTable from 'src/components/research_plan/ResearchPlanDetailsFieldTable';
-import ResearchPlanDetailsFieldSample from 'src/components/research_plan/ResearchPlanDetailsFieldSample';
-import ResearchPlanDetailsFieldReaction from 'src/components/research_plan/ResearchPlanDetailsFieldReaction';
+import ResearchPlanDetailsDragSource from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsDragSource';
+import ResearchPlanDetailsDropTarget from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsDropTarget';
+import ResearchPlanDetailsFieldRichText from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldRichText';
+import ResearchPlanDetailsFieldKetcher from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldKetcher';
+import ResearchPlanDetailsFieldImage from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldImage';
+import ResearchPlanDetailsFieldTable from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldTable';
+import ResearchPlanDetailsFieldSample from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldSample';
+import ResearchPlanDetailsFieldReaction from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldReaction';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
@@ -58,7 +58,7 @@ export default class ResearchPlanDetailsField extends Component {
           />);
         break;
       case 'table':
-        field.value.columns.forEach((item)=> {
+        field.value.columns.forEach((item) => {
           item.cellEditor = 'agTextCellEditor';
           return item;
         });

@@ -5,7 +5,7 @@ import Aviator from 'aviator';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { wellplateShowOrNew } from 'src/components/routesUtils';
-import EmbeddedWellplate from 'src/components/EmbeddedWellplate';
+import EmbeddedWellplate from 'src/components/elements/research_plans/wellplates_tab/EmbeddedWellplate';
 
 const target = {
   drop(props, monitor) {
