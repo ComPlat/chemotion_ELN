@@ -4,8 +4,8 @@ import Select from 'react-select';
 import { Row, Col } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import PredictionActions from 'src/stores/alt/actions/PredictionActions';
-import ContentInputs from 'src/components/prediction/ContentInputs';
-import ContentOutputs from 'src/components/prediction/ContentOutputs';
+import ContentInputs from 'src/components/elements/predictions/ContentInputs';
+import ContentOutputs from 'src/components/elements/predictions/ContentOutputs';
 
 const styles = {
   selectContainer: {

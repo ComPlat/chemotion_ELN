@@ -6,7 +6,7 @@ import FormatContainer from 'src/components/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/components/GraphContainer';
 import LiteratureDetails from 'src/components/LiteratureDetails';
-import PredictionContainer from 'src/components/prediction/PredictionContainer';
+import PredictionContainer from 'src/components/elements/predictions/PredictionContainer';
 import React, { Component } from 'react';
 import ReactionDetails from 'src/components/elements/reactions/ReactionDetails';
 import ReportContainer from 'src/components/elements/reports/ReportContainer';

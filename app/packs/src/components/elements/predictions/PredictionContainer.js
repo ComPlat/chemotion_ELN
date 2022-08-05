@@ -5,9 +5,9 @@ import PredictionActions from 'src/stores/alt/actions/PredictionActions';
 import PredictionStore from 'src/stores/alt/stores/PredictionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-import Content from 'src/components/prediction/Content';
+import Content from 'src/components/elements/predictions/Content';
 import PanelHeader from 'src/components/common/PanelHeader';
-import { CloseBtn, ResetBtn, PredictBtn } from 'src/components/prediction/PredictionComponent';
+import { CloseBtn, ResetBtn, PredictBtn } from 'src/components/elements/predictions/PredictionComponent';
 
 class PredictionContainer extends Component {
   constructor(props) {
