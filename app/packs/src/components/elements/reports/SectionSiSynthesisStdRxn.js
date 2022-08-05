@@ -1,12 +1,12 @@
 import React from 'react';
 import _ from 'lodash';
-import { SVGContent } from 'src/components/report/SectionReaction';
+import { SVGContent } from 'src/components/elements/reports/SectionReaction';
 import QuillViewer from 'src/components/QuillViewer';
 import { fixDigit, validDigit } from 'src/utilities/MathUtils';
 import { rmOpsRedundantSpaceBreak, frontBreak } from 'src/utilities/quillFormat';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { Alphabet } from 'src/utilities/ElementUtils';
-import { UserSerial } from 'src/utilities/ReportHelper';
+import { UserSerial, CapitalizeFirstLetter } from 'src/utilities/ReportHelper';
 
 const onlyBlank = (target) => {
   if (target.length === 0) return true;
@@ -25,7 +25,7 @@ const Title = ({ el, counter, molSerials }) => {
     const us = UserSerial(p.molecule, molSerials);
     const key = `${i}-text`;
     const comma = <span key={`${i}-comma`}>, </span>;
-    const smn = p.showedName();
+    const smn = i == 0 ? CapitalizeFirstLetter(p.showedName()) : p.showedName();
     title = smn
       ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
@@ -251,6 +251,7 @@ const endingSymbol = (content, symbol) => {
 const analysesContent = (products) => {
   let content = [];
   products.forEach((p) => {
+    let current = [];
     const sortAnalyses = ArrayUtils.sortArrByIndex(p.analyses);
     sortAnalyses.forEach((a) => {
       const data = a && a.extended_metadata
@@ -258,12 +259,14 @@ const analysesContent = (products) => {
         && a.extended_metadata.report === 'true'
         ? a.extended_metadata.content
         : { ops: [] };
-      content = [...content, ...endingSymbol(data.ops, '; ')];
+      current = [...current, ...endingSymbol(data.ops, '; ')];
     });
+    if (!onlyBlank(current)) {
+      current = rmOpsRedundantSpaceBreak(current);
+      content = [...content, { insert: '\n\n' }, ...current.slice(0, -1), { insert: '.' }];
+    }
   });
   if (onlyBlank(content)) return [];
-  content = rmOpsRedundantSpaceBreak(content);
-  content = [...content.slice(0, -1), { insert: '.' }];
   return frontBreak(content);
 };
 
@@ -291,11 +294,12 @@ const DangerBlock = ({ el }) => {
 const descContent = (el) => {
   if (['gp', 'parts'].indexOf(el.role) >= 0) return [];
   let block = rmOpsRedundantSpaceBreak(el.description.ops);
-  block = [{ insert: '\n' }, ...block, { insert: '\n' }];
+  block = [{ insert: '\n' }, ...block];
   return block;
 };
 
 const synNameContent = (el) => {
+  if (['gp', 'parts'].indexOf(el.role) < 0) return [];
   const title = el.name || el.short_label;
   return [{ insert: `${title}: ` }];
 };
@@ -303,10 +307,10 @@ const synNameContent = (el) => {
 const ContentBlock = ({ el, molSerials }) => {
   const synName = synNameContent(el);
   const desc = descContent(el);
-  const materials = materailsContent(el, molSerials);
+  // const materials = materailsContent(el, molSerials);
   const obsvTlc = obsvTlcContent(el);
   const analyses = analysesContent(el.products);
-  const block = [...synName, ...desc, ...materials, ...obsvTlc, ...analyses];
+  const block = [...synName, ...desc, ...obsvTlc, ...analyses];
   return <QuillViewer value={{ ops: block }} />;
 };
 

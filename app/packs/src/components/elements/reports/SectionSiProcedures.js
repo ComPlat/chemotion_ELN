@@ -1,5 +1,5 @@
 import React from 'react';
-import { SVGContent, DescriptionContent } from 'src/components/report/SectionReaction';
+import { SVGContent, DescriptionContent } from 'src/components/elements/reports/SectionReaction';
 import { rmDeltaRedundantSpaceBreak } from 'src/utilities/quillFormat';
 
 const Title = ({ el, counter }) => {

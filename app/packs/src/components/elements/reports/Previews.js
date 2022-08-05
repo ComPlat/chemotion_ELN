@@ -1,11 +1,11 @@
 import React from 'react';
-import { SectionReaction } from 'src/components/report/SectionReaction';
-import SectionSample from 'src/components/report/SectionSample';
-import SectionSiProcedures from 'src/components/report/SectionSiProcedures';
-import SectionSiSynthesis from 'src/components/report/SectionSiSynthesis';
-import SectionSpectrum from 'src/components/report/SectionSpectrum';
-import SectionReactionList from 'src/components/report/SectionReactionList';
-import SectionSiSynthesisStdRxn from 'src/components/report/SectionSiSynthesisStdRxn';
+import { SectionReaction } from 'src/components/elements/reports/SectionReaction';
+import SectionSample from 'src/components/elements/reports/SectionSample';
+import SectionSiProcedures from 'src/components/elements/reports/SectionSiProcedures';
+import SectionSiSynthesis from 'src/components/elements/reports/SectionSiSynthesis';
+import SectionSpectrum from 'src/components/elements/reports/SectionSpectrum';
+import SectionReactionList from 'src/components/elements/reports/SectionReactionList';
+import SectionSiSynthesisStdRxn from 'src/components/elements/reports/SectionSiSynthesisStdRxn';
 
 const objToKeyValPairs = (obj = []) => (
   obj.reduce((ob, { text, checked }) => {
@@ -142,7 +142,7 @@ const previewsContent = (props) => {
 
 const Previews = props => (
   <div className="report-preview">
-    { previewsContent(props) }
+    {previewsContent(props)}
   </div>
 );
 

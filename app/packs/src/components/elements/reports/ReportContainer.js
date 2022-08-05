@@ -4,14 +4,14 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import Setting from 'src/components/report/Setting';
-import Previews from 'src/components/report/Previews';
-import Orders from 'src/components/report/Orders';
-import Serials from 'src/components/report/Serials';
-import Archives from 'src/components/report/Archives';
-import Config from 'src/components/report/Config';
+import Setting from 'src/components/elements/reports/Setting';
+import Previews from 'src/components/elements/reports/Previews';
+import Orders from 'src/components/elements/reports/Orders';
+import Serials from 'src/components/elements/reports/Serials';
+import Archives from 'src/components/elements/reports/Archives';
+import Config from 'src/components/elements/reports/Config';
 import PanelHeader from 'src/components/common/PanelHeader';
-import { CloseBtn, ResetBtn, GenerateReportBtn } from 'src/components/report/ReportComponent';
+import { CloseBtn, ResetBtn, GenerateReportBtn } from 'src/components/elements/reports/ReportComponent';
 
 const fetchPreviewTabs = [3, 4];
 

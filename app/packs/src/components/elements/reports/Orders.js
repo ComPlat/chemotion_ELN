@@ -1,5 +1,5 @@
 import React from 'react';
-import ObjRow from 'src/components/report/OrdersDnD';
+import ObjRow from 'src/components/elements/reports/OrdersDnD';
 
 const allContent = ({ selectedObjs, template }) => (
   selectedObjs.map(obj => (
@@ -52,7 +52,7 @@ const ordersContent = (props) => {
 
 const Orders = props => (
   <div className="report-orders">
-    { ordersContent(props) }
+    {ordersContent(props)}
   </div>
 );
 
