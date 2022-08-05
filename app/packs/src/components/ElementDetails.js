@@ -15,7 +15,7 @@ import SampleDetails from 'src/components/elements/samples/SampleDetails';
 import ScreenDetails from 'src/components/elements/screens/ScreenDetails';
 import StickyDiv from 'react-stickydiv';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import WellplateDetails from 'src/components/WellplateDetails';
+import WellplateDetails from 'src/components/elements/wellplates/WellplateDetails';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 
 const tabInfoHash = {

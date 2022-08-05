@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-import WellContainer from 'src/components/WellContainer';
-import WellplateLabels from 'src/components/WellplateLabels';
-import WellOverlay from 'src/components/WellOverlay';
+import WellContainer from 'src/components/elements/wellplates/designer_tab/WellContainer';
+import WellplateLabels from 'src/components/elements/wellplates/designer_tab/WellplateLabels';
+import WellOverlay from 'src/components/elements/wellplates/designer_tab/WellOverlay';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 
 export default class Wellplate extends Component {

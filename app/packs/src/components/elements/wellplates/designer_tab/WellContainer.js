@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DragSource, DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import Well from 'src/components/Well';
+import Well from 'src/components/elements/wellplates/designer_tab/Well';
 
 const wellSource = {
   beginDrag(props) {
@@ -11,18 +11,18 @@ const wellSource = {
 };
 
 const wellTarget = {
-  canDrop(props, monitor){
+  canDrop(props, monitor) {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
     let canDrop = true;
     if (itemType == 'sample' && props.well.sample) {
       canDrop = false;
-    } else if (itemType == 'well' && ! item.well.sample && ! props.well.sample) {
+    } else if (itemType == 'well' && !item.well.sample && !props.well.sample) {
       canDrop = false;
     }
     return canDrop;
   },
-  drop(props, monitor){
+  drop(props, monitor) {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
     if (itemType == 'sample') {
@@ -46,14 +46,14 @@ const collectSource = (connect, monitor) => ({
 
 class WellContainer extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
-    const {active, hideOverlay} = this.props;
+    const { active, hideOverlay } = this.props;
     if (active && nextProps.isDragging) {
       hideOverlay();
     }
   }
 
   render() {
-    const {style, isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop, active} = this.props;
+    const { style, isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop, active } = this.props;
     const containerStyle = {
       paddingTop: 9,
       borderRadius: '50%',
@@ -87,7 +87,7 @@ class WellContainer extends Component {
 
     return (
       connectDragSource(connectDropTarget(
-        <div style={{ ...containerStyle, ...style}}>
+        <div style={{ ...containerStyle, ...style }}>
           <Well
             active={active}
             label={well.label}
