@@ -51,7 +51,7 @@ import ComputedPropsContainer from 'src/components/computed_props/ComputedPropsC
 import ComputedPropLabel from 'src/components/computed_props/ComputedPropLabel';
 import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import SampleDetailsLiteratures from 'src/components/DetailsTabLiteratures';
+import SampleDetailsLiteratures from 'src/components/elements/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import PubchemLcss from 'src/components/PubchemLcss';
 import QcMain from 'src/components/elements/samples/qc_tab/QcMain';
