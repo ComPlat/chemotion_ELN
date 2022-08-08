@@ -519,7 +519,7 @@ export default class ResearchPlanMetadata extends Component {
   }
 }
 
-ResearchPlansMetadata.propTypes = {
+ResearchPlanMetadata.propTypes = {
   parentResearchPlan: PropTypes.object.isRequired,
   parentResearchPlanMetadata: PropTypes.object
 };
