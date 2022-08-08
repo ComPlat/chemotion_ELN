@@ -7,7 +7,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import ComputeTaskStore from 'src/stores/alt/stores/ComputeTaskStore';
-import ComputeTask from 'src/components/ComputeTask';
+import ComputeTask from 'src/components/elements/compute_tasks/ComputeTask';
 
 export default class ComputeTaskContainer extends React.Component {
   constructor(props) {
