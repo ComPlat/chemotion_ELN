@@ -73,7 +73,7 @@ describe 'Copy sample' do
     expect(page).to have_content('Sample B')
   end
 
-  it ' copy shared collection without permission', js: true do
+  xit ' copy shared collection without permission', js: true do
     find_by_id('shared-home-link').click
     find_all('span.glyphicon-plus')[0].click
     find_by_id('tree-id-share-col-2').click

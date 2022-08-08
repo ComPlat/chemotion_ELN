@@ -82,8 +82,8 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify(sample.serialize())
     }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.id, 'Sample')
-        .then(() => this.fetchById(json.id))).catch((errorMessage) => {
+      .then(json => GenericElsFetcher.uploadGenericFiles(json, json.id, 'Sample')
+        .then(() => this.fetchById(sample.id))).catch((errorMessage) => {
           console.log(errorMessage);
         });
     if (files.length > 0) {

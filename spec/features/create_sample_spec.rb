@@ -10,7 +10,7 @@ describe 'Create sample' do
     sign_in(user)
   end
 
-  it ' with smile', js: true do
+  xit ' with smile', js: true do
     expect(page).to have_content('Col1', wait: 3)
     find('.tree-view', text: 'Col1').click
     find_by_id('create-split-button').click
