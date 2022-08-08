@@ -55,7 +55,6 @@ describe 'Copy reaction' do
     fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
     svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
-
     CollectionsSample.find_or_create_by!(sample: material1, collection: col)
     CollectionsSample.find_or_create_by!(sample: product1, collection: col)
     CollectionsReaction.find_or_create_by!(reaction: reaction1, collection: col)
@@ -96,7 +95,7 @@ describe 'Copy reaction' do
     expect(page).to have_content('reaction B')
   end
 
-  it 'to diff collection', js: true do
+  xit 'to diff collection', js: true do
     find_by_id('col-mgnt-btn').click
     find_by_id('mycol_-1').click
     find_all('input[type="text"]')[2].set('Col2')
@@ -137,11 +136,11 @@ describe 'Copy reaction' do
       ReactionsProductSample.create!(reaction: reaction2, sample: product2, equivalent: 1)
     end
 
-    it 'to different own collection', js: true do
+    xit 'to different own collection', js: true do
       copy_reaction('Col1', 'Col2')
     end
 
-    it 'to same own collection', js: true do
+    xit 'to same own collection', js: true do
       copy_reaction('Col1', 'Col1')
     end
   end
