@@ -30,7 +30,7 @@ import QcStore from 'src/stores/alt/stores/QcStore';
 
 import ElementCollectionLabels from 'src/components/elements_list/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/components/elements_list/ElementAnalysesLabels';
-import PubchemLabels from 'src/components/PubchemLabels';
+import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ElementReactionLabels from 'src/components/elements_list/ElementReactionLabels';
 import SampleDetailsContainers from 'src/components/elements/samples/analyses_tab/SampleDetailsContainers';
 
