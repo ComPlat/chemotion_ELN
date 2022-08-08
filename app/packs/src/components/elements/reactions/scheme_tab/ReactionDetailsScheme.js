@@ -16,7 +16,7 @@ import ReactionDetailsPurification from 'src/components/elements/reactions/schem
 import QuillViewer from 'src/components/QuillViewer';
 import ReactionDescriptionEditor from 'src/components/elements/reactions/scheme_tab/ReactionDescriptionEditor';
 
-import GeneralProcedureDnd from 'src/components/GeneralProcedureDnD';
+import GeneralProcedureDnd from 'src/components/elements/reactions/scheme_tab/GeneralProcedureDnD';
 import { rolesOptions, conditionsOptions } from 'src/components/staticDropdownOptions/options';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/components/elements/reactions/scheme_tab/ReactionDetailsDuration';
