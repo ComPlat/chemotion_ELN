@@ -4,7 +4,7 @@ import DeviceDetails from 'src/components/elements/devices/DeviceDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import FormatContainer from 'src/components/elements/formats/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
-import GraphContainer from 'src/components/GraphContainer';
+import GraphContainer from 'src/components/elements/GraphContainer';
 import LiteratureDetails from 'src/components/LiteratureDetails';
 import PredictionContainer from 'src/components/elements/predictions/PredictionContainer';
 import React, { Component } from 'react';
