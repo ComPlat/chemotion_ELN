@@ -1,6 +1,6 @@
 import React from 'react';
-import ElementalComposition from 'src/components/ElementalComposition'
-import ElementalCompositionCustom from 'src/components/ElementalCompositionCustom'
+import ElementalComposition from 'src/components/elements/samples/properties_tab/ElementalComposition'
+import ElementalCompositionCustom from 'src/components/elements/samples/properties_tab/ElementalCompositionCustom'
 
 export default class ElementalCompositionGroup extends React.Component {
 

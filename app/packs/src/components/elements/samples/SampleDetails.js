@@ -41,8 +41,8 @@ import StructureEditorModal from 'src/components/structure_editor/StructureEdito
 
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
-import PolymerSection from 'src/components/PolymerSection';
-import ElementalCompositionGroup from 'src/components/ElementalCompositionGroup';
+import PolymerSection from 'src/components/elements/samples/properties_tab/PolymerSection';
+import ElementalCompositionGroup from 'src/components/elements/samples/properties_tab/ElementalCompositionGroup';
 import ToggleSection from 'src/components/common/ToggleSection';
 import SampleName from 'src/components/common/SampleName';
 import ClipboardCopyText from 'src/components/common/ClipboardCopyText';

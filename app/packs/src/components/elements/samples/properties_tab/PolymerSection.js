@@ -1,7 +1,7 @@
 import React from 'react';
 import { FormGroup, ControlLabel, FormControl, Radio, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo'
-import ElementalCompositionGroup from 'src/components/ElementalCompositionGroup'
+import ElementalCompositionGroup from 'src/components/elements/samples/properties_tab/ElementalCompositionGroup'
 import NotificationActions from 'src/stores/alt/actions/NotificationActions'
 import Select from 'react-select'
 
