@@ -27,7 +27,7 @@ import { sampleShowOrNew } from 'src/components/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
-import ExportSamplesBtn from 'src/components/ExportSamplesBtn';
+import ExportSamplesBtn from 'src/components/elements/ExportSamplesBtn';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
