@@ -10,7 +10,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlansLiteratures from 'src/components/elements/DetailsTabLiteratures';
 import ResearchPlanWellplates from 'src/components/elements/research_plans/wellplates_tab/ResearchPlanWellplates';
-import ResearchPlansMetadata from 'src/components/DetailsTabMetadata';
+import ResearchPlanMetadata from 'src/components/elements/research_plans/ResearchPlanMetadata';
 import Attachment from 'src/models/Attachment';
 import Utils from 'src/utilities/Functions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -500,7 +500,7 @@ export default class ResearchPlanDetails extends Component {
       ),
       metadata: (
         <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
-          <ResearchPlansMetadata
+          <ResearchPlanMetadata
             parentResearchPlan={researchPlan}
             parentResearchPlanMetadata={researchPlan.research_plan_metadata}
           />

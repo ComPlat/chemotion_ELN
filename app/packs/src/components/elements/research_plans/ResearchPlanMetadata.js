@@ -14,7 +14,7 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 
 require('@citation-js/plugin-isbn');
 
-export default class ResearchPlansMetadata extends Component {
+export default class ResearchPlanMetadata extends Component {
   constructor(props) {
     super(props);
     this.state = {
