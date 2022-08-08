@@ -17,7 +17,7 @@ import QuillViewer from 'src/components/QuillViewer';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 
-import AnalysisEditor from 'src/components/AnalysisEditor';
+import AnalysisEditor from 'src/components/container/AnalysisEditor';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 export default class ContainerComponent extends Component {

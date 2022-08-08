@@ -3,7 +3,7 @@ import { ListGroup, ListGroupItem, Button, Well } from 'react-bootstrap';
 import ContainerDatasetModal from 'src/components/container/ContainerDatasetModal';
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
-import AttachmentDropzone from 'src/components/AttachmentDropzone';
+import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
