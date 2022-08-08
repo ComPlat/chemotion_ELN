@@ -3,6 +3,7 @@
 module Entities
   class SampleEntity < ApplicationEntity
     expose(
+      :ancestor_ids,
       :decoupled,
       :density,
       :external_label,

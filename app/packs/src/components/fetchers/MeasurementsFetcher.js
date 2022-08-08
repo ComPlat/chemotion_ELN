@@ -2,13 +2,14 @@ import 'whatwg-fetch';
 import Measurement from '../models/Measurement';
 
 export default class MeasurementsFetcher {
-  static fetchMeasurementHierarchy(sample) {
+  static fetchMeasurementHierarchy(sample_or_sample_id) {
     // No measurement fetching for new samples
-    if (sample.is_new == true) {
+    if (sample_or_sample_id.is_new === true) {
       return new Promise(() => []);
     }
+    let sample_id = sample_or_sample_id.id || sample_or_sample_id;
 
-    const promise = fetch(`/api/v1/measurements/?sample_id=${sample.id}`, {
+    const promise = fetch(`/api/v1/measurements/?sample_id=${sample_id}`, {
       credentials: 'same-origin',
       method: 'GET',
       headers: {
