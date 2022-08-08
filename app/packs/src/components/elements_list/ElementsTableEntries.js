@@ -3,10 +3,10 @@ import SVG from 'react-inlinesvg';
 import { Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
 import classnames from 'classnames';
 
-import ElementContainer from 'src/components/ElementContainer';
-import ElementCheckbox from 'src/components/ElementCheckbox';
-import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
+import ElementContainer from 'src/components/elements_list/ElementContainer';
+import ElementCheckbox from 'src/components/elements_list/ElementCheckbox';
+import ElementCollectionLabels from 'src/components/elements_list/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/components/elements_list/ElementAnalysesLabels';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 
 import UIStore from 'src/stores/alt/stores/UIStore';

@@ -11,9 +11,9 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import ElementAllCheckbox from 'src/components/ElementAllCheckbox';
-import ElementsTableEntries from 'src/components/ElementsTableEntries';
-import ElementsTableSampleEntries from 'src/components/ElementsTableSampleEntries';
+import ElementAllCheckbox from 'src/components/elements_list/ElementAllCheckbox';
+import ElementsTableEntries from 'src/components/elements_list/ElementsTableEntries';
+import ElementsTableSampleEntries from 'src/components/elements_list/ElementsTableSampleEntries';
 import Switch from 'src/components/Switch';
 
 export default class ElementsTable extends React.Component {
@@ -69,7 +69,7 @@ export default class ElementsTable extends React.Component {
 
     // check if element details of any type are open at the moment
     const currentId = state.sample.currentId || state.reaction.currentId ||
-                      state.wellplate.currentId;
+      state.wellplate.currentId;
 
     let isAdvS = false;
     if (currentSearchSelection && currentSearchSelection.search_by_method) {
@@ -106,11 +106,11 @@ export default class ElementsTable extends React.Component {
     const { elements, page, pages, perPage, totalElements } = elementsState;
 
     let currentElement;
-    if(!state.currentElement || state.currentElement.type == this.props.type) {
+    if (!state.currentElement || state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
-    const elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
+    const elementsDidChange = elements && !deepEqual(elements, this.state.elements);
     const currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
 
     const nextState = { page, pages, perPage, totalElements, currentElement }
@@ -123,11 +123,11 @@ export default class ElementsTable extends React.Component {
   }
 
   collapseSample(sampleCollapseAll) {
-    this.setState({sampleCollapseAll: !sampleCollapseAll})
+    this.setState({ sampleCollapseAll: !sampleCollapseAll })
   }
 
   changeSort() {
-    let {moleculeSort} = this.state
+    let { moleculeSort } = this.state
     moleculeSort = !moleculeSort
     this.setState({
       moleculeSort
@@ -135,37 +135,37 @@ export default class ElementsTable extends React.Component {
   }
 
   handlePaginationSelect(eventKey) {
-    const {pages} = this.state;
-    const {type} = this.props;
+    const { pages } = this.state;
+    const { type } = this.props;
 
-    if(eventKey > 0 && eventKey <= pages) {
+    if (eventKey > 0 && eventKey <= pages) {
       this.setState({
         page: eventKey
-      }, () => UIActions.setPagination({type, page: this.state.page}));
+      }, () => UIActions.setPagination({ type, page: this.state.page }));
     }
   }
 
   pagination() {
 
-    if(pages <= 1) {
+    if (pages <= 1) {
       return;
     }
 
-    const {page, pages} = this.state;
+    const { page, pages } = this.state;
     let items = [];
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
     items.push(<Pagination.First key="First" onClick={() => this.handlePaginationSelect(1)} />);
-    if (page>1) {
+    if (page > 1) {
       items.push(<Pagination.Prev key="Prev" onClick={() => this.handlePaginationSelect(page - 1)} />);
     }
-    for (let _page = minPage; _page <= maxPage; _page=_page+1) {
+    for (let _page = minPage; _page <= maxPage; _page = _page + 1) {
       items.push(
         <Pagination.Item
           key={`eltPage${_page}`}
           active={_page === page}
           onClick={() => this.handlePaginationSelect(_page)}>
-            {_page}
+          {_page}
         </Pagination.Item>
       );
     }
@@ -173,16 +173,16 @@ export default class ElementsTable extends React.Component {
     if (pages > maxPage) {
       items.push(<Pagination.Ellipsis key="Ell" />);
     }
-    if (page==pages) {
-      items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page+1)} />);
+    if (page == pages) {
+      items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page + 1)} />);
     }
     items.push(<Pagination.Last key="Last" onClick={() => this.handlePaginationSelect(pages)} />);
 
     return (
       <div className="list-pagination">
-      <Pagination>
-        { items }
-      </Pagination>
+        <Pagination>
+          {items}
+        </Pagination>
       </div>
     )
   }
@@ -204,9 +204,9 @@ export default class ElementsTable extends React.Component {
         <FormGroup>
           <InputGroup>
             <InputGroup.Addon>Show</InputGroup.Addon>
-            <FormControl type="text" style={{textAlign: 'center', zIndex: 0}}
-               onChange={event => this.handleNumberOfResultsChange(event)}
-               value={ui.number_of_results ? ui.number_of_results : 0} />
+            <FormControl type="text" style={{ textAlign: 'center', zIndex: 0 }}
+              onChange={event => this.handleNumberOfResultsChange(event)}
+              value={ui.number_of_results ? ui.number_of_results : 0} />
           </InputGroup>
         </FormGroup>
       </Form>
@@ -304,7 +304,7 @@ export default class ElementsTable extends React.Component {
     const dateIcon = <i className={`fa ${btnIcon}`} />;
 
     const headerRight = (
-      <div className="header-right" style={{paddingRight: '25px'}}>
+      <div className="header-right" style={{ paddingRight: '25px' }}>
         <OverlayTrigger placement="top" overlay={inchiTooltip}>
           <button style={{ border: 'none' }} onClick={this.changeDateFilter} >
             {dateIcon}
@@ -355,7 +355,7 @@ export default class ElementsTable extends React.Component {
       moleculeSort
     } = this.state
 
-    const {overview, type} = this.props
+    const { overview, type } = this.props
     let elementsTableEntries = null
 
     if (type === 'sample') {

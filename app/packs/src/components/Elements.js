@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Col } from 'react-bootstrap';
 
-import List from 'src/components/List';
+import ElementsList from 'src/components/elements_list/ElementsList';
 import ElementDetails from 'src/components/ElementDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
@@ -48,7 +48,7 @@ export default class Elements extends Component {
     return (
       <div>
         <Col md={md} className="small-col">
-          <List overview={overview} showReport={showReport} />
+          <ElementsList overview={overview} showReport={showReport} />
         </Col>
         {page}
       </div>

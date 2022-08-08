@@ -5,8 +5,8 @@ import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import ElementsTable from 'src/components/ElementsTable';
-import ElementsTableSettings from 'src/components/ElementsTableSettings';
+import ElementsTable from 'src/components/elements_list/ElementsTable';
+import ElementsTableSettings from 'src/components/elements_list/ElementsTableSettings';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -47,7 +47,7 @@ function getArrayFromLayout(layout, isVisible) {
   return array;
 }
 
-export default class List extends React.Component {
+export default class ElementsList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {

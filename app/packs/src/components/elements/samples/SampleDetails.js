@@ -28,10 +28,10 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
 
-import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
+import ElementCollectionLabels from 'src/components/elements_list/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/components/elements_list/ElementAnalysesLabels';
 import PubchemLabels from 'src/components/PubchemLabels';
-import ElementReactionLabels from 'src/components/ElementReactionLabels';
+import ElementReactionLabels from 'src/components/elements_list/ElementReactionLabels';
 import SampleDetailsContainers from 'src/components/elements/samples/analyses_tab/SampleDetailsContainers';
 
 import XLabels from 'src/components/extra/SampleDetailsXLabels';

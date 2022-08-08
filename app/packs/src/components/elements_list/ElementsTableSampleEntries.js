@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 import { Table, Button, Tooltip, OverlayTrigger, Label } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import ElementCheckbox from 'src/components/ElementCheckbox';
-import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
-import ElementReactionLabels from 'src/components/ElementReactionLabels';
-import ElementWellplateLabels from 'src/components/ElementWellplateLabels';
+import ElementCheckbox from 'src/components/elements_list/ElementCheckbox';
+import ElementCollectionLabels from 'src/components/elements_list/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/components/elements_list/ElementAnalysesLabels';
+import ElementReactionLabels from 'src/components/elements_list/ElementReactionLabels';
+import ElementWellplateLabels from 'src/components/elements_list/ElementWellplateLabels';
 import GenericElementLabels from 'src/components/generic/GenericElementLabels';
 import PubchemLabels from 'src/components/PubchemLabels';
 import ChemrepoLabels from 'src/components/ChemrepoLabels';
 import ComputedPropLabel from 'src/components/computed_props/ComputedPropLabel';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-import ElementContainer from 'src/components/ElementContainer';
+import ElementContainer from 'src/components/elements_list/ElementContainer';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
