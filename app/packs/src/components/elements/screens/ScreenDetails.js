@@ -11,7 +11,7 @@ import ConfirmClose from 'src/components/common/ConfirmClose';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/components/elements_list/ElementCollectionLabels';
-import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
+import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import PrivateNoteElement from 'src/components/PrivateNoteElement';

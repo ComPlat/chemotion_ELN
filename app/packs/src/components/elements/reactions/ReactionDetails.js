@@ -32,7 +32,7 @@ import CopyElementModal from 'src/components/common/CopyElementModal';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import Immutable from 'immutable';
-import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
+import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 
 export default class ReactionDetails extends Component {

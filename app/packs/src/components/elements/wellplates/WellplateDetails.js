@@ -23,7 +23,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ExportSamplesBtn from 'src/components/ExportSamplesBtn';
-import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
+import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/components/PrivateNoteElement'
 

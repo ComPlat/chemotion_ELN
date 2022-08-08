@@ -65,7 +65,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NmrSimTab from 'src/components/elements/samples/nmr_sim_tab/NmrSimTab';
 import FastInput from 'src/components/FastInput';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
-import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
+import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/components/elements/samples/measurements_tab/MeasurementsTab';
 

@@ -20,7 +20,7 @@ import ResearchPlanDetailsAttachments from 'src/components/elements/research_pla
 import ResearchPlanDetailsBody from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from 'src/components/elements/research_plans/analyses_tab/ResearchPlanDetailsContainers';
-import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
+import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/components/PrivateNoteElement';
 
