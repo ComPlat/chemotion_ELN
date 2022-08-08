@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Modal, ButtonToolbar, Button } from 'react-bootstrap';
-import ContainerDataset from 'src/components/ContainerDataset';
+import ContainerDataset from 'src/components/container/ContainerDataset';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {

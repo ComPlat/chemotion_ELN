@@ -1,6 +1,6 @@
 import React from 'react';
 import { PanelGroup, Panel } from 'react-bootstrap';
-import ContainerComponent from 'src/components/ContainerComponent';
+import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerRow from 'src/components/elements/samples/analyses_tab/SampleDetailsContainersDnd';
 import {
   HeaderDeleted,

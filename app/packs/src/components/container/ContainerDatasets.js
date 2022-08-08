@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { ListGroup, ListGroupItem, Button, Well } from 'react-bootstrap';
-import ContainerDatasetModal from 'src/components/ContainerDatasetModal';
-import ContainerDatasetField from 'src/components/ContainerDatasetField';
+import ContainerDatasetModal from 'src/components/container/ContainerDatasetModal';
+import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/AttachmentDropzone';
 

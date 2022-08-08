@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
 import Container from 'src/models/Container';
-import ContainerComponent from 'src/components/ContainerComponent';
+import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
 import { instrumentText } from 'src/utilities/ElementUtils';

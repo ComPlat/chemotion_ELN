@@ -7,7 +7,7 @@ import {
   OverlayTrigger, SplitButton, ButtonGroup, MenuItem, Tooltip
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
-import ContainerComponent from 'src/components/ContainerComponent';
+import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';

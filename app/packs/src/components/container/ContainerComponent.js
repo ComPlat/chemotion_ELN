@@ -12,7 +12,7 @@ import Select from 'react-select';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
-import ContainerDatasets from 'src/components/ContainerDatasets';
+import ContainerDatasets from 'src/components/container/ContainerDatasets';
 import QuillViewer from 'src/components/QuillViewer';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { confirmOptions } from 'src/components/staticDropdownOptions/options';
