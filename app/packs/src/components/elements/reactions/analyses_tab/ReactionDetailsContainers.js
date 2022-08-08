@@ -19,7 +19,7 @@ import { JcampIds, BuildSpcInfos } from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import ViewSpectra from 'src/components/ViewSpectra';
+import ViewSpectra from 'src/components/elements/ViewSpectra';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 

@@ -5,7 +5,7 @@ import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { reOrderArr } from 'src/utilities/DndControl';
-import ViewSpectra from 'src/components/ViewSpectra';
+import ViewSpectra from 'src/components/elements/ViewSpectra';
 import {
   RndNotAvailable, RndNoAnalyses,
   RndOrder, RndEdit
