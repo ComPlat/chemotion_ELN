@@ -5,7 +5,7 @@ import { uniq } from 'lodash';
 
 import DeviceActions from 'src/stores/alt/actions/UserActions';
 import DeviceStore from 'src/stores/alt/stores/UserStore';
-import FocusNovnc from 'src/components/FocusNovnc';
+import FocusNovnc from 'src/apps/command_and_control/FocusNovnc';
 import Navigation from 'src/apps/command_and_control/Navigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { ConnectedBtn, DisconnectedBtn } from 'src/components/NovncStatus';
