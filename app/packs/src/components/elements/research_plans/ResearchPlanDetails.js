@@ -22,7 +22,7 @@ import ResearchPlanDetailsName from 'src/components/elements/research_plans/rese
 import ResearchPlanDetailsContainers from 'src/components/elements/research_plans/analyses_tab/ResearchPlanDetailsContainers';
 import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import PrivateNoteElement from 'src/components/PrivateNoteElement';
+import PrivateNoteElement from 'src/components/elements/PrivateNoteElement';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {

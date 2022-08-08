@@ -10,7 +10,7 @@ import QuillViewer from 'src/components/QuillViewer';
 import Sample from 'src/models/Sample';
 import { observationPurification, solventsTL } from 'src/utilities/reactionPredefined';
 import { permitOn } from 'src/components/common/uis';
-import PrivateNoteElement from 'src/components/PrivateNoteElement';
+import PrivateNoteElement from 'src/components/elements/PrivateNoteElement';
 
 function dummy() { return true; }
 

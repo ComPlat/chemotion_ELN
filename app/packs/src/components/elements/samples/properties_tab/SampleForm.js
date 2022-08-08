@@ -11,7 +11,7 @@ import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsComp
 import TextRangeWithAddon from 'src/components/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/components/elements/samples/properties_tab/SampleDetailsSolvents';
-import PrivateNoteElement from 'src/components/PrivateNoteElement';
+import PrivateNoteElement from 'src/components/elements/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 

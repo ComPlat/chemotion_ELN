@@ -25,7 +25,7 @@ import ConfirmClose from 'src/components/common/ConfirmClose';
 import ExportSamplesBtn from 'src/components/elements/ExportSamplesBtn';
 import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import PrivateNoteElement from 'src/components/PrivateNoteElement'
+import PrivateNoteElement from 'src/components/elements/PrivateNoteElement'
 
 const cols = 12;
 

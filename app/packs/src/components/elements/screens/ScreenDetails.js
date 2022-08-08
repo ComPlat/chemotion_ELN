@@ -14,7 +14,7 @@ import ElementCollectionLabels from 'src/components/elements_list/ElementCollect
 import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import PrivateNoteElement from 'src/components/PrivateNoteElement';
+import PrivateNoteElement from 'src/components/elements/PrivateNoteElement';
 import QuillEditor from 'src/components/QuillEditor';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import Screen from 'src/models/Screen';
