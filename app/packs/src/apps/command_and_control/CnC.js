@@ -8,7 +8,7 @@ import DeviceStore from 'src/stores/alt/stores/UserStore';
 import FocusNovnc from 'src/apps/command_and_control/FocusNovnc';
 import Navigation from 'src/apps/command_and_control/Navigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import { ConnectedBtn, DisconnectedBtn } from 'src/components/NovncStatus';
+import { ConnectedBtn, DisconnectedBtn } from 'src/apps/command_and_control/NovncStatus';
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;
