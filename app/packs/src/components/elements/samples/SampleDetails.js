@@ -31,6 +31,7 @@ import QcStore from 'src/stores/alt/stores/QcStore';
 import ElementCollectionLabels from 'src/components/elements_list/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/components/elements_list/ElementAnalysesLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
+import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/components/elements_list/ElementReactionLabels';
 import SampleDetailsContainers from 'src/components/elements/samples/analyses_tab/SampleDetailsContainers';
 
@@ -53,7 +54,6 @@ import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import SampleDetailsLiteratures from 'src/components/elements/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import PubchemLcss from 'src/components/PubchemLcss';
 import QcMain from 'src/components/elements/samples/qc_tab/QcMain';
 import { chmoConversions } from 'src/components/OlsComponent';
 import ConfirmClose from 'src/components/common/ConfirmClose';
