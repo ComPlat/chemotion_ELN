@@ -166,20 +166,19 @@ class Molecule < ApplicationRecord
     { id: self.tag&.taggable_data&.fetch('chemrepo_id', nil) }
   end
 
-  def attach_svg svg_data
-    return unless svg_data.match /\A<\?xml/
-    
-    svg_file_name = if self.is_partial
-      "#{SecureRandom.hex(64)}Part.svg"
-    else
-      "#{SecureRandom.hex(64)}.svg"
-    end
-    svg_file_path = "public/images/molecules/#{svg_file_name}"
+  def attach_svg(svg_data)
+    return unless svg_data =~ /\A\s*<\?xml/
 
-    svg_file = File.new(svg_file_path, 'w+')
-    scrubbed = Loofah.scrub_fragment(svg_data, :strip).to_s
-    svg_file.write(scrubbed)
-    svg_file.close
+    svg_file_name = if is_partial
+                      "#{SecureRandom.hex(64)}Part.svg"
+                    else
+                      "#{SecureRandom.hex(64)}.svg"
+                    end
+
+    File.write(
+      full_svg_path(svg_file_name),
+      Loofah.scrub_fragment(svg_data.encode('UTF-8'), :strip).to_s
+    )
 
     self.molecule_svg_file = svg_file_name
   end
@@ -259,5 +258,9 @@ private
   def cid
     tag.taggable_data['pubchem_cid'] ||
       PubChem.get_cid_from_inchikey(inchikey)
+  end
+
+  def full_svg_path(svg_file_name = molecule_svg_file)
+    Rails.public_path.join('images', 'molecules', svg_file_name)
   end
 end
