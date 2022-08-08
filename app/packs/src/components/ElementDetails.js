@@ -5,7 +5,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import FormatContainer from 'src/components/elements/formats/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/components/elements/GraphContainer';
-import LiteratureDetails from 'src/components/LiteratureDetails';
+import LiteratureDetails from 'src/components/elements/LiteratureDetails';
 import PredictionContainer from 'src/components/elements/predictions/PredictionContainer';
 import React, { Component } from 'react';
 import ReactionDetails from 'src/components/elements/reactions/ReactionDetails';
