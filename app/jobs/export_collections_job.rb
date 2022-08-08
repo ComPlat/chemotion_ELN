@@ -37,7 +37,7 @@ class ExportCollectionsJob < ApplicationJob
     begin
       @labels = Collection.where(id: collection_ids[0..9]).pluck(:label)
       @link = if Rails.env.production?
-                "https://#{ENV['HOST'] || ENV['SMTP_DOMAIN']}/zip/#{job_id}.#{extname}"
+                "#{(ENV['URL_USE_SSL'] == 1 || ENV['URL_USE_SSL'] == 'true') && 'https' || 'http'}://#{ENV['URL_HOST'] || ENV['HOST'] || ENV['SMTP_DOMAIN']}/zip/#{job_id}.#{extname}"
               else
                 "http://#{ENV['HOST'] || 'localhost:3000'}/zip/#{job_id}.#{extname}"
               end

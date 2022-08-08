@@ -39,7 +39,7 @@ class DownloadAnalysesJob < ApplicationJob
 
     begin
       @link = if Rails.env.production?
-        "https://#{ENV['HOST'] || ENV['SMTP_DOMAIN']}/zip/#{@filename}"
+        "#{(ENV['URL_USE_SSL'] == 1 || ENV['URL_USE_SSL'] == 'true') && 'https' || 'http'}://#{ENV['URL_HOST'] || ENV['HOST'] || ENV['SMTP_DOMAIN']}/zip/#{@filename}"
       else
         "http://#{ENV['HOST'] || 'localhost:3000'}/zip/#{@filename}"
       end
@@ -89,3 +89,4 @@ class DownloadAnalysesJob < ApplicationJob
     zip
   end
 end
+
