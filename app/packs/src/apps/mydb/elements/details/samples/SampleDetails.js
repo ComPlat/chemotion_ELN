@@ -35,9 +35,6 @@ import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
-import XLabels from 'src/components/extra/SampleDetailsXLabels';
-import XTabs from 'src/components/extra/SampleDetailsXTabs';
-
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
 import Sample from 'src/models/Sample';
@@ -557,7 +554,6 @@ export default class SampleDetails extends React.Component {
           {colLabel}
           <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
           <PubchemLabels element={sample} />
-          {this.extraLabels().map((Lab, i) => <Lab key={i} element={sample} />)}
         </div>
         <ShowUserLabels element={sample} />
       </div>
@@ -1136,13 +1132,6 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  extraLabels() {
-    let labels = [];
-    for (let j = 0; j < XLabels.count; j += 1) {
-      labels.push(XLabels[`content${j}`]);
-    }
-    return labels;
-  }
 
   sampleIsValid() {
     const { sample, loadingMolecule, quickCreator } = this.state;
@@ -1295,19 +1284,6 @@ export default class SampleDetails extends React.Component {
       measurements: 'Measurements!'
     };
 
-    for (let j = 0; j < XTabs.count; j += 1) {
-      if (XTabs[`on${j}`](sample)) {
-        const NoName = XTabs[`content${j}`];
-        tabContentsMap[`xtab_${j}`] = (
-          <Tab eventKey={`xtab_${j}`} key={`xtab_${j}`} title={XTabs[`title${j}`]} >
-            <ListGroupItem style={{ paddingBottom: 20 }} >
-              <NoName sample={sample} />
-            </ListGroupItem>
-          </Tab>
-        );
-        tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
-      }
-    }
 
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
     const stb = [];

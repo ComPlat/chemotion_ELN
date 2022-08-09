@@ -191,8 +191,3 @@ group :test do
   gem 'webmock'
 end
 
-# gem 'nmr_sim', git: 'https://github.com/ComPlat/nmr_sim', ref: 'e2f91776aafd8eb1fa9d88c8ec2291b02201f222', group: [:plugins,:development, :test, :production]
-
-# Chemotion plugins: list your ELN specific plugin gems in the Gemfile.plugin
-eln_plugin = File.join(File.dirname(__FILE__), 'Gemfile.plugin')
-eval_gemfile eln_plugin if File.exist?(eln_plugin)

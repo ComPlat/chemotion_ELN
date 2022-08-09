@@ -1,13 +1,6 @@
-import rXr from 'src/components/extra/routesXroutes';
 import * as routesUtils from 'src/utilities/routesUtils';
 import klasses from '../../../../../config/klasses.json';
 
-
-const allRoutes = (r) => {
-  let rts = { ...r };
-  for (let i = 0; i < rXr.count; i++) { rts = { ...rts, ...rXr[`content${i}`] }; }
-  return rts;
-}
 
 const routes = {
   '/': 'root',
@@ -113,8 +106,8 @@ klasses && klasses.forEach((klass) => {
 });
 
 
-export default function () {
+export default function() {
   Aviator.root = '/mydb';
   Aviator.pushStateEnabled = true;
-  Aviator.setRoutes(allRoutes(routes));
+  Aviator.setRoutes(routes);
 }
