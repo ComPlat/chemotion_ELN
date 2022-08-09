@@ -1,7 +1,0 @@
-# gem  'scifinding', '0.1.7', 
-#  branch: 'upg_oauth2',
-#  ref: '2c9b4ebb3e3e7044620f90293679a9a8d647b080',
-#  git: 'https://github.com/ComPlat/scifinding',
-#  group: [:plugins,:development,:production]
-#  # path: '../scifinding',
-# gem 'nmr_sim', git: 'https://github.com/ComPlat/nmr_sim', ref: 'e2f91776aafd8eb1fa9d88c8ec2291b02201f222', group: [:plugins,:development,:production]
