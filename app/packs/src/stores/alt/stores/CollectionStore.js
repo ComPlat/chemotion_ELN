@@ -1,12 +1,6 @@
 import alt from 'src/stores/alt/alt';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
-import { extraThing } from 'src/utilities/Functions';
-import Xlisteners from 'src/components/extra/CollectionStoreXlisteners';
-import Xhandlers from 'src/components/extra/CollectionStoreXhandlers';
-import Xstate from 'src/components/extra/CollectionStoreXstate';
-
-
 
 class CollectionStore {
   constructor() {
@@ -18,15 +12,8 @@ class CollectionStore {
       lockedRoots: [],
       syncInRoots: [],
       visibleRootsIds: [],
-      ...extraThing(Xstate)
     };
 
-    for (let i = 0; i < Xlisteners.count; i++) {
-      Object.keys(Xlisteners["content" + i]).map((k) => {
-        this.bindAction(Xlisteners["content" + i][k],
-          Xhandlers["content" + i][k].bind(this))
-      });
-    }
 
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,

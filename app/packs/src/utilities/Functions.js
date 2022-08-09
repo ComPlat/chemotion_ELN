@@ -24,11 +24,6 @@ const Functions = {
     link.dispatchEvent(event);
   },
 
-  extraThing(extra) {
-    let obj = {};
-    for (let i = 0; i < extra['count'];i++){obj={...obj,...extra['content'+i]} }
-    return obj;
-  }
 
 };
 

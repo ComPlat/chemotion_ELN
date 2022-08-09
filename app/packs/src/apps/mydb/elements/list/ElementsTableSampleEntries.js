@@ -19,7 +19,6 @@ import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import SampleName from 'src/components/common/SampleName';
-import XMolHeadCont from 'src/components/extra/ElementsTableSampleEntriesXMolHeadCont';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
@@ -140,12 +139,6 @@ const svgPreview = (showPreviews, sample) => (
 
 const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) => {
   const showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right';
-  const tdExtraContents = [];
-
-  for (let j = 0; j < XMolHeadCont.count; j++) {
-    const NoName = XMolHeadCont[`content${j}`];
-    tdExtraContents.push(<NoName element={sample} key={`exMolHead${j}`} />);
-  }
 
   const { collId, showPreviews } = UIStore.getState();
   return (
@@ -170,7 +163,6 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
             </div>
             <div style={{ position: 'absolute', top: '10px', right: '25px', float: 'right' }} >
               <ChemrepoLabels chemrepoId={sample.molecule.chem_repo && sample.molecule.chem_repo.id} />
-              {tdExtraContents.map(e => e)}
               <PubchemLabels element={sample} />
             </div>
             <div style={{ position: 'absolute', bottom: '10px', right: '25px', float: 'right' }} >
