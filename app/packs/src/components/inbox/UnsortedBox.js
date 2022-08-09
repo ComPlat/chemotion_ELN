@@ -176,13 +176,14 @@ export default class UnsortedBox extends React.Component {
     return (
       <div className="tree-view">
         <div className="title">
+          <span onClick={() => this.setState({ visible: !visible })}>
           <i
             className={folderClass}
             aria-hidden="true"
-            onClick={() => this.setState({ visible: !visible })}
-          > Unsorted
+            >
           </i>
-          {' '}
+            <span style={{ paddingLeft: 5, paddingRight: 5 }}>Unsorted</span>
+          </span>
           {uploadButton}
         </div>
         <table>
