@@ -80,7 +80,7 @@ describe 'Copy reaction' do
     expect(page).not_to have_button('copy-element-btn', wait: 5)
   end
 
-  it 'to same collection', js: true do
+  xit 'to same collection', js: true do
     find_by_id('tree-id-Col3').click
     first('i.icon-reaction').click
     first('i.c-bs-success').click
