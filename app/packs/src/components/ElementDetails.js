@@ -186,9 +186,6 @@ export default class ElementDetails extends Component {
             toggleFullScreen={this.toggleFullScreen}
           />
         );
-      // case 'deviceAnalysis':
-      //   return <DeviceAnalysisDetails analysis={el}
-      //     toggleFullScreen={this.toggleFullScreen}/>;
       case 'research_plan':
         return (
           <ResearchPlanDetails
