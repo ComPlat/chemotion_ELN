@@ -289,6 +289,7 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 1,
                 'is_new' => true,
                 'is_split' => true,
+                'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
                 'container' => new_root_container
               ]
             }
@@ -308,7 +309,7 @@ describe Chemotion::ReactionAPI do
           subsample = r.products.last
           expect(subsample.parent).to eq(sample_1)
           expect(subsample.attributes).to include(
-            'name' => sample_1.name, 'target_amount_value' => 76.09596,
+            'target_amount_value' => 76.09596,
             'target_amount_unit' => 'mg'
           )
           subsample_association = r.reactions_product_samples
@@ -348,6 +349,7 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 1,
                 'is_new' => true,
                 'is_split' => true,
+                'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
                 'molecule' => { molfile: molfile_1 },
                 'container' => new_root_container
               ],
@@ -361,7 +363,6 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 2,
                 'is_new' => true,
                 'is_split' => false,
-                # 'molecule' => { molfile: molfile_1 },
                 'molfile' => molfile_1,
                 'container' => new_root_container
               ]
@@ -383,7 +384,6 @@ describe Chemotion::ReactionAPI do
 
           expect(subsample.parent).to eq(sample_1)
           expect(subsample.attributes).to include(
-            'name' => sample_1.name,
             'target_amount_value' => 76.09596,
             'target_amount_unit' => 'mg'
           )
