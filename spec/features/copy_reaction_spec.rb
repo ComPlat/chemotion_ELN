@@ -21,7 +21,7 @@ describe 'Copy reaction' do
   let(:product3) { create(:sample, name: 'Product3', real_amount_value: 4.671, molecule: m2) }
   let(:reaction3) { create(:reaction, status: 'Successful', short_label: 'Reaction3') }
 
-  let!(:col) { create(:collection, user_id: user1.id, label: 'Col3') }
+  let!(:col) { create(:collection, user_id: user1.id, label: 'Col3', permission_level: 10, reaction_detail_level: 10) }
 
   let!(:root_share) { create(:collection, user: user1, shared_by_id: user2.id, is_shared: true, is_locked: true) }
   let!(:cshare) { create(:collection, user: user1, label: 'share-col', permission_level: 10, sample_detail_level: 10, reaction_detail_level: 10, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
@@ -80,7 +80,7 @@ describe 'Copy reaction' do
     expect(page).not_to have_button('copy-element-btn', wait: 5)
   end
 
-  xit 'to same collection', js: true do
+  it 'to same collection', js: true do
     find_by_id('tree-id-Col3').click
     first('i.icon-reaction').click
     first('i.c-bs-success').click
@@ -95,7 +95,7 @@ describe 'Copy reaction' do
     expect(page).to have_content('reaction B')
   end
 
-  xit 'to diff collection', js: true do
+  it 'to diff collection', js: true do
     find_by_id('col-mgnt-btn').click
     find_by_id('mycol_-1').click
     find_all('input[type="text"]')[2].set('Col2')
@@ -136,11 +136,11 @@ describe 'Copy reaction' do
       ReactionsProductSample.create!(reaction: reaction2, sample: product2, equivalent: 1)
     end
 
-    xit 'to different own collection', js: true do
+    it 'to different own collection', js: true do
       copy_reaction('Col1', 'Col2')
     end
 
-    xit 'to same own collection', js: true do
+    it 'to same own collection', js: true do
       copy_reaction('Col1', 'Col1')
     end
   end

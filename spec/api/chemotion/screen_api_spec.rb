@@ -104,7 +104,7 @@ describe Chemotion::ScreenAPI do
       }
     end
     let(:expected_response) do
-      Entities::ScreenEntity.represent(screen, root: :screen).to_json
+      Entities::ScreenEntity.represent(screen, root: :screen)
     end
 
     before do
@@ -121,7 +121,10 @@ describe Chemotion::ScreenAPI do
       post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
 
       expect(response.status).to eq 201
-      expect(response.body).to eq(expected_response)
+      body_value = JSON.parse(response.body)
+      expected_response.instance_variables.each do |ivar_name|
+        expect(body_value[ivar_name]).to eq(expected_response.instance_variable_get ivar_name)
+      end
     end
   end
 
