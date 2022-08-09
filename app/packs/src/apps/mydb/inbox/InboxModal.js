@@ -9,8 +9,6 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 
-import Xdiv from 'src/components/extra/CollectionTreeXdiv';
-
 export default class InboxModal extends React.Component {
   constructor(props) {
     super(props);
@@ -90,11 +88,6 @@ export default class InboxModal extends React.Component {
     const { showCollectionTree } = this.props;
     const { visible, inboxVisible } = this.state;
 
-    const extraDiv = [];
-    for (let j = 0; j < Xdiv.count; j += 1) {
-      const NoName = Xdiv[`Xdiv${j}`];
-      extraDiv.push(<NoName key={`Xdiv${j}`} />);
-    }
 
     const panelClass = showCollectionTree ? 'small-col col-md-6' : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
