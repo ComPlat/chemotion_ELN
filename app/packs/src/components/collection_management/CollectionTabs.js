@@ -86,9 +86,12 @@ export default class CollectionTabs extends React.Component {
     let layout = {};
     elements.forEach((element, index) => {
       layout = (profileData && profileData[`layout_detail_${element.name}`]) || {};
-      const availableTabs = (layout && Object.keys(layout)) || {};
+      let availableTabs = (layout && Object.keys(layout)) || {};
+      let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
       if (!isEmpty(node.tabs_segment[element.name])) {
         const nodeTabs = node.tabs_segment[element.name];
+        let names = segmentKlasses.filter(s => s.element_klass.name == element.name).map(s => s.label);
+        availableTabs = availableTabs.concat(names);
         const { visible, hidden } = getArrayFromLayout(nodeTabs, availableTabs);
         layout = { visible, hidden };
       } else {
