@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from '../DragDropItemTypes';
-import ElementActions from '../actions/ElementActions';
-import { UrlSilentNavigation } from '../utils/ElementUtils';
-import SampleName from '../common/SampleName';
-import SamplesFetcher from '../fetchers/SamplesFetcher';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import SampleName from 'src/components/common/SampleName';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
 const spec = {
   drop(props, monitor) {
@@ -87,21 +87,21 @@ class ResearchPlanDetailsFieldSample extends Component {
     let image;
     if (sample.svgPath) {
       image = (
-      <div className="image-container">
-        <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
-          <img src={sample.svgPath} alt={title} />
-        </a>
-        <SampleName sample={sample} />
-      </div>)
+        <div className="image-container">
+          <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
+            <img src={sample.svgPath} alt={title} />
+          </a>
+          <SampleName sample={sample} />
+        </div>)
     }
     // render name of sample if no image exists
     else {
       image = (
-      <div className="image-container">
-        <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
-          {title}
-        </a>     
-      </div>)
+        <div className="image-container">
+          <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
+            {title}
+          </a>
+        </div>)
     }
     return (
       <div className="research-plan-field-image">

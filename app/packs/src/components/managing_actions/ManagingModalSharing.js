@@ -1,18 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Button, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
+import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import Select from 'react-select';
 
-import {debounce} from 'lodash';
+import SharingShortcuts from 'src/components/sharing/SharingShortcuts';
 
-import SharingShortcuts from '../sharing/SharingShortcuts';
-
-import CollectionActions from '../actions/CollectionActions';
-import UserActions from '../actions/UserActions';
-import UIStore from '../stores/UIStore';
-import UserStore from '../stores/UserStore';
-import UsersFetcher from '../fetchers/UsersFetcher';
-import MatrixCheck from '../common/MatrixCheck';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import klasses from '../../../../../config/klasses.json';
 
 export default class ManagingModalSharing extends React.Component {
@@ -21,10 +19,10 @@ export default class ManagingModalSharing extends React.Component {
     super(props);
 
     // TODO update for new check/uncheck info
-    let {currentUser} = UserStore.getState();
+    let { currentUser } = UserStore.getState();
     this.state = {
       currentUser: currentUser,
-      role:'Pick a sharing role',
+      role: 'Pick a sharing role',
       permissionLevel: props.permissionLevel,
       sampleDetailLevel: props.sampleDetailLevel,
       reactionDetailLevel: props.reactionDetailLevel,
@@ -39,7 +37,6 @@ export default class ManagingModalSharing extends React.Component {
     this.handleSharing = this.handleSharing.bind(this);
     this.promptTextCreator = this.promptTextCreator.bind(this);
 
-    // this.loadUserByName = debounce(this.loadUserByName.bind(this), 300);
     this.loadUserByName = this.loadUserByName.bind(this);
   }
 
@@ -60,8 +57,8 @@ export default class ManagingModalSharing extends React.Component {
 
   isElementSelectionEmpty(element) {
     return !element.checkedAll &&
-           element.checkedIds.size == 0 &&
-           element.uncheckedIds.size == 0;
+      element.checkedIds.size == 0 &&
+      element.uncheckedIds.size == 0;
   }
 
   isSelectionEmpty(uiState) {
@@ -83,8 +80,8 @@ export default class ManagingModalSharing extends React.Component {
 
 
     return isSampleSelectionEmpty && isReactionSelectionEmpty &&
-           isWellplateSelectionEmpty && isScreenSelectionEmpty &&
-           isElementSelectionEmpty;
+      isWellplateSelectionEmpty && isScreenSelectionEmpty &&
+      isElementSelectionEmpty;
   }
 
   filterParamsWholeCollection(uiState) {
@@ -240,7 +237,7 @@ export default class ManagingModalSharing extends React.Component {
   handleShortcutChange(e) {
     let val = e.target.value
     let permAndDetLevs = {}
-    switch(val) {
+    switch (val) {
       case 'user':
         permAndDetLevs = SharingShortcuts.user();
         break;
@@ -257,33 +254,33 @@ export default class ManagingModalSharing extends React.Component {
         permAndDetLevs = SharingShortcuts.supervisor();
         break;
     }
-    this.setState({...permAndDetLevs,role:val});
+    this.setState({ ...permAndDetLevs, role: val });
   }
 
   handlePLChange(e) {
     let val = e.target.value
     this.setState({
-      role:'Pick a sharing role',
+      role: 'Pick a sharing role',
       permissionLevel: val
     });
   }
 
-  handleDLChange(e,elementType){
+  handleDLChange(e, elementType) {
     let val = e.target.value
     let state = {}
-    state[elementType+'DetailLevel'] = val
+    state[elementType + 'DetailLevel'] = val
     state.role = 'Pick a sharing role'
     this.setState(state)
   }
 
   handleSelectUser(val) {
     if (val) {
-      this.setState({selectedUsers: val})
+      this.setState({ selectedUsers: val })
     }
   }
 
   loadUserByName(input) {
-    let {selectedUsers} = this.state;
+    let { selectedUsers } = this.state;
 
     if (!input) {
       return Promise.resolve({ options: [] });
@@ -299,7 +296,7 @@ export default class ManagingModalSharing extends React.Component {
               label: u.name + " (" + u.abb + ")"
             }
           });
-        return {options: usersEntries};
+        return { options: usersEntries };
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -310,10 +307,10 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   selectUsers() {
-    let style = this.props.selectUsers ? {} : {display: 'none'};
-    let {selectedUsers} = this.state;
+    let style = this.props.selectUsers ? {} : { display: 'none' };
+    let { selectedUsers } = this.state;
 
-    return(
+    return (
       <div style={style}>
         <ControlLabel>Select Users to share with</ControlLabel>
         <Select.AsyncCreatable id="share-users-select" multi={true} isLoading={true}
@@ -367,7 +364,7 @@ export default class ManagingModalSharing extends React.Component {
         <FormGroup controlId="sampleDetailLevelSelect">
           <ControlLabel>Sample detail level</ControlLabel>
           <FormControl componentClass="select"
-            onChange={(e) => this.handleDLChange(e,'sample')}
+            onChange={(e) => this.handleDLChange(e, 'sample')}
             value={this.state.sampleDetailLevel || ''}>
             <option value='0'>Molecular mass of the compound, external label</option>
             <option value='1'>Molecule, structure</option>
@@ -379,7 +376,7 @@ export default class ManagingModalSharing extends React.Component {
         <FormGroup controlId="reactionDetailLevelSelect">
           <ControlLabel>Reaction detail level</ControlLabel>
           <FormControl componentClass="select"
-            onChange={(e) => this.handleDLChange(e,'reaction')}
+            onChange={(e) => this.handleDLChange(e, 'reaction')}
             value={this.state.reactionDetailLevel || ''}>
             <option value='0'>Observation, description, calculation</option>
             <option value='10'>Everything</option>
@@ -388,7 +385,7 @@ export default class ManagingModalSharing extends React.Component {
         <FormGroup controlId="wellplateDetailLevelSelect">
           <ControlLabel>Wellplate detail level</ControlLabel>
           <FormControl componentClass="select"
-            onChange={(e) => this.handleDLChange(e,'wellplate')}
+            onChange={(e) => this.handleDLChange(e, 'wellplate')}
             value={this.state.wellplateDetailLevel || ''}>
             <option value='0'>Wells (Positions)</option>
             <option value='1'>Readout</option>
@@ -398,7 +395,7 @@ export default class ManagingModalSharing extends React.Component {
         <FormGroup controlId="screenDetailLevelSelect">
           <ControlLabel>Screen detail level</ControlLabel>
           <FormControl componentClass="select"
-            onChange={(e) => this.handleDLChange(e,'screen')}
+            onChange={(e) => this.handleDLChange(e, 'screen')}
             value={this.state.screenDetailLevel || ''}>
             <option value='0'>Name, description, condition, requirements</option>
             <option value='10'>Everything</option>
@@ -407,13 +404,13 @@ export default class ManagingModalSharing extends React.Component {
         <FormGroup controlId="screenDetailLevelSelect">
           <ControlLabel>Element detail level</ControlLabel>
           <FormControl componentClass="select"
-            onChange={(e) => this.handleDLChange(e,'element')}
+            onChange={(e) => this.handleDLChange(e, 'element')}
             value={this.state.elementDetailLevel || ''}>
             <option value='10'>Everything</option>
           </FormControl>
         </FormGroup>
         {this.selectUsers()}
-        <br/>
+        <br />
         <Button id="create-sync-shared-col-btn" bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
       </div>
     )
@@ -421,27 +418,27 @@ export default class ManagingModalSharing extends React.Component {
 }
 
 ManagingModalSharing.propTypes = {
-          collectionId: PropTypes.number,
-          collAction: PropTypes.string,
-          selectUsers: PropTypes.bool,
-          permissionLevel: PropTypes.number,
-          sampleDetailLevel: PropTypes.number,
-          reactionDetailLevel: PropTypes.number,
-          wellplateDetailLevel: PropTypes.number,
-          screenDetailLevel: PropTypes.number,
-          elementDetailLevel: PropTypes.number,
-          onHide: PropTypes.func.isRequired,
-          listSharedCollections: PropTypes.bool
+  collectionId: PropTypes.number,
+  collAction: PropTypes.string,
+  selectUsers: PropTypes.bool,
+  permissionLevel: PropTypes.number,
+  sampleDetailLevel: PropTypes.number,
+  reactionDetailLevel: PropTypes.number,
+  wellplateDetailLevel: PropTypes.number,
+  screenDetailLevel: PropTypes.number,
+  elementDetailLevel: PropTypes.number,
+  onHide: PropTypes.func.isRequired,
+  listSharedCollections: PropTypes.bool
 };
 
 ManagingModalSharing.defaultProps = {
-          collectionId: null,
-          collAction: "Create",
-          selectUsers: true,
-          permissionLevel: 0,
-          sampleDetailLevel: 0,
-          reactionDetailLevel: 0,
-          wellplateDetailLevel: 0,
-          screenDetailLevel: 0,
-          elementDetailLevel: 10
+  collectionId: null,
+  collAction: "Create",
+  selectUsers: true,
+  permissionLevel: 0,
+  sampleDetailLevel: 0,
+  reactionDetailLevel: 0,
+  wellplateDetailLevel: 0,
+  screenDetailLevel: 0,
+  elementDetailLevel: 10
 };

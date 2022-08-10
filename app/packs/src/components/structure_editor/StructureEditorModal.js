@@ -9,14 +9,14 @@ import {
   ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
-import UserStore from '../stores/UserStore';
-import UIStore from '../stores/UIStore';
-import StructureEditor from '../models/StructureEditor';
-import EditorAttrs from './StructureEditorSet';
-import ChemDrawEditor from './ChemDrawEditor';
-import MarvinjsEditor from './MarvinjsEditor';
-import KetcherEditor from './KetcherEditor';
-import loadScripts from './loadScripts';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import StructureEditor from 'src/models/StructureEditor';
+import EditorAttrs from 'src/components/structure_editor/StructureEditorSet';
+import ChemDrawEditor from 'src/components/structure_editor/ChemDrawEditor';
+import MarvinjsEditor from 'src/components/structure_editor/MarvinjsEditor';
+import KetcherEditor from 'src/components/structure_editor/KetcherEditor';
+import loadScripts from 'src/components/structure_editor/loadScripts';
 
 const EditorList = (props) => {
   const { options, fnChange, value } = props;

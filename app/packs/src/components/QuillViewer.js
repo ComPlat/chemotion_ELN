@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Quill from 'quill';
 import _ from 'lodash';
 
-import { keepSupSub } from './utils/quillFormat';
+import { keepSupSub } from 'src/utilities/quillFormat';
 
 export default class QuillViewer extends React.Component {
   constructor(props) {

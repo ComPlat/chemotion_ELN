@@ -2,12 +2,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
-import Reaction from '../models/Reaction';
-import GreenMaterialGroup from './GreenMaterialGroup';
-import { UrlSilentNavigation } from '../utils/ElementUtils';
-import ElementActions from '../actions/ElementActions';
+import Reaction from 'src/models/Reaction';
+import GreenMaterialGroup from 'src/components/green_chem/GreenMaterialGroup';
 
-import GreenMetrics from './GreenMetrics';
+import GreenMetrics from 'src/components/green_chem/GreenMetrics';
 
 export default class GreenChemistry extends Component {
   constructor() {

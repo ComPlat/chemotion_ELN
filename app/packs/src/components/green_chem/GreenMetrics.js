@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
-import Reaction from '../models/Reaction';
+import Reaction from 'src/models/Reaction';
 
 function getWaste(samples) {
   return samples.filter(s => s.waste);
@@ -62,16 +62,16 @@ export default class GreenMetrics extends React.Component {
       .map(x => x.amount_g).reduce(sumReducer, 0);
 
     const pSolventsAmount = (reaction.purification_solvents || [])
-          .map(x => x.amount_g).reduce(sumReducer, 0);
+      .map(x => x.amount_g).reduce(sumReducer, 0);
     const selectedPSolventsAmount = getNonWaste(reaction.purification_solvents)
-          .map(x => x.amount_g).reduce(sumReducer, 0);
+      .map(x => x.amount_g).reduce(sumReducer, 0);
 
     const prodsAmount = (reaction.products || [])
       .map(x => x.amount_g).reduce(sumReducer, 0);
     const selectedProductsAmount = getNonWaste(reaction.products)
       .map(x => x.amount_g).reduce(sumReducer, 0);
     const wastedProductsAmount = getWaste(reaction.products)
-          .map(x => x.amount_g).reduce(sumReducer, 0);
+      .map(x => x.amount_g).reduce(sumReducer, 0);
 
     const sef = (startsAmount + reactantsAmount + solventsAmount - prodsAmount) / prodsAmount;
     const cef = (
@@ -84,20 +84,20 @@ export default class GreenMetrics extends React.Component {
     ) / selectedProductsAmount;
 
     const aesm = reaction.starting_materials
-          .map(x => x.molecule_molecular_weight * x.coefficient)
-          .reduce(sumReducer, 0);
+      .map(x => x.molecule_molecular_weight * x.coefficient)
+      .reduce(sumReducer, 0);
     const aep = reaction.products
-          .map(x => x.molecule_molecular_weight * x.coefficient)
-          .reduce(sumReducer, 0);
+      .map(x => x.molecule_molecular_weight * x.coefficient)
+      .reduce(sumReducer, 0);
     const caep = getNonWaste(reaction.products)
-          .map(x => x.molecule_molecular_weight * x.coefficient)
-          .reduce(sumReducer, 0);
+      .map(x => x.molecule_molecular_weight * x.coefficient)
+      .reduce(sumReducer, 0);
     const aer = reaction.reactants
-          .map(x => x.equivalent < 0.3 ? 0 : (x.molecule_molecular_weight * x.coefficient))
-          .reduce(sumReducer, 0);
+      .map(x => x.equivalent < 0.3 ? 0 : (x.molecule_molecular_weight * x.coefficient))
+      .reduce(sumReducer, 0);
     const caer = getNonWaste(reaction.reactants)
-          .map(x => x.equivalent < 0.3 ? 0 : (x.molecule_molecular_weight * x.coefficient))
-          .reduce(sumReducer, 0);
+      .map(x => x.equivalent < 0.3 ? 0 : (x.molecule_molecular_weight * x.coefficient))
+      .reduce(sumReducer, 0);
     const ae = (aep / (aesm + aer));
     const cae = (caep / (aesm + caer));
 

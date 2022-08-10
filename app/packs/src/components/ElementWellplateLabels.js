@@ -1,8 +1,8 @@
 import React from 'react';
 import { Label, Modal, Button } from 'react-bootstrap';
 
-import ElementActions from './actions/ElementActions';
-import ElementStore from './stores/ElementStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class ElementWellplateLabels extends React.Component {
   constructor(props) {

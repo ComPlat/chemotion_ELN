@@ -1,24 +1,22 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import StickyDiv from 'react-stickydiv';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
-import SampleDetails from './SampleDetails';
-import DeviceDetails from './DeviceDetails';
-import ReactionDetails from './ReactionDetails';
-import WellplateDetails from './WellplateDetails';
-import ScreenDetails from './ScreenDetails';
-import ResearchPlanDetails from './research_plan/ResearchPlanDetails';
-import ReportContainer from './report/ReportContainer';
-import FormatContainer from './FormatContainer';
-import GraphContainer from './GraphContainer';
-import ComputeTaskContainer from './ComputeTaskContainer';
-import DetailActions from './actions/DetailActions';
-import ElementStore from './stores/ElementStore';
-import { SameEleTypId } from './utils/ElementUtils';
-import LiteratureDetails from './LiteratureDetails';
-import PredictionContainer from './prediction/PredictionContainer';
-import GenericElDetails from './generic/GenericElDetails';
-import UserStore from './stores/UserStore';
+import SampleDetails from 'src/components/SampleDetails';
+import DeviceDetails from 'src/components/DeviceDetails';
+import ReactionDetails from 'src/components/ReactionDetails';
+import WellplateDetails from 'src/components/WellplateDetails';
+import ScreenDetails from 'src/components/ScreenDetails';
+import ResearchPlanDetails from 'src/components/research_plan/ResearchPlanDetails';
+import ReportContainer from 'src/components/report/ReportContainer';
+import FormatContainer from 'src/components/FormatContainer';
+import GraphContainer from 'src/components/GraphContainer';
+import ComputeTaskContainer from 'src/components/ComputeTaskContainer';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import LiteratureDetails from 'src/components/LiteratureDetails';
+import PredictionContainer from 'src/components/prediction/PredictionContainer';
+import GenericElDetails from 'src/components/generic/GenericElDetails';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 const tabInfoHash = {
   report: {
@@ -106,16 +104,7 @@ export default class ElementDetails extends Component {
     window.scrollTo(window.scrollX, window.scrollY + 1);
     // imitate scroll event to make StickyDiv element visible in current area
     ElementStore.listen(this.onDetailChange);
-    // if (this.props.currentElement !== null) {
-    //   // DetailActions.changeCurrentElement.defer(null, this.props.currentElement);
-    // }
   }
-
-  // componentWillReceiveProps(nextProps) {
-  //   if (!SameEleTypId(this.props.currentElement, nextProps.currentElement)) {
-  //     // DetailActions.changeCurrentElement.defer(this.props.currentElement, nextProps.currentElement);
-  //   }
-  // }
 
   shouldComponentUpdate(nextProps, nextState) {
     return true;
@@ -150,7 +139,7 @@ export default class ElementDetails extends Component {
     if (spectraMsg) {
       const { showedSpcMsgID } = this.state;
       if (!showedSpcMsgID || showedSpcMsgID !== spectraMsg.message_id) {
-        this.setState({showedSpcMsgID: spectraMsg.message_id})
+        this.setState({ showedSpcMsgID: spectraMsg.message_id })
         alert(spectraMsg.content.data);
       }
     }
@@ -288,7 +277,3 @@ export default class ElementDetails extends Component {
     );
   }
 }
-
-// ElementDetails.propTypes = {
-//   currentElement: PropTypes.shape.isRequired
-// };

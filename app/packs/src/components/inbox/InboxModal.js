@@ -2,14 +2,14 @@ import React from 'react';
 import Draggable from 'react-draggable';
 import { Badge, Button, Panel, Glyphicon } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import InboxStore from '../stores/InboxStore';
-import InboxActions from '../actions/InboxActions';
-import LoadingActions from '../actions/LoadingActions';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import DeviceBox from '../inbox/DeviceBox';
-import UnsortedBox from '../inbox/UnsortedBox';
+import DeviceBox from 'src/components/inbox/DeviceBox';
+import UnsortedBox from 'src/components/inbox/UnsortedBox';
 
-import Xdiv from '../extra/CollectionTreeXdiv';
+import Xdiv from 'src/components/extra/CollectionTreeXdiv';
 
 export default class InboxModal extends React.Component {
   constructor(props) {

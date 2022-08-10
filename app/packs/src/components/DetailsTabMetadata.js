@@ -10,7 +10,7 @@ import {
   Row,
   Col
 } from 'react-bootstrap';
-import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 
 require('@citation-js/plugin-isbn');
 
@@ -203,7 +203,7 @@ export default class ResearchPlansMetadata extends Component {
                         value={alternateIdentifier?.alternateIdentifier}
                         placeholder="Alternate Identifier"
                         onChange={(event) => this.updateResearchPlanMetadataArrayItem('alternate_identifier', index, 'alternateIdentifier', event.target.value)}
-                        />
+                      />
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={5}>
@@ -218,7 +218,7 @@ export default class ResearchPlansMetadata extends Component {
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={2}>
-                    <ControlLabel>Action</ControlLabel><br/>
+                    <ControlLabel>Action</ControlLabel><br />
                     <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('alternate_identifier', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
@@ -246,7 +246,7 @@ export default class ResearchPlansMetadata extends Component {
                         value={relatedIdentifier?.relatedIdentifier}
                         placeholder="Related Identifier"
                         onChange={(event) => this.updateResearchPlanMetadataArrayItem('related_identifier', index, 'relatedIdentifier', event.target.value)}
-                        />
+                      />
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={5}>
@@ -261,7 +261,7 @@ export default class ResearchPlansMetadata extends Component {
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={2}>
-                    <ControlLabel>Action</ControlLabel><br/>
+                    <ControlLabel>Action</ControlLabel><br />
                     <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('related_identifier', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
@@ -289,7 +289,7 @@ export default class ResearchPlansMetadata extends Component {
                         value={description?.description}
                         placeholder="Description"
                         onChange={event => this.updateResearchPlanMetadataArrayItem('description', index, 'description', event.target.value)}
-                        />
+                      />
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={5}>
@@ -304,7 +304,7 @@ export default class ResearchPlansMetadata extends Component {
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={2}>
-                    <ControlLabel>Action</ControlLabel><br/>
+                    <ControlLabel>Action</ControlLabel><br />
                     <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('description', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
@@ -365,7 +365,7 @@ export default class ResearchPlansMetadata extends Component {
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={2}>
-                    <ControlLabel>Action</ControlLabel><br/>
+                    <ControlLabel>Action</ControlLabel><br />
                     <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('geo_location', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
@@ -393,7 +393,7 @@ export default class ResearchPlansMetadata extends Component {
                         value={fundingReferenceItem?.funderName}
                         placeholder="Funder Name e.g. 'Gordon and Betty Moore Foundation'"
                         onChange={event => this.updateResearchPlanMetadataArrayItem('funding_reference', index, 'funderName', event.target.value)}
-                        />
+                      />
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={5}>
@@ -408,7 +408,7 @@ export default class ResearchPlansMetadata extends Component {
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={2}>
-                    <ControlLabel>Action</ControlLabel><br/>
+                    <ControlLabel>Action</ControlLabel><br />
                     <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('funding_reference', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
@@ -476,8 +476,8 @@ export default class ResearchPlansMetadata extends Component {
                 readOnly
               />
             </FormGroup>
-            { researchPlanMetadata?.dates ? <ControlLabel style={{ marginTop: 5 }}>Dates</ControlLabel>: '' }
-            { researchPlanMetadata?.dates && researchPlanMetadata?.dates.map((dateItem, index) => (
+            {researchPlanMetadata?.dates ? <ControlLabel style={{ marginTop: 5 }}>Dates</ControlLabel> : ''}
+            {researchPlanMetadata?.dates && researchPlanMetadata?.dates.map((dateItem, index) => (
               <div key={index}>
                 <Row>
                   <Col smOffset={0} sm={6}>
@@ -488,7 +488,7 @@ export default class ResearchPlansMetadata extends Component {
                         defaultValue={dateItem.date}
                         placeholder="Date"
                         readOnly
-                        />
+                      />
                     </FormGroup>
                   </Col>
                   <Col smOffset={0} sm={6}>

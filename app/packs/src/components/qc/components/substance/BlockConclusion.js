@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Label } from 'react-bootstrap';
 
-import { iconByBool } from '../helper/icon';
+import { iconByBool } from 'src/components/qc/components/helper/icon';
 
 const iconNmr = (ansNmr) => {
   const { conclusion, conclusionOwn } = ansNmr;

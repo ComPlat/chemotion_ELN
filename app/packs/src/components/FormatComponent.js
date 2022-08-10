@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Accordion, Button } from 'react-bootstrap';
-import QuillViewer from './QuillViewer';
+import QuillViewer from 'src/components/QuillViewer';
 
-import PanelHeader from './common/PanelHeader';
+import PanelHeader from 'src/components/common/PanelHeader';
 
 const tryParse = function TryParseToJson(obj) {
   if (typeof obj === 'object') return obj;

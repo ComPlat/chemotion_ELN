@@ -7,25 +7,25 @@ import {
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import { findIndex } from 'lodash';
-import LoadingActions from './actions/LoadingActions';
-import ElementCollectionLabels from './ElementCollectionLabels';
-import ElementActions from './actions/ElementActions';
-import DetailActions from './actions/DetailActions';
-import Wellplate from './Wellplate';
-import WellplateList from './WellplateList';
-import WellplateProperties from './WellplateProperties';
-import WellplateDetailsContainers from './WellplateDetailsContainers';
-import WellplateDetailsAttachments from './WellplateDetailsAttachments';
-import PrintCodeButton from './common/PrintCodeButton';
-import Attachment from './models/Attachment';
-import Utils from './utils/Functions';
-import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
-import ConfirmClose from './common/ConfirmClose';
-import ExportSamplesBtn from './ExportSamplesBtn';
-import ElementDetailSortTab from './ElementDetailSortTab';
-import { addSegmentTabs } from './generic/SegmentDetails';
-import PrivateNoteElement from './PrivateNoteElement'
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import Wellplate from 'src/components/Wellplate';
+import WellplateList from 'src/components/WellplateList';
+import WellplateProperties from 'src/components/WellplateProperties';
+import WellplateDetailsContainers from 'src/components/WellplateDetailsContainers';
+import WellplateDetailsAttachments from 'src/components/WellplateDetailsAttachments';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import Attachment from 'src/models/Attachment';
+import Utils from 'src/utilities/Functions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import ConfirmClose from 'src/components/common/ConfirmClose';
+import ExportSamplesBtn from 'src/components/ExportSamplesBtn';
+import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
+import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
+import PrivateNoteElement from 'src/components/PrivateNoteElement'
 
 const cols = 12;
 

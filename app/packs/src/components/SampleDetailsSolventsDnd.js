@@ -1,16 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button, FormControl, Glyphicon
-} from 'react-bootstrap';
+import { Button, FormControl } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import VirtualizedSelect from 'react-virtualized-select';
-import DragDropItemTypes from './DragDropItemTypes';
-import Sample from './models/Sample';
-import Molecule from './models/Molecule';
-import MoleculesFetcher from './fetchers/MoleculesFetcher';
-import { ionic_liquids } from './staticDropdownOptions/ionic_liquids';
-import { defaultMultiSolventsSmilesOptions } from './staticDropdownOptions/options';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import Sample from 'src/models/Sample';
+import Molecule from 'src/models/Molecule';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
+import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';
 
 const target = {
   drop(tagProps, monitor) {
@@ -41,7 +39,7 @@ const collect = (connect, monitor) => ({
   canDrop: monitor.canDrop()
 });
 
-const SolventDetails = ({solvent, deleteSolvent, onChangeSolvent}) => {
+const SolventDetails = ({ solvent, deleteSolvent, onChangeSolvent }) => {
   if (!solvent) {
     return (<></>)
   }
@@ -203,7 +201,7 @@ class SampleDetailsSolventsDnd extends React.Component {
           addDefaultSolvent={dropSample}
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
-          />
+        />
       </div>
     );
   }

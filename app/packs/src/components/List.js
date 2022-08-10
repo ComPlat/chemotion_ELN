@@ -1,16 +1,16 @@
 import Immutable from 'immutable';
 import React from 'react';
 import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import KeyboardActions from './actions/KeyboardActions';
-import UIActions from './actions/UIActions';
-import UserActions from './actions/UserActions';
-import MatrixCheck from './common/MatrixCheck';
-import ElementsTable from './ElementsTable';
-import ElementsTableSettings from './ElementsTableSettings';
-import ElementStore from './stores/ElementStore';
-import UIStore from './stores/UIStore';
-import UserStore from './stores/UserStore';
-import ArrayUtils from './utils/ArrayUtils';
+import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import ElementsTable from 'src/components/ElementsTable';
+import ElementsTableSettings from 'src/components/ElementsTableSettings';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 
 function getSortedHash(inputHash) {
@@ -76,11 +76,11 @@ export default class List extends React.Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     return nextProps.overview !== this.props.overview ||
-    nextProps.showReport !== this.props.showReport ||
-    nextProps.totalElements !== this.state.totalElements ||
-    nextState.visible !== this.state.visible ||
-    nextState.hidden !== this.state.hidden ||
-    nextState.currentTab !== this.state.currentTab;
+      nextProps.showReport !== this.props.showReport ||
+      nextProps.totalElements !== this.state.totalElements ||
+      nextState.visible !== this.state.visible ||
+      nextState.hidden !== this.state.hidden ||
+      nextState.currentTab !== this.state.currentTab;
   }
 
   componentWillUnmount() {
@@ -201,7 +201,7 @@ export default class List extends React.Component {
 
       if (!constEls.includes(value)) {
         const genericEl = (this.state.genericEls &&
-                           this.state.genericEls.find(el => el.name === value)) || {};
+          this.state.genericEls.find(el => el.name === value)) || {};
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
         ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{genericEl.label}<br />{genericEl.desc}</Tooltip>);
       }
@@ -214,7 +214,7 @@ export default class List extends React.Component {
           </OverlayTrigger>
           <span style={{ paddingLeft: 5 }}>
             {elementState.totalElements &&
-                      elementState.totalElements[`${value}s`]}
+              elementState.totalElements[`${value}s`]}
             ({totalCheckedElements[value] || 0})
           </span>
         </NavItem>

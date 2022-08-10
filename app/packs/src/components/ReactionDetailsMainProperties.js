@@ -14,11 +14,11 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
-import Reaction from './models/Reaction';
-import { statusOptions } from './staticDropdownOptions/options';
-import LineChartContainer from './lineChart/LineChartContainer';
-import EditableTable from './lineChart/EditableTable';
-import { permitOn } from './common/uis';
+import Reaction from 'src/models/Reaction';
+import { statusOptions } from 'src/components/staticDropdownOptions/options';
+import LineChartContainer from 'src/components/lineChart/LineChartContainer';
+import EditableTable from 'src/components/lineChart/EditableTable';
+import { permitOn } from 'src/components/common/uis';
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {

@@ -4,18 +4,18 @@ import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
 import { findIndex, cloneDeep } from 'lodash';
 
-import Utils from './utils/Functions';
-import Attachment from './models/Attachment';
-import AttachmentFetcher from './fetchers/AttachmentFetcher';
-import UserStore from './stores/UserStore';
-import GenericDS from './models/GenericDS';
-import GenericDSDetails from './generic/GenericDSDetails';
-import { absOlsTermId } from '../admin/generic/Utils';
-import InboxActions from './actions/InboxActions';
-import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
-import ChildOverlay from './managing_actions/ChildOverlay';
+import Utils from 'src/utilities/Functions';
+import Attachment from 'src/models/Attachment';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import GenericDS from 'src/models/GenericDS';
+import GenericDSDetails from 'src/components/generic/GenericDSDetails';
+import { absOlsTermId } from 'src/apps/admin/generic/Utils';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
+import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
+import ChildOverlay from 'src/components/managing_actions/ChildOverlay';
 
-import HyperLinksSection from './common/HyperLinksSection';
+import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -455,7 +455,7 @@ export default class ContainerDataset extends Component {
           {this.dropzone()}
           {this.attachments()}
           <HyperLinksSection data={dataset_container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
-          disabled={disabled}></HyperLinksSection>
+            disabled={disabled}></HyperLinksSection>
         </Col>
       </Row>
     );

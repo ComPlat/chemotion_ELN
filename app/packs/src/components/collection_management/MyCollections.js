@@ -1,11 +1,11 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
-import ManagingModalSharing from '../managing_actions/ManagingModalSharing';
-import CollectionStore from '../stores/CollectionStore';
-import CollectionActions from '../actions/CollectionActions';
-import UserInfoIcon from '../UserInfoIcon';
-import PermissionIcons from '../PermissionIcons'
+import ManagingModalSharing from 'src/components/managing_actions/ManagingModalSharing';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import UserInfoIcon from 'src/components/UserInfoIcon';
+import PermissionIcons from 'src/components/PermissionIcons'
 
 export default class MyCollections extends React.Component {
   constructor(props) {

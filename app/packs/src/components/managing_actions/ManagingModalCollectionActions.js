@@ -1,10 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Button, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
-import UIStore from '../stores/UIStore';
-import CollectionStore from '../stores/CollectionStore';
-import CollectionActions from '../actions/CollectionActions';
-import ReactDOM from 'react-dom';
+import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import Select from 'react-select'
 
 export default class ManagingModalCollectionActions extends React.Component {
@@ -22,14 +20,15 @@ export default class ManagingModalCollectionActions extends React.Component {
 
   onSelectChange(e) {
     let selected = e && e.value
-    this.setState((previousProps,previousState) => {
-      return {...previousState, selected: selected}});
+    this.setState((previousProps, previousState) => {
+      return { ...previousState, selected: selected }
+    });
   }
 
   writableColls(colls) {
     return colls.map(coll => {
       return coll.permission_level >= 1 ? coll : null;
-    }).filter(r => r!=null);
+    }).filter(r => r != null);
   }
 
   collectionEntries() {
@@ -37,7 +36,7 @@ export default class ManagingModalCollectionActions extends React.Component {
     const cUnshared = [...cState.lockedRoots, ...cState.unsharedRoots];
     let cShared = [];
     let cSynced = [];
-    if (this.props.listSharedCollections){
+    if (this.props.listSharedCollections) {
       cState.sharedRoots.map(sharedR => cShared = [...cShared, ...sharedR.children]);
       cState.syncInRoots.map(syncInR => cSynced = [...cSynced, ...syncInR.children]);
       cSynced = this.writableColls(cSynced);
@@ -54,13 +53,15 @@ export default class ManagingModalCollectionActions extends React.Component {
 
   makeTree(tree, collections, depth) {
     collections.forEach((collection, index) => {
-      tree.push({ id: collection.id,
-                  label: collection.label,
-                  depth: depth,
-                  first: collection.first,
-                  is_shared: collection.is_shared,
-                  is_sync_to_me: collection.is_sync_to_me });
-      if(collection.children && collection.children.length > 0) {
+      tree.push({
+        id: collection.id,
+        label: collection.label,
+        depth: depth,
+        first: collection.first,
+        is_shared: collection.is_shared,
+        is_sync_to_me: collection.is_sync_to_me
+      });
+      if (collection.children && collection.children.length > 0) {
         this.makeTree(tree, collection.children, depth + 1)
       }
     });
@@ -69,12 +70,14 @@ export default class ManagingModalCollectionActions extends React.Component {
   collectionOptions() {
     const cAllTree = this.collectionEntries();
     if (cAllTree.length === 0) return [];
-    const options = cAllTree.map( leaf => {
+    const options = cAllTree.map(leaf => {
       const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
       const className = leaf.first ? "separator" : "";
-      return { value: `${leaf.id}-${leaf.is_sync_to_me ? "is_sync_to_me" : ""}`,
-                label: indent + leaf.label,
-                className: className };
+      return {
+        value: `${leaf.id}-${leaf.is_sync_to_me ? "is_sync_to_me" : ""}`,
+        label: indent + leaf.label,
+        className: className
+      };
     });
     return options;
   }
@@ -100,7 +103,7 @@ export default class ManagingModalCollectionActions extends React.Component {
       </Button>
     ) : (
       <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!selected}>
-          Submit
+        Submit
       </Button>
     );
   }

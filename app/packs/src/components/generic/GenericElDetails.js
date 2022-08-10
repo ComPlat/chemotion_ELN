@@ -3,24 +3,24 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Button, ButtonToolbar, ListGroupItem, Tabs, Tab, ListGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { findIndex } from 'lodash';
-import DetailActions from '../actions/DetailActions';
-import LoadingActions from '../actions/LoadingActions';
-import ElementActions from '../actions/ElementActions';
-import ElementStore from '../stores/ElementStore';
-import UIActions from '../actions/UIActions';
-import UIStore from '../stores/UIStore';
-import ConfirmClose from '../common/ConfirmClose';
-import GenericElDetailsContainers from './GenericElDetailsContainers';
-import { GenProperties, LayersLayout, UploadInputChange } from './GenericElCommon';
-import GenericEl from '../models/GenericEl';
-import Attachment from '../models/Attachment';
-import CopyElementModal from '../common/CopyElementModal';
-import { notification, genUnits, toBool, toNum, unitConversion } from '../../admin/generic/Utils';
-import { organizeSubValues } from '../../admin/generic/collate';
-import GenericAttachments from './GenericAttachments';
-import { SegmentTabs } from './SegmentDetails';
-import PreviewModal from './PreviewModal';
-import GenericElsFetcher from '../fetchers/GenericElsFetcher';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ConfirmClose from 'src/components/common/ConfirmClose';
+import GenericElDetailsContainers from 'src/components/generic/GenericElDetailsContainers';
+import { GenProperties, LayersLayout, UploadInputChange } from 'src/components/generic/GenericElCommon';
+import GenericEl from 'src/models/GenericEl';
+import Attachment from 'src/models/Attachment';
+import CopyElementModal from 'src/components/common/CopyElementModal';
+import { notification, genUnits, toBool, toNum, unitConversion } from 'src/apps/admin/generic/Utils';
+import { organizeSubValues } from 'src/apps/admin/generic/collate';
+import GenericAttachments from 'src/components/generic/GenericAttachments';
+import { SegmentTabs } from 'src/components/generic/SegmentDetails';
+import PreviewModal from 'src/components/generic/PreviewModal';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -120,7 +120,7 @@ export default class GenericElDetails extends Component {
             newProps.layers[key].fields[idx].value = curType !== 'undefined' ? toBool(curVal) : false;
           }
           if ((newProps.layers[key].fields[idx].type === 'drag_sample' && genericEl.properties.layers[key].fields[curIdx].type === 'drag_sample')
-          || (newProps.layers[key].fields[idx].type === 'drag_molecule' && genericEl.properties.layers[key].fields[curIdx].type === 'drag_molecule')) {
+            || (newProps.layers[key].fields[idx].type === 'drag_molecule' && genericEl.properties.layers[key].fields[curIdx].type === 'drag_molecule')) {
             if (typeof curVal !== 'undefined') newProps.layers[key].fields[idx].value = curVal;
           }
           if (newProps.layers[key].fields[idx].type === 'system-defined') {
@@ -400,7 +400,7 @@ export default class GenericElDetails extends Component {
     const iconClass = (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false &&
-    currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
     const copyBtn = (genericEl.can_copy && !genericEl.isNew) ? (
       <CopyElementModal element={genericEl} defCol={defCol} />
     ) : null;

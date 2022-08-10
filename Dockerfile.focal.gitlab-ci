@@ -2,8 +2,8 @@ FROM ubuntu:focal
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VRUBY=2.6.6
-ARG VNODE=14.16.0
-ARG VNODENEXT=14.17.5
+ARG VNODE=14.20.0
+ARG VNODENEXT=16.16.0
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
 RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
@@ -19,7 +19,7 @@ RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget a
       fonts-crosextra-caladea fonts-crosextra-carlito \
       fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
       fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
-      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic 
+      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic
 RUN  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
     && apt-get update -yqqq && apt-get -y install google-chrome-stable \
@@ -51,7 +51,7 @@ RUN asdf install nodejs $VNODENEXT
 RUN asdf global nodejs $VNODE
 
 RUN asdf plugin add ruby https://github.com/asdf-vm/asdf-ruby.git
-RUN asdf install ruby $VRUBY 
+RUN asdf install ruby $VRUBY
 RUN asdf global ruby $VRUBY
 
 RUN mkdir -p shared/node_modules
@@ -77,5 +77,5 @@ RUN sudo apt -yy remove lib*-dev
 RUN sudo apt-get -y --autoremove --fix-missing install \
     libboost-serialization1.71.0 \
     libboost-iostreams1.71.0 \
-    libboost-system1.71.0 
+    libboost-system1.71.0
 

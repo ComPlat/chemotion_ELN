@@ -2,17 +2,17 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
-import InboxActions from './actions/InboxActions';
-import DragDropItemTypes from './DragDropItemTypes';
-import AttachmentFetcher from './fetchers/AttachmentFetcher';
-import { GenericDSMisType, absOlsTermId } from '../admin/generic/Utils';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import { GenericDSMisType, absOlsTermId } from 'src/apps/admin/generic/Utils';
 
 const dataTarget = {
   canDrop(props, monitor) {
     const itemType = monitor.getItemType();
-    if(itemType == DragDropItemTypes.DATA ||
+    if (itemType == DragDropItemTypes.DATA ||
       itemType == DragDropItemTypes.UNLINKED_DATA ||
-      itemType == DragDropItemTypes.DATASET){
+      itemType == DragDropItemTypes.DATASET) {
       return true;
     }
   },
@@ -20,7 +20,7 @@ const dataTarget = {
   drop(props, monitor) {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
-    const {dataset_container, onChange} = props;
+    const { dataset_container, onChange } = props;
 
     switch (itemType) {
       case DragDropItemTypes.DATA:
@@ -50,16 +50,16 @@ const collectTarget = (connect, monitor) => ({
   canDrop: monitor.canDrop()
 });
 
-class ContainerDatasetField extends Component{
+class ContainerDatasetField extends Component {
 
   removeButton(dataset_container) {
-    const {readOnly, handleRemove, disabled} = this.props;
-    if(!readOnly) {
+    const { readOnly, handleRemove, disabled } = this.props;
+    if (!readOnly) {
       return (
         <Button bsSize="xsmall"
-                bsStyle="danger"
-                onClick={() => handleRemove(dataset_container)}
-                disabled={disabled}>
+          bsStyle="danger"
+          onClick={() => handleRemove(dataset_container)}
+          disabled={disabled}>
           <i className="fa fa-trash-o"></i>
         </Button>
       );
@@ -67,53 +67,53 @@ class ContainerDatasetField extends Component{
   }
 
   renderOverlay(color) {
-      return (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          height: '100%',
-          width: '100%',
-          zIndex: 1,
-          opacity: 0.5,
-          backgroundColor: color,
-        }} />
-      );
-    }
+    return (
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        height: '100%',
+        width: '100%',
+        zIndex: 1,
+        opacity: 0.5,
+        backgroundColor: color,
+      }} />
+    );
+  }
 
   render() {
-    const {connectDropTarget, isOver, canDrop, dataset_container, handleUndo, kind,
-            handleModalOpen, disabled} = this.props;
-    if(dataset_container.is_deleted){
+    const { connectDropTarget, isOver, canDrop, dataset_container, handleUndo, kind,
+      handleModalOpen, disabled } = this.props;
+    if (dataset_container.is_deleted) {
       return (
         <div><strike>{dataset_container.name}</strike>
 
-            <Button
-              className="pull-right"
-              bsSize="xsmall"
-              bsStyle="danger"
-              onClick={() => handleUndo(dataset_container)}
-              disabled={disabled}
-            >
-              <i className="fa fa-undo"></i>
-            </Button>
+          <Button
+            className="pull-right"
+            bsSize="xsmall"
+            bsStyle="danger"
+            onClick={() => handleUndo(dataset_container)}
+            disabled={disabled}
+          >
+            <i className="fa fa-undo"></i>
+          </Button>
 
         </div>
       )
-    }else{
+    } else {
       return connectDropTarget(
         <div>
           {dataset_container.dataset && dataset_container.dataset.klass_ols !== absOlsTermId(kind) ? <GenericDSMisType /> : null}
-        <a style={{cursor: 'pointer'}} onClick={() => handleModalOpen(dataset_container)}>
-          {dataset_container.name || 'new'}
-        </a>
-        <ButtonToolbar className="pull-right">
-          <Button bsSize="xsmall" bsStyle="info" onClick={() => AttachmentFetcher.downloadZip(dataset_container.id)}>
-            <i className="fa fa-download"></i>
-          </Button>
-          {this.removeButton(dataset_container)}
-        </ButtonToolbar>
-        {isOver && canDrop && this.renderOverlay('green')}
+          <a style={{ cursor: 'pointer' }} onClick={() => handleModalOpen(dataset_container)}>
+            {dataset_container.name || 'new'}
+          </a>
+          <ButtonToolbar className="pull-right">
+            <Button bsSize="xsmall" bsStyle="info" onClick={() => AttachmentFetcher.downloadZip(dataset_container.id)}>
+              <i className="fa fa-download"></i>
+            </Button>
+            {this.removeButton(dataset_container)}
+          </ButtonToolbar>
+          {isOver && canDrop && this.renderOverlay('green')}
         </div>
       )
     }

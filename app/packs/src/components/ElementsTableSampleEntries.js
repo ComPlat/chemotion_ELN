@@ -1,28 +1,28 @@
 import React, { Component } from 'react';
 import { Table, Button, Tooltip, OverlayTrigger, Label } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import ElementCheckbox from './ElementCheckbox';
-import ElementCollectionLabels from './ElementCollectionLabels';
-import ElementAnalysesLabels from './ElementAnalysesLabels';
-import ElementReactionLabels from './ElementReactionLabels';
-import ElementWellplateLabels from './ElementWellplateLabels';
-import GenericElementLabels from './generic/GenericElementLabels';
-import PubchemLabels from './PubchemLabels';
-import ChemrepoLabels from './ChemrepoLabels';
-import ComputedPropLabel from './computed_props/ComputedPropLabel';
-import ArrayUtils from './utils/ArrayUtils';
-import ElementContainer from './ElementContainer';
+import ElementCheckbox from 'src/components/ElementCheckbox';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
+import ElementReactionLabels from 'src/components/ElementReactionLabels';
+import ElementWellplateLabels from 'src/components/ElementWellplateLabels';
+import GenericElementLabels from 'src/components/generic/GenericElementLabels';
+import PubchemLabels from 'src/components/PubchemLabels';
+import ChemrepoLabels from 'src/components/ChemrepoLabels';
+import ComputedPropLabel from 'src/components/computed_props/ComputedPropLabel';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import ElementContainer from 'src/components/ElementContainer';
 
-import UIStore from './stores/UIStore';
-import ElementStore from './stores/ElementStore';
-import KeyboardStore from './stores/KeyboardStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import DragDropItemTypes from './DragDropItemTypes';
-import SampleName from './common/SampleName';
-import XMolHeadCont from './extra/ElementsTableSampleEntriesXMolHeadCont';
-import { sampleShowOrNew } from './routesUtils';
-import SvgWithPopover from './common/SvgWithPopover';
-import { ShowUserLabels } from './UserLabels';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import SampleName from 'src/components/common/SampleName';
+import XMolHeadCont from 'src/components/extra/ElementsTableSampleEntriesXMolHeadCont';
+import { sampleShowOrNew } from 'src/components/routesUtils';
+import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import { ShowUserLabels } from 'src/components/UserLabels';
 
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;
@@ -153,7 +153,7 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
     >
-      { sample.molecule && sample.molecule.inchikey === 'DUMMY' ?
+      {sample.molecule && sample.molecule.inchikey === 'DUMMY' ?
         (<td colSpan="3" style={{ position: 'relative ' }} ><div><h4>(No-structure sample)</h4></div></td>) :
         (
           <td colSpan="2" style={{ position: 'relative ' }} >

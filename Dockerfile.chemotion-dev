@@ -7,8 +7,8 @@ FROM ubuntu:focal
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VRUBY=2.6.6
-ARG VNODE=14.16.0
-ARG VNODENEXT=14.17.5
+ARG VNODE=14.20.0
+ARG VNODENEXT=16.16.0
 ARG ASDF_BRANCH=v0.8.1
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y

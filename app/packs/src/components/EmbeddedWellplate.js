@@ -2,12 +2,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Glyphicon } from 'react-bootstrap';
 import Aviator from 'aviator';
-import UIStore from './stores/UIStore';
-import { wellplateShowOrNew } from './routesUtils';
-import ElementCollectionLabels from './ElementCollectionLabels';
-import WellplatesFetcher from './fetchers/WellplatesFetcher';
-import ResearchPlan from './models/ResearchPlan';
-import Wellplate from './models/Wellplate';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { wellplateShowOrNew } from 'src/components/routesUtils';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ResearchPlan from 'src/models/ResearchPlan';
+import Wellplate from 'src/models/Wellplate';
 
 export default class EmbeddedWellplate extends Component {
   constructor(props) {

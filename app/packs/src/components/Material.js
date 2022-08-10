@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Checkbox, Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import DragDropItemTypes from './DragDropItemTypes';
-import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
-import SampleName from './common/SampleName';
-import ElementActions from './actions/ElementActions';
-import { UrlSilentNavigation, SampleCode } from './utils/ElementUtils';
-import { correctPrefix, validDigit } from './utils/MathUtils';
-import Reaction from './models/Reaction';
-import Sample from './models/Sample';
-import { permitCls, permitOn } from './common/uis';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo';
+import SampleName from 'src/components/common/SampleName';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { UrlSilentNavigation, SampleCode } from 'src/utilities/ElementUtils';
+import { correctPrefix, validDigit } from 'src/utilities/MathUtils';
+import Reaction from 'src/models/Reaction';
+import Sample from 'src/models/Sample';
+import { permitCls, permitOn } from 'src/components/common/uis';
 
 const matSource = {
   beginDrag(props) {
@@ -124,7 +124,7 @@ class Material extends Component {
     const tooltip = has_density || has_molarity ?
       (
         <Tooltip id="density_info">
-          { has_density ? `density = ${density}` : `molarity = ${molarity_value} ${molarity_unit}` }
+          {has_density ? `density = ${density}` : `molarity = ${molarity_value} ${molarity_unit}`}
         </Tooltip>
       )
       : <Tooltip id="density_info">no density or molarity defined</Tooltip>;
@@ -212,7 +212,7 @@ class Material extends Component {
 
   equivalentOrYield(material) {
     if (this.props.materialGroup === 'products') {
-      if (this.props.reaction.hasPolymers()){
+      if (this.props.reaction.hasPolymers()) {
         return (
           <FormControl
             type="text"
@@ -222,11 +222,11 @@ class Material extends Component {
             disabled
           />
         );
-      }else{
+      } else {
         return (
           <OverlayTrigger
             placement="top"
-            overlay={<Tooltip id="product-max-amount-info">max theoretical mass {Math.round(material.maxAmount * 10000)/10} mg</Tooltip>}
+            overlay={<Tooltip id="product-max-amount-info">max theoretical mass {Math.round(material.maxAmount * 10000) / 10} mg</Tooltip>}
           >
             <div>
               <FormControl
@@ -746,8 +746,8 @@ class Material extends Component {
     }
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     const component = sp ?
-          this.solventMaterial(this.props, style) :
-          this.generalMaterial(this.props, style);
+      this.solventMaterial(this.props, style) :
+      this.generalMaterial(this.props, style);
 
     return component;
   }

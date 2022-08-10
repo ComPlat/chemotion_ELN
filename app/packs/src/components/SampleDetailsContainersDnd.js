@@ -1,8 +1,8 @@
 import React from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import DragDropItemTypes from './DragDropItemTypes';
-import { HeaderDeleted, HeaderNormal } from './SampleDetailsContainersAux';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { HeaderDeleted, HeaderNormal } from 'src/components/SampleDetailsContainersAux';
 
 const orderSource = {
   beginDrag(props) {

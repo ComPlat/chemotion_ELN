@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Tooltip, OverlayTrigger, MenuItem, SplitButton, ButtonGroup } from 'react-bootstrap';
 
-import Utils from '../utils/Functions';
+import Utils from 'src/utilities/Functions';
 
 const PrintCodeButton = ({
   element,

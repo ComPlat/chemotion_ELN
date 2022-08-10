@@ -4,12 +4,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Button, Accordion } from 'react-bootstrap';
 
-import ReportActions from './actions/ReportActions';
-import DetailActions from './actions/DetailActions';
-import UIStore from './stores/UIStore';
-import ReportStore from './stores/ReportStore';
+import ReportActions from 'src/stores/alt/actions/ReportActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ReportStore from 'src/stores/alt/stores/ReportStore';
 
-import ComputedPropsGraphContainer from './computed_props/ComputedPropsGraphContainer';
+import ComputedPropsGraphContainer from 'src/components/computed_props/ComputedPropsGraphContainer';
 
 export default class GraphContainer extends React.Component {
   constructor(props) {

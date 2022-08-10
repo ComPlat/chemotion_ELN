@@ -1,21 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import AreaTitle from './summary/AreaTitle';
-import AreaSummary from './summary/AreaSummary';
+import AreaTitle from 'src/components/qc/components/summary/AreaTitle';
+import AreaSummary from 'src/components/qc/components/summary/AreaSummary';
 
-import BlockTitle from './substance/BlockTitle';
-import BlockHnmr from './substance/BlockHnmr';
-import BlockCnmr from './substance/BlockCnmr';
-import BlockMS from './substance/BlockMS';
-import BlockIr from './substance/BlockIr';
-import BlockEa from './substance/BlockEa';
-import BlockConclusion from './substance/BlockConclusion';
+import BlockTitle from 'src/components/qc/components/substance/BlockTitle';
+import BlockHnmr from 'src/components/qc/components/substance/BlockHnmr';
+import BlockCnmr from 'src/components/qc/components/substance/BlockCnmr';
+import BlockMS from 'src/components/qc/components/substance/BlockMS';
+import BlockIr from 'src/components/qc/components/substance/BlockIr';
+import BlockEa from 'src/components/qc/components/substance/BlockEa';
+import BlockConclusion from 'src/components/qc/components/substance/BlockConclusion';
 
-import { prismQcs } from '../utils/qcs';
-import { evaluateMs } from '../utils/ms';
-import { evaluateIr } from '../utils/ir';
-import { evaluateNmr } from '../utils/nmr';
+import { prismQcs } from 'src/components/qc/utils/qcs';
+import { evaluateMs } from 'src/components/qc/utils/ms';
+import { evaluateIr } from 'src/components/qc/utils/ir';
+import { evaluateNmr } from 'src/components/qc/utils/nmr';
 
 const QcContent = ({ sample, infer, curation }) => {
   const {

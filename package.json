@@ -113,11 +113,13 @@
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.3",
     "babel-loader": "^8.2.2",
     "enzyme": "^3.7.0",
-    "eslint": "^4.19.1",
-    "eslint-config-airbnb": "^16.1.0",
-    "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-jsx-a11y": "^6.0.2",
-    "eslint-plugin-react": "^7.4.0",
+    "eslint": "^8.20.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-filtered-fix": "^0.3.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsx-a11y": "^6.6.1",
+    "eslint-plugin-no-relative-import-paths": "^1.4.0",
+    "eslint-plugin-react": "^7.30.1",
     "expect": "^24.7.1",
     "jsdom-global": "2.1.0",
     "mocha": "^8.1.3",
@@ -130,11 +132,11 @@
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
-    "test": "mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
+    "test": "NODE_PATH=./app/packs yarn mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
   },
   "license": "MIT",
   "engines": {
-    "node": "14.16.0"
+    "node": "14.20.0"
   },
   "browserslist": [
     "defaults"

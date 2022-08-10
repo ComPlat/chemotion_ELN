@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
-import PredictionActions from '../actions/PredictionActions';
-import UIActions from '../actions/UIActions';
-import DetailActions from '../actions/DetailActions';
-import LoadingActions from '../actions/LoadingActions';
+import PredictionActions from 'src/stores/alt/actions/PredictionActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 const clickToClose = (el) => {
   DetailActions.close(el);

@@ -3,16 +3,16 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import Numeral from 'numeral';
-import GenericSubField from '../models/GenericSubField';
-import { AddRowBtn, DelRowBtn, DnDRowBtn, NullRowBtn } from './GridBtn';
-import { ColumnHeader, ColumnRow, NoRow } from './GridEntry';
-import UConverterRenderer from './UConverterRenderer';
-import { genUnits, unitConversion, molOptions, samOptions } from '../../admin/generic/Utils';
-import DropRenderer from './DropRenderer';
-import DropTextRenderer from './DropTextRenderer';
-import DropLinkRenderer from './DropLinkRenderer';
-import SampOption from './SamOption';
-import DragDropItemTypes from '../DragDropItemTypes';
+import GenericSubField from 'src/models/GenericSubField';
+import { AddRowBtn, DelRowBtn, DnDRowBtn, NullRowBtn } from 'src/components/generic/GridBtn';
+import { ColumnHeader, ColumnRow, NoRow } from 'src/components/generic/GridEntry';
+import UConverterRenderer from 'src/components/generic/UConverterRenderer';
+import { genUnits, unitConversion, molOptions, samOptions } from 'src/apps/admin/generic/Utils';
+import DropRenderer from 'src/components/generic/DropRenderer';
+import DropTextRenderer from 'src/components/generic/DropTextRenderer';
+import DropLinkRenderer from 'src/components/generic/DropLinkRenderer';
+import SampOption from 'src/components/generic/SamOption';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
 export default class TableRecord extends React.Component {
   constructor(props) {

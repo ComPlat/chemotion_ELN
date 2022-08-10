@@ -4,17 +4,17 @@ import PropTypes from 'prop-types';
 import { ListGroup, ListGroupItem, Button, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
-import { Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType } from './LiteratureCommon';
-import Sample from './models/Sample';
-import Reaction from './models/Reaction';
-import ResearchPlan from './models/ResearchPlan';
-import Literature from './models/Literature';
-import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
-import UserStore from './stores/UserStore';
-import NotificationActions from './actions/NotificationActions';
-import LoadingActions from './actions/LoadingActions';
-import CitationPanel from './CitationPanel';
-import { CitationTypeMap } from './CitationType';
+import { Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType } from 'src/components/LiteratureCommon';
+import Sample from 'src/models/Sample';
+import Reaction from 'src/models/Reaction';
+import ResearchPlan from 'src/models/ResearchPlan';
+import Literature from 'src/models/Literature';
+import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import CitationPanel from 'src/components/CitationPanel';
+import { CitationTypeMap } from 'src/components/CitationType';
 
 const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
@@ -127,7 +127,7 @@ export default class DetailsTabLiteratures extends Component {
       doi, url, title, isbn
     } = literature;
     if (element.isNew === true && element.type === 'reaction'
-    && element.literatures && element.literatures.size > 0) {
+      && element.literatures && element.literatures.size > 0) {
       const newlit = {
         ...literature,
         doi: sanitizeDoi(doi),

@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Col } from 'react-bootstrap';
 
-import List from './List';
-import ElementDetails from './ElementDetails';
-import ElementStore from './stores/ElementStore';
+import List from 'src/components/List';
+import ElementDetails from 'src/components/ElementDetails';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class Elements extends Component {
   constructor(props) {
