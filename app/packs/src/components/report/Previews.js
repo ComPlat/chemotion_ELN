@@ -1,11 +1,11 @@
 import React from 'react';
-import { SectionReaction } from './SectionReaction';
-import SectionSample from './SectionSample';
-import SectionSiProcedures from './SectionSiProcedures';
-import SectionSiSynthesis from './SectionSiSynthesis';
-import SectionSpectrum from './SectionSpectrum';
-import SectionReactionList from './SectionReactionList';
-import SectionSiSynthesisStdRxn from './SectionSiSynthesisStdRxn';
+import { SectionReaction } from 'src/components/report/SectionReaction';
+import SectionSample from 'src/components/report/SectionSample';
+import SectionSiProcedures from 'src/components/report/SectionSiProcedures';
+import SectionSiSynthesis from 'src/components/report/SectionSiSynthesis';
+import SectionSpectrum from 'src/components/report/SectionSpectrum';
+import SectionReactionList from 'src/components/report/SectionReactionList';
+import SectionSiSynthesisStdRxn from 'src/components/report/SectionSiSynthesisStdRxn';
 
 const objToKeyValPairs = (obj = []) => (
   obj.reduce((ob, { text, checked }) => {

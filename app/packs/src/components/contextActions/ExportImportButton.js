@@ -1,21 +1,20 @@
-import React, {Component} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { Dropdown, Button, MenuItem, Glyphicon } from 'react-bootstrap';
+import { Dropdown, MenuItem, Glyphicon } from 'react-bootstrap';
 
-import CollectionActions from '../actions/CollectionActions';
-import ElementActions from '../actions/ElementActions';
-import UIActions from '../actions/UIActions';
-import ModalImport from './ModalImport';
-import ModalImportChemScanner from './ModalImportChemScanner';
-import ModalExport from './ModalExport';
-import ModalReactionExport from './ModalReactionExport';
-import ModalExportCollection from './ModalExportCollection';
-import ModalImportCollection from './ModalImportCollection';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ModalImport from 'src/components/contextActions/ModalImport';
+import ModalImportChemScanner from 'src/components/contextActions/ModalImportChemScanner';
+import ModalExport from 'src/components/contextActions/ModalExport';
+import ModalReactionExport from 'src/components/contextActions/ModalReactionExport';
+import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
+import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
   <Dropdown id='export-dropdown'>
     <Dropdown.Toggle className={customClass}>
-      <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
+      <Glyphicon glyph="import" /> <Glyphicon glyph="export" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
       <MenuItem onSelect={() => exportFunction(updateModalProps)}

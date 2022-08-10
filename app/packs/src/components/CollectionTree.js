@@ -1,20 +1,20 @@
 import React from 'react';
 import { Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstrap';
 import update from 'immutability-helper';
-import CollectionStore from './stores/CollectionStore';
-import CollectionActions from './actions/CollectionActions';
-import CollectionSubtree from './CollectionSubtree';
-import UIActions from './actions/UIActions';
-import InboxActions from './actions/InboxActions';
-import LoadingActions from './actions/LoadingActions';
-import UIStore from './stores/UIStore';
-import ElementStore from './stores/ElementStore';
-import InboxStore from './stores/InboxStore';
-import Xdiv from './extra/CollectionTreeXdiv';
-import UserInfos from './UserInfos';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import CollectionSubtree from 'src/components/CollectionSubtree';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
+import Xdiv from 'src/components/extra/CollectionTreeXdiv';
+import UserInfos from 'src/components/UserInfos';
 
-import DeviceBox from './inbox/DeviceBox';
-import UnsortedBox from './inbox/UnsortedBox';
+import DeviceBox from 'src/components/inbox/DeviceBox';
+import UnsortedBox from 'src/components/inbox/UnsortedBox';
 
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 

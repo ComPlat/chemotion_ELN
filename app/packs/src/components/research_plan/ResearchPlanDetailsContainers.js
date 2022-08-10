@@ -1,19 +1,19 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
-import Container from '../models/Container';
-import ContainerComponent from '../ContainerComponent';
-import QuillViewer from '../QuillViewer';
-import ImageModal from '../common/ImageModal';
-import { instrumentText } from '../utils/ElementUtils';
-import { previewContainerImage } from './../utils/imageHelper';
-import { JcampIds, BuildSpcInfos } from '../utils/SpectraHelper';
-import UIStore from '../stores/UIStore';
-import SpectraActions from '../actions/SpectraActions';
-import LoadingActions from '../actions/LoadingActions';
-import ViewSpectra from '../ViewSpectra';
+import Container from 'src/models/Container';
+import ContainerComponent from 'src/components/ContainerComponent';
+import QuillViewer from 'src/components/QuillViewer';
+import ImageModal from 'src/components/common/ImageModal';
+import { instrumentText } from 'src/utilities/ElementUtils';
+import { previewContainerImage } from 'src/utilities/imageHelper';
+import { JcampIds, BuildSpcInfos } from 'src/utilities/SpectraHelper';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import SpectraActions from 'src/stores/alt/actions/SpectraActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ViewSpectra from 'src/components/ViewSpectra';
 
-import TextTemplateActions from '../actions/TextTemplateActions';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 const SpectraEditorBtn = ({
   element, spcInfo, hasJcamp, hasChemSpectra,
@@ -58,7 +58,7 @@ const SpectraEditorBtn = ({
     >
       <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
     </Button>
-    )}
+  )}
   </OverlayTrigger>
 );
 

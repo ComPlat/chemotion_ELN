@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-import WellContainer from './WellContainer';
-import WellplateLabels from './WellplateLabels';
-import WellOverlay from './WellOverlay';
-import WellplatesFetcher from './fetchers/WellplatesFetcher';
+import WellContainer from 'src/components/WellContainer';
+import WellplateLabels from 'src/components/WellplateLabels';
+import WellOverlay from 'src/components/WellOverlay';
+import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 
 export default class Wellplate extends Component {
   constructor(props) {
@@ -138,8 +138,8 @@ export default class Wellplate extends Component {
   }
 
   render() {
-    const { wells, readoutTitles, size, cols, width, handleWellsChange} = this.props;
-    const { showOverlay, overlayTarget, overlayWell, overlayPlacement, selectedColor} = this.state;
+    const { wells, readoutTitles, size, cols, width, handleWellsChange } = this.props;
+    const { showOverlay, overlayTarget, overlayWell, overlayPlacement, selectedColor } = this.state;
     const style = {
       width: (cols + 1) * width,
       height: ((size / cols) + 1) * width

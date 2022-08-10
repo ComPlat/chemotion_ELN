@@ -6,28 +6,28 @@ import {
   Button,
   OverlayTrigger, SplitButton, ButtonGroup, MenuItem, Tooltip
 } from 'react-bootstrap';
-import Container from './models/Container';
-import ContainerComponent from './ContainerComponent';
-import PrintCodeButton from './common/PrintCodeButton';
-import QuillViewer from './QuillViewer';
-import ImageModal from './common/ImageModal';
-import { hNmrCount, cNmrCount, instrumentText } from './utils/ElementUtils';
-import { contentToText } from './utils/quillFormat';
-import { chmoConversions } from './OlsComponent';
-import { previewContainerImage } from './utils/imageHelper';
-import { JcampIds, BuildSpcInfos } from './utils/SpectraHelper';
-import UIStore from './stores/UIStore';
-import SpectraActions from './actions/SpectraActions';
-import LoadingActions from './actions/LoadingActions';
-import ViewSpectra from './ViewSpectra';
+import Container from 'src/models/Container';
+import ContainerComponent from 'src/components/ContainerComponent';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import QuillViewer from 'src/components/QuillViewer';
+import ImageModal from 'src/components/common/ImageModal';
+import { hNmrCount, cNmrCount, instrumentText } from 'src/utilities/ElementUtils';
+import { contentToText } from 'src/utilities/quillFormat';
+import { chmoConversions } from 'src/components/OlsComponent';
+import { previewContainerImage } from 'src/utilities/imageHelper';
+import { JcampIds, BuildSpcInfos } from 'src/utilities/SpectraHelper';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import SpectraActions from 'src/stores/alt/actions/SpectraActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ViewSpectra from 'src/components/ViewSpectra';
 
-import TextTemplateActions from './actions/TextTemplateActions';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 const nmrMsg = (reaction, container) => {
   if (container.extended_metadata &&
-      (typeof container.extended_metadata.kind === 'undefined' ||
+    (typeof container.extended_metadata.kind === 'undefined' ||
       (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId)
-      )) {
+    )) {
     return '';
   }
   const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
@@ -84,7 +84,7 @@ const SpectraEditorBtn = ({
     >
       <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
     </Button>
-    )}
+  )}
   </OverlayTrigger>
 );
 
@@ -312,7 +312,7 @@ export default class ReactionDetailsContainers extends Component {
                 <span style={{ float: 'left', marginRight: '5px' }}>
                   Content:
                 </span>
-                <QuillViewer value={contentOneLine}  />
+                <QuillViewer value={contentOneLine} />
               </div>
 
             </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Tabs, Tab, Button, Label, Modal, ButtonToolbar} from 'react-bootstrap';
+import { Button, Modal, ButtonToolbar } from 'react-bootstrap';
 
 const ConfirmModal = ({ showModal, title, content, onClick, dialogClassName }) => {
   return (

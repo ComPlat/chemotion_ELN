@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { evalCurTitle } from './eval';
+import { evalCurTitle } from 'src/components/qc/components/summary/eval';
 
 const AreaTitle = ({ curation }) => (
   <div>

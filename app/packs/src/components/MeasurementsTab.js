@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import { Button, ButtonGroup } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 
-import { StoreContext } from '../mobx-stores/RootStore';
-import MeasurementsTable from './MeasurementsTable';
-import MeasurementsList from './MeasurementsList';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import MeasurementsTable from 'src/components/MeasurementsTable';
+import MeasurementsList from 'src/components/MeasurementsList';
 
 class MeasurementsTab extends Component {
   static propTypes = {

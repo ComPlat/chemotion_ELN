@@ -6,13 +6,13 @@ import {
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 
-import { elementShowOrNew } from '../routesUtils';
-import UIStore from '../stores/UIStore';
-import UserStore from '../stores/UserStore';
-import ElementActions from '../actions/ElementActions';
-import ClipboardActions from '../actions/ClipboardActions';
-import SamplesFetcher from '../fetchers/SamplesFetcher';
-import MatrixCheck from '../common/MatrixCheck';
+import { elementShowOrNew } from 'src/components/routesUtils';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 
 export default class CreateButton extends React.Component {
   constructor(props) {
@@ -174,21 +174,21 @@ export default class CreateButton extends React.Component {
   }
 
   noSampleSelected() {
-    const {sample} = UIStore.getState()
+    const { sample } = UIStore.getState()
     return sample.checkedIds.size == 0 && sample.checkedAll == false
   }
 
   isAllCollection() {
-    const {currentCollection} = UIStore.getState()
+    const { currentCollection } = UIStore.getState()
     return currentCollection && currentCollection.label == 'All'
   }
 
   createElementOfType(type) {
-    const {currentCollection,isSync} = UIStore.getState();
+    const { currentCollection, isSync } = UIStore.getState();
     const uri = isSync
       ? `/scollection/${currentCollection.id}/${type}/new`
       : `/collection/${currentCollection.id}/${type}/new`;
-    Aviator.navigate(uri, { silent: true} );
+    Aviator.navigate(uri, { silent: true });
     const e = { type, params: { collectionID: currentCollection.id } };
     e.params[`${type}ID`] = 'new'
     const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
@@ -264,7 +264,7 @@ export default class CreateButton extends React.Component {
           <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
           <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
           <MenuItem onSelect={() => this.splitSelectionAsSubsamples()}
-                    disabled={this.noSampleSelected() || this.isAllCollection()}>
+            disabled={this.noSampleSelected() || this.isAllCollection()}>
             Split Sample
           </MenuItem>
           <MenuItem
@@ -274,7 +274,7 @@ export default class CreateButton extends React.Component {
             Split Wellplate
           </MenuItem>
         </SplitButton>
-    </div>
+      </div>
     )
   }
 }

@@ -3,21 +3,21 @@ import SVG from 'react-inlinesvg';
 import { Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
 import classnames from 'classnames';
 
-import ElementContainer from './ElementContainer';
-import ElementCheckbox from './ElementCheckbox';
-import ElementCollectionLabels from './ElementCollectionLabels';
-import ElementAnalysesLabels from './ElementAnalysesLabels';
-import ArrayUtils from './utils/ArrayUtils';
+import ElementContainer from 'src/components/ElementContainer';
+import ElementCheckbox from 'src/components/ElementCheckbox';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
-import UIStore from './stores/UIStore';
-import ElementStore from './stores/ElementStore';
-import KeyboardStore from './stores/KeyboardStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import DragDropItemTypes from './DragDropItemTypes';
-import XTdCont from './extra/ElementsTableEntriesXTdCont';
-import { elementShowOrNew } from './routesUtils';
-import SvgWithPopover from './common/SvgWithPopover';
-import UserStore from './stores/UserStore';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import XTdCont from 'src/components/extra/ElementsTableEntriesXTdCont';
+import { elementShowOrNew } from 'src/components/routesUtils';
+import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -45,9 +45,9 @@ export default class ElementsTableEntries extends Component {
       return false
 
     let documentKeyDownCode = state.documentKeyDownCode
-    let {keyboardElementIndex} = this.state
+    let { keyboardElementIndex } = this.state
 
-    switch(documentKeyDownCode) {
+    switch (documentKeyDownCode) {
       case 13: // Enter
       case 39: // Right
         if (keyboardElementIndex != null && elements[keyboardElementIndex] != null) {
@@ -65,23 +65,23 @@ export default class ElementsTableEntries extends Component {
       case 40: // Down
         if (keyboardElementIndex == null) {
           keyboardElementIndex = 0
-        } else if (keyboardElementIndex < elements.length - 1){
+        } else if (keyboardElementIndex < elements.length - 1) {
           keyboardElementIndex++
         }
 
         break
     }
-    this.setState({keyboardElementIndex})
+    this.setState({ keyboardElementIndex })
   }
 
   isElementChecked(element) {
-    let {checkedIds, uncheckedIds, checkedAll} = this.props.ui;
+    let { checkedIds, uncheckedIds, checkedAll } = this.props.ui;
     return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
       || ArrayUtils.isValInArray(checkedIds || [], element.id);
   }
 
   isElementSelected(element) {
-    const {currentElement} = this.props;
+    const { currentElement } = this.props;
     return (currentElement && currentElement.id == element.id);
   }
 
@@ -166,7 +166,7 @@ export default class ElementsTableEntries extends Component {
   }
 
   previewColumn(element) {
-    const {ui} = this.props;
+    const { ui } = this.props;
     const classNames = classnames(
       {
         'molecule': element.type == 'sample'
@@ -191,18 +191,18 @@ export default class ElementsTableEntries extends Component {
       cursor: 'pointer'
     };
     let tdExtraContents = [];
-    for (let j=0;j < XTdCont.count;j++){
-      let NoName = XTdCont["content"+j];
-      tdExtraContents.push(<NoName element={element}/>);
+    for (let j = 0; j < XTdCont.count; j++) {
+      let NoName = XTdCont["content" + j];
+      tdExtraContents.push(<NoName element={element} />);
     }
 
-    const {showPreviews} = UIStore.getState();
+    const { showPreviews } = UIStore.getState();
     const clickToShowDetails = e => this.showDetails(element);
     if (showPreviews && (element.type == 'reaction')) {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
-          <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
-          {tdExtraContents.map((e)=>{return e;})}
+          <SVG src={element.svgPath} className={classNames} key={element.svgPath} />
+          {tdExtraContents.map((e) => { return e; })}
         </td>
       );
     } else if (element.type === 'research_plan') {
@@ -220,19 +220,19 @@ export default class ElementsTableEntries extends Component {
         </td>
       );
     }
-    return <td style={{display:'none', cursor: 'pointer'}} onClick={e => this.showDetails(element)}/>;
+    return <td style={{ display: 'none', cursor: 'pointer' }} onClick={e => this.showDetails(element)} />;
   }
 
   dragColumn(element) {
-    const {showDragColumn} = this.props;
-    if(showDragColumn) {
+    const { showDragColumn } = this.props;
+    if (showDragColumn) {
       return (
-        <td style={{verticalAlign: 'middle', textAlign: 'center'}}>
+        <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
           {this.dragHandle(element)}
         </td>
       );
     } else {
-     return <td style={{display:'none'}}></td>;
+      return <td style={{ display: 'none' }}></td>;
     }
   }
 
@@ -293,7 +293,7 @@ export default class ElementsTableEntries extends Component {
           tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-home c-bs-primary"/>
+              <i className="fa fa-home c-bs-primary" />
             </OverlayTrigger>
           )
           break;
@@ -301,7 +301,7 @@ export default class ElementsTableEntries extends Component {
           tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-bookmark c-bs-success"/>
+              <i className="fa fa-bookmark c-bs-success" />
             </OverlayTrigger>
           )
           break;
@@ -309,7 +309,7 @@ export default class ElementsTableEntries extends Component {
           tooltip = <Tooltip id="roleTp">Single</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-asterisk c-bs-danger"/>
+              <i className="fa fa-asterisk c-bs-danger" />
             </OverlayTrigger>
           )
           break;
@@ -322,7 +322,7 @@ export default class ElementsTableEntries extends Component {
   sampleAnalysesLabels(element) {
     if (element.type == 'sample') {
       return (
-        <ElementAnalysesLabels element={element} key={element.id+"_analyses"}/>
+        <ElementAnalysesLabels element={element} key={element.id + "_analyses"} />
       )
     }
   }
@@ -335,14 +335,14 @@ export default class ElementsTableEntries extends Component {
       <Table className="elements" bordered hover style={{ borderTop: 0 }}>
         <tbody>
           {elements.map((element, index) => {
-            const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name: '';
+            const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name : '';
             let style = {};
             if (this.isElementSelected(element) ||
               (keyboardElementIndex != null && keyboardElementIndex === index)) {
               style = {
-              color: '#000',
-              background: '#ddd',
-              border: '4px solid #337ab7'
+                color: '#000',
+                background: '#ddd',
+                border: '4px solid #337ab7'
               };
             }
 
@@ -355,7 +355,7 @@ export default class ElementsTableEntries extends Component {
                     checked={this.isElementChecked(element)}
                   /><br />
                 </td>
-                <td onClick={e => this.showDetails(element)} style={{ cursor: 'pointer' }} width={element.type === 'research_plan' ? '280px': 'unset'}>
+                <td onClick={e => this.showDetails(element)} style={{ cursor: 'pointer' }} width={element.type === 'research_plan' ? '280px' : 'unset'}>
                   <div>
                     {
                       <SvgWithPopover
@@ -378,7 +378,7 @@ export default class ElementsTableEntries extends Component {
                     {this.reactionRole(element)}
                     <br />
                     {sampleMoleculeName}
-                    <ElementCollectionLabels element={element} key={element.id}/>
+                    <ElementCollectionLabels element={element} key={element.id} />
                     {this.sampleAnalysesLabels(element)}
                     {this.topSecretIcon(element)}
                   </div>

@@ -1,20 +1,20 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, Overlay } from 'react-bootstrap';
+import { FormGroup, FormControl, Table, ListGroup, ListGroupItem, Button } from 'react-bootstrap';
 
 
 export default class HyperLinksSection extends Component {
   constructor(props) {
     super(props);
     this.state = {
-        link: null
-      };
+      link: null
+    };
 
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleLinkInputChange = this.handleLinkInputChange.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
   }
-  
+
   handleLinkInputChange(event) {
     const { value } = event.target;
 
@@ -23,15 +23,15 @@ export default class HyperLinksSection extends Component {
 
   handleAddLink() {
     const { link } = this.state;
-    this.props.onAddLink(link);  
+    this.props.onAddLink(link);
     this.setState({ link: null })
   }
 
   renderHyperLinkInput() {
-    const {  link } = this.state;
+    const { link } = this.state;
     const { disabled } = this.props;
 
-    if(disabled) {
+    if (disabled) {
       return <div></div>;
     }
 
@@ -86,7 +86,7 @@ export default class HyperLinksSection extends Component {
   }
 
   handleRemoveLink(link) {
-    this.props.onRemoveLink(link); 
+    this.props.onRemoveLink(link);
   }
 
   removeLinkButton(link) {
@@ -118,9 +118,9 @@ export default class HyperLinksSection extends Component {
   render() {
     return (
       <div>
-          <label>Hyperlinks: </label>
-          {this.renderHyperLinkInput()}
-          {this.renderHyperLinkList()}
+        <label>Hyperlinks: </label>
+        {this.renderHyperLinkInput()}
+        {this.renderHyperLinkList()}
       </div>
     );
   }

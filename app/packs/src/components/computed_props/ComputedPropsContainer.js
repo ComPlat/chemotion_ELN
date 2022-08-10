@@ -2,11 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ButtonGroup, Button, ControlLabel } from 'react-bootstrap';
 
-import ElementActions from '../actions/ElementActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 
-import ComputedPropsGraphContainer from './ComputedPropsGraphContainer';
-import SampleComputedProps from './SampleComputedProps';
-import { ConfirmModal } from '../common/ConfirmModal';
+import ComputedPropsGraphContainer from 'src/components/computed_props/ComputedPropsGraphContainer';
+import SampleComputedProps from 'src/components/computed_props/SampleComputedProps';
+import { ConfirmModal } from 'src/components/common/ConfirmModal';
 
 export default class ComputedPropsContainer extends React.Component {
   constructor(props) {

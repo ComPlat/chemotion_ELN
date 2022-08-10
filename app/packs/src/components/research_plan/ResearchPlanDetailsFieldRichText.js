@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import QuillEditor from '../QuillEditor';
-import QuillViewer from '../QuillViewer';
+import QuillEditor from 'src/components/QuillEditor';
+import QuillViewer from 'src/components/QuillViewer';
 
 export default class ResearchPlanDetailsFieldRichText extends Component {
 

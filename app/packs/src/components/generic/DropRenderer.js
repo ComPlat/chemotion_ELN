@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { cloneDeep } from 'lodash';
-import GenericElTableDropTarget from './GenericElTableDropTarget';
+import GenericElTableDropTarget from 'src/components/generic/GenericElTableDropTarget';
 
 const DropRenderer = (props) => {
   const {

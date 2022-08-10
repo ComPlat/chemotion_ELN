@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from 'react-bootstrap';
 
-import { iconMs } from '../helper/icon';
+import { iconMs } from 'src/components/qc/components/helper/icon';
 
 const emptyBlock = () => (
   <div className="card-qc">

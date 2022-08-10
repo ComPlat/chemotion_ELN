@@ -4,8 +4,8 @@ import _ from 'lodash';
 import { AgGridReact } from 'ag-grid-react';
 import { Checkbox } from 'react-bootstrap';
 
-import Sample from '../models/Sample';
-import SampleName from '../common/SampleName';
+import Sample from 'src/models/Sample';
+import SampleName from 'src/components/common/SampleName';
 
 function floatFormatter(params) {
   if (isNaN(params.value)) {
@@ -36,8 +36,8 @@ function MaterialNameWithIupac({ group, node }) {
   } else {
     moleculeIupacName = material.molecule_iupac_name;
     materialName = material.title() === '' ?
-          <SampleName sample={material} /> :
-          material.title();
+      <SampleName sample={material} /> :
+      material.title();
   }
 
   return (

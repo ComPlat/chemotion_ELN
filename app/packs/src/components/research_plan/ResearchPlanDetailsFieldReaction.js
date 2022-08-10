@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from '../DragDropItemTypes';
-import ElementActions from '../actions/ElementActions';
-import { UrlSilentNavigation } from '../utils/ElementUtils';
-import ReactionsFetcher from '../fetchers/ReactionsFetcher';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
 const spec = {
   drop(props, monitor) {
@@ -74,17 +74,17 @@ class ResearchPlanDetailsFieldReaction extends Component {
       return noAuth(reaction);
     }
     const link = <p>{reaction.title()}</p>;
-    
+
     return (
       <div className="research-plan-field-reaction">
         <div className="image-container">
           <img src={reaction.svgPath} alt={reaction.title()} />
           <a role="link" tabIndex={0} onClick={() => this.showReaction()} style={{ cursor: 'pointer' }}>
-          {link}
+            {link}
           </a>
         </div>
       </div>
-      );
+    );
   }
 
   renderEdit() {
@@ -121,4 +121,4 @@ ResearchPlanDetailsFieldReaction.propTypes = {
 };
 
 export
-default DropTarget(DragDropItemTypes.REACTION, spec, collect)(ResearchPlanDetailsFieldReaction);
+  default DropTarget(DragDropItemTypes.REACTION, spec, collect)(ResearchPlanDetailsFieldReaction);

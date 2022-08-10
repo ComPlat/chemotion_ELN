@@ -10,7 +10,6 @@ import {
   ListGroupItem,
   Row,
   Col,
-  Glyphicon,
   OverlayTrigger,
   Tooltip
 } from 'react-bootstrap';
@@ -26,16 +25,15 @@ import {
   sortByElement,
   LiteralType,
   literatureContent
-} from './LiteratureCommon';
-import Literature from './models/Literature';
-import LiteratureMap from './models/LiteratureMap';
-import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
-import UIStore from './stores/UIStore';
-import UserStore from './stores/UserStore';
-import DetailActions from './actions/DetailActions';
-import PanelHeader from './common/PanelHeader';
-import { stopEvent } from './utils/DomHelper';
-import NotificationActions from './actions/NotificationActions';
+} from 'src/components/LiteratureCommon';
+import Literature from 'src/models/Literature';
+import LiteratureMap from 'src/models/LiteratureMap';
+import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import PanelHeader from 'src/components/common/PanelHeader';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const Cite = require('citation-js');
 

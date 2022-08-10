@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import SVG from 'react-inlinesvg';
 import {Alert, Label, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
-import QuillViewer from '../QuillViewer';
+import QuillViewer from 'src/components/QuillViewer';
 import { map } from 'lodash';
 
 const SectionReaction = ({reaction, settings, configs}) => {

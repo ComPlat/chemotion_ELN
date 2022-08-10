@@ -2,10 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { Row, Col } from 'react-bootstrap';
-import UIActions from '../actions/UIActions';
-import PredictionActions from '../actions/PredictionActions';
-import ContentInputs from './ContentInputs';
-import ContentOutputs from './ContentOutputs';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import PredictionActions from 'src/stores/alt/actions/PredictionActions';
+import ContentInputs from 'src/components/prediction/ContentInputs';
+import ContentOutputs from 'src/components/prediction/ContentOutputs';
 
 const styles = {
   selectContainer: {

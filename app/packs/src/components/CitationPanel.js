@@ -1,8 +1,8 @@
 import React from 'react';
 import { Panel, ButtonGroup, Button, OverlayTrigger, Tooltip, Popover } from 'react-bootstrap';
 import { uniq } from 'lodash';
-import { Citation, literatureContent } from './LiteratureCommon';
-import { CitationType, CitationTypeMap, CitationTypeEOL } from './CitationType';
+import { Citation, literatureContent } from 'src/components/LiteratureCommon';
+import { CitationType, CitationTypeMap, CitationTypeEOL } from 'src/components/CitationType';
 
 const changeTypeBtn = (litype, updId, fn) => {
   const cands = CitationType.filter(e => e !== litype);

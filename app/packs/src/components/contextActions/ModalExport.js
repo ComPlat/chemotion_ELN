@@ -1,9 +1,9 @@
 import React from 'react';
 import { Button, ButtonToolbar, DropdownButton, MenuItem } from 'react-bootstrap';
-import CheckBoxs from '../common/CheckBoxs';
-import UIStore from './../stores/UIStore';
-import UserStore from './../stores/UserStore';
-import ReportsFetcher from './../fetchers/ReportsFetcher';
+import CheckBoxs from 'src/components/common/CheckBoxs';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 
 const filterUIState = (uiState) => {
   const {
@@ -40,48 +40,48 @@ export default class ModalExport extends React.Component {
     this.state = {
       columns: {
         sample: [
-          {value: ["sample_svg_file", "molecule_svg_file"], text: "image", checked: false},
-          {value: "name", text: "name", checked: true},
-          {value: "molecule_name", text: "molecule name", checked: false},
-          {value: "external_label", text: "external label", checked: true},
-          {value: "short_label", text: "short label", checked: false},
-          {value: "description", text: "description", checked: false},
-          {value: ["real_amount_value", "real_amount_unit"], text: "real amount", checked: true},
-          {value: ["target_amount_value", "target_amount_unit"], text: "target amount", checked: false},
-          {value: ["molarity_value", "molarity_unit"], text: "molarity", checked: false},
-          {value: "density", text: "density", checked: false},
-          {value: "molfile", text: "molfile", checked: false},
-        //  {value: "purity", text: "purity", checked: false},
-          {value: "solvent", text: "solvent", checked: false},
-          {value: "location", text: "location", checked: false},
-          {value: "is_top_secret", text: "is top secret?", checked: false},
-        //  {value: "ancestry", text: "ancestry", checked: false},
-          {value: "imported_readout", text: "imported readout", checked: false},
-        //  {value: "identifier", text: "identifier", checked: false},
-          {value: "melting_point", text: "melting point", checked: false},
-          {value: "boiling_point", text: "boiling point", checked: false},
-          {value: "created_at", text: "created at", checked: true},
-          {value: "updated_at", text: "updated at", checked: false},
-          {value: "user_labels", text: "user labels", checked: false},
-          {value: "literature", text: "literature", checked: false},
+          { value: ["sample_svg_file", "molecule_svg_file"], text: "image", checked: false },
+          { value: "name", text: "name", checked: true },
+          { value: "molecule_name", text: "molecule name", checked: false },
+          { value: "external_label", text: "external label", checked: true },
+          { value: "short_label", text: "short label", checked: false },
+          { value: "description", text: "description", checked: false },
+          { value: ["real_amount_value", "real_amount_unit"], text: "real amount", checked: true },
+          { value: ["target_amount_value", "target_amount_unit"], text: "target amount", checked: false },
+          { value: ["molarity_value", "molarity_unit"], text: "molarity", checked: false },
+          { value: "density", text: "density", checked: false },
+          { value: "molfile", text: "molfile", checked: false },
+          //  {value: "purity", text: "purity", checked: false},
+          { value: "solvent", text: "solvent", checked: false },
+          { value: "location", text: "location", checked: false },
+          { value: "is_top_secret", text: "is top secret?", checked: false },
+          //  {value: "ancestry", text: "ancestry", checked: false},
+          { value: "imported_readout", text: "imported readout", checked: false },
+          //  {value: "identifier", text: "identifier", checked: false},
+          { value: "melting_point", text: "melting point", checked: false },
+          { value: "boiling_point", text: "boiling point", checked: false },
+          { value: "created_at", text: "created at", checked: true },
+          { value: "updated_at", text: "updated at", checked: false },
+          { value: "user_labels", text: "user labels", checked: false },
+          { value: "literature", text: "literature", checked: false },
         ],
         molecule: [
-          {value: "cano_smiles", text: "canonical smiles", checked: true},
-          {value: "inchistring", text: "InChIstring", checked: false},
-          {value: "inchikey", text: "InChIkey", checked: false},
-          {value: "sum_formular", text: "sum formula", checked: false},
-          {value: "molecular_weight", text: "molecular weight", checked: false},
+          { value: "cano_smiles", text: "canonical smiles", checked: true },
+          { value: "inchistring", text: "InChIstring", checked: false },
+          { value: "inchikey", text: "InChIkey", checked: false },
+          { value: "sum_formular", text: "sum formula", checked: false },
+          { value: "molecular_weight", text: "molecular weight", checked: false },
         ],
         reaction: [
-          {value: "name", text: "reaction name", checked: true},
-          {value: "short_label", text: "r short label", checked: true},
-          {value: "reference", text: "reference", checked: false},
-          {value: "equivalent", text: "equivalent", checked: false},
+          { value: "name", text: "reaction name", checked: true },
+          { value: "short_label", text: "r short label", checked: true },
+          { value: "reference", text: "reference", checked: false },
+          { value: "equivalent", text: "equivalent", checked: false },
         ],
         wellplate: [
-          {value: "name", text: "wellplate name", checked: false},
-          {value: "position_x", text: "well x", checked: false},
-          {value: "position_y", text: "well y", checked: false},
+          { value: "name", text: "wellplate name", checked: false },
+          { value: "position_x", text: "well x", checked: false },
+          { value: "position_y", text: "well y", checked: false },
         ],
         analyses: [
           { value: "name", text: "analysis name", checked: false },
@@ -117,7 +117,7 @@ export default class ModalExport extends React.Component {
         }
         return col
       })
-      return {...prevState, columns}
+      return { ...prevState, columns }
     })
   }
 
@@ -180,7 +180,7 @@ export default class ModalExport extends React.Component {
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
             <DropdownButton dropup bsStyle="warning" id="md-export-dropdown"
-                title="XLSX/SD Export" onSelect={this.handleClick}>
+              title="XLSX/SD Export" onSelect={this.handleClick}>
               <MenuItem eventKey="1">XLSX Export</MenuItem>
               <MenuItem eventKey="2">SDF Export</MenuItem>
             </DropdownButton>
@@ -224,31 +224,31 @@ export default class ModalExport extends React.Component {
       <div>
         <div className='export-container'>
           <h4>Sample properties</h4>
-          <CheckBoxs  items={this.state.columns.sample}
+          <CheckBoxs items={this.state.columns.sample}
             toggleCheckbox={this.toggleColumnsSample.bind(this)}
             toggleCheckAll={this.toggleColumnsAllSample.bind(this)}
             checkedAll={this.state.checkedAllColumns.sample}
           />
           <h4>Molecule properties</h4>
-          <CheckBoxs  items={this.state.columns.molecule}
+          <CheckBoxs items={this.state.columns.molecule}
             toggleCheckbox={this.toggleColumnsMolecule.bind(this)}
             toggleCheckAll={this.toggleColumnsAllMolecule.bind(this)}
             checkedAll={this.state.checkedAllColumns.molecule}
           />
           <h4>Reaction properties</h4>
-          <CheckBoxs  items={this.state.columns.reaction}
+          <CheckBoxs items={this.state.columns.reaction}
             toggleCheckbox={this.toggleColumnsReaction.bind(this)}
             toggleCheckAll={this.toggleColumnsAllReaction.bind(this)}
             checkedAll={this.state.checkedAllColumns.reaction}
           />
           <h4>Wellplate and well properties</h4>
-          <CheckBoxs  items={this.state.columns.wellplate}
+          <CheckBoxs items={this.state.columns.wellplate}
             toggleCheckbox={this.toggleColumnsWellplate.bind(this)}
             toggleCheckAll={this.toggleColumnsAllWellplate.bind(this)}
             checkedAll={this.state.checkedAllColumns.wellplate}
           />
           <h4>Analyses</h4>
-          <CheckBoxs  items={this.state.columns.analyses}
+          <CheckBoxs items={this.state.columns.analyses}
             toggleCheckbox={this.toggleColumnsAnalyses.bind(this)}
             toggleCheckAll={this.toggleColumnsAllAnalyses.bind(this)}
             checkedAll={this.state.checkedAllColumns.analyses}

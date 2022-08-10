@@ -17,57 +17,57 @@ import uuid from 'uuid';
 import classNames from 'classnames';
 import Immutable from 'immutable';
 
-import ElementActions from './actions/ElementActions';
-import ElementStore from './stores/ElementStore';
-import DetailActions from './actions/DetailActions';
-import LoadingActions from './actions/LoadingActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import UIStore from './stores/UIStore';
-import UserStore from './stores/UserStore';
-import UIActions from './actions/UIActions';
-import QcActions from './actions/QcActions';
-import QcStore from './stores/QcStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import QcActions from 'src/stores/alt/actions/QcActions';
+import QcStore from 'src/stores/alt/stores/QcStore';
 
-import ElementCollectionLabels from './ElementCollectionLabels';
-import ElementAnalysesLabels from './ElementAnalysesLabels';
-import PubchemLabels from './PubchemLabels';
-import ElementReactionLabels from './ElementReactionLabels';
-import SampleDetailsContainers from './SampleDetailsContainers';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/components/ElementAnalysesLabels';
+import PubchemLabels from 'src/components/PubchemLabels';
+import ElementReactionLabels from 'src/components/ElementReactionLabels';
+import SampleDetailsContainers from 'src/components/SampleDetailsContainers';
 
-import XLabels from './extra/SampleDetailsXLabels';
-import XTabs from './extra/SampleDetailsXTabs';
+import XLabels from 'src/components/extra/SampleDetailsXLabels';
+import XTabs from 'src/components/extra/SampleDetailsXTabs';
 
-import StructureEditorModal from './structure_editor/StructureEditorModal';
+import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
 
-import Sample from './models/Sample';
-import Container from './models/Container';
-import PolymerSection from './PolymerSection';
-import ElementalCompositionGroup from './ElementalCompositionGroup';
-import ToggleSection from './common/ToggleSection';
-import SampleName from './common/SampleName';
-import ClipboardCopyText from './common/ClipboardCopyText';
-import SampleForm from './SampleForm';
-import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
-import ComputedPropLabel from './computed_props/ComputedPropLabel';
-import Utils from './utils/Functions';
-import PrintCodeButton from './common/PrintCodeButton';
-import SampleDetailsLiteratures from './DetailsTabLiteratures';
-import MoleculesFetcher from './fetchers/MoleculesFetcher';
-import PubchemLcss from './PubchemLcss';
-import QcMain from './qc/QcMain';
-import { chmoConversions } from './OlsComponent';
-import ConfirmClose from './common/ConfirmClose';
-import { EditUserLabels, ShowUserLabels } from './UserLabels';
-import CopyElementModal from './common/CopyElementModal';
-import NotificationActions from './actions/NotificationActions';
-import MatrixCheck from './common/MatrixCheck';
-import AttachmentFetcher from './fetchers/AttachmentFetcher';
-import NmrSimTab from './nmr_sim/NmrSimTab';
-import FastInput from './FastInput';
-import ScifinderSearch from './scifinder/ScifinderSearch';
-import ElementDetailSortTab from './ElementDetailSortTab';
-import { addSegmentTabs } from './generic/SegmentDetails';
-import MeasurementsTab from './MeasurementsTab';
+import Sample from 'src/models/Sample';
+import Container from 'src/models/Container';
+import PolymerSection from 'src/components/PolymerSection';
+import ElementalCompositionGroup from 'src/components/ElementalCompositionGroup';
+import ToggleSection from 'src/components/common/ToggleSection';
+import SampleName from 'src/components/common/SampleName';
+import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
+import SampleForm from 'src/components/SampleForm';
+import ComputedPropsContainer from 'src/components/computed_props/ComputedPropsContainer';
+import ComputedPropLabel from 'src/components/computed_props/ComputedPropLabel';
+import Utils from 'src/utilities/Functions';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import SampleDetailsLiteratures from 'src/components/DetailsTabLiteratures';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import PubchemLcss from 'src/components/PubchemLcss';
+import QcMain from 'src/components/qc/QcMain';
+import { chmoConversions } from 'src/components/OlsComponent';
+import ConfirmClose from 'src/components/common/ConfirmClose';
+import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import CopyElementModal from 'src/components/common/CopyElementModal';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import NmrSimTab from 'src/components/nmr_sim/NmrSimTab';
+import FastInput from 'src/components/FastInput';
+import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
+import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
+import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
+import MeasurementsTab from 'src/components/MeasurementsTab';
 
 const MWPrecision = 6;
 
@@ -153,7 +153,7 @@ export default class SampleDetails extends React.Component {
   // eslint-disable-next-line camelcase
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || ((nextProps.sample.molfile || '').length === 0))
-        || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey == 'DUMMY')) {
+      || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey == 'DUMMY')) {
       this.setState({
         smileReadonly: false,
       });
@@ -394,19 +394,19 @@ export default class SampleDetails extends React.Component {
     return (
       sample.can_update
         ? <div className={className}
-               onClick={this.showStructureEditor.bind(this)}>
-            <Glyphicon className="pull-right" glyph='pencil'/>
-            <SVG key={svgPath} src={svgPath} className="molecule-mid"/>
-          </div>
+          onClick={this.showStructureEditor.bind(this)}>
+          <Glyphicon className="pull-right" glyph='pencil' />
+          <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+        </div>
         : <div className={className}>
-            <SVG key={svgPath} src={svgPath} className="molecule-mid"/>
-          </div>
+          <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+        </div>
     );
   }
 
   sampleAverageMW(sample) {
     let mw = sample.molecule_molecular_weight;
-    if(mw)
+    if (mw)
       return <ClipboardCopyText text={`${mw.toFixed(MWPrecision)} g/mol`} />;
     else
       return '';
@@ -414,7 +414,7 @@ export default class SampleDetails extends React.Component {
 
   sampleExactMW(sample) {
     let mw = sample.molecule_exact_molecular_weight
-    if(mw)
+    if (mw)
       return <ClipboardCopyText text={`Exact mass: ${mw.toFixed(MWPrecision)} g/mol`} />;
     else
       return '';
@@ -437,14 +437,14 @@ export default class SampleDetails extends React.Component {
   initiateAnalysisWithKind(sample, kind) {
     let analysis = '';
     let a1 = Container.buildAnalysis(chmoConversions.others.value),
-        a2 = Container.buildAnalysis(chmoConversions.others.value),
-        a3 = Container.buildAnalysis(chmoConversions.others.value);
-    switch(kind) {
+      a2 = Container.buildAnalysis(chmoConversions.others.value),
+      a3 = Container.buildAnalysis(chmoConversions.others.value);
+    switch (kind) {
       case chmoConversions.nmr_1h.termId:
         analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value);
         sample.addAnalysis(analysis);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})
+        Utils.downloadFile({ contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small" })
         break;
       case chmoConversions.nmr_13c.termId:
         analysis = Container.buildAnalysis(chmoConversions.nmr_13c.value);
@@ -455,20 +455,20 @@ export default class SampleDetails extends React.Component {
       case "Others":
         sample.addAnalysis(a1);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&type=analysis&size=small"})
+        Utils.downloadFile({ contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&type=analysis&size=small" })
         break;
       case "Others2x":
         sample.addAnalysis(a1);
         sample.addAnalysis(a2);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id  + "&type=analysis&size=small"})
+        Utils.downloadFile({ contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&type=analysis&size=small" })
         break;
       case "Others3x":
         sample.addAnalysis(a1);
         sample.addAnalysis(a2);
         sample.addAnalysis(a3);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&analyses_ids[]=" + a3.id + "&type=analysis&size=small"})
+        Utils.downloadFile({ contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&analyses_ids[]=" + a3.id + "&type=analysis&size=small" })
         break;
     }
   }
@@ -568,11 +568,11 @@ export default class SampleDetails extends React.Component {
     return (
       <Button bsSize="xsmall"
         onClick={() => {
-          const {selectedDeviceId, devices} = ElementStore.getState().elements.devices
+          const { selectedDeviceId, devices } = ElementStore.getState().elements.devices
           const device = devices.find((d) => d.id === selectedDeviceId)
-          ElementActions.addSampleToDevice(sample, device, {save: true})
+          ElementActions.addSampleToDevice(sample, device, { save: true })
         }}
-        style={{marginLeft: 25}}
+        style={{ marginLeft: 25 }}
       >
         Transfer to Device
       </Button>
@@ -612,7 +612,7 @@ export default class SampleDetails extends React.Component {
 
   moleculeInchi(sample) {
     if (typeof (this.inchistringInput) !== 'undefined' && this.inchistringInput
-        && typeof (sample.molecule_inchistring) !== 'undefined' && sample.molecule_inchistring) {
+      && typeof (sample.molecule_inchistring) !== 'undefined' && sample.molecule_inchistring) {
       this.inchistringInput.value = sample.molecule_inchistring;
     }
     const inchiLabel = this.state.showInchikey ? 'InChIKey' : 'InChI';
@@ -653,21 +653,21 @@ export default class SampleDetails extends React.Component {
   }
 
   clipboardTooltip() {
-    return(
+    return (
       <Tooltip id="assign_button">copy to clipboard</Tooltip>
     )
   }
 
   moleculeCreatorTooltip() {
-    return(
+    return (
       <Tooltip id="assign_button">create molecule</Tooltip>
     )
   }
 
   moleculeCanoSmiles(sample) {
     if (this.state.smileReadonly && typeof (this.smilesInput) !== 'undefined'
-       && this.smilesInput && typeof (sample.molecule_cano_smiles) !== 'undefined'
-       && sample.molecule_cano_smiles) {
+      && this.smilesInput && typeof (sample.molecule_cano_smiles) !== 'undefined'
+      && sample.molecule_cano_smiles) {
       this.smilesInput.value = sample.molecule_cano_smiles;
     }
     return (
@@ -710,7 +710,7 @@ export default class SampleDetails extends React.Component {
 
   moleculeMolfile(sample) {
     if (typeof (this.molfileInput) !== 'undefined' && this.molfileInput
-        && typeof (sample.molfile) !== 'undefined' && sample.molfile) {
+      && typeof (sample.molfile) !== 'undefined' && sample.molfile) {
       this.molfileInput.value = sample.molfile;
     }
 
@@ -789,8 +789,8 @@ export default class SampleDetails extends React.Component {
   }
 
   onCasSelectOpen(e, casArr) {
-    if(casArr.length === 0) {
-      this.setState({isCasLoading: true})
+    if (casArr.length === 0) {
+      this.setState({ isCasLoading: true })
       DetailActions.getMoleculeCas(this.state.sample)
     }
   }
@@ -924,7 +924,7 @@ export default class SampleDetails extends React.Component {
       <ListGroupItem onClick={() => this.handleChemIdentSectionToggle()}>
         <Col className="padding-right chem-identifiers-header" md={6}>
           <b>Chemical identifiers</b>
-          { sample.decoupled &&
+          {sample.decoupled &&
             <span className="text-danger">
               &nbsp;[decoupled]
             </span>
@@ -993,7 +993,7 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <SampleDetailsContainers
             sample={sample}
-            setState={(sample) => {this.setState(sample)}}
+            setState={(sample) => { this.setState(sample) }}
             handleSampleChanged={this.handleSampleChanged}
             handleSubmit={this.handleSubmit}
             fromSample
@@ -1178,7 +1178,7 @@ export default class SampleDetails extends React.Component {
     const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
     const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
     const downloadAnalysesBtn = (sample.isNew || !hasAnalyses) ? null : (
-      <Button bsStyle="info" disabled={!this.sampleIsValid() } onClick={() => this.handleExportAnalyses(sample)}>
+      <Button bsStyle="info" disabled={!this.sampleIsValid()} onClick={() => this.handleExportAnalyses(sample)}>
         Download Analysis {startExport ? <span>&nbsp;<i className="fa fa-spin fa-spinner" /></span> : null}
       </Button>
     );
@@ -1334,25 +1334,25 @@ export default class SampleDetails extends React.Component {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage &&
       (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-          <strong>Structure Alert</strong>&nbsp;
-          <Button bsSize="xsmall" bsStyle="warning" onClick={() => this.setState({ pageMessage: null })}>Close Alert</Button>
-          <br />
-          {
-            pageMessage.error.map(m => (
-              <div key={uuid.v1()}>{m}</div>
-            ))
-          }
-          {
-            pageMessage.warning.map(m => (
-              <div key={uuid.v1()}>{m}</div>
-            ))
-          }
-        </Alert>
-      ) : null;
+      <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <strong>Structure Alert</strong>&nbsp;
+        <Button bsSize="xsmall" bsStyle="warning" onClick={() => this.setState({ pageMessage: null })}>Close Alert</Button>
+        <br />
+        {
+          pageMessage.error.map(m => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+        {
+          pageMessage.warning.map(m => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+      </Alert>
+    ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1 &&
-     this.state.activeTab) || visible.get(0);
+      this.state.activeTab) || visible.get(0);
 
     return (
       <Panel

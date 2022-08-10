@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   handleDrop(files) {
@@ -29,7 +29,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     if (field.value.public_name) {
       const src = `/images/research_plans/${field.value.public_name}`;
       const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
-      || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+        || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
       content = (
         <div className="image-container">
           <img style={style} src={src} alt={field.value.file_name} />
@@ -69,14 +69,14 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   renderStatic() {
     const { field } = this.props;
     if (typeof (field.value.public_name) === 'undefined'
-    || field.value.public_name === null) {
+      || field.value.public_name === null) {
       return (
         <div />
       );
     }
     const src = `/images/research_plans/${field.value.public_name}`;
     const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
-    || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+      || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
 
     return (
       <div className="image-container">

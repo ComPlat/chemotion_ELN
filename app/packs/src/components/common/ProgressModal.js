@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Modal, ProgressBar } from 'react-bootstrap';
-import LoadingStore from '../stores/LoadingStore';
+import LoadingStore from 'src/stores/alt/stores/LoadingStore';
 
 export default class ProgressModal extends Component {
   constructor(props) {

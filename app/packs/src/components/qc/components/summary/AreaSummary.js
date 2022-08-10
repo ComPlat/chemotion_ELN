@@ -1,14 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import LineScore from './LineScore';
+import LineScore from 'src/components/qc/components/summary/LineScore';
 import {
   LineTitle,
   LineQcp,
   LineQck,
   LineDav,
-} from './LineSummary';
-import { evalScore } from './eval';
+} from 'src/components/qc/components/summary/LineSummary';
+import { evalScore } from 'src/components/qc/components/summary/eval';
 
 const AreaSummary = ({
   ansHnmr, ansCnmr, ansMs, ansIr, curation,

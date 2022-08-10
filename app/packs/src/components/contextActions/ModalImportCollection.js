@@ -1,9 +1,7 @@
 import React from 'react';
-import {Button, ButtonToolbar} from 'react-bootstrap';
+import { Button, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import UIStore from '../stores/UIStore';
-
-import NotificationActions from '../actions/NotificationActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class ModalImportCollection extends React.Component {
   constructor(props) {
@@ -30,15 +28,15 @@ export default class ModalImportCollection extends React.Component {
   }
 
   handleFileDrop(attachment_file) {
-    this.setState({file: attachment_file[0]});
+    this.setState({ file: attachment_file[0] });
   }
 
   handleAttachmentRemove() {
-    this.setState({file: null});
+    this.setState({ file: null });
   }
 
   dropzoneOrfilePreview() {
-    const {file} = this.state;
+    const { file } = this.state;
     if (file) {
       return (
         <div>
@@ -52,9 +50,9 @@ export default class ModalImportCollection extends React.Component {
       return (
         <Dropzone
           onDrop={attachment_file => this.handleFileDrop(attachment_file)}
-          style={{height: 50, width: '100%', border: '3px dashed lightgray'}}
-          >
-          <div style={{textAlign: 'center', paddingTop: 12, color: 'gray'}}>
+          style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
+        >
+          <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
             Drop File, or Click to Select.
           </div>
         </Dropzone>
@@ -68,7 +66,7 @@ export default class ModalImportCollection extends React.Component {
   }
 
   render() {
-    const {onHide} = this.props;
+    const { onHide } = this.props;
     const { processing } = this.state;
     const bStyle = processing === true ? 'danger' : 'warning';
     const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
@@ -81,7 +79,7 @@ export default class ModalImportCollection extends React.Component {
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
           <Button bsStyle={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
-            <span><i  className={bClass} />{bTitle}</span>
+            <span><i className={bClass} />{bTitle}</span>
           </Button>
         </ButtonToolbar>
       </div>

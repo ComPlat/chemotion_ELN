@@ -2,13 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
 
-import AttachmentContainer from './AttachmentContainer';
-import DragDropItemTypes from '../DragDropItemTypes';
+import AttachmentContainer from 'src/components/inbox/AttachmentContainer';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
-import Container from '../models/Container';
-import UnsortedDatasetModal from './UnsortedDatasetModal';
-import InboxStore from '../stores/InboxStore';
-import InboxActions from '../actions/InboxActions';
+import Container from 'src/models/Container';
+import UnsortedDatasetModal from 'src/components/inbox/UnsortedDatasetModal';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
 
 export default class UnsortedBox extends React.Component {
   constructor(props) {
@@ -104,7 +104,7 @@ export default class UnsortedBox extends React.Component {
           className="g-marginLeft--10"
           style={{ fontWeight: 'bold' }}
         >
-          {this.hasChecked() ? 'Deselect all' : 'Select all' }
+          {this.hasChecked() ? 'Deselect all' : 'Select all'}
         </span>
       </div>
     );
@@ -155,7 +155,7 @@ export default class UnsortedBox extends React.Component {
       );
     })
       :
-    <div />;
+      <div />;
 
     const folderClass = `fa fa-folder${visible ? '-open' : ''}`;
 

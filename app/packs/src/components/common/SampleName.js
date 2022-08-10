@@ -1,6 +1,6 @@
 import React from 'react';
-import Formula from './Formula';
-import ClipboardCopyText from './ClipboardCopyText';
+import Formula from 'src/components/common/Formula';
+import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 
 const SampleName = ({ sample }) => {
   const { contains_residues, polymer_type, molecule_formula, decoupled } = sample;

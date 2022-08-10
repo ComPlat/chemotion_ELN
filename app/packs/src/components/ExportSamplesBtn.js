@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
-import CollectionsFetcher from './fetchers/CollectionsFetcher';
+import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 
 export default class ExportSamplesBtn extends Component {
   constructor(props) {

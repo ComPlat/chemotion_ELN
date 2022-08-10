@@ -1,22 +1,17 @@
 import React from 'react'
-import{
+import {
   Col, Form, FormGroup, ControlLabel, FormControl, ButtonToolbar,
-  Button, Radio, Checkbox, PanelGroup, Panel
+  Button, Radio, Checkbox
 } from 'react-bootstrap'
 import Select from 'react-select'
-import ElementActions from './actions/ElementActions'
-import DetailActions from './actions/DetailActions'
-import {solvents, experiments} from './staticDropdownOptions/device_options'
+import ElementActions from 'src/stores/alt/actions/ElementActions'
+import DetailActions from 'src/stores/alt/actions/DetailActions'
+import { solvents, experiments } from 'src/components/staticDropdownOptions/device_options'
 
-const AnalysisNMR = ({analysis}) => {
-  const styleByExperimentState = (experiment) => {
-    return experiment.isNew || experiment.isEdited
-      ? "info"
-      : "default"
-  }
+const AnalysisNMR = ({ analysis }) => {
   return (
     <div
-      style={{marginBottom: 10}}
+      style={{ marginBottom: 10 }}
     >
       <Form horizontal>
         <FormGroup>
@@ -55,16 +50,16 @@ const AnalysisNMR = ({analysis}) => {
         </FormGroup>
         {analysis.experiments.length > 0
           ? analysis.experiments.map((experiment, key) => {
-              return (
-                  <Experiment
-                    key={key}
-                    experiment={experiment}
-                    analysis={analysis}
-                  />
-              )
-            })
+            return (
+              <Experiment
+                key={key}
+                experiment={experiment}
+                analysis={analysis}
+              />
+            )
+          })
           : (
-            <FormGroup style={{marginLeft: 0}}>
+            <FormGroup style={{ marginLeft: 0 }}>
               This analysis has no experiments yet.
             </FormGroup>
           )
@@ -93,12 +88,12 @@ const AnalysisNMR = ({analysis}) => {
 
 export default AnalysisNMR
 
-const Experiment = ({analysis, experiment}) => {
+const Experiment = ({ analysis, experiment }) => {
   const handlePropChange = (prop, value) => {
     ElementActions.changeAnalysisExperimentProp(analysis, experiment, prop, value)
   }
   const handleSelectChange = (prop, e) => {
-    if(e && e.value) {
+    if (e && e.value) {
       handlePropChange(prop, e.value)
     } else {
       handlePropChange(prop, "")
@@ -156,14 +151,14 @@ const Experiment = ({analysis, experiment}) => {
         <Radio
           checked={experiment.onDay}
           onChange={(e) => handlePropChange('onDay', true)}
-          style={{minHeight: 20, marginBottom: -3, paddingTop: 0}}
+          style={{ minHeight: 20, marginBottom: -3, paddingTop: 0 }}
         >
           Day
         </Radio>
         <Radio
           checked={!experiment.onDay}
           onChange={(e) => handlePropChange('onDay', false)}
-          style={{minHeight: 20, marginBottom: -3, paddingTop: 0}}
+          style={{ minHeight: 20, marginBottom: -3, paddingTop: 0 }}
         >
           Night
         </Radio>

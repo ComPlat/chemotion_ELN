@@ -1,7 +1,7 @@
 import React from 'react';
 import { Panel } from 'react-bootstrap';
-import ReportActions from '../actions/ReportActions';
-import CheckBoxs from '../common/CheckBoxs';
+import ReportActions from 'src/stores/alt/actions/ReportActions';
+import CheckBoxs from 'src/components/common/CheckBoxs';
 
 const toggleSplSettings = (text, checked) => {
   ReportActions.updateSplSettings({ text, checked });

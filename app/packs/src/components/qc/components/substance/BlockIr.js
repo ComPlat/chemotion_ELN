@@ -2,9 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Alert } from 'react-bootstrap';
 
-import QcMolView from '../helper/qc_mol_view';
-import { iconByMargin } from '../helper/icon';
-import { tableIr } from '../helper/ir';
+import QcMolView from 'src/components/qc/components/helper/qc_mol_view';
+import { iconByMargin } from 'src/components/qc/components/helper/icon';
+import { tableIr } from 'src/components/qc/components/helper/ir';
 
 const emptyBlock = () => (
   <div className="card-qc">

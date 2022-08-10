@@ -6,14 +6,14 @@ import { OverlayTrigger, Popover } from 'react-bootstrap';
 import _ from 'lodash';
 import Delta from 'quill-delta';
 
-import TextTemplateStore from './stores/TextTemplateStore';
-import TextTemplateActions from './actions/TextTemplateActions';
+import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
-import DynamicToolbarEditor from './react_quill/DynamicToolbarEditor';
-import BaseToolbar from './react_quill/BaseToolbar';
+import DynamicToolbarEditor from 'src/components/react_quill/DynamicToolbarEditor';
+import BaseToolbar from 'src/components/react_quill/BaseToolbar';
 
-import TextTemplateToolbar from './text_template_toolbar/TextTemplateToolbar';
-import ToolbarTemplateCreator from './text_template_toolbar/ToolbarTemplateCreator';
+import TextTemplateToolbar from 'src/components/text_template_toolbar/TextTemplateToolbar';
+import ToolbarTemplateCreator from 'src/components/text_template_toolbar/ToolbarTemplateCreator';
 
 const toolbarOptions = [
   'bold', 'italic', 'underline',

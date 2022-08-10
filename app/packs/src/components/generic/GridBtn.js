@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import GridDnD from './GridDnD';
+import GridDnD from 'src/components/generic/GridDnD';
 
 const AddRowBtn = ({ addRow }) => (
   <OverlayTrigger delayShow={1000} placement="top" overlay={<Tooltip id={uuid.v4()} >add entry</Tooltip>}>

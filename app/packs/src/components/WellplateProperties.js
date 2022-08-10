@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { FormGroup, InputGroup, FormControl, ControlLabel, Button, ButtonGroup, Overlay, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-import QuillEditor from './QuillEditor';
+import QuillEditor from 'src/components/QuillEditor';
 
 export default class WellplateProperties extends Component {
   constructor(props) {

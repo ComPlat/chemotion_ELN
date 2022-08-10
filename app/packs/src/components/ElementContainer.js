@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
-import DragDropItemTypes from './DragDropItemTypes';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
 const listSource = { beginDrag(props) { return props; } };
 

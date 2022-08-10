@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
-import DragDropItemTypes from './DragDropItemTypes';
-import UIStore from './stores/UIStore';
-import { wellplateShowOrNew } from './routesUtils';
-import QuillViewer from './QuillViewer';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { wellplateShowOrNew } from 'src/components/routesUtils';
+import QuillViewer from 'src/components/QuillViewer';
 
 const target = {
   drop(props, monitor) {

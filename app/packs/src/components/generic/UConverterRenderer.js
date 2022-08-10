@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
-import { genUnit, genUnitSup } from '../../admin/generic/Utils';
+import { genUnit, genUnitSup } from 'src/apps/admin/generic/Utils';
 
 const UConverterRenderer = (props) => {
   const { sField, onChange, node } = props;

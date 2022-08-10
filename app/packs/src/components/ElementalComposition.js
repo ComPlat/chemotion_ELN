@@ -1,12 +1,11 @@
-import React, {Component} from 'react';
-import {Row, Col, Input, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
+import React from 'react';
 
 
 export default class ElementalComposition extends React.Component {
 
   elementsList(elemental_composition) {
     let keys = Object.keys(elemental_composition.data);
-    if(keys.length == 0) {
+    if (keys.length == 0) {
       return (
         <p>
           Sorry, it was not possible to calculate the elemental
@@ -17,7 +16,7 @@ export default class ElementalComposition extends React.Component {
 
     let elements = [];
 
-    keys.map(function(key, index) {
+    keys.map(function (key, index) {
       let value = elemental_composition.data[key];
       elements.push(
         <span className="data-item" key={key}>
@@ -32,23 +31,23 @@ export default class ElementalComposition extends React.Component {
         </span>
       );
     });
-    
+
     return elements;
   }
 
   relatedLoading(elemental_composition) {
-    if(!elemental_composition.loading)
+    if (!elemental_composition.loading)
       return false;
 
     return (
-      <td className="loading" style={{textAlign:"left"}} width="13%">
+      <td className="loading" style={{ textAlign: "left" }} width="13%">
         {elemental_composition.loading.toFixed(2)}
       </td>
     )
   }
 
   compositonTableHeader(elemental_composition) {
-    return(
+    return (
       <thead>
         <tr>
           <th>

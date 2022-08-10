@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Row, Col } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { concat, uniqBy } from 'lodash';
-import PubchemSigns from './PubchemSigns';
+import PubchemSigns from 'src/components/PubchemSigns';
 
 const PubchemLcss = ({
   cid, informArray

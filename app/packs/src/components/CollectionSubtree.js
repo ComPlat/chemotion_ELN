@@ -2,13 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
 import { Glyphicon, OverlayTrigger } from 'react-bootstrap';
-import UIStore from './stores/UIStore';
-import ElementStore from './stores/ElementStore';
-import CollectionStore from './stores/CollectionStore';
-import CollectionActions from './actions/CollectionActions';
-import UserInfos from './UserInfos';
-import GatePushBtn from './common/GatePushBtn';
-import { collectionShow, scollectionShow } from './routesUtils';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import UserInfos from 'src/components/UserInfos';
+import GatePushBtn from 'src/components/common/GatePushBtn';
+import { collectionShow, scollectionShow } from 'src/components/routesUtils';
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {

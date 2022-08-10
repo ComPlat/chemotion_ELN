@@ -3,7 +3,7 @@ import Delta from 'quill-delta';
 
 import {
   deltaToMarkdown, markdownToDelta
-} from '../../../app/packs/src/components/utils/deltaMarkdownConverter';
+} from '../../../app/packs/src/utilities/deltaMarkdownConverter';
 
 describe('Delta to Markdown converter', () => {
   it('should convert inline characters', () => {
@@ -115,7 +115,7 @@ describe('Delta to Markdown converter', () => {
       ]
     });
     const md = '1. First item\n2. Second item\n3. Third item\n\n' +
-               'A line of text\n\n* First bullet\n* Second bullet\n\n';
+      'A line of text\n\n* First bullet\n* Second bullet\n\n';
 
     expect(deltaToMarkdown(delta)).toEqual(md);
     expect(markdownToDelta(md)).toEqual(delta);

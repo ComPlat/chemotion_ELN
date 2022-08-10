@@ -6,8 +6,8 @@ import {
 } from 'react-vis';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
-import Highlight from './Highlight';
-import CustomAxisLabel from './CustomAxisLabel';
+import Highlight from 'src/components/computed_props/Highlight';
+import CustomAxisLabel from 'src/components/computed_props/CustomAxisLabel';
 
 const previewStyle = {
   background: 'white',

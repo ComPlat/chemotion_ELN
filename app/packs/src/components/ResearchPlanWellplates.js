@@ -2,11 +2,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
-import DragDropItemTypes from './DragDropItemTypes';
-import UIStore from './stores/UIStore';
-import { wellplateShowOrNew } from './routesUtils';
-import EmbeddedWellplate from './EmbeddedWellplate';
-import Wellplate from './models/Wellplate';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { wellplateShowOrNew } from 'src/components/routesUtils';
+import EmbeddedWellplate from 'src/components/EmbeddedWellplate';
 
 const target = {
   drop(props, monitor) {

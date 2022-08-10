@@ -1,8 +1,7 @@
 import React from 'react';
-// import PropTypes from 'prop-types';
 import { Table } from 'react-bootstrap';
 
-import EditableCell from './EditableCell'
+import EditableCell from 'src/components/lineChart/EditableCell'
 
 export default class EditableTable extends React.Component {
   constructor(props) {
@@ -31,7 +30,7 @@ export default class EditableTable extends React.Component {
       Date.parse("01/01/2016 " + a.time) - Date.parse("01/01/2016 " + b.time)
     ))
 
-    this.setState({data: data})
+    this.setState({ data: data })
   }
 
   handleTimeOnchange(oldVal, newVal) {
@@ -51,8 +50,8 @@ export default class EditableTable extends React.Component {
 
     if (match != null) {
       return (match[1] || "00") + ":" +
-             (match[2] || "00") + ":" +
-             (match[3] || "00")
+        (match[2] || "00") + ":" +
+        (match[3] || "00")
     } else {
       return oldVal
     }
@@ -68,7 +67,7 @@ export default class EditableTable extends React.Component {
     newTime = this.handleTimeOnchange(this.state.newTime, newTime)
     newTime = this.checkDefaultTime(newTime)
 
-    this.setState({newTime: newTime})
+    this.setState({ newTime: newTime })
   }
 
   handleNewTemperatureInput(e) {
@@ -76,33 +75,33 @@ export default class EditableTable extends React.Component {
     newTemperature = newTemperature.replace(/[^\d|-]/g, "")
     newTemperature = this.checkDefaultTemperature(newTemperature)
 
-    this.setState({newTemperature: newTemperature})
+    this.setState({ newTemperature: newTemperature })
   }
 
   checkDefaultTime(time) {
-    if (typeof(time) == "undefined" || time == null ||
-        time == "")
+    if (typeof (time) == "undefined" || time == null ||
+      time == "")
       return "00:00:00"
     else
       return time
   }
 
   checkDefaultTemperature(temperature) {
-    if (typeof(temperature) == "undefined" || temperature == null ||
-        temperature == "")
+    if (typeof (temperature) == "undefined" || temperature == null ||
+      temperature == "")
       return "21"
     else
       return temperature
   }
 
   removeRow(uid) {
-    let {data} = this.state
-    let {updateTemperature} = this.props
+    let { data } = this.state
+    let { updateTemperature } = this.props
     if (uid > -1) {
       data.splice(uid, 1)
     }
 
-    this.setState({data: data}, updateTemperature(data))
+    this.setState({ data: data }, updateTemperature(data))
   }
 
   addRow() {
@@ -123,38 +122,38 @@ export default class EditableTable extends React.Component {
   }
 
   onCellValueChange(uid, type, newValue) {
-    let {data} = this.state
-    let {updateTemperature} = this.props
+    let { data } = this.state
+    let { updateTemperature } = this.props
 
     data[uid][type] = newValue
 
-    this.setState({data: data}, updateTemperature(data))
+    this.setState({ data: data }, updateTemperature(data))
   }
 
   render() {
-    let {data, newTime, newTemperature} = this.state
-    let {valueUnit} = this.props.temperature
+    let { data, newTime, newTemperature } = this.state
+    let { valueUnit } = this.props.temperature
 
     var rows = []
     for (let i = 0; i < data.length; i = i + 1) {
       let row = (
         <tr key={"rows_" + i}>
           <td className="table-cell" key={"time_td_" + i}>
-              <EditableCell key={"time_cell_" + i} uid={i} type="time"
-                value={data[i].time} ref={"time_cell_" + i}
-                onCellValueChange={(uid, type, newValue) => this.onCellValueChange(uid, type, newValue)}
-                inputOnChange={(oldVal, newVal) => this.handleTimeOnchange(oldVal, newVal)}/>
+            <EditableCell key={"time_cell_" + i} uid={i} type="time"
+              value={data[i].time} ref={"time_cell_" + i}
+              onCellValueChange={(uid, type, newValue) => this.onCellValueChange(uid, type, newValue)}
+              inputOnChange={(oldVal, newVal) => this.handleTimeOnchange(oldVal, newVal)} />
           </td>
           <td className="table-cell" key={"value_td_" + i}>
             <div>
-              <div style={{width: "65%", float: "left"}}>
+              <div style={{ width: "65%", float: "left" }}>
                 <EditableCell key={"value_cell_" + i} uid={i} type="value"
                   value={data[i].value} ref={"value_cell_" + i}
                   onCellValueChange={(uid, type, newValue) => this.onCellValueChange(uid, type, newValue)}
-                  inputOnChange={(oldVal, newVal) => this.handleTemperatureOnchange(oldVal, newVal)}/>
+                  inputOnChange={(oldVal, newVal) => this.handleTemperatureOnchange(oldVal, newVal)} />
               </div>
               <i className="fa fa-minus clickable-icon" aria-hidden="true"
-                 onClick={() => this.removeRow(i)} />
+                onClick={() => this.removeRow(i)} />
             </div>
           </td>
         </tr>

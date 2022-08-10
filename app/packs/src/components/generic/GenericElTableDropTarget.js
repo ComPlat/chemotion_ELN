@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import { DropTarget } from 'react-dnd';
 import { Tooltip, OverlayTrigger, Popover, Button } from 'react-bootstrap';
-import { previewAttachmentImage } from '../utils/imageHelper';
+import { previewAttachmentImage } from 'src/utilities/imageHelper';
 
 const base = (opt, iconClass, onDrop = () => {}, params = {}) => {
   if (opt.value && opt.value.el_id) {
@@ -117,7 +117,7 @@ class GenericElTableDropTarget extends Component {
 }
 
 export default
-DropTarget(props => props.opt.dndItems, dropTarget, dropCollect)(GenericElTableDropTarget);
+  DropTarget(props => props.opt.dndItems, dropTarget, dropCollect)(GenericElTableDropTarget);
 
 GenericElTableDropTarget.propTypes = {
   connectDropTarget: PropTypes.func.isRequired,

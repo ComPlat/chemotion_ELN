@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 // import PropTypes from 'prop-types';
 import { FormControl } from 'react-bootstrap';
 
-import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
+import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo';
 
 const source = {
   beginDrag(props) {

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
-import { metPreConv, metPrefSymbols } from './utils/metricPrefix';
+import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -65,8 +65,8 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
     if (mc && mc[1]) {
       newValue = `${value.slice(0, selectionStart - 1)}.${value.slice(selectionStart)}`;
-    // } else if (value === '00') { // else if (value === '0.' || value === '00') {
-    //   newValue = '0.0';
+      // } else if (value === '00') { // else if (value === '0.' || value === '00') {
+      //   newValue = '0.0';
     }
 
     newValue = newValue.replace('--', '');

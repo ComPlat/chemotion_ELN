@@ -9,16 +9,16 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 
-import TextTemplateStore from './stores/TextTemplateStore';
-import TextTemplateActions from './actions/TextTemplateActions';
+import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
-import ContainerDatasets from './ContainerDatasets';
-import QuillViewer from './QuillViewer';
-import OlsTreeSelect from './OlsComponent';
-import { confirmOptions } from './staticDropdownOptions/options';
+import ContainerDatasets from 'src/components/ContainerDatasets';
+import QuillViewer from 'src/components/QuillViewer';
+import OlsTreeSelect from 'src/components/OlsComponent';
+import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 
-import AnalysisEditor from './AnalysisEditor';
-import HyperLinksSection from './common/HyperLinksSection';
+import AnalysisEditor from 'src/components/AnalysisEditor';
+import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
@@ -36,7 +36,7 @@ export default class ContainerComponent extends Component {
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
-    
+
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
   }
@@ -106,7 +106,7 @@ export default class ContainerComponent extends Component {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
   }
-  
+
   handleAddLink(link) {
     const { container } = this.state;
     if (container.extended_metadata['hyperlinks'] == null) {

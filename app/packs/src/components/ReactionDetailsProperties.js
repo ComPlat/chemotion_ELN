@@ -7,12 +7,12 @@ import {
 import Select from 'react-select';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
-import { dangerousProductsOptions } from './staticDropdownOptions/options';
-import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
-import StringTag from './StringTag';
-import { solventsTL } from './utils/reactionPredefined';
-import OlsTreeSelect from './OlsComponent';
-import { permitOn } from './common/uis';
+import { dangerousProductsOptions } from 'src/components/staticDropdownOptions/options';
+import ReactionDetailsMainProperties from 'src/components/ReactionDetailsMainProperties';
+import StringTag from 'src/components/StringTag';
+import { solventsTL } from 'src/utilities/reactionPredefined';
+import OlsTreeSelect from 'src/components/OlsComponent';
+import { permitOn } from 'src/components/common/uis';
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
@@ -124,7 +124,7 @@ export default class ReactionDetailsProperties extends Component {
                         title=""
                         onSelect={this.handleOnSolventSelect}
                       >
-                        { solventsItems }
+                        {solventsItems}
                       </DropdownButton>
                       <FormControl
                         style={{ zIndex: 0 }}

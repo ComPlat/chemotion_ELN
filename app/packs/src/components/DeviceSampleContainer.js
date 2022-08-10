@@ -1,9 +1,9 @@
 import React from 'react'
 import {DropTarget} from 'react-dnd'
-import DragDropItemTypes from './DragDropItemTypes'
-import ElementActions from './actions/ElementActions'
+import DragDropItemTypes from 'src/components/DragDropItemTypes'
+import ElementActions from 'src/stores/alt/actions/ElementActions'
 import {ButtonGroup, Button} from 'react-bootstrap';
-import { chmoConversions } from './OlsComponent';
+import { chmoConversions } from 'src/components/OlsComponent';
 
 const target = {
   drop(props, monitor){

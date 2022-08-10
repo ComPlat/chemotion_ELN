@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { ControlLabel, Row, Col } from 'react-bootstrap';
-import ResearchPlanDetailsAddField from './ResearchPlanDetailsAddField';
-import ResearchPlanDetailsDropTarget from './ResearchPlanDetailsDropTarget';
-import Field from './ResearchPlanDetailsField';
+import ResearchPlanDetailsAddField from 'src/components/research_plan/ResearchPlanDetailsAddField';
+import ResearchPlanDetailsDropTarget from 'src/components/research_plan/ResearchPlanDetailsDropTarget';
+import Field from 'src/components/research_plan/ResearchPlanDetailsField';
 
 // eslint-disable-next-line react/prefer-stateless-function
 export default class ResearchPlanDetailsBody extends Component {

@@ -1,13 +1,5 @@
-import UIStore from './stores/UIStore';
-import ElementStore from './stores/ElementStore';
-import CollectionStore from './stores/CollectionStore';
-import UserStore from './stores/UserStore';
-import UIActions from './actions/UIActions';
-import UserActions from './actions/UserActions';
-import ElementActions from './actions/ElementActions';
-import rXr from './extra/routesXroutes';
-import * as routesUtils from './routesUtils';
-import UIFetcher from './fetchers/UIFetcher';
+import rXr from 'src/components/extra/routesXroutes';
+import * as routesUtils from 'src/components/routesUtils';
 import klasses from '../../../../config/klasses.json';
 
 
@@ -113,16 +105,6 @@ const routes = {
   }
 };
 
-  // const { klasses } = UIStore.getState();
-  // console.log(klasses);
-
-
-// UIFetcher.initialize()
-//   .then((result) => {
-//     console.log(result);
-//     const klasses = result.klasses || [];
-//   });
-
 klasses && klasses.forEach((klass) => {
   const item = {};
   item['target'] = { showOrNew: routesUtils.genericElShowOrNew };
@@ -131,7 +113,7 @@ klasses && klasses.forEach((klass) => {
 });
 
 
-export default function() {
+export default function () {
   Aviator.root = '/mydb';
   Aviator.pushStateEnabled = true;
   Aviator.setRoutes(allRoutes(routes));

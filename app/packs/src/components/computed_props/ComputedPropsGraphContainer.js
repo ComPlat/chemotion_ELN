@@ -7,11 +7,11 @@ import {
   Grid, Row, Col, Button, ControlLabel, Form, FormGroup, FormControl
 } from 'react-bootstrap';
 
-import UserStore from '../stores/UserStore';
-import UserActions from '../actions/UserActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
 
-import ComputedPropsGraph from './ComputedPropsGraph';
-import GraphReferenceTable from './GraphReferenceTable';
+import ComputedPropsGraph from 'src/components/computed_props/ComputedPropsGraph';
+import GraphReferenceTable from 'src/components/computed_props/GraphReferenceTable';
 
 const etlReferences = [
   { x: -1.8, y: 50, type: 'reference' },

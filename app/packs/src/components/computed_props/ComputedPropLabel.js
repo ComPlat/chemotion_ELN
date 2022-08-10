@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 
-import UserStore from '../stores/UserStore';
-import MatrixCheck from '../common/MatrixCheck';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 
 const ComputedPropLabel = ({ cprops }) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};

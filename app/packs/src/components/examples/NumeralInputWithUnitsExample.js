@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
-import NumeralInput from '../NumeralInput'
-import NumeralInputWithUnits from '../NumeralInputWithUnits'
+import NumeralInput from 'src/components/NumeralInput'
+import NumeralInputWithUnits from 'src/components/NumeralInputWithUnits'
 
 export default class NumeralInputWithUnitsExample extends Component {
   constructor(props) {

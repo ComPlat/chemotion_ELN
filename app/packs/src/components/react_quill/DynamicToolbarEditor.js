@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import ReactQuill from './ReactQuill';
+import ReactQuill from 'src/components/react_quill/ReactQuill';
 
 class DynamicToolbarEditor extends React.Component {
   constructor(props) {

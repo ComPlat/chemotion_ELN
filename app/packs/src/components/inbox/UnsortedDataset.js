@@ -2,12 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col, Table, ListGroup, ListGroupItem, Button, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import Utils from '../utils/Functions';
+import Utils from 'src/utilities/Functions';
 
-import InboxActions from '../actions/InboxActions';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
-import Attachment from '../models/Attachment';
-import Container from '../models/Container';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import Attachment from 'src/models/Attachment';
+import Container from 'src/models/Container';
 
 export default class UnsortedDataset extends React.Component {
   constructor(props) {
@@ -40,7 +40,7 @@ export default class UnsortedDataset extends React.Component {
   }
 
   handleAttachmentDownload(attachment) {
-    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
   }
 
   handleAttachmentRemove(attachment) {
@@ -98,7 +98,7 @@ export default class UnsortedDataset extends React.Component {
         <tbody>
           <tr>
             <td>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
             </td>
           </tr>
           <tr>
@@ -117,11 +117,11 @@ export default class UnsortedDataset extends React.Component {
       return (
         <ListGroup>
           {datasetContainer.attachments.map((attachment) => {
-          return (
-            <ListGroupItem key={attachment.id}>
-              {this.listGroupItem(attachment)}
-            </ListGroupItem>
-          );
+            return (
+              <ListGroupItem key={attachment.id}>
+                {this.listGroupItem(attachment)}
+              </ListGroupItem>
+            );
           })}
         </ListGroup>
       );

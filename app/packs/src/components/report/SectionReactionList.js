@@ -1,10 +1,10 @@
 import React from 'react';
 import { Table, Tooltip, OverlayTrigger } from 'react-bootstrap';
-import { UserSerial } from '../utils/ReportHelper';
+import { UserSerial } from 'src/utilities/ReportHelper';
 
 const rlRowTp = (content, rowId) => (
   <Tooltip id={rowId}>
-    <p>{ content }</p>
+    <p>{content}</p>
   </Tooltip>
 );
 
@@ -12,7 +12,7 @@ const rlRowCont = (content, rowId) => {
   const overlay = rlRowTp(content, rowId);
   return (
     <OverlayTrigger placement="top" overlay={overlay}>
-      <p>{ content ? content.substring(0, 15) : '' }</p>
+      <p>{content ? content.substring(0, 15) : ''}</p>
     </OverlayTrigger>
   );
 };
@@ -59,7 +59,7 @@ const tableBody = (objs, molSerials) => {
   }).filter(r => r !== null);
 
   return (
-    <tbody>{ contents }</tbody>
+    <tbody>{contents}</tbody>
   );
 };
 
@@ -67,8 +67,8 @@ const SectionReactionList = ({ objs, molSerials }) => (
   <div>
     <p>* Images are hidden in the preview.</p>
     <Table striped bordered condensed hover>
-      { tableHeader() }
-      { tableBody(objs, molSerials) }
+      {tableHeader()}
+      {tableBody(objs, molSerials)}
     </Table>
   </div>
 );

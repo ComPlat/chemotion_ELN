@@ -7,9 +7,9 @@ import {
 import 'whatwg-fetch';
 import Quagga from 'quagga';
 import QrReader from 'react-qr-reader';
-import UIActions from '../actions/UIActions';
-import Utils from '../utils/Functions';
-import UIStore from '../stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import Utils from 'src/utilities/Functions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
@@ -64,7 +64,7 @@ export default class ScanCodeButton extends React.Component {
       decoder: {
         readers: ["code_128_reader"],
       }
-    }, function(err) {
+    }, function (err) {
       if (err) {
         console.log(err);
         return
@@ -104,7 +104,7 @@ export default class ScanCodeButton extends React.Component {
   }
 
   checkJSONResponse(json) {
-    if(json.error) {
+    if (json.error) {
       var error = new Error(json.error);
       error.response = json;
       throw error;
@@ -116,11 +116,11 @@ export default class ScanCodeButton extends React.Component {
   handleScan(data, stopQuagga = false) {
     let codeInput = this.codeInput.value;
     let code_log = {};
-    if(codeInput) {
+    if (codeInput) {
       data = codeInput;
     }
-    
-    if(!data) {
+
+    if (!data) {
       return;
     }
 
@@ -185,8 +185,8 @@ export default class ScanCodeButton extends React.Component {
                 ref={(scanInput) => { this.scanInput = scanInput; }}
                 onClick={() => this.handleScan()}
               />
-              
-              <div id="barcode-scanner" {...this.state.showQrReader && {style : {display: 'none'}}}></div>
+
+              <div id="barcode-scanner" {...this.state.showQrReader && { style: { display: 'none' } }}></div>
               {this.qrReader(this.state)}
             </div>
             <br />
@@ -206,7 +206,7 @@ export default class ScanCodeButton extends React.Component {
     if (this.state.scanError) {
       return (
         <div>
-          { this.state.scanInfo
+          {this.state.scanInfo
             ? <Alert bsStyle="info">{this.state.scanInfo}</Alert>
             : null
           }

@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
 
-import ArrayUtils from './utils/ArrayUtils';
-import TabLayoutCell from './TabLayoutCell';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import TabLayoutCell from 'src/components/TabLayoutCell';
 
 export default class TabLayoutContainer extends React.Component {
   constructor(props) {
@@ -53,21 +53,21 @@ export default class TabLayoutContainer extends React.Component {
     return (
       <table className="layout-container">
         <tbody>
-          {visible.map(function(e, index) {
+          {visible.map(function (e, index) {
             const defTitle = e.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
             return (<TabLayoutCell key={index + "_visible"} cell={e}
-                                  isHidden={false} index={index}
-                                  title={tabTitles[e] || defTitle}
-                                  moveLayout={moveLayout}
-                                  isElementDetails={isElementDetails}/>)
+              isHidden={false} index={index}
+              title={tabTitles[e] || defTitle}
+              moveLayout={moveLayout}
+              isElementDetails={isElementDetails} />)
           })}
-          {hidden.map(function(e, index) {
+          {hidden.map(function (e, index) {
             const defTitle = e.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
             return (<TabLayoutCell key={index + "_hidden"} cell={e}
-                                  isHidden={true} index={index}
-                                  moveLayout={moveLayout}
-                                  title={tabTitles[e] || defTitle}
-                                  isElementDetails={isElementDetails}/>)
+              isHidden={true} index={index}
+              moveLayout={moveLayout}
+              title={tabTitles[e] || defTitle}
+              isElementDetails={isElementDetails} />)
           })}
         </tbody>
       </table>

@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from './DragDropItemTypes';
-import { MaterialGroup } from './MaterialGroup';
-import Reaction from './models/Reaction';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { MaterialGroup } from 'src/components/MaterialGroup';
+import Reaction from 'src/models/Reaction';
 
 
 const target = {

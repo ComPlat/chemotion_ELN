@@ -1,19 +1,19 @@
 import React from 'react';
 import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
-import UserAuth from './UserAuth';
-import Search from './search/Search';
-import ManagingActions from './managing_actions/ManagingActions';
-import ContextActions from './contextActions/ContextActions';
-import UserStore from './stores/UserStore';
-import UIStore from './stores/UIStore'
-import UserActions from './actions/UserActions';
-import UIActions from './actions/UIActions';
-import ElementActions from './actions/ElementActions';
-import NavNewSession from '../libHome/NavNewSession'
-import NavHead from '../libHome/NavHead'
-import DocumentHelper from '../components/utils/DocumentHelper';
-import NavigationModal from './NavigationModal';
-import SearchFilter from './search/SearchFilter.js'
+import UserAuth from 'src/components/UserAuth';
+import Search from 'src/components/search/Search';
+import ManagingActions from 'src/components/managing_actions/ManagingActions';
+import ContextActions from 'src/components/contextActions/ContextActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore'
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import NavNewSession from 'src/apps/home/NavNewSession'
+import NavHead from 'src/apps/home/NavHead'
+import DocumentHelper from 'src/utilities/DocumentHelper';
+import NavigationModal from 'src/components/NavigationModal';
+import SearchFilter from 'src/components/search/SearchFilter.js'
 
 const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
 
@@ -54,8 +54,8 @@ export default class Navigation extends React.Component {
 
   onChange(state) {
     let newId = state.currentUser ? state.currentUser.id : null
-    let oldId =this.state.currentUser ?  this.state.currentUser.id : null
-    if (newId !== oldId){
+    let oldId = this.state.currentUser ? this.state.currentUser.id : null
+    if (newId !== oldId) {
       this.setState({
         currentUser: state.currentUser
       });
@@ -83,7 +83,7 @@ export default class Navigation extends React.Component {
     this.props.toggleCollectionTree();
   }
 
-  token(){
+  token() {
     return DocumentHelper.getMetaContent("csrf-token")
   }
 
@@ -112,10 +112,10 @@ export default class Navigation extends React.Component {
   navHeader() {
     return (
       <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{cursor: "pointer"}}>
+        <Navbar.Text style={{ cursor: "pointer" }}>
           <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-            <i  className="fa fa-list" style={{fontStyle: "normal"}}
-                onClick={this.toggleCollectionTree} />
+            <i className="fa fa-list" style={{ fontStyle: "normal" }}
+              onClick={this.toggleCollectionTree} />
           </OverlayTrigger>
         </Navbar.Text>
         <Navbar.Text />
@@ -130,26 +130,26 @@ export default class Navigation extends React.Component {
     const { customClass } = (profile && profile.data) || {};
     return (this.state.currentUser
       ? <Navbar fluid className='navbar-custom'>
-          {this.navHeader()}
-          <Nav navbar className='navbar-form'>
-            <Search />
-            <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
-            <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
-            <NavigationModal {...modalProps} />
-          </Nav>
-          <UserAuth/>
-          <div style={{clear: "both"}} />
-          <SearchFilter searchFunc={this.advancedSearch}
-            show={showAdvancedSearch}/>
-        </Navbar>
+        {this.navHeader()}
+        <Nav navbar className='navbar-form'>
+          <Search />
+          <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
+          <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
+          <NavigationModal {...modalProps} />
+        </Nav>
+        <UserAuth />
+        <div style={{ clear: "both" }} />
+        <SearchFilter searchFunc={this.advancedSearch}
+          show={showAdvancedSearch} />
+      </Navbar>
       : <Navbar fluid className='navbar-custom'>
-          {this.navHeader()}
-          <Nav navbar className='navbar-form'>
-            <Search noSubmit={true} />
-          </Nav>
-          <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders}/>
-          <div style={{clear: "both"}} />
-        </Navbar>
+        {this.navHeader()}
+        <Nav navbar className='navbar-form'>
+          <Search noSubmit={true} />
+        </Nav>
+        <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} />
+        <div style={{ clear: "both" }} />
+      </Navbar>
     )
   }
 }

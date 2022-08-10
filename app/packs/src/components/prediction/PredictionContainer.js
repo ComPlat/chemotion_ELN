@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Tabs, Tab } from 'react-bootstrap';
-import PredictionActions from '../actions/PredictionActions';
-import PredictionStore from '../stores/PredictionStore';
-import UIStore from '../stores/UIStore';
+import PredictionActions from 'src/stores/alt/actions/PredictionActions';
+import PredictionStore from 'src/stores/alt/stores/PredictionStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
-import Content from './Content';
-import PanelHeader from '../common/PanelHeader';
-import { CloseBtn, ResetBtn, PredictBtn } from './PredictionComponent';
+import Content from 'src/components/prediction/Content';
+import PanelHeader from 'src/components/common/PanelHeader';
+import { CloseBtn, ResetBtn, PredictBtn } from 'src/components/prediction/PredictionComponent';
 
 class PredictionContainer extends Component {
   constructor(props) {

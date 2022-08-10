@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
-import UnsortedDataset from './UnsortedDataset';
-import Container from '../models/Container';
+import UnsortedDataset from 'src/components/inbox/UnsortedDataset';
+import Container from 'src/models/Container';
 
 export default class UnsortedDatasetModal extends React.Component {
   render() {
-    const {show, datasetContainer, onHide} = this.props;
-    if(show) {
+    const { show, datasetContainer, onHide } = this.props;
+    if (show) {
       return (
         <div>
           <Modal animation show={show} bsSize="large" onHide={() => onHide()}>

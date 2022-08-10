@@ -2,11 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  BadgeNotAvailable,
   BadgeSuccess,
   BadgeFail,
   BadgeDefault,
-} from './common';
+} from 'src/components/qc/components/summary/common';
 
 /*
 const tpUv = (
@@ -36,20 +35,16 @@ const LineTitle = () => (
 );
 
 const statusLabel = status => status ? <BadgeSuccess /> : <BadgeFail />;
-// (status) => {
-//   if (status === undefined) return <BadgeNotAvailable />;
-//   return status ? <BadgeSuccess /> : <BadgeFail />;
-// };
 
 const LineQcp = ({
   ansHnmr, ansCnmr, ansMs, ansIr,
 }) => (
   <div className="card-qcsum">
     <span className="qc-title">Data Evaluation</span>
-    <span>{ statusLabel(ansHnmr.qcp.ansMac && ansHnmr.qcp.ansOwn) }</span>
-    <span>{ statusLabel(ansCnmr.qcp.ansMac && ansCnmr.qcp.ansOwn) }</span>
-    <span>{ statusLabel(ansMs.qcp.matchMass) }</span>
-    <span>{ statusLabel(ansIr.qcp.ansMac80 && ansIr.qcp.ansOwn80 && ansIr.qcp.ansMacF90 && ansIr.qcp.ansOwnF90) }</span>
+    <span>{statusLabel(ansHnmr.qcp.ansMac && ansHnmr.qcp.ansOwn)}</span>
+    <span>{statusLabel(ansCnmr.qcp.ansMac && ansCnmr.qcp.ansOwn)}</span>
+    <span>{statusLabel(ansMs.qcp.matchMass)}</span>
+    <span>{statusLabel(ansIr.qcp.ansMac80 && ansIr.qcp.ansOwn80 && ansIr.qcp.ansMacF90 && ansIr.qcp.ansOwnF90)}</span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>
@@ -66,9 +61,9 @@ LineQcp.propTypes = {
 const LineQck = ({ ansHnmr, ansCnmr, ansMs }) => (
   <div className="card-qcsum">
     <span className="qc-title">Analysis Check</span>
-    <span>{ statusLabel(ansHnmr.qck.ansQck) }</span>
-    <span>{ statusLabel(ansCnmr.qck.ansQck) }</span>
-    <span>{ statusLabel(ansMs.qck.ansQck) }</span>
+    <span>{statusLabel(ansHnmr.qck.ansQck)}</span>
+    <span>{statusLabel(ansCnmr.qck.ansQck)}</span>
+    <span>{statusLabel(ansMs.qck.ansQck)}</span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>
@@ -87,10 +82,10 @@ const LineDav = ({
 }) => (
   <div className="card-qcsum">
     <span className="qc-title">Data Availability</span>
-    <span>{ statusLabel(ansHnmr.dav) }</span>
-    <span>{ statusLabel(ansCnmr.dav) }</span>
-    <span>{ statusLabel(ansMs.dav) }</span>
-    <span>{ statusLabel(ansIr.dav) }</span>
+    <span>{statusLabel(ansHnmr.dav)}</span>
+    <span>{statusLabel(ansCnmr.dav)}</span>
+    <span>{statusLabel(ansMs.dav)}</span>
+    <span>{statusLabel(ansIr.dav)}</span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>
     <span><BadgeDefault /></span>

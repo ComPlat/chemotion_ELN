@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Checkbox, Table, thead, tr, th, td, Col, Badge, Panel, ButtonGroup, Button, Form, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
+import { Modal, Checkbox, Table, Col, Badge, Panel, ButtonGroup, Button, Form, FormGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
-import UsersFetcher from './fetchers/UsersFetcher';
-import NotificationActions from './actions/NotificationActions';
-import UserActions from './actions/UserActions';
-import UserStore from './stores/UserStore';
-import MatrixCheck from './common/MatrixCheck';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 
 const UL_FUNC_NAME = 'userLabel';
 
@@ -190,7 +190,7 @@ class UserLabelModal extends Component {
               </tr>
             </thead>
             <tbody>
-              { this.renderUserLabels() }
+              {this.renderUserLabels()}
             </tbody>
           </Table>
         </Panel>

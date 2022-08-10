@@ -3,7 +3,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Clipboard from 'clipboard';
 
-import Formula from './Formula';
+import Formula from 'src/components/common/Formula';
 
 export default class ClipboardCopyText extends Component {
   constructor(props) {

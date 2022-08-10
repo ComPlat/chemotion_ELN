@@ -3,10 +3,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { findIndex, cloneDeep } from 'lodash';
 import { Panel, Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import UserStore from '../stores/UserStore';
-import { LayersLayout } from './GenericElCommon';
-import MatrixCheck from '../common/MatrixCheck';
-import { genUnits, toBool, toNum, unitConversion, absOlsTermLabel } from '../../admin/generic/Utils';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import { LayersLayout } from 'src/components/generic/GenericElCommon';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import { genUnits, toBool, toNum, unitConversion, absOlsTermLabel } from 'src/apps/admin/generic/Utils';
 
 class GenericDSDetails extends Component {
   constructor(props) {

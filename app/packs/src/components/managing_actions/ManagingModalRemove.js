@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 
-import UIStore from '../stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const ManagingModalRemove = ({ onHide, action }) => {
   const ui_state = UIStore.getState();

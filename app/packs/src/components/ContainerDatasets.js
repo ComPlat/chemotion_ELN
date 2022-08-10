@@ -1,10 +1,9 @@
 import React, { Component } from 'react';
-// import PropTypes from 'prop-types';
 import { ListGroup, ListGroupItem, Button, Well } from 'react-bootstrap';
-import ContainerDatasetModal from './ContainerDatasetModal';
-import ContainerDatasetField from './ContainerDatasetField';
-import Container from './models/Container';
-import AttachmentDropzone from './AttachmentDropzone';
+import ContainerDatasetModal from 'src/components/ContainerDatasetModal';
+import ContainerDatasetField from 'src/components/ContainerDatasetField';
+import Container from 'src/models/Container';
+import AttachmentDropzone from 'src/components/AttachmentDropzone';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -26,14 +25,14 @@ export default class ContainerDatasets extends Component {
   }
 
   handleModalOpen(dataset_container) {
-    const {modal} = this.state;
+    const { modal } = this.state;
     modal.dataset_container = dataset_container;
     modal.show = true;
-    this.setState({modal});
+    this.setState({ modal });
   }
 
-  handleAdd(){
-    const {container} = this.state;
+  handleAdd() {
+    const { container } = this.state;
     let dataset_container = Container.buildEmpty();
     dataset_container.container_type = "dataset";
 
@@ -44,8 +43,8 @@ export default class ContainerDatasets extends Component {
 
   }
 
-  handleAddWithAttachments(attachments){
-    const {container} = this.state;
+  handleAddWithAttachments(attachments) {
+    const { container } = this.state;
     let dataset_container = Container.buildEmpty();
     dataset_container.container_type = "dataset";
 
@@ -60,24 +59,24 @@ export default class ContainerDatasets extends Component {
   }
 
   handleRemove(dataset_container) {
-    let {container} = this.state;
+    let { container } = this.state;
 
     dataset_container.is_deleted = true;
     this.props.onChange(container);
   }
 
   handleUndo(dataset_container) {
-    let {container} = this.state;
+    let { container } = this.state;
 
     dataset_container.is_deleted = false;
     this.props.onChange(container);
   }
 
-  handleChange(dataset_container){
-    let {container} = this.state;
+  handleChange(dataset_container) {
+    let { container } = this.state;
 
     container.children.find(dataset => {
-      if(dataset.id == dataset_container.id) {
+      if (dataset.id == dataset_container.id) {
         const datasetId = container.children.indexOf(dataset);
         container.children[datasetId] = dataset_container;
       }
@@ -87,20 +86,20 @@ export default class ContainerDatasets extends Component {
   }
 
   handleModalHide() {
-    const {modal} = this.state;
+    const { modal } = this.state;
     modal.show = false;
     modal.dataset_container = null;
-    this.setState({modal});
+    this.setState({ modal });
     // https://github.com/react-bootstrap/react-bootstrap/issues/1137
     document.body.className = document.body.className.replace('modal-open', '');
   }
 
   addButton() {
-    const {readOnly, disabled} = this.props;
+    const { readOnly, disabled } = this.props;
 
-    if(!readOnly && !disabled) {
+    if (!readOnly && !disabled) {
       return (
-        <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
+        <div className="pull-right" style={{ marginTop: 5, marginBottom: 5 }}>
           <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
             <i className="fa fa-plus"></i>
           </Button>
@@ -112,15 +111,15 @@ export default class ContainerDatasets extends Component {
 
 
   render() {
-    const {container, modal} = this.state;
-    const {disabled} = this.props;
+    const { container, modal } = this.state;
+    const { disabled } = this.props;
 
-    if(container.children.length > 0) {
+    if (container.children.length > 0) {
       const kind = container.extended_metadata && container.extended_metadata.kind;
       return (
         <div>
-          <Well style={{minHeight: 70, padding: 5, paddingBottom: 31}}>
-            <ListGroup style={{marginBottom: 0}}>
+          <Well style={{ minHeight: 70, padding: 5, paddingBottom: 31 }}>
+            <ListGroup style={{ marginBottom: 0 }}>
               {container.children.map((dataset_container, key) => {
                 return (
                   <ListGroupItem key={key}>
@@ -137,8 +136,8 @@ export default class ContainerDatasets extends Component {
                 )
               })}
               <ListGroupItem key="attachmentdropzone" disabled>
-              <AttachmentDropzone
-                handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                <AttachmentDropzone
+                  handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
                 />
               </ListGroupItem>
             </ListGroup>
@@ -153,15 +152,15 @@ export default class ContainerDatasets extends Component {
             dataset_container={modal.dataset_container}
             analysisContainer={modal.analysisContainer}
             disabled={disabled}
-            />
+          />
         </div>
       );
     } else {
       return (
         <div>
-          <Well style={{minHeight: 70, padding: 5, paddingBottom: 31}}>
+          <Well style={{ minHeight: 70, padding: 5, paddingBottom: 31 }}>
             <p>There are currently no Datasets.</p>
-            <ListGroup style={{marginBottom: 0}}>
+            <ListGroup style={{ marginBottom: 0 }}>
               <ListGroupItem key="attachmentdropzone" disabled>
                 <AttachmentDropzone
                   handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}

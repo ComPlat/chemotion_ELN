@@ -4,18 +4,18 @@ import {
   Button, Checkbox, OverlayTrigger, Tooltip,
   MenuItem, SplitButton, ButtonGroup
 } from 'react-bootstrap';
-import QuillViewer from './QuillViewer';
-import PrintCodeButton from './common/PrintCodeButton';
-import { stopBubble } from './utils/DomHelper';
-import ImageModal from './common/ImageModal';
-import SpectraActions from './actions/SpectraActions';
-import LoadingActions from './actions/LoadingActions';
-import { BuildSpcInfos, JcampIds } from './utils/SpectraHelper';
-import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from './utils/ElementUtils';
-import { contentToText } from './utils/quillFormat';
-import UIStore from './stores/UIStore';
-import { chmoConversions } from './OlsComponent';
-import { previewContainerImage } from './utils/imageHelper';
+import QuillViewer from 'src/components/QuillViewer';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import { stopBubble } from 'src/utilities/DomHelper';
+import ImageModal from 'src/components/common/ImageModal';
+import SpectraActions from 'src/stores/alt/actions/SpectraActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import { BuildSpcInfos, JcampIds } from 'src/utilities/SpectraHelper';
+import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
+import { contentToText } from 'src/utilities/quillFormat';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { chmoConversions } from 'src/components/OlsComponent';
+import { previewContainerImage } from 'src/utilities/imageHelper';
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>
@@ -36,8 +36,8 @@ const qCheckMsg = (sample, container) => {
     ((typeof container.extended_metadata.kind === 'undefined' || container.extended_metadata.kind == null ||
       container.extended_metadata.kind.split('|').length < 2) ||
       (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId
-      && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId
-      && !container.extended_metadata.kind.split('|')[1].includes('mass spectrometry'))
+        && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId
+        && !container.extended_metadata.kind.split('|')[1].includes('mass spectrometry'))
     )) {
     return '';
   }
@@ -63,7 +63,7 @@ const SpectraEditorBtn = ({
   <OverlayTrigger
     placement="bottom"
     delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess' }</Tooltip>}
+    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
   >{spcInfos.length > 0 ? (
     <ButtonGroup className="button-right">
       <SplitButton
@@ -183,9 +183,9 @@ const HeaderDeleted = ({ container, handleUndo, mode }) => {
   return (
     <div className="analysis-header-delete">
       <strike>
-        { container.name }
-        { kind }
-        { status }
+        {container.name}
+        {kind}
+        {status}
       </strike>
       <div className="button-right undo-middle">
         {undoBtn(container, mode, handleUndo)}

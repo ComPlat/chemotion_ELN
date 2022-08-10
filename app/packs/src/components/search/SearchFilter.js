@@ -1,8 +1,8 @@
 import React from 'react'
 import {Button, FormControl} from 'react-bootstrap'
 import Select from 'react-select'
-import UIActions from '../actions/UIActions';
-import XSearchParams from "../extra/AdvancedSearchXSearchParams";
+import UIActions from 'src/stores/alt/actions/UIActions';
+import XSearchParams from "src/components/extra/AdvancedSearchXSearchParams";
 
 export default class SearchFilter extends React.Component {
   constructor(props) {

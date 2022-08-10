@@ -6,13 +6,13 @@ import {
   Table, Glyphicon, Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import Select from 'react-select';
-import DetailActions from './actions/DetailActions';
-import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
-import TextRangeWithAddon from './TextRangeWithAddon';
-import { solventOptions } from './staticDropdownOptions/options';
-import SampleDetailsSolvents from './SampleDetailsSolvents';
-import PrivateNoteElement from './PrivateNoteElement';
-import NotificationActions from './actions/NotificationActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo';
+import TextRangeWithAddon from 'src/components/TextRangeWithAddon';
+import { solventOptions } from 'src/components/staticDropdownOptions/options';
+import SampleDetailsSolvents from 'src/components/SampleDetailsSolvents';
+import PrivateNoteElement from 'src/components/PrivateNoteElement';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 
 export default class SampleForm extends React.Component {

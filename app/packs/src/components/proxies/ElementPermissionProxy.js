@@ -1,4 +1,4 @@
-import Element from '../models/Element';
+import Element from 'src/models/Element';
 import _ from 'lodash';
 
 export default class ElementPermissionProxy {
@@ -32,7 +32,7 @@ export default class ElementPermissionProxy {
   }
 
   methodOrRestrictionPattern(element, m) {
-    if(element.isRestricted() == true && element[m] == undefined) {
+    if (element.isRestricted() == true && element[m] == undefined) {
       return this.restrictionPattern;
     } else {
       return element[m];

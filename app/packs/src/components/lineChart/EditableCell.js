@@ -1,5 +1,4 @@
 import React from 'react';
-// import PropTypes from 'prop-types';
 
 export default class EditableCell extends React.Component {
   constructor(props) {
@@ -15,11 +14,11 @@ export default class EditableCell extends React.Component {
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({val: nextProps.value})
+    this.setState({ val: nextProps.value })
   }
 
   handleBlur(e) {
-    let {uid, type, onCellValueChange, inputOnChange} = this.props
+    let { uid, type, onCellValueChange, inputOnChange } = this.props
     let newValue = inputOnChange(this.state.val, e.target.value)
 
     this.setState({
@@ -29,18 +28,18 @@ export default class EditableCell extends React.Component {
   }
 
   handleChange(e) {
-    let {inputOnChange} = this.props
+    let { inputOnChange } = this.props
 
-    this.setState({val: e.target.value})
+    this.setState({ val: e.target.value })
   }
 
   handleDoubleClick() {
-    this.setState({editing: true})
+    this.setState({ editing: true })
   }
 
   render() {
-    let {uid, inputPlaceholder} = this.props
-    let {editing, val} = this.state
+    let { uid, inputPlaceholder } = this.props
+    let { editing, val } = this.state
 
     let displayValue = editing ? '' : val
 
@@ -49,8 +48,8 @@ export default class EditableCell extends React.Component {
     if (editing) {
       className = 'editable-selected'
       cellContent = (
-        <input placeholder={inputPlaceholder} style={{width: "100%"}} value={val}
-               onChange={this.handleChange} onBlur={this.handleBlur} />
+        <input placeholder={inputPlaceholder} style={{ width: "100%" }} value={val}
+          onChange={this.handleChange} onBlur={this.handleBlur} />
       )
     }
 

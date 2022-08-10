@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table } from 'react-bootstrap';
 
-import { iconStatus } from './icon';
+import { iconStatus } from 'src/components/qc/components/helper/icon';
 
 const colorStyles = [
   { backgroundColor: '#FFFF00' },

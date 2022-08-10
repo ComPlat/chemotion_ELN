@@ -102,7 +102,7 @@ testjs:
   script:
     - /bin/bash -l -c "bundle install"
     - /bin/bash -l -c "yarn install"
-    - /bin/bash -l -c "RAILS_ENV=test bundle exec rake db:test:prepare && npm test"
+    - /bin/bash -l -c "RAILS_ENV=test bundle exec rake db:test:prepare && yarn test"
   except:
     variables:
     - $CI_COMMIT_MESSAGE =~ /skip[ _-]unitjs/i

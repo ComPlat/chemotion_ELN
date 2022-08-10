@@ -3,9 +3,9 @@ import SVG from 'react-inlinesvg';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import { Panel, Button } from 'react-bootstrap';
-import DragDropItemTypes from '../DragDropItemTypes';
-import ReportActions from '../actions/ReportActions';
-import UIActions from '../actions/UIActions';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import ReportActions from 'src/stores/alt/actions/ReportActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 const orderSource = {
   beginDrag(props) {

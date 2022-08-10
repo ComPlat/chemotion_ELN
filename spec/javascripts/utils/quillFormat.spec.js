@@ -1,7 +1,5 @@
 import expect from 'expect';
-import { describe, it } from 'mocha';
-
-import { keepSupSub } from '../../../app/packs/src/components/utils/quillFormat';
+import { keepSupSub } from '../../../app/packs/src/utilities/quillFormat';
 
 describe('keepSupSub', () => {
   it('does nothing special if empty ops', () => {
@@ -27,10 +25,10 @@ describe('keepSupSub', () => {
   it('does nothing special if multiple ops', () => {
     const originalDelta = {
       ops: [
-        { insert: "EI (m/z, 70 eV, 110 °C): 258 (9) [M]"},
+        { insert: "EI (m/z, 70 eV, 110 °C): 258 (9) [M]" },
         {
-          attributes: {"script":"super"},
-          insert:"+"
+          attributes: { "script": "super" },
+          insert: "+"
         },
         {
           insert: ", 240 (13), 225 (25), 224 (25), 223 (100), 200 (13), 199 (19), 198 (12), 196 (16), 195 (18), 183 (13), 182 (19), 154 (14), 141 (13), 115 (16), 106 (21), 77 (16), 65 (22). HRMS (C"
@@ -51,10 +49,10 @@ describe('keepSupSub', () => {
         },
         { insert: "N" },
         {
-          attributes: {"script":"sub"},
-          insert:"2"
+          attributes: { "script": "sub" },
+          insert: "2"
         },
-        {insert: "): calc. 258.1004, found 258.1006.  "}
+        { insert: "): calc. 258.1004, found 258.1006.  " }
       ]
     };
     const result = keepSupSub(originalDelta);

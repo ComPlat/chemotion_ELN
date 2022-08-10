@@ -2,13 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Alert } from 'react-bootstrap';
 
-import QuillViewer from '../../../QuillViewer';
-import QcMolView from '../helper/qc_mol_view';
-import { iconByMargin } from '../helper/icon';
+import QuillViewer from 'src/components/QuillViewer';
+import QcMolView from 'src/components/qc/components/helper/qc_mol_view';
+import { iconByMargin } from 'src/components/qc/components/helper/icon';
 import {
   tableNmr,
   formatQV,
-} from '../helper/nmr';
+} from 'src/components/qc/components/helper/nmr';
 
 const emptyBlock = () => (
   <div className="card-qc">

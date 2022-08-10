@@ -7,24 +7,24 @@ import {
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
 
-import Screen from './models/Screen';
+import Screen from 'src/models/Screen';
 
-import ElementCollectionLabels from './ElementCollectionLabels';
-import ScreenWellplates from './ScreenWellplates';
-import ScreenResearchPlans from './ScreenResearchPlans';
-import QuillEditor from './QuillEditor';
-import ScreenDetailsContainers from './ScreenDetailsContainers';
-import ElementActions from './actions/ElementActions';
-import DetailActions from './actions/DetailActions';
-import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
-import PrintCodeButton from './common/PrintCodeButton';
-import ConfirmClose from './common/ConfirmClose';
-import ElementDetailSortTab from './ElementDetailSortTab';
-import { addSegmentTabs } from './generic/SegmentDetails';
-import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher';
-import LoadingActions from './actions/LoadingActions';
-import PrivateNoteElement from './PrivateNoteElement';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ScreenWellplates from 'src/components/ScreenWellplates';
+import ScreenResearchPlans from 'src/components/ScreenResearchPlans';
+import QuillEditor from 'src/components/QuillEditor';
+import ScreenDetailsContainers from 'src/components/ScreenDetailsContainers';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import ConfirmClose from 'src/components/common/ConfirmClose';
+import ElementDetailSortTab from 'src/components/ElementDetailSortTab';
+import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import PrivateNoteElement from 'src/components/PrivateNoteElement';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -68,7 +68,7 @@ export default class ScreenDetails extends Component {
   }
 
   onUIStoreChange(state) {
-    if (state.screen.activeTab != this.state.activeTab){
+    if (state.screen.activeTab != this.state.activeTab) {
       this.setState({
         activeTab: state.screen.activeTab
       })
@@ -294,7 +294,7 @@ export default class ScreenDetails extends Component {
                       disabled={screen.isMethodDisabled('description')}
                     />
                   </FormGroup>
-                  <PrivateNoteElement element={screen} disabled={screen.can_update}/>
+                  <PrivateNoteElement element={screen} disabled={screen.can_update} />
                 </td>
               </tr>
             </tbody>

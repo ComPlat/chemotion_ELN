@@ -1,14 +1,13 @@
 import React from 'react'
-import {ButtonGroup, OverlayTrigger, Tooltip, DropdownButton, Button, MenuItem} from 'react-bootstrap'
-import UIActions from './../actions/UIActions'
-import ElementActions from './../actions/ElementActions'
-import UserActions from './../actions/UserActions'
-import ElementStore from './../stores/ElementStore'
-import UserStore from './../stores/UserStore'
-import UIStore from './../stores/UIStore'
+import { ButtonGroup, OverlayTrigger, Tooltip, DropdownButton, Button, MenuItem } from 'react-bootstrap'
+import UIActions from 'src/stores/alt/actions/UIActions'
+import ElementActions from 'src/stores/alt/actions/ElementActions'
+import ElementStore from 'src/stores/alt/stores/ElementStore'
+import UserStore from 'src/stores/alt/stores/UserStore'
+import UIStore from 'src/stores/alt/stores/UIStore'
 import connectToStores from 'alt-utils/lib/connectToStores'
 
-const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
+const DeviceButtonSplit = ({ devices, selectedDeviceId }) => {
   const handleShowDeviceManagement = () => {
     UIActions.showDeviceManagement()
     Aviator.navigate('/device/management')
@@ -16,13 +15,13 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
 
   const handleOpenDevice = () => {
     UIActions.closeDeviceManagement()
-    const {currentCollection} = UIStore.getState()
+    const { currentCollection } = UIStore.getState()
     // ending slash is needed!
     Aviator.navigate(`/collection/${currentCollection.id}/device/${selectedDeviceId}/`)
   }
 
   return (
-    <ButtonGroup style={{marginLeft: '10px'}}>
+    <ButtonGroup style={{ marginLeft: '10px' }}>
       <OverlayTrigger
         placement="bottom"
         overlay={<Tooltip id="open-device">Open Device</Tooltip>}
@@ -38,7 +37,7 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
       <DropdownButton
         bsStyle="warning"
         title={<div></div>}
-        style={{width: "26px", paddingLeft: "8px"}}
+        style={{ width: "26px", paddingLeft: "8px" }}
         id="device-selection"
       >
         <MenuItem
@@ -47,25 +46,25 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
           Device Management
         </MenuItem>
         <MenuItem divider />
-        {devices && devices.length > 0 
+        {devices && devices.length > 0
           ? devices.map((device, key) => {
-              return (
-                <MenuItem
-                  onSelect={() => ElementActions.changeSelectedDeviceId(device)}
-                  className={device.id === selectedDeviceId ? "selected" : ""}
-                  key={key}
-                >
-                  {device.title !== "" ? device.title : device.code}
-                </MenuItem>
-              )
-            })
-          : (
+            return (
               <MenuItem
-                disabled={true}
-                key={'no-devices'}
+                onSelect={() => ElementActions.changeSelectedDeviceId(device)}
+                className={device.id === selectedDeviceId ? "selected" : ""}
+                key={key}
               >
-                No Devices created yet.
+                {device.title !== "" ? device.title : device.code}
               </MenuItem>
+            )
+          })
+          : (
+            <MenuItem
+              disabled={true}
+              key={'no-devices'}
+            >
+              No Devices created yet.
+            </MenuItem>
           )
         }
       </DropdownButton>
@@ -77,7 +76,7 @@ DeviceButtonSplit.getStores = () => {
   // FIXME hacky
   const userStore = UserStore.getState()
   if (userStore && userStore.currentUser) {
-    const {selected_device_id} = userStore.currentUser
+    const { selected_device_id } = userStore.currentUser
     ElementActions.setSelectedDeviceId.defer(selected_device_id)
   }
 

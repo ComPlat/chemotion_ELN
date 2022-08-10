@@ -1,6 +1,6 @@
 import React from 'react';
 import { Label, OverlayTrigger, Popover, Button } from 'react-bootstrap';
-import UserStore from './stores/UserStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {

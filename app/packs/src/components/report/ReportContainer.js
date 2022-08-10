@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 import { Panel, Tabs, Tab } from 'react-bootstrap';
-import LoadingActions from '../actions/LoadingActions';
-import ReportActions from '../actions/ReportActions';
-import ReportStore from '../stores/ReportStore';
-import UIStore from '../stores/UIStore';
-import Setting from './Setting';
-import Previews from './Previews';
-import Orders from './Orders';
-import Serials from './Serials';
-import Archives from './Archives';
-import Config from './Config';
-import PanelHeader from '../common/PanelHeader';
-import { CloseBtn, ResetBtn, GenerateReportBtn } from './ReportComponent';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ReportActions from 'src/stores/alt/actions/ReportActions';
+import ReportStore from 'src/stores/alt/stores/ReportStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import Setting from 'src/components/report/Setting';
+import Previews from 'src/components/report/Previews';
+import Orders from 'src/components/report/Orders';
+import Serials from 'src/components/report/Serials';
+import Archives from 'src/components/report/Archives';
+import Config from 'src/components/report/Config';
+import PanelHeader from 'src/components/common/PanelHeader';
+import { CloseBtn, ResetBtn, GenerateReportBtn } from 'src/components/report/ReportComponent';
 
 const fetchPreviewTabs = [3, 4];
 
