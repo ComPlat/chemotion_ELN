@@ -188,10 +188,14 @@ class ElementActions {
         .then((result) => {
           dispatch(result);
           NotificationActions.removeByUid(uid);
+          if (result === '403 Unauthorized') {
+            NotificationActions.add({
+              title: 'Unauthorized: Performing more than one search operation simultaneously is not allowed',
+              level: 'info'
+            });
+          }
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
-
-
   }
 
   // -- Generic --
