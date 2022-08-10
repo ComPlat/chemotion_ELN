@@ -525,7 +525,7 @@ module Chemotion
         desc 'Update tab segment'
         params do
           requires :id, type: Integer, desc: 'Collection id'
-          optional :segment, type: String, desc: 'Tab segment type'
+          optional :segment, type: Hash, desc: 'Tab segment type'
         end
 
         patch do
