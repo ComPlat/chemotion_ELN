@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import {
   ListGroup, ListGroupItem, Collapse, Button, ButtonGroup
 } from 'react-bootstrap';
-import Sample from './models/Sample';
-import Molecule from './models/Molecule';
-import SampleDetailsSolventsDnd from './SampleDetailsSolventsDnd';
+import Sample from 'src/models/Sample';
+import Molecule from 'src/models/Molecule';
+import SampleDetailsSolventsDnd from 'src/components/SampleDetailsSolventsDnd';
 
 
 export default class SampleDetailsSolvents extends React.Component {
@@ -86,7 +86,7 @@ export default class SampleDetailsSolvents extends React.Component {
       <div>
         <ListGroup fill="true">
           <ListGroupItem style={minPadding}>
-            { this.solventCollapseBtn() }
+            {this.solventCollapseBtn()}
             <Collapse in={this.state.open}>
               <div>
                 <SampleDetailsSolventsDnd

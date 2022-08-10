@@ -1,8 +1,8 @@
 import React from 'react';
-import { SVGContent, DescriptionContent } from './SectionReaction';
-import { rmDeltaRedundantSpaceBreak } from '../utils/quillFormat';
+import { SVGContent, DescriptionContent } from 'src/components/report/SectionReaction';
+import { rmDeltaRedundantSpaceBreak } from 'src/utilities/quillFormat';
 
-const Title = ({el, counter}) => {
+const Title = ({ el, counter }) => {
   return (
     <h5>
       3.{counter} {el.name} ({el.short_label})
@@ -10,7 +10,7 @@ const Title = ({el, counter}) => {
   );
 }
 
-const ProcedureRow = ({el, counter}) => {
+const ProcedureRow = ({ el, counter }) => {
   const clean_desc = rmDeltaRedundantSpaceBreak(el.description);
   return (
     <div>
@@ -28,11 +28,11 @@ const ProcedureRow = ({el, counter}) => {
 
 const SectionSiProcedures = ({ previewObjs }) => {
   let counter = 0;
-  const contents = previewObjs.map( obj => {
-    if(obj.type === 'reaction' && obj.role === 'gp') {
+  const contents = previewObjs.map(obj => {
+    if (obj.type === 'reaction' && obj.role === 'gp') {
       counter += 1;
       return (
-        <ProcedureRow id={obj.id} key={obj.id} el={obj} counter={counter}/>
+        <ProcedureRow id={obj.id} key={obj.id} el={obj} counter={counter} />
       );
     }
   });

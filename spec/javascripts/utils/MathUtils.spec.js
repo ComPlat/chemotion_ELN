@@ -1,9 +1,8 @@
 import expect from 'expect';
-import { describe, it } from 'mocha';
 
 import {
   fixDigit, validDigit, correctPrefix,
-} from '../../../app/packs/src/components/utils/MathUtils';
+} from '../../../app/packs/src/utilities/MathUtils';
 
 describe('fixDigit', () => {
   it('return number with correct precisons', () => {

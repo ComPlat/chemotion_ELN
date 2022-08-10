@@ -2,14 +2,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonGroup, Row, Col, ControlLabel, Tooltip, OverlayTrigger, DropdownButton, MenuItem } from 'react-bootstrap';
-import ResearchPlanDetailsDragSource from './ResearchPlanDetailsDragSource';
-import ResearchPlanDetailsDropTarget from './ResearchPlanDetailsDropTarget';
-import ResearchPlanDetailsFieldRichText from './ResearchPlanDetailsFieldRichText';
-import ResearchPlanDetailsFieldKetcher from './ResearchPlanDetailsFieldKetcher';
-import ResearchPlanDetailsFieldImage from './ResearchPlanDetailsFieldImage';
-import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable';
-import ResearchPlanDetailsFieldSample from './ResearchPlanDetailsFieldSample';
-import ResearchPlanDetailsFieldReaction from './ResearchPlanDetailsFieldReaction';
+import ResearchPlanDetailsDragSource from 'src/components/research_plan/ResearchPlanDetailsDragSource';
+import ResearchPlanDetailsDropTarget from 'src/components/research_plan/ResearchPlanDetailsDropTarget';
+import ResearchPlanDetailsFieldRichText from 'src/components/research_plan/ResearchPlanDetailsFieldRichText';
+import ResearchPlanDetailsFieldKetcher from 'src/components/research_plan/ResearchPlanDetailsFieldKetcher';
+import ResearchPlanDetailsFieldImage from 'src/components/research_plan/ResearchPlanDetailsFieldImage';
+import ResearchPlanDetailsFieldTable from 'src/components/research_plan/ResearchPlanDetailsFieldTable';
+import ResearchPlanDetailsFieldSample from 'src/components/research_plan/ResearchPlanDetailsFieldSample';
+import ResearchPlanDetailsFieldReaction from 'src/components/research_plan/ResearchPlanDetailsFieldReaction';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Label, Modal, Button } from 'react-bootstrap';
-import ElementActions from '../actions/ElementActions';
-import ElementStore from '../stores/ElementStore';
-import UserStore from '../stores/UserStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class GenericElementLabels extends React.Component {
   constructor(props) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { LineChart } from './LineChart';
+import { LineChart } from 'src/components/nmr_sim/LineChart';
 
 export default class LineChartWrapper extends React.Component {
   constructor(props) {

@@ -1,9 +1,9 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
-import ManagingModalSharing from '../managing_actions/ManagingModalSharing';
-import CollectionStore from '../stores/CollectionStore';
-import CollectionActions from '../actions/CollectionActions';
+import ManagingModalSharing from 'src/components/managing_actions/ManagingModalSharing';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
 export default class MySharedCollections extends React.Component {
   constructor(props) {

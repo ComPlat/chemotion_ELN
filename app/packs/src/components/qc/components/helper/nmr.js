@@ -1,8 +1,8 @@
 import React from 'react';
 import { Table } from 'react-bootstrap';
 
-import { iconStatus } from './icon';
-import { numFormat, realFormat } from '../../utils/common';
+import { iconStatus } from 'src/components/qc/components/helper/icon';
+import { numFormat, realFormat } from 'src/components/qc/utils/common';
 
 const tableNmr = (shifts = []) => (
   <Table responsive striped condensed hover>

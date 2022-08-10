@@ -1,11 +1,9 @@
 import React from 'react'
-import {Panel , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
-import DeviceSampleContainer from './DeviceSampleContainer'
-import ElementActions from './actions/ElementActions'
-import DetailActions from './actions/DetailActions'
-import AnalysisNMR from './AnalysisNMR'
+import { Panel, Button, OverlayTrigger, Tooltip } from 'react-bootstrap'
+import DetailActions from 'src/stores/alt/actions/DetailActions'
+import AnalysisNMR from 'src/components/AnalysisNMR'
 
-const DeviceAnalysisDetails = ({analysis, toggleFullScreen}) => {
+const DeviceAnalysisDetails = ({ analysis, toggleFullScreen }) => {
   return (
     <Panel
       className='panel-detail'
@@ -64,11 +62,10 @@ const Header = ({ analysis, toggleFullScreen }) => {
   );
 };
 
-const MainContent = ({analysis}) => {
-  switch(analysis.analysisType) {
+const MainContent = ({ analysis }) => {
+  switch (analysis.analysisType) {
     case 'NMR':
       return <AnalysisNMR analysis={analysis} />
-      break
     default:
       return <div>Device-Analysis not found!</div>
   }

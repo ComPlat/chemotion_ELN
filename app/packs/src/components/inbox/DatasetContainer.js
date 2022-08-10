@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
-import AttachmentContainer from './AttachmentContainer';
-import DragDropItemTypes from '../DragDropItemTypes';
-import InboxActions from '../actions/InboxActions';
+import AttachmentContainer from 'src/components/inbox/AttachmentContainer';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
 
 const dataSource = {
   beginDrag(props) {

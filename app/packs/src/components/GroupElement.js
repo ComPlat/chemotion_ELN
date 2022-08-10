@@ -1,6 +1,6 @@
 import React from 'react';
-import { ButtonGroup, OverlayTrigger, Popover, Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Tooltip, Panel, Form, FormControl, FormGroup, ControlLabel, Col, Row } from 'react-bootstrap';
-import UsersFetcher from './fetchers/UsersFetcher';
+import { ButtonGroup, OverlayTrigger, Popover, Button, Table, Tooltip } from 'react-bootstrap';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 import Select from 'react-select';
 import _ from 'lodash';
 
@@ -168,14 +168,14 @@ export default class GroupElement extends React.Component {
   // add multiple users
   // replace with response result and then setState (with forceUpdate)
   addUser(groupRec) {
-    const { selectedUsers} = this.state;
+    const { selectedUsers } = this.state;
 
     const userIds = [];
     selectedUsers.map((g) => {
       userIds.push(g.value);
       return true;
     });
-    
+
     UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, add_users: userIds })
       .then((group) => {
         const idx = _.findIndex(this.props.currentGroup, function (o) { return o.id == group.group.id; });

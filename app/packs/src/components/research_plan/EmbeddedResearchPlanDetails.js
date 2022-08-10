@@ -2,13 +2,13 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
 import Aviator from 'aviator';
-import UIStore from '../stores/UIStore';
-import { researchPlanShowOrNew } from '../routesUtils';
-import ElementCollectionLabels from '../ElementCollectionLabels';
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
-import ResearchPlan from '../models/ResearchPlan';
-import ResearchPlanDetailsBody from './ResearchPlanDetailsBody';
-import ResearchPlanDetailsName from './ResearchPlanDetailsName';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { researchPlanShowOrNew } from 'src/components/routesUtils';
+import ElementCollectionLabels from 'src/components/ElementCollectionLabels';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import ResearchPlan from 'src/models/ResearchPlan';
+import ResearchPlanDetailsBody from 'src/components/research_plan/ResearchPlanDetailsBody';
+import ResearchPlanDetailsName from 'src/components/research_plan/ResearchPlanDetailsName';
 
 export default class EmbeddedResearchPlanDetails extends Component {
   constructor(props) {
@@ -252,7 +252,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
           placement="bottom"
           onHide={() => this.setState({ confirmRemove: false })}
         >
-          { popover }
+          {popover}
         </Overlay>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => saveResearchPlan(researchPlan)} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>

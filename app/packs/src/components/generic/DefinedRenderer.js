@@ -1,7 +1,7 @@
 import React from 'react';
-import SystemSelect from './SystemSelect';
-import { molOptions, samOptions } from '../../admin/generic/Utils';
-import AttrChk from './AttrChk';
+import SystemSelect from 'src/components/generic/SystemSelect';
+import { molOptions, samOptions } from 'src/apps/admin/generic/Utils';
+import AttrChk from 'src/components/generic/AttrChk';
 
 const DefinedRenderer = (props) => {
   const {

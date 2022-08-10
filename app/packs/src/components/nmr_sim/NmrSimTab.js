@@ -2,10 +2,10 @@ import React from 'react';
 import { Button, ButtonToolbar, ListGroup, ListGroupItem } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-import NmrSimActions from '../actions/NmrSimActions';
-import NmrSimStore from '../stores/NmrSimStore';
-import LineChartWrapper from './LineChartWrapper';
-import { ViewAtNmrdb, LinkToNmrdb } from './NmrdbReference';
+import NmrSimActions from 'src/stores/alt/actions/NmrSimActions';
+import NmrSimStore from 'src/stores/alt/stores/NmrSimStore';
+import LineChartWrapper from 'src/components/nmr_sim/LineChartWrapper';
+import { ViewAtNmrdb, LinkToNmrdb } from 'src/components/nmr_sim/NmrdbReference';
 
 export default class NmrSimTab extends React.Component {
   constructor(props) {

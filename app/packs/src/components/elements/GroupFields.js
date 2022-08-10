@@ -3,8 +3,8 @@ import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Button, FormGroup, FormControl } from 'react-bootstrap';
-import GenericSubField from '../models/GenericSubField';
-import DefinedRenderer from '../generic/DefinedRenderer';
+import GenericSubField from 'src/models/GenericSubField';
+import DefinedRenderer from 'src/components/generic/DefinedRenderer';
 
 const AddRowBtn = ({ addRow }) => (
   <Button onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>

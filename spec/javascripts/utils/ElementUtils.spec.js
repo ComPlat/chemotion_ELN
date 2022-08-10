@@ -4,11 +4,11 @@ import expect from 'expect';
 
 import {
   searchAndReplace
-} from '../../../app/packs/src/components/utils/markdownUtils';
+} from '../../../app/packs/src/utilities/markdownUtils';
 import {
   sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat
-} from '../../../app/packs/src/components/utils/ElementUtils';
-import { contentToText } from '../../../app/packs/src/components/utils/quillFormat';
+} from '../../../app/packs/src/utilities/ElementUtils';
+import { contentToText } from '../../../app/packs/src/utilities/quillFormat';
 import { nmrData1H } from '../fixture/nmr1H';
 import { nmrData13C } from '../fixture/nmr13C';
 import { rfValues } from '../fixture/rfvalue';

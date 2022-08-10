@@ -1,5 +1,5 @@
 import React from 'react';
-import {Label, OverlayTrigger, Popover,Glyphicon, Button} from 'react-bootstrap';
+import { Label, OverlayTrigger, Popover } from 'react-bootstrap';
 
 export default class ElementAnalysesLabels extends React.Component {
   constructor(props) {
@@ -12,8 +12,8 @@ export default class ElementAnalysesLabels extends React.Component {
   render() {
 
     return (
-      <div style={{display: 'inline-block'}}
-          onClick={(e) => { e.stopPropagation() }}>
+      <div style={{ display: 'inline-block' }}
+        onClick={(e) => { e.stopPropagation() }}>
         {this.analysesLabels(this.state.element)}
       </div>
     );
@@ -38,18 +38,18 @@ export default class ElementAnalysesLabels extends React.Component {
       confirmedTitle = 'Confirmed Analyses'
 
     return (
-      <div style={{display: 'inline-block'}}>
+      <div style={{ display: 'inline-block' }}>
         {this.labelWithPopover(unconfirmedTitle, analyses.unconfirmed)}
         {this.labelWithPopover(confirmedTitle, analyses.confirmed)}
-       </div>
+      </div>
     )
   }
 
   labelWithPopover(title, labels) {
     if (!labels) return (<span />)
 
-    let {element} = this.state
-    let experiment = <i className='fa fa-bar-chart'/>
+    let { element } = this.state
+    let experiment = <i className='fa fa-bar-chart' />
 
     let label_popover = (
       <Popover title={title} id={'labelpop' + element.id}>
@@ -58,8 +58,8 @@ export default class ElementAnalysesLabels extends React.Component {
     )
 
     let status = title.match(/Unconfirmed/)
-                 ? <i className="fa fa-question" />
-                 : <i className="fa fa-check"/>
+      ? <i className="fa fa-question" />
+      : <i className="fa fa-check" />
     let total = Object.values(labels).reduce((a, b) => a + b, 0)
 
     return (

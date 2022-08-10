@@ -1,12 +1,12 @@
 import React from 'react';
 import _ from 'lodash';
-import { SVGContent } from './SectionReaction';
-import QuillViewer from '../QuillViewer';
-import { fixDigit, validDigit } from '../utils/MathUtils';
-import { rmOpsRedundantSpaceBreak, frontBreak } from '../utils/quillFormat';
-import ArrayUtils from '../utils/ArrayUtils';
-import { Alphabet } from '../utils/ElementUtils';
-import { UserSerial } from '../utils/ReportHelper';
+import { SVGContent } from 'src/components/report/SectionReaction';
+import QuillViewer from 'src/components/QuillViewer';
+import { fixDigit, validDigit } from 'src/utilities/MathUtils';
+import { rmOpsRedundantSpaceBreak, frontBreak } from 'src/utilities/quillFormat';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import { Alphabet } from 'src/utilities/ElementUtils';
+import { UserSerial } from 'src/utilities/ReportHelper';
 
 const onlyBlank = (target) => {
   if (target.length === 0) return true;
@@ -114,11 +114,11 @@ const productContent = (products, settings, molSerials) => {
       : [];
 
     content = [...content, ...deltaName,
-      { insert: pFormula + pCAS + pMMass + pEMass + pEA },
-      { insert: '\n' },
-      ...dSmiles,
-      ...dInChI,
-      { insert: '\n' },
+    { insert: pFormula + pCAS + pMMass + pEMass + pEA },
+    { insert: '\n' },
+    ...dSmiles,
+    ...dInChI,
+    { insert: '\n' },
     ];
   });
   return content;
@@ -138,11 +138,11 @@ const stAndReContent = (el, prevContent, molSerials) => {
   [...el.starting_materials, ...el.reactants].forEach((elm) => {
     counter += 1;
     content = [...content,
-      { insert: `{${Alphabet(counter)}|` },
-      deltaUserSerial(elm.molecule, molSerials),
-      { insert: '} ' },
-      deltaSampleMoleculeName(elm),
-      { insert: ` (${validDigit(elm.amount_g, 3)} g, ${validDigit(elm.amount_mol * 1000, 3)} mmol, ${validDigit(elm.equivalent, 3)} equiv); ` }];
+    { insert: `{${Alphabet(counter)}|` },
+    deltaUserSerial(elm.molecule, molSerials),
+    { insert: '} ' },
+    deltaSampleMoleculeName(elm),
+    { insert: ` (${validDigit(elm.amount_g, 3)} g, ${validDigit(elm.amount_mol * 1000, 3)} mmol, ${validDigit(elm.equivalent, 3)} equiv); ` }];
   });
   return { content };
 };
@@ -153,10 +153,10 @@ const solventsContent = (el, prevContent) => {
   el.solvents.forEach((elm) => {
     counter += 1;
     content = [...content,
-      { insert: `{S${counter}` },
-      { insert: '} ' },
-      deltaSampleMoleculeName(elm),
-      { insert: ` (${validDigit(elm.amount_l * 1000, 2)} mL); ` }];
+    { insert: `{S${counter}` },
+    { insert: '} ' },
+    deltaSampleMoleculeName(elm),
+    { insert: ` (${validDigit(elm.amount_l * 1000, 2)} mL); ` }];
   });
   return { content };
 };
@@ -169,9 +169,9 @@ const porductsContent = (el, prevContent, molSerials) => {
     const mol = p.molecule;
     counter += 1;
     content = [...content, ...prdIdentifier(counter, mol, molSerials),
-      { insert: ` = ${validDigit(p.equivalent * 100, 0)}%` },
-      { insert: ` (${validDigit(p.amount_g, 3)} g, ${validDigit(p.amount_mol * 1000, 3)} mmol)` },
-      { insert: '; ' }];
+    { insert: ` = ${validDigit(p.equivalent * 100, 0)}%` },
+    { insert: ` (${validDigit(p.amount_g, 3)} g, ${validDigit(p.amount_mol * 1000, 3)} mmol)` },
+    { insert: '; ' }];
   });
   content = content.slice(0, -1);
   content = [...content, { insert: '.' }];
@@ -191,8 +191,8 @@ const tlcContent = (el) => {
   let content = [];
   if (el.tlc_solvents) {
     content = [{ attributes: { italic: 'true' }, insert: 'R' },
-      { attributes: { script: 'sub', italic: 'true' }, insert: 'f' },
-      { insert: ` = ${el.rf_value} (${el.tlc_solvents}).` }];
+    { attributes: { script: 'sub', italic: 'true' }, insert: 'f' },
+    { insert: ` = ${el.rf_value} (${el.tlc_solvents}).` }];
   }
   return content;
 };
@@ -270,9 +270,11 @@ const analysesContent = (products) => {
 const dangContent = (el) => {
   if (el.dangerous_products.length === 0) return [];
   let content = [{ attributes: { bold: 'true' }, insert: 'Attention! ' },
-    { insert: 'The reaction includes the use of dangerous ' +
+  {
+    insert: 'The reaction includes the use of dangerous ' +
       'chemicals, which have the following ' +
-      'classification: ' }];
+      'classification: '
+  }];
   el.dangerous_products.forEach((d) => {
     content = [...content, { insert: d }, { insert: ', ' }];
   });

@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
-import { permitOn } from './common/uis';
+import { permitOn } from 'src/components/common/uis';
 
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {

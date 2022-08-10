@@ -3,9 +3,9 @@ import React, { useRef } from 'react';
 import { InputGroup, OverlayTrigger, FormGroup, SplitButton, Tooltip, MenuItem } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
-import NotificationActions from './actions/NotificationActions';
-import BaseFetcher from './fetchers/BaseFetcher';
-import LoadingActions from './actions/LoadingActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 const apiCall = (cas, src = 'cas') => (src === 'cas' ? `https://commonchemistry.cas.org/api/detail?cas_rn=${cas}` : `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${cas}/property/CanonicalSMILES/JSON`);
 

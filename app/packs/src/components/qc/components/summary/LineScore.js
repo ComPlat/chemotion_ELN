@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 
-import { evalMsg, evalLabel, evalScoreTxt } from './eval';
+import { evalMsg, evalLabel, evalScoreTxt } from 'src/components/qc/components/summary/eval';
 
 const tpMsg = score => (
   <Tooltip id="tp-msg">

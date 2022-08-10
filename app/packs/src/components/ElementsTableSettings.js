@@ -1,15 +1,14 @@
 import React from 'react';
-import Immutable from 'immutable';
-import {Popover, Button, FormGroup, Checkbox, OverlayTrigger} from 'react-bootstrap';
+import { Popover, Button, FormGroup, Checkbox, OverlayTrigger } from 'react-bootstrap';
 import _ from 'lodash';
 
-import TabLayoutContainer from './TabLayoutContainer';
+import TabLayoutContainer from 'src/components/TabLayoutContainer';
 
-import UserActions from './actions/UserActions';
-import UIActions from './actions/UIActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
-import UIStore from './stores/UIStore';
-import UserStore from './stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class ElementsTableSettings extends React.Component {
   constructor(props) {
@@ -134,13 +133,13 @@ export default class ElementsTableSettings extends React.Component {
           <div className="popover-content">
             <FormGroup>
               <Checkbox onChange={this.handleToggleScheme}
-                        checked={tableSchemePreviews} >
+                checked={tableSchemePreviews} >
                 Show schemes images
               </Checkbox>
             </FormGroup>
             <FormGroup>
               <Checkbox onChange={this.handleToggleSampleExt}
-                        checked={showSampleExternalName} >
+                checked={showSampleExternalName} >
                 Show sample external name on title
               </Checkbox>
             </FormGroup>

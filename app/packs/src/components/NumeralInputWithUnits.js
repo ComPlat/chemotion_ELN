@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {DropdownButton, MenuItem} from 'react-bootstrap';
-import NumeralInput from './NumeralInput';
+import NumeralInput from 'src/components/NumeralInput';
 
 export default class NumeralInputWithUnits extends Component {
   constructor(props) {

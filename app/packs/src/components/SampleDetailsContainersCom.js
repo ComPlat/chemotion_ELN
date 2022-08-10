@@ -1,12 +1,12 @@
 import React from 'react';
 import { PanelGroup, Panel } from 'react-bootstrap';
-import ContainerComponent from './ContainerComponent';
-import ContainerRow from './SampleDetailsContainersDnd';
+import ContainerComponent from 'src/components/ContainerComponent';
+import ContainerRow from 'src/components/SampleDetailsContainersDnd';
 import {
   HeaderDeleted,
   HeaderNormal,
   AnalysisModeBtn
-} from './SampleDetailsContainersAux';
+} from 'src/components/SampleDetailsContainersAux';
 
 const RndNotAvailable = () => (
   <div>

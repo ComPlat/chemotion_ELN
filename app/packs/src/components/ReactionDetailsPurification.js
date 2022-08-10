@@ -3,14 +3,14 @@ import PropTypes from 'prop-types';
 import { Row, Col, FormGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import 'moment-precise-range-plugin';
-import { purificationOptions } from './staticDropdownOptions/options';
-import MaterialGroupContainer from './MaterialGroupContainer';
-import QuillEditor from './QuillEditor';
-import QuillViewer from './QuillViewer';
-import Sample from './models/Sample';
-import { observationPurification, solventsTL } from './utils/reactionPredefined';
-import { permitOn } from './common/uis';
-import PrivateNoteElement from './PrivateNoteElement';
+import { purificationOptions } from 'src/components/staticDropdownOptions/options';
+import MaterialGroupContainer from 'src/components/MaterialGroupContainer';
+import QuillEditor from 'src/components/QuillEditor';
+import QuillViewer from 'src/components/QuillViewer';
+import Sample from 'src/models/Sample';
+import { observationPurification, solventsTL } from 'src/utilities/reactionPredefined';
+import { permitOn } from 'src/components/common/uis';
+import PrivateNoteElement from 'src/components/PrivateNoteElement';
 
 function dummy() { return true; }
 

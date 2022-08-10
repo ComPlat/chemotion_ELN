@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { PanelGroup, Panel, Button } from 'react-bootstrap';
-import Container from '../models/Container';
-import ContainerComponent from '../ContainerComponent';
-import TextTemplateActions from '../actions/TextTemplateActions';
+import Container from 'src/models/Container';
+import ContainerComponent from 'src/components/ContainerComponent';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {
@@ -100,7 +100,7 @@ export default class GenericElDetailsContainers extends Component {
       <p style={{ width: '100%' }}>
         <strike>{container.name}
           {(container.extended_metadata['kind'] && container.extended_metadata['kind'] !== '') ?
-          (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
+            (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
           {(container.extended_metadata['status'] && container.extended_metadata['status'] !== '') ? (` - Status: ${container.extended_metadata['status']}`) : ''}
         </strike>
         <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>
@@ -122,22 +122,22 @@ export default class GenericElDetailsContainers extends Component {
                     <Panel eventKey={key} key={key}>
                       <Panel.Heading>{containerHeaderDeleted(container)}</Panel.Heading>
                     </Panel>
-                      );
-                    }
-                  return (
-                    <Panel eventKey={key} key={key} onClick={() => this.handleAccordionOpen(key)}>
-                      <Panel.Heading>{containerHeader(container)}</Panel.Heading>
-                      <Panel.Body collapsible="true">
-                        <ContainerComponent
-                          templateType={genericEl.type}
-                          readOnly={readOnly}
-                          container={container}
-                          onChange={c => this.handleChange(c)}
-                        />
-                      </Panel.Body>
-                    </Panel>
                   );
                 }
+                return (
+                  <Panel eventKey={key} key={key} onClick={() => this.handleAccordionOpen(key)}>
+                    <Panel.Heading>{containerHeader(container)}</Panel.Heading>
+                    <Panel.Body collapsible="true">
+                      <ContainerComponent
+                        templateType={genericEl.type}
+                        readOnly={readOnly}
+                        container={container}
+                        onChange={c => this.handleChange(c)}
+                      />
+                    </Panel.Body>
+                  </Panel>
+                );
+              }
               )}
             </PanelGroup>
           </div>

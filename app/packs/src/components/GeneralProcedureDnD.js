@@ -1,11 +1,10 @@
 import React from 'react';
 import { DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import { Tooltip, OverlayTrigger } from 'react-bootstrap';
-import DragDropItemTypes from './DragDropItemTypes';
-import DetailActions from './actions/DetailActions';
-import ElementActions from './actions/ElementActions.js';
-import { UrlSilentNavigation } from './utils/ElementUtils';
+import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions.js';
+import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 
 const updRxnOriName = (oriRxn, sourceTag) => {
   const nextRxn = oriRxn;
@@ -57,7 +56,7 @@ const GpContent = ({ reaction }) => (
   reaction.origin && reaction.origin.short_label
     ? <span className="c-bs-primary gp-content">
       <span className="spacer-10" />
-      <a role="link" onClick={() => {showReaction(reaction.origin)}}>{reaction.origin.short_label}</a>
+      <a role="link" onClick={() => { showReaction(reaction.origin) }}>{reaction.origin.short_label}</a>
     </span>
     : null
 );
