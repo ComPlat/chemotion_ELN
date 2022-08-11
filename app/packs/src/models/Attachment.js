@@ -1,9 +1,9 @@
 import Element from 'src/models/Element';
 
 export default class Attachment extends Element {
-  filePreview(file) {
+  static filePreview(file) {
     return file.type.split('/')[0] === 'image' ? file.preview : '/images/wild_card/not_available.svg';
-  };
+  }
 
   static fromFile(file) {
     return new Attachment({
@@ -12,7 +12,7 @@ export default class Attachment extends Element {
       filename: file.name,
       identifier: file.id,
       is_deleted: false,
-      preview: filePreview(file),
+      preview: this.filePreview(file),
     });
   }
 
