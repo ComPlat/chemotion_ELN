@@ -20,3 +20,86 @@ pre {
         border-right: 1px solid silver;
     }
 }
+
+
+// compatiable with react-bootstrap
+.tab-content > .active {
+    opacity: unset !important;
+}
+
+.nav-tabs > li.active > a {
+    background-color: #fff;
+    border: 1px solid;
+    border-color: #ddd #ddd transparent;
+    color: #555;
+    cursor: default;
+}
+
+.nav-tabs > li > a {
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    margin-right: 2px;
+}
+
+.nav > li > a {
+    display: block;
+    padding: 10px 15px;
+    position: relative;
+}
+
+.mb-5-scroll {
+    height: 80vh;
+    overflow-x: hidden;
+}
+.mt-3 {
+    margin-top: 1rem !important;
+}
+
+.rounded-0 {
+    border-radius: 0 !important;
+}
+
+.card {
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-body {
+    flex: 1 1 auto;
+    min-height: 1px;
+    padding: 1.25rem;
+}
+
+.justify-content-center {
+    justify-content: center !important;
+}
+
+
+.align-items-center-item {
+    justify-content: center !important;
+}
+
+.form-row-item {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -5px;
+    margin-left: -5px;
+}
+
+.col-sm-3-c {
+    flex: 0 0 25%;
+    max-width: 25%;
+}
+
+.col-sm-9-c {
+    flex: 0 0 75%;
+    max-width: 75%;
+}

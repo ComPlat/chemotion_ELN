@@ -1,520 +1,170 @@
-import React, { Component } from 'react';
-import { Button } from 'react-bootstrap';
+import React, { Component } from "react"
+import { Modal, Button } from 'react-bootstrap';
+import { ProfileList, ProfileForm, FileUploadForm } from 'chemotion-converter-client';
+
 import ConverterApi from '../../components/fetchers/ConverterFetcher';
-import ProfileNewModal from './create/ProfileNewModal';
-
-import ProfileList from './list/ProfileList';
-import ProfileEdit from './edit/ProfileEdit';
-import ProfileCreate from './create/ProfileCreate';
-
-
-const initTable = (tableData) => {
-  const header = {};
-  if (tableData) {
-    // eslint-disable-next-line guard-for-in
-    for (const key in tableData.options) {
-      header[key] = tableData.options[key][0];
-    }
-  }
-  return {
-    header,
-    table: {}
-  };
-};
+import AdminFetcher from '../../components/fetchers/AdminFetcher';
 
 class AdminApp extends Component {
+
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       status: 'list',
-      clientId: '',
       selectedFile: null,
       profiles: [],
-      tableData: null,
-      columnList: null,
-      headerOptions: [],
+      options: [],
+      datasets: [],
+      profile: null,
       error: false,
-      isLoading: false,
-      uploadModal: false,
-      uploadType: '',
       errorMessage: '',
-      title: '',
-      description: '',
-      tables: [],
-      identifiers: [],
-      firstRowIsHeader: [],
-      currentIdentifier: '',
-      currentIndex: -1,
-    };
+      isLoading: false,
+      createdModal: false,
+      deleteModal: false
+    }
 
-    this.showImportView = this.showImportView.bind(this);
-    this.showEditView = this.showEditView.bind(this);
-    this.updateTitle = this.updateTitle.bind(this);
-    this.updateDescription = this.updateDescription.bind(this);
-    this.addTable = this.addTable.bind(this);
-    this.updateTable = this.updateTable.bind(this);
-    this.removeTable = this.removeTable.bind(this);
-    this.addHeader = this.addHeader.bind(this);
-    this.updateHeader = this.updateHeader.bind(this);
-    this.removeHeader = this.removeHeader.bind(this);
-    this.addOperation = this.addOperation.bind(this);
-    this.updateOperation = this.updateOperation.bind(this);
-    this.removeOperation = this.removeOperation.bind(this);
-    this.addIdentifier = this.addIdentifier.bind(this);
-    this.updateIdentifier = this.updateIdentifier.bind(this);
-    this.removeIdentifier = this.removeIdentifier.bind(this);
-    this.toggleFirstRowIsHeader = this.toggleFirstRowIsHeader.bind(this);
-    this.updateFirstRowIsHeader = this.updateFirstRowIsHeader.bind(this);
-    this.createProfile = this.createProfile.bind(this);
-    this.updateProfile = this.updateProfile.bind(this);
-    this.deleteProfile = this.deleteProfile.bind(this);
-    this.downloadProfile = this.downloadProfile.bind(this);
-    this.updateFile = this.updateFile.bind(this);
-    this.uploadFile = this.uploadFile.bind(this);
-    this.importFile = this.importFile.bind(this);
-    this.dispatchView = this.dispatchView.bind(this);
-    this.getTitleforStatus = this.getTitleforStatus.bind(this);
-    this.showUploadModal = this.showUploadModal.bind(this);
-    this.hideUploadModal = this.hideUploadModal.bind(this);
-    this.showImportModal = this.showImportModal.bind(this);
-    this.handleCreate = this.handleCreate.bind(this);
-    this.handleUpload = this.handleUpload.bind(this);
-    this.handleImport = this.handleImport.bind(this);
-    this.backProfileList = this.backProfileList.bind(this);
+    this.showCreateView = this.showCreateView.bind(this)
+    this.showUpdateView = this.showUpdateView.bind(this)
+    this.showImportView = this.showImportView.bind(this)
+
+    this.showCreatedModal = this.showCreatedModal.bind(this)
+    this.hideCreatedModal = this.hideCreatedModal.bind(this)
+
+    this.showDeleteModal = this.showDeleteModal.bind(this)
+    this.hideDeleteModal = this.hideDeleteModal.bind(this)
+
+    this.updateProfile = this.updateProfile.bind(this)
+    this.storeProfile = this.storeProfile.bind(this)
+    this.deleteProfile = this.deleteProfile.bind(this)
+    this.downloadProfile = this.downloadProfile.bind(this)
+
+    this.updateFile = this.updateFile.bind(this)
+    this.uploadFile = this.uploadFile.bind(this)
+    this.importFile = this.importFile.bind(this)
+
+    this.dispatchView = this.dispatchView.bind(this)
   }
 
   componentDidMount() {
-    ConverterApi.fetchProfiles()
-      .then((profiles) => {
-        if (profiles) this.setState({ profiles: profiles.profiles, clientId: profiles.client });
+    Promise.all([
+      ConverterApi.fetchProfiles(),
+      AdminFetcher.listDatasetKlass(),
+      ConverterApi.fetchOptions()
+    ]).then((responses) => {
+      const [profiles, klass, options] = responses;
+      const datasets = klass.klass.map((kl) => {
+        const pr = kl.properties_release;
+        pr.name = kl.label;
+        pr.ols = kl.ols_term_id;
+        return pr;
       });
-  }
 
-  getTitleforStatus() {
-    if (this.state.status === 'list') {
-      return `Profiles List [ ${this.state.clientId} ]`;
-    } else if (this.state.status === 'edit') {
-      return 'Update Profile';
-    } else if (this.state.status === 'import') {
-      return 'Import Profile';
-    }
-    return 'Create Profile';
+      this.setState({
+        profiles: profiles.profiles, datasets, options: options.options
+      });
+    });
   }
 
   showImportView() {
-    this.setState({ status: 'import' });
-  }
-
-  showUploadModal() {
-    this.setState({ uploadModal: true, uploadType: 'new' });
-  }
-
-  showImportModal() {
-    this.setState({ uploadModal: true, uploadType: 'import' });
-  }
-
-
-  hideUploadModal() {
-    this.setState({ uploadModal: false, uploadType:'' });
-  }
-
-  showEditView(index, identifier) {
-    const currentProfile = this.state.profiles[index];
     this.setState({
-      status: 'edit',
-      currentIdentifier: identifier,
-      currentIndex: index,
-      id: currentProfile.id,
-      title: currentProfile.title,
-      description: currentProfile.description,
-      identifiers: currentProfile.identifiers,
-      header: currentProfile.header,
-      tables: currentProfile.tables,
-      firstRowIsHeader: currentProfile.firstRowIsHeader
-    });
+      status: 'import',
+      profile: null
+    })
   }
 
-  updateTitle(title) {
+  showCreateView() {
     this.setState({
-      title
-    });
+      status: 'upload',
+      profile: null
+    })
   }
 
-  updateDescription(description) {
+  showUpdateView(profile) {
     this.setState({
-      description
-    });
+      status: 'update',
+      profile: Object.assign({}, profile),
+      error: false,
+      errorMessage: ''
+    })
   }
 
-  addTable() {
-    const { tables, tableData } = this.state;
-    tables.push(initTable(tableData));
-    this.setState({ tables });
+  showCreatedModal() {
+    this.setState({
+      createdModal: true
+    })
   }
 
-  updateTable(index, key, value) {
-    const tables = [...this.state.tables]
-    if (index !== -1) {
-      tables[index].table[key] = value
-
-      // remove the column if tableIndex and columnIndex is null
-      if (Object.values(tables[index].table[key]).every(value => (value === null || isNaN(value)))) {
-        delete tables[index].table[key];
-      }
-
-      this.setState({ tables });
-    }
+  hideCreatedModal() {
+    this.setState({
+      createdModal: false
+    })
   }
 
-  removeTable(index) {
-    const tables = [...this.state.tables];
-    tables.splice(index, 1);
-    this.setState({ tables });
+  showDeleteModal(profile) {
+    this.setState({
+      deleteModal: true,
+      profile: Object.assign({}, profile),
+    })
   }
 
-  addHeader(index) {
-    const tables = [...this.state.tables]
-    if (index !== -1) {
-      const key = `HEADER${Object.keys(tables[index].header).length}`;
-      tables[index].header[key] = '';
-    }
-    this.setState({ tables });
+  hideDeleteModal() {
+    this.setState({
+      deleteModal: false,
+      profile: null
+    })
   }
 
-  updateHeader(index, key, value, oldKey) {
-    const tables = [...this.state.tables];
-    if (index !== -1) {
-      if (oldKey === undefined) {
-        tables[index].header[key] = value;
-      } else {
-        // create a new header to preserve the order
-        tables[index].header = Object.keys(tables[index].header).reduce((agg, cur) => {
-          if (cur == oldKey) {
-            agg[key] = value;
-          } else {
-            agg[cur] = tables[index].header[cur];
-          }
-          return agg;
-        }, {});
-      }
-      this.setState({ tables });
-    }
+  updateProfile(profile) {
+    this.setState({ profile })
   }
 
-  removeHeader(index, key) {
-    const tables = [...this.state.tables];
-    delete tables[index].header[key];
-    this.setState({ tables });
-  }
-
-  addOperation(index, key, type) {
-    const tables = [...this.state.tables];
-    if (index !== -1) {
-      const operation = {
-        type,
-        operator: '+'
-      };
-      if (type == 'column') {
-        operation['column'] = {
-          tableIndex: null,
-          columnIndex: null
-        };
-      }
-
-      if (tables[index].table[key] === undefined) {
-        tables[index].table[key] = [];
-      }
-      tables[index].table[key].push(operation);
-      this.setState({ tables });
-    }
-  }
-
-  updateOperation(index, key, opIndex, opKey, value) {
-    const tables = [...this.state.tables];
-    if (index !== -1) {
-      tables[index].table[key][opIndex][opKey] = value;
-      this.setState({ tables });
-    }
-  }
-
-  removeOperation(index, key, opIndex) {
-    const tables = [...this.state.tables];
-    if (index !== -1) {
-      tables[index].table[key].splice(opIndex, 1);
-
-      // remove operations if it is empty
-      if (tables[index].table[key].length == 0) {
-        delete tables[index].table[key];
-      }
-
-      this.setState({ tables });
-    }
-  }
-
-  addIdentifier(type) {
-    const { identifiers } = this.state
-
-    let metadataKey = '';
-    let value = '';
-    if (type === 'metadata' && this.state.status == 'create') {
-      metadataKey = Object.keys(this.state.tableData.metadata)[0];
-      value = this.state.tableData.metadata[metadataKey];
-    }
-
-    const identifier = {
-      type,
-      tableIndex: 0,
-      lineNumber: '',
-      metadataKey,
-      headerKey: '',
-      value,
-      isRegex: false
-    };
-
-    identifiers.push(identifier);
-    this.setState({ identifiers });
-  }
-
-  updateIdentifier(index, data) {
-    const identifiers = [...this.state.identifiers];
-    if (index !== -1) {
-      const identifier = identifiers[index];
-      Object.assign(identifier, data);
-      identifiers[index] = identifier;
-      this.setState({ identifiers });
-    }
-  }
-
-  removeIdentifier(index) {
-    const identifiers = [...this.state.identifiers];
-    if (index !== -1) {
-      identifiers.splice(index, 1);
-      this.setState({ identifiers });
-    }
-  }
-
-  updateFirstRowIsHeader(index, checked) {
-    const firstRowIsHeader = [...this.state.firstRowIsHeader];
-    firstRowIsHeader[index] = checked;
-    this.setState({ firstRowIsHeader });
-  }
-
-  toggleFirstRowIsHeader(index) {
-    const { tableData } = this.state;
-    const table = tableData.data[index];
-
-    if (table.firstRowIsHeader) {
-      table.firstRowIsHeader = false;
-      table.columns = table._columns;
-      table.rows.splice(0, 0, table._first);
-      table._columns = null;
-      table._first = null;
-    } else {
-      table.firstRowIsHeader = true;
-      table._columns = table.columns;
-      table._first = table.rows.shift();
-      table.columns = table._first.map((value, idx) => {
-        const originalName = table._columns[idx].name;
-
-        return {
-          key: idx.toString(),
-          name: value + ` (${originalName})`
-        }
-      })
-    }
-
-    const firstRowIsHeader = tableData.data.map(_table => _table.firstRowIsHeader || false);
-
-    this.setState({ tableData, firstRowIsHeader });
-  }
-
-
-  handleImport(context) {
-    const { uploadType } = this.state;
-    if (uploadType === 'import') {
-      this.handleUpload(context);
-    }
-    if (uploadType === 'new') {
-      this.handleCreate(context);
-    }
-  }
-
-  handleUpload(context) {
-    const createProfile = (e) => {
-      const profile = JSON.parse(e.target.result);
-
-      ConverterApi.createProfile(profile)
-        .then(() => {
-          ConverterApi.fetchProfiles()
-            .then((profiles) => {
-              this.setState({ profiles: profiles.profiles, uploadModal: false, uploadType: '' });
-            });
+  storeProfile() {
+    const { status } = this.state
+    if (status == 'create') {
+      ConverterApi.createProfile(this.state.profile)
+        .then(profile => {
+          const profiles = [...this.state.profiles]
+          profiles.push(profile)
+          this.setState({
+            status: 'list',
+            profiles: profiles,
+            profile: null
+          }, this.showCreatedModal())
         })
-        .catch((errors) => {
+    } else if (status == 'update') {
+      ConverterApi.updateProfile(this.state.profile)
+        .then((profile) => {
+          const profiles = [...this.state.profiles]
+          const index = profiles.findIndex(p => (p.id == profile.id))
+          profiles[index] = profile
           this.setState({
-            error: true,
-            errorMessage: Object.values(errors).join(', '),
-            isLoading: false
-          });
-        });
-    };
-
-    const reader = new FileReader();
-    reader.readAsText(context);
-    reader.onload = createProfile.bind(this);
-  }
-
-  handleCreate(context) {
-    const { uploadType } = this.state;
-    console.log(uploadType);
-
-    let profile = context;
-    if (uploadType === 'import') {
-      console.log(context);
-      profile = JSON.parse(context);
+            status: 'list',
+            profiles: profiles,
+            profile: null
+          })
+        })
     }
-
-    console.log(profile);
-    ConverterApi.fetchTables(profile)
-      .then((tableData) => {
-        if (tableData.error) {
-          //
-        } else {
-          // create a flat list of all columns
-          const columnList = tableData.data.reduce((accumulator, table, tableIndex) => {
-            const tableColumns = table.columns.map((tableColumn, columnIndex) => {
-              return Object.assign({}, tableColumn, {
-                label: `Table #${tableIndex} Column #${columnIndex}`,
-                value: {
-                  tableIndex,
-                  columnIndex
-                }
-              });
-            });
-            return accumulator.concat(tableColumns);
-          }, []);
-
-          this.setState({
-            selectedFile: null,
-            isLoading: false,
-            tableData,
-            columnList,
-            headerOptions: tableData.options,
-            tables: [initTable(tableData)],
-            identifiers: [],
-            firstRowIsHeader: tableData.data.map(table => false),
-            error: false,
-            status: 'create',
-            errorMessage: ''
-          });
-        }
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    this.hideUploadModal();
-  }
-  backProfileList(event) {
-    this.setState({
-      status: 'list',
-      title: '',
-      description: '',
-      identifiers: [],
-      header: {},
-      table: {},
-      currentIdentifier: '',
-      currentIndex: -1,
-     });
   }
 
-  createProfile(event) {
-    event.preventDefault();
-
-    const {
-      title, description, tables, identifiers, tableData, firstRowIsHeader
-    } = this.state;
-    const profile = {
-      title,
-      description,
-      tables,
-      identifiers,
-      firstRowIsHeader
-    };
-
-    ConverterApi.createProfile(profile)
-      .then((data) => {
-        const newProfiles = [...this.state.profiles];
-        newProfiles.push(data);
-        this.setState({
-          profiles: newProfiles,
-          status: 'list',
-          title: '',
-          description: '',
-          identifiers: [],
-          header: {},
-          table: {},
-          currentIdentifier: '',
-          currentIndex: -1,
-          showAlert: true
-        });
-        // $('#modal').show()
-      })
-      .catch(() => ({
-        errors: {
-          path: 'File not found'
-        }
-      }));
-  }
-
-  updateProfile() {
-    const {
-      id, title, description, tables, identifiers, tableData, firstRowIsHeader
-    } = this.state;
-    const profile = {
-      id,
-      title,
-      description,
-      tables,
-      identifiers,
-      firstRowIsHeader
-    };
-
-    ConverterApi.updateProfile(profile, this.state.currentIdentifier)
-      .then((data) => {
-        const newProfiles = [...this.state.profiles];
-        newProfiles[this.state.currentIndex] = data;
-        this.setState({
-          profiles: newProfiles,
-          status: 'list',
-          title: '',
-          description: '',
-          identifiers: [],
-          header: {},
-          table: {},
-          currentIdentifier: '',
-          currentIndex: -1,
-          showAlert: true
-        });
-      });
-  }
-
-  // deleteProfile() {
-  deleteProfile(index, identifier) {
-    ConverterApi.deleteProfile(identifier)
+  deleteProfile() {
+    ConverterApi.deleteProfile(this.state.profile)
       .then(() => {
-        const newProfiles = [...this.state.profiles];
-        if (index !== -1) {
-          newProfiles.splice(index, 1);
-          this.setState({
-            profiles: newProfiles,
-          });
-        }
-      });
+        const profiles = [...this.state.profiles]
+        const index = profiles.findIndex(p => (p.id == this.state.profile.id))
+        profiles.splice(index, 1)
+        this.setState({
+          status: 'list',
+          profiles: profiles,
+          profile: null
+        }, this.hideDeleteModal())
+      }
+    )
   }
 
-  downloadProfile(index, identifier) {
-    const a = document.createElement('a');
-    a.href = `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(this.state.profiles[index], null, 2))}`;
-    a.download = `${identifier}.json`;
+  downloadProfile(profile) {
+    const a = document.createElement('a')
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(profile, null, 2))
+    a.download = profile.id + '.json'
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -527,43 +177,35 @@ class AdminApp extends Component {
       isLoading: false,
       error: false,
       errorMessage: ''
-    });
+    })
   }
 
   uploadFile() {
-    const { selectedFile } = this.state;
+    const { selectedFile } = this.state
 
     this.setState({
       isLoading: true
-    });
+    })
 
     ConverterApi.fetchTables(selectedFile)
-      .then((tableData) => {
-        if (tableData) {
-          // create a flat list of all columns
-          const columnList = tableData.data.reduce((accumulator, table, tableIndex) => {
-            const tableColumns = table.columns.map((tableColumn, columnIndex) => Object.assign({}, tableColumn, {
-              label: `Table #${tableIndex} Column #${columnIndex}`,
-              value: {
-                tableIndex,
-                columnIndex
-              }
-            }));
-            return accumulator.concat(tableColumns);
-          }, []);
+      .then(data => {
+        if (data) {
+          const profile = {
+            title: '',
+            description: '',
+            tables: [],
+            identifiers: [],
+            data: data,
+          }
 
           this.setState({
+            status: 'create',
+            profile: profile,
             selectedFile: null,
             isLoading: false,
-            tableData,
-            columnList,
-            headerOptions: tableData.options,
-            tables: [initTable(tableData)],
-            identifiers: [],
-            firstRowIsHeader: tableData.data.map(() => false),
             error: false,
             errorMessage: ''
-          });
+          })
         }
       })
       .catch(error => {
@@ -586,24 +228,24 @@ class AdminApp extends Component {
   }
 
   importFile() {
-    const { selectedFile } = this.state;
+    const { selectedFile } = this.state
 
     this.setState({
       isLoading: true
-    });
+    })
 
     const createProfile = e => {
-      const profile = JSON.parse(e.target.result)
+      const fileProfile = JSON.parse(e.target.result)
 
-      ConverterApi.createProfile(profile)
-        .then(data => {
+      ConverterApi.createProfile(fileProfile)
+        .then(profile => {
+          const profiles = [...this.state.profiles]
+          profiles.push(profile)
           this.setState({
             status: 'list',
-            selectedFile: null,
-            isLoading: false,
-            error: false,
-            errorMessage: ''
-          })
+            profiles: profiles,
+            profile: null
+          }, this.showCreatedModal())
         })
         .catch(errors => {
           this.setState({
@@ -614,131 +256,105 @@ class AdminApp extends Component {
         })
     }
 
-    const reader = new FileReader();
-    reader.readAsText(selectedFile);
-    reader.onload = createProfile.bind(this);
+    const reader = new FileReader()
+    reader.readAsText(selectedFile)
+    reader.onload = createProfile.bind(this)
   }
 
   dispatchView() {
-    const {
-      tableData, status, error, errorMessage, isLoading, selectedFile
-    } = this.state;
-
-    if (status === 'list') {
+    if (this.state.status === 'list') {
       return (
         <ProfileList
           profiles={this.state.profiles}
-          editProfile={this.showEditView}
-          deleteProfile={this.deleteProfile}
+          updateProfile={this.showUpdateView}
+          deleteProfile={this.showDeleteModal}
           downloadProfile={this.downloadProfile}
         />
-      );
-    } else if (status === 'edit') {
+      )
+    } else if (this.state.status == 'import') {
       return (
-        <ProfileEdit
-          id={this.state.id}
-          title={this.state.title}
-          description={this.state.description}
-          tables={this.state.tables}
-          identifiers={this.state.identifiers}
-          firstRowIsHeader={this.state.firstRowIsHeader}
-          updateTitle={this.updateTitle}
-          updateDescription={this.updateDescription}
-          addTable={this.addTable}
-          updateTable={this.updateTable}
-          removeTable={this.removeTable}
-          addHeader={this.addHeader}
-          updateHeader={this.updateHeader}
-          removeHeader={this.removeHeader}
-          addOperation={this.addOperation}
-          updateOperation={this.updateOperation}
-          removeOperation={this.removeOperation}
-          addIdentifier={this.addIdentifier}
-          updateIdentifier={this.updateIdentifier}
-          removeIdentifier={this.removeIdentifier}
-          updateFirstRowIsHeader={this.updateFirstRowIsHeader}
-          updateProfile={this.updateProfile}
-          backProfileList={this.backProfileList}
+        <FileUploadForm
+          onFileChangeHandler={this.updateFile}
+          onSubmitFileHandler={this.importFile}
+          errorMessage={this.state.errorMessage}
+          error={this.state.error}
+          isLoading={this.state.isLoading}
+          disabled={this.state.selectedFile === null}
         />
-      );
-    } else if (status === 'create') {
-      if (tableData) {
-        return (
-          <ProfileCreate
-            tableData={this.state.tableData}
-            columnList={this.state.columnList}
-            toggleFirstRowIsHeader={this.toggleFirstRowIsHeader}
-            headerOptions={this.state.headerOptions}
-            title={this.state.title}
-            description={this.state.description}
-            identifiers={this.state.identifiers}
-            tables={this.state.tables}
-            updateTitle={this.updateTitle}
-            updateDescription={this.updateDescription}
-            addTable={this.addTable}
-            updateTable={this.updateTable}
-            removeTable={this.removeTable}
-            updateHeader={this.updateHeader}
-            addOperation={this.addOperation}
-            updateOperation={this.updateOperation}
-            removeOperation={this.removeOperation}
-            addIdentifier={this.addIdentifier}
-            updateIdentifier={this.updateIdentifier}
-            removeIdentifier={this.removeIdentifier}
-            createProfile={this.createProfile}
-            backProfileList={this.backProfileList}
+      )
+    } else if (this.state.status == 'upload') {
+      return (
+          <FileUploadForm
+            onFileChangeHandler={this.updateFile}
+            onSubmitFileHandler={this.uploadFile}
+            errorMessage={this.state.errorMessage}
+            error={this.state.error}
+            isLoading={this.state.isLoading}
+            disabled={this.state.selectedFile === null}
           />
-        );
-      }
+        )
+    } else {
+      return (
+        <ProfileForm
+          status={this.state.status}
+          profile={this.state.profile}
+          options={this.state.options}
+          datasets={this.state.datasets}
+          updateProfile={this.updateProfile}
+          storeProfile={this.storeProfile}
+        />
+      )
     }
-    return (<span />);
   }
-
 
   render() {
     return (
-      <div>
+      <div className={['create', 'update'].includes(this.state.status) ? 'container-fluid' : 'container'}>
         <header>
           <nav aria-label="breadcrumb">
-            {this.state.status === 'list' &&
+            {this.state.status == 'list' &&
               <ol className="breadcrumb">
                 <li className="breadcrumb-item active" aria-current="page">Chemotion file converter admin</li>
               </ol>
             }
-            {this.state.status === 'edit' &&
+            {['upload', 'create'].includes(this.state.status) &&
               <ol className="breadcrumb">
-                <li className="breadcrumb-item" aria-current="page">Chemotion file converter admin</li>
-                <li className="breadcrumb-item active" aria-current="page">Edit Profile: + {this.state.title}</li>
+                <li className="breadcrumb-item" aria-current="page"><a href="">Chemotion file converter admin</a></li>
+                <li className="breadcrumb-item active" aria-current="page">{'Create Profile'}</li>
               </ol>
             }
-            {this.state.status === 'create' &&
+            {this.state.status == 'update' &&
               <ol className="breadcrumb">
-                <li className="breadcrumb-item" aria-current="page">Chemotion file converter admin</li>
-                <li className="breadcrumb-item active" aria-current="page">Create Profile</li>
+                <li className="breadcrumb-item" aria-current="page"><a href="">Chemotion file converter admin</a></li>
+                <li className="breadcrumb-item active" aria-current="page">{'Edit Profile: ' + this.state.title}</li>
               </ol>
             }
-            {this.state.status === 'import' &&
+            {this.state.status == 'import' &&
               <ol className="breadcrumb">
-                <li className="breadcrumb-item" aria-current="page">Chemotion file converter admin</li>
-                <li className="breadcrumb-item active" aria-current="page">Import Profile</li>
+                <li className="breadcrumb-item" aria-current="page"><a href="">Chemotion file converter admin</a></li>
+                <li className="breadcrumb-item active" aria-current="page">{'Import Profile'}</li>
               </ol>
             }
           </nav>
 
           <div>
-            {this.state.status === 'list' &&
-              <div className="float-right">
-                <Button bsStyle="info" bsSize="small" onClick={this.showImportModal}>
-                  Import profile&nbsp;<i className="fa fa-upload" aria-hidden="true" />
-                </Button>&nbsp;&nbsp;
-                <Button bsStyle="primary" bsSize="small" onClick={this.showUploadModal}>
-                  Create new profile&nbsp;<i className="fa fa-plus" aria-hidden="true" />
-                </Button>
-
+            {this.state.status == "list" &&
+              <div className="pull-right">
+                <button type="button" onClick={this.showImportView} className="btn btn-success mr-10">
+                  Import profile
+                </button>
+                <button type="button" onClick={this.showCreateView} className="btn btn-primary">
+                  Create new profile
+                </button>
               </div>
             }
 
-            <h2 className="mb-0">{this.getTitleforStatus()}</h2>
+            <h2>
+              {this.state.status == 'list' && 'Profiles List'}
+              {['upload', 'create'].includes(this.state.status) && 'Create Profile'}
+              {this.state.status == 'update' && 'Edit Profile'}
+              {this.state.status == 'import' && 'Import Profile'}
+            </h2>
           </div>
         </header>
 
@@ -746,29 +362,29 @@ class AdminApp extends Component {
           {this.dispatchView()}
         </main>
 
-        <ProfileNewModal
-          content="Profile"
-          showModal={this.state.uploadModal}
-          fnClose={this.hideUploadModal}
-          fnCreate={this.handleImport}
-        />
+        <Modal show={this.state.createdModal}>
+          <Modal.Header>
+            <Modal.Title>Profile successfully created!</Modal.Title>
+          </Modal.Header>
 
-        <div className="modal modal-backdrop" data-backdrop="static" id="modal" tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-body">
-                <div className="alert alert-success" role="alert">Profile successfully created!</div>
-              </div>
-              <div className="modal-footer">
-                <a href="." className="btn btn-secondary">Back to profiles list</a>
-                <a href="/" className="btn btn-primary">Upload file and use profile</a>
-              </div>
-            </div>
-          </div>
-        </div>
+          <Modal.Footer>
+            <Button bsStyle="primary" onClick={this.hideCreatedModal}>Great!</Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal show={this.state.deleteModal}>
+          <Modal.Header>
+            <Modal.Title>Do you really want to delete this profile?</Modal.Title>
+          </Modal.Header>
+          <Modal.Footer>
+            <Button bsStyle="default" onClick={this.hideDeleteModal}>Cancel</Button>
+            <Button bsStyle="danger" onClick={this.deleteProfile}>Delete profile</Button>
+          </Modal.Footer>
+        </Modal>
       </div>
-    );
+    )
   }
+
 }
 
-export default AdminApp;
+export default AdminApp

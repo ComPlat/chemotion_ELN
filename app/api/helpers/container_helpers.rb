@@ -25,6 +25,7 @@ module ContainerHelpers
   def create_or_update_containers(children, parent_container)
     return unless children
     return unless can_update_container(parent_container)
+
     children.each do |child|
       if child[:is_deleted]
         delete_containers_and_attachments(child) unless child[:is_new]
@@ -33,11 +34,11 @@ module ContainerHelpers
 
       extended_metadata = child[:extended_metadata]
       if child[:container_type] == "analysis"
-          extended_metadata["content"] = if extended_metadata.key?("content")
-            extended_metadata["content"].to_json
-          else
-            "{\"ops\":[{\"insert\":\"\"}]}"
-          end
+        extended_metadata["content"] = if extended_metadata.key?("content")
+          extended_metadata["content"].to_json
+        else
+          "{\"ops\":[{\"insert\":\"\"}]}"
+        end
       end
 
       if child[:is_new]
@@ -51,6 +52,7 @@ module ContainerHelpers
       else
         #Update container
         next unless container = Container.find_by(id: child[:id])
+
         container.update!(
           name: child[:name],
           container_type: child[:container_type],
@@ -58,25 +60,25 @@ module ContainerHelpers
           extended_metadata: extended_metadata
         )
       end
-
       create_or_update_attachments(container, child[:attachments]) if child[:attachments]
-
       if child[:container_type] == 'dataset' && child[:dataset].present? && child[:dataset]["changed"]
         klass_id = child[:dataset]['dataset_klass_id']
         properties = child[:dataset]['properties']
         container.save_dataset(dataset_klass_id: klass_id, properties: properties)
       end
       container.destroy_datasetable if child[:container_type] == 'dataset' && child[:dataset].blank?
-
+      Analyses::Converter.generate_ds(container.id) if child[:container_type] == 'dataset'
       create_or_update_containers(child[:children], container)
     end
   end
 
   def create_or_update_attachments(container, attachments)
     return if attachments.empty?
+
     can_update = can_update_container(container)
     can_edit = true
     return unless can_update
+
     attachments.each do |att|
       if att[:is_new]
         attachment = Attachment.where(storage: 'tmp', key: att[:id]).last
@@ -119,5 +121,4 @@ module ContainerHelpers
       true
     end
   end
-
-end #module
+end
