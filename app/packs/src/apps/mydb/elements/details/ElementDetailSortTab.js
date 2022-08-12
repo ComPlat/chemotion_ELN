@@ -6,7 +6,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Button, Overlay, Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
@@ -142,6 +142,9 @@ export default class ElementDetailSortTab extends Component {
   }
 
   render() {
+    const currentCollection = UIStore.getState().currentCollection;
+    const tabs = currentCollection.tabs_segment;
+    const buttonInfo = isEmpty(tabs) ? 'info' : 'default';
     const tabLayoutContainerElement = (
       <TabLayoutContainer
         visible={this.state.visible}
@@ -170,7 +173,7 @@ export default class ElementDetailSortTab extends Component {
     return (
       <div style={{position: 'relative'}}>
         <Button
-          bsStyle="info"
+          bsStyle={buttonInfo}
           bsSize="xsmall"
           className="button-right"
           ref={button => { this.tabLayoutButton = button; }}
