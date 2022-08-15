@@ -2,14 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
-import ReactDOM from 'react-dom';
-import { DragDropContext } from 'react-dnd';
-import HTML5Backend from 'react-dnd-html5-backend';
 import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, Tabs, Tab } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy, orderBy } from 'lodash';
-import Notifications from '../components/Notifications';
 import Notifications from '../components/Notifications';
 import LoadingModal from '../components/common/LoadingModal';
 import GenericElsFetcher from '../components/fetchers/GenericElsFetcher';
@@ -69,7 +65,6 @@ export default class GenericElementAdmin extends React.Component {
       propTabKey: 1,
       revisions: [],
       user: {}
-      user: {}
     };
 
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -118,13 +113,6 @@ export default class GenericElementAdmin extends React.Component {
   componentDidMount() {
     this.fetchElements();
     this.fetchConfigs();
-    UsersFetcher.fetchCurrentUser().then((result) => {
-      if (!result.error) {
-        this.setState({ user: result.user });
-      }
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
     UsersFetcher.fetchCurrentUser().then((result) => {
       if (!result.error) {
         this.setState({ user: result.user });
@@ -277,8 +265,6 @@ export default class GenericElementAdmin extends React.Component {
 
   getShowState(att, val) { return { ...this.state.show, [att]: val }; }
 
-  getShowState(att, val) { return { ...this.state.show, [att]: val }; }
-
   retriveRevision(revision, cb) {
     const { element } = this.state;
     element.properties_template = revision;
@@ -384,11 +370,6 @@ export default class GenericElementAdmin extends React.Component {
   }
   closeModal(cb = () => {}) { this.handleShowState('modal', '', cb); }
 
-  handleShowState(att, val, cb = () => {}) {
-    this.setState({ show: this.getShowState(att, val) }, cb);
-  }
-  closeModal(cb = () => {}) { this.handleShowState('modal', '', cb); }
-
   handleAddSelect(selectName) {
     const { element } = this.state;
     if (validateSelectList(selectName, element)) {
@@ -402,7 +383,6 @@ export default class GenericElementAdmin extends React.Component {
 
   handleCreateLayer(__layer) {
     const layer = _layer;
-    const layer = _layer;
     if (!validateLayerInput(layer)) return;
     const { element } = this.state;
     if (element && element.properties_template && element.properties_template.layers[`${layer.key}`]) {
@@ -412,15 +392,11 @@ export default class GenericElementAdmin extends React.Component {
     const sortedLayers = sortBy(element.properties_template.layers, ['position']);
     layer.position = (!layer.position && sortedLayers.length < 1) ?
       100 : parseInt((sortedLayers.slice(-1)[0] || { position: 100 }).position, 10) + 10;
-    const sortedLayers = sortBy(element.properties_template.layers, ['position']);
-    layer.position = (!layer.position && sortedLayers.length < 1) ?
-      100 : parseInt((sortedLayers.slice(-1)[0] || { position: 100 }).position, 10) + 10;
     element.properties_template.layers[`${layer.key}`] = layer;
     notification({ title: `Layer [${layer.key}]`, lvl: 'info', msg: 'This new layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.' });
     this.setState({ show: this.getShowState('modal', ''), element, layerKey: layer.key });
   }
 
-  // @ts-check
   // @ts-check
   handleUpdateLayer(layerKey, updates) {
     if (!validateLayerInput(updates)) return;
@@ -477,9 +453,6 @@ export default class GenericElementAdmin extends React.Component {
   handleActivateKlass(id, isActive) {
     GenericElsFetcher.deActivateKlass({ id, is_active: !isActive, klass: 'ElementKlass' })
       .then((result) => {
-        if (result.error) {
-          notification({ title: `${isActive ? 'deactivate' : 'activate'} Element failed`, lvl: 'error', msg: result.error });
-        } else {
         if (result.error) {
           notification({ title: `${isActive ? 'deactivate' : 'activate'} Element failed`, lvl: 'error', msg: result.error });
         } else {
@@ -591,7 +564,6 @@ export default class GenericElementAdmin extends React.Component {
       });
       sortedFields = sortBy(sortedFields, l => l.position);
       // element.properties_template.layers[key].wf_position = 0; // ? @TO-CHECK
-      // element.properties_template.layers[key].wf_position = 0; // ? @TO-CHECK
       element.properties_template.layers[key].fields = sortedFields;
     });
     // TO-CHECK
@@ -602,9 +574,6 @@ export default class GenericElementAdmin extends React.Component {
         if (result.error) {
           notification({ title: `Update Element [${element.name}] template`, lvl: 'error', msg: result.error });
         } else {
-          if (result.error) {
-          notification({ title: `Update Element [${element.name}] template`, lvl: 'error', msg: result.error });
-        } else {
           if (isRelease === true) {
               notification({ title: `Update Element [${element.name}] template`, lvl: 'info', msg: 'Saved and Released successfully' });
             } else {
@@ -612,7 +581,6 @@ export default class GenericElementAdmin extends React.Component {
             }
             this.fetchElements();
             this.setState({ element: result }, () => LoadingActions.stop());
-        }
         }
       }).catch((errorMessage) => {
         console.log(errorMessage);
@@ -853,7 +821,6 @@ export default class GenericElementAdmin extends React.Component {
       element, show, revisions, propTabKey
     } = this.state;
     const showPropModal = show.tab === 'PropModal';
-    const showPropModal = show.tab === 'PropModal';
     if (showPropModal) {
       return (
         <Tabs activeKey={propTabKey} id="elements-prop-tabs" onSelect={this.propTabSelect}>
@@ -913,8 +880,7 @@ export default class GenericElementAdmin extends React.Component {
           <td><i className={e.icon_name} /></td>
           <td>{e.desc}</td>
           <td>
-            <ButtonTooltip tip="Edit Element template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
-            {/* {/* <ButtonTooltip tip="Edit Element template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" /> */} */}
+            <ButtonTooltip tip="Edit Element template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />
           </td>
           <td>{e.released_at} (UTC)</td>
         </tr>
@@ -928,7 +894,6 @@ export default class GenericElementAdmin extends React.Component {
               <tr style={{ backgroundColor: '#ddd' }}>
                 <th width="4%">#</th>
                 <th width="6%">Actions</th>
-                <th width="8%">Active</th>
                 <th width="8%">Active</th>
                 <th width="10%">Element</th>
                 <th width="6%">Prefix</th>
@@ -947,17 +912,12 @@ export default class GenericElementAdmin extends React.Component {
   }
 
   render() {
-    const { element, layerKey, user, user } = this.state;
+    const { element, layerKey, user } = this.state;
     if (!user.generic_admin || !user.generic_admin.elements) {
       return <GenericAdminUnauth userName={user.name} text="GenericElements" />;
     }
-    if (!user.generic_admin || !user.generic_admin.elements) {
-      return <GenericAdminUnauth userName={user.name} text="GenericElements" />;
-    }
-    const layer = (element && element.properties_template
-      && element.properties_template.layers[layerKey]) || {};
-    const layers = (element && element.properties_template
-      && element.properties_template.layers) || {};
+    const layer = (element?.properties_template?.layers[layerKey]) || {};
+    const layers = (element?.properties_template?.layers) || {};
     const sortedLayers = sortBy(layers, l => l.position) || [];
 
     return (
@@ -1046,12 +1006,6 @@ export default class GenericElementAdmin extends React.Component {
     );
   }
 }
-
-const GenericElementAdminDnD = DragDropContext(HTML5Backend)(GenericElementAdmin);
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('GenericElementAdmin');
-  if (domElement) ReactDOM.render(<GenericElementAdminDnD />, domElement);
-});
 
 const GenericElementAdminDnD = DragDropContext(HTML5Backend)(GenericElementAdmin);
 document.addEventListener('DOMContentLoaded', () => {

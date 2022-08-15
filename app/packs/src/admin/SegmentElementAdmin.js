@@ -2,9 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
-import ReactDOM from 'react-dom';
-import { DragDropContext } from 'react-dnd';
-import HTML5Backend from 'react-dnd-html5-backend';
 import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, Tabs, Tab } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
@@ -13,7 +10,6 @@ import LoadingModal from '../components/common/LoadingModal';
 import UsersFetcher from '../components/fetchers/UsersFetcher';
 import GenericSgsFetcher from '../components/fetchers/GenericSgsFetcher';
 import { ElementField } from '../components/elements/ElementField';
-import Notifications from '../components/Notifications';
 import Notifications from '../components/Notifications';
 import LoadingActions from '../components/actions/LoadingActions';
 import AttrNewModal from './generic/AttrNewModal';
@@ -27,8 +23,6 @@ import SelectAttrNewModal from './generic/SelectAttrNewModal';
 import UploadModal from './generic/UploadModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
 import Preview from './generic/Preview';
-import { GenericAdminNav, GenericAdminUnauth } from './GenericAdminNav';
-import RepoKlassHubModal from './generic/RepoKlassHubModal';
 import { GenericAdminNav, GenericAdminUnauth } from './GenericAdminNav';
 import RepoKlassHubModal from './generic/RepoKlassHubModal';
 
@@ -67,9 +61,6 @@ export default class SegmentElementAdmin extends React.Component {
       showUpload: false,
       showJson: false,
       propTabKey: 1,
-      show: { tab: '', modal: '' },
-      revisions: [],
-      user: {},
       show: { tab: '', modal: '' },
       revisions: [],
       user: {}
@@ -125,18 +116,11 @@ export default class SegmentElementAdmin extends React.Component {
     this.handleUploadTemplate = this.handleUploadTemplate.bind(this);
     this.handleShowState = this.handleShowState.bind(this);
     this.closeModal = this.closeModal.bind(this);
-    this.handleShowState = this.handleShowState.bind(this);
-    this.closeModal = this.closeModal.bind(this);
   }
 
   componentDidMount() {
     this.fetchElements();
     this.fetchConfigs();
-    UsersFetcher.fetchCurrentUser().then((result) => {
-      if (!result.error) {
-        this.setState({ user: result.user });
-      }
-    }).catch((errorMessage) => { console.log(errorMessage); });
     UsersFetcher.fetchCurrentUser().then((result) => {
       if (!result.error) {
         this.setState({ user: result.user });
@@ -154,15 +138,6 @@ export default class SegmentElementAdmin extends React.Component {
     this.setState({ show: this.getShowState(att, val) }, cb);
   }
   closeModal(cb = () => {}) { this.handleShowState('modal', '', cb); }
-
-
-
-  getShowState(att, val) { return { ...this.state.show, [att]: val }; }
-  handleShowState(att, val, cb = () => {}) {
-    this.setState({ show: this.getShowState(att, val) }, cb);
-  }
-  closeModal(cb = () => {}) { this.handleShowState('modal', '', cb); }
-
 
   onOptionInputChange(event, selectKey, optionKey) {
     const { element } = this.state;
@@ -305,7 +280,7 @@ export default class SegmentElementAdmin extends React.Component {
 
   fetchRevisions() {
     const { element } = this.state;
-    if (element && element.id) {
+    if (element?.id) {
       GenericSgsFetcher.fetchKlassRevisions(element.id, 'SegmentKlass')
         .then((result) => {
           let curr = Object.assign({}, { ...element.properties_template });
@@ -958,23 +933,16 @@ export default class SegmentElementAdmin extends React.Component {
   }
 
   render() {
-    const { element, layerKey, user, user } = this.state;
+    const { element, layerKey, user } = this.state;
     if (!user.generic_admin || !user.generic_admin.segments) {
       return <GenericAdminUnauth userName={user.name} text="GenericSegments" />;
     }
-    if (!user.generic_admin || !user.generic_admin.segments) {
-      return <GenericAdminUnauth userName={user.name} text="GenericSegments" />;
-    }
-    const layer = (element && element.properties_template
-      && element.properties_template.layers[layerKey]) || {};
+    const layer = (element?.properties_template?.layers[layerKey]) || {};
 
-    const sortedLayers = (element && element.properties_template && element.properties_template.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
+    const sortedLayers = (element?.properties_template?.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
 
     return (
       <div style={{ width: '90vw', margin: 'auto' }}>
-        <GenericAdminNav userName={user.name} text="GenericSegments" />
-        <hr />
-        <div style={{ marginTop: '60px' }} style={{ width: '90vw', margin: 'auto' }}>
         <GenericAdminNav userName={user.name} text="GenericSegments" />
         <hr />
         <div style={{ marginTop: '60px' }}>
@@ -982,9 +950,6 @@ export default class SegmentElementAdmin extends React.Component {
           New Segment&nbsp;<i className="fa fa-plus" aria-hidden="true" />
         </Button>
         &nbsp;
-        <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'REPO')}>
-          Fetch from Chemotion Repository&nbsp;<i className="fa fa-reply" aria-hidden="true" />
-        </Button>
         <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'REPO')}>
           Fetch from Chemotion Repository&nbsp;<i className="fa fa-reply" aria-hidden="true" />
         </Button>
@@ -1061,19 +1026,11 @@ export default class SegmentElementAdmin extends React.Component {
         </div>
         </div>
         <Notifications />
-        </div>
-        <Notifications />
         <LoadingModal />
       </div>
     );
   }
 }
-
-const SegmentElementAdminDnD = DragDropContext(HTML5Backend)(SegmentElementAdmin);
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('SegmentElementAdmin');
-  if (domElement) ReactDOM.render(<SegmentElementAdminDnD />, domElement);
-});
 
 const SegmentElementAdminDnD = DragDropContext(HTML5Backend)(SegmentElementAdmin);
 document.addEventListener('DOMContentLoaded', () => {

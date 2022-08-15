@@ -1099,6 +1099,65 @@
           "additionalProperties": false
         }
       }
+    },
+    "SegmentKlass": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "desc": {
+              "type": [
+                "string", "null"
+              ]
+            },
+            "properties_release": {
+              "type": "object"
+            },
+            "created_by": {
+              "$ref": "#/definitions/uuid"
+            },
+            "uuid": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Segment": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "klass_identifier": {
+              "type": "string"
+            },
+            "element_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "element_type": {
+              "type": "string"
+            },
+            "properties": {
+              "type": "object"
+            },
+            "created_by": {
+              "$ref": "#/definitions/uuid"
+            },
+            "uuid": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

@@ -424,7 +424,7 @@ module Chemotion
             end
           end
 
-          ExportCollectionsJob.perform_later(collection_ids, params[:format].to_s, nested, current_user.id)
+          ExportCollectionsJob.perform_now(collection_ids, params[:format].to_s, nested, current_user.id)
           status 204
         end
       end
@@ -453,7 +453,7 @@ module Chemotion
               tempfile.unlink
             end
             # run the asyncronous import job and return its id to the client
-            ImportCollectionsJob.perform_later(att, current_user.id)
+            ImportCollectionsJob.perform_now(att, current_user.id)
             status 204
           end
         end

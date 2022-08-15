@@ -9,7 +9,7 @@ import UserStore from '../../components/stores/UserStore';
 import MatrixCheck from '../../components/common/MatrixCheck';
 
 const wfLayerMark = (props) => {
-  if (props && props.flow) {
+  if (props?.flow) {
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip">A workflow is defined.</Tooltip>}>
         <i className="fa fa-sitemap" aria-hidden="true" />
