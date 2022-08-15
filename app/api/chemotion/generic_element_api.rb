@@ -113,6 +113,86 @@ module Chemotion
         end
       end
 
+      namespace :create_element_klass do
+        desc 'create Generic Element Klass'
+        params do
+          requires :name, type: String, desc: 'Element Klass Name'
+          requires :label, type: String, desc: 'Element Klass Label'
+          requires :klass_prefix, type: String, desc: 'Element Klass Short Label Prefix'
+          optional :icon_name, type: String, desc: 'Element Klass Icon Name'
+          optional :desc, type: String, desc: 'Element Klass Desc'
+          optional :properties_template, type: Hash, desc: 'Element Klass properties template'
+        end
+        post do
+          authenticate_admin!('elements')
+          uuid = SecureRandom.uuid
+          template = { uuid: uuid, layers: {}, select_options: {} }
+          attributes = declared(params, include_missing: false)
+          attributes[:properties_template]['uuid'] = uuid if attributes[:properties_template].present?
+          attributes[:properties_template] = template unless attributes[:properties_template].present?
+          attributes[:properties_template]['eln'] = Chemotion::Application.config.version if attributes[:properties_template].present?
+          attributes[:properties_template]['klass'] = 'ElementKlass' if attributes[:properties_template].present?
+          attributes[:is_active] = false
+          attributes[:uuid] = uuid
+          attributes[:released_at] = DateTime.now
+          attributes[:properties_release] = attributes[:properties_template]
+          attributes[:created_by] = current_user.id
+
+          new_klass = ElementKlass.create!(attributes)
+          new_klass.reload
+          new_klass.create_klasses_revision(current_user.id)
+          klass_names_file = Rails.root.join('config', 'klasses.json')
+          klasses = ElementKlass.where(is_active: true)&.pluck(:name) || []
+          File.write(klass_names_file, klasses)
+
+          status 201
+        rescue ActiveRecord::RecordInvalid => e
+          { error: e.message }
+        end
+      end
+
+      namespace :update_element_klass do
+        desc 'update Generic Element Klass'
+        params do
+          requires :id, type: Integer, desc: 'Element Klass ID'
+          optional :label, type: String, desc: 'Element Klass Label'
+          optional :klass_prefix, type: String, desc: 'Element Klass Short Label Prefix'
+          optional :icon_name, type: String, desc: 'Element Klass Icon Name'
+          optional :desc, type: String, desc: 'Element Klass Desc'
+          optional :place, type: String, desc: 'Element Klass Place'
+        end
+        post do
+          authenticate_admin!('elements')
+          place = params[:place]
+          begin
+            place = place.to_i if place.present? && place.to_i == place.to_f
+          rescue StandardError
+            place = 100
+          end
+          klass = ElementKlass.find(params[:id])
+          klass.label = params[:label] if params[:label].present?
+          klass.klass_prefix = params[:klass_prefix] if params[:klass_prefix].present?
+          klass.icon_name = params[:icon_name] if params[:icon_name].present?
+          klass.desc = params[:desc] if params[:desc].present?
+          klass.place = place
+          klass.save!
+          present klass, with: Entities::ElementKlassEntity
+        end
+      end
+
+      namespace :klass_revisions do
+        desc 'list Generic Element Revisions'
+        params do
+          requires :id, type: Integer, desc: 'Generic Element Klass Id'
+          requires :klass, type: String, desc: 'Klass', values: %w[ElementKlass SegmentKlass DatasetKlass]
+        end
+        get do
+          klass = params[:klass].constantize.find_by(id: params[:id])
+          list = klass.send("#{params[:klass].underscore}es_revisions") unless klass.nil?
+          present list.sort_by(&:released_at).reverse, with: Entities::KlassRevisionEntity, root: 'revisions'
+        end
+      end
+
       namespace :element_revisions do
         desc 'list Generic Element Revisions'
         params do
@@ -122,6 +202,24 @@ module Chemotion
           klass = Element.find(params[:id])
           list = klass.elements_revisions unless klass.nil?
           present list&.sort_by(&:created_at).reverse, with: Entities::ElementRevisionEntity, root: 'revisions'
+        end
+      end
+
+      namespace :delete_klass_revision do
+        desc 'delete Klass Revision'
+        params do
+          requires :id, type: Integer, desc: 'Revision ID'
+          requires :klass_id, type: Integer, desc: 'Klass ID'
+          requires :klass, type: String, desc: 'Klass', values: %w[ElementKlass SegmentKlass DatasetKlass]
+        end
+        post do
+          authenticate_admin!(params[:klass].gsub(/(Klass)/, 's').downcase)
+          revision = "#{params[:klass]}esRevision".constantize.find(params[:id])
+          klass = params[:klass].constantize.find_by(id: params[:klass_id]) unless revision.nil?
+          error!('Revision is invalid.', 404) if revision.nil?
+          error!('Can not delete the active revision.', 405) if revision.uuid == klass.uuid
+          revision&.destroy!
+          status 201
         end
       end
 
@@ -306,7 +404,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ElementEntity, displayed_in_list: true, root: :generic_elements
+        present paginate(scope), with: Entities::ElementEntity, displayed_in_list: true, root: :generic_elements, displayed_in_list: true, root: :generic_elements
       end
 
       desc 'Return serialized element by id'
