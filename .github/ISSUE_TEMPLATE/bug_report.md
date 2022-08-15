@@ -7,9 +7,9 @@ assignees: ''
 
 ---
 
-- [ ] I am an ELNer
-- [ ] I am a developer
-- [ ] I am a system/ELN admin
+- I am an ELNer
+- I am a developer
+- I am a system/ELN admin
 
 # Expected Behavior
 
@@ -36,8 +36,8 @@ Please provide detailed steps for reproducing the issue.
 Please provide any relevant information about your setup. This is important in case the issue is not reproducible except for under certain conditions.
 
  - OS: [e.g. iOS]
- - [ ] Chrome Browser 
- - [ ] Firefox Browser
+ - Chrome Browser 
+ - Firefox Browser
  - ELN version, or branch, or commit
 
 
