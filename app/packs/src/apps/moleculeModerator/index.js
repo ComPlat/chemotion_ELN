@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import MoleculeModerator from 'src/apps/molecule_moderator/MoleculeModerator';
+import MoleculeModerator from 'src/apps/moleculeModerator/MoleculeModerator';
 
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('MoleculeModerator');

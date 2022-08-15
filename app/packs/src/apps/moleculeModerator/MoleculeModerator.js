@@ -3,7 +3,7 @@ import { Navbar, FormGroup, ControlLabel, FormControl, Button } from 'react-boot
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import LoadingModal from 'src/components/common/LoadingModal';
-import MoleculeModeratorComponent from 'src/apps/molecule_moderator/MoleculeModeratorComponent';
+import MoleculeModeratorComponent from 'src/apps/moleculeModerator/MoleculeModeratorComponent';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import Notifications from 'src/components/Notifications';
