@@ -36,6 +36,20 @@ module Chemotion
         end
       end
 
+      resource :options do
+        before do
+          error!(401) unless current_user.is_a?(Admin)
+          @conf = Rails.configuration.try(:converter).try(:url)
+          @profile = Rails.configuration.try(:converter).try(:profile)
+          error!(406) unless @conf && @profile
+        end
+        desc 'fetch options'
+        get do
+          options = Analyses::Converter.fetch_options
+          { options: options, client: @profile }
+        end
+      end
+
       resource :tables do
         before do
           error!(401) unless current_user.is_a?(Admin)

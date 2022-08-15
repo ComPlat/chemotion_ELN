@@ -22,6 +22,7 @@ class ResearchPlan < ApplicationRecord
   validates :creator, :name, presence: true
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :includes_for_list_display, ->() { includes(:attachments) }
 
   after_create :create_root_container
 
@@ -43,10 +44,6 @@ class ResearchPlan < ApplicationRecord
 
   unless Dir.exists?(path = Rails.root.to_s + '/public/images/research_plans')
     Dir.mkdir path
-  end
-
-  def attachments
-    Attachment.where(attachable_id: self.id, attachable_type: 'ResearchPlan')
   end
 
   def thumb_svg

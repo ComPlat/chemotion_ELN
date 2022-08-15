@@ -126,7 +126,7 @@ class Sample < ApplicationRecord
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_ids,          ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
-
+  scope :includes_for_list_display, ->() { includes(:molecule_name, :tag, molecule: :tag) }
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, -> {
@@ -347,16 +347,19 @@ class Sample < ApplicationRecord
 
     svg_file_name = "#{SecureRandom.hex(64)}.svg"
 
-    if svg =~ /TMPFILE[0-9a-f]{64}.svg/
+    if svg =~ /\ATMPFILE[0-9a-f]{64}.svg\z/
       src = full_svg_path(svg.to_s)
       return unless File.exist?(src)
 
       svg = File.read(src)
       FileUtils.remove(src)
     end
-    if svg.start_with?('<?xml', '<svg')
+    if svg.start_with?(/\s*\<\?xml/, /\s*\<svg/)
       File.write(full_svg_path(svg_file_name), scrub(svg))
       self.sample_svg_file = svg_file_name
+    end
+    unless sample_svg_file =~ /\A[0-9a-f]{128}.svg\z/
+      self.sample_svg_file = nil
     end
   end
 

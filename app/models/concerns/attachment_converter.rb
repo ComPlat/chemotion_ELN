@@ -14,8 +14,8 @@ module AttachmentConverter
     def exec_converter
       return if !Rails.configuration.try(:converter).try(:url) || !ACCEPTED_FORMATS.include?(File.extname(filename&.downcase)) || aasm_state != 'queueing'
 
-      resp = Analyses::Converter.jcamp_converter(id)
-      self.aasm_state = resp.success? ? 'done' : 'failure'
+      state = Analyses::Converter.jcamp_converter(id)
+      self.aasm_state = state if %w[done failure].include?(state)
     end
   end
 end

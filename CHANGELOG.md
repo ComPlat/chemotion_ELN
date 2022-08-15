@@ -41,7 +41,7 @@
   * Chemspectra : Cyclic Voltametry (Warning: upd chem-spectra-app service to 0.10.14)
   * ResearchPlan link to reactions and samples (https://github.com/ComPlat/chemotion_ELN/issues/666)
   * No reaction-svg when no material present (https://github.com/ComPlat/chemotion_ELN/issues/691)
- 
+
 
 * Fixes
   * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
@@ -396,6 +396,38 @@
   * common chemical structure templates
   * synchronized collections
   * added full-screeen button to element view
+  * database and attachments backups
+  * better import feature
+  * advanced export options
+  * generate reports in .doc format
+  * different naming for reaction product
+  * add concentration to sample in solution
+  * updates in reporting system
+  * molecular weight calculation in real time Ketcherails v0.1.1
+  * molecular weight calculation for selected structure part in
+    real time Ketcherails v0.1.1
+  * warning for user when editing parent/child sample: parent/child samples
+    structures are not automatically updated
+  * reactants are not appearing in the samples list anymore
+  * added more details to sample analyses header
+  * style and user interface improvements
+  * zooming of reactions SVGs
+
+* Fixes
+  * user created samples counter is not decremented on deletion
+  * add material for reaction
+  * do not show non-saved collection in collection tree
+  * edit sample from reaction
+  * better scaling of sample and reaction SVG images
+  * multiple bug fixes
+
+
+## [v0.1.0]
+> 2016-05-31: https://github.com/ComPlat/chemotion_ELN/releases/tag/v0.1.0
+
+* Features
+  * ELN for (organic) chemistry
+ton to element view
   * database and attachments backups
   * better import feature
   * advanced export options

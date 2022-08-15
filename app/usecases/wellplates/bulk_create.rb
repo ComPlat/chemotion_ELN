@@ -3,18 +3,18 @@
 module Usecases
   module Wellplates
     class BulkCreate
-      attr_reader :params, :user_id
+      attr_reader :params, :user
 
-      def initialize(params, user_id)
+      def initialize(params, user)
         @params = params
-        @user_id = user_id
+        @user = user
       end
 
       def execute!
         wellplates = params[:wellplates]
 
         wellplates.each do |wellplate|
-          Create.new(wellplate, user_id).execute!
+          Create.new(wellplate, user).execute!
         end
       end
     end

@@ -36,7 +36,7 @@ const inputEventVal = (event, type) => {
 };
 
 const absOlsTermId = val => (val || '').split('|')[0].trim();
-const absOlsTermLabel = val => val.replace(absOlsTermId(val), '').replace('|', '').trim();
+const absOlsTermLabel = val => val?.replace(absOlsTermId(val), '')?.replace('|', '').trim();
 const toNum = (val) => {
   const parse = Number((val || ''));
   return Number.isNaN(parse) ? 0 : parse;

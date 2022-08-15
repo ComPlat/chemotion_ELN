@@ -49,24 +49,24 @@ export default class PrivateNoteElement extends React.Component {
     if (!element || !note) {
       return;
     }
-    this.setState({isSaving: true})
+    this.setState({ isSaving: true })
     if (!note.created_at) {
-      const params = { 
-        content: note.content, noteable_id: element.id, 
-        noteable_type: element.type 
+      const params = {
+        content: note.content, noteable_id: element.id,
+        noteable_type: element.type
       };
       PrivateNoteFetcher.create(params).then((newNote) => {
         this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        this.setState({isSaving: false})
+        this.setState({ isSaving: false })
       });
     } else {
       PrivateNoteFetcher.update(note).then((newNote) => {
         this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        this.setState({isSaving: false})
+        this.setState({ isSaving: false })
       });
     }
   }
@@ -94,12 +94,12 @@ export default class PrivateNoteElement extends React.Component {
         </OverlayTrigger>
 
         <i>{isSaving ? " saving your note" : ""}</i>
-        
+
         <FormControl
           componentClass="textarea"
           ref={(input) => { this.noteInput = input; }}
           placeholder={content}
-          value={content}
+          value={content ?? ''}
           onChange={e => this.handleInputChange(e.target.value)}
           rows={2}
           disabled={disabled}

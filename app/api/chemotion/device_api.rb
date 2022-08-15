@@ -17,7 +17,8 @@ module Chemotion
         }
         device.save!
         current_user.devices << device
-        device
+
+        present device, with: Entities::DeviceEntity, root: :device
       end
 
       desc "get Device by Id"
@@ -30,7 +31,7 @@ module Chemotion
           if device.nil?
             error!("404 Device with supplied id not found", 404)
           else
-            device
+            present device, with: Entities::DeviceEntity, root: :device
           end
         end
       end
@@ -74,7 +75,7 @@ module Chemotion
               user.save!
             end
 
-            device.destroy
+            present device.destroy, with: Entities::DeviceEntity, root: :device
           end
         end
       end
@@ -129,7 +130,7 @@ module Chemotion
 
       desc "get Devices"
       get do
-        Device.all
+        present Device.all, with: Entity::DeviceEntity, root: :devices
       end
     end
   end

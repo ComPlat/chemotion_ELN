@@ -19,7 +19,7 @@ export default class ComputeTaskFetcher {
       credentials: 'same-origin',
     }).then(res => res.json()).then((json) => {
       LoadingActions.stop.defer();
-      return camelizeKeys(json.check[0]);
+      return camelizeKeys(json.check);
     }).catch(err => console.log(err));
   }
 
@@ -29,7 +29,7 @@ export default class ComputeTaskFetcher {
       credentials: 'same-origin',
     }).then(res => res.json()).then((json) => {
       LoadingActions.stop.defer();
-      return camelizeKeys(json.revoke[0]);
+      return camelizeKeys(json.revoke);
     }).catch(err => console.log(err));
   }
 

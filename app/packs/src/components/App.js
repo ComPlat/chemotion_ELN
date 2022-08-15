@@ -5,7 +5,6 @@ import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 import Aviator from 'aviator';
 
-import alt from './alt';
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
 import CollectionManagement from './CollectionManagement';
@@ -19,9 +18,10 @@ import KeyboardActions from './actions/KeyboardActions';
 import UIStore from './stores/UIStore';
 import InboxModal from './inbox/InboxModal';
 import ProgressModal from './common/ProgressModal';
+import { RootStore, StoreContext } from '../mobx-stores/RootStore';
 
 class App extends Component {
-  constructor(props) {
+  constructor(_props) {
     super();
     this.state = {
       showCollectionManagement: false,
@@ -126,10 +126,16 @@ class App extends Component {
 
 const AppWithDnD = DragDropContext(HTML5Backend)(App);
 
+
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('app');
   if (domElement) {
-    ReactDOM.render(<AppWithDnD />, domElement);
+    ReactDOM.render(
+      <StoreContext.Provider value={RootStore.create({})}>
+        <AppWithDnD />
+      </StoreContext.Provider>,
+      domElement
+    );
     initRoutes();
     Aviator.dispatch();
   }

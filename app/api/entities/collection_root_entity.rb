@@ -45,6 +45,6 @@ module Entities
     expose :shared_by do |obj|
         obj['shared_by']
     end
-    expose :children, as: 'children', using: Entities::CollectionRootEntity
+    expose :children, as: 'children', using: 'Entities::CollectionRootEntity'
   end
 end

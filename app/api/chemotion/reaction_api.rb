@@ -46,8 +46,6 @@ module ReactionHelpers
   end
 
   def update_materials_for_reaction(reaction, material_attributes, current_user)
-    collections = reaction.collections
-    materials = OpenStruct.new(material_attributes)
     materials = {
       starting_material: Array(material_attributes['starting_materials']).map { |m| OSample.new(m) },
       reactant: Array(material_attributes['reactants']).map { |m| OSample.new(m) },
@@ -58,18 +56,19 @@ module ReactionHelpers
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
-        fixed_label = material_group =~ /solvents?|reactants?/ && $&
-        reactions_sample_klass = "Reactions#{material_group.to_s.camelize}Sample"
+        material_group = material_group.to_s
+        fixed_label = material_group if %w[reactant solvent].include?(material_group)
+        reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
         samples.each_with_index do |sample, idx|
           sample.position = idx if sample.position.nil?
-          sample.reference = false if material_group === 'solvent' && sample.reference == true
+          sample.reference = false if material_group == 'solvent' && sample.reference == true
           # create new subsample
           if sample.is_new
-            if sample.parent_id && material_group != 'products'
+            if sample.parent_id && material_group != 'product'
               parent_sample = Sample.find(sample.parent_id)
 
               # TODO: extract subsample method
-              subsample = parent_sample.create_subsample(current_user, collections, true)
+              subsample = parent_sample.create_subsample(current_user, reaction.collections, true)
 
               # Use 'reactant' or 'solvent' as short_label
               subsample.short_label = fixed_label if fixed_label
@@ -120,7 +119,7 @@ module ReactionHelpers
               # add new data container
               new_sample.container = update_datamodel(container_info)
 
-              new_sample.collections << collections
+              new_sample.collections << reaction.collections
               new_sample.save!
               new_sample.save_segments(segments: sample.segments, current_user_id: current_user.id)
               included_sample_ids << new_sample.id
@@ -284,11 +283,13 @@ module Chemotion
           end
         else
           Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.includes(:tag, collections: :sync_collections_users).order("created_at DESC")
+        end.order("created_at DESC")
 
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
+
+        scope = scope.includes_for_list_display
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at
         scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
@@ -296,7 +297,7 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
+        present paginate(scope), with: Entities::ReactionEntity, displayed_in_list: true, root: :reactions
       end
 
       desc 'Return serialized reaction by id'
@@ -311,10 +312,16 @@ module Chemotion
 
         get do
           reaction = Reaction.find(params[:id])
-          { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids, @element_policy).serialized, literatures: citation_for_elements(params[:id], 'Reaction') }
+
+          {
+            reaction: Entities::ReactionEntity.represent(reaction, policy: @element_policy),
+            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], 'Reaction'))
+          }
         end
       end
 
+      # Endpoint does not seem to be called from JS.
+      # ReactionsFetcher has no corresponding method
       desc 'Delete a reaction by id'
       params do
         requires :id, type: Integer, desc: 'Reaction id'
@@ -328,22 +335,6 @@ module Chemotion
           Reaction.find(params[:id]).destroy
         end
       end
-
-      # ??
-      # desc "Delete reactions by UI state"
-      # params do
-      #   requires :ui_state, type: Hash, desc: "Selected reactions from the UI"
-      # end
-      # route_param :id do
-      #   before do
-      #     @reactions = Reaction.for_user(current_user.id).by_ui_state(params[:ui_state])
-      #     error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @reactions).destroy?
-      #   end
-      #
-      #   delete do
-      #     @reactions.destroy_all
-      #   end
-      # end
 
       desc 'Update reaction by id'
       params do
@@ -403,7 +394,7 @@ module Chemotion
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids, @element_policy).serialized }
+          present reaction, with: Entities::ReactionEntity, root: :reaction, policy: @element_policy
         end
       end
 
@@ -512,7 +503,7 @@ module Chemotion
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          { reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized }
+          present reaction, with: Entities::ReactionEntity, root: :reaction
         end
       end
     end

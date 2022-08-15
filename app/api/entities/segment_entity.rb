@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 
-# Entity module
 module Entities
-  # Segment entity
-  class SegmentEntity < Grape::Entity
-    expose :id, :segment_klass_id, :element_type, :element_id, :properties, :uuid, :klass_uuid
+  class SegmentEntity < ApplicationEntity
+    expose(
+      :element_id,
+      :element_type,
+      :id,
+      :klass_uuid,
+      :properties,
+      :segment_klass_id,
+      :uuid,
+    )
 
     def properties
-      return unless object.respond_to? :properties
-
+      return unless object.respond_to?(:properties)
       return unless object&.properties.dig('layers').present?
 
       object&.properties['layers'].keys.each do |key|

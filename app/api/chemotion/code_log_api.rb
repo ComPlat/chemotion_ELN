@@ -42,7 +42,7 @@ module Chemotion
           if code_log.nil?
             error!("Element with #{code.size}-digit code #{params[:code]} not found", 404)
           else
-            code_log
+            present code_log, with: Entities::CodeLogEntity, root: :code_log
           end
         end
       end

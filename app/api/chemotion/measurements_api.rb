@@ -62,7 +62,7 @@ module Chemotion
               {
                 id: measurement.id,
                 description: measurement.description,
-                value: measurement.value,
+                value: measurement.value.to_f,
                 unit: measurement.unit,
                 source_type: measurement.source_type.underscore,
                 source_id: measurement.source_id
@@ -71,7 +71,8 @@ module Chemotion
           }
           results << entry if entry[:measurements].any?
         end
-        results
+
+        { measurements: results }
       end
 
       # params do

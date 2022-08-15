@@ -1,13 +1,20 @@
 import Aviator from 'aviator';
-import { researchPlanShowOrNew } from './routesUtils';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Glyphicon } from 'react-bootstrap';
+import { observer } from 'mobx-react';
+
+import { StoreContext } from '../mobx-stores/RootStore';
+import { researchPlanShowOrNew } from './routesUtils';
 import ConfirmDeletionModal from './ConfirmDeletionModal';
-import MeasurementsFetcher from './fetchers/MeasurementsFetcher';
 import LoadingActions from './actions/LoadingActions';
 
-export default class MeasurementsList extends Component {
+class MeasurementsList extends Component {
+  static propTypes = {
+    sample: PropTypes.object.isRequired
+  };
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -29,13 +36,13 @@ export default class MeasurementsList extends Component {
     if (measurement == null) { return; }
 
     LoadingActions.start();
-    const id = measurement.id
-    MeasurementsFetcher.deleteMeasurement(id).then(_result => {
-      console.log('Successfully deleted', measurement);
-      this.hideConfirmationModal();
-      LoadingActions.stop();
-      this.props.onDelete();
-    });
+    this.context.measurements.deleteMeasurement(
+      measurement.id,
+      () => {
+        this.hideConfirmationModal();
+        LoadingActions.stop();
+      }
+    );
   }
 
   hideConfirmationModal() {
@@ -55,8 +62,8 @@ export default class MeasurementsList extends Component {
     );
   }
 
-  renderEntry(entry) {
-    const measurements = entry.measurements.map(measurement => {
+  renderEntry(sampleHeader, measurements) {
+    measurements = measurements.map(measurement => {
       let measurementDisplay;
       if (measurement.source_id) {
         measurementDisplay = (
@@ -89,9 +96,9 @@ export default class MeasurementsList extends Component {
     });
 
     return (
-      <div key={`MeasurementListEntry${entry.id}`}>
-        <h4 key={`MeasurementListEntry${entry.id}-SampleName`}>
-          {entry.short_label} {entry.name}
+      <div key={`MeasurementListEntry${sampleHeader.id}`}>
+        <h4 key={`MeasurementListEntry${sampleHeader.id}-SampleName`}>
+          {sampleHeader.short_label} {sampleHeader.name}
         </h4>
         <table className="table striped condensed hover">
           <thead>
@@ -115,7 +122,17 @@ export default class MeasurementsList extends Component {
   }
 
   render() {
-    const entries = this.props.samplesWithMeasurements.map(entry => this.renderEntry(entry));
+    const measurementsStore = this.context.measurements;
+    let sampleIds = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(a => a);
+    const entries = sampleIds.map(sampleId => {
+      if (!measurementsStore.dataForSampleAvailable(sampleId)) { return null; }
+
+      return this.renderEntry(
+        measurementsStore.sampleHeader(sampleId),
+        measurementsStore.measurementsForSample(sampleId)
+      );
+    });
+
     return (
       <div className="measurementList">
         {entries}
@@ -123,7 +140,5 @@ export default class MeasurementsList extends Component {
     );
   }
 }
-MeasurementsList.propTypes = {
-  onDelete: PropTypes.func.isRequired,
-  samplesWithMeasurements: PropTypes.array.isRequired
-};
+
+export default observer(MeasurementsList);

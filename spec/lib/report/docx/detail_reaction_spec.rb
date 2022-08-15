@@ -79,7 +79,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
     )
     r1.reload
     con = r1.products[0].container.children[0].children[0]
-    con.extended_metadata['report'] = 'true'
+    con.extended_metadata['report'] = true
     con.extended_metadata['content'] = "{\"ops\":
       [
         {\"insert\": \"  \\n\"},
@@ -90,7 +90,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
     }"
     con.save!
 
-    ElementReportPermissionProxy.new(user, r1, [user.id]).serialized
+    Entities::ReactionReportEntity.represent(r1).serializable_hash
   end
   let!(:serial) { '1a' }
   let!(:mol_serials) do
@@ -128,10 +128,11 @@ describe 'Reporter::Docx::DetailReaction instance' do
     ]
   end
   let!(:target) do
-    Reporter::Docx::DetailReaction.new(reaction: OpenStruct.new(r1_serialized),
-                                       mol_serials: mol_serials,
-                                       index: prev_index,
-                                       si_rxn_settings: all_si_rxn_settings)
+    Reporter::Docx::DetailReaction.new(
+      reaction: OpenStruct.new(r1_serialized),
+      mol_serials: mol_serials,
+      index: prev_index,
+      si_rxn_settings: all_si_rxn_settings)
   end
 
   before do

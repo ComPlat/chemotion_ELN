@@ -15,7 +15,9 @@ module Chemotion
       end
       route_param :id, requirements: { id: /[0-9]*/ } do
         get do
-          current_user.all_sync_in_collections_users.find(params[:id])
+          scu = current_user.all_sync_in_collections_users.find(params[:id])
+
+          present scu, with: Entities::SyncCollectionsUserEntity, root: 'sync_collections_user'
         end
       end
 
@@ -31,14 +33,8 @@ module Chemotion
 
           post do
             Usecases::Sharing::TakeOwnership.new(params.merge(current_user_id: current_user.id, is_sync: true)).execute!
+            { success: true } # to prevent serializing the result of the usecase
           end
-        end
-      end
-
-      get_child = proc do |children, collections|
-        children.each do |obj|
-          child = collections.select { |dt| dt['ancestry'] == obj['id'].to_s }
-          obj[:children] = child if child.count.positive?
         end
       end
 
@@ -73,7 +69,10 @@ module Chemotion
                                SQL
                              ).as_json
 
-        get_child.call(col_tree, collections)
+        col_tree.each do |obj|
+          child = collections.select { |dt| dt['ancestry'] == obj['id'].to_s }
+          obj[:children] = child if child.count.positive?
+        end
         present col_tree, with: Entities::CollectionSyncEntity, root: 'syncCollections'
       end
 
@@ -93,6 +92,8 @@ module Chemotion
       put ':id' do
         sync = SyncCollectionsUser.where(id: params[:id], shared_by_id: current_user.id).first
         sync&.update!(params[:collection_attributes])
+
+        present sync || {}, using: Entities::SyncCollectionsUserEntity, root: 'sync_collections_user'
       end
 
       desc 'Create Sync collections'
@@ -143,11 +144,13 @@ module Chemotion
         Usecases::Sharing::SyncWithUsers.new(params, current_user).execute!
 
         c = Collection.find_by(id: params[:id])
-        Message.create_msg_notification(
+        message = Message.create_msg_notification(
           channel_subject: Channel::SYNCHRONIZED_COLLECTION_WITH_ME,
           message_from: current_user.id, message_to: uids,
           data_args: { synchronized_by: current_user.name, collection_name: c.label }, level: 'info'
         )
+
+        present message, using: Entities::MessageEntity
       end
 
       desc 'delete sync by id'
@@ -157,11 +160,13 @@ module Chemotion
       end
 
       delete ':id' do
-        if params[:is_syncd]
+        user = if params[:is_syncd]
           SyncCollectionsUser.where(id: params[:id], user_id: current_user.id).first
         else
           SyncCollectionsUser.where(id: params[:id], shared_by_id: current_user.id).first
         end&.destroy
+
+        present user || {}, using: Entities::SyncCollectionsUserEntity, root: 'sync_collections_user'
       end
     end
   end

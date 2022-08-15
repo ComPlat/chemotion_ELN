@@ -12,16 +12,6 @@ class ElementPermissionProxy
     @detail_level = detail_level_for_element
   end
 
-  def serialized
-    serializer_class = serializer_class_by_element
-    nested_dl = nested_details_levels_for_element
-    serialized_element = restriction_by_dl(
-      serializer_class,
-      detail_level,
-      nested_dl
-    ).deep_symbolize_keys
-  end
-
   def can_copy?
     @policy&.try(:copy?)
   end
@@ -109,29 +99,5 @@ class ElementPermissionProxy
     element.collections.map(&:sync_collections_users).flatten.select do |sc|
       @user_ids.include?(sc.user_id) && coll_ids.include?(sc.collection_id)
     end
-  end
-
-  def serializer_class_by_element
-    case element
-    when Sample
-      SampleSerializer
-    when Reaction
-     ReactionSerializer
-    when Wellplate
-      WellplateSerializer
-    when Screen
-      ScreenSerializer
-    when ResearchPlan
-      ResearchPlanSerializer
-    when Element
-      ElementSerializer
-    end
-  end
-
-  def restriction_by_dl(serializer_class, dl, nested_dl)
-    klass = "#{serializer_class}::Level#{dl}".constantize
-    need_hash = [SampleSerializer, ReactionSerializer].include? serializer_class
-    opt = need_hash ? { nested_dl: nested_dl, policy: @policy, current_user: @user } : nested_dl
-    klass.new(element, opt).serializable_hash
   end
 end

@@ -250,33 +250,33 @@ class ElementActions {
   fetchReactionsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
       ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   fetchWellplatesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
       WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   fetchScreensByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
       ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -284,11 +284,11 @@ class ElementActions {
   fetchResearchPlansByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
       ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -297,29 +297,29 @@ class ElementActions {
   fetchSampleById(id) {
     return (dispatch) => {
       SamplesFetcher.fetchById(id)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   createSample(params, closeView = false) {
     return (dispatch) => {
       SamplesFetcher.create(params)
-      .then((result) => {
-        dispatch({ element: result, closeView })
-      });
+        .then((result) => {
+          dispatch({ element: result, closeView })
+        });
     };
   }
 
   createSampleForReaction(sample, reaction, materialGroup) {
     return (dispatch) => {
       SamplesFetcher.create(sample)
-      .then((newSample) => {
-        dispatch({ newSample, reaction, materialGroup })
-      });
+        .then((newSample) => {
+          dispatch({ newSample, reaction, materialGroup })
+        });
     };
   }
 
@@ -342,46 +342,46 @@ class ElementActions {
 
     return () => {
       ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
-      .then((result) => {
-        reaction.reaction_svg_file = result.reaction_svg;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          reaction.reaction_svg_file = result.reaction_svg;
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   editReactionSample(reactionID, sampleID) {
     return (dispatch) => {
       SamplesFetcher.fetchById(sampleID)
-      .then((result) => {
-        dispatch({ sample: result, reaction: reactionID });
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch({ sample: result, reaction: reactionID });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   updateSampleForReaction(sample, reaction, closeView = true) {
     return (dispatch) => {
       SamplesFetcher.update(sample)
-      .then((newSample) => {
-        reaction.updateMaterial(newSample);
-        reaction.changed = true;
-        dispatch({ reaction, sample: newSample, closeView })
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((newSample) => {
+          reaction.updateMaterial(newSample);
+          reaction.changed = true;
+          dispatch({ reaction, sample: newSample, closeView })
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   updateSample(params, closeView = false) {
     return (dispatch) => {
       SamplesFetcher.update(params)
-      .then((result) => {
-        dispatch({ element: result, closeView })
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch({ element: result, closeView })
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -392,11 +392,11 @@ class ElementActions {
   splitAsSubsamples(ui_state) {
     return (dispatch) => {
       SamplesFetcher.splitAsSubsamples(ui_state)
-      .then((result) => {
-        dispatch(ui_state);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(ui_state);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -411,23 +411,23 @@ class ElementActions {
   showReactionMaterial(params) {
     return (dispatch) => {
       SamplesFetcher.fetchById(params.sample.id)
-      .then((result) => {
-        params.sample = result
-        dispatch(params);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      })
+        .then((result) => {
+          params.sample = result
+          dispatch(params);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        })
     }
   }
 
   importSamplesFromFile(params) {
     return (dispatch) => {
       SamplesFetcher.importSamplesFromFile(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -444,11 +444,11 @@ class ElementActions {
   importSamplesFromFileConfirm(params) {
     return (dispatch) => {
       SamplesFetcher.importSamplesFromFileConfirm(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -457,11 +457,11 @@ class ElementActions {
   fetchMoleculeByMolfile(molfile, svg_file = null) {
     return (dispatch) => {
       MoleculesFetcher.fetchByMolfile(molfile, svg_file)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -470,11 +470,11 @@ class ElementActions {
   fetchReactionById(id) {
     return (dispatch) => {
       ReactionsFetcher.fetchById(id)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -517,20 +517,20 @@ class ElementActions {
   createReaction(params) {
     return (dispatch) => {
       ReactionsFetcher.create(params)
-      .then((result) => {
-        dispatch(result)
-      });
+        .then((result) => {
+          dispatch(result)
+        });
     };
   }
 
   updateReaction(params, closeView = false) {
     return (dispatch) => {
       ReactionsFetcher.update(params)
-      .then((result) => {
-        dispatch({ element: result, closeView })
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch({ element: result, closeView })
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -541,22 +541,22 @@ class ElementActions {
   copyReactionFromId(id) {
     return (dispatch) => {
       ReactionsFetcher.fetchById(id)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   copyReaction(reaction, colId) {
     return (dispatch) => {
       ReactionsFetcher.fetchById(reaction.id)
-      .then((result) => {
-        dispatch({ reaction: result, colId: colId });
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch({ reaction: result, colId: colId });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -598,11 +598,11 @@ class ElementActions {
 
     return (dispatch) => {
       WellplatesFetcher.bulkCreateWellplates({ wellplates: wellplates })
-      .then(() => {
-        dispatch();
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then(() => {
+          dispatch();
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -617,55 +617,55 @@ class ElementActions {
   createWellplate(wellplate) {
     return (dispatch) => {
       WellplatesFetcher.create(wellplate)
-      .then(result => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then(result => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   editWellplateSample(wellplateID, sampleID) {
     return (dispatch) => {
       SamplesFetcher.fetchById(sampleID)
-      .then((result) => {
-        dispatch({ sample: result, wellplate: wellplateID });
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch({ sample: result, wellplate: wellplateID });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   updateWellplate(wellplate) {
     return (dispatch) => {
       WellplatesFetcher.update(wellplate)
-      .then(result => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then(result => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   updateSampleForWellplate(sample, wellplate) {
     return (dispatch) => {
       SamplesFetcher.update(sample)
-      .then((newSample) => {
-        dispatch(wellplate)
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((newSample) => {
+          dispatch(wellplate)
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   fetchWellplateById(id) {
     return (dispatch) => {
       WellplatesFetcher.fetchById(id)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -682,6 +682,14 @@ class ElementActions {
 
 
   // -- Screens --
+  addResearchPlanToScreen(screen_id, collection_id, afterComplete = () => {}) {
+    return (dispatch) => {
+      ScreensFetcher.addResearchPlan(screen_id, collection_id)
+        .then(result => dispatch(result.screen))
+        .then(() => { afterComplete(); })
+        .catch(errorMessage => console.log(errorMessage));
+    };
+  }
 
   generateScreenFromClipboard(collection_id) {
     return collection_id;
@@ -691,11 +699,11 @@ class ElementActions {
   fetchScreenById(id) {
     return (dispatch) => {
       ScreensFetcher.fetchById(id)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -706,22 +714,22 @@ class ElementActions {
   createScreen(params) {
     return (dispatch) => {
       ScreensFetcher.create(params)
-      .then(result => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then(result => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   updateScreen(params) {
     return (dispatch) => {
       ScreensFetcher.update(params)
-      .then(result => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then(result => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -730,22 +738,22 @@ class ElementActions {
   fetchResearchPlanById(id) {
     return (dispatch) => {
       ResearchPlansFetcher.fetchById(id)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
   updateResearchPlan(params) {
     return (dispatch) => {
       ResearchPlansFetcher.update(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -760,11 +768,11 @@ class ElementActions {
   createResearchPlan(params) {
     return (dispatch) => {
       ResearchPlansFetcher.create(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
