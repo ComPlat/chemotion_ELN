@@ -1,4 +1,4 @@
-image: "complat/complat-ubuntu-runner:development-5.biology"
+image: "complat/complat-ubuntu-runner:development-5.c44d0c2d4"
 
 services:
   - postgres:12-alpine
