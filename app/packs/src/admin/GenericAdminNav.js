@@ -15,7 +15,6 @@ const GenericAdminNav = (props) => {
         <Navbar.Toggle />
       </Navbar.Header>
       <Navbar.Collapse>
-        <Navbar.Brand><b>{`${text.split(/(?=[A-Z])/).join(' ')} Designer`}</b></Navbar.Brand>
         {['GenericElements', 'GenericSegments', 'GenericDatasets'].map(e => navs(text, e))}
         <Navbar.Text pullRight>Login as: {userName}</Navbar.Text>
       </Navbar.Collapse>

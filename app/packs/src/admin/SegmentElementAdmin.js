@@ -1,11 +1,16 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
 import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, Tabs, Tab } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy, orderBy } from 'lodash';
 import LoadingModal from '../components/common/LoadingModal';
-import AdminFetcher from '../components/fetchers/AdminFetcher';
+import UsersFetcher from '../components/fetchers/UsersFetcher';
+import GenericSgsFetcher from '../components/fetchers/GenericSgsFetcher';
 import { ElementField } from '../components/elements/ElementField';
+import Notifications from '../components/Notifications';
 import LoadingActions from '../components/actions/LoadingActions';
 import AttrNewModal from './generic/AttrNewModal';
 import AttrEditModal from './generic/AttrEditModal';
@@ -18,6 +23,8 @@ import SelectAttrNewModal from './generic/SelectAttrNewModal';
 import UploadModal from './generic/UploadModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
 import Preview from './generic/Preview';
+import { GenericAdminNav, GenericAdminUnauth } from './GenericAdminNav';
+import RepoKlassHubModal from './generic/RepoKlassHubModal';
 
 const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
 const validateInput = (element) => {
@@ -53,7 +60,10 @@ export default class SegmentElementAdmin extends React.Component {
       showFieldCond: false,
       showUpload: false,
       showJson: false,
-      propTabKey: 1
+      propTabKey: 1,
+      show: { tab: '', modal: '' },
+      revisions: [],
+      user: {}
     };
 
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -104,16 +114,31 @@ export default class SegmentElementAdmin extends React.Component {
     this.handleUploadShow = this.handleUploadShow.bind(this);
     this.handleUploadClose = this.handleUploadClose.bind(this);
     this.handleUploadTemplate = this.handleUploadTemplate.bind(this);
+    this.handleShowState = this.handleShowState.bind(this);
+    this.closeModal = this.closeModal.bind(this);
   }
 
   componentDidMount() {
     this.fetchElements();
     this.fetchConfigs();
+    UsersFetcher.fetchCurrentUser().then((result) => {
+      if (!result.error) {
+        this.setState({ user: result.user });
+      }
+    }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
   componentWillUnmount() {
     this.clipboard.destroy();
   }
+
+
+  getShowState(att, val) { return { ...this.state.show, [att]: val }; }
+  handleShowState(att, val, cb = () => {}) {
+    this.setState({ show: this.getShowState(att, val) }, cb);
+  }
+  closeModal(cb = () => {}) { this.handleShowState('modal', '', cb); }
+
 
   onOptionInputChange(event, selectKey, optionKey) {
     const { element } = this.state;
@@ -257,7 +282,7 @@ export default class SegmentElementAdmin extends React.Component {
   fetchRevisions() {
     const { element } = this.state;
     if (element && element.id) {
-      AdminFetcher.fetchKlassRevisions(element.id, 'SegmentKlass')
+      GenericSgsFetcher.fetchKlassRevisions(element.id, 'SegmentKlass')
         .then((result) => {
           let curr = Object.assign({}, { ...element.properties_template });
           curr = Object.assign({}, { properties_release: curr }, { uuid: 'current' });
@@ -269,7 +294,7 @@ export default class SegmentElementAdmin extends React.Component {
 
   delRevision(params) {
     const { element } = this.state;
-    AdminFetcher.deleteKlassRevision({ id: params.id, klass_id: element.id, klass: 'SegmentKlass' })
+    GenericSgsFetcher.deleteKlassRevision({ id: params.id, klass_id: element.id, klass: 'SegmentKlass' })
       .then((response) => {
         if (response.error) {
           notification({ title: 'Delete Revision', lvl: 'error', msg: response.error });
@@ -447,7 +472,7 @@ export default class SegmentElementAdmin extends React.Component {
 
   handleCreateKlass(element) {
     if (!validateInput(element)) return;
-    AdminFetcher.createSegmentKlass(element)
+    GenericSgsFetcher.createSegmentKlass(element)
       .then((result) => {
         if (result.error) {
           notification({ title: 'Create Segment fail', lvl: 'error', msg: result.error });
@@ -465,7 +490,7 @@ export default class SegmentElementAdmin extends React.Component {
   handleUpdateKlass(element, updates) {
     const inputs = { ...element, ...updates };
     if (!validateInput(inputs)) return;
-    AdminFetcher.updateSegmentKlass(inputs)
+    GenericSgsFetcher.updateSegmentKlass(inputs)
       .then((result) => {
         if (result.error) {
           notification({ title: 'Update Segment fail', lvl: 'error', msg: result.error });
@@ -480,7 +505,7 @@ export default class SegmentElementAdmin extends React.Component {
   }
 
   handleActivateKlass(id, isActive) {
-    AdminFetcher.deActiveSegmentKlass({ id, is_active: !isActive })
+    GenericSgsFetcher.deActivateKlass({ id, is_active: !isActive, klass: 'SegmentKlass' })
       .then((result) => {
         if (result.error) {
           notification({ title: 'Update Segment fail', lvl: 'error', msg: result.error });
@@ -495,7 +520,7 @@ export default class SegmentElementAdmin extends React.Component {
   }
 
   handleDeleteKlass(element) {
-    AdminFetcher.deleteSegmentKlass(element.id)
+    GenericSgsFetcher.deleteKlass({ id: element.id, klass: 'SegmentKlass' })
       .then((result) => {
         if (result.error) {
           notification({ title: 'Delete Segment fail', lvl: 'error', msg: result.error });
@@ -541,11 +566,11 @@ export default class SegmentElementAdmin extends React.Component {
   }
 
   fetchConfigs() {
-    AdminFetcher.fetchUnitsSystem().then((result) => { this.setState({ unitsSystem: result }); });
+    GenericSgsFetcher.fetchUnitsSystem().then((result) => { this.setState({ unitsSystem: result }); });
   }
 
   fetchElements() {
-    AdminFetcher.listSegmentKlass().then((result) => {
+    GenericSgsFetcher.listSegmentKlass().then((result) => {
       this.setState({ elements: result.klass });
     });
   }
@@ -571,7 +596,7 @@ export default class SegmentElementAdmin extends React.Component {
 
     element.is_release = isRelease;
 
-    AdminFetcher.updateSegmentTemplate(element)
+    GenericSgsFetcher.updateSegmentTemplate(element)
       .then((result) => {
         if (result.error) {
           notification({ title: 'Update Segment template fail', lvl: 'error', msg: result.error });
@@ -909,18 +934,27 @@ export default class SegmentElementAdmin extends React.Component {
   }
 
   render() {
-    const { element, layerKey } = this.state;
+    const { element, layerKey, user } = this.state;
+    if (!user.generic_admin || !user.generic_admin.segments) {
+      return <GenericAdminUnauth userName={user.name} text="GenericSegments" />;
+    }
     const layer = (element && element.properties_template
       && element.properties_template.layers[layerKey]) || {};
 
     const sortedLayers = (element && element.properties_template && element.properties_template.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
 
     return (
-      <div>
+      <div style={{ width: '90vw', margin: 'auto' }}>
+        <GenericAdminNav userName={user.name} text="GenericSegments" />
+        <hr />
+        <div style={{ marginTop: '60px' }}>
         <Button bsStyle="primary" bsSize="small" onClick={() => this.newKlass()}>
           New Segment&nbsp;<i className="fa fa-plus" aria-hidden="true" />
         </Button>
         &nbsp;
+        <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'REPO')}>
+          Fetch from Chemotion Repository&nbsp;<i className="fa fa-reply" aria-hidden="true" />
+        </Button>
         <br />
         <div className="list-container-bottom">
           { this.renderList() }
@@ -987,9 +1021,21 @@ export default class SegmentElementAdmin extends React.Component {
             fnClose={this.handleUploadClose}
             fnUpload={this.handleUploadTemplate}
           />
+          {
+            (this.state.show.modal === 'REPO') ?
+            <RepoKlassHubModal showModal={this.state.show.modal === 'REPO'} fnClose={this.closeModal} /> : null
+          }
         </div>
+        </div>
+        <Notifications />
         <LoadingModal />
       </div>
     );
   }
 }
+
+const SegmentElementAdminDnD = DragDropContext(HTML5Backend)(SegmentElementAdmin);
+document.addEventListener('DOMContentLoaded', () => {
+  const domElement = document.getElementById('SegmentElementAdmin');
+  if (domElement) ReactDOM.render(<SegmentElementAdminDnD />, domElement);
+});

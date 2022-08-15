@@ -265,7 +265,7 @@ module Chemotion
           @klz.save!
           @klz.reload
           @klz.create_klasses_revision(current_user.id) if params[:is_release] == true
-          @klz
+          "Entities::#{params[:klass]}Entity".constantize.represent(@klz)
         end
       end
 

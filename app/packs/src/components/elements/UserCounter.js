@@ -4,7 +4,7 @@ import { Row, Col, Panel, Button, FormControl } from 'react-bootstrap';
 import uuid from 'uuid';
 import UserStore from '../stores/UserStore';
 import UserActions from '../actions/UserActions';
-import AdminFetcher from '../fetchers/AdminFetcher';
+import GenericElsFetcher from '../fetchers/GenericElsFetcher';
 import UsersFetcher from '../fetchers/UsersFetcher';
 
 export default class UserCounter extends Component {
@@ -53,7 +53,7 @@ export default class UserCounter extends Component {
   }
 
   fetchKlasses() {
-    AdminFetcher.fetchElementKlasses()
+    GenericElsFetcher.fetchElementKlasses()
       .then((result) => {
         const genericEntities = result && result.klass.filter(u => u.is_generic === true);
         this.setState({ klasses: genericEntities || [] });

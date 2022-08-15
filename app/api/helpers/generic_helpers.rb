@@ -120,4 +120,12 @@ module GenericHelpers
     Attachment.where('id IN (?) AND attachable_type = (?)', del_files.map!(&:to_i), type).update_all(attachable_id: nil) unless (del_files || []).empty?
     attach_ary
   end
+
+  def fetch_repo_generic_template(klass, identifier)
+    Chemotion::Generic::Fetch::Template.exec(API::TARGET, klass, identifier)
+  end
+
+  def fetch_repo_generic_template_list(name = false)
+    Chemotion::Generic::Fetch::Template.list(API::TARGET, name)
+  end
 end

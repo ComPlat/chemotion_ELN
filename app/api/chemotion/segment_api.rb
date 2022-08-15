@@ -4,6 +4,50 @@ module Chemotion
     helpers GenericHelpers
 
     resource :segments do
+      namespace :fetch_repo_generic_template do
+        desc 'fetch segment templates from repository'
+        params do
+          requires :identifier, type: String, desc: 'identifier'
+        end
+        post do
+          sk_obj = fetch_repo_generic_template('Segment', params[:identifier])
+          sk_obj = sk_obj.deep_symbolize_keys[:generic_template]
+          return { error: 'No template data found' } unless sk_obj.present?
+
+          ek_obj = ElementKlass.find_by(name: sk_obj.dig(:element_klass, :klass_name))
+          return { error: 'No related element data found' } unless ek_obj.present?
+
+          byebug
+
+          segment_klass = SegmentKlass.find_or_create_by(
+            identifier: sk_obj.dig(:identifier)
+          )
+          segment_klass.update(sk_obj.slice(
+            :label,
+            :desc,
+            :place,
+            :properties_release,
+            :uuid
+          ).merge(
+            is_active: true,
+            properties_template: sk_obj.dig(:properties_release), # properties_release,
+            element_klass: ek_obj,
+            created_by: current_user.id,
+            released_at: DateTime.now,
+            sync_time: DateTime.now
+          ))
+
+          present segment_klass, with: Entities::SegmentKlassEntity, root: 'klass'
+        end
+      end
+
+      namespace :fetch_repo_generic_template_list do
+        desc 'fetch segment templates from repository'
+        get do
+          fetch_repo_generic_template_list('Segment')
+        end
+      end
+
       namespace :klasses do
         desc 'get segment klasses'
         params do

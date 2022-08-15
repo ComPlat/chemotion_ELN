@@ -308,12 +308,6 @@ export default class AdminFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static exec(path, method) {
-    return BaseFetcher.withoutBodyData({
-      apiEndpoint: path, requestMethod: method, jsonTranformation: json => json
-    });
-  }
-
   static fetchJobs() {
     return fetch('/api/v1/admin/jobs', {
       credentials: 'same-origin',

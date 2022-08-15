@@ -24,6 +24,7 @@ import Preview from './generic/Preview';
 import UploadModal from './generic/UploadModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from './generic/Utils';
 import { GenericAdminNav, GenericAdminUnauth } from './GenericAdminNav';
+import RepoKlassHubModal from './generic/RepoKlassHubModal';
 
 const validateKlass = klass => (/\b[a-z]{3,5}\b/g.test(klass));
 const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
@@ -594,17 +595,17 @@ export default class GenericElementAdmin extends React.Component {
       const selectOptions = Object.keys(sos).map(key => ({ value: key, name: key, label: key }));
       this.setState({ selectOptions });
     } else if (delStr === 'Option') {
-      const options = element.properties_template.select_options[delRoot];
-      const idx = findIndex(options, o => o.key === delKey);
-      options.splice(idx, 1);
+      const { options } = element.properties_template.select_options[delRoot];
+      if (options && options.length > 0) {
+        const idx = findIndex(options, o => o.key === delKey);
+        options.splice(idx, 1);
+      }
     } else if (delStr === 'Layer') {
       delete element.properties_template.layers[delKey];
     } else if (delStr === 'Field') {
       const { fields } = element.properties_template.layers[delRoot];
       const idx = findIndex(fields, o => o.field === delKey);
       fields.splice(idx, 1);
-    } else {
-      //
     }
     this.setState({ element });
   }
@@ -929,6 +930,9 @@ export default class GenericElementAdmin extends React.Component {
             New Element&nbsp;<i className="fa fa-plus" aria-hidden="true" />
           </Button>
           &nbsp;
+          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'REPO')}>
+            Fetch from Chemotion Repository&nbsp;<i className="fa fa-reply" aria-hidden="true" />
+          </Button>
           <span>The order of the list is: Active(active, inactive), Element(in alphabetical order), Prefix(in alphabetical order)</span>
           <br />
           <div className="list-container-bottom mgmt_table">
@@ -991,6 +995,10 @@ export default class GenericElementAdmin extends React.Component {
               fnClose={this.closeModal}
               fnUpload={this.handleUploadTemplate}
             />
+            {
+              (this.state.show.modal === 'REPO') ?
+              <RepoKlassHubModal showModal={this.state.show.modal === 'REPO'} fnClose={this.closeModal} /> : null
+            }
           </div>
         </div>
         <Notifications />

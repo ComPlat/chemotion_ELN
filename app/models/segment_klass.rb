@@ -17,6 +17,7 @@
 #  properties_release  :jsonb
 #  released_at         :datetime
 #  identifier          :string
+#  sync_time           :datetime
 #
 
 class SegmentKlass < ApplicationRecord
