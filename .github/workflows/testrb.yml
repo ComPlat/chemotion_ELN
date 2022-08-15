@@ -13,7 +13,7 @@ jobs:
         pg_role: [chemotion_test]
         pg_database: [chemotion_test]
     container: 
-      image: complat/complat-ubuntu-runner:development-5.biology
+      image: complat/complat-ubuntu-runner:development-5.c44d0c2d4
     env:
       HOME: /home/gitlab-runner
 

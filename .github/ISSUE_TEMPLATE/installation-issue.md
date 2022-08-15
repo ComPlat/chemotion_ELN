@@ -8,8 +8,8 @@ assignees: ''
 ---
 
 I am setting up a
-- [ ] production
-- [ ] development environment
+- production
+- development environment
 
 
 # Failure Information 
@@ -22,8 +22,8 @@ Please provide any relevant information about your setup. This is important in c
 
 
 I am 
-- [ ] using Docker
-- [ ] not using Docker 
+- using Docker
+- not using Docker 
  
 - OS: 
 - ELN version, or branch, or commit

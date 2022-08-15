@@ -7,9 +7,7 @@ assignees: ''
 
 ---
 
-- [ ] I am an ELNer
-- [ ] I am a developer
-- [ ] I am a system/ELN admin
+- I am an ELNer / developer / system/ELN admin
 
 # Description
 Please provide a description of:

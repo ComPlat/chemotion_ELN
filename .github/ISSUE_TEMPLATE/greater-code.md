@@ -8,8 +8,8 @@ assignees: ''
 ---
 
 
-- [ ] refactoring
-- [ ] dependencies 
-- [ ] linting 
-- [ ] more testing
+- refactoring
+- dependencies 
+- linting 
+- more testing
  
