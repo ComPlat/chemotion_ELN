@@ -4,8 +4,8 @@ import { ButtonGroup, Button, ControlLabel } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
-import ComputedPropsGraphContainer from 'src/components/computed_props/ComputedPropsGraphContainer';
-import SampleComputedProps from 'src/components/computed_props/SampleComputedProps';
+import ComputedPropsGraphContainer from 'src/components/computedProps/ComputedPropsGraphContainer';
+import SampleComputedProps from 'src/components/computedProps/SampleComputedProps';
 import { ConfirmModal } from 'src/components/common/ConfirmModal';
 
 export default class ComputedPropsContainer extends React.Component {

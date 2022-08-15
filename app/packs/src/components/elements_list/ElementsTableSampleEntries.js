@@ -9,7 +9,7 @@ import ElementWellplateLabels from 'src/components/elements_list/ElementWellplat
 import GenericElementLabels from 'src/components/generic/GenericElementLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ChemrepoLabels from 'src/components/elements_list/ChemrepoLabels';
-import ComputedPropLabel from 'src/components/computed_props/ComputedPropLabel';
+import ComputedPropLabel from 'src/components/computedProps/ComputedPropLabel';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementContainer from 'src/components/elements_list/ElementContainer';
 

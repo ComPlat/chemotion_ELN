@@ -10,8 +10,8 @@ import {
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 
-import ComputedPropsGraph from 'src/components/computed_props/ComputedPropsGraph';
-import GraphReferenceTable from 'src/components/computed_props/GraphReferenceTable';
+import ComputedPropsGraph from 'src/components/computedProps/ComputedPropsGraph';
+import GraphReferenceTable from 'src/components/computedProps/GraphReferenceTable';
 
 const etlReferences = [
   { x: -1.8, y: 50, type: 'reference' },

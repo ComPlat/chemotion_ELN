@@ -9,7 +9,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
 
-import ComputedPropsGraphContainer from 'src/components/computed_props/ComputedPropsGraphContainer';
+import ComputedPropsGraphContainer from 'src/components/computedProps/ComputedPropsGraphContainer';
 
 export default class GraphContainer extends React.Component {
   constructor(props) {
