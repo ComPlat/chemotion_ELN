@@ -10,5 +10,5 @@ var ChemSpectraEditor = require('src/apps/chemspectra/ChemSpectraEditor');
 var MoleculeModerator = require('src/apps/moleculeModerator');
 var OmniauthCredential = require('src/apps/omniauthCredential');
 var UserCounter = require('src/apps/user_counter');
-var ScifinderCredential = require('src/apps/scifinder_credential');
+var ScifinderCredential = require('src/apps/scifinderCredential');
 var mydb = require('src/apps/mydb');
