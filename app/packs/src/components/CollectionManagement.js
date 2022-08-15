@@ -1,10 +1,10 @@
 import React from 'react';
 import { Tabs, Tab } from 'react-bootstrap';
 
-import MyCollections from 'src/components/collection_management/MyCollections';
-import MySharedCollections from 'src/components/collection_management/MySharedCollections';
-import SharedWithMeCollections from 'src/components/collection_management/SharedWithMeCollections';
-import SyncWithMeCollections from 'src/components/collection_management/SyncWithMeCollections';
+import MyCollections from 'src/components/collectionManagement/MyCollections';
+import MySharedCollections from 'src/components/collectionManagement/MySharedCollections';
+import SharedWithMeCollections from 'src/components/collectionManagement/SharedWithMeCollections';
+import SyncWithMeCollections from 'src/components/collectionManagement/SyncWithMeCollections';
 import XTabs from 'src/components/extra/CollectionManagementXTabs';
 
 const CollectionManagement = () => {
