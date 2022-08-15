@@ -24,7 +24,8 @@ import UploadModal from './generic/UploadModal';
 import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from '../admin/generic/Utils';
 import Preview from './generic/Preview';
 import { GenericAdminNav, GenericAdminUnauth } from './GenericAdminNav';
-import RepoKlassHubModal from './generic/RepoKlassHubModal';
+// import RepoKlassHubModal from './generic/RepoKlassHubModal';
+import KlassFetchBtn from './generic/KlassFetchBtn';
 
 const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
 const validateInput = (element) => {
@@ -950,9 +951,10 @@ export default class SegmentElementAdmin extends React.Component {
           New Segment&nbsp;<i className="fa fa-plus" aria-hidden="true" />
         </Button>
         &nbsp;
-        <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'REPO')}>
+        <KlassFetchBtn />
+        {/* <Button bsStyle="primary" bsSize="small" onClick={() => this.handleShowState('modal', 'REPO')}>
           Fetch from Chemotion Repository&nbsp;<i className="fa fa-reply" aria-hidden="true" />
-        </Button>
+        </Button> */}
         <br />
         <div className="list-container-bottom">
           { this.renderList() }
@@ -1019,10 +1021,10 @@ export default class SegmentElementAdmin extends React.Component {
             fnClose={this.handleUploadClose}
             fnUpload={this.handleUploadTemplate}
           />
-          {
+          {/* {
             (this.state.show.modal === 'REPO') ?
             <RepoKlassHubModal showModal={this.state.show.modal === 'REPO'} fnClose={this.closeModal} /> : null
-          }
+          } */}
         </div>
         </div>
         <Notifications />

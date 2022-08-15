@@ -7,7 +7,7 @@ const delay = (n) => {
   return new Promise((resolve) => { setTimeout(resolve, n * 1000); });
 };
 
-const RepoKlassFetchBtn = (props) => {
+const KlassSyncBtn = (props) => {
   const { data } = props;
   const [show, setShow] = useState(false);
 
@@ -35,4 +35,4 @@ const RepoKlassFetchBtn = (props) => {
   );
 };
 
-export default RepoKlassFetchBtn;
+export default KlassSyncBtn;
