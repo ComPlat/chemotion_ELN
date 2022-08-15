@@ -5,10 +5,10 @@ import { uniq } from 'lodash';
 
 import DeviceActions from 'src/stores/alt/actions/UserActions';
 import DeviceStore from 'src/stores/alt/stores/UserStore';
-import FocusNovnc from 'src/apps/command_and_control/FocusNovnc';
-import Navigation from 'src/apps/command_and_control/Navigation';
+import FocusNovnc from 'src/apps/commandAndControl/FocusNovnc';
+import Navigation from 'src/apps/commandAndControl/Navigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import { ConnectedBtn, DisconnectedBtn } from 'src/apps/command_and_control/NovncStatus';
+import { ConnectedBtn, DisconnectedBtn } from 'src/apps/commandAndControl/NovncStatus';
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;
