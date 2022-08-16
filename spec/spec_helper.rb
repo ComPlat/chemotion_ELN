@@ -11,7 +11,7 @@ require 'webdrivers'
 # require 'capybara/rspec'
 require 'rails_helper'
 
-Webdrivers.logger.level = :DEBUG
+Webdrivers.logger.level = :WARN
 
 Capybara.register_driver :selenium do |app|
   http_client = Selenium::WebDriver::Remote::Http::Default.new(
@@ -40,7 +40,13 @@ hostname = 'http://pubchem.ncbi.nlm.nih.gov'
 inchi_path = '/rest/pug/compound/inchikey/'
 
 RSpec.configure do |config|
-  # config.example_status_persistence_file_path = "spec/examples.txt"
+  config.after do |example|
+    if example.metadata[:type] == :feature && example.exception.present?
+      metadata = example.metadata
+      filename = "#{metadata[:full_description].parameterize}-#{metadata[:line_number]}-#{Time.now.to_f}.png"
+      save_screenshot(filename)
+    end
+  end
 
   config.include FactoryBot::Syntax::Methods
 
