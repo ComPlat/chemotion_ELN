@@ -9,7 +9,7 @@ import {
   Panel
 } from 'react-bootstrap';
 
-import ReactQuill from 'src/components/react_quill/ReactQuill';
+import ReactQuill from 'src/components/reactQuill/ReactQuill';
 import TextTemplateIcon from 'src/apps/admin/text_templates/TextTemplateIcon';
 import ActionHeaderBtn from 'src/apps/admin/text_templates/ActionHeaderBtn';
 import ActionRowBtn from 'src/apps/admin/text_templates/ActionRowBtn';

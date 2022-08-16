@@ -9,8 +9,8 @@ import Delta from 'quill-delta';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
-import DynamicToolbarEditor from 'src/components/react_quill/DynamicToolbarEditor';
-import BaseToolbar from 'src/components/react_quill/BaseToolbar';
+import DynamicToolbarEditor from 'src/components/reactQuill/DynamicToolbarEditor';
+import BaseToolbar from 'src/components/reactQuill/BaseToolbar';
 
 import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
 import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';

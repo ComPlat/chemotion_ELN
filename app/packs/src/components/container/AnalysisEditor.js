@@ -10,9 +10,9 @@ import { formatAnalysisContent } from 'src/utilities/ElementUtils';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
-import DynamicToolbarEditor from 'src/components/react_quill/DynamicToolbarEditor';
-import ToolbarIcon from 'src/components/react_quill/ToolbarIcon';
-import BaseToolbar from 'src/components/react_quill/BaseToolbar';
+import DynamicToolbarEditor from 'src/components/reactQuill/DynamicToolbarEditor';
+import ToolbarIcon from 'src/components/reactQuill/ToolbarIcon';
+import BaseToolbar from 'src/components/reactQuill/BaseToolbar';
 
 import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
 import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
