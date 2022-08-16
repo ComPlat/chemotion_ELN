@@ -33,7 +33,7 @@ import ElementAnalysesLabels from 'src/components/elementsList/ElementAnalysesLa
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/components/elementsList/ElementReactionLabels';
-import SampleDetailsContainers from 'src/components/elements/samples/analyses_tab/SampleDetailsContainers';
+import SampleDetailsContainers from 'src/components/elements/samples/analysesTab/SampleDetailsContainers';
 
 import XLabels from 'src/components/extra/SampleDetailsXLabels';
 import XTabs from 'src/components/extra/SampleDetailsXTabs';
@@ -42,19 +42,19 @@ import StructureEditorModal from 'src/components/structure_editor/StructureEdito
 
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
-import PolymerSection from 'src/components/elements/samples/properties_tab/PolymerSection';
-import ElementalCompositionGroup from 'src/components/elements/samples/properties_tab/ElementalCompositionGroup';
+import PolymerSection from 'src/components/elements/samples/propertiesTab/PolymerSection';
+import ElementalCompositionGroup from 'src/components/elements/samples/propertiesTab/ElementalCompositionGroup';
 import ToggleSection from 'src/components/common/ToggleSection';
 import SampleName from 'src/components/common/SampleName';
 import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
-import SampleForm from 'src/components/elements/samples/properties_tab/SampleForm';
+import SampleForm from 'src/components/elements/samples/propertiesTab/SampleForm';
 import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsContainer';
 import ComputedPropLabel from 'src/components/computedProps/ComputedPropLabel';
 import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import SampleDetailsLiteratures from 'src/components/elements/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import QcMain from 'src/components/elements/samples/qc_tab/QcMain';
+import QcMain from 'src/components/elements/samples/qcTab/QcMain';
 import { chmoConversions } from 'src/components/OlsComponent';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
@@ -62,12 +62,12 @@ import CopyElementModal from 'src/components/common/CopyElementModal';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import NmrSimTab from 'src/components/elements/samples/nmr_sim_tab/NmrSimTab';
+import NmrSimTab from 'src/components/elements/samples/nmrSimTab/NmrSimTab';
 import FastInput from 'src/components/elements/samples/FastInput';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/components/elements/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import MeasurementsTab from 'src/components/elements/samples/measurements_tab/MeasurementsTab';
+import MeasurementsTab from 'src/components/elements/samples/measurementsTab/MeasurementsTab';
 
 const MWPrecision = 6;
 
