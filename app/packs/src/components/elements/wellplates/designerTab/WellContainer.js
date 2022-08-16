@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DragSource, DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import Well from 'src/components/elements/wellplates/designer_tab/Well';
+import Well from 'src/components/elements/wellplates/designerTab/Well';
 
 const wellSource = {
   beginDrag(props) {
