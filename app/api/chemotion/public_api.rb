@@ -201,7 +201,7 @@ module Chemotion
       end
 
       namespace :token do
-        desc 'start editing a document'
+        desc 'Generate Token'
         params do
           requires :username, type: String, desc: 'Username'
           requires :password, type: String, desc: 'Password'
@@ -209,17 +209,16 @@ module Chemotion
         post do
           user = User.where(name_abbreviation: params[:username]).or(User.where(email: params[:username])).take
           error!('404 Not found', 404) if user.nil?
-          isValidUser = user.valid_password?(params[:password])
-          error!('401 Not found', 404) unless isValidUser
-  
+          is_valid_user = user.valid_password?(params[:password])
+          error!('401 Not found', 404) unless is_valid_user
+
           payload = {
             first_name: user[:first_name],
             user_id: user.id,
-            last_name: user[:last_name],
-            exp: (Time.now + 6.months).to_i
+            last_name: user[:last_name]
           }
-  
-          token = JWT.encode payload, Rails.application.secrets.secret_key_base
+
+          token = JsonWebToken.encode(payload)
           { token: token }
         end
       end

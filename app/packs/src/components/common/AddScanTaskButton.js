@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { OverlayTrigger, Tooltip, Button, Glyphicon, ControlLabel, InputGroup } from 'react-bootstrap';
-import TaskFetcher from '../fetchers/TaskFetcher'
+import ScanTaskFetcher from '../fetchers/ScanTaskFetcher'
 import NotificationActions from '../actions/NotificationActions';
 
-export default class AddTaskButton extends Component {
+export default class AddScanTaskButton extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -15,7 +15,7 @@ export default class AddTaskButton extends Component {
 
   handleOnClick() {
     const { data } = this.props;
-    TaskFetcher.addNewTask(data.id).then((result) => {
+    ScanTaskFetcher.addNewTask(data.id).then((result) => {
       if (result && result.hasOwnProperty('id')) {
         NotificationActions.add({ message: `A weighting task for sample ${data.showed_name} was created successful`, level: 'success', position: 'tr' });
         this.setState({disabled: true});
@@ -41,7 +41,7 @@ export default class AddTaskButton extends Component {
   }
 
   infoMessage(data) {
-    return (<Tooltip id="addTaskButton">
+    return (<Tooltip id="addScanTaskButton">
       Add a weighting task for this {data.showed_name}
     </Tooltip>);
   }

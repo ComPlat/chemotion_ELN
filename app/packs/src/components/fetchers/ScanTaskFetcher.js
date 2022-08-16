@@ -1,10 +1,8 @@
 import 'whatwg-fetch';
 
-import { camelize, decamelize } from 'humps';
-
-export default class TaskFetcher {
+export default class ScanTaskFetcher {
   static addNewTask(sample_id) {
-    return fetch(`/api/v1/tasks`, {
+    return fetch(`/api/v1/scan_tasks`, {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -15,7 +13,6 @@ export default class TaskFetcher {
         "sample_id": sample_id
       })
     }).then(response => response.json())
-      .then(json => json)
       .catch((errorMessage) => console.log(errorMessage));
   }
 }

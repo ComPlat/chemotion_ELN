@@ -396,7 +396,6 @@ export default class CollectionTree extends React.Component {
             {
               this.state.numberOfFreeScans > 0 ? <Badge> {this.state.numberOfFreeScans} </Badge> : ''
             }
-            {/* &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshFreeScan()} /> */}
           </div>
 
         </div>

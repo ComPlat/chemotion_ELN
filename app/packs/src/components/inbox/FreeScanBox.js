@@ -30,7 +30,6 @@ export default class FreeScanBox extends React.Component {
     modal.datasetContainer = null;
     modal.show = false;
     this.setState({ modal });
-    document.body.className = document.body.className.replace('modal-open', '');
   }
 
   handleUploadButton() {

@@ -1,6 +1,6 @@
-class CreateTasks < ActiveRecord::Migration[5.2]
+class CreateScanTasks < ActiveRecord::Migration[5.2]
   def change
-    create_table :tasks do |t|
+    create_table :scan_tasks do |t|
       t.string "status", default: 'To do'
       t.integer "measurement_value", null: true
       t.string "measurement_unit", null: false, default: 'g'

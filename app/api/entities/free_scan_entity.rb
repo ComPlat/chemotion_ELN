@@ -7,7 +7,7 @@ module Entities
     def children
       all_containers = object.children
       arr = []
-      get_attchement_ids(arr, all_containers)
+      get_attachment_ids(arr, all_containers)
       attachments = Attachment.where_container(arr)
       result = []
       attachments.map do |att|
@@ -23,11 +23,11 @@ module Entities
       result
     end
 
-    def get_attchement_ids(arr, containers)
+    def get_attachment_ids(arr, containers)
       return if containers.nil?
       containers.map do |container, subcontainers|
         arr.push(container.id)
-        get_attchement_ids(arr, subcontainers)
+        get_attachment_ids(arr, subcontainers)
       end
     end
 
@@ -46,26 +46,13 @@ module Entities
       end
     end
 
-    # def freescann_attachments
-    #   all_containers = object.children
-    #   arr = []
-    #   byebug
-    #   get_attchement_ids(arr, all_containers)
-    #   Attachment.where(
-    #     attachable_type: 'Container',
-    #     attachable_id: arr,
-    #     created_for: object.containable.id
-    #   )
-    # end
-
     def inbox_count
       all_containers = object.children
       arr = []
-      get_attchement_ids(arr, all_containers)
+      get_attachment_ids(arr, all_containers)
 
-      cnt = Attachment.where_container(arr).length
-      # cnt += freescann_attachments.length
-      cnt
+      count = Attachment.where_container(arr).length
+      count
     end
   end
 end

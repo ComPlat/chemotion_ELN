@@ -49,36 +49,26 @@ module Chemotion
         requires :cnt_only, type: Boolean, desc: 'return count number only'
       end
       get do
-        if current_user
-          inbox_container = Container.where(name: 'inbox', container_type: 'root', containable_id: current_user.id).take
-          unless inbox_container
-            inbox_container = Container.create!(name: 'inbox', container_type: 'root', containable_id: current_user.id)
-          end
+        inbox_container = Container.find_or_create_by(name: 'inbox', container_type: 'root', containable_id: current_user.id)
 
-          if params[:cnt_only]
-            present inbox_container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
-          else
-            present inbox_container, with: Entities::InboxEntity, root: :inbox
-          end
+        if params[:cnt_only]
+          present inbox_container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
+        else
+          present inbox_container, with: Entities::InboxEntity, root: :inbox
         end
       end
     end
 
     resource :free_scan do
       params do
-        requires :cnt_only, type: Boolean, desc: 'return count number only'
+        requires :count_only, type: Boolean, desc: 'return count number only'
       end
       get do
-        return if current_user.nil?
-
-        free_scan_root_container = Container.where(name: 'free_scan_root', container_type: 'root', containable_id: current_user.id).take
-        unless free_scan_root_container
-          current_user.container = Container.create(name: 'free_scan_root', container_type: 'root', containable_id: current_user.id)
-          free_scan_root_container = current_user.container
-        end
+        free_scan_root_container = Container.find_or_create_by(name: 'free_scan_root', container_type: 'root', containable_id: current_user.id)
+        current_user.container = free_scan_root_container
 
         free_scans = Entities::FreeScanEntity.represent(free_scan_root_container)
-        if params[:cnt_only]
+        if params[:count_only]
           { inbox: { inbox_count: free_scans.inbox_count } }
         else
           free_scans

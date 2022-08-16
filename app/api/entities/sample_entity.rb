@@ -51,10 +51,10 @@ module Entities
     )
 
     expose :code_log, using: Entities::CodeLogEntity
-    expose :has_task
+    expose :has_scan_task
 
-    def has_task
-      object.task?
+    def has_scan_task
+      object.scan_task?
     end
 
     expose :analyses, using: 'Entities::ContainerEntity', unless: ->(instance, options) { displayed_in_list? }
