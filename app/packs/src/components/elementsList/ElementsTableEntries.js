@@ -15,7 +15,7 @@ import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import XTdCont from 'src/components/extra/ElementsTableEntriesXTdCont';
-import { elementShowOrNew } from 'src/components/routesUtils';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import UserStore from 'src/stores/alt/stores/UserStore';
 

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Glyphicon } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import { wellplateShowOrNew } from 'src/components/routesUtils';
+import { wellplateShowOrNew } from 'src/utilities/routesUtils';
 import ElementCollectionLabels from 'src/components/elementsList/ElementCollectionLabels';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';

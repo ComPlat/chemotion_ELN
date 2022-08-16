@@ -23,7 +23,7 @@ import XTabs from 'src/components/extra/ReactionDetailsXTabs';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { setReactionByType } from 'src/components/elements/reactions/ReactionDetailsShare';
-import { sampleShowOrNew } from 'src/components/routesUtils';
+import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';

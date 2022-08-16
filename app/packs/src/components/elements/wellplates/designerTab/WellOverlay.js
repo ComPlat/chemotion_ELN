@@ -4,7 +4,7 @@ import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { CirclePicker } from 'react-color';
-import { wellplateShowSample } from 'src/components/routesUtils';
+import { wellplateShowSample } from 'src/utilities/routesUtils';
 
 const sampleName = (sample) => { /* eslint-disable camelcase */
   if (sample) {
@@ -30,7 +30,7 @@ const handleSampleClick = (sample) => {
 }
 
 const renderWellContent = (well, removeSampleFromWell) => {
-  const {sample} = well;
+  const { sample } = well;
   let svg, moleculeName, removeButton = '';
 
   const svgContainerStyle = {
@@ -43,7 +43,7 @@ const renderWellContent = (well, removeSampleFromWell) => {
     lineHeight: 2
   };
   if (sample) {
-    svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath}/>;
+    svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
     moleculeName = sample.molecule.iupac_name;
     removeButton = (
       <div className="pull-right">
@@ -59,8 +59,8 @@ const renderWellContent = (well, removeSampleFromWell) => {
         {svg}
       </div>
       <div className="wellplate-overlay">
-        {sampleName(sample)}<br/>
-        {moleculeName}<br/>
+        {sampleName(sample)}<br />
+        {moleculeName}<br />
       </div>
       <div>
         {removeButton}
@@ -96,7 +96,7 @@ const content = (
     disabled: (wellLabels.some(item => item !== 'Molecular structure'))
   }];
 
-  return(
+  return (
     <div style={{ width: 220, height: 650 }}>
       {renderWellContent(well, removeSampleFromWell)}
       <div>
@@ -163,10 +163,10 @@ const content = (
 };
 
 const title = (handleClose) => {
-  return(
+  return (
     <div>
       Well Details
-      <span className='pull-right' style={{marginRight: -8, marginTop: -3}}>
+      <span className='pull-right' style={{ marginRight: -8, marginTop: -3 }}>
         <Button bsSize='xsmall' onClick={() => handleClose()}>
           <i className="fa fa-times"></i>
         </Button>

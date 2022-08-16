@@ -1,5 +1,5 @@
 import rXr from 'src/components/extra/routesXroutes';
-import * as routesUtils from 'src/components/routesUtils';
+import * as routesUtils from 'src/utilities/routesUtils';
 import klasses from '../../../../../config/klasses.json';
 
 

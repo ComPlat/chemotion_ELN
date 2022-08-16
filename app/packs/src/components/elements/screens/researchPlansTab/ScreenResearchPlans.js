@@ -9,7 +9,7 @@ import ResearchPlan from 'src/models/ResearchPlan';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
-import { researchPlanShowOrNew } from 'src/components/routesUtils';
+import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
 
 const target = {
   drop(props, monitor) {

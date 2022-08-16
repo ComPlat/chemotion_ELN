@@ -8,7 +8,7 @@ import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfos from 'src/components/collectionManagement/UserInfos';
 import GatePushBtn from 'src/components/common/GatePushBtn';
-import { collectionShow, scollectionShow } from 'src/components/routesUtils';
+import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {

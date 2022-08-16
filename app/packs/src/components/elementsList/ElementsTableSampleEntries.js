@@ -20,7 +20,7 @@ import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import SampleName from 'src/components/common/SampleName';
 import XMolHeadCont from 'src/components/extra/ElementsTableSampleEntriesXMolHeadCont';
-import { sampleShowOrNew } from 'src/components/routesUtils';
+import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 

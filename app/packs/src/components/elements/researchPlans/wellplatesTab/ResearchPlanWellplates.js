@@ -4,7 +4,7 @@ import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import { wellplateShowOrNew } from 'src/components/routesUtils';
+import { wellplateShowOrNew } from 'src/utilities/routesUtils';
 import EmbeddedWellplate from 'src/components/elements/researchPlans/wellplatesTab/EmbeddedWellplate';
 
 const target = {
