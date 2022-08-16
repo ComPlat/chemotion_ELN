@@ -13,7 +13,7 @@ import GenericDSDetails from 'src/components/generic/GenericDSDetails';
 import { absOlsTermId } from 'src/apps/admin/generic/Utils';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
-import ChildOverlay from 'src/components/managing_actions/ChildOverlay';
+import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 

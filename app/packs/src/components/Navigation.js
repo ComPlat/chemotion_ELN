@@ -2,7 +2,7 @@ import React from 'react';
 import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import UserAuth from 'src/components/UserAuth';
 import Search from 'src/components/search/Search';
-import ManagingActions from 'src/components/managing_actions/ManagingActions';
+import ManagingActions from 'src/components/managingActions/ManagingActions';
 import ContextActions from 'src/components/contextActions/ContextActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore'

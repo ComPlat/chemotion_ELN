@@ -1,7 +1,7 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
-import ManagingModalSharing from 'src/components/managing_actions/ManagingModalSharing';
+import { Button, ButtonGroup, FormControl, Modal } from 'react-bootstrap';
+import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
@@ -10,7 +10,7 @@ export default class MySharedCollections extends React.Component {
     super(props);
 
     this.state = {
-      active: {id: null},
+      active: { id: null },
       deleted_ids: [],
 
       tree: {
@@ -52,9 +52,9 @@ export default class MySharedCollections extends React.Component {
   handleChange(tree) {
     let oldTree = this.state.tree
     let children = oldTree.children
-    children.map((child,i) => {
-      if ('label' in tree && typeof(tree.label) == 'string' && tree.label == child.label){
-        children[i]=tree
+    children.map((child, i) => {
+      if ('label' in tree && typeof (tree.label) == 'string' && tree.label == child.label) {
+        children[i] = tree
         return
       }
     });
@@ -74,7 +74,7 @@ export default class MySharedCollections extends React.Component {
   }
 
   label(node) {
-    if(node.label == "My Shared Collections") {
+    if (node.label == "My Shared Collections") {
       return (
         <div className="root-label">
           My Shared Collections
@@ -92,13 +92,13 @@ export default class MySharedCollections extends React.Component {
       return (
         <FormControl className="collection-label" type="text"
           value={node.label || ''}
-          onChange={(e)=>{this.handleLabelChange(e,node)}}
+          onChange={(e) => { this.handleLabelChange(e, node) }}
         />
       )
     }
   }
 
-  handleLabelChange(e,node) {
+  handleLabelChange(e, node) {
     node.label = e.target.value;
     this.setState({
       tree: this.state.tree
@@ -121,7 +121,7 @@ export default class MySharedCollections extends React.Component {
   }
 
   actions(node) {
-    if(node.label == "My Shared Collections") {
+    if (node.label == "My Shared Collections") {
       return (
         <div className="root-actions">
           <Button bsSize="xsmall" bsStyle="warning"
@@ -134,7 +134,7 @@ export default class MySharedCollections extends React.Component {
       return (
         <ButtonGroup className="actions">
           <Button bsSize="xsmall" bsStyle="primary"
-            onClick={()=>this.editShare(node)}>
+            onClick={() => this.editShare(node)}>
             <i className="fa fa-share-alt"></i>
           </Button>
           <Button bsSize="xsmall" bsStyle="danger" onClick={this.deleteCollection.bind(this, node)}>
@@ -146,11 +146,11 @@ export default class MySharedCollections extends React.Component {
   }
 
   editShare(node) {
-    let {modalProps,active} = this.state
-    modalProps.title = "Update Share Settings for '"+node.label+"'"
+    let { modalProps, active } = this.state
+    modalProps.title = "Update Share Settings for '" + node.label + "'"
     modalProps.show = true
     active = node
-    this.setState({modalProps,active})
+    this.setState({ modalProps, active })
   }
   deleteCollection(node) {
     let children = node.children || [];
@@ -159,7 +159,7 @@ export default class MySharedCollections extends React.Component {
     this.removeNodeById(parent, node.id)
     this.appendChildrenToParent(parent, children)
 
-    if(!node.isNew) {
+    if (!node.isNew) {
       let deleted_ids = this.state.deleted_ids.concat([node.id])
 
       this.setState({
@@ -169,7 +169,7 @@ export default class MySharedCollections extends React.Component {
   }
 
   appendChildrenToParent(parent, children) {
-    if(children.length > 0) {
+    if (children.length > 0) {
       children.forEach((child) => {
         parent.children.push(child);
       });
@@ -179,19 +179,19 @@ export default class MySharedCollections extends React.Component {
   }
 
   findParentById(root, id) {
-    if(!root.children) {
+    if (!root.children) {
       root.children = [];
       return null;
     }
 
     let children = root.children;
 
-    for(let i = 0; i < children.length; i++) {
-      if(children[i].id == id) {
+    for (let i = 0; i < children.length; i++) {
+      if (children[i].id == id) {
         return root;
       } else {
         let parent = this.findParentById(children[i], id);
-        if(parent) {
+        if (parent) {
           return parent
         }
       }
@@ -207,7 +207,7 @@ export default class MySharedCollections extends React.Component {
   onClickNode(node) {
     if (node.is_locked) {
       this.setState({
-        active: {id: null}
+        active: { id: null }
       });
     } else {
       this.setState({
@@ -228,7 +228,7 @@ export default class MySharedCollections extends React.Component {
   }
 
   renderNode(node) {
-    if(!Object.keys(node).length == 0) {
+    if (!Object.keys(node).length == 0) {
       if (node.is_locked) {
         return (
           <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
@@ -253,8 +253,8 @@ export default class MySharedCollections extends React.Component {
 
   render() {
     let actNode = this.state.active
-    let trees = ()=> this.state.tree.children.map((e,i)=> {
-      return(
+    let trees = () => this.state.tree.children.map((e, i) => {
+      return (
         <Tree
           key={i}
           paddingLeft={20}                         // left padding for children nodes in pixels
@@ -289,7 +289,7 @@ export default class MySharedCollections extends React.Component {
               wellplateDetailLevel={actNode.wellplate_detail_level} screenDetailLevel={actNode.screen_detail_level}
               selectUsers={false}
               collAction="Update" />
-            </Modal.Body>
+          </Modal.Body>
         </Modal>
       </div>
     )
