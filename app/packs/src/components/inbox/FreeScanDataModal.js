@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Row, Col } from 'react-bootstrap';
-import Container from '../models/Container';
+import Container from 'src/models/Container';
 import ReactJson from 'react-json-view';
-import Utils from '../utils/Functions';
+import Utils from 'src/utilities/Functions';
 
 const handleAttachmentDownload = attachment => Utils.downloadFile({
   contents: `/api/v1/attachments/${attachment && attachment.id}`, name: attachment && attachment.filename

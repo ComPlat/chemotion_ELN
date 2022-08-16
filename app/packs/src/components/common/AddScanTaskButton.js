@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { OverlayTrigger, Tooltip, Button, Glyphicon, ControlLabel, InputGroup } from 'react-bootstrap';
-import ScanTaskFetcher from '../fetchers/ScanTaskFetcher'
-import NotificationActions from '../actions/NotificationActions';
+import ScanTaskFetcher from 'src/fetchers/ScanTaskFetcher'
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class AddScanTaskButton extends Component {
   constructor(props) {

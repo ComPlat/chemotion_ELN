@@ -1,8 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import FreeScanDataContainer from './FreeScanDataContainer';
-
-import Container from '../models/Container';
+import FreeScanDataContainer from 'src/components/inbox/FreeScanDataContainer';
+import Container from 'src/models/Container';
 
 
 

@@ -1,6 +1,6 @@
-import alt from '../alt';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
-import ContainerFetcher from '../fetchers/ContainerFetcher';
+import alt from 'alt';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 
 class FreeScanActions {
   fetchFreeScan() {

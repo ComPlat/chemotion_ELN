@@ -1,9 +1,6 @@
 import _ from 'lodash';
-import alt from '../alt';
-import FreeScanActions from '../actions/FreeScanActions';
-import ElementActions from '../actions/ElementActions';
-import DetailActions from '../actions/DetailActions';
-import ElementStore from './ElementStore';
+import alt from 'alt';
+import FreeScanActions from 'src/stores/alt/actions/FreeScanActions';
 
 class FreeScanStore {
   constructor() {

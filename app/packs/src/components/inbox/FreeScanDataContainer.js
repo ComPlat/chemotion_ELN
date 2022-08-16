@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import FreeScanActions from '../actions/FreeScanActions';
-import Utils from '../utils/Functions';
-import FreeScanDataModal from './FreeScanDataModal';
+import FreeScanActions from 'src/stores/alt/actions/FreeScanActions';
+import Utils from 'src/utilities/Functions';
+import FreeScanDataModal from 'src/components/inbox/FreeScanDataModal';
 
 const handleAttachmentDownload = attachment => Utils.downloadFile({
   contents: `/api/v1/attachments/${attachment && attachment.id}`, name: attachment && attachment.filename
