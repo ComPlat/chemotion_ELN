@@ -10,9 +10,9 @@ import {
 } from 'react-bootstrap';
 
 import ReactQuill from 'src/components/reactQuill/ReactQuill';
-import TextTemplateIcon from 'src/apps/admin/text_templates/TextTemplateIcon';
-import ActionHeaderBtn from 'src/apps/admin/text_templates/ActionHeaderBtn';
-import ActionRowBtn from 'src/apps/admin/text_templates/ActionRowBtn';
+import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
+import ActionHeaderBtn from 'src/apps/admin/textTemplates/ActionHeaderBtn';
+import ActionRowBtn from 'src/apps/admin/textTemplates/ActionRowBtn';
 
 export default class TextTemplate extends React.Component {
   constructor(props) {

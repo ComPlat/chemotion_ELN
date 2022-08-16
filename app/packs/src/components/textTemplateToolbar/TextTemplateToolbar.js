@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import ToolbarIcon from 'src/components/reactQuill/ToolbarIcon';
-import TextTemplateIcon from 'src/apps/admin/text_templates/TextTemplateIcon';
+import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
 import ToolbarDropdown from 'src/components/reactQuill/ToolbarDropdown';
 
 const getNamesFromTemplate = (template) => {
