@@ -6,11 +6,11 @@ import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 import { Row, Col, Button } from 'react-bootstrap';
 
-import CustomHeader from 'src/components/elements/research_plans/research_plan_tab/CustomHeader';
+import CustomHeader from 'src/components/elements/researchPlans/researchPlanTab/CustomHeader';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import ResearchPlanDetailsFieldTableColumnNameModal from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldTableColumnNameModal';
-import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldTableMeasurementExportModal';
-import ResearchPlanDetailsFieldTableSchemasModal from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsFieldTableSchemasModal';
+import ResearchPlanDetailsFieldTableColumnNameModal from 'src/components/elements/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableColumnNameModal';
+import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/components/elements/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableMeasurementExportModal';
+import ResearchPlanDetailsFieldTableSchemasModal from 'src/components/elements/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 

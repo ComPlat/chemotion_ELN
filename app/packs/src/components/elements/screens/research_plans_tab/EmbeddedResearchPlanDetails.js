@@ -7,8 +7,8 @@ import { researchPlanShowOrNew } from 'src/components/routesUtils';
 import ElementCollectionLabels from 'src/components/elementsList/ElementCollectionLabels';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlan from 'src/models/ResearchPlan';
-import ResearchPlanDetailsBody from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsBody';
-import ResearchPlanDetailsName from 'src/components/elements/research_plans/research_plan_tab/ResearchPlanDetailsName';
+import ResearchPlanDetailsBody from 'src/components/elements/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
+import ResearchPlanDetailsName from 'src/components/elements/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 
 export default class EmbeddedResearchPlanDetails extends Component {
   constructor(props) {

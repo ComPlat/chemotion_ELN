@@ -10,7 +10,7 @@ import PredictionContainer from 'src/components/elements/predictions/PredictionC
 import React, { Component } from 'react';
 import ReactionDetails from 'src/components/elements/reactions/ReactionDetails';
 import ReportContainer from 'src/components/elements/reports/ReportContainer';
-import ResearchPlanDetails from 'src/components/elements/research_plans/ResearchPlanDetails';
+import ResearchPlanDetails from 'src/components/elements/researchPlans/ResearchPlanDetails';
 import SampleDetails from 'src/components/elements/samples/SampleDetails';
 import ScreenDetails from 'src/components/elements/screens/ScreenDetails';
 import StickyDiv from 'react-stickydiv';
