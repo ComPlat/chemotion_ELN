@@ -34,6 +34,8 @@ Capybara.register_driver :selenium do |app|
   )
 end
 
+Capybara.default_max_wait_time = 5
+
 hostname = 'http://pubchem.ncbi.nlm.nih.gov'
 inchi_path = '/rest/pug/compound/inchikey/'
 
