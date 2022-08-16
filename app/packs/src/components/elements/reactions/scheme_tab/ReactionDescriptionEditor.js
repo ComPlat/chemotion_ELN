@@ -12,8 +12,8 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import DynamicToolbarEditor from 'src/components/react_quill/DynamicToolbarEditor';
 import BaseToolbar from 'src/components/react_quill/BaseToolbar';
 
-import TextTemplateToolbar from 'src/components/text_template_toolbar/TextTemplateToolbar';
-import ToolbarTemplateCreator from 'src/components/text_template_toolbar/ToolbarTemplateCreator';
+import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
+import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
 
 const toolbarOptions = [
   'bold', 'italic', 'underline',

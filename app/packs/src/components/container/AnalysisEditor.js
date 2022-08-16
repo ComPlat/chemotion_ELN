@@ -14,8 +14,8 @@ import DynamicToolbarEditor from 'src/components/react_quill/DynamicToolbarEdito
 import ToolbarIcon from 'src/components/react_quill/ToolbarIcon';
 import BaseToolbar from 'src/components/react_quill/BaseToolbar';
 
-import TextTemplateToolbar from 'src/components/text_template_toolbar/TextTemplateToolbar';
-import ToolbarTemplateCreator from 'src/components/text_template_toolbar/ToolbarTemplateCreator';
+import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
+import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
 
 const toolbarOptions = [
   'bold', 'italic', 'underline',
