@@ -11,9 +11,9 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import ElementAllCheckbox from 'src/components/elements_list/ElementAllCheckbox';
-import ElementsTableEntries from 'src/components/elements_list/ElementsTableEntries';
-import ElementsTableSampleEntries from 'src/components/elements_list/ElementsTableSampleEntries';
+import ElementAllCheckbox from 'src/components/elementsList/ElementAllCheckbox';
+import ElementsTableEntries from 'src/components/elementsList/ElementsTableEntries';
+import ElementsTableSampleEntries from 'src/components/elementsList/ElementsTableSampleEntries';
 import Switch from 'src/components/Switch';
 
 export default class ElementsTable extends React.Component {

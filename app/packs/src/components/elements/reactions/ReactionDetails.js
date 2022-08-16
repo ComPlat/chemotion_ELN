@@ -6,8 +6,8 @@ import {
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
-import ElementCollectionLabels from 'src/components/elements_list/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/components/elements_list/ElementAnalysesLabels';
+import ElementCollectionLabels from 'src/components/elementsList/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/components/elementsList/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
