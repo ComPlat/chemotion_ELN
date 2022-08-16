@@ -14,7 +14,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/components/elementsList/ElementAllCheckbox';
 import ElementsTableEntries from 'src/components/elementsList/ElementsTableEntries';
 import ElementsTableSampleEntries from 'src/components/elementsList/ElementsTableSampleEntries';
-import Switch from 'src/components/Switch';
+import Switch from 'src/components/elementsList/Switch';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
