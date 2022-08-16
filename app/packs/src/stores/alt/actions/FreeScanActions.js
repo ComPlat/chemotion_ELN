@@ -1,4 +1,4 @@
-import alt from 'alt';
+import alt from 'src/stores/alt/alt';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 

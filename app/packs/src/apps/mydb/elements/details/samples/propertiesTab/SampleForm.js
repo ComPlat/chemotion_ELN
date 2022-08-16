@@ -7,11 +7,11 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo';
-import TextRangeWithAddon from 'src/components/TextRangeWithAddon';
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
+import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
-import SampleDetailsSolvents from 'src/components/SampleDetailsSolvents';
-import PrivateNoteElement from 'src/components/PrivateNoteElement';
+import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
+import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AddScanTaskButton from 'src/components/common/AddScanTaskButton';
 

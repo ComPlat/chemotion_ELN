@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import alt from 'alt';
+import alt from 'src/stores/alt/alt';
 import FreeScanActions from 'src/stores/alt/actions/FreeScanActions';
 
 class FreeScanStore {
