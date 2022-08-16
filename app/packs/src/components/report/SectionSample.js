@@ -45,7 +45,7 @@ const AnalysesContent = ({ show, showRecDes, analyses, reactionDescription }) =>
     const dataMerged = analyses.reduce((sum, a) => {
       let defaultContent = "{\"ops\":[{\"insert\":\"\"}]}"
 
-      let contentJSON = JSON.parse(a.extended_metadata.content || defaultContent)
+      let contentJSON = a.extended_metadata.content || JSON.parse(defaultContent)
       return [...sum, ...contentJSON.ops];
     }, init);
     const data = dataMerged.map(d => {

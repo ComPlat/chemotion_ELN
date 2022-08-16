@@ -136,17 +136,19 @@ module Chemotion
           reactions = @collection.reactions.by_ui_state(params[:reaction])
 
           if params[:loadType] != 'lists'
-            samples = samples.includes(:analyses, :container, :elemental_compositions, :molecule, :residues, :segments, :tag)
+            samples = samples.includes(:container, :elemental_compositions, :molecule, :residues, :segments, :tag)
             reactions = reactions.includes(
               :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
             )
             result['samples'] = samples.map do |sample|
               serialized_element = Entities::SampleEntity.represent(sample).serializable_hash
               serialized_element[:literatures] = citation_for_elements(sample.id, 'Sample')
+              serialized_element
             end
             result['reactions'] = reactions.map do |reaction|
               serialized_element = Entities::ReactionEntity.represent(reaction).serializable_hash
               serialized_element[:literatures] = citation_for_elements(reaction.id, 'Reaction')
+              serialized_element
             end
           else
             sample_tags = selectedTags['sampleIds']
