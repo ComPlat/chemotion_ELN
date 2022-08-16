@@ -8,7 +8,7 @@ import Immutable from 'immutable';
 import _ from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import TabLayoutContainer from 'src/components/TabLayoutContainer';
+import TabLayoutContainer from 'src/components/tabLayout/TabLayoutContainer';
 
 const getNodeText = (node) => {
   if (['string', 'number'].includes(typeof node)) return node;

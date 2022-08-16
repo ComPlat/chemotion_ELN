@@ -2,7 +2,7 @@ import React from 'react';
 import { Popover, Button, FormGroup, Checkbox, OverlayTrigger } from 'react-bootstrap';
 import _ from 'lodash';
 
-import TabLayoutContainer from 'src/components/TabLayoutContainer';
+import TabLayoutContainer from 'src/components/tabLayout/TabLayoutContainer';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
