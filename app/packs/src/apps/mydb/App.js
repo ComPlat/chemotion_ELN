@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { Col, Grid, Row } from 'react-bootstrap';
 
-import CollectionManagement from 'src/components/CollectionManagement';
-import CollectionTree from 'src/components/CollectionTree';
+import CollectionManagement from 'src/components/collectionManagement/CollectionManagement';
+import CollectionTree from 'src/components/collectionManagement/CollectionTree';
 import Elements from 'src/components/Elements';
 import InboxModal from 'src/components/inbox/InboxModal';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
