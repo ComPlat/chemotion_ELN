@@ -7,7 +7,7 @@ import Elements from 'src/components/elements/Elements';
 import InboxModal from 'src/components/inbox/InboxModal';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import LoadingModal from 'src/components/common/LoadingModal';
-import Navigation from 'src/components/Navigation';
+import Navigation from 'src/components/navigation/Navigation';
 import Notifications from 'src/components/Notifications';
 import ProgressModal from 'src/components/common/ProgressModal';
 import UIActions from 'src/stores/alt/actions/UIActions';

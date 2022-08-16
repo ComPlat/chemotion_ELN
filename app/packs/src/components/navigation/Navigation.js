@@ -1,6 +1,6 @@
 import React from 'react';
 import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
-import UserAuth from 'src/components/UserAuth';
+import UserAuth from 'src/components/navigation/UserAuth';
 import Search from 'src/components/search/Search';
 import ManagingActions from 'src/components/managingActions/ManagingActions';
 import ContextActions from 'src/components/contextActions/ContextActions';
@@ -9,10 +9,10 @@ import UIStore from 'src/stores/alt/stores/UIStore'
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import NavNewSession from 'src/apps/home/NavNewSession'
-import NavHead from 'src/apps/home/NavHead'
+import NavNewSession from 'src/components/navigation/NavNewSession'
+import NavHead from 'src/components/navigation/NavHead'
 import DocumentHelper from 'src/utilities/DocumentHelper';
-import NavigationModal from 'src/components/NavigationModal';
+import NavigationModal from 'src/components/navigation/NavigationModal';
 import SearchFilter from 'src/components/search/SearchFilter.js'
 
 const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
