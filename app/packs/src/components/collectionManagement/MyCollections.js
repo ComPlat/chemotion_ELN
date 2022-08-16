@@ -5,7 +5,7 @@ import ManagingModalSharing from 'src/components/managingActions/ManagingModalSh
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfoIcon from 'src/components/UserInfoIcon';
-import PermissionIcons from 'src/components/PermissionIcons'
+import PermissionIcons from 'src/components/collectionManagement/PermissionIcons'
 
 export default class MyCollections extends React.Component {
   constructor(props) {
