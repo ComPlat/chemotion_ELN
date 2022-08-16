@@ -3,7 +3,7 @@ import { Grid, Row } from 'react-bootstrap';
 
 import Navigation from 'src/components/navigation/Navigation'
 import XHome from 'src/components/extra/HomeXHome'
-import WelcomeMessage from 'src/components/WelcomeMessage';
+import WelcomeMessage from 'src/apps/home/WelcomeMessage';
 
 const extraHomes = () => {
   const homes = [];
