@@ -1,6 +1,6 @@
 import rXr from 'src/components/extra/routesXroutes';
 import * as routesUtils from 'src/components/routesUtils';
-import klasses from '../../../../config/klasses.json';
+import klasses from '../../../../../config/klasses.json';
 
 
 const allRoutes = (r) => {
