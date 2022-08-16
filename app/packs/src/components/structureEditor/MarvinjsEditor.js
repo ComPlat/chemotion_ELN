@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
 import StructureEditor from 'src/models/StructureEditor';
-import loadScripts from 'src/components/structure_editor/loadScripts';
+import loadScripts from 'src/components/structureEditor/loadScripts';
 
 const LoadingModal = (props) => {
   const { loading } = props;

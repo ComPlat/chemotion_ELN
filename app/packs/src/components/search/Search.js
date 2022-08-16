@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import AutoCompleteInput from 'src/components/search/AutoCompleteInput';
-import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
+import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 import SuggestionsFetcher from 'src/fetchers/SuggestionsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';

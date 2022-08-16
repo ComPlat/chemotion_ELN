@@ -38,7 +38,7 @@ import SampleDetailsContainers from 'src/components/elements/samples/analysesTab
 import XLabels from 'src/components/extra/SampleDetailsXLabels';
 import XTabs from 'src/components/extra/SampleDetailsXTabs';
 
-import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
+import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';

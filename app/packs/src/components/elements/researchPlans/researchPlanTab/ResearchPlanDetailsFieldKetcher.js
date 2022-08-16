@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Glyphicon } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
-import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
+import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
 export default class ResearchPlanDetailsFieldKetcher extends Component {
   constructor(props) {

@@ -5,7 +5,7 @@ import { Col, Panel, Button, Row, FormControl, Table, Popover, ButtonGroup, Moda
 import { findIndex } from 'lodash';
 
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import StructureEditorModal from 'src/components/structure_editor/StructureEditorModal';
+import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
 export default class MoleculeModeratorComponent extends Component {
   constructor(props) {
