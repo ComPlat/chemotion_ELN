@@ -1,4 +1,4 @@
-import { CitationType } from 'src/components/CitationType';
+import { CitationType } from 'src/components/literature/CitationType';
 import Element from 'src/models/Element';
 
 export default class Literature extends Element {

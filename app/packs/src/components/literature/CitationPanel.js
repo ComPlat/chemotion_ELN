@@ -1,8 +1,8 @@
 import React from 'react';
 import { Panel, ButtonGroup, Button, OverlayTrigger, Tooltip, Popover } from 'react-bootstrap';
 import { uniq } from 'lodash';
-import { Citation, literatureContent } from 'src/components/LiteratureCommon';
-import { CitationType, CitationTypeMap, CitationTypeEOL } from 'src/components/CitationType';
+import { Citation, literatureContent } from 'src/components/literature/LiteratureCommon';
+import { CitationType, CitationTypeMap, CitationTypeEOL } from 'src/components/literature/CitationType';
 
 const changeTypeBtn = (litype, updId, fn) => {
   const cands = CitationType.filter(e => e !== litype);
@@ -51,7 +51,7 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate) => {
               </Button>
             </OverlayTrigger>
             {changeTypeBtn(litype, id, fnUpdate)}
-            <Button bsStyle="danger"  onClick={() => fnDelete(citation)} ><i className="fa fa-trash-o" aria-hidden="true"/></Button>
+            <Button bsStyle="danger" onClick={() => fnDelete(citation)} ><i className="fa fa-trash-o" aria-hidden="true" /></Button>
           </ButtonGroup>
         </div>
       </div>
