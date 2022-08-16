@@ -133,7 +133,7 @@ module Chemotion
           result = { 'samples' => [], 'reactions' => [] }
           selectedTags = params['selectedTags']
           samples = @collection.samples.by_ui_state(params[:sample])
-          reactions = @collection.reactions.by_ui_State(params[:reaction])
+          reactions = @collection.reactions.by_ui_state(params[:reaction])
 
           if params[:loadType] != 'lists'
             samples = samples.includes(:analyses, :code_log, :container, :elemental_compositions, :molecule, :residues, :segments, :tag)
