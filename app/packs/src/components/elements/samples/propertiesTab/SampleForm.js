@@ -7,7 +7,7 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo';
+import NumeralInputWithUnitsCompo from 'src/components/elements/NumeralInputWithUnitsCompo';
 import TextRangeWithAddon from 'src/components/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/components/elements/samples/propertiesTab/SampleDetailsSolvents';

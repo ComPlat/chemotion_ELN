@@ -1,6 +1,6 @@
 import React from 'react';
-import {FormControl} from 'react-bootstrap';
-import NumeralInput from 'src/components/NumeralInput';
+import { FormControl } from 'react-bootstrap';
+import NumeralInput from 'src/components/elements/NumeralInput';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 var _ = require('lodash');
 
@@ -11,11 +11,11 @@ export default class ElementalCompositionCustom extends React.Component {
 
     let keys = Object.keys(el_composition.data);
 
-    keys.map(function(key, index) {
+    keys.map(function (key, index) {
       sum += parseFloat(el_composition.data[key] || 0.0);
     });
 
-    if(sum > 100.0) {
+    if (sum > 100.0) {
       NotificationActions.add({
         message: 'Percentage sum is more than 100%',
         level: 'error'
@@ -49,7 +49,7 @@ export default class ElementalCompositionCustom extends React.Component {
     let keys = _.uniq(concat_formula.match(mendeleev)).sort();
 
     // add new key to custom composition, so that we have new input
-    keys.forEach(function(key) {
+    keys.forEach(function (key) {
       newData[key] = (el_composition.data[key] || 0.0);
       elements.push(<NumeralInput
         className="padding-left"
@@ -58,8 +58,8 @@ export default class ElementalCompositionCustom extends React.Component {
         key={key + 'found'}
         value={newData[key]}
         defaultValue={newData[key]}
-        onChange={(v)=> klass.handleElementsListChanged(v, key, el_composition, handleElementalChanged)}
-        />
+        onChange={(v) => klass.handleElementsListChanged(v, key, el_composition, handleElementalChanged)}
+      />
       );
     });
 
@@ -74,24 +74,24 @@ export default class ElementalCompositionCustom extends React.Component {
   }
 
   relatedLoading(el_composition) {
-    if(this.hideLoading(el_composition))
+    if (this.hideLoading(el_composition))
       return false;
 
     return (
-      <td className="loading" style={{textAlign:"left"}} width="13%">
+      <td className="loading" style={{ textAlign: "left" }} width="13%">
         <FormControl type="text"
-           key={"mc-loading" + (el_composition.id || 0).toString()}
-           defaultValue={el_composition.loading || ''}
-           value={el_composition.loading && el_composition.loading.toFixed(2) || ''}
-           disabled
-           readOnly
+          key={"mc-loading" + (el_composition.id || 0).toString()}
+          defaultValue={el_composition.loading || ''}
+          value={el_composition.loading && el_composition.loading.toFixed(2) || ''}
+          disabled
+          readOnly
         />
       </td>
     )
   }
 
   compositonTableHeader(elemental_composition) {
-    return(
+    return (
       <thead>
         <tr>
           <th>
@@ -107,9 +107,9 @@ export default class ElementalCompositionCustom extends React.Component {
   }
 
   render() {
-    let { elemental_composition, concat_formula, parent} = this.props;
+    let { elemental_composition, concat_formula, parent } = this.props;
 
-    if(!elemental_composition) return false;
+    if (!elemental_composition) return false;
 
     return (
       <table className="elemental-composition-custom">

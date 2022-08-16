@@ -1,6 +1,6 @@
 import React from 'react';
 import { FormGroup, ControlLabel, FormControl, Radio, Row, Col } from 'react-bootstrap';
-import NumeralInputWithUnitsCompo from 'src/components/NumeralInputWithUnitsCompo'
+import NumeralInputWithUnitsCompo from 'src/components/elements/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/components/elements/samples/propertiesTab/ElementalCompositionGroup'
 import NotificationActions from 'src/stores/alt/actions/NotificationActions'
 import Select from 'react-select'
