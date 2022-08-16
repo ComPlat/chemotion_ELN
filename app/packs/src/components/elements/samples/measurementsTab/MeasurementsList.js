@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { researchPlanShowOrNew } from 'src/components/routesUtils';
-import ConfirmDeletionModal from 'src/components/ConfirmDeletionModal';
+import ConfirmDeletionModal from 'src/components/elements/samples/measurementsTab/ConfirmDeletionModal';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 class MeasurementsList extends Component {
