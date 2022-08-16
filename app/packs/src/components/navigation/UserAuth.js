@@ -12,7 +12,7 @@ import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import GroupElement from 'src/components/GroupElement';
+import GroupElement from 'src/components/navigation/GroupElement';
 
 export default class UserAuth extends Component {
   constructor(props) {
