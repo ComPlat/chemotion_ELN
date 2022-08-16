@@ -132,14 +132,8 @@ module Chemotion
         post do
           result = { 'samples' => [], 'reactions' => [] }
           selectedTags = params['selectedTags']
-
-          collection_samples = @collection.samples.by_ui_state(params[:sample])
-          collection_reactions = @collection.reactions.by_ui_State(params[:reaction])
-          # TODO: Check permissions. User might not have access to the samples/reactions which he/she supplied ids for
-          checked_samples = Sample.where(id: params[:sample][:checkedIds] || [])
-          checked_reactions = Reaction.where(id: params[:reaction][:checkedIds] || [])
-          samples = collection_samples.union(checked_samples).distinct
-          reactions = collection_reactions.union(checked_reactions).distinct
+          samples = @collection.samples.by_ui_state(params[:sample])
+          reactions = @collection.reactions.by_ui_State(params[:reaction])
 
           if params[:loadType] != 'lists'
             samples = samples.includes(:analyses, :code_log, :container, :elemental_compositions, :molecule, :residues, :segments, :tag)
@@ -165,7 +159,7 @@ module Chemotion
               end
             end
             result['reactions'] = reactions.includes_for_list_display.map do |reaction|
-              if reaction_tags && reaction_id.in?(reaction_tags)
+              if reaction_tags && reaction.id.in?(reaction_tags)
                 { id: reaction.id, in_browser_memory: true }
               else
                 Entities::ReactionEntity.represent(reaction, displayed_in_list: true)
