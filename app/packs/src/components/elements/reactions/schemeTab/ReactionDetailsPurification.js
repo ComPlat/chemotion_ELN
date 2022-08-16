@@ -4,7 +4,7 @@ import { Row, Col, FormGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import 'moment-precise-range-plugin';
 import { purificationOptions } from 'src/components/staticDropdownOptions/options';
-import MaterialGroupContainer from 'src/components/elements/reactions/scheme_tab/MaterialGroupContainer';
+import MaterialGroupContainer from 'src/components/elements/reactions/schemeTab/MaterialGroupContainer';
 import QuillEditor from 'src/components/QuillEditor';
 import QuillViewer from 'src/components/QuillViewer';
 import Sample from 'src/models/Sample';

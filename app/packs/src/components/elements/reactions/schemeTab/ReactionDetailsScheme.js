@@ -6,20 +6,20 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 import Delta from 'quill-delta';
-import MaterialGroupContainer from 'src/components/elements/reactions/scheme_tab/MaterialGroupContainer';
+import MaterialGroupContainer from 'src/components/elements/reactions/schemeTab/MaterialGroupContainer';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import ReactionDetailsMainProperties from 'src/components/elements/reactions/ReactionDetailsMainProperties';
-import ReactionDetailsPurification from 'src/components/elements/reactions/scheme_tab/ReactionDetailsPurification';
+import ReactionDetailsPurification from 'src/components/elements/reactions/schemeTab/ReactionDetailsPurification';
 
 import QuillViewer from 'src/components/QuillViewer';
-import ReactionDescriptionEditor from 'src/components/elements/reactions/scheme_tab/ReactionDescriptionEditor';
+import ReactionDescriptionEditor from 'src/components/elements/reactions/schemeTab/ReactionDescriptionEditor';
 
-import GeneralProcedureDnd from 'src/components/elements/reactions/scheme_tab/GeneralProcedureDnD';
+import GeneralProcedureDnd from 'src/components/elements/reactions/schemeTab/GeneralProcedureDnD';
 import { rolesOptions, conditionsOptions } from 'src/components/staticDropdownOptions/options';
 import OlsTreeSelect from 'src/components/OlsComponent';
-import ReactionDetailsDuration from 'src/components/elements/reactions/scheme_tab/ReactionDetailsDuration';
+import ReactionDetailsDuration from 'src/components/elements/reactions/schemeTab/ReactionDetailsDuration';
 import { permitOn } from 'src/components/common/uis';
 
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
