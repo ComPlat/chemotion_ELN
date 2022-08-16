@@ -6,7 +6,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import UserInfos from 'src/components/UserInfos';
+import UserInfos from 'src/components/collectionManagement/UserInfos';
 import GatePushBtn from 'src/components/common/GatePushBtn';
 import { collectionShow, scollectionShow } from 'src/components/routesUtils';
 
@@ -45,7 +45,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   onChange(state) {
-    if(state.currentCollection) {
+    if (state.currentCollection) {
       const visible = this.isVisible(this.state.root, state)
       const { root } = this.state;
 
@@ -53,9 +53,9 @@ export default class CollectionSubtree extends React.Component {
         state.currentCollection.id == root.id &&
         state.currentCollection.is_synchronized == root.is_synchronized
       ) || (
-        state.currentCollection.id == root.id &&
-        state.currentCollection.isRemote == root.isRemote
-      )
+          state.currentCollection.id == root.id &&
+          state.currentCollection.isRemote == root.isRemote
+        )
 
       if (selectedCol) {
         this.setState({
@@ -72,7 +72,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   isVisible(node, uiState) {
-    if(node.descendant_ids) {
+    if (node.descendant_ids) {
       let currentCollectionId = parseInt(uiState.currentCollection.id)
       if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true
     }
@@ -184,17 +184,17 @@ export default class CollectionSubtree extends React.Component {
 
   toggleExpansion(e) {
     e.stopPropagation()
-    let {visible, root} = this.state
+    let { visible, root } = this.state
     visible = !visible
-    this.setState({visible: visible})
+    this.setState({ visible: visible })
 
-    let {visibleRootsIds} = CollectionStore.getState()
+    let { visibleRootsIds } = CollectionStore.getState()
     if (visible) {
       visibleRootsIds.push(root.id)
     } else {
       let descendantIds = root.descendant_ids
-                          ? root.descendant_ids
-                          : root.children.map(function(s) {return s.id})
+        ? root.descendant_ids
+        : root.children.map(function (s) { return s.id })
       descendantIds.push(root.id)
       visibleRootsIds = visibleRootsIds.filter(x => descendantIds.indexOf(x) == -1)
     }
@@ -204,13 +204,13 @@ export default class CollectionSubtree extends React.Component {
     CollectionActions.updateCollectrionTree(newIds)
   }
 
-  synchronizedIcon(){
+  synchronizedIcon() {
     let sharedUsers = this.state.root.sync_collections_users
-    return(
+    return (
       sharedUsers && sharedUsers.length > 0
-        ? <OverlayTrigger placement="bottom" overlay={UserInfos({users:sharedUsers})}>
-            <i className="fa fa-share-alt" style={{float: "right"}}></i>
-          </OverlayTrigger>
+        ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers })}>
+          <i className="fa fa-share-alt" style={{ float: "right" }}></i>
+        </OverlayTrigger>
         : null
     )
   }
@@ -228,8 +228,8 @@ export default class CollectionSubtree extends React.Component {
         marginBottom: 0
       };
     }
-    const gated = root && root.is_locked && label=='chemotion-repository.net' ?
-      <GatePushBtn collection_id={root.id}/> : null;
+    const gated = root && root.is_locked && label == 'chemotion-repository.net' ?
+      <GatePushBtn collection_id={root.id} /> : null;
     return (
       <div className="tree-view" key={root.id}>
         {this.takeOwnershipButton()}

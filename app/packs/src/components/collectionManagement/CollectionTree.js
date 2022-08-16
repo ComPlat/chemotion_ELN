@@ -11,7 +11,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import Xdiv from 'src/components/extra/CollectionTreeXdiv';
-import UserInfos from 'src/components/UserInfos';
+import UserInfos from 'src/components/collectionManagement/UserInfos';
 
 import DeviceBox from 'src/components/inbox/DeviceBox';
 import UnsortedBox from 'src/components/inbox/UnsortedBox';
@@ -86,7 +86,7 @@ export default class CollectionTree extends React.Component {
   }
 
   removeOrphanRoots(roots) {
-    let newRoots =[]
+    let newRoots = []
     roots.forEach((root) => {
       if (root.children.length > 0) newRoots.push(root)
     })
@@ -96,53 +96,59 @@ export default class CollectionTree extends React.Component {
 
   unsharedSubtrees() {
     let roots = this.state.unsharedRoots;
-    roots = roots.filter(function(item) { return !item.isNew})
+    roots = roots.filter(function (item) { return !item.isNew })
 
     return this.subtrees(roots, null, false);
   }
 
   sharedSubtrees() {
-    let {sharedRoots, sharedToCollectionVisible} = this.state
+    let { sharedRoots, sharedToCollectionVisible } = this.state
     sharedRoots = this.removeOrphanRoots(sharedRoots)
 
     let labelledRoots = sharedRoots.map(e => {
-      return update(e, {label: {$set:
-        <span>{this.labelRoot('shared_to', e)}</span>
-      }})
+      return update(e, {
+        label: {
+          $set:
+            <span>{this.labelRoot('shared_to', e)}</span>
+        }
+      })
     })
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div className="title" style={{backgroundColor:'white'}}
-             onClick={() => this.setState({sharedToCollectionVisible: !sharedToCollectionVisible})}>
+        <div className="title" style={{ backgroundColor: 'white' }}
+          onClick={() => this.setState({ sharedToCollectionVisible: !sharedToCollectionVisible })}>
           <i className="fa fa-share-alt share-icon" />&nbsp;&nbsp;
           My shared collections
         </div>
       </div>
     )
     return this.subtrees(labelledRoots, subTreeLabels,
-                         false, sharedToCollectionVisible)
+      false, sharedToCollectionVisible)
   }
 
   remoteSubtrees() {
-    let {remoteRoots, sharedWithCollectionVisible} = this.state
+    let { remoteRoots, sharedWithCollectionVisible } = this.state
     remoteRoots = this.removeOrphanRoots(remoteRoots)
 
     let labelledRoots = remoteRoots.map(e => {
-      return update(e, {label: {$set:
-        <span>
-          {this.labelRoot('shared_by',e)}
-          {' '}
-          {this.labelRoot('shared_to',e)}
-        </span>
-      }})
+      return update(e, {
+        label: {
+          $set:
+            <span>
+              {this.labelRoot('shared_by', e)}
+              {' '}
+              {this.labelRoot('shared_to', e)}
+            </span>
+        }
+      })
     })
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div id="shared-home-link" className="title" style={{backgroundColor:'white'}}
-             onClick={() => this.setState({sharedWithCollectionVisible: !sharedWithCollectionVisible})}>
-          <i className="fa fa-share-alt share-icon"/>
+        <div id="shared-home-link" className="title" style={{ backgroundColor: 'white' }}
+          onClick={() => this.setState({ sharedWithCollectionVisible: !sharedWithCollectionVisible })}>
+          <i className="fa fa-share-alt share-icon" />
           &nbsp;&nbsp;
           Shared with me &nbsp;
         </div>
@@ -150,7 +156,7 @@ export default class CollectionTree extends React.Component {
     )
 
     return this.subtrees(labelledRoots, subTreeLabels,
-                         false, sharedWithCollectionVisible)
+      false, sharedWithCollectionVisible)
   }
 
 
@@ -181,31 +187,34 @@ export default class CollectionTree extends React.Component {
   }
 
   remoteSyncInSubtrees() {
-    let {syncInRoots, syncCollectionVisible} = this.state
+    let { syncInRoots, syncCollectionVisible } = this.state
     syncInRoots = this.removeOrphanRoots(syncInRoots)
 
     let labelledRoots = syncInRoots.map(e => {
-      return update(e, {label: {$set:
-        <span>
-          {this.labelRoot('shared_by', e)}
-          {' '}
-          {this.labelRoot('shared_to', e)}
-        </span>
-      }})
+      return update(e, {
+        label: {
+          $set:
+            <span>
+              {this.labelRoot('shared_by', e)}
+              {' '}
+              {this.labelRoot('shared_to', e)}
+            </span>
+        }
+      })
     })
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div id="synchron-home-link" className="title" style={{backgroundColor:'white'}}
-             onClick={() => this.setState({syncCollectionVisible: !syncCollectionVisible})}>
-          <i className="fa fa-share-alt"/>&nbsp;&nbsp;
+        <div id="synchron-home-link" className="title" style={{ backgroundColor: 'white' }}
+          onClick={() => this.setState({ syncCollectionVisible: !syncCollectionVisible })}>
+          <i className="fa fa-share-alt" />&nbsp;&nbsp;
           Synchronized with me &nbsp;
         </div>
       </div>
     )
 
     return this.subtrees(labelledRoots, subTreeLabels,
-                         false, syncCollectionVisible)
+      false, syncCollectionVisible)
   }
 
 
@@ -213,8 +222,8 @@ export default class CollectionTree extends React.Component {
     let shared = rootCollection[sharedToOrBy]
     if (!shared) return <span />
 
-    return(
-      <OverlayTrigger placement="bottom" overlay={UserInfos({users:[shared]})}>
+    return (
+      <OverlayTrigger placement="bottom" overlay={UserInfos({ users: [shared] })}>
         <span>
           &nbsp; {sharedToOrBy == 'shared_to' ? 'with' : 'by'}
           &nbsp; {shared.initials}
@@ -229,14 +238,14 @@ export default class CollectionTree extends React.Component {
 
   subtrees(roots, label, isRemote, visible = true) {
     let subtrees = roots.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} isRemote={isRemote}/>
+      return <CollectionSubtree root={root} key={index} isRemote={isRemote} />
     })
 
     let subtreesVisible = visible ? "" : "none"
     return (
       <div>
         {label}
-        <div style={{display: subtreesVisible}}>
+        <div style={{ display: subtreesVisible }}>
           {subtrees}
         </div>
       </div>
@@ -247,7 +256,7 @@ export default class CollectionTree extends React.Component {
     return (
       <div className="take-ownership-btn">
         <Button id="col-mgnt-btn" bsSize="xsmall" bsStyle="danger"
-                onClick={() => this.handleCollectionManagementToggle()}>
+          onClick={() => this.handleCollectionManagementToggle()}>
           <i className="fa fa-cog"></i>
         </Button>
       </div>
@@ -256,11 +265,11 @@ export default class CollectionTree extends React.Component {
 
   handleCollectionManagementToggle() {
     UIActions.toggleCollectionManagement();
-    const {showCollectionManagement, currentCollection,isSync} = UIStore.getState();
-    if(showCollectionManagement) {
+    const { showCollectionManagement, currentCollection, isSync } = UIStore.getState();
+    if (showCollectionManagement) {
       Aviator.navigate('/collection/management');
     } else {
-      if( currentCollection == null || currentCollection.label == 'All' ) {
+      if (currentCollection == null || currentCollection.label == 'All') {
         Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
       } else {
         Aviator.navigate(isSync
@@ -271,12 +280,12 @@ export default class CollectionTree extends React.Component {
   }
 
   urlForCurrentElement() {
-    const {currentElement} = ElementStore.getState();
-    if(currentElement) {
-      if(currentElement.isNew) {
+    const { currentElement } = ElementStore.getState();
+    if (currentElement) {
+      if (currentElement.isNew) {
         return `${currentElement.type}/new`;
       }
-      else{
+      else {
         return `${currentElement.type}/${currentElement.id}`;
       }
     }
@@ -286,11 +295,11 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
-    let {ownCollectionVisible, inboxVisible, inbox} = this.state
+    let { ownCollectionVisible, inboxVisible, inbox } = this.state
     let extraDiv = [];
-    for (let j=0;j < Xdiv.count;j++){
-      let NoName = Xdiv["content"+j];
-      extraDiv.push(<NoName key={"Xdiv"+j} />);
+    for (let j = 0; j < Xdiv.count; j++) {
+      let NoName = Xdiv["content" + j];
+      extraDiv.push(<NoName key={"Xdiv" + j} />);
     }
 
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
@@ -301,8 +310,8 @@ export default class CollectionTree extends React.Component {
         <div className="tree-view">
           {this.collectionManagementButton()}
           <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>
-            <div className="title" style={{backgroundColor:'white'}}
-                 onClick={() => this.setState({ownCollectionVisible: !ownCollectionVisible})}>
+            <div className="title" style={{ backgroundColor: 'white' }}
+              onClick={() => this.setState({ ownCollectionVisible: !ownCollectionVisible })}>
               <i className="fa fa-list" /> &nbsp;&nbsp; Collections
             </div>
           </OverlayTrigger>
@@ -320,7 +329,7 @@ export default class CollectionTree extends React.Component {
         <div className="tree-wrapper">
           {this.remoteSyncInSubtrees()}
         </div>
-        {extraDiv.map((e)=>{return e})}
+        {extraDiv.map((e) => { return e })}
         <div className="tree-view">
           <div className="title" style={{ backgroundColor: 'white' }}>
             <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Inbox &nbsp;</i>
@@ -338,7 +347,7 @@ export default class CollectionTree extends React.Component {
 
         </div>
         <div className="tree-wrapper" style={{ display: inboxDisplay }}>
-          { this.inboxSubtrees() }
+          {this.inboxSubtrees()}
         </div>
       </div>
     )
