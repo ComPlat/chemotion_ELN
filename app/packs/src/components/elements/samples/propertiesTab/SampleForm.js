@@ -8,7 +8,7 @@ import {
 import Select from 'react-select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/components/elements/NumeralInputWithUnitsCompo';
-import TextRangeWithAddon from 'src/components/TextRangeWithAddon';
+import TextRangeWithAddon from 'src/components/elements/samples/propertiesTab/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/components/elements/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/components/elements/PrivateNoteElement';
