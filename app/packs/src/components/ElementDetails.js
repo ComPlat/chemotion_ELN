@@ -1,4 +1,4 @@
-import ComputeTaskContainer from 'src/components/elements/compute_tasks/ComputeTaskContainer';
+import ComputeTaskContainer from 'src/components/elements/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import DeviceDetails from 'src/components/elements/devices/DeviceDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
