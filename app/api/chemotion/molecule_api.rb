@@ -190,7 +190,7 @@ module Chemotion
         end
         molecule&.attributes&.merge(temp_svg: svg_process[:svg_file_name], ob_log: ob)
 
-        present molecule, with: Entities::MoleculeEntity
+        Entities::MoleculeEntity.represent(molecule, temp_svg: svg_process[:svg_file_name], ob_log: ob)
       end
 
       desc 'return CAS of the molecule'
