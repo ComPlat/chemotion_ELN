@@ -256,7 +256,7 @@ const analysesContent = (products) => {
       const data = a && a.extended_metadata
         && a.extended_metadata.report
         && a.extended_metadata.report === 'true'
-        ? JSON.parse(a.extended_metadata.content)
+        ? a.extended_metadata.content
         : { ops: [] };
       content = [...content, ...endingSymbol(data.ops, '; ')];
     });

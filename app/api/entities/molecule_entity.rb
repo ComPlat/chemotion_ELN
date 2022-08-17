@@ -24,6 +24,17 @@ module Entities
 
     expose :molecule_names, using: 'Entities::MoleculeNameEntity', unless: ->(instance, options) { displayed_in_list? }
 
+    expose :temp_svg, unless: ->(instance, options) { options[:temp_svg].nil? }
+
+    expose :ob_log, unless: ->(instance, options) { options[:ob_log].nil? }
+
+    def temp_svg
+      options[:temp_svg]
+    end
+
+    def ob_log
+      options[:ob_log]
+    end
 
     def molfile
       return unless object.respond_to?(:molfile)

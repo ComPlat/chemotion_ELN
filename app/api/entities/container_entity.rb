@@ -24,12 +24,8 @@ module Entities
 
       {}.tap do |metadata|
         metadata[:report] = report
-        if object.extended_metadata['content'].present?
-          metadata[:content] = JSON.parse(object.extended_metadata['content'])
-        end
-        if object.extended_metadata['hyperlinks'].present?
-          metadata[:hyperlinks] = JSON.parse(metadata['hyperlinks'])
-        end
+        metadata[:content] = JSON.parse(object.extended_metadata['content']) if object.extended_metadata['content'].present?
+        metadata[:hyperlinks] = JSON.parse(object.extended_metadata['hyperlinks']) if object.extended_metadata['hyperlinks'].present?
       end
     end
 
