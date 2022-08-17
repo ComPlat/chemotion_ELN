@@ -308,7 +308,7 @@ const AnalysesContent = ({ show, products }) => {
   const analyses = products.map((product, i) => (
     product.analyses.map((analysis, j) => {
       const content = analysis && analysis.extended_metadata
-        ? JSON.parse(analysis.extended_metadata.content)
+        ? analysis.extended_metadata.content
         : {};
       const kind = analysis.kind ? `(${analysis.kind})` : '';
       return (

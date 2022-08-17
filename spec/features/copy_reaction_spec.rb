@@ -21,7 +21,7 @@ describe 'Copy reaction' do
   let(:product3) { create(:sample, name: 'Product3', real_amount_value: 4.671, molecule: m2) }
   let(:reaction3) { create(:reaction, status: 'Successful', short_label: 'Reaction3') }
 
-  let!(:col) { create(:collection, user_id: user1.id, label: 'Col3') }
+  let!(:col) { create(:collection, user_id: user1.id, label: 'Col3', permission_level: 10, reaction_detail_level: 10) }
 
   let!(:root_share) { create(:collection, user: user1, shared_by_id: user2.id, is_shared: true, is_locked: true) }
   let!(:cshare) { create(:collection, user: user1, label: 'share-col', permission_level: 10, sample_detail_level: 10, reaction_detail_level: 10, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
@@ -55,7 +55,6 @@ describe 'Copy reaction' do
     fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
     svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
-
     CollectionsSample.find_or_create_by!(sample: material1, collection: col)
     CollectionsSample.find_or_create_by!(sample: product1, collection: col)
     CollectionsReaction.find_or_create_by!(reaction: reaction1, collection: col)

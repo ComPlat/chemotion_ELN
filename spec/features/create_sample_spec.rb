@@ -24,8 +24,6 @@ describe 'Create sample' do
     find_by_id('smile-create-molecule').click
     find_by_id('txinput_name').set('Sample A').send_keys(:enter)
     find_by_id('submit-sample-btn').click
-    find_by_id('txinput_name').set('Sample B').send_keys(:enter)
-    find_by_id('submit-sample-btn').click
-    expect(page).to have_content('Sample B')
+    expect(page).to have_content('Sample A')
   end
 end

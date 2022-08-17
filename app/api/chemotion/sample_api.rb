@@ -518,7 +518,7 @@ module Chemotion
         kinds = sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        present sample, with: Entities::SampleEntity
+        present sample, with: Entities::SampleEntity, root: :sample
       end
 
       desc "Delete a sample by id"

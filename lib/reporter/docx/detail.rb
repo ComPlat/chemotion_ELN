@@ -80,7 +80,7 @@ module Reporter
         if i['extended_metadata'] && i['extended_metadata']['content']
           JSON.parse(i['extended_metadata']['content'])['ops']
         elsif i[:extended_metadata] && i[:extended_metadata][:content]
-          JSON.parse(i[:extended_metadata][:content])['ops']
+          i[:extended_metadata][:content]['ops']
         else
           []
         end
