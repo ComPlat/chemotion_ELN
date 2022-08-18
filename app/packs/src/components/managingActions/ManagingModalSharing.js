@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import Select from 'react-select';
 
-import SharingShortcuts from 'src/components/sharing/SharingShortcuts';
+import SharingShortcuts from 'src/components/managingActions/SharingShortcuts';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
