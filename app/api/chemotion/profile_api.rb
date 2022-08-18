@@ -79,6 +79,7 @@ module Chemotion
           end
         end
         optional :show_external_name, type: Boolean
+        optional :structure_editor, type: String
       end
 
       put do
@@ -91,6 +92,11 @@ module Chemotion
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
 
+        data['structure_editor'] = 'ketcher' if data['structure_editor'].blank?
+
+        if declared_params[:structure_editor].present?
+          data = data.deep_merge('structure_editor' => declared_params[:structure_editor])
+        end
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name]

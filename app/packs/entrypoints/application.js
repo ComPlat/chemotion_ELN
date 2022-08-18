@@ -14,4 +14,5 @@ var ScifinderCredential = require('../src/components/scifinder/ScifinderCredenti
 var GenericElementAdmin = require('../src/admin/GenericElementAdmin');
 var SegmentElementAdmin = require('../src/admin/SegmentElementAdmin');
 var DatasetElementAdmin = require('../src/admin/DatasetElementAdmin');
+var StructureEditorUserSetting = require('../src/components/structure_editor/UserSetting');
 var mydb = require('../src/components/App');

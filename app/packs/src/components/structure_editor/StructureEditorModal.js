@@ -73,6 +73,13 @@ WarningBox.propTypes = {
   show: PropTypes.bool.isRequired,
 };
 
+const initializeEditor = () => {
+  const userProfile = UserStore.getState().profile;
+  const eId = userProfile?.data?.structure_editor || 'ketcher';
+  const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
+  return editor;
+};
+
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
     super(props);
@@ -81,11 +88,12 @@ export default class StructureEditorModal extends React.Component {
       showWarning: props.hasChildren || props.hasParent,
       molfile: props.molfile,
       matriceConfigs: [],
-      editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' })
+      editor: initializeEditor() // new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' })
     };
     this.editors = { ketcher: this.state.editor };
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.onChangeUser = this.onChangeUser.bind(this);
+    this.updateEditor = this.updateEditor.bind(this);
   }
 
   componentDidMount() {
@@ -100,6 +108,7 @@ export default class StructureEditorModal extends React.Component {
   }
 
   onChangeUser(state) {
+    console.log('onChangeUser');
     let grantEditors = (state.matriceConfigs || []).map(u => u.configs) || [];
     const availableEditors = UIStore.getState().structureEditors || {};
     if (Object.keys(availableEditors.editors || {}).length > 0) {
@@ -125,11 +134,24 @@ export default class StructureEditorModal extends React.Component {
       this.editors = [{ ketcher: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }) }].concat(grantEditors).reduce((acc, args) => {
         return Object.assign({}, acc, args);
       }, {});
+      this.updateEditor(this.editors);
+    }
+  }
+
+  updateEditor(_editors) {
+    const kks = Object.keys(_editors);
+    console.log(kks);
+    const { editor } = this.state;
+    console.log(editor.id);
+    if (!kks.find(e => e === editor.id)) {
+      this.setState({ editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }) });
     }
   }
 
   initializeEditor() {
+    console.log('inside ----------------- ');
     const { editor, molfile } = this.state;
+    console.log(editor);
     if (editor) { editor.structureDef.molfile = molfile; }
   }
 
@@ -204,16 +226,16 @@ export default class StructureEditorModal extends React.Component {
         />
       </div>
     );
-    if (!showWarning && editor.id === 'ketcher2') {
+    if (!showWarning && editor.id === 'ketcher2' && this.editors[editor.id]) {
       useEditor =
         <KetcherEditor editor={this.editors.ketcher2} fh={iframeHeight} fs={iframeStyle} molfile={molfile} />;
     }
-    if (!showWarning && editor.id === 'chemdraw') {
+    if (!showWarning && editor.id === 'chemdraw' && this.editors[editor.id]) {
       useEditor =
         <ChemDrawEditor editor={this.editors.chemdraw} molfile={molfile} parent={this} iH={iframeHeight} />;
     }
     let citeMarvin = null;
-    if (!showWarning && editor.id === 'marvinjs') {
+    if (!showWarning && editor.id === 'marvinjs' && this.editors[editor.id]) {
       useEditor =
         <MarvinjsEditor editor={this.editors.marvinjs} molfile={molfile} parent={this} iH={iframeHeight} />;
       citeMarvin = (
