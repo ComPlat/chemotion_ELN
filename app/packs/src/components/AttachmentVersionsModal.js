@@ -41,28 +41,16 @@ export default class AttachmentVersionsModal extends Component {
             <div className="list">
               <ListGroup>
                 {
-<<<<<<< HEAD
-                  data.map((attachment) => {
-=======
                   data.reverse().map((attachment) => {
->>>>>>> 1277-using-gemshrine-file-service
                     return (
                       <ListGroupItem key={attachment.version_numb} style={{ margin: 'unset', padding: 'unset' }}>
                         <Table className="borderless" style={{ marginBottom: 'unset' }}>
                           <tbody>
                             <tr>
                               <td style={{ verticalAlign: 'middle' }}>
-<<<<<<< HEAD
-                                <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename} Version_{attachment.version_numb}</a><br />
-                                {attachment.updated_at ?
-                                  <label>Updated at: {attachment.updated_at}</label> :
-                                  <label>Original Version</label>
-                                }
-=======
                                 <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
                                 <label> Version {attachment.version_numb}</label>&nbsp;&nbsp;&nbsp;
                                 <label>Updated at: {attachment.updated_at}</label>
->>>>>>> 1277-using-gemshrine-file-service
                               </td>
                             </tr>
                           </tbody>

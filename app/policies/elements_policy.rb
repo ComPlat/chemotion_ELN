@@ -10,6 +10,10 @@ class ElementsPolicy
     allowed?(0)
   end
 
+  def update?
+    allowed?(1)
+  end
+
   def share?
     allowed?(2)
   end

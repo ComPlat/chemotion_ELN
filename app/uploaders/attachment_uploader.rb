@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 class AttachmentUploader < Shrine
 <<<<<<< HEAD
   MAX_SIZE = Rails.configuration.storage.maximum_size * 1024 * 1024 # 10 MB
@@ -70,3 +71,78 @@ class AttachmentUploader < Shrine
     end
   end
 end
+=======
+# frozen_string_literal: true
+
+class AttachmentUploader < Shrine
+  require 'helpers/thumbnail/thumbnail_creator'
+
+  MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024 # 10 MB
+
+  plugin :derivatives
+  plugin :keep_files, replaced: true
+  plugin :validation_helpers
+  plugin :pretty_location
+  Attacher.validate do
+    validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
+  end
+
+  def is_integer?
+    !!(self =~ /\A[-+]?[0-9]+\z/)
+  end
+
+  def generate_location(io, context = {})
+    if context[:record]
+      file_name = if io.path.include? 'thumb.jpg'
+                    "#{context[:record][:key]}.thumb.jpg"
+                  elsif io.path.include? 'annotation.svg'
+                    "#{context[:record][:key]}.annotation.svg"
+                  else
+                    "#{context[:record][:key]}#{File.extname(context[:record][:filename])}"
+                  end
+
+      bucket = 1
+      bucket = (context[:record][:id] / 10_000).floor + 1 if context[:record][:id].present?
+      "#{storage.directory}/#{bucket}/#{file_name}"
+    else
+      super
+    end
+  end
+
+  # plugins and uploading logic
+  Attacher.derivatives do |original|
+    file_extension = AttachmentUploader.get_file_extension(file.id)
+
+    file_basename = File.basename(file.metadata['filename'], '.*')
+
+    file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
+
+    result = {}
+
+    tnc = ThumbnailCreator.new
+
+    result = tnc.create_derivative(
+      file_path.to_s,
+      original,
+      @context[:record].id,
+      result, record
+    )
+
+    result
+  end
+
+  def self.create_tmp_file(file_basename, file_extension, file)
+    tmp = Tempfile.new([file_basename, file_extension], encoding: 'ascii-8bit')
+    tmp.write file.read
+    tmp.rewind
+    tmp.path
+  end
+
+  def self.get_file_extension(file_name)
+    file_extension = File.extname(file_name)&.downcase
+    file_extension = '.jpg' if file_extension == '.jpeg'
+
+    file_extension
+  end
+end
+>>>>>>> 1277-using-gemshrine-file-service

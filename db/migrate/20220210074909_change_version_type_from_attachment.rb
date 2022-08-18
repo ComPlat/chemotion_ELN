@@ -1,9 +1,13 @@
 class ChangeVersionTypeFromAttachment < ActiveRecord::Migration[5.2]
   def up
 <<<<<<< HEAD
+<<<<<<< HEAD
     type = Attachment.column_for_attribute(:version).type
     return if(type == :string)
 
+=======
+    return if Attachment.column_for_attribute('version').type == :string
+>>>>>>> 1277-using-gemshrine-file-service
 =======
     return if Attachment.column_for_attribute('version').type == :string
 >>>>>>> 1277-using-gemshrine-file-service

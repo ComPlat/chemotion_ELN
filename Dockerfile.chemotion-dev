@@ -1,0 +1,73 @@
+# This dockerfile is used by docker-compose.dev.yml
+# It builds a container with all the necessary gems to run chemotion ELN
+# WARNING: Building this container initially takes a lot of time, due to gem compiling, so grab a coffee
+# and write some documentation meanwhile ;)
+
+FROM ubuntu:focal
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG VRUBY=2.6.6
+ARG VNODE=14.16.0
+ARG VNODENEXT=14.17.5
+ARG ASDF_BRANCH=v0.8.1
+
+RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
+RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
+      imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
+      build-essential nodejs sudo postgresql-client libappindicator1 swig \
+      gconf-service libasound2 libgconf-2-4 cmake \
+      libnspr4 libnss3 libpango1.0-0 libxss1 xdg-utils tzdata libpq-dev \
+      gtk2-engines-pixbuf \
+      libssl-dev libreadline-dev\
+      unzip openssh-client \
+      python-dev libsqlite3-dev libboost-all-dev p7zip-full \
+      xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
+      fonts-crosextra-caladea fonts-crosextra-carlito \
+      fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
+      fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
+      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic
+RUN  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
+    && apt-get update -yqqq && apt-get -y install google-chrome-stable \
+    && CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE` \
+    && mkdir -p /opt/chromedriver-$CHROMEDRIVER_VERSION \
+    && curl -sS -o /tmp/chromedriver_linux64.zip http://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip \
+    && unzip -qq /tmp/chromedriver_linux64.zip -d /opt/chromedriver-$CHROMEDRIVER_VERSION \
+    && rm /tmp/chromedriver_linux64.zip \
+    && chmod +x /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver \
+    && ln -fs /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver /usr/local/bin/chromedriver
+RUN apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+RUN useradd -ms /bin/bash chemotion-dev \
+    && echo "chemotion-dev ALL=NOPASSWD: ALL" >> /etc/sudoers
+
+USER chemotion-dev
+WORKDIR /home/chemotion-dev
+
+# Create node modules folder OUTSIDE of application directory
+RUN mkdir /home/chemotion-dev/node_modules
+
+SHELL ["/bin/bash", "-c"]
+
+RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch $ASDF_BRANCH
+
+ENV ASDF_DIR=/home/chemotion-dev/.asdf
+ENV PATH=/home/chemotion-dev/.asdf/shims:/home/chemotion-dev/.asdf/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+RUN asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+RUN asdf install nodejs $VNODE
+RUN asdf install nodejs $VNODENEXT
+RUN asdf global nodejs $VNODE
+
+RUN asdf plugin add ruby https://github.com/asdf-vm/asdf-ruby.git
+RUN asdf install ruby $VRUBY
+RUN asdf global ruby $VRUBY
+
+RUN echo 'network-timeout 600000' > /home/chemotion-dev/.yarnrc
+# use node modules from outside the application directory
+RUN echo '--modules-folder /home/chemotion-dev/node_modules/' >> /home/chemotion-dev/.yarnrc
+
+RUN sudo apt-get -y --fix-missing install \
+    libboost-serialization1.71.0 \
+    libboost-iostreams1.71.0 \
+    libboost-system1.71.0

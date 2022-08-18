@@ -23,10 +23,6 @@
 #  filesize        :bigint
 #  attachment_data :jsonb
 #  is_editing      :boolean          default(FALSE)
-<<<<<<< HEAD
-#  log_data        :jsonb
-=======
->>>>>>> 1277-using-gemshrine-file-service
 #
 # Indexes
 #
@@ -36,11 +32,7 @@
 
 
 class Attachment < ApplicationRecord
-<<<<<<< HEAD
-  has_logidze
-=======
   has_logidze  ignore_log_data: true
->>>>>>> 1277-using-gemshrine-file-service
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
@@ -65,7 +57,6 @@ class Attachment < ApplicationRecord
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template
-  
 
   scope :where_research_plan, lambda { |c_id|
     where(attachable_id: c_id, attachable_type: 'ResearchPlan')
@@ -79,7 +70,7 @@ class Attachment < ApplicationRecord
     where(attachable_id: r_id, attachable_type: 'Report')
   }
 
-  scope :where_template, lambda { 
+  scope :where_template, lambda {
     where(attachable_type: 'Template')
   }
 
@@ -199,7 +190,7 @@ class Attachment < ApplicationRecord
 
   def reload
     super
-  
+
     set_key
   end
 
@@ -247,7 +238,7 @@ class Attachment < ApplicationRecord
       self.thumb_data = store.read_thumb
     end
     stored = store.store_file
-    self.thumb = store.store_thumb if stored 
+    self.thumb = store.store_thumb if stored
     self.save if stored
     stored
   end
@@ -257,17 +248,13 @@ class Attachment < ApplicationRecord
   end
 
   def delete_file_and_thumbnail
-<<<<<<< HEAD
-    self.attachment_attacher.destroy
-=======
     self.reload_log_data
     for numb in 1..self.log_size do
       att = self.at(version: numb)
       att.attachment_attacher.destroy
     end
-   
+
     attachment_attacher.destroy
->>>>>>> 1277-using-gemshrine-file-service
   end
 
   def move_from_store(from_store = self.storage_was)

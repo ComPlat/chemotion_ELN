@@ -215,8 +215,8 @@ CREATE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
 CREATE FUNCTION public.literatures_by_element(element_type text, element_id integer) RETURNS TABLE(literatures text)
     LANGUAGE sql
     AS $_$
-   select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-   where l.literature_id = l2.id 
+   select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+   where l.literature_id = l2.id
    and l.element_type = $1 and l.element_id = $2
  $_$;
 
@@ -2351,6 +2351,44 @@ ALTER SEQUENCE public.matrices_id_seq OWNED BY public.matrices.id;
 
 
 --
+-- Name: measurements; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.measurements (
+    id bigint NOT NULL,
+    description character varying NOT NULL,
+    value numeric NOT NULL,
+    unit character varying NOT NULL,
+    deleted_at timestamp without time zone,
+    well_id bigint,
+    sample_id bigint NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    source_type character varying,
+    source_id bigint
+);
+
+
+--
+-- Name: measurements_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.measurements_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: measurements_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.measurements_id_seq OWNED BY public.measurements.id;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3100,6 +3138,72 @@ ALTER SEQUENCE public.research_plans_id_seq OWNED BY public.research_plans.id;
 
 
 --
+-- Name: research_plans_screens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.research_plans_screens (
+    screen_id integer,
+    research_plan_id integer,
+    id bigint NOT NULL,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone
+);
+
+
+--
+-- Name: research_plans_screens_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.research_plans_screens_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: research_plans_screens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.research_plans_screens_id_seq OWNED BY public.research_plans_screens.id;
+
+
+--
+-- Name: research_plans_wellplates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.research_plans_wellplates (
+    research_plan_id integer,
+    wellplate_id integer,
+    id bigint NOT NULL,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone
+);
+
+
+--
+-- Name: research_plans_wellplates_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.research_plans_wellplates_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: research_plans_wellplates_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.research_plans_wellplates_id_seq OWNED BY public.research_plans_wellplates.id;
+
+
+--
 -- Name: residues; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3751,7 +3855,9 @@ CREATE TABLE public.wellplates (
     description character varying,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
-    deleted_at timestamp without time zone
+    deleted_at timestamp without time zone,
+    short_label character varying,
+    readout_titles jsonb DEFAULT '["Readout"]'::jsonb
 );
 
 
@@ -3787,9 +3893,9 @@ CREATE TABLE public.wells (
     position_y integer,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
-    readout character varying,
     additive character varying,
     deleted_at timestamp without time zone,
+    readouts jsonb DEFAULT '[{"unit": "", "value": ""}]'::jsonb,
     label character varying DEFAULT 'Molecular structure'::character varying NOT NULL,
     color_code character varying
 );
@@ -4082,6 +4188,13 @@ ALTER TABLE ONLY public.matrices ALTER COLUMN id SET DEFAULT nextval('public.mat
 
 
 --
+-- Name: measurements id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurements ALTER COLUMN id SET DEFAULT nextval('public.measurements_id_seq'::regclass);
+
+
+--
 -- Name: messages id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -4205,6 +4318,20 @@ ALTER TABLE ONLY public.research_plan_table_schemas ALTER COLUMN id SET DEFAULT 
 --
 
 ALTER TABLE ONLY public.research_plans ALTER COLUMN id SET DEFAULT nextval('public.research_plans_id_seq'::regclass);
+
+
+--
+-- Name: research_plans_screens id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.research_plans_screens ALTER COLUMN id SET DEFAULT nextval('public.research_plans_screens_id_seq'::regclass);
+
+
+--
+-- Name: research_plans_wellplates id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.research_plans_wellplates ALTER COLUMN id SET DEFAULT nextval('public.research_plans_wellplates_id_seq'::regclass);
 
 
 --
@@ -4668,6 +4795,14 @@ ALTER TABLE ONLY public.matrices
 
 
 --
+-- Name: measurements measurements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurements
+    ADD CONSTRAINT measurements_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4809,6 +4944,22 @@ ALTER TABLE ONLY public.research_plan_table_schemas
 
 ALTER TABLE ONLY public.research_plans
     ADD CONSTRAINT research_plans_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: research_plans_screens research_plans_screens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.research_plans_screens
+    ADD CONSTRAINT research_plans_screens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: research_plans_wellplates research_plans_wellplates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.research_plans_wellplates
+    ADD CONSTRAINT research_plans_wellplates_pkey PRIMARY KEY (id);
 
 
 --
@@ -5337,6 +5488,34 @@ CREATE UNIQUE INDEX index_matrices_on_name ON public.matrices USING btree (name)
 
 
 --
+-- Name: index_measurements_on_deleted_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_measurements_on_deleted_at ON public.measurements USING btree (deleted_at);
+
+
+--
+-- Name: index_measurements_on_sample_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_measurements_on_sample_id ON public.measurements USING btree (sample_id);
+
+
+--
+-- Name: index_measurements_on_source_type_and_source_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_measurements_on_source_type_and_source_id ON public.measurements USING btree (source_type, source_id);
+
+
+--
+-- Name: index_measurements_on_well_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_measurements_on_well_id ON public.measurements USING btree (well_id);
+
+
+--
 -- Name: index_molecule_names_on_deleted_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5586,6 +5765,34 @@ CREATE INDEX index_research_plan_metadata_on_deleted_at ON public.research_plan_
 --
 
 CREATE INDEX index_research_plan_metadata_on_research_plan_id ON public.research_plan_metadata USING btree (research_plan_id);
+
+
+--
+-- Name: index_research_plans_screens_on_research_plan_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_research_plans_screens_on_research_plan_id ON public.research_plans_screens USING btree (research_plan_id);
+
+
+--
+-- Name: index_research_plans_screens_on_screen_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_research_plans_screens_on_screen_id ON public.research_plans_screens USING btree (screen_id);
+
+
+--
+-- Name: index_research_plans_wellplates_on_research_plan_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_research_plans_wellplates_on_research_plan_id ON public.research_plans_wellplates USING btree (research_plan_id);
+
+
+--
+-- Name: index_research_plans_wellplates_on_wellplate_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_research_plans_wellplates_on_wellplate_id ON public.research_plans_wellplates USING btree (wellplate_id);
 
 
 --
@@ -6106,8 +6313,12 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20210316132800'),
 ('20210316133000'),
 ('20210318133000'),
+('20210331221122'),
+('20210413163755'),
 ('20210416075103'),
 ('20210429141415'),
+('20210507131044'),
+('20210511132059'),
 ('20210527172347'),
 ('20210604232803'),
 ('20210605105020'),
@@ -6124,25 +6335,19 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20210825082859'),
 ('20210916091017'),
 ('20210920171211'),
-<<<<<<< HEAD
-=======
 ('20210921114420'),
->>>>>>> 1277-using-gemshrine-file-service
 ('20210921114428'),
 ('20210924095106'),
 ('20211105091019'),
 ('20211111112219'),
 ('20211115222715'),
-<<<<<<< HEAD
-('20211117234000'),
-=======
->>>>>>> 1277-using-gemshrine-file-service
 ('20211117235010'),
 ('20211118112711'),
 ('20211122142906'),
 ('20211206144812'),
 ('20220114085300'),
 ('20220116164546'),
+('20220123122040'),
 ('20220207134748'),
 ('20220210074909'),
 ('20220210201552'),
@@ -6150,6 +6355,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220214100000'),
 ('20220216133756'),
 ('20220217161840'),
-('20220309182512');
-
+('20220309182512'),
+('20220408113102');
 

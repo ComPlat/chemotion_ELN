@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class WellplateAPI < Grape::API
     include Grape::Kaminari
@@ -9,13 +11,14 @@ module Chemotion
 
     resource :wellplates do
       namespace :bulk do
-        desc "Bulk create wellplates"
+        desc 'Bulk create wellplates'
         params do
           requires :wellplates, type: Array do
             requires :name, type: String
             optional :size, type: Integer
             optional :description, type: Hash
             optional :wells, type: Array
+            optional :readout_titles, type: Array
             optional :collection_id, type: Integer
           end
         end
@@ -26,9 +29,9 @@ module Chemotion
       end
 
       namespace :ui_state do
-        desc "Get Wellplates by UI state"
+        desc 'Get Wellplates by UI state'
         params do
-          requires :ui_state, type: Hash, desc: "Selected wellplates from the UI" do
+          requires :ui_state, type: Hash, desc: 'Selected wellplates from the UI' do
             use :ui_state_params
           end
         end
@@ -39,14 +42,14 @@ module Chemotion
         end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          { wellplates: @wellplates.map{ |w| WellplateSerializer.new(w).serializable_hash.deep_symbolize_keys } }
+          { wellplates: @wellplates.map { |w| WellplateSerializer.new(w).serializable_hash.deep_symbolize_keys } }
         end
       end
 
-      desc "Return serialized wellplates"
+      desc 'Return serialized wellplates'
       params do
-        optional :collection_id, type: Integer, desc: "Collection id"
-        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :collection_id, type: Integer, desc: 'Collection id'
+        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -85,12 +88,12 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
       end
 
-      desc "Return serialized wellplate by id"
+      desc 'Return serialized wellplate by id'
       params do
-        requires :id, type: Integer, desc: "Wellplate id"
+        requires :id, type: Integer, desc: 'Wellplate id'
       end
       route_param :id do
         before do
@@ -99,13 +102,16 @@ module Chemotion
 
         get do
           wellplate = Wellplate.find(params[:id])
-          {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
+          {
+            wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized,
+            attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
+          }
         end
       end
 
-      desc "Delete a wellplate by id"
+      desc 'Delete a wellplate by id'
       params do
-        requires :id, type: Integer, desc: "Wellplate id"
+        requires :id, type: Integer, desc: 'Wellplate id'
       end
       route_param :id do
         before do
@@ -117,13 +123,14 @@ module Chemotion
         end
       end
 
-      desc "Update wellplate by id"
+      desc 'Update wellplate by id'
       params do
         requires :id, type: Integer
         optional :name, type: String
         optional :size, type: Integer
         optional :description, type: Hash
         optional :wells, type: Array
+        optional :readout_titles, type: Array
         requires :container, type: Hash
         optional :segments, type: Array, desc: 'Segments'
       end
@@ -133,31 +140,31 @@ module Chemotion
         end
 
         put do
-          update_datamodel(params[:container]);
-          params.delete(:container);
+          update_datamodel(params[:container])
+          params.delete(:container)
 
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false), current_user.id).execute!
 
-          #save to profile
+          # save to profile
           kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
+          { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
         end
       end
 
-      desc "Create a wellplate"
+      desc 'Create a wellplate'
       params do
         requires :name, type: String
         optional :size, type: Integer
         optional :description, type: Hash
-        optional :wells, type: Array
-        optional :collection_id, type: Integer
+        requires :wells, type: Array
+        optional :readout_titles, type: Array
+        requires :collection_id, type: Integer
         requires :container, type: Hash
         optional :segments, type: Array, desc: 'Segments'
       end
       post do
-
         container = params[:container]
         params.delete(:container)
 
@@ -166,25 +173,53 @@ module Chemotion
 
         wellplate.save!
 
-        #save to profile
-        kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
+        # save to profile
+        kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          current_user.increment_counter 'wellplates'
-        {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
+        { wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized }
       end
 
       namespace :subwellplates do
-        desc "Split Wellplates into Subwellplates"
+        desc 'Split Wellplates into Subwellplates'
         params do
-          requires :ui_state, type: Hash, desc: "Selected wellplates from the UI"
+          requires :ui_state, type: Hash, desc: 'Selected wellplates from the UI'
         end
         post do
           ui_state = params[:ui_state]
           col_id = ui_state[:currentCollectionId]
           wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(ui_state[:wellplate], CollectionsWellplate, col_id)
           Wellplate.where(id: wellplate_ids).each do |wellplate|
-            subwellplate = wellplate.create_subwellplate current_user, col_id, true
+            wellplate.create_subwellplate current_user, col_id, true
+          end
+        end
+      end
+
+      namespace :import_spreadsheet do
+        desc 'Import spreadsheet data to Wellplates and Wells'
+        params do
+          requires :wellplate_id, type: Integer
+          requires :attachment_id, type: Integer
+        end
+        route_param :wellplate_id do
+          before do
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:wellplate_id])).update?
+          end
+
+          put do
+            wellplate_id = params[:wellplate_id]
+            attachment_id = params[:attachment_id]
+            import = Import::ImportWellplateSpreadsheet.new(wellplate_id: wellplate_id, attachment_id: attachment_id)
+            begin
+              import.process!
+              wellplate = import.wellplate
+              {
+                wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized,
+                attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
+              }
+            rescue StandardError => e
+              error!(e, 500)
+            end
           end
         end
       end

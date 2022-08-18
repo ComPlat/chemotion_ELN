@@ -38,16 +38,22 @@ module Import
               key: SecureRandom.uuid,
               filename: file_name
             )
-            
+
             begin
               tmp = Tempfile.new(file_name)
               tmp.write(data)
               tmp.rewind
-              attachment.attachment_attacher.attach(tmp)
-              if attachment.valid?
-                attachment.attachment_attacher.create_derivatives
+              ActiveRecord::Base.transaction do
                 attachment.save!
-                attachments << attachment
+
+                attachment.attachment_attacher.attach(tmp)
+                if attachment.valid?
+                  attachment.attachment_attacher.create_derivatives
+                  attachment.save!
+                  attachments << attachment
+                else
+                  raise ActiveRecord::Rollback
+                end
               end
             ensure
               tmp.close

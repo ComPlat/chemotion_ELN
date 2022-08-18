@@ -27,6 +27,8 @@ import DeviceSample from '../models/DeviceSample';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import WellplatesFetcher from '../fetchers/WellplatesFetcher';
+import ScreensFetcher from '../fetchers/ScreensFetcher';
 import ModalImportConfirm from '../contextActions/ModalImportConfirm';
 
 import { extraThing } from '../utils/Functions';
@@ -123,7 +125,6 @@ class ElementStore {
     }
 
     this.bindListeners({
-      //
       handleFetchAllDevices: ElementActions.fetchAllDevices,
       handleFetchDeviceById: ElementActions.fetchDeviceById,
       handleCreateDevice: ElementActions.createDevice,
@@ -192,6 +193,7 @@ class ElementStore {
       handleBulkCreateWellplatesFromSamples:
         ElementActions.bulkCreateWellplatesFromSamples,
       handleFetchWellplateById: ElementActions.fetchWellplateById,
+      handleImportWellplateSpreadsheet: ElementActions.importWellplateSpreadsheet,
       handleCreateWellplate: ElementActions.createWellplate,
       handleGenerateWellplateFromClipboard:
         ElementActions.generateWellplateFromClipboard,
@@ -203,6 +205,8 @@ class ElementStore {
 
       handlefetchResearchPlanById: ElementActions.fetchResearchPlanById,
       handleCreateResearchPlan: ElementActions.createResearchPlan,
+      handleImportWellplateIntoResearchPlan: ElementActions.importWellplateIntoResearchPlan,
+      handleImportTableFromSpreadsheet: ElementActions.importTableFromSpreadsheet,
 
       handleCreatePrivateNote: ElementActions.createPrivateNote,
       handleUpdatePrivateNote: ElementActions.updatePrivateNote,
@@ -257,8 +261,9 @@ class ElementStore {
         ElementActions.updateResearchPlan,
         ElementActions.updateGenericEl,
       ],
+      handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
-    })
+    });
   }
 
   handleFetchAllDevices(devices) {
@@ -799,10 +804,19 @@ class ElementStore {
 
   handleFetchWellplateById(result) {
     this.changeCurrentElement(result);
-    //this.state.currentElement = result;
-  //  this.navigateToNewElement(result)
+    // this.state.currentElement = result;
+    // this.navigateToNewElement(result)
   }
 
+  handleImportWellplateSpreadsheet(result) {
+    if (result.error) { return; }
+
+    const { selecteds } = this.state;
+
+    const index = this.elementIndex(selecteds, result);
+    const newSelecteds = this.updateElement(result, index);
+    this.setState({ selecteds: newSelecteds });
+  }
 
   handleCreateWellplate(wellplate) {
     fetchOls('wellplate');
@@ -846,6 +860,26 @@ class ElementStore {
   handleCreateResearchPlan(research_plan) {
     this.handleRefreshElements('research_plan');
     this.navigateToNewElement(research_plan);
+  }
+
+  handleImportWellplateIntoResearchPlan(result) {
+    if (result.error) { return; }
+
+    const { selecteds } = this.state;
+
+    const index = this.elementIndex(selecteds, result);
+    const newSelecteds = this.updateElement(result, index);
+    this.setState({ selecteds: newSelecteds });
+  }
+
+  handleImportTableFromSpreadsheet(result) {
+    if (result.error) { return; }
+
+    const { selecteds } = this.state;
+
+    const index = this.elementIndex(selecteds, result);
+    const newSelecteds = this.updateElement(result, index);
+    this.setState({ selecteds: newSelecteds });
   }
 
   // -- Reactions --
@@ -1125,6 +1159,36 @@ class ElementStore {
     this.UpdateResearchPlanAttaches(updatedResearchPlan);
   }
 
+  UpdateWellplateAttaches(updatedWellplate) {
+    const { selecteds } = this.state;
+    WellplatesFetcher.fetchById(updatedWellplate.id)
+      .then((result) => {
+        this.changeCurrentElement(result);
+        const index = this.elementIndex(selecteds, result);
+        const newSelecteds = this.updateElement(result, index);
+        this.setState({ selecteds: newSelecteds });
+      });
+  }
+
+  handleUpdateWellplateAttaches(updatedWellplate) {
+    this.UpdateWellplateAttaches(updatedWellplate);
+  }
+
+  UpdateScreen(updatedScreen) {
+    const { selecteds } = this.state;
+    ScreensFetcher.fetchById(updatedScreen.id)
+      .then((result) => {
+        this.changeCurrentElement(result);
+        const index = this.elementIndex(selecteds, result);
+        const newSelecteds = this.updateElement(result, index);
+        this.setState({ selecteds: newSelecteds });
+      });
+  }
+
+  handleUpdateScreen(updatedScreen) {
+    this.UpdateScreen(updatedScreen);
+  }
+
   handleUpdateMoleculeNames(updatedSample) {
     this.UpdateMolecule(updatedSample);
   }
@@ -1147,6 +1211,7 @@ class ElementStore {
       case 'screen':
         fetchOls('screen');
         this.handleRefreshElements('screen');
+        this.handleUpdateScreen(updatedElement);
         break;
       case 'research_plan':
         this.handleRefreshElements('research_plan');
@@ -1155,6 +1220,7 @@ class ElementStore {
       case 'wellplate':
         fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
+        this.handleUpdateWellplateAttaches(updatedElement);
         this.handleRefreshElements('sample');
         break;
       case 'genericEl':
@@ -1167,6 +1233,10 @@ class ElementStore {
     }
 
     return true;
+  }
+
+  handleUpdateEmbeddedResearchPlan() {
+    this.handleRefreshElements('research_plan');
   }
 
   synchronizeElements(previous) {
@@ -1209,7 +1279,7 @@ class ElementStore {
   }
 
   updateElement(updateEl, index) {
-    const selecteds = this.state.selecteds;
+    const { selecteds } = this.state;
     return [
       ...selecteds.slice(0, index),
       updateEl,

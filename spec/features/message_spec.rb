@@ -59,6 +59,7 @@ describe 'Message' do
     end
 
     it 'check message box number', js: true do
+      sleep(2)
       expect(find('span.badge.badge-pill')).to have_content('3')
     end
 

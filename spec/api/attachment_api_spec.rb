@@ -74,13 +74,10 @@ describe Chemotion::AttachmentAPI do
       it 'creates attachments for each file' do
         expect(attachments.count).to eq 2
       end
-<<<<<<< HEAD
-=======
 
       it 'stores file localy' do
         expect(File.exist?(attachments.last.attachment_attacher.url)).to be true
       end
->>>>>>> 1277-using-gemshrine-file-service
     end
 
     describe 'upload img thru POST attachments/upload_dataset_attachments' do
@@ -96,13 +93,10 @@ describe Chemotion::AttachmentAPI do
         expect(img_attachments.count).to eq 2
       end
 
-<<<<<<< HEAD
-=======
       it 'stores file localy' do
         expect(File.exist?(img_attachments.last.attachment_attacher.url)).to be true
       end
 
->>>>>>> 1277-using-gemshrine-file-service
       it 'creates thumbnail' do
         expect(img_attachments.last.attachment_url(:thumbnail).present?).to be true
       end

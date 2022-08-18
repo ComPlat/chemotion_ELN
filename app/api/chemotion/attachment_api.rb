@@ -98,39 +98,41 @@ module Chemotion
       post 'update_attachments_attachable' do
         attachable_type = params[:attachable_type]
         attachable_id = params[:attachable_id]
-        unless params[:files].empty?
+        if params.fetch(:files, []).any?
           attach_ary = []
           rp_attach_ary = []
           params[:files].each do |file|
-            if (tempfile = file[:tempfile])
-              a = Attachment.new(
-                bucket: file[:container_id],
-                filename: file[:filename],
-                file_path: file[:tempfile],
-                created_by: current_user.id,
-                created_for: current_user.id,
-                content_type: file[:type],
-                attachable_type: attachable_type,
-                attachable_id: attachable_id
-              )
-              begin
-                a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-                if a.valid?
-                  a.attachment_attacher.create_derivatives
-                  a.save!
-                  attach_ary.push(a.id)
-                  rp_attach_ary.push(a.id) if %w[ResearchPlan Element].include?(attachable_type)
-                end
-              ensure
-                tempfile.close
-                tempfile.unlink
+            next unless (tempfile = file[:tempfile])
+
+            a = Attachment.new(
+              bucket: file[:container_id],
+              filename: file[:filename],
+              file_path: file[:tempfile],
+              created_by: current_user.id,
+              created_for: current_user.id,
+              content_type: file[:type],
+              attachable_type: attachable_type,
+              attachable_id: attachable_id
+            )
+
+            begin
+              a.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+              if a.valid?
+                a.attachment_attacher.create_derivatives
+                a.save!
+                attach_ary.push(a.id)
+                rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
               end
+            ensure
+              tempfile.close
+              tempfile.unlink
             end
           end
-          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) unless rp_attach_ary.empty?
-          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) unless attach_ary.empty?
+
+          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) if rp_attach_ary.any?
+          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) if attach_ary.any?
         end
-        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) unless params[:del_files].empty?
+        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) if params[:del_files].any?
         true
       end
     end
@@ -270,12 +272,18 @@ module Chemotion
               content_type: MIME::Types.type_for(file_name)[0].to_s
             )
             error_messages = []
-            attach.attachment_attacher.attach(File.open(file_path, binmode: true))
-            if attach.valid?
-              attach.attachment_attacher.create_derivatives
+            ActiveRecord::Base.transaction do
               attach.save!
-            else
-              error_messages.push(attach.errors.to_h[:attachment])
+
+              attach.attachment_attacher.attach(File.open(file_path, binmode: true))
+              if attach.valid?
+                attach.attachment_attacher.create_derivatives
+                attach.save!
+              else
+                error_messages.push(attach.errors.to_h[:attachment])
+
+                raise ActiveRecord::Rollback
+              end
             end
 
             return { ok: true, error_messages: error_messages }
@@ -306,20 +314,26 @@ module Chemotion
                 content_type: file[:type],
                 attachable_type: 'Container'
               )
-            begin
-              attach.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
-              if attach.valid?
-                attach.attachment_attacher.create_derivatives
+            ActiveRecord::Base.transaction do
+              begin
                 attach.save!
-                attach_ary.push(attach.id)
+
+                attach.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
+                if attach.valid?
+                  attach.attachment_attacher.create_derivatives
+                  attach.save!
+                  attach_ary.push(attach.id)
+                else
+                  raise ActiveRecord::Rollback
+                end
+              ensure
+                tempfile.close
+                tempfile.unlink
               end
-            ensure
-              tempfile.close
-              tempfile.unlink
             end
           end
         end
-     
+
         true
       end
 
@@ -331,17 +345,13 @@ module Chemotion
         content_type "application/octet-stream"
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-<<<<<<< HEAD
-        uploaded_file = @attachment.at(version: params[:version].to_i).attachment_attacher.file
-=======
-        
+
         uploaded_file = if params[:version].nil?
                            @attachment.attachment_attacher.file
                         else
                           @attachment.reload_log_data
                           @attachment.at(version: params[:version].to_i).attachment_attacher.file
                         end
->>>>>>> 1277-using-gemshrine-file-service
         data = uploaded_file.read
         uploaded_file.close
 
@@ -352,13 +362,6 @@ module Chemotion
       get ':attachment_id/versions' do
         content_type "application/octet-stream"
 
-<<<<<<< HEAD
-      versions = []
-        for numb in 1..@attachment.log_size do
-          versions.push @attachment.at(version: numb)
-        end
-        
-=======
         versions = []
         @attachment.reload_log_data
         for numb in 1..@attachment.log_size do
@@ -366,7 +369,6 @@ module Chemotion
           att.updated_at = Time.strptime("#{@attachment.log_data.versions[numb-1].data['ts']}", '%Q')
           versions.push att
         end
->>>>>>> 1277-using-gemshrine-file-service
         Entities::AttachmentEntity.represent(versions)
       end
 
@@ -395,7 +397,6 @@ module Chemotion
           instrument: #{@container.extended_metadata.fetch('instrument', nil)}
           description:
           #{@container.description}
-
           Files:
           #{file_text}
           Hyperlinks:
@@ -429,7 +430,6 @@ module Chemotion
           sample short label: #{@sample.short_label}
           sample id: #{@sample.id}
           analyses count: #{@sample.analyses&.length || 0}
-
           Files:
           DESC
 
