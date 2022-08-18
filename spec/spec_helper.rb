@@ -11,8 +11,6 @@ require 'webdrivers'
 # require 'capybara/rspec'
 require 'rails_helper'
 
-Webdrivers.logger.level = :WARN
-
 Capybara.register_driver :selenium do |app|
   http_client = Selenium::WebDriver::Remote::Http::Default.new(
     open_timeout: nil,
@@ -26,11 +24,21 @@ Capybara.register_driver :selenium do |app|
   options.add_argument('--headless') unless ENV['USE_HEAD']
   options.add_argument('--no-sandbox')
 
+  capabilities = Selenium::WebDriver::Remote::Capabilities.chrome(
+    loggingPrefs: {
+      browser: 'ALL',
+      client: 'ALL',
+      driver: 'ALL',
+      server: 'ALL'
+    }
+  )
+
   Capybara::Selenium::Driver.new(
     app,
     browser: :chrome,
     http_client: http_client,
-    options: options
+    options: options,
+    desired_capabilities: capabilities
   )
 end
 
