@@ -9,8 +9,8 @@ module Entities
       :container_type,
       :description,
       :extended_metadata,
-      :preview_img
     )
+    expose :preview_img, if: ->(object, options) { object.container_type == 'analysis' }
 
     expose :attachments, using: 'Entities::AttachmentEntity'
     expose :code_log, using: 'Entities::CodeLogEntity'
@@ -31,8 +31,18 @@ module Entities
 
     private
 
+    # The frontend assumes the analysis (no other container types) to have a preview image.
+    # Technically the images are attached to the analysis' dataset children though.
+    # Therefore we have to collect all eligible images from the dataset children and display the newest
+    # thumbnail available.
     def preview_img
-      attachments_with_thumbnail = object.attachments.where(thumb: true)
+      return unless object.container_type == 'analysis'
+
+      attachments_with_thumbnail = Attachment.where(
+        thumb: true,
+        attachable_type: 'Container',
+        attachable_id: object.children.where(container_type: :dataset)
+      )
       return no_preview_image_available unless attachments_with_thumbnail.exists?
 
       latest_image_attachment = attachments_with_thumbnail
