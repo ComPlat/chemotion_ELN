@@ -37,8 +37,8 @@ Capybara.register_driver :selenium do |app|
     app,
     browser: :chrome,
     http_client: http_client,
-    options: options,
-    desired_capabilities: capabilities
+    options: options
+    #desired_capabilities: capabilities
   )
 end
 

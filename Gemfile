@@ -172,7 +172,7 @@ group :development, :test do
 end
 
 group :test do
-  gem 'capybara', '~> 3.29.0'
+  gem 'capybara'
 
   gem 'database_cleaner'
 
@@ -185,7 +185,7 @@ group :test do
 
   gem 'simplecov', require: false
 
-  gem 'webdrivers', '~> 4.1.2'
+  gem 'webdrivers'
   gem 'webmock'
 end
 
