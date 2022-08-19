@@ -38,14 +38,14 @@ module Import
               key: SecureRandom.uuid,
               filename: file_name
             )
-            
+
             begin
               tmp = Tempfile.new(file_name)
               tmp.write(data)
               tmp.rewind
               ActiveRecord::Base.transaction do
                 attachment.save!
-            
+
                 attachment.attachment_attacher.attach(tmp)
                 if attachment.valid?
                   attachment.attachment_attacher.create_derivatives
@@ -57,7 +57,7 @@ module Import
               end
             ensure
               tmp.close
-              tmp.unlink   # deletes the temp file
+              tmp.unlink # deletes the temp file
             end
           when %r{^images/(samples|reactions|molecules|research_plans)/(\w{1,128}\.\w{1,4})}
             tmp_file = Tempfile.new
@@ -67,14 +67,8 @@ module Import
           end
         end
       end
-      @data['ResearchPlan'].each do |attr_name, attr_value|
-        image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
-        image_fields.each do |field|
-          new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
-          field['value']['public_name'] = new_att['identifier']
-          field['value']['file_name'] = new_att['filename']
-        end
-      end
+
+      update_researchplan_body
 
       @attachments = attachments.map(&:id)
       attachments = []
@@ -571,6 +565,17 @@ module Import
         associations << instance unless instance.nil?
       end
       associations
+    end
+
+    def update_researchplan_body
+      @data['ResearchPlan']&.each do |_attr_name, attr_value|
+        image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
+        image_fields.each do |field|
+          new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
+          field['value']['public_name'] = new_att['identifier']
+          field['value']['file_name'] = new_att['filename']
+        end
+      end
     end
   end
 end

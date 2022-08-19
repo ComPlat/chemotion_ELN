@@ -3,39 +3,57 @@
 require 'rails_helper'
 
 # test for ExportJson ImportJson
-RSpec.describe 'ExportImportCollection' do
+RSpec.describe 'ImportCollection' do
   let(:user) do
     create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU')
   end
 
   before do
     user.save!
+    create_tmp_file
   end
 
   context 'imports from a file' do
-    before do
-      # create the `tmp/imports/` if it does not exist yet
-      import_path = File.join('tmp', 'import')
-      FileUtils.mkdir_p(import_path) unless Dir.exist?(import_path)
+    it 'import a collection with a sample' do
+      zip_file_path = copy_target_to_import_folder('fe7fc72d-f6ec-467d-ae23-6587e5fd4333')
+      do_import(zip_file_path, user)
 
-      # store the file as `tmp/imports/<import_id>.zip`
-      import_id = '2541a423-11d9-4c76-a7e1-0da470644012'
-      import_file_path = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
-      zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
-      File.open(zip_file_path, 'wb') do |file|
-        file.write(File.open(import_file_path).read)
-      end
+      collection = Collection.find_by(label: 'Fab-Col-Sample')
+      expect(collection).to be_present
+      sample = Sample.find_by(name: 'Benzene A')
+      expect(sample).to be_present
+    end
+  end
 
-      import = Import::ImportCollections.new(import_id, user.id)
-      import.extract
-      import.read
-      import.import
-      import.cleanup
+  def create_tmp_file
+    import_path = File.join('tmp', 'import')
+    FileUtils.mkdir_p(import_path) unless Dir.exist?(import_path)
+  end
+
+  def copy_target_to_import_folder(import_id)
+    import_file_path = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
+    zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
+
+    File.open(zip_file_path, 'wb') do |file|
+      file.write(File.open(import_file_path).read)
+    end
+    zip_file_path
+  end
+
+  def do_import(zip_file_path, user)
+    import = Import::ImportCollections.new(AttachmentMock.new(zip_file_path), user.id)
+    import.extract
+    import.import
+    import.cleanup
+  end
+
+  class AttachmentMock
+    def initialize(file_path)
+      @file_path = file_path
     end
 
-    it 'creates a collection' do
-      collection = Collection.find_by(label: 'Awesome Collection')
-      expect(collection).to be_present
+    def read_file
+      File.open(@file_path).read
     end
   end
 end
