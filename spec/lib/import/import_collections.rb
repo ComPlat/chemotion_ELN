@@ -33,10 +33,7 @@ RSpec.describe 'ImportCollection' do
   def copy_target_to_import_folder(import_id)
     import_file_path = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
     zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
-
-    File.open(zip_file_path, 'wb') do |file|
-      file.write(File.open(import_file_path).read)
-    end
+    FileUtils.copy_file(zip_file_path, import_file_path)
     zip_file_path
   end
 

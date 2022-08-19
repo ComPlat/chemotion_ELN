@@ -34,7 +34,6 @@ module Import
               transferred: true,
               created_by: @current_user_id,
               created_for: @current_user_id,
-              filename: Regexp.last_match(1),
               key: SecureRandom.uuid,
               filename: file_name
             )
