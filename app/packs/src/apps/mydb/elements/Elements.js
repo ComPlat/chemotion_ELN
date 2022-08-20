@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Col } from 'react-bootstrap';
 
 import ElementsList from 'src/components/elementsList/ElementsList';
-import ElementDetails from 'src/components/elements/ElementDetails';
+import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class Elements extends Component {

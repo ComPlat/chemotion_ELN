@@ -5,7 +5,7 @@ import { Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigge
 import Select from 'react-select';
 import uuid from 'uuid';
 import { ButtonTooltip, genUnitSup } from 'src/apps/admin/generic/Utils';
-import GroupFields from 'src/components/elements/GroupFields';
+import GroupFields from 'src/apps/mydb/elements/details/GroupFields';
 import TextFormula from 'src/components/generic/TextFormula';
 import TableDef from 'src/components/generic/TableDef';
 
