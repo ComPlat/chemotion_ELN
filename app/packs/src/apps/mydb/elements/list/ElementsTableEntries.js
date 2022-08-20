@@ -5,8 +5,8 @@ import classnames from 'classnames';
 
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
-import ElementCollectionLabels from 'src/apps/mydb/elements/list/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/apps/mydb/elements/list/ElementAnalysesLabels';
+import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 
 import UIStore from 'src/stores/alt/stores/UIStore';

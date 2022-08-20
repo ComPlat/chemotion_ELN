@@ -28,11 +28,11 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
 
-import ElementCollectionLabels from 'src/apps/mydb/elements/list/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/apps/mydb/elements/list/ElementAnalysesLabels';
+import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
-import ElementReactionLabels from 'src/apps/mydb/elements/list/ElementReactionLabels';
+import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import XLabels from 'src/components/extra/SampleDetailsXLabels';
@@ -49,7 +49,7 @@ import SampleName from 'src/components/common/SampleName';
 import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
 import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsContainer';
-import ComputedPropLabel from 'src/components/computedProps/ComputedPropLabel';
+import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import SampleDetailsLiteratures from 'src/apps/mydb/elements/details/DetailsTabLiteratures';
