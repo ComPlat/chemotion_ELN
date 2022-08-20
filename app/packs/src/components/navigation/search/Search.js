@@ -4,7 +4,7 @@ import {
   Form, FormControl, Radio, Grid, Row, Col
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import AutoCompleteInput from 'src/components/search/AutoCompleteInput';
+import AutoCompleteInput from 'src/components/navigation/search/AutoCompleteInput';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 import SuggestionsFetcher from 'src/fetchers/SuggestionsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
