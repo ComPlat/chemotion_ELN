@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Tooltip } from 'react-bootstrap';
-import UserInfoIcon from 'src/components/collectionManagement/UserInfoIcon';
+import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
 
 const UserInfos = ({ users }) => {
   let tipUsers = users.map((user, ind) => {

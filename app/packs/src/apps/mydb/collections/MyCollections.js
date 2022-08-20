@@ -4,8 +4,8 @@ import { Button, ButtonGroup, FormControl, Modal } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import UserInfoIcon from 'src/components/collectionManagement/UserInfoIcon';
-import PermissionIcons from 'src/components/collectionManagement/PermissionIcons'
+import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
+import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons'
 
 export default class MyCollections extends React.Component {
   constructor(props) {
