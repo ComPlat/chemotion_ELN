@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
-import AttachmentContainer from 'src/components/inbox/AttachmentContainer';
+import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 
@@ -29,7 +29,7 @@ class DatasetContainer extends Component {
 
   attachmentCount() {
     return (this.props.dataset && this.props.dataset.attachments &&
-     this.props.dataset.attachments.length) || 0;
+      this.props.dataset.attachments.length) || 0;
   }
 
   deleteDataset() {
@@ -89,7 +89,7 @@ class DatasetContainer extends Component {
             <i className="fa fa-trash-o" onClick={() => this.deleteDataset()} style={{ cursor: "pointer" }}>&nbsp;</i>
             {deletingTooltip ? (
               <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-                Delete {attCount} attachment{attCount > 1 ? 's' : null }?
+                Delete {attCount} attachment{attCount > 1 ? 's' : null}?
                 <ButtonGroup>
                   <Button
                     bsStyle="danger"
@@ -124,7 +124,7 @@ class DatasetContainer extends Component {
               </span>
             </i>
             <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-              {moment(dataset.created_at).format('DD.MM.YYYY HH:mm') }
+              {moment(dataset.created_at).format('DD.MM.YYYY HH:mm')}
             </span>
           </div>
           <div>{visible ? attachments : null}</div>

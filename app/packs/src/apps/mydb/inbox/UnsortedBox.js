@@ -2,11 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
 
-import AttachmentContainer from 'src/components/inbox/AttachmentContainer';
+import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
 import Container from 'src/models/Container';
-import UnsortedDatasetModal from 'src/components/inbox/UnsortedDatasetModal';
+import UnsortedDatasetModal from 'src/apps/mydb/inbox/UnsortedDatasetModal';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 

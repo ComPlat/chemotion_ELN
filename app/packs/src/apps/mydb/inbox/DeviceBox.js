@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import DatasetContainer from 'src/components/inbox/DatasetContainer';
+import DatasetContainer from 'src/apps/mydb/inbox/DatasetContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';

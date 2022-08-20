@@ -13,8 +13,8 @@ import InboxStore from 'src/stores/alt/stores/InboxStore';
 import Xdiv from 'src/components/extra/CollectionTreeXdiv';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 
-import DeviceBox from 'src/components/inbox/DeviceBox';
-import UnsortedBox from 'src/components/inbox/UnsortedBox';
+import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
+import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 

@@ -6,8 +6,8 @@ import InboxStore from 'src/stores/alt/stores/InboxStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import DeviceBox from 'src/components/inbox/DeviceBox';
-import UnsortedBox from 'src/components/inbox/UnsortedBox';
+import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
+import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 
 import Xdiv from 'src/components/extra/CollectionTreeXdiv';
 
@@ -141,7 +141,7 @@ export default class InboxModal extends React.Component {
 
                   </div>
                   <div className="tree-wrapper" style={{ display: inboxDisplay }}>
-                    { this.inboxSubtrees() }
+                    {this.inboxSubtrees()}
                   </div>
                 </div>
               </Panel.Body>

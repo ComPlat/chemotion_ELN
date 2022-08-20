@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
-import UnsortedDataset from 'src/components/inbox/UnsortedDataset';
+import UnsortedDataset from 'src/apps/mydb/inbox/UnsortedDataset';
 import Container from 'src/models/Container';
 
 export default class UnsortedDatasetModal extends React.Component {
