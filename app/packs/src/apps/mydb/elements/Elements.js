@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Col } from 'react-bootstrap';
 
-import ElementsList from 'src/components/elementsList/ElementsList';
+import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 

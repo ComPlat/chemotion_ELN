@@ -11,10 +11,10 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import ElementAllCheckbox from 'src/components/elementsList/ElementAllCheckbox';
-import ElementsTableEntries from 'src/components/elementsList/ElementsTableEntries';
-import ElementsTableSampleEntries from 'src/components/elementsList/ElementsTableSampleEntries';
-import Switch from 'src/components/elementsList/Switch';
+import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
+import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
+import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
+import Switch from 'src/apps/mydb/elements/list/Switch';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {

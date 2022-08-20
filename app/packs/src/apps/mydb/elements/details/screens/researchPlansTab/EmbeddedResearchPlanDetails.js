@@ -4,7 +4,7 @@ import { Panel, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay,
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
-import ElementCollectionLabels from 'src/components/elementsList/ElementCollectionLabels';
+import ElementCollectionLabels from 'src/apps/mydb/elements/list/ElementCollectionLabels';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlan from 'src/models/ResearchPlan';
 import ResearchPlanDetailsBody from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';

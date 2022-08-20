@@ -4,7 +4,7 @@ import { Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Gl
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { wellplateShowOrNew } from 'src/utilities/routesUtils';
-import ElementCollectionLabels from 'src/components/elementsList/ElementCollectionLabels';
+import ElementCollectionLabels from 'src/apps/mydb/elements/list/ElementCollectionLabels';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 

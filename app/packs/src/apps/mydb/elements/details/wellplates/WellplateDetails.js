@@ -8,7 +8,7 @@ import {
 import Immutable from 'immutable';
 import { findIndex } from 'lodash';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import ElementCollectionLabels from 'src/components/elementsList/ElementCollectionLabels';
+import ElementCollectionLabels from 'src/apps/mydb/elements/list/ElementCollectionLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import Wellplate from 'src/apps/mydb/elements/details/wellplates/designerTab/Wellplate';
