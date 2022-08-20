@@ -52,7 +52,7 @@ import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsCo
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import SampleDetailsLiteratures from 'src/apps/mydb/elements/details/DetailsTabLiteratures';
+import SampleDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
 import { chmoConversions } from 'src/components/OlsComponent';

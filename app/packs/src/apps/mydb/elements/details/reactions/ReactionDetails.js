@@ -11,7 +11,7 @@ import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalyses
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import ReactionDetailsLiteratures from 'src/apps/mydb/elements/details/DetailsTabLiteratures';
+import ReactionDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';

@@ -25,7 +25,7 @@ import {
   sortByElement,
   LiteralType,
   literatureContent
-} from 'src/components/literature/LiteratureCommon';
+} from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import Literature from 'src/models/Literature';
 import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
