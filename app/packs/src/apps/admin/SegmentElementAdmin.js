@@ -5,7 +5,7 @@ import Clipboard from 'clipboard';
 import { findIndex, filter, sortBy, orderBy } from 'lodash';
 import LoadingModal from 'src/components/common/LoadingModal';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
-import { ElementField } from 'src/components/elements/ElementField';
+import { ElementField } from 'src/components/generic/ElementField';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import AttrNewModal from 'src/apps/admin/generic/AttrNewModal';
 import AttrEditModal from 'src/apps/admin/generic/AttrEditModal';
