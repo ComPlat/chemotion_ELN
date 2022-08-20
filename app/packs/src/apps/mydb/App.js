@@ -3,7 +3,7 @@ import { Col, Grid, Row } from 'react-bootstrap';
 
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
-import Elements from 'src/components/elements/Elements';
+import Elements from 'src/apps/mydb/elements/Elements';
 import InboxModal from 'src/apps/mydb/inbox/InboxModal';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import LoadingModal from 'src/components/common/LoadingModal';
