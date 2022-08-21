@@ -176,7 +176,7 @@ class Molecule < ApplicationRecord
 
     File.write(
       full_svg_path(svg_file_name),
-      Loofah.scrub_fragment(svg_data.encode('UTF-8'), :strip).to_s
+      Loofah.scrub_fragment(svg_data.encode('UTF-8'), :strip).to_s.gsub('viewbox', 'viewBox')
     )
 
     self.molecule_svg_file = svg_file_name

@@ -360,7 +360,7 @@ class Sample < ApplicationRecord
 
     if svg =~ /\ATMPFILE[0-9a-f]{64}.svg\z/
       src = full_svg_path(svg.to_s)
-      return unless File.exist?(src)
+      return unless File.file?(src)
 
       svg = File.read(src)
       FileUtils.remove(src)
@@ -597,7 +597,7 @@ private
   end
 
   def scrub(value)
-    Loofah.scrub_fragment(value, :strip).to_s
+    Loofah.scrub_fragment(value, :strip).to_s.gsub('viewbox', 'viewBox')
 #   value
   end
 
