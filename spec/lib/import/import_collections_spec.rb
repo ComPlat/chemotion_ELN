@@ -11,11 +11,11 @@ RSpec.describe 'ImportCollection' do
   before do
     user.save!
     create_tmp_file
+    stub_const('EPSILON', 0.001)
   end
 
   context 'when importing from a file' do
-    it 'import a collection with a sample' do
-      EPSILON = 0.001
+    it 'import a collection with 2 samples' do
       zip_file_path = copy_target_to_import_folder('collection_samples')
       do_import(zip_file_path, user)
 
@@ -48,6 +48,13 @@ RSpec.describe 'ImportCollection' do
       # TO DO: found out whats the meaning of these params
       expect(sample.real_amount_value).to eq(nil)
       expect(sample.user_id).to eq(nil)
+
+      sample = Sample.find_by(name: 'Benzene A')
+      expect(sample).to be_present
+    end
+
+    it 'import a collection with a reaction' do
+
     end
   end
 
