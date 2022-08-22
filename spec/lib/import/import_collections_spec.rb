@@ -12,6 +12,38 @@ RSpec.describe 'ImportCollection' do
     user.save!
     create_tmp_file
     stub_const('EPSILON', 0.001)
+
+    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/RJUFJBKOKNCXHH-UHFFFAOYSA-N/record/JSON')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/json',
+          'User-Agent' => 'Ruby'
+        }
+      )
+      .to_return(status: 200, body: '', headers: {})
+
+ stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/XBDQKXXYIPTUBI-UHFFFAOYSA-N/record/JSON").
+         with(
+           headers: {
+          'Accept'=>'*/*',
+          'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type'=>'text/json',
+          'User-Agent'=>'Ruby'
+           }).
+         to_return(status: 200, body: "", headers: {})
+
+    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/OKKJLVBELUTLKV-UHFFFAOYSA-N/record/JSON')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/json',
+          'User-Agent' => 'Ruby'
+        }
+      )
+      .to_return(status: 200, body: '', headers: {})
   end
 
   context 'when importing from a file' do
@@ -54,7 +86,14 @@ RSpec.describe 'ImportCollection' do
     end
 
     it 'import a collection with a reaction' do
+      zip_file_path = copy_target_to_import_folder('collection_reaction')
+      do_import(zip_file_path, user)
 
+      collection = Collection.find_by(label: 'Fab-Col-Reaction')
+      expect(collection).to be_present
+
+      reaction = Reaction.first
+      expect(reaction).to be_present
     end
   end
 
