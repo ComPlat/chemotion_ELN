@@ -13,15 +13,41 @@ RSpec.describe 'ImportCollection' do
     create_tmp_file
   end
 
-  context 'imports from a file' do
+  context 'when importing from a file' do
     it 'import a collection with a sample' do
-      zip_file_path = copy_target_to_import_folder('fe7fc72d-f6ec-467d-ae23-6587e5fd4333')
+      EPSILON = 0.001
+      zip_file_path = copy_target_to_import_folder('collection_samples')
       do_import(zip_file_path, user)
 
       collection = Collection.find_by(label: 'Fab-Col-Sample')
       expect(collection).to be_present
-      sample = Sample.find_by(name: 'Benzene A')
+
+      sample = Sample.find_by(name: 'Water-001')
+
       expect(sample).to be_present
+      expect(sample.target_amount_value).to be_within(EPSILON).of(0.1)
+      expect(sample.target_amount_unit).to eq('g')
+      expect(sample.created_at.strftime('%FT%T')).to eq('2022-08-22T07:59:32')
+      expect(sample.updated_at.strftime('%FT%T')).to eq('2022-08-22T07:59:32')
+      expect(sample.description).to eq('MyWater')
+      expect(sample.purity).to be_within(EPSILON).of(0.95)
+      expect(sample.location).to eq('Room X1')
+      expect(sample.is_top_secret).to eq(false)
+      expect(sample.external_label).to eq('Ext-Water')
+      expect(sample.short_label).to eq('FM-7')
+      expect(sample.real_amount_unit).to eq('g')
+      expect(sample.density).to be_within(EPSILON).of(0.998202)
+      expect(sample.melting_point.to_s).to eq('0.0...Infinity')
+      expect(sample.boiling_point.to_s).to eq('100.0...Infinity')
+      expect(sample.molarity_value).to be_within(EPSILON).of(0)
+      expect(sample.molarity_unit).to eq('M')
+      expect(sample.decoupled).to eq(false)
+      expect(sample.molecular_mass).to be_within(EPSILON).of(0)
+      expect(sample.sum_formula).to eq('')
+
+      # TO DO: found out whats the meaning of these params
+      expect(sample.real_amount_value).to eq(nil)
+      expect(sample.user_id).to eq(nil)
     end
   end
 
@@ -31,10 +57,10 @@ RSpec.describe 'ImportCollection' do
   end
 
   def copy_target_to_import_folder(import_id)
-    import_file_path = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
-    zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
-    FileUtils.copy_file(zip_file_path, import_file_path)
-    zip_file_path
+    src_location = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
+    target_location = File.join('tmp', 'import', "#{import_id}.zip")
+    FileUtils.copy_file(src_location, target_location)
+    target_location
   end
 
   def do_import(zip_file_path, user)
