@@ -444,13 +444,14 @@ module Import
 
     def import_attachments
       primary_store = Rails.configuration.storage.primary_store
+
       @data.fetch('Attachment', {}).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type')
         attachable_uuid = fields.fetch('attachable_id')
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
-
         file_name =  "#{fields.fetch('identifier')}#{File.extname(fields.fetch('filename'))}"
+        file_name = File.basename(file_name, File.extname(file_name))
         attachment = Attachment.where(id: @attachments, filename: file_name).first
         attachment.update!(
           attachable: attachable,
