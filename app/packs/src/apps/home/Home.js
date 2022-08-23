@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Grid, Row } from 'react-bootstrap';
 
-import Navigation from 'src/components/Navigation'
+import Navigation from 'src/components/navigation/Navigation'
 import XHome from 'src/components/extra/HomeXHome'
-import WelcomeMessage from 'src/components/WelcomeMessage';
+import WelcomeMessage from 'src/apps/home/WelcomeMessage';
 
 const extraHomes = () => {
   const homes = [];
@@ -22,7 +22,7 @@ class Home extends Component {
   render() {
     return (
       <div>
-        { XHome.count && XHome.count > 0
+        {XHome.count && XHome.count > 0
           ? extraHomes().map((Annex, i) => <Annex key={`Annex_${i}`} />)
           : <Grid fluid>
             <Row className="card-navigation">

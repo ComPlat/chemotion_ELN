@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 
-import { elementShowOrNew } from 'src/components/routesUtils';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
