@@ -183,8 +183,8 @@ GEM
       i18n (>= 0.7, < 2)
       minitest (~> 5.1)
       tzinfo (~> 1.1)
-    addressable (2.7.0)
-      public_suffix (>= 2.0.2, < 5.0)
+    addressable (2.8.1)
+      public_suffix (>= 2.0.2, < 6.0)
     aes_key_wrap (1.1.0)
     airbrussh (1.3.1)
       sshkit (>= 1.6.1, != 1.7.0)
@@ -251,17 +251,17 @@ GEM
       sshkit (~> 1.2)
     capistrano-yarn (2.0.2)
       capistrano (~> 3.0)
-    capybara (3.29.0)
+    capybara (3.36.0)
       addressable
+      matrix
       mini_mime (>= 0.1.3)
       nokogiri (~> 1.8)
       rack (>= 1.6.0)
       rack-test (>= 0.6.3)
-      regexp_parser (~> 1.5)
+      regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
     charlock_holmes (0.7.7)
-    childprocess (2.0.0)
-      rake (< 13.0)
+    childprocess (4.1.0)
     chronic (0.10.2)
     chronic_duration (0.10.6)
       numerizer (~> 0.1.1)
@@ -304,7 +304,7 @@ GEM
       railties (>= 4.1.0)
       responders
       warden (~> 1.2.3)
-    diff-lcs (1.3)
+    diff-lcs (1.5.0)
     docile (1.4.0)
     dotenv (2.7.2)
     dotenv-rails (2.7.2)
@@ -436,6 +436,7 @@ GEM
     mail (2.7.1)
       mini_mime (>= 0.1.1)
     marcel (1.0.2)
+    matrix (0.4.2)
     memoist (0.16.0)
     memory_profiler (0.9.13)
     meta_request (0.7.2)
@@ -540,7 +541,7 @@ GEM
     pundit (2.0.1)
       activesupport (>= 3.0.0)
     racc (1.6.0)
-    rack (2.0.9)
+    rack (2.0.9.1)
     rack-accept (0.4.5)
       rack (>= 0.4)
     rack-contrib (2.2.0)
@@ -555,8 +556,8 @@ GEM
       rack (< 2.1)
     rack-proxy (0.7.0)
       rack
-    rack-test (1.1.0)
-      rack (>= 1.0, < 3)
+    rack-test (2.0.2)
+      rack (>= 1.3)
     rails (5.2.7.1)
       actioncable (= 5.2.7.1)
       actionmailer (= 5.2.7.1)
@@ -587,7 +588,7 @@ GEM
     rb-inotify (0.10.1)
       ffi (~> 1.0)
     redcarpet (3.4.0)
-    regexp_parser (1.6.0)
+    regexp_parser (2.5.0)
     representable (3.1.1)
       declarative (< 0.1.0)
       trailblazer-option (>= 0.1.1, < 0.2.0)
@@ -595,6 +596,7 @@ GEM
     responders (2.4.1)
       actionpack (>= 4.2.0, < 6.0)
       railties (>= 4.2.0, < 6.0)
+    rexml (3.2.5)
     rmagick (4.1.2)
     roo (2.8.2)
       nokogiri (~> 1)
@@ -605,12 +607,12 @@ GEM
       rspec-core (~> 3.8.0)
       rspec-expectations (~> 3.8.0)
       rspec-mocks (~> 3.8.0)
-    rspec-core (3.8.0)
+    rspec-core (3.8.2)
       rspec-support (~> 3.8.0)
-    rspec-expectations (3.8.3)
+    rspec-expectations (3.8.6)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.8.0)
-    rspec-mocks (3.8.0)
+    rspec-mocks (3.8.2)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.8.0)
     rspec-rails (3.8.2)
@@ -623,7 +625,7 @@ GEM
       rspec-support (~> 3.8.0)
     rspec-repeat (1.0.2)
       rspec (~> 3.0)
-    rspec-support (3.8.2)
+    rspec-support (3.8.3)
     rtf (0.3.3)
     rubocop (0.69.0)
       jaro_winkler (~> 1.5.1)
@@ -669,9 +671,10 @@ GEM
       activerecord (>= 4.0.0)
       railties (>= 4.0.0)
     schmooze (0.2.0)
-    selenium-webdriver (3.142.4)
-      childprocess (>= 0.5, < 3.0)
-      rubyzip (~> 1.2, >= 1.2.2)
+    selenium-webdriver (4.1.0)
+      childprocess (>= 0.5, < 5.0)
+      rexml (~> 3.2, >= 3.2.5)
+      rubyzip (>= 1.2.2)
     semantic_range (3.0.0)
     sentry-rails (5.4.1)
       railties (>= 5.0)
@@ -745,10 +748,10 @@ GEM
       binding_of_caller (>= 0.7.2)
       railties (>= 4.0)
       sprockets-rails (>= 2.0, < 4.0)
-    webdrivers (4.1.2)
+    webdrivers (5.0.0)
       nokogiri (~> 1.6)
-      rubyzip (~> 1.0)
-      selenium-webdriver (>= 3.0, < 4.0)
+      rubyzip (>= 1.3.0)
+      selenium-webdriver (~> 4.0)
     webfinger (1.2.0)
       activesupport
       httpclient (>= 2.4)
@@ -797,7 +800,7 @@ DEPENDENCIES
   capistrano-rails
   capistrano-rvm
   capistrano-yarn
-  capybara (~> 3.29.0)
+  capybara
   charlock_holmes
   chem_scanner!
   chronic
@@ -897,7 +900,7 @@ DEPENDENCIES
   turbo-sprockets-rails4
   uglifier (>= 4.0.0)
   web-console (~> 2.0)
-  webdrivers (~> 4.1.2)
+  webdrivers
   webmock
   webpacker!
   whenever

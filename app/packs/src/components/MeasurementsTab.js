@@ -28,7 +28,7 @@ class MeasurementsTab extends Component {
   loadMeasurementsForSample() {
     this.setState({ loading: true });
     this.context.measurements.loadMeasurementsForSample(
-      this.props.sample.id,
+      this.props.sample,
       () => this.setState({ loading: false })
     );
   }
