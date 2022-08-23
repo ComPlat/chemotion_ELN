@@ -5,7 +5,7 @@ import HTML5Backend from 'react-dnd-html5-backend';
 import { DragDropContext } from 'react-dnd';
 
 import App from 'src/apps/mydb/App'
-import initRoutes from 'src/components/routes';
+import initRoutes from 'src/apps/mydb/routes';
 import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
 
 const AppWithDnD = DragDropContext(HTML5Backend)(App);

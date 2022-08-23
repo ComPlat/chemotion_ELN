@@ -10,7 +10,7 @@ import DataCollector from 'src/apps/admin/DataCollector';
 import OlsTerms from 'src/apps/admin/OlsTerms';
 import NovncSettings from 'src/apps/admin/NovncSettings';
 import MatrixManagement from 'src/apps/admin/MatrixManagement';
-import TextTemplateContainer from 'src/apps/admin/text_templates/TextTemplateContainer';
+import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateContainer';
 import GenericElementAdmin from 'src/apps/admin/GenericElementAdmin';
 import SegmentElementAdmin from 'src/apps/admin/SegmentElementAdmin';
 import DatasetElementAdmin from 'src/apps/admin/DatasetElementAdmin';
