@@ -14,9 +14,8 @@ RSpec.describe 'ImportCollection' do
     stub_rest_request('RJUFJBKOKNCXHH-UHFFFAOYSA-N')
     stub_rest_request('OKKJLVBELUTLKV-UHFFFAOYSA-N')
     stub_rest_request('XBDQKXXYIPTUBI-UHFFFAOYSA-N')
-
-
     stub_const('EPSILON', 0.001)
+
   end
 
   context 'when importing from a file' do
@@ -67,12 +66,29 @@ RSpec.describe 'ImportCollection' do
 
       reaction = Reaction.first
       expect(reaction).to be_present
+      expect(reaction.name).to eq('Esterification of propionic acid ')
+      expect(reaction.created_at.strftime('%FT%T')).to eq('2022-08-22T14:19:45')
+      expect(reaction.description.to_s).to eq('{"ops"=>[{"insert"=>"A "}, {"attributes"=>{"bold"=>true}, "insert"=>"sample "}, {"attributes"=>{"underline"=>true}, "insert"=>"reaction"}, {"insert"=>"\\n"}]}')
+      expect(reaction.timestamp_start).to eq('22/08/2022 16:16:30')
+      expect(reaction.timestamp_stop).to eq('23/08/2022 16:16:33')
+      expect(reaction.observation.to_s).to eq('{"ops"=>[{"insert"=>"\\nThe obtained crude product was purified via HPLC using MeCN/H₂O 10:1."}]}')
+      expect(reaction.purification).to match_array(%w[TLC HPLC])
+      expect(reaction.dangerous_products).to match_array([])
+      expect(reaction.tlc_solvents).to eq('')
+      expect(reaction.tlc_description).to eq('')
+      expect(reaction.rf_value).to eq('0')
+      expect(reaction.temperature.to_s).to eq('{"data"=>[], "userText"=>"30", "valueUnit"=>"°C"}')
+      expect(reaction.status).to eq('Done')
+      expect(reaction.solvent).to eq('')
+      expect(reaction.short_label).to eq('UU-R1')
+      expect(reaction.role).to eq('gp')
+      expect(reaction.duration).to eq('1 Day(s)')
+      expect(reaction.conditions).to eq('')
     end
   end
 
   def stub_rest_request(identifier)
-
-    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+identifier+'/record/JSON')
+    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/' + identifier + '/record/JSON')
       .with(
         headers: {
           'Accept' => '*/*',
@@ -82,7 +98,7 @@ RSpec.describe 'ImportCollection' do
         }
       )
       .to_return(status: 200, body: '', headers: {})
-    end
+  end
 
   def create_tmp_file
     import_path = File.join('tmp', 'import')
