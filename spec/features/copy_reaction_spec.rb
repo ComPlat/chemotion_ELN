@@ -51,7 +51,6 @@ describe 'Copy reaction' do
   end
 
   before do
-    sign_in(user1)
     fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
     svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
@@ -72,6 +71,8 @@ describe 'Copy reaction' do
     CollectionsReaction.find_or_create_by!(reaction: reaction3, collection: cshare2)
     ReactionsStartingMaterialSample.create!(reaction: reaction3, sample: material3, reference: true, equivalent: 1)
     ReactionsProductSample.create!(reaction: reaction3, sample: product3, equivalent: 1)
+
+    sign_in(user1)
   end
 
   it 'new reaction', js: true do
@@ -96,11 +97,11 @@ describe 'Copy reaction' do
   end
 
   it 'to diff collection', js: true do
-    find_by_id('col-mgnt-btn').click
-    find_by_id('mycol_-1').click
-    find_all('input[type="text"]')[2].set('Col2')
-    find_by_id('my-collections-update-btn').click
-    find_by_id('col-mgnt-btn').click
+    # find_by_id('col-mgnt-btn').click
+    # find_by_id('mycol_-1').click
+    # find_all('input[type="text"]')[2].set('Col2')
+    # find_by_id('my-collections-update-btn').click
+    # find_by_id('col-mgnt-btn').click
     find_by_id('tree-id-Col3').click
     first('i.icon-reaction').click
     first('i.c-bs-success').click
