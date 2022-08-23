@@ -1,4 +1,3 @@
-import { CitationType } from 'src/components/CitationType';
 import Element from 'src/models/Element';
 
 export default class Literature extends Element {
@@ -8,7 +7,7 @@ export default class Literature extends Element {
       url: '',
       doi: '',
       isbn: '',
-      litype: CitationType[0],
+      litype: 'citedOwn',
       type: 'literature',
       is_new: false,
       refs: {}

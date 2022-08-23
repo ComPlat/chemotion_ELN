@@ -1,11 +1,11 @@
 import React from 'react';
 import { Nav, Navbar, MenuItem, NavDropdown } from 'react-bootstrap';
 
-import UserAuth from 'src/components/UserAuth';
+import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 
-import NavNewSession from 'src/apps/home/NavNewSession';
+import NavNewSession from 'src/components/navigation/NavNewSession';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 
 const NavHead = () => (

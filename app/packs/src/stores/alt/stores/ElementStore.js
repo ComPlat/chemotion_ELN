@@ -34,7 +34,7 @@ import { extraThing } from 'src/utilities/Functions';
 import Xlisteners from 'src/components/extra/ElementStoreXlisteners';
 import Xhandlers from 'src/components/extra/ElementStoreXhandlers';
 import Xstate from 'src/components/extra/ElementStoreXstate';
-import { elementShowOrNew } from 'src/components/routesUtils';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from 'src/utilities/ElementUtils';
