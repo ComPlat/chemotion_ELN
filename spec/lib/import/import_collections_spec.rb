@@ -11,39 +11,12 @@ RSpec.describe 'ImportCollection' do
   before do
     user.save!
     create_tmp_file
+    stub_rest_request('RJUFJBKOKNCXHH-UHFFFAOYSA-N')
+    stub_rest_request('OKKJLVBELUTLKV-UHFFFAOYSA-N')
+    stub_rest_request('XBDQKXXYIPTUBI-UHFFFAOYSA-N')
+
+
     stub_const('EPSILON', 0.001)
-
-    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/RJUFJBKOKNCXHH-UHFFFAOYSA-N/record/JSON')
-      .with(
-        headers: {
-          'Accept' => '*/*',
-          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-          'Content-Type' => 'text/json',
-          'User-Agent' => 'Ruby'
-        }
-      )
-      .to_return(status: 200, body: '', headers: {})
-
- stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/XBDQKXXYIPTUBI-UHFFFAOYSA-N/record/JSON").
-         with(
-           headers: {
-          'Accept'=>'*/*',
-          'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-          'Content-Type'=>'text/json',
-          'User-Agent'=>'Ruby'
-           }).
-         to_return(status: 200, body: "", headers: {})
-
-    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/OKKJLVBELUTLKV-UHFFFAOYSA-N/record/JSON')
-      .with(
-        headers: {
-          'Accept' => '*/*',
-          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-          'Content-Type' => 'text/json',
-          'User-Agent' => 'Ruby'
-        }
-      )
-      .to_return(status: 200, body: '', headers: {})
   end
 
   context 'when importing from a file' do
@@ -96,6 +69,20 @@ RSpec.describe 'ImportCollection' do
       expect(reaction).to be_present
     end
   end
+
+  def stub_rest_request(identifier)
+
+    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+identifier+'/record/JSON')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/json',
+          'User-Agent' => 'Ruby'
+        }
+      )
+      .to_return(status: 200, body: '', headers: {})
+    end
 
   def create_tmp_file
     import_path = File.join('tmp', 'import')
