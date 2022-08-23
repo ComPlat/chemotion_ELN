@@ -15,7 +15,6 @@ RSpec.describe 'ImportCollection' do
     stub_rest_request('OKKJLVBELUTLKV-UHFFFAOYSA-N')
     stub_rest_request('XBDQKXXYIPTUBI-UHFFFAOYSA-N')
     stub_const('EPSILON', 0.001)
-
   end
 
   context 'when importing from a file' do
@@ -84,6 +83,17 @@ RSpec.describe 'ImportCollection' do
       expect(reaction.role).to eq('gp')
       expect(reaction.duration).to eq('1 Day(s)')
       expect(reaction.conditions).to eq('')
+    end
+
+    it 'import a collection with a wellplate' do
+      zip_file_path = copy_target_to_import_folder('collection-wellplate')
+      do_import(zip_file_path, user)
+
+      collection = Collection.find_by(label: 'Fab-Col-Wellplate')
+      expect(collection).to be_present
+
+      reaction = Wellplate.first
+      expect(reaction).to be_present
     end
   end
 
