@@ -86,14 +86,46 @@ RSpec.describe 'ImportCollection' do
     end
 
     it 'import a collection with a wellplate' do
-      zip_file_path = copy_target_to_import_folder('collection-wellplate')
+      zip_file_path = copy_target_to_import_folder('collection_wellplate')
       do_import(zip_file_path, user)
 
       collection = Collection.find_by(label: 'Fab-Col-Wellplate')
       expect(collection).to be_present
 
-      reaction = Wellplate.first
-      expect(reaction).to be_present
+      wellplate = Wellplate.first
+      expect(wellplate).to be_present
+      expect(wellplate.name).to eq('MyWellplate')
+      expect(wellplate.size).to eq(96)
+      expect(wellplate.description).to eq({})
+
+      expect(wellplate.samples).to be_present
+      expect(wellplate.samples.length).to eq(1)
+
+      expect(wellplate.wells).to be_present
+      expect(wellplate.wells.length).to eq(wellplate.size)
+
+      # TO DO: Checking well properties (color, labels, ...). First the export must be repaired
+    end
+    it 'import a collection with a screen' do
+      zip_file_path = copy_target_to_import_folder('collection_screen')
+      do_import(zip_file_path, user)
+
+      collection = Collection.find_by(label: 'Fab-Col-Screen')
+      expect(collection).to be_present
+
+      expect(collection.screens).to be_present
+      expect(collection.screens.length).to eq(1)
+      screen = collection.screens[0]
+      expect(screen.description.to_s).to eq('{"ops"=>[{"insert"=>"nothing to see here\\n"}]}')
+      expect(screen.name).to eq('MyScreen')
+      expect(screen.result).to eq('also nothing')
+      expect(screen.collaborator).to eq('none')
+      expect(screen.conditions).to eq('also none')
+      expect(screen.requirements).to eq('nothing')
+      expect(screen.created_at.strftime('%FT%T')).to eq('2022-08-24T08:39:17')
+      expect(screen.updated_at.strftime('%FT%T')).to eq('2022-08-24T08:39:17')
+
+      expect(screen.wellplates.length).to eq(1)
     end
   end
 
