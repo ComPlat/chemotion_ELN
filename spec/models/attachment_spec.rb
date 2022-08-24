@@ -3,64 +3,171 @@
 require 'rails_helper'
 
 RSpec.describe Attachment, type: :model do
+  let(:attachment) { create(:attachment) }
+
   describe '#copy' do
-    pending 'will be improved'
+    pending 'not in use??? TODO: find a way to test this method'
   end
 
   describe '#extname' do
-    pending 'will be improved'
+    it 'returns filename extension' do
+      expect(attachment.extname).to eq('.txt')
+    end
   end
 
   describe '#read_file' do
-    pending 'will be improved'
+    it 'returns content of file' do
+      expect(attachment.read_file).to eq("Hello world\n")
+    end
   end
 
   describe '#read_thumbnail' do
-    pending 'will be improved'
+    context 'when no thumbnail exists' do
+      it 'returns nil' do
+        expect(attachment.read_thumbnail).to eq(nil)
+      end
+    end
+
+    context 'when thumbnail exists' do
+      let(:attachment) { create(:attachment, :with_image) }
+
+      it 'returns content of thumbnail file' do
+        expect(attachment.read_thumbnail).not_to eq(nil)
+      end
+    end
   end
 
   describe '#abs_path' do
-    pending 'will be improved'
+    it 'returns the absolute path of file' do
+      expected_path = Rails.root.join('tmp', 'test', 'uploads', 'tmp', attachment.key).to_s
+      expect(attachment.abs_path).to eq(expected_path)
+    end
   end
 
   describe '#abs_prev_path' do
-    pending 'will be improved'
+    it 'returns the same absolute path like #abs_path' do
+      expect(attachment.abs_prev_path).to eq(attachment.abs_path)
+    end
   end
 
   describe '#store' do
-    pending 'will be improved'
+    it 'returns an instance of storage class' do
+      expect(attachment.store).to be_instance_of(Tmp)
+    end
   end
 
   describe '#old_store' do
-    pending 'will be improved'
+    it 'returns an instance of storage class' do
+      expect(attachment.old_store).to be_instance_of(Tmp)
+    end
   end
 
   describe '#add_checksum' do
-    pending 'will be improved'
+    it 'returns a MD5 checksum' do
+      expect(attachment.add_checksum).to be_instance_of(Digest::MD5)
+    end
   end
 
   describe '#reset_checksum' do
-    pending 'will be improved'
+    context 'when checksum was not changed' do
+      it 'returns nil' do
+        expect(attachment.reset_checksum).to eq(nil)
+      end
+    end
+
+    context 'when checksum was changed' do
+      it 'returns updated attachment' do
+        pending 'TODO: find a way to test this'
+        expect(attachment.reset_checksum).to be_instance_of(described_class)
+      end
+    end
   end
 
   describe '#regenerate_thumbnail' do
-    pending 'will be improved'
+    pending 'will be improved TODO: find a way to test this'
   end
 
   describe '#for_research_plan?' do
-    pending 'will be improved'
+    subject { attachment.for_research_plan? }
+
+    context 'when not attached to research_plan' do
+      let(:attachment) { create(:attachment, :attached_to_container) }
+
+      it 'returns false' do
+        expect(subject).to eq(false)
+      end
+    end
+
+    context 'when attached to research_plan' do
+      let(:attachment) { create(:attachment, :attached_to_research_plan) }
+
+      it 'returns true' do
+        expect(subject).to eq(true)
+      end
+    end
   end
 
   describe '#for_container?' do
-    pending 'will be improved'
+    subject { attachment.for_container? }
+
+    context 'when not attached to container' do
+      let(:attachment) { create(:attachment, :attached_to_research_plan) }
+
+      it 'returns false' do
+        expect(subject).to eq(false)
+      end
+    end
+
+    context 'when attached to container' do
+      let(:attachment) { create(:attachment, :attached_to_container) }
+
+      it 'returns true' do
+        expect(subject).to eq(true)
+      end
+    end
   end
 
   describe '#for_report?' do
-    pending 'will be improved'
+    subject { attachment.for_report? }
+
+    context 'when not attached to report' do
+      let(:attachment) { create(:attachment, :attached_to_container) }
+
+      it 'returns false' do
+        expect(subject).to eq(false)
+      end
+    end
+
+    context 'when attached to report' do
+      let(:attachment) { create(:attachment, :attached_to_report) }
+
+      it 'returns true' do
+        pending 'TODO: Find a way to test report'
+        expect(subject).to eq(true)
+      end
+    end
   end
 
   describe '#for_template?' do
-    pending 'will be improved'
+    subject { attachment.for_template? }
+
+    context 'when not attached to template' do
+      let(:attachment) { create(:attachment, :attached_to_container) }
+
+      it 'returns false' do
+        expect(subject).to eq(false)
+      end
+    end
+
+    context 'when attached to template' do
+      let(:attachment) { create(:attachment, :attached_to_template) }
+
+      it 'returns true' do
+        pending 'TODO: Find a way to test template'
+
+        expect(subject).to eq(true)
+      end
+    end
   end
 
   describe '#research_plan_id' do

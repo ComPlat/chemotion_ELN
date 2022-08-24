@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :attachment do
     #  container_id nil
@@ -17,5 +19,28 @@ FactoryBot.define do
     file_path { File.join("#{Rails.root}/spec/fixtures/upload.txt") }
 
     association :attachable, factory: :container
+
+    trait :with_image do
+      key { SecureRandom.uuid }
+      filename { 'upload.jpg' }
+      file_data { File.read("#{Rails.root}/spec/fixtures/upload.jpg") }
+      file_path { File.join("#{Rails.root}/spec/fixtures/upload.jpg") }
+    end
+
+    trait :attached_to_container do
+      association :attachable, factory: :container
+    end
+
+    trait :attached_to_research_plan do
+      association :attachable, factory: :research_plan
+    end
+
+    trait :attached_to_report do
+      association :attachable, factory: :report
+    end
+
+    trait :attached_to_template do
+      association :attachable, factory: :text_template
+    end
   end
 end
