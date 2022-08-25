@@ -66,8 +66,7 @@ module Import
           end
         end
       end
-
-      update_researchplan_body
+      update_researchplan_body(attachments)
 
       @attachments = attachments.map(&:id)
       attachments = []
@@ -452,7 +451,9 @@ module Import
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
         file_name =  "#{fields.fetch('identifier')}#{File.extname(fields.fetch('filename'))}"
         file_name = File.basename(file_name, File.extname(file_name))
+        binding.pry
         attachment = Attachment.where(id: @attachments, filename: file_name).first
+
         attachment.update!(
           attachable: attachable,
           transferred: true,
@@ -567,10 +568,11 @@ module Import
       associations
     end
 
-    def update_researchplan_body
+    def update_researchplan_body(attachments)
       @data['ResearchPlan']&.each do |_attr_name, attr_value|
         image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
         image_fields.each do |field|
+binding.pry
           new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
           field['value']['public_name'] = new_att['identifier']
           field['value']['file_name'] = new_att['filename']
