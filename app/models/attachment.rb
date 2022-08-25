@@ -69,14 +69,6 @@ class Attachment < ApplicationRecord
     where(attachable_type: 'Template')
   }
 
-  def copy(**args)
-    d = self.dup
-    d.identifier = nil
-    d.duplicated = true
-    d.update(args)
-    d
-  end
-
   def extname
     File.extname(self.filename.to_s)
   end
@@ -129,24 +121,12 @@ class Attachment < ApplicationRecord
     attachable_type == 'Container'
   end
 
-  def for_report?
-    attachable_type == 'Report'
-  end
-
-  def for_template?
-    attachable_type == 'Template'
-  end
-
   def research_plan_id
     for_research_plan? ? attachable_id : nil
   end
 
   def container_id
     for_container? ? attachable_id : nil
-  end
-
-  def report_id
-    for_report? ? attachable_id : nil
   end
 
   def research_plan
@@ -157,16 +137,8 @@ class Attachment < ApplicationRecord
     for_container? ? attachable : nil
   end
 
-  def report
-    for_report? ? attachable : nil
-  end
-
   def update_research_plan!(c_id)
     update!(attachable_id: c_id, attachable_type: 'ResearchPlan')
-  end
-
-  def update_report!(r_id)
-    update!(attachable_id: r_id, attachable_type: 'Report')
   end
 
   def rewrite_file_data!
@@ -177,12 +149,12 @@ class Attachment < ApplicationRecord
   end
 
   def update_filesize
-    self.filesize = File.size(self.file_path) if self.file_path.present?
-    self.filesize = self.file_data.bytesize if self.file_data && self.filesize.nil?
+    self.filesize = file_data.bytesize if file_data.present?
+    self.filesize = File.size(file_path) if file_path.present? && File.exist?(file_path)
   end
 
   def add_content_type
-    return unless self.content_type.present?
+    return if content_type.present?
     self.content_type = begin
                           MimeMagic.by_path(filename)&.type
                         rescue

@@ -5,10 +5,6 @@ require 'rails_helper'
 RSpec.describe Attachment, type: :model do
   let(:attachment) { create(:attachment) }
 
-  describe '#copy' do
-    pending 'not in use??? TODO: find a way to test this method'
-  end
-
   describe '#extname' do
     it 'returns filename extension' do
       expect(attachment.extname).to eq('.txt')
@@ -127,91 +123,204 @@ RSpec.describe Attachment, type: :model do
     end
   end
 
-  describe '#for_report?' do
-    subject { attachment.for_report? }
-
-    context 'when not attached to report' do
-      let(:attachment) { create(:attachment, :attached_to_container) }
-
-      it 'returns false' do
-        expect(subject).to eq(false)
-      end
-    end
-
-    context 'when attached to report' do
-      let(:attachment) { create(:attachment, :attached_to_report) }
-
-      it 'returns true' do
-        pending 'TODO: Find a way to test report'
-        expect(subject).to eq(true)
-      end
-    end
-  end
-
-  describe '#for_template?' do
-    subject { attachment.for_template? }
-
-    context 'when not attached to template' do
-      let(:attachment) { create(:attachment, :attached_to_container) }
-
-      it 'returns false' do
-        expect(subject).to eq(false)
-      end
-    end
-
-    context 'when attached to template' do
-      let(:attachment) { create(:attachment, :attached_to_template) }
-
-      it 'returns true' do
-        pending 'TODO: Find a way to test template'
-
-        expect(subject).to eq(true)
-      end
-    end
-  end
-
   describe '#research_plan_id' do
-    pending 'will be improved'
+    let(:attachment) { build(:attachment, attachable_type: attachable_type, attachable_id: attachable_id) }
+    let(:attachable_id) { 666 }
+
+    context 'when attached to a research plan' do
+      let(:attachable_type) { 'ResearchPlan' }
+
+      it 'returns the id of the research plan' do
+        expect(attachment.research_plan_id).to eq attachable_id
+      end
+    end
+
+    context 'when not attached to a research_plan' do
+      let(:attachable_type) { 'Container' }
+
+      it 'returns nil' do
+        expect(attachment.research_plan_id).to eq nil
+      end
+    end
   end
 
   describe '#container_id' do
-    pending 'will be improved'
-  end
+    let(:attachment) { build(:attachment, attachable_type: attachable_type, attachable_id: attachable_id) }
+    let(:attachable_id) { 666 }
 
-  describe '#report_id' do
-    pending 'will be improved'
+    context 'when attached to a container' do
+      let(:attachable_type) { 'Container' }
+
+      it 'returns the id of the container' do
+        expect(attachment.container_id).to eq attachable_id
+      end
+    end
+
+    context 'when not attached to a container' do
+      let(:attachable_type) { 'ResearchPlan' }
+
+      it 'returns nil' do
+        expect(attachment.container_id).to eq nil
+      end
+    end
   end
 
   describe '#research_plan' do
-    pending 'will be improved'
+    let(:attachment) { build(:attachment, attachable: attachable) }
+
+    context 'when attached to a research plan' do
+      let(:attachable) { build(:research_plan) }
+
+      it 'returns the research plan' do
+        expect(attachment.research_plan).to eq attachable
+      end
+    end
+
+    context 'when not attached to a research_plan' do
+      let(:attachable) { build(:container) }
+
+      it 'returns nil' do
+        expect(attachment.research_plan).to eq nil
+      end
+    end
   end
 
   describe '#container' do
-    pending 'will be improved'
-  end
+    let(:attachment) { build(:attachment, attachable: attachable) }
 
-  describe '#report' do
-    pending 'will be improved'
+    context 'when attached to a container' do
+      let(:attachable) { build(:container) }
+
+      it 'returns the container' do
+        expect(attachment.container).to eq attachable
+      end
+    end
+
+    context 'when not attached to a container' do
+      let(:attachable) { build(:research_plan) }
+
+      it 'returns nil' do
+        expect(attachment.container).to eq nil
+      end
+    end
   end
 
   describe '#update_research_plan!' do
-    pending 'will be improved'
-  end
+    before do
+      attachment.update_research_plan!(666)
+    end
 
-  describe '#update_report!' do
-    pending 'will be improved'
+    it 'assigns the provided id as attachable_id and sets the attachable_type to "ResearchPlan"' do
+      expect(attachment).to have_attributes(attachable_id: 666, attachable_type: 'ResearchPlan')
+    end
   end
 
   describe '#rewrite_file_data!' do
-    pending 'will be improved'
+    context 'when file_path leads to an existing file' do
+      let(:old_file_content) { 'Foo Bar' }
+      let(:attachment) { create(:attachment, file_data: old_file_content) }
+
+      let(:new_file_path) { File.join("#{Rails.root}/spec/fixtures/upload.txt") }
+      let(:new_file_content) { IO.binread(new_file_path) }
+
+      it 'overwrites the attachment file with the new file' do
+        attachment.file_path = new_file_path
+        attachment.rewrite_file_data!
+
+        expect(attachment.read_file).to eq new_file_content
+      end
+    end
+
+    context 'when file_path has no data but file_data accessor has data' do
+      let(:new_data) { 'Foo Bar' }
+
+      it 'writes the file_data to a file' do
+        attachment.file_data = new_data
+
+        attachment.rewrite_file_data!
+
+        expect(attachment.read_file).to eq new_data
+      end
+    end
   end
 
   describe '#update_filesize' do
-    pending 'will be improved'
+    before do
+      # this is just to have an easier base to compare from
+      attachment.filesize = 0
+    end
+
+    context 'when attachment has file_path set' do
+      let(:expected_filesize) { File.size(attachment.file_path) }
+
+      before do
+        attachment.file_path = File.join("#{Rails.root}/spec/fixtures/upload.txt")
+      end
+
+      it 'sets the filesize attributes to the filesize of the pointed file' do
+        expect { attachment.update_filesize }.to change(attachment, :filesize).from(0).to(expected_filesize)
+      end
+    end
+
+    context 'when attachment has file_data set' do
+      let(:file_data) { 'Foo Bar' }
+      let(:expected_filesize) { file_data.bytesize }
+
+      before do
+        attachment.file_data = file_data
+      end
+
+      it 'sets the filesize attribute to the size of the file_data accessor\'s content' do
+        expect { attachment.update_filesize }.to change(attachment, :filesize).from(0).to(expected_filesize)
+      end
+    end
+
+    context 'when attachment has both file_path and file_data set' do
+      let(:new_file_data) { 'Foo Bar' }
+      let(:file_path) { File.join("#{Rails.root}/spec/fixtures/upload.txt") }
+      let(:expected_filesize) { File.size(file_path) }
+
+      # this has to match the logic in attachment.store.write_file, so the correct filesize is used
+      it 'sets the filesize to the size of the file pointed at by file_path' do
+        expect { attachment.update_filesize }.to change(attachment, :filesize).from(0).to(expected_filesize)
+      end
+    end
+
+    context 'when attachment has neither file nor file_data' do
+      before do
+        attachment.file_path = nil
+        attachment.file_data = nil
+      end
+
+      it 'does not change the filesize attribute' do
+        expect { attachment.update_filesize }.not_to change(attachment, :filesize)
+      end
+    end
   end
 
   describe '#add_content_type' do
-    pending 'will be improved'
+    context 'when content_type is present' do
+      before do
+        attachment.content_type = 'foobar'
+      end
+
+      it 'does not change the content_type field' do
+        attachment.add_content_type
+
+        expect(attachment.content_type).to eq 'foobar'
+      end
+    end
+
+    context 'when content_type is missing' do
+      before do
+        attachment.content_type = nil
+      end
+      it 'guesses the content_type based on the file extension' do
+        attachment.add_content_type
+
+        expect(attachment.content_type).to eql 'text/plain'
+      end
+    end
   end
 
   # describe 'creation' do
