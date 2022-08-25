@@ -165,9 +165,6 @@ class Attachment < ApplicationRecord
   private
 
   def generate_key
-    #unless self.key #&& self.key.match(
-    #  /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
-    #)
     self.key = SecureRandom.uuid unless self.key
   end
 
@@ -176,7 +173,6 @@ class Attachment < ApplicationRecord
   end
 
   def store_changed
-    #!new_record? && storage_changed?
     !self.duplicated && storage_changed?
   end
 
