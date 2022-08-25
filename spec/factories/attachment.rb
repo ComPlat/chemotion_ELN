@@ -39,13 +39,5 @@ FactoryBot.define do
     trait :attached_to_research_plan do
       association :attachable, factory: :research_plan
     end
-
-    trait :attached_to_report do
-      association :attachable, factory: :report
-    end
-
-    trait :attached_to_template do
-      association :attachable, factory: :text_template
-    end
   end
 end
