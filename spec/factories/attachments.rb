@@ -2,6 +2,7 @@
 
 FactoryBot.define do
   factory :attachment do
+    key { nil }
     filename { 'upload.txt' }
     created_by { 0 }
     file_data { File.read("#{Rails.root}/spec/fixtures/upload.txt") }

@@ -323,6 +323,43 @@ RSpec.describe Attachment, type: :model do
     end
   end
 
+  describe '.create' do
+    # Callbacks from attachment model
+    it 'generates a key' do
+      expect(attachment.key).to be_present
+    end
+
+    context 'when attachment is a new upload' do
+      it 'saves the file and generates a thumbnail' do
+        expect(attachment.read_file).to eq "Hello world\n"
+        expect(attachment.thumb).to be true
+        expect(attachment.read_thumbnail).not_to be_nil
+      end
+
+      it 'generates a checksum of the file content' do
+
+      end
+    end
+
+    it 'determines the content type of the file' do
+
+    end
+
+    it 'updates the filesize if necessary' do
+
+    end
+
+    it 'fetches the generated identifier from the db' do
+
+    end
+
+    context 'when duplicated accessor is set' do
+      it 'duplicates the file and thumbnail' do
+
+      end
+    end
+  end
+
   # describe 'creation' do
   #   let(:file_path) { "#{Rails.root}/spec/fixtures/upload.txt" }
   #   let(:file_data) { File.read(file_path) }
