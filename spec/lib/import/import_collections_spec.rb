@@ -127,6 +127,26 @@ RSpec.describe 'ImportCollection' do
 
       expect(screen.wellplates.length).to eq(1)
     end
+
+    it 'import a collection with a researchplan' do
+      zip_file_path = copy_target_to_import_folder('collection_research_plan')
+      do_import(zip_file_path, user)
+
+      collection = Collection.find_by(label: 'collection-with-rp')
+      expect(collection).to be_present
+      expect(collection.research_plans).to be_present
+      expect(collection.research_plans.length).to eq(1)
+      research_plan=collection.research_plans[0]
+
+      expect(research_plan.name).to eq('Research plan 1')
+      expect(research_plan.created_at.strftime('%FT%T')).to eq('2022-08-24T14:19:19')
+      expect(research_plan.updated_at.strftime('%FT%T')).to eq('2022-08-24T14:19:19')
+      expect(research_plan.attachments.length).to eq(1)
+      attachment=research_plan.attachments[0]
+      expect(attachment.identifier).to eq('f3864e5e-0559-4134-9912-50837f397024')
+
+      #TO DO: create a more realistic example with more assosiatons of the research plan. Here i will stop because i focus on the attachment refactoring
+    end
   end
 
   def stub_rest_request(identifier)
