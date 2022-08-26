@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'barby'
 require 'barby/barcode/qr_code'
 require 'barby/outputter/svg_outputter'
@@ -15,18 +17,16 @@ module Chemotion
       end
 
       def raw_file(att)
-        begin
-          Base64.encode64(att.read_file)
-        rescue
-          nil
-        end
+        Base64.encode64(att.read_file)
+      rescue StandardError
+        nil
       end
 
       def raw_file_obj(att)
         {
           id: att.id,
           file: raw_file(att),
-          predictions: JSON.parse(att.get_infer_json_content())
+          predictions: JSON.parse(att.get_infer_json_content)
         }
       end
 
@@ -36,8 +36,10 @@ module Chemotion
 
       def writable?(att)
         return false unless att
+
         can_write = created_for_current_user(att)
         return can_write if can_write
+
         el = att.container&.root&.containable
         if el
           own_by_current_user = el.is_a?(User) && (el == current_user)
@@ -51,28 +53,13 @@ module Chemotion
         uuid_regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
         return true if uuid_regex.match?(uuid.to_s.downcase)
 
-        return false
+        false
       end
     end
 
-    rescue_from ActiveRecord::RecordNotFound do |error|
-      message = "Could not find attachment"
+    rescue_from ActiveRecord::RecordNotFound do |_error|
+      message = 'Could not find attachment'
       error!(message, 404)
-    end
-
-    resource :inbox do
-      params do
-        requires :cnt_only, type: Boolean, desc: 'return count number only'
-      end
-      get do
-        current_user.container = Container.create(name: 'inbox', container_type: 'root') unless current_user.container
-
-        if params[:cnt_only]
-          present current_user.container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
-        else
-          present current_user.container, with: Entities::InboxEntity, root: :inbox
-        end
-      end
     end
 
     resource :attachable do
@@ -220,7 +207,6 @@ module Chemotion
         true
       end
 
-
       desc 'Upload completed'
       post 'upload_chunk_complete' do
         params do
@@ -269,46 +255,45 @@ module Chemotion
         end
       end
 
-
-      desc "Upload files to Inbox as unsorted"
+      desc 'Upload files to Inbox as unsorted'
       post 'upload_to_inbox' do
-        attach_ary = Array.new
-        params.each do |file_id, file|
-          if tempfile = file[:tempfile]
-              attach = Attachment.new(
-                bucket: file[:container_id],
-                filename: file[:filename],
-                key: file[:name],
-                file_path: file[:tempfile],
-                created_by: current_user.id,
-                created_for: current_user.id,
-                content_type: file[:type],
-                attachable_type: 'Container'
-              )
-            begin
-              attach.save!
-              attach_ary.push(attach.id)
-            ensure
-              tempfile.close
-              tempfile.unlink
-            end
+        attach_ary = []
+        params.each do |_file_id, file|
+          next unless tempfile = file[:tempfile]
+
+          attach = Attachment.new(
+            bucket: file[:container_id],
+            filename: file[:filename],
+            key: file[:name],
+            file_path: file[:tempfile],
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: file[:type],
+            attachable_type: 'Container'
+          )
+          begin
+            attach.save!
+            attach_ary.push(attach.id)
+          ensure
+            tempfile.close
+            tempfile.unlink
           end
         end
         TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
-                       .perform_later(attach_ary)
+                              .perform_later(attach_ary)
 
         true
       end
 
-      desc "Download the attachment file"
+      desc 'Download the attachment file'
       get ':attachment_id' do
-        content_type "application/octet-stream"
+        content_type 'application/octet-stream'
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
         @attachment.read_file
       end
 
-      desc "Download the zip attachment file"
+      desc 'Download the zip attachment file'
       get 'zip/:container_id' do
         env['api.format'] = :binary
         content_type('application/zip, application/octet-stream')
@@ -319,34 +304,33 @@ module Chemotion
             zip.put_next_entry att.filename
             zip.write att.read_file
           end
-          file_text = "";
+          file_text = ''
           @container.attachments.each do |att|
             file_text += "#{att.filename} #{att.checksum}\n"
           end
-          hyperlinks_text = ""
+          hyperlinks_text = ''
           JSON.parse(@container.extended_metadata.fetch('hyperlinks', '[]')).each do |link|
             hyperlinks_text += "#{link} \n"
           end
-          zip.put_next_entry "dataset_description.txt"
+          zip.put_next_entry 'dataset_description.txt'
           zip.write <<~DESC
-          dataset name: #{@container.name}
-          instrument: #{@container.extended_metadata.fetch('instrument', nil)}
-          description:
-          #{@container.description}
-
-          Files:
-          #{file_text}
-          Hyperlinks:
-          #{hyperlinks_text}
+            dataset name: #{@container.name}
+            instrument: #{@container.extended_metadata.fetch('instrument', nil)}
+            description:
+            #{@container.description}
+             Files:
+            #{file_text}
+            Hyperlinks:
+            #{hyperlinks_text}
           DESC
         end
         zip.rewind
         zip.read
       end
 
-      desc "Download the zip attachment file by sample_id"
+      desc 'Download the zip attachment file by sample_id'
       get 'sample_analyses/:sample_id' do
-        tts = @sample.analyses&.map { |a| a.children&.map { |d| d.attachments&.map{ |at| at.filesize } } }&.flatten&.reduce(:+) || 0
+        tts = @sample.analyses&.map { |a| a.children&.map { |d| d.attachments&.map { |at| at.filesize } } }&.flatten&.reduce(:+) || 0
         if tts > 300_000_000
           DownloadAnalysesJob.perform_later(@sample.id, current_user.id, false)
           nil
@@ -366,19 +350,15 @@ module Chemotion
       get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
         content_type @attachment.content_type
-        header['Content-Disposition'] = "attachment; filename=" + sfilename
-        header['Content-Transfer-Encoding'] = 'binary';
+        header['Content-Disposition'] = 'attachment; filename=' + sfilename
+        header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
         @attachment.read_file
       end
 
       desc 'Return Base64 encoded thumbnail'
       get 'thumbnail/:attachment_id' do
-        if @attachment.thumb
-          Base64.encode64(@attachment.read_thumbnail)
-        else
-          nil
-        end
+        Base64.encode64(@attachment.read_thumbnail) if @attachment.thumb
       end
 
       desc 'Return Base64 encoded thumbnails'
@@ -389,9 +369,9 @@ module Chemotion
         thumbnails = params[:ids].map do |a_id|
           att = Attachment.find(a_id)
           can_dwnld = if att
-            element = att.container.root.containable
-            can_read = ElementPolicy.new(current_user, element).read?
-            can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                        element = att.container.root.containable
+                        can_read = ElementPolicy.new(current_user, element).read?
+                        can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
           end
           can_dwnld ? thumbnail_obj(att) : nil
         end
@@ -406,9 +386,9 @@ module Chemotion
         files = params[:ids].map do |a_id|
           att = Attachment.find(a_id)
           can_dwnld = if att
-            element = att.container.root.containable
-            can_read = ElementPolicy.new(current_user, element).read?
-            can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                        element = att.container.root.containable
+                        can_read = ElementPolicy.new(current_user, element).read?
+                        can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
           end
           can_dwnld ? raw_file_obj(att) : nil
         end
@@ -425,12 +405,14 @@ module Chemotion
         pm[:generated].each do |g_id|
           att = Attachment.find(g_id)
           next unless att
+
           can_delete = writable?(att)
           att.destroy if can_delete
         end
         pm[:original].each do |o_id|
           att = Attachment.find(o_id)
           next unless att
+
           can_write = writable?(att)
           if can_write
             att.set_regenerating
@@ -496,24 +478,23 @@ module Chemotion
       end
 
       namespace :svgs do
-        desc "Get QR Code SVG for element"
+        desc 'Get QR Code SVG for element'
         params do
           requires :element_id, type: Integer
           requires :element_type, type: String
         end
         get do
           code = CodeLog.where(source: params[:element_type],
-            source_id: params[:element_id]).first
+                               source_id: params[:element_id]).first
           if code
             qr_code = Barby::QrCode.new(code.value, size: 1, level: :l)
             outputter = Barby::SvgOutputter.new(qr_code)
             outputter.to_svg(margin: 0)
           else
-            ""
+            ''
           end
         end
       end
     end
-
   end
 end
