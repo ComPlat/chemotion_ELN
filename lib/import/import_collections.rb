@@ -450,9 +450,9 @@ module Import
         attachable_uuid = fields.fetch('attachable_id')
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
         file_name =  "#{fields.fetch('identifier')}#{File.extname(fields.fetch('filename'))}"
-        file_name = File.basename(file_name, File.extname(file_name))
-        binding.pry
-        attachment = Attachment.where(id: @attachments, filename: file_name).first
+        file_name_without_ext = File.basename(file_name, File.extname(file_name))
+        attachment = Attachment.where(id: @attachments,filename: file_name).first
+        attachment = Attachment.where(id: @attachments,filename: file_name_without_ext).first unless attachment
 
         attachment.update!(
           attachable: attachable,
@@ -572,7 +572,7 @@ module Import
       @data['ResearchPlan']&.each do |_attr_name, attr_value|
         image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
         image_fields.each do |field|
-binding.pry
+
           new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
           field['value']['public_name'] = new_att['identifier']
           field['value']['file_name'] = new_att['filename']
