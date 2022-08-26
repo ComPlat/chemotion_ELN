@@ -106,9 +106,10 @@ module AttachmentJcampAasm
 
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
+    return if new_upload
 
-    generate_spectrum(true, false) if queueing? && !new_upload
-    generate_spectrum(true, true) if regenerating? && !new_upload
+    generate_spectrum(true, false) if queueing?
+    generate_spectrum(true, true) if regenerating?
   end
 
   def belong_to_analysis?
@@ -193,7 +194,7 @@ module AttachmentJcampProcess
 
   def create_process(is_regen)
     params = build_params
-    
+
     tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
 
     check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
@@ -213,7 +214,7 @@ module AttachmentJcampProcess
         curr_tmp_csv = arr_csv[idx]
         csv_att = generate_csv_att(curr_tmp_csv, "#{idx+1}_bagit")
         tmp_to_deleted.push(curr_tmp_csv)
-        
+
         if idx == 0
           jcamp_att = curr_jcamp_att
         end
@@ -227,10 +228,10 @@ module AttachmentJcampProcess
       jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
       jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
       img_att = generate_img_att(arr_img, 'peak')
-      
+
       tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
       tmp_files_to_be_deleted.push(*arr_img)
-      
+
       set_done
       delete_tmps(tmp_files_to_be_deleted)
       delete_related_imgs(img_att)
@@ -245,11 +246,11 @@ module AttachmentJcampProcess
     tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
 
     check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
-    
+
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
     jcamp_att.update_prediction(params, spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'edit', true)
-    
+
     tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
 
     unless arr_csv.nil? || arr_csv.length == 0
@@ -258,7 +259,7 @@ module AttachmentJcampProcess
       tmp_files_to_be_deleted.push(*arr_csv)
       delete_related_csv(csv_att)
     end
-    
+
     set_backup
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att)
