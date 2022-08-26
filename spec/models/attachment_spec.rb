@@ -315,6 +315,7 @@ RSpec.describe Attachment, type: :model do
       before do
         attachment.content_type = nil
       end
+
       it 'guesses the content_type based on the file extension' do
         attachment.add_content_type
 
@@ -330,132 +331,295 @@ RSpec.describe Attachment, type: :model do
     end
 
     context 'when attachment is a new upload' do
-      it 'saves the file and generates a thumbnail' do
-        expect(attachment.read_file).to eq "Hello world\n"
-        expect(attachment.thumb).to be true
-        expect(attachment.read_thumbnail).not_to be_nil
+      # Thumbnails are only generated when a file is attached, having file_data does not suffice
+
+      context 'when the file is not thumbnailable' do
+        let(:attachment) { create(:attachment, file_path: Rails.root.join('spec', 'fixtures', 'upload.txt')) }
+
+        it 'saves the file' do
+          expect(attachment.read_file).not_to be_nil
+        end
+
+        it 'sets the thumbnail field to false' do
+          expect(attachment.thumb).to be false
+        end
+
+        it 'does not save a thumbnail' do
+          expect(attachment.read_thumbnail).to be_nil
+        end
+      end
+
+      context 'when the file is thumbnailable' do
+        let(:attachment) { create(:attachment, :with_image) }
+
+        it 'saves the file' do
+          expect(attachment.read_file).not_to be_nil
+        end
+
+        it 'sets the thumbnail field to true' do
+          expect(attachment.thumb).to be true
+        end
+
+        it 'saves the thumbnail' do
+          expect(attachment.read_thumbnail).not_to be_nil
+        end
       end
 
       it 'generates a checksum of the file content' do
-
+        expect(attachment.checksum).to be_present
       end
     end
 
     it 'determines the content type of the file' do
-
-    end
-
-    it 'updates the filesize if necessary' do
-
+      expect(attachment.content_type).to eq 'text/plain'
     end
 
     it 'fetches the generated identifier from the db' do
-
+      expect(attachment.identifier).to be_present
     end
 
     context 'when duplicated accessor is set' do
-      it 'duplicates the file and thumbnail' do
+      pending 'check if the copy method and the duplicated accessor are still used'
+      # it 'duplicates the file and thumbnail' do
+      # end
+    end
 
+    # callbacks from the AttachmentJcampAasm concern
+    context 'when AttachmentJcampAasm concern is included' do
+      let(:attachment) { build(:attachment) }
+
+      it 'calls init_aasm' do
+        expect(attachment).to receive(:init_aasm)
+
+        attachment.save
       end
     end
   end
 
-  # describe 'creation' do
-  #   let(:file_path) { "#{Rails.root}/spec/fixtures/upload.txt" }
-  #   let(:file_data) { File.read(file_path) }
-  #   let(:file_name) { File.basename(file_path) }
-  #   let!(:attachment) { FactoryBot.create(:attachment) }
-  #   let!(:attachment_with_file) do
-  #     FactoryBot.create(:attachment, filename: file_name, file_data: file_data)
-  #   end
-  #   let(:new_attachment) do
-  #     FactoryBot.build(:attachment, filename: file_name, file_data: file_data)
-  #   end
-  #   let(:new_attachment_with_img) do
-  #     FactoryBot.build(
-  #       :attachment, filename: 'upload.jpg', key: SecureRandom.uuid,
-  #                    file_path: "#{Rails.root}/spec/fixtures/upload.jpg"
-  #       # file_data: File.read("#{Rails.root}/spec/fixtures/upload.jpg")
-  #     )
-  #   end
+  describe '#save' do
+    # callbacks from Attachment model
 
-  #   context 'after_create' do
-  #     before do
-  #       new_attachment.save!
-  #     end
+    context 'when the file size has changed' do
+      it 'updates the filesize' do
+        file_data = 'Foo Bar Baz'
+        current_filesize = attachment.filesize
+        expected_filesize = file_data.bytesize
+        attachment.file_data = file_data # update_filesize runs only when new data is given
 
-  #     it 'is possible to create a valid attachment' do
-  #       expect(attachment.valid?).to be(true)
-  #     end
+        expect { attachment.save }.to change(attachment, :filesize).from(current_filesize).to(expected_filesize)
+      end
+    end
 
-  #     it 'has a valid uuid identifier' do
-  #       expect(attachment.identifier).to match(
-  #         /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
-  #       )
-  #     end
+    context 'when the file moves between stores' do
+      pending 'TODO: see how to test the #move_from_store method properly'
+    end
 
-  #     it 'checksummed the file_data' do
-  #       expect(attachment_with_file.checksum).to eq(
-  #         Digest::MD5.file(file_path).hexdigest
-  #       )
-  #     end
-  #   end
+    # callbacks from AttachmentJcampAasm concern
+    context 'when AttachmentJcampAasm concern is included' do
+      it 'calls require_peaks_generation?' do
+        expect(attachment).to receive(:require_peaks_generation?)
 
-  #   # describe 'add_checksum' do
-  #   #   before { new_attachment.send(:add_checksum)}
-  #   #   it 'checksums the file_data' do
-  #   #     expect(new_attachment.checksum).to eq(
-  #   #       Digest::SHA256.file(file_path).hexdigest
-  #   #     )
-  #   #   end
-  #   # end
+        attachment.update(identifier: 'does-not-matter-just-need-to-trigger-update')
+      end
+    end
+  end
 
-  #   describe 'generate_key' do
-  #     before { new_attachment.send(:generate_key) }
+  describe '#destroy' do
+    # use image file to have a
+    let(:attachment) { create(:attachment, :with_image) }
 
-  #     it 'generates a uuid  key' do
-  #       expect(new_attachment.key).to match(
-  #         /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
-  #       )
-  #     end
-  #   end
+    it 'deletes the attached file' do
+      expect { attachment.destroy }.to change(attachment, :read_file).to(false)
+    end
 
-  #   describe 'store_tmp_file_and_thumbnail' do
-  #     it 'stores file in tmp_folder' do
-  #       expect(new_attachment_with_img.send(:store_tmp_file_and_thumbnail)).to be true
-  #       expect(new_attachment_with_img.thumb).to be true
-  #     end
-  #   end
+    it 'deletes the thumbnail' do
+      expect { attachment.destroy }.to change(attachment, :read_thumbnail).to(false)
+    end
+  end
 
-  #   context 'local store' do
-  #     let(:f_path) { new_attachment_with_img.store.path }
-  #     let(:t_path) { new_attachment_with_img.store.thumb_path }
+  describe '#filename_parts' do
+    it 'returns the filename parts when split by .' do
+      expect(attachment.filename_parts).to eq %w[upload txt]
+    end
+  end
 
-  #     before do
-  #       new_attachment_with_img.save
-  #       new_attachment_with_img.update(storage: 'local')
-  #     end
+  describe '#extension_parts' do
+    it 'returns the last two filename parts' do
+      expect(attachment.extension_parts).to eq %w[upload txt]
+    end
+  end
 
-  #     it 'set the key according to the identifier' do
-  #       expect(new_attachment_with_img.key).to match(new_attachment_with_img.identifier)
-  #     end
+  describe '#init_aasm' do
+    let(:attachment) { build(:attachment) }
 
-  #     context 'when destroyed' do
-  #       before do
-  #         new_attachment_with_img.destroy!
-  #       end
+    context 'with transferred accessor present' do
+      before do
+        attachment.transferred = true
+      end
 
-  #       it 'deletes the file and thumbnail' do
-  #         expect(f_path).to eq(new_attachment_with_img.store.path)
-  #         expect(File.exist?(t_path)).to be false
-  #         expect(File.exist?(f_path)).to be false
-  #       end
-  #     end
-  #   end
+      it 'returns nil' do
+        expect(attachment.init_aasm).to eq nil
+      end
 
-  #   # it 'stores file in tmp folder with storage tmp' do
-  #   # #  expect
-  #   #
-  #   # end
-  # end
+      it 'does not change the aasm_state' do
+        expect(attachment.idle?).to be true
+      end
+    end
+
+    context 'with aasm_state other than idle' do
+      before do
+        attachment.aasm_state = :csv
+      end
+
+      it 'returns nil' do
+        expect(attachment.init_aasm).to eq nil
+      end
+
+      it 'does not change the aasm_state' do
+        expect(attachment.csv?).to be true
+      end
+    end
+
+    context 'when filename has a spectra file extension' do
+      it 'sets the aasm_state to queueing' do
+        attachment.filename = 'whatever.jdx'
+        attachment.init_aasm
+
+        expect(attachment.queueing?).to be true
+      end
+    end
+
+    context 'when filename has a non-spectra file extension' do
+      it 'sets the aasm_state to non_jcamp' do
+        attachment.init_aasm
+
+        expect(attachment.non_jcamp?).to be true
+      end
+    end
+  end
+
+  describe '#require_peaks_generation?' do
+    context 'when transferred accessor is present' do
+      it 'returns nil' do
+        attachment.transferred = true
+
+        expect(attachment.require_peaks_generation?).to eq nil
+      end
+    end
+
+    context 'when attachable is not an analysis subcontainer' do
+      it 'returns nil' do
+        expect(attachment.require_peaks_generation?).to eq nil
+      end
+    end
+
+    context 'when attachable is an analysis subcontainer' do
+      before do
+        allow(attachment).to receive(:belong_to_analysis?).and_return(true)
+      end
+
+      context 'when aasm_state is peaked' do
+        it 'returns nil' do
+          attachment.aasm_state = :peaked
+
+          expect(attachment.require_peaks_generation?).to eq nil
+        end
+      end
+
+      context 'when aasm_state is edited' do
+        it 'returns nil' do
+          attachment.aasm_state = :edited
+
+          expect(attachment.require_peaks_generation?).to eq nil
+        end
+      end
+
+      context 'when filename has no spectra file extension' do
+        it 'returns nil' do
+          expect(attachment.require_peaks_generation?).to eq nil
+        end
+      end
+
+      context 'when filename has a spectra file extension with a .peak. prefix' do
+        before do
+          attachment.filename = 'whatever.peak.jdx'
+        end
+
+        it 'generates only an image' do
+          expect(attachment).to receive(:generate_img_only).with('peak')
+
+          attachment.require_peaks_generation?
+        end
+      end
+
+      context 'when filename has a spectra file extension with a .edit. prefix' do
+        before do
+          attachment.filename = 'whatever.edit.jdx'
+        end
+
+        it 'generates only an image' do
+          expect(attachment).to receive(:generate_img_only).with('edit')
+
+          attachment.require_peaks_generation?
+        end
+      end
+
+      context 'when filename has a spectra file extension without special prefixes' do
+        before do
+          attachment.filename = 'whatever.jdx'
+        end
+
+        context 'when the file is still in Tmp storage' do
+          it 'returns nil' do
+            attachment.storage = 'tmp'
+
+            expect(attachment.require_peaks_generation?).to eq nil
+          end
+        end
+
+        context 'when the file is no longer in Tmp storage' do
+          before do
+            attachment.storage = 'some_other_storage'
+          end
+
+          context 'when aasm_state = queueing' do
+            it 'generates a spectrum' do
+              attachment.aasm_state = :queueing
+              expect(attachment).to receive(:generate_spectrum).with(true, false)
+
+              attachment.require_peaks_generation?
+            end
+          end
+
+          context 'when aasm_state = regenerating' do
+            it 'regenerates the spectrum' do
+              attachment.aasm_state = :regenerating
+              expect(attachment).to receive(:generate_spectrum).with(true, true)
+
+              expect(attachment.regenerating?).to be true
+              attachment.require_peaks_generation?
+            end
+          end
+        end
+      end
+    end
+  end
+
+  describe '#belong_to_analysis?' do
+    context 'when attachable is not a container' do
+      it 'returns false' do
+        expect(attachment.belong_to_analysis?).to be false
+      end
+    end
+
+    context 'when attachment is attached to a direct subcontainer with container_type analysis' do
+      let(:attachment) { create(:attachment, attachable: analysis_subcontainer) }
+      let(:analysis_subcontainer) { create(:container, parent: analysis_container) }
+      let(:analysis_container) { create(:container, container_type: 'analysis') }
+
+      it 'returns true' do
+        expect(attachment.belong_to_analysis?).to be true
+      end
+    end
+  end
 end
