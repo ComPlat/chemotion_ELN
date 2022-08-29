@@ -437,6 +437,7 @@ RSpec.describe Attachment, type: :model do
     end
   end
 
+  # Methods from AttachmentJcampAasm concern
   describe '#filename_parts' do
     it 'returns the filename parts when split by .' do
       expect(attachment.filename_parts).to eq %w[upload txt]
@@ -619,6 +620,164 @@ RSpec.describe Attachment, type: :model do
 
       it 'returns true' do
         expect(attachment.belong_to_analysis?).to be true
+      end
+    end
+  end
+
+  # Methods from AttachmentJcampProcess concern
+  describe '#generate_att' do
+    let(:attachment) { build(:attachment) }
+    let(:ext) { 'jpg' }
+    let(:new_attachment) { attachment.generate_att(tempfile, addon = 'foo', to_edit = false, ext) }
+
+    context 'without tempfile' do
+      let(:tempfile) { nil }
+
+      it 'does not create a new attachment' do
+        expect { attachment.generate_att(nil, false) }.not_to change(Attachment, :count)
+      end
+
+      it 'returns nil' do
+        expect(attachment.generate_att(nil, false)).to be nil
+      end
+    end
+
+    context 'with tempfile' do
+      let(:tempfile) { Tempfile.new(attachment.filename) }
+
+      it 'creates a new attachment' do
+        expect { new_attachment }.to change(Attachment, :count).by(1)
+      end
+
+      it 'saves the new attachment to the primary storage' do
+        # TODO: klären ob das sinnvoll ist oder ob die Storage explizit geprüft werden soll statt relativ zur Config
+        expect(new_attachment.storage).to eq Rails.configuration.storage.primary_store
+      end
+
+      it 'sets new new attachment\'s content_type to application/octet-stream' do
+        expect(new_attachment.content_type).to eq 'application/octet-stream'
+      end
+
+      it 'attaches the new attachment to the current attachment\'s attachable' do
+        expect(new_attachment.attachable).to eq attachment.attachable
+      end
+
+      context 'with spectra file and to_edit = true' do
+        let(:attachment) { build(:attachment, :with_spectra_file)}
+        let(:new_attachment) { attachment.generate_att(tempfile, addon = nil, to_edit = true) }
+
+        it 'sets the new attachment\'s aasm_state to edited' do
+          expect(new_attachment.edited?).to be true
+        end
+      end
+
+      context 'with ext = png' do
+        let(:attachment) { build(:attachment, :with_png_image) }
+        let(:ext) { 'png' }
+
+        it 'sets the new attachment\'s aasm_state to :image' do
+          expect(new_attachment.image?).to be true
+        end
+
+        it 'sets the new attachment\'s content_type to image/png' do
+          expect(new_attachment.content_type).to eq 'image/png'
+        end
+      end
+
+      context 'with ext = json' do
+        let(:attachment) { build(:attachment, :with_json_file) }
+        let(:ext) { 'json' }
+
+        it 'sets the new attachment\'s aasm_state to :json' do
+          expect(new_attachment.json?).to be true
+        end
+      end
+
+      context 'with ext = csv' do
+        let(:attachment) { build(:attachment, :with_csv_file) }
+        let(:ext) { 'csv' }
+
+        it 'sets the new attachment\'s aasm_state to :csv' do
+          expect(new_attachment.csv?).to be true
+        end
+      end
+    end
+  end
+
+  describe '#generate_img_att' do
+    it 'calls #generate_att with ext = png and all other parameters verbatim' do
+      expect(attachment).to receive(:generate_att).with('somethingThatGetsPassed', 'foo', false, 'png')
+
+      attachment.generate_img_att('somethingThatGetsPassed', 'foo')
+    end
+  end
+
+  describe '#generate_jcamp_att' do
+    it 'calls #generate_att with ext = jdx and all other parameters verbatim' do
+      expect(attachment).to receive(:generate_att).with('somethingThatGetsPassed', 'foo', false, 'jdx')
+
+      attachment.generate_jcamp_att('somethingThatGetsPassed', 'foo')
+    end
+  end
+
+  describe '#generate_json_att' do
+    it 'calls #generate_att with ext = json and all other parameters verbatim' do
+      expect(attachment).to receive(:generate_att).with('somethingThatGetsPassed', 'foo', false, 'json')
+
+      attachment.generate_json_att('somethingThatGetsPassed', 'foo')
+    end
+  end
+
+  describe '#generate_csv_att' do
+    it 'calls #generate_att with ext = csv and all other parameters verbatim' do
+      expect(attachment).to receive(:generate_att).with('somethingThatGetsPassed', 'foo', false, 'csv')
+
+      attachment.generate_csv_att('somethingThatGetsPassed', 'foo')
+    end
+  end
+
+  describe '#build_params' do
+    it 'returns a hash with :mass 0.0' do
+      expect(attachment.build_params[:mass]).to eq 0.0
+    end
+
+    context 'when attachable\'s root element is a sample with a related molecule attached' do
+      let(:attachment) do
+        create(
+          :attachment,
+          attachable: build(
+            :container,
+            name: 'blakeks',
+            container_type: 'foobar',
+            containable: build(
+              :valid_sample,
+              molecule: build(
+                :molecule,
+                exact_molecular_weight: 6.66
+              )
+            )
+          )
+        )
+      end
+      it 'returns a hash with the exact molecular weight of the molecule' do
+        expect(attachment.build_params[:mass]).to eq 6.66
+      end
+    end
+
+    it 'returns a hash with :ext set to the file extension of the attachment\'s filename' do
+      expect(attachment.build_params[:fname]).to eq 'upload.txt'
+    end
+
+    context 'with a hash of other params' do
+      it 'returns an enriched hash with mass, ext and fname' do
+        expected_result = {
+          foo: :bar,
+          mass: 0.0,
+          ext: 'txt',
+          fname: 'upload.txt'
+        }
+
+        expect(attachment.build_params({ foo: :bar })).to eq(expected_result)
       end
     end
   end

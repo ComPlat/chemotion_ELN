@@ -14,9 +14,24 @@ FactoryBot.define do
       file_path { File.join("#{Rails.root}/spec/fixtures/upload.jpg") }
     end
 
+    trait :with_png_image do
+      filename { 'upload.png' }
+      file_path { File.join("#{Rails.root}/spec/fixtures/upload.png") }
+    end
+
     trait :with_spectra_file do
       filename { 'spectra_file.jdx' }
       file_path { Rails.root.join('spec', 'fixtures', 'spectra_file.jdx') }
+    end
+
+    trait :with_json_file do
+      filename { 'upload.json' }
+      file_path { Rails.root.join('spec', 'fixtures', 'upload.json') }
+    end
+
+    trait :with_csv_file do
+      filename { 'upload.csv' }
+      file_path { Rails.root.join('spec', 'fixtures', 'upload.csv') }
     end
 
     trait :attached_to_container do
