@@ -43,7 +43,7 @@ module Chemotion
         el = att.container&.root&.containable
         if el
           own_by_current_user = el.is_a?(User) && (el == current_user)
-          policy_updatable = ElementPolicy.new(current_user, el).update?
+          policy_updatable = ElementPolicy.update?(current_user, el)
           can_write = own_by_current_user || policy_updatable
         end
         can_write
