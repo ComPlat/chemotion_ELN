@@ -173,9 +173,11 @@ module AttachmentJcampProcess
     params
   end
 
+  # TODO: Fix bugs and improve code
   def get_infer_json_content
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = Attachment.where(attachable_id: attachable_id) # might break on multiple Attachments with the same ID but different types
 
+    # shorten this whole block to a single find with '{}' fallback if none is found
     infers = atts.map do |att|
       keyword, _extname = att.extension_parts
       keep = att.json? && keyword == 'infer'
