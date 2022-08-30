@@ -781,4 +781,79 @@ RSpec.describe Attachment, type: :model do
       end
     end
   end
+
+  describe '#get_infer_json_content' do
+    context 'when there are no json attachments for this attachment\'s attachable' do
+      it 'returns an empty json string' do
+        expect(attachment.get_infer_json_content).to eq '{}'
+      end
+    end
+
+    context 'when the attachable has json attachments with "infer" as extension part' do
+      let(:json_attachment) do
+        create(
+          :attachment,
+          :with_json_file,
+          filename: 'foobar.infer.json',
+          attachable: attachment.attachable
+        )
+      end
+
+      before { json_attachment.set_json! }
+
+      it 'returns the content of the infer attachment' do
+        expect(attachment.get_infer_json_content).to eq json_attachment.read_file
+      end
+    end
+  end
+
+  describe '#update_prediction' do
+    context 'with spc_type = MS' do
+      it 'returns the result of #auto_infer_n_clear_json' do
+        expect(attachment).to receive(:auto_infer_n_clear_json).with('MS', false)
+
+        attachment.update_prediction(params = { foo: :bar}, spc_type = 'MS', is_regen = false)
+      end
+    end
+
+    context 'with keep_pred in params hash' do
+      let(:expected_result) { attachment.get_infer_json_content }
+      let(:result) { attachment.update_prediction(params = { keep_pred: true }, spc_type = 'foo', is_regen = false) }
+
+      it 'calls #write_infer_to_file with the result of #get_infer_json_content' do
+        expect(result).to eq expected_result
+      end
+    end
+
+    context 'without keep_pred in params hash' do
+      it 'calls #write_infer_to_file with the value of params["predict"]' do
+        expect(attachment).to receive(:write_infer_to_file).with('foobar')
+
+        attachment.update_prediction(params = { 'predict' => 'foobar' }, spc_type = 'foo', is_regen = false)
+      end
+    end
+  end
+
+  describe '#create_process' do
+    it 'calls #generate_spectrum_data with the result of #build_params and its is_regen parameter' do
+      build_params_result = attachment.build_params
+      expect(attachment).to receive(:create_process).with(build_params_result, false)
+
+      attachment.create_process(false)
+    end
+
+    it 'calls #check_invalid_molfile' do
+      expect(attachment).to receive(:check_invalid_molfile)
+
+      attachment.create_process(false)
+    end
+
+    context 'when #generate_spectrum_data returns spc_type "bagit"' do
+
+    end
+
+    context 'when #generate_spectrum_data returns a non-bagit spc_type' do
+
+    end
+  end
 end
