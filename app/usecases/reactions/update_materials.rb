@@ -79,6 +79,7 @@ module Usecases
         end
         @reaction.reload
         @reaction.save! # to update the SVG
+        @reaction
       end
 
       private

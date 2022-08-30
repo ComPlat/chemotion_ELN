@@ -170,7 +170,7 @@ module Chemotion
 
           reaction.update_attributes!(attributes)
           reaction.touch
-          Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
+          reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -279,7 +279,7 @@ module Chemotion
             end
           end
 
-          Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
+          reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
           reaction.reload
 
           # save to profile
