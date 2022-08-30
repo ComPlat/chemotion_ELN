@@ -108,7 +108,8 @@ module Chemotion
       delete 'link/:attachment_id' do
         @attachment.attachable_id = nil
         @attachment.attachable_type = 'Container'
-        present @attachment.save!, with: Entities::AttachmentEntity, root: :attachment
+        @attachment.save!
+        present @attachment, with: Entities::AttachmentEntity, root: :attachment
       end
 
       # TODO: Remove this endpoint. It is not used by the FE
