@@ -37,6 +37,7 @@ module Usecases
   module Reactions
     class UpdateMaterials
       include ContainerHelpers
+      attr_reader :current_user
 
       def initialize(reaction, materials, user)
         @reaction = reaction
@@ -47,7 +48,7 @@ module Usecases
           purification_solvent: Array(materials['purification_solvents']).map { |m| OSample.new(m) },
           product: Array(materials['products']).map { |m| OSample.new(m) }
         }
-        @user = user
+        @current_user = user
       end
 
       def execute!
@@ -69,7 +70,7 @@ module Usecases
                 modified_sample = update_existing_sample(sample, fixed_label)
               end
 
-              modified_sample.save_segments(segments: sample.segments, current_user_id: @user.id) if sample.segments
+              modified_sample.save_segments(segments: sample.segments, current_user_id: @current_user.id) if sample.segments
               modified_sample_ids << modified_sample.id
 
               associate_sample_with_reaction(sample, modified_sample, material_group)
@@ -87,7 +88,7 @@ module Usecases
       def create_sub_sample(sample, fixed_label)
         parent_sample = Sample.find(sample.parent_id)
 
-        subsample = parent_sample.create_subsample(@user, @reaction.collections, true)
+        subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true)
 
         subsample.short_label = fixed_label if fixed_label
 
@@ -111,7 +112,7 @@ module Usecases
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
           :boiling_point_lowerbound, :boiling_point_upperbound,
           :melting_point_lowerbound, :melting_point_upperbound, :segments
-        ).merge(created_by: @user.id,
+        ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
 
