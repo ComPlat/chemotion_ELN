@@ -12,18 +12,16 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:starting_materials) do
     {
       'starting_materials' => [
-        {
-          # hits existing_sample branch
-          'id' => sample.id,
-          'name' => 'starting_material',
-          'target_amount_unit' => 'mg',
-          'target_amount_value' => 75.09596,
-          'equivalent' => 1,
-          'reference' => false,
-          'is_new' => false,
-          'molfile' => molfile,
-          'container' => root_container
-        }
+        # hits existing_sample branch
+        'id' => sample.id,
+        'name' => 'starting_material',
+        'target_amount_unit' => 'mg',
+        'target_amount_value' => 75.09596,
+        'equivalent' => 1,
+        'reference' => false,
+        'is_new' => false,
+        'molfile' => molfile,
+        'container' => root_container
       ]
     }
   end
@@ -45,17 +43,15 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:products) do
     {
       'products' => [
-        {
-          # hits new_sample branch
-          'name' => 'product',
-          'target_amount_unit' => 'mg',
-          'target_amount_value' => 99.08304,
-          'equivalent' => 5.5,
-          'reference' => false,
-          'is_new' => true,
-          'molfile' => molfile,
-          'container' => root_container
-        }
+        # hits new_sample branch
+        'name' => 'product',
+        'target_amount_unit' => 'mg',
+        'target_amount_value' => 99.08304,
+        'equivalent' => 5.5,
+        'reference' => false,
+        'is_new' => true,
+        'molfile' => molfile,
+        'container' => root_container
       ]
     }
   end
@@ -75,32 +71,37 @@ describe Usecases::Reactions::UpdateMaterials do
     }.merge(starting_materials, reactants, products)
   end
 
-  it 'updates existing sample' do
-    described_class.new(reaction, starting_materials, user).execute!
-    expect(Sample.all.size).to eq(1) # RSpec creates `sample` fixture, and ReactionHelpers update it
-    expect(Sample.find_by(name: 'starting_material').target_amount_value).to eq(75.09596)
-  end
+  describe '#execute!' do
+    context 'when sample exists' do
+      it 'updates the sample' do
+        described_class.new(reaction, starting_materials, user).execute!
+        expect(Sample.all.size).to eq(1) # RSpec creates `sample` fixture, and ReactionHelpers update it
+        expect(Sample.find_by(name: 'starting_material').target_amount_value).to eq(75.09596)
+      end
+    end
 
-  it 'creates sample for new materials with parent ID that are not products' do
-    described_class.new(reaction, reactants, user).execute!
-    expect(Sample.all.size).to eq(2) # RSpec creates `sample` fixture (parent), ReactionHelpers derive new sample from it
-    expect(Sample.find_by(short_label: 'reactant').target_amount_value).to eq(86.09596)
-  end
+    context 'when sample is new' do
+      it 'creates sub-sample for sample with parent that are not products' do
+        described_class.new(reaction, reactants, user).execute!
+        expect(Sample.all.size).to eq(2) # RSpec creates `sample` fixture (parent), ReactionHelpers derive new sample from it
+        expect(Sample.find_by(short_label: 'reactant').target_amount_value).to eq(86.09596)
+      end
 
-  it 'creates sample for new materials that are products' do
-    described_class.new(reaction, products, user).execute!
-    expect(Sample.all.size).to eq(1) # ReactionHelpers create new sample
-    expect(Sample.find_by(name: 'product').target_amount_value).to eq(99.08304)
-  end
+      it 'creates new sample for samples that are products' do
+        described_class.new(reaction, products, user).execute!
+        expect(Sample.all.size).to eq(1) # ReactionHelpers create new sample
+        expect(Sample.find_by(name: 'product').target_amount_value).to eq(99.08304)
+      end
+    end
 
-  it 'associates reaction with materials' do
-    described_class.new(reaction, materials, user).execute!
-    expect(ReactionsSample.all.size).to eq(4)
-    expect(ReactionsStartingMaterialSample.all.size).to eq(1)
-    expect(ReactionsReactantSample.all.size).to eq(1)
-    expect(ReactionsSolventSample.all.size).to eq(1)
-    expect(ReactionsProductSample.all.size).to eq(1)
-    expect(reaction.reactions_samples).to eq(ReactionsSample.all)
+    it 'associates reaction with materials' do
+      described_class.new(reaction, materials, user).execute!
+      expect(ReactionsSample.all.size).to eq(4)
+      expect(ReactionsStartingMaterialSample.all.size).to eq(1)
+      expect(ReactionsReactantSample.all.size).to eq(1)
+      expect(ReactionsSolventSample.all.size).to eq(1)
+      expect(ReactionsProductSample.all.size).to eq(1)
+      expect(reaction.reactions_samples).to eq(ReactionsSample.all)
+    end
   end
-
 end
