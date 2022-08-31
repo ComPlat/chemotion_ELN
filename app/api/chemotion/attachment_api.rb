@@ -30,23 +30,22 @@ module Chemotion
         }
       end
 
-      def created_for_current_user(att)
-        att.container_id.nil? && att.created_for == current_user.id
+      def created_for_current_user?(attachment)
+        attachment.container_id.nil? && attachment.created_for == current_user.id
       end
 
-      def writable?(att)
-        return false unless att
+      def writable?(attachment)
+        return false unless attachment
+        return true if created_for_current_user?(attachment)
 
-        can_write = created_for_current_user(att)
-        return can_write if can_write
+        element = attachment.container&.root&.containable
 
-        el = att.container&.root&.containable
-        if el
-          own_by_current_user = el.is_a?(User) && (el == current_user)
-          policy_updatable = ElementPolicy.update?(current_user, el)
-          can_write = own_by_current_user || policy_updatable
+        if element.present?
+          return true if element.is_a?(User) && (element == current_user)
+          return true if ElementPolicy.update?(current_user, element)
         end
-        can_write
+
+        false
       end
 
       def validate_uuid_format(uuid)
@@ -67,9 +66,7 @@ module Chemotion
         @attachment = Attachment.find_by(id: params[:attachment_id])
         case request.env['REQUEST_METHOD']
         when /delete/i
-          error!('401 Unauthorized', 401) unless @attachment
-          can_delete = writable?(@attachment)
-          error!('401 Unauthorized', 401) unless can_delete
+          error!('401 Unauthorized', 401) unless writable?(@attachment)
         # when /post/i
         when /get/i
           can_dwnld = false
