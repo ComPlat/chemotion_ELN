@@ -75,7 +75,7 @@ describe Usecases::Reactions::UpdateMaterials do
     context 'when sample exists' do
       it 'updates the sample' do
         described_class.new(reaction, starting_materials, user).execute!
-        expect(Sample.all.size).to eq(1) # RSpec creates `sample` fixture, and ReactionHelpers update it
+        expect(Sample.count).to eq(1) # RSpec creates `sample` fixture, and ReactionHelpers update it
         expect(Sample.find_by(name: 'starting_material').target_amount_value).to eq(75.09596)
       end
     end
@@ -83,24 +83,24 @@ describe Usecases::Reactions::UpdateMaterials do
     context 'when sample is new' do
       it 'creates sub-sample for sample with parent that are not products' do
         described_class.new(reaction, reactants, user).execute!
-        expect(Sample.all.size).to eq(2) # RSpec creates `sample` fixture (parent), ReactionHelpers derive new sample from it
+        expect(Sample.count).to eq(2) # RSpec creates `sample` fixture (parent), ReactionHelpers derive new sample from it
         expect(Sample.find_by(short_label: 'reactant').target_amount_value).to eq(86.09596)
       end
 
       it 'creates new sample for samples that are products' do
         described_class.new(reaction, products, user).execute!
-        expect(Sample.all.size).to eq(1) # ReactionHelpers create new sample
+        expect(Sample.count).to eq(1) # ReactionHelpers create new sample
         expect(Sample.find_by(name: 'product').target_amount_value).to eq(99.08304)
       end
     end
 
     it 'associates reaction with materials' do
       described_class.new(reaction, materials, user).execute!
-      expect(ReactionsSample.all.size).to eq(4)
-      expect(ReactionsStartingMaterialSample.all.size).to eq(1)
-      expect(ReactionsReactantSample.all.size).to eq(1)
-      expect(ReactionsSolventSample.all.size).to eq(1)
-      expect(ReactionsProductSample.all.size).to eq(1)
+      expect(ReactionsSample.count).to eq(4)
+      expect(ReactionsStartingMaterialSample.count).to eq(1)
+      expect(ReactionsReactantSample.count).to eq(1)
+      expect(ReactionsSolventSample.count).to eq(1)
+      expect(ReactionsProductSample.count).to eq(1)
       expect(reaction.reactions_samples).to eq(ReactionsSample.all)
     end
   end
