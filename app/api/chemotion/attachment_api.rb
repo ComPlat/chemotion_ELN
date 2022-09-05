@@ -30,22 +30,8 @@ module Chemotion
         }
       end
 
-      def created_for_current_user?(attachment)
-        attachment.container_id.nil? && attachment.created_for == current_user.id
-      end
-
       def writable?(attachment)
-        return false unless attachment
-        return true if created_for_current_user?(attachment)
-
-        element = attachment.container&.root&.containable
-
-        if element.present?
-          return true if element.is_a?(User) && (element == current_user)
-          return true if ElementPolicy.update?(current_user, element)
-        end
-
-        false
+        AttachmentPolicy.can_delete?(current_user, attachment)
       end
 
       def validate_uuid_format(uuid)
@@ -98,15 +84,16 @@ module Chemotion
 
       desc 'Delete Attachment'
       delete ':attachment_id' do
-        present @attachment.delete, with: Entities::AttachmentEntity, root: :attachment
+        present Usecases::Attachments::Delete.execute!(@attachment),
+                with: Entities::AttachmentEntity,
+                root: :attachment
       end
 
       desc 'Delete container id of attachment'
       delete 'link/:attachment_id' do
-        @attachment.attachable_id = nil
-        @attachment.attachable_type = 'Container'
-        @attachment.save!
-        present @attachment, with: Entities::AttachmentEntity, root: :attachment
+        present Usecases::Attachments::Unlink.execute!(@attachment),
+                with: Entities::AttachmentEntity,
+                root: :attachment
       end
 
       # TODO: Remove this endpoint. It is not used by the FE

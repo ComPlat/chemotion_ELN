@@ -23,8 +23,9 @@ describe Chemotion::AttachmentAPI do
     let(:execute_request) { delete "/api/v1/attachments/#{attachment_id}" }
 
     before do |example|
-      allow(ElementPolicy).to receive(:update?).and_return(true) if example.metadata[:enable_element_policy_mock].present?
-      execute_request if example.metadata[:skip_execute_request].blank?
+      allow(Usecases::Attachments::Delete).to receive(:execute!) if example.metadata[:enable_usecases_attachments_delete].present?
+      allow(AttachmentPolicy).to receive(:can_delete?).and_return(true) if example.metadata[:enable_attachment_policy_can_delete].present?
+      execute_request
     end
 
     context 'when attachment not exists' do
@@ -35,7 +36,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when attachment is unrelated to current user' do
+    context 'when "AttachmentPolicy" denies deletion' do
       let(:attachment) { create(:attachment) }
 
       it 'returns with an error' do
@@ -43,8 +44,8 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when attachment is not attached to a container and created for current user' do
-      let(:attachment) { create(:attachment, created_for: user.id, attachable: nil) }
+    context 'when "AttachmentPolicy" allows deletion', :enable_attachment_policy_can_delete do
+      let(:attachment) { create(:attachment) }
 
       it 'returns with the right http status' do
         expect(response.status).to eq(200)
@@ -54,46 +55,8 @@ describe Chemotion::AttachmentAPI do
         expect(parsed_json_response).to eq(expected_response)
       end
 
-      it 'deletes the attachment on database', :skip_execute_request do
-        attachment.save
-        expect { execute_request }.to change(Attachment, :count).by(-1)
-      end
-    end
-
-    context 'when attachment is attached to a container owned by current user' do
-      let(:container) { create(:container, containable: user) }
-      let(:attachment) { create(:attachment, attachable: container) }
-
-      it 'returns with the right http status' do
-        expect(response.status).to eq(200)
-      end
-
-      it 'returns the deleted attachment' do
-        expect(parsed_json_response).to eq(expected_response)
-      end
-
-      it 'deletes the attachment on database', :skip_execute_request do
-        attachment.save
-        expect { execute_request }.to change(Attachment, :count).by(-1)
-      end
-    end
-
-    context 'when attachment is attached to a container and current user has update rights' do
-      let(:other_user) { create(:person) }
-      let(:container) { create(:container, containable: other_user) }
-      let(:attachment) { create(:attachment, attachable: container) }
-
-      it 'returns with the right http status', :enable_element_policy_mock do
-        expect(response.status).to eq(200)
-      end
-
-      it 'returns the deleted attachment', :enable_element_policy_mock do
-        expect(parsed_json_response).to eq(expected_response)
-      end
-
-      it 'deletes the attachment on database', :skip_execute_request, :enable_element_policy_mock do
-        attachment.save
-        expect { execute_request }.to change(Attachment, :count).by(-1)
+      it 'deletes the attachment on database', :enable_usecases_attachments_delete do
+        expect(Usecases::Attachments::Delete).to have_received(:execute!)
       end
     end
   end
@@ -102,8 +65,9 @@ describe Chemotion::AttachmentAPI do
     let(:execute_request) { delete "/api/v1/attachments/link/#{attachment_id}" }
 
     before do |example|
-      allow(ElementPolicy).to receive(:update?).and_return(true) if example.metadata[:enable_element_policy_mock].present?
-      execute_request if example.metadata[:skip_execute_request].blank?
+      allow(Usecases::Attachments::Unlink).to receive(:execute!) if example.metadata[:enable_usecases_attachments_unlink].present?
+      allow(AttachmentPolicy).to receive(:can_delete?).and_return(true) if example.metadata[:enable_attachment_policy_can_delete].present?
+      execute_request
     end
 
     context 'when attachment not exists' do
@@ -114,7 +78,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when attachment is unrelated to current user' do
+    context 'when "AttachmentPolicy" denies deletion' do
       let(:attachment) { create(:attachment) }
 
       it 'returns with an error' do
@@ -122,27 +86,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when attachment is not attached to a container and created for current user' do
-      let(:attachment) { create(:attachment, created_for: user.id, attachable: nil) }
-
-      it 'returns with the right http status' do
-        expect(response.status).to eq(200)
-      end
-
-      it 'returns the deleted attachment' do
-        expect(parsed_json_response).to eq(expected_response)
-      end
-
-      it 'sets the attachment_type to "Container"', :skip_execute_request do
-        attachment.save
-        expect do
-          execute_request
-          attachment.reload
-        end.to change(attachment, :attachable_type).from(nil).to('Container')
-      end
-    end
-
-    context 'when attachment is attached to a container owned by current user' do
+    context 'when "AttachmentPolicy" allows deletion', :enable_attachment_policy_can_delete do
       let(:container) { create(:container, containable: user) }
       let(:attachment) { create(:attachment, attachable: container) }
 
@@ -154,50 +98,8 @@ describe Chemotion::AttachmentAPI do
         expect(parsed_json_response).to eq(expected_response)
       end
 
-      it 'unlinks the attachment from container', :skip_execute_request do
-        attachment.save
-        expect do
-          execute_request
-          attachment.reload
-        end.to change(attachment, :attachable_id).from(container.id).to(nil)
-      end
-
-      it 'sets the attachment_type to "Container"', :skip_execute_request do
-        attachment.save
-        expect do
-          execute_request
-          attachment.reload
-        end.not_to change(attachment, :attachable_type)
-      end
-    end
-
-    context 'when attachment is attached to a container and current user has update rights' do
-      let(:other_user) { create(:person) }
-      let(:container) { create(:container, containable: other_user) }
-      let(:attachment) { create(:attachment, attachable: container) }
-
-      it 'returns with the right http status', :enable_element_policy_mock do
-        expect(response.status).to eq(200)
-      end
-
-      it 'returns the deleted attachment', :enable_element_policy_mock do
-        expect(parsed_json_response).to eq(expected_response)
-      end
-
-      it 'unlinks the attachment from container', :skip_execute_request, :enable_element_policy_mock do
-        attachment.save
-        expect do
-          execute_request
-          attachment.reload
-        end.to change(attachment, :attachable_id).from(container.id).to(nil)
-      end
-
-      it 'sets the attachment_type to "Container"', :skip_execute_request, :enable_element_policy_mock do
-        attachment.save
-        expect do
-          execute_request
-          attachment.reload
-        end.not_to change(attachment, :attachable_type)
+      it 'unlinks the attachment from container', :enable_usecases_attachments_unlink do
+        expect(Usecases::Attachments::Unlink).to have_received(:execute!)
       end
     end
   end
