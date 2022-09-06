@@ -92,31 +92,6 @@ module Chemotion
                 root: :attachment
       end
 
-      # TODO: Remove this endpoint. It is not used by the FE
-      desc 'Upload attachments'
-      post 'upload_dataset_attachments' do
-        params.each do |_file_id, file|
-          next unless tempfile = file[:tempfile]
-
-          a = Attachment.new(
-            bucket: file[:container_id],
-            filename: file[:filename],
-            key: file[:name],
-            file_path: file[:tempfile],
-            created_by: current_user.id,
-            created_for: current_user.id,
-            content_type: file[:type]
-          )
-          begin
-            a.save!
-          ensure
-            tempfile.close
-            tempfile.unlink
-          end
-        end
-        true
-      end
-
       desc 'Upload large file as chunks'
       params do
         requires :file, type: File, desc: 'file'
