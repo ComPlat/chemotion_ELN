@@ -34,11 +34,8 @@ module Chemotion
         AttachmentPolicy.can_delete?(current_user, attachment)
       end
 
-      def validate_uuid_format(uuid)
-        uuid_regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-        return true if uuid_regex.match?(uuid.to_s.downcase)
-
-        false
+      def upload_chunk_error_message
+        { ok: false, statusText: 'File key is not valid' }
       end
     end
 
@@ -53,7 +50,6 @@ module Chemotion
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless writable?(@attachment)
-        # when /post/i
         when /get/i
           can_dwnld = false
           if /zip/.match?(request.url)
@@ -122,22 +118,15 @@ module Chemotion
       end
 
       desc 'Upload large file as chunks'
+      params do
+        requires :file, type: File, desc: 'file'
+        requires :counter, type: Integer, default: 0
+        requires :key, type: String
+      end
       post 'upload_chunk' do
-        params do
-          require :file, type: File, desc: 'file'
-          require :counter, type: Integer, default: 0
-          require :key, type: String
-        end
-        return { ok: false, statusText: 'File key is not valid' } unless validate_uuid_format(params[:key])
+        return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
-        FileUtils.mkdir_p(Rails.root.join('tmp/uploads', 'chunks'))
-        File.open(Rails.root.join('tmp/uploads', 'chunks', "#{params[:key]}$#{params[:counter]}"), 'wb') do |file|
-          File.open(params[:file][:tempfile], 'r') do |data|
-            file.write(data.read)
-          end
-        end
-
-        true
+        Usecases::Attachments::UploadChunk.execute!(params)
       end
 
       desc 'Upload completed'
@@ -146,7 +135,7 @@ module Chemotion
           require :filename, type: String
           require :key, type: String
         end
-        return { ok: false, statusText: 'File key is not valid' } unless validate_uuid_format(params[:key])
+        return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
         begin
           file_name = ActiveStorage::Filename.new(params[:filename]).sanitized

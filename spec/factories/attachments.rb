@@ -9,7 +9,6 @@ FactoryBot.define do
     association :attachable, factory: :container
 
     trait :with_image do
-      # key { SecureRandom.uuid }
       filename { 'upload.jpg' }
       file_path { File.join("#{Rails.root}/spec/fixtures/upload.jpg") }
     end

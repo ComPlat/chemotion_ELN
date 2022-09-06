@@ -109,7 +109,53 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'POST /api/v1/attachments/upload_chunk' do
-    pending 'work in progress'
+    let(:params) do
+      {
+        file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt')),
+        key: '116d5a66-7188-4527-ba42-9a97edab9dfc',
+        counter: 1
+      }
+    end
+    let(:execute_request) { post '/api/v1/attachments/upload_chunk', params: params }
+
+    before do |example|
+      allow(Usecases::Attachments::UploadChunk).to receive(:execute!) if example.metadata[:enable_usecases_attachments_upload_chunk].present?
+      allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(false) if example.metadata[:disable_attachment_policy_can_upload_chunk].present?
+      allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(true) if example.metadata[:enable_attachment_policy_can_upload_chunk].present?
+      execute_request
+    end
+
+    context 'when "AttachmentPolicy" denies upload', :disable_attachment_policy_can_upload_chunk do
+      let(:expected_response) do
+        { 'ok' => false, 'statusText' => 'File key is not valid' }
+      end
+
+      it 'returns with the right http status' do
+        expect(response.status).to eq(201)
+      end
+
+      it 'returns a custom error message' do
+        expect(parsed_json_response).to eq(expected_response)
+      end
+    end
+
+    context 'when "AttachmentPolicy" allows upload', :enable_attachment_policy_can_upload_chunk do
+      let(:expected_response) { true }
+
+      after { FileUtils.rm_rf(Rails.root.join('tmp', 'uploads', 'chunks')) }
+
+      it 'returns with the right http status' do
+        expect(response.status).to eq(201)
+      end
+
+      it 'returns a simple true' do
+        expect(parsed_json_response).to eq(expected_response)
+      end
+
+      it 'stores the file', :enable_usecases_attachments_upload_chunk do
+        expect(Usecases::Attachments::UploadChunk).to have_received(:execute!)
+      end
+    end
   end
 
   describe 'POST /api/v1/attachments/upload_chunk_complete' do
