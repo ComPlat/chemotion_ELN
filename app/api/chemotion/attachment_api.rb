@@ -130,51 +130,18 @@ module Chemotion
       end
 
       desc 'Upload completed'
+      params do
+        requires :filename, type: String
+        requires :key, type: String
+        requires :checksum, type: String
+      end
       post 'upload_chunk_complete' do
-        params do
-          require :filename, type: String
-          require :key, type: String
-        end
         return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
-        begin
-          file_name = ActiveStorage::Filename.new(params[:filename]).sanitized
-          FileUtils.mkdir_p(Rails.root.join('tmp/uploads', 'full'))
-          entries = Dir["#{Rails.root.join('tmp/uploads', 'chunks', params[:key])}*"].sort_by { |s| s.scan(/\d+/).last.to_i }
-          file_path = Rails.root.join('tmp/uploads', 'full', params[:key])
-          file_path = "#{file_path}#{File.extname(file_name)}"
-          file_checksum = Digest::MD5.new
-          File.open(file_path, 'wb') do |outfile|
-            entries.each do |file|
-              buff = File.open(file, 'rb').read
-              file_checksum.update(buff)
-              outfile.write(buff)
-            end
-          end
+        usecase = Usecases::Attachments::UploadChunkComplete.execute!(current_user, params)
+        return true if usecase.present?
 
-          if file_checksum == params[:checksum]
-            attach = Attachment.new(
-              bucket: nil,
-              filename: file_name,
-              key: params[:key],
-              file_path: file_path,
-              created_by: current_user.id,
-              created_for: current_user.id,
-              content_type: MIME::Types.type_for(file_name)[0].to_s
-            )
-
-            attach.save!
-
-            return true
-          else
-            return { ok: false, statusText: 'File upload has error. Please try again!' }
-          end
-        ensure
-          entries.each do |file|
-            File.delete(file) if File.exist?(file)
-          end
-          File.delete(file_path) if File.exist?(file_path)
-        end
+        { ok: false, statusText: 'File upload has error. Please try again!' }
       end
 
       desc 'Upload files to Inbox as unsorted'
