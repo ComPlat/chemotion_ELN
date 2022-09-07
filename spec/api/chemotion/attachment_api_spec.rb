@@ -104,6 +104,10 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  describe 'POST /api/v1/attachments/upload_dataset_attachments' do
+    pending 'not yet implemented'
+  end
+
   describe 'POST /api/v1/attachments/upload_chunk' do
     let(:params) do
       {
