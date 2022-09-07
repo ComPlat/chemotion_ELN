@@ -220,8 +220,6 @@ describe Chemotion::AttachmentAPI do
     context 'when "AttachmentPolicy" allows upload', :enable_attachment_policy_can_upload_chunk do
       let(:expected_response) { true }
 
-      after { FileUtils.rm_rf(Rails.root.join('tmp', 'uploads', 'chunks')) }
-
       it 'returns with the right http status' do
         expect(response.status).to eq(201)
       end
