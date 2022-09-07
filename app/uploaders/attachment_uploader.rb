@@ -1,7 +1,7 @@
 class AttachmentUploader < Shrine
   require 'helpers/thumbnail/thumbnail_creator'
 
-  MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024 # 10 MB
+  MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024
 
   plugin :derivatives
   plugin :remove_attachment
@@ -9,10 +9,6 @@ class AttachmentUploader < Shrine
   plugin :pretty_location
   Attacher.validate do
     validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
-  end
-
-  def is_integer?
-    !!(self =~ /\A[-+]?[0-9]+\z/)
   end
 
   def generate_location(io, context = {})
@@ -43,9 +39,7 @@ class AttachmentUploader < Shrine
 
     result = {}
 
-    tnc = ThumbnailCreator.new
-
-    result = tnc.create_derivative(
+    result = ThumbnailCreator.new.create_derivative(
       file_path.to_s,
       original,
       @context[:record].id,

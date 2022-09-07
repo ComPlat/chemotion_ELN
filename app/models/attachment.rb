@@ -10,7 +10,7 @@
 #  storage         :string(20)       default("tmp")
 #  created_by      :integer          not null
 #  created_for     :integer
-#  version         :integer          default(0)
+#  version         :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  content_type    :string
@@ -22,6 +22,8 @@
 #  aasm_state      :string
 #  filesize        :bigint
 #  attachment_data :jsonb
+#  is_editing      :boolean          default(FALSE)
+#  log_data        :jsonb
 #
 # Indexes
 #
@@ -81,15 +83,15 @@ class Attachment < ApplicationRecord
   end
 
   def read_file
-    self.attachment_attacher.file.read if self.attachment_attacher.file.present?
+    attachment_attacher.file.read if attachment_attacher.file.present?
   end
 
   def read_thumbnail
-    self.attachment(:thumbnail).read if self.attachment(:thumbnail).present?
+    attachment(:thumbnail).read if attachment(:thumbnail).present?
   end
 
   def abs_path
-    self.attachment_attacher.url if self.attachment_attacher.file.present?
+    attachment_attacher.url if attachment_attacher.file.present?
   end
 
   def abs_prev_path
@@ -105,7 +107,7 @@ class Attachment < ApplicationRecord
   end
 
   def add_checksum
-    self.checksum = Digest::MD5.hexdigest(read_file) if self.attachment_attacher.file.present?
+    checksum = Digest::MD5.hexdigest(read_file) if self.attachment_attacher.file.present?
   end
 
   def reset_checksum
@@ -114,7 +116,7 @@ class Attachment < ApplicationRecord
   end
 
   def regenerate_thumbnail
-    return unless self.filesize <= 50 * 1024 * 1024
+    return unless filesize <= 50 * 1024 * 1024
 
     store.regenerate_thumbnail
     update_column('thumb', thumb) if thumb_changed?
@@ -176,7 +178,7 @@ class Attachment < ApplicationRecord
   end
 
   def set_key
-    self.key = self.identifier
+    key = identifier
   end
 
   private
@@ -225,7 +227,7 @@ class Attachment < ApplicationRecord
   end
 
   def delete_file_and_thumbnail
-    self.attachment_attacher.destroy
+    attachment_attacher.destroy
   end
 
   def move_from_store(from_store = self.storage_was)
