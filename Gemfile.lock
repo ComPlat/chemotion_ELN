@@ -859,8 +859,8 @@ DEPENDENCIES
   haml-rails (~> 1.0)
   hashie-forbidden_attributes
   httparty
-  inchi-gem (= 1.06.1)!
   image_processing (~> 1.8)
+  inchi-gem (= 1.06.1)!
   jbuilder (~> 2.0)
   jquery-rails
   jwt
@@ -914,9 +914,9 @@ DEPENDENCIES
   scenic
   schmooze
   semacode!
-  shrine (~> 3.0)
   sentry-rails
   sentry-ruby
+  shrine (~> 3.0)
   simplecov
   slackistrano
   spring
