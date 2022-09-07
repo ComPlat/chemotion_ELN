@@ -160,6 +160,7 @@ module Usecases
 
         existing_sample.container = update_datamodel(sample.container) if sample.container
 
+        existing_sample.skip_reaction_svg_update = true
         existing_sample.save!
         existing_sample
       end

@@ -73,9 +73,22 @@ describe Usecases::Reactions::UpdateMaterials do
 
   describe '#execute!' do
     context 'when sample exists' do
+      before do
+        ReactionsStartingMaterialSample.create!(
+          reaction: reaction, sample: sample, reference: true, equivalent: 1
+        )
+      end
+
+      it 'does not update reaction-SVG from sample model' do
+        # Capturing SVG::ReactionComposer:new is the most straightforward way I could think of to test updates to the reaction-SVG.
+        # Since the updates to the reaction-SVG are a side-effect they are difficult to test.
+        expect(SVG::ReactionComposer).to receive(:new).once # only one final update to reaction-SVG once reaction is saved
+        described_class.new(reaction, starting_materials, user).execute!
+      end
+
       it 'updates the sample' do
         described_class.new(reaction, starting_materials, user).execute!
-        expect(Sample.count).to eq(1) # RSpec creates `sample` fixture, and ReactionHelpers update it
+        expect(Sample.count).to eq(1) # RSpec creates `sample` fixture, and UpdateMaterials update it
         expect(Sample.find_by(name: 'starting_material').target_amount_value).to eq(75.09596)
       end
     end
@@ -83,13 +96,13 @@ describe Usecases::Reactions::UpdateMaterials do
     context 'when sample is new' do
       it 'creates sub-sample for sample with parent that are not products' do
         described_class.new(reaction, reactants, user).execute!
-        expect(Sample.count).to eq(2) # RSpec creates `sample` fixture (parent), ReactionHelpers derive new sample from it
+        expect(Sample.count).to eq(2) # RSpec creates `sample` fixture (parent), UpdateMaterials derive new sample from it
         expect(Sample.find_by(short_label: 'reactant').target_amount_value).to eq(86.09596)
       end
 
       it 'creates new sample for samples that are products' do
         described_class.new(reaction, products, user).execute!
-        expect(Sample.count).to eq(1) # ReactionHelpers create new sample
+        expect(Sample.count).to eq(1) # UpdateMaterials create new sample
         expect(Sample.find_by(name: 'product').target_amount_value).to eq(99.08304)
       end
     end
