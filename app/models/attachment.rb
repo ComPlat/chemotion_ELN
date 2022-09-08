@@ -68,6 +68,14 @@ class Attachment < ApplicationRecord
     where(attachable_type: 'Template')
   }
 
+  def copy(**args)
+    d = self.dup
+    d.identifier = nil
+    d.duplicated = true
+    d.update(args)
+    d
+  end
+
   def extname
     File.extname(self.filename.to_s)
   end
