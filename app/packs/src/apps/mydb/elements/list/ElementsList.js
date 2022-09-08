@@ -208,7 +208,7 @@ export default class ElementsList extends React.Component {
 
 
       const navItem = (
-        <NavItem eventKey={i} key={`${value}_navItem`}>
+        <NavItem eventKey={i} key={`${value}_navItem`} className={`elements-list-tab-${value}s`}>
           <OverlayTrigger delayShow={500} placement="top" overlay={ttl}>
             <i className={iconClass} />
           </OverlayTrigger>

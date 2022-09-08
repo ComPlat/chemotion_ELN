@@ -38,7 +38,7 @@ describe 'Copy reaction' do
 
   def copy_reaction(source_collection, target_collection)
     find_by_id("tree-id-#{source_collection}").click
-    find('i.icon-reaction').click
+    find('.elements-list-tab-reactions').click
     find('div.preview-table', text: 'Reaction').click
     click_button('copy-element-btn')
     fill_in('modal-collection-id-select', with: target_collection).send_keys(:enter)
