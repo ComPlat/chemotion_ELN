@@ -12,7 +12,7 @@ jobs:
       matrix:
         pg_role: [chemotion_test]
         pg_database: [chemotion_test]
-    container: 
+    container:
       image: complat/complat-ubuntu-runner:development-5.c44d0c2d4
     env:
       HOME: /home/gitlab-runner
@@ -25,11 +25,11 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
-          --health-cmd pg_isready 
-          --health-interval 10s 
-          --health-timeout 5s 
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
-          
+
     steps:
       - name: git clone + postgres
         working-directory: /home/gitlab-runner
@@ -38,7 +38,7 @@ jobs:
           POSTGRES_PORT: 5432
         run: |
             sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/$(echo $GITHUB_REPOSITORY).git
-            
+
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
             echo "POSTGRES"
@@ -64,10 +64,10 @@ jobs:
       - name: rb test
         uses: nick-invision/retry@v2
         with:
-          timeout_minutes: 10
+          timeout_minutes: 30
           max_attempts: 5
           retry_on: error
           command: |
             cd /home/gitlab-runner/chemotion_ELN
-            /bin/bash -l -c "RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"      
-            
+            /bin/bash -l -c "RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
+
