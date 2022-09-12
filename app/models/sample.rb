@@ -225,7 +225,7 @@ class Sample < ApplicationRecord
   attr_writer :skip_reaction_svg_update
 
   def skip_reaction_svg_update?
-    @skip_reaction_svg_update
+    @skip_reaction_svg_update.present?
   end
 
   def molecule_sum_formular
