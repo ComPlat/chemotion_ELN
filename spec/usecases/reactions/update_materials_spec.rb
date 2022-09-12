@@ -82,8 +82,9 @@ describe Usecases::Reactions::UpdateMaterials do
       it 'does not update reaction-SVG from sample model' do
         # Capturing SVG::ReactionComposer:new is the most straightforward way I could think of to test updates to the reaction-SVG.
         # Since the updates to the reaction-SVG are a side-effect they are difficult to test.
-        expect(SVG::ReactionComposer).to receive(:new).once # only one final update to reaction-SVG once reaction is saved
+        allow(SVG::ReactionComposer).to receive(:new)
         described_class.new(reaction, starting_materials, user).execute!
+        expect(SVG::ReactionComposer).to have_received(:new).once # only one final update to reaction-SVG once reaction is saved
       end
 
       it 'updates the sample' do
