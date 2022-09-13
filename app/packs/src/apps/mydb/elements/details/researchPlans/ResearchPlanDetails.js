@@ -23,7 +23,7 @@ import ResearchPlanDetailsContainers from 'src/apps/mydb/elements/details/resear
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import ResearchPlanBodyOperation from './ResearchPlanBodyOperation';
+import ResearchPlanBodyOperation from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanBodyOperation';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
