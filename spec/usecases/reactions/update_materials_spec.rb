@@ -4,16 +4,17 @@ require 'rails_helper'
 
 describe Usecases::Reactions::UpdateMaterials do
   let(:user) { create(:user) }
-  let(:collection) { Collection.create!(label: 'Collection', user: user) }
+  let(:collection) { create(:collection, label: 'Collection', user: user) }
   let(:reaction) { create(:reaction, name: 'Reaction', collections: [collection]) }
   let(:root_container) { create(:root_container) }
-  let(:sample) { create(:sample, name: 'Sample', container: FactoryBot.create(:container)) }
+  let(:sample1) { create(:sample, name: 'Sample1', container: create(:container)) }
+  let(:sample2) { create(:sample, name: 'Sample2', container: create(:container)) }
   let(:molfile) { File.read(Rails.root + 'spec/fixtures/test_2.mol') }
   let(:starting_materials) do
     {
       'starting_materials' => [
         # hits existing_sample branch
-        'id' => sample.id,
+        'id' => sample1.id,
         'name' => 'starting_material',
         'target_amount_unit' => 'mg',
         'target_amount_value' => 75.09596,
@@ -36,7 +37,7 @@ describe Usecases::Reactions::UpdateMaterials do
         'is_new' => true,
         'molfile' => molfile,
         'container' => root_container,
-        'parent_id' => sample.id # gets named after parent, hence no name specified
+        'parent_id' => sample2.id # gets named after parent, hence no name specified
       ]
     }
   end
@@ -55,7 +56,7 @@ describe Usecases::Reactions::UpdateMaterials do
       ]
     }
   end
-  let(:materials) do
+  let(:mixed_materials) do
     {
       'solvents' => [
         # hits new_sample branch
@@ -72,50 +73,56 @@ describe Usecases::Reactions::UpdateMaterials do
   end
 
   describe '#execute!' do
-    context 'when sample exists' do
-      before do
-        ReactionsStartingMaterialSample.create!(
-          reaction: reaction, sample: sample, reference: true, equivalent: 1
-        )
-      end
+    let(:samples) { mixed_materials }
 
-      it 'does not update reaction-SVG from sample model' do
-        # Capturing SVG::ReactionComposer:new is the most straightforward way I could think of to test updates to the reaction-SVG.
-        # Since the updates to the reaction-SVG are a side-effect they are difficult to test.
-        allow(SVG::ReactionComposer).to receive(:new)
-        described_class.new(reaction, starting_materials, user).execute!
-        expect(SVG::ReactionComposer).to have_received(:new).once # only one final update to reaction-SVG once reaction is saved
-      end
-
-      it 'updates the sample' do
-        described_class.new(reaction, starting_materials, user).execute!
-        expect(Sample.count).to eq(1) # RSpec creates `sample` fixture, and UpdateMaterials update it
-        expect(Sample.find_by(name: 'starting_material').target_amount_value).to eq(75.09596)
-      end
-    end
-
-    context 'when sample is new' do
-      it 'creates sub-sample for sample with parent that are not products' do
-        described_class.new(reaction, reactants, user).execute!
-        expect(Sample.count).to eq(2) # RSpec creates `sample` fixture (parent), UpdateMaterials derive new sample from it
-        expect(Sample.find_by(short_label: 'reactant').target_amount_value).to eq(86.09596)
-      end
-
-      it 'creates new sample for samples that are products' do
-        described_class.new(reaction, products, user).execute!
-        expect(Sample.count).to eq(1) # UpdateMaterials create new sample
-        expect(Sample.find_by(name: 'product').target_amount_value).to eq(99.08304)
-      end
+    before do |example|
+      ReactionsStartingMaterialSample.create!(
+        reaction: reaction, sample: sample1, reference: true, equivalent: 1
+      )
+      allow(SVG::ReactionComposer).to receive(:new) if example.metadata[:svg_update]
+      described_class.new(reaction, samples, user).execute!
     end
 
     it 'associates reaction with materials' do
-      described_class.new(reaction, materials, user).execute!
       expect(ReactionsSample.count).to eq(4)
       expect(ReactionsStartingMaterialSample.count).to eq(1)
       expect(ReactionsReactantSample.count).to eq(1)
       expect(ReactionsSolventSample.count).to eq(1)
       expect(ReactionsProductSample.count).to eq(1)
       expect(reaction.reactions_samples).to eq(ReactionsSample.all)
+    end
+
+    context 'when sample exists', :existing_sample do
+      let(:samples) { starting_materials }
+
+      it 'does not update reaction-SVG from sample model', :svg_update do
+        # Capturing SVG::ReactionComposer:new is the most straightforward way I could think of to test updates to the reaction-SVG.
+        # Since the updates to the reaction-SVG are a side-effect they are difficult to test.
+        expect(SVG::ReactionComposer).to have_received(:new).once # only one final update to reaction-SVG once reaction is saved
+      end
+
+      it 'updates the sample' do
+        expect(Sample.count).to eq(1) # RSpec creates `sample` fixture, and UpdateMaterials update it
+        expect(Sample.find_by(name: 'starting_material').target_amount_value).to eq(75.09596)
+      end
+    end
+
+    context 'when sample is new and not a product' do
+      let(:samples) { reactants }
+
+      it 'creates sub-sample for sample with parent' do
+        expect(Sample.count).to eq(2) # RSpec creates `sample` fixture (parent), UpdateMaterials derive new sample from it
+        expect(Sample.find_by(short_label: 'reactant').target_amount_value).to eq(86.09596)
+      end
+    end
+
+    context 'when sample is a new product' do
+      let(:samples) { products }
+
+      it 'creates new sample' do
+        expect(Sample.count).to eq(1) # UpdateMaterials create new sample
+        expect(Sample.find_by(name: 'product').target_amount_value).to eq(99.08304)
+      end
     end
   end
 end
