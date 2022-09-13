@@ -164,7 +164,8 @@ class Sample < ApplicationRecord
   before_create :set_boiling_melting_points
   after_save :update_counter
   after_create :create_root_container
-  after_save :update_data_for_reactions
+  after_save :update_equivalent_for_reactions
+  after_save :update_svg_for_reactions, unless: :skip_reaction_svg_update?
 
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
@@ -220,6 +221,12 @@ class Sample < ApplicationRecord
 
   delegate :computed_props, to: :molecule, prefix: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
+
+  attr_writer :skip_reaction_svg_update
+
+  def skip_reaction_svg_update?
+    @skip_reaction_svg_update.present?
+  end
 
   def molecule_sum_formular
     (decoupled? ? sum_formula : molecule&.sum_formular) || ''
@@ -506,11 +513,6 @@ private
     end
 
     el_composition.set_loading self
-  end
-
-  def update_data_for_reactions
-    update_equivalent_for_reactions
-    update_svg_for_reactions
   end
 
   def update_equivalent_for_reactions
