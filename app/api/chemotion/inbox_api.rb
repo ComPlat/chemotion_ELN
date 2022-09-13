@@ -1,6 +1,21 @@
+# frozen_string_literal: true
+
 module Chemotion
   class InboxAPI < Grape::API
     resource :inbox do
+      params do
+        requires :cnt_only, type: Boolean, desc: 'return count number only'
+      end
+      get do
+        current_user.container = Container.create(name: 'inbox', container_type: 'root') unless current_user.container
+
+        if params[:cnt_only]
+          present current_user.container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
+        else
+          present current_user.container, with: Entities::InboxEntity, root: :inbox
+        end
+      end
+
       resource :samples do
         desc 'search samples from user by'
         params do
@@ -35,7 +50,7 @@ module Chemotion
           error!('402 Unauthorized', 402) unless attachment.created_for == current_user.id
         end
         post ':sample_id' do
-          analyses_container = Sample.find(params[:sample_id]).container.children.find_by(container_type: "analyses")
+          analyses_container = Sample.find(params[:sample_id]).container.children.find_by(container_type: 'analyses')
           attachment = Attachment.find(params[:attachment_id])
           analysis_name = attachment.filename.chomp(File.extname(attachment.filename))
 
@@ -52,7 +67,7 @@ module Chemotion
           Message.create_msg_notification(
             channel_subject: Channel::ASSIGN_INBOX_TO_SAMPLE,
             message_from: current_user.id,
-            data_args: { filename: attachment.filename, info: "#{@sample.short_label} #{@sample.name}"},
+            data_args: { filename: attachment.filename, info: "#{@sample.short_label} #{@sample.name}" },
             url: @link,
             level: 'success'
           )

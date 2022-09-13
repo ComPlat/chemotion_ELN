@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'barby'
 require 'barby/barcode/qr_code'
 require 'barby/outputter/svg_outputter'
@@ -15,116 +17,31 @@ module Chemotion
       end
 
       def raw_file(att)
-        begin
-          Base64.encode64(att.read_file)
-        rescue
-          nil
-        end
+        Base64.encode64(att.read_file)
+      rescue StandardError
+        nil
       end
 
       def raw_file_obj(att)
         {
           id: att.id,
           file: raw_file(att),
-          predictions: JSON.parse(att.get_infer_json_content())
+          predictions: JSON.parse(att.get_infer_json_content)
         }
       end
 
-      def created_for_current_user(att)
-        att.container_id.nil? && att.created_for == current_user.id
+      def writable?(attachment)
+        AttachmentPolicy.can_delete?(current_user, attachment)
       end
 
-      def writable?(att)
-        return false unless att
-        can_write = created_for_current_user(att)
-        return can_write if can_write
-        el = att.container&.root&.containable
-        if el
-          own_by_current_user = el.is_a?(User) && (el == current_user)
-          policy_updatable = ElementPolicy.new(current_user, el).update?
-          can_write = own_by_current_user || policy_updatable
-        end
-        can_write
-      end
-
-      def validate_uuid_format(uuid)
-        uuid_regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-        return true if uuid_regex.match?(uuid.to_s.downcase)
-
-        return false
+      def upload_chunk_error_message
+        { ok: false, statusText: 'File key is not valid' }
       end
     end
 
-    rescue_from ActiveRecord::RecordNotFound do |error|
-      message = "Could not find attachment"
+    rescue_from ActiveRecord::RecordNotFound do |_error|
+      message = 'Could not find attachment'
       error!(message, 404)
-    end
-
-    resource :inbox do
-      params do
-        requires :cnt_only, type: Boolean, desc: 'return count number only'
-      end
-      get do
-        current_user.container = Container.create(name: 'inbox', container_type: 'root') unless current_user.container
-
-        if params[:cnt_only]
-          present current_user.container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
-        else
-          present current_user.container, with: Entities::InboxEntity, root: :inbox
-        end
-      end
-    end
-
-    resource :attachable do
-      params do
-        optional :files, type: Array[File], desc: 'files', default: []
-        optional :attachable_type, type: String, desc: 'attachable_type'
-        optional :attachable_id, type: Integer, desc: 'attachable id'
-        optional :del_files, type: Array[Integer], desc: 'del file id', default: []
-      end
-      after_validation do
-        case params[:attachable_type]
-        when 'ResearchPlan'
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: params[:attachable_id])).update?
-        end
-      end
-
-      desc 'Update attachable records'
-      post 'update_attachments_attachable' do
-        attachable_type = params[:attachable_type]
-        attachable_id = params[:attachable_id]
-        if params.fetch(:files, []).any?
-          attach_ary = []
-          rp_attach_ary = []
-          params[:files].each do |file|
-            next unless (tempfile = file[:tempfile])
-
-            a = Attachment.new(
-              bucket: file[:container_id],
-              filename: file[:filename],
-              file_path: file[:tempfile],
-              created_by: current_user.id,
-              created_for: current_user.id,
-              content_type: file[:type],
-              attachable_type: attachable_type,
-              attachable_id: attachable_id
-            )
-            begin
-              a.save!
-              attach_ary.push(a.id)
-              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Element])
-            ensure
-              tempfile.close
-              tempfile.unlink
-            end
-          end
-
-          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) if rp_attach_ary.any?
-          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) if attach_ary.any?
-        end
-        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) if params[:del_files].any?
-        true
-      end
     end
 
     resource :attachments do
@@ -132,10 +49,7 @@ module Chemotion
         @attachment = Attachment.find_by(id: params[:attachment_id])
         case request.env['REQUEST_METHOD']
         when /delete/i
-          error!('401 Unauthorized', 401) unless @attachment
-          can_delete = writable?(@attachment)
-          error!('401 Unauthorized', 401) unless can_delete
-        # when /post/i
+          error!('401 Unauthorized', 401) unless writable?(@attachment)
         when /get/i
           can_dwnld = false
           if /zip/.match?(request.url)
@@ -166,14 +80,16 @@ module Chemotion
 
       desc 'Delete Attachment'
       delete ':attachment_id' do
-        present @attachment.delete, with: Entities::AttachmentEntity, root: :attachment
+        present Usecases::Attachments::Delete.execute!(@attachment),
+                with: Entities::AttachmentEntity,
+                root: :attachment
       end
 
       desc 'Delete container id of attachment'
       delete 'link/:attachment_id' do
-        @attachment.attachable_id = nil
-        @attachment.attachable_type = 'Container'
-        present @attachment.save!, with: Entities::AttachmentEntity, root: :attachment
+        present Usecases::Attachments::Unlink.execute!(@attachment),
+                with: Entities::AttachmentEntity,
+                root: :attachment
       end
 
       # TODO: Remove this endpoint. It is not used by the FE
@@ -202,113 +118,71 @@ module Chemotion
       end
 
       desc 'Upload large file as chunks'
-      post 'upload_chunk' do
-        params do
-          require :file, type: File, desc: 'file'
-          require :counter, type: Integer, default: 0
-          require :key, type: String
-        end
-        return { ok: false, statusText: 'File key is not valid' } unless validate_uuid_format(params[:key])
-
-        FileUtils.mkdir_p(Rails.root.join('tmp/uploads', 'chunks'))
-        File.open(Rails.root.join('tmp/uploads', 'chunks', "#{params[:key]}$#{params[:counter]}"), 'wb') do |file|
-          File.open(params[:file][:tempfile], 'r') do |data|
-            file.write(data.read)
-          end
-        end
-
-        true
+      params do
+        requires :file, type: File, desc: 'file'
+        requires :counter, type: Integer, default: 0
+        requires :key, type: String
       end
+      post 'upload_chunk' do
+        return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
+        Usecases::Attachments::UploadChunk.execute!(params)
+      end
 
       desc 'Upload completed'
+      params do
+        requires :filename, type: String
+        requires :key, type: String
+        requires :checksum, type: String
+      end
       post 'upload_chunk_complete' do
-        params do
-          require :filename, type: String
-          require :key, type: String
-        end
-        return { ok: false, statusText: 'File key is not valid' } unless validate_uuid_format(params[:key])
+        return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
-        begin
-          file_name = ActiveStorage::Filename.new(params[:filename]).sanitized
-          FileUtils.mkdir_p(Rails.root.join('tmp/uploads', 'full'))
-          entries = Dir["#{Rails.root.join('tmp/uploads', 'chunks', params[:key])}*"].sort_by { |s| s.scan(/\d+/).last.to_i }
-          file_path = Rails.root.join('tmp/uploads', 'full', params[:key])
-          file_path = "#{file_path}#{File.extname(file_name)}"
-          file_checksum = Digest::MD5.new
-          File.open(file_path, 'wb') do |outfile|
-            entries.each do |file|
-              buff = File.open(file, 'rb').read
-              file_checksum.update(buff)
-              outfile.write(buff)
-            end
-          end
+        usecase = Usecases::Attachments::UploadChunkComplete.execute!(current_user, params)
+        return true if usecase.present?
 
-          if file_checksum == params[:checksum]
-            attach = Attachment.new(
-              bucket: nil,
-              filename: file_name,
-              key: params[:key],
-              file_path: file_path,
-              created_by: current_user.id,
-              created_for: current_user.id,
-              content_type: MIME::Types.type_for(file_name)[0].to_s
-            )
-
-            attach.save!
-
-            return true
-          else
-            return { ok: false, statusText: 'File upload has error. Please try again!' }
-          end
-        ensure
-          entries.each do |file|
-            File.delete(file) if File.exist?(file)
-          end
-          File.delete(file_path) if File.exist?(file_path)
-        end
+        { ok: false, statusText: 'File upload has error. Please try again!' }
       end
 
-
-      desc "Upload files to Inbox as unsorted"
+      desc 'Upload files to Inbox as unsorted'
       post 'upload_to_inbox' do
-        attach_ary = Array.new
-        params.each do |file_id, file|
-          if tempfile = file[:tempfile]
-              attach = Attachment.new(
-                bucket: file[:container_id],
-                filename: file[:filename],
-                key: file[:name],
-                file_path: file[:tempfile],
-                created_by: current_user.id,
-                created_for: current_user.id,
-                content_type: file[:type],
-                attachable_type: 'Container'
-              )
-            begin
-              attach.save!
-              attach_ary.push(attach.id)
-            ensure
-              tempfile.close
-              tempfile.unlink
-            end
+        attach_ary = []
+        params.each do |_file_id, file|
+          next unless tempfile = file[:tempfile]
+
+          attach = Attachment.new(
+            bucket: file[:container_id],
+            filename: file[:filename],
+            key: file[:name],
+            file_path: file[:tempfile],
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: file[:type],
+            attachable_type: 'Container'
+          )
+          begin
+            attach.save!
+            attach_ary.push(attach.id)
+          ensure
+            tempfile.close
+            tempfile.unlink
           end
         end
         TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
-                       .perform_later(attach_ary)
+                              .perform_later(attach_ary)
 
         true
       end
 
-      desc "Download the attachment file"
+      desc 'Download the attachment file'
       get ':attachment_id' do
-        content_type "application/octet-stream"
+        content_type 'application/octet-stream'
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
         @attachment.read_file
       end
 
-      desc "Download the zip attachment file"
+      desc 'Download the zip attachment file'
       get 'zip/:container_id' do
         env['api.format'] = :binary
         content_type('application/zip, application/octet-stream')
@@ -319,34 +193,33 @@ module Chemotion
             zip.put_next_entry att.filename
             zip.write att.read_file
           end
-          file_text = "";
+          file_text = ''
           @container.attachments.each do |att|
             file_text += "#{att.filename} #{att.checksum}\n"
           end
-          hyperlinks_text = ""
+          hyperlinks_text = ''
           JSON.parse(@container.extended_metadata.fetch('hyperlinks', '[]')).each do |link|
             hyperlinks_text += "#{link} \n"
           end
-          zip.put_next_entry "dataset_description.txt"
+          zip.put_next_entry 'dataset_description.txt'
           zip.write <<~DESC
-          dataset name: #{@container.name}
-          instrument: #{@container.extended_metadata.fetch('instrument', nil)}
-          description:
-          #{@container.description}
-
-          Files:
-          #{file_text}
-          Hyperlinks:
-          #{hyperlinks_text}
+            dataset name: #{@container.name}
+            instrument: #{@container.extended_metadata.fetch('instrument', nil)}
+            description:
+            #{@container.description}
+             Files:
+            #{file_text}
+            Hyperlinks:
+            #{hyperlinks_text}
           DESC
         end
         zip.rewind
         zip.read
       end
 
-      desc "Download the zip attachment file by sample_id"
+      desc 'Download the zip attachment file by sample_id'
       get 'sample_analyses/:sample_id' do
-        tts = @sample.analyses&.map { |a| a.children&.map { |d| d.attachments&.map{ |at| at.filesize } } }&.flatten&.reduce(:+) || 0
+        tts = @sample.analyses&.map { |a| a.children&.map { |d| d.attachments&.map { |at| at.filesize } } }&.flatten&.reduce(:+) || 0
         if tts > 300_000_000
           DownloadAnalysesJob.perform_later(@sample.id, current_user.id, false)
           nil
@@ -366,19 +239,15 @@ module Chemotion
       get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
         content_type @attachment.content_type
-        header['Content-Disposition'] = "attachment; filename=" + sfilename
-        header['Content-Transfer-Encoding'] = 'binary';
+        header['Content-Disposition'] = 'attachment; filename=' + sfilename
+        header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
         @attachment.read_file
       end
 
       desc 'Return Base64 encoded thumbnail'
       get 'thumbnail/:attachment_id' do
-        if @attachment.thumb
-          Base64.encode64(@attachment.read_thumbnail)
-        else
-          nil
-        end
+        Base64.encode64(@attachment.read_thumbnail) if @attachment.thumb
       end
 
       desc 'Return Base64 encoded thumbnails'
@@ -389,9 +258,9 @@ module Chemotion
         thumbnails = params[:ids].map do |a_id|
           att = Attachment.find(a_id)
           can_dwnld = if att
-            element = att.container.root.containable
-            can_read = ElementPolicy.new(current_user, element).read?
-            can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                        element = att.container.root.containable
+                        can_read = ElementPolicy.new(current_user, element).read?
+                        can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
           end
           can_dwnld ? thumbnail_obj(att) : nil
         end
@@ -406,9 +275,9 @@ module Chemotion
         files = params[:ids].map do |a_id|
           att = Attachment.find(a_id)
           can_dwnld = if att
-            element = att.container.root.containable
-            can_read = ElementPolicy.new(current_user, element).read?
-            can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                        element = att.container.root.containable
+                        can_read = ElementPolicy.new(current_user, element).read?
+                        can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
           end
           can_dwnld ? raw_file_obj(att) : nil
         end
@@ -425,12 +294,14 @@ module Chemotion
         pm[:generated].each do |g_id|
           att = Attachment.find(g_id)
           next unless att
+
           can_delete = writable?(att)
           att.destroy if can_delete
         end
         pm[:original].each do |o_id|
           att = Attachment.find(o_id)
           next unless att
+
           can_write = writable?(att)
           if can_write
             att.set_regenerating
@@ -496,24 +367,23 @@ module Chemotion
       end
 
       namespace :svgs do
-        desc "Get QR Code SVG for element"
+        desc 'Get QR Code SVG for element'
         params do
           requires :element_id, type: Integer
           requires :element_type, type: String
         end
         get do
           code = CodeLog.where(source: params[:element_type],
-            source_id: params[:element_id]).first
+                               source_id: params[:element_id]).first
           if code
             qr_code = Barby::QrCode.new(code.value, size: 1, level: :l)
             outputter = Barby::SvgOutputter.new(qr_code)
             outputter.to_svg(margin: 0)
           else
-            ""
+            ''
           end
         end
       end
     end
-
   end
 end

@@ -6,6 +6,10 @@ class ElementPolicy
     @record = record
   end
 
+  def self.update?(user, record)
+    new(user, record).update?
+  end
+
   # A user can read/write/share an element if
   # 1. there exists an unshared collection which he owns and that contains the sample or
   # 2. there exists a shared collection, containing the sample, which he owns and where the user has
