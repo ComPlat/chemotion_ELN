@@ -13,7 +13,6 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:starting_materials) do
     {
       'starting_materials' => [
-        # hits existing_sample branch
         'id' => sample1.id,
         'name' => 'starting_material',
         'target_amount_unit' => 'mg',
@@ -29,7 +28,6 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:reactants) do
     {
       'reactants' => [
-        # hits subsample branch
         'target_amount_unit' => 'mg',
         'target_amount_value' => 86.09596,
         'equivalent' => 2,
@@ -44,7 +42,6 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:products) do
     {
       'products' => [
-        # hits new_sample branch
         'name' => 'product',
         'target_amount_unit' => 'mg',
         'target_amount_value' => 99.08304,
@@ -59,7 +56,6 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:mixed_materials) do
     {
       'solvents' => [
-        # hits new_sample branch
         'name' => 'solvent',
         'target_amount_unit' => 'mg',
         'target_amount_value' => 76.09596,
@@ -92,8 +88,8 @@ describe Usecases::Reactions::UpdateMaterials do
       expect(reaction.reactions_samples).to eq(ReactionsSample.all)
     end
 
-    context 'when sample exists', :existing_sample do
-      let(:samples) { starting_materials }
+    context 'when sample exists' do
+      let(:samples) { starting_materials } # hits .update_existing_sample
 
       it 'does not update reaction-SVG from sample model', :svg_update do
         # Capturing SVG::ReactionComposer:new is the most straightforward way I could think of to test updates to the reaction-SVG.
@@ -108,7 +104,7 @@ describe Usecases::Reactions::UpdateMaterials do
     end
 
     context 'when sample is new and not a product' do
-      let(:samples) { reactants }
+      let(:samples) { reactants } # hits .create_sub_sample
 
       it 'creates sub-sample for sample with parent' do
         expect(Sample.count).to eq(2) # RSpec creates `sample` fixture (parent), UpdateMaterials derive new sample from it
@@ -117,7 +113,7 @@ describe Usecases::Reactions::UpdateMaterials do
     end
 
     context 'when sample is a new product' do
-      let(:samples) { products }
+      let(:samples) { products } # hits .create_new_sample
 
       it 'creates new sample' do
         expect(Sample.count).to eq(1) # UpdateMaterials create new sample
