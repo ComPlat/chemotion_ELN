@@ -10,7 +10,7 @@ import ResearchPlanDetailsFieldImage from 'src/apps/mydb/elements/details/resear
 import ResearchPlanDetailsFieldTable from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldReaction';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {

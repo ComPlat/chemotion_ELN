@@ -5,7 +5,7 @@ import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import Attachment from 'src/models/Attachment';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import ImageFileDropHandler from './ImageFileDropHandler';
+import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
 
