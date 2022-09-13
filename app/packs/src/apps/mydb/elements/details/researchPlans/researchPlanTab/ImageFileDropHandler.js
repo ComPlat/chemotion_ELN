@@ -1,4 +1,4 @@
-import Attachment from "../models/Attachment";
+import Attachment from "src/models/Attachment";
 
 export default class ImageFileDropHandler {
 
