@@ -62,12 +62,7 @@ jobs:
             /bin/bash -l -c "RAILS_ENV=test bundle exec bin/rails db:seed > /dev/null"
 
       - name: rb test
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 30
-          max_attempts: 5
-          retry_on: error
-          command: |
-            cd /home/gitlab-runner/chemotion_ELN
-            /bin/bash -l -c "RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
+        working-directory: /home/gitlab-runner/chemotion_ELN
+        run: |
+          /bin/bash -l -c "RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
 
