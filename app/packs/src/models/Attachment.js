@@ -12,7 +12,7 @@ export default class Attachment extends Element {
         name: file.name,
         filename: file.name,
         is_deleted: false,
-        preview: filePreview(file),
+        preview: Attachment.filePreview(file),
         is_image_field: false
       }
     )
@@ -20,7 +20,7 @@ export default class Attachment extends Element {
 
   constructor(args) {
     super(args);
-    this.identifier=this.id;
+    this.identifier = this.id;
   }
 
   get preview() {
