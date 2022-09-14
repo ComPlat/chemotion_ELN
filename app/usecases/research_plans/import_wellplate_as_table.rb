@@ -57,11 +57,11 @@ module Usecases
         columns = [
           {
             colId: :wellplate_position, field: :wellplate_position,
-            headerName: 'Position', editable: false, resizable: true
+            headerName: 'Position', editable: true, resizable: true
           },
           {
             colId: :sample, field: :sample,
-            headerName: 'Sample', editable: false, resizable: true
+            headerName: 'Sample', editable: true, resizable: true
           }
         ]
 
