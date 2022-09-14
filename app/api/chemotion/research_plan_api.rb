@@ -98,7 +98,7 @@ module Chemotion
           research_plan.collections << all_coll
         end
 
-        present research_plan, with: Entities::ResearchPlanEntity
+        present research_plan, with: Entities::ResearchPlanEntity, root: :research_plan
       end
 
       namespace :table_schemas do
