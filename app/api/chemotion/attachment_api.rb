@@ -46,7 +46,7 @@ module Chemotion
 
     resource :attachments do
       before do
-        @attachment = Attachment.find_by(id: params[:attachment_id])
+        @attachment = Attachment.find_by(id: params[:attachment_id]) if params[:attachment_id].is_a? Integer
         @attachment = Attachment.find_by(identifier: params[:attachment_id]) if @attachment == nil
         case request.env['REQUEST_METHOD']
         when /delete/i
