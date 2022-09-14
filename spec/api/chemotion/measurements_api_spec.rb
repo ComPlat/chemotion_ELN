@@ -71,7 +71,8 @@ describe Chemotion::MeasurementsAPI do
 
     describe 'POST /api/v1/measurements/bulk_create_from_raw_data' do
       let(:collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
-      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3) }
+      let(:sample) { create(:sample, creator: user) }
+      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3, sample: sample) }
       let(:raw_data) do
         wellplate.wells.map do |well|
           well.readouts.map.with_index do |readout, readout_index|
@@ -95,9 +96,7 @@ describe Chemotion::MeasurementsAPI do
       before do
         CollectionsResearchPlan.create(research_plan: research_plan, collection: collection)
         CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-        wellplate.wells.each do |well|
-          CollectionsSample.create!(sample: well.sample, collection: collection)
-        end
+        CollectionsSample.create!(sample: sample, collection: collection)
       end
 
       it 'creates measurements from the given well' do
