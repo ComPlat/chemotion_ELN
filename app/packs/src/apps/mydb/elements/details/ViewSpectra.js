@@ -33,12 +33,10 @@ class ViewSpectra extends React.Component {
     this.writeCloseCommon = this.writeCloseCommon.bind(this);
     this.writeClosePeakOp = this.writeClosePeakOp.bind(this);
     this.writeCloseMpyOp = this.writeCloseMpyOp.bind(this);
-    // this.checkWriteOp = this.checkWriteOp.bind(this);
     this.saveOp = this.saveOp.bind(this);
     this.saveCloseOp = this.saveCloseOp.bind(this);
     this.closeOp = this.closeOp.bind(this);
     this.predictOp = this.predictOp.bind(this);
-    // this.checkedToWrite = this.checkedToWrite.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
     this.renderSpectraEditor = this.renderSpectraEditor.bind(this);
     this.renderEmpty = this.renderEmpty.bind(this);
@@ -63,8 +61,6 @@ class ViewSpectra extends React.Component {
   onChange(newState) {
     const origState = this.state;
     this.setState({ ...origState, ...newState });
-    // const { writing, predictions } = newState;
-    // this.checkedToWrite(writing, predictions);
   }
 
   opsSolvent(shift) {
@@ -201,6 +197,11 @@ class ViewSpectra extends React.Component {
     peaks, shift, layout, isAscend, decimal, body,
     isIntensity, integration
   }) {
+    const layoutOpsObj = SpectraOps[layout];
+    if (!layoutOpsObj) {
+      return [];
+    }
+
     const { jcamp } = this.getContent();
     const { entity } = FN.buildData(jcamp);
     const { features } = entity;
@@ -217,7 +218,7 @@ class ViewSpectra extends React.Component {
     const mBody = body || FN.peaksBody({
       peaks, layout, decimal, shift, isAscend, isIntensity, boundary, integration
     });
-    const layoutOpsObj = SpectraOps[layout];
+    
     const { label, value, name } = shift.ref;
     const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
     return [
@@ -351,36 +352,6 @@ class ViewSpectra extends React.Component {
     this.writeCommon(params, isMpy);
   }
 
-  // checkedToWrite(writing, predictions) {
-  //   if (!writing || predictions.output.result.length === 0) return null;
-  //   const {
-  //     peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
-  //     isIntensity, multiplicity, integration,
-  //   } = writing;
-
-  //   const data = predictions.output.result[0].shifts;
-  //   const body = FN.formatPeaksByPrediction(peaks, layout, isAscend, decimal, data);
-  //   const isMpy = false;
-  //   this.writeCommon({
-  //     peaks,
-  //     shift,
-  //     scan,
-  //     thres,
-  //     analysis,
-  //     layout,
-  //     isAscend,
-  //     decimal,
-  //     body,
-  //     keepPred: true,
-  //     isIntensity,
-  //     multiplicity,
-  //     integration,
-  //   }, isMpy);
-
-  //   SpectraActions.WriteStop.defer();
-  //   return null;
-  // }
-
   saveOp({
     peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt
   }) {
@@ -486,22 +457,7 @@ class ViewSpectra extends React.Component {
       handleSubmit,
       keepPred,
     );
-    // this.closeOp();
-    // spcInfo: si, peaks: targetPeaks, layout, shift, cb: handleSubmit,
   }
-
-  // checkWriteOp({
-  //   peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
-  //   multiplicity, integration,
-  // }) {
-  //   const cleanPeaks = FN.rmShiftFromPeaks(peaks, shift);
-  //   LoadingActions.start.defer();
-  //   SpectraActions.WriteStart.defer({
-  //     shift, scan, thres, analysis, layout, isAscend, decimal, peaks: cleanPeaks,
-  //     multiplicity, integration,
-  //   }); // keep payload to state.writing & handle by onChange/checkedToWrite after predictOp
-  //   this.predictOp({ layout, shift, peaks: cleanPeaks });
-  // }
 
   buildOpsByLayout(et) {
     if (this.props.sample && this.props.sample instanceof ResearchPlan) {
@@ -529,14 +485,6 @@ class ViewSpectra extends React.Component {
         { name: 'save & close', value: this.saveCloseOp },
       ];
     }
-    // { name: 'check & write', value: this.checkWriteOp },
-    // const predictable = updatable && ['1H', '13C', 'IR'].indexOf(et.layout) >= 0;
-    // if (predictable) {
-    //   baseOps = [
-    //     ...baseOps,
-    //     { name: 'predict', value: this.predictOp },
-    //   ];
-    // }
     const saveable = updatable;
     if (saveable) {
       baseOps = [
