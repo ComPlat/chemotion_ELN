@@ -104,7 +104,7 @@ module Chemotion
         end
 
         post do
-          Usecases::Measurements::BulkCreateFromRawData.new(current_user, params).execute!
+          { measurements: Usecases::Measurements::BulkCreateFromRawData.new(current_user, params).execute! }
         rescue StandardError => e
           error!(e.full_message, 500)
         end

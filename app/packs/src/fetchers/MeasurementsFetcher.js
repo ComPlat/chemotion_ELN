@@ -43,7 +43,7 @@ export default class MeasurementsFetcher {
         source_id: researchPlanId
       })
     }).then(response => response.json())
-      .then(json => json.bulk_create_from_raw_data)
+      .then(json => json.measurements)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
