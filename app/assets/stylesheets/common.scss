@@ -302,3 +302,11 @@
     background-color: #e6e6e6;
   }
 }
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  b {
+    float: right;
+  }
+}

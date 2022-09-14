@@ -73,6 +73,13 @@ WarningBox.propTypes = {
   show: PropTypes.bool.isRequired,
 };
 
+const initEditor = () => {
+  const userProfile = UserStore.getState().profile;
+  const eId = userProfile?.data?.default_structure_editor || 'ketcher';
+  const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
+  return editor;
+};
+
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
     super(props);
@@ -81,7 +88,7 @@ export default class StructureEditorModal extends React.Component {
       showWarning: props.hasChildren || props.hasParent,
       molfile: props.molfile,
       matriceConfigs: [],
-      editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' })
+      editor: initEditor()
     };
     this.editors = { ketcher: this.state.editor };
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
