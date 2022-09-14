@@ -102,8 +102,6 @@ module Chemotion
             params[:attfilesIdentifier],
             current_user.id) if params[:attfiles].present? || params[:delfiles].present?
           (attach_ary << att_ary).flatten! unless att_ary&.empty?
-          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(attach_ary) unless attach_ary.empty?
-          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}").perform_later(attach_ary) unless attach_ary.empty?
           true
         end
       end
