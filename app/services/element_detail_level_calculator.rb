@@ -19,7 +19,7 @@ class ElementDetailLevelCalculator
     @nested_detail_levels = {}
 
     calculate_element_detail_level
-    calculcate_nested_detail_levels
+    calculate_nested_detail_levels
   end
 
   private
@@ -28,9 +28,12 @@ class ElementDetailLevelCalculator
     element_detail_level_field = "#{element.class.to_s.downcase}_detail_level".to_sym
     element_is_from_own_unshared_collection = user_collection_detail_levels.any? { |entry| !entry[:is_shared] }
     max_detail_level_from_collections = [
-      user_collection_detail_levels.pluck(element_detail_level_field),
-      sync_collection_detail_levels.pluck(element_detail_level_field)
-    ].max
+      user_collection_detail_levels.map { |entry| entry[element_detail_level_field] },
+      sync_collection_detail_levels.map { |entry| entry[element_detail_level_field] }
+    ].flatten.max
+
+    puts "Max Detail Level from collection"
+    puts max_detail_level_from_collections
 
     @element_detail_level = if element_is_from_own_unshared_collection
                               10
@@ -53,7 +56,7 @@ class ElementDetailLevelCalculator
 
   # taken from API#group_ids
   def user_ids
-    @user_ids ||= user.group_ids.merge(user.id)
+    @user_ids ||= user.group_ids + [user.id]
   end
 
   # All collections containing the element that belong to the user or were shared to them
@@ -64,7 +67,7 @@ class ElementDetailLevelCalculator
   # All collections containing the element that were synced to the current user
   def sync_collections_with_element
     @sync_collections_with_element ||=
-      SyncCollectionUsers.where(
+      SyncCollectionsUser.where(
         user_id: user_ids,
         collection_id: element.collections.ids
       )
@@ -75,8 +78,8 @@ class ElementDetailLevelCalculator
   def user_collection_detail_levels
     attributes_to_fetch = [:is_shared] + DETAIL_LEVEL_FIELDS
     @user_collection_detail_levels ||= user_collections_with_element
-                                       .pluck(attributes_to_fetch)
-                                       .map { |values| Hash[ attributes_to_fetch.zip(values) ]
+                                       .pluck(*attributes_to_fetch)
+                                       .map { |values| Hash[ attributes_to_fetch.zip(values) ] }
   end
 
   # Returns an array of Hashes. One hash per collection from sync_collections_with_element.
@@ -84,7 +87,7 @@ class ElementDetailLevelCalculator
   def sync_collection_detail_levels
     attributes_to_fetch = DETAIL_LEVEL_FIELDS
     @sync_collection_detail_levels ||= sync_collections_with_element
-                                       .pluck(attributes_to_fetch)
+                                       .pluck(*attributes_to_fetch)
                                        .map { |attributes| Hash[ attributes_to_fetch.zip(values) ] }
   end
 end
