@@ -9,7 +9,7 @@ describe 'Sync Collection Test' do
   let(:reaction) { create(:reaction) }
 
   def first_user_syncs_collection(permission)
-    click_button('col-mgnt-btn')
+    click_button('collection-management-button')
     click_button('sync-users-btn')
     select(permission, from: 'permissionLevelSelect')
     select('Everything', from: 'reactionDetailLevelSelect')
@@ -18,8 +18,8 @@ describe 'Sync Collection Test' do
     sus.send_keys(:down)
     sus.send_keys(:enter)
     click_button('create-sync-shared-col-btn')
-    click_button('my-collections-update-btn')
-    click_button('col-mgnt-btn')
+    click_button('save-collections-button')
+    click_button('collection-management-button')
     click_link('Log out')
   end
 

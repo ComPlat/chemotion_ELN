@@ -97,11 +97,6 @@ describe 'Copy reaction' do
   end
 
   it 'to diff collection', js: true do
-    # find_by_id('col-mgnt-btn').click
-    # find_by_id('mycol_-1').click
-    # find_all('input[type="text"]')[2].set('Col2')
-    # find_by_id('my-collections-update-btn').click
-    # find_by_id('col-mgnt-btn').click
     find_by_id('tree-id-Col3').click
     first('i.icon-reaction').click
     first('i.c-bs-success').click
