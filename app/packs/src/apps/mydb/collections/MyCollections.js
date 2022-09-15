@@ -79,7 +79,9 @@ export default class MyCollections extends React.Component {
       )
     } else {
       return (
-        <FormControl className="collection-label" type="text"
+        <FormControl
+          className="collection-label"
+          type="text"
           value={node.label || ''}
           onChange={(e) => { this.handleLabelChange(e, node) }}
         />
@@ -114,19 +116,31 @@ export default class MyCollections extends React.Component {
       const { isChange } = this.state;
       return (
         <div className="root-actions">
-          {isChange && <Button id="my-collections-update-btn" bsSize="xsmall" bsStyle="warning" onClick={this.bulkUpdate.bind(this)}> Save </Button>}
-          {this.addButton(node)}
+          {isChange && <Button id="save-collections-button" bsSize="xsmall" bsStyle="warning" onClick={this.bulkUpdate.bind(this)}> Save </Button>}
+          {this.addCollectionButton(node)}
         </div>
       )
     } else {
       return (
         <ButtonGroup className="actions">
-          <Button id="sync-users-btn" bsSize="xsmall" bsStyle="primary" disabled={node.isNew === true}
-            onClick={() => this.doSync(node, 'CreateSync')}>
+          <Button
+            id="sync-users-btn"
+            bsSize="xsmall"
+            bsStyle="primary"
+            disabled={node.isNew === true}
+            onClick={() => this.doSync(node, 'CreateSync')}
+          >
             <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>
-          {this.addButton(node)}
-          <Button bsSize="xsmall" bsStyle="danger" onClick={this.deleteCollection.bind(this, node)}>
+
+          {this.addSubcollectionButton(node)}
+
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            id={`delete-collection-button_${node.id}`}
+            onClick={this.deleteCollection.bind(this, node)}
+          >
             <i className="fa fa-trash-o"></i>
           </Button>
         </ButtonGroup>
@@ -183,9 +197,27 @@ export default class MyCollections extends React.Component {
     this.setState({ modalProps, active })
   }
 
-  addButton(node) {
+  addCollectionButton(node) {
     return (
-      <Button id={`mycol_${node.id}`} bsSize="xsmall" bsStyle="success" onClick={this.addSubcollection.bind(this, node)}>
+      <Button
+        id="add-new-collection-button"
+        bsSize="xsmall"
+        bsStyle="success"
+        onClick={this.addSubcollection.bind(this, node)}
+      >
+        <i className="fa fa-plus"></i>
+      </Button>
+    )
+  }
+
+  addSubcollectionButton(node) {
+    return (
+      <Button
+        id={`add-subcollection-to-collection_${node.id}`}
+        bsSize="xsmall"
+        bsStyle="success"
+        onClick={this.addSubcollection.bind(this, node)}
+      >
         <i className="fa fa-plus"></i>
       </Button>
     )
