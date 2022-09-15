@@ -20,7 +20,6 @@ import ReactionDetailsProperties from './ReactionDetailsProperties';
 import GreenChemistry from './green_chem/GreenChemistry';
 import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton';
-import XTabs from './extra/ReactionDetailsXTabs';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import { setReactionByType } from './ReactionDetailsShare';
@@ -231,19 +230,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  extraTab(ind) {
-    const reaction = this.state.reaction || {};
-    const num = ind;
-    const NoName = XTabs["content"+num];
-    const TabName = XTabs["title"+num];
-    return (
-      <Tab eventKey={ind + 5} title={TabName} key={`sampleDetailsTab${ind + 3}`} >
-        <ListGroupItem style={{ paddingBottom: 20 }}>
-          <NoName reaction={reaction} />
-        </ListGroupItem>
-      </Tab>
-    );
-  }
 
   reactionSVG(reaction) {
     if(!reaction.svgPath) {
@@ -450,19 +436,6 @@ export default class ReactionDetails extends Component {
       green_chemistry: 'Green Chemistry'
     }
 
-    for (let j = 0; j < XTabs.count; j += 1) {
-      if (XTabs[`on${j}`](reaction)) {
-        const NoName = XTabs[`content${j}`];
-        tabContentsMap[`xtab_${j}`] = (
-          <Tab eventKey={`xtab_${j}`} key={`xtab_${j}`} title={XTabs[`title${j}`]} >
-            <ListGroupItem style={{ paddingBottom: 20 }} >
-              <NoName reaction={reaction} />
-            </ListGroupItem>
-          </Tab>
-        );
-        tabTitlesMap[`xtab_${j}`] = XTabs[`title${j}`];
-      }
-    }
 
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 

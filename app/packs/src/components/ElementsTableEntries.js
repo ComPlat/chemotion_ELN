@@ -14,7 +14,6 @@ import ElementStore from './stores/ElementStore';
 import KeyboardStore from './stores/KeyboardStore';
 
 import DragDropItemTypes from './DragDropItemTypes';
-import XTdCont from './extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from './routesUtils';
 import SvgWithPopover from './common/SvgWithPopover';
 import UserStore from './stores/UserStore';
@@ -190,11 +189,7 @@ export default class ElementsTableEntries extends Component {
       textAlign: 'center',
       cursor: 'pointer'
     };
-    let tdExtraContents = [];
-    for (let j=0;j < XTdCont.count;j++){
-      let NoName = XTdCont["content"+j];
-      tdExtraContents.push(<NoName element={element}/>);
-    }
+
 
     const {showPreviews} = UIStore.getState();
     const clickToShowDetails = e => this.showDetails(element);
@@ -202,7 +197,6 @@ export default class ElementsTableEntries extends Component {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
-          {tdExtraContents.map((e)=>{return e;})}
         </td>
       );
     } else if (element.type === 'research_plan') {
@@ -210,13 +204,11 @@ export default class ElementsTableEntries extends Component {
         return (
           <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
             <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" style={{ cursor: 'pointer' }} />
-            {tdExtraContents.map((e) => { return e; })}
           </td>
         );
       }
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
-          {tdExtraContents.map((e) => { return e; })}
         </td>
       );
     }

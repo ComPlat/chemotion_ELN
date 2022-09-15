@@ -10,7 +10,6 @@ import LoadingActions from './actions/LoadingActions';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import InboxStore from './stores/InboxStore';
-import Xdiv from './extra/CollectionTreeXdiv';
 import UserInfos from './UserInfos';
 
 import DeviceBox from './inbox/DeviceBox';
@@ -287,11 +286,6 @@ export default class CollectionTree extends React.Component {
 
   render() {
     let {ownCollectionVisible, inboxVisible, inbox} = this.state
-    let extraDiv = [];
-    for (let j=0;j < Xdiv.count;j++){
-      let NoName = Xdiv["content"+j];
-      extraDiv.push(<NoName key={"Xdiv"+j} />);
-    }
 
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
     const inboxDisplay = inboxVisible ? '' : 'none';
@@ -320,7 +314,6 @@ export default class CollectionTree extends React.Component {
         <div className="tree-wrapper">
           {this.remoteSyncInSubtrees()}
         </div>
-        {extraDiv.map((e)=>{return e})}
         <div className="tree-view">
           <div className="title" style={{ backgroundColor: 'white' }}>
             <button

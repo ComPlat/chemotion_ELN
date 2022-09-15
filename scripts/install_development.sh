@@ -19,12 +19,12 @@ PROD=chemotion
 # PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.6.6 # 2.5 recommended for bionic
+RUBY_VERSION=2.6.8
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
 NVM_VERSION='v0.38.0'
-NODE_VERSION=14.16.0
+NODE_VERSION=14.20.0
 NPM_VERSION=7.11.1
 YARN_VERSION=1.22.10
 
@@ -79,12 +79,8 @@ PART_9='log-rotation'
 
 ## supported Distribution Version  
 . /etc/os-release
-V18='bionic'
 V20='focal'
 V10='buster'
-# if [ "$VERSION_CODENAME" = "$V18" ]; then
-#   RUBY_VERSION=2.5.8  
-# fi
 
 
 GRE='\033[0;32m'
@@ -130,7 +126,7 @@ rm_tmp_repo() {
 
 trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
-if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V18" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
+if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
   sharpi "Running installation for $PRETTY_NAME "
 else 
   error "The installation for your distribution ($PRETTY_NAME) has not been tested"

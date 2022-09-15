@@ -5,17 +5,10 @@ import UserStore from './stores/UserStore';
 import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
-import rXr from './extra/routesXroutes';
 import * as routesUtils from './routesUtils';
 import UIFetcher from './fetchers/UIFetcher';
 import klasses from '../../../../config/klasses.json';
 
-
-const allRoutes = (r) => {
-  let rts = { ...r };
-  for (let i = 0; i < rXr.count; i++) { rts = { ...rts, ...rXr[`content${i}`] }; }
-  return rts;
-}
 
 const routes = {
   '/': 'root',
@@ -134,5 +127,5 @@ klasses && klasses.forEach((klass) => {
 export default function() {
   Aviator.root = '/mydb';
   Aviator.pushStateEnabled = true;
-  Aviator.setRoutes(allRoutes(routes));
+  Aviator.setRoutes(routes);
 }

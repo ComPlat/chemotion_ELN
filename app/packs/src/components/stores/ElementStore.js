@@ -31,10 +31,6 @@ import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import ModalImportConfirm from '../contextActions/ModalImportConfirm';
 
-import { extraThing } from '../utils/Functions';
-import Xlisteners from '../extra/ElementStoreXlisteners';
-import Xhandlers from '../extra/ElementStoreXhandlers';
-import Xstate from '../extra/ElementStoreXstate';
 import { elementShowOrNew } from '../routesUtils';
 
 import DetailActions from '../actions/DetailActions';
@@ -112,17 +108,8 @@ class ElementStore {
       activeKey: 0,
       deletingElement: null,
       ////
-      ...extraThing(Xstate)
     };
 
-
-
-    for (let i = 0; i < Xlisteners.count; i++){
-      Object.keys(Xlisteners["content"+i]).map((k) => {
-        this.bindAction(Xlisteners["content" + i][k],
-                        Xhandlers["content" + i][k].bind(this))
-      });
-    }
 
     this.bindListeners({
       handleFetchAllDevices: ElementActions.fetchAllDevices,

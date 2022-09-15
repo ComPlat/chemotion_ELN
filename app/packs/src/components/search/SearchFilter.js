@@ -2,7 +2,7 @@ import React from 'react'
 import {Button, FormControl} from 'react-bootstrap'
 import Select from 'react-select'
 import UIActions from '../actions/UIActions';
-import XSearchParams from "../extra/AdvancedSearchXSearchParams";
+
 
 export default class SearchFilter extends React.Component {
   constructor(props) {
@@ -60,11 +60,7 @@ export default class SearchFilter extends React.Component {
       }
     ];
 
-    for (let i = 0; i < XSearchParams.count; i++){
-      if (XSearchParams[`on${i}`]) {
-        this.listOptions = this.listOptions.concat(XSearchParams[`content${i}`])
-      }
-    }
+
 
     this.andOrOps = [
       { value: "AND", label: "AND" },
