@@ -11,7 +11,7 @@ set -euo pipefail
 ############# VARIABLES ####################
 
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH='v1.3'
+BRANCH='v1.4'
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -20,12 +20,12 @@ PROD=production
 # PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.6.6 # 2.5 recommended for bionic
+RUBY_VERSION=2.6.8 
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
 NVM_VERSION='v0.38.0'
-NODE_VERSION=14.16.0
+NODE_VERSION=14.20.0
 NPM_VERSION=7.11.1
 
 APP_NAME=chemotion_ELN # used for naming directories and files
@@ -87,12 +87,8 @@ PART_11='configure NGINX'
 
 ## supported Distribution Version
 . /etc/os-release
-V18='bionic'
 V20='focal'
 V10='buster'
-# if [ "$VERSION_CODENAME" = "$V18" ]; then
-#   RUBY_VERSION=2.5.8
-# fi
 
 GRE='\033[0;32m'
 YEL='\033[0;33m'
@@ -137,7 +133,7 @@ rm_tmp_repo() {
 
 trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
-if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V18" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
+if  [ "$VERSION_CODENAME" = "$V10" ] ||  [ "$VERSION_CODENAME" = "$V20" ]; then
   sharpi "Running installation for $PRETTY_NAME "
 else
   error "The installation for your distribution ($PRETTY_NAME) has not been tested"

@@ -9,7 +9,7 @@ set -euo pipefail
 
 ## CHEMOTION ELN GIT REPOSITORY
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH='v1.3'
+BRANCH='v1.4'
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -17,12 +17,12 @@ PROD=production
 PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.6.6
+RUBY_VERSION=2.6.8
 BUNDLER_VERSION=1.17.3
 
 ## NODEJS
 NVM_VERSION='v0.38.0'
-NODE_VERSION=14.16.0
+NODE_VERSION=14.20.0
 NPM_VERSION=7.11.1
 
 ## default naming of directories and files

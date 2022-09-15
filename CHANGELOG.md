@@ -10,7 +10,35 @@
 * Fixes
 
 
-# [v1.3.1-pre]
+## [v1.4.0]
+> 2022-09-26
+
+* Important for admin and developers:
+  * change of environment variable: use PUBLIC_URL instead of HOST and SMTP_HOST
+  * nodejs upd to 14.20.0
+  * drop support for bionic
+
+* Features and Improvements:
+  * ketcherservice: server generation of sample svg
+  * Reaction coefficient: improve yield calculation (https://github.com/ComPlat/chemotion_ELN/issues/544)
+  * Metadata-converter: v0.6.0
+  * Chemspectra: v0.10.15 (allow reprocessing, read Bruker processed files if present)
+  * Inbox: delete multiple attachments at once (https://github.com/ComPlat/chemotion_ELN/issues/571)
+  * research-plan: improve context-menu in tables
+
+
+* Fixes:
+  * SVG generation for sample and reaction: (https://github.com/ComPlat/chemotion_ELN/issues/846)
+  * Sample amount metric 
+  * report svg composer: skip image if image file does not exist.
+  * chemspectra: duplicate image generation
+
+
+
+ 
+
+
+## [v1.3.1]
 > 2022-07-07
 
 * Features and Improvements:
