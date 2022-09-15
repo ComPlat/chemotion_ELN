@@ -79,7 +79,7 @@ export default class ElementsTableSettings extends React.Component {
 
     }
 
-    let { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
+    const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
 
     UserActions.updateUserProfile({
       show_external_name: showSampleExternalLabel,
