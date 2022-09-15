@@ -17,6 +17,9 @@ module KetcherService
       svg = JSON.parse(res.body)['svg']
       Rails.logger.info('Render service replied with SVG.')
       svg
+    rescue Errno::ECONNREFUSED => e
+      Rails.logger.error('Errno::ECONNREFUSED: ketcher_service unreachable')
+      raise
     rescue Errno::ENOENT => e
       Rails.logger.error('IOError')
       raise
@@ -37,6 +40,8 @@ module KetcherService
       request.body = { molfile: molfile.force_encoding('utf-8') }.to_json
       svg = RenderSvg.call_render_service(url, request)
       svg.force_encoding('utf-8')
+    rescue
+      nil
     end
   end
 end
