@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ElementDetailLevelCalculator
   attr_reader :user, :element
   attr_reader :element_detail_level, :nested_detail_levels
@@ -18,7 +20,7 @@ class ElementDetailLevelCalculator
   end
 
   def user_collections_with_element
-    @collections_with_element ||= element.collections.where(user_id: user_ids)
+    @user_collections_with_element ||= element.collections.where(user_id: user_ids)
   end
 
   def sync_collections_with_element
@@ -37,15 +39,15 @@ class ElementDetailLevelCalculator
       :sample_detail_level,
       :reaction_detail_level,
       :wellplate_detail_level,
-      :screen_detail_level,
+      :screen_detail_level
     )
-    sync_collection_detail_levels = collection_detail_levels = sync_collections_with_element.pluck(
+    sync_collection_detail_levels = sync_collections_with_element.pluck(
       :element_detail_level,
       :researchplan_detail_level,
       :sample_detail_level,
       :reaction_detail_level,
       :wellplate_detail_level,
-      :screen_detail_level,
+      :screen_detail_level
     )
 
     calculate_element_detail_level(user_collection_detail_levels, sync_collection_detail_levels)
@@ -54,7 +56,7 @@ class ElementDetailLevelCalculator
 
   def calculate_element_detail_level(user_collection_detail_levels, sync_collection_detail_levels)
     element_detail_level_field = "#{element.class.to_s.downcase}_detail_level".to_sym
-    element_is_from_own_unshared_collection = user_collection_detail_levels.any?{ |entry| !entry[:is_shared] }
+    element_is_from_own_unshared_collection = user_collection_detail_levels.any? { |entry| !entry[:is_shared] }
     max_detail_level_from_collections = [
       user_collection_detail_levels.pluck(element_detail_level_field),
       sync_collection_detail_levels.pluck(element_detail_level_field)
@@ -75,8 +77,6 @@ class ElementDetailLevelCalculator
     nested_detail_levels[:sample] = all_collections.pluck(:sample_detail_level).max
     nested_detail_levels[:research_plan] = all_collections.pluck(:researchplan_detail_level).max
 
-    if element.is_a?(Sample)
-      nested_detail_levels[:sample] = element_detail_level
-    end
+    nested_detail_levels[:sample] = element_detail_level if element.is_a?(Sample)
   end
 end
