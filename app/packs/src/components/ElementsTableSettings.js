@@ -61,7 +61,7 @@ export default class ElementsTableSettings extends React.Component {
         showSampleShortLabel: state.profile.show_sample_short_label
       });
     }
-    if (state && (currentType != state.currentType)) {
+    if (state && (currentType !== state.currentType)) {
       this.setState({ currentType: state.currentType });
     }
   }
@@ -79,10 +79,12 @@ export default class ElementsTableSettings extends React.Component {
 
     }
 
+    let { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
+
     UserActions.updateUserProfile({
-      show_external_name: this.state.showSampleExternalLabel,
-      show_sample_short_label: this.state.showSampleShortLabel,
-      show_sample_name: this.state.showSampleName
+      show_external_name: showSampleExternalLabel,
+      show_sample_short_label: showSampleShortLabel,
+      show_sample_name: showSampleName
     });
   }
 
@@ -107,6 +109,7 @@ export default class ElementsTableSettings extends React.Component {
       showSampleName: false
     });
   }
+
   handleToggleSampleShortLabel() {
     const { showSampleShortLabel } = this.state;
     this.setState({
@@ -115,6 +118,7 @@ export default class ElementsTableSettings extends React.Component {
       showSampleName: false
     });
   }
+
   handleToggleSampleName() {
     const { showSampleName } = this.state;
     this.setState({
@@ -155,22 +159,30 @@ export default class ElementsTableSettings extends React.Component {
           <h3 className="popover-title">Settings</h3>
           <div className="popover-content">
             <FormGroup>
-              <Checkbox onChange={this.handleToggleScheme}
-                        checked={tableSchemePreviews} >
+              <Checkbox
+                onChange={this.handleToggleScheme}
+                checked={tableSchemePreviews}
+              >
                 Show schemes images
               </Checkbox>
             </FormGroup>
             <FormGroup>
-              <Checkbox onChange={this.handleToggleSampleExt}
-                        checked={showSampleExternalLabel} >
+              <Checkbox
+                onChange={this.handleToggleSampleExt}
+                checked={showSampleExternalLabel}
+              >
                 Show sample external name on title
               </Checkbox>
-              <Checkbox onChange={this.handleToggleSampleShortLabel}
-                        checked={showSampleShortLabel} >
+              <Checkbox
+                onChange={this.handleToggleSampleShortLabel}
+                checked={showSampleShortLabel}
+              >
                 Show sample short label
               </Checkbox>
-              <Checkbox onChange={this.handleToggleSampleName}
-                        checked={showSampleName} >
+              <Checkbox
+                onChange={this.handleToggleSampleName}
+                checked={showSampleName}
+              >
                 Show sample name
               </Checkbox>
             </FormGroup>
