@@ -1,11 +1,9 @@
-import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import sinon from 'sinon';
-import ResearchPlan from '../../../../../../app/packs/src/components/models/ResearchPlan';
-import Attachment from '../../../../../../app/packs/src/components/models/Attachment';
-import AttachmentFilter from '../../../../../../app/packs/src/components/research_plan/AttachmentFilter';
+import ResearchPlan from 'src/models/ResearchPlan';
+import Attachment from 'src/models/Attachment';
+import AttachmentFilter from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/AttachmentFilter';
 
 
 
