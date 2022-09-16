@@ -2,11 +2,8 @@ import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import sinon from 'sinon';
-import ResearchPlanDetailsFieldImage from '../../../../../../app/packs/src/components/research_plan/ResearchPlanDetailsFieldImage';
-import ResearchPlan from '../../../../../../app/packs/src/components/models/ResearchPlan';
-
-
+import ResearchPlanDetailsFieldImage from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldImage';
+import ResearchPlan from 'src/models/ResearchPlan';
 
 Enzyme.configure({ adapter: new Adapter() });
 

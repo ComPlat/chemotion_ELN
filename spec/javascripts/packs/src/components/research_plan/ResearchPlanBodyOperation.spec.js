@@ -1,14 +1,9 @@
-import React from 'react';
 import expect from 'expect';
-import Enzyme, { shallow } from 'enzyme';
+import Enzyme from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import sinon from 'sinon';
-import ResearchPlan from '../../../../../../app/packs/src/components/models/ResearchPlan';
-import Attachment from '../../../../../../app/packs/src/components/models/Attachment';
-import AttachmentFilter from '../../../../../../app/packs/src/components/research_plan/AttachmentFilter';
-import ResearchPlanBodyOperation from '../../../../../../app/packs/src/components/research_plan/ResearchPlanBodyOperation';
-
-
+import ResearchPlan from 'src/models/ResearchPlan';
+import Attachment from 'src/models/Attachment';
+import ResearchPlanBodyOperation from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanBodyOperation';
 
 Enzyme.configure({ adapter: new Adapter() });
 
@@ -135,5 +130,3 @@ function createAttachment() {
   attachment.is_deleted = false;
   return attachment;
 }
-
-

@@ -1,8 +1,7 @@
 
 import expect from 'expect';
-
-import ResearchPlan from '../../../../../../app/packs/src/components/models/ResearchPlan';
-import ResearchPlansFetcher from '../../../../../../app/packs/src/components/fetchers/ResearchPlansFetcher';
+import ResearchPlan from 'src/models/ResearchPlan';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 
 
 describe('ResearchPlansFetcher', () => {
