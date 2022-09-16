@@ -38,11 +38,7 @@ class DownloadAnalysesJob < ApplicationJob
     @file_path = Rails.public_path.join('zip', @filename)
 
     begin
-      @link = if Rails.env.production?
-        "https://#{ENV['HOST'] || ENV['SMTP_DOMAIN']}/zip/#{@filename}"
-      else
-        "http://#{ENV['HOST'] || 'localhost:3000'}/zip/#{@filename}"
-      end
+      @link = "#{app.root_url}/zip/#{@filename}"
       @expires_at = Time.now + 24.hours
 
       zip = Zip::OutputStream.write_buffer do |zip|
@@ -89,3 +85,4 @@ class DownloadAnalysesJob < ApplicationJob
     zip
   end
 end
+
