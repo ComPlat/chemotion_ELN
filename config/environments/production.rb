@@ -78,7 +78,7 @@ Rails.application.configure do
   # config.active_job.queue_adapter     = :resque
   # config.active_job.queue_name_prefix = "chemotion_#{Rails.env}"
 
-  config.action_mailer.perform_caching = false
+  # config.action_mailer.perform_caching = false
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
@@ -106,19 +106,4 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
-
-  config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.default_url_options = { host: ENV['SMTP_HOST']}
-  config.action_mailer.smtp_settings = {
-    :address              => ENV["SMTP_ADDRESS"],
-    :port                 => ENV["SMTP_PORT"],
-    :user_name            => ENV['SMTP_USERNAME'],
-    :domain               => ENV['SMTP_DOMAIN'],
-    :password             => ENV['SMTP_PASSWORD'],
-    :authentication       => ENV['SMTP_AUTH'] && ENV['SMTP_AUTH'].to_sym,
-    :enable_starttls_auto => ENV['SMTP_TLS'] && ENV['SMTP_TLS'].match(/true/),
-    :openssl_verify_mode  => ENV['SMTP_SSL_MODE']
-  }
-
 end
