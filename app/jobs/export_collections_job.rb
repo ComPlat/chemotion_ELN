@@ -36,11 +36,7 @@ class ExportCollectionsJob < ApplicationJob
     @user_id = user_id
     begin
       @labels = Collection.where(id: collection_ids[0..9]).pluck(:label)
-      @link = if Rails.env.production?
-                "https://#{ENV['HOST'] || ENV['SMTP_DOMAIN']}/zip/#{job_id}.#{extname}"
-              else
-                "http://#{ENV['HOST'] || 'localhost:3000'}/zip/#{job_id}.#{extname}"
-              end
+      @link = "#{Rails.application.config.root_url}/zip/#{job_id}.#{extname}"
       @expires_at = Time.now + 24.hours
 
       export = Export::ExportCollections.new(job_id, collection_ids, extname, nested)

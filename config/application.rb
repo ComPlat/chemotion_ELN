@@ -35,13 +35,34 @@ module Chemotion
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
     #
+    #
+
+    if ENV['SMTP_HOST'].present?
+      message = <<~MESSAGE
+        #########################################################################
+        The use of SMTP_HOST has been deprecated.
+        In your .env file, use the variable PUBLIC_URL with a proper uri instead.
+        (eg PUBLIC_URL=http://my.eln.edu)
+        #########################################################################
+      MESSAGE
+      puts message
+    end
+
+    uri = URI.parse(ENV['PUBLIC_URL'] || 'http://localhost:3000')
+    scheme = uri.scheme || 'http'
+    host   = uri.host   || 'localhost'
+    port   = uri.port
+    routes do
+      default_url_options(host: host, protocol: scheme, port: port)
+    end
+    config.root_url = uri&.to_s
 
     # tmp assets fix
     sprite_file = Rails.public_path.join('sprite.png')
-    sprite_source = Rails.public_path.join('assets', 'ketcherails','sprite*.png' )
-    new_sprite = Dir.glob(sprite_source).max_by{ |f| File.mtime(f)}
+    sprite_source = Rails.public_path.join('assets', 'ketcherails', 'sprite*.png')
+    new_sprite = Dir.glob(sprite_source).max_by { |f| File.mtime(f) }
     if new_sprite.present?
-      FileUtils.rm(sprite_file) if File.exist?(sprite_file)
+      FileUtils.rm(sprite_file) if File.file?(sprite_file)
       FileUtils.ln_s(new_sprite, sprite_file)
     end
 
