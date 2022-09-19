@@ -8,21 +8,19 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
-
   constructor(props) {
     super(props);
-    this.state = { attachments: props.attachments }
+    this.state = { attachments: props.attachments };
   }
 
   componentDidMount() {
     this.generateSrcOfImage(this.props.field.value.public_name);
-
   }
 
   handleDrop(files) {
-    if (files.length == 0) { return;}
-    let handler = new ImageFileDropHandler();
-    let value = handler.handleDrop(files, this.props.field, this.state.attachments);
+    if (files.length == 0) { return; }
+    const handler = new ImageFileDropHandler();
+    const value = handler.handleDrop(files, this.props.field, this.state.attachments);
     this.generateSrcOfImage(value.public_name);
     this.props.onChange(value, this.props.field.id, this.state.attachments);
   }
@@ -58,7 +56,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               min="1"
               placeholder="image zoom"
               defaultValue={field.value.zoom}
-              onChange={event => this.handleResizeChange(event)}
+              onChange={(event) => this.handleResizeChange(event)}
             />
             <InputGroup.Addon>%</InputGroup.Addon>
           </InputGroup>
@@ -66,7 +64,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         <Dropzone
           accept="image/*"
           multiple={false}
-          onDrop={files => this.handleDrop(files)}
+          onDrop={(files) => this.handleDrop(files)}
           className="dropzone"
         >
           {content}
@@ -75,23 +73,23 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     );
   }
 
-  generateSrcOfImage(public_name) {
-    if (!public_name) { return; }
+  generateSrcOfImage(publicName) {
+    if (!publicName) { return; }
     let src;
-    if (public_name.startsWith('blob')) {
-      this.setState({ imageSrc: public_name });
-    }
-    else if (public_name.includes('.')) {
-      src = `/images/research_plans/${public_name}`;
+    if (publicName.startsWith('blob')) {
+      this.setState({ imageSrc: publicName });
+    } else if (publicName.includes('.')) {
+      src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
-    }
-    else {
-      this.props.fetchImageBlob(public_name)
-        .then(data => { this.setState({ imageSrc: data }) });
+    } else {
+      AttachmentFetcher.fetchImageAttachment({ id: publicName })
+        .then((result) => {
+          if (result.data != null) {
+            this.setState({ imageSrc: result.data });
+          }
+        });
     }
   }
-
-
 
   renderStatic() {
     const { field } = this.props;
@@ -120,7 +118,6 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 }
 
 ResearchPlanDetailsFieldImage.propTypes = {
-  fetchImageBlob: PropTypes.func,
   field: PropTypes.object,
   index: PropTypes.number,
   disabled: PropTypes.bool,
