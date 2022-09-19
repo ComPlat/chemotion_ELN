@@ -56,18 +56,7 @@ export default class ResearchPlanDetailsField extends Component {
             index={index}
             disabled={disabled}
             onChange={onChange.bind(this)}
-            edit={edit}
-            fetchImageBlob={(public_name) => {
-              const promise = AttachmentFetcher.fetchImageAttachment({ id: public_name })
-                .then((result) => {
-                  if (result.data != null) {
-                    return Promise.resolve(result.data);
-                  }
-                });
-              return promise;
-            }
-            }
-          />);
+            edit={edit}/>);
         break;
       case 'table':
         field.value.columns.forEach((item) => {
