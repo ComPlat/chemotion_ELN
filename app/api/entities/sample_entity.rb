@@ -2,67 +2,69 @@
 
 module Entities
   class SampleEntity < ApplicationEntity
+    # rubocop:disable Layout/LineLength, Layout/ExtraSpacing
     # Level 0 Attributes
-    expose! :can_copy,                unless: :displayed_in_list, anonymized_below: 0
-    expose! :can_update,              unless: :displayed_in_list, anonymized_below: 0
-    expose! :decoupled,                                           anonymized_below: 0
-    expose! :id,                                                  anonymized_below: 0
-    expose! :is_restricted,                                       anonymized_below: 0
-    expose! :molecular_mass,                                      anonymized_below: 0
-    expose! :sum_formula,                                         anonymized_below: 0
-    expose! :type,                                                anonymized_below: 0
-    expose! :external_label,                                      anonymized_below: 0
-    expose! :can_publish,             unless: :displayed_in_list, anonymized_below: 0
+    expose! :can_copy,                unless: :displayed_in_list, anonymize_below: 0
+    expose! :can_update,              unless: :displayed_in_list, anonymize_below: 0
+    expose! :decoupled,                                           anonymize_below: 0
+    expose! :id,                                                  anonymize_below: 0
+    expose! :is_restricted,                                       anonymize_below: 0
+    expose! :molecular_mass,                                      anonymize_below: 0
+    expose! :sum_formula,                                         anonymize_below: 0
+    expose! :type,                                                anonymize_below: 0
+    expose! :external_label,                                      anonymize_below: 0
+    expose! :can_publish,             unless: :displayed_in_list, anonymize_below: 0
 
     # Level 1 Attributes
-    expose! :molfile,                                             anonymized_below: 1
+    expose! :molfile,                                             anonymize_below: 1
 
     # Level 2+3 only gain additional relations for analyses and container
 
-    with_options(anonymized_below: 10) do |klass|
+    with_options(anonymize_below: 10) do |klass|
       klass.expose! :_contains_residues,      unless: :displayed_in_list, anonymize_with: false
-      klass.expose! :ancestor_ids,
-      klass.expose! :boiling_point,           unless: :displayed_in_list,
-      klass.expose! :children_count,          unless: :displayed_in_list,
-      klass.expose! :density,
-      klass.expose! :description,             unless: :displayed_in_list,
-      klass.expose! :imported_readout,        unless: :displayed_in_list,
-      klass.expose! :is_top_secret,
-      klass.expose! :location,                unless: :displayed_in_list,
-      klass.expose! :melting_point,           unless: :displayed_in_list,
-      klass.expose! :metrics,
-      klass.expose! :molarity_unit,           unless: :displayed_in_list,
-      klass.expose! :molarity_value,          unless: :displayed_in_list,
+      klass.expose! :ancestor_ids
+      klass.expose! :boiling_point,           unless: :displayed_in_list
+      klass.expose! :children_count,          unless: :displayed_in_list
+      klass.expose! :density
+      klass.expose! :description,             unless: :displayed_in_list
+      klass.expose! :imported_readout,        unless: :displayed_in_list
+      klass.expose! :is_top_secret
+      klass.expose! :location,                unless: :displayed_in_list
+      klass.expose! :melting_point,           unless: :displayed_in_list
+      klass.expose! :metrics
+      klass.expose! :molarity_unit,           unless: :displayed_in_list
+      klass.expose! :molarity_value,          unless: :displayed_in_list
       klass.expose! :molecule_name_hash,                                  anonymize_with: {}
-      klass.expose! :name,
-      klass.expose! :parent_id,               unless: :displayed_in_list,
-      klass.expose! :pubchem_tag,
-      klass.expose! :purity,
-      klass.expose! :reaction_description,    unless: :displayed_in_list,
-      klass.expose! :real_amount_unit,        unless: :displayed_in_list,
-      klass.expose! :real_amount_value,       unless: :displayed_in_list,
-      klass.expose! :sample_svg_file,
-      klass.expose! :short_label,
-      klass.expose! :showed_name,
+      klass.expose! :name
+      klass.expose! :parent_id,               unless: :displayed_in_list
+      klass.expose! :pubchem_tag
+      klass.expose! :purity
+      klass.expose! :reaction_description,    unless: :displayed_in_list
+      klass.expose! :real_amount_unit,        unless: :displayed_in_list
+      klass.expose! :real_amount_value,       unless: :displayed_in_list
+      klass.expose! :sample_svg_file
+      klass.expose! :short_label
+      klass.expose! :showed_name
       klass.expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
-      klass.expose! :stereo,
-      klass.expose! :target_amount_unit,      unless: :displayed_in_list,
-      klass.expose! :target_amount_value,     unless: :displayed_in_list,
-      klass.expose! :user_labels,
+      klass.expose! :stereo
+      klass.expose! :target_amount_unit,      unless: :displayed_in_list
+      klass.expose! :target_amount_value,     unless: :displayed_in_list
+      klass.expose! :user_labels
       klass.expose! :xref
     end
 
     expose_timestamps
 
     # relations
-    expose! :analyses,                unless: :displayed_in_list, anonymized_below: 2,  anonymize_with: [],   using: 'Entities::ContainerEntity'
-    expose! :code_log,                unless: :displayed_in_list, anonymized_below: 0,                        using: 'Entities::CodeLogEntity'
-    expose! :container,               unless: :displayed_in_list, anonymized_below: 2,  anonymize_with: nil,  using: 'Entities::ContainerEntity'
-    expose! :elemental_compositions,  unless: :displayed_in_list, anonymized_below: 10, anonymize_with: [],   using: 'Entities::ElementalCompositionEntity'
-    expose! :molecule,                                            anonymized_below: 10,                       using: 'Entities::MoleculeEntity'
-    expose! :residues,                unless: :displayed_in_list, anonymized_below: 10, anonymize_with: []    using: 'Entities::ResidueEntity'
-    expose! :segments,                unless: :displayed_in_list, anonymized_below: 10,                       using: 'Entities::SegmentEntity'
-    expose! :tag,                                                 anonymized_below: 10,                       using: 'Entities::ElementTagEntity'
+    expose! :analyses,                unless: :displayed_in_list, anonymize_below: 2,  anonymize_with: [],   using: 'Entities::ContainerEntity'
+    expose! :code_log,                unless: :displayed_in_list, anonymize_below: 0,                        using: 'Entities::CodeLogEntity'
+    expose! :container,               unless: :displayed_in_list, anonymize_below: 2,  anonymize_with: nil,  using: 'Entities::ContainerEntity'
+    expose! :elemental_compositions,  unless: :displayed_in_list, anonymize_below: 10, anonymize_with: [],   using: 'Entities::ElementalCompositionEntity'
+    expose! :molecule,                                            anonymize_below: 10,                       using: 'Entities::MoleculeEntity'
+    expose! :residues,                unless: :displayed_in_list, anonymize_below: 10, anonymize_with: [],   using: 'Entities::ResidueEntity'
+    expose! :segments,                unless: :displayed_in_list, anonymize_below: 10,                       using: 'Entities::SegmentEntity'
+    expose! :tag,                                                 anonymize_below: 10,                       using: 'Entities::ElementTagEntity'
+    # rubocop:enable Layout/LineLength, Layout/ExtraSpacing
 
     private
 
@@ -79,32 +81,32 @@ module Entities
     end
 
     def can_update
-      (options[:policy] && options[:policy].try(:update?)) || false
+      options[:policy].try(:update?) || false
     end
 
     def can_copy
-      (options[:policy] && options[:policy].try(:copy?)) || false
+      options[:policy].try(:copy?) || false
     end
 
     def can_publish
-      (options[:policy] && options[:policy].try(:destroy?)) || false
+      options[:policy].try(:destroy?) || false
     end
 
     def children_count
       object.new_record? ? 0 : object.children.count.to_i
     end
 
-    def is_restricted
+    def is_restricted # rubocop:disable Naming/PredicateName
       detail_level[Sample] < 10
     end
 
     # molecule returns only minimal values for detail level 0
     def molecule
-      return molecule if detail_level[Sample] > 0
+      return molecule if detail_level[Sample] > 0 # rubocop:disable Style/NumericPredicate
 
       {
         molecular_weight: object.molecule.try(:molecular_weight),
-        exact_molecular_weight: object.molecule.try(:exact_molecular_weight),
+        exact_molecular_weight: object.molecule.try(:exact_molecular_weight)
       }
     end
 
