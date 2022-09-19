@@ -25,17 +25,20 @@ FactoryBot.define do
     trait :with_random_wells do
       transient do
         number_of_readouts { 1 }
+        sample { } # allows to pass in a custom sample to prevent the well factory from creating one sample per well
       end
 
       wells do
         (1..8).map do |pos_y|
           (1..12).map do |pos_x|
-            build(
-              :well, :with_random_readouts,
+            well_attributes = {
               position_x: pos_x,
               position_y: pos_y,
               number_of_readouts: number_of_readouts
-            )
+            }
+            well_attributes[:sample] = sample if sample
+
+            build(:well, :with_random_readouts, well_attributes)
           end
         end.flatten
       end

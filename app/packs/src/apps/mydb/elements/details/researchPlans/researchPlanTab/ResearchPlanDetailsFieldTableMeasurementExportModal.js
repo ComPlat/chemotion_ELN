@@ -184,7 +184,7 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
           <div>
             <ButtonToolbar>
               <Button bsStyle="warning" onClick={this.props.onHide}>
-                Cancel
+                Close
               </Button>
               <Button bsStyle="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
                 Link data to sample

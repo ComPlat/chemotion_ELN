@@ -71,7 +71,8 @@ describe Chemotion::MeasurementsAPI do
 
     describe 'POST /api/v1/measurements/bulk_create_from_raw_data' do
       let(:collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
-      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3) }
+      let(:sample) { create(:sample, creator: user) }
+      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3, sample: sample) }
       let(:raw_data) do
         wellplate.wells.map do |well|
           well.readouts.map.with_index do |readout, readout_index|
@@ -89,22 +90,17 @@ describe Chemotion::MeasurementsAPI do
       let(:params) do
         { raw_data: raw_data, source_type: 'research_plan', source_id: research_plan.id }
       end
+      let(:parsed_response) { JSON.parse(response.body) }
+      let(:execute_request) { post "/api/v1/measurements/bulk_create_from_raw_data", params: params, as: :json }
 
       before do
         CollectionsResearchPlan.create(research_plan: research_plan, collection: collection)
         CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-        wellplate.wells.each do |well|
-          CollectionsSample.create!(sample: well.sample, collection: collection)
-        end
+        CollectionsSample.create!(sample: sample, collection: collection)
       end
 
       it 'creates measurements from the given well' do
-        measurements_before = Measurement.count
-        post "/api/v1/measurements/bulk_create_from_raw_data", params: params, as: :json
-
-        created_measurements = Measurement.count - measurements_before
-
-        expect(created_measurements).to eq 96*3
+        expect { execute_request }.to change(Measurement, :count).by(96*3)
 
         measurements = Measurement.last(96*3)
         well = wellplate.wells.first
@@ -116,6 +112,22 @@ describe Chemotion::MeasurementsAPI do
           expect(measurements[i].value.to_f).to eq well.readouts[i]['value']
         end
       end
+
+      it 'returns the data in the right format' do
+      execute_request
+
+      expect(parsed_response).to have_key('measurements')
+
+      all_results_match_expected_structure = parsed_response['measurements'].all? do |measurement|
+        measurement.key?('errors') &&
+          measurement.key?('uuid') &&
+          measurement.key?('sample_identifier') &&
+          measurement.key?('unit') &&
+          measurement.key?('value') &&
+          measurement.key?('source_type') &&
+          measurement.key?('source_id')
+      end
+    end
     end
 
     describe 'DELETE /api/v1/measurements/MEASUREMENT_ID' do
