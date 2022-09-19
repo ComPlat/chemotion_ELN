@@ -16,8 +16,10 @@ module Entities
         expose(field, args) do |represented_object, options|
           if detail_levels[represented_object.class] < anonymize_below
             anonymize_with
-          elsif respond_to?(field) # Entity has a method with the same name
+          elsif respond_to?(field, true) # Entity has a method with the same name
             send(field)
+          elsif represented_object.respond_to?(field)
+            represented_object.public_send(field)
           else
             represented_object[field] # works both for AR and Hash objects
           end

@@ -97,12 +97,12 @@ module Entities
     end
 
     def is_restricted # rubocop:disable Naming/PredicateName
-      detail_level[Sample] < 10
+      detail_levels[Sample] < 10
     end
 
     # molecule returns only minimal values for detail level 0
     def molecule
-      return molecule if detail_level[Sample] > 0 # rubocop:disable Style/NumericPredicate
+      return object.molecule if detail_levels[Sample] > 0 # rubocop:disable Style/NumericPredicate
 
       {
         molecular_weight: object.molecule.try(:molecular_weight),
