@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem } from 'react-bootstrap';
+import {
+  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem
+} from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -23,7 +25,6 @@ import ResearchPlanDetailsContainers from 'src/apps/mydb/elements/details/resear
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import ResearchPlanBodyOperation from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanBodyOperation';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -70,7 +71,7 @@ export default class ResearchPlanDetails extends Component {
   handleSegmentsChange(se) {
     const { researchPlan } = this.state;
     const { segments } = researchPlan;
-    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
     if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
     researchPlan.segments = segments;
     researchPlan.changed = true;
@@ -122,8 +123,8 @@ export default class ResearchPlanDetails extends Component {
   handleBodyChange(value, id, attachments) {
     const { researchPlan } = this.state;
     for (let i = 0; i < researchPlan.attachments.length; i++) {
-      if ((researchPlan.attachments[i].identifier && researchPlan.attachments[i].identifier === value.old_value) ||
-        (researchPlan.attachments[i].file && researchPlan.attachments[i].file.preview === value.old_value)) {
+      if ((researchPlan.attachments[i].identifier && researchPlan.attachments[i].identifier === value.old_value)
+        || (researchPlan.attachments[i].file && researchPlan.attachments[i].file.preview === value.old_value)) {
         researchPlan.attachments[i].is_deleted = true;
         researchPlan.attachments[i].is_image_field = true;
       }
@@ -131,11 +132,10 @@ export default class ResearchPlanDetails extends Component {
 
     researchPlan.addAttachments(attachments);
 
-    const index = researchPlan.body.findIndex(field => field.id === id);
+    const index = researchPlan.body.findIndex((field) => field.id === id);
     researchPlan.body[index].value = value;
     researchPlan.changed = true;
     this.setState({ researchPlan });
-
   }
 
   handleBodyDrop(source, target) {
@@ -154,8 +154,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleBodyDelete(id, attachments) {
     const { researchPlan } = this.state;
-    let bodyOperation = new ResearchPlanBodyOperation();
-    bodyOperation.deleteBodyPart(id, researchPlan);
+    researchPlan.removeFieldFromBody(id);
     this.setState({ researchPlan });
   }
 
@@ -268,7 +267,7 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = this.state;
     const researchPlanMetadata = researchPlan.research_plan_metadata;
     const args = { research_plan_id: researchPlanMetadata.research_plan_id };
-    const index = researchPlan.body.findIndex(field => field.id === id);
+    const index = researchPlan.body.findIndex((field) => field.id === id);
     const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || '';
     if (fieldName === 'name') {
       researchPlanMetadata.title = researchPlan.name;
@@ -280,8 +279,8 @@ export default class ResearchPlanDetails extends Component {
       const type = researchPlan.body[index]?.title?.trim() || '';
       const newItem = this.newItemByType(fieldName, value, type);
 
-      const currentCollection = researchPlanMetadata[fieldName] ?
-        researchPlanMetadata[fieldName] : [];
+      const currentCollection = researchPlanMetadata[fieldName]
+        ? researchPlanMetadata[fieldName] : [];
       const newCollection = currentCollection.concat(newItem);
       researchPlanMetadata[fieldName] = newCollection;
       args[`${fieldName}`] = researchPlanMetadata[fieldName];
@@ -331,11 +330,13 @@ export default class ResearchPlanDetails extends Component {
   }
 
   renderResearchPlanMain(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
-    const { name, body, changed, attachments } = researchPlan;
+    const {
+      name, body, changed, attachments
+    } = researchPlan;
     const edit = researchPlan.mode === 'edit';
     return (
       <ListGroup fill="true">
-        <ListGroupItem >
+        <ListGroupItem>
           {this.renderExportButton(changed)}
           <ResearchPlanDetailsName
             value={name}
@@ -371,7 +372,7 @@ export default class ResearchPlanDetails extends Component {
     const { name, body } = researchPlan;
     return (
       <ListGroup fill="true">
-        <ListGroupItem >
+        <ListGroupItem>
           <ResearchPlanDetailsName
             value={name}
             isNew={researchPlan.isNew}
@@ -422,7 +423,7 @@ export default class ResearchPlanDetails extends Component {
   renderAttachmentsTab(researchPlan) { /* eslint-disable react/jsx-no-bind */
     return (
       <ListGroup fill="true">
-        <ListGroupItem >
+        <ListGroupItem>
           <ResearchPlanDetailsAttachments
             researchPlan={researchPlan}
             attachments={researchPlan.attachments}
@@ -447,7 +448,11 @@ export default class ResearchPlanDetails extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
           <span>
             <i className="fa fa-file-text-o" />
-            &nbsp; <span>{researchPlan.name}</span> &nbsp;
+            &nbsp;
+            {' '}
+            <span>{researchPlan.name}</span>
+            {' '}
+&nbsp;
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={researchPlan} placement="right" />
@@ -504,9 +509,9 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanWellplates
             researchPlan={researchPlan}
             wellplates={researchPlan.wellplates}
-            dropWellplate={wellplate => this.dropWellplate(wellplate)}
-            deleteWellplate={wellplate => this.deleteWellplate(wellplate)}
-            importWellplate={wellplate => this.importWellplate(wellplate)}
+            dropWellplate={(wellplate) => this.dropWellplate(wellplate)}
+            deleteWellplate={(wellplate) => this.deleteWellplate(wellplate)}
+            importWellplate={(wellplate) => this.importWellplate(wellplate)}
           />
         </Tab>
       ),
@@ -548,7 +553,7 @@ export default class ResearchPlanDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
+          <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
             {tabContents}
           </Tabs>
           <ButtonToolbar>

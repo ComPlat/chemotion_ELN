@@ -207,4 +207,28 @@ export default class ResearchPlan extends Element {
     this.attachments = this.attachments.concat(attachmentsToAdd
       .filter((attachment) => !idsOfAttachmentsInResearchPlan.includes(attachment.identifier)));
   }
+
+  markAttachmentAsDeleted(identifier) {
+    if (!identifier) { return; }
+    const attachmentToDelete = this.attachments
+      .find((attachment) => attachment.identifier === identifier);
+
+    if (attachmentToDelete) {
+      attachmentToDelete.is_deleted = true;
+      attachmentToDelete.is_image_field = true;
+      this.markAttachmentAsDeleted(attachmentToDelete.ancestor);
+    }
+  }
+
+  removeFieldFromBody(fieldId) {
+    const index = this.body.findIndex((field) => field.id === fieldId);
+    if (index === -1) { return; }
+    let { identifier } = this.body[index].value;
+    if (!identifier) {
+      identifier = this.body[index].value.public_name;
+    }
+    this.markAttachmentAsDeleted(identifier);
+    this.body.splice(index, 1);
+    this.changed = true;
+  }
 }
