@@ -2,57 +2,40 @@
 
 module Entities
   class ApplicationEntity < Grape::Entity
-    class MissingCurrentUserError < StandardError
-      def initialize(message = '%s requires a current user to work properly', object)
-        super(format(message, object.class))
-      end
-    end
-
     format_with(:eln_timestamp) do |datetime|
       datetime.present? ? I18n.l(datetime, format: :eln_timestamp) : nil
     end
 
-    def self.detail_level_entities(level_entities_hash = {})
-      # Initialize entity list for current subclass. As this is used in class context, it is only defined for the
-      # current subclass, not for the whole inheritance hierarchy, which would be the case when using @@some_variable
-      @detail_level_entities ||= {}
+    def self.expose!(*fields, **args)
+      anonymize_below = args.delete(:anonymize_below) || 0
+      anonymize_with = args.delete(:anonymize_with) || '***'
 
-      # allow method to be used as reader if no data is provided
-      return @detail_level_entities if level_entities_hash.empty?
-
-      # validate input
-      raise "Keys must be integer" unless level_entities_hash.keys.all?(Integer)
-      raise "Values must be subclasses of ApplicationEntity" unless level_entities_hash.values.all? do |klass|
-        klass.is_a?(Class) && klass.ancestors.include?(::Entities::ApplicationEntity)
+      Array(fields).each do |field|
+        expose(field, args) do |represented_object, options|
+          if detail_levels[represented_object.class] < anonymize_below
+            anonymize_with
+          elsif respond_to?(field) # Entity has a method with the same name
+            send(field)
+          else
+            represented_object[field] # works both for AR and Hash objects
+          end
+        end
       end
-
-      level_entities_hash.each do |level, entity_class|
-        @detail_level_entities[level] = entity_class
-      end
-
-      @detail_level_entities
     end
 
-    def self.entity_for_level(level)
-      raise "#{self.name} has no detail level entities defined" if detail_level_entities.empty?
-      raise "#{self.name} has no defined entity for detail level #{level}" unless detail_level_entities.key?(level)
+    # def self.with_options(exposure_options)
+    #   @exposure_options ||= {}
+    #   @previous_exposure_options ||= @exposure_options.deep_dup
+    #   @exposure_options.merge!(exposure_options)
 
-      detail_level_entities[level]
-    end
+    #   yield if block_given?
+
+    #   @expose_options = @previous_exposure_options
+    # end
 
     def self.expose_timestamps(timestamp_fields: %i[created_at updated_at], **additional_args)
       timestamp_fields.each do |field|
         expose field, format_with: :eln_timestamp, **additional_args
-      end
-    end
-
-    # Exposes one or more attributes in an anonymized form. The resulting hash will have all
-    # the attribute names as keys, but only the anonymized_default as value.
-    def self.expose_anonymized(*attributes, with: '***')
-      Array(attributes).each do |attribute|
-        expose attribute do |_object, _entity_options|
-          with
-        end
       end
     end
 
@@ -63,8 +46,29 @@ module Entities
     end
 
     def current_user
-      raise MissingCurrentUserError unless options[:current_user]
+      raise MissingCurrentUserError.new(self) unless options[:current_user]
+
       options[:current_user]
+    end
+
+    def detail_levels
+      maximal_default_levels = Hash.new(10) # every requested detail level will be returned as 10
+      return maximal_default_levels if !options.key?(:detail_levels) || options[:detail_levels].empty?
+
+      options[:detail_levels]
+    end
+
+    class EntityError < StandardError
+      MESSAGE = 'OVERRIDE_ME_IN_SUBCLASSES'
+
+      def initialize(object)
+        klass = object.is_a?(Class) ? object : object.class
+        super(format(message, klass))
+      end
+    end
+
+    class MissingCurrentUserError < EntityError
+      MESSAGE = '%s requires a current user to work properly'
     end
   end
 end
