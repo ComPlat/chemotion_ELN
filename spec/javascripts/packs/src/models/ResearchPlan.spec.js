@@ -12,7 +12,7 @@ describe('ResearchPlan', () => {
     it('with empty list', () => {
       researchPlan.attachments = [attachmentInResearchPlan];
       researchPlan.addAttachments([]);
-      expect(researchPlan.attachments.length.toEqual(1));
+      expect(researchPlan.attachments.length).toEqual(1);
     });
 
     it('with two attachments, one already present in researchplan', () => {
