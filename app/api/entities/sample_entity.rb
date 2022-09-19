@@ -20,37 +20,37 @@ module Entities
 
     # Level 2+3 only gain additional relations for analyses and container
 
-    with_options(anonymize_below: 10) do |klass|
-      klass.expose! :_contains_residues,      unless: :displayed_in_list, anonymize_with: false
-      klass.expose! :ancestor_ids
-      klass.expose! :boiling_point,           unless: :displayed_in_list
-      klass.expose! :children_count,          unless: :displayed_in_list
-      klass.expose! :density
-      klass.expose! :description,             unless: :displayed_in_list
-      klass.expose! :imported_readout,        unless: :displayed_in_list
-      klass.expose! :is_top_secret
-      klass.expose! :location,                unless: :displayed_in_list
-      klass.expose! :melting_point,           unless: :displayed_in_list
-      klass.expose! :metrics
-      klass.expose! :molarity_unit,           unless: :displayed_in_list
-      klass.expose! :molarity_value,          unless: :displayed_in_list
-      klass.expose! :molecule_name_hash,                                  anonymize_with: {}
-      klass.expose! :name
-      klass.expose! :parent_id,               unless: :displayed_in_list
-      klass.expose! :pubchem_tag
-      klass.expose! :purity
-      klass.expose! :reaction_description,    unless: :displayed_in_list
-      klass.expose! :real_amount_unit,        unless: :displayed_in_list
-      klass.expose! :real_amount_value,       unless: :displayed_in_list
-      klass.expose! :sample_svg_file
-      klass.expose! :short_label
-      klass.expose! :showed_name
-      klass.expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
-      klass.expose! :stereo
-      klass.expose! :target_amount_unit,      unless: :displayed_in_list
-      klass.expose! :target_amount_value,     unless: :displayed_in_list
-      klass.expose! :user_labels
-      klass.expose! :xref
+    with_options(anonymize_below: 10) do
+      expose! :_contains_residues,      unless: :displayed_in_list, anonymize_with: false
+      expose! :ancestor_ids
+      expose! :boiling_point,           unless: :displayed_in_list
+      expose! :children_count,          unless: :displayed_in_list
+      expose! :density
+      expose! :description,             unless: :displayed_in_list
+      expose! :imported_readout,        unless: :displayed_in_list
+      expose! :is_top_secret
+      expose! :location,                unless: :displayed_in_list
+      expose! :melting_point,           unless: :displayed_in_list
+      expose! :metrics
+      expose! :molarity_unit,           unless: :displayed_in_list
+      expose! :molarity_value,          unless: :displayed_in_list
+      expose! :molecule_name_hash,                                  anonymize_with: {}
+      expose! :name
+      expose! :parent_id,               unless: :displayed_in_list
+      expose! :pubchem_tag
+      expose! :purity
+      expose! :reaction_description,    unless: :displayed_in_list
+      expose! :real_amount_unit,        unless: :displayed_in_list
+      expose! :real_amount_value,       unless: :displayed_in_list
+      expose! :sample_svg_file
+      expose! :short_label
+      expose! :showed_name
+      expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
+      expose! :stereo
+      expose! :target_amount_unit,      unless: :displayed_in_list
+      expose! :target_amount_value,     unless: :displayed_in_list
+      expose! :user_labels
+      expose! :xref
     end
 
     expose_timestamps

@@ -2,6 +2,8 @@
 
 module Entities
   class ApplicationEntity < Grape::Entity
+    CUSTOM_ENTITY_OPTIONS = %i[anonymize_below anonymize_with].freeze
+
     format_with(:eln_timestamp) do |datetime|
       datetime.present? ? I18n.l(datetime, format: :eln_timestamp) : nil
     end
@@ -23,16 +25,6 @@ module Entities
       end
     end
 
-    # def self.with_options(exposure_options)
-    #   @exposure_options ||= {}
-    #   @previous_exposure_options ||= @exposure_options.deep_dup
-    #   @exposure_options.merge!(exposure_options)
-
-    #   yield if block_given?
-
-    #   @expose_options = @previous_exposure_options
-    # end
-
     def self.expose_timestamps(timestamp_fields: %i[created_at updated_at], **additional_args)
       timestamp_fields.each do |field|
         expose field, format_with: :eln_timestamp, **additional_args
@@ -40,6 +32,19 @@ module Entities
     end
 
     private
+
+    # overridden method from Grape::Entity to support our custom anonymization options
+    # https://github.com/ruby-grape/grape-entity/blob/v0.7.1/lib/grape_entity/entity.rb#L565
+    def self.valid_options(options)
+      options.each_key do |key|
+        next if OPTIONS.include?(key) || CUSTOM_ENTITY_OPTIONS.include?(key)
+
+        raise ArgumentError, "#{key.inspect} is not a valid option."
+      end
+
+      options[:using] = options.delete(:with) if options.key?(:with)
+      options
+    end
 
     def displayed_in_list?
       options[:displayed_in_list] == true
