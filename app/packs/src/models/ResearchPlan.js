@@ -39,7 +39,6 @@ const columns = [
   }
 ];
 
-
 export default class ResearchPlan extends Element {
   constructor(args) {
     super(args);
@@ -69,10 +68,9 @@ export default class ResearchPlan extends Element {
       attachments: this.attachments,
       container: this.container,
       wellplate_ids: this.wellplateIDs,
-      segments: this.segments.map(s => s.serialize())
+      segments: this.segments.map((s) => s.serialize())
     });
   }
-
 
   analysesContainers() {
     if (this.container.children.length === 0) {
@@ -82,7 +80,7 @@ export default class ResearchPlan extends Element {
     }
     return this.container
       .children
-      .filter(el => ~el.container_type.indexOf('analyses'));
+      .filter((el) => ~el.container_type.indexOf('analyses'));
   }
 
   addBodyField(type) {
@@ -160,7 +158,7 @@ export default class ResearchPlan extends Element {
   }
 
   get wellplateIDs() {
-    return this.wellplates.map(wp => wp.id);
+    return this.wellplates.map((wp) => wp.id);
   }
 
   get svgPath() {
@@ -186,7 +184,7 @@ export default class ResearchPlan extends Element {
   }
 
   set segments(segments) {
-    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+    this._segments = (segments && segments.map((s) => new Segment(s))) || [];
   }
 
   get segments() {
@@ -194,24 +192,19 @@ export default class ResearchPlan extends Element {
   }
 
   set wellplates(wellplates) {
-    this._wellplates = (wellplates && wellplates.map(w => new Wellplate(w))) || [];
+    this._wellplates = (wellplates && wellplates.map((w) => new Wellplate(w))) || [];
   }
 
   get wellplates() {
     return this._wellplates || [];
   }
 
-  addAttachments(attachmentsIn) {
-    for (let i = 0; i < attachmentsIn.length; i++) {
-      let alreadyIn = false;
-      for (let j = 0; j < this.attachments.length; j++) {
-        if (attachmentsIn[i] && attachmentsIn[i].identifier === this.attachments[j].identifier) {
-          alreadyIn = true;
-        }
-      }
-      if (!alreadyIn) {
-        this.attachments.push(attachmentsIn[i]);
-      }
-    }
+  addAttachments(attachmentsToAdd) {
+    const idsOfAttachmentsInResearchPlan = this.attachments.map(
+      (attachmentInResearchPlan) => attachmentInResearchPlan.identifier
+    );
+
+    this.attachments = this.attachments.concat(attachmentsToAdd
+      .filter((attachment) => !idsOfAttachmentsInResearchPlan.includes(attachment.identifier)));
   }
 }
