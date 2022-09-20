@@ -120,19 +120,24 @@ export default class ResearchPlanDetails extends Component {
 
   // handle body actions
 
-  handleBodyChange(value, id, attachments) {
+  handleBodyChange(value, idOfFieldToReplace, attachments) {
     const { researchPlan } = this.state;
-    for (let i = 0; i < researchPlan.attachments.length; i++) {
-      if ((researchPlan.attachments[i].identifier && researchPlan.attachments[i].identifier === value.old_value)
-        || (researchPlan.attachments[i].file && researchPlan.attachments[i].file.preview === value.old_value)) {
-        researchPlan.attachments[i].is_deleted = true;
-        researchPlan.attachments[i].is_image_field = true;
-      }
-    }
-
     researchPlan.addAttachments(attachments);
 
-    const index = researchPlan.body.findIndex((field) => field.id === id);
+    const index = researchPlan.body.findIndex((field) => field.id === idOfFieldToReplace);
+    if (index === -1) { return; }
+
+    researchPlan.attachments.forEach((attachment) => {
+      const identifierMatch = (attachment.identifier && attachment.identifier === value.old_value);
+      const filePreviewMatch = (attachment.file && attachment.file.preview === value.old_value);
+      if (identifierMatch || filePreviewMatch) {
+        attachment.is_deleted = true;
+        if (researchPlan.body[index].type === 'image') {
+          attachment.is_image_field = true;
+        }
+      }
+    });
+
     researchPlan.body[index].value = value;
     researchPlan.changed = true;
     this.setState({ researchPlan });
