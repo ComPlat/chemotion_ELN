@@ -233,7 +233,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { attachments } = this.props;
     if (attachments && attachments.length > 0) {
       const filter = new ImageAttachmentFilter();
-      const filteredAttachments = filter.removeAttachmentsWhichAreInBody(
+      const filteredAttachments = filter.filterAttachmentsWhichAreInBody(
         this.props.researchPlan.body,
         this.props.researchPlan.attachments
       );
