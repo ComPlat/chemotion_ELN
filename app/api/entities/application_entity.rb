@@ -13,7 +13,7 @@ module Entities
       anonymize_with = args.delete(:anonymize_with) || '***'
 
       Array(fields).each do |field|
-        expose(field, args) do |represented_object, options|
+        expose(field, args) do |represented_object, _options|
           if detail_levels[represented_object.class] < anonymize_below
             anonymize_with
           elsif respond_to?(field, true) # Entity has a method with the same name
@@ -33,8 +33,6 @@ module Entities
       end
     end
 
-    private
-
     # overridden method from Grape::Entity to support our custom anonymization options
     # https://github.com/ruby-grape/grape-entity/blob/v0.7.1/lib/grape_entity/entity.rb#L565
     def self.valid_options(options)
@@ -47,13 +45,18 @@ module Entities
       options[:using] = options.delete(:with) if options.key?(:with)
       options
     end
+    private_class_method :valid_options
+
+    private
 
     def displayed_in_list?
       options[:displayed_in_list] == true
     end
 
     def current_user
-      raise MissingCurrentUserError.new(self) unless options[:current_user]
+      unless options[:current_user]
+        raise MissingCurrentUserError, "#{self.class} requires a current user to work properly"
+      end
 
       options[:current_user]
     end
@@ -65,17 +68,7 @@ module Entities
       options[:detail_levels]
     end
 
-    class EntityError < StandardError
-      MESSAGE = 'OVERRIDE_ME_IN_SUBCLASSES'
-
-      def initialize(object)
-        klass = object.is_a?(Class) ? object : object.class
-        super(format(message, klass))
-      end
-    end
-
-    class MissingCurrentUserError < EntityError
-      MESSAGE = '%s requires a current user to work properly'
+    class MissingCurrentUserError < StandardError
     end
   end
 end

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
+# rubocop:disable CodeReuse/ActiveRecord
 class ElementDetailLevelCalculator
-  attr_reader :user, :element
-  attr_reader :element_detail_level, :nested_detail_levels
+  attr_reader :user, :element, :element_detail_level, :nested_detail_levels
 
   DETAIL_LEVEL_FIELDS = %i[
     element_detail_level
@@ -11,7 +11,7 @@ class ElementDetailLevelCalculator
     reaction_detail_level
     wellplate_detail_level
     screen_detail_level
-  ]
+  ].freeze
 
   def initialize(user:, element:)
     @user = user
@@ -32,9 +32,6 @@ class ElementDetailLevelCalculator
       sync_collection_detail_levels.map { |entry| entry[element_detail_level_field] }
     ].flatten.max
 
-    puts "Max Detail Level from collection"
-    puts max_detail_level_from_collections
-
     @element_detail_level = if element_is_from_own_unshared_collection
                               10
                             else
@@ -47,11 +44,11 @@ class ElementDetailLevelCalculator
   # implemented here as well
   def calculate_nested_detail_levels
     all_collections_detail_levels = user_collection_detail_levels + sync_collection_detail_levels
-    nested_detail_levels[:wellplate] = all_collections_detail_levels.pluck(:wellplate_detail_level).max || 0
-    nested_detail_levels[:sample] = all_collections_detail_levels.pluck(:sample_detail_level).max || 0
-    nested_detail_levels[:research_plan] = all_collections_detail_levels.pluck(:researchplan_detail_level).max || 0
+    nested_detail_levels[Wellplate] = all_collections_detail_levels.pluck(:wellplate_detail_level).max || 0
+    nested_detail_levels[Sample] = all_collections_detail_levels.pluck(:sample_detail_level).max || 0
+    nested_detail_levels[ResearchPlan] = all_collections_detail_levels.pluck(:researchplan_detail_level).max || 0
 
-    nested_detail_levels[:sample] = element_detail_level if element.is_a?(Sample)
+    nested_detail_levels[Sample] = element_detail_level if element.is_a?(Sample)
   end
 
   # taken from API#group_ids
@@ -79,7 +76,7 @@ class ElementDetailLevelCalculator
     attributes_to_fetch = [:is_shared] + DETAIL_LEVEL_FIELDS
     @user_collection_detail_levels ||= user_collections_with_element
                                        .pluck(*attributes_to_fetch)
-                                       .map { |values| Hash[ attributes_to_fetch.zip(values) ] }
+                                       .map { |values| Hash[attributes_to_fetch.zip(values)] }
   end
 
   # Returns an array of Hashes. One hash per collection from sync_collections_with_element.
@@ -88,6 +85,7 @@ class ElementDetailLevelCalculator
     attributes_to_fetch = DETAIL_LEVEL_FIELDS
     @sync_collection_detail_levels ||= sync_collections_with_element
                                        .pluck(*attributes_to_fetch)
-                                       .map { |attributes| Hash[ attributes_to_fetch.zip(values) ] }
+                                       .map { |values| Hash[attributes_to_fetch.zip(values)] }
   end
 end
+# rubocop:enable CodeReuse/ActiveRecord

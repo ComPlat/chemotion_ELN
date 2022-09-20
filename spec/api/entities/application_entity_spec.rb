@@ -80,6 +80,12 @@ describe Entities::ApplicationEntity do
         expect(result[:d]).to eq 'I am a regular field but hidden unless requested'
       end
     end
+
+    context 'with unknown option' do
+      it 'raises an error' do
+        expect { TestEntity.expose!(:some_field, unknown_option: true) }.to raise_error(ArgumentError)
+      end
+    end
   end
 
   describe '.expose_timestamps' do
