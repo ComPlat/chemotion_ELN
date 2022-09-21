@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
@@ -16,8 +14,6 @@ import Attachment from 'src/models/Attachment';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
-
-// eslint-disable-next-line no-unused-vars
 
 Enzyme.configure({ adapter: new Adapter() });
 
