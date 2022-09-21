@@ -86,9 +86,7 @@ module GenericHelpers
   def create_attachments(files, del_files, type, id, identifier, user_id)
     attach_ary = []
 
-    file_counter=-1;
-    (files || []).each do |file|
-      file_counter+=1;
+    (files || []).each_with_index do |file, index|
       if (tempfile = file[:tempfile])
         att = Attachment.new(
           bucket: file[:container_id],
@@ -96,7 +94,7 @@ module GenericHelpers
           created_by: user_id,
           created_for: user_id,
           content_type: file[:type],
-          identifier:  identifier[file_counter],
+          identifier:  identifier[index],
           attachable_type: type,
           attachable_id: id
         )
