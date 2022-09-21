@@ -41,9 +41,10 @@ class AttachmentUploader < Shrine
 
     result = ThumbnailCreator.new.create_derivative(
       file_path.to_s,
-      original,
-      @context[:record].id,
-      result, record
+      nil,
+      nil,
+      result,
+      record
     )
 
     result
