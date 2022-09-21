@@ -29,7 +29,7 @@ module Chemotion
     config.autoload_paths += Dir[Rails.root.join('lib')]
 
     config.active_job.queue_adapter = :delayed_job
-
+    config.active_record.schema_format = :sql
     # Chemotion Plugin configuration
 
     # list of registered plugins (from the plugins group of the Gemfile):

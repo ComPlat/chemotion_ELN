@@ -19,3 +19,7 @@ end
 every 1.day, at: '3:00 am' do
   rake 'chunks:clear'
 end
+
+every 1.hour do
+  rake 'attachments:release_locked_attachments'
+end

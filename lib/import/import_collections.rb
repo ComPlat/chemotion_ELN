@@ -29,14 +29,36 @@ module Import
           when 'export.json'
             @data = JSON.parse(data)
           when %r{attachments/([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})}
-            attachment = Attachment.create!(
-              file_data: data,
+            file_name = entry.name.sub('attachments/', '')
+            attachment = Attachment.new(
               transferred: true,
               created_by: @current_user_id,
               created_for: @current_user_id,
-              filename: Regexp.last_match(1)
+              filename: Regexp.last_match(1),
+              key: SecureRandom.uuid,
+              filename: file_name
             )
-            attachments << attachment
+            
+            begin
+              tmp = Tempfile.new(file_name)
+              tmp.write(data)
+              tmp.rewind
+              ActiveRecord::Base.transaction do
+                attachment.save!
+            
+                attachment.attachment_attacher.attach(tmp)
+                if attachment.valid?
+                  attachment.attachment_attacher.create_derivatives
+                  attachment.save!
+                  attachments << attachment
+                else
+                  raise ActiveRecord::Rollback
+                end
+              end
+            ensure
+              tmp.close
+              tmp.unlink   # deletes the temp file
+            end
           when %r{^images/(samples|reactions|molecules|research_plans)/(\w{1,128}\.\w{1,4})}
             tmp_file = Tempfile.new
             tmp_file.write(data)
@@ -426,8 +448,8 @@ module Import
         attachable_uuid = fields.fetch('attachable_id')
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
 
-        attachment = Attachment.where(id: @attachments, filename: fields.fetch('identifier')).first
-
+        file_name =  "#{fields.fetch('identifier')}#{File.extname(fields.fetch('filename'))}"
+        attachment = Attachment.where(id: @attachments, filename: file_name).first
         attachment.update!(
           attachable: attachable,
           transferred: true,
@@ -443,7 +465,7 @@ module Import
 
         # add attachment to the @instances map
         update_instances!(uuid, attachment)
-        attachment.regenerate_thumbnail
+        # attachment.regenerate_thumbnail
       end
     end
 
