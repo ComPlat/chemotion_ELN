@@ -1,8 +1,7 @@
 name: JavaScript Unit Tests
 
-on:
-  workflow_dispatch:
-  push:
+on: [workflow_dispatch, push, pull_request]
+
 
 jobs:
   docker_container:
