@@ -28,6 +28,8 @@ class DatacollectorFolder < DatacollectorObject
   private
 
   def zip_files(tmpzip)
+    return if @files.nil?
+
     if @sftp
       @files.each do |new_file|
         begin
