@@ -2,24 +2,34 @@
 
 module Entities
   class WellplateEntity < ApplicationEntity
-    expose(
-      :description,
-      :id,
-      :name,
-      :readout_titles,
-      :short_label,
-      :size,
-      :type,
-    )
+
+    # Level 0 attributes and relations
+    with_options(anonymize_below: 0) do
+      expose :id
+      expose :is_restricted
+      expose :size
+      expose :type
+      expose :wells, using: 'Entities::WellEntity'
+    end
+
+    with_options(anonymize_below: 10) do
+      expose :code_log, using: 'Entities::CodeLogEntity'
+      expose :container, using: 'Entities::ContainerEntity'
+      expose :description
+      expose :name
+      expose :readout_title
+      expose :segments, using: 'Entities::SegmentEntity'
+      expose :short_label
+      expose :tag, using: 'Entities::ElementTagEntity'
+    end
+
     expose_timestamps
 
-    expose :wells, using: 'Entities::WellEntity'
-    expose :container, using: 'Entities::ContainerEntity'
-    expose :tag, using: 'Entities::ElementTagEntity'
-    expose :segments, using: 'Entities::SegmentEntity'
-    expose :code_log, using: 'Entities::CodeLogEntity'
-
     private
+
+    def is_restricted
+      detail_levels[Wellplate] < 10
+    end
 
     def code_log
       displayed_in_list? ? nil : object.code_log
