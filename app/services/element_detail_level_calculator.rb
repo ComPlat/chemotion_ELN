@@ -45,6 +45,7 @@ class ElementDetailLevelCalculator
   def calculate_nested_detail_levels
     all_collections_detail_levels = user_collection_detail_levels + sync_collection_detail_levels
     nested_detail_levels[Wellplate] = all_collections_detail_levels.pluck(:wellplate_detail_level).max || 0
+    nested_detail_levels[Well] = nested_detail_levels[Wellplate]
     nested_detail_levels[Sample] = all_collections_detail_levels.pluck(:sample_detail_level).max || 0
     nested_detail_levels[ResearchPlan] = all_collections_detail_levels.pluck(:researchplan_detail_level).max || 0
 
