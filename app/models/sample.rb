@@ -195,6 +195,8 @@ class Sample < ApplicationRecord
   belongs_to :molecule_name, optional: true
 
   has_one :container, as: :containable
+  has_one :well, dependent: :destroy
+  has_one :inventories, as: :inventoriable
 
   has_many :wells
   has_many :wellplates, through: :wells

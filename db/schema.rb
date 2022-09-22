@@ -457,6 +457,13 @@ ActiveRecord::Schema.define(version: 2022_11_04_155451) do
     t.time "deleted_at"
   end
 
+  create_table "inventories", force: :cascade do |t|
+    t.jsonb "inventory_parameters"
+    t.integer "inventoriable_id"
+    t.string "inventoriable_type"
+    t.index ["inventoriable_type", "inventoriable_id"], name: "index_inventories_on_inventoriable_type_and_inventoriable_id"
+  end
+
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
     t.integer "moderated_by"
     t.integer "suggested_by"

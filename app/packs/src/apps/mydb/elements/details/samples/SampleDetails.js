@@ -65,6 +65,8 @@ import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
+import InventoryTab from 'src/components/InventoryTab';
+
 
 const MWPrecision = 6;
 
@@ -982,6 +984,21 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  sampleInventoryTab(ind) {
+    const sample = this.state.sample || {};
+
+    return (
+      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+        <ListGroupItem>
+          <InventoryTab
+            element={sample}
+          />
+        </ListGroupItem>
+        <EditUserLabels element={sample} />
+      </Tab>
+    );
+  }
+
   sampleContainerTab(ind) {
     const { sample } = this.state;
     return (
@@ -1265,7 +1282,8 @@ export default class SampleDetails extends React.Component {
       references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
-      measurements: this.measurementsTab('measurements')
+      measurements: this.measurementsTab('measurements'),
+      inventory: this.sampleInventoryTab('inventory')
     };
 
     if (this.enableComputedProps) {

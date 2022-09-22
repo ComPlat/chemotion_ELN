@@ -135,6 +135,11 @@ RSpec.configure do |config|
         body: File.read(Rails.root + 'spec/fixtures/body_643785_LCSS.json'),
         headers: { 'Content-Type' => 'application/json' }
       )
+      
+    stub_request(:get, 'https://www.alfa.com/en/catalog/A14672')
+    .with(headers: { 'Accept' => '*/*', 'Access-Control-Request-Method' => 'GET', 'User-Agent' => 'Google Chrome' })
+    .to_return(status: 200, body: '', headers: {}
+    )
   end
 
   config.expect_with :rspec do |expectations|
