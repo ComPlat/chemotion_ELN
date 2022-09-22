@@ -23,7 +23,8 @@ module Entities
 
     # Level 2 attributes and relations
     with_options(unless: :displayed_in_list, anonymize_below: 2, using: 'Entities::ContainerEntity') do
-      expose! :analyses,  anonymize_with: []
+      # Analyses is no longer exposed as the old implementation in the serializer was broken anyway
+      # Additionally, the frontend does not use the analyses field. It renders the analyses via the container field
       expose! :container, anonymize_with: nil
     end
 
@@ -75,14 +76,6 @@ module Entities
 
     def _contains_residues
       object.residues.any?
-    end
-
-    def analyses
-      if detail_levels[Sample] < 3
-        object.analyses.map { |analysis_container| analysis_container['datasets'] = { datasets: [] } }
-      else
-        object.analyses
-      end
     end
 
     def can_update
