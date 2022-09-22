@@ -9,7 +9,6 @@ env:
 
 jobs:
   docker_container:
-    if: "!contains(github.event.commits[0].message, 'skip all') && !contains(github.event.commits[0].message, 'skip acceptance')"
     runs-on: ubuntu-latest
     strategy:
       matrix:

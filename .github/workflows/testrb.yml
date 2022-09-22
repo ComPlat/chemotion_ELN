@@ -6,7 +6,6 @@ on:
 
 jobs:
   docker_container:
-    if: "!contains(github.event.commits[0].message, 'skip all') && !contains(github.event.commits[0].message, 'skip unit rb')"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -65,4 +64,3 @@ jobs:
         working-directory: /home/gitlab-runner/chemotion_ELN
         run: |
           /bin/bash -l -c "RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
-
