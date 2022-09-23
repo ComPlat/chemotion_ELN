@@ -233,7 +233,7 @@ export default class ElementsTableSampleEntries extends Component {
       displayedMoleculeGroup,
       targetType: currentElement && currentElement.type,
       flattenSamplesId: buildFlattenSampleIds(displayedMoleculeGroup)
-    });
+    }, this.forceUpdate());
   }
 
   shouldComponentUpdate(nextProps, nextState) {
