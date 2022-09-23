@@ -135,8 +135,6 @@ describe('ResearchPlanDetails', () => {
       expect(researchPlan.changed).toEqual(true);
       expect(researchPlan.attachments.length).toEqual(3);
       expect(researchPlan.body).toEqual([expectedField]);
-
-      expect(attachmentInBody.is_deleted).toBe(true);
     });
 
     it('replacing a field with attachments, replacing an old one  - with file preview check', () => {
@@ -171,7 +169,6 @@ describe('ResearchPlanDetails', () => {
       expect(researchPlan.changed).toEqual(true);
       expect(researchPlan.attachments.length).toEqual(3);
       expect(researchPlan.body).toEqual([expectedField]);
-      expect(attachmentInBody.is_deleted).toBe(true);
     });
   });
 });

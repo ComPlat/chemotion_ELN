@@ -1,21 +1,43 @@
-import Attachment from "src/models/Attachment";
+import Attachment from 'src/models/Attachment';
 
 export default class ImageFileDropHandler {
-
   handleDrop(files, replace, attachments) {
-    let file = files[0];
-    let attachment = Attachment.fromFile(file);
-    attachment.ancestor = replace;
-    attachment.is_image_field = true;
-    attachments.push(attachment);
-    let value = {
-      file_name: attachment.name,
-      public_name: file.preview,
-      identifier: attachment.identifier,
+    const identifierOfAncestor = this.getIdentifierOfAncestor(replace.value);
+
+    const attachmentFromFile = this.createAttachmentFromFile(files[0], identifierOfAncestor);
+    attachments.push(attachmentFromFile);
+
+    attachments
+      .filter((attachment) => attachment.identifier === identifierOfAncestor)
+      .map((attachment) => {
+        attachment.is_deleted = true;
+        attachment.is_new = Number.isNaN(attachment.id);
+        return attachment;
+      });
+
+    const value = {
+      file_name: attachmentFromFile.name,
+      public_name: files[0].preview,
+      identifier: attachmentFromFile.identifier,
       old_value: replace
-    }
+    };
     return value;
   }
 
+  getIdentifierOfAncestor(valueOfField) {
+    let identifierOfAncestor = null;
+    if (valueOfField.identifier) {
+      identifierOfAncestor = valueOfField.identifier;
+    } else if (valueOfField.public_name) {
+      identifierOfAncestor = valueOfField.public_name;
+    }
+    return identifierOfAncestor;
+  }
 
+  createAttachmentFromFile(file, identifierOfAncestor) {
+    const attachmentFromFile = Attachment.fromFile(file);
+    attachmentFromFile.ancestor = identifierOfAncestor;
+    attachmentFromFile.is_image_field = true;
+    return attachmentFromFile;
+  }
 }

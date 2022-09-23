@@ -5,23 +5,27 @@ import expect from 'expect';
 describe('ResearchPlan', () => {
   const researchPlan = ResearchPlan.buildEmpty();
 
-  describe('.addAttachments', () => {
+  describe('.upsertAttachments', () => {
     const attachmentNotInResearchPlan = new Attachment();
     const attachmentInResearchPlan = new Attachment();
 
     it('with empty list', () => {
       researchPlan.attachments = [attachmentInResearchPlan];
-      researchPlan.addAttachments([]);
+      researchPlan.upsertAttachments([]);
       expect(researchPlan.attachments.length).toEqual(1);
     });
 
     it('with two attachments, one already present in researchplan', () => {
+      attachmentInResearchPlan.is_deleted = false;
       researchPlan.attachments = [attachmentInResearchPlan];
-
-      researchPlan.addAttachments([attachmentNotInResearchPlan, attachmentInResearchPlan]);
+      const attachmentInResearchPlanCopy = new Attachment();
+      attachmentInResearchPlanCopy.identifier = attachmentInResearchPlan.identifier;
+      attachmentInResearchPlanCopy.is_deleted = true;
+      researchPlan.upsertAttachments([attachmentNotInResearchPlan, attachmentInResearchPlanCopy]);
 
       expect(researchPlan.attachments.length).toEqual(2);
       expect(researchPlan.attachments[0].id).toEqual(attachmentInResearchPlan.id);
+      expect(researchPlan.attachments[0].is_deleted).toEqual(true);
       expect(researchPlan.attachments[1].id).toEqual(attachmentNotInResearchPlan.id);
     });
   });
