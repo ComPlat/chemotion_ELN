@@ -4,6 +4,8 @@
 #
 #  id                 :integer          not null, primary key
 #  show_external_name :boolean          default(FALSE)
+#  show_sample_name        :boolean          default(FALSE)
+#  show_sample_short_label :boolean          default(FALSE)
 #  user_id            :integer          not null
 #  deleted_at         :datetime
 #  created_at         :datetime         not null

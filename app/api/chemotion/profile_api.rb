@@ -55,6 +55,8 @@ module Chemotion
         {
           data: data,
           show_external_name: profile.show_external_name,
+          show_sample_name: profile.show_sample_name,
+          show_sample_short_label: profile.show_sample_short_label,
           curation: profile.curation,
         }
       end
@@ -79,6 +81,8 @@ module Chemotion
           end
         end
         optional :show_external_name, type: Boolean
+        optional :show_sample_name, type: Boolean
+        optional :show_sample_short_label, type: Boolean
       end
 
       put do
@@ -93,7 +97,9 @@ module Chemotion
 
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
-          show_external_name: declared_params[:show_external_name]
+          show_external_name: declared_params[:show_external_name],
+          show_sample_name: declared_params[:show_sample_name],
+          show_sample_short_label: declared_params[:show_sample_short_label],
         }
 
         current_user.profile.update!(**new_profile) &&

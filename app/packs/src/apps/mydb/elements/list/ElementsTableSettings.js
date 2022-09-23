@@ -18,12 +18,16 @@ export default class ElementsTableSettings extends React.Component {
       visible: props.visible,
       hidden: props.hidden,
       currentType: '',
-      showSampleExternalName: false,
+      showSampleExternalLabel: false,
+      showSampleShortLabel: false,
+      showSampleName: false,
       tableSchemePreviews: true
     }
 
     this.handleOnExit = this.handleOnExit.bind(this);
     this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this);
+    this.handleToggleSampleShortLabel = this.handleToggleSampleShortLabel.bind(this);
+    this.handleToggleSampleName = this.handleToggleSampleName.bind(this);
     this.handleToggleScheme = this.handleToggleScheme.bind(this);
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
@@ -48,17 +52,16 @@ export default class ElementsTableSettings extends React.Component {
   }
 
   onChangeUser(state) {
-    let { currentType, showSampleExternalName } = this.state;
-    let showExt = showSampleExternalName;
-    if (state.profile && state.profile.show_external_name) {
-      showExt = state.profile.show_external_name;
-    }
-
-    if (currentType != state.currentType || showSampleExternalName != showExt) {
+    let { currentType } = this.state;
+    if (state && state.profile) {
       this.setState({
-        currentType: state.currentType,
-        showSampleExternalName: showExt
-      })
+        showSampleExternalLabel: state.profile.show_external_name,
+        showSampleName: state.profile.show_sample_name,
+        showSampleShortLabel: state.profile.show_sample_short_label
+      });
+    }
+    if (state && (currentType !== state.currentType)) {
+      this.setState({ currentType: state.currentType });
     }
   }
 
@@ -75,12 +78,13 @@ export default class ElementsTableSettings extends React.Component {
 
     }
 
-    const storeExt = UserStore.getState().profile.show_external_name;
-    if (this.state.showSampleExternalName != storeExt) {
-      UserActions.updateUserProfile(
-        { show_external_name: this.state.showSampleExternalName }
-      );
-    }
+    const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
+
+    UserActions.updateUserProfile({
+      show_external_name: showSampleExternalLabel,
+      show_sample_short_label: showSampleShortLabel,
+      show_sample_name: showSampleName
+    });
   }
 
   // eslint-disable-next-line camelcase
@@ -97,8 +101,30 @@ export default class ElementsTableSettings extends React.Component {
   }
 
   handleToggleSampleExt() {
-    const { showSampleExternalName } = this.state;
-    this.setState({ showSampleExternalName: !showSampleExternalName });
+    const { showSampleExternalLabel } = this.state;
+    this.setState({
+      showSampleExternalLabel: !showSampleExternalLabel,
+      showSampleShortLabel: false,
+      showSampleName: false
+    });
+  }
+
+  handleToggleSampleShortLabel() {
+    const { showSampleShortLabel } = this.state;
+    this.setState({
+      showSampleShortLabel: !showSampleShortLabel,
+      showSampleExternalLabel: false,
+      showSampleName: false
+    });
+  }
+
+  handleToggleSampleName() {
+    const { showSampleName } = this.state;
+    this.setState({
+      showSampleName: !showSampleName,
+      showSampleExternalLabel: false,
+      showSampleShortLabel: false
+    });
   }
 
   updateLayout() {
@@ -120,7 +146,7 @@ export default class ElementsTableSettings extends React.Component {
   render() {
     const {
       visible, hidden, currentType,
-      tableSchemePreviews, showSampleExternalName
+      tableSchemePreviews, showSampleExternalLabel, showSampleShortLabel, showSampleName,
     } = this.state;
 
     const wd = 35 + ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
@@ -132,15 +158,31 @@ export default class ElementsTableSettings extends React.Component {
           <h3 className="popover-title">Settings</h3>
           <div className="popover-content">
             <FormGroup>
-              <Checkbox onChange={this.handleToggleScheme}
-                checked={tableSchemePreviews} >
+              <Checkbox
+                onChange={this.handleToggleScheme}
+                checked={tableSchemePreviews}
+              >
                 Show schemes images
               </Checkbox>
             </FormGroup>
             <FormGroup>
-              <Checkbox onChange={this.handleToggleSampleExt}
-                checked={showSampleExternalName} >
+              <Checkbox
+                onChange={this.handleToggleSampleExt}
+                checked={showSampleExternalLabel}
+              >
                 Show sample external name on title
+              </Checkbox>
+              <Checkbox
+                onChange={this.handleToggleSampleShortLabel}
+                checked={showSampleShortLabel}
+              >
+                Show sample short label
+              </Checkbox>
+              <Checkbox
+                onChange={this.handleToggleSampleName}
+                checked={showSampleName}
+              >
+                Show sample name
               </Checkbox>
             </FormGroup>
           </div>
