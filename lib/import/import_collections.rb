@@ -336,6 +336,9 @@ module Import
         wellplate = Wellplate.create!(fields.slice(
           'name',
           'size',
+          'description',
+          'short_label',
+          'readout_titles',
           'created_at',
           'updated_at'
         ).merge(
@@ -359,7 +362,9 @@ module Import
         well = Well.create!(fields.slice(
           'position_x',
           'position_y',
-          'readout',
+          'readouts',
+          'label',
+          'color_code',
           'additive',
           'created_at',
           'updated_at'

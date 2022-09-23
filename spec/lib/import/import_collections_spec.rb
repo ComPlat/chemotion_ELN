@@ -113,7 +113,7 @@ RSpec.describe 'ImportCollection' do
         expect(wellplate).to be_present
         expect(wellplate.name).to eq('MyWellplate')
         expect(wellplate.size).to eq(96)
-        expect(wellplate.description).to eq({})
+        expect(wellplate.description).to eq({ 'ops' => [{ 'insert' => "I made a wellplate\n" }] })
 
         expect(wellplate.samples).to be_present
         expect(wellplate.samples.length).to eq(1)
