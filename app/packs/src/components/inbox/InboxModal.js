@@ -111,7 +111,14 @@ export default class InboxModal extends React.Component {
           >
             <Panel bsStyle="primary" className="eln-panel-detail research-plan-details cursor">
               <Panel.Heading className="cursor handle">
-                <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Inbox &nbsp;</i>
+                <button
+                  type="button"
+                  className="btn-inbox"
+                  onClick={() => this.onClickInbox()}
+                >
+                  <i className="fa fa-inbox" />
+                  <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
+                </button>
                 {
                   this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
                 }
@@ -136,7 +143,14 @@ export default class InboxModal extends React.Component {
                 <div>
                   <div className="tree-view">
                     <div className="title" style={{ backgroundColor: 'white', display: inboxVisible ? 'none' : '' }}>
-                      <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Fetch Inbox &nbsp;</i>
+                      <button
+                        type="button"
+                        className="btn-inbox"
+                        onClick={() => this.onClickInbox()}
+                      >
+                        <i className="fa fa-inbox" />
+                        <span style={{ marginLeft: '10px' }}>Fetch Inbox</span>
+                      </button>
                     </div>
 
                   </div>
