@@ -38,7 +38,7 @@ class DetailLevels::Sample
   # We dont need these attributes for Element List, take them out
   def list_removed_attributes
     [
-      :description, :container, :analyses, :elemental_compositions,
+      :container, :analyses, :elemental_compositions,
       :target_amount_value, :target_amount_unit, :real_amount_value,
       :real_amount_unit, :purity, :solvent, :molarity_value, :molarity_unit,
       :children_count, :parent_id, :imported_readout, :location,
