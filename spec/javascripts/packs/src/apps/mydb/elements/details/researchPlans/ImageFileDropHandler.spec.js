@@ -32,40 +32,95 @@ describe('ImageFileDropHandler', () => {
       }
     };
     it('drop first image', () => {
+      const replacedFieldWasEmpty = {
+        value: {
+          file_name: null,
+          public_name: null,
+          zoom: null
+        }
+      };
       researchPlan.body = [fieldWithImage, fieldWithoutImage];
       const file = { name: 'dummyFile', preview: 'publicName' };
 
       const attachments = [];
-      const value = filter.handleDrop([file], undefined, attachments);
+      const value = filter.handleDrop([file], replacedFieldWasEmpty, attachments);
+
       expect(attachments.length).toEqual(1);
       expect(attachments[0].is_image_field).toEqual(true);
-      expect(attachments[0].ancestor).toEqual(undefined);
+      expect(attachments[0].ancestor).toEqual(null);
 
       expect(value.identifier).toEqual(attachments[0].identifier);
       expect(value.public_name).toEqual('publicName');
       expect(value.file_name).toEqual('dummyFile');
-      expect(value.old_value).toEqual(undefined);
+      expect(value.old_value).toEqual(replacedFieldWasEmpty);
     });
 
     it('drop image after another image dropped', () => {
+      const replacedAttachment = new Attachment();
+      replacedAttachment.name = 'replacedFile.png';
+
+      const replacedFieldTemporayImage = {
+        value: {
+          file_name: replacedAttachment.name,
+          public_name: 'blob://http://...',
+          identifier: replacedAttachment.identifier
+        }
+      };
+
       researchPlan.body = [fieldWithImage, fieldWithoutImage];
-      const file = { name: 'dummyFile', preview: 'publicName' };
-      const file2 = { name: 'anotherDummyFile', preview: 'anotherPublicName' };
-      const attachments = [];
+      researchPlan.attachments = [replacedAttachment];
+      const dropedFile = { name: 'dummyFile', preview: 'anotherPublicName' };
 
-      filter.handleDrop([file], undefined, attachments);
-      const value = filter.handleDrop([file2], attachments[0].identifier, attachments);
+      const value = filter.handleDrop(
+        [dropedFile],
+        replacedFieldTemporayImage,
+        researchPlan.attachments
+      );
 
-      expect(attachments.length).toEqual(2);
-      expect(attachments[0].is_image_field).toEqual(true);
-      expect(attachments[0].ancestor).toEqual(undefined);
-      expect(attachments[1].is_image_field).toEqual(true);
-      expect(attachments[1].ancestor).toEqual(attachments[0].identifier);
+      expect(researchPlan.attachments.length).toEqual(2);
+      expect(researchPlan.attachments[0].is_deleted).toEqual(true);
+      expect(researchPlan.attachments[1].is_image_field).toEqual(true);
+      expect(researchPlan.attachments[1].is_deleted).toEqual(false);
+      expect(researchPlan.attachments[1].ancestor).toEqual(researchPlan.attachments[0].identifier);
 
-      expect(value.identifier).toEqual(attachments[1].identifier);
+      expect(value.identifier).toEqual(researchPlan.attachments[1].identifier);
       expect(value.public_name).toEqual('anotherPublicName');
-      expect(value.file_name).toEqual('anotherDummyFile');
-      expect(value.old_value).toEqual(attachments[0].identifier);
+      expect(value.file_name).toEqual('dummyFile');
+      expect(value.old_value).toEqual(replacedFieldTemporayImage);
+    });
+
+    it('drop image on image which is saved on server', () => {
+      const replacedAttachment = new Attachment();
+      replacedAttachment.name = 'replacedFile.png';
+
+      const replacedFieldTemporayImage = {
+        value: {
+          file_name: replacedAttachment.name,
+          public_name: replacedAttachment.identifier
+        }
+      };
+
+      researchPlan.body = [fieldWithImage, fieldWithoutImage];
+      researchPlan.attachments = [replacedAttachment];
+
+      const dropedFile = { name: 'dummyFile', preview: 'anotherPublicName' };
+
+      const value = filter.handleDrop(
+        [dropedFile],
+        replacedFieldTemporayImage,
+        researchPlan.attachments
+      );
+
+      expect(researchPlan.attachments.length).toEqual(2);
+      expect(researchPlan.attachments[0].is_deleted).toEqual(true);
+      expect(researchPlan.attachments[1].is_image_field).toEqual(true);
+      expect(researchPlan.attachments[1].is_deleted).toEqual(false);
+      expect(researchPlan.attachments[1].ancestor).toEqual(researchPlan.attachments[0].identifier);
+
+      expect(value.identifier).toEqual(researchPlan.attachments[1].identifier);
+      expect(value.public_name).toEqual('anotherPublicName');
+      expect(value.file_name).toEqual('dummyFile');
+      expect(value.old_value).toEqual(replacedFieldTemporayImage);
     });
   });
 });

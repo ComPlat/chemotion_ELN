@@ -199,10 +199,20 @@ export default class ResearchPlan extends Element {
     return this._wellplates || [];
   }
 
-  addAttachments(attachmentsToAdd) {
+  upsertAttachments(attachmentsToAdd) {
     const idsOfAttachmentsInResearchPlan = this.attachments.map(
       (attachmentInResearchPlan) => attachmentInResearchPlan.identifier
     );
+
+    attachmentsToAdd
+      .filter((attachment) => idsOfAttachmentsInResearchPlan.includes(attachment.identifier))
+      .map((source) => {
+        const target = this.attachments
+          .filter((attachInRP) => source.identifier === attachInRP.identifier);
+        target[0].is_deleted = source.is_deleted;
+
+        return source;
+      });
 
     this.attachments = this.attachments.concat(attachmentsToAdd
       .filter((attachment) => !idsOfAttachmentsInResearchPlan.includes(attachment.identifier)));

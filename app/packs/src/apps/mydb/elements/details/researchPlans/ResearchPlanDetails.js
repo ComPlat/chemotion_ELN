@@ -122,21 +122,10 @@ export default class ResearchPlanDetails extends Component {
 
   handleBodyChange(value, idOfFieldToReplace, attachments) {
     const { researchPlan } = this.state;
-    researchPlan.addAttachments(attachments);
+    researchPlan.upsertAttachments(attachments);
 
     const index = researchPlan.body.findIndex((field) => field.id === idOfFieldToReplace);
     if (index === -1) { return; }
-
-    researchPlan.attachments.forEach((attachment) => {
-      const identifierMatch = (attachment.identifier && attachment.identifier === value.old_value);
-      const filePreviewMatch = (attachment.file && attachment.file.preview === value.old_value);
-      if (identifierMatch || filePreviewMatch) {
-        attachment.is_deleted = true;
-        if (researchPlan.body[index].type === 'image') {
-          attachment.is_image_field = true;
-        }
-      }
-    });
 
     researchPlan.body[index].value = value;
     researchPlan.changed = true;

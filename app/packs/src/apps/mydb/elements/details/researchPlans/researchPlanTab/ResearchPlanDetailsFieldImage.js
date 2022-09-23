@@ -18,7 +18,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   handleDrop(files) {
-    if (files.length == 0) { return; }
+    if (files.length === 0) { return; }
     const handler = new ImageFileDropHandler();
     const value = handler.handleDrop(files, this.props.field, this.state.attachments);
     this.generateSrcOfImage(value.public_name);
