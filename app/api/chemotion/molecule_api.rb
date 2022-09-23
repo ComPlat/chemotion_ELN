@@ -71,9 +71,9 @@ module Chemotion
             svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
             if File.exist?(svg_file_src)
               mol = molecule.molfile.lines[0..1]
-              if mol[1]&.strip&.match?('OpenBabel')
-                svg = File.read(svg_file_src)
-                svg_process = SVG::Processor.new.structure_svg('openbabel', svg, svg_digest)
+              if svg.nil? || svg&.include?('Open Babel')
+                svg = Molecule.svg_reprocess(svg, molecule.molfile)
+                svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
               else
                 FileUtils.cp(svg_file_src, svg_process[:svg_file_path])
               end
