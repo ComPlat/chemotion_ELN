@@ -19,7 +19,7 @@ module Entities
       expose :color_code
       expose :label
       expose :readouts
-    )
+    end
 
     private
 
