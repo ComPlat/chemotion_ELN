@@ -6,16 +6,17 @@ module Entities
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
       expose! :can_copy,        unless: :displayed_in_list
+      expose! :can_publish,     unless: :displayed_in_list
       expose! :can_update,      unless: :displayed_in_list
       expose! :code_log,        unless: :displayed_in_list, using: 'Entities::CodeLogEntity'
       expose! :decoupled
+      expose! :external_label
       expose! :id
       expose! :is_restricted
       expose! :molecular_mass
+      expose! :molecule,                                    using: 'Entities::MoleculeEntity'
       expose! :sum_formula
       expose! :type
-      expose! :external_label
-      expose! :can_publish,     unless: :displayed_in_list
     end
 
     # Level 1 attributes
@@ -28,8 +29,6 @@ module Entities
       expose! :container, anonymize_with: nil
     end
 
-    # TODO: Clarify if dataset anonymization until level 3 is necessary or can be removed (API does not use it, maybe reports)
-
     # Level 10 attributes and relations
     with_options(anonymize_below: 10) do
       expose! :_contains_residues,      unless: :displayed_in_list, anonymize_with: false
@@ -38,7 +37,7 @@ module Entities
       expose! :children_count,          unless: :displayed_in_list
       expose! :density
       expose! :description,             unless: :displayed_in_list
-      expose! :elemental_compositions,  unless: :displayed_in_list, anonymize_below: 10, anonymize_with: [],   using: 'Entities::ElementalCompositionEntity'
+      expose! :elemental_compositions,  unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ElementalCompositionEntity'
       expose! :imported_readout,        unless: :displayed_in_list
       expose! :is_top_secret
       expose! :location,                unless: :displayed_in_list
@@ -46,7 +45,6 @@ module Entities
       expose! :metrics
       expose! :molarity_unit,           unless: :displayed_in_list
       expose! :molarity_value,          unless: :displayed_in_list
-      expose! :molecule,                                            anonymize_below: 10,                       using: 'Entities::MoleculeEntity'
       expose! :molecule_name_hash,                                  anonymize_with: {}
       expose! :name
       expose! :parent_id,               unless: :displayed_in_list
@@ -55,14 +53,14 @@ module Entities
       expose! :reaction_description,    unless: :displayed_in_list
       expose! :real_amount_unit,        unless: :displayed_in_list
       expose! :real_amount_value,       unless: :displayed_in_list
-      expose! :residues,                unless: :displayed_in_list, anonymize_below: 10, anonymize_with: [],   using: 'Entities::ResidueEntity'
+      expose! :residues,                unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ResidueEntity'
       expose! :sample_svg_file
-      expose! :segments,                unless: :displayed_in_list, anonymize_below: 10,                       using: 'Entities::SegmentEntity'
+      expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::SegmentEntity'
       expose! :short_label
       expose! :showed_name
       expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
       expose! :stereo
-      expose! :tag,                                                 anonymize_below: 10,                       using: 'Entities::ElementTagEntity'
+      expose! :tag,                                                                       using: 'Entities::ElementTagEntity'
       expose! :target_amount_unit,      unless: :displayed_in_list
       expose! :target_amount_value,     unless: :displayed_in_list
       expose! :user_labels
