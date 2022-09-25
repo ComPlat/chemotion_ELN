@@ -1,0 +1,19 @@
+name: Pronto
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: git fetch origin development-5 --unshallow
+      - uses: adwerx/pronto-ruby@v4.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          runners: >-
+            rubocop
+          target: origin/development-5
