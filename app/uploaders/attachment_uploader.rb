@@ -38,7 +38,6 @@ class AttachmentUploader < Shrine
     file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
 
     result = {}
-    binding.pry
     result = ThumbnailCreator.new.create_derivative(
       file_path.to_s,
       nil,
