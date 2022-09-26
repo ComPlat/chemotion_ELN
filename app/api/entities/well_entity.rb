@@ -3,22 +3,21 @@
 module Entities
   class WellEntity < ApplicationEntity
     with_options(anonymize_below: 0) do
-      expose :id
-      expose :is_restricted
-      expose :position
-      expose :sample, using: 'Entities::SampleEntity'
-      expose :type
+      expose! :id
+      expose! :is_restricted
+      expose! :position
+      expose! :sample, using: 'Entities::SampleEntity'
+      expose! :type
     end
 
     with_options(anonymize_below: 1) do
-      expose :readouts
+      expose! :readouts
     end
 
     with_options(anonymize_below: 10) do
-      expose :additive
-      expose :color_code
-      expose :label
-      expose :readouts
+      expose! :additive
+      expose! :color_code
+      expose! :label
     end
 
     private
