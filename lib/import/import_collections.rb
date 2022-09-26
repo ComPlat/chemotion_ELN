@@ -16,6 +16,12 @@ module Import
       @svg_files = []
     end
 
+    def execute
+      extract
+      import
+      cleanup
+    end
+
     def extract
       attachments = []
       att = Tempfile.new(encoding: 'ascii-8bit')

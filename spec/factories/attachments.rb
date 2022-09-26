@@ -40,5 +40,26 @@ FactoryBot.define do
     trait :attached_to_research_plan do
       association :attachable, factory: :research_plan
     end
+
+    trait :with_sample_collection_zip do
+      file_path { Rails.root.join('spec', 'fixtures', 'import', 'collection_samples.zip') }
+    end
+
+    trait :with_reaction_collection_zip do
+      file_path { Rails.root.join('spec', 'fixtures', 'import', 'collection_reaction.zip') }
+    end
+
+    trait :with_wellplate_collection_zip do
+      file_path { Rails.root.join('spec', 'fixtures', 'import', 'collection_wellplate.zip') }
+    end
+
+    trait :with_screen_collection_zip do
+      file_path { Rails.root.join('spec', 'fixtures', 'import', 'collection_screen.zip') }
+    end
+
+    trait :with_researchplan_collection_zip do
+      file_path { Rails.root.join('spec', 'fixtures', 'import', 'collection_research_plan.zip') }
+    end
+
   end
 end
