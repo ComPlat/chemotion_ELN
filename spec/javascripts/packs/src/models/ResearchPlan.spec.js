@@ -129,4 +129,49 @@ describe('ResearchPlan', () => {
       expect(researchPlan.body).toEqual([bodyFieldWithoutImage]);
     });
   });
+
+  describe('.convertTemporaryImageFieldsInBody', () => {
+    const permanentBodyField = {
+      id: 'normalizedBodyField',
+      type: 'image',
+      value: {
+        file_name: 'xyz.png',
+        public_name: 'xzy',
+      }
+    };
+
+    const temporaryBodyField = {
+      id: 'unnormalizedBodyField',
+      type: 'image',
+      value: {
+        file_name: 'abc.png',
+        public_name: 'abc',
+        identifier: '123456',
+        old_value: 'abcdef'
+      }
+    };
+
+    it('with permanent body', () => {
+      researchPlan.body = [permanentBodyField];
+      researchPlan.convertTemporaryImageFieldsInBody();
+
+      expect(researchPlan.body).toEqual([permanentBodyField]);
+    });
+
+    it('with temporary body', () => {
+      const expected = {
+        id: 'unnormalizedBodyField',
+        type: 'image',
+        value: {
+          file_name: 'abc.png',
+          public_name: '123456'
+        }
+      };
+
+      researchPlan.body = [permanentBodyField, temporaryBodyField];
+      researchPlan.convertTemporaryImageFieldsInBody();
+
+      expect(researchPlan.body).toEqual([permanentBodyField, expected]);
+    });
+  });
 });

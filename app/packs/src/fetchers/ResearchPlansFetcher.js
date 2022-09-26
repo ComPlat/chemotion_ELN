@@ -31,7 +31,7 @@ export default class ResearchPlansFetcher {
   }
 
   static create(researchPlan) {
-    researchPlan = ResearchPlansFetcher.updateBodyInformationOfImages(researchPlan);
+    researchPlan.convertTemporaryImageFieldsInBody();
     const promise = fetch('/api/v1/research_plans/', {
       credentials: 'same-origin',
       method: 'post',
@@ -47,23 +47,9 @@ export default class ResearchPlansFetcher {
     return promise;
   }
 
-  static updateBodyInformationOfImages(researchPlan) {
-    for (let i = 0; i < researchPlan.body.length; i++) {
-      const element = researchPlan.body[i];
-      if (element.type === 'image') {
-        if (element.value.identifier) {
-          researchPlan.body[i].value.public_name = element.value.identifier;
-          delete researchPlan.body[i].value.identifier;
-          delete researchPlan.body[i].value.old_value;
-        }
-      }
-    }
-    return researchPlan;
-  }
-
   static update(researchPlan) {
     const containerFiles = AttachmentFetcher.getFileListfrom(researchPlan.container);
-    researchPlan = ResearchPlansFetcher.updateBodyInformationOfImages(researchPlan);
+    researchPlan.convertTemporaryImageFieldsInBody();
 
     const promise = () => fetch(`/api/v1/research_plans/${researchPlan.id}`, {
       credentials: 'same-origin',

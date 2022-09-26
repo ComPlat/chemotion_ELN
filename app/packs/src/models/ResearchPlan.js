@@ -241,4 +241,16 @@ export default class ResearchPlan extends Element {
     this.body.splice(index, 1);
     this.changed = true;
   }
+
+  convertTemporaryImageFieldsInBody() {
+    this.body
+      .filter((field) => field.type === 'image')
+      .map((field) => field.value)
+      .filter((value) => value.identifier)
+      .forEach((value) => {
+        value.public_name = value.identifier;
+        delete value.identifier;
+        delete value.old_value;
+      });
+  }
 }
