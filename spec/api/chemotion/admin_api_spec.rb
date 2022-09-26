@@ -21,8 +21,6 @@ RSpec.describe Chemotion::AdminAPI do
       expect(parsed_json_response['jobs'].size).to eq 1
     end
   end
-  # add a very long line with more than 120 characters --------------------------------------------------------------------------
-
 
   describe 'PUT /api/v1/admin/jobs/restart' do
     it 'returns the right http status' do
