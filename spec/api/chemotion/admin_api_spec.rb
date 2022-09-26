@@ -3,7 +3,6 @@
 RSpec.describe Chemotion::AdminAPI do
   let!(:admin1) { create(:admin) }
 
-  # add a very long line with more than 120 characters --------------------------------------------------------------------------
   before do
     allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin1)
   end
