@@ -5,22 +5,22 @@ module Entities
 
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
-      expose :id
-      expose :is_restricted
-      expose :size
-      expose :type
-      expose :wells, using: 'Entities::WellEntity'
+      expose! :id
+      expose! :is_restricted
+      expose! :size
+      expose! :type
+      expose! :wells,                                using: 'Entities::WellEntity'
     end
 
     with_options(anonymize_below: 10) do
-      expose :code_log, using: 'Entities::CodeLogEntity'
-      expose :container, using: 'Entities::ContainerEntity'
-      expose :description
-      expose :name
-      expose :readout_title
-      expose :segments, using: 'Entities::SegmentEntity'
-      expose :short_label
-      expose :tag, using: 'Entities::ElementTagEntity'
+      expose! :code_log,        anonymize_with: nil, using: 'Entities::CodeLogEntity'
+      expose! :container,       anonymize_with: nil, using: 'Entities::ContainerEntity'
+      expose! :description
+      expose! :name
+      expose! :readout_titles
+      expose! :segments,        anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :short_label
+      expose! :tag,             anonymize_with: nil, using: 'Entities::ElementTagEntity'
     end
 
     expose_timestamps
