@@ -2,18 +2,18 @@
 
 module Entities
   class ResearchPlanEntity < ApplicationEntity
-    expose(
-      :id,
-      :type,
-      :name,
-      :body,
-      :thumb_svg,
-    )
-    expose :container, using: 'Entities::ContainerEntity'
+    # ResearchPlan does not have any anonymization defined, so nothing to see here
+    expose :body
+    expose :container,              using: 'Entities::ContainerEntity'
+    expose :id,
+    expose :is_restricted
+    expose :name
     expose :research_plan_metadata, using: 'Entities::ResearchPlanMetadataEntity'
-    expose :segments, using: 'Entities::SegmentEntity'
-    expose :tag, using: 'Entities::ElementTagEntity'
-    expose :wellplates, using: 'Entities::WellplateEntity'
+    expose :segments,               using: 'Entities::SegmentEntity'
+    expose :tag,                    using: 'Entities::ElementTagEntity'
+    expose :thumb_svg
+    expose :type
+    expose :wellplates,             using: 'Entities::WellplateEntity'
 
     expose_timestamps
 
@@ -21,6 +21,10 @@ module Entities
 
     def container
       displayed_in_list? ? nil : object.container
+    end
+
+    def is_restricted
+      detail_levels[ResearchPlan] < 10
     end
 
     def segments
