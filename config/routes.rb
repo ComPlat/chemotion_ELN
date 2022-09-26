@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  post "/graphql", to: "graphql#execute"
+  post "/graphql", to: "graphql#execute" unless Rails.env.production?
 
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
     devise_for :users, controllers: { registrations: 'users/registrations' }, skip: [:registrations]
