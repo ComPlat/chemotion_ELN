@@ -23,6 +23,7 @@ RSpec.describe Chemotion::AdminAPI do
   end
   # add a very long line with more than 120 characters --------------------------------------------------------------------------
 
+
   describe 'PUT /api/v1/admin/jobs/restart' do
     it 'returns the right http status' do
       failed_job = Delayed::Job.create(failed_at: DateTime.now, handler: 'Do something')
