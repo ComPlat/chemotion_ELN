@@ -88,7 +88,7 @@ describe ElementDetailLevelCalculator do
     end
 
     it 'returns a hash with matching keys' do
-      expect(subject).to eq({ Sample => 0, Wellplate => 0, ResearchPlan => 0 })
+      expect(subject).to eq({ Sample => 0, Wellplate => 0, Well => 0, ResearchPlan => 0 })
     end
 
     context 'when user has shared/synced collection that contains the element' do
