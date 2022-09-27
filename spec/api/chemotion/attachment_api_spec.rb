@@ -357,8 +357,8 @@ describe Chemotion::AttachmentAPI do
           expect(attachments.count).to eq 2
         end
 
-        it 'stores file localy' do
-          expect(File.exist?(attachments.last.store.path)).to be true
+        it 'stores file success' do
+          expect(File.exist?(attachments.last.abs_path)).to be true
         end
       end
 
@@ -375,12 +375,12 @@ describe Chemotion::AttachmentAPI do
           expect(img_attachments.count).to eq 2
         end
 
-        it 'stores file localy' do
-          expect(File.exist?(img_attachments.last.store.path)).to be true
+        it 'stores file success' do
+          expect(File.exist?(img_attachments.last.abs_path)).to be true
         end
 
         it 'creates thumbnail localy' do
-          expect(File.exist?(img_attachments.last.store.thumb_path)).to be true
+          expect(File.exist?(img_attachments.last.attachment(:thumbnail).url)).to be true
         end
 
         describe 'Return Base64 encoded thumbnail' do
