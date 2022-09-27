@@ -5,7 +5,6 @@ import { Dropdown, MenuItem, Glyphicon } from 'react-bootstrap';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ModalImport from 'src/components/contextActions/ModalImport';
-import ModalImportChemScanner from 'src/components/contextActions/ModalImportChemScanner';
 import ModalExport from 'src/components/contextActions/ModalExport';
 import ModalReactionExport from 'src/components/contextActions/ModalReactionExport';
 import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
@@ -39,10 +38,6 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
         title='Import collections from ZIP archive'>
         Import collections
       </MenuItem>
-      {/* <MenuItem onSelect={() => importChemScannerFunction(updateModalProps)} disabled={isDisabled} */}
-      {/*   title='Import from Docs'> */}
-      {/*   Import elements from Docs */}
-      {/* </MenuItem> */}
     </Dropdown.Menu>
   </Dropdown>
 );
@@ -69,21 +64,6 @@ const importSampleFunction = (updateModalProps) => {
     action,
     listSharedCollections,
   };
-  updateModalProps(modalProps);
-};
-
-const importChemScannerFunction = (updateModalProps) => {
-  const title = 'Import Elements from Docs';
-  const component = ModalImportChemScanner;
-  const listSharedCollections = false;
-  const modalProps = {
-    show: true,
-    title,
-    component,
-    customModal: 'importChemDrawModal',
-    listSharedCollections,
-  };
-
   updateModalProps(modalProps);
 };
 
