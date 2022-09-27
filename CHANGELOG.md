@@ -9,6 +9,11 @@
 * Features and Improvements:
 * Fixes
 
+## [vMAJOR.MINOR.PATCH]
+> yyyy-mm-dd
+
+* Features and Improvements:
+  * Use 'Search CAS' instead of 'CAS content' based on final feedback from CAS
 
 ## [v1.4.0]
 > 2022-09-26
@@ -29,13 +34,13 @@
 
 * Fixes:
   * SVG generation for sample and reaction: (https://github.com/ComPlat/chemotion_ELN/issues/846)
-  * Sample amount metric 
+  * Sample amount metric
   * report svg composer: skip image if image file does not exist.
   * chemspectra: duplicate image generation
 
 
 
- 
+
 
 
 ## [v1.3.1]
@@ -69,7 +74,7 @@
   * Chemspectra : Cyclic Voltametry (Warning: upd chem-spectra-app service to 0.10.14)
   * ResearchPlan link to reactions and samples (https://github.com/ComPlat/chemotion_ELN/issues/666)
   * No reaction-svg when no material present (https://github.com/ComPlat/chemotion_ELN/issues/691)
- 
+
 
 * Fixes
   * report: fix the label can't be assigned issue https://github.com/ComPlat/chemotion_ELN/issues/661
