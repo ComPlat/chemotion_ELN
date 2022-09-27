@@ -1,7 +1,9 @@
 name: Pronto
+
 on:
   pull_request:
     types: [opened, synchronize]
+
 jobs:
   pronto:
     runs-on: ubuntu-latest
