@@ -170,7 +170,6 @@ class ElementStore {
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
-      handleImportReactionsFromChemScanner: ElementActions.importReactionsFromChemScanner,
 
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
@@ -788,11 +787,6 @@ class ElementStore {
     if (data.sdf) {
       this.handleRefreshElements('sample');
     }
-  }
-
-  handleImportReactionsFromChemScanner(data) {
-    this.handleRefreshElements('sample');
-    this.handleRefreshElements('reaction');
   }
 
   // -- Wellplates --
