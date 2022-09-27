@@ -369,6 +369,7 @@ GEM
     grape-swagger-representable (0.2.2)
       grape-swagger (>= 0.31.0)
       representable
+    graphql (2.0.14)
     haml (5.1.2)
       temple (>= 0.8.0)
       tilt
@@ -843,6 +844,7 @@ DEPENDENCIES
   grape-swagger-entity (~> 0.3)
   grape-swagger-rails
   grape-swagger-representable (~> 0.2)
+  graphql
   haml-rails (~> 1.0)
   hashie-forbidden_attributes
   httparty

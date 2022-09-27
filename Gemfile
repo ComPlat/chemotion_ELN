@@ -45,6 +45,8 @@ gem 'grape-swagger-entity', '~> 0.3'
 gem 'grape-swagger-rails'
 gem 'grape-swagger-representable', '~> 0.2'
 
+gem 'graphql'
+
 gem 'haml-rails', '~> 1.0'
 gem 'hashie-forbidden_attributes'
 gem 'httparty'
