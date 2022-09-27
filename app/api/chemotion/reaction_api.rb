@@ -10,31 +10,6 @@ module Chemotion
     helpers ProfileHelpers
 
     resource :reactions do
-      namespace :import_chemscanner do
-        desc 'Import Reactions'
-        params do
-          requires :reactions, type: Array, desc: 'List of reactions to import'
-          requires :molecules, type: Array, desc: 'List of molecules to import'
-          requires :collection_id, type: Integer, desc: 'Collection id'
-        end
-
-        after_validation do
-          unless current_user.collections.find(params[:collection_id])
-            error!('401 Unauthorized', 401)
-          end
-        end
-
-        post do
-          Import::FromChemScanner.from_list(
-            params[:reactions],
-            params[:molecules],
-            current_user.id,
-            params[:collection_id]
-          )
-
-          true
-        end
-      end
 
       desc 'Return serialized reactions'
       params do

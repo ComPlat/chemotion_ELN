@@ -3,7 +3,6 @@ import Immutable from 'immutable';
 
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import Reaction from 'src/models/Reaction';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
@@ -73,25 +72,5 @@ export default class ReactionsFetcher {
 
   static update(reaction) {
     return ReactionsFetcher.create(reaction, 'put');
-  }
-
-  static importFromChemScanner({ reactions, molecules }) {
-    const promise = fetch('/api/v1/reactions/import_chemscanner', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        reactions,
-        molecules,
-        collection_id: UIStore.getState().currentCollection.id,
-      })
-    }).then(response => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
   }
 }

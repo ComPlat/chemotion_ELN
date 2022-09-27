@@ -431,16 +431,6 @@ class ElementActions {
     };
   }
 
-  importReactionsFromChemScanner(params) {
-    return (dispatch) => {
-      ReactionsFetcher.importFromChemScanner(params).then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    };
-  }
-
   importSamplesFromFileConfirm(params) {
     return (dispatch) => {
       SamplesFetcher.importSamplesFromFileConfirm(params)
