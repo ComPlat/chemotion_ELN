@@ -61,5 +61,10 @@ FactoryBot.define do
       file_path { Rails.root.join('spec', 'fixtures', 'import', 'collection_research_plan.zip') }
     end
 
+    after(:create) do |attachment|
+      attachment.attachment_attacher.attach(File.open(File.join("#{Rails.root}/spec/fixtures/#{attachment.filename}"), binmode: true))
+      attachment.attachment_attacher.create_derivatives
+      attachment.save!
+    end
   end
 end

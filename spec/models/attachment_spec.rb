@@ -35,52 +35,16 @@ RSpec.describe Attachment, type: :model do
 
   describe '#abs_path' do
     it 'returns the absolute path of file' do
-      expected_path = Rails.root.join('tmp', 'test', 'uploads', 'tmp', attachment.key).to_s
+      expected_path = Rails.root.join('uploads', 'test', '1', "#{attachment.key}#{File.extname(attachment.filename)}").to_s
       expect(attachment.abs_path).to eq(expected_path)
-    end
-  end
-
-  describe '#abs_prev_path' do
-    it 'returns the same absolute path like #abs_path' do
-      expect(attachment.abs_prev_path).to eq(attachment.abs_path)
-    end
-  end
-
-  describe '#store' do
-    it 'returns an instance of storage class' do
-      expect(attachment.store).to be_instance_of(Tmp)
-    end
-  end
-
-  describe '#old_store' do
-    it 'returns an instance of storage class' do
-      expect(attachment.old_store).to be_instance_of(Tmp)
     end
   end
 
   describe '#add_checksum' do
     it 'returns a MD5 checksum' do
-      expect(attachment.add_checksum).to be_instance_of(Digest::MD5)
+      expect(attachment.add_checksum).to be_present
+      expect(attachment['checksum']).to be_present
     end
-  end
-
-  describe '#reset_checksum' do
-    context 'when checksum was not changed' do
-      it 'returns nil' do
-        expect(attachment.reset_checksum).to eq(nil)
-      end
-    end
-
-    context 'when checksum was changed' do
-      it 'returns updated attachment' do
-        pending 'TODO: find a way to test this'
-        expect(attachment.reset_checksum).to be_instance_of(described_class)
-      end
-    end
-  end
-
-  describe '#regenerate_thumbnail' do
-    pending 'will be improved TODO: find a way to test this'
   end
 
   describe '#for_research_plan?' do
@@ -228,18 +192,6 @@ RSpec.describe Attachment, type: :model do
         attachment.rewrite_file_data!
 
         expect(attachment.read_file).to eq new_file_content
-      end
-    end
-
-    context 'when file_path has no data but file_data accessor has data' do
-      let(:new_data) { 'Foo Bar' }
-
-      it 'writes the file_data to a file' do
-        attachment.file_data = new_data
-
-        attachment.rewrite_file_data!
-
-        expect(attachment.read_file).to eq new_data
       end
     end
   end
@@ -397,23 +349,6 @@ RSpec.describe Attachment, type: :model do
   end
 
   describe '#save' do
-    # callbacks from Attachment model
-
-    context 'when the file size has changed' do
-      it 'updates the filesize' do
-        file_data = 'Foo Bar Baz'
-        current_filesize = attachment.filesize
-        expected_filesize = file_data.bytesize
-        attachment.file_data = file_data # update_filesize runs only when new data is given
-
-        expect { attachment.save }.to change(attachment, :filesize).from(current_filesize).to(expected_filesize)
-      end
-    end
-
-    context 'when the file moves between stores' do
-      pending 'TODO: see how to test the #move_from_store method properly'
-    end
-
     # callbacks from AttachmentJcampAasm concern
     context 'when AttachmentJcampAasm concern is included' do
       it 'calls require_peaks_generation?' do
@@ -429,11 +364,13 @@ RSpec.describe Attachment, type: :model do
     let(:attachment) { create(:attachment, :with_image) }
 
     it 'deletes the attached file' do
-      expect { attachment.destroy }.to change(attachment, :read_file).to(false)
+      attachment.destroy
+      expect(File.exist?(attachment.attachment_attacher.file.url)).to be false
     end
 
     it 'deletes the thumbnail' do
-      expect { attachment.destroy }.to change(attachment, :read_thumbnail).to(false)
+      attachment.destroy
+      expect(File.exist?(attachment.attachment(:thumbnail).url)).to be false
     end
   end
 
@@ -639,67 +576,6 @@ RSpec.describe Attachment, type: :model do
 
       it 'returns nil' do
         expect(attachment.generate_att(nil, false)).to be nil
-      end
-    end
-
-    context 'with tempfile' do
-      let(:tempfile) { Tempfile.new(attachment.filename) }
-
-      it 'creates a new attachment' do
-        expect { new_attachment }.to change(Attachment, :count).by(1)
-      end
-
-      it 'saves the new attachment to the primary storage' do
-        # TODO: klären ob das sinnvoll ist oder ob die Storage explizit geprüft werden soll statt relativ zur Config
-        expect(new_attachment.storage).to eq Rails.configuration.storage.primary_store
-      end
-
-      it 'sets new new attachment\'s content_type to application/octet-stream' do
-        expect(new_attachment.content_type).to eq 'application/octet-stream'
-      end
-
-      it 'attaches the new attachment to the current attachment\'s attachable' do
-        expect(new_attachment.attachable).to eq attachment.attachable
-      end
-
-      context 'with spectra file and to_edit = true' do
-        let(:attachment) { build(:attachment, :with_spectra_file)}
-        let(:new_attachment) { attachment.generate_att(tempfile, addon = nil, to_edit = true) }
-
-        it 'sets the new attachment\'s aasm_state to edited' do
-          expect(new_attachment.edited?).to be true
-        end
-      end
-
-      context 'with ext = png' do
-        let(:attachment) { build(:attachment, :with_png_image) }
-        let(:ext) { 'png' }
-
-        it 'sets the new attachment\'s aasm_state to :image' do
-          expect(new_attachment.image?).to be true
-        end
-
-        it 'sets the new attachment\'s content_type to image/png' do
-          expect(new_attachment.content_type).to eq 'image/png'
-        end
-      end
-
-      context 'with ext = json' do
-        let(:attachment) { build(:attachment, :with_json_file) }
-        let(:ext) { 'json' }
-
-        it 'sets the new attachment\'s aasm_state to :json' do
-          expect(new_attachment.json?).to be true
-        end
-      end
-
-      context 'with ext = csv' do
-        let(:attachment) { build(:attachment, :with_csv_file) }
-        let(:ext) { 'csv' }
-
-        it 'sets the new attachment\'s aasm_state to :csv' do
-          expect(new_attachment.csv?).to be true
-        end
       end
     end
   end

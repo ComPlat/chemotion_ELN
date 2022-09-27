@@ -70,8 +70,6 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
     t.string "aasm_state"
     t.bigint "filesize"
     t.jsonb "attachment_data"
-    t.boolean "is_editing", default: false
-    t.jsonb "log_data"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -1203,6 +1201,20 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
 
+  create_function :user_instrument, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
+       RETURNS TABLE(instrument text)
+       LANGUAGE sql
+      AS $function$
+         select distinct extended_metadata -> 'instrument' as instrument from containers c
+         where c.container_type='dataset' and c.id in
+         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+         order by extended_metadata -> 'instrument' limit 10
+       $function$
+  SQL
   create_function :collection_shared_names, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
@@ -1216,6 +1228,45 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
        WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
        group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
        ) as result
+       $function$
+  SQL
+  create_function :user_ids, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+          select $1 as id
+          union
+          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+         and users.type in ('Group') and users_groups.user_id = $1)
+        $function$
+  SQL
+  create_function :user_as_json, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
+       RETURNS json
+       LANGUAGE sql
+      AS $function$
+         select row_to_json(result) from (
+           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           from users where id = $1
+         ) as result
+       $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+         begin
+          if (in_user_id = in_current_user_id) then
+            return null;
+          else
+            return (select row_to_json(result) from (
+            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+            from users where id = $1
+            ) as result);
+          end if;
+          end;
        $function$
   SQL
   create_function :detail_level_for_sample, sql_definition: <<-SQL
@@ -1251,6 +1302,16 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
+  create_function :group_user_ids, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select id from users where type='Person' and id= $1
+             union
+             select user_id from users_groups where group_id = $1
+      $function$
+  SQL
   create_function :generate_notifications, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.generate_notifications(in_channel_id integer, in_message_id integer, in_user_id integer, in_user_ids integer[])
        RETURNS integer
@@ -1281,6 +1342,21 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
       	end case;
       	return in_message_id;
       end;$function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
   SQL
   create_function :generate_users_matrix, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
@@ -1317,427 +1393,6 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
       end
       $function$
   SQL
-  create_function :group_user_ids, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
-  SQL
-  create_function :labels_by_user_sample, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
-       $function$
-  SQL
-  create_function :literatures_by_element, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
-         and l.element_type = $1 and l.element_id = $2
-       $function$
-  SQL
-  create_function :logidze_capture_exception, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.logidze_capture_exception(error_data jsonb)
-       RETURNS boolean
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 1
-      BEGIN
-        -- Feel free to change this function to change Logidze behavior on exception.
-        --
-        -- Return `false` to raise exception or `true` to commit record changes.
-        --
-        -- `error_data` contains:
-        --   - returned_sqlstate
-        --   - message_text
-        --   - pg_exception_detail
-        --   - pg_exception_hint
-        --   - pg_exception_context
-        --   - schema_name
-        --   - table_name
-        -- Learn more about available keys:
-        -- https://www.postgresql.org/docs/9.6/plpgsql-control-structures.html#PLPGSQL-EXCEPTION-DIAGNOSTICS-VALUES
-        --
-
-        return false;
-      END;
-      $function$
-  SQL
-  create_function :logidze_compact_history, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.logidze_compact_history(log_data jsonb, cutoff integer DEFAULT 1)
-       RETURNS jsonb
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 1
-        DECLARE
-          merged jsonb;
-        BEGIN
-          LOOP
-            merged := jsonb_build_object(
-              'ts',
-              log_data#>'{h,1,ts}',
-              'v',
-              log_data#>'{h,1,v}',
-              'c',
-              (log_data#>'{h,0,c}') || (log_data#>'{h,1,c}')
-            );
-
-            IF (log_data#>'{h,1}' ? 'm') THEN
-              merged := jsonb_set(merged, ARRAY['m'], log_data#>'{h,1,m}');
-            END IF;
-
-            log_data := jsonb_set(
-              log_data,
-              '{h}',
-              jsonb_set(
-                log_data->'h',
-                '{1}',
-                merged
-              ) - 0
-            );
-
-            cutoff := cutoff - 1;
-
-            EXIT WHEN cutoff <= 0;
-          END LOOP;
-
-          return log_data;
-        END;
-      $function$
-  SQL
-  create_function :logidze_filter_keys, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.logidze_filter_keys(obj jsonb, keys text[], include_columns boolean DEFAULT false)
-       RETURNS jsonb
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 1
-        DECLARE
-          res jsonb;
-          key text;
-        BEGIN
-          res := '{}';
-
-          IF include_columns THEN
-            FOREACH key IN ARRAY keys
-            LOOP
-              IF obj ? key THEN
-                res = jsonb_insert(res, ARRAY[key], obj->key);
-              END IF;
-            END LOOP;
-          ELSE
-            res = obj;
-            FOREACH key IN ARRAY keys
-            LOOP
-              res = res - key;
-            END LOOP;
-          END IF;
-
-          RETURN res;
-        END;
-      $function$
-  SQL
-  create_function :logidze_logger, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.logidze_logger()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 2
-        DECLARE
-          changes jsonb;
-          version jsonb;
-          snapshot jsonb;
-          new_v integer;
-          size integer;
-          history_limit integer;
-          debounce_time integer;
-          current_version integer;
-          k text;
-          iterator integer;
-          item record;
-          columns text[];
-          include_columns boolean;
-          ts timestamp with time zone;
-          ts_column text;
-          err_sqlstate text;
-          err_message text;
-          err_detail text;
-          err_hint text;
-          err_context text;
-          err_table_name text;
-          err_schema_name text;
-          err_jsonb jsonb;
-          err_captured boolean;
-        BEGIN
-          ts_column := NULLIF(TG_ARGV[1], 'null');
-          columns := NULLIF(TG_ARGV[2], 'null');
-          include_columns := NULLIF(TG_ARGV[3], 'null');
-
-          IF TG_OP = 'INSERT' THEN
-            IF columns IS NOT NULL THEN
-              snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column, columns, include_columns);
-            ELSE
-              snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column);
-            END IF;
-
-            IF snapshot#>>'{h, -1, c}' != '{}' THEN
-              NEW.log_data := snapshot;
-            END IF;
-
-          ELSIF TG_OP = 'UPDATE' THEN
-
-            IF OLD.log_data is NULL OR OLD.log_data = '{}'::jsonb THEN
-              IF columns IS NOT NULL THEN
-                snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column, columns, include_columns);
-              ELSE
-                snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column);
-              END IF;
-
-              IF snapshot#>>'{h, -1, c}' != '{}' THEN
-                NEW.log_data := snapshot;
-              END IF;
-              RETURN NEW;
-            END IF;
-
-            history_limit := NULLIF(TG_ARGV[0], 'null');
-            debounce_time := NULLIF(TG_ARGV[4], 'null');
-
-            current_version := (NEW.log_data->>'v')::int;
-
-            IF ts_column IS NULL THEN
-              ts := statement_timestamp();
-            ELSE
-              ts := (to_jsonb(NEW.*)->>ts_column)::timestamp with time zone;
-              IF ts IS NULL OR ts = (to_jsonb(OLD.*)->>ts_column)::timestamp with time zone THEN
-                ts := statement_timestamp();
-              END IF;
-            END IF;
-
-            IF NEW = OLD THEN
-              RETURN NEW;
-            END IF;
-
-            IF current_version < (NEW.log_data#>>'{h,-1,v}')::int THEN
-              iterator := 0;
-              FOR item in SELECT * FROM jsonb_array_elements(NEW.log_data->'h')
-              LOOP
-                IF (item.value->>'v')::int > current_version THEN
-                  NEW.log_data := jsonb_set(
-                    NEW.log_data,
-                    '{h}',
-                    (NEW.log_data->'h') - iterator
-                  );
-                END IF;
-                iterator := iterator + 1;
-              END LOOP;
-            END IF;
-
-            changes := '{}';
-
-            IF (coalesce(current_setting('logidze.full_snapshot', true), '') = 'on') THEN
-              BEGIN
-                changes = hstore_to_jsonb_loose(hstore(NEW.*));
-              EXCEPTION
-                WHEN NUMERIC_VALUE_OUT_OF_RANGE THEN
-                  changes = row_to_json(NEW.*)::jsonb;
-                  FOR k IN (SELECT key FROM jsonb_each(changes))
-                  LOOP
-                    IF jsonb_typeof(changes->k) = 'object' THEN
-                      changes = jsonb_set(changes, ARRAY[k], to_jsonb(changes->>k));
-                    END IF;
-                  END LOOP;
-              END;
-            ELSE
-              BEGIN
-                changes = hstore_to_jsonb_loose(
-                      hstore(NEW.*) - hstore(OLD.*)
-                  );
-              EXCEPTION
-                WHEN NUMERIC_VALUE_OUT_OF_RANGE THEN
-                  changes = (SELECT
-                    COALESCE(json_object_agg(key, value), '{}')::jsonb
-                    FROM
-                    jsonb_each(row_to_json(NEW.*)::jsonb)
-                    WHERE NOT jsonb_build_object(key, value) <@ row_to_json(OLD.*)::jsonb);
-                  FOR k IN (SELECT key FROM jsonb_each(changes))
-                  LOOP
-                    IF jsonb_typeof(changes->k) = 'object' THEN
-                      changes = jsonb_set(changes, ARRAY[k], to_jsonb(changes->>k));
-                    END IF;
-                  END LOOP;
-              END;
-            END IF;
-
-            changes = changes - 'log_data';
-
-            IF columns IS NOT NULL THEN
-              changes = logidze_filter_keys(changes, columns, include_columns);
-            END IF;
-
-            IF changes = '{}' THEN
-              RETURN NEW;
-            END IF;
-
-            new_v := (NEW.log_data#>>'{h,-1,v}')::int + 1;
-
-            size := jsonb_array_length(NEW.log_data->'h');
-            version := logidze_version(new_v, changes, ts);
-
-            IF (
-              debounce_time IS NOT NULL AND
-              (version->>'ts')::bigint - (NEW.log_data#>'{h,-1,ts}')::text::bigint <= debounce_time
-            ) THEN
-              -- merge new version with the previous one
-              new_v := (NEW.log_data#>>'{h,-1,v}')::int;
-              version := logidze_version(new_v, (NEW.log_data#>'{h,-1,c}')::jsonb || changes, ts);
-              -- remove the previous version from log
-              NEW.log_data := jsonb_set(
-                NEW.log_data,
-                '{h}',
-                (NEW.log_data->'h') - (size - 1)
-              );
-            END IF;
-
-            NEW.log_data := jsonb_set(
-              NEW.log_data,
-              ARRAY['h', size::text],
-              version,
-              true
-            );
-
-            NEW.log_data := jsonb_set(
-              NEW.log_data,
-              '{v}',
-              to_jsonb(new_v)
-            );
-
-            IF history_limit IS NOT NULL AND history_limit <= size THEN
-              NEW.log_data := logidze_compact_history(NEW.log_data, size - history_limit + 1);
-            END IF;
-          END IF;
-
-          return NEW;
-        EXCEPTION
-          WHEN OTHERS THEN
-            GET STACKED DIAGNOSTICS err_sqlstate = RETURNED_SQLSTATE,
-                                    err_message = MESSAGE_TEXT,
-                                    err_detail = PG_EXCEPTION_DETAIL,
-                                    err_hint = PG_EXCEPTION_HINT,
-                                    err_context = PG_EXCEPTION_CONTEXT,
-                                    err_schema_name = SCHEMA_NAME,
-                                    err_table_name = TABLE_NAME;
-            err_jsonb := jsonb_build_object(
-              'returned_sqlstate', err_sqlstate,
-              'message_text', err_message,
-              'pg_exception_detail', err_detail,
-              'pg_exception_hint', err_hint,
-              'pg_exception_context', err_context,
-              'schema_name', err_schema_name,
-              'table_name', err_table_name
-            );
-            err_captured = logidze_capture_exception(err_jsonb);
-            IF err_captured THEN
-              return NEW;
-            ELSE
-              RAISE;
-            END IF;
-        END;
-      $function$
-  SQL
-  create_function :logidze_snapshot, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.logidze_snapshot(item jsonb, ts_column text DEFAULT NULL::text, columns text[] DEFAULT NULL::text[], include_columns boolean DEFAULT false)
-       RETURNS jsonb
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 3
-        DECLARE
-          ts timestamp with time zone;
-          k text;
-        BEGIN
-          item = item - 'log_data';
-          IF ts_column IS NULL THEN
-            ts := statement_timestamp();
-          ELSE
-            ts := coalesce((item->>ts_column)::timestamp with time zone, statement_timestamp());
-          END IF;
-
-          IF columns IS NOT NULL THEN
-            item := logidze_filter_keys(item, columns, include_columns);
-          END IF;
-
-          FOR k IN (SELECT key FROM jsonb_each(item))
-          LOOP
-            IF jsonb_typeof(item->k) = 'object' THEN
-               item := jsonb_set(item, ARRAY[k], to_jsonb(item->>k));
-            END IF;
-          END LOOP;
-
-          return json_build_object(
-            'v', 1,
-            'h', jsonb_build_array(
-                    logidze_version(1, item, ts)
-                  )
-            );
-        END;
-      $function$
-  SQL
-  create_function :logidze_version, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.logidze_version(v bigint, data jsonb, ts timestamp with time zone)
-       RETURNS jsonb
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 2
-        DECLARE
-          buf jsonb;
-        BEGIN
-          data = data - 'log_data';
-          buf := jsonb_build_object(
-                    'ts',
-                    (extract(epoch from ts) * 1000)::bigint,
-                    'v',
-                    v,
-                    'c',
-                    data
-                    );
-          IF coalesce(current_setting('logidze.meta', true), '') <> '' THEN
-            buf := jsonb_insert(buf, '{m}', current_setting('logidze.meta')::jsonb);
-          END IF;
-          RETURN buf;
-        END;
-      $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-         begin
-          if (in_user_id = in_current_user_id) then
-            return null;
-          else
-            return (select row_to_json(result) from (
-            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-            from users where id = $1
-            ) as result);
-          end if;
-          end;
-       $function$
-  SQL
   create_function :update_users_matrix, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
@@ -1761,50 +1416,35 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
       end
       $function$
   SQL
-  create_function :user_as_json, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
+  create_function :literatures_by_element, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select row_to_json(result) from (
-           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           from users where id = $1
-         ) as result
-       $function$
-  SQL
-  create_function :user_ids, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-          select $1 as id
-          union
-          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-         and users.type in ('Group') and users_groups.user_id = $1)
-        $function$
-  SQL
-  create_function :user_instrument, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
-       RETURNS TABLE(instrument text)
-       LANGUAGE sql
-      AS $function$
-         select distinct extended_metadata -> 'instrument' as instrument from containers c
-         where c.container_type='dataset' and c.id in
-         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-         order by extended_metadata -> 'instrument' limit 10
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
 
-  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at', '{attachment_data}', 'true')
-  SQL
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
       CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
 
+  create_view "v_samples_collections", sql_definition: <<-SQL
+      SELECT cols.id AS cols_id,
+      cols.user_id AS cols_user_id,
+      cols.sample_detail_level AS cols_sample_detail_level,
+      cols.wellplate_detail_level AS cols_wellplate_detail_level,
+      cols.shared_by_id AS cols_shared_by_id,
+      cols.is_shared AS cols_is_shared,
+      samples.id AS sams_id,
+      samples.name AS sams_name
+     FROM ((collections cols
+       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
+       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
+    WHERE (cols.deleted_at IS NULL);
+  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,
@@ -1847,19 +1487,5 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
       channels,
       users
     WHERE ((channels.id = messages.channel_id) AND (messages.id = notifications.message_id) AND (users.id = messages.created_by));
-  SQL
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
   SQL
 end
