@@ -16,7 +16,8 @@ export default class InventoryTab extends React.Component {
       checkSaveIconThermofischer: true,
       checkSaveIconMerck: true,
       vendorValue: 'All',
-      vendorSafetyPhrasesValue: 'Thermofischer',
+      vendorSafetyPhrasesValue: '',
+      vendorChemPropertiesValue: '',
       queryOption: 'Common Name',
       languageOfSdd: 'en',
       safetyPhrases: ''
@@ -156,9 +157,38 @@ export default class InventoryTab extends React.Component {
     });
   }
 
+  fetchChemicalProperties = (vendor) => {
+    const { inventory } = this.state;
+    let productLink;
+    console.log(inventory._inventory_parameters[0]);
+
+    if (vendor == 'thermofischer') {
+      productLink = inventory._inventory_parameters[0].alfaProductInfo.productLink;
+    } else if (vendor == 'merck') {
+      productLink = inventory._inventory_parameters[0].merckProductInfo.productLink;
+
+    }
+    console.log(productLink);
+
+    InventoryFetcher.chemicalProperties(productLink).then((result) => {
+      if(result === 'Could not find additional chemical properties') {
+        const handleError = <p>{result}</p>; 
+      } else {
+        Object.entries(result).forEach(([key, value]) => {
+          this.handleFieldChanged(key, value)
+        });
+        console.log(inventory._inventory_parameters[0]);
+      }
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+  }
+
   textInput(field, label, parameter) {
     const bsSize = parameter !== 'important_notes' && parameter !== 'disposal_info' ? 'small' : null;
-    const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' ? 'input' : 'textarea';
+    const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage' 
+    && parameter !== 'solubility' ? 'input' : 'textarea';
     const noBoldLabel = { fontWeight: 'normal' } 
     return (
       <FormGroup bsSize={bsSize}>
@@ -369,6 +399,10 @@ export default class InventoryTab extends React.Component {
     this.setState({ vendorSafetyPhrasesValue: value })
   }
 
+  handleVendorChemPropOption(value) {
+    this.setState({ vendorChemPropertiesValue: value })
+  }
+
   handleQueryOption(value) {
     this.setState({ queryOption: value })
   }
@@ -543,6 +577,63 @@ export default class InventoryTab extends React.Component {
     );
   }
 
+  chooseVendorForChemicalProperties() {
+    const { vendorChemPropertiesValue } = this.state;
+    const vendorOptions = [
+      { label: 'merck', value: 'merck' },
+      { label: 'thermofischer', value: 'thermofischer' },
+    ];
+
+    return (
+      <FormGroup>
+        <ControlLabel style={{ paddingRight: '100px' }}>Choose Vendor</ControlLabel>
+        <Select
+          name="chemicalVendorforSafetyPhrases"
+          clearable={false}
+          options={vendorOptions}
+          onChange={e => this.handleVendorChemPropOption(e.value)}
+          value={vendorChemPropertiesValue}
+        />
+      </FormGroup>
+    );
+  }
+
+  renderChemicalProperties = () => {
+    const { inventory, vendorChemPropertiesValue, safetyPhrases} = this.state;
+
+    return (
+      <table>
+        <tbody>
+          <tr>
+            <td>
+              <div style={{ width: '%100', display: 'flex', justifyContent: 'justify' }}>
+                <div style={{ width: '%50', paddingRight: '20px' }}>
+                  {this.chooseVendorForChemicalProperties()}
+                </div> 
+                <div style={{ width: '%50', paddingTop: '25px' }}>
+                  <Button
+                    id="safetyPhrases-btn"
+                    onClick={() => this.fetchChemicalProperties(vendorChemPropertiesValue)}
+                  >
+                    fetch Chemical Properties
+                  </Button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            {/* <td>
+              <div style={{ width: '100%', paddingTop: '10px'}}>
+                {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
+              </div>
+            </td> */}
+          </tr>
+        </tbody>
+      </table>
+    );
+
+  }
+
   render() {
     let {
       inventory
@@ -567,6 +658,14 @@ export default class InventoryTab extends React.Component {
     let sdsLink;
     let disposalInfo;
     let importantNotes;
+    let form;
+    let density;
+    let melting_point;
+    let boiling_point;
+    let flash_point;
+    let refractive_index;
+    let solubility;
+    let sensitivity_storage;
 
 
     if (inventory) {
@@ -591,6 +690,14 @@ export default class InventoryTab extends React.Component {
         sdsLink = (inventoryParameters[0].sds_link !== undefined) ? inventoryParameters[0].sds_link : '';
         disposalInfo = (inventoryParameters[0].disposal_info !== undefined) ? inventoryParameters[0].disposal_info : '';
         importantNotes = (inventoryParameters[0].important_notes !== undefined) ? inventoryParameters[0].important_notes : '';
+        form = (inventoryParameters[0].form !== undefined) ? inventoryParameters[0].form : '';
+        density = (inventoryParameters[0].density !== undefined) ? inventoryParameters[0].density : '';
+        melting_point = (inventoryParameters[0].melting_point !== undefined) ? inventoryParameters[0].melting_point : '';
+        boiling_point = (inventoryParameters[0].boiling_point !== undefined) ? inventoryParameters[0].boiling_point : '';
+        flash_point = (inventoryParameters[0].flash_point !== undefined) ? inventoryParameters[0].flash_point : '';
+        refractive_index = (inventoryParameters[0].refractive_index !== undefined) ? inventoryParameters[0].refractive_index : '';
+        solubility = (inventoryParameters[0].solubility !== undefined) ? inventoryParameters[0].solubility : '';
+        sensitivity_storage = (inventoryParameters[0].sensitivity_storage !== undefined) ? inventoryParameters[0].sensitivity_storage : '';
       }
     }
 
@@ -621,6 +728,55 @@ export default class InventoryTab extends React.Component {
                 </div>
               </div>
             </td>
+          </tr>
+          <tr>
+            <th style={styleHeader}> Chemical Properties</th>
+          </tr>
+          <tr>
+            <td style={styleBorderless}>
+             {this.renderChemicalProperties()}
+            </td>
+          </tr>         
+          <tr>
+            <td colSpan="4" style={styleBorderless}>
+              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ width: '20%' }}>
+                  {this.textInput(form, 'Form', 'form')}
+                </div>
+                <div style={{ width: '20%' }}>
+                  {this.textInput(density, 'Density', 'density')}
+                </div>
+                <div style={{ width: '20%' }}>
+                  {this.textInput(melting_point, 'Melting Point', 'melting_point')}
+                </div>
+                <div style={{ width: '20%' }}>
+                  {this.textInput(boiling_point, 'Boiling Point', 'boiling_point')}
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="3" style={styleBorderless}>
+              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ width: '20%' }}>
+                  {this.textInput(flash_point, 'Flash Point', 'flash_point')}
+                </div>
+                <div style={{ width: '30%' }}>
+                  {this.textInput(refractive_index, 'Refractive Index', 'refractive_index')}
+                </div>
+                <div style={{ width: '40%' }}>
+                  {this.textInput(solubility, 'Solubility', 'solubility')}
+                </div>
+                {/* <div style={{ width: '20%' }}>
+                {this.textInput(sensitivity_storage, 'Sensitivity and Storage', 'sensitivity_storage')}
+                </div> */}
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <div style={{ width: '90%' }}>
+             {this.textInput(sensitivity_storage, 'Sensitivity and Storage', 'sensitivity_storage')}
+            </div>
           </tr>
           <tr>
             <th style={styleHeader}> History</th>

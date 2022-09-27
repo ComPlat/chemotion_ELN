@@ -97,4 +97,14 @@ export default class InventoryFetcher {
       .catch((errorMessage) => {console.log(errorMessage);
     });
   }
+
+  static chemicalProperties(productLink) {
+    return fetch(`/api/v1/inventories/chemical_properties?link=${productLink}`, {
+      credentials: 'same-origin',
+      method: 'GET'
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {console.log(errorMessage);
+    });
+  }
 }

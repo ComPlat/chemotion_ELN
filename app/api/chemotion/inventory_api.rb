@@ -149,6 +149,22 @@ module Chemotion
           end
         end
       end
+
+      resources :chemical_properties do
+        desc 'additional chemical properties'
+
+        params do
+          requires :link, type: String, desc: 'vendor product link'
+        end
+
+        get do
+          if params[:link].include? 'alfa'
+            Chemotion::InventoryService.chemical_properties_alfa(params[:link])
+          elsif params[:link].include? 'sigmaaldrich'
+            Chemotion::InventoryService.chemical_properties_merck(params[:link])
+          end
+        end
+      end
     end
   end
 end

@@ -157,4 +157,56 @@ module Chemotion::InventoryService
       err_body
     end
   end
+
+  def self.chemical_properties_alfa(product_link)
+    options = { headers: {
+      'Access-Control-Request-Method' => 'GET',
+      'Accept' => '*/*',
+      'User-Agent': 'Mozilla'
+    }}
+    begin
+      alfa_req = HTTParty.get(product_link, options)
+      properties = Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'product')]").search('div.col-md-12').search('div.col-md-3').text.gsub(/\t/, '').split(/\n\n/)
+
+      chemical_properties = {}
+      properties.each_with_index do |property, index|
+        property_name = property.gsub(' ', '_').downcase
+        chemical_properties[property_name] = properties[index + 1] unless index.odd?
+      end
+      chemical_properties
+    rescue
+      err_body = 'Could not find additional chemical properties'
+      err_body
+    end
+  end
+
+  def self.chemical_properties_merck(product_link)
+    options = { headers: {
+      'Access-Control-Request-Method' => 'GET',
+      'Accept' => '*/*',
+      'User-Agent': 'Google Chrome'
+    }}
+    begin
+      merck_req = HTTParty.get(product_link, options)
+      properties = Nokogiri::HTML.parse(merck_req.body).xpath("//*[contains(@class, 'MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-md-9')]")
+      chem_properties_names = properties.search('div.MuiGrid-grid-sm-3').css('span').map(&:text).map { |str| str.gsub(' ', '_').downcase }
+      chem_properties_values = properties.search('p.MuiTypography-root').map(&:text)
+      chem_properties_values.pop
+      chemical_properties = {}
+      chem_properties_names.map.with_index { |string, index|
+        property_name = if string == 'mp'
+                          'melting_point'
+                        elsif string == 'bp'
+                          'boiling_point'
+                        else
+                          string
+                        end
+        chemical_properties[property_name] = chem_properties_values[index]
+      }
+      chemical_properties
+    rescue
+      err_body = 'Could not find additional chemical properties'
+      err_body
+    end
+  end
 end
