@@ -49,7 +49,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ScreenEntity, root: :screens
+        screens = paginate(scope).map do |screen|
+          Entities::ScreenEntity.represent(
+            screen,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
+            displayed_in_list: true
+          )
+        end
+
+        { screens: screens }
       end
 
       desc "Return serialized screen by id"
@@ -63,7 +71,13 @@ module Chemotion
 
         get do
           screen = Screen.find(params[:id])
-          present screen, with: Entities::ScreenEntity, root: :screen
+
+          present(
+            screen,
+            with: Entities::ScreenEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
+            root: :screen
+          )
         end
 
         namespace :add_research_plan do
@@ -129,7 +143,12 @@ module Chemotion
             ScreensWellplate.where(wellplate_id: id, screen_id: params[:id]).destroy_all
           end
 
-          present screen, with: Entities::ScreenEntity, root: :screen
+          present(
+            screen,
+            with: Entities::ScreenEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
+            root: :screen
+          )
         end
       end
 
