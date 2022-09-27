@@ -2,7 +2,7 @@
 
 # rubocop:disable CodeReuse/ActiveRecord
 class ElementDetailLevelCalculator
-  attr_reader :user, :element, :element_detail_level, :nested_detail_levels
+  attr_reader :user, :element, :detail_levels
 
   DETAIL_LEVEL_FIELDS = %i[
     element_detail_level
@@ -16,40 +16,24 @@ class ElementDetailLevelCalculator
   def initialize(user:, element:)
     @user = user
     @element = element
-    @nested_detail_levels = {}
-
-    calculate_element_detail_level
-    calculate_nested_detail_levels
+    @detail_levels = calculate_detail_levels
   end
 
   private
 
-  def calculate_element_detail_level
-    element_detail_level_field = "#{element.class.to_s.downcase}_detail_level".to_sym
-    element_is_from_own_unshared_collection = user_collection_detail_levels.any? { |entry| !entry[:is_shared] }
-    max_detail_level_from_collections = [
-      user_collection_detail_levels.map { |entry| entry[element_detail_level_field] },
-      sync_collection_detail_levels.map { |entry| entry[element_detail_level_field] }
-    ].flatten.max
-
-    @element_detail_level = if element_is_from_own_unshared_collection
-                              10
-                            else
-                              max_detail_level_from_collections || 0
-                            end
-  end
-
-  # The ElementPermissionProxy only calculated nested detail levels for Sample. Wellplate and ResearchPlan,
-  # so Element, Reaction and Screen are omitted here. If they are needed in the future, they can be easily
-  # implemented here as well
-  def calculate_nested_detail_levels
+  def calculate_detail_levels
+    detail_levels = {}
     all_collections_detail_levels = user_collection_detail_levels + sync_collection_detail_levels
-    nested_detail_levels[Wellplate] = all_collections_detail_levels.pluck(:wellplate_detail_level).max || 0
-    nested_detail_levels[Well] = nested_detail_levels[Wellplate]
-    nested_detail_levels[Sample] = all_collections_detail_levels.pluck(:sample_detail_level).max || 0
-    nested_detail_levels[ResearchPlan] = all_collections_detail_levels.pluck(:researchplan_detail_level).max || 0
 
-    nested_detail_levels[Sample] = element_detail_level if element.is_a?(Sample)
+    detail_levels[Element] = all_collections_detail_levels.pluck(:element_detail_level).max || 0
+    detail_levels[Reaction] = all_collections_detail_levels.pluck(:reaction_detail_level).max || 0
+    detail_levels[ResearchPlan] = all_collections_detail_levels.pluck(:researchplan_detail_level).max || 0
+    detail_levels[Sample] = all_collections_detail_levels.pluck(:sample_detail_level).max || 0
+    detail_levels[Screen] = all_collections_detail_levels.pluck(:screen_detail_level).max || 0
+    detail_levels[Wellplate] = all_collections_detail_levels.pluck(:wellplate_detail_level).max || 0
+    detail_levels[Well] = detail_levels[Wellplate]
+
+    detail_levels
   end
 
   # taken from API#group_ids
@@ -74,19 +58,17 @@ class ElementDetailLevelCalculator
   # Returns an array of Hashes. One hash per collection from user_collections_with_element.
   # Hash contains the all detail level attributes and their respective values + the is_shared field
   def user_collection_detail_levels
-    attributes_to_fetch = [:is_shared] + DETAIL_LEVEL_FIELDS
     @user_collection_detail_levels ||= user_collections_with_element
-                                       .pluck(*attributes_to_fetch)
-                                       .map { |values| Hash[attributes_to_fetch.zip(values)] }
+                                       .pluck(*DETAIL_LEVEL_FIELDS)
+                                       .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
   end
 
   # Returns an array of Hashes. One hash per collection from sync_collections_with_element.
   # Hash contains the all detail level attributes and their respective values
   def sync_collection_detail_levels
-    attributes_to_fetch = DETAIL_LEVEL_FIELDS
     @sync_collection_detail_levels ||= sync_collections_with_element
-                                       .pluck(*attributes_to_fetch)
-                                       .map { |values| Hash[attributes_to_fetch.zip(values)] }
+                                       .pluck(*DETAIL_LEVEL_FIELDS)
+                                       .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
   end
 end
 # rubocop:enable CodeReuse/ActiveRecord
