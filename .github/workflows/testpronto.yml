@@ -1,8 +1,7 @@
 name: Pronto
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  pull_request_target:
   workflow_dispatch:
 
 jobs:
