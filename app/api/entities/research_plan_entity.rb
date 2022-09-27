@@ -5,7 +5,7 @@ module Entities
     # ResearchPlan does not have any anonymization defined, so nothing to see here
     expose :body
     expose :container,              using: 'Entities::ContainerEntity'
-    expose :id,
+    expose :id
     expose :is_restricted
     expose :name
     expose :research_plan_metadata, using: 'Entities::ResearchPlanMetadataEntity'
