@@ -3,6 +3,7 @@
 require 'simplecov'
 
 SimpleCov.start 'rails' do
+  add_group 'GraphQL', 'app/graphql'
   add_group 'REST API', 'app/api'
   add_filter 'app/graphql/chemotion_schema.rb'
   add_filter 'app/channels'
