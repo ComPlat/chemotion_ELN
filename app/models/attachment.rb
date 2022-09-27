@@ -41,7 +41,7 @@ class Attachment < ApplicationRecord
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
   before_create :generate_key
-  before_create :add_checksum, if: :new_upload
+  before_save :add_checksum, if: :new_upload
   before_create :add_content_type
   before_save :update_filesize
 
@@ -83,7 +83,10 @@ class Attachment < ApplicationRecord
   end
 
   def read_file
-    attachment_attacher.file.read if attachment_attacher.file.present?
+    return unless attachment_attacher.file.present?
+
+    attachment_attacher.file.rewind if attachment_attacher.file.eof?
+    attachment_attacher.file.read
   end
 
   def read_thumbnail
@@ -107,7 +110,7 @@ class Attachment < ApplicationRecord
   end
 
   def add_checksum
-    checksum = Digest::MD5.hexdigest(read_file) if self.attachment_attacher.file.present?
+    self.checksum = Digest::MD5.hexdigest(read_file) if attachment_attacher.file.present?
   end
 
   def reset_checksum
