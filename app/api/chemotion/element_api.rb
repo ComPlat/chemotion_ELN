@@ -97,12 +97,24 @@ module Chemotion
       post do
         result = { 'samples' => [], 'reactions' => [] }
 
-        # TODO: optimize includes for performance
+        # TODO: optimize for performance
+        #       The calculator is not really a good way to check for large amounts of elements,
+        #       as it will fetch all containing collections for EACH element.
+        #       The more elements are selected, the more SQL queries get executed.
         if params['sample'][:checkedAll] || params['sample'][:checkedIds].any?
-          result['samples'] = Entities::SampleEntity.represent(@collection.samples.by_ui_state(params['sample']))
+          result['samples'] = @collection.samples.by_ui_state(params['sample']).map do |sample|
+            calculator = ElementDetailLevelCalculator.new(user: current_user, element: sample)
+
+            Entities::SampleEntity.represent(sample, detail_levels: calculator.detail_levels)
+          end
         end
+
         if params['reaction'][:checkedAll] || params['reaction'][:checkedIds].any?
-          result['reactions'] = Entities::ReactionEntity.represent(@collection.reactions.by_ui_state(params['reaction']))
+          result['reactions'] = @collection.reactions.by_ui_state(params['reaction']).map do |reaction|
+            calculator = ElementDetailLevelCalculator.new(user: current_user, element: reaction)
+
+            Entities::ReactionEntity.represent(reaction, detail_levels: calculator.detail_levels)
+          end
         end
 
         # TODO: fallback if sample are not in owned collection and currentCollection is missing
