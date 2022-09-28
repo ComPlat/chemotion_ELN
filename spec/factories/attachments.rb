@@ -62,7 +62,13 @@ FactoryBot.define do
     end
 
     after(:create) do |attachment|
-      attachment.attachment_attacher.attach(File.open(File.join("#{Rails.root}/spec/fixtures/#{attachment.filename}"), binmode: true))
+      path = if File.exist? "#{Rails.root}/spec/fixtures/#{attachment.filename}"
+               "#{Rails.root}/spec/fixtures/#{attachment.filename}"
+             else
+               attachment.file_path
+             end
+
+      attachment.attachment_attacher.attach(File.open(path, binmode: true))
       attachment.attachment_attacher.create_derivatives
       attachment.save!
     end

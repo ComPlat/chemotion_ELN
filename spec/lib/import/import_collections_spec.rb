@@ -191,6 +191,7 @@ RSpec.describe 'ImportCollection' do
 
   def copy_target_to_import_folder(import_id)
     src_location = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
+    FileUtils.mkdir_p(File.join('tmp', 'import'))
     target_location = File.join('tmp', 'import', "#{import_id}.zip")
     FileUtils.copy_file(src_location, target_location)
   end
