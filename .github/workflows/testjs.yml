@@ -1,19 +1,20 @@
 name: JavaScript Unit Tests
 
-on:
-  workflow_dispatch:
-  push:
-    
+on: [workflow_dispatch, push, pull_request]
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   docker_container:
-    if: "!contains(github.event.commits[0].message, 'skip all') && !contains(github.event.commits[0].message, 'skip unit js')"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         pg_role: [chemotion_test]
         pg_database: [chemotion_test]
         pg_password: [123456]
-    container: 
+    container:
       image: complat/complat-ubuntu-runner:development-5.c44d0c2d4
     env:
       HOME: /home/gitlab-runner
@@ -26,9 +27,9 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
-          --health-cmd pg_isready 
-          --health-interval 10s 
-          --health-timeout 5s 
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
 
     steps:
@@ -37,9 +38,12 @@ jobs:
         env:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
-
         run: |
-            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/$(echo $GITHUB_REPOSITORY).git
+            branch=${GITHUB_REF##*/}
+            if [[ $GITHUB_EVENT_NAME == pull_request ]]; then
+              branch=$GITHUB_HEAD_REF  # GITHUB_HEAD_REF is only set for PR events
+            fi
+            sudo git clone --branch $branch --depth 1 https://github.com/$(echo $GITHUB_REPOSITORY).git    # replace with actions/checkout/@v3?
 
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
@@ -63,4 +67,3 @@ jobs:
             /bin/bash -l -c "RAILS_ENV=test bundle exec rake db:test:prepare > /dev/null"
             echo "NPM TEST"
             /bin/bash -l -c "npm test"
-            
