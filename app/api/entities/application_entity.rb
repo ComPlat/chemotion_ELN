@@ -8,12 +8,15 @@ module Entities
       datetime.present? ? I18n.l(datetime, format: :eln_timestamp) : nil
     end
 
-    def self.expose!(*fields, **args)
-      anonymize_below = args.delete(:anonymize_below) || 0
-      anonymize_with = args.delete(:anonymize_with) || '***'
+    def self.expose!(*args)
+      fields = args.first
+      options = args.last.is_a?(Hash) ? args.pop : {}
+      options = merge_options(options) # merges additional params set in #with_options
+      anonymize_below = options[:anonymize_below] || 0
+      anonymize_with = options.key?(:anonymize_with) ? options[:anonymize_with] : '***'
 
       Array(fields).each do |field|
-        expose(field, args) do |represented_object, _options|
+        expose(field, options) do |represented_object, _options|
           if detail_levels[represented_object.class] < anonymize_below
             anonymize_with
           elsif respond_to?(field, true) # Entity has a method with the same name

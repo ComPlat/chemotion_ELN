@@ -60,7 +60,7 @@ module Entities
       expose! :showed_name
       expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
       expose! :stereo
-      expose! :tag,                                                                       using: 'Entities::ElementTagEntity'
+      expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'
       expose! :target_amount_unit,      unless: :displayed_in_list
       expose! :target_amount_value,     unless: :displayed_in_list
       expose! :user_labels
@@ -97,6 +97,7 @@ module Entities
     end
 
     # molecule returns only minimal values for detail level 0
+    # Due to the way Grape::Entity works, the MoleculeEntity will return all keys nil except those two defined here
     def molecule
       return object.molecule if detail_levels[Sample] > 0 # rubocop:disable Style/NumericPredicate
 
