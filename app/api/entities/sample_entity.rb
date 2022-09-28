@@ -32,7 +32,7 @@ module Entities
     # Level 10 attributes and relations
     with_options(anonymize_below: 10) do
       expose! :_contains_residues,      unless: :displayed_in_list, anonymize_with: false
-      expose! :ancestor_ids
+      expose! :ancestor_ids,                                        anonymize_with: []
       expose! :boiling_point,           unless: :displayed_in_list
       expose! :children_count,          unless: :displayed_in_list
       expose! :density

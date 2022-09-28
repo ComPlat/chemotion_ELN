@@ -32,11 +32,11 @@ describe Entities::SampleEntity do
           is_restricted: false,
           molecular_mass: sample.molecular_mass,
           sum_formula: sample.sum_formula,
-          type: "sample",
+          type: 'sample',
           molfile: sample.molfile,
           _contains_residues: true,
           ancestor_ids: sample.ancestor_ids,
-          boiling_point: 'sample.boiling_point',
+          boiling_point: sample.boiling_point,
           children_count: 0,
           density: sample.density,
           description: sample.description,
@@ -100,11 +100,10 @@ describe Entities::SampleEntity do
       end
     end
 
-    fcontext 'when detail level for Sample is 2' do
+    context 'when detail level for Sample is 2' do
       let(:sample_detail_level) { 2 }
 
-      it 'returns a sample with the following attributes' do
-        binding.pry
+      it 'returns a sample with the following (anonymized) attributes' do
         expect(grape_entity_as_hash).to include(
           can_copy: false,
           can_publish: false,
@@ -115,59 +114,59 @@ describe Entities::SampleEntity do
           is_restricted: true,
           molecular_mass: sample.molecular_mass,
           sum_formula: sample.sum_formula,
-          type: "sample",
+          type: 'sample',
           molfile: sample.molfile,
-          _contains_residues: true,
-          ancestor_ids: sample.ancestor_ids,
-          boiling_point: sample.boiling_point,
-          children_count: 0,
-          density: sample.density,
-          description: sample.description,
-          imported_readout: sample.imported_readout,
-          is_top_secret: sample.is_top_secret,
-          location: "xxx",
-          melting_point: sample.melting_point,
-          metrics: sample.metrics,
-          molarity_unit: sample.molarity_unit,
-          molarity_value: sample.molarity_value,
-          molecule_name_hash: sample.molecule_name_hash,
-          name: "xxx",
-          parent_id: sample.parent_id,
-          pubchem_tag: sample.molecule.tag.taggable_data,
-          purity: sample.purity,
-          reaction_description: sample.reaction_description,
-          real_amount_unit: sample.real_amount_unit,
-          real_amount_value: sample.real_amount_value,
-          sample_svg_file: sample.sample_svg_file,
-          short_label: sample.short_label,
-          showed_name: sample.showed_name,
-          solvent: sample.solvent,
-          stereo: sample.stereo,
-          target_amount_unit: sample.target_amount_unit,
-          target_amount_value: sample.target_amount_value,
-          user_labels: sample.user_labels,
-          xref: sample.xref,
+          _contains_residues: false,
+          ancestor_ids: [],
+          boiling_point: '***',
+          children_count: '***',
+          density: '***',
+          description: '***',
+          imported_readout: '***',
+          is_top_secret: '***',
+          location: '***',
+          melting_point: '***',
+          metrics: '***',
+          molarity_unit: '***',
+          molarity_value: '***',
+          molecule_name_hash: {},
+          name: '***',
+          parent_id: '***',
+          pubchem_tag: '***',
+          purity: '***',
+          reaction_description: '***',
+          real_amount_unit: '***',
+          real_amount_value: '***',
+          sample_svg_file: '***',
+          short_label: '***',
+          showed_name: '***',
+          solvent: [],
+          stereo: '***',
+          target_amount_unit: '***',
+          target_amount_value: '***',
+          user_labels: '***',
+          xref: '***',
           created_at: I18n.localize(sample.created_at, format: :eln_timestamp),
           updated_at: I18n.localize(sample.updated_at, format: :eln_timestamp)
         )
       end
 
-      it 'returns a sample with a tag' do
-        expect(grape_entity_as_hash[:tag]).not_to be_empty
+      it 'returns a sample an anonymized tag' do
+        expect(grape_entity_as_hash[:tag]).to be(nil)
       end
 
-      it 'returns a sample with segments' do
+      it 'returns a sample without segments' do
         pending 'Segments are an empty array because a segments factory is missing'
         raise 'missing segments factory'
         # expect(grape_entity_as_hash[:segments]).not_to be_empty
       end
 
-      it 'returns a sample with residues' do
-        expect(grape_entity_as_hash[:residues]).not_to be_empty
+      it 'returns a sample with anonymized residues' do
+        expect(grape_entity_as_hash[:residues]).to be_empty
       end
 
-      it 'returns a sample with elemental_compositions' do
-        expect(grape_entity_as_hash[:elemental_compositions]).not_to be_empty
+      it 'returns a sample with anonymized elemental_compositions' do
+        expect(grape_entity_as_hash[:elemental_compositions]).to be_empty
       end
 
       it 'returns a sample with a container' do
@@ -185,6 +184,20 @@ describe Entities::SampleEntity do
 
     context 'when detail level for Sample is 1' do
       let(:sample_detail_level) { 1 }
+
+      it 'returns a sample with an anonymized container' do
+        expect(grape_entity_as_hash[:container]).to be(nil)
+      end
+    end
+
+    context 'when detail level for Sample is 0' do
+      let(:sample_detail_level) { 0 }
+
+      it 'returns a sample an anonymized molfile' do
+        expect(grape_entity_as_hash).to include(
+          molfile: '***'
+        )
+      end
     end
 
     context 'when entity is displayed in list' do
@@ -216,10 +229,9 @@ describe Entities::SampleEntity do
           :segments,
           :solvent,
           :target_amount_unit,
-          :target_amount_value,
+          :target_amount_value
         )
       end
     end
   end
-
 end
