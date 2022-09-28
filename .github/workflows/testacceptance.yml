@@ -1,15 +1,16 @@
 name: Acceptance Tests
 
-on:
-  workflow_dispatch:
-  push:
+on: [workflow_dispatch, push, pull_request]
+
+defaults:
+  run:
+    shell: bash
 
 env:
   NODE_OPTIONS: '--max_old_space_size=4096'
 
 jobs:
   docker_container:
-    if: "!contains(github.event.commits[0].message, 'skip all') && !contains(github.event.commits[0].message, 'skip acceptance')"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -41,7 +42,11 @@ jobs:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5433
         run: |
-            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/$(echo $GITHUB_REPOSITORY).git
+            branch=${GITHUB_REF##*/}
+            if [[ $GITHUB_EVENT_NAME == pull_request ]]; then
+              branch=$GITHUB_HEAD_REF  # GITHUB_HEAD_REF is only set for PR events
+            fi
+            sudo git clone --branch $branch --depth 1 https://github.com/$(echo $GITHUB_REPOSITORY).git    # replace with actions/checkout/@v3?
 
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 

@@ -186,6 +186,7 @@ group :test do
   gem 'rspec-repeat'
 
   gem 'simplecov', require: false
+  gem 'simplecov-lcov', require: false
 
   gem 'webdrivers'
   gem 'webmock'
