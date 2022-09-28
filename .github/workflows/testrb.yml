@@ -1,19 +1,20 @@
 name: Ruby Unit Tests
 
-on:
-  workflow_dispatch:
-  push:
+on: [workflow_dispatch, push, pull_request]
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   docker_container:
-    if: "!contains(github.event.commits[0].message, 'skip all') && !contains(github.event.commits[0].message, 'skip unit rb')"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         pg_role: [chemotion_test]
         pg_database: [chemotion_test]
-    container:
-      image: complat/complat-ubuntu-runner:development-5.c44d0c2d4
+        pg_password: [123456]
+    container: complat/complat-ubuntu-runner:development-5.c44d0c2d4
     env:
       HOME: /home/gitlab-runner
 
@@ -31,20 +32,24 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: git clone + postgres
+      - name: git clone + postgres    # split into separate steps?
         working-directory: /home/gitlab-runner
         env:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
         run: |
-            sudo git clone --branch $(echo $GITHUB_REF | cut -d'/' -f 3) --depth 1 https://github.com/$(echo $GITHUB_REPOSITORY).git
+            branch=${GITHUB_REF##*/}
+            if [[ $GITHUB_EVENT_NAME == pull_request ]]; then
+              branch=$GITHUB_HEAD_REF  # GITHUB_HEAD_REF is only set for PR events
+            fi
+            sudo git clone --branch $branch --depth 1 https://github.com/$(echo $GITHUB_REPOSITORY).git    # replace with actions/checkout/@v3?
 
             sudo bash ./chemotion_ELN/.github/workflows/config.sh
 
             echo "POSTGRES"
-            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB NOSUPERUSER PASSWORD '123456'"
+            psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE ROLE ${{ matrix.pg_role }} LOGIN CREATEDB NOSUPERUSER PASSWORD '${{ matrix.pg_password }}'"
             psql -d postgresql://postgres:postgres@postgres/postgres -c "CREATE DATABASE ${{ matrix.pg_database }} OWNER ${{ matrix.pg_role }};"
-            psql -d postgresql://${{ matrix.pg_role }}:123456@postgres/${{ matrix.pg_database }} -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+            psql -d postgresql://${{ matrix.pg_role }}:${{ matrix.pg_password }}@postgres/${{ matrix.pg_database }} -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 
             sudo chmod -R +x chemotion_ELN/spec
             sudo chown -R gitlab-runner:gitlab-runner chemotion_ELN
@@ -66,3 +71,25 @@ jobs:
         run: |
           /bin/bash -l -c "RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
 
+      - name: upload coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: /home/gitlab-runner/chemotion_ELN/coverage/lcov/chemotion_ELN.lcov
+
+  coverage_report:
+    needs: docker_container
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout/@v3  # we need to have the repository checked out in order to generate HTML report
+    - name: download coverage
+      uses: actions/download-artifact@v3
+      with:
+        name: coverage
+    - name: post coverage
+      uses: zgosalvez/github-actions-report-lcov@v1
+      with:
+        coverage-files: chemotion_ELN.lcov
+        minimum-coverage: 50
+        artifact-name: code-coverage-report
+        github-token: ${{ secrets.GITHUB_TOKEN }}
