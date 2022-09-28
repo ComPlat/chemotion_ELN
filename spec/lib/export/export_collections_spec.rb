@@ -77,7 +77,7 @@ RSpec.describe 'ExportImportCollection' do
                              collections: [collection])
       attachment = create(:attachment,
                           bucket: 1,
-                          filename: 'xyz.png',
+                          filename: 'upload.png',
                           created_by: 1,
                           attachable_id: research_plan.id,
                           attachment_data: create_annotation_json(tempfile.path))
