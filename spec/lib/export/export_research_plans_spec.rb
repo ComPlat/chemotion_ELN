@@ -16,7 +16,7 @@ describe 'Export::ExportResearchPlan' do
 
         attachment = create(:attachment,
                            bucket: 1,
-                           filename: 'test',
+                           filename: 'upload.jpg',
                            created_by: 1,
                            attachable_id: rp.id,
                            attachment_data: create_annotation_json(tempfile.path))
