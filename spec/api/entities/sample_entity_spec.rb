@@ -198,6 +198,44 @@ describe Entities::SampleEntity do
           molfile: '***'
         )
       end
+
+      it 'returns a molecule only with molecular_weight and exact_molecular_weight' do
+        expect(grape_entity_as_hash[:molecule]).to include(
+          boiling_point: nil,
+          cano_smiles: nil,
+          cas: nil,
+          density: nil,
+          exact_molecular_weight: sample.molecule.exact_molecular_weight,
+          id: nil,
+          inchikey: nil,
+          inchistring: nil,
+          is_partial: nil,
+          iupac_name: nil,
+          melting_point: nil,
+          molecular_weight: sample.molecule.molecular_weight,
+          molecule_svg_file: nil,
+          molfile: nil,
+          molfile_version: nil,
+          names: nil,
+          sum_formular: nil,
+          molecule_names: nil
+        )
+      end
+    end
+
+    context 'when entity represented with a policy' do
+      let(:sample_detail_level) { 10 }
+      let(:policy) do
+        Struct.new(:update?, :copy?, :destroy?).new(true, true, true)
+      end
+
+      it 'returns the policy releated attributes' do
+        expect(grape_entity_as_hash).to include(
+          can_copy: true,
+          can_publish: true,
+          can_update: true
+        )
+      end
     end
 
     context 'when entity is displayed in list' do
