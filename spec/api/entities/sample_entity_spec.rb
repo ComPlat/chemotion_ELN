@@ -152,13 +152,13 @@ describe Entities::SampleEntity do
       end
 
       it 'returns a sample an anonymized tag' do
-        expect(grape_entity_as_hash[:tag]).to be(nil)
+        expect(grape_entity_as_hash[:tag]).to eq(nil)
       end
 
       it 'returns a sample without segments' do
         pending 'Segments are an empty array because a segments factory is missing'
         raise 'missing segments factory'
-        # expect(grape_entity_as_hash[:segments]).not_to be_empty
+        # expect(grape_entity_as_hash[:segments]).to be_empty
       end
 
       it 'returns a sample with anonymized residues' do
@@ -186,7 +186,7 @@ describe Entities::SampleEntity do
       let(:sample_detail_level) { 1 }
 
       it 'returns a sample with an anonymized container' do
-        expect(grape_entity_as_hash[:container]).to be(nil)
+        expect(grape_entity_as_hash[:container]).to eq(nil)
       end
     end
 

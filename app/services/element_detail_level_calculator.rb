@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable CodeReuse/ActiveRecord
 class ElementDetailLevelCalculator
   attr_reader :user, :element, :detail_levels
 
@@ -51,7 +50,7 @@ class ElementDetailLevelCalculator
     @sync_collections_with_element ||=
       SyncCollectionsUser.where(
         user_id: user_ids,
-        collection_id: element.collections.ids
+        collection_id: element.collections.ids,
       )
   end
 
@@ -71,4 +70,3 @@ class ElementDetailLevelCalculator
                                        .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
   end
 end
-# rubocop:enable CodeReuse/ActiveRecord

@@ -103,7 +103,7 @@ module Entities
 
       {
         molecular_weight: object.molecule.try(:molecular_weight),
-        exact_molecular_weight: object.molecule.try(:exact_molecular_weight)
+        exact_molecular_weight: object.molecule.try(:exact_molecular_weight),
       }
     end
 

@@ -88,7 +88,7 @@ describe Entities::WellEntity do
       let(:detail_level) { 10 }
 
       it 'returns a well without a sample' do
-        expect(grape_entity_as_hash[:sample]).to be(nil)
+        expect(grape_entity_as_hash[:sample]).to eq(nil)
       end
     end
   end
