@@ -22,7 +22,7 @@ module Entities
 
     private
 
-    def is_restricted
+    def is_restricted # rubocop:disable Naming/PredicateName
       detail_levels[Well] < 10
     end
 
