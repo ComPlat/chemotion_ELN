@@ -2,7 +2,7 @@
 
 module Entities
   class WellplateEntity < ApplicationEntity
-
+    # rubocop:disable Layout/ExtraSpacing
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
       expose! :id
@@ -22,12 +22,13 @@ module Entities
       expose! :short_label
       expose! :tag,             anonymize_with: nil, using: 'Entities::ElementTagEntity'
     end
+    # rubocop:enable Layout/ExtraSpacing
 
     expose_timestamps
 
     private
 
-    def is_restricted
+    def is_restricted # rubocop:disable Naming/PredicateName
       detail_levels[Wellplate] < 10
     end
 
@@ -44,7 +45,7 @@ module Entities
     end
 
     def wells
-      displayed_in_list? ? [] : object.ordered_wells.includes(:sample)
+      displayed_in_list? ? [] : object.ordered_wells_with_samples
     end
 
     def type
