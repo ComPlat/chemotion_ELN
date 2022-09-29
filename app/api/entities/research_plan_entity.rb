@@ -2,18 +2,22 @@
 
 module Entities
   class ResearchPlanEntity < ApplicationEntity
-    # ResearchPlan does not have any anonymization defined, so nothing to see here
-    expose :body
-    expose :container,              using: 'Entities::ContainerEntity'
-    expose :id
-    expose :is_restricted
-    expose :name
-    expose :research_plan_metadata, using: 'Entities::ResearchPlanMetadataEntity'
-    expose :segments,               using: 'Entities::SegmentEntity'
-    expose :tag,                    using: 'Entities::ElementTagEntity'
-    expose :thumb_svg
-    expose :type
-    expose :wellplates,             using: 'Entities::WellplateEntity'
+    with_options(anonymize_below: 0) do
+      expose! :body
+      expose! :container,                                    using: 'Entities::ContainerEntity'
+      expose! :id
+      expose! :is_restricted
+      expose! :name
+      expose! :thumb_svg
+      expose! :type
+    end
+
+    with_options(anonymize_below: 10) do
+      expose! :research_plan_metadata,  anonymize_with: nil, using: 'Entities::ResearchPlanMetadataEntity'
+      expose! :tag,                     anonymize_with: nil, using: 'Entities::ElementTagEntity'
+      expose! :wellplates,              anonymize_with: [],  using: 'Entities::WellplateEntity'
+      expose! :segments,                anonymize_with: [],  using: 'Entities::SegmentEntity'
+    end
 
     expose_timestamps
 
