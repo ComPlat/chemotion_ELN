@@ -335,7 +335,7 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static createTabsLayout(params) {
+  static createTabsSegment(params) {
     return fetch('/api/v1/collections/tabs/', {
       credentials: 'same-origin',
       method: 'POST',

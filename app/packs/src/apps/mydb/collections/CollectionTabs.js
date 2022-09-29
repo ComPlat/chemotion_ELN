@@ -2,12 +2,12 @@ import React from 'react';
 import Tree from 'react-ui-tree';
 import { Button, FormControl, Modal, Col } from 'react-bootstrap';
 import _, { isEmpty } from 'lodash';
-import CollectionStore from '../stores/CollectionStore';
-import CollectionActions from '../actions/CollectionActions';
-import TabLayoutContainer from '../TabLayoutContainer';
-import UserStore from '../stores/UserStore';
-import { filterTabLayout, getArrayFromLayout } from '../ElementDetailSortTab';
-import UserActions from '../actions/UserActions';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import { filterTabLayout, getArrayFromLayout } from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 
 const elements = [
   { name: 'sample', label: 'Sample' },

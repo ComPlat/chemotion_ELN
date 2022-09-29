@@ -10,7 +10,7 @@ import _, { isEmpty } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
-import UIStore from './stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const getNodeText = (node) => {
   if (['string', 'number'].includes(typeof node)) return node;

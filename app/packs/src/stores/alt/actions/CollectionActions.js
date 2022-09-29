@@ -94,6 +94,17 @@ class CollectionActions {
     };
   }
 
+  createTabsSegment(params) {
+    return (dispatch) => {
+      CollectionsFetcher.createTabsSegment(params)
+        .then(() => {
+          dispatch();
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   bulkUpdateUnsharedCollections(params) {
     return (dispatch) => {
       CollectionsFetcher.bulkUpdateUnsharedCollections(params)
