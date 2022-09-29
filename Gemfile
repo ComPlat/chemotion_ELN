@@ -36,7 +36,6 @@ gem 'font-awesome-rails'
 gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git', branch: 'allow-port-option'
 gem 'fx'
 
-gem 'gitlab-styles', require: false
 gem 'grape', '~>1.2.3'
 gem 'grape-entity'
 gem 'grape-kaminari'
@@ -133,10 +132,6 @@ group :development do
   gem 'memory_profiler'
 
   #  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
-  gem 'rubocop', require: false
-  gem 'rubocop-performance', require: false
-  gem 'rubocop-rspec', require: false
-
   gem 'slackistrano'
   gem 'stackprof' # For Ruby MRI 2.1+
 
@@ -165,6 +160,11 @@ group :development, :test do
   gem 'pry-rails'
 
   gem 'puma'
+
+  gem 'rubocop', require: false
+  gem 'rubocop-performance', require: false
+  gem 'rubocop-rails', require: false
+  gem 'rubocop-rspec', require: false
 
   gem 'rspec-rails'
   gem 'ruby_jard'
