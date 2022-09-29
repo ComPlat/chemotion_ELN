@@ -221,7 +221,7 @@ export default class AttachmentFetcher {
           message: msg,
           level: 'error'
         });
-      } else {
+      } else if(response.error_messages) {
         for (let i = 0; i < response.error_messages.length; i++) {
           NotificationActions.add({
             message: response.error_messages[i],
