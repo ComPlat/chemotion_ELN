@@ -22,8 +22,6 @@
 #  aasm_state      :string
 #  filesize        :bigint
 #  attachment_data :jsonb
-#  is_editing      :boolean          default(FALSE)
-#  log_data        :jsonb
 #
 # Indexes
 #

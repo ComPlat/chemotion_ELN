@@ -150,7 +150,7 @@ module Chemotion
         return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
         usecase = Usecases::Attachments::UploadChunkComplete.execute!(current_user, params)
-        return true if usecase.present?
+        return usecase if usecase.present?
 
         { ok: false, statusText: 'File upload has error. Please try again!' }
       end
@@ -189,6 +189,7 @@ module Chemotion
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
         uploaded_file = @attachment.attachment_attacher.file
+        
         data = uploaded_file.read
         uploaded_file.close
 
