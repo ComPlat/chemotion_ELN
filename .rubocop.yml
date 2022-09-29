@@ -31,3 +31,15 @@ RSpec:
 
 Style/Documentation:
   Enabled: false
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Metrics/BlockLength:
+  Exclude:
+  - 'spec/**/*_spec.rb'
