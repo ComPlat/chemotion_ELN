@@ -334,13 +334,6 @@ GEM
     fx (0.3.1)
       activerecord (>= 4.0.0)
       railties (>= 4.0.0)
-    gitlab-styles (7.1.0)
-      rubocop (~> 0.91, >= 0.91.1)
-      rubocop-gitlab-security (~> 0.1.1)
-      rubocop-graphql (~> 0.10)
-      rubocop-performance (~> 1.9.2)
-      rubocop-rails (~> 2.9)
-      rubocop-rspec (~> 1.44)
     globalid (1.0.0)
       activesupport (>= 5.0)
     grape (1.2.5)
@@ -640,10 +633,6 @@ GEM
       unicode-display_width (>= 1.4.0, < 2.0)
     rubocop-ast (1.21.0)
       parser (>= 3.1.1.0)
-    rubocop-gitlab-security (0.1.1)
-      rubocop (>= 0.51)
-    rubocop-graphql (0.14.5)
-      rubocop (>= 0.87, < 2)
     rubocop-performance (1.9.2)
       rubocop (>= 0.90.0, < 2.0)
       rubocop-ast (>= 0.4.0)
@@ -837,7 +826,6 @@ DEPENDENCIES
   font-awesome-rails
   fun_sftp!
   fx
-  gitlab-styles
   grape (~> 1.2.3)
   grape-entity
   grape-kaminari
@@ -892,6 +880,7 @@ DEPENDENCIES
   rtf
   rubocop
   rubocop-performance
+  rubocop-rails
   rubocop-rspec
   ruby-geometry
   ruby-mailchecker

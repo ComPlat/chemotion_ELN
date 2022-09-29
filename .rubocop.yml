@@ -1,16 +1,10 @@
-# inherit_from: .rubocop_todo.yml
-
-inherit_gem:
-  gitlab-styles:
-    - rubocop-metrics.yml
-    - rubocop-rspec.yml
-
 require:
   - rubocop-rspec
-  # TODO: install rubocop-rails
-  # - rubocop-rails
+  - rubocop-rails
   - rubocop-performance
+
 AllCops:
+  NewCops: enable
   DisplayCopNames: true
   TargetRubyVersion: 2.6.6
   Exclude:
@@ -20,17 +14,32 @@ AllCops:
     - 'tmp/**/*'
     - 'vendor/**/*'
   CacheRootDirectory: tmp
-Style/Documentation:
-  Enabled: false
-# Rails:
-#   Enabled: true
-#   Exclude:
-#     - 'Guardfile'
-#     - 'bin/**/*'
-#     - 'config/*'
-#     - 'config/**/*'
-#     - 'tmp/**/*'
-#     - 'Rakefile'
+
+Rails:
+  Enabled: true
+  Exclude:
+    - 'Guardfile'
+    - 'bin/**/*'
+    - 'config/*'
+    - 'config/**/*'
+    - 'tmp/**/*'
+    - 'Rakefile'
+
 RSpec:
   Include:
     - 'spec/**/*_spec.rb'
+
+Style/Documentation:
+  Enabled: false
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
+Metrics/BlockLength:
+  Exclude:
+  - 'spec/**/*_spec.rb'
