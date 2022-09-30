@@ -2,6 +2,7 @@
 
 module Entities
   class ScreenEntity < ApplicationEntity
+    # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
       expose! :id
       expose! :type
@@ -22,6 +23,7 @@ module Entities
       expose! :segments,       anonymize_with: [],  using: 'Entities::SegmentEntity'
       expose! :tag,            anonymize_with: nil, using: 'Entities::ElementTagEntity'
     end
+    # rubocop:enable Layout/ExtraSpacing
 
     expose_timestamps
 
@@ -35,7 +37,7 @@ module Entities
       displayed_in_list? ? nil : object.container
     end
 
-    def is_restricted
+    def is_restricted # rubocop:disable Naming/PredicateName
       detail_levels[Screen] < 10
     end
 
