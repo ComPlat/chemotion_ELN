@@ -2,22 +2,24 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 describe Entities::ApplicationEntity do
-  class TestEntity < Entities::ApplicationEntity
-    expose! :a, anonymize_below: 0
-    expose! :b, anonymize_below: 1
-    expose! :c, anonymize_below: 1, anonymize_with: 'A custom string'
-    expose! :d, if: :show_d
-    expose! :e
-    expose! :f
-    expose_timestamps
-    expose_timestamps(timestamp_fields: %i[foo bar])
+  let(:test_entity_class) do
+    Class.new(Entities::ApplicationEntity) do
+      expose! :a, anonymize_below: 0
+      expose! :b, anonymize_below: 1
+      expose! :c, anonymize_below: 1, anonymize_with: 'A custom string'
+      expose! :d, if: :show_d
+      expose! :e
+      expose! :f
+      expose_timestamps
+      expose_timestamps(timestamp_fields: %i[foo bar])
 
-    def e
-      'I am overridden by a method defined in the entity'
+      def e
+        'I am overridden by a method defined in the entity'
+      end
     end
   end
-
   let(:timestamp) { DateTime.new(2020, 6, 6, 12, 13, 14) }
   let(:input) do
     {
@@ -34,10 +36,10 @@ describe Entities::ApplicationEntity do
   let(:options) do
     {
       detail_levels: detail_levels,
-      serializable: true
+      serializable: true,
     }
   end
-  let(:result) { TestEntity.represent(input, options) }
+  let(:result) { test_entity_class.represent(input, options) }
 
   describe '.expose!' do
     context 'without detail levels' do
@@ -52,10 +54,12 @@ describe Entities::ApplicationEntity do
       let(:detail_level) { 0 }
 
       it 'anonymizes fields if their anonymized_below < detail_level' do
-        expect(result.slice(:a, :b)).to eq({
-          a: 'I am never anonymized',
-          b: '***',
-        })
+        expect(result.slice(:a, :b)).to eq(
+          {
+            a: 'I am never anonymized',
+            b: '***',
+          },
+        )
       end
 
       it 'anonymizes with a default string' do
@@ -72,7 +76,7 @@ describe Entities::ApplicationEntity do
         {
           detail_levels: detail_levels,
           show_d: true,
-          serializable: true
+          serializable: true,
         }
       end
 
@@ -83,7 +87,9 @@ describe Entities::ApplicationEntity do
 
     context 'with unknown option' do
       it 'raises an error' do
-        expect { TestEntity.expose!(:some_field, unknown_option: true) }.to raise_error(ArgumentError)
+        expect do
+          test_entity_class.expose!(:some_field, unknown_option: true)
+        end.to raise_error(ArgumentError)
       end
     end
   end
@@ -95,7 +101,7 @@ describe Entities::ApplicationEntity do
     context 'without params' do
       it 'exposes formatted timestamps of created_at and updated_at' do
         expect(result.slice(:created_at, :updated_at)).to eq(
-          { created_at: formatted_timestamp, updated_at: formatted_timestamp }
+          { created_at: formatted_timestamp, updated_at: formatted_timestamp },
         )
       end
     end
@@ -105,9 +111,10 @@ describe Entities::ApplicationEntity do
 
       it 'exposes the given timestamp_fields in a formatted way' do
         expect(result.slice(:foo, :bar)).to eq(
-          { foo: formatted_timestamp, bar: formatted_timestamp }
+          { foo: formatted_timestamp, bar: formatted_timestamp },
         )
       end
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers

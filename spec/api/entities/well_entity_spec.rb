@@ -4,21 +4,18 @@ require 'rails_helper'
 
 describe Entities::WellEntity do
   describe '.represent' do
-    let(:detail_levels) { { Well => detail_level, Sample => detail_level } }
-    let(:displayed_in_list) { false }
-
-    let(:sample) { create(:sample) }
-    let(:well) do
-      create(:well, :with_color_code_and_additive, sample: sample)
-    end
-
     subject(:entity) do
       described_class.represent(
         well,
         detail_levels: detail_levels,
-        displayed_in_list: displayed_in_list
+        displayed_in_list: displayed_in_list,
       )
     end
+
+    let(:detail_levels) { { Well => detail_level, Sample => detail_level } }
+    let(:displayed_in_list) { false }
+    let(:sample) { create(:sample) }
+    let(:well) { create(:well, :with_color_code_and_additive, sample: sample) }
 
     context 'when detail level for Well is 10' do
       let(:detail_level) { 10 }
@@ -32,7 +29,7 @@ describe Entities::WellEntity do
           readouts: well.readouts,
           additive: well.additive,
           color_code: well.color_code,
-          label: well.label
+          label: well.label,
         )
       end
 
@@ -53,7 +50,7 @@ describe Entities::WellEntity do
           readouts: well.readouts,
           additive: '***',
           color_code: '***',
-          label: '***'
+          label: '***',
         )
       end
 
@@ -74,7 +71,7 @@ describe Entities::WellEntity do
           readouts: '***',
           additive: '***',
           color_code: '***',
-          label: '***'
+          label: '***',
         )
       end
 

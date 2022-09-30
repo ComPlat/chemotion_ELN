@@ -4,19 +4,19 @@ require 'rails_helper'
 
 describe Entities::SampleEntity do
   describe '.represent' do
-    let(:sample) { create(:sample, :with_residues) }
-    let(:displayed_in_list) { false }
-    let(:policy) { nil }
-    let(:detail_levels) { { Sample => sample_detail_level } }
-
     subject(:entity) do
       described_class.represent(
         sample,
         detail_levels: detail_levels,
         displayed_in_list: displayed_in_list,
-        policy: policy
+        policy: policy,
       )
     end
+
+    let(:sample) { create(:sample, :with_residues) }
+    let(:displayed_in_list) { false }
+    let(:policy) { nil }
+    let(:detail_levels) { { Sample => sample_detail_level } }
 
     context 'when detail level for Sample is 10' do
       let(:sample_detail_level) { 10 }
@@ -64,8 +64,8 @@ describe Entities::SampleEntity do
           target_amount_value: sample.target_amount_value,
           user_labels: sample.user_labels,
           xref: sample.xref,
-          created_at: I18n.localize(sample.created_at, format: :eln_timestamp),
-          updated_at: I18n.localize(sample.updated_at, format: :eln_timestamp)
+          created_at: I18n.l(sample.created_at, format: :eln_timestamp),
+          updated_at: I18n.l(sample.updated_at, format: :eln_timestamp),
         )
       end
 
@@ -146,8 +146,8 @@ describe Entities::SampleEntity do
           target_amount_value: '***',
           user_labels: '***',
           xref: '***',
-          created_at: I18n.localize(sample.created_at, format: :eln_timestamp),
-          updated_at: I18n.localize(sample.updated_at, format: :eln_timestamp)
+          created_at: I18n.l(sample.created_at, format: :eln_timestamp),
+          updated_at: I18n.l(sample.updated_at, format: :eln_timestamp),
         )
       end
 
@@ -195,7 +195,7 @@ describe Entities::SampleEntity do
 
       it 'returns a sample an anonymized molfile' do
         expect(grape_entity_as_hash).to include(
-          molfile: '***'
+          molfile: '***',
         )
       end
 
@@ -218,7 +218,7 @@ describe Entities::SampleEntity do
           molfile_version: nil,
           names: nil,
           sum_formular: nil,
-          molecule_names: nil
+          molecule_names: nil,
         )
       end
     end
@@ -233,7 +233,7 @@ describe Entities::SampleEntity do
         expect(grape_entity_as_hash).to include(
           can_copy: true,
           can_publish: true,
-          can_update: true
+          can_update: true,
         )
       end
     end
@@ -267,7 +267,7 @@ describe Entities::SampleEntity do
           :segments,
           :solvent,
           :target_amount_unit,
-          :target_amount_value
+          :target_amount_value,
         )
       end
     end
