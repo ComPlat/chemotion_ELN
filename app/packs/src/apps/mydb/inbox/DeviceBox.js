@@ -61,12 +61,18 @@ export default class DeviceBox extends React.Component {
               </i>
             ) : null
           }
-          <i
-            className={`fa fa-folder${visible ? '-open' : ''}`}
-            aria-hidden="true"
+          <button
+            type="button"
+            className="btn-inbox"
             onClick={() => this.setState({ visible: !visible })}
-          > {device_box.name}
-          </i>
+          >
+            <i
+              className={`fa fa-folder${visible ? '-open' : ''}`}
+              aria-hidden="true"
+              style={{ marginRight: '5px' }}
+            />
+            {device_box.name}
+          </button>
         </div>
         <div>{visible ? datasets : null}</div>
       </div>
