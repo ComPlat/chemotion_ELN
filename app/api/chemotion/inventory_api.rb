@@ -26,7 +26,7 @@ module Chemotion
       desc 'Return inventory by inventoriable_id and inventoriable_type'
       params do
         requires :inventoriable_id, type: Integer, desc: 'inventoriable id'
-        requires :inventoriable_type, type: String, values: %w[Sample Reaction Wellplate Screen ResearchPlan]
+        requires :inventoriable_type, type: String, values: %w[Sample]
       end
 
       get do
@@ -44,7 +44,7 @@ module Chemotion
         params do
           requires :inventory_parameters, type: Array[Hash]
           requires :inventoriable_id, type: Integer
-          requires :inventoriable_type, type: String, values: %w[Sample Reaction Wellplate Screen ResearchPlan]
+          requires :inventoriable_type, type: String, values: %w[Sample]
         end
 
         post do
@@ -60,7 +60,7 @@ module Chemotion
         end
       end
 
-      resource :fetchsds do
+      resource :fetch_safetysheet do
         desc 'fetch safety data sheet'
 
         route_param :id do
@@ -68,32 +68,32 @@ module Chemotion
             requires :data, type: Hash, desc: 'params'
           end
           get do
-            quary_params = params[:data]
+            data = params[:data]
             molecule = Molecule.find(params[:id])
-            vendor = quary_params['vendor']
-            language = quary_params['language']
+            vendor = data[:vendor]
+            language = data[:language]
 
-            if quary_params['option'] == 'Common Name'
+            if data[:option] == 'Common Name'
               name = molecule.names[0]
-            elsif quary_params['option'] == 'CAS'
+            elsif data[:option] == 'CAS'
               name = molecule.cas[0]
             end
-            merck_info = Chemotion::InventoryService.merck(name, language)
-            alfa_info = Chemotion::InventoryService.alfa(name, language)
 
-            if vendor == 'All'
-              sds_links = { 'alfa_link' => alfa_info, 'merck_link' => merck_info }
-            elsif vendor == 'Merck'
-              sds_links = { 'merck_link' => merck_info }
+            if vendor == 'Merck'
+              { merck_link: Chemotion::InventoryService.merck(name, language) }
             elsif vendor == 'Thermofischer'
-              sds_links = { 'alfa_link' => alfa_info }
+              { alfa_link: Chemotion::InventoryService.alfa(name, language) }
+            else
+              {
+                alfa_link: Chemotion::InventoryService.alfa(name, language),
+                merck_link: Chemotion::InventoryService.merck(name, language)
+              }
             end
-            sds_links
           end
         end
       end
 
-      resource :save_sds do
+      resource :save_safety_datasheet do
         desc 'save safety data sheet'
 
         params do

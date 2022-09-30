@@ -125,7 +125,7 @@ describe Chemotion::InventoryAPI do
       end
     end
 
-    describe 'POST safety phrases /api/v1/inventories/safety_phrases' do
+    describe 'GET safety phrases /api/v1/inventories/safety_phrases' do
       let(:inventory) { create(:inventory, inventoriable: s, inventoriable_id: s.id) }
 
       let(:params) do
@@ -140,6 +140,22 @@ describe Chemotion::InventoryAPI do
 
       it 'There is no content' do
         expect(response.status).to eq 204
+      end
+    end
+
+    describe 'GET chemical properties /api/v1/inventories/chemical_properties' do
+      let(:params) do
+        {
+          link: 'alfa'
+        }
+      end
+
+      before do
+        get '/api/v1/inventories/chemical_properties', params: params
+      end
+
+      it 'response is ok with params as link' do
+        expect(response.status).to eq 200
       end
     end
   end

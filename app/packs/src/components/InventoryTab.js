@@ -19,7 +19,7 @@ export default class InventoryTab extends React.Component {
       vendorSafetyPhrasesValue: '',
       vendorChemPropertiesValue: '',
       queryOption: 'Common Name',
-      languageOfSdd: 'en',
+      safetySheetLanguage: 'en',
       safetyPhrases: ''
     };
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -64,8 +64,8 @@ export default class InventoryTab extends React.Component {
       inventoriable_type: element.type 
     };
     if (inventory.isNew) {
-      InventoryFetcher.create(params).then((newinventory) => {
-        if (newinventory) {
+      InventoryFetcher.create(params).then((response) => {
+        if (response) {
           this.setState({ inventory });
         }
       }).catch((errorMessage) => {
@@ -73,8 +73,8 @@ export default class InventoryTab extends React.Component {
       });
       inventory.isNew = false;
     } else {
-      InventoryFetcher.update(params).then((newinventory) => {
-        if (newinventory) {
+      InventoryFetcher.update(params).then((response) => {
+        if (response) {
           this.setState({ inventory });
         }
       }).catch((errorMessage) => {
@@ -83,22 +83,22 @@ export default class InventoryTab extends React.Component {
     }
   }
 
-  querySds = () => {
+  querySafetySheets = () => {
     const { element } = this.props;
     const sampleName = element.showedName();
     const moleculeId = element.molecule_name_hash ? element.molecule_name_hash.mid : null;
-    const { inventory, vendorValue, queryOption, languageOfSdd } = this.state;
+    const { inventory, vendorValue, queryOption, safetySheetLanguage } = this.state;
     if(inventory) {
       inventory.invenParameters('sample_name', sampleName);
       inventory.invenParameters('molecule_id', moleculeId);
     }
 
     const queryParams = { 
-      id: moleculeId, vendor: vendorValue, queryOption: queryOption, language: languageOfSdd 
+      id: moleculeId, vendor: vendorValue, queryOption: queryOption, language: safetySheetLanguage 
     };
     const { safetySheets } = this.state;
 
-    InventoryFetcher.fetchSds(queryParams).then((result) => {
+    InventoryFetcher.fetchSafetySheets(queryParams).then((result) => {
       const obj = JSON.parse(result);
       safetySheets.splice(0, 1);
       this.setState({ safetySheets });
@@ -168,7 +168,6 @@ export default class InventoryTab extends React.Component {
       productLink = inventory._inventory_parameters[0].merckProductInfo.productLink;
 
     }
-    console.log(productLink);
 
     InventoryFetcher.chemicalProperties(productLink).then((result) => {
       if(result === 'Could not find additional chemical properties') {
@@ -204,6 +203,23 @@ export default class InventoryTab extends React.Component {
       </FormGroup>
     );
   }
+
+  // vendorSdsLink = () => {
+  //   const { inventory } = this.state;
+  //   const inventoryParameters = inventory ? inventory._inventory_parameters[0] : {};
+  //   console.log(inventoryParameters.alfaProductInfo);
+  //   return (
+  //     <ListGroup>
+  //       <ListGroupItem key="vendorLink">
+  //         <div>
+  //           <a href={inventoryParameters.alfaProductInfo} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer" >
+  //             { 'Safety Data She'}
+  //           </a>
+  //         </div>
+  //       </ListGroupItem>
+  //      </ListGroup>
+  //   )
+  // }
 
   handleRemove(index, document) {
     const { safetySheets, inventory } = this.state;
@@ -293,7 +309,7 @@ export default class InventoryTab extends React.Component {
       inventoriable_id: this.props.element.id,
       vendor_product: vendorProduct
     };
-    InventoryFetcher.saveSds(params).then((result) => {
+    InventoryFetcher.saveSafetySheets(params).then((result) => {
       if (result || result === 'file is already saved') {
         const value = `/safety_sheets/${productInfo.productNumber}_${productInfo.vendor}.pdf`;
         const inventoryParameters = inventory._inventory_parameters;
@@ -330,7 +346,7 @@ export default class InventoryTab extends React.Component {
   }
 
 
-  saveSds(sdsInfo) {
+  saveSafetySheets(sdsInfo) {
     let vendor;
     let sdsLink;
     let productNumber;
@@ -408,7 +424,7 @@ export default class InventoryTab extends React.Component {
   }
 
   handleLanguageOption(value) {
-    this.setState({ languageOfSdd: value })
+    this.setState({ safetySheetLanguage: value })
   }
 
   chooseVendor() {
@@ -435,7 +451,7 @@ export default class InventoryTab extends React.Component {
   }
 
   queryOption() {
-    const { queryOption, languageOfSdd } = this.state;
+    const { queryOption } = this.state;
     const queryOptions = [
       { label: 'Common Name', value: 'Common Name' },
       { label: 'CAS', value: 'CAS' }
@@ -455,8 +471,8 @@ export default class InventoryTab extends React.Component {
     );
   }
 
-  languageOfSdd() {
-    const { languageOfSdd } = this.state;
+  safetySheetLanguage() {
+    const { safetySheetLanguage } = this.state;
     const languageOptions = [
       { label: 'English', value: 'en' },
       { label: 'Deustch', value: 'de' },
@@ -471,7 +487,7 @@ export default class InventoryTab extends React.Component {
           clearable={false}
           options={languageOptions}
           onChange={e => this.handleLanguageOption(e.value)}
-          value={languageOfSdd}
+          value={safetySheetLanguage}
         />
       </FormGroup>
     );
@@ -499,7 +515,7 @@ export default class InventoryTab extends React.Component {
                   { this.checkMarkButton(document) }
                 </a>
                 <ButtonToolbar className="pull-right">
-                  {this.saveSds(document)}
+                  {this.saveSafetySheets(document)}
                   {this.removeButton(index, document)}
                 </ButtonToolbar>
               </div>
@@ -809,7 +825,7 @@ export default class InventoryTab extends React.Component {
                   {this.textInput(amount, 'Amount', 'amount')}
                 </div>
                 <div style={{ width: '20%' }}>
-                  {this.textInput(link, 'Link', 'link')}
+                  {this.textInput(link, 'Product Link', 'link')}
                 </div>
                 <div style={{ width: '20%' }}>
                   {this.textInput(otherInformation, 'Other information', 'other_information')}
@@ -848,6 +864,9 @@ export default class InventoryTab extends React.Component {
                   {this.textInput(sdsLink, 'Vendors saftey data sheet link', 'sds_link')}
                 </div>
               </div>
+              {/* <div>
+                {this.vendorSdsLink()}
+              </div> */}
             </td>
           </tr>
           <tr>
@@ -860,13 +879,13 @@ export default class InventoryTab extends React.Component {
                   {this.queryOption()}
                 </div>
                 <div style={{ width: '%100' }}>
-                  {this.languageOfSdd()}
+                  {this.safetySheetLanguage()}
                 </div>
                 <div style={{ width: '%100', paddingTop: '25px' }}>
                   <Button
                     id="submit-sds-btn"
                     // bsStyle="warning"
-                    onClick={() => this.querySds()}
+                    onClick={() => this.querySafetySheets()}
                   >
                     Search for SDS
                   </Button>

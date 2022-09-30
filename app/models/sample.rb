@@ -266,6 +266,18 @@ class Sample < ApplicationRecord
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
+  def create_inventory_for_subsample(sample_id, subsample_id)
+    get_sample_inventory = Inventory.find_by(inventoriable_id: sample_id) || Inventory.new
+    inventory_parameters = get_sample_inventory.inventory_parameters
+    attributes = {
+      inventory_parameters: inventory_parameters,
+      inventoriable_id: subsample_id,
+      inventoriable_type: 'Sample'
+    }
+    inventory = Inventory.new(attributes)
+    inventory.save!
+  end
+
   def create_subsample user, collection_ids, copy_ea = false
     subsample = self.dup
     subsample.name = self.name if self.name.present?
@@ -297,7 +309,10 @@ class Sample < ApplicationRecord
 
     subsample.container = Container.create_root_container
     subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
-    subsample.save! && subsample
+    subsample.save!
+
+    create_inventory_for_subsample(self.id, subsample.id)
+    subsample
   end
 
   def reaction_description

@@ -26,10 +26,10 @@ export default class InventoryFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static create(prms) {
-    const params = { ...prms };
-    if (prms.inventoriable_type) {
-      params.inventoriable_type = classify(prms.inventoriable_type);
+  static create(inventoryAttributes) {
+    const params = { ...inventoryAttributes };
+    if (inventoryAttributes.inventoriable_type) {
+      params.inventoriable_type = classify(inventoryAttributes.inventoriable_type);
     }
     return fetch('/api/v1/inventories/create', {
       credentials: 'same-origin',
@@ -58,8 +58,8 @@ export default class InventoryFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchSds(queryParams) {
-    return fetch(`/api/v1/inventories/fetchsds/${queryParams.id}?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}&data[language]=${queryParams.language}`, {
+  static fetchSafetySheets(queryParams) {
+    return fetch(`/api/v1/inventories/fetch_safetysheet/${queryParams.id}?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}&data[language]=${queryParams.language}`, {
       credentials: 'same-origin',
       method: 'GET',
       headers: {
@@ -75,8 +75,8 @@ export default class InventoryFetcher {
     });
   }
 
-  static saveSds(params) {
-    return fetch('/api/v1/inventories/save_sds', {
+  static saveSafetySheets(params) {
+    return fetch('/api/v1/inventories/save_safety_datasheet', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
