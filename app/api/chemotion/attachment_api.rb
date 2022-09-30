@@ -152,7 +152,7 @@ module Chemotion
         usecase = Usecases::Attachments::UploadChunkComplete.execute!(current_user, params)
         return usecase if usecase.present?
 
-        { ok: false, statusText: 'File upload has error. Please try again!' }
+        { ok: false, statusText: ['File upload has error. Please try again!'] }
       end
 
       desc 'Upload files to Inbox as unsorted'

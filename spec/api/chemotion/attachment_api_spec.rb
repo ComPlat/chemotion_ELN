@@ -205,7 +205,7 @@ describe Chemotion::AttachmentAPI do
     context 'when "AttachmentPolicy" allows upload but checksum is wrong', :enable_attachment_policy_can_upload_chunk do
       let(:checksum) { 'invalid' }
       let(:expected_response) do
-        { 'ok' => false, 'statusText' => 'File upload has error. Please try again!' }
+        { 'ok' => false, 'statusText' => ['File upload has error. Please try again!'] }
       end
 
       it 'returns with the right http status' do
@@ -218,7 +218,9 @@ describe Chemotion::AttachmentAPI do
     end
 
     context 'when "AttachmentPolicy" allows upload', :enable_attachment_policy_can_upload_chunk do
-      let(:expected_response) { true }
+      let(:expected_response) do
+        { 'ok' => true, 'statusText' => [] }
+      end
 
       it 'returns with the right http status' do
         expect(response.status).to eq(201)
