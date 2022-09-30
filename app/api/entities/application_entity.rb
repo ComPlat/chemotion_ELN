@@ -12,6 +12,11 @@ module Entities
       fields = args.first
       options = args.last.is_a?(Hash) ? args.pop : {}
       options = merge_options(options) # merges additional params set in #with_options
+      expose_fields_with_anonymization!(fields, options)
+    end
+
+    # rubocop:disable Metrics/MethodLength
+    def self.expose_fields_with_anonymization!(fields, options)
       anonymize_below = options[:anonymize_below] || 0
       anonymize_with = options.key?(:anonymize_with) ? options[:anonymize_with] : '***'
 
@@ -29,6 +34,8 @@ module Entities
         end
       end
     end
+    private_class_method :expose_fields_with_anonymization!
+    # rubocop:enable Metrics/MethodLength
 
     def self.expose_timestamps(timestamp_fields: %i[created_at updated_at], **additional_args)
       timestamp_fields.each do |field|

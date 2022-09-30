@@ -29,6 +29,7 @@ module Entities
       expose! :container, anonymize_with: nil
     end
 
+    # rubocop:disable Metrics/BlockLength
     # Level 10 attributes and relations
     with_options(anonymize_below: 10) do
       expose! :_contains_residues,      unless: :displayed_in_list, anonymize_with: false
@@ -66,7 +67,7 @@ module Entities
       expose! :user_labels
       expose! :xref
     end
-    # rubocop:enable Layout/LineLength, Layout/ExtraSpacing
+    # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
 
     expose_timestamps
 
