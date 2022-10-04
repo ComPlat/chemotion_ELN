@@ -2,9 +2,13 @@
 
 require 'simplecov'
 require 'simplecov-lcov'
+require "simplecov-html"
 
 SimpleCov::Formatter::LcovFormatter.config.report_with_single_file = true
-SimpleCov.formatter = SimpleCov::Formatter::LcovFormatter
+SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
+  SimpleCov::Formatter::HTMLFormatter,
+  SimpleCov::Formatter::LcovFormatter,
+])
 
 SimpleCov.start 'rails' do
   add_group 'GraphQL', 'app/graphql'
