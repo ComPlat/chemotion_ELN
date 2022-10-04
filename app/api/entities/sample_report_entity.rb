@@ -20,6 +20,8 @@ module Entities
 
     expose_timestamps
 
+    private
+
     def literatures
       Literature.by_element_attributes_and_cat(object.id, 'Sample', 'detail').with_user_info
     end
