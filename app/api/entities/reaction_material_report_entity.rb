@@ -4,24 +4,26 @@ module Entities
   # wraps a ReactionsSample object like Entities::ReactionMaterialEntity
   # adds some additional fields for reports
   class ReactionMaterialReportEntity < ReactionMaterialEntity
-    SAMPLE_ENTITY = 'Entities::SampleReportEntity'.freeze
+    with_options(anonymize_below: 0) do
+      expose! :amount_g
+      expose! :amount_ml
+      expose! :amount_mmol
+      expose! :get_svg_path
+      expose! :preferred_label
+      expose! :preferred_tag
+      expose! :real_amount_g
+      expose! :real_amount_ml
+      expose! :real_amount_mmol
+    end
 
-    expose(
-      :amount_g,
-      :amount_ml,
-      :amount_mmol,
-      :get_svg_path,
-      :preferred_label,
-      :preferred_tag,
-      :real_amount_g,
-      :real_amount_ml,
-      :real_amount_mmol,
-    )
+    with_options(anonymize_below: 2, anonymize_with: []) do
+      expose! :analyses, using: 'Entities::ContainerEntity'
+    end
 
     private
 
     delegate(
-      :amount_g, :amount_ml, :amount_mmol, :get_svg_path, :preferred_label, :preferred_tag,
+      :amount_g, :amount_ml, :amount_mmol, :analyses, :get_svg_path, :preferred_label, :preferred_tag,
       to: :"object.sample"
     )
 
