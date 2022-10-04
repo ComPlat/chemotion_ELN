@@ -12,10 +12,10 @@ module Entities
     end
 
     with_options(anonymize_below: 10) do
-      expose! :reactions,           anonymize_with: [], using: 'Entities::ReationReportEntity'
+      expose! :reactions,           anonymize_with: [], using: 'Entities::ReactionReportEntity'
       expose! :molecule_iupac_name, anonymize_with: nil
       expose! :get_svg_path,        anonymize_with: nil
-      expose! :literatures,         anonymize_with: [], using: 'Entities::LiteratureEntity',   with_user_info: true
+      expose! :literatures,         anonymize_with: []
     end
 
     expose_timestamps
@@ -23,7 +23,10 @@ module Entities
     private
 
     def literatures
-      Literature.by_element_attributes_and_cat(object.id, 'Sample', 'detail').with_user_info
+      Entities::LiteratureEntity.represent(
+        Literature.by_element_attributes_and_cat(object.id, 'Sample', 'detail').with_user_info,
+        with_user_info: true
+      )
     end
   end
 end
