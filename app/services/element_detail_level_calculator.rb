@@ -21,7 +21,7 @@ class ElementDetailLevelCalculator
   private
 
   def calculate_detail_levels
-    detail_levels = {}
+    detail_levels = Hash.new(0)
     all_collections_detail_levels = user_collection_detail_levels + sync_collection_detail_levels
 
     detail_levels[Element] = all_collections_detail_levels.pluck(:element_detail_level).max || 0
