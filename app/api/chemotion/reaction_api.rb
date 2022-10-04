@@ -85,7 +85,7 @@ module Chemotion
             reaction: Entities::ReactionEntity.represent(
               reaction,
               policy: @element_policy,
-              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction)
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
             ),
             literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], 'Reaction'))
           }
