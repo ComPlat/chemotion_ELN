@@ -1,15 +1,17 @@
 import React from 'react';
+import UserStore from '../../../stores/alt/stores/UserStore';
 
 const filterSharedWithMeCollection = (sharedCollections) => {
-  sharedCollections = sharedCollections.filter(c => (c.shared_by !== null));
-
+  const { currentUser } = UserStore.getState();
   const collections = [];
+
   sharedCollections.forEach((collection) => {
     let children = [];
     let label = `by ${collection.shared_by.initials}`;
     let user = {};
     let uid = -1;
-    collection.collection_acls.forEach((acl) => {
+    let sharedCollections = collection.collection_acls.filter(acl => (acl.user.id === currentUser.id ));
+    sharedCollections.forEach((acl) => {
       children.push(acl);
       user = acl.user;
       uid = acl.id;
