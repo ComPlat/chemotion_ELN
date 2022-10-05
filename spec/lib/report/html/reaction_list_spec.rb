@@ -5,22 +5,22 @@ require 'rails_helper'
 describe 'Reporter::Html::ReactionList instance' do
   include_context 'Report shared declarations'
 
-  before do
-    t_file = Tempfile.new(['rspec', '.html'])
+  let(:html_file) do
+    tempfile = Tempfile.new(['rspec', '.html'])
     Reporter::Html::ReactionList.new(
-      objs: @obj_hash,
+      objs: [serialized_reaction],
       template_path: Rails.root.join('lib', 'template', 'rxn_list.html.erb')
-    ).create(Pathname.new(t_file.path))
-    @target = File.open(t_file.path).read
+    ).create(tempfile)
+    tempfile.read
   end
 
   it 'contains a html file' do
-    [@sp_prd_a, @sp_prd_b].each_with_index do |prd, _idx|
-      expect(@target).to include(prd.molecule.inchistring)
-      expect(@target).to include(prd.molecule.inchikey)
-      expect(@target).to include(@r1.rinchi_long_key)
-      expect(@target).to include(@r1.rinchi_web_key)
-      expect(@target).to include(@r1.rinchi_short_key)
+    [product_1, product_2].each do |product|
+      expect(html_file).to include(product.molecule.inchistring)
+      expect(html_file).to include(product.molecule.inchikey)
+      expect(html_file).to include(reaction.rinchi_long_key)
+      expect(html_file).to include(reaction.rinchi_web_key)
+      expect(html_file).to include(reaction.rinchi_short_key)
     end
   end
 end
