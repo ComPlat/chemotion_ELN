@@ -59,11 +59,11 @@ class CollectionStore {
   }
 
   handleFetchMyCollections(results) {
-    this.state.myCollections = results.all;
+    this.setState({ myCollections: results.collections });
   }
 
   handleFetchCollectionsSharedWithMe(results) {
-    this.state.sharedCollections = results.shared;
+    this.setState({ sharedCollections: results.collections });
   }
 
   handleFetchUnsharedCollectionRoots(results) {
