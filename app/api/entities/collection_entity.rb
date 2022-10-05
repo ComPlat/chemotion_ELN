@@ -20,7 +20,8 @@ module Entities
     )
 
     expose :children, using: 'Entities::CollectionEntity'
-    expose :shared_to, using: 'Entities::UserSimpleEntity'
+    expose :collection_acls
+    expose :shared_by, using: 'Entities::UserSimpleEntity'
     expose :shared_users, using: 'Entities::UserSimpleEntity'
     expose :sync_collections_users, using: 'Entities::SyncCollectionsUserEntity'
 
@@ -43,10 +44,20 @@ module Entities
       object.descendant_ids
     end
 
-    def shared_to
+    def shared_by
       return unless object.is_shared
 
       object.user || User.new
+    end
+
+    def collection_acls
+      collection_acls = []
+      object.collection_acls.each do |acl|
+        collection_acl = acl.attributes
+        collection_acl[:user] = Entities::UserEntity.represent acl.user
+        collection_acls.push(collection_acl)
+      end
+      collection_acls
     end
   end
 end

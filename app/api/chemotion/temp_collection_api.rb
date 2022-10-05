@@ -9,7 +9,7 @@ module Chemotion
           collections = Collection.where(user_id: current_user.id)
                                   .joins('left join collection_acls acls on acls.collection_id = collections.id')
                                   .includes(collection_acls: :user)
-          collections.distinct
+          present collections.distinct, with: Entities::CollectionEntity, root: :collections
         end
       end
 
@@ -30,7 +30,8 @@ module Chemotion
         end
         route_param :id, requirements: { id: /[0-9]*/ } do
           get do
-            current_user.acl_collection_by_id(params[:id])
+            collections = current_user.acl_collection_by_id(params[:id])
+            present collections, with: Entities::CollectionEntity, root: :collections
           end
         end
       end
@@ -38,7 +39,8 @@ module Chemotion
       namespace :shared do
         desc 'Return the collection shared with current user'
         get do
-          Collection.joins(:collection_acls).includes(:user).where('collection_acls.user_id = ?', current_user.id)
+          collections = Collection.joins(:collection_acls).includes(:user).where('collection_acls.user_id = ?', current_user.id)
+          present collections, with: Entities::CollectionEntity, root: :collections
         end
 
         desc 'Create shared collections'
@@ -156,6 +158,7 @@ module Chemotion
             requires :wellplate_detail_level, type: Integer
             requires :screen_detail_level, type: Integer
             requires :element_detail_level, type: Integer
+            optional :label, type: String
           end
           requires :user_ids, type: Array
           requires :id, type: Integer
@@ -195,9 +198,9 @@ module Chemotion
 
           c = Collection.find_by(id: params[:id])
           Message.create_msg_notification(
-          channel_subject: Channel::SYNCHRONIZED_COLLECTION_WITH_ME,
-          message_from: current_user.id, message_to: uids,
-          data_args: { synchronized_by: current_user.name, collection_name: c.label }, level: 'info'
+            channel_subject: Channel::SYNCHRONIZED_COLLECTION_WITH_ME,
+            message_from: current_user.id, message_to: uids,
+            data_args: { synchronized_by: current_user.name, collection_name: c.label }, level: 'info'
           )
         end
       end

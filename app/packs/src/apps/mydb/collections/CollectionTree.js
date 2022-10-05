@@ -78,11 +78,17 @@ export default class CollectionTree extends React.Component {
 
     return newRoots;
   }
+  unsharedSubtrees() {
+    let roots = this.state.unsharedRoots;
+    roots = roots.filter(function (item) { return !item.isNew })
+
+    return this.subtrees(roots, null, false);
+  }
 
   myCollections() {
-    let { myCollections } = this.state;
-    myCollections = myCollections.filter(c => (c.is_shared === false && c.is_locked === false ));
+    let myCollections = this.state.myCollections;
 
+    myCollections = myCollections.filter(c => (c.is_shared === false && c.is_locked === false ));
     const subtrees = myCollections.map((root, index) => {
       return <CollectionSubtree root={root} key={index} />
     })
@@ -235,7 +241,8 @@ export default class CollectionTree extends React.Component {
 
   // remoteSyncInSubtrees() {
   sharedWithMeSubtrees() {
-    let { syncCollectionVisible, sharedCollections } = this.state
+    let { sharedCollections, sharedWithCollectionVisible } = this.state;
+
     let collections = filterSharedWithMeCollection(sharedCollections);
     let sharedLabelledRoots = {};
     sharedLabelledRoots = collections.map(e => {
@@ -253,7 +260,7 @@ export default class CollectionTree extends React.Component {
           id="synchron-home-link"
           className="title"
           style={{ backgroundColor: 'white' }}
-          onClick={() => this.handleSectionToggle('syncCollectionVisible')}
+          onClick={() => this.handleSectionToggle('sharedWithCollectionVisible')}
         >
           <i className="fa fa-share-alt" />&nbsp;&nbsp;
           Shared with me &nbsp;
@@ -262,7 +269,7 @@ export default class CollectionTree extends React.Component {
     )
 
     return this.subtrees(sharedLabelledRoots, subTreeLabels,
-      false, syncCollectionVisible, 'shared_by')
+      false, sharedWithCollectionVisible, 'shared_by')
   }
 
 
@@ -372,7 +379,7 @@ export default class CollectionTree extends React.Component {
         </div>
 
         <div className="tree-wrapper">
-          {this.sharedSubtrees()}
+          {/*{this.sharedSubtrees()}*/}
         </div>
         <div className="tree-wrapper">
           {/*{this.remoteSubtrees()}*/}

@@ -4,7 +4,7 @@ import { Button, ButtonGroup, FormControl, Modal } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import { filterMySharedCollection } from '../CollectionTreeStructure';
+import { filterMySharedCollection } from 'src/apps/mydb/collections/CollectionTreeStructure';
 
 export default class MySharedCollections extends React.Component {
   constructor(props) {
