@@ -27,6 +27,28 @@ class CollectionActions {
     };
   }
 
+  fetchMyCollections() {
+    return (dispatch) => {
+      CollectionsFetcher.fetchMyRoots()
+        .then((roots) => {
+          dispatch(roots);
+        }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  fetchCollectionsSharedWithMe() {
+    return (dispatch) => {
+      CollectionsFetcher.fetchSharedWithMeRoots()
+        .then((roots) => {
+          dispatch(roots);
+        }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
   // TODO #2...centralized error handling maybe ErrorActions?
   fetchLockedCollectionRoots() {
     return (dispatch) => {
