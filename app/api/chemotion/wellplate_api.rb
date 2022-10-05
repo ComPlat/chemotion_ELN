@@ -160,7 +160,7 @@ module Chemotion
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false), current_user.id).execute!
 
           # save to profile
-          kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
+          kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
           present(

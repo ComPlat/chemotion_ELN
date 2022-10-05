@@ -181,7 +181,7 @@ module Chemotion
           ids = id_array.join(',')
           Sample.includes_for_list_display
                 .where(id: id_array)
-                .order("position(','||id::text||',' in ',#{ids},')")
+                .order(Arel.sql("position(','||id::text||',' in ',#{ids},')"))
                 .each do |sample|
                   detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
                   serialized_sample = Entities::SampleEntity.represent(

@@ -211,7 +211,7 @@ module Chemotion
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
                            .where(id: (sample_scope.pluck :molecule_id))
-                           .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                           .order(Arel.sql("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))"))
                            .order(:sum_formular)
           reset_pagination_page(molecule_scope)
           paginate(molecule_scope).each do |molecule|

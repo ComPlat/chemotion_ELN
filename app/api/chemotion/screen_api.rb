@@ -132,7 +132,7 @@ module Chemotion
           old_wellplate_ids = screen.wellplates.pluck(:id)
 
           #save to profile
-          kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
+          kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
           params[:wellplate_ids].each do |id|
@@ -184,7 +184,7 @@ module Chemotion
         screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
         #save to profile
-        kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
+        kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         collection = current_user.collections.where(id: params[:collection_id]).take
