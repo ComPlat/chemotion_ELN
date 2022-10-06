@@ -134,14 +134,20 @@ module Chemotion
           #cannot parse response from json, return as normal
           rsp_io = StringIO.new(rsp.body.to_s)
           spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-          Util.extract_zip(rsp_io) << spc_type
+          invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
+          extracted_array = Util.extract_zip(rsp_io)
+          extracted_array << spc_type
+          extracted_array << invalid_molfile
         else
           if json_rsp['invalid_molfile'] == true
             [json_rsp, nil, nil]
           else
             rsp_io = StringIO.new(rsp.body.to_s)
             spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-            Util.extract_zip(rsp_io) << spc_type
+            invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
+            extracted_array = Util.extract_zip(rsp_io)
+            extracted_array << spc_type
+            extracted_array << invalid_molfile
           end
         end
       end

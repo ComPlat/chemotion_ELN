@@ -197,9 +197,9 @@ module AttachmentJcampProcess
   def create_process(is_regen)
     params = build_params
 
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
 
-    check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
+    check_invalid_molfile(invalid_molfile)
 
     if spc_type == 'bagit'
       jcamp_att = nil
@@ -245,9 +245,9 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
 
-    check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
+    check_invalid_molfile(invalid_molfile)
 
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
     jcamp_att.update_prediction(params, spc_type, is_regen)
@@ -269,8 +269,8 @@ module AttachmentJcampProcess
     jcamp_att
   end
 
-  def check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
-    if tmp_img.nil? && spc_type.nil? && tmp_jcamp['invalid_molfile'] == true
+  def check_invalid_molfile(invalid_molfile=false)
+    if invalid_molfile == true
       # add message when invalid molfile
       Message.create_msg_notification(
         channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
