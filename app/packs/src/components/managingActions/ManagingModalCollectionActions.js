@@ -58,8 +58,7 @@ export default class ManagingModalCollectionActions extends React.Component {
         label: collection.label,
         depth: depth,
         first: collection.first,
-        is_shared: collection.is_shared,
-        is_sync_to_me: collection.is_sync_to_me
+        is_shared: collection.is_shared
       });
       if (collection.children && collection.children.length > 0) {
         this.makeTree(tree, collection.children, depth + 1)
@@ -74,7 +73,7 @@ export default class ManagingModalCollectionActions extends React.Component {
       const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
       const className = leaf.first ? "separator" : "";
       return {
-        value: `${leaf.id}-${leaf.is_sync_to_me ? "is_sync_to_me" : ""}`,
+        value: `${leaf.id}-${leaf.is_shared ? "is_shared" : ""}`,
         label: indent + leaf.label,
         className: className
       };
@@ -85,11 +84,11 @@ export default class ManagingModalCollectionActions extends React.Component {
   handleSubmit() {
     const { selected, newLabel } = this.state;
     const collection_id = selected && parseInt(selected.split("-")[0]);
-    const is_sync_to_me = selected && selected.split("-")[1] == "is_sync_to_me";
+    const is_shared = selected && selected.split("-")[1] == "is_shared";
     const ui_state = UIStore.getState();
 
     this.props.action({
-      ui_state, collection_id, is_sync_to_me, newLabel
+      ui_state, collection_id, is_shared, newLabel
     });
     this.props.onHide();
   }

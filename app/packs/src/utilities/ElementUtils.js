@@ -211,20 +211,20 @@ const SameEleTypId = (orig, next) => {
 };
 
 const UrlSilentNavigation = (element) => {
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection, isShared } = UIStore.getState();
   if (element) {
     let elementString = `${element.type}`;
     if (!isNaN(element.id)) elementString += `/${element.id}`;
 
     const collectionUrl = `${currentCollection.id}/${elementString}`;
     Aviator.navigate(
-      isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`,
+      isShared ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`,
       { silent: true },
     );
   } else {
     const cId = currentCollection.id;
     Aviator.navigate(
-      isSync ? `/scollection/${cId}/` : `/collection/${cId}/`,
+      isShared ? `/scollection/${cId}/` : `/collection/${cId}/`,
       { silent: true },
     );
   }

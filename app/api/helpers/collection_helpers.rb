@@ -10,15 +10,18 @@ module CollectionHelpers
         Collection.find_by(id: id.to_i, shared_by_id: current_user.id))&.id.to_i
   end
 
-  def fetch_collection_w_current_user(id, is_sync = false)
-    if is_sync
-      SyncCollectionsUser.find_by(id: id.to_i, user_id: user_ids)
+  def fetch_collection_w_current_user(id, is_shared = false)
+    if is_shared
+      fetch_collection_from_col_acl(id.to_i, user_ids)
     else
-      Collection.find_by(id: id.to_i, user_id: user_ids) ||
-        Collection.find_by(id: id.to_i, shared_by_id: current_user.id)
+      Collection.find_by(id: id.to_i, user_id: user_ids) || fetch_collection_from_col_acl(id.to_i, current_user.id)
     end
   end
 
+  def fetch_collection_from_col_acl(col_id, user_id)
+    collection_acl = CollectionAcl.find_by('collection_id = ? and user_id in (?)', col_id, user_id)
+    Collection.find(collection_acl.collection_id)
+  end
   # desc: given an id of coll or sync coll return detail levels as array
   def detail_level_for_collection(id, is_sync = false)
     dl = (is_sync && SyncCollectionsUser || Collection).find_by(
@@ -69,11 +72,11 @@ module CollectionHelpers
 
   def fetch_collection_by_ui_state_params_and_pl(pl = 2)
     current_collection = params['ui_state']['currentCollection']
-    @collection = if current_collection['is_sync_to_me']
-      Collection.joins(:sync_collections_users).where(
-        'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and sync_collections_users.permission_level >= ?',
+    @collection = if current_collection['is_shared']
+      Collection.joins(:collection_acls).includes(:user).where(
+        'collection_acls.user_id in (?) and collection_acls.collection_id = ? and sync_collections_users.permission_level >= ?',
+        current_user.id,
         current_collection['id'],
-        user_ids,
         pl
       ).first
     else
