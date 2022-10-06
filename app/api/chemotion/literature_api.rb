@@ -138,11 +138,11 @@ module Chemotion
       namespace :collection do
         params do
           requires :id, type: Integer
-          optional :is_sync_to_me, type: Boolean, default: false
+          optional :is_shared, type: Boolean, default: false
         end
 
         after_validation do
-          set_var(params[:id], params[:is_sync_to_me])
+          set_var(params[:id], params[:is_shared])
           error!(404) unless @c
         end
 
@@ -173,7 +173,7 @@ module Chemotion
             use :ui_state_params
           end
           requires :id, type: Integer
-          optional :is_sync_to_me, type: Boolean, default: false
+          optional :is_shared, type: Boolean, default: false
           optional :ref, type: Hash do
             optional :is_new, type: Boolean
             optional :id, types: [Integer, String]
@@ -188,7 +188,7 @@ module Chemotion
         end
 
         after_validation do
-          set_var(params[:id], params[:is_sync_to_me])
+          set_var(params[:id], params[:is_shared])
           error!(404) unless @c
           @sids = @dl_s > 1 ? @c.samples.by_ui_state(declared(params)[:sample]).pluck(:id) : []
           @rids = @dl_r > 1 ? @c.reactions.by_ui_state(declared(params)[:reaction]).pluck(:id) : []

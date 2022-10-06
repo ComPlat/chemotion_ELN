@@ -98,9 +98,9 @@ export default class ElementsTableEntries extends Component {
   }
 
   showDetails(element) {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection, isShared } = UIStore.getState();
     const { id, type } = element;
-    const uri = isSync
+    const uri = isShared
       ? `/scollection/${currentCollection.id}/${type}/${id}`
       : `/collection/${currentCollection.id}/${type}/${id}`;
     Aviator.navigate(uri, { silent: true });

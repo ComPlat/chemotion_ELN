@@ -8,7 +8,7 @@ import ResearchPlan from 'src/models/ResearchPlan';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
-    const { selection, collectionId, page, isSync, moleculeSort, isPublic } = params;
+    const { selection, collectionId, page, isShared, moleculeSort, isPublic } = params;
     return fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
       credentials: 'same-origin',
       method: 'POST',
@@ -21,7 +21,7 @@ export default class SearchFetcher {
         collection_id: collectionId,
         page: page || 1,
         per_page: selection.page_size,
-        is_sync: isSync || false,
+        is_shared: isShared || false,
         molecule_sort: moleculeSort || false,
         is_public: isPublic || false,
       })

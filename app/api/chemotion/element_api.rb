@@ -14,7 +14,7 @@ module Chemotion
       params do
         optional :currentCollection, default: Hash.new, type: Hash do
           optional :id, type: Integer
-          optional :is_sync_to_me, type: Boolean, default: false
+          optional :is_shared, type: Boolean, default: false
         end
         optional :options, type: Hash do
           optional :deleteSubsamples, type: Boolean, default: false
@@ -49,9 +49,9 @@ module Chemotion
                 when 'DELETE' then 2
                 else 5
                 end
-          if params[:currentCollection][:is_sync_to_me]
-            @s_collection = SyncCollectionsUser.where(
-              'id = ? and user_id in (?) and permission_level > ?',
+          if params[:currentCollection][:is_shared]
+            @s_collection = CollectionAcl.where(
+              'collection_id = ? and user_id in (?) and permission_level > ?',
               params[:currentCollection][:id],
               user_ids,
               pl
@@ -59,11 +59,10 @@ module Chemotion
             @collection = Collection.find(@s_collection.collection_id)
           else
             @collection = Collection.where(
-              'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level > ?)) OR shared_by_id = ?)',
+              'id = ? AND (user_id in (?) AND (is_shared IS NOT TRUE OR permission_level > ?))',
               params[:currentCollection][:id],
               user_ids,
-              pl,
-              current_user.id
+              pl
             ).first
           end
         end
@@ -127,7 +126,7 @@ module Chemotion
         params do
           optional :currentCollection, default: Hash.new, type: Hash do
             optional :id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
+            optional :is_shared, type: Boolean, default: false
           end
           optional :sample, type: Hash do
             use :ui_state_params
