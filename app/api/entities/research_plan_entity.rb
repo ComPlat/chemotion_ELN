@@ -2,6 +2,7 @@
 
 module Entities
   class ResearchPlanEntity < ApplicationEntity
+    # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
       expose! :body
       expose! :container,                                    using: 'Entities::ContainerEntity'
@@ -18,6 +19,7 @@ module Entities
       expose! :wellplates,              anonymize_with: [],  using: 'Entities::WellplateEntity'
       expose! :segments,                anonymize_with: [],  using: 'Entities::SegmentEntity'
     end
+    # rubocop:enable Layout/ExtraSpacing
 
     expose_timestamps
 
@@ -27,7 +29,7 @@ module Entities
       displayed_in_list? ? nil : object.container
     end
 
-    def is_restricted
+    def is_restricted # rubocop:disable Naming/PredicateName
       detail_levels[ResearchPlan] < 10
     end
 
