@@ -34,9 +34,9 @@ const collect = (connect, monitor) => ({
 
 class ScreenResearchPlans extends Component {
   handleResearchPlanClick(researchPlan) { // eslint-disable-line class-methods-use-this
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection, isShared } = UIStore.getState();
     const researchPlanID = researchPlan.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
+    const uri = `/${isShared ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
     Aviator.navigate(uri, { silent: true });
     researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
   }

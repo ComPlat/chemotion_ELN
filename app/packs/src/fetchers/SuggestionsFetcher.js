@@ -1,10 +1,10 @@
 export default class SuggestionsFetcher {
-  static fetchSuggestionsForCurrentUser(elementType, query, collectId, isSync = false) {
+  static fetchSuggestionsForCurrentUser(elementType, query, collectId, isShared = false) {
     const urlParams=new URLSearchParams({
       query: encodeURIComponent(query),
       collection_id: collectId,
-      is_sync: isSync}) 
-      
+      is_shared: isShared})
+
       elementType=elementType.replaceAll(" ", "_");
 
     return fetch(

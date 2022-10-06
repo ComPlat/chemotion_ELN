@@ -192,7 +192,7 @@ export default class LiteratureDetails extends Component {
     const { currentCollection, sorting } = state;
 
     if (cCol && currentCollection &&
-      (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
+      (cCol.id !== currentCollection.id || cCol.is_shared !== currentCollection.is_shared)
     ) {
       LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
 
@@ -221,7 +221,7 @@ export default class LiteratureDetails extends Component {
         sample,
         reaction,
         id: currentCollection.id,
-        is_sync_to_me: currentCollection.is_sync_to_me
+        is_shared: currentCollection.is_shared
 
       };
       LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
@@ -281,7 +281,7 @@ export default class LiteratureDetails extends Component {
       sample,
       reaction,
       id: currentCollection.id,
-      is_sync_to_me: currentCollection.is_sync_to_me,
+      is_shared: currentCollection.is_shared,
       ref: { ...literature, doi: sanitizeDoi(doi || '') }
     };
     LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {

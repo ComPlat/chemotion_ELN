@@ -71,7 +71,7 @@ class UIStore {
       currentSearchByID: null,
       showCollectionManagement: false,
       showDeviceManagement: false,
-      isSync: false,
+      isShared: false,
       showModal: false,
       modalParams: {},
       hasChemSpectra: false,
@@ -299,7 +299,7 @@ class UIStore {
 
   handleSelectCollection(collection, hasChanged = false, isShared) {
     const state = this.state;
-    const isSync = collection.is_sync_to_me ? true : false;
+    isShared = isShared ? isShared : collection.is_shared ? true : false;
     const { filterCreatedAt, fromDate, toDate, productOnly } = state;
 
     if (!hasChanged) {
@@ -316,7 +316,7 @@ class UIStore {
     }
 
     if (hasChanged && !collection.noFetch) {
-      this.state.isSync = isSync;
+      this.state.isShared = isShared;
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
@@ -370,7 +370,7 @@ class UIStore {
               ElementActions.fetchGenericElsByCollectionId(
                 collection.id,
                 Object.assign(params, { page, name: key }),
-                isSync,
+                isShared,
                 key
               );
             }
@@ -382,7 +382,7 @@ class UIStore {
 
   handleSelectCollectionForSearchById(layout, collection) {
     const state = this.state;
-    const isSync = state.isSync;
+    const isShared = state.isShared;
     const searchResult = { ...state.currentSearchByID };
     const { filterCreatedAt, fromDate, toDate, productOnly } = state;
     const { moleculeSort } = ElementStore.getState();
@@ -422,7 +422,7 @@ class UIStore {
         ElementActions.fetchBasedOnSearchResultIds.defer({
           selection,
           collectionId: collection.id,
-          isSync: isSync,
+          isShared: isShared,
           page_size: per_page,
           page: searchResult[key].page,
           moleculeSort
@@ -452,7 +452,7 @@ class UIStore {
 
   handleSelectCollectionWithoutUpdating(collection) {
     this.state.currentCollection = collection;
-    this.state.isSync = collection.is_sync_to_me ? true : false;
+    this.state.isShared = collection.is_shared ? true : false;
   }
 
   handleClearSearchSelection() {
