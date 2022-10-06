@@ -106,7 +106,7 @@ export default class Navigation extends React.Component {
     ElementActions.fetchBasedOnSearchSelectionAndCollection({
       selection,
       collectionId: uiState.currentCollection.id,
-      isSync: uiState.isSync
+      isShared: uiState.isShared
     });
   }
 

@@ -7,10 +7,10 @@ import { Tooltip, OverlayTrigger, Popover } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
 const handleSampleClick = (type, id) => {
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection, isShared } = UIStore.getState();
   if (!isNaN(id)) type += `/${id}`;
   const collectionUrl = `${currentCollection.id}/${type}`;
-  Aviator.navigate(isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`);
+  Aviator.navigate(isShared ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`);
 };
 
 const show = (opt, iconClass) => {
