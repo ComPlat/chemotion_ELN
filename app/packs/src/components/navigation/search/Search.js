@@ -38,20 +38,20 @@ export default class Search extends React.Component {
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const isPublic = this.props.isPublic;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const isShared = currentCollection ? currentCollection.is_shared : false;
     selection.elementType = this.state.elementType;
     UIActions.setSearchSelection(selection);
     selection.page_size = uiState.number_of_results;
     ElementActions.fetchBasedOnSearchSelectionAndCollection(
-      { selection, collectionId, isSync, isPublic });
+      { selection, collectionId, isShared, isPublic });
   }
 
   search(query) {
     const { currentCollection } = UIStore.getState();
     const id = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const isShared = currentCollection ? currentCollection.is_shared : false;
     return SuggestionsFetcher.fetchSuggestionsForCurrentUser(
-      this.state.elementType.toLowerCase(), query, id, isSync
+      this.state.elementType.toLowerCase(), query, id, isShared
     );
   }
 
@@ -59,7 +59,7 @@ export default class Search extends React.Component {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const isShared = currentCollection ? currentCollection.is_shared : false;
     const isPublic = this.props.isPublic;
     let tanimoto = this.state.tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
@@ -75,7 +75,7 @@ export default class Search extends React.Component {
     UIActions.setSearchSelection(selection);
     ElementActions.fetchBasedOnSearchSelectionAndCollection(
       {
-        selection, collectionId, isSync, isPublic
+        selection, collectionId, isShared, isPublic
       });
   }
 
@@ -83,7 +83,7 @@ export default class Search extends React.Component {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const isShared = currentCollection ? currentCollection.is_shared : false;
     const { genericEl } = this.state;
 
 
@@ -103,16 +103,16 @@ export default class Search extends React.Component {
       selection,
       genericElName: genericEl.name,
       collectionId,
-      isSync,
+      isShared,
     });
     this.setState({ showGenericElCriteria: false });
   }
 
   handleClearSearchSelection() {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection, isShared } = UIStore.getState();
     this.setState({ elementType: 'all' })
     currentCollection['clearSearch'] = true;
-    isSync ? UIActions.selectSyncCollection(currentCollection)
+    isShared ? UIActions.selectSyncCollection(currentCollection)
       : UIActions.selectCollection(currentCollection);
   }
 

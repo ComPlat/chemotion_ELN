@@ -160,7 +160,7 @@ module Chemotion
         collection_id =
           if params[:collection_id]
             Collection
-              .belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+              .belongs_to_current_user(current_user.id, current_user.group_ids)
               .find_by(id: params[:collection_id])&.id
           elsif params[:sync_collection_id]
             current_user

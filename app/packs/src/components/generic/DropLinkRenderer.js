@@ -5,10 +5,10 @@ import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
 const linkSample = (type, id) => {
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection, isShared } = UIStore.getState();
   const collectionUrl = (!isNaN(id)) ?
     `${currentCollection.id}/${type}/${id}` : `${currentCollection.id}/${type}`;
-  Aviator.navigate(isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`);
+  Aviator.navigate(isShared ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`);
 };
 
 const DropLinkRenderer = (props) => {

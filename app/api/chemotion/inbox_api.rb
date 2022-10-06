@@ -61,7 +61,7 @@ module Chemotion
           search_string.chomp!(' EA')
           search_string.sub!(/-?[a-zA-Z]$/, '')
           search_string.sub!(/^[a-zA-Z0-9]+-/, '')
-          collection_ids = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).map(&:id)
+          collection_ids = Collection.belongs_to_current_user(current_user.id, current_user.group_ids).map(&:id)
           samples = Sample.by_exact_name(search_string)
                           .joins(:collections_samples)
                           .where(collections_samples: { collection_id: collection_ids }).uniq

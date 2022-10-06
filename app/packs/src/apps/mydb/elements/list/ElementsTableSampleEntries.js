@@ -40,8 +40,8 @@ const buildFlattenSampleIds = (displayedMoleculeGroup) => {
 };
 
 const showDetails = (id) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/sample/${id}`;
+  const { currentCollection, isShared } = UIStore.getState();
+  const uri = `/${isShared ? 's' : ''}collection/${currentCollection.id}/sample/${id}`;
   Aviator.navigate(uri, { silent: true });
   sampleShowOrNew({ params: { sampleID: id, collectionID: currentCollection.id } });
 };

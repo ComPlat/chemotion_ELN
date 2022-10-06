@@ -37,7 +37,7 @@ export default class ContextActions extends React.Component {
   isCreateDisabled() {
     const { currentCollection } = this.state.uiState;
     return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked)
-      || (currentCollection.is_shared && currentCollection.is_synchronized == false) || (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write));
+      || (currentCollection.is_shared == false) || (currentCollection.is_shared && currentCollection.permission_level != PermissionConst.Write));
   }
 
   isDisabled() {

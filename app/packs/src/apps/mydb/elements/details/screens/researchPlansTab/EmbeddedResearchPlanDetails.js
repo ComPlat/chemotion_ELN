@@ -129,9 +129,9 @@ export default class EmbeddedResearchPlanDetails extends Component {
   }
 
   openResearchPlan() {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection, isShared } = UIStore.getState();
     const researchPlanID = this.state.researchPlan.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
+    const uri = `/${isShared ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
     Aviator.navigate(uri, { silent: true });
     researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
   }

@@ -26,13 +26,13 @@ module Chemotion
             optional :from_date, type: Date
             optional :to_date, type: Date
             optional :collection_id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
+            optional :is_shared, type: Boolean, default: false
           end
           optional :limit, type: Integer, desc: "Limit number of samples"
         end
 
         before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_shared])
           @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read?
         end
@@ -193,14 +193,14 @@ module Chemotion
           end
         elsif params[:collection_id]
           begin
-            c = Collection.belongs_to_or_shared_by(
-            current_user.id, current_user.group_ids
+            c = Collection.belongs_to_current_user(
+              current_user.id, current_user.group_ids
             ).find(params[:collection_id])
 
             !c.is_shared && (c.shared_by_id != current_user.id) &&
             (own_collection = true)
 
-            sample_scope = Collection.belongs_to_or_shared_by(
+            sample_scope = Collection.belongs_to_current_user(
               current_user.id, current_user.group_ids
             ).find(params[:collection_id]).samples
           rescue ActiveRecord::RecordNotFound

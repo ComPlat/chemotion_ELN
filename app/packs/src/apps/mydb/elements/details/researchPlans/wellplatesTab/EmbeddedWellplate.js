@@ -22,9 +22,9 @@ export default class EmbeddedWellplate extends Component {
   }
 
   openWellplate() {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection, isShared } = UIStore.getState();
     const wellplateID = this.props.wellplate.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
+    const uri = `/${isShared ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
     Aviator.navigate(uri, { silent: true });
     wellplateShowOrNew({ params: { wellplateID } });
   }
