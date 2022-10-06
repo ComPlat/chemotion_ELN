@@ -37,7 +37,7 @@ module Chemotion
         # we are using POST because the fetchers don't support GET requests with body data
         post do
           cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id],
-                                                   params[:ui_state][:is_sync_to_me])
+                                                   params[:ui_state][:is_shared])
           wellplates = Wellplate
                        .includes_for_list_display
                        .by_collection_id(cid)
@@ -64,7 +64,7 @@ module Chemotion
       get do
         scope = if params[:collection_id]
                   begin
-                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                    Collection.belongs_to_current_user(current_user.id, current_user.group_ids)
                               .find(params[:collection_id]).wellplates
                   rescue ActiveRecord::RecordNotFound
                     Wellplate.none

@@ -45,7 +45,7 @@ module Entities
     end
 
     def shared_by
-      return unless object.is_shared
+      # return unless object.is_shared
 
       object.user || User.new
     end
