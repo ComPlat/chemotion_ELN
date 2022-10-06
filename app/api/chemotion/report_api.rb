@@ -55,7 +55,7 @@ module Chemotion
           force_molfile_selection
         end
         c_id = params[:uiState][:currentCollection]
-        c_id = SyncCollectionsUser.find(c_id)&.collection_id if params[:uiState][:isSync]
+        c_id = CollectionAcl.find_by(collection_id: c_id)&.collection_id if params[:uiState][:isShared]
         %i[sample reaction wellplate].each do |table|
           next unless (p_t = params[:uiState][table])
 
@@ -111,7 +111,7 @@ module Chemotion
         filename = CGI.escape("reaction_smiles_#{time_now}.csv")
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
         real_coll_id = fetch_collection_id_w_current_user(
-          params[:uiState][:currentCollection], params[:uiState][:isSync]
+          params[:uiState][:currentCollection], params[:uiState][:isShared]
         )
         return unless (p_t = params[:uiState][:reaction])
 

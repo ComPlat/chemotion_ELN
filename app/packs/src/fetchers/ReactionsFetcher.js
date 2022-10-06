@@ -34,8 +34,8 @@ export default class ReactionsFetcher {
       });
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'reactions', Reaction);
+  static fetchByCollectionId(id, queryParams = {}, isShared = false) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, isShared, 'reactions', Reaction);
   }
 
   static findByShortLabel(shortLabel) {

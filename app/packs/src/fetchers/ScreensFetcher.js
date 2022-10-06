@@ -23,8 +23,8 @@ export default class ScreensFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'screens', Screen);
+  static fetchByCollectionId(id, queryParams = {}, isShared = false) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, isShared, 'screens', Screen);
   }
 
   static update(screen) {

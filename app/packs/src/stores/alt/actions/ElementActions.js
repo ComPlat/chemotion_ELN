@@ -202,9 +202,9 @@ class ElementActions {
   }
 
   // -- Generic --
-  fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
+  fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsShared = false, elementType) {
     return (dispatch) => {
-      GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsShared)
         .then((result) => { dispatch({ result, type: elementType }); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
@@ -254,9 +254,9 @@ class ElementActions {
     };
   }
 
-  fetchReactionsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchReactionsByCollectionId(id, queryParams = {}, collectionIsShared = false) {
     return (dispatch) => {
-      ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsShared)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -265,9 +265,9 @@ class ElementActions {
     };
   }
 
-  fetchWellplatesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchWellplatesByCollectionId(id, queryParams = {}, collectionIsShared = false) {
     return (dispatch) => {
-      WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsShared)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -276,9 +276,9 @@ class ElementActions {
     };
   }
 
-  fetchScreensByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchScreensByCollectionId(id, queryParams = {}, collectionIsShared = false) {
     return (dispatch) => {
-      ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsShared)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -288,9 +288,9 @@ class ElementActions {
   }
 
 
-  fetchResearchPlansByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchResearchPlansByCollectionId(id, queryParams = {}, collectionIsShared = false) {
     return (dispatch) => {
-      ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsShared)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {

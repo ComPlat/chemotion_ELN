@@ -130,8 +130,8 @@ export default class CollectionSubtree extends React.Component {
     const { root } = this.state;
     const { isRemote } = this.state;
     const isTakeOwnershipAllowed = this.state.root.permission_level === 5;
-    const isSync = !!((root.sharer && root.user && root.user.type !== 'Group'));
-    if ((isRemote || isSync) && isTakeOwnershipAllowed) {
+    const isShared = !!((root.sharer && root.user && root.user.type !== 'Group'));
+    if ((isRemote || isShared) && isTakeOwnershipAllowed) {
       return (
         <div className="take-ownership-btn">
           <i className="fa fa-exchange" onClick={e => this.handleTakeOwnership(e)} />
@@ -142,8 +142,8 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleTakeOwnership() {
-    const isSync = !!this.state.root.sharer;
-    CollectionActions.takeOwnership({ id: this.state.root.id, isSync });
+    const isShared = !!this.state.root.sharer;
+    CollectionActions.takeOwnership({ id: this.state.root.id, isShared });
   }
 
   handleClick(e) {
