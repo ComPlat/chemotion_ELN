@@ -30,28 +30,28 @@ export default class Search extends React.Component {
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const isPublic = this.props.isPublic;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const isShared = currentCollection ? currentCollection.is_shared : false;
     selection.elementType = this.state.elementType;
     UIActions.setSearchSelection(selection);
     selection.page_size = uiState.number_of_results;
     ElementActions.fetchBasedOnSearchSelectionAndCollection(
-      { selection, collectionId, isSync, isPublic });
+      { selection, collectionId, isShared, isPublic });
   }
 
   search(query) {
     const { currentCollection } = UIStore.getState();
     const id = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const isShared = currentCollection ? currentCollection.is_shared : false;
     return SuggestionsFetcher.fetchSuggestionsForCurrentUser(
-      this.state.elementType.toLowerCase(), query, id, isSync
+      this.state.elementType.toLowerCase(), query, id, isShared
     );
   }
 
   handleClearSearchSelection() {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection, isShared } = UIStore.getState();
     this.setState({ elementType: 'all' })
     currentCollection['clearSearch'] = true;
-    isSync ? UIActions.selectSyncCollection(currentCollection)
+    isShared ? UIActions.selectSyncCollection(currentCollection)
       : UIActions.selectCollection(currentCollection);
   }
 

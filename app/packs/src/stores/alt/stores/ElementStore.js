@@ -367,7 +367,7 @@ class ElementStore {
   handleOpenDeviceAnalysis({ device, type }) {
     switch (type) {
       case "NMR":
-        const { currentCollection, isSync } = UIStore.getState();
+        const { currentCollection, isShared } = UIStore.getState();
         const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR")
 
         // update Device in case of sample was added by dnd and device was not saved
@@ -375,12 +375,12 @@ class ElementStore {
         ElementActions.saveDevice(device)
 
         if (deviceAnalysis) {
-          Aviator.navigate(isSync
+          Aviator.navigate(isShared
             ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
             : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
           )
         } else {
-          Aviator.navigate(isSync
+          Aviator.navigate(isShared
             ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
             : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
           )
@@ -474,10 +474,10 @@ class ElementStore {
   }
 
   handleSaveDeviceAnalysis(analysis) {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection, isShared } = UIStore.getState();
     this.state.currentElement = analysis
 
-    Aviator.navigate(isSync
+    Aviator.navigate(isShared
       ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
       : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
     )
@@ -586,7 +586,7 @@ class ElementStore {
 
   fetchElementsByCollectionIdandLayout() {
     const { currentSearchSelection, currentCollection } = UIStore.getState();
-    const isSync = !!(currentCollection && currentCollection.is_sync_to_me);
+    const isShared = !!(currentCollection && currentCollection.is_shared);
     if (currentSearchSelection != null) {
       const { currentType } = UserStore.getState();
       this.handleRefreshElements(currentType);
@@ -594,14 +594,13 @@ class ElementStore {
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
-        
+
         if (layout.sample && layout.sample > 0) { this.handleRefreshElements('sample'); }
         if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
-        if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
-
+        if (!isShared && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
         const { currentUser, genericEls } = UserStore.getState();
         if (MatrixCheck(currentUser.matrix, 'genericElement')) {
@@ -730,7 +729,7 @@ class ElementStore {
   handleSplitAsSubsamples(ui_state) {
     ElementActions.fetchSamplesByCollectionId(
       ui_state.currentCollection.id, {},
-      ui_state.isSync, this.state.moleculeSort
+      ui_state.isShared, this.state.moleculeSort
     );
   }
 
@@ -747,7 +746,7 @@ class ElementStore {
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchSamplesByCollectionId(
       ui_state.currentCollection.id, {},
-      ui_state.isSync, this.state.moleculeSort
+      ui_state.isShared, this.state.moleculeSort
     );
   }
 
@@ -1088,7 +1087,7 @@ class ElementStore {
         selection: currentSearchSelection,
         collectionId: uiState.currentCollection.id,
         page,
-        isSync: uiState.isSync,
+        isShared: uiState.isShared,
         moleculeSort
       });
     } else if (currentSearchByID != null) {
@@ -1108,10 +1107,10 @@ class ElementStore {
         'fetchCellLinesByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
-        ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        ElementActions[fn](uiState.currentCollection.id, params, uiState.isShared, moleculeSort);
       } else {
-        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isShared, type);
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isShared, moleculeSort);
       }
     }
 

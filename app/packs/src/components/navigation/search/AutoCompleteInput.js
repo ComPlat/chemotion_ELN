@@ -231,9 +231,9 @@ export default class AutoCompleteInput extends React.Component {
       this.setState({
         value: ''
       })
-      let {currentCollection, isSync} = UIStore.getState();
+      let {currentCollection, isShared} = UIStore.getState();
       currentCollection['clearSearch'] = true
-      isSync ? UIActions.selectSyncCollection(currentCollection)
+      isShared ? UIActions.selectSyncCollection(currentCollection)
         : UIActions.selectCollection(currentCollection);
 
       return 0

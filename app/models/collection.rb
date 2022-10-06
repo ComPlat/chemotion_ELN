@@ -76,19 +76,16 @@ class Collection < ApplicationRecord
 
   scope :ordered, -> { order('position ASC') }
   scope :unshared, -> { where(is_shared: false) }
-  scope :synchronized, -> { where(is_synchronized: true) }
-  scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
+  # scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
+  scope :shared, ->(user_id) { where('is_shared = ?', true) }
   scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
-  scope :belongs_to_or_shared_by, lambda { |user_id, with_group = false|
+  scope :belongs_to_current_user, ->(user_id, with_group = false) do
     if with_group.present?
-      where(
-        'user_id = ? OR shared_by_id = ? OR (user_id IN (?) AND is_locked = false)',
-        user_id, user_id, with_group
-      )
+      where('user_id = ? OR (user_id IN (?) AND is_locked = false)', user_id, with_group)
     else
-      where('user_id = ? OR shared_by_id = ?', user_id, user_id)
+      where('user_id = ?', user_id)
     end
-  }
+  end
 
   default_scope { ordered }
 

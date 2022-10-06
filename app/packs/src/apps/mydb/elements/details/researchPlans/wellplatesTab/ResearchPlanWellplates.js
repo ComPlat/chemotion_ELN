@@ -30,9 +30,9 @@ const collect = (connect, monitor) => ({
 
 class ResearchPlanWellplates extends Component {
   handleWellplateClick(wellplate) { // eslint-disable-line class-methods-use-this
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection, isShared } = UIStore.getState();
     const wellplateID = wellplate.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
+    const uri = `/${isShared ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
     Aviator.navigate(uri, { silent: true });
     wellplateShowOrNew({ params: { wellplateID } });
   }
