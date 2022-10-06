@@ -6,14 +6,11 @@ module Entities
       expose! :collections,                                     using: 'Entities::CollectionEntity'
       expose! :literatures
       expose! :products,                                        using: 'Entities::ReactionMaterialReportEntity'
+      expose! :purification_solvents,                           using: 'Entities::ReactionMaterialReportEntity'
       expose! :reactants,                                       using: 'Entities::ReactionMaterialReportEntity'
       expose! :solvents,                                        using: 'Entities::ReactionMaterialReportEntity'
       expose! :starting_materials,                              using: 'Entities::ReactionMaterialReportEntity'
       expose! :temperature_display_with_unit
-    end
-
-    with_options(anonymize_below: 10) do
-      expose! :purification_solvents, anonymize_with: [],       using: 'Entities::ReactionMaterialReportEntity'
     end
 
     private

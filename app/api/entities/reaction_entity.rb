@@ -11,6 +11,7 @@ module Entities
       expose! :is_restricted
       expose! :observation,                                 unless: :displayed_in_list
       expose! :products,                                                                using: 'Entities::ReactionMaterialEntity'
+      expose! :purification_solvents, anonymize_with: [],                               using: 'Entities::ReactionMaterialEntity'
       expose! :reactants,                                                               using: 'Entities::ReactionMaterialEntity'
       expose! :role
       expose! :solvents,                                                                using: 'Entities::ReactionMaterialEntity'
@@ -27,7 +28,6 @@ module Entities
       expose! :name
       expose! :origin
       expose! :purification,          anonymize_with: [],   unless: :displayed_in_list
-      expose! :purification_solvents, anonymize_with: [],                               using: 'Entities::ReactionMaterialEntity'
       expose! :reaction_svg_file
       expose! :rf_value,                                    unless: :displayed_in_list
       expose! :rinchi_long_key
