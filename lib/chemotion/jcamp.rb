@@ -134,14 +134,20 @@ module Chemotion
           #cannot parse response from json, return as normal
           rsp_io = StringIO.new(rsp.body.to_s)
           spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-          Util.extract_zip(rsp_io) << spc_type
+          invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
+          extracted_array = Util.extract_zip(rsp_io)
+          extracted_array << spc_type
+          extracted_array << invalid_molfile
         else
           if json_rsp['invalid_molfile'] == true
             [json_rsp, nil, nil]
           else
             rsp_io = StringIO.new(rsp.body.to_s)
             spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-            Util.extract_zip(rsp_io) << spc_type
+            invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
+            extracted_array = Util.extract_zip(rsp_io)
+            extracted_array << spc_type
+            extracted_array << invalid_molfile
           end
         end
       end
@@ -288,6 +294,48 @@ module Chemotion
         def self.exec(molfile, spectrum)
           rsp = stub_request(molfile, spectrum)
           rsp.code == 200 ? rsp.parsed_response : nil
+        end
+      end
+    end
+  end
+end
+
+# Chemotion module
+module Chemotion
+  # process NMRium files
+  module Jcamp
+    # CreateFromNMRium module
+    module CreateFromNMRium
+      include HTTParty
+
+      def self.convert_nmrium_data(path)
+        response = nil
+        url = Rails.configuration.spectra.url
+        port = Rails.configuration.spectra.port
+        begin
+          File.open(path, 'r') do |f|
+            response = HTTParty.post(
+              "http://#{url}:#{port}/nmrium",
+              body: {
+                multipart: true,
+                file: f
+              }
+            )
+          end
+        rescue => error
+          response = nil
+        end
+        
+        response
+      end
+
+      def self.jcamp_from_nmrium(path)
+        rsp = convert_nmrium_data(path)
+        unless rsp.nil? || rsp.code != 200
+          tmp_jcamp = Util.generate_tmp_file(rsp.body.to_s)
+          tmp_jcamp
+        else
+          nil
         end
       end
     end

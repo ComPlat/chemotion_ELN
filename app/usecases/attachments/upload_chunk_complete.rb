@@ -67,6 +67,7 @@ module Usecases
 
         { ok: true, statusText: status_text }
       end
+
     end
   end
 end

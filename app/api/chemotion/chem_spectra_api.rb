@@ -6,9 +6,9 @@ module Chemotion
   class ChemSpectraAPI < Grape::API
     format :json
 
-    helpers do # rubocop:disable BlockLength
+    helpers do # rubocop:disable Metrics/BlockLength
       def encode64(path)
-        target = File.exist?(path) && IO.binread(path) || false
+        target = (File.exist?(path) && IO.binread(path)) || false
         Base64.encode64(target)
       end
 
@@ -29,9 +29,7 @@ module Chemotion
       end
 
       def get_molfile(params)
-        if params[:molfile].is_a? String
-          params[:molfile] = { tempfile: Tempfile.new }
-        end
+        params[:molfile] = { tempfile: Tempfile.new } if params[:molfile].is_a? String
         params[:molfile][:tempfile]
       end
 
@@ -44,7 +42,7 @@ module Chemotion
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
-      rescue
+      rescue StandardError
         { status: false }
       end
 
@@ -56,7 +54,7 @@ module Chemotion
         )
         predict = JSON.parse(params['predict'])
         to_zip_file(params[:filename], params[:src], jcamp, img, predict)
-      rescue
+      rescue StandardError
         error!('Save files error!', 500)
       end
 
@@ -69,12 +67,18 @@ module Chemotion
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
-      rescue
+      rescue StandardError
         { status: false }
+      end
+
+      def raw_file(att)
+        Base64.encode64(att.read_file)
+      rescue StandardError
+        nil
       end
     end
 
-    resource :chemspectra do # rubocop:disable BlockLength
+    resource :chemspectra do # rubocop:disable Metrics/BlockLength
       resource :file do
         desc 'Convert file'
         params do
@@ -185,6 +189,18 @@ module Chemotion
 
           content_type('application/json')
           { smi: m[:smiles], mass: m[:mass], svg: m[:svg], status: true }
+        end
+      end
+
+      resource :nmrium_wrapper do
+        desc 'Return url of nmrium wrapper'
+        route_param :host_name do
+          get do
+            protocol = Rails.configuration.spectra.nmrdisplayer[:protocol]
+            url = Rails.configuration.spectra.nmrdisplayer[:url]
+            port = Rails.configuration.spectra.nmrdisplayer[:port]
+            { protocol: protocol, url: url, port: port }
+          end
         end
       end
     end

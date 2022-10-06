@@ -7,5 +7,6 @@ if File.exist? Rails.root.join('config', 'spectra.yml')
     config.spectra = ActiveSupport::OrderedOptions.new
     config.spectra.url = spectra_config[:url]
     config.spectra.port = spectra_config[:port]
+    config.spectra.nmrdisplayer = spectra_config[:nmrdisplayer]
   end
 end

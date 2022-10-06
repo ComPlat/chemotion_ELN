@@ -66,6 +66,68 @@ NB:
 
 see online [docs](https://www.chemotion.net/chemotionsaurus/docs/eln/docker_installation)
 
+## Setup for using NMRium in Chemotion ELN
+
+### 1. Setup by your own machine
+Checkout this repository and follow the setup instruction [https://github.com/NFDI4Chem/nmrium-react-wrapper](https://github.com/NFDI4Chem/nmrium-react-wrapper)
+
+Edit file following fields in `config/spectra.yml` in Chemotion ELN as follow, depend on your information:
+```yaml
+development:
+  :url: '<your_chem_spectra_development_url'
+  :port: 'your_chem_spectra_development_port'
+  :nmrdisplayer:
+    :protocol: '<your_protocol_of_development_env>'
+    :url: '<your_developemt_url>'
+    :port: '<your_development_port>'
+
+test:
+  :url: '<your_chem_spectra_test_url'
+  :port: 'your_chem_spectra_test_port'
+  :nmrdisplayer:
+    :protocol: '<your_protocol_of_test_env>'
+    :url: '<your_test_url>'
+    :port: '<your_test_port>'
+
+production:
+  :url: '<your_chem_spectra_production_url'
+  :port: 'your_chem_spectra_production_port'
+  :nmrdisplayer:
+    :protocol: '<your_protocol_of_production_env>'
+    :url: '<your_production_url>'
+    :port: '<your_production_port>'
+```
+
+If you have the CORS issue, add your urls at `ALLOWED_ORIGINS` in this file [nmrium-react-wrapper/blob/main/src/events/event.ts](https://github.com/NFDI4Chem/nmrium-react-wrapper/blob/main/src/events/event.ts)
+
+### 2. Using service from NMRXiv
+Edit file following fields in `config/spectra.yml` in Chemotion ELN as follow, depend on your information:
+```yaml
+development:
+  :url: '<your_chem_spectra_development_url'
+  :port: 'your_chem_spectra_development_port'
+  :nmrdisplayer:
+    :protocol: 'https'
+    :url: 'nmriumdev.nmrxiv.org'
+    :port: ''
+
+test:
+  :url: '<your_chem_spectra_test_url'
+  :port: 'your_chem_spectra_test_port'
+  :nmrdisplayer:
+    :protocol: 'https'
+    :url: 'nmriumdev.nmrxiv.org'
+    :port: '8081'
+
+production:
+  :url: '<your_chem_spectra_production_url'
+  :port: 'your_chem_spectra_production_port'
+  :nmrdisplayer:
+    :protocol: 'https'
+    :url: 'nmrium.nmrxiv.org'
+    :port: ''
+
+```
 
 
 # Basic Development Setup
