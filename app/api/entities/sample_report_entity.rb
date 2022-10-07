@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Layout/ExtraSpacing
 module Entities
   class SampleReportEntity < SampleEntity
     with_options(anonymize_below: 0) do
@@ -17,7 +16,6 @@ module Entities
       expose! :get_svg_path,        anonymize_with: nil
       expose! :literatures,         anonymize_with: []
     end
-
     expose_timestamps
 
     private
@@ -25,9 +23,8 @@ module Entities
     def literatures
       Entities::LiteratureEntity.represent(
         Literature.by_element_attributes_and_cat(object.id, 'Sample', 'detail').with_user_info,
-        with_user_info: true
+        with_user_info: true,
       )
     end
   end
 end
-# rubocop:enable Layout/ExtraSpacing
