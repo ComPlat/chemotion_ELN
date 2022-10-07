@@ -10,6 +10,6 @@ module Entities
     expose! :show_label
     expose! :waste
 
-    expose :sample, using: 'Entities::SampleEntity', merge: true
+    expose! :sample, using: 'Entities::SampleEntity', merge: true
   end
 end
