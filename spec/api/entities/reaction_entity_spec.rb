@@ -9,11 +9,13 @@ describe Entities::ReactionEntity do
         reaction,
         detail_levels: detail_levels,
         displayed_in_list: displayed_in_list,
+        policy: policy,
       )
     end
 
     let(:detail_levels) { { Reaction => detail_level } }
     let(:displayed_in_list) { false }
+    let(:policy) { nil }
     let(:reaction) do
       create(
         :reaction,
@@ -25,7 +27,7 @@ describe Entities::ReactionEntity do
       )
     end
 
-    fcontext 'when detail level for Reaction is 10' do
+    context 'when detail level for Reaction is 10' do
       let(:detail_level) { 10 }
 
       it 'returns a reaction with following attributes' do
@@ -97,6 +99,93 @@ describe Entities::ReactionEntity do
 
       it 'returns a reaction with a tag' do
         expect(grape_entity_as_hash[:tag]).not_to be_empty
+      end
+    end
+
+    context 'when detail level for Reaction is 0' do
+      let(:detail_level) { 0 }
+
+      it 'returns a reaction with following attributes' do
+        expect(grape_entity_as_hash).to include(
+          can_copy: false,
+          can_update: false,
+          description: reaction.description,
+          id: reaction.id,
+          is_restricted: true,
+          observation: reaction.observation,
+          role: reaction.role,
+          type: 'reaction',
+          conditions: '***',
+          dangerous_products: [],
+          duration: '***',
+          name: '***',
+          origin: '***',
+          purification: [],
+          reaction_svg_file: '***',
+          rf_value: '***',
+          rinchi_long_key: '***',
+          rinchi_short_key: '***',
+          rinchi_web_key: '***',
+          rxno: '***',
+          short_label: '***',
+          solvent: '***',
+          status: '***',
+          temperature: '***',
+          timestamp_start: '***',
+          timestamp_stop: '***',
+          tlc_description: '***',
+          tlc_solvents: '***',
+        )
+      end
+
+      it 'returns a reaction with products' do
+        expect(grape_entity_as_hash[:products]).not_to be_empty
+      end
+
+      it 'returns a reaction with purification_solvents' do
+        expect(grape_entity_as_hash[:purification_solvents]).not_to be_empty
+      end
+
+      it 'returns a reaction with reactants' do
+        expect(grape_entity_as_hash[:reactants]).not_to be_empty
+      end
+
+      it 'returns a reaction with solvents' do
+        expect(grape_entity_as_hash[:solvents]).not_to be_empty
+      end
+
+      it 'returns a reaction with starting_materials' do
+        expect(grape_entity_as_hash[:starting_materials]).not_to be_empty
+      end
+
+      it 'returns a reaction without code_log' do
+        expect(grape_entity_as_hash[:code_log]).to eq(nil)
+      end
+
+      it 'returns a reaction without a container' do
+        expect(grape_entity_as_hash[:container]).to eq(nil)
+      end
+
+      it 'returns a research_plan without segments' do
+        expect(grape_entity_as_hash[:segments]).to be_empty
+      end
+
+      it 'returns a reaction without a tag' do
+        expect(grape_entity_as_hash[:tag]).to eq(nil)
+      end
+    end
+
+    context 'when entity represented with a policy' do
+      let(:detail_level) { 10 }
+      let(:policy) do
+        Struct.new(:update?, :copy?).new(true, true)
+      end
+
+      it 'returns the policy releated attributes' do
+        expect(grape_entity_as_hash).to include(
+          can_copy: true,
+          can_update: true,
+        )
       end
     end
 
