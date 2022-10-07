@@ -73,9 +73,12 @@ module Entities
 
     def detail_levels
       maximal_default_levels = Hash.new(10) # every requested detail level will be returned as 10
+      minimal_default_levels = Hash.new(0) # every requested detail level will be returned as 0
       return maximal_default_levels if !options.key?(:detail_levels) || options[:detail_levels].empty?
 
-      options[:detail_levels]
+      # When explicitly configured detail levels are available, we want to return only those and all other
+      # requests (by using `detail_levels[SomeUnconfiguredModel]`) should return the minimum detail level
+      minimal_default_levels.merge(options[:detail_levels])
     end
 
     class MissingCurrentUserError < StandardError
