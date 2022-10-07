@@ -31,7 +31,7 @@ describe('ImageFileDropHandler', () => {
         public_name: attachmentInBodyButNoImage.identifier
       }
     };
-    it('drop first image', () => {
+    it('drop first image', async () => {
       const replacedFieldWasEmpty = {
         value: {
           file_name: null,
