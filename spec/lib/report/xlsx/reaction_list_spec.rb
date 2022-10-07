@@ -2,14 +2,10 @@
 
 require 'rails_helper'
 
-describe 'Reporter::Xlsx::ReactionList instance' do
+describe Reporter::Xlsx::ReactionList do
+  let(:file_extension) { '.xlsx' }
   include_context 'Report shared declarations'
-
-  before do
-    t_file = Tempfile.new(['rspec', '.xlsx'])
-    Reporter::Xlsx::ReactionList.new(objs: @obj_hash).create(t_file.path)
-    @target = Roo::Spreadsheet.open(t_file.path)
+  pending "Requires Roo 2.9.0 to work properly" do
+    it_behaves_like 'Rinchi Xlsx/Csv formats'
   end
-
-  it_behaves_like 'Rinchi Xlsx/Csv formats'
 end
