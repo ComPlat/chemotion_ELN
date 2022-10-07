@@ -31,6 +31,7 @@
     "d3": "^3.5.15",
     "deep-equal": "1.0.1",
     "es6-promise-debounce": "^1.0.1",
+    "factory-bot": "^6.3.1",
     "html2pdf.js": "^0.9.3",
     "humps": "^2.0.1",
     "immutability-helper": "^2.8.1",
@@ -133,11 +134,15 @@
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
-    "test": "NODE_PATH=./app/packs yarn mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
+    "test": "NODE_PATH=./app/packs:./spec/javascripts yarn mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
     "coverage": "yarn nyc npm test;yarn nyc report --reporter=html"
   },
-  "nyc":{
-    "exclude":["**/*.spec.js","spec/javascripts/fixture/*","spec/javascripts/helper/*"]
+  "nyc": {
+    "exclude": [
+      "**/*.spec.js",
+      "spec/javascripts/fixture/*",
+      "spec/javascripts/helper/*"
+    ]
   },
   "license": "MIT",
   "engines": {
