@@ -153,12 +153,20 @@ module Chemotion
               :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
             )
             result['samples'] = samples.map do |sample|
-              serialized_element = Entities::SampleEntity.represent(sample).serializable_hash
+              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+              serialized_element = Entities::SampleEntity.represent(
+                sample,
+                detail_levels: detail_levels
+              ).serializable_hash
               serialized_element[:literatures] = citation_for_elements(sample.id, 'Sample')
               serialized_element
             end
             result['reactions'] = reactions.map do |reaction|
-              serialized_element = Entities::ReactionEntity.represent(reaction).serializable_hash
+              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+              serialized_element = Entities::ReactionEntity.represent(
+                reaction,
+                detail_levels: detail_levels
+              ).serializable_hash
               serialized_element[:literatures] = citation_for_elements(reaction.id, 'Reaction')
               serialized_element
             end
@@ -169,14 +177,16 @@ module Chemotion
               if sample_tags && sample.id.in?(sample_tags)
                 { id: sample.id, in_browser_memory: true }
               else
-                Entities::SampleEntity.represent(sample, displayed_in_list: true)
+                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+                Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
             result['reactions'] = reactions.includes_for_list_display.map do |reaction|
               if reaction_tags && reaction.id.in?(reaction_tags)
                 { id: reaction.id, in_browser_memory: true }
               else
-                Entities::ReactionEntity.represent(reaction, displayed_in_list: true)
+                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+                Entities::ReactionEntity.represent(reaction, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
           end

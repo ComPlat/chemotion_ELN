@@ -77,17 +77,20 @@ module Reporter
     end
 
     def extract(objects)
-      objects.map do |tag|
-        e = tag['type'].camelize.constantize.find(tag['id'])
-        entity =
-          case e
+      objects.map do |object|
+        instance = object['type'].camelize.constantize.find(object['id'])
+        entity_class =
+          case instance
           when Sample
-            Entities::SampleReportEntity.represent(e)
+            Entities::SampleReportEntity
           when Reaction
-            Entities::ReactionReportEntity.represent(e)
+            Entities::ReactionReportEntity
           end
 
-        entity.serializable_hash
+        entity_class.new(
+          instance,
+          detail_levels: ElementDetailLevelCalculator.new(user: @author, element: instance).detail_levels,
+        ).serializable_hash
       end
     end
 
