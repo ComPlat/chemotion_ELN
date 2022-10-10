@@ -2,7 +2,6 @@
 
 RSpec.shared_examples 'Rinchi Xlsx/Csv formats' do
   it 'has correct values' do
-    binding.pry
     [product_1, product_2].each_with_index do |product, line_offset|
       _, _, _, inchistring, inchikey, long_key, web_key, short_key =
         report_file.sheet(0).row(4 + line_offset)
