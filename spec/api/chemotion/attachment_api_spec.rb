@@ -295,7 +295,7 @@ describe Chemotion::AttachmentAPI do
     end
 
     context 'when loading is forbidden' do
-      let(:attachment_id) { :non_readable_attachment.id }
+      let(:attachment_id) { non_readable_attachment.id }
 
       it('returning error 401') do
         expect(response.status).to eq(401)
