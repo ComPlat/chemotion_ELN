@@ -17,14 +17,21 @@ describe Chemotion::AttachmentAPI do
       }
     }
   end
+
   let(:attachment_id) { attachment.id }
 
   describe 'DELETE /api/v1/attachments/{attachment_id}' do
     let(:execute_request) { delete "/api/v1/attachments/#{attachment_id}" }
 
     before do |example|
-      allow(Usecases::Attachments::Delete).to receive(:execute!) if example.metadata[:enable_usecases_attachments_delete].present?
-      allow(AttachmentPolicy).to receive(:can_delete?).and_return(true) if example.metadata[:enable_attachment_policy_can_delete].present?
+      if example.metadata[:enable_usecases_attachments_delete].present?
+        allow(Usecases::Attachments::Delete).to receive(:execute!)
+      end
+
+      if example.metadata[:enable_attachment_policy_can_delete].present?
+        allow(AttachmentPolicy).to receive(:can_delete?).and_return(true)
+      end
+
       execute_request
     end
 
@@ -65,8 +72,14 @@ describe Chemotion::AttachmentAPI do
     let(:execute_request) { delete "/api/v1/attachments/link/#{attachment_id}" }
 
     before do |example|
-      allow(Usecases::Attachments::Unlink).to receive(:execute!) if example.metadata[:enable_usecases_attachments_unlink].present?
-      allow(AttachmentPolicy).to receive(:can_delete?).and_return(true) if example.metadata[:enable_attachment_policy_can_delete].present?
+      if example.metadata[:enable_usecases_attachments_unlink].present?
+        allow(Usecases::Attachments::Unlink).to receive(:execute!)
+      end
+
+      if example.metadata[:enable_attachment_policy_can_delete].present?
+        allow(AttachmentPolicy).to receive(:can_delete?).and_return(true)
+      end
+
       execute_request
     end
 
@@ -116,12 +129,22 @@ describe Chemotion::AttachmentAPI do
         counter: 1
       }
     end
+
     let(:execute_request) { post '/api/v1/attachments/upload_chunk', params: params }
 
     before do |example|
-      allow(Usecases::Attachments::UploadChunk).to receive(:execute!) if example.metadata[:enable_usecases_attachments_upload_chunk].present?
-      allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(false) if example.metadata[:disable_attachment_policy_can_upload_chunk].present?
-      allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(true) if example.metadata[:enable_attachment_policy_can_upload_chunk].present?
+      if example.metadata[:enable_usecases_attachments_upload_chunk].present?
+        allow(Usecases::Attachments::UploadChunk).to receive(:execute!)
+      end
+
+      if example.metadata[:disable_attachment_policy_can_upload_chunk].present?
+        allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(false)
+      end
+
+      if example.metadata[:enable_attachment_policy_can_upload_chunk].present?
+        allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(true)
+      end
+
       execute_request
     end
 
@@ -177,9 +200,19 @@ describe Chemotion::AttachmentAPI do
 
     before do |example|
       simulate_upload_chunks
-      allow(Usecases::Attachments::UploadChunkComplete).to receive(:execute!) if example.metadata[:enable_usecases_attachments_upload_chunk_complete].present?
-      allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(false) if example.metadata[:disable_attachment_policy_can_upload_chunk].present?
-      allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(true) if example.metadata[:enable_attachment_policy_can_upload_chunk].present?
+
+      if example.metadata[:enable_usecases_attachments_upload_chunk_complete].present?
+        allow(Usecases::Attachments::UploadChunkComplete).to receive(:execute!)
+      end
+
+      if example.metadata[:disable_attachment_policy_can_upload_chunk].present?
+        allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(false)
+      end
+
+      if example.metadata[:enable_attachment_policy_can_upload_chunk].present?
+        allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(true)
+      end
+
       execute_request
     end
 
@@ -253,7 +286,46 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'GET /api/v1/attachments/image/{attachment_id}' do
-    pending 'not yet implemented'
+    let(:non_readable_attachment) { create(:attachment, :with_image) }
+    let(:readable_attachment) { create(:attachment, :with_image, created_for: user.id, attachable_type: '') }
+    let(:attachment_identifier) { 'none' }
+
+    before do
+      get "/api/v1/attachments/image/#{attachment_id}?identifier=#{attachment_identifier}"
+    end
+
+    context 'when loading is forbidden' do
+      let(:attachment_id) { :non_readable_attachment.id }
+
+      it('returning error 401') do
+        expect(response.status).to eq(401)
+      end
+    end
+
+    context 'when image not available' do
+      let(:attachment_id) { -1 }
+
+      it('returning error 401') do
+        expect(response.status).to eq(401)
+      end
+    end
+
+    context 'when loading by id' do
+      let(:attachment_id) { readable_attachment.id }
+
+      it('returning status 200') do
+        expect(response.status).to eq(200)
+      end
+    end
+
+    context 'when loading by identifier' do
+      let(:attachment_id) { -1 }
+      let(:attachment_identifier) { readable_attachment.identifier }
+
+      it('returning status 200') do
+        expect(response.status).to eq(200)
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/thumbnail/{attachment_id}' do
@@ -293,6 +365,7 @@ describe Chemotion::AttachmentAPI do
         file_2: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt'), 'text/plain')
       }
     end
+
     let(:img_upload) do
       {
         file_1: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
@@ -307,6 +380,7 @@ describe Chemotion::AttachmentAPI do
     let!(:s1) do
       create(:sample_without_analysis, name: 'sample 1', container: cont_s1_root)
     end
+
     let!(:cont_s1_analyses) { create(:container, container_type: 'analyses') }
     let!(:cont_s1_analysis) { create(:analysis_container) }
     let!(:new_attachment) do
@@ -318,12 +392,14 @@ describe Chemotion::AttachmentAPI do
         created_by: user.id, created_for: user.id
       )
     end
+
     let(:new_local_attachment) { build(:attachment, storage: 'local') }
 
     context 'authorized user logged in' do
       let(:attachments) do
         Attachment.where(created_by: user, filename: 'upload.txt')
       end
+
       let(:img_attachments) do
         Attachment.where(created_by: user, filename: 'upload.jpg')
       end
