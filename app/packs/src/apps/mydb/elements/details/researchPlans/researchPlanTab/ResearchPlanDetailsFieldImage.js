@@ -82,7 +82,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
     } else {
-      AttachmentFetcher.fetchImageAttachment({ id: publicName })
+      AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName })
         .then((result) => {
           if (result.data != null) {
             this.setState({ imageSrc: result.data });

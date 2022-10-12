@@ -25,6 +25,15 @@ export default class AttachmentFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static fetchImageAttachmentByIdentifier(identifier) {
+    return fetch(`/api/v1/attachments/image/-1?identifier=${identifier.identifier}`, {
+      credentials: 'same-origin',
+      method: 'GET'
+    }).then(response => response.blob())
+      .then(blob => ({ type: blob.type, data: URL.createObjectURL(blob) }))
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
   static fetchThumbnail(params) {
     let promise = fetch(`/api/v1/attachments/thumbnail/${params.id}`, {
       credentials: 'same-origin',
