@@ -50,7 +50,8 @@ module Chemotion
           @attachment = Attachment.find_by(id: params[:attachment_id])
         end
 
-        @attachment = Attachment.find_by(identifier: params[:attachment_id]) if @attachment.nil?
+        @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
+
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless writable?(@attachment)
@@ -189,7 +190,7 @@ module Chemotion
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
         uploaded_file = @attachment.attachment_attacher.file
-        
+
         data = uploaded_file.read
         uploaded_file.close
 
@@ -250,6 +251,12 @@ module Chemotion
       end
 
       desc 'Return image attachment'
+
+      params do
+          requires :attachment_id, type: Integer, desc: 'Database id of image attachment'
+          optional :identifier, type: String, desc: 'Identifier of image attachment as fallback loading criteria. Must be an UUID'
+      end
+
       get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
         content_type @attachment.content_type

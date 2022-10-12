@@ -45,11 +45,15 @@ describe('ResearchPlanDetailsFieldImage', () => {
       const wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} />);
 
       expect(wrapper.find('img').length).toEqual(1);
-      expect(wrapper.find('img').prop('src')).toEqual('/images/research_plans/xxx.png');
+      expect(wrapper.find('img').prop('src')).toEqual(
+        '/images/research_plans/xxx.png'
+      );
     });
 
     it('image from attachment on server in view mode', async () => {
-      sinon.stub(AttachmentFetcher, 'fetchImageAttachment').callsFake(() => new Promise(() => 'srcToImage'));
+      sinon
+        .stub(AttachmentFetcher, 'fetchImageAttachmentByIdentifier')
+        .callsFake(() => new Promise(() => 'srcToImage'));
 
       const rp = ResearchPlan.buildEmpty();
 
@@ -57,9 +61,7 @@ describe('ResearchPlanDetailsFieldImage', () => {
       rp.value.public_name = 'xxx';
       rp.value.file_name = 'xxx';
 
-      const wrapper = shallow(<ResearchPlanDetailsFieldImage
-        field={rp}
-      />);
+      const wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} />);
 
       expect(wrapper.find('img').length).toEqual(1);
 
