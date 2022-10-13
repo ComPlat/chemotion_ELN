@@ -467,10 +467,11 @@ module Import
         attachable_type = fields.fetch('attachable_type')
         attachable_uuid = fields.fetch('attachable_id')
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
-        file_name =  "#{fields.fetch('identifier')}#{File.extname(fields.fetch('filename'))}"
-        file_name_without_ext = File.basename(file_name, File.extname(file_name))
-        attachment = Attachment.where(id: @attachments,filename: file_name).first
-        attachment = Attachment.where(id: @attachments,filename: file_name_without_ext).first unless attachment
+
+        attachment = Attachment.where(
+          'id IN (?) AND filename LIKE ? ',
+           @attachments,
+            fields.fetch('identifier') << '%').first
 
         attachment.update!(
           attachable: attachable,
