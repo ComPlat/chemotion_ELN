@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import { Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, Overlay } from 'react-bootstrap';
+import { Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, 
+  ListGroupItem, Button, Overlay, Tooltip } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
-import { findIndex, cloneDeep } from 'lodash';
+import { last, values, findIndex, cloneDeep } from 'lodash';
 
 import Utils from 'src/utilities/Functions';
 import Attachment from 'src/models/Attachment';
@@ -16,12 +17,16 @@ import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
+import AttachmentEditButton from 'src/apps/mydb/elements/details/AttachmentEditButton'
+
+const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
 export default class ContainerDataset extends Component {
   constructor(props) {
     super();
     let dataset_container = Object.assign({}, props.dataset_container);
     this.state = {
+      attachmentEditor: false,
       dataset_container: dataset_container,
       instruments: null,
       valueBeforeFocus: null,
@@ -140,6 +145,9 @@ export default class ContainerDataset extends Component {
     const preview = (attachment.preview ? (<tr><td rowSpan="2" width="128"><img style={{ width: '85%', display: 'block' }} src={attachment.preview} alt="" /></td></tr>) : (
       <tr><td rowSpan="2" width="128"><img style={{ width: '128px', display: 'block' }} alt="" /></td></tr>
     ));
+
+    const extension = last(attachment.filename.split('.'));
+
     if (attachment.is_deleted) {
       return (
         <Table className="borderless" style={{ marginBottom: 'unset' }}>
@@ -165,7 +173,13 @@ export default class ContainerDataset extends Component {
             <td style={{ verticalAlign: 'middle' }}>
               <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
               {this.removeAttachmentButton(attachment)} &nbsp;
-              {this.attachmentBackToInboxButton(attachment)}
+              {this.attachmentBackToInboxButton(attachment)} &nbsp;
+              <AttachmentEditButton
+                attachment={attachment}
+                overlay={editorTooltip(values(extension).join(','))}
+                onEdit={this.props.onChange}
+                isSpinningLock={isEditing}
+              ></AttachmentEditButton>
             </td>
           </tr>
         </tbody>

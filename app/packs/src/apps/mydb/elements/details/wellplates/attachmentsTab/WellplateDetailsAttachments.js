@@ -2,12 +2,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon, Popover, Overlay } from 'react-bootstrap';
-import { last, findKey, values } from 'lodash';
-import EditorFetcher from 'src/fetchers/EditorFetcher';
+import { last, values } from 'lodash';
 import ImageModal from 'src/components/common/ImageModal';
-import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import { previewAttachmentImage } from 'src/utilities/imageHelper';
 import Utils from 'src/utilities/Functions';
+import AttachmentEditButton from 'src/apps/mydb/elements/details/AttachmentEditButton'
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
@@ -28,7 +27,7 @@ export default class WellplateDetailsAttachments extends Component {
     super(props);
     this.importButtonRefs = [];
     const {
-      attachments, wellplateChanged, onDrop, onDelete, onUndoDelete, onDownload, onImport, onEdit
+      onDrop, onDelete, onUndoDelete, onDownload, onImport, onEdit
     } = props;
     this.state = {
       onDrop,
@@ -41,55 +40,6 @@ export default class WellplateDetailsAttachments extends Component {
       extension: null,
       showImportConfirm: [],
     };
-    this.editorInitial = this.editorInitial.bind(this);
-  }
-
-  componentDidMount() {
-    this.editorInitial();
-  }
-
-  editorInitial() {
-    EditorFetcher.initial()
-      .then((result) => {
-        this.setState({
-          attachmentEditor: result.installed,
-          extension: result.ext
-        });
-      });
-  }
-
-  documentType(filename) {
-    const { extension } = this.state;
-
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, o => o.includes(ext));
-
-    if (typeof (docType) === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
-
-  handleEdit(attachment) {
-    const { onEdit } = this.state;
-    const fileType = last(attachment.filename.split('.'));
-    const docType = this.documentType(attachment.filename);
-
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
-        if (result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
-          window.open(url, '_blank');
-
-          attachment.aasm_state = 'oo_editing';
-          attachment.updated_at = new Date();
-
-          onEdit(attachment);
-        } else {
-          alert('Unauthorized to edit this file.');
-        }
-      });
   }
 
   handleTemplateDownload() { // eslint-disable-line class-methods-use-this
@@ -191,22 +141,14 @@ export default class WellplateDetailsAttachments extends Component {
 
   renderListGroupItem(attachment) {
     const {
-      attachmentEditor, extension, onUndoDelete, onDownload
+      extension, onUndoDelete, onDownload
     } = this.state;
-
-    const updateTime = new Date(attachment.updated_at);
-    updateTime.setTime(updateTime.getTime() + (15 * 60 * 1000));
 
     const hasPop = false;
     const fetchNeeded = false;
     const fetchId = attachment.id;
 
     const previewImg = previewAttachmentImage(attachment);
-    const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
-
-    const docType = this.documentType(attachment.filename);
-    const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
-    const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
 
     if (attachment.is_deleted) {
       return (
@@ -268,18 +210,12 @@ export default class WellplateDetailsAttachments extends Component {
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))} >
-              <Button
-                style={{ display: styleEditorBtn }}
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="success"
-                disabled={editDisable}
-                onClick={() => this.handleEdit(attachment)}
-              >
-                <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
-              </Button>
-            </OverlayTrigger>
+            <AttachmentEditButton
+              attachment={attachment}
+              className="button-right"
+              overlay={editorTooltip(values(extension).join(','))}
+              onEdit={this.props.onEdit}
+            ></AttachmentEditButton>
             {this.renderImportAttachmentButton(attachment)}
           </Col>
         </Row>
