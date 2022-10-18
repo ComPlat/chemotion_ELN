@@ -2,34 +2,43 @@
 
 module Entities
   class ScreenEntity < ApplicationEntity
-    expose(
-      :collaborator,
-      :conditions,
-      :description,
-      :id,
-      :name,
-      :requirements,
-      :result,
-      :type,
-    )
+    # rubocop:disable Layout/ExtraSpacing
+    with_options(anonymize_below: 0) do
+      expose! :id
+      expose! :type
+      expose! :name
+      expose! :is_restricted
+      expose! :description
+      expose! :conditions
+      expose! :requirements
+      expose! :wellplates,                          using: 'Entities::WellplateEntity'
+    end
+
+    with_options(anonymize_below: 10) do
+      expose! :collaborator
+      expose! :result
+      expose! :code_log,       anonymize_with: nil, using: 'Entities::CodeLogEntity'
+      expose! :container,      anonymize_with: nil, using: 'Entities::ContainerEntity'
+      expose! :research_plans, anonymize_with: [],  using: 'Entities::ResearchPlanEntity'
+      expose! :segments,       anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :tag,            anonymize_with: nil, using: 'Entities::ElementTagEntity'
+    end
+    # rubocop:enable Layout/ExtraSpacing
 
     expose_timestamps
 
-    expose :code_log, using: 'Entities::CodeLogEntity'
-    expose :container, using: 'Entities::ContainerEntity'
-    expose :research_plans, using: 'Entities::ResearchPlanEntity'
-    expose :segments, using: 'Entities::SegmentEntity'
-    expose :tag, using: 'Entities::ElementTagEntity'
-    expose :wellplates, using: 'Entities::WellplateEntity'
-
     private
+
+    def code_log
+      displayed_in_list? ? nil : object.code_log
+    end
 
     def container
       displayed_in_list? ? nil : object.container
     end
 
-    def code_log
-      displayed_in_list? ? nil : object.code_log
+    def is_restricted # rubocop:disable Naming/PredicateName
+      detail_levels[Screen] < 10
     end
 
     def research_plans
@@ -40,12 +49,12 @@ module Entities
       displayed_in_list? ? [] : object.segments
     end
 
-    def wellplates
-      displayed_in_list? ? [] : object.wellplates
-    end
-
     def type
       'screen'
+    end
+
+    def wellplates
+      displayed_in_list? ? [] : object.wellplates
     end
   end
 end

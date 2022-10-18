@@ -49,7 +49,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ScreenEntity, root: :screens
+        screens = paginate(scope).map do |screen|
+          Entities::ScreenEntity.represent(
+            screen,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
+            displayed_in_list: true
+          )
+        end
+
+        { screens: screens }
       end
 
       desc "Return serialized screen by id"
@@ -63,7 +71,13 @@ module Chemotion
 
         get do
           screen = Screen.find(params[:id])
-          present screen, with: Entities::ScreenEntity, root: :screen
+
+          present(
+            screen,
+            with: Entities::ScreenEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
+            root: :screen
+          )
         end
 
         namespace :add_research_plan do
@@ -118,7 +132,7 @@ module Chemotion
           old_wellplate_ids = screen.wellplates.pluck(:id)
 
           #save to profile
-          kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
+          kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
           params[:wellplate_ids].each do |id|
@@ -129,7 +143,12 @@ module Chemotion
             ScreensWellplate.where(wellplate_id: id, screen_id: params[:id]).destroy_all
           end
 
-          present screen, with: Entities::ScreenEntity, root: :screen
+          present(
+            screen,
+            with: Entities::ScreenEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
+            root: :screen
+          )
         end
       end
 
@@ -165,7 +184,7 @@ module Chemotion
         screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
         #save to profile
-        kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
+        kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         collection = current_user.collections.where(id: params[:collection_id]).take

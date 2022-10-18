@@ -147,7 +147,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ElementEntity
+        paginate(scope).map do |element|
+          Entities::ElementEntity.represent(
+            element,
+            displayed_in_list: true,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: element).detail_levels
+          )
+        end
       end
 
       desc 'Return serialized element by id'
@@ -162,7 +168,10 @@ module Chemotion
         get do
           element = Element.find(params[:id])
           {
-            element: Entities::ElementEntity.represent(element),
+            element: Entities::ElementEntity.represent(
+              element,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: element).detail_levels
+            ),
             attachments: Entities::AttachmentEntity.represent(element.attachments)
           }
         end
@@ -208,7 +217,12 @@ module Chemotion
         element.save!
         element.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-        present element, with: Entities::ElementEntity, root: :element
+        present(
+          element,
+          with: Entities::ElementEntity,
+          root: :element,
+          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: element).detail_levels
+        )
       end
 
       desc 'Update element by id'
@@ -248,7 +262,10 @@ module Chemotion
           element.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
           {
-            element: Entities::ElementEntity.represent(element),
+            element: Entities::ElementEntity.represent(
+              element,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: element).detail_levels
+            ),
             attachments: Entities::AttachmentEntity.represent(element.attachments)
           }
         end

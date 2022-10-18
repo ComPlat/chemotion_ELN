@@ -97,12 +97,24 @@ module Chemotion
       post do
         result = { 'samples' => [], 'reactions' => [] }
 
-        # TODO: optimize includes for performance
+        # TODO: optimize for performance
+        #       The calculator is not really a good way to check for large amounts of elements,
+        #       as it will fetch all containing collections for EACH element.
+        #       The more elements are selected, the more SQL queries get executed.
         if params['sample'][:checkedAll] || params['sample'][:checkedIds].any?
-          result['samples'] = Entities::SampleEntity.represent(@collection.samples.by_ui_state(params['sample']))
+          result['samples'] = @collection.samples.by_ui_state(params['sample']).map do |sample|
+            calculator = ElementDetailLevelCalculator.new(user: current_user, element: sample)
+
+            Entities::SampleEntity.represent(sample, detail_levels: calculator.detail_levels)
+          end
         end
+
         if params['reaction'][:checkedAll] || params['reaction'][:checkedIds].any?
-          result['reactions'] = Entities::ReactionEntity.represent(@collection.reactions.by_ui_state(params['reaction']))
+          result['reactions'] = @collection.reactions.by_ui_state(params['reaction']).map do |reaction|
+            calculator = ElementDetailLevelCalculator.new(user: current_user, element: reaction)
+
+            Entities::ReactionEntity.represent(reaction, detail_levels: calculator.detail_levels)
+          end
         end
 
         # TODO: fallback if sample are not in owned collection and currentCollection is missing
@@ -141,12 +153,20 @@ module Chemotion
               :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
             )
             result['samples'] = samples.map do |sample|
-              serialized_element = Entities::SampleEntity.represent(sample).serializable_hash
+              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+              serialized_element = Entities::SampleEntity.represent(
+                sample,
+                detail_levels: detail_levels
+              ).serializable_hash
               serialized_element[:literatures] = citation_for_elements(sample.id, 'Sample')
               serialized_element
             end
             result['reactions'] = reactions.map do |reaction|
-              serialized_element = Entities::ReactionEntity.represent(reaction).serializable_hash
+              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+              serialized_element = Entities::ReactionEntity.represent(
+                reaction,
+                detail_levels: detail_levels
+              ).serializable_hash
               serialized_element[:literatures] = citation_for_elements(reaction.id, 'Reaction')
               serialized_element
             end
@@ -157,14 +177,16 @@ module Chemotion
               if sample_tags && sample.id.in?(sample_tags)
                 { id: sample.id, in_browser_memory: true }
               else
-                Entities::SampleEntity.represent(sample, displayed_in_list: true)
+                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+                Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
             result['reactions'] = reactions.includes_for_list_display.map do |reaction|
               if reaction_tags && reaction.id.in?(reaction_tags)
                 { id: reaction.id, in_browser_memory: true }
               else
-                Entities::ReactionEntity.represent(reaction, displayed_in_list: true)
+                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+                Entities::ReactionEntity.represent(reaction, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
           end

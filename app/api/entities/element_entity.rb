@@ -2,27 +2,34 @@
 
 module Entities
   class ElementEntity < ApplicationEntity
-    expose(
-      :can_copy,
-      :container,
-      :created_by,
-      :id,
-      :klass_uuid,
-      :name,
-      :properties,
-      :short_label,
-      :type,
-      :uuid,
-    )
+    with_options(anonymize_below: 0) do
+      expose! :can_copy
+      expose! :container,                           using: 'Entities::ContainerEntity'
+      expose! :created_by
+      expose! :id
+      expose! :is_restricted
+      expose! :klass_uuid
+      expose! :name
+      expose! :properties
+      expose! :short_label
+      expose! :type
+      expose! :uuid
+    end
+
+    with_options(anonymize_below: 10) do
+      expose! :element_klass, anonymize_with: nil,  using: 'Entities::ElementKlassEntity'
+      expose! :segments,      anonymize_with: [],   using: 'Entities::SegmentEntity'
+      expose! :tag,           anonymize_with: nil,  using: 'Entities::ElementTagEntity'
+    end
 
     expose_timestamps
 
-    expose :container, using: 'Entities::ContainerEntity'
-    expose :element_klass, using: 'Entities::ElementKlassEntity'
-    expose :tag, using: 'Entities::ElementTagEntity'
-    expose :segments, using: 'Entities::SegmentEntity'
 
     private
+
+    def is_restricted
+      detail_levels[Element] < 10
+    end
 
     # TODO: Refactor this method to something more readable/understandable
     def properties

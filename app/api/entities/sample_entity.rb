@@ -2,93 +2,110 @@
 
 module Entities
   class SampleEntity < ApplicationEntity
-    expose(
-      :ancestor_ids,
-      :decoupled,
-      :density,
-      :external_label,
-      :id,
-      :is_restricted,
-      :is_top_secret,
-      :metrics,
-      :molecular_mass,
-      :molecule_name_hash,
-      :molfile,
-      :name,
-      :pubchem_tag,
-      :purity,
-      :sample_svg_file,
-      :short_label,
-      :showed_name,
-      :stereo,
-      :sum_formula,
-      :type,
-      :user_labels,
-      :xref,
-    )
+    # rubocop:disable Layout/LineLength, Layout/ExtraSpacing
+    # Level 0 attributes and relations
+    with_options(anonymize_below: 0) do
+      expose! :can_copy,        unless: :displayed_in_list
+      expose! :can_publish,     unless: :displayed_in_list
+      expose! :can_update,      unless: :displayed_in_list
+      expose! :code_log,        unless: :displayed_in_list, using: 'Entities::CodeLogEntity'
+      expose! :decoupled
+      expose! :external_label
+      expose! :id
+      expose! :is_restricted
+      expose! :molecular_mass
+      expose! :molecule,                                    using: 'Entities::MoleculeEntity'
+      expose! :sum_formula
+      expose! :type
+    end
 
-    expose(
-      :_contains_residues,
-      :boiling_point,
-      :can_copy,
-      :can_publish,
-      :can_update,
-      :children_count,
-      :description,
-      :imported_readout,
-      :location,
-      :melting_point,
-      :molarity_unit,
-      :molarity_value,
-      :parent_id,
-      :reaction_description,
-      :real_amount_unit,
-      :real_amount_value,
-      :solvent,
-      :target_amount_unit,
-      :target_amount_value,
-      unless: ->(instance, options) { displayed_in_list? }
-    )
+    # Level 1 attributes
+    expose! :molfile, anonymize_below: 1
+
+    # Level 2 attributes and relations
+    with_options(unless: :displayed_in_list, anonymize_below: 2, using: 'Entities::ContainerEntity') do
+      # Analyses is no longer exposed as the old implementation in the serializer was broken anyway
+      # Additionally, the frontend does not use the analyses field. It renders the analyses via the container field
+      expose! :container, anonymize_with: nil
+    end
+
+    # rubocop:disable Metrics/BlockLength
+    # Level 10 attributes and relations
+    with_options(anonymize_below: 10) do
+      expose! :_contains_residues,      unless: :displayed_in_list, anonymize_with: false
+      expose! :ancestor_ids,                                        anonymize_with: []
+      expose! :boiling_point,           unless: :displayed_in_list
+      expose! :children_count,          unless: :displayed_in_list
+      expose! :density
+      expose! :description,             unless: :displayed_in_list
+      expose! :elemental_compositions,  unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ElementalCompositionEntity'
+      expose! :imported_readout,        unless: :displayed_in_list
+      expose! :is_top_secret
+      expose! :location,                unless: :displayed_in_list
+      expose! :melting_point,           unless: :displayed_in_list
+      expose! :metrics
+      expose! :molarity_unit,           unless: :displayed_in_list
+      expose! :molarity_value,          unless: :displayed_in_list
+      expose! :molecule_name_hash,                                  anonymize_with: {}
+      expose! :name
+      expose! :parent_id,               unless: :displayed_in_list
+      expose! :pubchem_tag
+      expose! :purity
+      expose! :reaction_description,    unless: :displayed_in_list
+      expose! :real_amount_unit,        unless: :displayed_in_list
+      expose! :real_amount_value,       unless: :displayed_in_list
+      expose! :residues,                unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ResidueEntity'
+      expose! :sample_svg_file
+      expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::SegmentEntity'
+      expose! :short_label
+      expose! :showed_name
+      expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
+      expose! :stereo
+      expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'
+      expose! :target_amount_unit,      unless: :displayed_in_list
+      expose! :target_amount_value,     unless: :displayed_in_list
+      expose! :user_labels
+      expose! :xref
+    end
+    # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
 
     expose_timestamps
 
-    expose :analyses, using: 'Entities::ContainerEntity', unless: ->(instance, options) { displayed_in_list? }
-    expose :code_log, using: 'Entities::CodeLogEntity', unless: ->(instance, options) { displayed_in_list? }
-    expose :container, using: 'Entities::ContainerEntity', unless: ->(instance, options) { displayed_in_list? }
-    expose :elemental_compositions, using: 'Entities::ElementalCompositionEntity', unless: ->(instance, options) { displayed_in_list? }
-    expose :molecule, using: 'Entities::MoleculeEntity'
-    expose :residues, using: 'Entities::ResidueEntity', unless: ->(instance, options) { displayed_in_list? }
-    expose :segments, using: 'Entities::SegmentEntity', unless: ->(instance, options) { displayed_in_list? }
-    expose :tag, using: 'Entities::ElementTagEntity'
-
-    def type
-      'sample'
-    end
+    private
 
     def _contains_residues
       object.residues.any?
     end
 
-    def is_restricted
-      false
-    end
-
     def can_update
-      (options[:policy] && options[:policy].try(:update?)) || false
+      options[:policy].try(:update?) || false
     end
 
     def can_copy
-      (options[:policy] && options[:policy].try(:copy?)) || false
+      options[:policy].try(:copy?) || false
     end
 
     def can_publish
-      (options[:policy] && options[:policy].try(:destroy?)) || false
+      options[:policy].try(:destroy?) || false
     end
 
     def children_count
-      return 0 if object.new_record?
+      object.new_record? ? 0 : object.children.count.to_i
+    end
 
-      object.children.count.to_i
+    def is_restricted # rubocop:disable Naming/PredicateName
+      detail_levels[Sample] < 10
+    end
+
+    # molecule returns only minimal values for detail level 0
+    # Due to the way Grape::Entity works, the MoleculeEntity will return all keys nil except those two defined here
+    def molecule
+      return object.molecule if detail_levels[Sample] > 0 # rubocop:disable Style/NumericPredicate
+
+      {
+        molecular_weight: object.molecule.try(:molecular_weight),
+        exact_molecular_weight: object.molecule.try(:exact_molecular_weight),
+      }
     end
 
     def pubchem_tag
@@ -99,11 +116,17 @@ module Entities
     end
 
     def molfile
-      object.molfile&.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace) if object.respond_to? :molfile
+      return unless object.respond_to? :molfile
+
+      object.molfile&.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace)
     end
 
     def parent_id
       object.parent&.id
+    end
+
+    def type
+      'sample'
     end
   end
 end
