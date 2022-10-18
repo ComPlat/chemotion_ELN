@@ -90,7 +90,10 @@ describe 'Reporter::Docx::DetailReaction instance' do
     }"
     con.save!
 
-    Entities::ReactionReportEntity.represent(r1).serializable_hash
+    Entities::ReactionReportEntity.represent(
+      r1,
+      detail_levels: ElementDetailLevelCalculator.new(user: user, element: r1).detail_levels
+    ).serializable_hash
   end
   let!(:serial) { '1a' }
   let!(:mol_serials) do

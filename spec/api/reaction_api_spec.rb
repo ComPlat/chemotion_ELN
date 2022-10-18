@@ -15,7 +15,7 @@ describe Chemotion::ReactionAPI do
 
     describe 'GET /api/v1/reactions' do
       let!(:c1) do
-        create(:collection, label: 'C1', user: user, is_shared: false)
+        create(:collection, label: 'C1', user: user, is_shared: false, reaction_detail_level: 10)
       end
       let!(:r1) { create(:reaction, name: 'r1', collections: [c1]) }
       let!(:r2) { create(:reaction, name: 'r2', collections: [c1]) }

@@ -5,9 +5,11 @@ require 'rails_helper'
 describe Chemotion::WellplateAPI do
   include_context 'api request authorization context'
 
-  let(:collection) { create(:collection, user_id: user.id) }
+  let(:collection) { create(:collection, user_id: user.id, wellplate_detail_level: 10) }
   let(:other_user_collection) { create(:collection, user_id: user.id + 1) }
-  let(:shared_collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
+  let(:shared_collection) do
+    create(:collection, user_id: user.id, is_shared: true, permission_level: 3, wellplate_detail_level: 10)
+  end
   let(:wellplate) { create(:wellplate) }
 
   describe 'POST /api/v1/wellplates/bulk' do

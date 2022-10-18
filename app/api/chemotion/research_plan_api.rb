@@ -48,7 +48,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ResearchPlanEntity, displayed_in_list: true, root: :research_plans
+        research_plans = paginate(scope).map do |research_plan|
+          Entities::ResearchPlanEntity.represent(
+            research_plan,
+            displayed_in_list: true,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
+          )
+        end
+
+        { research_plans: research_plans }
       end
 
       desc 'Create a research plan'
@@ -147,7 +155,10 @@ module Chemotion
             subject: ''
           ) if research_plan.research_plan_metadata.nil?
           {
-            research_plan: Entities::ResearchPlanEntity.represent(research_plan),
+            research_plan: Entities::ResearchPlanEntity.represent(
+              research_plan,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
+            ),
             attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
           }
         end
@@ -175,9 +186,10 @@ module Chemotion
           if research_plan = ResearchPlan.find(params[:id])
             research_plan.update!(attributes)
             research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
-
           end
-          present research_plan, with: Entities::ResearchPlanEntity, root: :research_plan
+
+          detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
+          present research_plan, with: Entities::ResearchPlanEntity, detail_levels: detail_levels, root: :research_plan
         end
       end
 
@@ -296,7 +308,9 @@ module Chemotion
       route_param :id do
         before do
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).update?
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:wellplate_id])).read?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(
+            current_user, Wellplate.find(params[:wellplate_id])
+          ).read?
         end
 
         post 'import_wellplate/:wellplate_id' do
@@ -307,7 +321,12 @@ module Chemotion
             exporter.execute!
 
             {
-              research_plan: Entities::ResearchPlanEntity.represent(research_plan),
+              research_plan: Entities::ResearchPlanEntity.represent(
+                research_plan,
+                detail_levels: ElementDetailLevelCalculator.new(
+                  user: current_user, element: research_plan
+                ).detail_levels
+              ),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
           rescue StandardError => e
@@ -335,7 +354,12 @@ module Chemotion
             exporter.execute!
 
             {
-              research_plan: Entities::ResearchPlanEntity.represent(research_plan),
+              research_plan: Entities::ResearchPlanEntity.represent(
+                research_plan,
+                detail_levels: ElementDetailLevelCalculator.new(
+                  user: current_user, element: research_plan
+                ).detail_levels
+              ),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
           rescue StandardError => e

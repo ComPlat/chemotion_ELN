@@ -111,9 +111,11 @@ class Report < ApplicationRecord
   end
 
   def self.docx_file(current_user, user_ids, params)
-    serialized_reaction = Entities::ReactionReportEntity
-                          .represent(Reaction.find(params[:id]))
-                          .serializable_hash
+    reaction = Reaction.find(params[:id])
+    serialized_reaction = Entities::ReactionReportEntity.represent(
+      reaction,
+      detail_levels: ElementDetailLevelCalculator.new(user: current_user, element:reaction).detail_levels
+    ).serializable_hash
     content = Reporter::Docx::Document.new(objs: [serialized_reaction]).convert
     tpl_path = template_path(params[:template])
     file = Sablon.template(tpl_path)

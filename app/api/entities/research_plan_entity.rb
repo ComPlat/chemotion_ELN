@@ -2,18 +2,24 @@
 
 module Entities
   class ResearchPlanEntity < ApplicationEntity
-    expose(
-      :id,
-      :type,
-      :name,
-      :body,
-      :thumb_svg,
-    )
-    expose :container, using: 'Entities::ContainerEntity'
-    expose :research_plan_metadata, using: 'Entities::ResearchPlanMetadataEntity'
-    expose :segments, using: 'Entities::SegmentEntity'
-    expose :tag, using: 'Entities::ElementTagEntity'
-    expose :wellplates, using: 'Entities::WellplateEntity'
+    # rubocop:disable Layout/ExtraSpacing
+    with_options(anonymize_below: 0) do
+      expose! :body
+      expose! :container,                                    using: 'Entities::ContainerEntity'
+      expose! :id
+      expose! :is_restricted
+      expose! :name
+      expose! :thumb_svg
+      expose! :type
+    end
+
+    with_options(anonymize_below: 10) do
+      expose! :research_plan_metadata,  anonymize_with: nil, using: 'Entities::ResearchPlanMetadataEntity'
+      expose! :tag,                     anonymize_with: nil, using: 'Entities::ElementTagEntity'
+      expose! :wellplates,              anonymize_with: [],  using: 'Entities::WellplateEntity'
+      expose! :segments,                anonymize_with: [],  using: 'Entities::SegmentEntity'
+    end
+    # rubocop:enable Layout/ExtraSpacing
 
     expose_timestamps
 
@@ -21,6 +27,10 @@ module Entities
 
     def container
       displayed_in_list? ? nil : object.container
+    end
+
+    def is_restricted # rubocop:disable Naming/PredicateName
+      detail_levels[ResearchPlan] < 10
     end
 
     def segments

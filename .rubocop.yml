@@ -40,6 +40,13 @@ Style/TrailingCommaInHashLiteral:
   Enabled: true
   EnforcedStyleForMultiline: comma
 
+Style/TrailingCommaInArguments:
+  Enabled: true
+  EnforcedStyleForMultiline: comma
+
 Metrics/BlockLength:
   Exclude:
   - 'spec/**/*_spec.rb'
+
+RSpec/ExampleLength:
+  Enabled: false
