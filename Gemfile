@@ -59,6 +59,7 @@ gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '28
 
 gem 'net-sftp'
 gem 'net-ssh'
+gem 'net-scp', '3.0.0'
 gem 'nokogiri'
 
 gem 'omniauth', '~> 1.9.1'
