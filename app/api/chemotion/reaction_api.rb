@@ -57,7 +57,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        present paginate(scope), with: Entities::ReactionEntity, displayed_in_list: true, root: :reactions
+        reactions = paginate(scope).map do |reaction|
+          Entities::ReactionEntity.represent(
+            reaction,
+            displayed_in_list: true,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+          )
+        end
+
+        { reactions: reactions }
       end
 
       desc 'Return serialized reaction by id'
@@ -74,7 +82,11 @@ module Chemotion
           reaction = Reaction.find(params[:id])
 
           {
-            reaction: Entities::ReactionEntity.represent(reaction, policy: @element_policy),
+            reaction: Entities::ReactionEntity.represent(
+              reaction,
+              policy: @element_policy,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+            ),
             literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], 'Reaction'))
           }
         end
@@ -153,7 +165,13 @@ module Chemotion
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present reaction, with: Entities::ReactionEntity, root: :reaction, policy: @element_policy
+          present(
+            reaction,
+            with: Entities::ReactionEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
+            root: :reaction,
+            policy: @element_policy
+          )
         end
       end
 
@@ -261,7 +279,12 @@ module Chemotion
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present reaction, with: Entities::ReactionEntity, root: :reaction
+          present(
+            reaction,
+            with: Entities::ReactionEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
+            root: :reaction
+          )
         end
       end
     end

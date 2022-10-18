@@ -6,7 +6,16 @@ describe Chemotion::ScreenAPI do
   include_context 'api request authorization context'
 
   let(:other_user) { create(:person) }
-  let(:collection) { create(:collection, user_id: user.id) }
+  let(:collection) do
+    create(
+      :collection,
+      user_id: user.id,
+      sample_detail_level: 10,
+      reaction_detail_level: 10,
+      wellplate_detail_level: 10,
+      screen_detail_level: 10
+    )
+  end
   let(:another_collection) { create(:collection, user_id: user.id) }
   let(:other_user_collection) { create(:collection, user_id: other_user.id) }
   let(:other_shared_collection) { create(:collection, user_id: other_user.id, is_shared: true, permission_level: 3) }
@@ -146,6 +155,7 @@ describe Chemotion::ScreenAPI do
 
     before do
       CollectionsScreen.create!(screen: screen, collection: collection)
+      CollectionsResearchPlan.create(research_plan: research_plan, collection: collection)
       ScreensWellplate.create!(wellplate: other_wellplate, screen: screen)
       put "/api/v1/screens/#{screen.id}", params: params
     end

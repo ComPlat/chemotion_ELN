@@ -4,19 +4,20 @@ module Entities
   # wraps a ReactionsSample object like Entities::ReactionMaterialEntity
   # adds some additional fields for reports
   class ReactionMaterialReportEntity < ReactionMaterialEntity
-    SAMPLE_ENTITY = 'Entities::SampleReportEntity'.freeze
+    expose! :amount_g
+    expose! :amount_ml
+    expose! :amount_mmol
+    expose! :get_svg_path
+    expose! :preferred_label
+    expose! :preferred_tag
+    expose! :real_amount_g
+    expose! :real_amount_ml
+    expose! :real_amount_mmol
 
-    expose(
-      :amount_g,
-      :amount_ml,
-      :amount_mmol,
-      :get_svg_path,
-      :preferred_label,
-      :preferred_tag,
-      :real_amount_g,
-      :real_amount_ml,
-      :real_amount_mmol,
-    )
+    # This entity does not wrap a sample but a ReactionsSample instance
+    # Therefore we cannot use anonymize_below (it would check detail_levels[ReactionsSample] or one of its
+    # polymorphic subclasses). Instead we do the check manually in the #analyses method below
+    expose! :analyses, using: 'Entities::ContainerEntity'
 
     private
 
@@ -24,6 +25,12 @@ module Entities
       :amount_g, :amount_ml, :amount_mmol, :get_svg_path, :preferred_label, :preferred_tag,
       to: :"object.sample"
     )
+
+    def analyses
+      return [] if detail_levels[Sample] < 2
+
+      object.sample.analyses
+    end
 
     def real_amount_g
       object.sample.amount_g(:real)

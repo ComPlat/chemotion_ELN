@@ -92,9 +92,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        wellplates = paginate(scope)
+        wellplates = paginate(scope).map do |wellplate|
+          Entities::WellplateEntity.represent(
+            wellplate,
+            displayed_in_list: true,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels
+          )
+        end
 
-        present wellplates, with: Entities::WellplateEntity, displayed_in_list: true, root: :wellplates
+        { wellplates: wellplates }
       end
 
       desc 'Return serialized wellplate by id'
@@ -108,8 +114,10 @@ module Chemotion
 
         get do
           wellplate = Wellplate.find(params[:id])
+          detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels
+
           {
-            wellplate: Entities::WellplateEntity.represent(wellplate),
+            wellplate: Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels),
             attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
           }
         end
@@ -152,10 +160,15 @@ module Chemotion
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false), current_user.id).execute!
 
           # save to profile
-          kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
+          kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present wellplate, with: Entities::WellplateEntity, root: :wellplate
+          present(
+            wellplate,
+            with: Entities::WellplateEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
+            root: :wellplate
+          )
         end
       end
 
@@ -183,7 +196,12 @@ module Chemotion
         kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        present wellplate, with: Entities::WellplateEntity, root: :wellplate
+        present(
+          wellplate,
+          with: Entities::WellplateEntity,
+          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
+          root: :wellplate
+        )
       end
 
       namespace :subwellplates do
@@ -223,7 +241,10 @@ module Chemotion
               import.process!
               wellplate = import.wellplate
               {
-                wellplate: Entities::WellplateEntity.represent(wellplate),
+                wellplate: Entities::WellplateEntity.represent(
+                  wellplate,
+                  detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels
+                ),
                 attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
               }
             rescue StandardError => e

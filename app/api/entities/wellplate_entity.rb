@@ -2,24 +2,35 @@
 
 module Entities
   class WellplateEntity < ApplicationEntity
-    expose(
-      :description,
-      :id,
-      :name,
-      :readout_titles,
-      :short_label,
-      :size,
-      :type,
-    )
+    # rubocop:disable Layout/ExtraSpacing
+    # Level 0 attributes and relations
+    with_options(anonymize_below: 0) do
+      expose! :id
+      expose! :is_restricted
+      expose! :size
+      expose! :type
+      expose! :wells,                                using: 'Entities::WellEntity'
+    end
+
+    with_options(anonymize_below: 10) do
+      expose! :code_log,        anonymize_with: nil, using: 'Entities::CodeLogEntity'
+      expose! :container,       anonymize_with: nil, using: 'Entities::ContainerEntity'
+      expose! :description
+      expose! :name
+      expose! :readout_titles
+      expose! :segments,        anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :short_label
+      expose! :tag,             anonymize_with: nil, using: 'Entities::ElementTagEntity'
+    end
+    # rubocop:enable Layout/ExtraSpacing
+
     expose_timestamps
 
-    expose :wells, using: 'Entities::WellEntity'
-    expose :container, using: 'Entities::ContainerEntity'
-    expose :tag, using: 'Entities::ElementTagEntity'
-    expose :segments, using: 'Entities::SegmentEntity'
-    expose :code_log, using: 'Entities::CodeLogEntity'
-
     private
+
+    def is_restricted # rubocop:disable Naming/PredicateName
+      detail_levels[Wellplate] < 10
+    end
 
     def code_log
       displayed_in_list? ? nil : object.code_log
@@ -34,7 +45,7 @@ module Entities
     end
 
     def wells
-      displayed_in_list? ? [] : object.ordered_wells.includes(:sample)
+      displayed_in_list? ? [] : object.ordered_wells_with_samples
     end
 
     def type

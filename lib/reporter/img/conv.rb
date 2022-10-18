@@ -17,7 +17,8 @@ module Reporter
         system(
           'inkscape --export-text-to-path --without-gui ' \
           "--file=#{input} --export-#{ext}=#{output} " \
-          '--export-width=1550 --export-height=440'
+          '--export-width=1550 --export-height=440',
+          exception: true
         )
       end
 

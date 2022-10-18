@@ -36,5 +36,10 @@ FactoryBot.define do
         end
       end
     end
+
+    trait :with_color_code_and_additive do
+      color_code { 'color_code' }
+      additive { 'additive' }
+    end
   end
 end

@@ -21,12 +21,20 @@ describe 'Reporter::Docx::Document instance' do
 
   before do
     `ln -s #{svg_fixt_path} #{Rails.root.join('public', 'images', 'molecules')} ` unless File.exist?(svg_image_path)
-    allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
 
     serialized_objects = [
-      Entities::ReactionReportEntity.represent(reaction1).serializable_hash,
-      Entities::ReactionReportEntity.represent(reaction2).serializable_hash,
-      Entities::SampleReportEntity.represent(sample).serializable_hash,
+      Entities::ReactionReportEntity.represent(
+        reaction1,
+        detail_levels: ElementDetailLevelCalculator.new(user: user, element: reaction1).detail_levels
+      ).serializable_hash,
+      Entities::ReactionReportEntity.represent(
+        reaction2,
+        detail_levels: ElementDetailLevelCalculator.new(user: user, element: reaction2).detail_levels
+      ).serializable_hash,
+      Entities::SampleReportEntity.represent(
+        sample,
+        detail_levels: ElementDetailLevelCalculator.new(user: user, element: sample).detail_levels
+      ).serializable_hash,
     ]
 
     instance = Reporter::Docx::Document.new(objs: serialized_objects,

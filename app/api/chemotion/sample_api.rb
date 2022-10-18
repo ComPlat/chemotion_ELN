@@ -211,20 +211,26 @@ module Chemotion
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
                            .where(id: (sample_scope.pluck :molecule_id))
-                           .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                           .order(Arel.sql("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))"))
                            .order(:sum_formular)
           reset_pagination_page(molecule_scope)
           paginate(molecule_scope).each do |molecule|
             samplesGroup = sample_scope.select {|v| v.molecule_id == molecule.id}
             samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
             samplesGroup.each do |sample|
-              samplelist.push(Entities::SampleEntity.represent(sample, displayed_in_list: true))
+              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+              samplelist.push(
+                Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
+              )
             end
           end
         else
           sample_scope = sample_scope.order('updated_at DESC')
           paginate(sample_scope).each do |sample|
-            samplelist.push(Entities::SampleEntity.represent(sample, displayed_in_list: true))
+            detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+            samplelist.push(
+              Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
+            )
           end
         end
 
@@ -247,8 +253,13 @@ module Chemotion
         get do
           sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
-
-          present sample, with: Entities::SampleEntity, policy: @element_policy, root: :sample
+          present(
+            sample,
+            with: Entities::SampleEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels,
+            policy: @element_policy,
+            root: :sample
+          )
         end
       end
 
@@ -369,12 +380,13 @@ module Chemotion
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          var_detail_level = db_exec_detail_level_for_sample(current_user.id, @sample.id)
-          nested_detail_levels = {}
-          nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
-          nested_detail_levels[:wellplate] = [var_detail_level[0]['detail_level_wellplate'].to_i]
-
-          present @sample, with: Entities::SampleEntity, policy: @element_policy, root: :sample
+          present(
+            @sample,
+            with: Entities::SampleEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: @sample).detail_levels,
+            policy: @element_policy,
+            root: :sample
+          )
         end
       end
 

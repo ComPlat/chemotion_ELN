@@ -15,6 +15,16 @@ FactoryBot.define do
       sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
     end
 
+    trait :with_residues do
+      transient do
+        residues_count { 2 }
+      end
+
+      after(:create) do |sample, evaluator|
+        sample.residues << build_list(:residue, evaluator.residues_count)
+      end
+    end
+
     factory :valid_sample do
       after(:build) do |sample|
         creator = FactoryBot.create(:user)

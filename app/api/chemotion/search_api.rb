@@ -167,7 +167,12 @@ module Chemotion
             samplesGroup = samples.select { |sample| sample.molecule_id == molecule.id }
             samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
             samplesGroup.each do |sample|
-              serialized_sample = Entities::SampleEntity.represent(sample, displayed_in_list: true).serializable_hash
+              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+              serialized_sample = Entities::SampleEntity.represent(
+                sample,
+                detail_levels: detail_levels,
+                displayed_in_list: true
+              ).serializable_hash
               samplelist.push(serialized_sample)
             end
           end
@@ -176,9 +181,15 @@ module Chemotion
           ids = id_array.join(',')
           Sample.includes_for_list_display
                 .where(id: id_array)
-                .order("position(','||id::text||',' in ',#{ids},')")
+                .order(Arel.sql("position(','||id::text||',' in ',#{ids},')"))
                 .each do |sample|
-                  samplelist.push(Entities::SampleEntity.represent(sample, displayed_in_list: true).serializable_hash)
+                  detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+                  serialized_sample = Entities::SampleEntity.represent(
+                    sample,
+                    detail_levels: detail_levels,
+                    displayed_in_list: true
+                  ).serializable_hash
+                  samplelist.push(serialized_sample)
                 end
         end
 
