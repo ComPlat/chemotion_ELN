@@ -8,9 +8,10 @@ module KetcherService
   # Use Ketcher-as-a-Service to render molfiles to SVG
   module RenderSvg
     def self.call_render_service(url, request)
-      Rails.logger.info("Sending molfile to render service at: #{url}")
+      use_ssl = url.instance_of? URI::HTTPS
+      Rails.logger.info("Sending molfile to render service at: #{url} (SSL: #{use_ssl})")
       start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      res = Net::HTTP.start(url.host, url.port, read_timeout: 1.5) { |http| http.request(request) }
+      res = Net::HTTP.start(url.host, url.port, :read_timeout => 1.5, :use_ssl => use_ssl) { |http| http.request(request) }
       finish = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       Rails.logger.info("Render service response: #{res.code} in #{finish - start} seconds")
       raise Net::HTTPError.new("Server replied #{res.code}.", res) if res.code != '200'
