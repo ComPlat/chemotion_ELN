@@ -104,6 +104,8 @@ gem 'sentry-ruby'
 gem 'swot', git: 'https://github.com/leereilly/swot.git', branch: 'master', ref: 'bfe392b4cd52f62fbc1d83156020275719783dd1'
 gem 'sys-filesystem'
 
+gem 'puma'
+
 gem 'thor'
 gem 'thumbnailer', git: 'https://github.com/merlin-p/thumbnailer.git'
 gem 'turbo-sprockets-rails4'
@@ -158,8 +160,6 @@ group :development, :test do
 
   gem 'pry-byebug'
   gem 'pry-rails'
-
-  gem 'puma'
 
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false
