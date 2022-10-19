@@ -52,8 +52,7 @@ module Chemotion
           target = URI.join(params[:target], '/').to_s
           resp_body = { target: target }
           connection = Faraday.new(url: target) do |f|
-            f.use FaradayMiddleware::FollowRedirects
-            f.adapter :net_http
+            f.use FaradayMiddleware::FollowRedirects::Middleware
           end
           begin
             resp = connection.get { |req| req.url('/api/v1/public/ping') }
@@ -87,9 +86,8 @@ module Chemotion
           @move_queue = "move_to_collection_#{@collection.id}"
           # TODO: use persistent connection
           connection = Faraday.new(url: @url) do |f|
-            f.use FaradayMiddleware::FollowRedirects
+            f.use FaradayMiddleware::FollowRedirects::Middleware
             f.headers = @req_headers
-            f.adapter :net_http
           end
           resp = connection.get { |req| req.url('/api/v1/gate/ping') }
           resp_body.merge!(JSON.parse(resp.body)) if resp.headers["content-type"] == "application/json"
