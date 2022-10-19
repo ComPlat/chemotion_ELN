@@ -13,7 +13,7 @@ gem 'barby'
 gem 'bcrypt_pbkdf'
 gem 'bibtex-ruby'
 gem 'bootsnap'
-gem 'bootstrap-sass', '~> 3.4.1'
+gem 'bootstrap-sass'
 gem 'charlock_holmes'
 
 # gem 'chem_scanner', git: 'git@git.scc.kit.edu:ComPlat/chem_scanner.git'
@@ -29,8 +29,8 @@ gem 'dotenv-rails', require: 'dotenv/rails-now'
 
 gem 'ed25519'
 
-gem 'faraday', '~> 0.12.1'
-gem 'faraday_middleware', '~> 0.12.1'
+gem 'faraday'
+gem 'faraday-follow_redirects'
 gem 'font-awesome-rails'
 gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git', branch: 'allow-port-option'
 gem 'fx'
@@ -44,7 +44,7 @@ gem 'grape-swagger-rails'
 
 gem 'graphql'
 
-gem 'haml-rails', '~> 1.0'
+gem 'haml-rails'
 gem 'hashie-forbidden_attributes'
 gem 'httparty'
 
@@ -59,23 +59,24 @@ gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '28
 
 gem 'net-sftp'
 gem 'net-ssh'
+# locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks out newer net-scp versions
 gem 'net-scp', '3.0.0'
 gem 'nokogiri'
 
-gem 'omniauth', '~> 1.9.1'
-gem 'omniauth-github', '~> 1.4.0'
-gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
+gem 'omniauth'
+gem 'omniauth-github'
+gem 'omniauth-oauth2'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth_openid_connect'
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
 
 gem 'pandoc-ruby'
-gem 'paranoia', '~> 2.0'
+gem 'paranoia'
 gem 'pg', '~> 0.20.0'
 gem 'pg_search'
 gem 'prawn'
 gem 'prawn-svg'
-gem 'puma', '< 6.0'
+gem 'puma', '< 6.0.0'
 gem 'pundit'
 
 # If we want to upgrade past rack >= 2.1 we need to upgrade to at least grape
@@ -94,7 +95,7 @@ gem 'ruby-mailchecker'
 gem 'ruby-ole'
 
 gem 'sablon', git: 'https://github.com/ComPlat/sablon'
-gem 'sassc-rails', '~> 2.1.2'
+gem 'sassc-rails'
 gem 'scenic'
 gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
@@ -107,7 +108,7 @@ gem 'thor'
 gem 'thumbnailer', git: 'https://github.com/merlin-p/thumbnailer.git'
 gem 'turbo-sprockets-rails4'
 
-gem 'uglifier', '>= 4.0.0'
+#gem 'uglifier', '>= 4.0.0'
 # gem 'webpacker', '~> 6.0.0.beta.6'
 gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
