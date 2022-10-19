@@ -25,7 +25,8 @@ jobs:
           formatters: github_status github_pr_review
 
   testing:
-    needs: linting
+    needs: [linting]
+    if: always() && (needs.linting.result == 'success' || needs.linting.result == 'skipped')    # https://github.com/actions/runner/issues/491
     runs-on: ubuntu-latest
     defaults:
       run:
