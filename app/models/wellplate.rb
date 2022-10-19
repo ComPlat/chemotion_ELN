@@ -116,7 +116,7 @@ class Wellplate < ApplicationRecord
       if w.sample
         begin
           # Call Sample.create_subsample to perform SampleSplit
-          subsample = Sample.find_by(id: w.sample.id).create_subsample user, collection_ids, true
+          subsample = Sample.find_by(id: w.sample.id).create_subsample user, collection_ids, true, false
           subsample_id = subsample.id
         end
       end

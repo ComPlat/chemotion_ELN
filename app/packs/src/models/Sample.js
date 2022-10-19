@@ -506,6 +506,8 @@ export default class Sample extends Element {
   }
 
   updateRange(field, lower, upper) {
+    // console.log(lower);
+    // console.log(upper);
     this[`${field}_lowerbound`] = lower;
     this[`${field}_upperbound`] = upper;
     if (lower === '' && upper === '') {

@@ -2,10 +2,13 @@
 object-property-newline, semi, react/no-unused-prop-types, react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Well, ButtonToolbar, ListGroup, ListGroupItem } from 'react-bootstrap';
+import { FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Well, ButtonToolbar, ListGroup, ListGroupItem, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import SVG from 'react-inlinesvg';
 import InventoryFetcher from './fetchers/InventoryFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import Sample from 'src/models/Sample';
 
 export default class InventoryTab extends React.Component {
   constructor(props) {
@@ -26,15 +29,15 @@ export default class InventoryTab extends React.Component {
   }
 
   componentDidMount() {
-    const { element } = this.props;
-    this.fetchInventory(element);
+    const { sample } = this.props;
+    this.fetchInventory(sample);
   }
 
-  fetchInventory(element) {
-    if (element === undefined || element.is_new) {
+  fetchInventory(sample) {
+    if (sample === undefined || sample.is_new) {
       return;
     }
-    InventoryFetcher.fetchByInventoriableId(element.id, element.type).then((inventory) => {
+    InventoryFetcher.fetchByInventoriableId(sample.id, sample.type).then((inventory) => {
       if (inventory !== null) {
         this.setState({ inventory: inventory });
       } 
@@ -53,15 +56,15 @@ export default class InventoryTab extends React.Component {
 
   handleSubmitSave() {
     const { inventory } = this.state;
-    const { element } = this.props;
-    if (!element || !inventory) {
+    const { sample } = this.props;
+    if (!sample || !inventory) {
       return;
     }
     const inventoryParameters = inventory._inventory_parameters;
     const params = { 
       inventory_parameters: inventoryParameters,
-      inventoriable_id: element.id, 
-      inventoriable_type: element.type 
+      inventoriable_id: sample.id, 
+      inventoriable_type: sample.type 
     };
     if (inventory.isNew) {
       InventoryFetcher.create(params).then((response) => {
@@ -84,9 +87,9 @@ export default class InventoryTab extends React.Component {
   }
 
   querySafetySheets = () => {
-    const { element } = this.props;
-    const sampleName = element.showedName();
-    const moleculeId = element.molecule_name_hash ? element.molecule_name_hash.mid : null;
+    const { sample } = this.props;
+    const sampleName = sample.showedName();
+    const moleculeId = sample.molecule_name_hash ? sample.molecule_name_hash.mid : null;
     const { inventory, vendorValue, queryOption, safetySheetLanguage } = this.state;
     if(inventory) {
       inventory.invenParameters('sample_name', sampleName);
@@ -140,16 +143,16 @@ export default class InventoryTab extends React.Component {
   }
 
   fetchSafetyPhrases = (vendor) => {
-    const { element } = this.props;
+    const { sample } = this.props;
     const queryParams = { 
-      vendor: vendor, id: element.id
+      vendor: vendor, id: sample.id
     };
     InventoryFetcher.safetyPhrases(queryParams).then((result) => {
       if(result === 'Could not find H and P phrases' || result === 'Please fetch and save corresponding safety data sheet first') {
         const handleError = <p>{result}</p>; 
-        this.setState({ safetyPhrases: handleError  })
+        this.setState({ safetyPhrases: handleError })
       } else {
-        this.setState({ safetyPhrases:  this.stylePhrases(result) })
+        this.setState({ safetyPhrases: this.stylePhrases(result) })
         this.handleFieldChanged('safetyPhrases', result);
       }
     }).catch((errorMessage) => {
@@ -162,16 +165,18 @@ export default class InventoryTab extends React.Component {
     let productLink;
     console.log(inventory._inventory_parameters[0]);
 
-    if (vendor == 'thermofischer') {
-      productLink = inventory._inventory_parameters[0].alfaProductInfo.productLink;
-    } else if (vendor == 'merck') {
-      productLink = inventory._inventory_parameters[0].merckProductInfo.productLink;
-
+    if (vendor === 'thermofischer') {
+      productLink = inventory._inventory_parameters[0].alfaProductInfo ? inventory._inventory_parameters[0].alfaProductInfo.productLink : '';
+    } else if (vendor === 'merck') {
+      productLink = inventory._inventory_parameters[0].merckProductInfo ? inventory._inventory_parameters[0].merckProductInfo.productLink : '';
     }
 
     InventoryFetcher.chemicalProperties(productLink).then((result) => {
-      if(result === 'Could not find additional chemical properties') {
-        const handleError = <p>{result}</p>; 
+      if (result === 'Could not find additional chemical properties' || result === null) {
+        NotificationActions.add({
+          message: 'Could not find additional chemical properties',
+          level: 'error'
+        });
       } else {
         Object.entries(result).forEach(([key, value]) => {
           this.handleFieldChanged(key, value)
@@ -181,14 +186,43 @@ export default class InventoryTab extends React.Component {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-
   }
+  
+  mapToSampleProperties() {
+    const { sample } = this.props;
+    const { inventory } = this.state;
+    const inventoryParameters = inventory._inventory_parameters[0];
+    if (inventoryParameters.boiling_point) {
+      const boilingPoints = inventoryParameters.boiling_point.replace(/°C?/g, '').trim().split('-');
+      console.log(boilingPoints);
+      const lowerBound = boilingPoints[0];
+      const upperBound = boilingPoints.length === 2 ? boilingPoints[1] : Number.POSITIVE_INFINITY;
+      sample.updateRange('boiling_point', lowerBound, upperBound);
+    }
+
+    if (inventoryParameters.melting_point) {
+      const MeltingPoints = inventoryParameters.melting_point.replace(/°C?/g, '').trim().split('-');
+      const lowerBound = MeltingPoints[0];
+      const upperBound = MeltingPoints.length === 2 ? MeltingPoints[1] : Number.POSITIVE_INFINITY;
+      sample.updateRange('melting_point', lowerBound, upperBound);
+    }
+
+    if (inventoryParameters.density) {
+      // const substring = inventoryParameters.density.indexOf('at');
+      // const density = inventoryParameters.density.substr(0, substring);
+      const densityNumber = inventoryParameters.density.match(/[0-9.]+/g);
+      console.log(densityNumber);
+      sample.density = densityNumber[0];
+    }
+    this.props.parent.setState({ sample });
+    ElementActions.updateSample(new Sample(sample), false);
+  };
 
   textInput(field, label, parameter) {
     const bsSize = parameter !== 'important_notes' && parameter !== 'disposal_info' ? 'small' : null;
     const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage' 
     && parameter !== 'solubility' ? 'input' : 'textarea';
-    const noBoldLabel = { fontWeight: 'normal' } 
+    const noBoldLabel = { fontWeight: 'normal' }
     return (
       <FormGroup bsSize={bsSize}>
         <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
@@ -200,6 +234,44 @@ export default class InventoryTab extends React.Component {
           onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
           rows={label !== 'Important notes' && label !== 'Disposal information' ? 1 : 2}
         />
+      </FormGroup>
+    );
+  }
+
+  textUnitInput(field, label, parameter) {
+    const noBoldLabel = { fontWeight: 'normal' }
+    let unit;
+    let value;
+    if (field) {
+      if ((parameter === 'melting_point' || parameter === 'boiling_point') && (field.includes('°C') || field.includes('°'))) {
+        value = field.replace('°C', '').replace('°', '');
+        unit = '°C'
+      } else if ((parameter === 'melting_point' || parameter === 'boiling_point') && field.includes('°F') && !field.includes('°C')) {
+        value = field.replace('°F', '');
+        unit = '°F'
+      } else if (parameter === 'density') {
+        const densityArr = field.match(/[0-9.]+/g);
+        value = densityArr[0];
+        unit = 'g/mL'
+      }  
+      // else if (parameter === 'density' && field.includes('g/cm3')) {
+      //   value = field.replace('g/cm3', '');
+      //   unit = 'g/cm3'
+      // } else if (parameter === 'density' && !field.includes('g/cm3') && !field.includes('g/mL')) {
+      //   value = `${field} (specific density)`
+      // }
+    } 
+    return (
+      <FormGroup bsSize="small">
+        <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
+        <InputGroup>
+          <FormControl
+            type="text"
+            value={value}
+            onChange={(e) => this.handleFieldChanged(parameter, e.target.value)}
+          />
+          <InputGroup.Addon>{unit}</InputGroup.Addon>
+        </InputGroup>
       </FormGroup>
     );
   }
@@ -306,7 +378,7 @@ export default class InventoryTab extends React.Component {
     this.handleFieldChanged(vendorProduct, productInfo);
     const params = { 
       inventory_parameters: inventory._inventory_parameters,
-      inventoriable_id: this.props.element.id,
+      inventoriable_id: this.props.sample.id,
       vendor_product: vendorProduct
     };
     InventoryFetcher.saveSafetySheets(params).then((result) => {
@@ -352,7 +424,7 @@ export default class InventoryTab extends React.Component {
     let productNumber;
     let productLink;
     let productInfo;
-    const { element } = this.props;
+    const { sample } = this.props;
     const { inventory } = this.state;
     if (sdsInfo.alfa_link !== undefined) {
       vendor = 'Thermofischer'
@@ -380,7 +452,7 @@ export default class InventoryTab extends React.Component {
     const inventoryParameters = inventory._inventory_parameters;
     const params = { 
       inventory_parameters: inventoryParameters,
-      inventoriable_id: element.id, 
+      inventoriable_id: sample.id, 
     };
 
     return (
@@ -623,15 +695,23 @@ export default class InventoryTab extends React.Component {
           <tr>
             <td>
               <div style={{ width: '%100', display: 'flex', justifyContent: 'justify' }}>
-                <div style={{ width: '%50', paddingRight: '20px' }}>
+                <div style={{ width: '%30', paddingRight: '20px' }}>
                   {this.chooseVendorForChemicalProperties()}
                 </div> 
-                <div style={{ width: '%50', paddingTop: '25px' }}>
+                <div style={{ width: '%30', paddingTop: '25px', paddingRight: '20px' }}>
                   <Button
                     id="safetyPhrases-btn"
                     onClick={() => this.fetchChemicalProperties(vendorChemPropertiesValue)}
                   >
                     fetch Chemical Properties
+                  </Button>
+                </div>
+                <div style={{ width: '%30', paddingTop: '25px' }}>
+                  <Button
+                    id="mapSampleProperties-btn"
+                    onClick={() => this.mapToSampleProperties()}
+                  >
+                    copy fetched data to sample properties
                   </Button>
                 </div>
               </div>
@@ -760,13 +840,13 @@ export default class InventoryTab extends React.Component {
                   {this.textInput(form, 'Form', 'form')}
                 </div>
                 <div style={{ width: '20%' }}>
-                  {this.textInput(density, 'Density', 'density')}
+                  {this.textUnitInput(density, 'Density', 'density')}
                 </div>
                 <div style={{ width: '20%' }}>
-                  {this.textInput(melting_point, 'Melting Point', 'melting_point')}
+                  {this.textUnitInput(melting_point, 'Melting Point', 'melting_point')}
                 </div>
                 <div style={{ width: '20%' }}>
-                  {this.textInput(boiling_point, 'Boiling Point', 'boiling_point')}
+                  {this.textUnitInput(boiling_point, 'Boiling Point', 'boiling_point')}
                 </div>
               </div>
             </td>
@@ -942,4 +1022,8 @@ export default class InventoryTab extends React.Component {
       </table>     
     )
   }
+}
+
+InventoryTab.propTypes = {
+  sample: PropTypes.object
 }

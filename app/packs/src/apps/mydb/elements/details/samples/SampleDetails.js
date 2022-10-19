@@ -991,7 +991,8 @@ export default class SampleDetails extends React.Component {
       <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
         <ListGroupItem>
           <InventoryTab
-            element={sample}
+            sample={sample}
+            parent={this}
           />
         </ListGroupItem>
         <EditUserLabels element={sample} />

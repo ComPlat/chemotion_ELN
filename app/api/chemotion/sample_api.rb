@@ -53,7 +53,7 @@ module Chemotion
           col_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
           Sample.where(id: sample_ids).each do |sample|
-            subsample = sample.create_subsample current_user, col_id, true
+            subsample = sample.create_subsample(current_user, col_id, true, true)
           end
 
           {} # JS layer does not use the reply

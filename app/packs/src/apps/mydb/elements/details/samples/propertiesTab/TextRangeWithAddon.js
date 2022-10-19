@@ -66,6 +66,7 @@ export default class TextRangeWithAddon extends Component {
             title={tipOnText}
             type="text"
             disabled={disabled}
+            key={this.props.value}
             defaultValue={this.props.value || ''}
             inputRef={(ref) => { this.input = ref; }}
             onChange={event => this.handleInputChange(event)}

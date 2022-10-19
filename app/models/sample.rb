@@ -278,7 +278,7 @@ class Sample < ApplicationRecord
     inventory.save!
   end
 
-  def create_subsample user, collection_ids, copy_ea = false
+  def create_subsample user, collection_ids, copy_ea = false, with_inventory = true
     subsample = self.dup
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?
@@ -311,7 +311,7 @@ class Sample < ApplicationRecord
     subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
     subsample.save!
 
-    create_inventory_for_subsample(self.id, subsample.id)
+    create_inventory_for_subsample(self.id, subsample.id) if with_inventory
     subsample
   end
 
