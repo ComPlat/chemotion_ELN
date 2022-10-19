@@ -1,0 +1,52 @@
+FROM ruby:2.6.8
+
+ARG NODE_VERSION=14.20.0
+ARG BUNDLER_VERSION=1.17.3
+
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+    bash ca-certificates wget apt-transport-https git gpg gcc-9 \
+    imagemagick inkscape libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
+    build-essential sudo postgresql-client libappindicator1 swig \
+    gconf-service libasound2 libgconf-2-4 cmake \
+    libnspr4 libnss3 libpango1.0-0 libxss1 xdg-utils tzdata libpq-dev \
+    gtk2-engines-pixbuf \
+    libssl-dev libreadline-dev libyaml-dev lcov \
+    unzip openssh-client \
+    python-dev libsqlite3-dev libboost-all-dev p7zip-full \
+    xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
+    fonts-crosextra-caladea fonts-crosextra-carlito \
+    fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
+    fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
+    fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic
+
+# rdkit_chem gem (https://github.com/CamAnNguyen/rdkit_chem) won't build with gcc > 9
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 20 && \
+    update-alternatives --set gcc "/usr/bin/gcc-9"
+
+RUN  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
+    && apt-get update -yqqq && apt-get -y install google-chrome-stable \
+    && CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE` \
+    && mkdir -p /opt/chromedriver-$CHROMEDRIVER_VERSION \
+    && curl -sS -o /tmp/chromedriver_linux64.zip http://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip \
+    && unzip -qq /tmp/chromedriver_linux64.zip -d /opt/chromedriver-$CHROMEDRIVER_VERSION \
+    && rm /tmp/chromedriver_linux64.zip \
+    && chmod +x /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver \
+    && ln -fs /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver /usr/local/bin/chromedriver
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY Gemfile .
+COPY Gemfile.lock .
+RUN gem install bundler -v $BUNDLER_VERSION
+RUN bundle install
+
+RUN curl https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz | tar -xz -C /usr/local --strip-components 1
+COPY package.json .
+COPY yarn.lock .
+COPY package_postinstall.sh .
+RUN npm install -g yarn
+RUN yarn install
+
+RUN rm Gemfile Gemfile.lock package.json yarn.lock package_postinstall.sh
