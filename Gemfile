@@ -10,7 +10,7 @@ gem 'axlsx', git: 'https://github.com/randym/axlsx'
 
 gem 'backup'
 gem 'barby'
-gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'
+gem 'bcrypt_pbkdf'
 gem 'bibtex-ruby'
 gem 'bootsnap'
 gem 'bootstrap-sass', '~> 3.4.1'
@@ -22,13 +22,12 @@ gem 'chem_scanner', git: 'https://github.com/complat/chem_scanner.git'
 gem 'closure_tree'
 gem 'countries'
 
-gem 'daemons'
 gem 'delayed_cron_job'
 gem 'delayed_job_active_record'
 gem 'devise'
 gem 'dotenv-rails', require: 'dotenv/rails-now'
 
-gem 'ed25519', '>= 1.2', '< 2.0'
+gem 'ed25519'
 
 gem 'faraday', '~> 0.12.1'
 gem 'faraday_middleware', '~> 0.12.1'
@@ -36,13 +35,12 @@ gem 'font-awesome-rails'
 gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git', branch: 'allow-port-option'
 gem 'fx'
 
-gem 'grape', '~>1.2.3'
+gem 'grape'
 gem 'grape-entity'
 gem 'grape-kaminari'
 gem 'grape-swagger'
-gem 'grape-swagger-entity', '~> 0.3'
+gem 'grape-swagger-entity'
 gem 'grape-swagger-rails'
-gem 'grape-swagger-representable', '~> 0.2'
 
 gem 'graphql'
 
@@ -52,8 +50,7 @@ gem 'httparty'
 
 gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
 
-gem 'jbuilder', '~> 2.0'
-gem 'jquery-rails'
+gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails
 gem 'jwt'
 
 gem 'kaminari'
@@ -62,6 +59,7 @@ gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '28
 
 gem 'net-sftp'
 gem 'net-ssh'
+gem 'net-scp', '3.0.0'
 gem 'nokogiri'
 
 gem 'omniauth', '~> 1.9.1'
@@ -77,19 +75,20 @@ gem 'pg', '~> 0.20.0'
 gem 'pg_search'
 gem 'prawn'
 gem 'prawn-svg'
+gem 'puma', '< 6.0'
 gem 'pundit'
 
 # If we want to upgrade past rack >= 2.1 we need to upgrade to at least grape
 # 1.3.0
-gem 'rack', '~> 2.0.0'
+gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 5.2.0'
 gem 'rdkit_chem', git: 'https://github.com/CamAnNguyen/rdkit_chem'
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'
-gem 'roo', '>2.5.0'
-gem 'rqrcode'
+gem 'roo'
 gem 'rtf'
+gem 'rqrcode' # required for Barby to work but not listed as its dependency -_-
 gem 'ruby-geometry', require: 'geometry'
 gem 'ruby-mailchecker'
 gem 'ruby-ole'
@@ -98,7 +97,7 @@ gem 'sablon', git: 'https://github.com/ComPlat/sablon'
 gem 'sassc-rails', '~> 2.1.2'
 gem 'scenic'
 gem 'schmooze'
-gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master'
+gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
 gem 'sentry-rails'
 gem 'sentry-ruby'
 gem 'swot', git: 'https://github.com/leereilly/swot.git', branch: 'master', ref: 'bfe392b4cd52f62fbc1d83156020275719783dd1'
@@ -158,8 +157,6 @@ group :development, :test do
 
   gem 'pry-byebug'
   gem 'pry-rails'
-
-  gem 'puma'
 
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false

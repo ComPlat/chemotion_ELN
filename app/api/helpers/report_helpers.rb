@@ -5,7 +5,12 @@ module ReportHelpers
   extend Grape::API::Helpers
 
   params :export_params do
-    requires :columns, types: [Hash, Array[String]]
+    requires :columns, type: Hash do
+      optional :sample, type: Array[String]
+      optional :reaction, type: Array[String]
+      optional :wellplate, type: Array[String]
+      optional :sample_analyses, type: Array[String]
+    end
     requires :exportType, type: Integer
     requires :uiState, type: Hash do
       requires :sample, type: Hash do
@@ -583,7 +588,7 @@ module ReportHelpers
       columns.slice(:sample, :molecule, :wellplate)
     when :sample_analyses
     # FIXME: slice analyses + process properly
-      columns.slice(:analysis).merge(sample_id: params[:columns][:sample])
+      columns.slice(:analyses).merge(sample_id: params[:columns][:sample])
     # TODO: reaction analyses data
     # when :reaction_analyses
     #  columns.slice(:analysis).merge(reaction_id: params[:columns][:reaction])
