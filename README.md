@@ -1,6 +1,6 @@
 # Chemotion [![Badge DOI]][DOI]
 
-An **Electronic Lab Notebook** for chemists!
+Test
 
 ---
 
