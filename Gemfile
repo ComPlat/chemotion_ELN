@@ -63,9 +63,9 @@ gem 'net-ssh'
 gem 'net-scp', '3.0.0'
 gem 'nokogiri'
 
-gem 'omniauth'
-gem 'omniauth-github'
-gem 'omniauth-oauth2'
+gem 'omniauth', '~> 1.9.1'
+gem 'omniauth-github', '~> 1.4.0'
+gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth_openid_connect'
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
@@ -79,8 +79,6 @@ gem 'prawn-svg'
 gem 'puma', '< 6.0.0'
 gem 'pundit'
 
-# If we want to upgrade past rack >= 2.1 we need to upgrade to at least grape
-# 1.3.0
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 5.2.0'
@@ -108,8 +106,6 @@ gem 'thor'
 gem 'thumbnailer', git: 'https://github.com/merlin-p/thumbnailer.git'
 gem 'turbo-sprockets-rails4'
 
-#gem 'uglifier', '>= 4.0.0'
-# gem 'webpacker', '~> 6.0.0.beta.6'
 gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
 
@@ -149,10 +145,6 @@ group :development, :test do
   gem 'chronic'
 
   gem 'listen'
-
-  # Install mailcatcher outside the bundle since it does not support rack 2.0
-  # Use `gem install mailcatcher` instead
-  # gem 'mailcatcher'
 
   gem 'meta_request'
 
