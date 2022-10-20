@@ -1,4 +1,4 @@
-# Chemotion Electronic Lab Notebook
+# Test
 
 An ELN for chemists!
 
