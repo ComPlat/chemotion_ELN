@@ -89,7 +89,9 @@ describe Chemotion::ReportAPI do
             analyses: [],
             molecule: %w[cano_smiles],
             reaction: %w[name short_label],
-            sample: %w[name external_label real_amount_value real_amount_unit created_at]
+            sample: %w[name external_label real_amount_value real_amount_unit created_at],
+            sample_analyses: [],
+            wellplate: []
           }
         }
       end
@@ -107,7 +109,7 @@ describe Chemotion::ReportAPI do
           post(
             '/api/v1/reports/export_samples_from_selections',
             params: params.to_json,
-            headers: { 'CONTENT_TYPE' => 'application/json' }
+            headers: { 'CONTENT-TYPE' => 'application/json' }
           )
         end
 
@@ -128,7 +130,7 @@ describe Chemotion::ReportAPI do
           post(
             '/api/v1/reports/export_samples_from_selections',
             params: params.to_json,
-            headers: { 'CONTENT_TYPE' => 'application/json' }
+            headers: { 'CONTENT-TYPE' => 'application/json' }
           )
         end
 
@@ -148,7 +150,7 @@ describe Chemotion::ReportAPI do
           params[:uiState][:sample][:checkedIds] = [sample_3.id]
           post('/api/v1/reports/export_samples_from_selections',
             params: params.to_json,
-            headers: { 'CONTENT_TYPE' => 'application/json' }
+            headers: { 'CONTENT-TYPE' => 'application/json' }
           )
         end
 
@@ -168,11 +170,12 @@ describe Chemotion::ReportAPI do
           params[:uiState][:sample][:checkedIds] = [sample_4.id]
           post('/api/v1/reports/export_samples_from_selections',
             params: params.to_json,
-            headers: { 'CONTENT_TYPE' => 'application/json' }
+            headers: { 'CONTENT-TYPE' => 'application/json' }
           )
         end
 
         it 'returns correct sdf' do
+          # binding.pry
           expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
           expect(response['Content-Disposition']).to include('.sdf')
           msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v3000_1.sdf'))
@@ -216,17 +219,22 @@ describe Chemotion::ReportAPI do
             currentCollection: c.id,
             isSync: false
           },
-          columns: %w[
-            target_amount_value target_amount_unit
-            created_at updated_at molfile
-          ]
+          columns: {
+            sample: %w[
+              created_at
+              molfile
+              target_amount_unit
+              target_amount_value
+              updated_at
+            ]
+          }
         }
         post(
            '/api/v1/reports/export_samples_from_selections',
-           params: params.to_json,
+           params: params, as: :json,
            headers: {
-             'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-             'CONTENT_TYPE' => 'application/json'
+             'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+             'CONTENT-TYPE' => 'application/json'
            }
         )
       end
@@ -298,7 +306,8 @@ describe Chemotion::ReportAPI do
             },
             currentCollection: c1.id,
             isSync: false
-          }
+          },
+          columns: {}
         }
       end
 
@@ -324,7 +333,7 @@ describe Chemotion::ReportAPI do
           params: params.to_json,
           headers: {
             'HTTP_ACCEPT' => 'text/plain, text/csv',
-            'CONTENT_TYPE' => 'application/json'
+            'CONTENT-TYPE' => 'application/json'
           }
         )
         expect(response['Content-Type']).to eq('text/csv')
@@ -440,59 +449,67 @@ describe Chemotion::ReportAPI do
       let(:fileName) { 'ELN' }
       let(:params) do
         {
-          objTags: "[{\"id\":#{r1.id},\"type\":\"reaction\"}, \
-            {\"id\":#{r2.id},\"type\":\"reaction\"}]",
-          splSettings: "[{\"text\":\"diagram\",\"checked\":true}, \
-            {\"text\":\"analyses\",\"checked\":true}]",
-          rxnSettings: "[{\"text\":\"diagram\",\"checked\":true}, \
-            {\"text\":\"material\",\"checked\":true}]",
-          siRxnSettings: "[{\"text\":\"Name\",\"checked\":true}, \
-            {\"text\":\"CAS\",\"checked\":true}]",
-          configs: "[{\"text\":\"page_break\",\"checked\":true}, \
-            {\"text\":\"whole_diagram\",\"checked\":true}]",
+          objTags: [
+            { id: r1.id, type: "reaction" },
+            { id: r2.id, type: "reaction" }
+          ],
+          splSettings: [
+            { text: 'diagram', checked: true },
+            { text: 'analyses', checked: true }
+          ],
+          rxnSettings: [
+            { text: 'diagram', checked: true },
+            { text: 'material' ,checked: true }
+          ],
+          siRxnSettings: [
+            { text: "Name", checked: true },
+            { text: "CAS", checked: true }
+          ],
+          configs: [
+            { text: "page_break", checked: true },
+            { text: "whole_diagram", checked: true }
+          ],
           imgFormat: 'png',
           fileName: fileName,
-          molSerials: "[{\"mol\":{\"id\":1, \"svgPath\":\"1a.svg\", \
-            \"sumFormula\":\"C6H6\", \"iupacName\":\"benzene\"}, \
-            \"value\":\"1a\"}]",
-          prdAtts: "{\"atts\": \
-                      [ \
-                        { \
-                          \"id\":2, \
-                          \"attachable_id\":121, \
-                          \"attachable_type\":\"Report\", \
-                          \"filename\":\"kit_logo.png\", \
-                          \"identifier\":\"123\", \
-                          \"checksum\":\"456\", \
-                          \"storage\":\"local\", \
-                          \"created_by\":1, \
-                          \"created_for\":1, \
-                          \"version\":0, \
-                          \"created_at\":\"2018-01-03T15:24:19.751Z\", \
-                          \"updated_at\":\"2018-01-03T15:24:28.686Z\", \
-                          \"content_type\":\"image/png\", \
-                          \"bucket\":\"1\", \
-                          \"key\":\"987\", \
-                          \"thumb\":true, \
-                          \"folder\":\"\", \
-                          \"kind\":\"GCMS\" \
-                        } \
-                      ] \
-                    }",
+          molSerials: [
+            { mol: { id: 1, svgPath: "1a.svg", sumFormula: "C6H6", iupacName: "benzene" }, value: "1a" }
+          ],
+          prdAtts: [
+            {
+              id: 2,
+              attachable_id: 121,
+              attachable_type: "Report",
+              filename: "kit_logo.png",
+              identifier: "123",
+              checksum: "456",
+              storage: "local",
+              created_by: 1,
+              created_for: 1,
+              version: 0,
+              created_at: "2018-01-03T15:24:19.751Z",
+              updated_at: "2018-01-03T15:24:28.686Z",
+              content_type: "image/png",
+              bucket: "1",
+              key: "987",
+              thumb: true,
+              folder: '',
+              kind: "GCMS"
+            }
+          ],
           templateId: 1
         }
       end
 
       it 'returns a created -standard- report' do
         params[:template] = 'standard'
-        post '/api/v1/reports', params: params
+        post '/api/v1/reports', params: params, as: :json
 
         expect(response.body).to include(fileName)
       end
 
       it 'returns a created -supporting_information- report' do
         params[:template] = 'supporting_information'
-        post '/api/v1/reports', params: params
+        post '/api/v1/reports', params: params, as: :json
         expect(response.body).to include(fileName)
       end
     end

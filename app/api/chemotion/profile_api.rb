@@ -1,6 +1,6 @@
 module Chemotion
 
-  class ProfileLayoutHash < Grape::Validations::Base
+  class ProfileLayoutHash < Grape::Validations::Validators::Base
     def validate_param!(attr_name, params)
       fail Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
          message: "has too many entries" if  params[attr_name].keys.size > 30

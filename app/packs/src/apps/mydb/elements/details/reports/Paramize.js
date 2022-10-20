@@ -32,17 +32,17 @@ const paramize = (state) => {
   } = state;
 
   const params = {
-    objTags: JSON.stringify(objTags(selectedObjs)),
-    splSettings: JSON.stringify(abstractSettings(splSettings)),
-    rxnSettings: JSON.stringify(abstractSettings(rxnSettings)),
-    siRxnSettings: JSON.stringify(siRxnSettings),
-    configs: JSON.stringify(abstractConfigs(configs)),
-    prdAtts: JSON.stringify(prdAtts),
+    objTags: objTags(selectedObjs),
+    splSettings: abstractSettings(splSettings),
+    rxnSettings: abstractSettings(rxnSettings),
+    siRxnSettings: siRxnSettings,
+    configs: abstractConfigs(configs),
+    prdAtts: prdAtts,
     imgFormat: imgFormat?.value || imgFormat || 'png',
     fileName,
     fileDescription,
     templateId: template.id || template,
-    molSerials: JSON.stringify(selMolSerials),
+    molSerials: selMolSerials,
   };
 
   return params;
