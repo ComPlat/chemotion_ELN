@@ -178,7 +178,6 @@ export default class ContainerDataset extends Component {
                 attachment={attachment}
                 overlay={editorTooltip(values(extension).join(','))}
                 onEdit={this.props.onChange}
-                isSpinningLock={isEditing}
               ></AttachmentEditButton>
             </td>
           </tr>
