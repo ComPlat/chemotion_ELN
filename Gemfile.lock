@@ -114,16 +114,6 @@ GIT
       semantic_range (>= 2.3.0)
 
 GIT
-  remote: https://github.com/randym/axlsx
-  revision: c593a08b2a929dac7aa8dc418b55e26b4c49dc34
-  specs:
-    axlsx (3.0.0.pre)
-      htmlentities (~> 4.3, >= 4.3.4)
-      mimemagic (~> 0.3)
-      nokogiri (~> 1.8, >= 1.8.2)
-      rubyzip (~> 1.2, >= 1.2.1)
-
-GIT
   remote: https://github.com/toretore/semacode.git
   revision: 4e31e0b79a1a63c98f2560359c1c6a527b00bacc
   branch: master
@@ -256,6 +246,11 @@ GEM
       rack-test (>= 0.6.3)
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
+    caxlsx (3.2.0)
+      htmlentities (~> 4.3, >= 4.3.4)
+      marcel (~> 1.0)
+      nokogiri (~> 1.10, >= 1.10.4)
+      rubyzip (>= 1.3.0, < 3)
     charlock_holmes (0.7.7)
     childprocess (4.1.0)
     chronic (0.10.2)
@@ -788,7 +783,6 @@ DEPENDENCIES
   annotate
   api-pagination
   awesome_print
-  axlsx!
   backup
   barby
   bcrypt_pbkdf
@@ -807,6 +801,7 @@ DEPENDENCIES
   capistrano-rvm
   capistrano-yarn
   capybara
+  caxlsx
   charlock_holmes
   chem_scanner!
   chronic

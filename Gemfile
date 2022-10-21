@@ -6,7 +6,7 @@ gem 'aasm'
 gem 'activejob-status'
 gem 'ancestry'
 gem 'api-pagination'
-gem 'axlsx', git: 'https://github.com/randym/axlsx'
+gem 'caxlsx'
 
 gem 'backup'
 gem 'barby'
