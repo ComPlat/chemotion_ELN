@@ -158,7 +158,6 @@ group :development, :test do
 
   gem 'rspec-rails'
   gem 'ruby_jard'
-  gem 'rubyXL', '3.3.26'
 
   gem 'spring'
 end
@@ -168,7 +167,7 @@ group :test do
 
   gem 'database_cleaner'
 
-  gem 'factory_bot_rails', '~>4.11'
+  gem 'factory_bot_rails'
   gem 'faker', '~> 1.6.6'
 
   gem 'launchy', '~> 2.4.3'
