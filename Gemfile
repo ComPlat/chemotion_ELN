@@ -156,6 +156,7 @@ group :development, :test do
   gem 'rubocop-rails', require: false
   gem 'rubocop-rspec', require: false
 
+  gem 'rspec'
   gem 'rspec-rails'
   gem 'ruby_jard'
 
