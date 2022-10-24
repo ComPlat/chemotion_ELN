@@ -166,6 +166,7 @@ group :test do
   gem 'capybara'
 
   gem 'database_cleaner'
+  gem 'database_cleaner-active_record'
 
   gem 'factory_bot_rails'
   gem 'faker', '~> 1.6.6'
