@@ -35,7 +35,9 @@ module Chemotion
         end
         get do
           list = ElementKlass.where(is_active: true) if params[:generic_only].present? && params[:generic_only] == true
-          list = ElementKlass.where(is_active: true) unless params[:generic_only].present? && params[:generic_only] == true
+          unless params[:generic_only].present? && params[:generic_only] == true
+            list = ElementKlass.where(is_active: true)
+          end
           list.pluck(:name)
         end
       end
@@ -79,18 +81,20 @@ module Chemotion
         # 7 - error has occurred while force saving the document.
         before do
           error!('401 Unauthorized', 401) if params[:key].nil?
-          payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base) unless params[:key].nil?
-          error!('401 Unauthorized', 401) if payload&.length == 0
+          unless params[:key].nil?
+            payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base)
+          end
+          error!('401 Unauthorized', 401) if payload&.length.zero?
           @status = params[:status].is_a?(Integer) ? params[:status] : 0
 
           if @status > 1
             attach_id = payload[0]['att_id']&.to_i
             @url = params[:url]
-            @attachment = Attachment.find_by(id: attach_id, attachable_type: 'ResearchPlan')
+            @attachment = Attachment.find_by(id: attach_id)
             user_id = payload[0]['user_id']&.to_i
             @user = User.find_by(id: user_id)
             error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-            @research_plan = @attachment.attachable if @attachment.attachable_type == 'ResearchPlan'
+            element = @attachment.attachable
           end
         end
 
@@ -105,7 +109,6 @@ module Chemotion
         end
 
         post do
-
           # begin
           case @status
           when 1
@@ -193,9 +196,9 @@ module Chemotion
 
         desc "Return organization's name from email domain"
         get 'swot' do
-          return unless params[:domain].present?
+          return if params[:domain].blank?
 
-          Swot::school_name(params[:domain]).presence ||
+          Swot.school_name(params[:domain]).presence ||
             Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
         end
       end
@@ -224,24 +227,24 @@ module Chemotion
 
           if helper.sender_recipient_known?
             dataset = helper.prepare_new_dataset(subject)
-            params.each do |file_id, file|
-              if tempfile = file.tempfile
-                a = Attachment.new(
-                  filename: file.filename,
-                  file_path: file.tempfile,
-                  created_by: helper.sender.id,
-                  created_for: helper.recipient.id,
-                  content_type: file.type
-                )
-                begin
-                  a.save!
-                  a.update!(attachable: dataset)
-                  primary_store = Rails.configuration.storage.primary_store
-                  a.update!(storage: primary_store)
-                ensure
-                  tempfile.close
-                  tempfile.unlink
-                end
+            params.each do |_file_id, file|
+              next unless tempfile = file.tempfile
+
+              a = Attachment.new(
+                filename: file.filename,
+                file_path: file.tempfile,
+                created_by: helper.sender.id,
+                created_for: helper.recipient.id,
+                content_type: file.type
+              )
+              begin
+                a.save!
+                a.update!(attachable: dataset)
+                primary_store = Rails.configuration.storage.primary_store
+                a.update!(storage: primary_store)
+              ensure
+                tempfile.close
+                tempfile.unlink
               end
             end
           end
