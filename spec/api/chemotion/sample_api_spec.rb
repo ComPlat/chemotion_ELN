@@ -92,9 +92,10 @@ describe Chemotion::SampleAPI do
         id created_at updated_at ancestry created_by
         short_label name external_label
       ]
-      s3.attributes.except(*except_attr).each do |k, v|
-        expect(s1[k]).to eq(v)
-      end
+      sample1_attributes = s1.attributes.except(*except_attr)
+      subsample1_attributes = s3.attributes.except(*except_attr)
+      expect(sample1_attributes).to eq (subsample1_attributes)
+
       expect(s3.name).to eq(s1.name)
       expect(s3.external_label).to eq(s1.external_label)
       expect(s3.short_label).to eq(s1.short_label + '-' + s1.children.count.to_s)

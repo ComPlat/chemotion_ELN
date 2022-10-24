@@ -170,9 +170,9 @@ group :test do
   gem 'database_cleaner-active_record'
 
   gem 'factory_bot_rails'
-  gem 'faker', '~> 1.6.6'
+  gem 'faker'
 
-  gem 'launchy', '~> 2.4.3'
+  gem 'launchy'
 
   gem 'rspec-repeat'
 

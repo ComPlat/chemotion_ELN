@@ -328,8 +328,8 @@ GEM
     factory_bot_rails (6.2.0)
       factory_bot (~> 6.2.0)
       railties (>= 5.0.0)
-    faker (1.6.6)
-      i18n (~> 0.5)
+    faker (2.22.0)
+      i18n (>= 1.8.11, < 2)
     faraday (2.6.0)
       faraday-net_http (>= 2.0, < 3.1)
       ruby2_keywords (>= 0.0.4)
@@ -391,7 +391,7 @@ GEM
       mime-types (~> 3.0)
       multi_xml (>= 0.5.2)
     httpclient (2.8.3)
-    i18n (0.9.5)
+    i18n (1.12.0)
       concurrent-ruby (~> 1.0)
     i18n_data (0.16.0)
       simple_po_parser (~> 1.1)
@@ -425,8 +425,8 @@ GEM
       grape
       kaminari-core (~> 1.0)
     latex-decode (0.3.2)
-    launchy (2.4.3)
-      addressable (~> 2.3)
+    launchy (2.5.0)
+      addressable (~> 2.7)
     listen (3.7.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
@@ -816,7 +816,7 @@ DEPENDENCIES
   dotenv-rails
   ed25519
   factory_bot_rails
-  faker (~> 1.6.6)
+  faker
   faraday
   faraday-follow_redirects
   fast_stack
@@ -840,7 +840,7 @@ DEPENDENCIES
   kaminari
   kaminari-grape
   ketcherails!
-  launchy (~> 2.4.3)
+  launchy
   listen
   memory_profiler
   meta_request
