@@ -128,10 +128,9 @@ group :development do
   gem 'memory_profiler'
 
   #  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
-  gem 'slackistrano'
   gem 'stackprof' # For Ruby MRI 2.1+
 
-  gem 'web-console', '~> 2.0'
+  gem 'web-console'
 end
 
 group :development, :test do
