@@ -114,7 +114,7 @@ gem 'yaml_db'
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser
 
-  gem 'capistrano', '3.9.1'
+  gem 'capistrano'
   gem 'capistrano-bundler'
   gem 'capistrano-npm'
   gem 'capistrano-nvm', require: false
