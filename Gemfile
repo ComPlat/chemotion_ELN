@@ -72,7 +72,7 @@ gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git'
 
 gem 'pandoc-ruby'
 gem 'paranoia'
-gem 'pg', '~> 0.20.0'
+gem 'pg'
 gem 'pg_search'
 gem 'prawn'
 gem 'prawn-svg'
