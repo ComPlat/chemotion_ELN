@@ -405,7 +405,7 @@ module Chemotion
         requires :description, type: String, desc: "Sample description"
         requires :purity, type: Float, desc: "Sample purity"
         # requires :solvent, type: String, desc: "Sample solvent"
-        optional :solvent, type: Array[Hash], desc: "Sample solvent"
+        optional :solvent, type: Array[Hash], desc: "Sample solvent", default: []
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
