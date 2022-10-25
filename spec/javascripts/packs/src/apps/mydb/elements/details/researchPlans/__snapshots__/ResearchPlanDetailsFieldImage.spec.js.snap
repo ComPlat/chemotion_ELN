@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ResearchPlanDetailsFieldImage .render() deprecated image in view mode img tag present, src should be starting with absolute path /images/research_plans 1`] = `"<div class=\\"image-container\\"><img style=\\"width:unset\\" src=\\"/images/research_plans/xxx.png\\" alt=\\"xxx.png\\"/></div>"`;
+
+exports[`ResearchPlanDetailsFieldImage .render() image from attachment on server in view mode img tag present, src should be the scrToImage from the stubed method 1`] = `"<div class=\\"image-container\\"><img style=\\"width:unset\\" src=\\"scrToImageOnServer\\" alt=\\"fileName\\"/></div>"`;
+
+exports[`ResearchPlanDetailsFieldImage .render() no image choosen in view mode no img tag should be rendered 1`] = `"<div></div>"`;
+
+exports[`ResearchPlanDetailsFieldImage .render() temporary image in blob in view mode img tag present, src should be starting with blob 1`] = `"<div class=\\"image-container\\"><img style=\\"width:unset\\" src=\\"blob://...\\" alt=\\"myFile.png\\"/></div>"`;

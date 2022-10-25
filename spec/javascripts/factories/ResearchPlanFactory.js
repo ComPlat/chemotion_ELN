@@ -23,6 +23,8 @@ export default class ResearchPlanFactory {
       ResearchPlan,
       () => {
         const researchPlan = ResearchPlan.buildEmpty();
+        researchPlan.value = {};
+        researchPlan.value.public_name = null;
         return researchPlan;
       },
       {
