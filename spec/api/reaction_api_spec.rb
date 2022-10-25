@@ -20,26 +20,78 @@ describe Chemotion::ReactionAPI do
       let!(:r1) { create(:reaction, name: 'r1', collections: [c1]) }
       let!(:r2) { create(:reaction, name: 'r2', collections: [c1]) }
 
-      before { get '/api/v1/reactions' }
+      context 'without params' do
 
-      it 'returns serialized (unshared) reactions roots of logged in user' do
-        reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.map { |r| [r['id'], r['name']] }).to match_array(
-          [[r1.id, r1.name], [r2.id, r2.name]]
-        )
-        expect(reactions.first).to include(
-          'id' => r2.id, 'name' => r2.name, 'type' => 'reaction',
-          'tag' => include(
-            'taggable_id' => r2.id, 'taggable_type' => 'Reaction',
-            'taggable_data' => include(
-              'collection_labels' => include(
-                'name' => 'C1', 'is_shared' => false, 'id' => c1.id,
-                'user_id' => user.id, 'shared_by_id' => c1.shared_by_id,
-                'is_synchronized' => c1.is_synchronized
+        before { get '/api/v1/reactions' }
+
+        it 'returns serialized (unshared) reactions roots of logged in user' do
+          reactions = JSON.parse(response.body)['reactions']
+          expect(reactions.map { |r| [r['id'], r['name']] }).to match_array(
+            [[r1.id, r1.name], [r2.id, r2.name]]
+          )
+          expect(reactions.first).to include(
+            'id' => r2.id, 'name' => r2.name, 'type' => 'reaction',
+            'tag' => include(
+              'taggable_id' => r2.id, 'taggable_type' => 'Reaction',
+              'taggable_data' => include(
+                'collection_labels' => include(
+                  'name' => 'C1', 'is_shared' => false, 'id' => c1.id,
+                  'user_id' => user.id, 'shared_by_id' => c1.shared_by_id,
+                  'is_synchronized' => c1.is_synchronized
+                )
               )
             )
           )
-        )
+        end
+      end
+
+      context 'with ID of collection' do
+        before { get '/api/v1/reactions', params: { collection_id: c1.id } }
+
+        it 'returns serialized reaction' do
+          reactions = JSON.parse(response.body)['reactions']
+          expect(reactions.size).to be(2)
+          expect(reactions.first).to include('id' => r2.id)
+          expect(reactions.second).to include('id' => r1.id)
+        end
+      end
+
+      context 'with ID of non-existing collection' do
+        before { get '/api/v1/reactions', params: { collection_id: 42 } }
+
+        it 'does not return reaction' do
+          reactions = JSON.parse(response.body)['reactions']
+          expect(reactions.size).to be(0)
+        end
+      end
+
+      context 'with ID of synced collection' do
+        let(:sharer) { create(:person) }
+        let(:sync_collections_user) do
+          create(:sync_collections_user, collection: c1, user: user, sharer: sharer)
+        end
+
+        before do
+          get '/api/v1/reactions', params: { sync_collection_id: sync_collections_user.id }
+        end
+
+        it 'returns serialized reaction' do
+          reactions = JSON.parse(response.body)['reactions']
+          expect(reactions.size).to be(2)
+          expect(reactions.first).to include('id' => r2.id)
+          expect(reactions.second).to include('id' => r1.id)
+        end
+      end
+
+      context 'with ID of non-existing synced collection' do
+        before do
+          get '/api/v1/reactions', params: { sync_collection_id: 42 }
+        end
+
+        it 'does not return reaction' do
+          reactions = JSON.parse(response.body)['reactions']
+          expect(reactions.size).to be(0)
+        end
       end
     end
 
@@ -330,6 +382,53 @@ describe Chemotion::ReactionAPI do
         )
       end
       let(:molfile_1) { sample_1.molecule.molfile }
+
+      context 'when adding reaction to synced collection' do
+        let(:receiver) { create(:person, name: 'receiver') }
+        let(:collection) { create(:collection, user_id: user.id) }
+        let(:sync_collection) do
+          create(:sync_collections_user, collection_id: collection.id, sharer: user, user: receiver)
+        end
+        let(:params) do
+          {
+            'collection_id' => sync_collection.id,
+            'container' => new_root_container,
+            'literatures' => {
+              'foo' => { 'title' => 'Foo', 'url' => 'foo.com' },
+            },
+            'origin' => { 'short_label' => 'bar' },
+            'materials' => {
+              'products' => [
+                'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
+                'name' => 'New Subsample 1',
+                'target_amount_unit' => 'mg',
+                'target_amount_value' => 76.09596,
+                'parent_id' => sample_1.id,
+                'reference' => true,
+                'equivalent' => 1,
+                'is_new' => true,
+                'is_split' => true,
+                'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
+                'molecule' => { molfile: molfile_1 },
+                'container' => new_root_container
+              ]
+            }
+          }
+        end
+
+        before do
+          allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(receiver)    # log in as receiver
+          post('/api/v1/reactions.json',
+               params: params.to_json,
+               headers: { 'CONTENT_TYPE' => 'application/json' })
+        end
+
+        it 'links reaction to collection' do
+          reaction_id = JSON.parse(response.body)['reaction']['id']
+          match = CollectionsReaction.where(collection_id: collection.id, reaction_id: reaction_id).first
+          expect(match).not_to be_nil
+        end
+      end
 
       context 'creating new materials' do
         let(:params) do
