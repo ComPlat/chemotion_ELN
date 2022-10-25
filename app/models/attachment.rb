@@ -37,7 +37,8 @@ class Attachment < ApplicationRecord
   include AttachmentUploader::Attachment(:attachment)
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
-
+  
+  has_ancestry ancestry_column: :version
   before_create :generate_key
   before_save :add_checksum, if: :new_upload
   before_create :add_content_type
