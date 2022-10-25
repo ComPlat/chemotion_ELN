@@ -264,13 +264,13 @@ module Chemotion
         if reaction
           if attributes['origin'] && attributes['origin']['short_label']
             if materials['products'].present?
-              materials['products'].map! do |prod|
-                prod[:name]&.gsub! params['short_label'], reaction.short_label
-                prod[:name]&.gsub! attributes['origin']['short_label'], reaction.short_label
-                prod
-              end
+            materials['products'].map! do |prod|
+              prod[:name]&.gsub! params['short_label'], reaction.short_label if params['short_label']
+              prod[:name]&.gsub! attributes['origin']['short_label'], reaction.short_label
+              prod
             end
           end
+        end
 
           reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
           reaction.reload
