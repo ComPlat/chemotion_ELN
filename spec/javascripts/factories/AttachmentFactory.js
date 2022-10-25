@@ -1,6 +1,7 @@
 import { factory } from 'factory-bot';
 import Attachment from 'src/models/Attachment';
-import Element from 'src/models/Element';
+import PseudoRandomUUIDGenerator from 'factories/PseudoRandomUUIDGenerator';
+import sha256 from 'sha256';
 
 export default class AttachmentFactory {
   static instance = undefined;
@@ -16,9 +17,21 @@ export default class AttachmentFactory {
   constructor() {
     this.factory = factory;
 
-    this.factory.define('new', Attachment, {
-      id : Element.buildID(),
-      is_new : true
-    });
+    this.factory.define(
+      'new',
+      Attachment,
+      async () => {
+        const attachment = new Attachment();
+        attachment.id = PseudoRandomUUIDGenerator.createNextUUID();
+        attachment.is_new = true;
+        return attachment;
+      },
+      {
+        afterBuild: (model, attrs, buildOptions) => {
+          model.updateChecksum(sha256(PseudoRandomUUIDGenerator.createNextUUID()));
+          return model;
+        }
+      }
+    );
   }
 }
