@@ -18,7 +18,7 @@ import {
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import ImageAttachmentFilter from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageAttachmentFilter';
+import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 
 const editorTooltip = (exts) => (
   <Tooltip id="editor_tooltip">
