@@ -19,7 +19,7 @@ module Usecases
             collection_id: sync_collection_attributes['collection_id'],
             shared_by_id: sync_collection_attributes['shared_by_id']
           )
-          sCol.update_attributes(
+          sCol.update(
             permission_level: sync_collection_attributes['permission_level'],
             sample_detail_level: sync_collection_attributes['sample_detail_level'],
             reaction_detail_level: sync_collection_attributes['reaction_detail_level'],

@@ -427,7 +427,7 @@ describe Chemotion::SampleAPI do
       let(:collection) { shared_collection }
 
       before do
-        collection.update_attributes(permission_level: permission_level)
+        collection.update(permission_level: permission_level)
         get "/api/v1/samples/#{sample.id}"
       end
 
