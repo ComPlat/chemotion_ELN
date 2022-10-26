@@ -10,7 +10,6 @@ module Chemotion
     helpers ProfileHelpers
 
     resource :reactions do
-
       desc 'Return serialized reactions'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
@@ -43,7 +42,7 @@ module Chemotion
                   end
                 else
                   Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order("created_at DESC")
+                end.order("created_at DESC")
 
         from = params[:from_date]
         to = params[:to_date]
@@ -254,23 +253,26 @@ module Chemotion
           sync_collection = current_user.all_sync_in_collections_users.where(id: collection_id).take
           if sync_collection.present?
             is_shared_collection = true
-            CollectionsReaction.create(reaction: reaction, collection: Collection.find(sync_collection['collection_id']))
-            CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(sync_collection['shared_by_id']))
+            CollectionsReaction.create(reaction: reaction,
+                                       collection: Collection.find(sync_collection['collection_id']))
+            CollectionsReaction.create(reaction: reaction,
+                                       collection: Collection.get_all_collection_for_user(sync_collection['shared_by_id']))
           end
         end
 
-        CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id)) unless is_shared_collection
+        CollectionsReaction.create(reaction: reaction,
+                                   collection: Collection.get_all_collection_for_user(current_user.id)) unless is_shared_collection
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
         if reaction
           if attributes['origin'] && attributes['origin']['short_label']
             if materials['products'].present?
-            materials['products'].map! do |prod|
-              prod[:name]&.gsub! params['short_label'], reaction.short_label if params['short_label']
-              prod[:name]&.gsub! attributes['origin']['short_label'], reaction.short_label
-              prod
+              materials['products'].map! do |prod|
+                prod[:name]&.gsub! params['short_label'], reaction.short_label if params['short_label']
+                prod[:name]&.gsub! attributes['origin']['short_label'], reaction.short_label
+                prod
+              end
             end
           end
-        end
 
           reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
           reaction.reload

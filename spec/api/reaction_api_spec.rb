@@ -21,7 +21,6 @@ describe Chemotion::ReactionAPI do
       let!(:r2) { create(:reaction, name: 'r2', collections: [c1]) }
 
       context 'without params' do
-
         before { get '/api/v1/reactions' }
 
         it 'returns serialized (unshared) reactions roots of logged in user' do
@@ -417,7 +416,7 @@ describe Chemotion::ReactionAPI do
         end
 
         before do
-          allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(receiver)    # log in as receiver
+          allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(receiver) # log in as receiver
           post('/api/v1/reactions.json',
                params: params.to_json,
                headers: { 'CONTENT_TYPE' => 'application/json' })
