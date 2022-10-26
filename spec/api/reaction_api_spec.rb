@@ -43,9 +43,7 @@ describe Chemotion::ReactionAPI do
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.size).to be(2)
-        expect(reactions.first).to include('id' => r2.id)
-        expect(reactions.second).to include('id' => r1.id)
+        expect(reactions.map { |reaction| reaction['id'] }).to eq([r2.id, r1.id])
       end
     end
 
@@ -70,9 +68,7 @@ describe Chemotion::ReactionAPI do
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.size).to be(2)
-        expect(reactions.first).to include('id' => r2.id)
-        expect(reactions.second).to include('id' => r1.id)
+        expect(reactions.map { |reaction| reaction['id'] }).to eq([r2.id, r1.id])
       end
     end
 
