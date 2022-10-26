@@ -48,6 +48,7 @@ gem 'haml-rails'
 gem 'hashie-forbidden_attributes'
 gem 'httparty'
 
+gem 'image_processing', '~> 1.8'
 gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
 
 gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails
@@ -109,8 +110,7 @@ gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
 
 gem 'yaml_db'
-gem "shrine", "~> 3.0"
-gem "image_processing", "~> 1.8"
+gem 'shrine', '~> 3.0'
 
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser
