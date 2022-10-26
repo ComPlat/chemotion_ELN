@@ -1,7 +1,7 @@
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import ReactionsFetcher from '../fetchers/ReactionsFetcher';
+import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import uniqueId from 'react-html-id';
 import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
