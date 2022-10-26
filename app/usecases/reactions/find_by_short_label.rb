@@ -11,7 +11,7 @@ module Usecases
         @short_label = short_label
         @result = {
           reaction_id: nil,
-          collection_id: nil
+          collection_id: nil,
         }
         find_reaction
       end
@@ -27,7 +27,7 @@ module Usecases
 
         self.result = {
           reaction_id: reaction.id,
-          collection_id: collections_containing_reaction.first
+          collection_id: collections_containing_reaction.first,
         }
       end
     end
