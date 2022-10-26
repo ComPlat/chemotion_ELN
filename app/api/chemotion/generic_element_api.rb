@@ -94,13 +94,17 @@ module Chemotion
           (attach_ary << att_ary).flatten! unless att_ary&.empty?
           att_ary = create_uploads('Segment', params[:att_id], params[:sefiles], params[:seInfo], current_user.id) if params[:sefiles].present? && params[:seInfo].present?
           (attach_ary << att_ary).flatten! unless att_ary&.empty?
-          att_ary = create_attachments(
-            params[:attfiles],
-            params[:delfiles],
-            params[:att_type],
-            params[:att_id],
-            params[:attfilesIdentifier],
-            current_user.id) if params[:attfiles].present? || params[:delfiles].present?
+
+          if params[:attfiles].present? || params[:delfiles].present? then
+            att_ary = create_attachments(
+              params[:attfiles],
+              params[:delfiles],
+              params[:att_type],
+              params[:att_id],
+              params[:attfilesIdentifier],
+              current_user.id,
+            )
+          end
           (attach_ary << att_ary).flatten! unless att_ary&.empty?
           true
         end
