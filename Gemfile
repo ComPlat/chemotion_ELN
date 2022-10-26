@@ -58,6 +58,7 @@ gem 'kaminari'
 gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '287c848ad4149caf6466a1b7a648ada017d30304'
 
+gem 'net-scp', '3.0.0'
 gem 'net-sftp'
 gem 'net-ssh'
 # locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks out newer net-scp versions
@@ -67,8 +68,9 @@ gem 'nokogiri'
 gem 'omniauth', '~> 1.9.1'
 gem 'omniauth-github', '~> 1.4.0'
 gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
-gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth_openid_connect'
+gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
+
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
 
 gem 'pandoc-ruby'
@@ -87,8 +89,8 @@ gem 'rdkit_chem', git: 'https://github.com/CamAnNguyen/rdkit_chem'
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'
 gem 'roo'
-gem 'rtf'
 gem 'rqrcode' # required for Barby to work but not listed as its dependency -_-
+gem 'rtf'
 gem 'ruby-geometry', require: 'geometry'
 gem 'ruby-mailchecker'
 gem 'ruby-ole'
@@ -100,6 +102,7 @@ gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
 gem 'sentry-rails'
 gem 'sentry-ruby'
+gem 'shrine', '~> 3.0'
 gem 'sys-filesystem'
 
 gem 'thor'
@@ -110,7 +113,7 @@ gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
 
 gem 'yaml_db'
-gem 'shrine', '~> 3.0'
+
 
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser
