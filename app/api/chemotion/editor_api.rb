@@ -19,14 +19,21 @@ module Chemotion
         end
         before do
           @attachment = Attachment.find_by(id: params[:attachment_id])
-          # error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: @attachment[:attachable_id])).update?
-          # error!('401 Unauthorized', 401) if @attachment.oo_editing?
+          if @attachment
+            can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
+            if !can_dwnld && (element = @attachment.container&.root&.containable)
+              can_dwnld = element.is_a?(User) && (element == current_user) ||
+                          ElementPolicy.new(current_user, element).read? &&
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+            end
+          end
+          error!('401 Unauthorized', 401) unless can_dwnld
         end
         post do
           payload = {
             att_id: @attachment.id,
             user_id: current_user.id,
-            exp: (Time.current + 15.minutes).to_i,
+            exp: 15.minutes.from_now.to_i,
           }
           @attachment.oo_editing_start!
           token = JWT.encode payload, Rails.application.secrets.secret_key_base
