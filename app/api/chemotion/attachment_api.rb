@@ -253,8 +253,8 @@ module Chemotion
       desc 'Return image attachment'
 
       params do
-          requires :attachment_id, type: Integer, desc: 'Database id of image attachment'
-          optional :identifier, type: String, desc: 'Identifier of image attachment as fallback loading criteria. Must be an UUID'
+        requires :attachment_id, type: Integer, desc: 'Database id of image attachment'
+        optional :identifier, type: String, desc: 'Identifier(UUID) of image attachment as fallback loading criteria'
       end
 
       get 'image/:attachment_id' do
