@@ -21,7 +21,7 @@ RSpec.describe Report, type: :report do
       attachable_id: rp1.id,
       attachable_type: 'Report',
       content_type: docx_mime_type,
-      attachment: File.open("#{Rails.root}/spec/fixtures/upload.jpg", binmode: true)
+      file_path: Rails.root.join('spec/fixtures/upload.jpg')
     )
   end
 
