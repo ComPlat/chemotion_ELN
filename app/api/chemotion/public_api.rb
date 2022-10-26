@@ -81,10 +81,8 @@ module Chemotion
         # 7 - error has occurred while force saving the document.
         before do
           error!('401 Unauthorized', 401) if params[:key].nil?
-          unless params[:key].nil?
-            payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base)
-          end
-          error!('401 Unauthorized', 401) if payload&.length.zero?
+          payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base) unless params[:key].nil?
+          error!('401 Unauthorized', 401) if payload&.length == 0
           @status = params[:status].is_a?(Integer) ? params[:status] : 0
 
           if @status > 1
@@ -94,7 +92,7 @@ module Chemotion
             user_id = payload[0]['user_id']&.to_i
             @user = User.find_by(id: user_id)
             error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-            element = @attachment.attachable
+            @attachment.attachable
           end
         end
 
@@ -235,7 +233,7 @@ module Chemotion
                 file_path: file.tempfile,
                 created_by: helper.sender.id,
                 created_for: helper.recipient.id,
-                content_type: file.type
+                content_type: file.type,
               )
               begin
                 a.save!

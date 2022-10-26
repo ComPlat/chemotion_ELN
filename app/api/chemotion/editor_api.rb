@@ -26,7 +26,7 @@ module Chemotion
           payload = {
             att_id: @attachment.id,
             user_id: current_user.id,
-            exp: (Time.now + 15.minutes).to_i,
+            exp: (Time.current + 15.minutes).to_i,
           }
           @attachment.oo_editing_start!
           token = JWT.encode payload, Rails.application.secrets.secret_key_base
@@ -50,7 +50,7 @@ module Chemotion
             editorConfig: {
               callbackUrl: "http://#{request.host_with_port}/api/v1/public/callback",
               mode: 'edit',
-              lang: "en",
+              lang: 'en',
               customization: {
                 chat: false,
                 compactToolbar: false,
@@ -75,7 +75,7 @@ module Chemotion
                 },
                 showReviewChanges: false,
                 zoom: 100,
-              }
+              },
             },
           }
           only_office_token = JWT.encode only_office_payload, Rails.application.secrets.only_office_secret_key_base
