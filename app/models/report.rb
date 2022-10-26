@@ -59,7 +59,7 @@ class Report < ApplicationRecord
       report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
       template = report_template.report_type
       tpl_path = if report_template.attachment
-                   "uploads/#{report_template.attachment.attachment_url}"
+                   report_template.attachment.attachment_url
                  else
                    report_template.report_type
                  end
