@@ -5,7 +5,6 @@ import ImageModal from 'src/components/common/ImageModal';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import {
   Button, ButtonGroup,
   Col, ControlLabel,
@@ -18,6 +17,7 @@ import {
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import AttachmentEditButton from 'src/apps/mydb/elements/details/AttachmentEditButton'
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
@@ -27,20 +27,15 @@ export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
-    const {
-      attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
-    } = props;
     this.state = {
-      attachmentEditor: false,
       extension: null,
       showImportConfirm: []
     };
-    this.editorInitial = this.editorInitial.bind(this);
+
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
   }
 
   componentDidMount() {
-    this.editorInitial();
     this.createAttachmentPreviews();
   }
 
@@ -48,49 +43,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     if (this.props.attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
     }
-  }
-
-  editorInitial() {
-    EditorFetcher.initial()
-      .then((result) => {
-        this.setState({
-          attachmentEditor: result.installed,
-          extension: result.ext
-        });
-      });
-  }
-
-  documentType(filename) {
-    const { extension } = this.state;
-
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, o => o.includes(ext));
-
-    if (typeof (docType) === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
-
-  handleEdit(attachment) {
-    const fileType = last(attachment.filename.split('.'));
-    const docType = this.documentType(attachment.filename);
-
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
-        if (result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
-          window.open(url, '_blank');
-
-          attachment.aasm_state = 'oo_editing';
-          attachment.updated_at = new Date();
-
-          this.props.onEdit(attachment);
-        } else {
-          alert('Unauthorized to edit this file.');
-        }
-      });
   }
 
   createAttachmentPreviews() {
@@ -130,19 +82,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderListGroupItem(attachment) {
-    const { attachmentEditor, extension } = this.state;
-
-    const updateTime = new Date(attachment.updated_at);
-    updateTime.setTime(updateTime.getTime() + (15 * 60 * 1000));
-
+    const { extension } = this.state;
     const hasPop = false;
     const fetchNeeded = false;
     const fetchId = attachment.id;
-    const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
-
-    const docType = this.documentType(attachment.filename);
-    const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
-    const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
 
     if (attachment.is_deleted) {
       return (
@@ -204,18 +147,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))} >
-              <Button
-                style={{ display: styleEditorBtn }}
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="success"
-                disabled={editDisable}
-                onClick={() => this.handleEdit(attachment)}
-              >
-                <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
-              </Button>
-            </OverlayTrigger>
+            <AttachmentEditButton
+              attachment={attachment}
+              className="button-right"
+              overlay={editorTooltip(values(extension).join(','))}
+              onEdit={this.props.onEdit}
+            ></AttachmentEditButton>
             {this.renderImportAttachmentButton(attachment)}
           </Col>
         </Row>
@@ -369,5 +306,5 @@ ResearchPlanDetailsAttachments.propTypes = {
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => {}
+  onAttachmentImportComplete: () => { }
 };
