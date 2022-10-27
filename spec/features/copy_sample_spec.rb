@@ -6,9 +6,9 @@ describe 'Copy sample' do
   let!(:user) { create(:user, first_name: 'Hallo', last_name: 'Complat', account_active: true, confirmed_at: Time.now) }
   let!(:user2) { create(:user, first_name: 'User2', last_name: 'Complat', account_active: true, confirmed_at: Time.now) }
   let!(:mol) { create(:molecule, molecular_weight: 171.03448) }
-  let(:sample) { create(:sample, name: 'PH-1234', real_amount_value: 4.671, molecule: mol, solvent: '[]') }
-  let(:sample2) { create(:sample, name: 'PH-2222', real_amount_value: 4.671, molecule: mol, solvent: '[]') }
-  let(:sample3) { create(:sample, name: 'PH-3333', real_amount_value: 4.671, molecule: mol, solvent: '[]') }
+  let(:sample) { create(:sample, name: 'PH-1234', real_amount_value: 4.671, molecule: mol, solvent: []) }
+  let(:sample2) { create(:sample, name: 'PH-2222', real_amount_value: 4.671, molecule: mol, solvent: []) }
+  let(:sample3) { create(:sample, name: 'PH-3333', real_amount_value: 4.671, molecule: mol, solvent: []) }
   let!(:col1) { create(:collection, user_id: user.id, label: 'Col1', sample_detail_level: 10) }
   let!(:col2) { create(:collection, user_id: user.id, label: 'Col2', sample_detail_level: 10) }
 
