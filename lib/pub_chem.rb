@@ -10,15 +10,6 @@ module PubChem
     Rails.env.test? && "http://" || "https://"
   end
 
-  def self.faraday_conn
-    Faraday.new(:url => http_s + PUBCHEM_HOST) do |faraday|
-      # faraday.use FaradayMiddleware::FollowRedirects
-      # faraday.request  :url_encoded
-      # faraday.response :logger , ::Logger.new(STDOUT), bodies: true
-      faraday.adapter  :net_http
-    end
-  end
-
   def self.get_record_from_molfile(molfile)
     @auth = {:username => '', :password => ''}
     options = { :timeout => 10,  :headers => {'Content-Type' => 'application/x-www-form-urlencoded'}, :body => { 'sdf' => molfile } }
@@ -39,12 +30,6 @@ module PubChem
   end
 
   def self.get_cids_from_inchikeys(inchikeys)
-    # faraday_conn.post { |req|
-    #   req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    #   req.url('/rest/pug/compound/inchikey/property/InChIKey/JSON')
-    #   req.body = "inchikey=#{inchikeys.join(',')}"
-    # }.body
-
     options = {
       :timeout => 10,
       :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
@@ -57,12 +42,6 @@ module PubChem
   end
 
   def self.get_records_from_inchikeys(inchikeys)
-    # faraday_conn.post { |req|
-    #   req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    #   req.url('/rest/pug/compound/inchikey/record/JSON')
-    #   req.body = "inchikey=#{inchikeys.join(',')}"
-    # }.body
-
     options = {
       :timeout => 10,
       :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
@@ -85,12 +64,6 @@ module PubChem
   end
 
   def self.get_molfiles_by_inchikeys(inchikeys)
-    # faraday_conn.post { |req|
-    #   req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    #   req.url('/rest/pug/compound/inchikey/record/SDF')
-    #   req.body = "inchikey=#{inchikeys.join(',')}"
-    # }.body
-
     options = {
       :timeout => 10,
       :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
@@ -123,9 +96,6 @@ module PubChem
   end
 
   def self.get_cid_from_inchikey(inchikey)
-    # resp = faraday_conn.get('/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT')
-    # return nil unless resp.success?
-
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/plain'}  }
     begin
       resp = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT', options)

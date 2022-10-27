@@ -18,9 +18,8 @@ class GateTransferJob < ApplicationJob
     @no_error = true
 
     connection = Faraday.new(url: @url) do |f|
-      f.use FaradayMiddleware::FollowRedirects
+      f.use FaradayMiddleware::FollowRedirects::Middleware
       f.headers = @req_headers
-      f.adapter :net_http
     end
 
     @resp = connection.get { |req| req.url('/api/v1/gate/ping') }
@@ -91,10 +90,9 @@ class GateTransferJob < ApplicationJob
     end
 
     payload_connection = Faraday.new(url: @url) { |f|
-      f.use FaradayMiddleware::FollowRedirects
+      f.use FaradayMiddleware::FollowRedirects::Middleware
       f.request :multipart
       f.headers = @req_headers.merge('Accept' => 'application/json')
-      f.adapter :net_http
     }
 
     @resp = payload_connection.post do |req|

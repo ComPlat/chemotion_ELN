@@ -20,7 +20,7 @@
 # Generic Element
 class Element < ApplicationRecord
   acts_as_paranoid
-  include PgSearch
+  include PgSearch::Model
   include ElementUIStateScopes
   include Collectable
   include AnalysisCodes

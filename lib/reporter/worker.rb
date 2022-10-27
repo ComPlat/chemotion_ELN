@@ -38,6 +38,7 @@ module Reporter
 
     def create_tmp(raw)
       tmp_file = Tempfile.new
+      tmp_file.binmode
       tmp_file.write(raw)
       tmp_file.close
       tmp_file

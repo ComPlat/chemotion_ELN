@@ -49,8 +49,8 @@ describe Chemotion::ResearchPlanMetadataAPI do
           },
           geo_location: {
             geoLocationPoint: {
-              pointLongitude: Faker::Address.longitude,
-              pointLatitude: Faker::Address.latitude
+              pointLongitude: Faker::Address.longitude.to_s,
+              pointLatitude: Faker::Address.latitude.to_s
             }
           },
           funding_reference: {
