@@ -22,7 +22,7 @@
 class Wellplate < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
-  include PgSearch
+  include PgSearch::Model
   include Collectable
   include ElementCodes
   include Taggable

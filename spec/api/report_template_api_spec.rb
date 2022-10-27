@@ -45,8 +45,8 @@ describe Chemotion::ReportTemplateAPI do
           '/api/v1/report_templates',
           params: params.to_json,
           headers: {
-            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT_TYPE' => 'multipart/form-data'
+            'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT-TYPE' => 'multipart/form-data'
           }
         )
       end
@@ -61,11 +61,7 @@ describe Chemotion::ReportTemplateAPI do
     describe 'DELETE /api/v1/report_templates/{id}' do
       before do
         delete(
-          "/api/v1/report_templates/#{report_template1.id}",
-          headers: {
-            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT_TYPE' => 'multipart/form-data'
-          }
+          "/api/v1/report_templates/#{report_template1.id}"
         )
       end
 
@@ -81,8 +77,8 @@ describe Chemotion::ReportTemplateAPI do
         get(
           "/api/v1/report_templates/#{report_template1.id}",
           headers: {
-            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT_TYPE' => 'multipart/form-data'
+            'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT-TYPE' => 'multipart/form-data'
           }
         )
       end
@@ -104,8 +100,8 @@ describe Chemotion::ReportTemplateAPI do
           "/api/v1/report_templates/#{report_template1.id}",
           params: params.to_json,
           headers: {
-            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT_TYPE' => 'multipart/form-data'
+            'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT-TYPE' => 'multipart/form-data'
           }
         )
       end
@@ -121,7 +117,7 @@ describe Chemotion::ReportTemplateAPI do
   context 'with Admin user logged in' do
     let(:admin) { create(:admin, type: Admin) }
     let!(:report_template1) { create(:report_template) }
-   
+
     before do
       allow_any_instance_of(WardenAuthentication).to(
         receive(:current_user).and_return(admin)
@@ -138,8 +134,8 @@ describe Chemotion::ReportTemplateAPI do
           '/api/v1/report_templates',
           params: params,
           headers: {
-            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT_TYPE' => 'multipart/form-data'
+            'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT-TYPE' => 'multipart/form-data'
           }
         )
       end
@@ -155,11 +151,7 @@ describe Chemotion::ReportTemplateAPI do
     describe 'DELETE /api/v1/report_templates/{id}' do
       before do
         delete(
-          "/api/v1/report_templates/#{report_template1.id}",
-          headers: {
-            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT_TYPE' => 'multipart/form-data'
-          }
+          "/api/v1/report_templates/#{report_template1.id}"
         )
       end
 
@@ -175,8 +167,8 @@ describe Chemotion::ReportTemplateAPI do
         get(
           "/api/v1/report_templates/#{report_template1.id}",
           headers: {
-            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT_TYPE' => 'multipart/form-data'
+            'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT-TYPE' => 'multipart/form-data'
           }
         )
       end
@@ -195,11 +187,11 @@ describe Chemotion::ReportTemplateAPI do
           report_type: 'Report template type'
         }
         put(
-          "/api/v1/report_templates/#{report_template1.id}", 
+          "/api/v1/report_templates/#{report_template1.id}",
           params: params,
           headers: {
-            'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT_TYPE' => 'multipart/form-data'
+            'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT-TYPE' => 'multipart/form-data'
           }
         )
       end
