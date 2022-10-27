@@ -5,7 +5,7 @@ require 'rails_helper'
 describe Chemotion::ReactionAPI do
   include_context 'api request authorization context'
 
-    let(:new_root_container) { create(:root_container) }
+  let(:new_root_container) { create(:root_container) }
 
   describe 'GET /api/v1/reactions' do
     let!(:c1) do
@@ -24,7 +24,7 @@ describe Chemotion::ReactionAPI do
       it 'returns serialized (unshared) reactions roots of logged in user' do
         reactions = JSON.parse(response.body)['reactions']
         expect(reactions.map { |r| [r['id'], r['name']] }).to match_array(
-          [[r1.id, r1.name], [r2.id, r2.name], [r3.id, r3.name]]
+          [[r1.id, r1.name], [r2.id, r2.name], [r3.id, r3.name]],
         )
         expect(reactions.first).to include(
           'id' => r3.id, 'name' => r3.name, 'type' => 'reaction',
@@ -35,7 +35,7 @@ describe Chemotion::ReactionAPI do
                 'name' => 'C2', 'is_shared' => false, 'id' => c2.id,
                 'user_id' => user.id, 'shared_by_id' => c2.shared_by_id,
                 'is_synchronized' => c2.is_synchronized
-              )
+              ),
             )
           )
         )
@@ -113,7 +113,7 @@ describe Chemotion::ReactionAPI do
       let(:c1) do
         create(
           :collection,
-          user_id: user.id + 1, is_shared: true, permission_level: 0
+          user_id: user.id + 1, is_shared: true, permission_level: 0,
         )
       end
       let(:r1) { create(:reaction) }
@@ -182,25 +182,25 @@ describe Chemotion::ReactionAPI do
         'description' => '',
         'container_type' => 'root',
         'extended_metadata' => {},
-        'children' => []
+        'children' => [],
       }
     end
 
     before do
       CollectionsReaction.create(
-        reaction_id: reaction_1.id, collection_id: collection_1.id
+        reaction_id: reaction_1.id, collection_id: collection_1.id,
       )
       ReactionsStartingMaterialSample.create!(
-        reaction: reaction_1, sample: sample_1, reference: true, equivalent: 1
+        reaction: reaction_1, sample: sample_1, reference: true, equivalent: 1,
       )
       ReactionsReactantSample.create!(
-        reaction: reaction_1, sample: sample_2, equivalent: 2
+        reaction: reaction_1, sample: sample_2, equivalent: 2,
       )
       ReactionsProductSample.create!(
-        reaction: reaction_1, sample: sample_3, equivalent: 1
+        reaction: reaction_1, sample: sample_3, equivalent: 1,
       )
       ReactionsProductSample.create!(
-        reaction: reaction_1, sample: sample_4, equivalent: 1
+        reaction: reaction_1, sample: sample_4, equivalent: 1,
       )
     end
 
@@ -218,7 +218,7 @@ describe Chemotion::ReactionAPI do
                 'target_amount_value' => 76.09596,
                 'equivalent' => 1,
                 'reference' => true,
-                'is_new' => false
+                'is_new' => false,
               },
               {
                 'id' => sample_2.id,
@@ -226,8 +226,8 @@ describe Chemotion::ReactionAPI do
                 'target_amount_value' => 99.08404,
                 'equivalent' => 5.5,
                 'reference' => false,
-                'is_new' => false
-              }
+                'is_new' => false,
+              },
             ],
             'products' => [
               {
@@ -236,18 +236,17 @@ describe Chemotion::ReactionAPI do
                 'target_amount_value' => 99.08404,
                 'equivalent' => 5.5,
                 'reference' => false,
-                'is_new' => false
-              }
-            ]
-          }
+                'is_new' => false,
+              },
+            ],
+          },
         }
       end
+      let(:r) { Reaction.find(reaction_1.id) }
 
       before do
         put "/api/v1/reactions/#{reaction_1.id}", params: params, as: :json
       end
-
-      let(:r) { Reaction.find(reaction_1.id) }
 
       it 'updates the reaction attributes' do
         expect(r.name).to eq('new name')
@@ -257,21 +256,21 @@ describe Chemotion::ReactionAPI do
         s1 = r.starting_materials.find(sample_1.id)
         s2 = r.starting_materials.find(sample_2.id)
         expect(s1.attributes).to include(
-          'target_amount_unit' => 'mg', 'target_amount_value' => 76.09596
+          'target_amount_unit' => 'mg', 'target_amount_value' => 76.09596,
         )
         expect(s2.attributes).to include(
-          'target_amount_unit' => 'mg', 'target_amount_value' => 99.08404
+          'target_amount_unit' => 'mg', 'target_amount_value' => 99.08404,
         )
       end
 
       it 'materials associations and reassign to a new group' do
         sa1 = r.reactions_starting_material_samples
-                .find_by(sample_id: sample_1.id)
+               .find_by(sample_id: sample_1.id)
         sa2 = r.reactions_starting_material_samples
-                .find_by(sample_id: sample_2.id)
+               .find_by(sample_id: sample_2.id)
         sa2_eq = (sa2.sample.amount_mmol / sa1.sample.amount_mmol).round(14)
         expect(sa1.attributes).to include(
-          'reference' => true, 'equivalent' => 1.0
+          'reference' => true, 'equivalent' => 1.0,
         )
         expect(sa2.attributes).to include('reference' => false)
         expect(sa2.equivalent.round(14)).to eq(sa2_eq)
@@ -280,10 +279,10 @@ describe Chemotion::ReactionAPI do
 
       it 'deletes only not included samples' do
         expect(
-          r.reactions_product_samples.find_by(sample_id: sample_3.id)
+          r.reactions_product_samples.find_by(sample_id: sample_3.id),
         ).to be_present
         expect(
-          r.reactions_product_samples.find_by(sample_id: sample_4.id)
+          r.reactions_product_samples.find_by(sample_id: sample_4.id),
         ).not_to be_present
       end
     end
@@ -302,7 +301,7 @@ describe Chemotion::ReactionAPI do
                 'target_amount_value' => 76.09596,
                 'equivalent' => 1,
                 'reference' => false,
-                'is_new' => false
+                'is_new' => false,
               },
               {
                 'id' => sample_2.id,
@@ -311,8 +310,8 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 5.5,
                 'reference' => false,
                 'is_new' => false,
-                'container' => new_root_container
-              }
+                'container' => new_root_container,
+              },
             ],
             'products' => [
               'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
@@ -325,11 +324,12 @@ describe Chemotion::ReactionAPI do
               'is_new' => true,
               'is_split' => true,
               'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
-              'container' => new_root_container
-            ]
-          }
+              'container' => new_root_container,
+            ],
+          },
         }
       end
+      let(:r) { Reaction.find(reaction_1.id) }
 
       before do
         put("/api/v1/reactions/#{reaction_1.id}.json",
@@ -337,19 +337,17 @@ describe Chemotion::ReactionAPI do
             headers: { 'CONTENT_TYPE' => 'application/json' })
       end
 
-      let(:r) { Reaction.find(reaction_1.id) }
-
       it 'creates subsamples' do
         subsample = r.products.last
         expect(subsample.parent).to eq(sample_1)
         expect(subsample.attributes).to include(
           'target_amount_value' => 76.09596,
-          'target_amount_unit' => 'mg'
+          'target_amount_unit' => 'mg',
         )
         subsample_association = r.reactions_product_samples
-                                  .find_by(sample_id: subsample.id)
+                                 .find_by(sample_id: subsample.id)
         expect(subsample_association.attributes).to include(
-          'reference' => true, 'equivalent' => 1
+          'reference' => true, 'equivalent' => 1,
         )
       end
     end
@@ -393,17 +391,17 @@ describe Chemotion::ReactionAPI do
               'is_split' => true,
               'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
               'molecule' => { molfile: molfile_1 },
-              'container' => new_root_container
-            ]
-          }
+              'container' => new_root_container,
+            ],
+          },
         }
       end
 
       before do
         allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(receiver) # log in as receiver
         post('/api/v1/reactions.json',
-              params: params.to_json,
-              headers: { 'CONTENT_TYPE' => 'application/json' })
+             params: params.to_json,
+             headers: { 'CONTENT_TYPE' => 'application/json' })
       end
 
       it 'links reaction to collection' do
@@ -432,7 +430,7 @@ describe Chemotion::ReactionAPI do
               'is_split' => true,
               'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
               'molecule' => { molfile: molfile_1 },
-              'container' => new_root_container
+              'container' => new_root_container,
             ],
             'reactants' => [
               'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336',
@@ -445,19 +443,18 @@ describe Chemotion::ReactionAPI do
               'is_new' => true,
               'is_split' => false,
               'molfile' => molfile_1,
-              'container' => new_root_container
-            ]
-          }
+              'container' => new_root_container,
+            ],
+          },
         }
       end
+      let(:r) { Reaction.find_by(name: 'r001') }
 
       before do
         post('/api/v1/reactions.json',
-              params: params.to_json,
-              headers: { 'CONTENT_TYPE' => 'application/json' })
+             params: params.to_json,
+             headers: { 'CONTENT_TYPE' => 'application/json' })
       end
-
-      let(:r) { Reaction.find_by(name: 'r001') }
 
       it 'creates subsamples' do
         subsample = r.products.last
@@ -465,13 +462,13 @@ describe Chemotion::ReactionAPI do
         expect(subsample.parent).to eq(sample_1)
         expect(subsample.attributes).to include(
           'target_amount_value' => 76.09596,
-          'target_amount_unit' => 'mg'
+          'target_amount_unit' => 'mg',
         )
 
         subsample_association = r.reactions_product_samples
-                                  .find_by(sample_id: subsample.id)
+                                 .find_by(sample_id: subsample.id)
         expect(subsample_association.attributes).to include(
-          'reference' => true, 'equivalent' => 1
+          'reference' => true, 'equivalent' => 1,
         )
       end
 
@@ -481,12 +478,12 @@ describe Chemotion::ReactionAPI do
           'name' => 'Copied Sample',
           'target_amount_value' => 86.09596,
           'target_amount_unit' => 'mg',
-          'solvent' => [{ 'label' => 'Acetone', 'smiles' => 'CC(C)=O', 'ratio' => '100' }]
+          'solvent' => [{ 'label' => 'Acetone', 'smiles' => 'CC(C)=O', 'ratio' => '100' }],
         )
         reactant_association = r.reactions_reactant_samples
                                 .find_by(sample_id: reactant.id)
         expect(reactant_association.attributes).to include(
-          'reference' => false, 'equivalent' => 2
+          'reference' => false, 'equivalent' => 2,
         )
       end
     end
@@ -503,9 +500,10 @@ describe Chemotion::ReactionAPI do
           'description' => '',
           'container_type' => 'root',
           'extended_metadata' => {},
-          'children' => []
+          'children' => [],
         }
       end
+      let(:r) { Reaction.last }
 
       let(:params) do
         {
@@ -524,17 +522,15 @@ describe Chemotion::ReactionAPI do
               'is_split' => true,
               # 'molecule' => { molfile: molfile_1 },
               'molfile' => molfile_1,
-              'container' => new_container
-            ]
-          }
+              'container' => new_container,
+            ],
+          },
         }
       end
 
       before do
         post '/api/v1/reactions', params: params, as: :json
       end
-
-      let(:r) { Reaction.last }
 
       it 'create products with name realted to the reaction short_label' do
         product = r.products.first

@@ -42,7 +42,7 @@ module Chemotion
                   end
                 else
                   Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-                end.order("created_at DESC")
+                end.order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -60,7 +60,7 @@ module Chemotion
           Entities::ReactionEntity.represent(
             reaction,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
           )
         end
 
@@ -84,9 +84,9 @@ module Chemotion
             reaction: Entities::ReactionEntity.represent(
               reaction,
               policy: @element_policy,
-              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
-            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], 'Reaction'))
+            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], 'Reaction')),
           }
         end
       end
@@ -169,7 +169,7 @@ module Chemotion
             with: Entities::ReactionEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             root: :reaction,
-            policy: @element_policy
+            policy: @element_policy,
           )
         end
       end
@@ -219,7 +219,7 @@ module Chemotion
 
         if literatures.present?
           literatures.each do |literature|
-            next unless literature&.length > 1
+            next unless literature&.length&.> 1
 
             refs = literature[1][:refs]
             doi = literature[1][:doi]
@@ -235,7 +235,7 @@ module Chemotion
               user_id: current_user.id,
               element_type: 'Reaction',
               element_id: reaction.id,
-              category: 'detail'
+              category: 'detail',
             }
             unless Literal.find_by(lattributes)
               Literal.create(lattributes)
@@ -260,17 +260,17 @@ module Chemotion
           end
         end
 
-        CollectionsReaction.create(reaction: reaction,
-                                   collection: Collection.get_all_collection_for_user(current_user.id)) unless is_shared_collection
+        unless is_shared_collection
+          CollectionsReaction.create(reaction: reaction,
+                                     collection: Collection.get_all_collection_for_user(current_user.id))
+        end
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
         if reaction
-          if attributes['origin'] && attributes['origin']['short_label']
-            if materials['products'].present?
-              materials['products'].map! do |prod|
-                prod[:name]&.gsub! params['short_label'], reaction.short_label if params['short_label']
-                prod[:name]&.gsub! attributes['origin']['short_label'], reaction.short_label
-                prod
-              end
+          if attributes['origin'] && attributes['origin']['short_label'] && materials['products'].present?
+            materials['products'].map! do |prod|
+              prod[:name]&.gsub! params['short_label'], reaction.short_label if params['short_label']
+              prod[:name]&.gsub! attributes['origin']['short_label'], reaction.short_label
+              prod
             end
           end
 
@@ -285,7 +285,7 @@ module Chemotion
             reaction,
             with: Entities::ReactionEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
-            root: :reaction
+            root: :reaction,
           )
         end
       end
