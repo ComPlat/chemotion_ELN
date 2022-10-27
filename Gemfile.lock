@@ -5,6 +5,12 @@ GIT
     rinchi-gem (1.0.1)
 
 GIT
+  remote: https://github.com/CamAnNguyen/rdkit_chem
+  revision: 4b6c1835d605ec281c5d1d8cf89973a923a86757
+  specs:
+    rdkit_chem (2020.04.30.1)
+
+GIT
   remote: https://github.com/ComPlat/inchi-gem.git
   revision: 9a95669b42e18a20d2a0c2d5440670ff94e46c37
   branch: main
