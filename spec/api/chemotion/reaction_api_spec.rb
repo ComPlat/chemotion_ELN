@@ -95,23 +95,13 @@ describe Chemotion::ReactionAPI do
       end
       let(:c2) { create(:collection, user: user) }
       let(:r1) { create(:reaction) }
-      let(:r2) { create(:reaction) }
 
       before do
         CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
-        CollectionsReaction.create!(collection_id: c2.id, reaction_id: r2.id)
       end
 
       describe 'reading reaction r1' do
         before { get "/api/v1/reactions/#{r1.id}" }
-
-        it 'is allowed' do
-          expect(response.status).to eq 200
-        end
-      end
-
-      describe 'reading reaction r2' do
-        before { get "/api/v1/reactions/#{r2.id}" }
 
         it 'is allowed' do
           expect(response.status).to eq 200
