@@ -11,8 +11,12 @@ describe Chemotion::ReactionAPI do
     let!(:c1) do
       create(:collection, label: 'C1', user: user, is_shared: false, reaction_detail_level: 10)
     end
+    let!(:c2) do
+      create(:collection, label: 'C2', user: user, is_shared: false, reaction_detail_level: 10)
+    end
     let!(:r1) { create(:reaction, name: 'r1', collections: [c1]) }
     let!(:r2) { create(:reaction, name: 'r2', collections: [c1]) }
+    let!(:r3) { create(:reaction, name: 'r3', collections: [c2]) }
 
     context 'without params' do
       before { get '/api/v1/reactions' }
@@ -20,17 +24,17 @@ describe Chemotion::ReactionAPI do
       it 'returns serialized (unshared) reactions roots of logged in user' do
         reactions = JSON.parse(response.body)['reactions']
         expect(reactions.map { |r| [r['id'], r['name']] }).to match_array(
-          [[r1.id, r1.name], [r2.id, r2.name]]
+          [[r1.id, r1.name], [r2.id, r2.name], [r3.id, r3.name]]
         )
         expect(reactions.first).to include(
-          'id' => r2.id, 'name' => r2.name, 'type' => 'reaction',
+          'id' => r3.id, 'name' => r3.name, 'type' => 'reaction',
           'tag' => include(
-            'taggable_id' => r2.id, 'taggable_type' => 'Reaction',
+            'taggable_id' => r3.id, 'taggable_type' => 'Reaction',
             'taggable_data' => include(
               'collection_labels' => include(
-                'name' => 'C1', 'is_shared' => false, 'id' => c1.id,
-                'user_id' => user.id, 'shared_by_id' => c1.shared_by_id,
-                'is_synchronized' => c1.is_synchronized
+                'name' => 'C2', 'is_shared' => false, 'id' => c2.id,
+                'user_id' => user.id, 'shared_by_id' => c2.shared_by_id,
+                'is_synchronized' => c2.is_synchronized
               )
             )
           )
