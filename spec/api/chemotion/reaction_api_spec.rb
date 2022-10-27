@@ -52,7 +52,7 @@ describe Chemotion::ReactionAPI do
     end
 
     context 'with ID of non-existing collection' do
-      before { get '/api/v1/reactions', params: { collection_id: 42 } }
+      before { get '/api/v1/reactions', params: { collection_id: -1 } }
 
       it 'does not return reaction' do
         reactions = JSON.parse(response.body)['reactions']
@@ -78,7 +78,7 @@ describe Chemotion::ReactionAPI do
 
     context 'with ID of non-existing synced collection' do
       before do
-        get '/api/v1/reactions', params: { sync_collection_id: 42 }
+        get '/api/v1/reactions', params: { sync_collection_id: -1 }
       end
 
       it 'does not return reaction' do
