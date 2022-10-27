@@ -287,7 +287,7 @@ describe Chemotion::ReportAPI do
       end
       let(:params) do
         {
-          exportType: 0, columns: [],
+          exportType: 0,
           uiState: {
             sample: {
               checkedIds: [],

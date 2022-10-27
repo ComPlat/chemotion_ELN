@@ -29,8 +29,7 @@ FactoryBot.define do
       after(:build) do |sample|
         creator = FactoryBot.create(:user)
         sample.creator = creator unless sample.creator
-        collection = FactoryBot.create(:collection, user_id: creator.id)
-        sample.collections << collection if sample.collections.blank?
+        sample.collections << FactoryBot.create(:collection, user_id: creator.id) if sample.collections.blank?
         sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
         sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
       end

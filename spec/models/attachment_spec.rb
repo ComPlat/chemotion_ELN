@@ -659,6 +659,9 @@ RSpec.describe Attachment, type: :model do
       end
 
       it 'attaches the new attachment to the current attachment\'s attachable' do
+        # needs to be persisted so the attachable is persisted as well
+        attachment.save!
+
         expect(new_attachment.attachable).to eq attachment.attachable
       end
 

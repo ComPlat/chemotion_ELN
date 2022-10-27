@@ -100,7 +100,6 @@ class User < ApplicationRecord
   validate :name_abbreviation_reserved_list, on: :create
   validate :name_abbreviation_length, on: :create
   validate :name_abbreviation_format, on: :create
-  # validate :academic_email
   validate :mail_checker
 
   # NB: only Persons and Admins can get a confirmation email and confirm their email.
@@ -176,12 +175,6 @@ class User < ApplicationRecord
 
     na.blank? || !na.length.between?(min_val, max_val) &&
       errors.add(:name_abbreviation, "has to be #{min_val} to #{max_val} characters long")
-  end
-
-  def academic_email
-    Swot::is_academic?(email) || errors.add(
-      :email, 'not from an academic organization'
-    )
   end
 
   def mail_checker

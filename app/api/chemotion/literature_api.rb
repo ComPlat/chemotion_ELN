@@ -251,10 +251,8 @@ module Chemotion
 
         get :metadata do
           connection = Faraday.new(url: 'https://dx.doi.org') do |f|
-            f.use FaradayMiddleware::FollowRedirects
-            # f.headers = { 'Accept' => 'text/bibliography; style=bibtex'}
+            f.use FaradayMiddleware::FollowRedirects::Middleware
             f.headers = { 'Accept' => 'application/x-bibtex' }
-            f.adapter :net_http
           end
           resp = connection.get { |req| req.url("/10.#{@doi_prefix}/#{@doi_suffix}") }
           unless resp.success?

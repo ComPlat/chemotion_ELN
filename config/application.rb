@@ -115,14 +115,19 @@ module Chemotion
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
     #
-    
+
     # tmp assets fix
     sprite_file = Rails.public_path.join('sprite.png')
     sprite_source = Rails.public_path.join('assets', 'ketcherails','sprite*.png' )
     new_sprite = Dir.glob(sprite_source).max_by{ |f| File.mtime(f)}
     if new_sprite.present?
       FileUtils.rm(sprite_file) if File.exist?(sprite_file)
-      FileUtils.ln_s(new_sprite, sprite_file) 
+      FileUtils.ln_s(new_sprite, sprite_file)
     end
+
+    # Specifically allow some classes to be serialized by Psych
+    # See https://discuss.rubyonrails.org/t/cve-2022-32224-possible-rce-escalation-bug-with-serialized-columns-in-active-record/81017
+    # and https://stackoverflow.com/questions/71332602/upgrading-to-ruby-3-1-causes-psychdisallowedclass-exception-when-using-yaml-lo
+    config.active_record.yaml_column_permitted_classes = [Symbol, Hash, Array, ActiveSupport::HashWithIndifferentAccess]
   end
 end
