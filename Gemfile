@@ -56,7 +56,7 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-# gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '287c848ad4149caf6466a1b7a648ada017d30304'
+gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
 gem 'mimemagic'
 
