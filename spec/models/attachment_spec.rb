@@ -20,7 +20,7 @@ RSpec.describe Attachment, type: :model do
   describe '#read_thumbnail' do
     context 'when no thumbnail exists' do
       it 'returns nil' do
-        expect(attachment.read_thumbnail).to eq(nil)
+        expect(attachment.read_thumbnail).to be_nil
       end
     end
 
@@ -28,14 +28,15 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, :with_image) }
 
       it 'returns content of thumbnail file' do
-        expect(attachment.read_thumbnail).not_to eq(nil)
+        expect(attachment.read_thumbnail).not_to be_nil
       end
     end
   end
 
   describe '#abs_path' do
     it 'returns the absolute path of file' do
-      expected_path = Rails.root.join('uploads', 'test', '1', "#{attachment.key}#{File.extname(attachment.filename)}").to_s
+      expected_path = Rails.root.join('uploads', 'test', '1',
+                                      "#{attachment.key}#{File.extname(attachment.filename)}").to_s
       expect(attachment.abs_path).to eq(expected_path)
     end
   end
@@ -54,7 +55,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, :attached_to_container) }
 
       it 'returns false' do
-        expect(subject).to eq(false)
+        expect(subject).to be(false)
       end
     end
 
@@ -62,7 +63,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, :attached_to_research_plan) }
 
       it 'returns true' do
-        expect(subject).to eq(true)
+        expect(subject).to be(true)
       end
     end
   end
@@ -74,7 +75,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, :attached_to_research_plan) }
 
       it 'returns false' do
-        expect(subject).to eq(false)
+        expect(subject).to be(false)
       end
     end
 
@@ -82,7 +83,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, :attached_to_container) }
 
       it 'returns true' do
-        expect(subject).to eq(true)
+        expect(subject).to be(true)
       end
     end
   end
@@ -103,7 +104,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachable_type) { 'Container' }
 
       it 'returns nil' do
-        expect(attachment.research_plan_id).to eq nil
+        expect(attachment.research_plan_id).to be_nil
       end
     end
   end
@@ -124,7 +125,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachable_type) { 'ResearchPlan' }
 
       it 'returns nil' do
-        expect(attachment.container_id).to eq nil
+        expect(attachment.container_id).to be_nil
       end
     end
   end
@@ -144,7 +145,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachable) { build(:container) }
 
       it 'returns nil' do
-        expect(attachment.research_plan).to eq nil
+        expect(attachment.research_plan).to be_nil
       end
     end
   end
@@ -164,7 +165,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachable) { build(:research_plan) }
 
       it 'returns nil' do
-        expect(attachment.container).to eq nil
+        expect(attachment.container).to be_nil
       end
     end
   end
@@ -396,7 +397,7 @@ RSpec.describe Attachment, type: :model do
       end
 
       it 'returns nil' do
-        expect(attachment.init_aasm).to eq nil
+        expect(attachment.init_aasm).to be_nil
       end
 
       it 'does not change the aasm_state' do
@@ -410,7 +411,7 @@ RSpec.describe Attachment, type: :model do
       end
 
       it 'returns nil' do
-        expect(attachment.init_aasm).to eq nil
+        expect(attachment.init_aasm).to be_nil
       end
 
       it 'does not change the aasm_state' do
@@ -441,13 +442,13 @@ RSpec.describe Attachment, type: :model do
       it 'returns nil' do
         attachment.transferred = true
 
-        expect(attachment.require_peaks_generation?).to eq nil
+        expect(attachment.require_peaks_generation?).to be_nil
       end
     end
 
     context 'when attachable is not an analysis subcontainer' do
       it 'returns nil' do
-        expect(attachment.require_peaks_generation?).to eq nil
+        expect(attachment.require_peaks_generation?).to be_nil
       end
     end
 
@@ -460,7 +461,7 @@ RSpec.describe Attachment, type: :model do
         it 'returns nil' do
           attachment.aasm_state = :peaked
 
-          expect(attachment.require_peaks_generation?).to eq nil
+          expect(attachment.require_peaks_generation?).to be_nil
         end
       end
 
@@ -468,13 +469,13 @@ RSpec.describe Attachment, type: :model do
         it 'returns nil' do
           attachment.aasm_state = :edited
 
-          expect(attachment.require_peaks_generation?).to eq nil
+          expect(attachment.require_peaks_generation?).to be_nil
         end
       end
 
       context 'when filename has no spectra file extension' do
         it 'returns nil' do
-          expect(attachment.require_peaks_generation?).to eq nil
+          expect(attachment.require_peaks_generation?).to be_nil
         end
       end
 
@@ -511,7 +512,7 @@ RSpec.describe Attachment, type: :model do
           it 'returns nil' do
             attachment.storage = 'tmp'
 
-            expect(attachment.require_peaks_generation?).to eq nil
+            expect(attachment.require_peaks_generation?).to be_nil
           end
         end
 
@@ -575,7 +576,7 @@ RSpec.describe Attachment, type: :model do
       end
 
       it 'returns nil' do
-        expect(attachment.generate_att(nil, false)).to be nil
+        expect(attachment.generate_att(nil, false)).to be_nil
       end
     end
 
@@ -603,7 +604,7 @@ RSpec.describe Attachment, type: :model do
       end
 
       context 'with spectra file and to_edit = true' do
-        let(:attachment) { build(:attachment, :with_spectra_file)}
+        let(:attachment) { build(:attachment, :with_spectra_file) }
         let(:new_attachment) { attachment.generate_att(tempfile, addon = nil, to_edit = true) }
 
         it 'sets the new attachment\'s aasm_state to edited' do
@@ -693,12 +694,13 @@ RSpec.describe Attachment, type: :model do
               :valid_sample,
               molecule: build(
                 :molecule,
-                exact_molecular_weight: 6.66
-              )
-            )
-          )
+                exact_molecular_weight: 6.66,
+              ),
+            ),
+          ),
         )
       end
+
       it 'returns a hash with the exact molecular weight of the molecule' do
         expect(attachment.build_params[:mass]).to eq 6.66
       end
@@ -714,7 +716,7 @@ RSpec.describe Attachment, type: :model do
           foo: :bar,
           mass: 0.0,
           ext: 'txt',
-          fname: 'upload.txt'
+          fname: 'upload.txt',
         }
 
         expect(attachment.build_params({ foo: :bar })).to eq(expected_result)
@@ -735,7 +737,7 @@ RSpec.describe Attachment, type: :model do
           :attachment,
           :with_json_file,
           filename: 'foobar.infer.json',
-          attachable: attachment.attachable
+          attachable: attachment.attachable,
         )
       end
 
@@ -752,7 +754,7 @@ RSpec.describe Attachment, type: :model do
       it 'returns the result of #auto_infer_n_clear_json' do
         expect(attachment).to receive(:auto_infer_n_clear_json).with('MS', false)
 
-        attachment.update_prediction(params = { foo: :bar}, spc_type = 'MS', is_regen = false)
+        attachment.update_prediction(params = { foo: :bar }, spc_type = 'MS', is_regen = false)
       end
     end
 

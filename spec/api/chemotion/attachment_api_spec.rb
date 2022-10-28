@@ -13,8 +13,8 @@ describe Chemotion::AttachmentAPI do
         'filename' => attachment.filename,
         'id' => attachment.id,
         'identifier' => attachment.identifier,
-        'thumb' => attachment.thumb
-      }
+        'thumb' => attachment.thumb,
+      },
     }
   end
 
@@ -39,7 +39,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment_id) { 666 }
 
       it 'returns with an error' do
-        expect(response.status).to eq(401)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
@@ -47,7 +47,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment) { create(:attachment) }
 
       it 'returns with an error' do
-        expect(response.status).to eq(401)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
@@ -55,7 +55,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment) { create(:attachment) }
 
       it 'returns with the right http status' do
-        expect(response.status).to eq(200)
+        expect(response).to have_http_status(:ok)
       end
 
       it 'returns the deleted attachment' do
@@ -87,7 +87,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment_id) { 666 }
 
       it 'returns with an error' do
-        expect(response.status).to eq(401)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
@@ -95,7 +95,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment) { create(:attachment) }
 
       it 'returns with an error' do
-        expect(response.status).to eq(401)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
@@ -104,7 +104,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment) { create(:attachment, attachable: container) }
 
       it 'returns with the right http status' do
-        expect(response.status).to eq(200)
+        expect(response).to have_http_status(:ok)
       end
 
       it 'returns the deleted attachment' do
@@ -126,7 +126,7 @@ describe Chemotion::AttachmentAPI do
       {
         file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt')),
         key: '116d5a66-7188-4527-ba42-9a97edab9dfc',
-        counter: 1
+        counter: 1,
       }
     end
 
@@ -154,7 +154,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns with the right http status' do
-        expect(response.status).to eq(201)
+        expect(response).to have_http_status(:created)
       end
 
       it 'returns a custom error message' do
@@ -168,7 +168,7 @@ describe Chemotion::AttachmentAPI do
       after { FileUtils.rm_rf(Rails.root.join('tmp', 'uploads', 'chunks')) }
 
       it 'returns with the right http status' do
-        expect(response.status).to eq(201)
+        expect(response).to have_http_status(:created)
       end
 
       it 'returns a simple true' do
@@ -227,7 +227,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns with the right http status' do
-        expect(response.status).to eq(201)
+        expect(response).to have_http_status(:created)
       end
 
       it 'returns a custom error message' do
@@ -242,7 +242,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns with the right http status' do
-        expect(response.status).to eq(201)
+        expect(response).to have_http_status(:created)
       end
 
       it 'returns a custom error message' do
@@ -256,7 +256,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns with the right http status' do
-        expect(response.status).to eq(201)
+        expect(response).to have_http_status(:created)
       end
 
       it 'returns a simple true' do
@@ -298,7 +298,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment_id) { non_readable_attachment.id }
 
       it('returning error 401') do
-        expect(response.status).to eq(401)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
@@ -306,7 +306,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment_id) { -1 }
 
       it('returning error 401') do
-        expect(response.status).to eq(401)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
@@ -314,7 +314,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment_id) { readable_attachment.id }
 
       it('returning status 200') do
-        expect(response.status).to eq(200)
+        expect(response).to have_http_status(:ok)
       end
     end
 
@@ -323,7 +323,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment_identifier) { readable_attachment.identifier }
 
       it('returning status 200') do
-        expect(response.status).to eq(200)
+        expect(response).to have_http_status(:ok)
       end
     end
   end
@@ -362,13 +362,13 @@ describe Chemotion::AttachmentAPI do
     let(:file_upload) do
       {
         file_1: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt'), 'text/plain'),
-        file_2: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt'), 'text/plain')
+        file_2: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt'), 'text/plain'),
       }
     end
 
     let(:img_upload) do
       {
-        file_1: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
+        file_1: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg')),
       }
     end
 
@@ -388,7 +388,7 @@ describe Chemotion::AttachmentAPI do
         :attachment,
         storage: 'tmp', key: '8580a8d0-4b83-11e7-afc4-85a98b9d0194',
         filename: 'upload.jpg',
-        file_path: File.join(Rails.root, 'spec/fixtures/upload.jpg'),
+        file_path: Rails.root.join('spec/fixtures/upload.jpg'),
         created_by: user.id, created_for: user.id
       )
     end
@@ -417,13 +417,13 @@ describe Chemotion::AttachmentAPI do
 
         img_attachments.last.update!(
           attachable_id: cont_s1_analysis.id,
-          attachable_type: 'Container'
+          attachable_type: 'Container',
         )
       end
 
       after(:all) do
-        `rm -rf #{File.join(Rails.root, 'tmp', 'test')}`
-        puts "delete tmp folder #{File.join(Rails.root, 'tmp', 'test')} "
+        `rm -rf #{Rails.root.join('tmp', 'test')}`
+        puts "delete tmp folder #{Rails.root.join('tmp', 'test')} "
       end
 
       describe 'upload files thru POST attachments/upload_dataset_attachments' do
@@ -445,7 +445,7 @@ describe Chemotion::AttachmentAPI do
           post '/api/v1/attachments/upload_dataset_attachments', params: img_upload
           img_attachments.reload.last.update!(
             attachable_id: cont_s1_analysis.id,
-            attachable_type: 'Container'
+            attachable_type: 'Container',
           )
         end
 
