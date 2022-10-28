@@ -49,7 +49,7 @@ jobs:
       run:
         shell: bash
 
-    container: jancbrammer/chemotion-ci-runner:debian    # TODO: serve image from complat account
+    container: matthh/chemotion-ci-runner:ruby-2.7.6    # TODO: serve image from complat account
 
     services:
       postgres:
