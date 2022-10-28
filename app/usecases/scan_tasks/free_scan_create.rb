@@ -41,8 +41,8 @@ module Usecases
             tempfile.unlink
           end
 
-          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{@user_id}").perform_later(attachment.id)
-          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{@user_id}").perform_later(attachment.id)
+          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{@current_user.id}").perform_later(attachment.id)
+          TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{@current_user.id}").perform_later(attachment.id)
         end
       end
     end

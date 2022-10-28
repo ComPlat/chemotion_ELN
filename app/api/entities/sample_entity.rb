@@ -50,7 +50,7 @@ module Entities
       unless: ->(instance, options) { displayed_in_list? }
     )
 
-    expose :code_log, using: Entities::CodeLogEntity
+    expose_timestamps
     expose :has_scan_task
 
     def has_scan_task
