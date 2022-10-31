@@ -98,14 +98,11 @@ describe Chemotion::ReactionAPI do
 
       before do
         CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
+        get "/api/v1/reactions/#{r1.id}"
       end
 
-      describe 'reading reaction r1' do
-        before { get "/api/v1/reactions/#{r1.id}" }
-
-        it 'is allowed' do
-          expect(response.status).to eq 200
-        end
+      it 'is allowed to read reaction' do
+        expect(response).to have_http_status(:ok)
       end
     end
 
@@ -120,14 +117,11 @@ describe Chemotion::ReactionAPI do
 
       before do
         CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
+        get "/api/v1/reactions/#{r1.id}"
       end
 
-      describe 'reading reaction r1' do
-        before { get "/api/v1/reactions/#{r1.id}" }
-
-        it 'is not allowed' do
-          expect(response.status).to eq 401
-        end
+      it 'is not allowed to read reaction' do
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -147,8 +141,6 @@ describe Chemotion::ReactionAPI do
         reaction_id = r1.id
         r = Reaction.find_by(name: 'test')
         expect(r).to be_nil
-        # a = Literature.where(reaction_id: reaction_id)
-        # expect(a).to match_array([])
         a = CollectionsReaction.where(reaction_id: reaction_id)
         expect(a).to match_array([])
         a = ReactionsProductSample.where(reaction_id: reaction_id)
@@ -162,15 +154,15 @@ describe Chemotion::ReactionAPI do
   end
 
   describe 'PUT /api/v1/reactions' do
-    let(:collection_1) do
+    let(:collection1) do
       Collection.create!(label: 'Collection #1', user: user)
     end
-    let(:sample_1) { create(:sample, name: 'Sample 1') }
-    let(:sample_2) { create(:sample, name: 'Sample 2') }
-    let(:sample_3) { create(:sample, name: 'Sample 3') }
-    let(:sample_4) { create(:sample, name: 'Sample 4') }
+    let(:sample1) { create(:sample, name: 'Sample 1') }
+    let(:sample2) { create(:sample, name: 'Sample 2') }
+    let(:sample3) { create(:sample, name: 'Sample 3') }
+    let(:sample4) { create(:sample, name: 'Sample 4') }
 
-    let(:reaction_1) { create(:reaction, name: 'r1') }
+    let(:reaction1) { create(:reaction, name: 'r1') }
     let(:reaction_container) do
       {
         'name' => 'new',
@@ -178,7 +170,7 @@ describe Chemotion::ReactionAPI do
         'is_deleted' => false,
         'is_new' => false,
         'containable_type' => 'Reaction',
-        'containable_id' => reaction_1.id,
+        'containable_id' => reaction1.id,
         'description' => '',
         'container_type' => 'root',
         'extended_metadata' => {},
@@ -188,32 +180,32 @@ describe Chemotion::ReactionAPI do
 
     before do
       CollectionsReaction.create(
-        reaction_id: reaction_1.id, collection_id: collection_1.id,
+        reaction_id: reaction1.id, collection_id: collection1.id,
       )
       ReactionsStartingMaterialSample.create!(
-        reaction: reaction_1, sample: sample_1, reference: true, equivalent: 1,
+        reaction: reaction1, sample: sample1, reference: true, equivalent: 1,
       )
       ReactionsReactantSample.create!(
-        reaction: reaction_1, sample: sample_2, equivalent: 2,
+        reaction: reaction1, sample: sample2, equivalent: 2,
       )
       ReactionsProductSample.create!(
-        reaction: reaction_1, sample: sample_3, equivalent: 1,
+        reaction: reaction1, sample: sample3, equivalent: 1,
       )
       ReactionsProductSample.create!(
-        reaction: reaction_1, sample: sample_4, equivalent: 1,
+        reaction: reaction1, sample: sample4, equivalent: 1,
       )
     end
 
-    context 'updating and reassigning existing materials' do
+    context 'when updating and reassigning existing materials' do
       let(:params) do
         {
-          'id' => reaction_1.id,
+          'id' => reaction1.id,
           'name' => 'new name',
           'container' => reaction_container,
           'materials' => {
             'starting_materials' => [
               {
-                'id' => sample_1.id,
+                'id' => sample1.id,
                 'target_amount_unit' => 'mg',
                 'target_amount_value' => 76.09596,
                 'equivalent' => 1,
@@ -221,7 +213,7 @@ describe Chemotion::ReactionAPI do
                 'is_new' => false,
               },
               {
-                'id' => sample_2.id,
+                'id' => sample2.id,
                 'target_amount_unit' => 'mg',
                 'target_amount_value' => 99.08404,
                 'equivalent' => 5.5,
@@ -231,7 +223,7 @@ describe Chemotion::ReactionAPI do
             ],
             'products' => [
               {
-                'id' => sample_3.id,
+                'id' => sample3.id,
                 'target_amount_unit' => 'mg',
                 'target_amount_value' => 99.08404,
                 'equivalent' => 5.5,
@@ -242,10 +234,10 @@ describe Chemotion::ReactionAPI do
           },
         }
       end
-      let(:r) { Reaction.find(reaction_1.id) }
+      let(:r) { Reaction.find(reaction1.id) }
 
       before do
-        put "/api/v1/reactions/#{reaction_1.id}", params: params, as: :json
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
       end
 
       it 'updates the reaction attributes' do
@@ -253,8 +245,8 @@ describe Chemotion::ReactionAPI do
       end
 
       it 'updates the sample attributes' do
-        s1 = r.starting_materials.find(sample_1.id)
-        s2 = r.starting_materials.find(sample_2.id)
+        s1 = r.starting_materials.find(sample1.id)
+        s2 = r.starting_materials.find(sample2.id)
         expect(s1.attributes).to include(
           'target_amount_unit' => 'mg', 'target_amount_value' => 76.09596,
         )
@@ -265,9 +257,9 @@ describe Chemotion::ReactionAPI do
 
       it 'materials associations and reassign to a new group' do
         sa1 = r.reactions_starting_material_samples
-               .find_by(sample_id: sample_1.id)
+               .find_by(sample_id: sample1.id)
         sa2 = r.reactions_starting_material_samples
-               .find_by(sample_id: sample_2.id)
+               .find_by(sample_id: sample2.id)
         sa2_eq = (sa2.sample.amount_mmol / sa1.sample.amount_mmol).round(14)
         expect(sa1.attributes).to include(
           'reference' => true, 'equivalent' => 1.0,
@@ -279,24 +271,24 @@ describe Chemotion::ReactionAPI do
 
       it 'deletes only not included samples' do
         expect(
-          r.reactions_product_samples.find_by(sample_id: sample_3.id),
+          r.reactions_product_samples.find_by(sample_id: sample3.id),
         ).to be_present
         expect(
-          r.reactions_product_samples.find_by(sample_id: sample_4.id),
+          r.reactions_product_samples.find_by(sample_id: sample4.id),
         ).not_to be_present
       end
     end
 
-    context 'creating new materials' do
+    context 'when creating new materials' do
       let(:params) do
         {
-          'id' => reaction_1.id,
+          'id' => reaction1.id,
           'name' => 'new name',
           'container' => new_root_container,
           'materials' => {
             'starting_materials' => [
               {
-                'id' => sample_1.id,
+                'id' => sample1.id,
                 'target_amount_unit' => 'mg',
                 'target_amount_value' => 76.09596,
                 'equivalent' => 1,
@@ -304,7 +296,7 @@ describe Chemotion::ReactionAPI do
                 'is_new' => false,
               },
               {
-                'id' => sample_2.id,
+                'id' => sample2.id,
                 'amount_unit' => 'mg',
                 'amount_value' => 99.08404,
                 'equivalent' => 5.5,
@@ -318,28 +310,28 @@ describe Chemotion::ReactionAPI do
               'name' => 'New Subsample 1',
               'target_amount_unit' => 'mg',
               'target_amount_value' => 76.09596,
-              'parent_id' => sample_1.id,
+              'parent_id' => sample1.id,
               'reference' => true,
               'equivalent' => 1,
               'is_new' => true,
               'is_split' => true,
-              'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
+              'molfile' => Rails.root.join('spec/fixtures/test_2.mol').read,
               'container' => new_root_container,
             ],
           },
         }
       end
-      let(:r) { Reaction.find(reaction_1.id) }
+      let(:r) { Reaction.find(reaction1.id) }
 
       before do
-        put("/api/v1/reactions/#{reaction_1.id}.json",
+        put("/api/v1/reactions/#{reaction1.id}.json",
             params: params.to_json,
             headers: { 'CONTENT_TYPE' => 'application/json' })
       end
 
       it 'creates subsamples' do
         subsample = r.products.last
-        expect(subsample.parent).to eq(sample_1)
+        expect(subsample.parent).to eq(sample1)
         expect(subsample.attributes).to include(
           'target_amount_value' => 76.09596,
           'target_amount_unit' => 'mg',
@@ -354,15 +346,15 @@ describe Chemotion::ReactionAPI do
   end
 
   describe 'POST /api/v1/reactions' do
-    let(:collection_1) do
+    let(:collection1) do
       Collection.create!(label: 'Collection #1', user: user)
     end
-    let(:sample_1) do
+    let(:sample1) do
       create(
-        :sample, name: 'Sample 1', container: FactoryBot.create(:container)
+        :sample, name: 'Sample 1', container: create(:container)
       )
     end
-    let(:molfile_1) { sample_1.molecule.molfile }
+    let(:molfile_1) { sample1.molecule.molfile }
 
     context 'when adding reaction to synced collection' do
       let(:receiver) { create(:person, name: 'receiver') }
@@ -384,12 +376,12 @@ describe Chemotion::ReactionAPI do
               'name' => 'New Subsample 1',
               'target_amount_unit' => 'mg',
               'target_amount_value' => 76.09596,
-              'parent_id' => sample_1.id,
+              'parent_id' => sample1.id,
               'reference' => true,
               'equivalent' => 1,
               'is_new' => true,
               'is_split' => true,
-              'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
+              'molfile' => Rails.root.join('spec/fixtures/test_2.mol').read,
               'molecule' => { molfile: molfile_1 },
               'container' => new_root_container,
             ],
@@ -411,11 +403,11 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    context 'creating new materials' do
+    context 'when creating new materials' do
       let(:params) do
         {
           'name' => 'r001',
-          'collection_id' => collection_1.id,
+          'collection_id' => collection1.id,
           'container' => new_root_container,
           'materials' => {
             'products' => [
@@ -423,12 +415,12 @@ describe Chemotion::ReactionAPI do
               'name' => 'New Subsample 1',
               'target_amount_unit' => 'mg',
               'target_amount_value' => 76.09596,
-              'parent_id' => sample_1.id,
+              'parent_id' => sample1.id,
               'reference' => true,
               'equivalent' => 1,
               'is_new' => true,
               'is_split' => true,
-              'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
+              'molfile' => Rails.root.join('spec/fixtures/test_2.mol').read,
               'molecule' => { molfile: molfile_1 },
               'container' => new_root_container,
             ],
@@ -459,7 +451,7 @@ describe Chemotion::ReactionAPI do
       it 'creates subsamples' do
         subsample = r.products.last
 
-        expect(subsample.parent).to eq(sample_1)
+        expect(subsample.parent).to eq(sample1)
         expect(subsample.attributes).to include(
           'target_amount_value' => 76.09596,
           'target_amount_unit' => 'mg',
@@ -488,7 +480,7 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    context 'creating a copied reaction' do
+    context 'when creating a copied reaction' do
       let!(:new_container) do
         {
           'name' => 'new',
@@ -508,7 +500,7 @@ describe Chemotion::ReactionAPI do
       let(:params) do
         {
           'name' => ' Copy',
-          'collection_id' => collection_1.id,
+          'collection_id' => collection1.id,
           'container' => new_container,
           'materials' => {
             'products' => [

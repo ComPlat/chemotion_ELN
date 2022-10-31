@@ -41,7 +41,7 @@ module Chemotion
                     Reaction.none
                   end
                 else
-                  Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                  Reaction.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('created_at DESC')
 
         from = params[:from_date]
@@ -154,7 +154,7 @@ module Chemotion
           attributes.delete(:container)
           attributes.delete(:segments)
 
-          reaction.update_attributes!(attributes)
+          reaction.update!(attributes)
           reaction.touch
           reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
@@ -249,14 +249,16 @@ module Chemotion
         CollectionsReaction.create(reaction: reaction, collection: collection) if collection.present?
 
         is_shared_collection = false
-        unless collection.present?
+        if collection.blank?
           sync_collection = current_user.all_sync_in_collections_users.where(id: collection_id).take
           if sync_collection.present?
             is_shared_collection = true
+            sync_in_collection_receiver = Collection.find(sync_collection['collection_id'])
             CollectionsReaction.create(reaction: reaction,
-                                       collection: Collection.find(sync_collection['collection_id']))
+                                       collection: sync_in_collection_receiver)
+            sync_out_collection_sharer = Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
             CollectionsReaction.create(reaction: reaction,
-                                       collection: Collection.get_all_collection_for_user(sync_collection['shared_by_id']))
+                                       collection: sync_out_collection_sharer)
           end
         end
 
