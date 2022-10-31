@@ -9,20 +9,24 @@ on:
 
 jobs:
   linting:
-    if: github.event.pull_request && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
+    if: github.event.pull_request
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      statuses: write
+    env:
+      PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
     steps:
       - uses: actions/checkout@v3
+      - run: |
+          git fetch --no-tags --prune --depth=10 origin +refs/heads/*:refs/remotes/origin/*
+      - uses: ruby/setup-ruby@v1
         with:
-          fetch-depth: 0
-      - name: RuboCop with Pronto
-        uses: HeRoMo/pronto-action@v1.37.0
-        with:
-          runner: rubocop
-          formatters: github_status github_pr_review
+          ruby-version: '2.6.9'
+      - run: gem install pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
+      - run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
+        env:
+          PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
+        if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
+      - run: pronto run -f text -c origin/${{ github.base_ref }}
+        if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
 
   testing:
     needs: [linting]
