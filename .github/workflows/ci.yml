@@ -19,7 +19,7 @@ jobs:
           git fetch --no-tags --prune --depth=10 origin +refs/heads/*:refs/remotes/origin/*
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.6.9'
+          ruby-version: '2.7.6'
       - run: gem install pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
       - run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
         env:
