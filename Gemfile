@@ -66,8 +66,8 @@ gem 'nokogiri'
 gem 'omniauth', '~> 1.9.1'
 gem 'omniauth-github', '~> 1.4.0'
 gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
-gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth_openid_connect'
+gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
 
 gem 'pandoc-ruby'
@@ -86,8 +86,8 @@ gem 'rdkit_chem', git: 'https://github.com/CamAnNguyen/rdkit_chem'
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'
 gem 'roo'
-gem 'rtf'
 gem 'rqrcode' # required for Barby to work but not listed as its dependency -_-
+gem 'rtf'
 gem 'ruby-geometry', require: 'geometry'
 gem 'ruby-mailchecker'
 gem 'ruby-ole'
@@ -128,6 +128,10 @@ group :development do
 
   #  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
   gem 'stackprof' # For Ruby MRI 2.1+
+
+  gem 'debase', '~> 0.2.4', require: false
+  gem 'ruby-debug-ide', '~> 0.7.3', require: false
+  gem 'solargraph', '~> 0.47.2', require: false
 
   gem 'web-console'
 end
