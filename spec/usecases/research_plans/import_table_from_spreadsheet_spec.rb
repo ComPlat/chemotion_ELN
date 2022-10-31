@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
-  let(:file_path) { Rails.root.join('public/xlsx/wellplate_import_template.xlsx') }
+  let(:file_path) { Rails.root.join('public/test/xlsx/wellplate_import_template.xlsx') }
   let(:file_name) { File.basename(file_path) }
   let(:attachment) do
     create(:attachment, filename: file_name, file_path: file_path)
@@ -44,7 +44,7 @@ RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
       expect(actual_header_names).to eq header_names
     end
 
-    it 'imports row data' do
+    it 'imports row data test' do
       rows = research_plan.body.last['value']['rows']
       rows.each_with_index do |row, index|
         expect(row['Position']).to eq index_to_position(index)
