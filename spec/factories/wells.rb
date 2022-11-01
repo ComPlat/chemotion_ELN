@@ -4,8 +4,8 @@ FactoryBot.define do
   factory :well do
     position_x { 0 }
     position_y { 0 }
-    wellplate
-    sample
+    association :wellplate
+    association :sample
     readouts do
       [
         {
@@ -35,6 +35,11 @@ FactoryBot.define do
           }.with_indifferent_access # Rails serializer uses strings, so at least in specs I want both to work
         end
       end
+    end
+
+    trait :with_color_code_and_additive do
+      color_code { 'color_code' }
+      additive { 'additive' }
     end
   end
 end

@@ -4,9 +4,9 @@ import React from 'react';
 import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
-import MoleculesFetcher from '../fetchers/MoleculesFetcher';
-import NotificationActions from '../actions/NotificationActions';
-import LoadingActions from '../actions/LoadingActions';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 const notify = (params) => {
   NotificationActions.add({
@@ -92,7 +92,7 @@ const ScifinderSearch = (props) => {
   return (
     <OverlayTrigger trigger="click" placement="left" overlay={popoverSettings} rootClose>
       <Button className="button-right" style={{ padding: '0px' }}>
-        <img src="/images/sfn-horizontal-logo-header.svg" style={{ width: '5vw' }} alt="SciFinder-n" />
+        <div style={{ fontSize: '1.2vmin', padding: '2px', color: '#337ab7' }}><i className="fa fa-search" aria-hidden="true" />&nbsp;CAS content</div>
       </Button>
     </OverlayTrigger>
   );

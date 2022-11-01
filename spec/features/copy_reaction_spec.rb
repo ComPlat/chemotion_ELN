@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# TODO: tried to fix this spec, however spec/support/login_macros.rb appears to be broken
 require 'rails_helper'
 
 describe 'Copy reaction' do
@@ -22,7 +21,7 @@ describe 'Copy reaction' do
   let(:product3) { create(:sample, name: 'Product3', real_amount_value: 4.671, molecule: m2) }
   let(:reaction3) { create(:reaction, status: 'Successful', short_label: 'Reaction3') }
 
-  let!(:col) { create(:collection, user_id: user1.id, label: 'Col3') }
+  let!(:col) { create(:collection, user_id: user1.id, label: 'Col3', permission_level: 10, reaction_detail_level: 10) }
 
   let!(:root_share) { create(:collection, user: user1, shared_by_id: user2.id, is_shared: true, is_locked: true) }
   let!(:cshare) { create(:collection, user: user1, label: 'share-col', permission_level: 10, sample_detail_level: 10, reaction_detail_level: 10, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
@@ -39,7 +38,7 @@ describe 'Copy reaction' do
 
   def copy_reaction(source_collection, target_collection)
     find_by_id("tree-id-#{source_collection}").click
-    find('i.icon-reaction').click
+    find('.elements-list-tab-reactions').click
     find('div.preview-table', text: 'Reaction').click
     click_button('copy-element-btn')
     fill_in('modal-collection-id-select', with: target_collection).send_keys(:enter)
@@ -52,11 +51,9 @@ describe 'Copy reaction' do
   end
 
   before do
-    sign_in(user1)
     fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
     svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
-
     CollectionsSample.find_or_create_by!(sample: material1, collection: col)
     CollectionsSample.find_or_create_by!(sample: product1, collection: col)
     CollectionsReaction.find_or_create_by!(reaction: reaction1, collection: col)
@@ -74,6 +71,8 @@ describe 'Copy reaction' do
     CollectionsReaction.find_or_create_by!(reaction: reaction3, collection: cshare2)
     ReactionsStartingMaterialSample.create!(reaction: reaction3, sample: material3, reference: true, equivalent: 1)
     ReactionsProductSample.create!(reaction: reaction3, sample: product3, equivalent: 1)
+
+    sign_in(user1)
   end
 
   it 'new reaction', js: true do
@@ -98,11 +97,6 @@ describe 'Copy reaction' do
   end
 
   it 'to diff collection', js: true do
-    find_by_id('col-mgnt-btn').click
-    find_by_id('mycol_-1').click
-    find_all('input[type="text"]')[2].set('Col2')
-    find_by_id('my-collections-update-btn').click
-    find_by_id('col-mgnt-btn').click
     find_by_id('tree-id-Col3').click
     first('i.icon-reaction').click
     first('i.c-bs-success').click

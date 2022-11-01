@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
-import UIStore from '../stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const linkSample = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();

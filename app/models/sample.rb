@@ -55,7 +55,7 @@
 class Sample < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
-  include PgSearch
+  include PgSearch::Model
   include Collectable
   include ElementCodes
   include AnalysisCodes
@@ -126,7 +126,7 @@ class Sample < ApplicationRecord
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_ids,          ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
-
+  scope :includes_for_list_display, -> { includes(:molecule_name, :tag, molecule: :tag) }
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, -> {
@@ -164,7 +164,8 @@ class Sample < ApplicationRecord
   before_create :set_boiling_melting_points
   after_save :update_counter
   after_create :create_root_container
-  after_save :update_data_for_reactions
+  after_save :update_equivalent_for_reactions
+  after_save :update_svg_for_reactions, unless: :skip_reaction_svg_update?
 
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
@@ -220,6 +221,12 @@ class Sample < ApplicationRecord
 
   delegate :computed_props, to: :molecule, prefix: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
+
+  attr_writer :skip_reaction_svg_update
+
+  def skip_reaction_svg_update?
+    @skip_reaction_svg_update.present?
+  end
 
   def molecule_sum_formular
     (decoupled? ? sum_formula : molecule&.sum_formular) || ''
@@ -347,16 +354,19 @@ class Sample < ApplicationRecord
 
     svg_file_name = "#{SecureRandom.hex(64)}.svg"
 
-    if svg =~ /TMPFILE[0-9a-f]{64}.svg/
+    if svg =~ /\ATMPFILE[0-9a-f]{64}.svg\z/
       src = full_svg_path(svg.to_s)
       return unless File.exist?(src)
 
       svg = File.read(src)
       FileUtils.remove(src)
     end
-    if svg.start_with?('<?xml', '<svg')
+    if svg.start_with?(/\s*\<\?xml/, /\s*\<svg/)
       File.write(full_svg_path(svg_file_name), scrub(svg))
       self.sample_svg_file = svg_file_name
+    end
+    unless sample_svg_file =~ /\A[0-9a-f]{128}.svg\z/
+      self.sample_svg_file = nil
     end
   end
 
@@ -503,11 +513,6 @@ private
     end
 
     el_composition.set_loading self
-  end
-
-  def update_data_for_reactions
-    update_equivalent_for_reactions
-    update_svg_for_reactions
   end
 
   def update_equivalent_for_reactions

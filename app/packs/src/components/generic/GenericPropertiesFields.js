@@ -1,15 +1,14 @@
 import React from 'react';
-import { Checkbox, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, InputGroup, Radio, Modal, ListGroup, ListGroupItem, Row, Col } from 'react-bootstrap';
+import { Checkbox, FormGroup, FormControl, Button, Tooltip, OverlayTrigger, InputGroup, Radio, ListGroup, ListGroupItem } from 'react-bootstrap';
 import uuid from 'uuid';
 import { filter } from 'lodash';
 import Select from 'react-select';
 import Dropzone from 'react-dropzone';
-import GenericElDropTarget from './GenericElDropTarget';
-import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from '../../admin/generic/Utils';
-import TableRecord from './TableRecord';
-import Utils from '../utils/Functions';
+import GenericElDropTarget from 'src/components/generic/GenericElDropTarget';
+import { genUnit, genUnitSup, FieldLabel, unitConvToBase } from 'src/apps/admin/generic/Utils';
+import TableRecord from 'src/components/generic/TableRecord';
+import Utils from 'src/utilities/Functions';
 
-const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const GenTextFormula = (opt) => {
   const { layers } = opt;
   const fieldHeader = opt.label === '' ? null : <FieldLabel label={opt.label} desc={opt.description} />;
@@ -125,7 +124,7 @@ const GenPropertiesUpload = (opt) => {
           <ListGroupItem key={attachment.id} className="generic_files">
             {renderListGroupItem(opt, attachment)}
           </ListGroupItem>
-          ))}
+        ))}
       </ListGroup>
     </FormGroup>
   );

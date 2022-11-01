@@ -10,11 +10,13 @@
     "@babel/preset-env": "^7.11.0",
     "@babel/preset-react": "7.10.4",
     "@citation-js/plugin-isbn": "0.3.0",
-    "@complat/chem-spectra-client": "^0.10.14-beta.3",
-    "@complat/react-spectra-editor": "^0.10.14-beta.3",
+    "@complat/chem-spectra-client": "0.10.15",
+    "@complat/react-spectra-editor": "0.10.15",
     "@novnc/novnc": "^1.2.0",
     "@rails/ujs": "^6.1.3-1",
     "@rails/webpacker": "https://github.com/rails/webpacker.git",
+    "@sentry/react": "^7.16.0",
+    "@sentry/tracing": "^7.16.0",
     "acorn": "^5.7.0",
     "ag-grid-community": "^25.1.0",
     "ag-grid-react": "^25.1.0",
@@ -31,6 +33,7 @@
     "d3": "^3.5.15",
     "deep-equal": "1.0.1",
     "es6-promise-debounce": "^1.0.1",
+    "factory-bot": "^6.3.1",
     "html2pdf.js": "^0.9.3",
     "humps": "^2.0.1",
     "immutability-helper": "^2.8.1",
@@ -39,6 +42,9 @@
     "js-yaml": "^3.13.1",
     "jsdom": "^9.8.0",
     "lodash": "^4.17.20",
+    "mobx": "^6.6.0",
+    "mobx-react": "^7.5.0",
+    "mobx-state-tree": "^5.1.5",
     "moment": "^2.29.2",
     "moment-precise-range-plugin": "^1.2.4",
     "normalizr": "^3.3.0",
@@ -110,28 +116,40 @@
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.3",
     "babel-loader": "^8.2.2",
     "enzyme": "^3.7.0",
-    "eslint": "^4.19.1",
-    "eslint-config-airbnb": "^16.1.0",
-    "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-jsx-a11y": "^6.0.2",
-    "eslint-plugin-react": "^7.4.0",
+    "eslint": "^8.20.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-filtered-fix": "^0.3.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsx-a11y": "^6.6.1",
+    "eslint-plugin-no-relative-import-paths": "^1.4.0",
+    "eslint-plugin-react": "^7.30.1",
     "expect": "^24.7.1",
     "jsdom-global": "2.1.0",
     "mocha": "^8.1.3",
+    "nyc": "^15.1.0",
     "react-refresh": "^0.12.0",
     "redux-logger": "^3.0.6",
     "sinon": "^7.5.0",
     "sinon-spy-react": "^2.0.1",
     "webpack-cli": "^4.2.0",
     "webpack-dev-server": "^4.8.1"
+
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
-    "test": "mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
+    "test": "NODE_PATH=./app/packs:./spec/javascripts yarn mocha --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
+    "coverage": "yarn nyc npm test;yarn nyc report --reporter=html"
+  },
+  "nyc": {
+    "exclude": [
+      "**/*.spec.js",
+      "spec/javascripts/fixture/*",
+      "spec/javascripts/helper/*"
+    ]
   },
   "license": "MIT",
   "engines": {
-    "node": "14.16.0"
+    "node": "14.20.0"
   },
   "browserslist": [
     "defaults"

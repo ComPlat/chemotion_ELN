@@ -26,7 +26,7 @@ module LiteratureHelpers
 
   def citation_for_elements(id, type, cat = 'detail')
     return Literature.none unless id.present?
-    Literature.by_element_attributes_and_cat(id, type, cat).add_user_info
+    Literature.by_element_attributes_and_cat(id, type, cat).with_user_info
   end
 
 end #module

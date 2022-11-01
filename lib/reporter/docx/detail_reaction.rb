@@ -241,7 +241,7 @@ module Reporter
         obj.products.each do |product|
           product[:analyses].each do |analysis|
             metadata = analysis[:extended_metadata]
-            content = JSON.parse(metadata[:content])
+            content = metadata[:content]
 
             output.push({
               sample: product[:molecule][:sum_formular],
@@ -473,6 +473,7 @@ module Reporter
             delta += current
           end
         end
+
         return [] if delta.length.zero?
         delta[0..-2] + [{ 'insert' => "\n" }]
       end
@@ -599,9 +600,7 @@ module Reporter
       end
 
       def keep_report(analyses)
-        analyses.map do |a|
-          a[:extended_metadata][:report] == "true" ? a : nil
-        end.compact
+        analyses.select { |a| a[:extended_metadata][:report].in?(["true", true]) }
       end
 
       def sort_by_index(analyses)

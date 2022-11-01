@@ -1,7 +1,7 @@
 class UpdateStdReportTemplate < ActiveRecord::Migration[5.2]
   def change
     rt = ReportTemplate.find_by(name: 'Standard')
-    return if rt.nil? 
+    return unless rt
     uid = Admin.first&.id || User.first.id
     file_path =  "#{Rails.root.join('lib', 'template').to_s}/Standard.docx";
     attachment = Attachment.create!(

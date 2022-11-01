@@ -22,7 +22,7 @@
 class Wellplate < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
-  include PgSearch
+  include PgSearch::Model
   include Collectable
   include ElementCodes
   include Taggable
@@ -64,6 +64,7 @@ class Wellplate < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_sample_ids, ->(ids) { joins(:samples).where('samples.id in (?)', ids) }
   scope :by_screen_ids, ->(ids) { joins(:screens).where('screens.id in (?)', ids) }
+  scope :includes_for_list_display, ->() { includes(:tag) }
 
   has_many :collections_wellplates, dependent: :destroy
   has_many :collections, through: :collections_wellplates
@@ -137,6 +138,10 @@ class Wellplate < ApplicationRecord
 
   def ordered_wells
     wells.order(position_y: :asc, position_x: :asc)
+  end
+
+  def ordered_wells_with_samples
+    ordered_wells.includes(:sample)
   end
 
   def set_short_label(user:) # rubocop:disable Naming/AccessorMethodName

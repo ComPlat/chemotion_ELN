@@ -95,16 +95,31 @@ module Chemotion
 
       desc "return selected elements from the list. (only samples an reactions)"
       post do
-        selected = { 'samples' => [], 'reactions' => [] }
-        %w[sample reaction].each do |element|
-          next unless params[element][:checkedAll] || params[element][:checkedIds].present?
-          selected[element + 's'] = @collection.send(element + 's').by_ui_state(params[element]).map do |e|
-            ElementPermissionProxy.new(current_user, e, user_ids).serialized
+        result = { 'samples' => [], 'reactions' => [] }
+
+        # TODO: optimize for performance
+        #       The calculator is not really a good way to check for large amounts of elements,
+        #       as it will fetch all containing collections for EACH element.
+        #       The more elements are selected, the more SQL queries get executed.
+        if params['sample'][:checkedAll] || params['sample'][:checkedIds].any?
+          result['samples'] = @collection.samples.by_ui_state(params['sample']).map do |sample|
+            calculator = ElementDetailLevelCalculator.new(user: current_user, element: sample)
+
+            Entities::SampleEntity.represent(sample, detail_levels: calculator.detail_levels)
           end
         end
+
+        if params['reaction'][:checkedAll] || params['reaction'][:checkedIds].any?
+          result['reactions'] = @collection.reactions.by_ui_state(params['reaction']).map do |reaction|
+            calculator = ElementDetailLevelCalculator.new(user: current_user, element: reaction)
+
+            Entities::ReactionEntity.represent(reaction, detail_levels: calculator.detail_levels)
+          end
+        end
+
         # TODO: fallback if sample are not in owned collection and currentCollection is missing
         # (case when cloning report)
-        selected
+        result
       end
 
       namespace :load_report do
@@ -127,36 +142,56 @@ module Chemotion
           end
         end
         post do
-          selected = { 'samples' => [], 'reactions' => [] }
+          result = { 'samples' => [], 'reactions' => [] }
           selectedTags = params['selectedTags']
-          %w[sample reaction].each do |element|
-            next unless params[element][:checkedAll] || params[element][:checkedIds].present?
-            klass = Object.const_get(element.capitalize)
-            col_els = @collection.send(element + 's').by_ui_state(params[element])
-            col_ids = col_els.map(&:id)
-            all_ids = params[element][:checkedIds] || []
-            dif_ids = all_ids - col_ids
-            dif_els = klass.where(id: dif_ids)
-            all_els = (col_els + dif_els).uniq { |x| x.id }
+          samples = @collection.samples.by_ui_state(params[:sample])
+          reactions = @collection.reactions.by_ui_state(params[:reaction])
 
-            tags = selectedTags["#{element}Ids".to_sym]
-            selected[element + 's'] = all_els.map do |e|
-              if params[:loadType] == 'lists'
-                if tags && tags.include?(e.id)
-                  { id: e.id, in_browser_memory: true }
-                else
-                  ElementListPermissionProxy.new(current_user, e, user_ids)
-                                            .serialized
-                end
+          if params[:loadType] != 'lists'
+            samples = samples.includes(:container, :elemental_compositions, :molecule, :residues, :segments, :tag)
+            reactions = reactions.includes(
+              :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
+            )
+            result['samples'] = samples.map do |sample|
+              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+              serialized_element = Entities::SampleEntity.represent(
+                sample,
+                detail_levels: detail_levels
+              ).serializable_hash
+              serialized_element[:literatures] = citation_for_elements(sample.id, 'Sample')
+              serialized_element
+            end
+            result['reactions'] = reactions.map do |reaction|
+              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+              serialized_element = Entities::ReactionEntity.represent(
+                reaction,
+                detail_levels: detail_levels
+              ).serializable_hash
+              serialized_element[:literatures] = citation_for_elements(reaction.id, 'Reaction')
+              serialized_element
+            end
+          else
+            sample_tags = selectedTags['sampleIds']
+            reaction_tags = selectedTags['reactionIds']
+            result['samples'] = samples.includes_for_list_display.map do |sample|
+              if sample_tags && sample.id.in?(sample_tags)
+                { id: sample.id, in_browser_memory: true }
               else
-                se = ElementPermissionProxy.new(current_user, e, user_ids)
-                                            .serialized
-                se[:literatures] = citation_for_elements(e.id, e.class.to_s)
-                se
+                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+                Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
+              end
+            end
+            result['reactions'] = reactions.includes_for_list_display.map do |reaction|
+              if reaction_tags && reaction.id.in?(reaction_tags)
+                { id: reaction.id, in_browser_memory: true }
+              else
+                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
+                Entities::ReactionEntity.represent(reaction, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
           end
-          selected
+
+          result
         end
       end
     end

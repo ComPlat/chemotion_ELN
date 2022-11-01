@@ -20,8 +20,8 @@ module Chemotion
       desc 'Return template by id'
       get ':id' do
         report_template = ReportTemplate.includes(:attachment).find(params[:id])
-        entity = Entities::ReportTemplateEntity.represent(report_template, serializable: true)
-        { template: entity }
+
+        present report_template, with: Entities::ReportTemplateEntity, root: :template
       end
 
       desc 'Update new template'
@@ -40,6 +40,7 @@ module Chemotion
         if file && tempfile = file[:tempfile]
           attachment_id = report_template.attachment_id
           attachment = Attachment.new(
+            bucket: file[:container_id],
             filename: file[:filename],
             key: file[:name],
             file_path: file[:tempfile],
@@ -48,20 +49,24 @@ module Chemotion
             content_type: file[:type]
           )
 
-          ActiveRecord::Base.transaction do
-            begin
+          begin
+            ActiveRecord::Base.transaction do
               attachment.save!
 
-              attachment.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
+              attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+
               if attachment.valid?
+                attachment.attachment_attacher.create_derivatives
                 attachment.save!
+                report_template.attachment = attachment
+                report_template.save!
               else
                 raise ActiveRecord::Rollback
               end
-            ensure
-              tempfile.close
-              tempfile.unlink
             end
+          ensure
+            tempfile.close
+            tempfile.unlink
           end
 
           report_template.attachment = attachment
@@ -72,7 +77,7 @@ module Chemotion
         report_template.save!
       end
 
-      desc 'Upload new template'
+      desc 'Create new template'
       params do
         requires :report_type, type: String, desc: 'Template Type'
         optional :file, type: File, desc: 'Template File'
@@ -99,24 +104,31 @@ module Chemotion
               begin
                 attachment.save!
 
-                attachment.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
+            begin
+              ActiveRecord::Base.transaction do
+                attachment.save!
+
+                attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+
                 if attachment.valid?
+                  attachment.attachment_attacher.create_derivatives
                   attachment.save!
+                  report_template.attachment = attachment
                 else
                   raise ActiveRecord::Rollback
                 end
-              ensure
-                tempfile.close
-                tempfile.unlink
               end
+            ensure
+              tempfile.close
+              tempfile.unlink
             end
 
             report_template.attachment = attachment
             report_template.save!
           end
-        else
-          report_template.save!
         end
+
+        report_template.save!
       end
 
       desc 'Delete Template'

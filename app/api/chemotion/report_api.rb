@@ -177,18 +177,19 @@ module Chemotion
       desc 'return all reports of the user'
       params do
       end
-      get :all, each_serializer: ReportSerializer do
-        current_user.reports.order(updated_at: :desc)
+      get :all do
+        reports = current_user.reports.order(updated_at: :desc)
+        present reports, with: Entities::ReportEntity, root: :archives, current_user: current_user
       end
 
       desc 'return reports which can be downloaded now'
       params do
         requires :ids, type: Array[Integer]
       end
-      post :downloadable, each_serializer: ReportSerializer do
-        return current_user.reports.select do |r|
-          params[:ids].include?(r.id) && r.generated_at.present?
-        end
+      post :downloadable do
+        reports = current_user.reports.where(id: params[:ids]).where.not(generated_at: nil)
+
+        present reports, with: Entities::ReportEntity, root: :archives, current_user: current_user
       end
 
       desc 'delete an archive'
@@ -207,25 +208,23 @@ module Chemotion
 
     desc 'returns a created report'
     params do
-      requires :objTags, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
-      requires :splSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
-      requires :rxnSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
-      requires :siRxnSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
-      requires :configs, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
-      requires :molSerials, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
-      requires :prdAtts, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
+      requires :objTags, type: Array[Hash]
+      requires :splSettings, type: Array[Hash]
+      requires :rxnSettings, type: Array[Hash]
+      requires :siRxnSettings, type: Array[Hash]
+      requires :configs, type: Array[Hash]
+      requires :molSerials, type: Array[Hash]
+      requires :prdAtts, type: Array[Hash]
       requires :imgFormat, type: String, default: 'png', values: %w[png eps emf]
       requires :fileName, type: String, default: 'ELN_Report_' + Time.now.strftime('%Y-%m-%dT%H-%M-%S')
       requires :templateId, type: String
       optional :fileDescription
     end
-    post :reports, each_serializer: ReportSerializer do
+    post :reports do
       spl_settings = hashize(params[:splSettings])
       rxn_settings = hashize(params[:rxnSettings])
       si_rxn_settings = hashize(params[:siRxnSettings])
       configs = hashize(params[:configs])
-      mol_serials = params[:molSerials].map(&:to_hash)
-      prd_atts = params[:prdAtts].map(&:to_hash)
 
       attributes = {
         file_name: params[:fileName],
@@ -234,8 +233,8 @@ module Chemotion
         sample_settings: spl_settings,
         reaction_settings: rxn_settings,
         si_reaction_settings: si_rxn_settings,
-        mol_serials: mol_serials,
-        prd_atts: prd_atts,
+        mol_serials: params[:molSerials],
+        prd_atts: params[:prdAtts],
         objects: params[:objTags],
         img_format: params[:imgFormat],
         template: params[:templateId],
@@ -246,7 +245,8 @@ module Chemotion
       report = Report.create(attributes)
       current_user.reports << report
       report.create_docx
-      report
+
+      present report, with: Entities::ReportEntity, root: :report
     end
 
     resource :download_report do

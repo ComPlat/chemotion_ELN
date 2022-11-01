@@ -1,13 +1,18 @@
 # frozen_string_literal: true
 
 module Entities
-  # SegmentKlassEntity
-  class SegmentKlassEntity < Grape::Entity
-    expose :id, :uuid, :label, :desc, :properties_template, :properties_release, :is_active, :place, :released_at
+  class SegmentKlassEntity < ApplicationEntity
+    expose(
+      :desc,
+      :id,
+      :is_active,
+      :label,
+      :place,
+      :properties_release,
+      :properties_template,
+      :uuid,
+    )
     expose :element_klass, using: Entities::ElementKlassEntity
-
-    def released_at
-      object.released_at&.strftime('%d.%m.%Y, %H:%M')
-    end
+    expose_timestamps(timestamp_fields: [:released_at])
   end
 end

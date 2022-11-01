@@ -2,14 +2,14 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { findIndex, cloneDeep } from 'lodash';
 import { Panel, Button, ButtonToolbar, OverlayTrigger, Tooltip, Tab } from 'react-bootstrap';
-import UserStore from '../stores/UserStore';
-import { LayersLayout, UploadInputChange } from './GenericElCommon';
-import Segment from '../models/Segment';
-import MatrixCheck from '../common/MatrixCheck';
-import { notification, genUnits, toBool, toNum, unitConversion } from '../../admin/generic/Utils';
-import { organizeSubValues } from '../../admin/generic/collate';
-import PreviewModal from './PreviewModal';
-import GenericElsFetcher from '../fetchers/GenericElsFetcher';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import { LayersLayout, UploadInputChange } from 'src/components/generic/GenericElCommon';
+import Segment from 'src/models/Segment';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import { notification, genUnits, toBool, toNum, unitConversion } from 'src/apps/admin/generic/Utils';
+import { organizeSubValues } from 'src/apps/admin/generic/collate';
+import PreviewModal from 'src/components/generic/PreviewModal';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 const addSegmentTabs = (element, onChange, contentMap) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};

@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
-import Preview from '../../admin/generic/Preview';
+import Preview from 'src/apps/admin/generic/Preview';
 
 export default class PreviewModal extends React.Component {
   constructor(props) {

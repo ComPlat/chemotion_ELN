@@ -31,7 +31,8 @@ module Chemotion
 
       get 'root' do
         list = OlsTerm.where(owl_name: params[:name], is_enabled: true, ancestry: nil)
-        { ols_terms: present(list, with: Entities::OlsTermEntity) }
+
+        present list, with: Entities::OlsTermEntity, root: :ols_terms
       end
     end
   end

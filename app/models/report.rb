@@ -59,7 +59,7 @@ class Report < ApplicationRecord
       report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
       template = report_template.report_type
       tpl_path = if report_template.attachment
-                   "uploads/#{report_template.attachment.attachment_url}"
+                   report_template.attachment.attachment_url
                  else
                    report_template.report_type
                  end
@@ -111,9 +111,12 @@ class Report < ApplicationRecord
   end
 
   def self.docx_file(current_user, user_ids, params)
-    r = Reaction.find(params[:id])
-    r_hash = ElementReportPermissionProxy.new(current_user, r, user_ids).serialized
-    content = Reporter::Docx::Document.new(objs: [r_hash]).convert
+    reaction = Reaction.find(params[:id])
+    serialized_reaction = Entities::ReactionReportEntity.represent(
+      reaction,
+      detail_levels: ElementDetailLevelCalculator.new(user: current_user, element:reaction).detail_levels
+    ).serializable_hash
+    content = Reporter::Docx::Document.new(objs: [serialized_reaction]).convert
     tpl_path = template_path(params[:template])
     file = Sablon.template(tpl_path)
                  .render_to_string(merge(current_user,

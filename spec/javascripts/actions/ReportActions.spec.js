@@ -1,13 +1,13 @@
 import React from 'react'
 import expect from 'expect'
-import ReportActions from '../../../app/packs/src/components/actions/ReportActions'
+import ReportActions from '../../../app/packs/src/stores/alt/actions/ReportActions'
 Object.assign = require('object-assign')
 
 describe('ReportActions', () => {
 
   describe('updateSplSettings', () => {
     it('should return the splSetting', () => {
-      const payload = {text: "diagram", checked: true}
+      const payload = { text: "diagram", checked: true }
       const actual = ReportActions.updateSplSettings(payload)
       const expected = payload
       expect(actual).toEqual(expected)
@@ -16,7 +16,7 @@ describe('ReportActions', () => {
 
   describe('updateRxnSettings', () => {
     it('should return the rxnSetting', () => {
-      const payload = {text: "diagram", checked: true}
+      const payload = { text: "diagram", checked: true }
       const actual = ReportActions.updateRxnSettings(payload)
       const expected = payload
       expect(actual).toEqual(expected)
@@ -41,7 +41,7 @@ describe('ReportActions', () => {
 
   describe('updateConfigs', () => {
     it('should return the Config', () => {
-      const payload = {text: "Page Break", checked: true}
+      const payload = { text: "Page Break", checked: true }
       const actual = ReportActions.updateConfigs(payload)
       const expected = payload
       expect(actual).toEqual(expected)

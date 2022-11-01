@@ -2,31 +2,25 @@
 
 RSpec.shared_examples 'Rinchi Xlsx/Csv formats' do
   it 'has correct values' do
-    [@sp_prd_a, @sp_prd_b].each_with_index do |prd, idx|
-      _, _, _, inchi, inchikey, l_key, w_key, s_key =
-        @target.sheet(0).row(4 + idx)
+    [product_1, product_2].each_with_index do |product, line_offset|
+      _, _, _, inchistring, inchikey, long_key, web_key, short_key =
+        report_file.sheet(0).row(4 + line_offset)
 
-      expect(inchi).to eq(prd.molecule.inchistring)
-      expect(inchikey).to eq(prd.molecule.inchikey)
-      expect(l_key).to eq(@r1.rinchi_long_key)
-      expect(w_key).to eq(@r1.rinchi_web_key)
-      expect(s_key).to eq(@r1.rinchi_short_key)
+      expect(inchistring).to eq(product.molecule.inchistring)
+      expect(inchikey).to eq(product.molecule.inchikey)
+      expect(long_key).to eq(reaction.rinchi_long_key)
+      expect(web_key).to eq(reaction.rinchi_web_key)
+      expect(short_key).to eq(reaction.rinchi_short_key)
     end
   end
 end
 
 RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
-  def do_authentication
-    @user = create(:user)
-    allow_any_instance_of(
-      WardenAuthentication
-    ).to receive(:current_user).and_return(@user)
-  end
-
-  def set_collection
-    @c = create(
+  let(:user) { create(:user) }
+  let(:collection) do
+    create(
       :collection,
-      user: @user,
+      user: user,
       sample_detail_level: 10,
       reaction_detail_level: 10,
       wellplate_detail_level: 10,
@@ -34,62 +28,42 @@ RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
       permission_level: 10
     )
   end
-
-  def set_samples
-    fp = './spec/fixtures/rinchi/esterifica/'
-    @sp_rct_a = create(:sample, molfile: File.read(fp + 'rct_01.mol'))
-    @sp_rct_b = create(:sample, molfile: File.read(fp + 'rct_02.mol'))
-    @sp_prd_a = create(:sample, molfile: File.read(fp + 'prd_01.mol'))
-    @sp_prd_b = create(:sample, molfile: File.read(fp + 'prd_02.mol'))
-    @sp_agt_a = create(:sample, molfile: File.read(fp + 'agt_01.mol'))
+  let(:starting_material_1) do
+    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/rct_01.mol'), collections: [collection])
   end
-
-  def set_reaction
-    t1 = 'title 1'
-    @r1 = create(:reaction, name: t1)
+  let(:starting_material_2) do
+    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/rct_02.mol'), collections: [collection])
   end
-
-  def set_col_sample
-    [@sp_rct_a, @sp_rct_b, @sp_prd_a, @sp_prd_b, @sp_agt_a].each do |s|
-      CollectionsSample.create!(sample: s, collection: @c)
-    end
+  let(:product_1) do
+    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/prd_01.mol'), collections: [collection])
   end
-
-  def set_col_reaction
-    equiv = 0.88
-    CollectionsReaction.create!(reaction: @r1, collection: @c)
-    ReactionsStartingMaterialSample.create!(
-      reaction: @r1, sample: @sp_rct_a, equivalent: equiv
-    )
-    ReactionsStartingMaterialSample.create!(
-      reaction: @r1, sample: @sp_rct_b, equivalent: equiv
-    )
-    ReactionsProductSample.create!(
-      reaction: @r1, sample: @sp_prd_a, equivalent: equiv
-    )
-    ReactionsProductSample.create!(
-      reaction: @r1, sample: @sp_prd_b, equivalent: equiv
-    )
-    ReactionsSolventSample.create!(
-      reaction: @r1, sample: @sp_agt_a, equivalent: equiv
+  let(:product_2) do
+    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/prd_02.mol'), collections: [collection])
+  end
+  let(:solvent) do
+    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/agt_01.mol'), collections: [collection])
+  end
+  let(:reaction) do
+    create(:reaction, name: 'title 1', collections: [collection])
+  end
+  let(:serialized_reaction) do
+    Entities::ReactionReportEntity.represent(
+      reaction,
+      detail_levels: ElementDetailLevelCalculator.new(user: user, element: reaction).detail_levels,
+      serializable: true
     )
   end
-
-  def serialize_reaction
-    @obj_hash = [@r1].map do |o|
-      ElementReportPermissionProxy.new(@user, o, [@user.id]).serialized
-    end
+  let(:report_file) do
+    tempfile = Tempfile.new(['rspec', file_extension])
+    described_class.new(objs: [serialized_reaction]).create(tempfile.path)
+    Roo::Spreadsheet.open(tempfile.path)
   end
 
   before do
-    do_authentication
-    set_collection
-    set_samples
-    set_reaction
-
-    set_col_sample
-    set_col_reaction
-
-    serialize_reaction
+    reaction.reactions_starting_material_samples.create(sample: starting_material_1, equivalent: 0.88)
+    reaction.reactions_starting_material_samples.create(sample: starting_material_2, equivalent: 0.88)
+    reaction.reactions_product_samples.create(sample: product_1, equivalent: 0.88)
+    reaction.reactions_product_samples.create(sample: product_2, equivalent: 0.88)
+    reaction.reactions_solvent_samples.create(sample: solvent, equivalent: 0.88)
   end
 end

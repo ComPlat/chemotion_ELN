@@ -38,6 +38,7 @@ module Reporter
 
     def create_tmp(raw)
       tmp_file = Tempfile.new
+      tmp_file.binmode
       tmp_file.write(raw)
       tmp_file.close
       tmp_file
@@ -81,9 +82,20 @@ module Reporter
     end
 
     def extract(objects)
-      objects.map do |tag|
-        e = tag['type'].camelize.constantize.find(tag['id'])
-        ElementReportPermissionProxy.new(@author, e, user_ids).serialized
+      objects.map do |object|
+        instance = object['type'].camelize.constantize.find(object['id'])
+        entity_class =
+          case instance
+          when Sample
+            Entities::SampleReportEntity
+          when Reaction
+            Entities::ReactionReportEntity
+          end
+
+        entity_class.new(
+          instance,
+          detail_levels: ElementDetailLevelCalculator.new(user: @author, element: instance).detail_levels,
+        ).serializable_hash
       end
     end
 

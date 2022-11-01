@@ -15,12 +15,21 @@ FactoryBot.define do
       sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
     end
 
+    trait :with_residues do
+      transient do
+        residues_count { 2 }
+      end
+
+      after(:create) do |sample, evaluator|
+        sample.residues << build_list(:residue, evaluator.residues_count)
+      end
+    end
+
     factory :valid_sample do
       after(:build) do |sample|
         creator = FactoryBot.create(:user)
         sample.creator = creator unless sample.creator
-        collection = FactoryBot.create(:collection, user_id: creator.id)
-        sample.collections << collection if sample.collections.blank?
+        sample.collections << FactoryBot.create(:collection, user_id: creator.id) if sample.collections.blank?
         sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
         sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
       end

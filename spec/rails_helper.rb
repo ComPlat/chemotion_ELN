@@ -1,5 +1,22 @@
 # frozen_string_literal: true
 
+require 'simplecov'
+require 'simplecov-lcov'
+require "simplecov-html"
+
+SimpleCov::Formatter::LcovFormatter.config.report_with_single_file = true
+SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
+  SimpleCov::Formatter::HTMLFormatter,
+  SimpleCov::Formatter::LcovFormatter,
+])
+
+SimpleCov.start 'rails' do
+  add_group 'GraphQL', 'app/graphql'
+  add_group 'REST API', 'app/api'
+  add_filter 'app/graphql/chemotion_schema.rb'
+  add_filter 'app/channels'
+end
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV['RAILS_ENV'] ||= 'test'
 require 'spec_helper'
@@ -43,4 +60,5 @@ RSpec.configure do |config|
   config.include CapybaraHelpers
   config.include ReportHelpers
   config.include PubchemHelpers
+  config.include ActiveSupport::Testing::TimeHelpers
 end

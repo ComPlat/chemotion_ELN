@@ -15,7 +15,7 @@ describe Chemotion::ReactionAPI do
 
     describe 'GET /api/v1/reactions' do
       let!(:c1) do
-        create(:collection, label: 'C1', user: user, is_shared: false)
+        create(:collection, label: 'C1', user: user, is_shared: false, reaction_detail_level: 10)
       end
       let!(:r1) { create(:reaction, name: 'r1', collections: [c1]) }
       let!(:r2) { create(:reaction, name: 'r2', collections: [c1]) }
@@ -126,7 +126,7 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    describe 'PUT /api/v1/reactions', focus: true do
+    describe 'PUT /api/v1/reactions' do
       let(:collection_1) do
         Collection.create!(label: 'Collection #1', user: user)
       end
@@ -289,6 +289,7 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 1,
                 'is_new' => true,
                 'is_split' => true,
+                'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
                 'container' => new_root_container
               ]
             }
@@ -297,9 +298,8 @@ describe Chemotion::ReactionAPI do
 
         before do
           put("/api/v1/reactions/#{reaction_1.id}.json",
-            params: params.to_json,
-            headers: { 'CONTENT_TYPE' => 'application/json' }
-          )
+              params: params.to_json,
+              headers: { 'CONTENT_TYPE' => 'application/json' })
         end
 
         let(:r) { Reaction.find(reaction_1.id) }
@@ -308,7 +308,7 @@ describe Chemotion::ReactionAPI do
           subsample = r.products.last
           expect(subsample.parent).to eq(sample_1)
           expect(subsample.attributes).to include(
-            'name' => sample_1.name, 'target_amount_value' => 76.09596,
+            'target_amount_value' => 76.09596,
             'target_amount_unit' => 'mg'
           )
           subsample_association = r.reactions_product_samples
@@ -320,7 +320,7 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    describe 'POST /api/v1/reactions', focus: true do
+    describe 'POST /api/v1/reactions' do
       let(:collection_1) do
         Collection.create!(label: 'Collection #1', user: user)
       end
@@ -348,20 +348,20 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 1,
                 'is_new' => true,
                 'is_split' => true,
+                'molfile' => File.read(Rails.root + 'spec/fixtures/test_2.mol'),
                 'molecule' => { molfile: molfile_1 },
                 'container' => new_root_container
               ],
               'reactants' => [
                 'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336',
                 'name' => 'Copied Sample',
-                'solvent' => [{:label=>'Acetone', :smiles=>'CC(C)=O', :ratio=>'100'}],
+                'solvent' => [{ label: 'Acetone', smiles: 'CC(C)=O', ratio: '100' }],
                 'target_amount_unit' => 'mg',
                 'target_amount_value' => 86.09596,
                 'reference' => false,
                 'equivalent' => 2,
                 'is_new' => true,
                 'is_split' => false,
-                # 'molecule' => { molfile: molfile_1 },
                 'molfile' => molfile_1,
                 'container' => new_root_container
               ]
@@ -371,9 +371,8 @@ describe Chemotion::ReactionAPI do
 
         before do
           post('/api/v1/reactions.json',
-            params: params.to_json,
-            headers: { 'CONTENT_TYPE' => 'application/json' }
-          )
+               params: params.to_json,
+               headers: { 'CONTENT_TYPE' => 'application/json' })
         end
 
         let(:r) { Reaction.find_by(name: 'r001') }
@@ -383,7 +382,6 @@ describe Chemotion::ReactionAPI do
 
           expect(subsample.parent).to eq(sample_1)
           expect(subsample.attributes).to include(
-            'name' => sample_1.name,
             'target_amount_value' => 76.09596,
             'target_amount_unit' => 'mg'
           )

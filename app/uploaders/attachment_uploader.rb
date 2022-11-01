@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # frozen_string_literal: true
 
 class AttachmentUploader < Shrine
@@ -10,16 +11,28 @@ class AttachmentUploader < Shrine
 
   plugin :derivatives
   plugin :keep_files, replaced: true
+=======
+class AttachmentUploader < Shrine
+  require 'helpers/thumbnail/thumbnail_creator'
+
+  MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024
+
+  plugin :derivatives
+  plugin :remove_attachment
+>>>>>>> applying-gem-shrine-2
   plugin :validation_helpers
   plugin :pretty_location
   Attacher.validate do
     validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
 
+<<<<<<< HEAD
   def is_integer?
     !!(self =~ /\A[-+]?[0-9]+\z/)
   end
 
+=======
+>>>>>>> applying-gem-shrine-2
   def generate_location(io, context = {})
     if context[:record]
       file_name = if io.path.include? 'thumb.jpg'
@@ -46,7 +59,20 @@ class AttachmentUploader < Shrine
 
     file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
 
+<<<<<<< HEAD
     AttachmentUploader.create_derivatives(file_extension, file_path, original, @context[:record].id, record)
+=======
+    result = {}
+    result = ThumbnailCreator.new.create_derivative(
+      file_path.to_s,
+      nil,
+      nil,
+      result,
+      record
+    )
+
+    result
+>>>>>>> applying-gem-shrine-2
   end
 
   def self.create_tmp_file(file_basename, file_extension, file)
@@ -62,6 +88,7 @@ class AttachmentUploader < Shrine
 
     file_extension
   end
+<<<<<<< HEAD
 
   def self.create_derivatives(file_extension, file_path, original, attachment_id, record)
     result = {}
@@ -79,4 +106,6 @@ class AttachmentUploader < Shrine
 
     result
   end
+=======
+>>>>>>> applying-gem-shrine-2
 end

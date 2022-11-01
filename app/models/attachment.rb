@@ -22,7 +22,6 @@
 #  aasm_state      :string
 #  filesize        :bigint
 #  attachment_data :jsonb
-#  is_editing      :boolean          default(FALSE)
 #
 # Indexes
 #
@@ -41,17 +40,15 @@ class Attachment < ApplicationRecord
   has_ancestry ancestry_column: :version
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
+  has_ancestry ancestry_column: :version
   before_create :generate_key
-  # before_create :store_tmp_file_and_thumbnail, if: :new_upload
-  before_create :add_checksum, if: :new_upload
+  before_save :add_checksum, if: :new_upload
   before_create :add_content_type
   before_save :update_filesize
 
-  # before_save  :move_from_store, if: :store_changed, on: :update
 
   #reload to get identifier:uuid
   after_create :reload, on: :create
-  # after_create :store_file_and_thumbnail_for_dup, if: :duplicated
 
   before_destroy :delete_file_and_thumbnail
 
@@ -87,15 +84,18 @@ class Attachment < ApplicationRecord
   end
 
   def read_file
-    self.attachment_attacher.file.read if self.attachment_attacher.file.present?
+    return unless attachment_attacher.file.present?
+
+    attachment_attacher.file.rewind if attachment_attacher.file.eof?
+    attachment_attacher.file.read
   end
 
   def read_thumbnail
-    self.attachment(:thumbnail).read if self.attachment(:thumbnail).present?
+    attachment(:thumbnail).read if attachment(:thumbnail).present?
   end
 
   def abs_path
-    self.attachment_attacher.url if self.attachment_attacher.file.present?
+    attachment_attacher.url if attachment_attacher.file.present?
   end
 
   def abs_prev_path
@@ -111,7 +111,7 @@ class Attachment < ApplicationRecord
   end
 
   def add_checksum
-    self.checksum = Digest::MD5.hexdigest(read_file) if self.attachment_attacher.file.present?
+    self.checksum = Digest::MD5.hexdigest(read_file) if attachment_attacher.file.present?
   end
 
   def reset_checksum
@@ -134,24 +134,12 @@ class Attachment < ApplicationRecord
     attachable_type == 'Container'
   end
 
-  def for_report?
-    attachable_type == 'Report'
-  end
-
-  def for_template?
-    attachable_type == 'Template'
-  end
-
   def research_plan_id
     for_research_plan? ? attachable_id : nil
   end
 
   def container_id
     for_container? ? attachable_id : nil
-  end
-
-  def report_id
-    for_report? ? attachable_id : nil
   end
 
   def research_plan
@@ -162,25 +150,24 @@ class Attachment < ApplicationRecord
     for_container? ? attachable : nil
   end
 
-  def report
-    for_report? ? attachable : nil
-  end
-
   def update_research_plan!(c_id)
     update!(attachable_id: c_id, attachable_type: 'ResearchPlan')
   end
 
-  def update_report!(r_id)
-    update!(attachable_id: r_id, attachable_type: 'Report')
+  def rewrite_file_data!
+    return unless file_data.present?
+    store.destroy
+    store.store_file
+    self
   end
 
   def update_filesize
-    self.filesize = File.size(self.file_path) if self.file_path.present?
-    self.filesize = self.file_data.bytesize if self.file_data && self.filesize.nil?
+    self.filesize = file_data.bytesize if file_data.present?
+    self.filesize = File.size(file_path) if file_path.present? && File.exist?(file_path)
   end
 
   def add_content_type
-    return unless self.content_type.present?
+    return if content_type.present?
     self.content_type = begin
                           MimeMagic.by_path(filename)&.type
                         rescue
@@ -190,20 +177,17 @@ class Attachment < ApplicationRecord
 
   def reload
     super
-  
+
     set_key
   end
 
   def set_key
-    self.key = self.identifier
+    key = identifier
   end
 
   private
 
   def generate_key
-    #unless self.key #&& self.key.match(
-    #  /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
-    #)
     self.key = SecureRandom.uuid unless self.key
   end
 
@@ -212,7 +196,6 @@ class Attachment < ApplicationRecord
   end
 
   def store_changed
-    #!new_record? && storage_changed?
     !self.duplicated && storage_changed?
   end
 
@@ -248,12 +231,6 @@ class Attachment < ApplicationRecord
   end
 
   def delete_file_and_thumbnail
-    self.reload_log_data
-    for numb in 1..self.log_size do
-      att = self.at(version: numb)
-      att.attachment_attacher.destroy
-    end
-   
     attachment_attacher.destroy
   end
 

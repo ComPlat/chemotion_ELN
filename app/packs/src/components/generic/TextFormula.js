@@ -3,9 +3,9 @@ import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Button } from 'react-bootstrap';
-import GenericSubField from '../models/GenericSubField';
-import LayerSelect from './LayerSelect';
-import FieldSelect from './FieldSelect';
+import GenericSubField from 'src/models/GenericSubField';
+import LayerSelect from 'src/components/generic/LayerSelect';
+import FieldSelect from 'src/components/generic/FieldSelect';
 
 const AddRowBtn = ({ addRow }) => (
   <Button onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>

@@ -151,7 +151,8 @@ tags
 tags.temp
 .vscode/*
 
-/spec/examples.txt
+coverage
+spec/examples.txt
 
 # ignore vendor files
 vendor/cache/*
@@ -175,8 +176,11 @@ vendor/bundle/*
 vendor/cache/*
 .idea/*
 .devcontainer
+shrine/*
 .docker-sync/
 
 shrine/*
 config/shrine_config.yml
 public/sprite.png
+config/shrine_config.yml
+.nyc_output/
