@@ -200,4 +200,8 @@ export default class ResearchPlan extends Element {
   get wellplates() {
     return this._wellplates || [];
   }
+
+  getAttachmentById(id){
+    return this.attachments[0];
+  }
 }

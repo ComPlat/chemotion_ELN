@@ -4,6 +4,7 @@ import Dropzone from 'react-dropzone';
 import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import ResearchPlan from '../models/ResearchPlan';
+import ImageAnnotationEditButton from './ImageAnnotationEditButton'
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   handleDrop(files) {
@@ -55,6 +56,10 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             <InputGroup.Addon>%</InputGroup.Addon>
 
           </InputGroup>
+          <ImageAnnotationEditButton
+            parent={this}
+            attachment={this.props.researchPlan.getAttachmentById()}
+          />
         </FormGroup>
         <Dropzone
           accept="image/*"
