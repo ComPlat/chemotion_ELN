@@ -10,6 +10,7 @@ import ResearchPlanDetailsFieldImage from './ResearchPlanDetailsFieldImage';
 import ResearchPlanDetailsFieldTable from './ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from './ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from './ResearchPlanDetailsFieldReaction';
+import ResearchPlan from '../models/ResearchPlan';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
@@ -55,6 +56,7 @@ export default class ResearchPlanDetailsField extends Component {
             disabled={disabled}
             onChange={onChange.bind(this)}
             edit={edit}
+            researchPlan={this.props.researchPlan}
           />);
         break;
       case 'table':
@@ -192,5 +194,6 @@ ResearchPlanDetailsField.propTypes = {
   isNew: PropTypes.bool,
   copyableFields: PropTypes.arrayOf(PropTypes.object),
   update: PropTypes.bool,
-  edit: PropTypes.bool
+  edit: PropTypes.bool,
+  researchPlan: PropTypes.instanceOf(ResearchPlan)
 };

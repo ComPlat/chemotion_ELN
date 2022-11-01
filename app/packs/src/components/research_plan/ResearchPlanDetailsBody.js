@@ -4,6 +4,7 @@ import { ControlLabel, Row, Col } from 'react-bootstrap';
 import ResearchPlanDetailsAddField from './ResearchPlanDetailsAddField';
 import ResearchPlanDetailsDropTarget from './ResearchPlanDetailsDropTarget';
 import Field from './ResearchPlanDetailsField';
+import ResearchPlan from '../models/ResearchPlan';
 
 // eslint-disable-next-line react/prefer-stateless-function
 export default class ResearchPlanDetailsBody extends Component {
@@ -30,6 +31,7 @@ export default class ResearchPlanDetailsBody extends Component {
         tableIndex={tableIndex}
         isNew={isNew}
         copyableFields={copyableFields}
+        researchPlan={this.props.researchPlan}
       />);
 
       if (field.type === 'table') tableIndex++;
@@ -77,5 +79,6 @@ ResearchPlanDetailsBody.propTypes = {
   update: PropTypes.bool,
   edit: PropTypes.bool,
   isNew: PropTypes.bool,
-  copyableFields: PropTypes.arrayOf(PropTypes.object)
+  copyableFields: PropTypes.arrayOf(PropTypes.object),
+  researchPlan: PropTypes.instanceOf(ResearchPlan)
 };

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import ResearchPlan from '../models/ResearchPlan';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   handleDrop(files) {
@@ -52,6 +53,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               onChange={event => this.handleResizeChange(event)}
             />
             <InputGroup.Addon>%</InputGroup.Addon>
+
           </InputGroup>
         </FormGroup>
         <Dropzone
@@ -99,4 +101,5 @@ ResearchPlanDetailsFieldImage.propTypes = {
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   edit: PropTypes.bool,
+  researchPlan: PropTypes.instanceOf(ResearchPlan)
 };

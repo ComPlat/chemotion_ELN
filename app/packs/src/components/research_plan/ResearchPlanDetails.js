@@ -351,6 +351,7 @@ export default class ResearchPlanDetails extends Component {
               { title: 'Related Identifier', fieldName: 'related_identifier' },
               { title: 'Description', fieldName: 'description' }
             ]}
+            researchPlan={this.props.researchPlan}
           />
         </ListGroupItem>
       </ListGroup>
