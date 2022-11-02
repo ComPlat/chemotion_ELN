@@ -23,9 +23,10 @@
 #
 
 class Container < ApplicationRecord
+  has_logidze
+  acts_as_paranoid
   include ElementCodes
   include Labimotion::Datasetable
-  include Versionable
 
   belongs_to :containable, polymorphic: true, optional: true
   has_many :attachments, as: :attachable

@@ -22,7 +22,7 @@ class ConvertAnalysisType < ActiveRecord::Migration[4.2]
   def up
     # convert
     CONV.each do |c|
-      list = Container.where('extended_metadata->\'kind\' = (?) and container_type = \'analysis\' ', c[:kind])
+      list = Container.unscoped.where('extended_metadata->\'kind\' = (?) and container_type = \'analysis\' ', c[:kind])
       list.each do |rs|
         meta = rs.extended_metadata
         meta["kind"] = c[:ols]
@@ -32,7 +32,7 @@ class ConvertAnalysisType < ActiveRecord::Migration[4.2]
     end
 
     EXCP.each do |c|
-      list = Container.where('extended_metadata->\'kind\' = (?) and container_type = \'analysis\' ', c[:kind])
+      list = Container.unscoped.where('extended_metadata->\'kind\' = (?) and container_type = \'analysis\' ', c[:kind])
       list.each do |rs|
         meta = rs.extended_metadata
         meta["kind"] = c[:ols]
@@ -45,7 +45,7 @@ class ConvertAnalysisType < ActiveRecord::Migration[4.2]
   def down
     # revert
     CONV.each do |c|
-      list = Container.where('extended_metadata->\'kind\' = (?) and container_type = \'analysis\' ', c[:ols])
+      list = Container.unscoped.where('extended_metadata->\'kind\' = (?) and container_type = \'analysis\' ', c[:ols])
       list.each do |rs|
         meta = rs.extended_metadata
         meta["kind"] = c[:kind]

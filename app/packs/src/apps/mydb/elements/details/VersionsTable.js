@@ -1,4 +1,3 @@
-/* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Pager } from 'react-bootstrap';
@@ -6,6 +5,8 @@ import BootstrapTable from 'react-bootstrap-table-next';
 import VersionsFetcher from 'src/fetchers/VersionsFetcher';
 import VersionsTableTime from 'src/apps/mydb/elements/details/VersionsTableTime';
 import VersionsTableChanges from 'src/apps/mydb/elements/details/VersionsTableChanges';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
 
 export default class VersionsTable extends Component {
   constructor(props) {
@@ -16,8 +17,6 @@ export default class VersionsTable extends Component {
       page: 1,
       pages: 1,
     };
-
-    this.updateParent = this.updateParent.bind(this);
   }
 
   componentDidMount() {
@@ -36,11 +35,29 @@ export default class VersionsTable extends Component {
     }
   };
 
+  reloadEntity = () => {
+    const { id, type, element } = this.props;
+    const entityType = type.slice(0, -1);
+
+    if (entityType === 'reaction') {
+      DetailActions.close(element, true);
+    }
+
+    elementShowOrNew({
+      type: entityType,
+      params: { [`${entityType}ID`]: id }
+    });
+  };
+
+  handleRevert = (changes) => VersionsFetcher.revert(changes)
+    .then(() => this.fetchVersions())
+    .then(() => this.reloadEntity());
+
   fetchVersions() {
     const { type, id } = this.props;
     const { page } = this.state;
 
-    VersionsFetcher.fetch({
+    return VersionsFetcher.fetch({
       type, id, page
     }).then((result) => {
       if (!result) return false;
@@ -53,13 +70,8 @@ export default class VersionsTable extends Component {
     });
   }
 
-  updateParent(name, kind, value) {
-    this.props.updateGrandparent(name, kind, value);
-  }
-
   render() {
     const { versions, page, pages } = this.state;
-    const { type } = this.props;
 
     const pagination = () => (
       <Pager>
@@ -69,7 +81,7 @@ export default class VersionsTable extends Component {
           onClick={() => this.handlePagerClick('prev')}
           disabled={page >= pages}
         >
-          &larr; Previous Page
+          &larr; Older Versions
         </Pager.Item>
         <Pager.Item
           next
@@ -77,31 +89,30 @@ export default class VersionsTable extends Component {
           onClick={() => this.handlePagerClick('next')}
           disabled={page <= 1}
         >
-          Next Page &rarr;
+          Newer Versions &rarr;
         </Pager.Item>
       </Pager>
     );
 
     const columns = [
       {
+        dataField: 'caret',
+        text: '',
+        isDummyField: true,
+        // eslint-disable-next-line react/no-unstable-nested-components
+        formatter: () => <i className="fa fa-caret-right history-table__caret" />,
+      },
+      {
         dataField: 'id',
         text: '#',
       },
       {
         dataField: 'createdAt',
-        text: 'Created',
+        text: 'Modified on',
         // eslint-disable-next-line react/no-unstable-nested-components
         formatter: (cell) => (
           <VersionsTableTime dateTime={cell} />
         ),
-      },
-      {
-        dataField: 'klass',
-        text: 'Entity',
-      },
-      {
-        dataField: 'name',
-        text: 'Name',
       },
       {
         dataField: 'userName',
@@ -112,8 +123,12 @@ export default class VersionsTable extends Component {
     const expandRow = {
       onlyOneExpanding: true,
       parentClassName: 'active',
-      renderer: row => (
-        <VersionsTableChanges type={type} changes={row.changes} updateParent={this.updateParent}/>
+      renderer: (row) => (
+        <VersionsTableChanges
+          id={row.id}
+          changes={row.changes}
+          handleRevert={this.handleRevert}
+        />
       ),
     };
 
@@ -121,18 +136,24 @@ export default class VersionsTable extends Component {
       <>
         <style>
           {`
-          .reset-expansion-style {
-            background: white;
-          }
-        `}
+            .reset-expansion-style {
+              background: white;
+            }
+          `}
         </style>
+        <ul className="history-legend">
+          <li className="history-legend__item history-legend__item--old">before</li>
+          <li className="history-legend__item history-legend__item--new">after</li>
+          <li className="history-legend__item history-legend__item--current">current value</li>
+        </ul>
         <BootstrapTable
           keyField="id"
           data={versions}
           columns={columns}
           expandRow={expandRow}
-          style={{ fontSize: 10 }}
           hover
+          wrapperClasses="history-table"
+          rowClasses="history-table__row"
         />
         {pagination()}
       </>
@@ -143,4 +164,9 @@ export default class VersionsTable extends Component {
 VersionsTable.propTypes = {
   type: PropTypes.string.isRequired,
   id: PropTypes.number.isRequired,
+  element: PropTypes.object,
+};
+
+VersionsTable.defaultProps = {
+  element: {}
 };

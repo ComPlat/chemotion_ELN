@@ -1,0 +1,167 @@
+# frozen_string_literal: true
+
+class Versioning::Serializers::SampleSerializer < Versioning::Serializers::BaseSerializer
+  def self.call(record, name = ['Properties'])
+    new(record: record, name: name).call
+  end
+
+  def field_definitions
+    {
+      created_at: {
+        label: 'Created at',
+        kind: :date,
+      },
+      name: {
+        label: 'Name',
+        revert: %i[name],
+      },
+      description: {
+        label: 'Description',
+        revert: %i[description],
+      },
+      created_by: {
+        label: 'Created by',
+        formatter: user_formatter,
+      },
+      sample_svg_file: {
+        label: 'Structural formula',
+        kind: :image,
+        formatter: svg_path_formatter('samples'),
+        revertible_value_formatter: default_formatter,
+        revert: %i[sample_svg_file molfile molecule_id fingerprint_id],
+      },
+      stereo: [
+        {
+          name: 'stereo.abs',
+          label: 'Stereo Abs',
+          formatter: jsonb_formatter('abs'),
+          revert: %i[stereo.abs],
+        },
+        {
+          name: 'stereo.rel',
+          label: 'Stereo Rel',
+          formatter: jsonb_formatter('rel'),
+          revert: %i[stereo.rel],
+        },
+      ],
+      is_top_secret: {
+        label: 'Top secret',
+        kind: :boolean,
+        revert: %i[is_top_secret],
+      },
+      external_label: {
+        label: 'External label',
+        revert: %i[external_label],
+      },
+      boiling_point: {
+        label: 'Boiling point',
+        kind: :numrange,
+        revert: %i[boiling_point],
+        formatter: non_formatter,
+      },
+      melting_point: {
+        label: 'Melting point',
+        kind: :numrange,
+        revert: %i[melting_point],
+        formatter: non_formatter,
+      },
+      purity: {
+        label: 'Purity/Concentration',
+        revert: %i[purity density],
+      },
+      density: {
+        label: 'Density',
+        revert: %i[density purity],
+      },
+      molarity_value: {
+        label: 'Molarity',
+        revert: %i[molarity_value],
+      },
+      target_amount_value: {
+        label: 'Amount',
+        revert: %i[target_amount_value target_amount_unit],
+      },
+      target_amount_unit: {
+        label: 'Target amount unit',
+        revert: %i[target_amount_unit target_amount_value],
+      },
+      location: {
+        label: 'Location',
+        revert: %i[location],
+      },
+      molfile: {
+        label: 'Molfile',
+      },
+      metrics: {
+        label: 'Amount metrics',
+        revert: %i[metrics],
+        formatter: metrics_formatter,
+        revertible_value_formatter: default_formatter,
+      },
+      xref: [
+        {
+          name: 'xref.cas',
+          label: 'CAS',
+          revert: %i[xref.cas],
+          formatter: jsonb_formatter('cas', 'value'),
+        },
+      ],
+      solvent: {
+        label: 'Solvent',
+        kind: :solvent,
+        revert: %i[solvent],
+      },
+      molecule_name_id: {
+        label: 'Molecule',
+        formatter: ->(_key, value) { molecule_names_lookup[value] },
+        revert: %i[molecule_name_id],
+        revertible_value_formatter: default_formatter,
+      },
+      molecule_id: {
+        kind: :hidden,
+      },
+      fingerprint_id: {
+        kind: :hidden,
+      },
+    }.with_indifferent_access
+  end
+
+  private
+
+  def molecule_names_lookup
+    @molecule_names_lookup ||= begin
+      ids = Set.new
+
+      record.log_data.versions.each do |v|
+        ids << v.changes['molecule_name_id'] if v.changes.key?('molecule_name_id')
+      end
+
+      MoleculeName.with_deleted.where(id: ids).to_h { |u| [u.id, u.name] }
+    end
+  end
+
+  def metrics_formatter
+    lambda do |_key, value|
+      return '' unless value
+
+      first = {
+        'm' => 'mg',
+        'n' => 'g',
+        'u' => 'μg',
+      }[value[0]]
+
+      second = {
+        'm' => 'ml',
+        'n' => 'l',
+        'u' => 'μl',
+      }[value[1]]
+
+      third = {
+        'm' => 'mmol',
+        'n' => 'mol',
+      }[value[2]]
+
+      [first, second, third].join(', ')
+    end
+  end
+end

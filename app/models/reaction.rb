@@ -48,6 +48,7 @@
 
 # rubocop:disable Metrics/ClassLength
 class Reaction < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch::Model
@@ -56,7 +57,6 @@ class Reaction < ApplicationRecord
   include Taggable
   include ReactionRinchi
   include Labimotion::Segmentable
-  include Versionable
 
   serialize :description, Hash
   serialize :observation, Hash

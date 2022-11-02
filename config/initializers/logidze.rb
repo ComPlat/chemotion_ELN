@@ -7,7 +7,7 @@ module Logidze
     def with_responsible!(responsible_id)
       return if responsible_id.nil?
 
-      meta = { Logidze::History::Version::META_RESPONSIBLE => responsible_id }
+      meta = { Logidze::History::Version::META_RESPONSIBLE => responsible_id, 'uuid' => SecureRandom.uuid }
       PermanentMetaWithTransaction.wrap_with(meta, &proc {})
     end
 
