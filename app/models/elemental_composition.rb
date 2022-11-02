@@ -16,7 +16,7 @@
 #
 
 class ElementalComposition < ApplicationRecord
-  include Versionable
+  has_logidze
 
   belongs_to :sample
 

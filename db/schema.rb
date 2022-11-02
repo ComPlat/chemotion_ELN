@@ -69,8 +69,8 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.string "attachable_type"
     t.string "aasm_state"
     t.bigint "filesize"
-    t.jsonb "log_data"
     t.jsonb "attachment_data"
+    t.jsonb "log_data"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -231,6 +231,7 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.datetime "updated_at", null: false
     t.integer "parent_id"
     t.jsonb "log_data"
+    t.datetime "deleted_at"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
 
@@ -793,8 +794,8 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
-    t.datetime "created_at", default: "2021-10-01 00:00:00", null: false
-    t.datetime "updated_at", default: "2021-10-01 00:00:00", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.jsonb "log_data"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
@@ -878,6 +879,7 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.text "subject"
     t.jsonb "alternate_identifier"
     t.jsonb "related_identifier"
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_research_plan_metadata_on_deleted_at"
     t.index ["research_plan_id"], name: "index_research_plan_metadata_on_research_plan_id"
   end
@@ -898,11 +900,12 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "body"
+    t.jsonb "log_data"
   end
 
   create_table "research_plans_screens", force: :cascade do |t|
-    t.integer "screen_id"
-    t.integer "research_plan_id"
+    t.bigint "screen_id", null: false
+    t.bigint "research_plan_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -911,8 +914,8 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
   end
 
   create_table "research_plans_wellplates", force: :cascade do |t|
-    t.integer "research_plan_id"
-    t.integer "wellplate_id"
+    t.bigint "research_plan_id", null: false
+    t.bigint "wellplate_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -1022,6 +1025,7 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.jsonb "component_graph_data", default: {}
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_screens_on_deleted_at"
   end
 
@@ -1844,6 +1848,9 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
   create_trigger :logidze_on_samples, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
+  create_trigger :logidze_on_screens, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_residues, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
@@ -1856,11 +1863,17 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
   create_trigger :logidze_on_attachments, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
+  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
       CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+  SQL
+  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL

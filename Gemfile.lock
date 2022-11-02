@@ -283,7 +283,6 @@ GEM
       sixarm_ruby_unaccent (~> 1.1)
     crack (0.4.5)
       rexml
-    crass (1.0.6)
     css_parser (1.12.0)
       addressable
     daemons (1.4.1)
@@ -457,14 +456,11 @@ GEM
     listen (3.7.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
-    loofah (2.19.1)
     logidze (1.2.2)
       activerecord (>= 5.0)
       railties (>= 5.0)
       ruby-next-core (~> 0.9)
-    loofah (2.19.0)
-      crass (~> 1.0.2)
-      nokogiri (>= 1.5.9)
+    loofah (2.19.1)
     mail (2.8.1)
       mini_mime (>= 0.1.1)
       net-imap
