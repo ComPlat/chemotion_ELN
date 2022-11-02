@@ -841,7 +841,6 @@ DEPENDENCIES
   ketcherails!
   launchy
   listen
-  logidze (~> 1.1)
   memory_profiler
   meta_request
   net-scp (= 3.0.0)
