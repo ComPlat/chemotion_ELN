@@ -158,6 +158,24 @@ module Chemotion
         { ok: false, statusText: ['File upload has error. Please try again!'] }
       end
 
+      desc 'get_annotation_of_attachment'
+      get ':attachment_id/annotation' do
+        loader = AnnotationLoader .new
+        return loader.get_annotation_of_attachment(params[:attachment_id])
+      end
+
+      desc 'update_annotation_of_attachment'
+      post ':attachment_id/annotation' do
+      params do
+        require :updated_svg_string, type: String
+      end
+        updater = AnnotationUpdater.new
+        updater.update_annotation(
+          params['updated_svg_string'],
+          params['attachment_id'].to_i
+        )
+      end
+
       desc 'Upload files to Inbox as unsorted'
       post 'upload_to_inbox' do
         attach_ary = []
