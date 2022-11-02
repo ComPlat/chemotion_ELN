@@ -68,10 +68,6 @@ module Chemotion
             tempfile.close
             tempfile.unlink
           end
-
-          report_template.attachment = attachment
-          report_template.save!
-          Attachment.find(attachment_id).delete
         end
 
         report_template.save!
@@ -100,9 +96,6 @@ module Chemotion
               created_for: current_user.id,
               content_type: file[:type]
             )
-            ActiveRecord::Base.transaction do
-              begin
-                attachment.save!
 
             begin
               ActiveRecord::Base.transaction do
@@ -122,9 +115,6 @@ module Chemotion
               tempfile.close
               tempfile.unlink
             end
-
-            report_template.attachment = attachment
-            report_template.save!
           end
         end
 
