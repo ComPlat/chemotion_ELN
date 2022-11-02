@@ -20,7 +20,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '2.7.6'
-      - run: gem install pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
+      - run: gem install pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance rubocop:1.37.1
       - run: pronto run --exit-code -f github_status github_pr_review -c origin/${{ github.base_ref }}
         env:
           PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
