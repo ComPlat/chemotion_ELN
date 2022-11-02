@@ -6,9 +6,13 @@ import moment from 'moment';
 function VersionsTableTime(props) {
   const { dateTime } = props;
 
+  const formattedTime = () => moment(dateTime).format('YYYY-MM-DD HH:mm:ss');
+
+  const timeFromNow = () => moment(dateTime).fromNow();
+
   const renderTooltip = () => (
     <Tooltip id="datetime">
-      {moment(dateTime).format('YYYY-MM-DD HH:mm')}
+      {timeFromNow()}
     </Tooltip>
   );
 
@@ -17,7 +21,7 @@ function VersionsTableTime(props) {
       placement="top"
       overlay={renderTooltip(dateTime)}
     >
-      <span>{moment(dateTime).fromNow()}</span>
+      <span>{formattedTime()}</span>
     </OverlayTrigger>
   );
 }

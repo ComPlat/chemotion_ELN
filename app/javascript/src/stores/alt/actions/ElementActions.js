@@ -376,19 +376,19 @@ class ElementActions {
 
   createSample(params, closeView = false) {
     return (dispatch) => {
-      SamplesFetcher.create(params)
-        .then((result) => {
-          dispatch({ element: result, closeView })
-        });
+      return SamplesFetcher.create(params)
+      .then((result) => {
+        dispatch({ element: result, closeView })
+      });
     };
   }
 
   createSampleForReaction(sample, reaction, materialGroup) {
     return (dispatch) => {
-      SamplesFetcher.create(sample)
-        .then((newSample) => {
-          dispatch({ newSample, reaction, materialGroup })
-        });
+      return SamplesFetcher.create(sample)
+      .then((newSample) => {
+        dispatch({ newSample, reaction, materialGroup })
+      });
     };
   }
 
@@ -432,25 +432,25 @@ class ElementActions {
 
   updateSampleForReaction(sample, reaction, closeView = true) {
     return (dispatch) => {
-      SamplesFetcher.update(sample)
-        .then((newSample) => {
-          reaction.updateMaterial(newSample);
-          reaction.changed = true;
-          dispatch({ reaction, sample: newSample, closeView })
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+      return SamplesFetcher.update(sample)
+      .then((newSample) => {
+        reaction.updateMaterial(newSample);
+        reaction.changed = true;
+        dispatch({ reaction, sample: newSample, closeView })
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     };
   }
 
   updateSample(params, closeView = false) {
     return (dispatch) => {
-      SamplesFetcher.update(params)
-        .then((result) => {
-          dispatch({ element: result, closeView })
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+      return SamplesFetcher.update(params)
+      .then((result) => {
+        dispatch({ element: result, closeView })
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     };
   }
 
@@ -622,21 +622,21 @@ class ElementActions {
 
   createReaction(params) {
     return (dispatch) => {
-      ReactionsFetcher.create(params)
-        .then((result) => {
-          dispatch(result)
-        });
+      return ReactionsFetcher.create(params)
+      .then((result) => {
+        dispatch(result)
+      });
     };
   }
 
   updateReaction(params, closeView = false) {
     return (dispatch) => {
-      ReactionsFetcher.update(params)
-        .then((result) => {
-          dispatch({ element: result, closeView })
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+      return ReactionsFetcher.update(params)
+      .then((result) => {
+        dispatch({ element: result, closeView })
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     };
   }
 
@@ -780,12 +780,12 @@ class ElementActions {
 
   updateSampleForWellplate(sample, wellplate) {
     return (dispatch) => {
-      SamplesFetcher.update(sample)
-        .then((newSample) => {
-          dispatch(wellplate)
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+      return SamplesFetcher.update(sample)
+      .then((newSample) => {
+        dispatch(wellplate)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     };
   }
 

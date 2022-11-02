@@ -61,6 +61,7 @@
 class Sample < ApplicationRecord
   attr_accessor :skip_inventory_label_update
 
+  has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch::Model
@@ -70,7 +71,6 @@ class Sample < ApplicationRecord
   include UnitConvertable
   include Taggable
   include Labimotion::Segmentable
-  include Versionable
 
   STEREO_ABS = ['any', 'rac', 'meso', 'delta', 'lambda', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)', '(Ra)'].freeze
   STEREO_REL = %w[any syn anti p-geminal p-ortho p-meta p-para cis trans fac mer].freeze
@@ -446,7 +446,7 @@ class Sample < ApplicationRecord
     return if inchikey.blank?
 
     is_partial = babel_info[:is_partial]
-    babel_info[:version]
+    molfile_version = babel_info[:version]
     return unless molecule&.inchikey != inchikey || molecule.is_partial != is_partial
 
     self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
@@ -461,7 +461,7 @@ class Sample < ApplicationRecord
   def get_svg_path
     if sample_svg_file.present?
       "/images/samples/#{sample_svg_file}"
-    elsif molecule&.molecule_svg_file.present?
+    elsif molecule&.molecule_svg_file&.present?
       "/images/molecules/#{molecule.molecule_svg_file}"
     end
   end

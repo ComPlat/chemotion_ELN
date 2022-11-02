@@ -34,8 +34,7 @@
 #
 
 class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
-  include Versionable
-
+  has_logidze
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter

@@ -26,8 +26,7 @@
 #
 
 class ReactionsSample < ApplicationRecord
-  include Versionable
-
+  has_logidze
   acts_as_paranoid
   belongs_to :reaction, optional: true
   belongs_to :sample, optional: true
