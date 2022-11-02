@@ -31,7 +31,6 @@
 
 
 class Attachment < ApplicationRecord
-  has_logidze  ignore_log_data: true
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
