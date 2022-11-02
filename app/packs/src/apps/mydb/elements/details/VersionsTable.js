@@ -1,4 +1,3 @@
-/* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Pager } from 'react-bootstrap';
@@ -16,8 +15,6 @@ export default class VersionsTable extends Component {
       page: 1,
       pages: 1,
     };
-
-    this.updateParent = this.updateParent.bind(this);
   }
 
   componentDidMount() {
@@ -34,6 +31,13 @@ export default class VersionsTable extends Component {
         page: state.page - 1
       }), this.fetchVersions);
     }
+  };
+
+  handleRevert = (change, changes) => {
+    // eslint-disable-next-line react/destructuring-assignment
+    this.props.handleRevert(change, changes, () => {
+      this.fetchVersions();
+    });
   };
 
   fetchVersions() {
@@ -53,13 +57,9 @@ export default class VersionsTable extends Component {
     });
   }
 
-  updateParent(name, kind, value) {
-    this.props.updateGrandparent(name, kind, value);
-  }
-
   render() {
-    const { versions, page, pages } = this.state;
     const { type } = this.props;
+    const { versions, page, pages } = this.state;
 
     const pagination = () => (
       <Pager>
@@ -112,8 +112,13 @@ export default class VersionsTable extends Component {
     const expandRow = {
       onlyOneExpanding: true,
       parentClassName: 'active',
-      renderer: row => (
-        <VersionsTableChanges type={type} changes={row.changes} updateParent={this.updateParent}/>
+      renderer: (row) => (
+        <VersionsTableChanges
+          type={type}
+          klass={row.klass}
+          changes={row.changes}
+          handleRevert={this.handleRevert}
+        />
       ),
     };
 
@@ -143,4 +148,5 @@ export default class VersionsTable extends Component {
 VersionsTable.propTypes = {
   type: PropTypes.string.isRequired,
   id: PropTypes.number.isRequired,
+  handleRevert: PropTypes.func.isRequired,
 };

@@ -41,6 +41,7 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import Reaction from 'src/models/Reaction';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -92,8 +93,6 @@ export default class ReactionDetails extends Component {
     if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
-    
-    this.updateGrandparent = this.updateGrandparent.bind(this);
   }
 
   componentDidMount() {
@@ -141,16 +140,19 @@ export default class ReactionDetails extends Component {
   handleSubmit(closeView = false) {
     LoadingActions.start();
 
+    let promise = Promise.resolve();
     const { reaction } = this.state;
     if (reaction && reaction.isNew) {
-      ElementActions.createReaction(reaction);
+      promise = ElementActions.createReaction(reaction);
     } else {
-      ElementActions.updateReaction(reaction, closeView);
+      promise = ElementActions.updateReaction(reaction, closeView);
     }
 
     if (reaction.is_new || closeView) {
       DetailActions.close(reaction, true);
     }
+
+    return promise;
   }
 
   handleReactionChange(reaction, options = {}) {
@@ -224,12 +226,65 @@ export default class ReactionDetails extends Component {
     }
   }
 
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  handleRevert = (change, _changes, callback) => {
+    const { reaction } = this.state;
+    const { name, oldValue } = change;
+    const nextReaction = new Reaction({
+      ...reaction,
+      [name]: oldValue,
+    });
+    this.setState({ reaction: nextReaction }, () => {
+      this.handleSubmit().then(() => callback());
+    });
+  };
+
   handleSelect = (key) => {
     UIActions.selectTab({ tabKey: key, type: 'reaction' });
     this.setState({
       activeTab: key,
     });
   };
+
+  updateReactionSvg() {
+    const { reaction } = this.state;
+    const materialsSvgPaths = {
+      starting_materials: reaction.starting_materials.map(
+        (material) => material.svgPath
+      ),
+      reactants: reaction.reactants.map((material) => material.svgPath),
+      products: reaction.products.map((material) => [
+        material.svgPath,
+        material.equivalent,
+      ]),
+    };
+
+    const solvents = reaction.solvents
+      .map((s) => {
+        const name = s.preferred_label;
+        return name;
+      })
+      .filter((s) => s);
+
+    let temperature = reaction.temperature_display;
+    if (/^[-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
+      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
+    }
+
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(
+      materialsSvgPaths,
+      temperature,
+      solvents,
+      reaction.duration,
+      reaction.conditions
+    ).then((result) => {
+      reaction.reaction_svg_file = result.reaction_svg;
+      this.setState(reaction);
+    });
+  }
 
   reactionHeader(reaction) {
     const hasChanged = reaction.changed ? '' : 'none';
@@ -432,49 +487,6 @@ export default class ReactionDetails extends Component {
     return reaction.hasMaterials() && reaction.SMGroupValid();
   }
 
-  updateGrandparent(name, kind, value) {
-    let { reaction } = this.state;
-    reaction[name] = value;
-    this.setState({ reaction });
-  }
-
-  updateReactionSvg() {
-    const { reaction } = this.state;
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map(
-        (material) => material.svgPath
-      ),
-      reactants: reaction.reactants.map((material) => material.svgPath),
-      products: reaction.products.map((material) => [
-        material.svgPath,
-        material.equivalent,
-      ]),
-    };
-
-    const solvents = reaction.solvents
-      .map((s) => {
-        const name = s.preferred_label;
-        return name;
-      })
-      .filter((s) => s);
-
-    let temperature = reaction.temperature_display;
-    if (/^[-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
-    }
-
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(
-      materialsSvgPaths,
-      temperature,
-      solvents,
-      reaction.duration,
-      reaction.conditions
-    ).then((result) => {
-      reaction.reaction_svg_file = result.reaction_svg;
-      this.setState(reaction);
-    });
-  }
-
   render() {
     const { reaction, visible } = this.state;
     const tabContentsMap = {
@@ -555,7 +567,7 @@ export default class ReactionDetails extends Component {
           <VersionsTable
             type="reactions"
             id={reaction.id}
-            updateGrandparent={this.updateGrandparent}
+            handleRevert={this.handleRevert}
           />
         </Tab>
       ),
