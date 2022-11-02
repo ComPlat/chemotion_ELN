@@ -6,6 +6,7 @@ import Attachment from 'src/models/Attachment';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
+import ImageAnnotationEditButton from "src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton";
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {

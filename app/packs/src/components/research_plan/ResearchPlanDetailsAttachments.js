@@ -1,46 +1,50 @@
-import Dropzone from 'react-dropzone';
-import EditorFetcher from '../fetchers/EditorFetcher';
-import ElementActions from '../actions/ElementActions';
-import ImageModal from '../common/ImageModal';
-import LoadingActions from '../actions/LoadingActions';
-import PropTypes from 'prop-types';
-import React, { Component } from 'react';
-import SpinnerPencilIcon from '../common/SpinnerPencilIcon';
-import { previewAttachmentImage } from './../utils/imageHelper';
-import ImageAnnotationModalSVG from './ImageAnnotationModalSVG'
-import ImageAnnotationEditButton from './ImageAnnotationEditButton';
+import Dropzone from "react-dropzone";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
+import SpinnerPencilIcon from "src/components/common/SpinnerPencilIcon";
 
 import {
-  Button, ButtonGroup,
-  Col, ControlLabel,
+  Button,
+  ButtonGroup,
+  Col,
+  ControlLabel,
   FormGroup,
   Glyphicon,
-  ListGroup, ListGroupItem,
-  Overlay, OverlayTrigger,
+  ListGroup,
+  ListGroupItem,
+  Overlay,
+  OverlayTrigger,
   Row,
-  Tooltip
-} from 'react-bootstrap';
+  Tooltip,
+} from "react-bootstrap";
 
-import { last, findKey, values } from 'lodash';
-import AttachmentFetcher from '../fetchers/AttachmentFetcher';
+import { last, findKey, values } from "lodash";
+import AttachmentFetcher from "src/components/fetchers/AttachmentFetcher";
+import EditorFetcher from "src/components/fetchers/EditorFetcher";
+import LoadingActions from "src/components/actions/LoadingActions";
+import ImageModal from "src/components/common/ImageModal";
+import { previewAttachmentImage } from "src/components/utils/imageHelper";
+import ElementActions from "src/components/actions/ElementActions";
 
-const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
-const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
-const imageStyle = { position: 'absolute', width: 60, height: 60 };
-
+const editorTooltip = (exts) => (
+  <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>
+);
+const downloadTooltip = (
+  <Tooltip id="download_tooltip">Download attachment</Tooltip>
+);
+const imageStyle = { position: "absolute", width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
-    const {
-      attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
-    } = props;
+    const { attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit } =
+      props;
     this.state = {
       attachmentEditor: false,
       extension: null,
       imageEditModalShown: false,
-      showImportConfirm: []
+      showImportConfirm: [],
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -58,22 +62,21 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   editorInitial() {
-    EditorFetcher.initial()
-      .then((result) => {
-        this.setState({
-          attachmentEditor: result.installed,
-          extension: result.ext
-        });
+    EditorFetcher.initial().then((result) => {
+      this.setState({
+        attachmentEditor: result.installed,
+        extension: result.ext,
       });
+    });
   }
 
   documentType(filename) {
     const { extension } = this.state;
 
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, o => o.includes(ext));
+    const ext = last(filename.split("."));
+    const docType = findKey(extension, (o) => o.includes(ext));
 
-    if (typeof (docType) === 'undefined' || !docType) {
+    if (typeof docType === "undefined" || !docType) {
       return null;
     }
 
@@ -82,42 +85,44 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   isImageFile(fileName) {
     const acceptedImageTypes = ["png", "jpg", "bmp", "tif", "svg", "jpeg"];
-    const dataType = last(fileName.split('.'));
+    const dataType = last(fileName.split("."));
     return acceptedImageTypes.includes(dataType);
   }
 
   handleEdit(attachment) {
-    const fileType = last(attachment.filename.split('.'));
+    const fileType = last(attachment.filename.split("."));
     const docType = this.documentType(attachment.filename);
 
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
+    EditorFetcher.startEditing({ attachment_id: attachment.id }).then(
+      (result) => {
         if (result.token) {
           const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
-          window.open(url, '_blank');
+          window.open(url, "_blank");
 
-          attachment.aasm_state = 'oo_editing';
+          attachment.aasm_state = "oo_editing";
           attachment.updated_at = new Date();
 
           this.props.onEdit(attachment);
         } else {
-          alert('Unauthorized to edit this file.');
+          alert("Unauthorized to edit this file.");
         }
-      });
+      }
+    );
   }
 
   createAttachmentPreviews() {
     const { attachments } = this.props;
     attachments.map((attachment) => {
       if (attachment.thumb) {
-        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then((result) => {
-          if (result != null) {
-            attachment.preview = `data:image/png;base64,${result}`;
+        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
+          (result) => {
+            if (result != null) {
+              attachment.preview = `data:image/png;base64,${result}`;
+            }
           }
-        });
-      }
-      else {
-        attachment.preview = '/images/wild_card/not_available.svg';
+        );
+      } else {
+        attachment.preview = "/images/wild_card/not_available.svg";
       }
       return attachment;
     });
@@ -130,13 +135,19 @@ export default class ResearchPlanDetailsAttachments extends Component {
       researchPlanId,
       attachment.id,
       this.props.onAttachmentImportComplete
-    )
+    );
     LoadingActions.stop();
   }
 
   renderRemoveAttachmentButton(attachment) {
     return (
-      <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => this.props.onDelete(attachment)} disabled={this.props.readOnly}>
+      <Button
+        bsSize="xsmall"
+        bsStyle="danger"
+        className="button-right"
+        onClick={() => this.props.onDelete(attachment)}
+        disabled={this.props.readOnly}
+      >
         <i className="fa fa-trash-o" aria-hidden="true" />
       </Button>
     );
@@ -147,15 +158,17 @@ export default class ResearchPlanDetailsAttachments extends Component {
       <ImageAnnotationModalSVG
         attachment={this.state.choosenAttachment}
         isShow={this.state.imageEditModalShown}
-        handleSave={
-          () => {
-            let newAnnotation = document.getElementById("svgEditId").contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.choosenAttachment.updatedAnnotation=newAnnotation;
-            this.setState({ imageEditModalShown: false });
-            this.props.onEdit(this.state.choosenAttachment);
-          }
-        }
-        handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
+        handleSave={() => {
+          const newAnnotation = document
+            .getElementById("svgEditId")
+            .contentWindow.svgEditor.svgCanvas.getSvgString();
+          this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+          this.setState({ imageEditModalShown: false });
+          this.props.onEdit(this.state.choosenAttachment);
+        }}
+        handleOnClose={() => {
+          this.setState({ imageEditModalShown: false });
+        }}
       />
     );
   }
@@ -177,22 +190,24 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { attachmentEditor, extension } = this.state;
 
     const updateTime = new Date(attachment.updated_at);
-    updateTime.setTime(updateTime.getTime() + (15 * 60 * 1000));
+    updateTime.setTime(updateTime.getTime() + 15 * 60 * 1000);
 
     const hasPop = false;
     const fetchNeeded = false;
     const fetchId = attachment.id;
-    const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
+    const isEditing =
+      attachment.aasm_state === "oo_editing" &&
+      new Date().getTime() < updateTime;
 
     const docType = this.documentType(attachment.filename);
-    const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
-    const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
+    const editDisable =
+      !attachmentEditor || isEditing || attachment.is_new || docType === null;
+    const styleEditorBtn = !attachmentEditor || docType === null ? "none" : "";
 
     if (attachment.is_deleted) {
       return (
         <div>
           <Row>
-
             <Col md={1} />
             <Col md={9}>
               <strike>{attachment.filename}</strike>
@@ -216,8 +231,14 @@ export default class ResearchPlanDetailsAttachments extends Component {
       <div>
         <Row>
           <Col md={1}>
-            <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
-              <div className="preview" style={{ width: '60px', height: '60px' }} >
+            <div
+              className="analysis-header order"
+              style={{ width: "60px", height: "60px" }}
+            >
+              <div
+                className="preview"
+                style={{ width: "60px", height: "60px" }}
+              >
                 <ImageModal
                   imageStyle={imageStyle}
                   hasPop={hasPop}
@@ -228,30 +249,30 @@ export default class ResearchPlanDetailsAttachments extends Component {
                     title: attachment.filename,
                     src: attachment.preview,
                     fetchNeeded,
-                    fetchId
+                    fetchId,
                   }}
                 />
               </div>
             </div>
           </Col>
-          <Col md={9}>
-            {attachment.filename}
-          </Col>
+          <Col md={9}>{attachment.filename}</Col>
           <Col md={2}>
             {this.renderAnnotateImageButton(attachment)}
             {this.renderRemoveAttachmentButton(attachment)}
-            <OverlayTrigger placement="top" overlay={downloadTooltip} >
+            <OverlayTrigger placement="top" overlay={downloadTooltip}>
               <Button
                 bsSize="xsmall"
                 className="button-right"
                 bsStyle="primary"
                 onClick={() => this.props.onDownload(attachment)}
               >
-
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))} >
+            <OverlayTrigger
+              placement="left"
+              overlay={editorTooltip(values(extension).join(","))}
+            >
               <Button
                 style={{ display: styleEditorBtn }}
                 bsSize="xsmall"
@@ -260,7 +281,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 disabled={editDisable}
                 onClick={() => this.handleEdit(attachment)}
               >
-                <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
+                <SpinnerPencilIcon
+                  spinningLock={!attachmentEditor || isEditing}
+                />
               </Button>
             </OverlayTrigger>
             {this.renderImportAttachmentButton(attachment)}
@@ -275,7 +298,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     if (attachments && attachments.length > 0) {
       return (
         <ListGroup>
-          {attachments.map(attachment => (
+          {attachments.map((attachment) => (
             <ListGroupItem key={attachment.id}>
               {this.renderListGroupItem(attachment)}
             </ListGroupItem>
@@ -285,21 +308,21 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
     return (
       <div>
-        There are currently no attachments.<br />
+        There are currently no attachments.
+        <br />
       </div>
     );
   }
 
   renderDropzone() {
-
     return (
       <Dropzone
-        onDrop={files => this.props.onDrop(files)}
-        className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}
+        onDrop={(files) => this.props.onDrop(files)}
+        className={`research-plan-dropzone-${
+          this.props.readOnly ? "disable" : "enable"
+        }`}
       >
-        <div className="zone">
-          Drop Files, or Click to Select.
-        </div>
+        <div className="zone">Drop Files, or Click to Select.</div>
       </Dropzone>
     );
   }
@@ -308,15 +331,22 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const show = this.state.showImportConfirm[attachment.id];
     // TODO: import disabled when?
     const importDisabled = this.props.researchPlan.changed;
-    const extension = last(attachment.filename.split('.'));
+    const extension = last(attachment.filename.split("."));
 
-    const importTooltip = importDisabled ?
-      <Tooltip id="import_tooltip">Research Plan must be saved before import</Tooltip> :
-      <Tooltip id="import_tooltip">Import spreadsheet as research plan table</Tooltip>;
+    const importTooltip = importDisabled ? (
+      <Tooltip id="import_tooltip">
+        Research Plan must be saved before import
+      </Tooltip>
+    ) : (
+      <Tooltip id="import_tooltip">
+        Import spreadsheet as research plan table
+      </Tooltip>
+    );
 
     const confirmTooltip = (
       <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-        Import data from Spreadsheet?<br />
+        Import data from Spreadsheet?
+        <br />
         <ButtonGroup>
           <Button
             bsStyle="success"
@@ -336,18 +366,20 @@ export default class ResearchPlanDetailsAttachments extends Component {
       </Tooltip>
     );
 
-    if (extension === 'xlsx') {
+    if (extension === "xlsx") {
       return (
         <div>
-          <OverlayTrigger placement="top" overlay={importTooltip} >
-            <div style={{ float: 'right' }}>
+          <OverlayTrigger placement="top" overlay={importTooltip}>
+            <div style={{ float: "right" }}>
               <Button
                 bsSize="xsmall"
                 bsStyle="success"
                 className="button-right"
                 disabled={importDisabled}
-                ref={(ref) => { this.importButtonRefs[attachment.id] = ref; }}
-                style={importDisabled ? { pointerEvents: 'none' } : {}}
+                ref={(ref) => {
+                  this.importButtonRefs[attachment.id] = ref;
+                }}
+                style={importDisabled ? { pointerEvents: "none" } : {}}
                 onClick={() => this.showImportConfirm(attachment.id)}
               >
                 <Glyphicon glyph="import" />
@@ -363,7 +395,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
           >
             {confirmTooltip}
           </Overlay>
-
         </div>
       );
     }
@@ -388,9 +419,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   render() {
-
     return (
-
       <Row>
         <Col md={12}>
           <FormGroup>
@@ -401,7 +430,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
           </FormGroup>
         </Col>
       </Row>
-
     );
   }
 }
@@ -415,10 +443,10 @@ ResearchPlanDetailsAttachments.propTypes = {
   onDownload: PropTypes.func.isRequired,
   onAttachmentImportComplete: PropTypes,
   onEdit: PropTypes.func.isRequired,
-  readOnly: PropTypes.bool.isRequired
+  readOnly: PropTypes.bool.isRequired,
 };
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => { }
+  onAttachmentImportComplete: () => {},
 };

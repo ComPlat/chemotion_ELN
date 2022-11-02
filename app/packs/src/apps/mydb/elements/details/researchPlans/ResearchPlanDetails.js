@@ -334,14 +334,14 @@ export default class ResearchPlanDetails extends Component {
           {this.renderExportButton(changed)}
           <ResearchPlanDetailsName
             value={name}
-            disabled={researchPlan.isMethodDisabled('name')}
+            disabled={researchPlan.isMethodDisabled("name")}
             onChange={this.handleNameChange}
             edit={edit}
           />
           <ResearchPlanDetailsBody
             body={body}
             attachments={attachments}
-            disabled={researchPlan.isMethodDisabled('body')}
+            disabled={researchPlan.isMethodDisabled("body")}
             onChange={this.handleBodyChange}
             onDrop={this.handleBodyDrop.bind(this)}
             onAdd={this.handleBodyAdd}
@@ -351,11 +351,15 @@ export default class ResearchPlanDetails extends Component {
             update={update}
             edit={edit}
             copyableFields={[
-              { title: 'Subject', fieldName: 'subject' },
-              { title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
-              { title: 'Related Identifier', fieldName: 'related_identifier' },
-              { title: 'Description', fieldName: 'description' }
+              { title: "Subject", fieldName: "subject" },
+              {
+                title: "Alternate Identifier",
+                fieldName: "alternate_identifier",
+              },
+              { title: "Related Identifier", fieldName: "related_identifier" },
+              { title: "Description", fieldName: "description" },
             ]}
+            researchPlan={this.props.researchPlan}
           />
         </ListGroupItem>
       </ListGroup>
@@ -370,14 +374,14 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanDetailsName
             value={name}
             isNew={researchPlan.isNew}
-            disabled={researchPlan.isMethodDisabled('name')}
+            disabled={researchPlan.isMethodDisabled("name")}
             onChange={this.handleNameChange}
             onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             edit
           />
           <ResearchPlanDetailsBody
             body={body}
-            disabled={researchPlan.isMethodDisabled('body')}
+            disabled={researchPlan.isMethodDisabled("body")}
             onChange={this.handleBodyChange.bind(this)}
             onDrop={this.handleBodyDrop.bind(this)}
             onAdd={this.handleBodyAdd}
@@ -386,13 +390,17 @@ export default class ResearchPlanDetails extends Component {
             onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             isNew={researchPlan.isNew}
             copyableFields={[
-              { title: 'Subject', fieldName: 'subject' },
-              { title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
-              { title: 'Related Identifier', fieldName: 'related_identifier' },
-              { title: 'Description', fieldName: 'description' }
+              { title: "Subject", fieldName: "subject" },
+              {
+                title: "Alternate Identifier",
+                fieldName: "alternate_identifier",
+              },
+              { title: "Related Identifier", fieldName: "related_identifier" },
+              { title: "Description", fieldName: "description" },
             ]}
             update={update}
             edit
+            researchPlan={this.props.researchPlan}
           />
         </ListGroupItem>
       </ListGroup>
