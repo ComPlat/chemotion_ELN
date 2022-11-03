@@ -129,11 +129,13 @@ group :development do
   #  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
   gem 'stackprof' # For Ruby MRI 2.1+
 
-  gem 'debase', '~> 0.2.4', require: false
-  gem 'ruby-debug-ide', '~> 0.7.3', require: false
-  gem 'solargraph', '~> 0.47.2', require: false
-
   gem 'web-console'
+end
+
+group :vscode do
+  gem 'debase'
+  gem 'ruby-debug-ide'
+  gem 'solargraph'
 end
 
 group :development, :test do

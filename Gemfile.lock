@@ -829,7 +829,7 @@ DEPENDENCIES
   countries
   database_cleaner
   database_cleaner-active_record
-  debase (~> 0.2.4)
+  debase
   delayed_cron_job
   delayed_job_active_record
   devise
@@ -900,7 +900,7 @@ DEPENDENCIES
   rubocop-performance
   rubocop-rails
   rubocop-rspec
-  ruby-debug-ide (~> 0.7.3)
+  ruby-debug-ide
   ruby-geometry
   ruby-mailchecker
   ruby-ole
@@ -914,7 +914,7 @@ DEPENDENCIES
   sentry-ruby
   simplecov
   simplecov-lcov
-  solargraph (~> 0.47.2)
+  solargraph
   spring
   stackprof
   sys-filesystem
