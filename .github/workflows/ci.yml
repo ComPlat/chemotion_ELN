@@ -25,10 +25,10 @@ jobs:
 
       - name: install linting dependencies
         # IMPORTANT: install rubocop first for pinning to take effect (`gem` doesn't resolve dependencies but simply installs gems in order)
-        run: gem install rubocop:1.37.1 pronto pronto-rubocop #rubocop-rspec rubocop-rails rubocop-performance    # TODO: unpin rubocop once it's not breaking pronto anymore (as does rubocop:1.38.0)
+        run: gem install rubocop:1.37.1 pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance    # TODO: unpin rubocop once it's not breaking pronto anymore (as does rubocop:1.38.0)
 
       - name: run Pronto
-        run: pronto run --exit-code -f github_status github_pr_review -c origin/${{ github.base_ref }}
+        run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
         env:
           PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
         if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
