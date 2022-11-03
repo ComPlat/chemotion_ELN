@@ -22,9 +22,10 @@ jobs:
     steps:
       - name: checkout repository
         uses: actions/checkout@v3
-      # - run: git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
+      - run: git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
       - run: |
           git status
+          git branch
           pwd
           ls -al
 
