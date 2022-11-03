@@ -25,7 +25,7 @@ jobs:
 
       - name: install linting dependencies
         # IMPORTANT: install rubocop first for pinning to take effect (`gem` doesn't resolve dependencies but simply installs gems in order)
-        run: gem install rubocop:1.37.1 pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance    # TODO: unpin rubocop once it's not breaking pronto anymore (as does rubocop:1.38.0)
+        run: gem install rubocop:1.37.1 pronto pronto-rubocop #rubocop-rspec rubocop-rails rubocop-performance    # TODO: unpin rubocop once it's not breaking pronto anymore (as does rubocop:1.38.0)
 
       - name: run Pronto
         run: pronto run --exit-code -f github_status github_pr_review -c origin/${{ github.base_ref }}
