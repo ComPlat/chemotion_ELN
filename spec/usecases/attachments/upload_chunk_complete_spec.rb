@@ -7,7 +7,7 @@ RSpec.describe Usecases::Attachments::UploadChunkComplete do
     let(:user) { create(:person) }
     let(:filename) { 'upload_chunks_completed.txt' }
     let(:key) { '453cc77f-e0e6-4757-b47b-656137eb7084' }
-    let(:checksum) { 'adb11f193ccbcb0cfe7d28806bc43e8e' }
+    let(:checksum) { '2750570558c50dcb8de719cfe21c0366' }
     let(:params) { { filename: filename, key: key, checksum: checksum } }
     let(:file_path) { Rails.root.join('tmp', 'uploads', 'full', params[:key], File.extname(filename)) }
     let(:chunk_file1) { Rails.root.join('tmp', 'uploads', 'chunks', "#{key}$0") }
