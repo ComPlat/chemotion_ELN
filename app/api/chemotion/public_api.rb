@@ -28,6 +28,20 @@ module Chemotion
         status 204
       end
 
+      namespace :token do
+        desc 'Generate Token'
+        params do
+          requires :username, type: String, desc: 'Username'
+          requires :password, type: String, desc: 'Password'
+        end
+        post do
+          token = Usecases::Public::BuildToken.execute!(params)
+          error!('401 Unauthorized', 401) if token.blank?
+
+          { token: token }
+        end
+      end
+
       namespace :element_klasses_name do
         desc 'get klasses'
         params do
