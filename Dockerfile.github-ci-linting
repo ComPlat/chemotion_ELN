@@ -1,0 +1,18 @@
+FROM ruby:2.7.6
+
+# cmake necessary for building `rugged` gem
+RUN apt-get update && apt-get upgrade -y && apt-get install -y cmake
+
+RUN touch Gemfile
+
+# TODO: unpin rubocop once it's not breaking pronto anymore
+RUN echo "# frozen_string_literal: true\n \
+source 'https://rubygems.org'\n \
+gem 'pronto'\n \
+gem 'pronto-rubocop'\n \
+gem 'rubocop', '1.37.1'\n \
+gem 'rubocop-performance'\n \
+gem 'rubocop-rails'\n \
+gem 'rubocop-rspec'" >> Gemfile
+
+RUN bundle install

@@ -11,21 +11,27 @@ jobs:
   linting:
     if: github.event.pull_request
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     env:
       PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
+
+    container: jancbrammer/chemotion-linting-runner:ruby2.7.6    # TODO: serve image from complat account
+
     steps:
-      - uses: actions/checkout@v3
+      - name: checkout repository
+        uses: actions/checkout@v3
       - run: |
-          git fetch --no-tags --prune --depth=10 origin +refs/heads/*:refs/remotes/origin/*
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '2.7.6'
-      - run: gem install pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance rubocop:1.37.1
-      - run: pronto run --exit-code -f github_status github_pr_review -c origin/${{ github.base_ref }}
+          git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
+
+      - name: run Pronto
+        run: pronto run --exit-code -f github_status github_pr_review -c origin/${{ github.base_ref }}
         env:
           PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
         if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
-      - run: pronto run --exit-code -f text -c origin/${{ github.base_ref }}
+      - name: run Pronto on fork
+        run: pronto run --exit-code -f text -c origin/${{ github.base_ref }}
         if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
 
   testing:
@@ -36,7 +42,7 @@ jobs:
       run:
         shell: bash
 
-    container: jancbrammer/chemotion-ci-runner:debian    # TODO: serve image from complat account
+    container: jancbrammer/chemotion-ci-runner:debian    # TODO: serve image from complat account and make naming consistent with linting image
 
     services:
       postgres:
