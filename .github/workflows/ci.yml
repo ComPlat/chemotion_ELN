@@ -23,11 +23,8 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v3
       - run: git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
-      - run: |
-          git status
-          git branch
-          pwd
-          ls -al
+      - run: bundle list
+      - run: rubocop
 
       - name: run Pronto
         run: pronto run --exit-code -f github_status github_pr_review -c origin/${{ github.base_ref }}
