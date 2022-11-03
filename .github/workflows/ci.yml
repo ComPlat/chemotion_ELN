@@ -22,8 +22,11 @@ jobs:
     steps:
       - name: checkout repository
         uses: actions/checkout@v3
+      # - run: git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
       - run: |
-          git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
+          git status
+          pwd
+          ls -al
 
       - name: run Pronto
         run: pronto run --exit-code -f github_status github_pr_review -c origin/${{ github.base_ref }}
