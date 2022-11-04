@@ -181,7 +181,6 @@ describe Chemotion::ReportAPI do
         end
 
         it 'returns correct sdf' do
-          # binding.pry
           expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
           expect(response['Content-Disposition']).to include('.sdf')
           msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v3000_1.sdf'))

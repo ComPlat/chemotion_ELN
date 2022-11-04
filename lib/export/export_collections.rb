@@ -45,6 +45,7 @@ module Export
 
         # create a zip buffer
         zip = Zip::OutputStream.write_buffer do |zip|
+          zip.set_encoding('UTF-8')
           # write the json file into the zip file
           export_json = self.to_json()
           export_json_checksum = Digest::SHA256.hexdigest(export_json)
