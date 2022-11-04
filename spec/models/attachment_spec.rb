@@ -13,7 +13,7 @@ RSpec.describe Attachment, type: :model do
 
   describe '#read_file' do
     it 'returns content of file' do
-      expect(attachment.read_file).to eq("Hello world\r\n")
+      expect(attachment.read_file).to eq("Hello world\n")
     end
   end
 
