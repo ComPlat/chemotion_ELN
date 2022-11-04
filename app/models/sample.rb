@@ -196,7 +196,7 @@ class Sample < ApplicationRecord
 
   has_one :container, as: :containable
   has_one :well, dependent: :destroy
-  has_one :inventories, as: :inventoriable
+  has_one :chemicals
 
   has_many :wells
   has_many :wellplates, through: :wells
@@ -266,19 +266,18 @@ class Sample < ApplicationRecord
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
-  def create_inventory_for_subsample(sample_id, subsample_id)
-    get_sample_inventory = Inventory.find_by(inventoriable_id: sample_id) || Inventory.new
-    inventory_parameters = get_sample_inventory.inventory_parameters
+  def create_chemical_entry_for_subsample(sample_id, subsample_id)
+    get_sample_as_chemical = Chemical.find_by(sample_id: sample_id) || Chemical.new
+    chemical_data = get_sample_as_chemical.chemical_data
     attributes = {
-      inventory_parameters: inventory_parameters,
-      inventoriable_id: subsample_id,
-      inventoriable_type: 'Sample'
+      chemical_data: chemical_data,
+      sample_id: subsample_id,
     }
-    inventory = Inventory.new(attributes)
-    inventory.save!
+    chemical = Chemical.new(attributes)
+    chemical.save!
   end
 
-  def create_subsample user, collection_ids, copy_ea = false, with_inventory = true
+  def create_subsample user, collection_ids, copy_ea = false, as_chemical_entry = true
     subsample = self.dup
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?
@@ -311,7 +310,7 @@ class Sample < ApplicationRecord
     subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
     subsample.save!
 
-    create_inventory_for_subsample(self.id, subsample.id) if with_inventory
+    create_chemical_entry_for_subsample(self.id, subsample.id) if as_chemical_entry
     subsample
   end
 

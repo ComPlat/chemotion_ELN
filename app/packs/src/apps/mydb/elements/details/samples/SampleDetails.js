@@ -65,7 +65,7 @@ import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
-import InventoryTab from 'src/components/InventoryTab';
+import ChemicalTab from 'src/components/ChemicalTab';
 
 
 const MWPrecision = 6;
@@ -990,7 +990,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
         <ListGroupItem>
-          <InventoryTab
+          <ChemicalTab
             sample={sample}
             parent={this}
           />
