@@ -184,7 +184,7 @@ describe Chemotion::AttachmentAPI do
   describe 'POST /api/v1/attachments/upload_chunk_complete' do
     let(:filename) { 'upload_chunks_completed.txt' }
     let(:key) { '453cc77f-e0e6-4757-b47b-656137eb7084' }
-    let(:checksum) { 'adb11f193ccbcb0cfe7d28806bc43e8e' }
+    let(:checksum) { '2750570558c50dcb8de719cfe21c0366' }
     let(:params) { { filename: filename, key: key, checksum: checksum } }
 
     let(:execute_request) { post '/api/v1/attachments/upload_chunk_complete', params: params }
@@ -212,7 +212,6 @@ describe Chemotion::AttachmentAPI do
       if example.metadata[:enable_attachment_policy_can_upload_chunk].present?
         allow(AttachmentPolicy).to receive(:can_upload_chunk?).and_return(true)
       end
-
       execute_request
     end
 
