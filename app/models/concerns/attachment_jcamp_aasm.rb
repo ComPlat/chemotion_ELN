@@ -124,10 +124,10 @@ module AttachmentJcampProcess
 
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
-
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
     content_type = ext == 'png' ? 'image/png' : 'application/octet-stream'
     att = Attachment.children_of(self[:id]).where(filename: meta_filename).take
+
     if att.nil?
       att = Attachment.children_of(self[:id]).new(
         filename: meta_filename,
@@ -144,8 +144,11 @@ module AttachmentJcampProcess
     att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'
     att.set_json if ext == 'json'
+    att.update!(
+      storage: Rails.configuration.storage.primary_store,
+      attachable_id: attachable_id, attachable_type: 'Container'
+    )
 
-    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att.set_csv if ext == 'csv'
     att
   end

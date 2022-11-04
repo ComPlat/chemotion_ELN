@@ -581,10 +581,11 @@ RSpec.describe Attachment, type: :model do
     end
 
     context 'with tempfile' do
-      let(:tempfile) { Tempfile.new(attachment.filename) }
+      let(:tempfile) {Tempfile.new(attachment.filename)}
+      let(:attachment) { create(:attachment) }
 
       it 'creates a new attachment' do
-        expect { new_attachment }.to change(Attachment, :count).by(1)
+        expect { new_attachment }.to change(Attachment, :count).by(2)
       end
 
       it 'saves the new attachment to the primary storage' do
@@ -604,7 +605,7 @@ RSpec.describe Attachment, type: :model do
       end
 
       context 'with spectra file and to_edit = true' do
-        let(:attachment) { build(:attachment, :with_spectra_file) }
+        let(:attachment) { create(:attachment, :with_spectra_file) }
         let(:new_attachment) { attachment.generate_att(tempfile, addon = nil, to_edit = true) }
 
         it 'sets the new attachment\'s aasm_state to edited' do
@@ -613,7 +614,7 @@ RSpec.describe Attachment, type: :model do
       end
 
       context 'with ext = png' do
-        let(:attachment) { build(:attachment, :with_png_image) }
+        let(:attachment) { create(:attachment, :with_png_image) }
         let(:ext) { 'png' }
 
         it 'sets the new attachment\'s aasm_state to :image' do
@@ -626,7 +627,7 @@ RSpec.describe Attachment, type: :model do
       end
 
       context 'with ext = json' do
-        let(:attachment) { build(:attachment, :with_json_file) }
+        let(:attachment) { create(:attachment, :with_json_file) }
         let(:ext) { 'json' }
 
         it 'sets the new attachment\'s aasm_state to :json' do
@@ -635,7 +636,7 @@ RSpec.describe Attachment, type: :model do
       end
 
       context 'with ext = csv' do
-        let(:attachment) { build(:attachment, :with_csv_file) }
+        let(:attachment) { create(:attachment, :with_csv_file) }
         let(:ext) { 'csv' }
 
         it 'sets the new attachment\'s aasm_state to :csv' do
