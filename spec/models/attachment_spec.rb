@@ -581,11 +581,11 @@ RSpec.describe Attachment, type: :model do
     end
 
     context 'with tempfile' do
-      let(:tempfile) {Tempfile.new(attachment.filename)}
+      let(:tempfile) { Tempfile.new(attachment.filename) }
       let(:attachment) { create(:attachment) }
 
       it 'creates a new attachment' do
-        expect { new_attachment }.to change(Attachment, :count).by(2)
+        expect { new_attachment }.to change(described_class, :count).by(2)
       end
 
       it 'saves the new attachment to the primary storage' do
