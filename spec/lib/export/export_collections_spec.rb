@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 # test for ExportJson ImportJson
-RSpec.describe 'ExportImportCollection' do
+RSpec.describe 'ExportCollection' do
   let(:user) do
     create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU')
   end
@@ -40,19 +40,19 @@ RSpec.describe 'ExportImportCollection' do
     sample.update!(molecule_name_id: molecule_name.id)
   end
 
-  context 'creates an export file, ' do
+  context 'with a sample' do
     before do
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
       export.prepare_data
       export.to_file
     end
 
-    it 'which exists' do
+    it 'exported file exists' do
       file_path = File.join('public', 'zip', "#{job_id}.zip")
       expect(File.exist?(file_path)).to be true
     end
 
-    it 'which is a zip file containing export.json, schema.json and description.txt' do
+    it 'zip file containing export.json, schema.json and description.txt' do
       file_names = []
       file_path = File.join('public', 'zip', "#{job_id}.zip")
       Zip::File.open(file_path) do |files|
@@ -62,34 +62,43 @@ RSpec.describe 'ExportImportCollection' do
       end
       expect(file_names).to include('export.json', 'schema.json', 'description.txt')
     end
+  end
 
-    it 'which is a zip file and containing a collection with a researchplan' do
+  context 'with a researchplan' do
+    let (:collection)  {create(:collection,user_id: user.id,label: 'collection-with-rp')}
+    let (:research_plan)  {create(:research_plan,collections: [collection])}
+
+    let (:attachment) do
+      create(:attachment,
+      bucket: 1,
+      filename: 'upload.png',
+        created_by: 1,
+        attachable_id: research_plan.id,
+        attachment_data: create_annotation_json(tempfile.path))
+    end
+
+    let (:tempfile) do
       example_svg_annotation = '<svg>example</svg>'
       tempfile = Tempfile.new('annotationFile.svg')
       tempfile.write(example_svg_annotation)
       tempfile.rewind
       tempfile.close
+      tempfile
+    end
 
-      collection = create(:collection, user_id: user.id,
-                                       label: 'collection-with-rp')
-
-      research_plan = create(:research_plan,
-                             collections: [collection])
-      attachment = create(:attachment,
-                          bucket: 1,
-                          filename: 'upload.png',
-                          created_by: 1,
-                          attachable_id: research_plan.id,
-                          attachment_data: create_annotation_json(tempfile.path))
+    before do
       research_plan.attachments = [attachment]
       research_plan.save!
       update_body_of_researchplan(research_plan, attachment.identifier)
+
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
       export.prepare_data
-
       export.to_file
+    end
 
-      # TO DO : check the content of the zip file
+    it 'exported file exists' do
+        file_path = File.join('public', 'zip', "#{job_id}.zip")
+        expect(File.exist?(file_path)).to be true
     end
   end
 
