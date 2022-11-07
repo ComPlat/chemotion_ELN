@@ -58,7 +58,7 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
     t.string "storage", limit: 20, default: "tmp"
     t.integer "created_by", null: false
     t.integer "created_for"
-    t.integer "version", default: 0
+    t.string "version"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "content_type"
@@ -69,6 +69,7 @@ ActiveRecord::Schema.define(version: 2022_07_07_164502) do
     t.string "attachable_type"
     t.string "aasm_state"
     t.bigint "filesize"
+    t.jsonb "attachment_data"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end

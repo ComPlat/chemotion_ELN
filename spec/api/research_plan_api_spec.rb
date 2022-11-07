@@ -71,7 +71,7 @@ describe Chemotion::ResearchPlanAPI do
           }
         end
 
-        before { post '/api/v1/research_plans', params: params,  as: :json}
+        before { post '/api/v1/research_plans', params: params, as: :json}
 
         it 'is able to create a new research plan' do
           rp = ResearchPlan.find_by(name: 'test')
@@ -85,6 +85,15 @@ describe Chemotion::ResearchPlanAPI do
         it 'sets the creator' do
           rp = ResearchPlan.find_by(name: 'test')
           expect(rp.creator).to eq(user)
+        end
+
+        it 'returns serialized research_plan body' do
+          expect(JSON.parse(response.body)['research_plan']).not_to be_nil
+
+          rp = ResearchPlan.find_by(name: 'test')
+          expected = Entities::ResearchPlanEntity.represent(rp, root: 'research_plan')
+
+          expect(response.body).to eq JSON.generate(expected)
         end
       end
     end

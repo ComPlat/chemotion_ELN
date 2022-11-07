@@ -32,10 +32,14 @@ RSpec.describe Usecases::Attachments::UploadChunkComplete do
 
     context 'when checksum from params not matches the file checksum' do
       let(:checksum) { 'invalid' }
+      let(:expected_response) do
+        { ok: false, statusText: ['File upload has error. Please try again!'] }
+      end
 
       it 'returns false' do
-        expect(subject).to eq(false)
+        expect(subject).to eq(expected_response)
       end
+
       it 'removes the created merged file' do
         subject
         expect(File).not_to exist(file_path)
@@ -49,8 +53,12 @@ RSpec.describe Usecases::Attachments::UploadChunkComplete do
     end
 
     context 'when checksum from params matches the file checksum' do
+      let(:expected_response) do
+        { ok: true, statusText: [] }
+      end
+
       it 'returns true' do
-        expect(subject).to eq(true)
+        expect(subject).to eq(expected_response)
       end
 
       it 'creates the attachment' do

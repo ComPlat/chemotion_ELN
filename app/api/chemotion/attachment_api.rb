@@ -46,7 +46,12 @@ module Chemotion
 
     resource :attachments do
       before do
-        @attachment = Attachment.find_by(id: params[:attachment_id])
+        if params[:attachment_id].present? && params[:attachment_id].match(/^(\d)+$/)
+          @attachment = Attachment.find_by(id: params[:attachment_id])
+        end
+
+        @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
+
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless writable?(@attachment)
@@ -95,6 +100,7 @@ module Chemotion
       # TODO: Remove this endpoint. It is not used by the FE
       desc 'Upload attachments'
       post 'upload_dataset_attachments' do
+        error_messages = []
         params.each do |_file_id, file|
           next unless tempfile = file[:tempfile]
 
@@ -102,13 +108,19 @@ module Chemotion
             bucket: file[:container_id],
             filename: file[:filename],
             key: file[:name],
-            file_path: file[:tempfile],
             created_by: current_user.id,
             created_for: current_user.id,
             content_type: file[:type]
           )
+
+          a.attachment_attacher.attach(file[:tempfile])
           begin
-            a.save!
+            if a.valid?
+              a.attachment_attacher.create_derivatives
+              a.save!
+            else
+              error_messages.push(a.errors.to_h[:attachment])
+            end
           ensure
             tempfile.close
             tempfile.unlink
@@ -139,9 +151,9 @@ module Chemotion
         return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
         usecase = Usecases::Attachments::UploadChunkComplete.execute!(current_user, params)
-        return true if usecase.present?
+        return usecase if usecase.present?
 
-        { ok: false, statusText: 'File upload has error. Please try again!' }
+        { ok: false, statusText: ['File upload has error. Please try again!'] }
       end
 
       desc 'Upload files to Inbox as unsorted'
@@ -168,8 +180,6 @@ module Chemotion
             tempfile.unlink
           end
         end
-        TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
-                              .perform_later(attach_ary)
 
         true
       end
@@ -179,7 +189,12 @@ module Chemotion
         content_type 'application/octet-stream'
         header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
         env['api.format'] = :binary
-        @attachment.read_file
+        uploaded_file = @attachment.attachment_attacher.file
+
+        data = uploaded_file.read
+        uploaded_file.close
+
+        data
       end
 
       desc 'Download the zip attachment file'
@@ -236,13 +251,23 @@ module Chemotion
       end
 
       desc 'Return image attachment'
+
+      params do
+        requires :attachment_id, type: Integer, desc: 'Database id of image attachment'
+        optional :identifier, type: String, desc: 'Identifier(UUID) of image attachment as fallback loading criteria'
+      end
+
       get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
         content_type @attachment.content_type
         header['Content-Disposition'] = 'attachment; filename=' + sfilename
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
-        @attachment.read_file
+        uploaded_file = @attachment.attachment_attacher.file
+        data = uploaded_file.read
+        uploaded_file.close
+
+        data
       end
 
       desc 'Return Base64 encoded thumbnail'

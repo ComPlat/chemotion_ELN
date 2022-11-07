@@ -82,7 +82,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  handleBodyDelete(id) {
+  handleBodyDelete(id,attachments) {
     const { researchPlan } = this.state;
     const index = researchPlan.body.findIndex(field => field.id === id);
     researchPlan.body.splice(index, 1);

@@ -76,17 +76,24 @@ class Mailcollector
     begin
       dataset = helper.prepare_new_dataset(message.subject)
       message.attachments.each do |attachment|
-        a = Attachment.new(
+        att = Attachment.new(
           filename: attachment.filename,
           file_data: attachment.decoded,
           created_by: helper.sender.id,
           created_for: helper.recipient.id,
           content_type: attachment.mime_type
           )
-        a.save!
-        a.update!(attachable: dataset)
-        primary_store = Rails.configuration.storage.primary_store
-        a.update!(storage: primary_store)
+        ActiveRecord::Base.transaction do
+          att.save!
+
+          att.attachment_attacher.attach(File.open(attachment.path, binmode: true))
+          if att.valid?
+            att.save!
+          else
+            raise ActiveRecord::Rollback
+          end
+        end
+        att.update!(attachable: dataset)
       end
     rescue => e
       log_error 'Error on mailcollector handle_new_message:'
