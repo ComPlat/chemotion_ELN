@@ -36,7 +36,7 @@ class ExportCollectionsJob < ApplicationJob
     @user_id = user_id
     begin
       @labels = Collection.where(id: collection_ids[0..9]).pluck(:label)
-      @link = "#{app.root_url}/zip/#{job_id}.#{extname}"
+      @link = "#{Rails.application.config.root_url}/zip/#{job_id}.#{extname}"
       @expires_at = Time.now + 24.hours
 
       export = Export::ExportCollections.new(job_id, collection_ids, extname, nested)

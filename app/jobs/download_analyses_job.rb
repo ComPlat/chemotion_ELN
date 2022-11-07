@@ -38,7 +38,7 @@ class DownloadAnalysesJob < ApplicationJob
     @file_path = Rails.public_path.join('zip', @filename)
 
     begin
-      @link = "#{app.root_url}/zip/#{@filename}"
+      @link = "#{Rails.application.config.root_url}/zip/#{@filename}"
       @expires_at = Time.now + 24.hours
 
       zip = Zip::OutputStream.write_buffer do |zip|
