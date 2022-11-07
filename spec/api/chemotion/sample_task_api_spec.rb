@@ -58,9 +58,7 @@ describe Chemotion::SampleTaskAPI do
 
   describe 'POST /api/v1/sample_tasks' do
     let(:open_sample_task_params) do
-      {
-        sample_id: sample.id
-      }
+      { sample_id: sample.id }
     end
 
     let(:open_free_scan_params) do
@@ -147,6 +145,51 @@ describe Chemotion::SampleTaskAPI do
         post '/api/v1/sample_tasks', params: params_with_missing_file
 
         expect(parsed_json_response).to eq(expected_result)
+      end
+    end
+  end
+
+  describe 'PUT /api/v1/sample_tasks/:id' do
+    context 'when updating an open sample task' do
+      let(:params) do
+        {
+          measurement_value: 123.45,
+          measurement_unit: 'mg',
+          description: 'description',
+          additional_note: 'additional note',
+          private_note: 'private note',
+          file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
+        }
+      end
+
+      it 'returns the updated SampleTask' do
+        put "/api/v1/sample_tasks/#{open_sample_task.id}", params: params
+
+        expect(parsed_json_response).to include(params.except(:file).stringify_keys)
+      end
+
+      it 'updates the referenced sample with the measurement data' do
+        put "/api/v1/sample_tasks/#{open_sample_task.id}", params: params
+
+        expect(parsed_json_response).not_to have_key('error')
+
+        updated_sample_task = SampleTask.find(open_sample_task.id)
+
+        expect(updated_sample_task.measurement_value).to eq 123.45
+        expect(updated_sample_task.measurement_unit).to eq 'mg'
+        expect(updated_sample_task.description).to eq 'description'
+        expect(updated_sample_task.additional_note).to eq 'additional note'
+        expect(updated_sample_task.additional_note).to eq 'additional note'
+        expect(updated_sample_task.attachment).not_to be_nil
+      end
+    end
+
+    context 'when updating an open free scan with a sample id' do
+      it 'returns the updated SampleTask' do
+
+      end
+
+      it 'updates the referenced sample with the measurement data' do
       end
     end
   end

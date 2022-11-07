@@ -5,24 +5,10 @@ module Usecases
     class Create
       attr_reader :params, :creator
 
-      def self.execute!(params, creator:)
-        new(params, creator: creator).execute
-      end
-
-      def initialize(params, creator: creator)
+      def initialize(params, creator:)
         @params = params
         @creator = creator
       end
-
-      def execute
-        if params[:sample_id]
-          create_open_sample_task
-        else
-          create_open_free_scan
-        end
-      end
-
-      private
 
       def create_open_sample_task
         sample = user_accessible_samples.find(params[:sample_id])
@@ -52,6 +38,8 @@ module Usecases
           attachment_attributes: attachment_attributes
         )
       end
+
+      private
 
       # This encapsulates the logic which samples a given user can access.
       # As in the near future the logic for shared/synched collections will change, it is feasible to extract

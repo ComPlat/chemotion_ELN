@@ -37,12 +37,42 @@ module Chemotion
         optional :file, File # automatically provides subfields filename, type and tempfile
       end
       post do
-        scan_task = Usecases::SampleTasks::Create.execute!(
+        creator = Usecases::SampleTasks::Create.new(
           declared(params, include_missing: false),
           creator: current_user
         )
+        scan_task = if params[:sample_id]
+          creator.create_open_sample_task
+        else
+          creator.create_open_free_scan
+        end
 
         present scan_task, with: Entities::SampleTaskEntity
+      end
+
+      # update a scan task
+      params do
+        optional :sample_id, Integer, description: 'ID of the sample to scan'
+        optional :measurement_value, Float
+        optional :measurement_unit, String
+        optional :description, String
+        optional :additional_note, String
+        optional :private_note, String
+        optional :file, File # automatically provides subfields filename, type and tempfile
+      end
+      put ':id' do
+        sample_task = SampleTask.find(params[:id])
+        updater = Usecases::SampleTasks::Update.new(
+          declared(params, include_missing: false),
+          sample_task: sample_task,
+          creator: current_user
+        )
+
+        updater.update_sample_task
+        updater.transfer_measurement_to_sample
+
+        # TODO: klären ob hier sinnvollerweise sowohl ScanTask als auch Sample zurückgegeben werden sollten
+        present sample_task, with: Entities::SampleTaskEntity
       end
     end
   end
