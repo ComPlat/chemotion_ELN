@@ -121,5 +121,25 @@ describe Chemotion::SampleTaskAPI do
         expect(parsed_json_response['image']).not_to be_nil
       end
     end
+
+    context 'when required params are missing' do
+      let(:params_with_missing_file) do
+        {
+          measurement_value: 123.45,
+          measurement_unit: 'mg',
+          description: 'description',
+          additional_note: 'additional note',
+          private_note: 'private note',
+        }
+      end
+      let(:expected_result) do
+        { 'error' => I18n.t('activerecord.errors.models.sample_task.attributes.base.sample_or_scan_data_required') }
+      end
+      it 'responds with an error' do
+        post '/api/v1/sample_tasks', params: params_with_missing_file
+
+        expect(parsed_json_response).to eq(expected_result)
+      end
+    end
   end
 end
