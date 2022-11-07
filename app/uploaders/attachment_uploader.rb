@@ -43,14 +43,8 @@ class AttachmentUploader < Shrine
 
     file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
 
-    result = {}
-    result = ThumbnailCreator.new.create_derivative(
-      file_path.to_s,
-      nil,
-      nil,
-      result,
-      record
-    )
+
+    result=AttachmentUploader.create_derivatives(file_extension, file_path, original, @context[:record].id, record)
 
     result
   end
@@ -67,5 +61,22 @@ class AttachmentUploader < Shrine
     file_extension = '.jpg' if file_extension == '.jpeg'
 
     file_extension
+  end
+
+  def self.create_derivatives(file_extension, file_path, original, attachment_id, record)
+    result = {}
+    factory = DerivativeBuilderFactory.new
+
+    builders = factory.create_derivative_builders(file_extension)
+    builders.each do |builder|
+      builder.create_derivative(
+        file_path.to_s,
+        original,
+        attachment_id,
+        result, record
+      )
+    end
+
+    result
   end
 end
