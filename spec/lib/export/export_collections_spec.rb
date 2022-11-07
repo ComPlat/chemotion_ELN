@@ -4,41 +4,18 @@ require 'rails_helper'
 
 # test for ExportJson ImportJson
 RSpec.describe 'ExportCollection' do
-  let(:user) do
-    create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU')
-  end
-  let(:collection) do
-    create(:collection, user_id: user.id, label: 'Awesome Collection')
-  end
-  let(:molfile) do
-    Rails.root.join('spec', 'fixtures', 'test_2.mol').read
-  end
-  let(:svg) do
-    Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg').read
-  end
-  let(:sample) do
-    build(
-      :sample, created_by: user.id, name: 'Sample zero', molfile: molfile,
-               collections: [collection]
-    )
-  end
+  let(:user) { create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU') }
+
+  let(:collection) { create(:collection, user_id: user.id, label: 'Awesome Collection') }
+
+  let(:molfile) { Rails.root.join('spec/fixtures/test_2.mol').read }
+  let(:svg) { Rails.root.join('spec/fixtures/images/molecule.svg').read }
+  let(:sample) { build(:sample, created_by: user.id, name: 'Sample zero', molfile: molfile, collections: [collection]) }
   let(:molecule_name_name) { 'Awesome Molecule' }
   let(:molecule_name) do
-    build(
-      :molecule_name, user_id: user.id, name: molecule_name_name, molecule_id: sample.molecule_id
-    )
+    build(:molecule_name, user_id: user.id, name: molecule_name_name, molecule_id: sample.molecule_id)
   end
-  let(:job_id) do
-    SecureRandom.uuid
-  end
-
-  before do
-    user.save!
-    collection.save!
-    sample.save!
-    molecule_name.save!
-    sample.update!(molecule_name_id: molecule_name.id)
-  end
+  let(:job_id) { SecureRandom.uuid }
 
   context 'with a sample' do
     before do
@@ -120,22 +97,22 @@ RSpec.describe 'ExportCollection' do
   def create_annotation_json(location)
     tempfile = Tempfile.new('example.png')
     str = '{' \
-          ' "id": "' + tempfile.path + '",' \
-                                       '"storage": "store",' \
-                                       '"metadata": {' \
-                                       '    "size": 29111,' \
-                                       '   "filename": "example.png",' \
-                                       '    "mime_type": null' \
-                                       '},' \
-                                       '"derivatives": {' \
-                                       '    "annotation": {' \
-                                       '        "id": "' + location + '",' \
-                                                                      '        "storage": "store",' \
-                                                                      '        "metadata": {' \
-                                                                      '            "size": 480,' \
-                                                                      '            "filename": "example_annotation.svg",' \
-                                                                      '            "mime_type": null' \
-                                                                      '        }}}}'
+          '"id": "' + tempfile.path + '",' \
+                                      '"storage": "store",' \
+                                      '"metadata": {' \
+                                      '"size": 29111,' \
+                                      '"filename": "example.png",' \
+                                      '"mime_type": null' \
+                                      '},' \
+                                      '"derivatives": {' \
+                                      '"annotation": {' \
+                                      '"id": "' + location + '",' \
+                                                             '"storage": "store",' \
+                                                             '"metadata": {' \
+                                                             '"size": 480,' \
+                                                             '"filename": "example_annotation.svg",' \
+                                                             '"mime_type": null' \
+                                                             '}}}}'
     JSON.parse(str)
   end
 end
