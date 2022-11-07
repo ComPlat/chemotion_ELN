@@ -122,6 +122,14 @@ describe Chemotion::SampleTaskAPI do
       end
     end
 
+    context 'when the sample can not be found' do
+      it 'responds with an error' do
+        post '/api/v1/sample_tasks', params: { sample_id: 0 }
+
+        expect(parsed_json_response).to eq({ 'error' => 'Sample not found' })
+      end
+    end
+
     context 'when required params are missing' do
       let(:params_with_missing_file) do
         {
