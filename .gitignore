@@ -188,9 +188,12 @@ shrine/*
 .docker-sync/
 
 public/sprite.png
+config/shrine_config.yml
 .nyc_output/
 
 #svgeditor
 /public/svgedit
 
 !spec/fixtures/import/sample_import_template.xlsx
+
+data/klasses.json
