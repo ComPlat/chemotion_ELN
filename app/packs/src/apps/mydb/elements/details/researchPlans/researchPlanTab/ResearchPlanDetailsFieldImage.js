@@ -6,7 +6,7 @@ import Attachment from 'src/models/Attachment';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
-import ImageAnnotationEditButton from "src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton";
+import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
@@ -42,18 +42,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const { field } = this.props;
     let content;
     if (field.value.public_name) {
-      const style = field.value.zoom == null
-        || typeof field.value.zoom === 'undefined'
-        || field.value.width === ''
-        ? { width: 'unset' }
-        : { width: `${field.value.zoom}%` };
+      const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
+        || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
       content = (
         <div className="image-container">
-          <img
-            style={style}
-            src={this.state.imageSrc}
-            alt={field.value.file_name}
-          />
+          <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
         </div>
       );
     } else {
@@ -88,9 +81,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   generateSrcOfImage(publicName) {
-    if (!publicName) {
-      return;
-    }
+    if (!publicName) { return; }
     let src;
     if (publicName.startsWith('blob')) {
       this.setState({ imageSrc: publicName });
@@ -98,13 +89,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
     } else {
-      AttachmentFetcher.fetchImageAttachmentByIdentifier({
-        identifier: publicName,
-      }).then((result) => {
-        if (result.data != null) {
-          this.setState({ imageSrc: result.data });
-        }
-      });
+      AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName })
+        .then((result) => {
+          if (result.data != null) {
+            this.setState({ imageSrc: result.data });
+          }
+        });
     }
   }
 
@@ -116,19 +106,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     ) {
       return <div />;
     }
-    const style = field.value.zoom == null
-      || typeof field.value.zoom === 'undefined'
-      || field.value.width === ''
-      ? { width: 'unset' }
-      : { width: `${field.value.zoom}%` };
+    const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
+      || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
 
     return (
       <div className="image-container">
-        <img
-          style={style}
-          src={this.state.imageSrc}
-          alt={field.value.file_name}
-        />
+        <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
       </div>
     );
   }
@@ -147,5 +130,5 @@ ResearchPlanDetailsFieldImage.propTypes = {
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   edit: PropTypes.bool,
-  attachments: PropTypes.array,
+  attachments: PropTypes.array
 };

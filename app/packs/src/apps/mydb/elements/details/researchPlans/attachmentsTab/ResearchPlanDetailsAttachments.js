@@ -6,8 +6,8 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
-import ImageAnnotationModalSVG from "src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG";
-import ImageAnnotationEditButton from "src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton";
+import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import {
   Button, ButtonGroup,
   Col, ControlLabel,
@@ -226,14 +226,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
       <div>
         <Row>
           <Col md={1}>
-            <div
-              className="analysis-header order"
-              style={{ width: "60px", height: "60px" }}
-            >
-              <div
-                className="preview"
-                style={{ width: "60px", height: "60px" }}
-              >
+            <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
+              <div className="preview" style={{ width: '60px', height: '60px' }}>
                 <ImageModal
                   imageStyle={imageStyle}
                   hasPop={hasPop}
@@ -264,10 +258,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger
-              placement="left"
-              overlay={editorTooltip(values(extension).join(","))}
-            >
+            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
               <Button
                 style={{ display: styleEditorBtn }}
                 bsSize="xsmall"
@@ -319,9 +310,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <Dropzone
         onDrop={(files) => this.props.onDrop(files)}
-        className={`research-plan-dropzone-${
-          this.props.readOnly ? "disable" : "enable"
-        }`}
+        className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}
       >
         <div className="zone">Drop Files, or Click to Select.</div>
       </Dropzone>
@@ -334,15 +323,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const importDisabled = this.props.researchPlan.changed;
     const extension = last(attachment.filename.split('.'));
 
-    const importTooltip = importDisabled ? (
-      <Tooltip id="import_tooltip">
-        Research Plan must be saved before import
-      </Tooltip>
-    ) : (
-      <Tooltip id="import_tooltip">
-        Import spreadsheet as research plan table
-      </Tooltip>
-    );
+    const importTooltip = importDisabled
+      ? <Tooltip id="import_tooltip">Research Plan must be saved before import</Tooltip>
+      : <Tooltip id="import_tooltip">Import spreadsheet as research plan table</Tooltip>;
 
     const confirmTooltip = (
       <Tooltip placement="bottom" className="in" id="tooltip-bottom">
@@ -371,7 +354,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       return (
         <div>
           <OverlayTrigger placement="top" overlay={importTooltip}>
-            <div style={{ float: "right" }}>
+            <div style={{ float: 'right' }}>
               <Button
                 bsSize="xsmall"
                 bsStyle="success"
@@ -380,7 +363,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 ref={(ref) => {
                   this.importButtonRefs[attachment.id] = ref;
                 }}
-                style={importDisabled ? { pointerEvents: "none" } : {}}
+                style={importDisabled ? { pointerEvents: 'none' } : {}}
                 onClick={() => this.showImportConfirm(attachment.id)}
               >
                 <Glyphicon glyph="import" />

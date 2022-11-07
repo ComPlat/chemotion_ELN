@@ -79,6 +79,8 @@ module Export
           zip.put_next_entry 'description.txt'
           zip.write description
         end
+
+        zip.set_encoding('UTF-8')
         zip.rewind
 
         # write the zip file to public/zip/

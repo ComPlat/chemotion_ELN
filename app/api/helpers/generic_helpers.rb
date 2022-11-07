@@ -115,6 +115,7 @@ module GenericHelpers
           end
         end
       end
+
     end
     Attachment.where('id IN (?) AND attachable_type = (?)', del_files.map!(&:to_i), type).update_all(attachable_id: nil) unless (del_files || []).empty?
     attach_ary
