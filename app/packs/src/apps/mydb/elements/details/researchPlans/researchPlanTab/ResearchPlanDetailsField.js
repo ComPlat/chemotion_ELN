@@ -10,6 +10,7 @@ import ResearchPlanDetailsFieldImage from 'src/apps/mydb/elements/details/resear
 import ResearchPlanDetailsFieldTable from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldReaction';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
@@ -49,13 +50,13 @@ export default class ResearchPlanDetailsField extends Component {
         label = 'Image';
         component =
           (<ResearchPlanDetailsFieldImage
+            attachments={this.props.attachments}
             key={field.id}
             field={field}
             index={index}
             disabled={disabled}
             onChange={onChange.bind(this)}
-            edit={edit}
-          />);
+            edit={edit}/>);
         break;
       case 'table':
         field.value.columns.forEach((item) => {
@@ -155,7 +156,7 @@ export default class ResearchPlanDetailsField extends Component {
         <div className="research-plan-field-header">
           {/* TODO: make label editable */}
           <ControlLabel>{label}</ControlLabel>
-          <Button className="pull-right" bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(field.id)}>
+          <Button className="pull-right" bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(field.id,this.props.attachments )}>
             <i className="fa fa-times" />
           </Button>
           {copyToMetadataButton}
@@ -192,5 +193,6 @@ ResearchPlanDetailsField.propTypes = {
   isNew: PropTypes.bool,
   copyableFields: PropTypes.arrayOf(PropTypes.object),
   update: PropTypes.bool,
-  edit: PropTypes.bool
+  edit: PropTypes.bool,
+  attachments: PropTypes.array
 };

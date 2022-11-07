@@ -17,34 +17,53 @@ class DatacollectorFile < DatacollectorObject
   private
 
   def attach(device)
-    a = Attachment.new(
+    att = Attachment.new(
       filename: @name,
       file_data: IO.binread(@path),
       content_type: MimeMagic.by_path(@name)&.type,
       created_by: device.id,
       created_for: recipient.id
     )
-    a.save!
-    a
+    ActiveRecord::Base.transaction do
+      att.save!
+
+      att.attachment_attacher.attach(File.open(@path, binmode: true))
+      if att.valid?
+        att.save!
+      else
+        raise ActiveRecord::Rollback
+      end
+    end
+    att
   end
 
   def attach_remote(device)
-    begin
-      tmpfile = Tempfile.new
-      @sftp.download!(@path, tmpfile.path)
-      a = Attachment.new(
-        filename: @name,
-        file_data: IO.binread(tmpfile.path),
-        content_type: MimeMagic.by_path(@name)&.type,
-        created_by: device.id,
-        created_for: recipient.id
-      )
-    ensure
-      tmpfile.close
-      tmpfile.unlink
+    tmpfile = Tempfile.new
+    @sftp.download!(@path, tmpfile.path)
+    att = Attachment.new(
+      filename: @name,
+      file_data: IO.binread(tmpfile.path),
+      content_type: MimeMagic.by_path(@name)&.type,
+      created_by: device.id,
+      created_for: recipient.id
+    )
+
+    ActiveRecord::Base.transaction do
+      begin
+        att.save!
+
+        att.attachment_attacher.attach(File.open(tmpfile.path, binmode: true))
+        if att.valid?
+          att.save!
+        else
+          raise ActiveRecord::Rollback
+        end
+      ensure
+        tmpfile.close
+        tmpfile.unlink
+      end
     end
-    a.save!
-    a
+    att
   end
 
   def add_attach_to_container(device, attach, _ = false)

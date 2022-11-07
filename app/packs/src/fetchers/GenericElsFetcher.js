@@ -58,7 +58,8 @@ export default class GenericElsFetcher {
       const newFiles = (element.attachments || []).filter(a => a.is_new && !a.is_deleted);
       const delFiles = (element.attachments || []).filter(a => !a.is_new && a.is_deleted);
       (newFiles || []).forEach((file) => {
-        data.append('attfiles[]', file.file, file.name);
+          data.append('attfiles[]', file.file, file.name);
+          data.append('attfilesIdentifier[]', file.id);
       });
       (delFiles || []).forEach((f) => {
         data.append('delfiles[]', f.id);

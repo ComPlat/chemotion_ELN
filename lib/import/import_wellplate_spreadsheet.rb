@@ -9,7 +9,7 @@ module Import
     def initialize(wellplate_id:, attachment_id:)
       @wellplate = Wellplate.find(wellplate_id)
       @attachment = Attachment.find(attachment_id)
-      @file_path = @attachment.store.path
+      @file_path = @attachment.abs_path
 
       @rows = []
       @error_messages = []

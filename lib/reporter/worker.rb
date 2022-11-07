@@ -55,7 +55,11 @@ module Reporter
           content_type: @typ
         )
 
-        TransferFileFromTmpJob.set(queue: "transfer_report_from_tmp_#{att.id}").perform_later([att.id]) unless att.nil?
+        att.attachment_attacher.attach(File.open(tmp.path, binmode: true))
+        if att.valid?
+          att.attachment_attacher.create_derivatives
+          att.save!
+        end
 
         @report.update_attributes(
           generated_at: Time.zone.now

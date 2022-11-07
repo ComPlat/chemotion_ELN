@@ -8,7 +8,7 @@ module Usecases
       def initialize(research_plan, attachment)
         @research_plan = research_plan
         @attachment = attachment
-        @file_path = @attachment.store.path
+        @file_path = @attachment.abs_path
 
         @rows = []
         @error_messages = []

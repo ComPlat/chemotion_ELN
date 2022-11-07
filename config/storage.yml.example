@@ -1,4 +1,5 @@
 development:
+  :maximum_size: 100
   :primary_store: 'local'
   :secondary_store: ''
   :stores:
@@ -27,6 +28,7 @@ development:
 
 
 test:
+  :maximum_size: 100
   :primary_store: 'local'
   :secondary_store: ''
   :stores:
@@ -38,6 +40,7 @@ test:
       :thumbnail_folder: 'tmp/test/uploads/local'
 
 production:
+  :maximum_size: 100
   :primary_store: 'local'
   :secondary_store: ''
   :stores:

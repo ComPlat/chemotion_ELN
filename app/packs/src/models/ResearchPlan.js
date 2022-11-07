@@ -39,7 +39,6 @@ const columns = [
   }
 ];
 
-
 export default class ResearchPlan extends Element {
   constructor(args) {
     super(args);
@@ -69,10 +68,9 @@ export default class ResearchPlan extends Element {
       attachments: this.attachments,
       container: this.container,
       wellplate_ids: this.wellplateIDs,
-      segments: this.segments.map(s => s.serialize())
+      segments: this.segments.map((s) => s.serialize())
     });
   }
-
 
   analysesContainers() {
     if (this.container.children.length === 0) {
@@ -82,7 +80,7 @@ export default class ResearchPlan extends Element {
     }
     return this.container
       .children
-      .filter(el => ~el.container_type.indexOf('analyses'));
+      .filter((el) => ~el.container_type.indexOf('analyses'));
   }
 
   addBodyField(type) {
@@ -160,7 +158,7 @@ export default class ResearchPlan extends Element {
   }
 
   get wellplateIDs() {
-    return this.wellplates.map(wp => wp.id);
+    return this.wellplates.map((wp) => wp.id);
   }
 
   get svgPath() {
@@ -186,7 +184,7 @@ export default class ResearchPlan extends Element {
   }
 
   set segments(segments) {
-    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+    this._segments = (segments && segments.map((s) => new Segment(s))) || [];
   }
 
   get segments() {
@@ -194,10 +192,65 @@ export default class ResearchPlan extends Element {
   }
 
   set wellplates(wellplates) {
-    this._wellplates = (wellplates && wellplates.map(w => new Wellplate(w))) || [];
+    this._wellplates = (wellplates && wellplates.map((w) => new Wellplate(w))) || [];
   }
 
   get wellplates() {
     return this._wellplates || [];
+  }
+
+  upsertAttachments(attachmentsToAdd) {
+    const idsOfAttachmentsInResearchPlan = this.attachments.map(
+      (attachmentInResearchPlan) => attachmentInResearchPlan.identifier
+    );
+
+    attachmentsToAdd
+      .filter((attachment) => idsOfAttachmentsInResearchPlan.includes(attachment.identifier))
+      .map((source) => {
+        const target = this.attachments
+          .filter((attachInRP) => source.identifier === attachInRP.identifier);
+        target[0].is_deleted = source.is_deleted;
+
+        return source;
+      });
+
+    this.attachments = this.attachments.concat(attachmentsToAdd
+      .filter((attachment) => !idsOfAttachmentsInResearchPlan.includes(attachment.identifier)));
+  }
+
+  markAttachmentAsDeleted(identifier) {
+    if (!identifier) { return; }
+    const attachmentToDelete = this.attachments
+      .find((attachment) => attachment.identifier === identifier);
+
+    if (attachmentToDelete) {
+      attachmentToDelete.is_deleted = true;
+      attachmentToDelete.is_image_field = true;
+      this.markAttachmentAsDeleted(attachmentToDelete.ancestor);
+    }
+  }
+
+  removeFieldFromBody(fieldId) {
+    const index = this.body.findIndex((field) => field.id === fieldId);
+    if (index === -1) { return; }
+    let { identifier } = this.body[index].value;
+    if (!identifier) {
+      identifier = this.body[index].value.public_name;
+    }
+    this.markAttachmentAsDeleted(identifier);
+    this.body.splice(index, 1);
+    this.changed = true;
+  }
+
+  convertTemporaryImageFieldsInBody() {
+    this.body
+      .filter((field) => field.type === 'image')
+      .map((field) => field.value)
+      .filter((value) => value.identifier)
+      .forEach((value) => {
+        value.public_name = value.identifier;
+        delete value.identifier;
+        delete value.old_value;
+      });
   }
 }

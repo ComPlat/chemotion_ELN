@@ -39,7 +39,7 @@ module Chemotion
         file = params[:file]
         if file && tempfile = file[:tempfile]
           attachment_id = report_template.attachment_id
-          report_template.attachment = Attachment.new(
+          attachment = Attachment.new(
             bucket: file[:container_id],
             filename: file[:filename],
             key: file[:name],
@@ -50,8 +50,20 @@ module Chemotion
           )
 
           begin
-            report_template.save!
-            Attachment.find(attachment_id).delete
+            ActiveRecord::Base.transaction do
+              attachment.save!
+    
+              attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+    
+              if attachment.valid?
+                attachment.attachment_attacher.create_derivatives
+                attachment.save!
+                report_template.attachment = attachment
+                report_template.save!
+              else
+                raise ActiveRecord::Rollback
+              end
+            end
           ensure
             tempfile.close
             tempfile.unlink
@@ -61,7 +73,7 @@ module Chemotion
         report_template.save!
       end
 
-      desc 'Upload new template'
+      desc 'Create new template'
       params do
         requires :report_type, type: String, desc: 'Template Type'
         optional :file, type: File, desc: 'Template File'
@@ -85,19 +97,28 @@ module Chemotion
               content_type: file[:type]
             )
 
-            report_template.attachment = attachment
             begin
-              report_template.save!
-              primary_store = Rails.configuration.storage.primary_store
-              attachment.update!(storage: primary_store)
+              ActiveRecord::Base.transaction do
+                attachment.save!
+      
+                attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+      
+                if attachment.valid?
+                  attachment.attachment_attacher.create_derivatives
+                  attachment.save!
+                  report_template.attachment = attachment
+                else
+                  raise ActiveRecord::Rollback
+                end
+              end
             ensure
               tempfile.close
               tempfile.unlink
             end
           end
-        else
-          report_template.save!
         end
+
+        report_template.save!
       end
 
       desc 'Delete Template'

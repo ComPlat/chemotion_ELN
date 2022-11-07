@@ -9,11 +9,13 @@ describe Chemotion::ReportAPI do
     let(:docx_mime_type) do
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     end
+
     let(:excel_mime_type) { 'application/vnd.ms-excel' }
     let(:ext) { 'docx' }
     let!(:rp1) do
       create(:report, :downloadable, user: user, file_name: 'ELN_Report_1')
     end
+
     let!(:rp2) { create(:report, :undownloadable, user: user) }
     let!(:rp3) { create(:report, :downloadable, user: user) }
     let!(:att1) do
@@ -25,6 +27,7 @@ describe Chemotion::ReportAPI do
         content_type: docx_mime_type
       )
     end
+
     let!(:rp_others) { create(:report, user: other) }
     let!(:s1)   { create(:sample) }
     let!(:s2)   { create(:sample) }
@@ -45,6 +48,7 @@ describe Chemotion::ReportAPI do
     describe 'GET /api/v1/reports/docx' do
       before do
         params = { id: r1.id.to_s }
+
         get '/api/v1/reports/docx', params: params
       end
 
@@ -71,6 +75,7 @@ describe Chemotion::ReportAPI do
           checkedAll: false
         }
       end
+
       let(:params) do
         {
           exportType: 2,
@@ -114,13 +119,14 @@ describe Chemotion::ReportAPI do
         end
 
         it 'returns correct sdf' do
+
           expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
           expect(response['Content-Disposition']).to include('.sdf')
           msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_1.sdf'))
           sdf = response.body
           sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
           msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          expect(sdf).to eq(msdf)
+          expect(sdf.squish).to eq(msdf.squish)
         end
       end
 
@@ -141,7 +147,7 @@ describe Chemotion::ReportAPI do
           sdf = response.body
           sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
           msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          expect(sdf).to eq(msdf)
+          expect(sdf.squish).to eq(msdf.squish)
         end
       end
 
@@ -161,7 +167,7 @@ describe Chemotion::ReportAPI do
           sdf = response.body
           sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
           msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          expect(sdf).to eq(msdf)
+          expect(sdf.squish).to eq(msdf.squish)
         end
       end
 
@@ -175,14 +181,13 @@ describe Chemotion::ReportAPI do
         end
 
         it 'returns correct sdf' do
-          # binding.pry
           expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
           expect(response['Content-Disposition']).to include('.sdf')
           msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v3000_1.sdf'))
           sdf = response.body
           sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
           msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          expect(sdf).to eq(msdf)
+          expect(sdf.squish).to eq(msdf.squish)
         end
       end
     end
@@ -253,24 +258,31 @@ describe Chemotion::ReportAPI do
           user_id: user.id + 1, is_shared: true, sample_detail_level: 0
         )
       end
+
       let!(:mf) do
         IO.read(Rails.root.join('spec', 'fixtures', 'test_2.mol'))
       end
+
       let!(:s0) do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
       end
+
       let!(:s1) do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
       end
+
       let!(:s2) do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
       end
+
       let!(:s3) do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
       end
+
       let!(:s4) do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
       end
+
       let(:smi_0) { s0.molecule.cano_smiles }
       let(:smi_1) { s1.molecule.cano_smiles }
       let(:smi_2) { s2.molecule.cano_smiles }
@@ -285,6 +297,7 @@ describe Chemotion::ReportAPI do
               products: [s4],
               collections: [c1, c2])
       end
+
       let(:params) do
         {
           exportType: 0,
@@ -345,28 +358,33 @@ describe Chemotion::ReportAPI do
             [smi_0, smi_1].join('.') + '>>' + smi_4
           )
         end
+
         it 'concats the smiles SM.R>>P' do
           expect(subj.r_smiles_1(result.first.second)).to eq(
             [smi_0, smi_1, smi_2].join('.') + '>>' + smi_4
           )
         end
+
         it 'concats the smiles SM.R.S>>P' do
           expect(subj.r_smiles_2(result.first.second)).to eq(
             [smi_0, smi_1, smi_2, smi_3].join('.') + '>>' + smi_4
           )
         end
+
         it 'concats the smiles SM>R>P' do
           expect(subj.r_smiles_3(result.first.second)).to eq(
             [smi_0, smi_1].join('.') + '>' + smi_2 \
             + '>' + smi_4
           )
         end
+
         it 'concats the smiles SM>R.S>P' do
           expect(subj.r_smiles_4(result.first.second)).to eq(
             [smi_0, smi_1].join('.') + '>' + [smi_2, smi_3].join('.') \
             + '>' + smi_4
           )
         end
+
         context 'user owned reaction, ' do
           it 'queries the cano_smiles from reaction associated samples' do
             expect(result.fetch(rxn.id.to_s)).to eq(

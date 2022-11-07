@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'tempfile'
 
 module Export
   class ExportResearchPlan
-
     def initialize(current_user, research_plan, export_format)
       @current_user = current_user
       @name = research_plan.name
@@ -11,27 +12,29 @@ module Export
 
       research_plan.body.each do |field|
         case field['type']
+
         when 'richtext'
           @fields << {
-            :type => field['type'],
-            :text => Chemotion::QuillToHtml.new.convert(field['value'])
+            type: field['type'],
+            text: Chemotion::QuillToHtml.new.convert(field['value'])
           }
         when 'table'
           @fields << {
-            :type => field['type'],
-            :columns => field['value']['columns'],
-            :rows => field['value']['rows']
+            type: field['type'],
+            columns: field['value']['columns'],
+            rows: field['value']['rows']
           }
         when 'ketcher'
           img_src = to_png('research_plans', field['value']['svg_file'])
           @fields << {
-            :type => field['type'],
-            :src =>  img_src
+            type: field['type'],
+            src: img_src
           }
         when 'image'
+          attachment = Attachment.find_by(identifier: field['value']['public_name'])
           @fields << {
-            :type => field['type'],
-            :src => "/images/research_plans/#{field['value']['public_name']}"
+            type: field['type'],
+            src: attachment.attachment_data['id']
           }
         when 'sample'
           next unless (sample = Sample.find_by(id: field['value']['sample_id']))
@@ -39,9 +42,9 @@ module Export
           if ElementPolicy.new(@current_user, sample).read?
             img_src = to_png('samples', sample['sample_svg_file'])
             @fields << {
-              :type => field['type'],
-              :src => img_src,
-              :p => sample['name']
+              type: field['type'],
+              src: img_src,
+              p: sample['name']
             }
           end
         when 'reaction'
@@ -50,9 +53,9 @@ module Export
           if ElementPolicy.new(@current_user, reaction).read?
             img_src = to_png('reactions', reaction['reaction_svg_file'])
             @fields << {
-              :type => field['type'],
-              :src => img_src,
-              :p => reaction['name']
+              type: field['type'],
+              src: img_src,
+              p: reaction['name']
             }
           end
         end
@@ -66,25 +69,25 @@ module Export
       output_file.path
     end
 
-    def to_html()
+    def to_html
       view = ActionView::Base.new(ActionController::Base.view_paths, {})
       view.assign(name: @name, fields: @fields)
       view.render(file: 'export/research_plan')
     end
 
-    def to_relative_html()
+    def to_relative_html
       # make src in html relative
       to_html.gsub "src='/images/", "src='images/"
     end
 
     def to_file
-      PandocRuby.convert(to_relative_html, :from => :html, :to => @export_format, :resource_path => Rails.public_path)
+      PandocRuby.convert(to_relative_html, from: :html, to: @export_format, resource_path: Rails.public_path)
     end
 
     def to_zip
       Dir.mktmpdir('chemotion') do |tmpdir|
         # convert the html string using pandoc and save the images in tmpdir
-        document = PandocRuby.convert(to_relative_html, :from => :html, :to => @export_format, :resource_path => Rails.public_path, :extract_media => tmpdir)
+        document = PandocRuby.convert(to_relative_html, from: :html, to: @export_format, resource_path: Rails.public_path, extract_media: tmpdir)
 
         # substitute tmp dir with images in the document
         document.gsub! tmpdir, 'images'

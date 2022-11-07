@@ -60,9 +60,9 @@ module Export
           description += "#{schema_json_checksum} schema.json\n"
           # write all attachemnts into an attachments directory
           @attachments.each do |attachment|
-            attachment_path = File.join('attachments', attachment.identifier)
+            attachment_path = File.join('attachments', "#{attachment.identifier}#{File.extname(attachment.filename)}")
             zip.put_next_entry attachment_path
-            zip.write attachment.read_file if attachment.store.file_exist?
+            zip.write attachment.attachment_attacher.file.read if attachment.attachment_attacher.file.present?
             description += "#{attachment.checksum} #{attachment_path}\n"
           end
 
@@ -79,6 +79,8 @@ module Export
           zip.put_next_entry 'description.txt'
           zip.write description
         end
+
+        zip.set_encoding('UTF-8')
         zip.rewind
 
         # write the zip file to public/zip/

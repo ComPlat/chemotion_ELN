@@ -73,19 +73,21 @@ module Analyses
         tmp_file = Tempfile.new
         tmp_file.write(response.parsed_response)
         name = "#{oa.filename.split('.').first}#{extname}"
-        att = Attachment.new(
-          filename: name,
-          file_path: tmp_file.path,
-          attachable_id: oa.attachable_id,
-          attachable_type: 'Container',
-          created_by: oa.created_by,
-          created_for: oa.created_for
-        )
-        att.save!
+        ActiveRecord::Base.transaction do
+          begin
+            att.save!
 
-        primary_store = Rails.configuration.storage.primary_store
-        att.update!(storage: primary_store)
-        tmp_file.close
+            att.attachment_attacher.attach(File.open(tmp_file.path, binmode: true))
+            if att.valid?
+              att.save!
+            else
+              raise ActiveRecord::Rollback
+            end
+          ensure
+            tmp_file.close
+            tmp_file.unlink
+          end
+        end
       end
       response
     end

@@ -28,6 +28,8 @@ class DatacollectorFolder < DatacollectorObject
   private
 
   def zip_files(tmpzip)
+    return if @files.nil?
+
     if @sftp
       @files.each do |new_file|
         begin
@@ -51,18 +53,24 @@ class DatacollectorFolder < DatacollectorObject
   end
 
   def register_new_data(device, tmpzip)
-    a = Attachment.new(
+    att = Attachment.new(
       filename: @name + '.zip',
-      file_data: IO.binread(tmpzip.path),
       created_by: device.id,
       created_for: recipient.id,
       content_type: 'application/zip'
     )
-    a.save!
+    ActiveRecord::Base.transaction do
+      att.save!
+
+      att.attachment_attacher.attach(File.open(tmpzip.path, binmode: true))
+      if att.valid?
+        att.save!
+      else
+        raise ActiveRecord::Rollback
+      end
+    end
     helper = CollectorHelper.new(device, recipient)
     dataset = helper.prepare_new_dataset(@name)
-    a.update!(attachable: dataset)
-    primary_store = Rails.configuration.storage.primary_store
-    a.update!(storage: primary_store)
+    att.update!(attachable: dataset)
   end
 end
