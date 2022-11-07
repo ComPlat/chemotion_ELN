@@ -871,7 +871,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={g.account_active === false ? accountActiveTooltip : accountInActiveTooltip} >
+          <OverlayTrigger placement="bottom" overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}>
             <Button
               bsSize="xsmall"
               bsStyle={g.account_active === true ? 'default' : 'danger'}
