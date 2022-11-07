@@ -332,11 +332,18 @@ export default class CollectionTree extends React.Component {
         {extraDiv.map((e) => { return e })}
         <div className="tree-view">
           <div className="title" style={{ backgroundColor: 'white' }}>
-            <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Inbox &nbsp;</i>
+            <button
+              type="button"
+              className="btn-inbox"
+              onClick={() => this.onClickInbox()}
+            >
+              <i className="fa fa-inbox" />
+              <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
+            </button>
             {
               this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
             }
-            &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshInbox()} />
+            <Glyphicon bsSize="small" glyph="refresh" style={{ marginLeft: '5px' }} onClick={() => this.refreshInbox()} />
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullInbox">Show larger Inbox</Tooltip>}>
               <Button style={{ position: 'absolute', right: 0 }} bsSize="xsmall" onClick={InboxActions.toggleInboxModal}>
                 <i className="fa fa-expand" aria-hidden="true" />
@@ -350,6 +357,6 @@ export default class CollectionTree extends React.Component {
           {this.inboxSubtrees()}
         </div>
       </div>
-    )
+    );
   }
 }
