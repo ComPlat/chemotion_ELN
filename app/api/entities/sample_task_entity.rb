@@ -2,6 +2,8 @@
 
 module Entities
   class SampleTaskEntity < ApplicationEntity
+    root :sample_tasks # root key when rendering a list of sample tasks
+
     expose :id
     expose :measurement_value
     expose :measurement_unit
