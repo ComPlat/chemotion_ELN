@@ -114,15 +114,19 @@ class DatasetContainer extends Component {
         <div>
           <div style={textStyle}>
             &nbsp;{trash}&nbsp;
-            <i
-              className={`fa fa-folder${visible ? '-open' : ''}`}
+            <button
+              type="button"
+              className="btn-inbox"
               onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
-              style={{ cursor: 'pointer' }}
-            >&nbsp;&nbsp;
-              <span className="text-info fa fa-arrows">
-                &nbsp; {dataset.name}
-              </span>
-            </i>
+            >
+              <i
+                className={`fa fa-folder${visible ? '-open' : ''}`}
+                style={{ cursor: 'pointer' }}
+              >
+                <span className="text-info fa fa-arrows" style={{ marginLeft: '5px', cursor: 'pointer' }} />
+              </i>
+              <span style={{ marginLeft: '8px' }}>{dataset.name}</span>
+            </button>
             <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
               {moment(dataset.created_at).format('DD.MM.YYYY HH:mm')}
             </span>
