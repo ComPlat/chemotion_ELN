@@ -7,7 +7,7 @@
 
 **write temporary in run-ruby-dev.sh**
 - rake db:create
-- rake db:migrate
+- rake db:schema:load
 
 ## Installation
 
