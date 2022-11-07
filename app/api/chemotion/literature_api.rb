@@ -18,7 +18,7 @@ module Chemotion
           @element_klass = params[:element_type].classify
           @element = @element_klass.constantize.find_by(id: params[:element_id])
           @element_policy = ElementPolicy.new(current_user, @element)
-          allowed = if request.env['REQUEST_METHOD'] =~ /get/i
+          allowed = if request.env['REQUEST_METHOD TEST'] =~ /get/i
                       @element_policy.read?
                     else
                       @element_policy.update?
