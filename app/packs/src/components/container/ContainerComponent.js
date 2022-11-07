@@ -109,20 +109,33 @@ export default class ContainerComponent extends Component {
 
   handleAddLink(link) {
     const { container } = this.state;
-    if (container.extended_metadata['hyperlinks'] == null) {
+    let hyperlinks = container.extended_metadata['hyperlinks'];
+    if (hyperlinks == null) {
       container.extended_metadata['hyperlinks'] = [link];
     } else {
-      container.extended_metadata['hyperlinks'].push(link);
+      if (typeof hyperlinks === 'string' || hyperlinks instanceof String) {
+        hyperlinks = JSON.parse(hyperlinks);
+      }
+
+      hyperlinks.push(link);
+      container.extended_metadata['hyperlinks'] = hyperlinks;
     }
     this.setState({ container });
   }
 
   handleRemoveLink(link) {
     const { container } = this.state;
-    var index = container.extended_metadata['hyperlinks'].indexOf(link);
-    if (index !== -1) {
-      container.extended_metadata['hyperlinks'].splice(index, 1);
+    let hyperlinks = container.extended_metadata['hyperlinks'];
+    if (typeof hyperlinks === 'string' || hyperlinks instanceof String) {
+      hyperlinks = JSON.parse(hyperlinks);
     }
+
+    var index = hyperlinks.indexOf(link);
+    if (index !== -1) {
+      hyperlinks.splice(index, 1);
+      container.extended_metadata['hyperlinks'] = hyperlinks;
+    }
+
     this.setState({ container });
   }
 

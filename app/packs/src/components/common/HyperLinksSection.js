@@ -61,12 +61,17 @@ export default class HyperLinksSection extends Component {
 
   renderHyperLinkList() {
     const { data } = this.props;
-    if (data && data.length > 0) {
+    let hyperLinks = data
+    if (typeof hyperLinks === 'string' || hyperLinks instanceof String) {
+      hyperLinks = JSON.parse(hyperLinks);
+    }
+
+    if (hyperLinks && hyperLinks.length > 0) {
       return (
         <div className="list">
           <ListGroup>
             {
-              data.map((link) => {
+              hyperLinks.map((link) => {
                 return (
                   <ListGroupItem style={{ margin: 'unset', padding: 'unset' }}>
                     {this.listLinkItem(link)}
