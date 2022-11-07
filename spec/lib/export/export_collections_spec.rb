@@ -11,10 +11,10 @@ RSpec.describe 'ExportCollection' do
     create(:collection, user_id: user.id, label: 'Awesome Collection')
   end
   let(:molfile) do
-    IO.read(Rails.root.join('spec', 'fixtures', 'test_2.mol'))
+    Rails.root.join('spec', 'fixtures', 'test_2.mol').read
   end
   let(:svg) do
-    IO.read(Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg'))
+    Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg').read
   end
   let(:sample) do
     build(
@@ -65,19 +65,19 @@ RSpec.describe 'ExportCollection' do
   end
 
   context 'with a researchplan' do
-    let (:collection)  {create(:collection,user_id: user.id,label: 'collection-with-rp')}
-    let (:research_plan)  {create(:research_plan,collections: [collection])}
+    let(:collection) { create(:collection, user_id: user.id, label: 'collection-with-rp') }
+    let(:research_plan) { create(:research_plan, collections: [collection]) }
 
-    let (:attachment) do
+    let(:attachment) do
       create(:attachment,
-      bucket: 1,
-      filename: 'upload.png',
-        created_by: 1,
-        attachable_id: research_plan.id,
-        attachment_data: create_annotation_json(tempfile.path))
+             bucket: 1,
+             filename: 'upload.png',
+             created_by: 1,
+             attachable_id: research_plan.id,
+             attachment_data: create_annotation_json(tempfile.path))
     end
 
-    let (:tempfile) do
+    let(:tempfile) do
       example_svg_annotation = '<svg>example</svg>'
       tempfile = Tempfile.new('annotationFile.svg')
       tempfile.write(example_svg_annotation)
@@ -97,21 +97,21 @@ RSpec.describe 'ExportCollection' do
     end
 
     it 'exported file exists' do
-        file_path = File.join('public', 'zip', "#{job_id}.zip")
-        expect(File.exist?(file_path)).to be true
+      file_path = File.join('public', 'zip', "#{job_id}.zip")
+      expect(File.exist?(file_path)).to be true
     end
   end
 
   def update_body_of_researchplan(research_plan, identifier_of_attachment)
     research_plan.body = [
       {
-        "id": 'entry-003',
-        "type": 'image',
-        "value": {
-          "file_name": 'xyz.png',
-          "public_name": identifier_of_attachment
-        }
-      }
+        id: 'entry-003',
+        type: 'image',
+        value: {
+          file_name: 'xyz.png',
+          public_name: identifier_of_attachment,
+        },
+      },
     ]
     research_plan.save!
     research_plan
@@ -119,23 +119,23 @@ RSpec.describe 'ExportCollection' do
 
   def create_annotation_json(location)
     tempfile = Tempfile.new('example.png')
-    str = '{'\
-        ' "id": "' + tempfile.path + '",'\
-        '"storage": "store",'\
-        '"metadata": {'\
-        '    "size": 29111,'\
-        '   "filename": "example.png",'\
-        '    "mime_type": null'\
-        '},'\
-        '"derivatives": {'\
-        '    "annotation": {'\
-        '        "id": "' + location + '",'\
-        '        "storage": "store",'\
-        '        "metadata": {'\
-        '            "size": 480,'\
-        '            "filename": "example_annotation.svg",'\
-        '            "mime_type": null'\
-        '        }}}}'
+    str = '{' \
+          ' "id": "' + tempfile.path + '",' \
+                                       '"storage": "store",' \
+                                       '"metadata": {' \
+                                       '    "size": 29111,' \
+                                       '   "filename": "example.png",' \
+                                       '    "mime_type": null' \
+                                       '},' \
+                                       '"derivatives": {' \
+                                       '    "annotation": {' \
+                                       '        "id": "' + location + '",' \
+                                                                      '        "storage": "store",' \
+                                                                      '        "metadata": {' \
+                                                                      '            "size": 480,' \
+                                                                      '            "filename": "example_annotation.svg",' \
+                                                                      '            "mime_type": null' \
+                                                                      '        }}}}'
     JSON.parse(str)
   end
 end
