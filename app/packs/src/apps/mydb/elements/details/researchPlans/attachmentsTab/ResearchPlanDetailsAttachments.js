@@ -18,8 +18,15 @@ import {
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 
-const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
+const editorTooltip = (exts) => (
+  <Tooltip id="editor_tooltip">
+    Available extensions:
+    {' '}
+    {exts}
+  </Tooltip>
+);
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
@@ -64,7 +71,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { extension } = this.state;
 
     const ext = last(filename.split('.'));
-    const docType = findKey(extension, o => o.includes(ext));
+    const docType = findKey(extension, (o) => o.includes(ext));
 
     if (typeof (docType) === 'undefined' || !docType) {
       return null;
@@ -102,8 +109,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
             attachment.preview = `data:image/png;base64,${result}`;
           }
         });
-      }
-      else {
+      } else {
         attachment.preview = '/images/wild_card/not_available.svg';
       }
       return attachment;
@@ -117,7 +123,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       researchPlanId,
       attachment.id,
       this.props.onAttachmentImportComplete
-    )
+    );
     LoadingActions.stop();
   }
 
@@ -172,7 +178,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
         <Row>
           <Col md={1}>
             <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
-              <div className="preview" style={{ width: '60px', height: '60px' }} >
+              <div className="preview" style={{ width: '60px', height: '60px' }}>
                 <ImageModal
                   imageStyle={imageStyle}
                   hasPop={hasPop}
@@ -194,7 +200,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           </Col>
           <Col md={2}>
             {this.renderRemoveAttachmentButton(attachment)}
-            <OverlayTrigger placement="top" overlay={downloadTooltip} >
+            <OverlayTrigger placement="top" overlay={downloadTooltip}>
               <Button
                 bsSize="xsmall"
                 className="button-right"
@@ -204,7 +210,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))} >
+            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
               <Button
                 style={{ display: styleEditorBtn }}
                 bsSize="xsmall"
@@ -226,9 +232,15 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderAttachments() {
     const { attachments } = this.props;
     if (attachments && attachments.length > 0) {
+      const filter = new ImageAttachmentFilter();
+      const filteredAttachments = filter.filterAttachmentsWhichAreInBody(
+        this.props.researchPlan.body,
+        this.props.researchPlan.attachments
+      );
+
       return (
         <ListGroup>
-          {attachments.map(attachment => (
+          {filteredAttachments.map((attachment) => (
             <ListGroupItem key={attachment.id}>
               {this.renderListGroupItem(attachment)}
             </ListGroupItem>
@@ -238,16 +250,16 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
     return (
       <div>
-        There are currently no attachments.<br />
+        There are currently no attachments.
+        <br />
       </div>
     );
   }
 
   renderDropzone() {
-
     return (
       <Dropzone
-        onDrop={files => this.props.onDrop(files)}
+        onDrop={(files) => this.props.onDrop(files)}
         className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}
       >
         <div className="zone">
@@ -263,13 +275,14 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const importDisabled = this.props.researchPlan.changed;
     const extension = last(attachment.filename.split('.'));
 
-    const importTooltip = importDisabled ?
-      <Tooltip id="import_tooltip">Research Plan must be saved before import</Tooltip> :
-      <Tooltip id="import_tooltip">Import spreadsheet as research plan table</Tooltip>;
+    const importTooltip = importDisabled
+      ? <Tooltip id="import_tooltip">Research Plan must be saved before import</Tooltip>
+      : <Tooltip id="import_tooltip">Import spreadsheet as research plan table</Tooltip>;
 
     const confirmTooltip = (
       <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-        Import data from Spreadsheet?<br />
+        Import data from Spreadsheet?
+        <br />
         <ButtonGroup>
           <Button
             bsStyle="success"
@@ -292,7 +305,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     if (extension === 'xlsx') {
       return (
         <div>
-          <OverlayTrigger placement="top" overlay={importTooltip} >
+          <OverlayTrigger placement="top" overlay={importTooltip}>
             <div style={{ float: 'right' }}>
               <Button
                 bsSize="xsmall"
@@ -369,5 +382,5 @@ ResearchPlanDetailsAttachments.propTypes = {
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => {}
+  onAttachmentImportComplete: () => { }
 };

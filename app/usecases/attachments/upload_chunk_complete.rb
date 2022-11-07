@@ -31,7 +31,7 @@ module Usecases
 
         return create_attachment(file_name, file_path) if file_checksum == params[:checksum]
 
-        false
+        { ok: false, statusText: ['File upload has error. Please try again!'] }
       ensure
         entries.each do |file|
           File.delete(file) if File.exist?(file)
@@ -49,9 +49,23 @@ module Usecases
           created_for: user.id,
           content_type: MIME::Types.type_for(file_name)[0].to_s
         )
-        attachment.save!
+        status_text = []
+        ActiveRecord::Base.transaction do
+          attachment.save!
 
-        true
+          attachment.attachment_attacher.attach(File.open(file_path, binmode: true))
+
+          if attachment.valid?
+            attachment.attachment_attacher.create_derivatives
+            attachment.save!
+          else
+            status_text.push(attachment.errors.to_h[:attachment])
+
+            raise ActiveRecord::Rollback
+          end
+        end
+
+        { ok: true, statusText: status_text }
       end
     end
   end

@@ -855,12 +855,9 @@ describe Chemotion::SampleAPI do
             ).to eq(attachment)
           end
 
-          it 'has stored the file in the primary storage' do
+          it 'has stored the file' do
             expect(
-              s1.analyses.first.children.first.attachments.first.storage
-            ).to eq(Rails.configuration.storage.primary_store)
-            expect(
-              s1.analyses.first.children.first.attachments.first.store.file_exist?
+              File.exist?(s1.analyses.first.children.first.attachments.first.abs_path)
             ).to be true
           end
         end

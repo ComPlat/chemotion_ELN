@@ -3,86 +3,80 @@
 require 'rails_helper'
 
 RSpec.describe 'ImportWellplateSpreadsheet' do
-  let(:file_path) { Rails.root.join('public/xlsx/wellplate_import_template.xlsx') }
-  let(:file_name) { File.basename(file_path) }
-  let!(:attachment) { create(:attachment, filename: file_name, file_path: file_path) }
+
+  let!(:attachment) { create(:attachment, filename: file_name) }
   let!(:wellplate) { create(:wellplate, :with_wells, attachments: [attachment]) }
+  let(:import) { Import::ImportWellplateSpreadsheet.new(wellplate_id: wellplate.id, attachment_id: attachment.id) }
 
-  let(:att_id) { attachment.id }
-  let(:wp_id) { wellplate.id }
+  describe '.process' do
+    context 'when receiving wrong extension' do
+      let(:expected_error_messsage) { ["Can not process this type of file, must be '.xlsx'."].join("\n") }
+      let(:file_name) { 'import/wrong.txt' }
 
-  let(:import) { Import::ImportWellplateSpreadsheet.new(wellplate_id: wp_id, attachment_id: att_id) }
-
-  context 'when receiving wrong extension' do
-    let!(:attachment) { create(:attachment) }
-
-    it 'raises an exception' do
-      error_message = ["Can not process this type of file, must be '.xlsx'."].join("\n")
-
-      expect { import.process! }.to raise_error(StandardError, error_message)
-    end
-  end
-
-  context 'when headers are missing' do
-    let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_headers.xlsx') }
-
-    it 'raises an exception' do
-      error_message = ["'Position' must be in cell A1.", "'Sample' must be in cell B1."].join("\n")
-
-      expect { import.process! }.to raise_error(StandardError, error_message)
-    end
-  end
-
-  context 'when headers are missing' do
-    let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_prefix.xlsx') }
-
-    it 'raises an exception' do
-      error_message = ["'_Value 'and '_Unit' prefixes don't match up.", 'Prefixes must be unique.'].join("\n")
-
-      expect { import.process! }.to raise_error(StandardError, error_message)
-    end
-  end
-
-  context 'when wells are missing' do
-    let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_wells.xlsx') }
-
-    it 'raises an exception' do
-      error_message = ['Well A3 is missing or at wrong position.', 'Well H9 is missing or at wrong position.'].join("\n")
-
-      expect { import.process! }.to raise_error(StandardError, error_message)
-    end
-  end
-
-  context 'with multiple errors in file' do
-    let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_multiple_errors.xlsx') }
-
-    it 'only raises the first error' do
-      error_message = ["'Position' must be in cell A1.", "'Smiles' must be in cell D1."].join("\n")
-
-      expect { import.process! }.to raise_error(StandardError, error_message)
-    end
-  end
-
-  context 'with valid data' do
-    before do
-      import.process!
-      wellplate.reload
+      it 'raises an exception' do
+        expect { import.process! }.to raise_error(StandardError, expected_error_messsage)
+      end
     end
 
-    it 'imports headers' do
-      expect(wellplate.readout_titles).to eq %w[Readout1 Readout2]
+    context 'when headers are missing' do
+      let(:expected_error_messsage) {  ["'Position' must be in cell A1.", "'Sample' must be in cell B1."].join("\n") }
+      let(:file_name) { 'import/wellplate_missing_headers.xlsx' }
+
+      it 'raises an exception' do
+        expect { import.process! }.to raise_error(StandardError, expected_error_messsage)
+      end
     end
 
-    it 'imports well readouts' do
-      expected_readouts = (1..96).map do |x|
-        [{ value: "0.#{x}".to_f,
-           unit: 'mg' }.stringify_keys,
-         { value: "#{x}.00".to_f,
-           unit: 'GW' }.stringify_keys]
+    context 'when prefixes are missing' do
+      let(:expected_error_messsage) { ["'_Value 'and '_Unit' prefixes don't match up.", 'Prefixes must be unique.'].join("\n") }
+      let(:file_name) { 'import/wellplate_missing_prefix.xlsx' }
+
+      it 'raises an exception' do
+        expect { import.process! }.to raise_error(StandardError, expected_error_messsage)
+      end
+    end
+
+    context 'when wells are missing' do
+      let(:expected_error_messsage) { ['Well A3 is missing or at wrong position.', 'Well H9 is missing or at wrong position.'].join("\n") }
+      let(:file_name) { 'import/wellplate_missing_wells.xlsx' }
+
+      it 'raises an exception' do
+        expect { import.process! }.to raise_error(StandardError, expected_error_messsage)
+      end
+    end
+
+    context 'with multiple errors in file' do
+      let(:expected_error_messsage) { ["'Position' must be in cell A1.", "'Smiles' must be in cell D1."].join("\n") }
+      let(:file_name) { 'import/wellplate_multiple_errors.xlsx' }
+
+      it 'only raises the first error' do
+        expect { import.process! }.to raise_error(StandardError, expected_error_messsage)
+      end
+    end
+
+    context 'with valid data' do
+      let(:file_name) { 'import/wellplate_import_template.xlsx' }
+
+      before do
+        import.process!
+        wellplate.reload
       end
 
-      expect(wellplate.wells.count).to eq 96
-      expect(wellplate.ordered_wells.pluck(:readouts)).to eq expected_readouts
+      it 'imports headers' do
+        expect(wellplate.readout_titles).to eq %w[Readout1 Readout2]
+      end
+
+      it 'imports well readouts' do
+        expected_readouts = (1..96).map do |x|
+          [{ value: "0.#{x}".to_f,
+             unit: 'mg' }.stringify_keys,
+           { value: "#{x}.00".to_f,
+             unit: 'GW' }.stringify_keys]
+        end
+
+        expect(wellplate.wells.count).to eq 96
+        expect(wellplate.ordered_wells.pluck(:readouts)).to eq expected_readouts
+      end
     end
   end
 end
