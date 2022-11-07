@@ -185,7 +185,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentEdit(attachment) {
     const { researchPlan } = this.state;
-
+    researchPlan.changed = true;
     // update only this attachment
     researchPlan.attachments.map((currentAttachment) => {
       if (currentAttachment.id === attachment.id) return attachment;
@@ -341,7 +341,7 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanDetailsBody
             body={body}
             attachments={attachments}
-            disabled={researchPlan.isMethodDisabled('body')}
+            disabled={researchPlan.isMethodDisabled("body")}
             onChange={this.handleBodyChange}
             onDrop={this.handleBodyDrop.bind(this)}
             onAdd={this.handleBodyAdd}
