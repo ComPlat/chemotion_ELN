@@ -6,23 +6,28 @@
 # https://github.com/merlin-p/thumbnailer.git
 
 class ThumbnailCreator
-  def create_derivative(tmp_path, _, _, result, record)
+  def create_derivative(tmp_path, _, _, result, _record)
     begin
       thumbnail = Thumbnailer.create(tmp_path)
-
-      if thumbnail.present?
-        dir = File.dirname(thumbnail)
-        thumb_path = "#{dir}/#{record.identifier}.thumb.jpg"
-        FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
-        FileUtils.move(thumbnail, thumb_path)
-        result[:thumbnail] = File.open(thumb_path, 'rb')
-        record.thumb = true
-      end
+      add_thumbnail_to_record(thumbnail, record, result) if thumbnail.present?
     rescue StandardError => e
       Rails.logger.info('**** ThumbnailCreator failed ***')
       Rails.logger.error e
     end
 
     result
+  end
+
+  def add_thumbnail_to_record(thumbnail, record, result)
+    dir = File.dirname(thumbnail)
+    thumb_path = "#{dir}/#{record.identifier}.thumb.jpg"
+    FileUtils.mkdir_p(dir)
+    FileUtils.move(thumbnail, thumb_path)
+    result[:thumbnail] = File.open(thumb_path, 'rb')
+    record.thumb = true
+  end
+
+  def self.supported_formats
+    Thumbnailer.supported_formats.map(&:to_s)
   end
 end
