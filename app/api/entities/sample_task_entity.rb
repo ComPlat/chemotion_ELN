@@ -9,7 +9,7 @@ module Entities
     expose :private_note
     expose :additional_note
     expose :sample_id
-    expose :displayName
+    expose :display_name
     expose :short_label
     expose :sample_svg_file
     expose :image, unless: :displayed_in_list
@@ -18,7 +18,7 @@ module Entities
 
     private
 
-    delegate(:short_label, :sample_svg_file, to: :sample)
+    delegate(:short_label, :sample_svg_file, to: :"object.sample", allow_nil: true)
 
     def display_name
       object.sample&.showed_name
