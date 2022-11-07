@@ -6,7 +6,7 @@
 # https://github.com/merlin-p/thumbnailer.git
 
 class ThumbnailCreator
-  def create_derivative(tmp_path, _, _, result, _record)
+  def create_derivative(tmp_path, _, _, result, record)
     begin
       thumbnail = Thumbnailer.create(tmp_path)
       add_thumbnail_to_record(thumbnail, record, result) if thumbnail.present?

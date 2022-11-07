@@ -61,7 +61,6 @@ class AttachmentUploader < Shrine
 
   def self.create_derivatives(file_extension, file_path, original, attachment_id, record)
     result = {}
-
     factory = DerivativeBuilderFactory.new
     builders = factory.create_derivative_builders(file_extension)
     builders.each do |builder|
@@ -74,12 +73,9 @@ class AttachmentUploader < Shrine
   end
 
   def generate_file_name(file_stream, context)
-    attachment_key = context[:record][:key]
-
     file_ending = File.extname(context[:record][:filename])
-    file_ending = "#{attachment_key}.thumb.jpg" if file_stream.path.end_with? 'thumb.jpg'
-    file_ending = "#{attachment_key}.annotation.svg" if file_stream.path.end_with? 'annotation.svg'
-
-    "#{attachment_key}#{file_ending}"
+    file_ending = '.thumb.jpg' if file_stream.path.include? 'thumb.jpg'
+    file_ending = '.annotation.svg' if file_stream.path.include? 'annotation.svg'
+    "#{context[:record][:key]}#{file_ending}"
   end
 end
