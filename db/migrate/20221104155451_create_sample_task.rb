@@ -6,8 +6,8 @@ class CreateSampleTask < ActiveRecord::Migration[5.2]
       t.string :description
       t.string :private_note
       t.string :additional_note
-      t.belongs_to :user, foreign_key: true, null: false
-      t.belongs_to :sample, foreign_key: true, null: true
+      t.references :creator, foreign_key: { to_table: :users }, null: false
+      t.references :sample, foreign_key: true, null: true
       t.timestamps
     end
   end
