@@ -3,17 +3,17 @@
 module Usecases
   module SampleTasks
     class Create
-      attr_reader :params, :creator
+      attr_accessor :params, :user
 
-      def initialize(params, creator:)
+      def initialize(params:, user:)
         @params = params
-        @creator = creator
+        @user = user
       end
 
       def create_open_sample_task
         sample = user_accessible_samples.find(params[:sample_id])
 
-        SampleTask.create!(creator: creator, sample: sample)
+        SampleTask.create!(creator: user, sample: sample)
       end
 
       def create_open_free_scan
@@ -22,14 +22,14 @@ module Usecases
             filename: params[:file][:filename],
             content_type: params[:file][:type],
             file_path: params[:file][:tempfile].path,
-            created_by: creator.id
+            created_by: user.id
           }
         else
           {}
         end
 
         SampleTask.create!(
-          creator: creator,
+          creator: user,
           measurement_value: params[:measurement_value],
           measurement_unit: params[:measurement_unit],
           description: params[:description],
@@ -45,7 +45,7 @@ module Usecases
       # As in the near future the logic for shared/synched collections will change, it is feasible to extract
       # this into its own method, even if currently there is only dummy logic used
       def user_accessible_samples
-        creator.samples
+        user.samples
       end
     end
   end

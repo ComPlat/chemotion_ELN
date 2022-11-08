@@ -50,10 +50,10 @@ class SampleTask < ApplicationRecord
   private
 
   def sample_or_scan_data_required
-    create_as_planned_scan_task = sample.present?
+    create_as_planned_sample_task = sample.present?
     create_as_free_scan = sample.nil? && measurement_value.present? && attachment.present?
 
-    return if create_as_planned_scan_task || create_as_free_scan
+    return if create_as_planned_sample_task || create_as_free_scan
 
     errors.add(:base, :sample_or_scan_data_required)
   end

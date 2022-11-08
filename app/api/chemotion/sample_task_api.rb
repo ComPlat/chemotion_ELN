@@ -10,11 +10,14 @@ module Chemotion
       error!('Sample not found', 400)
     end
 
+    rescue_from Grape::Exceptions::ValidationErrors do |exception|
+      error!(exception.message, 422)
+    end
+
     resource :sample_tasks do
       # Index: List all scan tasks for the given parameters
       params do
         optional :status, type: String, values: %w[open open_free_scan done], default: 'open'
-        optional :free_scans_only, type: Boolean, default: false
       end
       get do
         scan_tasks = SampleTask.for(current_user).public_send(params[:status])
@@ -28,50 +31,64 @@ module Chemotion
       # nested objects, which we do not want to have (so we don't need to change the app again)
       # It still would make for a better readable API
       params do
-        optional :sample_id, Integer, description: 'ID of the sample to scan'
-        optional :measurement_value, Float
-        optional :measurement_unit, String
-        optional :description, String
-        optional :additional_note, String
-        optional :private_note, String
-        optional :file, File # automatically provides subfields filename, type and tempfile
+        optional :create_open_sample_task, type: Hash do
+          requires :sample_id, type: Integer, description: 'ID of the sample to scan'
+        end
+
+        optional :create_open_free_scan, type: Hash do
+          requires :measurement_value, type: Float
+          requires :measurement_unit, type: String
+          optional :description, type: String
+          optional :additional_note, type: String
+          optional :private_note, type: String
+          requires :file, type: File # automatically provides subfields filename, type and tempfile
+        end
+        exactly_one_of :create_open_sample_task, :create_open_free_scan
       end
       post do
-        creator = Usecases::SampleTasks::Create.new(
-          declared(params, include_missing: false),
-          creator: current_user
-        )
-        scan_task = if params[:sample_id]
-          creator.create_open_sample_task
+        # create initial instance with empty parameters. They will get overridden later
+        creator = Usecases::SampleTasks::Create.new(params: {}, user: current_user)
+        scan_task = nil
+
+        if params[:create_open_sample_task]
+          creator.params = declared(params, include_missing: false)[:create_open_sample_task]
+          scan_task = creator.create_open_sample_task
         else
-          creator.create_open_free_scan
+          creator.params = declared(params, include_missing: false)[:create_open_free_scan]
+          scan_task = creator.create_open_free_scan
         end
 
         present scan_task, with: Entities::SampleTaskEntity
       end
 
-      # update a scan task
+      # update a sample task
       params do
-        optional :sample_id, Integer, description: 'ID of the sample to scan'
-        optional :measurement_value, Float
-        optional :measurement_unit, String
-        optional :description, String
-        optional :additional_note, String
-        optional :private_note, String
-        optional :file, File # automatically provides subfields filename, type and tempfile
+        optional :update_open_free_scan, type: Hash do
+          optional :sample_id, type: Integer, description: 'ID of the sample to scan'
+        end
+
+        optional :update_open_sample_task, type: Hash do
+          optional :measurement_value, type: Float
+          optional :measurement_unit, type: String
+          optional :description, type: String
+          optional :additional_note, type: String
+          optional :private_note, type: String
+          optional :file, type: File # automatically provides subfields filename, type and tempfile
+        end
+        exactly_one_of :update_open_sample_task, :update_open_free_scan
       end
       put ':id' do
         sample_task = SampleTask.find(params[:id])
         updater = Usecases::SampleTasks::Update.new(
           declared(params, include_missing: false),
           sample_task: sample_task,
-          creator: current_user
+          user: current_user
         )
 
         updater.update_sample_task
         updater.transfer_measurement_to_sample
 
-        # TODO: klären ob hier sinnvollerweise sowohl ScanTask als auch Sample zurückgegeben werden sollten
+        # TODO: klären ob hier sinnvollerweise sowohl SampleTask als auch Sample zurückgegeben werden sollten
         present sample_task, with: Entities::SampleTaskEntity
       end
     end

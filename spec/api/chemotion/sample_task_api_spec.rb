@@ -51,24 +51,30 @@ describe Chemotion::SampleTaskAPI do
         get '/api/v1/sample_tasks', params: { status: :something_unknown }
 
         expect(parsed_json_response).to eq({"error"=>"status does not have a valid value"})
-        expect(response.status).to eq 400
+        expect(response.status).to eq 422
       end
     end
   end
 
   describe 'POST /api/v1/sample_tasks' do
     let(:open_sample_task_params) do
-      { sample_id: sample.id }
+      {
+        create_open_sample_task: {
+          sample_id: sample.id
+        }
+      }
     end
 
     let(:open_free_scan_params) do
       {
-        measurement_value: 123.45,
-        measurement_unit: 'mg',
-        description: 'description',
-        additional_note: 'additional note',
-        private_note: 'private note',
-        file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
+        create_open_free_scan: {
+          measurement_value: 123.45,
+          measurement_unit: 'mg',
+          description: 'description',
+          additional_note: 'additional note',
+          private_note: 'private note',
+          file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
+        }
       }
     end
 
@@ -120,9 +126,28 @@ describe Chemotion::SampleTaskAPI do
       end
     end
 
+    context 'when both parameter groups are given' do
+      let(:params) do
+        {}.merge(open_sample_task_params).merge(open_free_scan_params)
+      end
+
+      it 'returns an 422 error' do
+        post '/api/v1/sample_tasks', params: params
+
+        expect(response.status).to eq 422
+      end
+    end
+
     context 'when the sample can not be found' do
+      let(:params) do
+        {
+          create_open_sample_task: {
+            sample_id: 0
+          }
+        }
+      end
       it 'responds with an error' do
-        post '/api/v1/sample_tasks', params: { sample_id: 0 }
+        post '/api/v1/sample_tasks', params: params
 
         expect(parsed_json_response).to eq({ 'error' => 'Sample not found' })
       end
@@ -131,15 +156,17 @@ describe Chemotion::SampleTaskAPI do
     context 'when required params are missing' do
       let(:params_with_missing_file) do
         {
-          measurement_value: 123.45,
-          measurement_unit: 'mg',
-          description: 'description',
-          additional_note: 'additional note',
-          private_note: 'private note',
+          create_open_free_scan: {
+            measurement_value: 123.45,
+            measurement_unit: 'mg',
+            description: 'description',
+            additional_note: 'additional note',
+            private_note: 'private note',
+          }
         }
       end
       let(:expected_result) do
-        { 'error' => I18n.t('activerecord.errors.models.sample_task.attributes.base.sample_or_scan_data_required') }
+        { 'error' => 'create_open_free_scan[file] is missing' }
       end
       it 'responds with an error' do
         post '/api/v1/sample_tasks', params: params_with_missing_file
@@ -153,12 +180,14 @@ describe Chemotion::SampleTaskAPI do
     context 'when updating an open sample task' do
       let(:params) do
         {
-          measurement_value: 123.45,
-          measurement_unit: 'mg',
-          description: 'description',
-          additional_note: 'additional note',
-          private_note: 'private note',
-          file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
+          update_open_sample_task: {
+            measurement_value: 123.45,
+            measurement_unit: 'mg',
+            description: 'description',
+            additional_note: 'additional note',
+            private_note: 'private note',
+            file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
+          }
         }
       end
 
