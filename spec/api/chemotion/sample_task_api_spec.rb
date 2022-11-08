@@ -194,7 +194,7 @@ describe Chemotion::SampleTaskAPI do
       it 'returns the updated SampleTask' do
         put "/api/v1/sample_tasks/#{open_sample_task.id}", params: params
 
-        expect(parsed_json_response).to include(params.except(:file).stringify_keys)
+        expect(parsed_json_response).to include(params[:update_open_sample_task].except(:file).stringify_keys)
       end
 
       it 'updates the referenced sample with the measurement data' do

@@ -78,18 +78,25 @@ module Chemotion
         exactly_one_of :update_open_sample_task, :update_open_free_scan
       end
       put ':id' do
-        sample_task = SampleTask.find(params[:id])
-        updater = Usecases::SampleTasks::Update.new(
-          declared(params, include_missing: false),
-          sample_task: sample_task,
-          user: current_user
-        )
+        # create initial instance with empty parameters. They will get overridden later
+        updater = Usecases::SampleTasks::Update.new(params: {}, user: current_user, sample_task: nil)
+        if params[:update_open_free_scan]
+          updater.sample_task = SampleTask.open_free_scan.find(params[:id])
+          updater.params = declared(params, include_missing: false)[:update_open_free_scan]
+        else
+          updater.sample_task = SampleTask.open.find(params[:id])
+          updater.params = declared(params, include_missing: false)[:update_open_sample_task]
+        end
 
-        updater.update_sample_task
-        updater.transfer_measurement_to_sample
+        # Run the update within a transaction to prevent data corruption if the sample task was updated
+        # but the measurement transfer fails for some reason
+        SampleTask.transaction do
+          updater.update_sample_task
+          updater.transfer_measurement_to_sample
+        end
 
         # TODO: klären ob hier sinnvollerweise sowohl SampleTask als auch Sample zurückgegeben werden sollten
-        present sample_task, with: Entities::SampleTaskEntity
+        present updater.sample_task, with: Entities::SampleTaskEntity
       end
     end
   end
