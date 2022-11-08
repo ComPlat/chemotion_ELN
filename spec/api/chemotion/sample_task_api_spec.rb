@@ -214,11 +214,29 @@ describe Chemotion::SampleTaskAPI do
     end
 
     context 'when updating an open free scan with a sample id' do
-      it 'returns the updated SampleTask' do
+      let(:params) do
+        {
+          update_open_free_scan: {
+            sample_id: sample.id
+          }
+        }
+      end
 
+      it 'returns the updated SampleTask' do
+        put "/api/v1/sample_tasks/#{open_free_scan.id}", params: params
+
+        expected_attributes = { sample_id: sample.id, measurement_value: 123.45 }.stringify_keys
+        expect(parsed_json_response).to include(expected_attributes)
       end
 
       it 'updates the referenced sample with the measurement data' do
+        put "/api/v1/sample_tasks/#{open_free_scan.id}", params: params
+
+        sample.reload
+
+        expect(sample.real_amount_value).to eq open_free_scan.measurement_value
+        expect(sample.real_amount_unit).to eq open_free_scan.measurement_unit
+        expect(sample.description).to eq open_free_scan.description
       end
     end
   end
