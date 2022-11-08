@@ -34,7 +34,11 @@ jobs:
         if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
 
       - name: run Pronto on fork
-        run: pronto run -f github_status text -c origin/${{ github.base_ref }}
+        # We cannot use the `github_status` formatter on forks in order to report the linting status,
+        # since the formatter requires write access, which isn't the default on forks.
+        # This is why we're using the `--exit-code` flag, which causes Pronto to propagate non-zero exit codes,
+        # i.e., we can use the `--exit-code` flag to fail the linting job in case Pronto reports warning or errors (https://github.com/prontolabs/pronto).
+        run: pronto run --exit-code -f text -c origin/${{ github.base_ref }}
         if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
 
   testing:
