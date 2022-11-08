@@ -17,17 +17,6 @@ module Usecases
       end
 
       def create_open_free_scan
-        attachment_attributes = if params[:file].present?
-          {
-            filename: params[:file][:filename],
-            content_type: params[:file][:type],
-            file_path: params[:file][:tempfile].path,
-            created_by: user.id
-          }
-        else
-          {}
-        end
-
         SampleTask.create!(
           creator: user,
           measurement_value: params[:measurement_value],
@@ -35,7 +24,12 @@ module Usecases
           description: params[:description],
           additional_note: params[:additional_note],
           private_note: params[:private_note],
-          attachment_attributes: attachment_attributes
+          attachment_attributes: {
+            filename: params[:file][:filename],
+            content_type: params[:file][:type],
+            file_path: params[:file][:tempfile].path,
+            created_by: user.id
+          }
         )
       end
 
