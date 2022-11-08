@@ -173,7 +173,7 @@ class Molecule < ApplicationRecord
                     else
                       "#{SecureRandom.hex(64)}.svg"
                     end
-
+    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
     File.write(
       full_svg_path(svg_file_name),
       Loofah.scrub_fragment(svg_data.encode('UTF-8'), :strip).to_s.gsub('viewbox', 'viewBox')

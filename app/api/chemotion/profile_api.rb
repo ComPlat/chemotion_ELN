@@ -79,6 +79,7 @@ module Chemotion
             optional :graph_templates, type: Array[Hash]
             optional :cur_template_idx, type: Integer
           end
+          optional :default_structure_editor, type: String
         end
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
@@ -94,6 +95,7 @@ module Chemotion
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
+        data['default_structure_editor'] = 'ketcher' if data['default_structure_editor'].nil?
 
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
