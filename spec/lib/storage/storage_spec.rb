@@ -33,11 +33,6 @@ RSpec.describe Storage do
       attachment.storage = 'tmp'
     end
 
-    it 'raises error when attachment has no key for path' do
-      expect(new_store).to be_a(Tmp)
-      expect { new_store.path }.to raise_error(StandardError,
-                                               'cannot build path without attachment key')
-    end
     context 'with a non valid attachment.key' do
       before { attachment.key = SecureRandom.uuid }
 

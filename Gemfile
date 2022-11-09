@@ -48,6 +48,7 @@ gem 'haml-rails'
 gem 'hashie-forbidden_attributes'
 gem 'httparty'
 
+gem 'image_processing', '~> 1.8'
 gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
 
 gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails
@@ -57,10 +58,11 @@ gem 'kaminari'
 gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '287c848ad4149caf6466a1b7a648ada017d30304'
 
+# locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks
+# out newer net-scp versions
+gem 'net-scp', '3.0.0'
 gem 'net-sftp'
 gem 'net-ssh'
-# locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks out newer net-scp versions
-gem 'net-scp', '3.0.0'
 gem 'nokogiri'
 
 gem 'omniauth', '~> 1.9.1'
@@ -68,6 +70,7 @@ gem 'omniauth-github', '~> 1.4.0'
 gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
 gem 'omniauth_openid_connect'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
+
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
 
 gem 'pandoc-ruby'
@@ -99,6 +102,7 @@ gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
 gem 'sentry-rails'
 gem 'sentry-ruby'
+gem 'shrine', '~> 3.0'
 gem 'sys-filesystem'
 
 gem 'thor'

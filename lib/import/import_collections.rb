@@ -16,6 +16,12 @@ module Import
       @svg_files = []
     end
 
+    def execute
+      extract
+      import
+      cleanup
+    end
+
     def extract
       attachments = []
       att = Tempfile.new(encoding: 'ascii-8bit')
@@ -29,14 +35,36 @@ module Import
           when 'export.json'
             @data = JSON.parse(data)
           when %r{attachments/([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})}
-            attachment = Attachment.create!(
-              file_data: data,
+            file_name = entry.name.sub('attachments/', '')
+            attachment = Attachment.new(
               transferred: true,
               created_by: @current_user_id,
               created_for: @current_user_id,
-              filename: Regexp.last_match(1)
+              key: SecureRandom.uuid,
+              filename: file_name
             )
-            attachments << attachment
+
+            begin
+              tmp = Tempfile.new(file_name)
+              tmp.write(data)
+              tmp.rewind
+              ActiveRecord::Base.transaction do
+                attachment.save!
+
+                attachment.attachment_attacher.attach(tmp)
+
+                if attachment.valid?
+                  attachment.attachment_attacher.create_derivatives
+                  attachment.save!
+                  attachments << attachment
+                else
+                  raise ActiveRecord::Rollback
+                end
+              end
+            ensure
+              tmp.close
+              tmp.unlink # deletes the temp file
+            end
           when %r{^images/(samples|reactions|molecules|research_plans)/(\w{1,128}\.\w{1,4})}
             tmp_file = Tempfile.new
             tmp_file.write(data)
@@ -45,6 +73,8 @@ module Import
           end
         end
       end
+      update_researchplan_body(attachments)
+
       @attachments = attachments.map(&:id)
       attachments = []
       att.close!
@@ -131,17 +161,23 @@ module Import
       @data.fetch('Sample', {}).each do |uuid, fields|
         # look for the molecule_name
         molecule_name_uuid = fields.fetch('molecule_name_id')
-        molecule_name_name = @data.fetch('MoleculeName').fetch(molecule_name_uuid).fetch('name') if molecule_name_uuid.present?
+        if molecule_name_uuid.present?
+          molecule_name_name = @data.fetch('MoleculeName').fetch(molecule_name_uuid).fetch('name')
+        end
 
         # look for the molecule for this sample and add the molecule name
         # neither the Molecule or the MoleculeName are created if they already exist
         molfile = fields.fetch('molfile')
         molecule = fields.fetch('decoupled', nil) && molfile.blank? ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
-        molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id) unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
+        unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
+          molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
+        end
 
         # get the molecule_name from the list of molecule names in molecule
         # this seems a bit cumbersome, but fits in with the methods of Molecule and MoleculeName
-        molecule_name = molecule.molecule_names.find_by(name: molecule_name_name) unless fields.fetch('decoupled', nil) && molfile.blank?
+        unless fields.fetch('decoupled', nil) && molfile.blank?
+          molecule_name = molecule.molecule_names.find_by(name: molecule_name_name)
+        end
 
         # create the sample
         sample = Sample.create!(fields.slice(
@@ -186,12 +222,17 @@ module Import
         solvent_value = fields.slice('solvent')['solvent']
         if solvent_value.is_a? String
           solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(solvent_value) }
-          sample['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }] if solvent.present?
+          if solvent.present?
+            sample['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }]
+          end
         end
 
         # for same sample_svg_file case
         s_svg_file = @svg_files.select { |s| s[:sample_svg_file] == fields.fetch('sample_svg_file') }.first
-        @svg_files.push(sample_svg_file: fields.fetch('sample_svg_file'), svg_file: sample.sample_svg_file) if s_svg_file.nil?
+        if s_svg_file.nil?
+          @svg_files.push(sample_svg_file: fields.fetch('sample_svg_file'), svg_file: sample.sample_svg_file)
+        end
+
         sample.sample_svg_file = s_svg_file[:svg_file] unless s_svg_file.nil?
 
         # add sample to the @instances map
@@ -420,13 +461,17 @@ module Import
 
     def import_attachments
       primary_store = Rails.configuration.storage.primary_store
+
       @data.fetch('Attachment', {}).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type')
         attachable_uuid = fields.fetch('attachable_id')
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
 
-        attachment = Attachment.where(id: @attachments, filename: fields.fetch('identifier')).first
+        attachment = Attachment.where(
+          'id IN (?) AND filename LIKE ? ',
+           @attachments,
+            fields.fetch('identifier') << '%').first
 
         attachment.update!(
           attachable: attachable,
@@ -443,7 +488,7 @@ module Import
 
         # add attachment to the @instances map
         update_instances!(uuid, attachment)
-        attachment.regenerate_thumbnail
+        # attachment.regenerate_thumbnail
       end
     end
 
@@ -540,6 +585,17 @@ module Import
         associations << instance unless instance.nil?
       end
       associations
+    end
+
+    def update_researchplan_body(attachments)
+      @data['ResearchPlan']&.each do |_attr_name, attr_value|
+        image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
+        image_fields.each do |field|
+          new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
+          field['value']['public_name'] = new_att['identifier']
+          field['value']['file_name'] = new_att['filename']
+        end
+      end
     end
   end
 end

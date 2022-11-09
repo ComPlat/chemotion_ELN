@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
-  let(:file_path) { Rails.root.join('public/xlsx/wellplate_import_template.xlsx') }
+  let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template.xlsx') }
   let(:file_name) { File.basename(file_path) }
   let(:attachment) do
     create(:attachment, filename: file_name, file_path: file_path)

@@ -176,12 +176,18 @@ export default class UnsortedBox extends React.Component {
     return (
       <div className="tree-view">
         <div className="title">
-          <i
-            className={folderClass}
-            aria-hidden="true"
+          <button
+            type="button"
+            className="btn-inbox"
             onClick={() => this.setState({ visible: !visible })}
-          > Unsorted
-          </i>
+          >
+            <i
+              className={folderClass}
+              aria-hidden="true"
+              style={{ marginRight: '5px' }}
+            />
+            Unsorted
+          </button>
           {' '}
           {uploadButton}
         </div>

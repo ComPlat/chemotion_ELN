@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-  
+
 ## package.json postinstall script
 
 set -euo pipefail
 
 src1=$(node -e 'console.log(require.resolve("@citation-js/core/lib-mjs/util/fetchFile.js"))')
-src2=$(node -e 'console.log(require.resolve("@citation-js/core/lib-mjs/index.js"))') 
+src2=$(node -e 'console.log(require.resolve("@citation-js/core/lib-mjs/index.js"))')
 src3=$(node -e 'console.log(require.resolve("@citation-js/plugin-bibtex/lib-mjs/input/constants.js"))')
 src4=$(node -e 'console.log(require.resolve("@citation-js/plugin-wikidata/lib-mjs/entity.js"))')
 

@@ -17,13 +17,21 @@ const fileFromAttachment = (attachment, containerId) => {
 export default class AttachmentFetcher {
 
   static fetchImageAttachment(params) {
-    const promise = fetch(`/api/v1/attachments/image/${params.id}`, {
+    return fetch(`/api/v1/attachments/image/${params.id}`, {
       credentials: 'same-origin',
       method: 'GET'
     }).then(response => response.blob())
       .then(blob => ({ type: blob.type, data: URL.createObjectURL(blob) }))
       .catch((errorMessage) => { console.log(errorMessage); });
-    return promise;
+  }
+
+  static fetchImageAttachmentByIdentifier(identifier) {
+    return fetch(`/api/v1/attachments/image/-1?identifier=${identifier.identifier}`, {
+      credentials: 'same-origin',
+      method: 'GET'
+    }).then(response => response.blob())
+      .then(blob => ({ type: blob.type, data: URL.createObjectURL(blob) }))
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchThumbnail(params) {
@@ -177,7 +185,7 @@ export default class AttachmentFetcher {
   }
 
   static uploadFiles(files) {
-    const data = new FormData()
+    const data = new FormData();
     files.forEach((file) => {
       data.append(file.id || file.name, file);
     });
@@ -187,19 +195,15 @@ export default class AttachmentFetcher {
       method: 'post',
       body: data
     }).then((response) => {
-      if (response.ok == false) {
-        let msg = 'Files uploading failed: ';
-        if (response.status == 413) {
-          msg += 'File size limit exceeded.'
-        } else {
-          msg += response.statusText;
-        }
+      return response.json();
+    }).then((json) => {
+      for (let i = 0; i < json.error_messages.length; i++) {
         NotificationActions.add({
-          message: msg,
+          message: json.error_messages[i],
           level: 'error'
         });
       }
-    })
+    });
   }
 
   static uploadCompleted(filename, key, checksum) {
@@ -222,12 +226,19 @@ export default class AttachmentFetcher {
             msg += response.statusText;
           }
 
+        NotificationActions.add({
+          message: msg,
+          level: 'error'
+        });
+      } else if(response.error_messages) {
+        for (let i = 0; i < response.error_messages.length; i++) {
           NotificationActions.add({
-            message: msg,
+            message: response.error_messages[i],
             level: 'error'
           });
         }
-      })
+      }
+    })
   };
 
   static uploadChunk(chunk, counter, key, progress, filename) {
@@ -303,7 +314,7 @@ export default class AttachmentFetcher {
         'Content-Type': 'application/json'
       }
     }).then((response) => {
-      return response.json()
+      return response.json();
     }).then((json) => {
       return new Attachment(json.attachment);
     }).catch((errorMessage) => {
@@ -322,7 +333,7 @@ export default class AttachmentFetcher {
         'Content-Type': 'application/json'
       }
     }).then((response) => {
-      return response.json()
+      return response.json();
     }).then((json) => {
       return new Attachment(json.attachment);
     }).catch((errorMessage) => {
