@@ -16,10 +16,7 @@ class DatacollectorFolder < DatacollectorObject
 
   def delete
     if @sftp
-      @files.each do |remote_file|
-        @sftp.remove! File.join(@path, remote_file)
-      end
-      sftp.rmdir(@path)
+      sftp.session.exec!("rm -rf #{@path}")
     else
       FileUtils.rm_r @path
     end
