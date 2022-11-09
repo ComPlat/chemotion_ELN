@@ -13,6 +13,12 @@
 > yyyy-mm-dd
 
 * Features and Improvements:
+  * Allow selection of default drawing editor on individual user level settings [Allow selection of default drawing editor on individual user level settings #632](https://github.com/ComPlat/chemotion_ELN/issues/632)
+
+* Fixes:
+  * An incomplete SVG file is generated after sanitizing the SVG
+
+* Features and Improvements:
   * Use 'Search CAS' instead of 'CAS content' based on final feedback from CAS
 
 ## [v1.4.0]
