@@ -9,15 +9,24 @@
 * Features and Improvements:
 * Fixes
 
-## [vMAJOR.MINOR.PATCH]
-> yyyy-mm-dd
+## [v1.4.1]
+> 2022-11-09
 
 * Features and Improvements:
   * Allow selection of default drawing editor on individual user level settings [Allow selection of default drawing editor on individual user level settings #632](https://github.com/ComPlat/chemotion_ELN/issues/632)
   * Use 'Search CAS' instead of 'CAS content' based on final feedback from CAS
+  * Ketcher Service on HTTPS
 
 * Fixes:
   * An incomplete SVG file is generated after sanitizing the SVG
+  * chemspectra on Reaction and ResearchPlan analyses
+  * chemspectra display of XRD data
+  * DataCollector: deletion of folder
+  * Incorrect application root url in Jobs
+  * client handling of attachment hyperlinks
+  * misleading tooltip in the user list  (Admin UI)
+  * proper version of chemspectra app
+
 
 
 ## [v1.4.0]
