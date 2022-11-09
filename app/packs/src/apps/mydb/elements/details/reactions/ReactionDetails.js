@@ -295,7 +295,7 @@ export default class ReactionDetails extends Component {
             bsSize="xsmall"
             className="button-right"
             onClick={() => this.handleSubmit(true)}
-            disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
+            // disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
             style={{ display: hasChanged }}
           >
             <i className="fa fa-floppy-o" />
@@ -306,7 +306,7 @@ export default class ReactionDetails extends Component {
           overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
             onClick={() => this.handleSubmit()}
-            disabled={!permitOn(reaction) || !this.reactionIsValid()}
+            // disabled={!permitOn(reaction) || !this.reactionIsValid()}
             style={{ display: hasChanged }} >
             <i className="fa fa-floppy-o "></i>
           </Button>
