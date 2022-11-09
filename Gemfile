@@ -136,6 +136,12 @@ group :development do
   gem 'web-console'
 end
 
+group :vscode do
+  gem 'debase'
+  gem 'ruby-debug-ide'
+  gem 'solargraph'
+end
+
 group :development, :test do
   gem 'annotate'
   gem 'awesome_print'
