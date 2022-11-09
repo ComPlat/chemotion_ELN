@@ -9,6 +9,16 @@
 * Features and Improvements:
 * Fixes
 
+## [vMAJOR.MINOR.PATCH]
+> yyyy-mm-dd
+
+* Features and Improvements:
+  * Allow selection of default drawing editor on individual user level settings [Allow selection of default drawing editor on individual user level settings #632](https://github.com/ComPlat/chemotion_ELN/issues/632)
+  * Use 'Search CAS' instead of 'CAS content' based on final feedback from CAS
+
+* Fixes:
+  * An incomplete SVG file is generated after sanitizing the SVG
+
 
 ## [v1.4.0]
 > 2022-09-26
@@ -29,13 +39,11 @@
 
 * Fixes:
   * SVG generation for sample and reaction: (https://github.com/ComPlat/chemotion_ELN/issues/846)
-  * Sample amount metric 
+  * Sample amount metric
   * report svg composer: skip image if image file does not exist.
   * chemspectra: duplicate image generation
 
 
-
- 
 
 
 ## [v1.3.1]

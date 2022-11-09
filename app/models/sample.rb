@@ -597,6 +597,7 @@ private
   end
 
   def scrub(value)
+    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
     Loofah.scrub_fragment(value, :strip).to_s.gsub('viewbox', 'viewBox')
 #   value
   end

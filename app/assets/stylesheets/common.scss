@@ -309,3 +309,11 @@
   padding: 0;
   cursor: pointer;
 }
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  b {
+    float: right;
+  }
+}

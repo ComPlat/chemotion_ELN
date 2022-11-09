@@ -73,6 +73,13 @@ WarningBox.propTypes = {
   show: PropTypes.bool.isRequired,
 };
 
+const initEditor = () => {
+  const userProfile = UserStore.getState().profile;
+  const eId = userProfile?.data?.default_structure_editor || 'ketcher';
+  const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
+  return editor;
+};
+
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
     super(props);
@@ -81,11 +88,12 @@ export default class StructureEditorModal extends React.Component {
       showWarning: props.hasChildren || props.hasParent,
       molfile: props.molfile,
       matriceConfigs: [],
-      editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' })
+      editor: initEditor()
     };
     this.editors = { ketcher: this.state.editor };
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.onChangeUser = this.onChangeUser.bind(this);
+    this.updateEditor = this.updateEditor.bind(this);
   }
 
   componentDidMount() {
@@ -125,6 +133,15 @@ export default class StructureEditorModal extends React.Component {
       this.editors = [{ ketcher: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }) }].concat(grantEditors).reduce((acc, args) => {
         return Object.assign({}, acc, args);
       }, {});
+      this.updateEditor(this.editors);
+    }
+  }
+
+  updateEditor(_editors) {
+    const kks = Object.keys(_editors);
+    const { editor } = this.state;
+    if (!kks.find(e => e === editor.id)) {
+      this.setState({ editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }) });
     }
   }
 
@@ -204,16 +221,16 @@ export default class StructureEditorModal extends React.Component {
         />
       </div>
     );
-    if (!showWarning && editor.id === 'ketcher2') {
+    if (!showWarning && editor.id === 'ketcher2' && this.editors[editor.id]) {
       useEditor =
         <KetcherEditor editor={this.editors.ketcher2} fh={iframeHeight} fs={iframeStyle} molfile={molfile} />;
     }
-    if (!showWarning && editor.id === 'chemdraw') {
+    if (!showWarning && editor.id === 'chemdraw' && this.editors[editor.id]) {
       useEditor =
         <ChemDrawEditor editor={this.editors.chemdraw} molfile={molfile} parent={this} iH={iframeHeight} />;
     }
     let citeMarvin = null;
-    if (!showWarning && editor.id === 'marvinjs') {
+    if (!showWarning && editor.id === 'marvinjs' && this.editors[editor.id]) {
       useEditor =
         <MarvinjsEditor editor={this.editors.marvinjs} molfile={molfile} parent={this} iH={iframeHeight} />;
       citeMarvin = (

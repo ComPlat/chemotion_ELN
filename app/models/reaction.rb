@@ -283,6 +283,7 @@ class Reaction < ApplicationRecord
   private
 
   def scrubber(value)
+    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
     Loofah.scrub_fragment(value, :strip).to_s
   end
 end
