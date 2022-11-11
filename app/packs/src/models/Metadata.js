@@ -1,7 +1,7 @@
-import Element from './Element';
+import Element from 'src/models/Element';
 
-import UserStore from '../stores/UserStore';
-import UIStore from '../stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class Metadata extends Element {
   static buildEmpty(collection_id) {

@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
 
-import { relatedIdentifierTypes } from '../staticDropdownOptions/radar/relatedIdentifierTypes'
-import { relationTypes } from '../staticDropdownOptions/radar/relationTypes'
+import { relatedIdentifierTypes } from 'src/components/staticDropdownOptions/radar/relatedIdentifierTypes'
+import { relationTypes } from 'src/components/staticDropdownOptions/radar/relationTypes'
 
 const MetadataRelatedIdentifier = ({ relatedIdentifier, index, onChange, onRemove }) => {
   const relatedIdentifierType = relatedIdentifierTypes.find(el => el.value == relatedIdentifier.relatedIdentifierType)

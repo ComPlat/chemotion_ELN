@@ -6,7 +6,7 @@ import FormatContainer from 'src/apps/mydb/elements/details/formats/FormatContai
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
-import MetadataContainer from './metadata/MetadataContainer';
+import MetadataContainer from 'src/components/metadata/MetadataContainer';
 import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import React, { Component } from 'react';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';

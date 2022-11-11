@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
 
-import { contributorTypes } from '../staticDropdownOptions/radar/contributorTypes'
+import { contributorTypes } from 'src/components/staticDropdownOptions/radar/contributorTypes'
 
 const MetadataContributor = ({ contributor, index, onAdd, onChange, onRemove }) => {
   const contributorType = contributorTypes.find(el => el.value == contributor.contributorType)

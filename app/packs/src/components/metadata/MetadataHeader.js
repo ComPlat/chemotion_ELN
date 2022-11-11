@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip} from 'react-bootstrap';
-import PanelHeader from '../common/PanelHeader';
+import PanelHeader from 'src/components/common/PanelHeader';
 
 const MetadataHeader = ({ title, onSave, onClose }) => {
   const onSaveAndClose = () => {

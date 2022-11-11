@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Button, ControlLabel, FormControl, FormGroup, Row, Col } from 'react-bootstrap'
 import Select from 'react-select3'
 
-import { subjectAreas } from '../staticDropdownOptions/radar/subjectAreas'
+import { subjectAreas } from 'src/components/staticDropdownOptions/radar/subjectAreas'
 
 const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
   <div>

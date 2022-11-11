@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
 
-import { funderIdentifierTypes } from '../staticDropdownOptions/radar/funderIdentifierTypes'
+import { funderIdentifierTypes } from 'src/components/staticDropdownOptions/radar/funderIdentifierTypes'
 
 const MetadataFundingReference = ({ fundingReference, index, onChange, onRemove }) => {
   const funderIdentifierType = funderIdentifierTypes.find(el => el.value == fundingReference.funderIdentifierType)
