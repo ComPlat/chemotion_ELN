@@ -36,7 +36,7 @@ module Usecases
 
       private
 
-      def update_with_scan_data
+      def update_with_scan_data # rubocop:disable Metrics/AbcSize
         file = params.delete(:file)
         params[:attachment_attributes] = {
           filename: file[:filename],
