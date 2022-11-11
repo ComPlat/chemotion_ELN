@@ -847,7 +847,6 @@ export default class Reaction extends Element {
     return name;
   }
 
-
   set segments(segments) {
     this._segments = (segments && segments.map(s => new Segment(s))) || [];
   }
@@ -856,15 +855,4 @@ export default class Reaction extends Element {
     return this._segments || [];
   }
 
-  analysesContainers() {
-    if (this.container.children.length === 0) {
-      const analyses = Container.buildEmpty();
-      analyses.container_type = 'analyses';
-      this.container.children.push(analyses);
-    }
-
-    return this.container
-      .children
-      .filter(el => ~el.container_type.indexOf('analyses'));
-  }
 }
