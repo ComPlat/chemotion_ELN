@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-describe SampleTask, type: :model do
+describe SampleTask do
   let(:user) { create(:person) }
   let(:other_user) { create(:person) }
   let(:sample) { create(:valid_sample, creator: user) }
-  let(:open_sample_task) { create(:sample_task, :open, creator: user, sample: sample)}
+  let(:open_sample_task) { create(:sample_task, :open, creator: user, sample: sample) }
   let(:open_free_scan) { create(:sample_task, :open_free_scan, creator: user) }
   let(:done) { create(:sample_task, :done, creator: other_user, sample: sample) }
 
@@ -55,12 +55,18 @@ describe SampleTask, type: :model do
 
     it 'prevents creating a record that is neither open nor a free scan' do
       expect(sample_task.valid?).to be false
-      expect(sample_task.errors.added?(:base, :sample_or_scan_data_required))
+    end
+
+    it 'adds an error with a clear message' do
+      sample_task.valid?
+
+      expect(sample_task.errors.added?(:base, :sample_or_scan_data_required)).to be_true
     end
 
     it 'checks the presence of a creator' do
-      expect(sample_task.valid?).to be false
-      expect(sample_task.errors.added?(:creator, :blank))
+      sample_task.valid?
+
+      expect(sample_task.errors.added?(:creator, :blank)).to be_true
     end
   end
 end

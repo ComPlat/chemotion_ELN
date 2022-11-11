@@ -42,7 +42,6 @@ class SampleTask < ApplicationRecord
   scope :with_scan_data, -> { where.not(measurement_value: nil) }
   scope :without_scan_data, -> { where(measurement_value: nil) }
 
-  validates :creator, presence: true # checks if user_id is present, not if user is valid!
   validate :sample_or_scan_data_required, on: :create
 
   accepts_nested_attributes_for :attachment, reject_if: :all_blank
