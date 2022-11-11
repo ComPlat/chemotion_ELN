@@ -60,13 +60,13 @@ describe SampleTask do
     it 'adds an error with a clear message' do
       sample_task.valid?
 
-      expect(sample_task.errors.added?(:base, :sample_or_scan_data_required)).to be_true
+      expect(sample_task.errors.added?(:base, :sample_or_scan_data_required)).to be true
     end
 
     it 'checks the presence of a creator' do
       sample_task.valid?
 
-      expect(sample_task.errors.added?(:creator, :blank)).to be_true
+      expect(sample_task.errors.added?(:creator, :blank)).to be true
     end
   end
 end

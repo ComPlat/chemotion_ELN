@@ -18,7 +18,7 @@ FactoryBot.define do
       private_note { 'private note' }
 
       before(:create) do |sample_task, _evaluator|
-        sample_task.attachment ||= build(:attachment, attachable: sample_task)
+        sample_task.attachment ||= create(:attachment, :with_image)
       end
     end
 
@@ -31,7 +31,7 @@ FactoryBot.define do
 
       before(:create) do |sample_task, _evaluator|
         sample_task.sample ||= create(:valid_sample, creator: sample_task.creator)
-        sample_task.attachment ||= build(:attachment, :with_image, attachable: sample_task)
+        sample_task.attachment ||= create(:attachment, :with_image)
       end
     end
   end

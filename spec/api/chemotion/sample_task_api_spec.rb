@@ -257,7 +257,7 @@ describe Chemotion::SampleTaskAPI do
         sample.reload
 
         expect(sample).to have_attributes(
-          'measurement_value' => open_free_scan.measurement_value,
+          'real_amount_value' => open_free_scan.measurement_value,
           'real_amount_unit' => open_free_scan.measurement_unit,
           'description' => open_free_scan.description,
         )

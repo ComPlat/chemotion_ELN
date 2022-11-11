@@ -17,7 +17,7 @@ module Usecases
       end
 
       def create_open_free_scan # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-        SampleTask.create!(
+        sample_task = SampleTask.create!(
           creator: user,
           measurement_value: params[:measurement_value],
           measurement_unit: params[:measurement_unit],
@@ -31,6 +31,11 @@ module Usecases
             created_by: user.id,
           },
         )
+
+        # until the Shrine integration is
+        sample_task.attachment.attachment_attacher.attach(File.open(params[:file][:tempfile], binmode: true))
+        sample_task.attachment.save!
+        sample_task
       end
 
       private

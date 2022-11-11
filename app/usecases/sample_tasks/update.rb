@@ -46,31 +46,10 @@ module Usecases
         }
 
         sample_task.update!(params)
-      end
 
-      # This encapsulates the logic which samples a given user can access.
-      # As in the near future the logic for shared/synched collections will change, it is feasible to extract
-      # this into its own method, even if currently there is only dummy logic used
-      def user_accessible_samples
-        user.samples
-      end
-
-      def too_many_parameters?
-        params
-          .values(:sample_id, :measurement_value, :measurement_unit, :file)
-          .all?(&:present?)
-      end
-
-      def sample_task_already_updated?
-        sample_task.sample.present? &&
-          sample_task.attachment.present? &&
-          sample_task.measurement_value.present?
-      end
-
-      def missing_free_scan_parameters?
-        params[:measurement_value] &&
-          params[:measurement_unit] &&
-          params[:file]
+        # until the Shrine integration is refactored
+        sample_task.attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
+        sample_task.attachment.save!
       end
     end
   end
