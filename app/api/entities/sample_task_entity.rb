@@ -20,7 +20,7 @@ module Entities
 
     private
 
-    delegate(:short_label, :sample_svg_file, to: :"object.sample", allow_nil: true)
+    delegate(:short_label, :sample_svg_file, to: :'object.sample', allow_nil: true)
 
     def display_name
       object.sample&.showed_name

@@ -16,7 +16,7 @@ module Usecases
         SampleTask.create!(creator: user, sample: sample)
       end
 
-      def create_open_free_scan
+      def create_open_free_scan # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         SampleTask.create!(
           creator: user,
           measurement_value: params[:measurement_value],
@@ -28,8 +28,8 @@ module Usecases
             filename: params[:file][:filename],
             content_type: params[:file][:type],
             file_path: params[:file][:tempfile].path,
-            created_by: user.id
-          }
+            created_by: user.id,
+          },
         )
       end
 

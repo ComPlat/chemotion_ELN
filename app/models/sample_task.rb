@@ -28,9 +28,9 @@
 class SampleTask < ApplicationRecord
   belongs_to :creator, class_name: 'Person'
   belongs_to :sample, optional: true
-  has_one :attachment, as: :attachable
+  has_one :attachment, as: :attachable, dependent: :destroy
 
-  scope :for, -> (user) { where(creator: user) }
+  scope :for, ->(user) { where(creator: user) }
   scope :open, -> { with_sample.without_attachment.without_scan_data }
   scope :open_free_scan, -> { without_sample.with_attachment.with_scan_data }
   scope :done, -> { with_sample.with_attachment.with_scan_data }
@@ -42,7 +42,7 @@ class SampleTask < ApplicationRecord
   scope :with_scan_data, -> { where.not(measurement_value: nil) }
   scope :without_scan_data, -> { where(measurement_value: nil) }
 
-  validates_presence_of :creator # checks if user_id is present, not if user is valid!
+  validates :creator, presence: true # checks if user_id is present, not if user is valid!
   validate :sample_or_scan_data_required, on: :create
 
   accepts_nested_attributes_for :attachment, reject_if: :all_blank

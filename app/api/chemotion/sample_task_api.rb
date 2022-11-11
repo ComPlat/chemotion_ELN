@@ -6,7 +6,7 @@ module Chemotion
       error!(exception.record.errors.full_messages.join("\n"), 400)
     end
 
-    rescue_from ActiveRecord::RecordNotFound do |exception|
+    rescue_from ActiveRecord::RecordNotFound do
       error!('Sample not found', 400)
     end
 
@@ -14,7 +14,7 @@ module Chemotion
       error!(exception.message, 422)
     end
 
-    resource :sample_tasks do
+    resource :sample_tasks do # rubocop:disable Metrics/BlockLength
       # Index: List all scan tasks for the given parameters
       params do
         optional :status, type: String, values: %w[open open_free_scan done], default: 'open'

@@ -19,19 +19,19 @@ module Usecases
         end
       end
 
-      def transfer_measurement_to_sample
+      def transfer_measurement_to_sample # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         sample_task.sample.update!(
           real_amount_value: sample_task.measurement_value,
           real_amount_unit: sample_task.measurement_unit,
-          description: sample_task.description
+          description: sample_task.description,
         )
-        if sample_task.private_note
-          PrivateNote.create!(
-            content: sample_task.private_note,
-            noteable: sample_task.sample,
-            created_by: user.id
-          )
-        end
+        return unless sample_task.private_note
+
+        PrivateNote.create!(
+          content: sample_task.private_note,
+          noteable: sample_task.sample,
+          created_by: user.id,
+        )
       end
 
       private
@@ -42,7 +42,7 @@ module Usecases
           filename: file[:filename],
           content_type: file[:type],
           file_path: file[:tempfile].path,
-          created_by: user.id
+          created_by: user.id,
         }
 
         sample_task.update!(params)

@@ -4,15 +4,22 @@ describe Chemotion::SampleTaskAPI do
   include_context 'api request authorization context'
 
   let(:other_user) { create(:person) }
-  let(:collection) { create(:collection, user: user) }
-  let(:other_collection) { create(:collection, user: other_user) }
-  let(:sample) { create(:valid_sample, creator: user, collections: [collection, other_collection]) }
-  let(:open_sample_task) { create(:sample_task, :open, creator: user, sample: sample)}
+  let(:sample) do
+    create(
+      :valid_sample,
+      creator: user,
+      collections: [
+        create(:collection, user: user),
+        create(:collection, user: other_user),
+      ],
+    )
+  end
+  let(:open_sample_task) { create(:sample_task, :open, creator: user, sample: sample) }
   let(:open_free_scan) { create(:sample_task, :open_free_scan, creator: user) }
   let(:done) { create(:sample_task, :done, creator: other_user, sample: sample) }
 
   describe 'GET /api/v1/sample_tasks' do
-    let(:sample_task_ids) { parsed_json_response['sample_tasks'].map { |sample_task| sample_task['id'] } }
+    let(:sample_task_ids) { parsed_json_response['sample_tasks'].pluck('id') }
 
     before do
       open_sample_task
@@ -50,8 +57,13 @@ describe Chemotion::SampleTaskAPI do
       it 'returns an error' do
         get '/api/v1/sample_tasks', params: { status: :something_unknown }
 
-        expect(parsed_json_response).to eq({"error"=>"status does not have a valid value"})
-        expect(response.status).to eq 422
+        expect(parsed_json_response).to eq({ 'error' => 'status does not have a valid value' })
+      end
+
+      it 'returns error 422' do
+        get '/api/v1/sample_tasks', params: { status: :something_unknown }
+
+        expect(response).to have_http_status(:unprocessable_entity)
       end
     end
   end
@@ -60,8 +72,8 @@ describe Chemotion::SampleTaskAPI do
     let(:open_sample_task_params) do
       {
         create_open_sample_task: {
-          sample_id: sample.id
-        }
+          sample_id: sample.id,
+        },
       }
     end
 
@@ -73,8 +85,8 @@ describe Chemotion::SampleTaskAPI do
           description: 'description',
           additional_note: 'additional note',
           private_note: 'private note',
-          file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
-        }
+          file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg')),
+        },
       }
     end
 
@@ -98,7 +110,6 @@ describe Chemotion::SampleTaskAPI do
         post '/api/v1/sample_tasks', params: open_sample_task_params
 
         expect(parsed_json_response).to include(expected_result)
-        expect(parsed_json_response['id']).not_to be_nil
       end
     end
 
@@ -121,7 +132,11 @@ describe Chemotion::SampleTaskAPI do
         post '/api/v1/sample_tasks', params: open_free_scan_params
 
         expect(parsed_json_response).to include(expected_result)
-        expect(parsed_json_response['id']).not_to be_nil
+      end
+
+      it 'returns the open free scan with the image attached' do
+        post '/api/v1/sample_tasks', params: open_free_scan_params
+
         expect(parsed_json_response['image']).not_to be_nil
       end
     end
@@ -134,7 +149,7 @@ describe Chemotion::SampleTaskAPI do
       it 'returns an 422 error' do
         post '/api/v1/sample_tasks', params: params
 
-        expect(response.status).to eq 422
+        expect(response).to have_http_status(:unprocessable_entity)
       end
     end
 
@@ -142,10 +157,11 @@ describe Chemotion::SampleTaskAPI do
       let(:params) do
         {
           create_open_sample_task: {
-            sample_id: 0
-          }
+            sample_id: 0,
+          },
         }
       end
+
       it 'responds with an error' do
         post '/api/v1/sample_tasks', params: params
 
@@ -162,12 +178,13 @@ describe Chemotion::SampleTaskAPI do
             description: 'description',
             additional_note: 'additional note',
             private_note: 'private note',
-          }
+          },
         }
       end
       let(:expected_result) do
         { 'error' => 'create_open_free_scan[file] is missing' }
       end
+
       it 'responds with an error' do
         post '/api/v1/sample_tasks', params: params_with_missing_file
 
@@ -186,8 +203,8 @@ describe Chemotion::SampleTaskAPI do
             description: 'description',
             additional_note: 'additional note',
             private_note: 'private note',
-            file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg'))
-          }
+            file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg')),
+          },
         }
       end
 
@@ -199,16 +216,21 @@ describe Chemotion::SampleTaskAPI do
 
       it 'updates the referenced sample with the measurement data' do
         put "/api/v1/sample_tasks/#{open_sample_task.id}", params: params
-
-        expect(parsed_json_response).not_to have_key('error')
-
         updated_sample_task = SampleTask.find(open_sample_task.id)
 
-        expect(updated_sample_task.measurement_value).to eq 123.45
-        expect(updated_sample_task.measurement_unit).to eq 'mg'
-        expect(updated_sample_task.description).to eq 'description'
-        expect(updated_sample_task.additional_note).to eq 'additional note'
-        expect(updated_sample_task.additional_note).to eq 'additional note'
+        expect(updated_sample_task).to have_attributes(
+          'measurement_value' => 123.45,
+          'measurement_unit' => 'mg',
+          'description' => 'description',
+          'additional_note' => 'additional note',
+          'private_note' => 'private note',
+        )
+      end
+
+      it 'creates an attachment for the referenced sample_task' do
+        put "/api/v1/sample_tasks/#{open_sample_task.id}", params: params
+        updated_sample_task = SampleTask.find(open_sample_task.id)
+
         expect(updated_sample_task.attachment).not_to be_nil
       end
     end
@@ -217,8 +239,8 @@ describe Chemotion::SampleTaskAPI do
       let(:params) do
         {
           update_open_free_scan: {
-            sample_id: sample.id
-          }
+            sample_id: sample.id,
+          },
         }
       end
 
@@ -234,9 +256,11 @@ describe Chemotion::SampleTaskAPI do
 
         sample.reload
 
-        expect(sample.real_amount_value).to eq open_free_scan.measurement_value
-        expect(sample.real_amount_unit).to eq open_free_scan.measurement_unit
-        expect(sample.description).to eq open_free_scan.description
+        expect(sample).to have_attributes(
+          'measurement_value' => open_free_scan.measurement_value,
+          'real_amount_unit' => open_free_scan.measurement_unit,
+          'description' => open_free_scan.description,
+        )
       end
     end
   end
