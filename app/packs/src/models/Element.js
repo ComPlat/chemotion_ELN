@@ -87,6 +87,38 @@ export default class Element {
     return cleanParams;
   }
 
+  // get analyses container if any
+  analysesContainers() {
+    if (this.container.children.length === 0) {
+      const analyses = Container.buildEmpty();
+      analyses.container_type = 'analyses';
+      this.container.children.push(analyses);
+    }
+    return this.container
+      .children
+      .filter((el) => ~el.container_type.indexOf('analyses'));
+  }
+
+  analysisContainers() {
+    let target = [];
+    this.analysesContainers().forEach((aec) => {
+      const aics = aec.children
+        .filter(el => ~el.container_type.indexOf('analysis'));
+      target = [...target, ...aics];
+    });
+    return target;
+  }
+
+  datasetContainers() {
+    let target = [];
+    this.analysisContainers().forEach((aic) => {
+      const dts = aic.children
+        .filter(el => ~el.container_type.indexOf('dataset'));
+      target = [...target, ...dts];
+    });
+    return target;
+  }
+
   // Default empty quill-delta
   static quillDefault() {
     return { ops: [{ insert: '\n' }] };
