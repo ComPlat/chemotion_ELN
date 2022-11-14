@@ -16,7 +16,7 @@ describe SampleTask do
 
   describe '.for' do
     it 'returns SampleTasks created by the given user' do
-      expect(described_class.for(user).ids).to eq [open_sample_task.id, open_free_scan.id]
+      expect(described_class.for(user).ids).to match_array [open_sample_task.id, open_free_scan.id]
     end
   end
 
@@ -46,7 +46,7 @@ describe SampleTask do
 
   describe '.with_attachment' do
     it 'returns SampleTasks with attachment' do
-      expect(described_class.with_attachment.ids).to eq [open_free_scan.id, done.id]
+      expect(described_class.with_attachment.ids).to match_array [open_free_scan.id, done.id]
     end
   end
 

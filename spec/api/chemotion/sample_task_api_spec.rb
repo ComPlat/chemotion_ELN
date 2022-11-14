@@ -141,6 +141,27 @@ describe Chemotion::SampleTaskAPI do
       end
     end
 
+    context 'when given params build an invalid sample task' do
+      let(:open_free_scan_params) do
+        {
+          create_open_free_scan: {
+            measurement_value: nil,
+            measurement_unit: 'mg',
+            description: 'description',
+            additional_note: 'additional note',
+            private_note: 'private note',
+            file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg')),
+          },
+        }
+      end
+
+      it 'returns an 400 error' do
+        post '/api/v1/sample_tasks', params: open_free_scan_params
+
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+
     context 'when both parameter groups are given' do
       let(:params) do
         {}.merge(open_sample_task_params).merge(open_free_scan_params)
