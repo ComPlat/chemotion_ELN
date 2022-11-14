@@ -1,5 +1,5 @@
 # This docker-compose file sets up the dev environment.
-# It builds an app container based on Dockerfile.chemotion.de
+# It builds an app container based on Dockerfile.chemotion.dev
 #
 # USAGE:
 # - Run development environment:
