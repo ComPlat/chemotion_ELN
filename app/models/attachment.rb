@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: attachments
@@ -29,7 +31,6 @@
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #
 
-
 class Attachment < ApplicationRecord
   include AttachmentJcampAasm
   include AttachmentJcampProcess
@@ -39,18 +40,20 @@ class Attachment < ApplicationRecord
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
   has_ancestry ancestry_column: :version
-  before_create :generate_key
+
   before_save :add_checksum, if: :new_upload
-  before_create :add_content_type
   before_save :update_filesize
 
   #reload to get identifier:uuid
   after_create :reload
+  before_create :generate_key
+  before_create :add_content_type
+
 
   after_destroy :delete_file_and_thumbnail
 
   belongs_to :attachable, polymorphic: true, optional: true
-  has_one :report_template
+  has_one :report_template, dependent: :nullify
 
   scope :where_research_plan, lambda { |c_id|
     where(attachable_id: c_id, attachable_type: 'ResearchPlan')
@@ -69,7 +72,7 @@ class Attachment < ApplicationRecord
   }
 
   def copy(**args)
-    d = self.dup
+    d = dup
     d.identifier = nil
     d.duplicated = true
     d.update(args)
@@ -77,11 +80,11 @@ class Attachment < ApplicationRecord
   end
 
   def extname
-    File.extname(self.filename.to_s)
+    File.extname(filename.to_s)
   end
 
   def read_file
-    return unless attachment_attacher.file.present?
+    return if attachment_attacher.file.blank?
 
     attachment_attacher.file.rewind if attachment_attacher.file.eof?
     attachment_attacher.file.read
@@ -103,7 +106,7 @@ class Attachment < ApplicationRecord
     Storage.new_store(self)
   end
 
-  def old_store(old_store = self.storage_was)
+  def old_store(old_store = storage_was)
     Storage.old_store(self, old_store)
   end
 
@@ -152,7 +155,8 @@ class Attachment < ApplicationRecord
   end
 
   def rewrite_file_data!
-    return unless file_data.present?
+    return if file_data.blank?
+
     store.destroy
     store.store_file
     self
@@ -165,11 +169,12 @@ class Attachment < ApplicationRecord
 
   def add_content_type
     return if content_type.present?
+
     self.content_type = begin
-                          MimeMagic.by_path(filename)&.type
-                        rescue
-                          nil
-                        end
+      MimeMagic.by_path(filename)&.type
+    rescue StandardError
+      nil
+    end
   end
 
   def reload
@@ -179,59 +184,28 @@ class Attachment < ApplicationRecord
   end
 
   def set_key
-    key = identifier
+    self.key = identifier
   end
 
   private
 
   def generate_key
-    self.key = SecureRandom.uuid unless self.key
+    self.key = SecureRandom.uuid unless key
   end
 
   def new_upload
-    self.storage == 'tmp'
+    storage == 'tmp'
   end
 
   def store_changed
-    !self.duplicated && storage_changed?
-  end
-
-  def store_tmp_file_and_thumbnail
-    stored = store.store_file
-    self.thumb = store.store_thumb if stored
-    stored
-  end
-
-  def store_file_and_thumbnail_for_dup
-    #TODO have copy function inside store
-    return unless self.filesize <= 50 * 1024 * 1024
-
-    self.duplicated = nil
-    if store.respond_to?(:path)
-      self.file_path = store.path
-    else
-      self.file_data = store.read_file
-    end
-    if store.respond_to?(:thumb_path)
-      self.thumb_path = store.thumb_path
-    else
-      self.thumb_data = store.read_thumb
-    end
-    stored = store.store_file
-    self.thumb = store.store_thumb if stored
-    self.save if stored
-    stored
+    !duplicated && storage_changed?
   end
 
   def transferred?
-    self.transferred || false
+    transferred || false
   end
 
   def delete_file_and_thumbnail
     attachment_attacher.destroy
-  end
-
-  def move_from_store(from_store = self.storage_was)
-    old_store.move_to_store(self.storage)
   end
 end
