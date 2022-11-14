@@ -27,13 +27,13 @@ describe 'Copy sample' do
     CollectionsSample.find_or_create_by!(sample: sample3, collection: cshare2)
   end
 
-  it ' new sample', js: true do
+  it 'new sample', js: true do
     find_by_id('tree-id-Col1').click
     first('i.icon-sample').click
     expect(page).not_to have_button('copy-element-btn', wait: 5)
   end
 
-  it ' to same collection', js: true do
+  it 'to same collection', js: true do
     find_by_id('tree-id-Col1').click
     find_all('.label--bold', text: 'PH-1234').first.click
     first('i.fa-clone').click
@@ -43,7 +43,7 @@ describe 'Copy sample' do
     expect(page).to have_content('Sample B')
   end
 
-  it ' to diff collection', js: true do
+  it 'to diff collection', js: true do # rubocop:disable RSpec/MultipleExpectations
     find('.tree-view', text: 'Col1').click
     find_all('.label--bold', text: 'PH-1234').first.click
     first('i.fa-clone').click
@@ -56,7 +56,7 @@ describe 'Copy sample' do
     expect(page).to have_content('Sample B')
   end
 
-  it ' copy shared collection with permission', js: true do
+  it 'copy shared collection with permission', js: true do # rubocop:disable RSpec/MultipleExpectations
     find_by_id('shared-home-link').click
     find_all('span.glyphicon-plus')[0].click
     find_by_id('tree-id-share-col').click
@@ -73,7 +73,7 @@ describe 'Copy sample' do
     expect(page).to have_content('Sample B')
   end
 
-  it ' copy shared collection without permission', js: true do
+  it 'copy shared collection without permission', js: true do # rubocop:disable RSpec/MultipleExpectations
     find_by_id('shared-home-link').click
     find_all('span.glyphicon-plus')[0].click
     find_by_id('tree-id-share-col-2').click

@@ -73,9 +73,9 @@ module Export
       ActionView::Base
         .with_empty_template_cache
         .with_view_paths(
-          ActionController::Base.view_paths,  # Rails 6 no longer has defaults
+          ActionController::Base.view_paths, # Rails 6 no longer has defaults
           { name: @name, fields: @fields },
-          nil
+          nil,
         ).render(template: 'export/research_plan')
     end
 

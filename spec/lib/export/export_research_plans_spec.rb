@@ -13,27 +13,27 @@ describe Export::ExportResearchPlan do
         bucket: 1,
         filename: 'upload.jpg',
         created_by: research_plan.creator.id,
-        attachable: research_plan
+        attachable: research_plan,
       )
     end
     let(:exporter) do
       described_class.new(
         research_plan.creator,
         research_plan,
-        'irrelevant_export_format'
+        'irrelevant_export_format',
       )
     end
 
     before do
       research_plan.body = [
         {
-          "id": 'entry-003',
-          "type": 'image',
-          "value": {
-            "file_name": 'xyz.png',
-            "public_name": attachment.identifier
-          }
-        }
+          id: 'entry-003',
+          type: 'image',
+          value: {
+            file_name: 'xyz.png',
+            public_name: attachment.identifier,
+          },
+        },
       ]
       research_plan.save!
     end
@@ -44,4 +44,4 @@ describe Export::ExportResearchPlan do
       expect(generated_html).to include(attachment.attachment_data['id'])
     end
   end
- end
+end

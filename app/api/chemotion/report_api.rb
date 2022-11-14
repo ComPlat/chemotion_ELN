@@ -109,7 +109,7 @@ module Chemotion
         env['api.format'] = :binary
         params[:exportType]
         content_type('text/csv')
-        filename = CGI.escape('reaction_smiles_' + time_now + '.csv')
+        filename = CGI.escape("reaction_smiles_#{time_now}.csv")
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
         real_coll_id = fetch_collection_id_w_current_user(
           params[:uiState][:currentCollection], params[:uiState][:isSync]

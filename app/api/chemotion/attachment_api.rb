@@ -201,7 +201,7 @@ module Chemotion
       get 'zip/:container_id' do
         env['api.format'] = :binary
         content_type('application/zip, application/octet-stream')
-        filename = CGI.escape("#{@container.parent&.name.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
+        filename = CGI.escape("#{@container.parent&.name&.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         zip = Zip::OutputStream.write_buffer do |zip|
           @container.attachments.each do |att|
