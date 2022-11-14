@@ -221,6 +221,7 @@ RSpec.describe Attachment, type: :model do
 
       before do
         attachment.file_data = file_data
+        attachment.file_path = nil
       end
 
       it 'sets the filesize attribute to the size of the file_data accessor\'s content' do

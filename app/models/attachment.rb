@@ -37,12 +37,13 @@ class Attachment < ApplicationRecord
   include AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
 
-  attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
+  attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred, :tmp_file
 
   has_ancestry ancestry_column: :version
 
-  before_save :add_checksum, if: :new_upload
-  before_save :update_filesize
+  after_save :upload_file
+  after_save :update_filesize
+  after_save :add_checksum, if: :new_upload
 
   #reload to get identifier:uuid
   after_create :reload
@@ -112,11 +113,12 @@ class Attachment < ApplicationRecord
 
   def add_checksum
     self.checksum = Digest::MD5.hexdigest(read_file) if attachment_attacher.file.present?
+    update_column('checksum', checksum)
   end
 
   def reset_checksum
     add_checksum
-    update if checksum_changed?
+    update_column('checksum', checksum) if checksum_changed?
   end
 
   def regenerate_thumbnail
@@ -165,6 +167,7 @@ class Attachment < ApplicationRecord
   def update_filesize
     self.filesize = file_data.bytesize if file_data.present?
     self.filesize = File.size(file_path) if file_path.present? && File.exist?(file_path)
+    update_column('filesize', filesize)
   end
 
   def add_content_type
@@ -207,5 +210,16 @@ class Attachment < ApplicationRecord
 
   def delete_file_and_thumbnail
     attachment_attacher.destroy
+  end
+
+  def upload_file
+    if file_path.present?
+      attachment_attacher.attach(File.open(file_path, binmode: true))
+    elsif tmp_file.present?
+      attachment_attacher.attach(tmp_file, binmode: true)
+    end
+
+    attachment_attacher.create_derivatives
+    update_column('attachment_data', attachment_data)
   end
 end
