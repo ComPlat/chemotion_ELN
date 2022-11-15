@@ -17,7 +17,7 @@
     {
       "label": "RSpec - unit",
       "type": "shell",
-      "command": "RAILS_ENV=test $(which bundle) exec rspec --exclude-pattern spec/{features}/**/*_spec.rb"
+      "command": "RAILS_ENV=test $(which bundle) exec rspec --exclude-pattern \"spec/{features}/**/*_spec.rb\""
     },
     {
       "label": "RSpec - acceptance",
