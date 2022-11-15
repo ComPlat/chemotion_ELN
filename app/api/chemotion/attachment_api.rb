@@ -111,21 +111,20 @@ module Chemotion
             created_by: current_user.id,
             created_for: current_user.id,
             content_type: file[:type],
+            file_path: file[:tempfile].path,
           )
 
-          a.attachment_attacher.attach(file[:tempfile])
           begin
-            if a.valid?
-              a.attachment_attacher.create_derivatives
-              a.save!
-            else
-              error_messages.push(a.errors.to_h[:attachment])
-            end
+            a.save!
+          rescue
+            error_messages.push(a.errors.to_h[:attachment])
           ensure
             tempfile.close
             tempfile.unlink
           end
+          binding.pry
         end
+        binding.pry
         true
       end
 
