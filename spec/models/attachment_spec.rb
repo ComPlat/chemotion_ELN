@@ -776,4 +776,22 @@ RSpec.describe Attachment, type: :model do
   describe '#create_process' do
     pending 'not yet implemented'
   end
+
+  describe '#upload_file' do
+    context 'when no file is attached' do
+      let(:attachment) { create(:attachment, file_path: nil) }
+
+      it 'no attachment_data should be present' do
+        expect(attachment.attachment_data).to be_nil
+      end
+    end
+
+    context 'when file is attached by filepath' do
+      let(:attachment) { create(:attachment) }
+
+      it 'attachment_data should be present' do
+        expect(attachment.attachment_data).not_to be_nil
+      end
+    end
+  end
 end

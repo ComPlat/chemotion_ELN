@@ -41,15 +41,15 @@ class Attachment < ApplicationRecord
 
   has_ancestry ancestry_column: :version
 
-  after_save :upload_file
+  before_create :generate_key
+  before_create :add_content_type
+
+  after_save :attach_file
   after_save :update_filesize
   after_save :add_checksum, if: :new_upload
 
   #reload to get identifier:uuid
   after_create :reload
-  before_create :generate_key
-  before_create :add_content_type
-
 
   after_destroy :delete_file_and_thumbnail
 
@@ -212,13 +212,10 @@ class Attachment < ApplicationRecord
     attachment_attacher.destroy
   end
 
-  def upload_file
-    if file_path.present?
-      attachment_attacher.attach(File.open(file_path, binmode: true))
-    elsif tmp_file.present?
-      attachment_attacher.attach(tmp_file, binmode: true)
-    end
+  def attach_file
+    return if file_path.blank?
 
+    attachment_attacher.attach(File.open(file_path, binmode: true))
     attachment_attacher.create_derivatives
     update_column('attachment_data', attachment_data)
   end
