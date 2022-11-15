@@ -26,7 +26,7 @@
   * Incorrect application root url in Jobs
   * client handling of attachment hyperlinks
   * misleading tooltip in the user list  (Admin UI)
-  * proper version of chemspectra app
+  * proper version of chemspectra app (v0.10.17)
 
 
 
