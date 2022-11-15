@@ -134,7 +134,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
   }
 
   render() {
-    const { bsSize, bsStyle, disabled, label, unit } = this.props;
+    const {
+      bsSize, bsStyle, disabled, label, unit, name
+    } = this.props;
     const {
       showString, value, metricPrefix,
       currentPrecision, valueString, block,
@@ -184,6 +186,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
               onChange={event => this._handleInputValueChange(event)}
               onFocus={event => this._handleInputValueFocus(event)}
               onBlur={event => this._handleInputValueBlur(event)}
+              name={name}
             />
             {prefixSwitch}
           </InputGroup>
@@ -205,6 +208,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             onFocus={event => this._handleInputValueFocus(event)}
             onBlur={event => this._handleInputValueBlur(event)}
             onDoubleClick={event => this.handleInputDoubleClick(event)}
+            name={name}
           />
         </div>
       </div>
@@ -224,6 +228,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   label: PropTypes.node,
   bsSize: PropTypes.string,
   bsStyle: PropTypes.string,
+  name: PropTypes.string
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -234,4 +239,5 @@ NumeralInputWithUnitsCompo.defaultProps = {
   block: false,
   bsSize: 'small',
   bsStyle: 'default',
+  name: ''
 };
