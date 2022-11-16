@@ -46,18 +46,15 @@ module Chemotion
             file_path: file[:tempfile],
             created_by: current_user.id,
             created_for: current_user.id,
-            content_type: file[:type]
+            content_type: file[:type],
+            file_path: file[:tempfile].path,
           )
 
           begin
             ActiveRecord::Base.transaction do
               attachment.save!
-    
-              attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-    
+
               if attachment.valid?
-                attachment.attachment_attacher.create_derivatives
-                attachment.save!
                 report_template.attachment = attachment
                 report_template.save!
               else
@@ -100,9 +97,9 @@ module Chemotion
             begin
               ActiveRecord::Base.transaction do
                 attachment.save!
-      
+
                 attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-      
+
                 if attachment.valid?
                   attachment.attachment_attacher.create_derivatives
                   attachment.save!

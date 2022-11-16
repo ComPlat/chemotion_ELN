@@ -122,9 +122,7 @@ module Chemotion
             tempfile.close
             tempfile.unlink
           end
-          binding.pry
         end
-        binding.pry
         true
       end
 
