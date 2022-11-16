@@ -70,42 +70,7 @@ module Chemotion
         optional :file, type: File, desc: 'Template File'
       end
       post do
-        report_template = ReportTemplate.new(
-          name: params[:name],
-          report_type: params[:report_type],
-        )
-
-        file = params[:file]
-        if file && tempfile = file[:tempfile]
-          attachment = Attachment.new(
-            bucket: file[:container_id],
-            filename: file[:filename],
-            key: file[:name],
-            file_path: file[:tempfile],
-            created_by: current_user.id,
-            created_for: current_user.id,
-            content_type: file[:type],
-          )
-
-          begin
-            ActiveRecord::Base.transaction do
-              attachment.save!
-
-              attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-
-              raise ActiveRecord::Rollback unless attachment.valid?
-
-              attachment.attachment_attacher.create_derivatives
-              attachment.save!
-              report_template.attachment = attachment
-            end
-          ensure
-            tempfile.close
-            tempfile.unlink
-          end
-        end
-
-        report_template.save!
+        Usecases::ReportTemplates::Create.new(params, current_user.id).execute!
       end
 
       desc 'Delete Template'

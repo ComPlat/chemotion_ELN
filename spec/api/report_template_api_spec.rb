@@ -129,6 +129,7 @@ describe Chemotion::ReportTemplateAPI do
         params = {
           name: 'Report template',
           report_type: 'Report template type',
+          file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.png')),
         }
         post(
           '/api/v1/report_templates',
