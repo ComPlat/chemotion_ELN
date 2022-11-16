@@ -40,7 +40,7 @@ RSpec.describe GenericHelpers, type: :helper do
     end
 
     context 'when a file is upload' do
-      let(:tmp_file) { Tempfile.new('upload_data.png') }
+      let(:tmp_file) { fixture_file_upload(Rails.root.join('spec/fixtures/upload.png'))}
       let(:files) {  [{filename: 'test', container_id: '', tempfile: tmp_file, type: '' }] }
       let(:del_files) { nil }
       let(:type) { 'ResearchPlan' }

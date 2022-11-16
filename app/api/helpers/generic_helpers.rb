@@ -10,7 +10,7 @@ module GenericHelpers
       layer = properties['layers'][key]
       field_uploads = layer['fields'].select { |ss| ss['type'] == 'upload' }
       field_uploads.each do |field|
-        (field['value'] && field['value']['files'] || []).each do |file|
+        ((field['value'] && field['value']['files']) || []).each do |file|
           uploads.push({ layer: key, field: field['field'], uid: file['uid'], filename: file['filename'] })
         end
       end
@@ -48,33 +48,27 @@ module GenericHelpers
       map_info[key]['files'].each do |fobj|
         file = (files || []).select { |ff| ff['filename'] == fobj['uid'] }&.first
         pa = uploads.select { |ss| ss[:uid] == file[:filename] }&.first || nil
-        if (tempfile = file[:tempfile])
-          att = Attachment.new(
-            bucket: file[:container_id],
-            filename: fobj['filename'],
-            created_by: user_id,
-            created_for: user_id,
-            content_type: file[:type],
-            attachable_type: map_info[key]['type'],
-            attachable_id: element.id
-          )
-          ActiveRecord::Base.transaction do
-            begin
-              att.save!
+        next unless (tempfile = file[:tempfile])
 
-              att.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-              if att.valid?
-                att.save!
-                update_properties_upload(element, element.properties, att, pa)
-                attach_ary.push(att.id)
-              else
-                raise ActiveRecord::Rollback
-              end
-            ensure
-              tempfile.close
-              tempfile.unlink
-            end
-          end
+        att = Attachment.new(
+          bucket: file[:container_id],
+          filename: fobj['filename'],
+          file_path: file[:tempfile].path,
+          created_by: user_id,
+          created_for: user_id,
+          content_type: file[:type],
+          attachable_type: map_info[key]['type'],
+          attachable_id: element.id,
+        )
+
+        ActiveRecord::Base.transaction do
+          att.save!
+
+          update_properties_upload(element, element.properties, att, pa)
+          attach_ary.push(att.id)
+        ensure
+          tempfile.close
+          tempfile.unlink
         end
       end
       element.send("#{type.downcase}s_revisions")&.last&.destroy!
@@ -87,38 +81,33 @@ module GenericHelpers
     attach_ary = []
 
     (files || []).each_with_index do |file, index|
-      if (tempfile = file[:tempfile])
-        att = Attachment.new(
-          bucket: file[:container_id],
-          filename: file[:filename],
-          created_by: user_id,
-          created_for: user_id,
-          content_type: file[:type],
-          identifier:  identifier[index],
-          attachable_type: type,
-          attachable_id: id
-        )
-        ActiveRecord::Base.transaction do
-          begin
-            att.save!
+      next unless (tempfile = file[:tempfile])
 
-            att.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-            if att.valid?
-              att.attachment_attacher.create_derivatives
-              att.save!
-              attach_ary.push(att.id)
-            else
-              raise ActiveRecord::Rollback
-            end
-          ensure
-            tempfile.close
-            tempfile.unlink
-          end
-        end
+      att = Attachment.new(
+        bucket: file[:container_id],
+        filename: file[:filename],
+        file_path: file[:tempfile].path,
+        created_by: user_id,
+        created_for: user_id,
+        content_type: file[:type],
+        identifier: identifier[index],
+        attachable_type: type,
+        attachable_id: id,
+      )
+
+      ActiveRecord::Base.transaction do
+        att.save!
+        attach_ary.push(att.id)
+
+      ensure
+        tempfile.close
+        tempfile.unlink
       end
-
     end
-    Attachment.where('id IN (?) AND attachable_type = (?)', del_files.map!(&:to_i), type).update_all(attachable_id: nil) unless (del_files || []).empty?
+    unless (del_files || []).empty?
+      Attachment.where('id IN (?) AND attachable_type = (?)', del_files.map!(&:to_i),
+                       type).update_all(attachable_id: nil)
+    end
     attach_ary
   end
 end
