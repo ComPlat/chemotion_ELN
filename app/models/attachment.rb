@@ -216,6 +216,8 @@ class Attachment < ApplicationRecord
     return if file_path.blank?
 
     attachment_attacher.attach(File.open(file_path, binmode: true))
+    raise 'File to large' unless valid?
+
     attachment_attacher.create_derivatives
     update_column('attachment_data', attachment_data)
   end
