@@ -213,7 +213,7 @@ class Attachment < ApplicationRecord
   end
 
   def attach_file
-    return if file_path.blank?
+    return unless File.exist?(file_path)
 
     attachment_attacher.attach(File.open(file_path, binmode: true))
     raise 'File to large' unless valid?
