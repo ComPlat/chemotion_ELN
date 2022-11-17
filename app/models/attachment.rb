@@ -41,6 +41,8 @@ class Attachment < ApplicationRecord
 
   has_ancestry ancestry_column: :version
 
+  validate :check_file_size
+
   before_create :generate_key
   before_create :add_content_type
 
@@ -52,6 +54,7 @@ class Attachment < ApplicationRecord
   after_create :reload
 
   after_destroy :delete_file_and_thumbnail
+  after_save :add_checksum, if: :new_upload
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
@@ -213,6 +216,7 @@ class Attachment < ApplicationRecord
   end
 
   def attach_file
+    return if file_path.nil?
     return unless File.exist?(file_path)
 
     attachment_attacher.attach(File.open(file_path, binmode: true))
@@ -220,5 +224,14 @@ class Attachment < ApplicationRecord
 
     attachment_attacher.create_derivatives
     update_column('attachment_data', attachment_data)
+  end
+
+  def check_file_size
+    return if file_path.nil?
+    return unless File.exist?(file_path)
+
+    return unless File.size(file_path) > Rails.configuration.shrine_storage.maximum_size * 1024 * 1024
+
+    raise "File #{File.basename(file_path)} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
 end
