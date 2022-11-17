@@ -35,6 +35,7 @@
 /config/profile_default.yml
 /config/compute_props.yml
 /config/converter.yml
+/config/ketcher_service.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml
