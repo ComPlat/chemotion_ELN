@@ -44,7 +44,7 @@ end
 
 
 
-def create_collector_folders 
+def create_collector_folders
   [DIR1, DIR2].each do |dir|
     FileUtils.mkdir_p(dir) unless File.directory?(dir)
   end
@@ -57,7 +57,7 @@ def touch_files
     # create dummy data file for Dv1 - file collection
 	  file = Pathname.new(DIR1).join("#{na}-#{Time.now.to_i}")
     FileUtils.touch(file)
-    
+
     # create dummy folder with 1 file for Dv1 - folder collection
     dir = Pathname.new(DIR2).join("#{na}-#{Time.now.to_i}")
     file = dir.join('dummy')
