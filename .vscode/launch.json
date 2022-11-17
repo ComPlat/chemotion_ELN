@@ -1,0 +1,58 @@
+// https://code.visualstudio.com/docs/editor/debugging#_launchjson-attributes
+// https://code.visualstudio.com/docs/editor/variables-reference
+// https://github.com/microsoft/vscode-recipes/tree/master/debugging-Ruby-on-Rails
+// https://github.com/rubyide/vscode-ruby/blob/main/docs/debugger.md
+// Debug configurations requires..
+// the solargraph, debase, and ruby-debug-ide gems to be (bundle) installed, and
+// the castwide.solargraph, and rebornix.ruby extensions to be installed.
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Rails server",
+      "type": "Ruby",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "useBundler": true,
+      "pathToBundler": "${env:BUNDLER_PATH}",
+      "pathToRDebugIDE": "${env:RUBY_DEBUG_IDE_PATH}",
+      "program": "${workspaceRoot}/bin/rails",
+      "args": [
+        "server",
+        "-b",
+        "0.0.0.0",
+        "-p",
+        "3000"
+      ],
+      "env": {
+        "RAILS_ENV": "development"
+      }
+    },
+    {
+      "name": "Debug RSpec - selected line, active file",
+      "type": "Ruby",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "useBundler": true,
+      "pathToBundler": "${env:BUNDLER_PATH}",
+      "pathToRDebugIDE": "${env:RUBY_DEBUG_IDE_PATH}",
+      "program": "/home/chemotion-dev/.asdf/installs/ruby/2.7.6/bin/rspec", // "program" doesn't support env variable substitution
+      "args": [
+        "${file}:${lineNumber}"
+      ],
+      "env": {
+        "RAILS_ENV": "test"
+      }
+    },
+  ],
+  "environment": [
+    {
+      "name": "BUNDLER_PATH",
+      "value": "$(which bundle)",
+    },
+    {
+      "name": "RUBY_DEBUG_IDE_PATH",
+      "value": "$(bundle info --path ruby-debug-ide)"
+    },
+  ]
+}
