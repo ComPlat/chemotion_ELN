@@ -19,8 +19,8 @@ PROD=chemotion
 # PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.6.8
-BUNDLER_VERSION=1.17.3
+RUBY_VERSION=2.7.6
+BUNDLER_VERSION=2.1.4
 
 ## NODEJS
 NVM_VERSION='v0.38.0'
@@ -81,6 +81,9 @@ PART_9='log-rotation'
 . /etc/os-release
 V20='focal'
 V10='buster'
+# if [ "$VERSION_CODENAME" = "$V18" ]; then
+#   RUBY_VERSION=2.5.8
+# fi
 
 
 GRE='\033[0;32m'
