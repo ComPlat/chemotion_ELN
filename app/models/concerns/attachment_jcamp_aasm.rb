@@ -124,9 +124,10 @@ module AttachmentJcampProcess
 
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
+
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
     content_type = ext == 'png' ? 'image/png' : 'application/octet-stream'
-    att = Attachment.children_of(self[:id]).where(filename: meta_filename).take
+    att = Attachment.children_of(self[:id]).find_by(filename: meta_filename)
 
     if att.nil?
       att = Attachment.children_of(self[:id]).new(
@@ -135,7 +136,7 @@ module AttachmentJcampProcess
         created_by: created_by,
         created_for: created_for,
         content_type: content_type,
-        key: SecureRandom.uuid
+        key: SecureRandom.uuid,
       )
     end
     att.attachment_attacher.attach(File.open(meta_tmp.path, binmode: true))
@@ -191,7 +192,7 @@ module AttachmentJcampProcess
       keep = att.json? && keyword == 'infer'
       keep ? att : nil
     end.select(&:present?)
-    !infers.empty? ? infers[0].read_file : '{}'
+    infers.empty? ? '{}' : infers[0].read_file
   end
 
   def update_prediction(params, spc_type, is_regen)
@@ -210,30 +211,9 @@ module AttachmentJcampProcess
     check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
 
     if spc_type == 'bagit'
-      jcamp_att = nil
-      tmp_to_deleted = []
-      tmp_img_to_deleted = []
-      arr_jcamp.each_with_index do |jcamp, idx|
-        curr_jcamp_att = generate_jcamp_att(jcamp, "#{idx+1}_bagit")
-        curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-        curr_tmp_img = arr_img[idx]
-        img_att = generate_img_att(curr_tmp_img, "#{idx+1}_bagit")
-        tmp_to_deleted.push(jcamp, curr_tmp_img)
-        tmp_img_to_deleted.push(img_att)
-
-        curr_tmp_csv = arr_csv[idx]
-        csv_att = generate_csv_att(curr_tmp_csv, "#{idx+1}_bagit")
-        tmp_to_deleted.push(curr_tmp_csv)
-
-        if idx == 0
-          jcamp_att = curr_jcamp_att
-        end
-      end
-      set_done
-      delete_tmps(tmp_to_deleted)
-      delete_related_arr_img(tmp_img_to_deleted)
-      delete_edit_peak_after_done
-      jcamp_att
+      read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen)
+    elsif arr_jcamp.count > 1
+      read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
     else
       jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
       jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
@@ -248,7 +228,6 @@ module AttachmentJcampProcess
       delete_edit_peak_after_done
       jcamp_att
     end
-
   end
 
   def edit_process(is_regen, orig_params)
@@ -283,7 +262,7 @@ module AttachmentJcampProcess
       Message.create_msg_notification(
         channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
         message_from: attachable.root_element.created_by,
-        data_args: { 'msg': 'Invalid molfile' }
+        data_args: { msg: 'Invalid molfile' },
       )
     end
   end
@@ -308,6 +287,56 @@ module AttachmentJcampProcess
     Rails.logger.error(e)
   end
 
+  def read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
+    jcamp_att = nil
+    tmp_to_be_deleted = []
+    tmp_img_to_deleted = []
+    arr_jcamp.each_with_index do |jcamp, idx|
+      file_name_to_generate = idx == 0 ? 'peak' : "processed_#{idx}"
+
+      curr_jcamp_att = generate_jcamp_att(jcamp, file_name_to_generate)
+      curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
+      jcamp_att = curr_jcamp_att if idx == 0
+
+      curr_tmp_img = arr_img[idx]
+      img_att = generate_img_att(curr_tmp_img, file_name_to_generate)
+
+      tmp_to_be_deleted.push(jcamp, curr_tmp_img)
+      tmp_img_to_deleted.push(img_att)
+    end
+
+    set_done
+    delete_tmps(tmp_to_be_deleted)
+    delete_related_arr_img(tmp_img_to_deleted)
+    delete_edit_peak_after_done
+    jcamp_att
+  end
+
+  def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen)
+    jcamp_att = nil
+    tmp_to_be_deleted = []
+    tmp_img_to_deleted = []
+    arr_jcamp.each_with_index do |jcamp, idx|
+      curr_jcamp_att = generate_jcamp_att(jcamp, "#{idx + 1}_bagit")
+      curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
+      curr_tmp_img = arr_img[idx]
+      img_att = generate_img_att(curr_tmp_img, "#{idx + 1}_bagit")
+      tmp_to_be_deleted.push(jcamp, curr_tmp_img)
+      tmp_img_to_deleted.push(img_att)
+
+      curr_tmp_csv = arr_csv[idx]
+      csv_att = generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit")
+      tmp_to_be_deleted.push(curr_tmp_csv)
+
+      jcamp_att = curr_jcamp_att if idx == 0
+    end
+    set_done
+    delete_tmps(tmp_to_be_deleted)
+    delete_related_arr_img(tmp_img_to_deleted)
+    delete_edit_peak_after_done
+    jcamp_att
+  end
+
   def delete_tmps(tmp_arr)
     tmp_arr.each do |tmp|
       next unless tmp
@@ -324,7 +353,7 @@ module AttachmentJcampProcess
 
   def fname_wo_ext(target)
     parts = target.filename_parts
-    ending = (parts.length == 2 || parts.length == 3) ? -2 : -3
+    ending = parts.length == 2 || parts.length == 3 ? -2 : -3
     parts[0..ending].join('_')
   end
 
@@ -417,7 +446,7 @@ module AttachmentJcampProcess
           params[:layout],
           params[:peaks] || '[]',
           params[:shift] || '{}',
-          t_spectrum
+          t_spectrum,
         )
       end
     end
