@@ -290,6 +290,7 @@ module Chemotion
         optional :molarity_value, type: Float, desc: "Sample molarity value"
         optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         optional :description, type: String, desc: "Sample description"
+        optional :metrics, type: String, desc: "Sample metric units"
         optional :purity, type: Float, desc: "Sample purity"
         optional :solvent, type: Array[Hash], desc: "Sample solvent"
         optional :location, type: String, desc: "Sample location"
