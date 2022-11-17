@@ -25,6 +25,8 @@ class ReactionsSample < ApplicationRecord
   belongs_to :reaction, optional: true
   belongs_to :sample, optional: true
 
+  before_validation :set_default
+
   include ReactionSampleCollections
 
   def self.get_samples(reaction_ids)
@@ -33,6 +35,12 @@ class ReactionsSample < ApplicationRecord
 
   def self.get_reactions(samples_ids)
     where(sample_id: samples_ids).pluck(:reaction_id).compact.uniq
+  end
+
+  private
+
+  def set_default
+    1 if coefficient.nil? || coefficient&.zero?
   end
 end
 
