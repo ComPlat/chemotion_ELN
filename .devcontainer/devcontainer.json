@@ -1,0 +1,32 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.187.0/containers/docker-existing-dockerfile
+{
+  "name": "Chemotion Dockerfile",
+  "dockerComposeFile": [
+    "../docker-compose.dev.yml"
+  ],
+  "service": "app",
+  "workspaceFolder": "/home/chemotion-dev/app",
+  "extensions": [
+    "castwide.solargraph",
+    "rebornix.ruby",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "eamodio.gitlens",
+    "streetsidesoftware.code-spell-checker"
+  ],
+  "forwardPorts": [
+    3000,
+    5432
+  ],
+  "postCreateCommand": [
+    "/bin/bash",
+    ".devcontainer/post_create.sh"
+  ],
+  "remoteUser": "chemotion-dev", // see https: //aka.ms/vscode-remote/containers/non-root
+  "shutdownAction": "stopCompose", // stop compose when quitting
+  "overrideCommand": true, // override the commands in the compose file
+  "containerEnv": {
+    "RAILS_ENV": "development"
+  }
+}
