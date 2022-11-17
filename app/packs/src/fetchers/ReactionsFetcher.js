@@ -37,6 +37,16 @@ export default class ReactionsFetcher {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'reactions', Reaction);
   }
 
+  static findByShortLabel(shortLabel) {
+    return fetch(
+      `/api/v1/reactions/findByShortLabel/${shortLabel}.json`,
+      {
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      }
+    ).then((response) => response.json()).catch(errorMessage => console.log(errorMessage))
+  }
+
   static create(reaction, method = 'post') {
     const reactionFiles = AttachmentFetcher.getFileListfrom(reaction.container);
     let productsFiles = [];
