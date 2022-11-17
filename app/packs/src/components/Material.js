@@ -235,7 +235,7 @@ class Material extends Component {
                 type="text"
                 bsClass="bs-form--compact form-control"
                 bsSize="small"
-                value={`${((material.equivalent || 0) * 100).toFixed(0)}%`}
+                value={`${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`}
                 disabled
               />
             </div>

@@ -588,7 +588,7 @@ export default class ReactionDetailsScheme extends Component {
           }
         }
 
-        if (materialGroup === 'starting_materials') {
+        if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && !sample.reference) {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
         } else if (materialGroup === 'products' && (sample.equivalent < 0.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
@@ -653,7 +653,8 @@ export default class ReactionDetailsScheme extends Component {
           }
         } else {
           // NB: sample equivalent independant of coeff
-          //sample.equivalent = referenceMaterial.amount_mol !== 0 ? ( sample.amount_mol / referenceMaterial.amount_mol) : 1;
+          sample.equivalent = sample.reference ? 1
+            : sample.amount_mol / referenceMaterial.amount_mol;
         }
       }
       return sample;
@@ -679,7 +680,7 @@ export default class ReactionDetailsScheme extends Component {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         // set sampple.coefficient to default value, if user set coeff. value to zero
-        if (updatedSample.coefficient % 1 !== 0 || updatedSample.coefficient === 0 ) {
+        if (updatedSample.coefficient % 1 !== 0 || updatedSample.coefficient === 0) {
           updatedSample.coefficient = 1;
           sample.coefficient = updatedSample.coefficient;
           NotificationActions.add({
@@ -781,8 +782,6 @@ export default class ReactionDetailsScheme extends Component {
           if (sample.contains_residues) {
             sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
               * (sample.molecule.molecular_weight - referenceMaterial.molecule.molecular_weight));
-          } else {
-            sample.maxAmount = referenceMaterial.amount_mol * (sample.coefficient || 1.0 / referenceMaterial.coefficient || 1.0) * sample.molecule_molecular_weight;
           }
         }
       });
