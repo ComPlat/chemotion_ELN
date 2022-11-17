@@ -293,3 +293,51 @@ module Chemotion
     end
   end
 end
+
+# Chemotion module
+module Chemotion
+  # process Jcamp files
+  module Jcamp
+    # Generate Jcamp files module
+    module RegenerateJcamp
+      include HTTParty
+
+      def self.build_body(
+        file, molfile
+      )
+        {
+          multipart: true,
+          file: file,
+          molfile: molfile.size > 10 ? molfile : false,
+          simulatenrm: true,
+        }
+      end
+
+      def self.stub_http(
+        file_path, mol_path
+      )
+        response = nil
+        url = Rails.configuration.spectra.url
+        port = Rails.configuration.spectra.port
+        File.open(file_path, 'r') do |file|
+          File.open(mol_path, 'r') do |molfile|
+            body = build_body(file, molfile)
+            response = HTTParty.post(
+              "http://#{url}:#{port}/zip_jcamp_n_img",
+              body: body,
+              timeout: 120,
+            )
+          end
+        end
+        response
+      end
+
+      def self.spectrum(
+        file_path, mol_path
+      )
+        rsp = stub_http(file_path, mol_path)
+        rsp.code == 200 ? rsp.parsed_response : nil
+      end
+    end
+  end
+end
