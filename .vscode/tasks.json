@@ -1,0 +1,38 @@
+// https://code.visualstudio.com/docs/editor/variables-reference
+// See https://go.microsoft.com/fwlink/?LinkId=733558
+// for the documentation about the tasks.json format
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Rails - server",
+      "type": "shell",
+      "command": "RAILS_ENV=development $(which bundle) exec rails server -b 0.0.0.0 -p 3000"
+    },
+    {
+      "label": "RSpec - all",
+      "type": "shell",
+      "command": "RAILS_ENV=test $(which bundle) exec rspec"
+    },
+    {
+      "label": "RSpec - unit",
+      "type": "shell",
+      "command": "RAILS_ENV=test $(which bundle) exec rspec --exclude-pattern \"spec/{features}/**/*_spec.rb\""
+    },
+    {
+      "label": "RSpec - acceptance",
+      "type": "shell",
+      "command": "RAILS_ENV=test $(which bundle) exec rspec spec/features"
+    },
+    {
+      "label": "RSpec - selected line, active file",
+      "type": "shell",
+      "command": "RAILS_ENV=test $(which bundle) exec rspec ${file}:${lineNumber}",
+    },
+    {
+      "label": "RuboCop autocorrect active file",
+      "type": "shell",
+      "command": "$(which bundle) exec rubocop -c .rubocop.yml -a ${file}",
+    },
+  ]
+}
