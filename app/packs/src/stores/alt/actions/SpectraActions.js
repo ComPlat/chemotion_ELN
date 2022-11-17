@@ -92,6 +92,18 @@ class SpectraActions {
         });
     };
   }
+
+  RegenerateEdited(jcampIds, molfile, cb) {
+    return (dispatch) => {
+      AttachmentFetcher.regenerateEditedSpectrum(jcampIds, molfile)
+        .then(() => {
+          dispatch();
+          cb();
+        }).catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+        });
+    };
+  }
 }
 
 export default alt.createActions(SpectraActions);

@@ -3,6 +3,7 @@ const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'mzxml', 'raw', 'cdf', 'zip']
 const JcampIds = (container) => {
   let origJcampIds = [];
   let geneJcampIds = [];
+  let editedJcampsIds = [];
 
   container.children.forEach((dt) => {
     dt.attachments.forEach((att) => {
@@ -15,6 +16,7 @@ const JcampIds = (container) => {
         if (isJcamp) {
           if (notOrig) {
             geneJcampIds = [...geneJcampIds, att.id];
+            editedJcampsIds = [...editedJcampsIds, att.id];
           } else {
             origJcampIds = [...origJcampIds, att.id];
           }
@@ -24,7 +26,7 @@ const JcampIds = (container) => {
       }
     });
   });
-  return { orig: origJcampIds, gene: geneJcampIds };
+  return { orig: origJcampIds, gene: geneJcampIds, edited: editedJcampsIds };
 };
 
 const extractJcampFiles = (container) => {
