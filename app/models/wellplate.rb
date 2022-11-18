@@ -149,6 +149,6 @@ class Wellplate < ApplicationRecord
     counter = user.increment_counter 'wellplates'
     user_label = user.name_abbreviation
 
-    update_attributes(short_label: "#{user_label}-#{prefix}#{counter}")
+    update(short_label: "#{user_label}-#{prefix}#{counter}")
   end
 end

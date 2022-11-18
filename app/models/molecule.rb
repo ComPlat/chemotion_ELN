@@ -151,14 +151,14 @@ class Molecule < ApplicationRecord
     # if pubchem_lcss of taggable does not exist, try PubChem API and then update DB and return
     mol_tag = self.tag
     mol_tag_data = mol_tag.taggable_data || {}
-    if mol_tag_data['pubchem_lcss'] && mol_tag_data['pubchem_lcss'].length > 0
-      mol_tag_data['pubchem_lcss']
-    else
+
+    unless mol_tag_data['pubchem_lcss']&.present?
       mol_tag_data['pubchem_lcss'] = Chemotion::PubchemService.lcss_from_cid(cid)
       # updated_at of element_tags(not molecule) is updated
-      mol_tag.update_attributes taggable_data: mol_tag_data
-      mol_tag_data['pubchem_lcss']
+      mol_tag.update taggable_data: mol_tag_data
     end
+
+    mol_tag_data['pubchem_lcss']
   end
 
   def chem_repo

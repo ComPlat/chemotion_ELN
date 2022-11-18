@@ -213,7 +213,7 @@ class Import::ImportJson
     attributes = research_plan_metadata.slice(*attribute_names)
 
     metadata = ResearchPlanMetadata.find_or_create_by!(research_plan_id: research_plan.id)
-    metadata.update_attributes!(attributes)
+    metadata.update!(attributes)
   end
 
   def import_research_plan_analyses(research_plan, research_plan_analyses)

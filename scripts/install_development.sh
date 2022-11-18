@@ -77,7 +77,7 @@ PART_9='log-rotation'
 ############################################
 ############################################
 
-## supported Distribution Version  
+## supported Distribution Version
 . /etc/os-release
 V20='focal'
 V10='buster'
@@ -131,7 +131,7 @@ trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
 if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
   sharpi "Running installation for $PRETTY_NAME "
-else 
+else
   error "The installation for your distribution ($PRETTY_NAME) has not been tested"
 fi
 
@@ -289,10 +289,10 @@ if [ "${PART_6:-}" ]; then
   sudo -u postgres psql -d $DB_NAME -c ' CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 
   ## DB for testing
-  sudo -u postgres psql -c " CREATE DATABASE $DB_TEST OWNER $DB_ROLE;" || yellow 'Test DB exists.' 
+  sudo -u postgres psql -c " CREATE DATABASE $DB_TEST OWNER $DB_ROLE;" || yellow 'Test DB exists.'
   sudo -u postgres psql -d $DB_TEST -c ' CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 
-  
+
 
   green "done $description\n"
 else
@@ -348,7 +348,7 @@ EOL
 # Change Ownership and Permissions
   sudo chmod 600 $TMP_DIR/config/*.yml
   sudo chown $PROD:$PROD -R $TMP_DIR
-  
+
   src='source ~/.nvm/nvm.sh && source ~/.rvm/scripts/rvm '
 
   sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle config build.nokogiri --use-system-libraries"

@@ -169,7 +169,7 @@ module Usecases
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
         existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
         if existing_association
-          existing_association.update_attributes!(
+          existing_association.update!(
             reaction_id: @reaction.id,
             equivalent: sample.equivalent,
             reference: sample.reference,

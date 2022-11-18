@@ -120,12 +120,12 @@ module Import
             position_y: position_y
           )
 
-          well.update_attributes!(
+          well.update!(
             readouts: readouts
           )
         end
 
-        @wellplate.update_attributes!(readout_titles: @prefixes)
+        @wellplate.update!(readout_titles: @prefixes)
       end
     end
   end

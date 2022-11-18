@@ -61,9 +61,7 @@ module Reporter
           att.save!
         end
 
-        @report.update_attributes(
-          generated_at: Time.zone.now
-        )
+        @report.update(generated_at: Time.zone.now)
       end
 
 

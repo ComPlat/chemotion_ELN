@@ -2,7 +2,7 @@
 
 directory=/var/www/chemotion_ELN/current
 port=4000
-ruby_version=2.6.6
+ruby_version=2.7.6
 
 
 if [ -d "$directory" ]; then
@@ -24,10 +24,10 @@ if [ -d "$directory" ]; then
   # start passenger daemon
   . $HOME/.profile; source ~/.nvm/nvm.sh && $HOME/.rvm/gems/$version_gemset/wrappers/ruby /usr/bin/passenger start -e production  --daemonize --address 127.0.0.1 --port $port
 
-  # start backgorund worker 
+  # start backgorund worker
   source $HOME/.rvm/environments/$version_gemset && RAILS_ENV=production bundle exec bin/delayed_job stop && RAILS_ENV=production bundle exec bin/delayed_job start
 
-  # start ketcher background service 
+  # start ketcher background service
   if [ -f "$directory/lib/node_service/nodeService.js" ]; then
     source $HOME/.nvm/nvm.sh &&  nvm use $node_version
     nohup node $directory/lib/node_service/nodeService.js production >> $directory/log/node.log 2>&1 &

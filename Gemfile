@@ -56,7 +56,9 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '287c848ad4149caf6466a1b7a648ada017d30304'
+gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
+
+gem 'mimemagic', '0.3.10'
 
 # locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks
 # out newer net-scp versions
@@ -84,7 +86,7 @@ gem 'pundit'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
-gem 'rails', '~> 5.2.0'
+gem 'rails', '6.1.7'
 gem 'rdkit_chem', git: 'https://github.com/CamAnNguyen/rdkit_chem'
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'

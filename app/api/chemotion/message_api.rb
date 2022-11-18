@@ -21,7 +21,9 @@ module Chemotion
         message_list = present(messages, with: Entities::MessageEntity, root: 'messages')
         message_list[:version] = ENV['VERSION_ASSETS'] if ENV['VERSION_ASSETS']
 
-        Notification.where(id: messages.where(channel_type: 5).ids).each do |notification|
+        # .ids does not work here as it uses the primary key which the database view notify_messages does not have
+        channel_5_ids = messages.where(channel_type: 5).pluck(:id)
+        Notification.where(id: channel_5_ids).each do |notification|
           notification.update!(is_ack: 1)
         end
       end

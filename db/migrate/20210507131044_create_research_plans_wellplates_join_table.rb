@@ -4,9 +4,7 @@ class CreateResearchPlansWellplatesJoinTable < ActiveRecord::Migration[5.2]
 
     create_join_table :research_plans, :wellplates do |t|
       t.primary_key :id
-      t.integer :research_plan_id
       t.index :research_plan_id
-      t.integer :wellplate_id
       t.index :wellplate_id
       t.datetime :created_at
       t.datetime :updated_at
@@ -15,9 +13,7 @@ class CreateResearchPlansWellplatesJoinTable < ActiveRecord::Migration[5.2]
 
     create_join_table :screens, :research_plans do |t|
       t.primary_key :id
-      t.integer :research_plan_id
       t.index :research_plan_id
-      t.integer :screen_id
       t.index :screen_id
       t.datetime :created_at
       t.datetime :updated_at

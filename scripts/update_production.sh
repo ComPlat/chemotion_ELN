@@ -26,7 +26,7 @@ NODE_VERSION=14.20.0
 NPM_VERSION=7.11.1
 
 ## default naming of directories and files
-APP_NAME=chemotion_ELN 
+APP_NAME=chemotion_ELN
 
 ## TMP DIR (has to be acccesible to install and PROD user)
 TMP_DIR=/tmp/${APP_NAME}_stage
@@ -60,7 +60,7 @@ PART_4='update rvm and ruby'
 PART_5='update nvm and npm'
 PART_8='prepare first deploy and deploy application code'
 #PART_81='seed common ketcher templates'
-#PART_82='seed common reagents' 
+#PART_82='seed common reagents'
 
 
 ############################################
@@ -261,7 +261,7 @@ if [ "${PART_8:-}" ]; then
   sudo -H -u $PROD bash -c  "if [ -z \"\$(grep \"$localkey\" $PROD_HOME/.ssh/authorized_keys )\" ]; then echo $localkey | tee -a $PROD_HOME/.ssh/authorized_keys; fi;"
 
   sharpi "prepare config"
-  
+
   local_deploy_conf=$TMP_DIR/config/deploy/local_deploy.rb
   sudo cp $deploy_conf_example $local_deploy_conf
   sed -i "s/user =.*/user ='$PROD'/" $local_deploy_conf

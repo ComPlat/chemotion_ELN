@@ -201,7 +201,7 @@ module Chemotion
       get 'zip/:container_id' do
         env['api.format'] = :binary
         content_type('application/zip, application/octet-stream')
-        filename = URI.escape("#{@container.parent&.name.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
+        filename = CGI.escape("#{@container.parent&.name&.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         zip = Zip::OutputStream.write_buffer do |zip|
           @container.attachments.each do |att|
@@ -247,7 +247,7 @@ module Chemotion
         else
           env['api.format'] = :binary
           content_type('application/zip, application/octet-stream')
-          filename = URI.escape("#{@sample.short_label}-analytical-files.zip")
+          filename = CGI.escape("#{@sample.short_label}-analytical-files.zip")
           header('Content-Disposition', "attachment; filename=\"#{filename}\"")
           zip = DownloadAnalysesJob.perform_now(@sample.id, current_user.id, true)
           zip.rewind
