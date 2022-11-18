@@ -177,6 +177,7 @@ class API < Grape::API
   mount Chemotion::MeasurementsAPI
   mount Chemotion::ConverterAPI
   mount Chemotion::AttachableAPI
+  mount Chemotion::SampleTaskAPI
   mount Chemotion::CommentAPI
 
   add_swagger_documentation(info: {
