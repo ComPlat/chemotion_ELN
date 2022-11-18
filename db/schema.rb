@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_09_08_132540) do
+ActiveRecord::Schema.define(version: 2022_11_04_155451) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -914,6 +914,20 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
     t.index ["sample_id"], name: "index_residues_on_sample_id"
   end
 
+  create_table "sample_tasks", force: :cascade do |t|
+    t.float "measurement_value"
+    t.string "measurement_unit", default: "g", null: false
+    t.string "description"
+    t.string "private_note"
+    t.string "additional_note"
+    t.bigint "creator_id", null: false
+    t.bigint "sample_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_sample_tasks_on_creator_id"
+    t.index ["sample_id"], name: "index_sample_tasks_on_sample_id"
+  end
+
   create_table "samples", id: :serial, force: :cascade do |t|
     t.string "name"
     t.float "target_amount_value", default: 0.0
@@ -1202,8 +1216,9 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
 
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
-
-  create_function :user_instrument, sql_definition: <<-SQL
+  add_foreign_key "sample_tasks", "samples"
+  add_foreign_key "sample_tasks", "users", column: "creator_id"
+  create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
        LANGUAGE sql
@@ -1217,7 +1232,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
          order by extended_metadata -> 'instrument' limit 10
        $function$
   SQL
-  create_function :collection_shared_names, sql_definition: <<-SQL
+  create_function :collection_shared_names, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
        LANGUAGE sql
@@ -1232,7 +1247,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
        ) as result
        $function$
   SQL
-  create_function :user_ids, sql_definition: <<-SQL
+  create_function :user_ids, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
        RETURNS TABLE(user_ids integer)
        LANGUAGE sql
@@ -1243,7 +1258,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
          and users.type in ('Group') and users_groups.user_id = $1)
         $function$
   SQL
-  create_function :user_as_json, sql_definition: <<-SQL
+  create_function :user_as_json, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
        RETURNS json
        LANGUAGE sql
@@ -1254,7 +1269,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
          ) as result
        $function$
   SQL
-  create_function :shared_user_as_json, sql_definition: <<-SQL
+  create_function :shared_user_as_json, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
        RETURNS json
        LANGUAGE plpgsql
@@ -1271,7 +1286,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
           end;
        $function$
   SQL
-  create_function :detail_level_for_sample, sql_definition: <<-SQL
+  create_function :detail_level_for_sample, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)
        RETURNS TABLE(detail_level_sample integer, detail_level_wellplate integer)
        LANGUAGE plpgsql
@@ -1304,7 +1319,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
-  create_function :group_user_ids, sql_definition: <<-SQL
+  create_function :group_user_ids, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
        RETURNS TABLE(user_ids integer)
        LANGUAGE sql
@@ -1314,7 +1329,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
              select user_id from users_groups where group_id = $1
       $function$
   SQL
-  create_function :generate_notifications, sql_definition: <<-SQL
+  create_function :generate_notifications, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_notifications(in_channel_id integer, in_message_id integer, in_user_id integer, in_user_ids integer[])
        RETURNS integer
        LANGUAGE plpgsql
@@ -1345,7 +1360,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
       	return in_message_id;
       end;$function$
   SQL
-  create_function :labels_by_user_sample, sql_definition: <<-SQL
+  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
        RETURNS TABLE(labels text)
        LANGUAGE sql
@@ -1360,7 +1375,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
          ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
        $function$
   SQL
-  create_function :generate_users_matrix, sql_definition: <<-SQL
+  create_function :generate_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
        RETURNS boolean
        LANGUAGE plpgsql
@@ -1395,7 +1410,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
       end
       $function$
   SQL
-  create_function :update_users_matrix, sql_definition: <<-SQL
+  create_function :update_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
        LANGUAGE plpgsql
@@ -1418,7 +1433,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
       end
       $function$
   SQL
-  create_function :literatures_by_element, sql_definition: <<-SQL
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
        RETURNS TABLE(literatures text)
        LANGUAGE sql
@@ -1428,6 +1443,7 @@ ActiveRecord::Schema.define(version: 2022_09_08_132540) do
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
+
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
       CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
