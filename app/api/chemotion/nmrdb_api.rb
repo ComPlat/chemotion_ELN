@@ -39,7 +39,7 @@ module Chemotion
 
       def update_simulation(simulation, molecule_id)
         molecule = Molecule.find(molecule_id)
-        simulation.update_attributes(source: "nmrdb") && simulation
+        simulation.update(source: 'nmrdb') && simulation
       end
     end
 

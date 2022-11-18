@@ -37,16 +37,15 @@ class Attachment < ApplicationRecord
   include AttachmentUploader::Attachment(:attachment)
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
-  
+
   has_ancestry ancestry_column: :version
   before_create :generate_key
   before_save :add_checksum, if: :new_upload
   before_create :add_content_type
   before_save :update_filesize
 
-
   #reload to get identifier:uuid
-  after_create :reload, on: :create
+  after_create :reload
 
   after_destroy :delete_file_and_thumbnail
 
@@ -175,7 +174,7 @@ class Attachment < ApplicationRecord
 
   def reload
     super
-  
+
     set_key
   end
 

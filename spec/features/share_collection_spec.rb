@@ -19,7 +19,7 @@ describe 'Copy sample' do
     CollectionsSample.find_or_create_by!(sample: sample, collection: col1)
   end
 
-  it ' share with permission read everything ', js: true do
+  it 'share with permission read everything', js: true do # rubocop:disable RSpec/MultipleExpectations
     find_by_id('tree-id-Col1').click
     find_all('input[type="checkbox"]').first.click
     first('i.fa-share-alt').click
@@ -40,7 +40,7 @@ describe 'Copy sample' do
     expect(page).to have_content('PH-1234', wait: 5)
   end
 
-  xit ' share with permission read limited ', js: true do
+  it 'share with permission read limited', js: true do # rubocop:disable RSpec/MultipleExpectations
     find_by_id('tree-id-Col1').click
     find_all('input[type="checkbox"]').first.click
     first('i.fa-share-alt').click

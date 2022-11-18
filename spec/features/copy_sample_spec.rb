@@ -6,9 +6,9 @@ describe 'Copy sample' do
   let!(:user) { create(:user, first_name: 'Hallo', last_name: 'Complat', account_active: true, confirmed_at: Time.now) }
   let!(:user2) { create(:user, first_name: 'User2', last_name: 'Complat', account_active: true, confirmed_at: Time.now) }
   let!(:mol) { create(:molecule, molecular_weight: 171.03448) }
-  let(:sample) { create(:sample, name: 'PH-1234', real_amount_value: 4.671, molecule: mol, solvent: '[]') }
-  let(:sample2) { create(:sample, name: 'PH-2222', real_amount_value: 4.671, molecule: mol, solvent: '[]') }
-  let(:sample3) { create(:sample, name: 'PH-3333', real_amount_value: 4.671, molecule: mol, solvent: '[]') }
+  let(:sample) { create(:sample, name: 'PH-1234', real_amount_value: 4.671, molecule: mol, solvent: []) }
+  let(:sample2) { create(:sample, name: 'PH-2222', real_amount_value: 4.671, molecule: mol, solvent: []) }
+  let(:sample3) { create(:sample, name: 'PH-3333', real_amount_value: 4.671, molecule: mol, solvent: []) }
   let!(:col1) { create(:collection, user_id: user.id, label: 'Col1', sample_detail_level: 10) }
   let!(:col2) { create(:collection, user_id: user.id, label: 'Col2', sample_detail_level: 10) }
 
@@ -27,13 +27,13 @@ describe 'Copy sample' do
     CollectionsSample.find_or_create_by!(sample: sample3, collection: cshare2)
   end
 
-  it ' new sample', js: true do
+  it 'new sample', js: true do
     find_by_id('tree-id-Col1').click
     first('i.icon-sample').click
     expect(page).not_to have_button('copy-element-btn', wait: 5)
   end
 
-  it ' to same collection', js: true do
+  it 'to same collection', js: true do
     find_by_id('tree-id-Col1').click
     find_all('.label--bold', text: 'PH-1234').first.click
     first('i.fa-clone').click
@@ -43,7 +43,7 @@ describe 'Copy sample' do
     expect(page).to have_content('Sample B')
   end
 
-  it ' to diff collection', js: true do
+  it 'to diff collection', js: true do # rubocop:disable RSpec/MultipleExpectations
     find('.tree-view', text: 'Col1').click
     find_all('.label--bold', text: 'PH-1234').first.click
     first('i.fa-clone').click
@@ -56,7 +56,7 @@ describe 'Copy sample' do
     expect(page).to have_content('Sample B')
   end
 
-  it ' copy shared collection with permission', js: true do
+  it 'copy shared collection with permission', js: true do # rubocop:disable RSpec/MultipleExpectations
     find_by_id('shared-home-link').click
     find_all('span.glyphicon-plus')[0].click
     find_by_id('tree-id-share-col').click
@@ -73,7 +73,7 @@ describe 'Copy sample' do
     expect(page).to have_content('Sample B')
   end
 
-  xit ' copy shared collection without permission', js: true do
+  it 'copy shared collection without permission', js: true do # rubocop:disable RSpec/MultipleExpectations
     find_by_id('shared-home-link').click
     find_all('span.glyphicon-plus')[0].click
     find_by_id('tree-id-share-col-2').click
