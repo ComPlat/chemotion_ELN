@@ -1,12 +1,8 @@
 development:
-  :url: https://test.radar-service.eu
+  :url:
   :client_id:
   :client_secret:
   :redirect_uri:
-  :username:
-  :password:
-  :contract_id:
-  :workspace_id:
   :email:
   :backlink:
   :publisher:
@@ -16,14 +12,10 @@ development:
   :softwareVersion:
 
 production:
-  :url: https://www.radar-service.eu
+  :url:
   :client_id:
   :client_secret:
   :redirect_uri:
-  :username:
-  :password:
-  :contract_id:
-  :workspace_id:
   :email:
   :backlink:
   :publisher:
