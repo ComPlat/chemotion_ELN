@@ -2,11 +2,11 @@ import 'whatwg-fetch';
 
 export default class SampleTaskFetcher {
   static openSampleTasks() {
-    return _fetchSampleTasks('open');
+    return this._fetchSampleTasks('open');
   }
 
   static openFreeScans() {
-    return _fetchSampleTasks('open_free_scan');
+    return this._fetchSampleTasks('open_free_scan');
   }
 
   static _fetchSampleTasks(status) {
