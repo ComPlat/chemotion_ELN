@@ -139,6 +139,13 @@ describe Chemotion::SampleTaskAPI do
 
         expect(parsed_json_response['image']).not_to be_nil
       end
+
+      it 'returns correct attachment' do
+        post '/api/v1/sample_tasks', params: open_free_scan_params
+
+        expect(Attachment.find(parsed_json_response['id']).filename).to eq("upload.jpg")
+        expect(Attachment.find(parsed_json_response['id']).attachment_data).not_to be_nil
+      end
     end
 
     context 'when given params build an invalid sample task' do
