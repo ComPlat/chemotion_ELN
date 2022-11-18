@@ -14,12 +14,12 @@ module Usecases
           sync_collection_attributes = collection_attributes.select do |k, _v|
             k.to_s.match(/#{keys.join('|')}/)
           end
-          sCol = SyncCollectionsUser.find_or_create_by(
+          sync_collections_user = SyncCollectionsUser.find_or_create_by(
             user_id: sync_collection_attributes['user_id'],
             collection_id: sync_collection_attributes['collection_id'],
             shared_by_id: sync_collection_attributes['shared_by_id']
           )
-          sCol.update_attributes(
+          sync_collections_user.update(
             permission_level: sync_collection_attributes['permission_level'],
             sample_detail_level: sync_collection_attributes['sample_detail_level'],
             reaction_detail_level: sync_collection_attributes['reaction_detail_level'],
@@ -31,7 +31,7 @@ module Usecases
           current_user_id = collection_attributes.fetch(:shared_by_id)
 
           # find or create and assign parent collection ()
-          root_label = format('with %s', sCol.user.name_abbreviation)
+          root_label = format('with %s', sync_collections_user.user.name_abbreviation)
           root_collection_attributes = {
             label: root_label,
             user_id: collection_attributes[:user_id],
@@ -41,7 +41,7 @@ module Usecases
           }
 
           rc = Collection.find_or_create_by(root_collection_attributes)
-          sCol.update(fake_ancestry: rc.id.to_s)
+          sync_collections_user.update(fake_ancestry: rc.id.to_s)
 
           # SendSharingNotificationJob.perform_later(@user, '')
         end

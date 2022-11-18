@@ -70,9 +70,13 @@ module Export
     end
 
     def to_html
-      view = ActionView::Base.new(ActionController::Base.view_paths, {})
-      view.assign(name: @name, fields: @fields)
-      view.render(file: 'export/research_plan')
+      ActionView::Base
+        .with_empty_template_cache
+        .with_view_paths(
+          ActionController::Base.view_paths, # Rails 6 no longer has defaults
+          { name: @name, fields: @fields },
+          nil,
+        ).render(template: 'export/research_plan')
     end
 
     def to_relative_html

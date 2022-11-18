@@ -55,11 +55,11 @@ module DataCite
     end
 
     def create_at_chemotion!
-      @chemotion_metadata.update_attributes!(@converter.to_chemotion_for_create)
+      @chemotion_metadata.update!(@converter.to_chemotion_for_create)
     end
 
     def update_at_chemotion!
-      @chemotion_metadata.update_attributes!(@converter.to_chemotion_for_update)
+      @chemotion_metadata.update!(@converter.to_chemotion_for_update)
     end
   end
 end

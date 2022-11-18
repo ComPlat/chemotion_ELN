@@ -2,16 +2,15 @@
 # It builds an app container based on Dockerfile.chemotion.dev
 #
 # USAGE:
-# - Run app server: docker-compose -f docker-compose.dev.yml up
-# - Initial dev setup without external seeds: docker-compose -f docker-compose.dev.yml run app bundle exec rake db:setup
-# - Open shell within container (for rake tasks etc): docker-compose -f docker-compose.dev.yml run app /bin/bash
-# - Run unit tests: docker-compose -f docker-compose.dev.yml run app bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb
-# - Run feature tests: docker-compose -f docker-compose.dev.yml run app bundle exec rspec spec/features
-# - Run JS tests: docker-compose -f docker-compose.dev.yml run app npm test
-# Note: all these commands can be run manually from the shell. This might be the better choice as docker creates an overlay FS for every run
+# - Run development environment:
+#     docker-compose -f docker-compose.dev.yml up postgres app webpacker
+# - Open a bash shell in the app container:
+#     docker exec -it NAME_OF_APP_CONTAINER_FROM_DOCKER_PS /bin/bash
+# - Setup the database environment inside the bash shell:
+#     bundle exec rake db:setup
+# - Run tests:
+#     bundle exec rspec
 #
-
-
 version: '3'
 
 services:
