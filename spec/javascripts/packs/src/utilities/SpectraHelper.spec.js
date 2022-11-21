@@ -6,7 +6,9 @@ import { FN } from '@complat/react-spectra-editor';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
   JcampIds, BuildSpcInfos, cleaningNMRiumData,
-  inlineNotation,
+  inlineNotation, BuildSpectraComparedInfos,
+  BuildSpectraComparedSelection, GetSelectedComparedAnalyses,
+  ProcessSampleWithComparisonAnalyses,
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
@@ -491,6 +493,230 @@ describe('SpectraHelper', () => {
         expect(formattedString).toEqual(expectedString);
         expect(quillData).toEqual(expectedQuillData);
       });
+    })
+  });
+
+  describe('.BuildSpectraComparedInfos()', () => {
+    describe('when sample or container is null or undefined', () => {
+      it('sample is null or undefined', () => {
+        const specInfo1 = BuildSpectraComparedInfos(null, 'just a random value');
+        expect(specInfo1).toEqual([]);
+
+        const specInfo2 = BuildSpectraComparedInfos(undefined, 'just a random value');
+        expect(specInfo2).toEqual([]);
+      });
+
+      it('container is null or undefined', () => {
+        const specInfo1 = BuildSpectraComparedInfos('just a random value', null);
+        expect(specInfo1).toEqual([]);
+
+        const specInfo2 = BuildSpectraComparedInfos('just a random value', undefined);
+        expect(specInfo2).toEqual([]);
+      });
+    });
+
+    describe('when it does not has any comparable info', () => {
+      let container;
+      beforeEach(() => {
+        container = Container.buildEmpty();
+      });
+
+      it('container does not has any comparable info', () => {
+        const specInfo = BuildSpectraComparedInfos('just a random value', container);
+        expect(specInfo).toEqual([]);
+      });
+
+      it('container has comparable info', () => {
+        const { extended_metadata } = container;
+        const comparableData = {
+          file: { name: 'testfile.jdx', id: '1' },
+          dataset: { name: 'dataset.title', id: 'dataset.key' },
+          analysis: { name: 'analysis.title', id: 'analysis.key' },
+          layout: 'layout.title',
+        };
+        extended_metadata.analyses_compared = [comparableData];
+
+        const specInfo = BuildSpectraComparedInfos('just a random value', container);
+        const expectedValue = [{ idx: comparableData.file.id, info: comparableData }]
+        expect(specInfo).toEqual(expectedValue);
+      });
+    });
+  });
+
+  describe('.BuildSpectraComparedSelection()', () => {
+    describe('when it does not have sample information', () => {
+      it('sample is null', () => {
+        const { menuItems, selectedFiles } = BuildSpectraComparedSelection(null);
+        expect(menuItems).toEqual([]);
+        expect(selectedFiles).toEqual([]);
+      });
+
+      it('sample is undefined', () => {
+        const { menuItems, selectedFiles } = BuildSpectraComparedSelection(undefined);
+        expect(menuItems).toEqual([]);
+        expect(selectedFiles).toEqual([]);
+      });
+    });
+
+    describe('when it is an sample', () => {
+      let sample = null;
+      beforeEach(() => {
+        sample = Sample.buildEmpty();
+      });
+
+      it('it does not have any comparison container', () => {
+        const { menuItems, selectedFiles } = BuildSpectraComparedSelection(sample);
+        expect(menuItems).toEqual([]);
+        expect(selectedFiles).toEqual([]);
+      });
+
+      it('it has comparison container', () => {
+        const analyses1 = Container.buildEmpty();
+        analyses1.container_type = 'analyses';
+        const analyses2 = Container.buildEmpty();
+        analyses2.container_type = 'analyses';
+        const analyses3 = Container.buildEmpty();
+        analyses3.container_type = 'analyses';
+
+        const analysis1 = Container.buildEmpty();
+        analysis1.container_type = 'analysis';
+        analysis1.extended_metadata.kind = '1H NMR'
+        analyses1.children.push(analysis1);
+
+        const analysis2 = Container.buildEmpty();
+        analysis2.container_type = 'analysis';
+        analysis2.extended_metadata.kind = '1H NMR';
+        analyses2.children.push(analysis2);
+
+        const analysis3 = Container.buildEmpty();
+        analysis3.container_type = 'analysis';
+        analysis3.extended_metadata.kind = '1H NMR'
+        analyses3.children.push(analysis3);
+
+        analysis3.comparable_info = { is_comparison: true, list_attachments: [{id: 1}, {id: 2}] };
+
+        sample.container.children.push(analyses1);
+        sample.container.children.push(analyses2);
+        sample.container.children.push(analyses3);
+
+        const { menuItems, selectedFiles } = BuildSpectraComparedSelection(sample);
+        expect(menuItems).not.toEqual([]);
+        const firstItem = menuItems[0];
+        expect(firstItem['value']).toEqual('1H NMR');
+        expect(firstItem['title']).toEqual('Type: 1H NMR');
+        expect(selectedFiles).toEqual([1, 2]);
+      });
+    });
+  });
+
+  describe('.GetSelectedComparedAnalyses()', () => {
+    describe('when selectedFiles is invalid', () => {
+      let container;
+      beforeEach(() => {
+        container = Container.buildEmpty();
+      });
+
+      it('when selectedFiles is null or undefined', () => {
+        let selectedData = GetSelectedComparedAnalyses(container, [], null, 'what ever');
+        expect(selectedData).toEqual([]);
+
+        selectedData = GetSelectedComparedAnalyses(container, [], undefined, 'what ever');
+        expect(selectedData).toEqual([]);
+      });
+
+      it('when info is null or undefined', () => {
+        let selectedData = GetSelectedComparedAnalyses(container, [], [1], null);
+        expect(selectedData).toEqual([]);
+
+        selectedData = GetSelectedComparedAnalyses(container, [], [1], undefined);
+        expect(selectedData).toEqual([]);
+      });
+
+      it('when info and selectedFiles neither are not null nor undefined, but have different length', () => {
+        const selectedData = GetSelectedComparedAnalyses(container, [], [1, 2], [1]);
+        expect(selectedData).toEqual([]);
+      });
+    });
+
+    describe('when selectedFiles is valid', () => {
+      it('get compared analyses', () => {
+        const container = Container.buildEmpty();
+        const treeData = [{"title":" 1H nuclear magnetic resonance spectroscopy (1H NMR)","key":" 1H nuclear magnetic resonance spectroscopy (1H NMR)","value":" 1H nuclear magnetic resonance spectroscopy (1H NMR)","children":[{"title":"test","value":630,"key":630,"children":[{"title":"new","key":631,"value":631,"checkable":false,"children":[{"title":"File012.peak.jdx","key":7921,"value":7921}]}],"checkable":false}],"checkable":false},{"title":"other","key":"other","value":"other","children":[{"title":"","value":632,"key":632,"children":[],"checkable":false}],"checkable":false}];
+        const selectedData = GetSelectedComparedAnalyses(container, treeData, [7921], ["File012.peak.jdx"]);
+        const expectedData = [
+          {
+            "analysis": {
+              "id": 630,
+              "name": "test",
+            },
+            "dataset": {
+              "id": 631,
+              "name": "new",
+            },
+            "file": {
+              "id": 7921,
+              "name": "File012.peak.jdx",
+            },
+            "layout": " 1H nuclear magnetic resonance spectroscopy (1H NMR)",
+          }
+        ];
+        expect(selectedData).toEqual(expectedData);
+      });
+    });
+  });
+
+  describe('.ProcessSampleWithComparisonAnalyses()', () => {
+    let sample = null;
+    let spectraStore = null;
+    beforeEach(() => {
+      sample = Sample.buildEmpty();
+      spectraStore = { spcIdx: 3, prevIdx: 1};
+    });
+
+    it('it does not have any comparison container', () => {
+      const newSample = ProcessSampleWithComparisonAnalyses(sample, spectraStore);
+      const comparableContainers = newSample.getAnalysisContainersComparable();
+      expect(comparableContainers).toEqual({});
+    });
+
+    it('it has comparison container', () => {
+      const analyses1 = Container.buildEmpty();
+      analyses1.container_type = 'analyses';
+      const analyses2 = Container.buildEmpty();
+      analyses2.container_type = 'analyses';
+      const analyses3 = Container.buildEmpty();
+      analyses3.container_type = 'analyses';
+
+      const analysis1 = Container.buildEmpty();
+      analysis1.container_type = 'analysis';
+      analysis1.extended_metadata.kind = '1H NMR'
+      analyses1.children.push(analysis1);
+
+      const analysis2 = Container.buildEmpty();
+      analysis2.container_type = 'analysis';
+      analysis2.extended_metadata.kind = '1H NMR';
+      analyses2.children.push(analysis2);
+
+      const analysis3 = Container.buildEmpty();
+      analysis3.container_type = 'analysis';
+      analysis3.extended_metadata.kind = '1H NMR';
+      analysis3.extended_metadata.analyses_compared = [{file: {id: 1}}, {file: {id: 2}}];
+      analyses3.children.push(analysis3);
+
+      analysis3.comparable_info = { is_comparison: true, list_attachments: [{id: 1}, {id: 2}]};
+
+      sample.container.children.push(analyses1);
+      sample.container.children.push(analyses2);
+      sample.container.children.push(analyses3);
+
+      const newSample = ProcessSampleWithComparisonAnalyses(sample, spectraStore);
+      const comparableContainers = newSample.getAnalysisContainersComparable();
+      const comparibles = comparableContainers['1H NMR'];
+      const thirdComparible = comparibles[2];
+      const { extended_metadata } = thirdComparible;
+      const { analyses_compared } = extended_metadata;
+      const expectedData = [{file: {id: 3}}, {file: {id: 2}}];
+      expect(analyses_compared).toEqual(expectedData);
     });
   });
 });

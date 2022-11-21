@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rspec/NestedGroups
+# rubocop:disable RSpec/NestedGroups
 # rubocop:disable RSpec/MultipleMemoizedHelpers
 # rubocop:disable RSpec/AnyInstance
 # rubocop:disable RSpec/BeforeAfterAll
@@ -548,7 +548,7 @@ describe Chemotion::AttachmentAPI do
         execute_request
       end
 
-      it 'returns statuscode 201' do
+      it 'returns status code 201' do
         expect(response).to have_http_status(:created)
       end
 
@@ -764,7 +764,7 @@ class ThumbnailerMock
     tmp_path
   end
 end
-# rubocop:enable Rspec/NestedGroups
+# rubocop:enable RSpec/NestedGroups
 # rubocop:enable RSpec/MultipleMemoizedHelpers
 # rubocop:enable RSpec/AnyInstance
 # rubocop:enable RSpec/BeforeAfterAll
