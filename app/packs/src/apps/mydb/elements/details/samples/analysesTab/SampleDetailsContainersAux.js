@@ -1,12 +1,16 @@
 import React from 'react';
-import { Button, Checkbox } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import {
+  Button, Checkbox, OverlayTrigger, Tooltip,
+  MenuItem, SplitButton, ButtonGroup, Dropdown
+} from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import { stopBubble } from 'src/utilities/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
+import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind, BuildSpectraComparedInfos } from 'src/utilities/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -14,6 +18,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>
@@ -52,6 +57,166 @@ const qCheckMsg = (sample, container) => {
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'MS', '');
   }
   return '';
+};
+
+const SpectraEditorBtn = ({
+  sample, spcInfos, hasJcamp, hasChemSpectra,
+  toggleSpectraModal, confirmRegenerate, confirmRegenerateEdited, hasEditedJcamp,
+  toggleNMRDisplayerModal, hasNMRium
+}) => (
+  <span>
+    <OverlayTrigger
+    placement="bottom"
+    delayShow={500}
+    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
+  >{spcInfos.length > 0 ? (
+    <ButtonGroup className="button-right">
+      <SplitButton
+        id="spectra-editor-split-button"
+        pullRight
+        bsStyle="info"
+        bsSize="xsmall"
+        title={<i className="fa fa-area-chart" />}
+        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+        onClick={toggleSpectraModal}
+        disabled={!(spcInfos.length > 0) || !hasChemSpectra}
+      >
+        <MenuItem
+          id="regenerate-spectra"
+          key="regenerate-spectra"
+          onSelect={(eventKey, event) => {
+            event.stopPropagation();
+            confirmRegenerate(event);
+          }}
+          disabled={!hasJcamp || !sample.can_update}
+        >
+          <i className="fa fa-refresh" /> Reprocess
+        </MenuItem>
+        {
+          hasEditedJcamp ? 
+            (<MenuItem
+              id="regenerate-edited-spectra"
+              key="regenerate-edited-spectra"
+              onSelect={(eventKey, event) => {
+                event.stopPropagation();
+                confirmRegenerateEdited(event);
+              }}
+            >
+              <i className="fa fa-refresh" /> Regenerate .edit.jdx files
+            </MenuItem>) : <span></span>
+        }
+      </SplitButton>
+    </ButtonGroup>
+  ) : (
+    <Button
+      bsStyle="warning"
+      bsSize="xsmall"
+      className="button-right"
+      onClick={confirmRegenerate}
+      disabled={!hasJcamp || !sample.can_update || !hasChemSpectra}
+    >
+      <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
+    </Button>
+  )}
+  </OverlayTrigger>
+
+  {
+        hasNMRium ? (
+            <OverlayTrigger
+            placement="top"
+            delayShow={500}
+            overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
+            >
+                <ButtonGroup className="button-right">
+                    <Button
+                    id="spectra-editor-split-button"
+                    pullRight
+                    bsStyle="info"
+                    bsSize="xsmall"
+                    onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+                    onClick={toggleNMRDisplayerModal}
+                    disabled={!hasJcamp || !sample.can_update}
+                    >
+                    <i className="fa fa-bar-chart"/>
+                    </Button>
+                </ButtonGroup>
+            </OverlayTrigger>
+        ) : null
+    }
+  </span>
+);
+
+SpectraEditorBtn.propTypes = {
+  sample: PropTypes.object,
+  hasJcamp: PropTypes.bool,
+  spcInfos: PropTypes.array,
+  hasChemSpectra: PropTypes.bool,
+  toggleSpectraModal: PropTypes.func.isRequired,
+  confirmRegenerate: PropTypes.func.isRequired,
+  confirmRegenerateEdited: PropTypes.func.isRequired,
+  hasEditedJcamp: PropTypes.bool,
+  toggleNMRDisplayerModal: PropTypes.func.isRequired,
+  hasNMRium: PropTypes.bool,
+};
+
+SpectraEditorBtn.defaultProps = {
+  hasJcamp: false,
+  spcInfos: [],
+  sample: {},
+  hasChemSpectra: false,
+  hasEditedJcamp: false,
+  hasNMRium: false,
+};
+
+const SpectraCompareBtn = ({
+  sample, spcInfos, spectraCompare,
+  toggleSpectraModal,
+}) => (
+  <OverlayTrigger
+    placement="bottom"
+    delayShow={500}
+    overlay={<Tooltip id="spectra">Spectra Editor</Tooltip>}
+  >
+     <ButtonGroup className="button-right">
+      <SplitButton
+        id="spectra-editor-split-button"
+        pullRight
+        bsStyle="info"
+        bsSize="xsmall"
+        title={<i className="fa fa-area-chart" />}
+        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+        onClick={toggleSpectraModal}
+        disabled={!(spcInfos.length > 0) || (spectraCompare.length > 0)}
+      >
+        {/* <MenuItem
+          id="regenerate-spectra"
+          key="regenerate-spectra"
+          onSelect={(eventKey, event) => {
+            event.stopPropagation();
+            confirmRegenerate(event);
+          }}
+          disabled={!hasJcamp || !sample.can_update}
+        >
+          <i className="fa fa-refresh" /> Reprocess
+        </MenuItem> */}
+      </SplitButton>
+    </ButtonGroup>
+  </OverlayTrigger>
+);
+
+SpectraCompareBtn.propTypes = {
+  sample: PropTypes.object,
+  spectraCompare: PropTypes.object,
+  spcInfos: PropTypes.array,
+  hasChemSpectra: PropTypes.bool,
+  toggleSpectraModal: PropTypes.func.isRequired,
+};
+
+SpectraCompareBtn.defaultProps = {
+  spectraCompare: [],
+  spcInfos: [],
+  sample: {},
+  hasChemSpectra: false,
 };
 
 const editModeBtn = (toggleMode, isDisabled) => (
@@ -189,6 +354,14 @@ const headerBtnGroup = (
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
   const { chmos } = UserStore.getState();
   const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
+  const spcCompareInfo = BuildSpectraComparedInfos(sample, container);
+  const toggleCompareModal = (e) => {
+    e.stopPropagation();
+    SpectraActions.ToggleCompareModal(container);
+    SpectraActions.LoadSpectraCompare.defer(spcCompareInfo); // going to fetch files base on spcInfos
+  };
+
+  const { spectraCompare } = SpectraStore.getState();
 
   return (
     <div className="upper-btn">
@@ -206,8 +379,8 @@ const headerBtnGroup = (
         analyses={[container]}
         ident={container.id}
       />
-      <SpectraEditorButton
-        element={sample}
+      {/* <SpectraEditorBtn
+        sample={sample}
         hasJcamp={hasJcamp}
         spcInfos={spcInfos}
         hasChemSpectra={hasChemSpectra}
@@ -217,7 +390,28 @@ const headerBtnGroup = (
         confirmRegenerateEdited={confirmRegenerateEdited}
         toggleNMRDisplayerModal={toggleNMRDisplayerModal}
         hasNMRium={hasNMRium}
-      />
+      /> */}
+      {
+        container.extended_metadata.is_comparison ? (
+          <SpectraCompareBtn
+            sample={sample}
+            spectraCompare={spectraCompare}
+            spcInfos={spcCompareInfo}
+            toggleSpectraModal={toggleCompareModal}
+          />
+        ): (
+          <SpectraEditorBtn
+            sample={sample}
+            hasJcamp={hasJcamp}
+            spcInfos={spcInfos}
+            hasChemSpectra={hasChemSpectra}
+            hasEditedJcamp={hasEditedJcamp}
+            toggleSpectraModal={toggleSpectraModal}
+            confirmRegenerate={confirmRegenerate}
+            confirmRegenerateEdited={confirmRegenerateEdited}
+          />
+        )
+      }
       <span
         className="button-right add-to-report"
         onClick={stopBubble}
@@ -261,6 +455,22 @@ const HeaderNormal = ({
   } else {
     hasPop = false;
   }
+
+  const { analyses_compared } = container.extended_metadata;
+  const { comparable_info } = container;
+  let is_comparison = false;
+  let layout = '';
+  let list_attachments = [];
+  let list_analyses = [];
+  let list_dataset = [];
+  if (comparable_info) {
+    is_comparison = comparable_info.is_comparison;
+    layout = comparable_info.layout;
+    list_attachments = comparable_info.list_attachments;
+    list_analyses = comparable_info.list_analyses;
+    list_dataset = comparable_info.list_dataset;
+  }
+  
   return (
     <div
       className={`analysis-header ${mode === 'edit' ? '' : 'order'}`}
@@ -289,16 +499,34 @@ const HeaderNormal = ({
         }
         <div className="lower-text">
           <div className="main-title">{container.name}</div>
-          <div className="sub-title">Type: {kind}</div>
-          <div className="sub-title">
-            Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
-          </div>
-          <div className="desc sub-title">
-            <span style={{ float: 'left', marginRight: '5px' }}>
-              Content:
-            </span>
-            <QuillViewer value={contentOneLine} />
-          </div>
+          {
+            is_comparison ? (
+              <>
+                <div className="sub-title">Layout: { layout }</div>
+                <div className="desc sub-title">Spectra: 
+                {
+                  (list_attachments && list_attachments.length > 0) ? list_attachments.map((spectra, idx) => (
+                    // <p>{`-File: ${spectra.file.name}, dataset: ${spectra.dataset.name}, analysis: ${spectra.analysis.name}`}</p>
+                    <p>{`-File: ${spectra.filename}, dataset: ${list_dataset[idx].name}, analysis: ${list_analyses[idx].name}`}</p>
+                  )) : ''
+                }
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="sub-title">Type: {kind}</div>
+                <div className="sub-title">
+                  Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
+                </div>
+                <div className="desc sub-title">
+                  <span style={{ float: 'left', marginRight: '5px' }}>
+                    Content:
+                  </span>
+                  <QuillViewer value={contentOneLine} />
+                </div>
+              </>
+            )
+          }
         </div>
       </div>
     </div>
