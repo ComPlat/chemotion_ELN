@@ -5,6 +5,7 @@ import {
   FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Well, ButtonToolbar,
   ListGroup, ListGroupItem, InputGroup
 } from 'react-bootstrap';
+import Spinner from 'react-svg-spinner';
 import Select from 'react-select';
 import SVG from 'react-inlinesvg';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
@@ -25,7 +26,9 @@ export default class ChemicalTab extends React.Component {
       vendorChemPropertiesValue: '',
       queryOption: 'Common Name',
       safetySheetLanguage: 'en',
-      safetyPhrases: ''
+      safetyPhrases: '',
+      loading: false,
+      loadChemicalProperties: false,
     };
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
   }
@@ -125,6 +128,7 @@ export default class ChemicalTab extends React.Component {
 
   querySafetySheets = () => {
     const { sample } = this.props;
+    this.setState({ loading: true });
     const sampleName = sample.showedName();
     const moleculeId = sample.molecule_name_hash ? sample.molecule_name_hash.mid : null;
     const {
@@ -136,7 +140,11 @@ export default class ChemicalTab extends React.Component {
     }
 
     const queryParams = {
-      id: moleculeId, vendor: vendorValue, queryOption, language: safetySheetLanguage
+      id: moleculeId,
+      vendor: vendorValue,
+      queryOption,
+      language: safetySheetLanguage,
+      cas: chemical._cas
     };
     const { safetySheets } = this.state;
 
@@ -145,6 +153,7 @@ export default class ChemicalTab extends React.Component {
       safetySheets.splice(0, 1);
       this.setState({ safetySheets });
       this.setState({ safetySheets: Object.values(obj) });
+      this.setState({ loading: false });
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -208,6 +217,7 @@ export default class ChemicalTab extends React.Component {
   fetchChemicalProperties = (vendor) => {
     const { chemical } = this.state;
     let productLink;
+    this.setState({ loadChemicalProperties: true });
 
     if (chemical && vendor === 'thermofischer') {
       productLink = chemical._chemical_data[0].alfaProductInfo ? chemical._chemical_data[0].alfaProductInfo.productLink : '';
@@ -216,6 +226,7 @@ export default class ChemicalTab extends React.Component {
     }
 
     ChemicalFetcher.chemicalProperties(productLink).then((result) => {
+      this.setState({ loadChemicalProperties: false });
       if (result === 'Could not find additional chemical properties' || result === null) {
         NotificationActions.add({
           message: 'Could not find additional chemical properties',
@@ -274,7 +285,9 @@ export default class ChemicalTab extends React.Component {
     const val = data !== undefined ? data[parameter] : '';
     const statusOptions = [
       { label: 'Available', value: 'Available' },
-      { label: 'Out of stock', value: 'Out of stock' }
+      { label: 'Out of stock', value: 'Out of stock' },
+      { label: 'To be ordered', value: 'To be ordered' },
+      { label: 'Ordered', value: 'Ordered' }
     ];
     const noBoldLabel = { fontWeight: 'normal' };
     return (
@@ -348,6 +361,57 @@ export default class ChemicalTab extends React.Component {
             onChange={(e) => this.handleFieldChanged(parameter, e.target.value)}
           />
           <InputGroup.Addon>{unit}</InputGroup.Addon>
+        </InputGroup>
+      </FormGroup>
+    );
+  }
+
+  // onCasSelectOpen(e) {
+  //   const { sample } = this.props;
+  // }
+
+  onChangeCas = (e) => {
+    // console.log(e);
+    const value = e ? e.value : '';
+    this.handleFieldChanged('cas', value);
+  };
+
+  casNumber(data, label) {
+    const { chemical } = this.state;
+    const { sample } = this.props;
+    const { molecule } = sample;
+    const val = data !== undefined ? data : 'hola';
+    const noBoldLabel = { fontWeight: 'normal' };
+    // const onOpen = (e) => this.onCasSelectOpen(e);
+    let statusOptions = [];
+
+    if (molecule && molecule.cas) {
+      const fetchCas = molecule.cas.map((c) => ({ label: c, value: c }));
+      statusOptions = fetchCas;
+    }
+
+    if (chemical) {
+      const cas = chemical._cas ? chemical._cas : '';
+      const casObject = [
+        { label: cas, value: cas }
+      ];
+      const valuesArr = statusOptions.map(({ value }) => value) || [];
+      statusOptions = cas !== '' && !valuesArr.includes(cas) ? statusOptions.concat(casObject) : statusOptions;
+    }
+    const onChange = (e) => this.onChangeCas(e);
+    return (
+      <FormGroup>
+        <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
+        <InputGroup className="cas-number" style={{ width: '100%', paddingRight: '10px' }}>
+          <Select.Creatable
+            name="cas"
+            multi={false}
+            options={statusOptions}
+            onChange={onChange}
+            // onOpen={onOpen}
+            value={val || ''}
+            clearable
+          />
         </InputGroup>
       </FormGroup>
     );
@@ -525,16 +589,19 @@ export default class ChemicalTab extends React.Component {
     ];
 
     return (
-      <FormGroup style={{ width: '100%' }}>
-        <ControlLabel style={{ paddingRight: '25px' }}>Query SSD using</ControlLabel>
-        <Select
-          name="queryOption"
-          clearable={false}
-          options={queryOptions}
-          onChange={(e) => this.handleQueryOption(e.value)}
-          value={queryOption}
-        />
-      </FormGroup>
+      <OverlayTrigger placement="top" overlay={<Tooltip id="ssd-query-message">Assign a cas number using the cas field in labels section for better search results using cas number</Tooltip>}>
+        <FormGroup style={{ width: '100%' }}>
+          <ControlLabel style={{ paddingRight: '25px' }}>Query SSD using</ControlLabel>
+          <Select
+            name="queryOption"
+            clearable={false}
+            options={queryOptions}
+            onChange={(e) => this.handleQueryOption(e.value)}
+            value={queryOption}
+          />
+        </FormGroup>
+      </OverlayTrigger>
+
     );
   }
 
@@ -571,35 +638,36 @@ export default class ChemicalTab extends React.Component {
       }
     }
     return (
-      (sdsStatus === undefined || sdsStatus.length === 0) ? null : (
-        <ListGroup>
-          {sdsStatus.map((document, index) => (
-            document !== 'Could not find safety data sheet' ? (
-              <ListGroupItem key="safetySheetsFiles">
-                <div>
-                  <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
-                    {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofischer' : 'Safety Data Sheet from Merck'}
-                    { this.checkMarkButton(document) }
-                  </a>
-                  <ButtonToolbar className="pull-right">
-                    {this.saveSafetySheets(document)}
-                    {this.removeButton(index, document)}
-                  </ButtonToolbar>
-                </div>
-              </ListGroupItem>
-            )
-              : (
-                <ListGroupItem>
+      (sdsStatus === undefined || sdsStatus.length === 0) ? null
+        : (
+          <ListGroup>
+            {sdsStatus.map((document, index) => (
+              document !== 'Could not find safety data sheet' ? (
+                <ListGroupItem key="safetySheetsFiles">
                   <div>
-                    <p>
-                      {(index === 0) ? 'Could not find safety data sheet from Thermofischer' : 'Could not find safety Data Sheet from Merck'}
-                    </p>
+                    <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
+                      {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofischer' : 'Safety Data Sheet from Merck'}
+                      { this.checkMarkButton(document) }
+                    </a>
+                    <ButtonToolbar className="pull-right">
+                      {this.saveSafetySheets(document)}
+                      {this.removeButton(index, document)}
+                    </ButtonToolbar>
                   </div>
                 </ListGroupItem>
               )
-          ))}
-        </ListGroup>
-      )
+                : (
+                  <ListGroupItem>
+                    <div>
+                      <p>
+                        {(index === 0) ? 'Could not find safety data sheet from Thermofischer' : 'Could not find safety Data Sheet from Merck'}
+                      </p>
+                    </div>
+                  </ListGroupItem>
+                )
+            ))}
+          </ListGroup>
+        )
     );
   };
 
@@ -685,7 +753,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   renderChemicalProperties = () => {
-    const { vendorChemPropertiesValue } = this.state;
+    const { vendorChemPropertiesValue, loading, loadChemicalProperties } = this.state;
 
     return (
       <table>
@@ -695,13 +763,20 @@ export default class ChemicalTab extends React.Component {
               <div style={{ width: '%100', display: 'flex', justifyContent: 'justify' }}>
                 <div style={{ width: '%30', paddingRight: '20px' }}>
                   {this.chooseVendorForChemicalProperties()}
-                </div> 
+                </div>
                 <div style={{ width: '%30', paddingTop: '25px', paddingRight: '20px' }}>
                   <Button
                     id="safetyPhrases-btn"
                     onClick={() => this.fetchChemicalProperties(vendorChemPropertiesValue)}
+                    disabled={!!loading || !!loadChemicalProperties}
+                    style={{ width: 200 }}
                   >
-                    fetch Chemical Properties
+                    {loadChemicalProperties === false ? 'fetch Chemical Properties'
+                      : (
+                        <Spinner animation="border" role="status">
+                          <span className="visually-hidden">Loading...</span>
+                        </Spinner>
+                      )}
                   </Button>
                 </div>
                 <div style={{ width: '%30', paddingTop: '25px' }}>
@@ -722,7 +797,7 @@ export default class ChemicalTab extends React.Component {
 
   render() {
     const {
-      chemical
+      chemical, loading
     } = this.state;
     let cas;
     let data;
@@ -745,14 +820,14 @@ export default class ChemicalTab extends React.Component {
           <tr>
             <td colSpan="5" style={styleBorderless}>
               <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '25%' }}>
+                <div style={{ width: '20%' }}>
                   {this.chemicalStatus(data, 'Status', 'status')}
                 </div>
-                <div style={{ width: '15%' }}>
-                  {this.textInput(cas, 'CAS', 'cas')}
+                <div style={{ width: '20%' }}>
+                  {this.casNumber(cas, 'CAS')}
                 </div>
-                <div style={{ width: '15%' }}>
-                  {this.textInput(data, 'Internal label', 'internal_label')}
+                <div style={{ width: '20%' }}>
+                  {this.textInput(data, 'Internal (CCP) label', 'internal_label')}
                 </div>
                 <div style={{ width: '15%' }}>
                   {this.textInput(data, 'Purity', 'purity')}
@@ -897,8 +972,15 @@ export default class ChemicalTab extends React.Component {
                   <Button
                     id="submit-sds-btn"
                     onClick={() => this.querySafetySheets()}
+                    style={{ width: 150 }}
+                    disabled={!!loading}
                   >
-                    Search for SDS
+                    {loading === false ? 'Search for SDS'
+                      : (
+                        <Spinner animation="border" role="status">
+                          <span className="visually-hidden">Loading...</span>
+                        </Spinner>
+                      )}
                   </Button>
                 </div>
               </div>

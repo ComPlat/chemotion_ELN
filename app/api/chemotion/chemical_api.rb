@@ -72,7 +72,7 @@ module Chemotion
             when 'Common Name'
               name = molecule.names[0]
             when 'CAS'
-              name = molecule.cas[0]
+              name = data[:cas] || molecule.cas[0]
             end
             case vendor
             when 'Merck'
