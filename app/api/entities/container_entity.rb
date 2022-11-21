@@ -36,6 +36,10 @@ module Entities
           metadata[:hyperlinks] =
             JSON.parse(object.extended_metadata['hyperlinks'])
         end
+        if object.extended_metadata['is_comparison'].present?
+          metadata[:is_comparison] = object.extended_metadata['is_comparison'] == 'true'
+        end
+        metadata[:analyses_compared] = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':')) if object.extended_metadata['analyses_compared'].present?
       end
     end
 
@@ -53,6 +57,22 @@ module Entities
         attachable_type: 'Container',
         attachable_id: object.children.where(container_type: :dataset),
       )
+
+      comparison_thumbnail = Attachment.where(
+        thumb: true,
+        attachable_type: 'Container',
+        attachable_id: object.id,
+      )
+
+      unless attachments_with_thumbnail.exists?
+        build_preview_image(comparison_thumbnail)
+      else
+        build_preview_image(attachments_with_thumbnail)
+      end
+      
+    end
+
+    def build_preview_image(attachments_with_thumbnail)
       return no_preview_image_available unless attachments_with_thumbnail.exists?
 
       latest_image_attachment = attachments_with_thumbnail.where(

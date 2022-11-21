@@ -145,6 +145,60 @@ module Chemotion
         post 'refresh' do
           convert_for_refresh(params)
         end
+
+        desc 'Combine spectra'
+        params do
+          requires :spectra_ids, type: [Integer]
+          requires :front_spectra_idx, type: Integer # index of front spectra
+          requires :container_id, type: Integer
+          requires :edited_data_spectra, type: [Hash]
+        end
+        post 'combine_spectra' do
+          pm = to_rails_snake_case(params)
+
+          list_file = []
+          list_file_names = []
+          Attachment.where(id: pm[:spectra_ids]).each do |att|
+            list_file_names.push(att.filename)
+            list_file.push(att.abs_path)
+          end
+
+          _, image = Chemotion::Jcamp::CombineImg.combine(
+            list_file, pm[:front_spectra_idx], list_file_names
+          )
+
+          content_type('application/json')
+          unless image.nil?
+            filename = "#{pm[:container_id]}.png"
+
+            att = Attachment.find_by(filename: filename)
+            if att.nil?
+              att = Attachment.new(
+                bucket: pm[:container_id],
+                filename: filename,
+                key: SecureRandom.uuid,
+                created_by: current_user.id,
+                created_for: current_user.id,
+                content_type: 'image/png',
+                file_path: image.path,
+                attachable_type: 'Container',
+                attachable_id: pm[:container_id],
+                storage: Rails.configuration.storage.primary_store,
+              )
+              att.save!
+            else
+              att.update!(
+                storage: Rails.configuration.storage.primary_store,
+                file_path: image.path,
+                attachable_type: 'Container',
+                attachable_id: pm[:container_id],
+              )
+            end
+            { status: true }
+          end
+
+          { status: false }
+        end
       end
 
       resource :predict do

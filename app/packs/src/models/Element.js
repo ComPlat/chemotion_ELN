@@ -122,6 +122,26 @@ export default class Element {
     });
     return target;
   }
+  
+  getAnalysisContainersCompareable() {
+    let result = {};
+    const analysisContainers = this.analysisContainers();
+    analysisContainers.forEach((aic) => {
+      const mKind = aic.extended_metadata.kind;
+      const kind = (mKind && mKind !== '') ? (mKind.split('|')[1].trim().split(' (')) : undefined;
+      let layout = kind !== undefined ? kind[kind.length-1] : undefined;
+      if (layout !== undefined) {
+        layout = layout.replace(')', '');
+        let listAics = result[layout] ? result[layout] : [];
+        const dts = aic.children.filter(el => ~el.container_type.indexOf('dataset'));
+        const aicWithDataset = Object.assign({}, aic, { children: dts});
+        listAics.push(aicWithDataset);
+        result[layout] = listAics;
+      }
+
+    });
+    return result;
+  }
 
   // Return true if the element has at least one analysis
   analysesPresent() {

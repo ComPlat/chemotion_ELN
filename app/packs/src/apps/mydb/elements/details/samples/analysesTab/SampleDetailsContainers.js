@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
-
+import { Button, ButtonGroup } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { reOrderArr } from 'src/utilities/DndControl';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
-
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import ViewSpectraCompare from 'src/apps/mydb/elements/details/ViewSpectraCompare';
 import {
   RndNotAvailable, RndNoAnalyses,
   RndOrder, RndEdit
@@ -22,6 +21,7 @@ export default class SampleDetailsContainers extends Component {
     this.state = {
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',
+
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.addButton = this.addButton.bind(this);
@@ -72,9 +72,9 @@ export default class SampleDetailsContainers extends Component {
     this.props.handleSampleChanged(sample);
   }
 
-  handleAdd() {
+  handleAdd(isComparispon = false) {
     const { sample } = this.props;
-    const newContainer = this.buildEmptyAnalyContainer();
+    const newContainer = this.buildEmptyAnalyContainer(isComparispon);
 
     const sortedConts = this.sortedContainers(sample);
     const newSortConts = [...sortedConts, newContainer];
@@ -102,10 +102,11 @@ export default class SampleDetailsContainers extends Component {
     return ArrayUtils.sortArrByIndex(containers);
   }
 
-  buildEmptyAnalyContainer() {
+  buildEmptyAnalyContainer(isComparispon) {
     const newContainer = Container.buildEmpty();
     newContainer.container_type = "analysis";
     newContainer.extended_metadata.content = { ops: [{ insert: '\n' }] };
+    newContainer.extended_metadata.is_comparison = isComparispon;
     return newContainer;
   }
 
@@ -152,16 +153,30 @@ export default class SampleDetailsContainers extends Component {
       return null;
     }
     return (
-      <Button
-        className="button-right"
-        bsSize="xsmall"
-        bsStyle="success"
-        onClick={this.handleAdd}
-        disabled={!sample.can_update}
-      >
-        <i className="fa fa-plus" />&nbsp;
-        Add analysis
-      </Button>
+      <ButtonGroup
+      className="button-right">
+        <Button
+          style={{marginRight: "0.5em"}}
+          bsSize="xsmall"
+          bsStyle="success"
+          onClick={() => this.handleAdd(true)}
+          disabled={!sample.can_update}
+        >
+          <i className="fa fa-plus" />&nbsp;
+          Add compare analysis
+        </Button>
+
+        <Button
+          bsSize="xsmall"
+          bsStyle="success"
+          onClick={() => this.handleAdd(false)}
+          disabled={!sample.can_update}
+        >
+          <i className="fa fa-plus" />&nbsp;
+          Add analysis
+        </Button>
+      </ButtonGroup>
+      
     );
   }
 
@@ -246,7 +261,11 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
-          
+          <ViewSpectraCompare 
+            elementData={sample}
+            handleSampleChanged={handleSampleChanged}
+            handleSubmit={handleSubmit}
+          />
         </div>
       );
     }

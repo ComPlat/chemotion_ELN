@@ -20,9 +20,12 @@ class SpectraStore {
     this.writing = false;
     this.others = [];
     this.showModalNMRDisplayer = false;
+    this.showCompareModal = false;
+    this.spectraCompare = [];
 
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
+      handleToggleCompareModal: SpectraActions.ToggleCompareModal,
       handleLoadSpectra: SpectraActions.LoadSpectra,
       handleSaveToFile: SpectraActions.SaveToFile,
       handleRegenerate: SpectraActions.Regenerate,
@@ -35,6 +38,7 @@ class SpectraStore {
       handleRegenerateEdited: SpectraActions.RegenerateEdited,
       handleToggleModalNMRDisplayer: SpectraActions.ToggleModalNMRDisplayer,
       handleLoadSpectraForNMRDisplayer: SpectraActions.LoadSpectraForNMRDisplayer,
+      handleLoadSpectraCompare: SpectraActions.LoadSpectraCompare,
     });
   }
 
@@ -81,6 +85,13 @@ class SpectraStore {
     });
   }
 
+  handleToggleCompareModal(container) {
+    this.setState({
+      showCompareModal: !this.showCompareModal,
+      container: container,
+    })
+  }
+
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
     const spcMetas = this.decodeSpectra(fetchedFiles);
     let newArrSpcIdx = spcMetas.map(spci => (
@@ -96,6 +107,14 @@ class SpectraStore {
       spcIdx: (spcMetas[0].idx || 0),
       others: [],
       arrSpcIdx: newArrSpcIdx,
+    });
+  }
+
+  handleLoadSpectraCompare({ fetchedFiles, spcInfos }) {
+    const spcMetas = this.decodeSpectra(fetchedFiles);
+    this.setState({
+      spectraCompare: spcMetas,
+      fetched: true,
     });
   }
 

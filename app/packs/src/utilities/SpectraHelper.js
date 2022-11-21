@@ -164,4 +164,88 @@ const isNMRKind = (container) => {
   return kind.toLowerCase().includes('nuclear magnetic resonance');
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind }; // eslint-disable-line
+const BuildSpectraComparedInfos = (sample, container) => {
+  if (!sample || !container) return [];
+  const { analyses_compared } = container.extended_metadata;
+  if (!analyses_compared) return [];
+  return analyses_compared.map(data => (
+    {
+      idx: data.file.id,
+      info: data
+    }
+  ));
+}
+
+const BuildSpectraComparedSelection = (sample) => {
+  if (!sample) return [];
+  const filteredAttachments = (dataset) => {
+    if (dataset) {
+      const filtered = dataset.attachments.filter((attch) => {
+        const position = attch.filename.search(/[.]jdx$/);
+        return position > 0;
+      });
+      return filtered;
+    }
+    return false;
+  };
+
+  const listComparible = sample.getAnalysisContainersCompareable();
+  const menuItems = Object.keys(listComparible).map((layout) => {
+    const listAics = listComparible[layout].map((aic)=> {
+      const { children } = aic;
+      let subSubMenu = null;
+      if (children) {
+        subSubMenu = children.map((dts) => {
+          const attachments = filteredAttachments(dts);
+          const dataSetName = dts.name;
+          if (!attachments) {
+            return { title: dataSetName, value: dts, checkable: false };
+          }
+          const spectraItems = attachments.map((item) => {
+            return { title: item.filename, key: item.id, value: item.id }
+          });
+          return { title: dts.name, key: dts.id, value: dts, checkable: false , children: spectraItems };
+        });
+      }
+      return { title: aic.name, key: aic.id, children: subSubMenu, checkable: false };
+    });
+    return { title: layout, key: layout, value: layout, children: listAics, checkable: false }
+  });
+  return menuItems;
+};
+
+const GetSelectedComparedAnalyses = (container, treeData, selectedFiles, info) => {
+  const getParentNode = (key, tree) => {
+    let parentNode;
+    for (let i = 0; i < tree.length; i++) {
+      const node = tree[i];
+      if (node.children) {
+        if (node.children.some(item => item.key === key)) {
+          parentNode = node;
+        } else if (getParentNode(key, node.children)) {
+          parentNode = getParentNode (key, node.children);
+        }
+      }
+    }
+    return parentNode;
+  }
+
+  const selectedData = selectedFiles.map((fileID, idx) => {
+    const dataset = getParentNode(fileID, treeData);
+    const analysis = getParentNode(dataset.key, treeData);
+    const layout = getParentNode(analysis.key, treeData);
+    return { 
+      file: { name: info[idx], id: fileID },
+      dataset: { name: dataset.title, id: dataset.key },
+      analysis: { name: analysis.title, id: analysis.key },
+      layout: layout.title,
+     }
+  });
+  return selectedData;
+};
+
+export {
+  BuildSpcInfos, BuildSpcInfosForNMRDisplayer,
+  JcampIds, isNMRKind, BuildSpectraComparedInfos,
+  BuildSpectraComparedSelection, GetSelectedComparedAnalyses
+}; // eslint-disable-line
