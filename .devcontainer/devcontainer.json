@@ -1,5 +1,4 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.187.0/containers/docker-existing-dockerfile
+// For format details, see https://containers.dev/implementors/json_reference/.
 {
   "name": "Chemotion Dockerfile",
   "dockerComposeFile": [
@@ -18,6 +17,10 @@
   "forwardPorts": [
     3000,
     5432
+  ],
+  "initializeCommand": [
+    "/bin/bash",
+    ".devcontainer/pre_create.sh"
   ],
   "postCreateCommand": [
     "/bin/bash",
