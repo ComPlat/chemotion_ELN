@@ -350,19 +350,24 @@ describe Chemotion::AttachmentAPI do
     context 'when pameters are correct' do
       let (:spectrum_params) {JSON.parse(File.read('spec/fixtures/spectrum_param_chloroform_d.json'))}   
       let (:execute_request) { post '/api/v1/attachments/save_spectrum', params: spectrum_params}
+      let (:generated_attachment_id){ JSON.parse(body)['files'].first['id']}
       before do                
-        allow(Chemotion::Jcamp::Create).to receive(:spectrum).and_return([Tempfile.new('test'),Tempfile.new('tmpImage'),3,4,nil,6])
+        allow(Chemotion::Jcamp::Create).to receive(:spectrum).and_return([Tempfile.new('test'),Tempfile.new('tmpImage'),nil,nil,nil,nil])
         allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["spectra_file", "jdx"],'edit','jdx' ).and_return('fakeFile.jdx')
         allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["fakeFile", "jdx"],'infer','json' ).and_return('fakeFile.json')
         allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["spectra_file", "jdx"],'edit','png' ).and_return('fakeFile.png')
 
         spectrum_params["attachment_id"]=attachment.id
         
+        execute_request
       end
 
-      it 'returns raw file' do
-        expect(execute_request).to_not be_nil 
-        binding.pry       
+      it 'returns statuscode 201' do
+        expect(response.status).to eq 201
+      end
+
+      it 'new attachment was created' do
+        expect(Attachment.find( generated_attachment_id)).to_not be nil
       end
     end
   end
