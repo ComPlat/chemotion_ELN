@@ -349,20 +349,20 @@ describe Chemotion::AttachmentAPI do
 
     context 'when pameters are correct' do
       let (:spectrum_params) {JSON.parse(File.read('spec/fixtures/spectrum_param_chloroform_d.json'))}   
-     
+      let (:execute_request) { post '/api/v1/attachments/save_spectrum', params: spectrum_params}
       before do                
         allow(Chemotion::Jcamp::Create).to receive(:spectrum).and_return([Tempfile.new('test'),Tempfile.new('tmpImage'),3,4,nil,6])
         allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["spectra_file", "jdx"],'edit','jdx' ).and_return('fakeFile.jdx')
         allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["fakeFile", "jdx"],'infer','json' ).and_return('fakeFile.json')
         allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["spectra_file", "jdx"],'edit','png' ).and_return('fakeFile.png')
-        #allow(Chemotion::Jcamp::Gen).to receive(:filename).and_return('fakeFile.jdx')
 
         spectrum_params["attachment_id"]=attachment.id
-        post '/api/v1/attachments/save_spectrum', params: spectrum_params
+        
       end
 
       it 'returns raw file' do
-        pending 'not yet implemented'         
+        expect(execute_request).to_not be_nil 
+        binding.pry       
       end
     end
   end
