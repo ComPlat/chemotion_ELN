@@ -4,13 +4,10 @@ import { values } from 'mobx';
 import { Button, Panel } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import FreeScanCard from 'src/apps/mydb/collections/sampleTaskInbox/FreeScanCard';
 
 class SampleTaskInbox extends React.Component {
   static contextType = StoreContext;
-
-  constructor(props) {
-    super(props);
-  }
 
   openSampleTaskCount() {
     let count = this.context.sampleTasks.openSampleTaskCount;
@@ -50,29 +47,18 @@ class SampleTaskInbox extends React.Component {
   openFreeScans() {
     let sample_tasks = values(this.context.sampleTasks.open_sample_tasks);
 
-    // TODO: return image as well
-    return sample_tasks.map(sample_task => {
-      return (
-        <Panel byStyle="info">
-          <Panel.Heading>
-            {sample_task.description}
-          </Panel.Heading>
-          <Panel.Body>
-            <ul>
-              <li><strong>Measurement value:</strong> {sample_task.measurement_value}</li>
-              <li><strong>Measurement unit:</strong> {sample_task.measurement_unit}</li>
-              <li><strong>Additional note:</strong> {sample_task.additional_note}</li>
-              <li><strong>Private note:</strong> {sample_task.private_note}</li>
-            </ul>
-          </Panel.Body>
-          <Panel.Footer>
-            SAMPLE DROPZONE HERE
-          </Panel.Footer>
-        </Panel>
-      );
-    });
+    return sample_tasks.map(sample_task => (
+      <FreeScanCard
+        sampleTask={sample_task}
+        assignSampleToTask={this.assignSampleToTask}
+      />
+    ));
   }
 
+  assignSampleToTask(sample, task) {
+    console.debug('Sample:', sample);
+    console.debug('Task:', task);
+  }
 
   render() {
     let display_value = this.context.sampleTasks.sampleTaskInboxVisible ? 'block' : 'none';
