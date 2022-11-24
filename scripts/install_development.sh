@@ -10,7 +10,7 @@ set -euo pipefail
 ############# VARIABLES ####################
 
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH=development-5
+BRANCH=main
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)

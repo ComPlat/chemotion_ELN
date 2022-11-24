@@ -61,12 +61,12 @@ of the **[Karlsruhe Institute of Technology]**.
 [Nicole Jung]: mailto:nicole.jung@kit.edu
 [Karlsruhe Institute of Technology]: https://www.kit.edu/english/
 
-[JS Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=development-5
-[Ruby Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=development-5
-[Acceptance Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=development-5
+[JS Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=main
+[Ruby Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=main
+[Acceptance Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=main
 [DOI]: https://doi.org/10.5281/zenodo.1054134
 
-[Badge JS]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=development-5
-[Badge Ruby]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=development-5
-[Badge Acceptance]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=development-5
+[Badge JS]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=main
+[Badge Ruby]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=main
+[Badge Acceptance]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=main
 [Badge DOI]: https://zenodo.org/badge/DOI/10.5281/zenodo.1054134.svg

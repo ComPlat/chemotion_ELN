@@ -7,7 +7,7 @@ Server requirement: the installation can fail if not enough memory is available.
 copy the installation script on a ubuntu server 18.04 or 20.04 (also works with debian buster)
 
 ```
-curl -o chemotion_ELN_install.sh -L https://github.com/ComPlat/chemotion_ELN/raw/development-5/scripts/install_production.sh
+curl -o chemotion_ELN_install.sh -L https://github.com/ComPlat/chemotion_ELN/raw/main/scripts/install_production.sh
 ```
 
 
@@ -38,7 +38,7 @@ An admin account should have been created (email: eln-admin@kit.edu, pw: PleaseC
 To update the application code for such an installation, use the update script:
 
 ```
-curl -o chemotion_ELN_update.sh -L https://github.com/ComPlat/chemotion_ELN/raw/development-5/scripts/update_production.sh
+curl -o chemotion_ELN_update.sh -L https://github.com/ComPlat/chemotion_ELN/raw/main/scripts/update_production.sh
 ```
 
 
