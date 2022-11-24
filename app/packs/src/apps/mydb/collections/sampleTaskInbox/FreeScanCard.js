@@ -57,7 +57,6 @@ class FreeScanCard extends React.Component {
 
   render() {
     let { sampleTask } = this.props;
-    console.debug(this.context);
     return (
       <Panel byStyle="info">
         <Panel.Heading>
@@ -72,16 +71,15 @@ class FreeScanCard extends React.Component {
           </ul>
         </Panel.Body>
         <Panel.Footer>
-          {}
+          {this.sampleDropzone()}
         </Panel.Footer>
       </Panel>
     );
   }
 }
 
-// export default DropTarget(
-//   [DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL],
-//   target,
-//   collect
-// )(observer(FreeScanCard));
-export default observer(FreeScanCard);
+export default DropTarget(
+  [DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL],
+  target,
+  collect
+)(observer(FreeScanCard));
