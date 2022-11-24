@@ -29,7 +29,7 @@ const collect = (connector, monitor) => ({
 });
 
 class FreeScanCard extends React.Component {
-  static contextType = StoreContext;
+  // static contextType = StoreContext;
   static propTypes = {
     sampleTask: PropTypes.object,
     assignSampleToTask: PropTypes.func.isRequired,
@@ -82,4 +82,4 @@ export default DropTarget(
   [DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL],
   target,
   collect
-)(observer(FreeScanCard));
+)(FreeScanCard);
