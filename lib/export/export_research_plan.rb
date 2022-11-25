@@ -40,7 +40,8 @@ module Export
           next unless (sample = Sample.find_by(id: field['value']['sample_id']))
 
           if ElementPolicy.new(@current_user, sample).read?
-            img_src = to_png('samples', sample['sample_svg_file'])
+            sub_folder, svg_file = get_svg_file(sample['sample_svg_file'], sample)
+            img_src = to_png(sub_folder, svg_file)
             @fields << {
               type: field['type'],
               src: img_src,
@@ -51,7 +52,8 @@ module Export
           next unless (reaction = Reaction.find_by(id: field['value']['reaction_id']))
 
           if ElementPolicy.new(@current_user, reaction).read?
-            img_src = to_png('reactions', reaction['reaction_svg_file'])
+            sub_folder, svg_file = get_svg_file(reaction['reaction_svg_file'], reaction)
+            img_src = to_png(sub_folder, svg_file)
             @fields << {
               type: field['type'],
               src: img_src,
@@ -62,7 +64,15 @@ module Export
       end
     end
 
+    def get_svg_file(svg_file, record)
+      file = svg_file.presence || record.molecule.molecule_svg_file
+      sub_folder = svg_file.present? ? record.class.name.downcase.pluralize : 'molecules'
+      [sub_folder, file]
+    end
+
     def to_png(sub_folder, file)
+      return if file.nil?
+
       output_file = Tempfile.new(['output', '.png'])
       svg_file_path = File.join('public', 'images', sub_folder, file)
       Reporter::Img::Conv.by_inkscape(svg_file_path, output_file.path, 'png')
