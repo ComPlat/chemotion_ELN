@@ -338,9 +338,17 @@ class Sample < ApplicationRecord
   def get_svg_path
     if self.sample_svg_file.present?
       "/images/samples/#{self.sample_svg_file}"
-    else
+    elsif self.molecule&.molecule_svg_file&.present?
       "/images/molecules/#{self.molecule.molecule_svg_file}"
+    else
+      nil
     end
+  end
+
+  # return the full path of the svg file (molecule svg if no sample svg) if it or nil.
+  def current_svg_full_path
+    file_path = full_svg_path
+    File.file?(file_path) ? file_path : molecule&.current_svg_full_path
   end
 
   def svg_text_path
