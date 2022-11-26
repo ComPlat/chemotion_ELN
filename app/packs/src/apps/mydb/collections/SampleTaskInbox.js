@@ -32,7 +32,7 @@ class SampleTaskInbox extends React.Component {
       }
 
       return (
-        <Panel byStyle="info">
+        <Panel byStyle="info" key={`sampleTask_${sample_task.id}`}>
           <Panel.Heading>
             {sample_task.short_label} {sample_task.display_name}
           </Panel.Heading>
@@ -45,60 +45,56 @@ class SampleTaskInbox extends React.Component {
   }
 
   openFreeScans() {
-    let sample_tasks = values(this.context.sampleTasks.open_sample_tasks);
+    let sample_tasks = values(this.context.sampleTasks.open_free_scans);
 
     return sample_tasks.map(sample_task => (
-      <FreeScanCard
-        sampleTask={sample_task}
-        assignSampleToTask={this.assignSampleToTask}
-      />
+      <FreeScanCard sampleTask={sample_task} />
     ));
   }
 
-  assignSampleToTask(sample, task) {
-    console.debug('Sample:', sample);
-    console.debug('Task:', task);
-  }
+
 
   render() {
     let display_value = this.context.sampleTasks.sampleTaskInboxVisible ? 'block' : 'none';
 
     return (
-      <div
-        className="sampleTaskInbox small-col col-md-6"
-        style={{ zIndex: 10, position: 'absolute', top: '70px', left: '10px', display: display_value }}
+      <Draggable
+        handle=".handle"
+        bounds="body"
       >
-        <Draggable handle=".handle" bounds="body">
-          <Panel bsStyle="primary">
-            <Panel.Heading className="handle">
-              <div className="row">
-                <div className="col-md-5">{this.openSampleTaskCount()} open SampleTasks</div>
-                <div className="col-md-5 col-md-offset-1">{this.openFreeScanCount()} open FreeScans</div>
-                <div className="col-md-1">
-                  <Button
-                    bsStyle="danger"
-                    bsSize="xsmall"
-                    className="button-right"
-                    onClick={() => this.context.sampleTasks.hideSampleTaskInbox()}
-                  >
-                    <i className="fa fa-times" />
-                  </Button>
-                </div>
+        <Panel
+          bsStyle="primary"
+          className="sampleTaskInbox small-col col-md-6"
+          style={{ zIndex: 10, position: 'absolute', top: '70px', left: '10px', display: display_value }}
+        >
+          <Panel.Heading className="handle">
+            <div className="row">
+              <div className="col-md-5">{this.openSampleTaskCount()} open SampleTasks</div>
+              <div className="col-md-5 col-md-offset-1">{this.openFreeScanCount()} open FreeScans</div>
+              <div className="col-md-1">
+                <Button
+                  bsStyle="danger"
+                  bsSize="xsmall"
+                  className="button-right"
+                  onClick={() => this.context.sampleTasks.hideSampleTaskInbox()}
+                >
+                  <i className="fa fa-times" />
+                </Button>
               </div>
-            </Panel.Heading>
-            <Panel.Body>
-              <div className="row">
-                <div className="small-col col-md-5">
-                  {this.openSampleTasks()}
-                </div>
-                <div className="small-col col-md-5 col-md-offset-1">
-                  {this.openFreeScans()}
-                </div>
+            </div>
+          </Panel.Heading>
+          <Panel.Body>
+            <div className="row">
+              <div className="small-col col-md-5">
+                {this.openSampleTasks()}
               </div>
-            </Panel.Body>
-          </Panel>
-        </Draggable>
-      </div>
+              <div className="small-col col-md-5 col-md-offset-1">
+                {this.openFreeScans()}
+              </div>
+            </div>
+          </Panel.Body>
+        </Panel>
+      </Draggable>
     );
   }
 }

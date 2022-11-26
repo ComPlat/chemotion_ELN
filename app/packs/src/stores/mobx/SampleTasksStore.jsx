@@ -29,6 +29,7 @@ export const SampleTasksStore = types
     // within an action
     loadOpenSampleTasks: flow(function* loadOpenSampleTasks() {
       let result = yield SampleTasksFetcher.openSampleTasks();
+      self.open_sample_tasks.clear();
       result.forEach(entry => {
         let sampleTask = SampleTask.create({ ...entry })
         self.open_sample_tasks.set(sampleTask.id, sampleTask)
@@ -36,6 +37,7 @@ export const SampleTasksStore = types
     }),
     loadOpenFreeScans: flow(function* loadOpenFreeScans() {
       let result = yield SampleTasksFetcher.openFreeScans();
+      self.open_free_scans.clear();
       result.forEach(entry => {
         let sampleTask = SampleTask.create({ ...entry })
         self.open_free_scans.set(sampleTask.id, sampleTask)
@@ -46,7 +48,13 @@ export const SampleTasksStore = types
     },
     hideSampleTaskInbox() {
       self.sample_task_inbox_visible = false;
-    }
+    },
+    assignSampleToOpenFreeScan: flow(function* assignSampleToOpenFreeScan(sample, sampleTask) {
+      let result = yield SampleTasksFetcher.assignSampleToOpenFreeScan(sample.id, sampleTask.id)
+      if (result.id) {
+        self.open_free_scans.delete(result.id);
+      }
+    })
   }))
   .views(self => ({
     get openSampleTaskCount() { return keys(self.open_sample_tasks).length },
