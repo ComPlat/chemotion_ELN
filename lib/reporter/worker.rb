@@ -55,12 +55,7 @@ module Reporter
           content_type: @typ
         )
 
-        att.attachment_attacher.attach(File.open(tmp.path, binmode: true))
-        if att.valid?
-          att.attachment_attacher.create_derivatives
-          att.save!
-        end
-
+        att.save!
         @report.update(generated_at: Time.zone.now)
       end
 
