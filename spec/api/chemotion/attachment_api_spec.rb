@@ -348,17 +348,22 @@ describe Chemotion::AttachmentAPI do
     let(:attachment) { create(:attachment, :with_spectra_file) }
 
     context 'when pameters are correct' do
-      let (:spectrum_params) {JSON.parse(File.read('spec/fixtures/spectrum_param_chloroform_d.json'))}   
-      let (:execute_request) { post '/api/v1/attachments/save_spectrum', params: spectrum_params}
-      let (:generated_attachment_id){ JSON.parse(body)['files'].first['id']}
-      before do                
-        allow(Chemotion::Jcamp::Create).to receive(:spectrum).and_return([Tempfile.new('test'),Tempfile.new('tmpImage'),nil,nil,nil,nil])
-        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["spectra_file", "jdx"],'edit','jdx' ).and_return('fakeFile.jdx')
-        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["fakeFile", "jdx"],'infer','json' ).and_return('fakeFile.json')
-        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(["spectra_file", "jdx"],'edit','png' ).and_return('fakeFile.png')
+      let(:spectrum_params) { JSON.parse(File.read('spec/fixtures/spectrum_param_chloroform_d.json')) }
+      let(:execute_request) { post '/api/v1/attachments/save_spectrum', params: spectrum_params }
+      let(:generated_attachment_id) { JSON.parse(body)['files'].first['id'] }
 
-        spectrum_params["attachment_id"]=attachment.id
-        
+      before do
+        allow(Chemotion::Jcamp::Create).to receive(:spectrum).and_return([Tempfile.new('test'), Tempfile.new('tmpImage'),
+                                                                          nil, nil, nil, nil])
+        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(%w[spectra_file jdx], 'edit',
+                                                                'jdx').and_return('fakeFile.jdx')
+        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(%w[fakeFile jdx], 'infer',
+                                                                'json').and_return('fakeFile.json')
+        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(%w[spectra_file jdx], 'edit',
+                                                                'png').and_return('fakeFile.png')
+
+        spectrum_params['attachment_id'] = attachment.id
+
         execute_request
       end
 
@@ -367,7 +372,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'new attachment was created' do
-        expect(Attachment.find( generated_attachment_id)).to_not be nil
+        expect(Attachment.find(generated_attachment_id)).not_to be_nil
       end
     end
   end
