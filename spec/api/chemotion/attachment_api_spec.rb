@@ -354,7 +354,7 @@ describe Chemotion::AttachmentAPI do
   describe 'POST /api/v1/attachments/save_spectrum' do
     let(:attachment) { create(:attachment, :with_spectra_file) }
 
-    context 'when pameters are correct' do
+    context 'when parameters are correct' do
       let(:spectrum_params) { JSON.parse(File.read('spec/fixtures/spectrum_param_chloroform_d.json')) }
       let(:execute_request) { post '/api/v1/attachments/save_spectrum', params: spectrum_params }
       let(:generated_attachment_id) { JSON.parse(body)['files'].first['id'] }
