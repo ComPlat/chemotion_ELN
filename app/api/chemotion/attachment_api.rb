@@ -46,9 +46,8 @@ module Chemotion
 
     resource :attachments do
       before do
-       
         @attachment = Attachment.find_by(id: params[:attachment_id])
-       
+
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
         case request.env['REQUEST_METHOD']
