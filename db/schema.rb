@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_12_02_150826) do
+ActiveRecord::Schema.define(version: 2023_03_06_114227) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1324,6 +1324,7 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
             )
             and sync_cols.user_id in (select user_ids(in_user_id))
         ) all_cols;
+
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
@@ -1349,6 +1350,7 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
       begin
       	select channel_type into i_channel_type
       	from channels where id = in_channel_id;
+
         case i_channel_type
       	when 9 then
       	  insert into notifications (message_id, user_id, created_at,updated_at)
@@ -1426,6 +1428,7 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
       	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
       	end if;
+
       	if (TG_OP='UPDATE') then
       	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);
@@ -1452,7 +1455,7 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
 
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
