@@ -54,14 +54,14 @@ const FreeScanCard = ({ sampleTask }) => {
         <div>
           {sample.short_label}: {sample.showed_name}
         </div>
-        <button className="btn btn-danger" type="button" onClick={removeSample}>X</button>
-        <button className="btn btn-success" type="button" onClick={saveSampleTask}>SAVE</button>
+        <button className="btn btn-danger" type="button" onClick={removeSample}>clear Sample</button>
+        <button className="btn btn-success pull-right" type="button" onClick={saveSampleTask}>save data to Sample</button>
       </div>
     );
   };
 
   return (
-    <Panel byStyle="info" key={`openFreeScan_${sampleTask.id}`}>
+    <Panel bsStyle="info">
       <Panel.Heading>
         {sampleTask.description}
       </Panel.Heading>

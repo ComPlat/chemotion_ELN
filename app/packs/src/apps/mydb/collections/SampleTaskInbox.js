@@ -32,7 +32,7 @@ class SampleTaskInbox extends React.Component {
       }
 
       return (
-        <Panel byStyle="info" key={`sampleTask_${sample_task.id}`}>
+        <Panel bsStyle="info" key={`sampleTask_${sample_task.id}`}>
           <Panel.Heading>
             {sample_task.short_label} {sample_task.display_name}
           </Panel.Heading>
@@ -45,10 +45,10 @@ class SampleTaskInbox extends React.Component {
   }
 
   openFreeScans() {
-    let sample_tasks = values(this.context.sampleTasks.open_free_scans);
+    let sampleTasks = values(this.context.sampleTasks.open_free_scans);
 
-    return sample_tasks.map(sample_task => (
-      <FreeScanCard sampleTask={sample_task} />
+    return sampleTasks.map(sampleTask => (
+      <FreeScanCard sampleTask={sampleTask} key={`openFreeScan_${sampleTask.id}`} />
     ));
   }
 
