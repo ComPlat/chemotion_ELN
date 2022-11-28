@@ -1,4 +1,4 @@
-import { keys } from 'mobx';
+import { keys, values } from 'mobx';
 import { flow, types } from 'mobx-state-tree';
 
 import SampleTasksFetcher from 'src/fetchers/SampleTasksFetcher';
@@ -54,6 +54,13 @@ export const SampleTasksStore = types
       if (result.id) {
         self.open_free_scans.delete(result.id);
       }
+    }),
+    createSampleTask: flow(function* createSampleTask(sampleId) {
+      let result = yield SampleTasksFetcher.createSampleTask(sampleId)
+      if (result.id) {
+        let createdSampleTask = SampleTask.create({ ...result });
+        self.open_sample_tasks.set(createdSampleTask.id, createdSampleTask)
+      }
     })
   }))
   .views(self => ({
@@ -61,4 +68,13 @@ export const SampleTasksStore = types
     get openFreeScanCount() { return keys(self.open_free_scans).length },
     get doneCount() { return keys(self.done).length },
     get sampleTaskInboxVisible() { return self.sample_task_inbox_visible },
+    sampleTaskForSample(sampleId) {
+      console.debug("Looking for sample id", sampleId);
+      return values(self.open_sample_tasks).find(
+        task => {
+          console.debug("Task Sample ID:", task.sample_id);
+          return task.sample_id == sampleId
+        }
+      )
+    }
   }));

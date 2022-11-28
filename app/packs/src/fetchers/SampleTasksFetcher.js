@@ -27,6 +27,24 @@ export default class SampleTaskFetcher {
     );
   }
 
+  static createSampleTask(sample_id) {
+    return fetch(
+      `/api/v1/sample_tasks`,
+      {
+        ...this._httpOptions('POST'),
+        body: JSON.stringify({
+          create_open_sample_task: {
+            sample_id: sample_id
+          }
+        })
+      }
+    ).then(
+      response => response.json()
+    ).catch(
+      errorMessage => { console.log(errorMessage); }
+    );
+  }
+
   static _fetchSampleTasks(status) {
     return fetch(
       `/api/v1/sample_tasks?status=${status}`,
