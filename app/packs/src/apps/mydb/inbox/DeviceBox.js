@@ -5,6 +5,7 @@ import DatasetContainer from 'src/apps/mydb/inbox/DatasetContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class DeviceBox extends React.Component {
   constructor(props) {
@@ -14,12 +15,33 @@ export default class DeviceBox extends React.Component {
     };
   }
 
+  handleDeviceBoxClick(deviceBox) {
+    const { visible } = this.state;
+    const { fromCollectionTree } = this.props;
+    if (fromCollectionTree) {
+      return;
+    }
+
+    if (!visible) {
+      if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
+        LoadingActions.start();
+        InboxActions.fetchInboxContainer(deviceBox);
+      }
+    }
+    this.setState({ visible: !visible });
+  }
+
   deleteDeviceBox(deviceBox) {
+    const { fromCollectionTree } = this.props;
+    if (fromCollectionTree) {
+      return;
+    }
+
     InboxActions.deleteContainer(deviceBox);
   }
 
   render() {
-    const { device_box, largerInbox } = this.props;
+    const { device_box, largerInbox, fromCollectionTree } = this.props;
     const { visible } = this.state;
     const cache = InboxStore.getState().cache;
 
@@ -50,21 +72,22 @@ export default class DeviceBox extends React.Component {
 
     return (
       <div className="tree-view">
-        <div className="title" style={textStyle}>
-          {datasets.length === 0
+        <div className="title" style={textStyle} onClick={() => this.handleDeviceBoxClick(device_box)}>
+          {device_box?.children_count === 0
             ? (
               <i
                 className="fa fa-trash-o"
                 onClick={() => this.deleteDeviceBox(device_box)}
                 style={{ cursor: 'pointer' }}
-              >&nbsp;&nbsp;
+              >
+                &nbsp;&nbsp;
               </i>
             ) : null
           }
           <button
             type="button"
             className="btn-inbox"
-            onClick={() => this.setState({ visible: !visible })}
+            onClick={!fromCollectionTree ? () => this.setState({ visible: !visible }) : null}
           >
             <i
               className={`fa fa-folder${visible ? '-open' : ''}`}
@@ -74,7 +97,7 @@ export default class DeviceBox extends React.Component {
             {device_box.name}
           </button>
         </div>
-        <div>{visible ? datasets : null}</div>
+        <div>{visible && !fromCollectionTree ? datasets : null}</div>
       </div>
     );
   }
@@ -82,9 +105,11 @@ export default class DeviceBox extends React.Component {
 
 DeviceBox.propTypes = {
   device_box: PropTypes.object.isRequired,
-  largerInbox: PropTypes.bool
+  largerInbox: PropTypes.bool,
+  fromCollectionTree: PropTypes.bool
 };
 
 DeviceBox.defaultProps = {
-  largerInbox: false
+  largerInbox: false,
+  fromCollectionTree: false
 };

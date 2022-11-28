@@ -15,13 +15,18 @@ class InboxStore {
       numberOfAttachments: 0,
       checkedIds: [],
       checkedAll: false,
-      inboxModalVisible: false
+      inboxModalVisible: false,
+      currentPage: 1,
+      itemsPerPage: 20,
+      totalPages: null,
     };
 
     this.bindListeners({
       handleToggleInboxModal: InboxActions.toggleInboxModal,
+      showInboxModal: InboxActions.showInboxModal,
       handleFetchInbox: InboxActions.fetchInbox,
       handleFetchInboxCount: InboxActions.fetchInboxCount,
+      handleFetchInboxContainer: InboxActions.fetchInboxContainer,
       handleRemoveAttachmentFromList: InboxActions.removeAttachmentFromList,
       handleRemoveUnlinkedAttachmentFromList: InboxActions.removeUnlinkedAttachmentFromList,
       handleRemoveDatasetFromList: InboxActions.removeDatasetFromList,
@@ -46,7 +51,8 @@ class InboxStore {
       ],
       handleClose: DetailActions.close,
       handleConfirmDelete: DetailActions.confirmDelete,
-      handleDeleteElement: ElementActions.deleteElementsByUIState
+      handleDeleteElement: ElementActions.deleteElementsByUIState,
+      handleSetPagination: InboxActions.setInboxPagination,
     });
   }
 
@@ -56,14 +62,34 @@ class InboxStore {
     this.emitChange();
   }
 
+  showInboxModal() {
+    const { inboxModalVisible } = this.state;
+    if (!inboxModalVisible) {
+      this.setState({ inboxModalVisible: !inboxModalVisible });
+      this.emitChange();
+    }
+  }
+
   handleFetchInbox(result) {
+    const { itemsPerPage } = this.state;
     this.state.inbox = result;
+    this.state.totalPages = Math.ceil(this.state.inbox.count / itemsPerPage);
+
     this.sync();
     this.countAttachments();
   }
 
   handleFetchInboxCount(result) {
     this.state.numberOfAttachments = result.inbox_count;
+  }
+
+  handleFetchInboxContainer(result) {
+    const inbox = { ...this.state.inbox };
+    const index = inbox.children.findIndex((obj) => obj.id === result.id);
+    inbox.children[index].children = result.children;
+    this.setState(inbox);
+    this.sync();
+    this.countAttachments();
   }
 
   handleRemoveAttachmentFromList(attachment) {
@@ -113,15 +139,18 @@ class InboxStore {
   }
 
   handleDeleteAttachment(result) {
-    InboxActions.fetchInbox();
+    const { currentPage, itemsPerPage } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   handleDeleteContainerLink(result) {
-    InboxActions.fetchInbox();
+    const { currentPage, itemsPerPage } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   handleDeleteContainer(result) {
-    InboxActions.fetchInbox();
+    const { currentPage, itemsPerPage } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   handleBackToInbox(attachment) {
@@ -134,7 +163,8 @@ class InboxStore {
     if (attachments.length == 1) {
       var index = this.state.cache.indexOf(attachments[0])
       this.state.cache.splice(index, 1)
-      InboxActions.fetchInbox()
+      const { currentPage, itemsPerPage } = this.state;
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
     } else {
       InboxActions.deleteContainerLink(attachment)
     }
@@ -162,7 +192,8 @@ class InboxStore {
     if (element && element.isEdited && element.container) {
       const all_attachments = this.getAttachments(element.container.children, [])
       this.updateCache(all_attachments);
-      InboxActions.fetchInbox();
+      const { currentPage, itemsPerPage } = this.state;
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
   }
 
@@ -184,6 +215,11 @@ class InboxStore {
     selecteds.forEach(element => this.handleUpdateCreateElement(element));
   }
 
+  handleSetPagination(pagination) {
+    const { currentPage } = pagination;
+    this.state.currentPage = currentPage;
+  }
+
   sync() {
     let inbox = this.state.inbox
 
@@ -198,15 +234,8 @@ class InboxStore {
   }
 
   countAttachments() {
-    let count = 0;
-    const inbox = this.state.inbox
-    inbox.children.forEach(device_box => {
-      device_box.children.forEach(dataset => {
-        count += dataset.attachments.length
-      })
-    });
-    count += inbox.unlinked_attachments.length
-    this.state.numberOfAttachments = count;
+    const { inbox } = this.state;
+    this.state.numberOfAttachments = inbox.children_count + inbox.unlinked_attachments.length;
   }
 
   handleCheckedAll(params) {
