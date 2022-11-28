@@ -72,22 +72,14 @@ module Analyses
       if response.ok?
         tmp_file = Tempfile.new
         tmp_file.write(response.parsed_response)
-        name = "#{oa.filename.split('.').first}#{extname}"
-        ActiveRecord::Base.transaction do
-          begin
-            att.save!
-
-            att.attachment_attacher.attach(File.open(tmp_file.path, binmode: true))
-            if att.valid?
-              att.save!
-            else
-              raise ActiveRecord::Rollback
-            end
-          ensure
-            tmp_file.close
-            tmp_file.unlink
-          end
+        name = "#{oa.filename.split('.').first}#{extname}"      
+        begin
+          att.save!           
+        ensure
+          tmp_file.close
+          tmp_file.unlink
         end
+        
       end
       response
     end
