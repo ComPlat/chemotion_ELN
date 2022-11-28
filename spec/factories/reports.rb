@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :report do
     transient do
-      user { user }
+      user { create(:user) }
     end
 
     trait :downloadable do
