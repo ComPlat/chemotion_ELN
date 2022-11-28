@@ -5,6 +5,7 @@ import DatasetContainer from 'src/apps/mydb/inbox/DatasetContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class DeviceBox extends React.Component {
   constructor(props) {
@@ -12,6 +13,15 @@ export default class DeviceBox extends React.Component {
     this.state = {
       visible: false
     };
+  }
+
+  handleDeviceBoxClick(deviceBox) {
+    const { visible } = this.state;
+    if (!visible && (Array.isArray(deviceBox.children) && !deviceBox.children.length)) {
+      LoadingActions.start();
+      InboxActions.fetchInboxContainer(deviceBox);
+    }
+    this.setState({ visible: !visible });
   }
 
   deleteDeviceBox(deviceBox) {
@@ -51,13 +61,14 @@ export default class DeviceBox extends React.Component {
     return (
       <div className="tree-view">
         <div className="title" style={textStyle}>
-          {datasets.length === 0
+          {device_box.children_count && device_box.children_count === 0
             ? (
               <i
                 className="fa fa-trash-o"
                 onClick={() => this.deleteDeviceBox(device_box)}
                 style={{ cursor: 'pointer' }}
-              >&nbsp;&nbsp;
+              >
+                &nbsp;&nbsp;
               </i>
             ) : null
           }
@@ -70,6 +81,7 @@ export default class DeviceBox extends React.Component {
               className={`fa fa-folder${visible ? '-open' : ''}`}
               aria-hidden="true"
               style={{ marginRight: '5px' }}
+              onClick={() => this.handleDeviceBoxClick(device_box)}
             />
             {device_box.name}
           </button>

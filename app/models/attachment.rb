@@ -56,7 +56,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   # TODO: rm this during legacy store cleaning
   # after_save :add_checksum, if: :new_upload
 
-  belongs_to :attachable, polymorphic: true, optional: true
+  belongs_to :attachable, polymorphic: true, optional: true, counter_cache: true
   has_one :report_template, dependent: :nullify
 
   scope :where_research_plan, lambda { |c_id|

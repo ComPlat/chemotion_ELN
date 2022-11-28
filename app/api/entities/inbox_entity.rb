@@ -4,6 +4,8 @@ module Entities
   class InboxEntity < ApplicationEntity
     expose(
       :children,
+      :children_count,
+      :total_attachment_count,
       :container_type,
       :id,
       :inbox_count,
@@ -14,7 +16,11 @@ module Entities
     private
 
     def children
-      serialize_children(object.hash_tree[object])
+      serialize_children(object.hash_tree(limit_depth: 2)[object])
+    end
+
+    def children_count
+      object.leaves.count
     end
 
     def descendents
@@ -40,11 +46,15 @@ module Entities
       end
     end
 
+    def total_attachment_count
+      object.descendants.sum { |dataset| dataset&.attachments&.size }
+    end
+
     def unlinked_attachments
       Attachment.where(
         attachable_type: 'Container',
         attachable_id: nil,
-        created_for: object.containable.id
+        created_for: object&.containable&.id
       )
     end
 

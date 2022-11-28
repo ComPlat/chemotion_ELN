@@ -53,6 +53,17 @@ class InboxActions {
     };
   }
 
+  fetchInboxContainer(container) {
+    return (dispatch) => {
+      InboxFetcher.fetchInboxByContainer(container)
+        .then((result) => {
+          dispatch(result.inbox);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   removeAttachmentFromList(attachment) {
     return attachment;
   }

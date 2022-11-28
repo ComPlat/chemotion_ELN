@@ -22,6 +22,7 @@ class InboxStore {
       handleToggleInboxModal: InboxActions.toggleInboxModal,
       handleFetchInbox: InboxActions.fetchInbox,
       handleFetchInboxCount: InboxActions.fetchInboxCount,
+      handleFetchInboxContainer: InboxActions.fetchInboxContainer,
       handleRemoveAttachmentFromList: InboxActions.removeAttachmentFromList,
       handleRemoveUnlinkedAttachmentFromList: InboxActions.removeUnlinkedAttachmentFromList,
       handleRemoveDatasetFromList: InboxActions.removeDatasetFromList,
@@ -64,6 +65,16 @@ class InboxStore {
 
   handleFetchInboxCount(result) {
     this.state.numberOfAttachments = result.inbox_count;
+  }
+
+  handleFetchInboxContainer(result) {
+    const inbox = { ...this.state.inbox };
+    const index = inbox.children.findIndex((obj) => obj.id === result.id);
+    inbox.children[index].children = result.children;
+    this.setState(inbox);
+
+    this.sync();
+    this.countAttachments();
   }
 
   handleRemoveAttachmentFromList(attachment) {
@@ -198,15 +209,8 @@ class InboxStore {
   }
 
   countAttachments() {
-    let count = 0;
-    const inbox = this.state.inbox
-    inbox.children.forEach(device_box => {
-      device_box.children.forEach(dataset => {
-        count += dataset.attachments.length
-      })
-    });
-    count += inbox.unlinked_attachments.length
-    this.state.numberOfAttachments = count;
+    const { inbox } = this.state;
+    this.state.numberOfAttachments = inbox.total_attachment_count + inbox.unlinked_attachments.length;
   }
 
   handleCheckedAll(params) {

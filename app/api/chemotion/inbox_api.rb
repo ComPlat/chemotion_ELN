@@ -16,6 +16,16 @@ module Chemotion
         end
       end
 
+      desc 'Return datasets by container ID'
+      params do
+        requires :id, type: Integer, desc: 'container ID'
+      end
+
+      get "containers/id" do
+        container = Container.find params[:id]
+        present container, with: Entities::InboxEntity, root: :inbox
+      end
+
       resource :samples do
         desc 'search samples from user by'
         params do
