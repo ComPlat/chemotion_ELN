@@ -31,28 +31,22 @@ class DatacollectorFile < DatacollectorObject
   end
 
   def attach_remote(device)
-    tmpfile = Tempfile.new
-    @sftp.download!(@path, tmpfile.path)
-    att = Attachment.new(
-      filename: @name,
-      file_data: IO.binread(tmpfile.path),
-      content_type: MimeMagic.by_path(@name)&.type,
-      created_by: device.id,
-      created_for: recipient.id,
-    )
-
-    ActiveRecord::Base.transaction do
+    begin
+      tmpfile = Tempfile.new
+      @sftp.download!(@path, tmpfile.path)
+      att = Attachment.new(
+        filename: @name,
+        file_path: tmpfile.path,
+        content_type: MimeMagic.by_path(@name)&.type,
+        created_by: device.id,
+        created_for: recipient.id,
+      )
       att.save!
-
-      att.attachment_attacher.attach(File.open(tmpfile.path, binmode: true))
-      raise ActiveRecord::Rollback unless att.valid?
-
-      att.save!
-
     ensure
       tmpfile.close
       tmpfile.unlink
     end
+
     att
   end
 
