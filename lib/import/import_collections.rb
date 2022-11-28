@@ -48,19 +48,11 @@ module Import
               tmp = Tempfile.new(file_name)
               tmp.write(data)
               tmp.rewind
-              ActiveRecord::Base.transaction do
-                attachment.save!
+              
+              attachment.file_path=tmp.path
+              attachment.save!
+              attachments << attachment
 
-                attachment.attachment_attacher.attach(tmp)
-
-                if attachment.valid?
-                  attachment.attachment_attacher.create_derivatives
-                  attachment.save!
-                  attachments << attachment
-                else
-                  raise ActiveRecord::Rollback
-                end
-              end
             ensure
               tmp.close
               tmp.unlink # deletes the temp file
