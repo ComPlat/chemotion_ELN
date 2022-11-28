@@ -74,6 +74,7 @@ module Analyses
         tmp_file.write(response.parsed_response)
         name = "#{oa.filename.split('.').first}#{extname}"      
         begin
+          att.file_path=tmp_file.path;
           att.save!           
         ensure
           tmp_file.close
