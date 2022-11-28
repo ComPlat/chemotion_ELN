@@ -9,7 +9,7 @@ RSpec.describe 'ImportCollection' do
   end
 
   before do
-    attachment.attachment_attacher.attach(File.open(attachment.file_path))
+    
     copy_target_to_import_folder(import_id)
     stub_rest_request('OKKJLVBELUTLKV-UHFFFAOYSA-N')
     stub_rest_request('XBDQKXXYIPTUBI-UHFFFAOYSA-N')
