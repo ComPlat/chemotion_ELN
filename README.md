@@ -10,9 +10,7 @@ An **Electronic Lab Notebook** for chemists!
 
 ## Tests
 
-[![Badge JS]][JS Tests] <br>
-[![Badge Acceptance]][Acceptance Tests]  <br>
-[![Badge Ruby]][Ruby Tests]
+![Badge CI]
 
 ---
 
@@ -61,12 +59,7 @@ of the **[Karlsruhe Institute of Technology]**.
 [Nicole Jung]: mailto:nicole.jung@kit.edu
 [Karlsruhe Institute of Technology]: https://www.kit.edu/english/
 
-[JS Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=main
-[Ruby Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=main
-[Acceptance Tests]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=main
 [DOI]: https://doi.org/10.5281/zenodo.1054134
 
-[Badge JS]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testjs.yml/badge.svg?branch=main
-[Badge Ruby]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testrb.yml/badge.svg?branch=main
-[Badge Acceptance]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/testacceptance.yml/badge.svg?branch=main
+[Badge CI]: https://github.com/ComPlat/chemotion_ELN/actions/workflows/ci.yml/badge.svg?branch=main
 [Badge DOI]: https://zenodo.org/badge/DOI/10.5281/zenodo.1054134.svg
