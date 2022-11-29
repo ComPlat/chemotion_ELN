@@ -45,7 +45,7 @@
     "mobx": "^6.6.0",
     "mobx-react": "^7.5.0",
     "mobx-state-tree": "^5.1.5",
-    "moment": "^2.29.2",
+    "moment": "^2.29.4",
     "moment-precise-range-plugin": "^1.2.4",
     "normalizr": "^3.3.0",
     "npm": "^8.11.0",
