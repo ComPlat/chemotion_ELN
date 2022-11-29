@@ -28,7 +28,7 @@ module GenericHelpers
     element.update_columns(properties: properties)
   end
 
-  def create_uploads(type, id, files, param_info, user_id)
+  def create_uploads(type, id, files, param_info, user_id) 
     return if files.nil? || param_info.nil? || files.empty? || param_info.empty?
 
     attach_ary = []
