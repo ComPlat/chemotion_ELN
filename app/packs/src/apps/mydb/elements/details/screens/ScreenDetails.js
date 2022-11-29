@@ -21,6 +21,7 @@ import Screen from 'src/models/Screen';
 import ScreenDetailsContainers from 'src/apps/mydb/elements/details/screens/analysesTab/ScreenDetailsContainers';
 import ScreenResearchPlans from 'src/apps/mydb/elements/details/screens/researchPlansTab/ScreenResearchPlans';
 import ScreenWellplates from 'src/apps/mydb/elements/details/screens/ScreenWellplates';
+import ResearchplanFlowDisplay from 'src/apps/mydb/elements/details/screens/ResearchplanFlowDisplay';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
@@ -372,6 +373,7 @@ export default class ScreenDetails extends Component {
       >
         <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
         <Panel.Body>
+          <ResearchplanFlowDisplay />
           <ElementDetailSortTab
             type="screen"
             availableTabs={Object.keys(tabContentsMap)}
