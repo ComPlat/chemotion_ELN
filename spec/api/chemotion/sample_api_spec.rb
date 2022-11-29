@@ -781,7 +781,7 @@ describe Chemotion::SampleAPI do
     let!(:cont_s2_analysis) { create(:analysis_container) }
     let!(:cont_s2_dataset) { create(:container, container_type: 'dataset') }
 
-    let!(:attachment) do
+    let!(:attachment) do     
       create(
         :attachment,
         storage: 'tmp', key: '8580a8d0-4b83-11e7-afc4-85a98b9d0194',
@@ -824,6 +824,9 @@ describe Chemotion::SampleAPI do
       context 'with appropriate permissions' do
         describe 'update sample analysis with a new dataset and a new img file' do
           before do
+            attachment=Attachment.find_by(filename: 'upload.jpg')
+            attachment.key='8580a8d0-4b83-11e7-afc4-85a98b9d0194'
+            attachment.save!
             put("/api/v1/samples/#{s1.id}.json",
               params: sample_upd_1_params.to_json,
               headers: { 'CONTENT_TYPE' => 'application/json' }
