@@ -4,12 +4,12 @@ require 'rails_helper'
 
 RSpec.describe GenericHelpers, type: :helper do
   let(:tmp_file) { fixture_file_upload(Rails.root.join('spec/fixtures/upload.png')) }
-
+  let(:id) { nil }
   describe '.create_uploads' do
     subject { create_uploads(type, id, files, param_info, user_id) }
 
     let(:type) { nil }
-    let(:id) { nil }
+   
     let(:files) { nil }
     let(:param_info) { nil }
     let(:user_id) { nil }
@@ -19,15 +19,7 @@ RSpec.describe GenericHelpers, type: :helper do
       it 'return empty' do
         expect(subject).to be_nil
       end
-    end
-
-    context 'when file is present' do
-      let(:files) { [{ filename: 'test', container_id: '', tempfile: tmp_file, type: '' }] }
-
-      it 'return list of attachment id' do
-        pending 'not yet implemented'
-      end
-    end
+    end    
   end
 
   describe '.create_attachments' do
@@ -42,7 +34,7 @@ RSpec.describe GenericHelpers, type: :helper do
     let(:research_plan) { create(:research_plan, :with_image_field) }
 
     context 'when files is nil' do
-      it 'return empty array' do
+      it 'return empty array' do      
         expect(ids_of_uploaded_files).to eq []
       end
     end
