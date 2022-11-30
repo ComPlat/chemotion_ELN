@@ -7,5 +7,6 @@ attributes = {
   type: 'Admin'
 }
 
-User.create!(attributes) unless User.find_by(type: 'Admin', name_abbreviation: 'ADM')
-
+user = User.find_by(type: 'Admin', name_abbreviation: 'ADM') || User.create!(attributes) 
+user.update!(account_active: true)
+user.update!(confirmed_at: DateTime.now)
