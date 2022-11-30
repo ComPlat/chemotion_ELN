@@ -5,11 +5,12 @@ require 'rails_helper'
 RSpec.describe GenericHelpers, type: :helper do
   let(:tmp_file) { fixture_file_upload(Rails.root.join('spec/fixtures/upload.png')) }
   let(:id) { nil }
+
   describe '.create_uploads' do
     subject { create_uploads(type, id, files, param_info, user_id) }
 
     let(:type) { nil }
-   
+
     let(:files) { nil }
     let(:param_info) { nil }
     let(:user_id) { nil }
@@ -17,9 +18,9 @@ RSpec.describe GenericHelpers, type: :helper do
 
     context 'when any param is nil' do
       it 'return empty' do
-        expect(subject).to be_nil
+        expect(subject).to be_nil # rubocop:disable RSpec/NamedSubject
       end
-    end    
+    end
   end
 
   describe '.create_attachments' do
@@ -34,7 +35,7 @@ RSpec.describe GenericHelpers, type: :helper do
     let(:research_plan) { create(:research_plan, :with_image_field) }
 
     context 'when files is nil' do
-      it 'return empty array' do      
+      it 'return empty array' do
         expect(ids_of_uploaded_files).to eq []
       end
     end
