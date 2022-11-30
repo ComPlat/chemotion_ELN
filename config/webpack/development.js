@@ -34,12 +34,6 @@ const developmentConfig = {
         ]
       }
     ]
-  },
-  resolve: {
-    alias: {
-      process: "process/browser",
-    },
-    fallback: { "process/browser": require.resolve("process/browser") },
   }
 };
 
