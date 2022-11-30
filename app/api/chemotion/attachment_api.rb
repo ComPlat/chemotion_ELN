@@ -46,9 +46,7 @@ module Chemotion
 
     resource :attachments do
       before do
-        if params[:attachment_id].present? && params[:attachment_id].match(/^(\d)+$/)
-          @attachment = Attachment.find_by(id: params[:attachment_id])
-        end
+        @attachment = Attachment.find_by(id: params[:attachment_id])
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
@@ -398,7 +396,6 @@ module Chemotion
         optional :peaks_str, type: String
         optional :shift_select_x, type: String
         optional :shift_ref_name, type: String
-        optional :shift_ref_value, type: String
         optional :shift_ref_value, type: String
         optional :integration, type: String
         optional :multiplicity, type: String
