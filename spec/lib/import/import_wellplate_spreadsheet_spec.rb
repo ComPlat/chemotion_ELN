@@ -3,7 +3,6 @@
 require 'rails_helper'
 
 RSpec.describe 'ImportWellplateSpreadsheet' do
-
   let!(:attachment) { create(:attachment, file_path: file_path) }
   let!(:wellplate) { create(:wellplate, :with_wells, attachments: [attachment]) }
   let(:import) { Import::ImportWellplateSpreadsheet.new(wellplate_id: wellplate.id, attachment_id: attachment.id) }
@@ -28,7 +27,9 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
     end
 
     context 'when prefixes are missing' do
-      let(:expected_error_messsage) { ["'_Value 'and '_Unit' prefixes don't match up.", 'Prefixes must be unique.'].join("\n") }
+      let(:expected_error_messsage) do
+        ["'_Value 'and '_Unit' prefixes don't match up.", 'Prefixes must be unique.'].join("\n")
+      end
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_prefix.xlsx') }
 
       it 'raises an exception' do
@@ -37,7 +38,9 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
     end
 
     context 'when wells are missing' do
-      let(:expected_error_messsage) { ['Well A3 is missing or at wrong position.', 'Well H9 is missing or at wrong position.'].join("\n") }
+      let(:expected_error_messsage) do
+        ['Well A3 is missing or at wrong position.', 'Well H9 is missing or at wrong position.'].join("\n")
+      end
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_wells.xlsx') }
 
       it 'raises an exception' do
@@ -55,7 +58,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
     end
 
     context 'with valid data' do
-      let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template.xlsx')}
+      let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template.xlsx') }
 
       before do
         import.process!
@@ -66,7 +69,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
         expect(wellplate.readout_titles).to eq %w[Readout1 Readout2]
       end
 
-      it 'imports well readouts' do
+      it 'imports well readouts' do # rubocop:disable RSpec/MultipleExpectations
         expected_readouts = (1..96).map do |x|
           [{ value: "0.#{x}".to_f,
              unit: 'mg' }.stringify_keys,
