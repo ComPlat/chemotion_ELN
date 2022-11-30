@@ -4,9 +4,9 @@
 module GenericHelpers
   extend Grape::API::Helpers
 
-  def fetch_properties_uploads(properties)
+  def fetch_properties_uploads(properties) # rubocop:disable  Metrics/AbcSize,Metrics/MethodLength
     uploads = []
-    properties['layers'].keys.each do |key|
+    properties['layers'].each_key do |key|
       layer = properties['layers'][key]
       field_uploads = layer['fields'].select { |ss| ss['type'] == 'upload' }
       field_uploads.each do |field|
@@ -18,27 +18,28 @@ module GenericHelpers
     uploads
   end
 
-  def update_properties_upload(element, properties, att, pa)
+  def update_properties_upload(element, properties, att, pa) # rubocop:disable  Metrics/AbcSize,Naming/MethodParameterName
     return if pa.nil?
 
     idx = properties['layers'][pa[:layer]]['fields'].index { |fl| fl['field'] == pa[:field] }
     fidx = properties['layers'][pa[:layer]]['fields'][idx]['value']['files'].index { |fi| fi['uid'] == pa[:uid] }
     properties['layers'][pa[:layer]]['fields'][idx]['value']['files'][fidx]['aid'] = att.id
     properties['layers'][pa[:layer]]['fields'][idx]['value']['files'][fidx]['uid'] = att.identifier
-    element.update_columns(properties: properties)
+    element.update_columns(properties: properties) # rubocop:disable  Rails/SkipsModelValidations
   end
 
-  def create_uploads(type, id, files, param_info, user_id) 
+  def create_uploads(type, id, files, param_info, user_id) # rubocop:disable  Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
     return if files.nil? || param_info.nil? || files.empty? || param_info.empty?
 
     attach_ary = []
     map_info = JSON.parse(param_info)
-    map_info&.keys&.each do |key|
+    map_info&.keys&.each do |key| # rubocop:disable  Metrics/BlockLength
       next if map_info[key]['files'].empty?
 
-      if type == 'Segment'
+      case type
+      when 'Segment'
         element = Segment.find_by(element_id: id, segment_klass_id: key)
-      elsif type == 'Element'
+      when 'Element'
         element = Element.find_by(id: id)
       end
       next if element.nil?
@@ -77,7 +78,7 @@ module GenericHelpers
     attach_ary
   end
 
-  def create_attachments(files, del_files, type, id, identifier, user_id)
+  def create_attachments(files, del_files, type, id, identifier, user_id) # rubocop:disable  Metrics/AbcSize,Metrics/MethodLength,Metrics/ParameterLists
     attach_ary = []
 
     (files || []).each_with_index do |file, index|
@@ -106,7 +107,7 @@ module GenericHelpers
     end
     unless (del_files || []).empty?
       Attachment.where('id IN (?) AND attachable_type = (?)', del_files.map!(&:to_i),
-                       type).update_all(attachable_id: nil)
+                       type).update_all(attachable_id: nil) # rubocop:disable  Rails/SkipsModelValidations
     end
     attach_ary
   end
