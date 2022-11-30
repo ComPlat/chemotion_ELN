@@ -249,7 +249,8 @@ module AttachmentJcampProcess
       delete_related_csv(csv_att)
     end
 
-    set_backup
+    set_done
+
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att)
     delete_edit_peak_after_done
