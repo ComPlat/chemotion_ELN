@@ -3,10 +3,14 @@ const webpack = require('webpack');
 module.exports = {
   resolve: {
     extensions: ['.json', '...'],
+    alias: {
+      process: 'process/browser',
+    },
     fallback: {
       util: require.resolve('util/'),
       querystring: require.resolve('querystring-es3'),
-      stream: false
+      stream: false,
+      'process/browser': require.resolve('process/browser')
     }
   },
   plugins: [
