@@ -4,6 +4,7 @@ require 'rails_helper'
 
 RSpec.describe GenericHelpers, type: :helper do
   let(:tmp_file) { fixture_file_upload(Rails.root.join('spec/fixtures/upload.png')) }
+
   let(:id) { nil }
 
   describe '.create_uploads' do
