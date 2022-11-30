@@ -4,14 +4,12 @@ require 'rails_helper'
 
 RSpec.describe GenericHelpers, type: :helper do
   let(:tmp_file) { fixture_file_upload(Rails.root.join('spec/fixtures/upload.png')) }
-
   let(:id) { nil }
 
   describe '.create_uploads' do
     subject { create_uploads(type, id, files, param_info, user_id) }
 
     let(:type) { nil }
-
     let(:files) { nil }
     let(:param_info) { nil }
     let(:user_id) { nil }
@@ -26,7 +24,6 @@ RSpec.describe GenericHelpers, type: :helper do
 
   describe '.create_attachments' do
     let(:ids_of_uploaded_files) { create_attachments(files, del_files, type, id, identifier, user_id) }
-
     let(:files) { nil }
     let(:del_files) { nil }
     let(:type) { nil }
