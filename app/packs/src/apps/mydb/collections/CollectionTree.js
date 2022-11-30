@@ -10,7 +10,6 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
-import Xdiv from 'src/components/extra/CollectionTreeXdiv';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
@@ -296,11 +295,6 @@ export default class CollectionTree extends React.Component {
 
   render() {
     let { ownCollectionVisible, inboxVisible, inbox } = this.state
-    let extraDiv = [];
-    for (let j = 0; j < Xdiv.count; j++) {
-      let NoName = Xdiv["content" + j];
-      extraDiv.push(<NoName key={"Xdiv" + j} />);
-    }
 
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
     const inboxDisplay = inboxVisible ? '' : 'none';
@@ -329,14 +323,20 @@ export default class CollectionTree extends React.Component {
         <div className="tree-wrapper">
           {this.remoteSyncInSubtrees()}
         </div>
-        {extraDiv.map((e) => { return e })}
         <div className="tree-view">
           <div className="title" style={{ backgroundColor: 'white' }}>
-            <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Inbox &nbsp;</i>
+            <button
+              type="button"
+              className="btn-inbox"
+              onClick={() => this.onClickInbox()}
+            >
+              <i className="fa fa-inbox" />
+              <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
+            </button>
             {
               this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
             }
-            &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshInbox()} />
+            <Glyphicon bsSize="small" glyph="refresh" style={{ marginLeft: '5px' }} onClick={() => this.refreshInbox()} />
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullInbox">Show larger Inbox</Tooltip>}>
               <Button style={{ position: 'absolute', right: 0 }} bsSize="xsmall" onClick={InboxActions.toggleInboxModal}>
                 <i className="fa fa-expand" aria-hidden="true" />
@@ -350,6 +350,6 @@ export default class CollectionTree extends React.Component {
           {this.inboxSubtrees()}
         </div>
       </div>
-    )
+    );
   }
 }

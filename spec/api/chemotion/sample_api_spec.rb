@@ -233,8 +233,6 @@ describe Chemotion::SampleAPI do
 
         collection_sample = CollectionsSample.where(collection_id: collection.id)
 
-        puts 'collection_sample'
-
         molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
         sample = Sample.find_by(molecule_id: molecule.id)
 
@@ -304,8 +302,6 @@ describe Chemotion::SampleAPI do
         ).to eq 'ok'
 
         collection_sample = CollectionsSample.where(collection_id: collection.id)
-
-        puts 'collection_sample'
 
         molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
         sample = Sample.find_by(molecule_id: molecule.id)
@@ -427,7 +423,7 @@ describe Chemotion::SampleAPI do
       let(:collection) { shared_collection }
 
       before do
-        collection.update_attributes(permission_level: permission_level)
+        collection.update(permission_level: permission_level)
         get "/api/v1/samples/#{sample.id}"
       end
 

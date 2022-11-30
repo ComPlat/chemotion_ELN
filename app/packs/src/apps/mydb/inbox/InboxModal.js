@@ -9,8 +9,6 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 
-import Xdiv from 'src/components/extra/CollectionTreeXdiv';
-
 export default class InboxModal extends React.Component {
   constructor(props) {
     super(props);
@@ -90,11 +88,6 @@ export default class InboxModal extends React.Component {
     const { showCollectionTree } = this.props;
     const { visible, inboxVisible } = this.state;
 
-    const extraDiv = [];
-    for (let j = 0; j < Xdiv.count; j += 1) {
-      const NoName = Xdiv[`Xdiv${j}`];
-      extraDiv.push(<NoName key={`Xdiv${j}`} />);
-    }
 
     const panelClass = showCollectionTree ? 'small-col col-md-6' : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
@@ -111,7 +104,14 @@ export default class InboxModal extends React.Component {
           >
             <Panel bsStyle="primary" className="eln-panel-detail research-plan-details cursor">
               <Panel.Heading className="cursor handle">
-                <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Inbox &nbsp;</i>
+                <button
+                  type="button"
+                  className="btn-inbox"
+                  onClick={() => this.onClickInbox()}
+                >
+                  <i className="fa fa-inbox" />
+                  <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
+                </button>
                 {
                   this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
                 }
@@ -136,7 +136,14 @@ export default class InboxModal extends React.Component {
                 <div>
                   <div className="tree-view">
                     <div className="title" style={{ backgroundColor: 'white', display: inboxVisible ? 'none' : '' }}>
-                      <i className="fa fa-inbox" onClick={() => this.onClickInbox()}> &nbsp; Fetch Inbox &nbsp;</i>
+                      <button
+                        type="button"
+                        className="btn-inbox"
+                        onClick={() => this.onClickInbox()}
+                      >
+                        <i className="fa fa-inbox" />
+                        <span style={{ marginLeft: '10px' }}>Fetch Inbox</span>
+                      </button>
                     </div>
 
                   </div>

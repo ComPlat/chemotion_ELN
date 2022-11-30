@@ -422,7 +422,7 @@ module SVG
     def inner_file_content(svg_path)
       file = @rails_path ? "#{Rails.public_path}#{svg_path}" : svg_path
       return svg_text(svg_path) if svg_path.start_with?('svg_text/')
-      return if File.directory?(file)
+      return unless File.file?(file)
 
       doc = Nokogiri::XML(File.open(file))
       if svg_path.include?('/samples')

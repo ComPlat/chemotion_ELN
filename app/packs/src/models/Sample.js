@@ -364,18 +364,16 @@ export default class Sample extends Element {
   title(selected = false) {
     const profile = UserStore.getState().profile
     const show_external_name = profile ? profile.show_external_name : false
+    const show_sample_name = profile ? profile.show_sample_name : false
     const external_label = this.external_label;
     const extLabelClass = this.highlight_label(!selected);
-    const nameClass = this.highlight_label(false);
-    const short_label = this.name
-      ? <span>
-        <span>{this.short_label}</span>
-        <span className={nameClass}>{`  ${this.name}`}</span>
-      </span>
-      : this.short_label
+    const name = this.name;
+    const short_label = this.short_label;
 
     if (show_external_name) {
       return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
+    } else if(show_sample_name) {
+      return (name ? <span className={extLabelClass}>{name}</span> : short_label);
     } else {
       return short_label;
     }
@@ -950,38 +948,6 @@ export default class Sample extends Element {
     this.container.children.filter(
       element => ~element.container_type.indexOf('analyses')
     )[0].children.push(analysis);
-  }
-
-  analysesContainers() {
-    if (this.container.children.length === 0) {
-      const analyses = Container.buildEmpty();
-      analyses.container_type = 'analyses';
-      this.container.children.push(analyses);
-    }
-
-    return this.container
-      .children
-      .filter(el => ~el.container_type.indexOf('analyses'));
-  }
-
-  analysisContainers() {
-    let target = [];
-    this.analysesContainers().forEach((aec) => {
-      const aics = aec.children
-        .filter(el => ~el.container_type.indexOf('analysis'));
-      target = [...target, ...aics];
-    });
-    return target;
-  }
-
-  datasetContainers() {
-    let target = [];
-    this.analysisContainers().forEach((aic) => {
-      const dts = aic.children
-        .filter(el => ~el.container_type.indexOf('dataset'));
-      target = [...target, ...dts];
-    });
-    return target;
   }
 
   attachments() {

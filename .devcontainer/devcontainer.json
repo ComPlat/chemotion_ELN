@@ -1,0 +1,35 @@
+// For format details, see https://containers.dev/implementors/json_reference/.
+{
+  "name": "Chemotion Dockerfile",
+  "dockerComposeFile": [
+    "../docker-compose.dev.yml"
+  ],
+  "service": "app",
+  "workspaceFolder": "/home/chemotion-dev/app",
+  "extensions": [
+    "castwide.solargraph",
+    "rebornix.ruby",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "eamodio.gitlens",
+    "streetsidesoftware.code-spell-checker"
+  ],
+  "forwardPorts": [
+    3000,
+    5432
+  ],
+  "initializeCommand": [
+    "/bin/bash",
+    ".devcontainer/pre_create.sh"
+  ],
+  "postCreateCommand": [
+    "/bin/bash",
+    ".devcontainer/post_create.sh"
+  ],
+  "remoteUser": "chemotion-dev", // see https: //aka.ms/vscode-remote/containers/non-root
+  "shutdownAction": "stopCompose", // stop compose when quitting
+  "overrideCommand": true, // override the commands in the compose file
+  "containerEnv": {
+    "RAILS_ENV": "development"
+  }
+}

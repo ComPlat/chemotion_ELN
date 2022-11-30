@@ -302,3 +302,18 @@
     background-color: #e6e6e6;
   }
 }
+
+.btn-inbox {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  b {
+    float: right;
+  }
+}

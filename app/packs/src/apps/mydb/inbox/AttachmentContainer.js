@@ -145,11 +145,12 @@ class AttachmentContainer extends Component {
           />
         ) : null}
         <OverlayTrigger placement="top" overlay={filenameTooltip} >
-          <span
-            className="text-info fa fa-arrows"
-            style={{ maxWidth: '100%' }}
-          >
-            &nbsp; {attachment.filename}
+          <span>
+            <span
+              className="text-info fa fa-arrows"
+              style={{ maxWidth: '100%', marginRight: '8px' }}
+            />
+            {attachment.filename}
           </span>
         </OverlayTrigger>
         <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>

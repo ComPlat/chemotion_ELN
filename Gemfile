@@ -56,7 +56,9 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: '287c848ad4149caf6466a1b7a648ada017d30304'
+gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
+
+gem 'mimemagic', '0.3.10'
 
 # locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks
 # out newer net-scp versions
@@ -84,7 +86,7 @@ gem 'pundit'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
-gem 'rails', '~> 5.2.0'
+gem 'rails', '6.1.7'
 gem 'rdkit_chem', git: 'https://github.com/CamAnNguyen/rdkit_chem'
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 gem 'rmagick'
@@ -138,6 +140,12 @@ group :development do
   gem 'web-console'
 end
 
+group :vscode do
+  gem 'debase'
+  gem 'ruby-debug-ide'
+  gem 'solargraph'
+end
+
 group :development, :test do
   gem 'annotate'
   gem 'awesome_print'
@@ -187,8 +195,3 @@ group :test do
   gem 'webmock'
 end
 
-# gem 'nmr_sim', git: 'https://github.com/ComPlat/nmr_sim', ref: 'e2f91776aafd8eb1fa9d88c8ec2291b02201f222', group: [:plugins,:development, :test, :production]
-
-# Chemotion plugins: list your ELN specific plugin gems in the Gemfile.plugin
-eln_plugin = File.join(File.dirname(__FILE__), 'Gemfile.plugin')
-eval_gemfile eln_plugin if File.exist?(eln_plugin)

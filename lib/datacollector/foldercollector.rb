@@ -74,7 +74,7 @@ class Foldercollector < Fcollector
 
   def list_files
     if @sftp
-      all_files = @sftp.dir.entries(@current_collector.path).reject(
+      all_files = @sftp.dir.glob(@current_collector.path, '**/*').reject(
         &:directory?
       )
       all_files.map!(&:name)

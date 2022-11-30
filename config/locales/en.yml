@@ -34,3 +34,10 @@ en:
   time:
     formats:
       eln_timestamp: '%d.%m.%Y, %H:%M:%S'
+  activerecord:
+    errors:
+      models:
+        sample_task:
+          attributes:
+            base:
+              sample_or_scan_data_required: SampleTask creation requires either a sample id or a file + measurement data

@@ -95,7 +95,7 @@ class Molecule < ApplicationRecord
       molecule.molfile = is_partial && partial_molfile || molfile
       molecule.assign_molecule_data(babel_info, pubchem_info)
     end
- 
+
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end
@@ -136,11 +136,10 @@ class Molecule < ApplicationRecord
     self.iupac_name = pubchem_info[:iupac_name]
     self.names = pubchem_info[:names]
     self.pcid = pubchem_info[:cid]
-    self.check_sum_formular # correct exact and average MW for resins
 
-    #self.attach_svg babel_info[:svg]
-    svg = Chemotion::OpenBabelService.svg_from_molfile(self.molfile)
-    self.attach_svg svg
+    check_sum_formular
+    svg = Molecule.svg_reprocess(babel_info[:svg], molfile)
+    attach_svg svg
 
     self.cano_smiles = babel_info[:cano_smiles]
     self.molfile_version = babel_info[:molfile_version]
@@ -152,14 +151,14 @@ class Molecule < ApplicationRecord
     # if pubchem_lcss of taggable does not exist, try PubChem API and then update DB and return
     mol_tag = self.tag
     mol_tag_data = mol_tag.taggable_data || {}
-    if mol_tag_data['pubchem_lcss'] && mol_tag_data['pubchem_lcss'].length > 0
-      mol_tag_data['pubchem_lcss'];
-    else
+
+    unless mol_tag_data['pubchem_lcss']&.present?
       mol_tag_data['pubchem_lcss'] = Chemotion::PubchemService.lcss_from_cid(cid)
       # updated_at of element_tags(not molecule) is updated
-      mol_tag.update_attributes taggable_data: mol_tag_data
-      mol_tag_data['pubchem_lcss'];
+      mol_tag.update taggable_data: mol_tag_data
     end
+
+    mol_tag_data['pubchem_lcss']
   end
 
   def chem_repo
@@ -174,10 +173,10 @@ class Molecule < ApplicationRecord
                     else
                       "#{SecureRandom.hex(64)}.svg"
                     end
-
+    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
     File.write(
       full_svg_path(svg_file_name),
-      Loofah.scrub_fragment(svg_data.encode('UTF-8'), :strip).to_s
+      Loofah.scrub_fragment(svg_data.encode('UTF-8'), :strip).to_s.gsub('viewbox', 'viewBox'),
     )
 
     self.molecule_svg_file = svg_file_name
@@ -244,6 +243,20 @@ class Molecule < ApplicationRecord
   def unique_molecule_name(new_name)
     mns = molecule_names.map(&:name)
     !mns.include?(new_name)
+  end
+
+  def self.svg_reprocess(svg, molfile)
+    return svg unless Rails.configuration.try(:ketcher_service).try(:url).present?
+    return svg if svg.present? && !svg&.include?('Open Babel')
+
+    svg = KetcherService::RenderSvg.svg(molfile)
+
+    if svg&.present?
+      svg = Ketcherails::SVGProcessor.new(svg)
+      svg.centered_and_scaled_svg
+    else
+      Chemotion::OpenBabelService.svg_from_molfile(molfile)
+    end
   end
 
 private

@@ -9,7 +9,7 @@ set -euo pipefail
 
 ## CHEMOTION ELN GIT REPOSITORY
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH='v1.3'
+BRANCH='v1.4'
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -17,16 +17,16 @@ PROD=production
 PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.6.6
-BUNDLER_VERSION=1.17.3
+RUBY_VERSION=2.7.6
+BUNDLER_VERSION=2.1.4
 
 ## NODEJS
 NVM_VERSION='v0.38.0'
-NODE_VERSION=14.16.0
+NODE_VERSION=14.20.0
 NPM_VERSION=7.11.1
 
 ## default naming of directories and files
-APP_NAME=chemotion_ELN 
+APP_NAME=chemotion_ELN
 
 ## TMP DIR (has to be acccesible to install and PROD user)
 TMP_DIR=/tmp/${APP_NAME}_stage
@@ -60,7 +60,7 @@ PART_4='update rvm and ruby'
 PART_5='update nvm and npm'
 PART_8='prepare first deploy and deploy application code'
 #PART_81='seed common ketcher templates'
-#PART_82='seed common reagents' 
+#PART_82='seed common reagents'
 
 
 ############################################
@@ -261,7 +261,7 @@ if [ "${PART_8:-}" ]; then
   sudo -H -u $PROD bash -c  "if [ -z \"\$(grep \"$localkey\" $PROD_HOME/.ssh/authorized_keys )\" ]; then echo $localkey | tee -a $PROD_HOME/.ssh/authorized_keys; fi;"
 
   sharpi "prepare config"
-  
+
   local_deploy_conf=$TMP_DIR/config/deploy/local_deploy.rb
   sudo cp $deploy_conf_example $local_deploy_conf
   sed -i "s/user =.*/user ='$PROD'/" $local_deploy_conf

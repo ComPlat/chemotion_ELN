@@ -45,9 +45,8 @@ class Attachment < ApplicationRecord
   before_create :add_content_type
   before_save :update_filesize
 
-
   #reload to get identifier:uuid
-  after_create :reload, on: :create
+  after_create :reload
 
   before_destroy :delete_file_and_thumbnail
 

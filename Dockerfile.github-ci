@@ -1,7 +1,7 @@
-FROM ruby:2.6.8
+FROM ruby:2.7.6
 
 ARG NODE_VERSION=14.20.0
-ARG BUNDLER_VERSION=1.17.3
+ARG BUNDLER_VERSION=2.1.4
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     bash ca-certificates wget apt-transport-https git gpg gcc-9 \

@@ -9,8 +9,53 @@
 * Features and Improvements:
 * Fixes
 
+## [v1.4.1]
+> 2022-11-09
 
-# [v1.3.1-pre]
+* Features and Improvements:
+  * Allow selection of default drawing editor on individual user level settings [Allow selection of default drawing editor on individual user level settings #632](https://github.com/ComPlat/chemotion_ELN/issues/632)
+  * Use 'Search CAS' instead of 'CAS content' based on final feedback from CAS
+  * Ketcher Service on HTTPS
+
+* Fixes:
+  * An incomplete SVG file is generated after sanitizing the SVG
+  * chemspectra on Reaction and ResearchPlan analyses
+  * chemspectra display of XRD data
+  * DataCollector: deletion of folder
+  * Incorrect application root url in Jobs
+  * client handling of attachment hyperlinks
+  * misleading tooltip in the user list  (Admin UI)
+  * proper version of chemspectra app
+
+
+
+## [v1.4.0]
+> 2022-09-26
+
+* Important for admin and developers:
+  * change of environment variable: use PUBLIC_URL instead of HOST and SMTP_HOST
+  * nodejs upd to 14.20.0
+  * drop support for bionic
+
+* Features and Improvements:
+  * ketcherservice: server generation of sample svg
+  * Reaction coefficient: improve yield calculation (https://github.com/ComPlat/chemotion_ELN/issues/544)
+  * Metadata-converter: v0.6.0
+  * Chemspectra: v0.10.15 (allow reprocessing, read Bruker processed files if present)
+  * Inbox: delete multiple attachments at once (https://github.com/ComPlat/chemotion_ELN/issues/571)
+  * research-plan: improve context-menu in tables
+
+
+* Fixes:
+  * SVG generation for sample and reaction: (https://github.com/ComPlat/chemotion_ELN/issues/846)
+  * Sample amount metric
+  * report svg composer: skip image if image file does not exist.
+  * chemspectra: duplicate image generation
+
+
+
+
+## [v1.3.1]
 > 2022-07-07
 
 * Features and Improvements:

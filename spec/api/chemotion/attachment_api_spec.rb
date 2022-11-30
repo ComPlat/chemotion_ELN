@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+# rubocop:disable Rspec/NestedGroups
+# rubocop:disable RSpec/MultipleMemoizedHelpers
+# rubocop:disable RSpec/AnyInstance
+# rubocop:disable RSpec/BeforeAfterAll
+# rubocop:disable RSpec/LetSetup
+# rubocop:disable Naming/VariableNumber
+
 require 'rails_helper'
 
 describe Chemotion::AttachmentAPI do
@@ -165,7 +172,7 @@ describe Chemotion::AttachmentAPI do
     context 'when "AttachmentPolicy" allows upload', :enable_attachment_policy_can_upload_chunk do
       let(:expected_response) { true }
 
-      after { FileUtils.rm_rf(Rails.root.join('tmp', 'uploads', 'chunks')) }
+      after { FileUtils.rm_rf(Rails.root.join('tmp/uploads/chunks')) }
 
       it 'returns with the right http status' do
         expect(response).to have_http_status(:created)
@@ -188,11 +195,11 @@ describe Chemotion::AttachmentAPI do
     let(:params) { { filename: filename, key: key, checksum: checksum } }
 
     let(:execute_request) { post '/api/v1/attachments/upload_chunk_complete', params: params }
-    let(:chunk_file1) { Rails.root.join('tmp', 'uploads', 'chunks', "#{key}$0") }
-    let(:chunk_file2) { Rails.root.join('tmp', 'uploads', 'chunks', "#{key}$1") }
+    let(:chunk_file1) { Rails.root.join('tmp/uploads/chunks', "#{key}$0") }
+    let(:chunk_file2) { Rails.root.join('tmp/uploads/chunks', "#{key}$1") }
     let(:simulate_upload_chunks) do
-      source = Rails.root.join('spec', 'fixtures', 'upload.txt')
-      FileUtils.mkdir_p(Rails.root.join('tmp', 'uploads', 'chunks'))
+      source = Rails.root.join('spec/fixtures/upload.txt')
+      FileUtils.mkdir_p(Rails.root.join('tmp/uploads/chunks'))
 
       FileUtils.cp(source, chunk_file1)
       FileUtils.cp(source, chunk_file2)
@@ -217,8 +224,8 @@ describe Chemotion::AttachmentAPI do
     end
 
     after do
-      FileUtils.rm_rf(Rails.root.join('tmp', 'uploads', 'full'))
-      FileUtils.rm_rf(Rails.root.join('tmp', 'uploads', 'chunks'))
+      FileUtils.rm_rf(Rails.root.join('tmp/uploads/full'))
+      FileUtils.rm_rf(Rails.root.join('tmp/uploads/chunks'))
     end
 
     context 'when "AttachmentPolicy" denies upload', :disable_attachment_policy_can_upload_chunk do
@@ -345,7 +352,38 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'POST /api/v1/attachments/save_spectrum' do
-    pending 'not yet implemented'
+    let(:attachment) { create(:attachment, :with_spectra_file) }
+
+    context 'when parameters are correct' do
+      let(:spectrum_params) { JSON.parse(File.read('spec/fixtures/spectrum_param_chloroform_d.json')) }
+      let(:execute_request) { post '/api/v1/attachments/save_spectrum', params: spectrum_params }
+      let(:generated_attachment_id) { JSON.parse(body)['files'].first['id'] }
+
+      before do
+        allow(Chemotion::Jcamp::Create)
+          .to receive(:spectrum)
+          .and_return([Tempfile.new('test'), Tempfile.new('tmpImage'),
+                       nil, nil, nil, nil])
+        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(%w[spectra_file jdx], 'edit',
+                                                                'jdx').and_return('fakeFile.jdx')
+        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(%w[fakeFile jdx], 'infer',
+                                                                'json').and_return('fakeFile.json')
+        allow(Chemotion::Jcamp::Gen).to receive(:filename).with(%w[spectra_file jdx], 'edit',
+                                                                'png').and_return('fakeFile.png')
+
+        spectrum_params['attachment_id'] = attachment.id
+
+        execute_request
+      end
+
+      it 'returns statuscode 201' do
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'new attachment was created' do
+        expect(Attachment.find(generated_attachment_id)).not_to be_nil
+      end
+    end
   end
 
   describe 'POST /api/v1/attachments/infer' do
@@ -358,7 +396,7 @@ describe Chemotion::AttachmentAPI do
 
   # TODO: Check these specs and remove everything that is already covered by the specs above
   #       Refactor the rest to match the spec structure as shown above
-  context 'legacy specs from spec/api/attachment_api_spec.rb' do
+  context 'with legacy specs from spec/api/attachment_api_spec.rb' do
     let(:file_upload) do
       {
         file_1: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt'), 'text/plain'),
@@ -395,7 +433,7 @@ describe Chemotion::AttachmentAPI do
 
     let(:new_local_attachment) { build(:attachment, storage: 'local') }
 
-    context 'authorized user logged in' do
+    context 'when authorized user logged in' do
       let(:attachments) do
         Attachment.where(created_by: user, filename: 'upload.txt')
       end
@@ -422,8 +460,8 @@ describe Chemotion::AttachmentAPI do
       end
 
       after(:all) do
-        `rm -rf #{Rails.root.join('tmp', 'test')}`
-        puts "delete tmp folder #{Rails.root.join('tmp', 'test')} "
+        `rm -rf #{Rails.root.join('tmp/test')}`
+        puts "delete tmp folder #{Rails.root.join('tmp/test')} "
       end
 
       describe 'upload files thru POST attachments/upload_dataset_attachments' do
@@ -487,3 +525,9 @@ describe Chemotion::AttachmentAPI do
     end
   end
 end
+# rubocop:enable Rspec/NestedGroups
+# rubocop:enable RSpec/MultipleMemoizedHelpers
+# rubocop:enable RSpec/AnyInstance
+# rubocop:enable RSpec/BeforeAfterAll
+# rubocop:enable RSpec/LetSetup
+# rubocop:enable Naming/VariableNumber

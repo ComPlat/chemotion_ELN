@@ -52,9 +52,9 @@ module Chemotion
           begin
             ActiveRecord::Base.transaction do
               attachment.save!
-
+    
               attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-
+    
               if attachment.valid?
                 attachment.attachment_attacher.create_derivatives
                 attachment.save!
@@ -100,9 +100,9 @@ module Chemotion
             begin
               ActiveRecord::Base.transaction do
                 attachment.save!
-
+      
                 attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
-
+      
                 if attachment.valid?
                   attachment.attachment_attacher.create_derivatives
                   attachment.save!

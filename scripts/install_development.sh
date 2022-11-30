@@ -10,7 +10,7 @@ set -euo pipefail
 ############# VARIABLES ####################
 
 REPO='https://github.com/ComPlat/chemotion_ELN.git'
-BRANCH=development-5
+BRANCH=main
 TMP_REPO_DIR="/tmp/${BRANCH}.git"
 
 ## user account name (to be created or to be used)
@@ -19,12 +19,12 @@ PROD=chemotion
 # PROD_HOME=$(eval echo "~$PROD")
 
 ## RUBY
-RUBY_VERSION=2.6.6 # 2.5 recommended for bionic
-BUNDLER_VERSION=1.17.3
+RUBY_VERSION=2.7.6
+BUNDLER_VERSION=2.1.4
 
 ## NODEJS
 NVM_VERSION='v0.38.0'
-NODE_VERSION=14.16.0
+NODE_VERSION=14.20.0
 NPM_VERSION=7.11.1
 YARN_VERSION=1.22.10
 
@@ -77,13 +77,12 @@ PART_9='log-rotation'
 ############################################
 ############################################
 
-## supported Distribution Version  
+## supported Distribution Version
 . /etc/os-release
-V18='bionic'
 V20='focal'
 V10='buster'
 # if [ "$VERSION_CODENAME" = "$V18" ]; then
-#   RUBY_VERSION=2.5.8  
+#   RUBY_VERSION=2.5.8
 # fi
 
 
@@ -130,9 +129,9 @@ rm_tmp_repo() {
 
 trap "rm_tmp; rm_tmp_repo; red 'An error has occured'" ERR
 
-if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V18" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
+if  [ "$VERSION_CODENAME" = "$V10" ] || [ "$VERSION_CODENAME" = "$V20" ]; then
   sharpi "Running installation for $PRETTY_NAME "
-else 
+else
   error "The installation for your distribution ($PRETTY_NAME) has not been tested"
 fi
 
@@ -290,10 +289,10 @@ if [ "${PART_6:-}" ]; then
   sudo -u postgres psql -d $DB_NAME -c ' CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 
   ## DB for testing
-  sudo -u postgres psql -c " CREATE DATABASE $DB_TEST OWNER $DB_ROLE;" || yellow 'Test DB exists.' 
+  sudo -u postgres psql -c " CREATE DATABASE $DB_TEST OWNER $DB_ROLE;" || yellow 'Test DB exists.'
   sudo -u postgres psql -d $DB_TEST -c ' CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore";  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 
-  
+
 
   green "done $description\n"
 else
@@ -349,7 +348,7 @@ EOL
 # Change Ownership and Permissions
   sudo chmod 600 $TMP_DIR/config/*.yml
   sudo chown $PROD:$PROD -R $TMP_DIR
-  
+
   src='source ~/.nvm/nvm.sh && source ~/.rvm/scripts/rvm '
 
   sudo -H -u $PROD bash -c "cd $TMP_DIR && source ~/.rvm/scripts/rvm && rvm use $RUBY_VERSION && bundle config build.nokogiri --use-system-libraries"

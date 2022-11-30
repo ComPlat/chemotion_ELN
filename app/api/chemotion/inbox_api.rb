@@ -56,7 +56,7 @@ module Chemotion
 
           new_analysis_container = analyses_container.children.create(container_type: 'analysis', name: analysis_name)
           dataset = new_analysis_container.children.create(parent_id: new_analysis_container.id, container_type: 'dataset', name: analysis_name)
-          attachment.update_attributes!(attachable: dataset)
+          attachment.update!(attachable: dataset)
 
           @link = if Rails.env.production?
                     "https://#{ENV['HOST'] || ENV['SMTP_DOMAIN']}/mydb/collection/all/sample/#{@sample.id}"

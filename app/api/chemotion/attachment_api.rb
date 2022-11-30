@@ -28,7 +28,7 @@ module Chemotion
         {
           id: att.id,
           file: raw_file(att),
-          predictions: JSON.parse(att.get_infer_json_content)
+          predictions: JSON.parse(att.get_infer_json_content),
         }
       end
 
@@ -48,9 +48,7 @@ module Chemotion
 
     resource :attachments do
       before do
-        if params[:attachment_id].present? && params[:attachment_id].match(/^(\d)+$/)
-          @attachment = Attachment.find_by(id: params[:attachment_id])
-        end
+        @attachment = Attachment.find_by(id: params[:attachment_id])
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
@@ -76,9 +74,9 @@ module Chemotion
           elsif @attachment
             can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
             if !can_dwnld && (element = @attachment.container&.root&.containable)
-              can_dwnld = element.is_a?(User) && (element == current_user) ||
-                          ElementPolicy.new(current_user, element).read? &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+              can_dwnld = (element.is_a?(User) && (element == current_user)) ||
+                          (ElementPolicy.new(current_user, element).read? &&
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?)
             end
           end
           error!('401 Unauthorized', 401) unless can_dwnld
@@ -112,7 +110,7 @@ module Chemotion
             key: file[:name],
             created_by: current_user.id,
             created_for: current_user.id,
-            content_type: file[:type]
+            content_type: file[:type],
           )
 
           a.attachment_attacher.attach(file[:tempfile])
@@ -190,7 +188,7 @@ module Chemotion
             created_by: current_user.id,
             created_for: current_user.id,
             content_type: file[:type],
-            attachable_type: 'Container'
+            attachable_type: 'Container',
           )
           begin
             attach.save!
@@ -221,7 +219,7 @@ module Chemotion
       get 'zip/:container_id' do
         env['api.format'] = :binary
         content_type('application/zip, application/octet-stream')
-        filename = URI.escape("#{@container.parent&.name.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
+        filename = CGI.escape("#{@container.parent&.name&.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         zip = Zip::OutputStream.write_buffer do |zip|
           @container.attachments.each do |att|
@@ -254,14 +252,20 @@ module Chemotion
 
       desc 'Download the zip attachment file by sample_id'
       get 'sample_analyses/:sample_id' do
-        tts = @sample.analyses&.map { |a| a.children&.map { |d| d.attachments&.map { |at| at.filesize } } }&.flatten&.reduce(:+) || 0
+        tts = @sample.analyses&.map do |a|
+                a.children&.map do |d|
+                  d.attachments&.map do |at|
+                    at.filesize
+                  end
+                end
+              end&.flatten&.reduce(:+) || 0
         if tts > 300_000_000
           DownloadAnalysesJob.perform_later(@sample.id, current_user.id, false)
           nil
         else
           env['api.format'] = :binary
           content_type('application/zip, application/octet-stream')
-          filename = URI.escape("#{@sample.short_label}-analytical-files.zip")
+          filename = CGI.escape("#{@sample.short_label}-analytical-files.zip")
           header('Content-Disposition', "attachment; filename=\"#{filename}\"")
           zip = DownloadAnalysesJob.perform_now(@sample.id, current_user.id, true)
           zip.rewind
@@ -306,7 +310,7 @@ module Chemotion
                         element = att.container.root.containable
                         can_read = ElementPolicy.new(current_user, element).read?
                         can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
-          end
+                      end
           can_dwnld ? thumbnail_obj(att) : nil
         end
         { thumbnails: thumbnails }
@@ -323,38 +327,61 @@ module Chemotion
                         element = att.container.root.containable
                         can_read = ElementPolicy.new(current_user, element).read?
                         can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
-          end
+                      end
           can_dwnld ? raw_file_obj(att) : nil
         end
         { files: files }
       end
 
-      desc 'Regenrate spectra'
+      desc 'Regenerate spectra'
       params do
         requires :original, type: Array[Integer]
         requires :generated, type: Array[Integer]
       end
       post 'regenerate_spectrum' do
         pm = to_rails_snake_case(params)
-        pm[:generated].each do |g_id|
-          att = Attachment.find(g_id)
-          next unless att
+        Attachment.where(id: pm[:generated]).each do |att|
+          next unless writable?(att)
 
-          can_delete = writable?(att)
-          att.destroy if can_delete
+          att.destroy
         end
-        pm[:original].each do |o_id|
-          att = Attachment.find(o_id)
-          next unless att
+        Attachment.where(id: pm[:original]).each do |att|
+          next unless writable?(att)
 
-          can_write = writable?(att)
-          if can_write
-            att.set_regenerating
-            att.save
-          end
+          att.set_regenerating
+          att.save
         end
 
         {} # FE does not use the result
+      end
+
+      desc 'Regenerate edited spectra'
+      params do
+        requires :edited, type: Array[Integer]
+        optional :molfile, type: String
+      end
+      post 'regenerate_edited_spectrum' do
+        pm = to_rails_snake_case(params)
+
+        molfile = pm[:molfile]
+        t_molfile = Tempfile.create('molfile')
+        t_molfile.write(molfile)
+        t_molfile.rewind
+
+        Attachment.where(id: pm[:edited]).each do |att|
+          next unless writable?(att)
+
+          # TODO: do not use abs_path
+          result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
+            att.abs_path, t_molfile.path
+          )
+          att.file_data = result
+          att.rewrite_file_data!
+        end
+        t_molfile.close
+        t_molfile.unlink
+
+        { status: true }
       end
 
       desc 'Save spectra to file'
@@ -389,7 +416,6 @@ module Chemotion
         optional :peaks_str, type: String
         optional :shift_select_x, type: String
         optional :shift_ref_name, type: String
-        optional :shift_ref_value, type: String
         optional :shift_ref_value, type: String
         optional :integration, type: String
         optional :multiplicity, type: String

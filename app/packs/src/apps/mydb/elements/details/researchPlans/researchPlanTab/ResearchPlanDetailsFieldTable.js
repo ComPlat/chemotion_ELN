@@ -13,6 +13,7 @@ import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/apps/mydb/e
 import ResearchPlanDetailsFieldTableSchemasModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import ReactionsFetcher from 'src/fetchers/ReactionsFetcher'
 
 
 // regexp to parse tap separated paste from the clipboard
@@ -509,14 +510,27 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const tr = rows.map((row, index) => {
       const td = columns.map((column) => {
         let cellContent = row[column.colId];
-        let cellContentIsShortLabel = column.headerName == 'Sample' && (cellContent || '').length > 3;
-        if (cellContentIsShortLabel) {
-          let shortLabel = cellContent;
-          cellContent = <a
-            onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(shortLabel) }}
-          >
-            {shortLabel}
-          </a>
+        if(column.headerName == 'Sample') {
+          let cellContentIsShortLabel = column.headerName == 'Sample' && (cellContent || '').length > 3;
+          if (cellContentIsShortLabel) {
+            let shortLabel = cellContent;
+            cellContent = <a
+              onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(shortLabel) }}
+            >
+              {shortLabel}
+            </a>
+          }
+        }
+        else if(column.headerName == 'Reaction') {
+          let cellContentIsShortLabel = column.headerName == 'Reaction' && (cellContent || '').length > 3;
+          if (cellContentIsShortLabel) {
+            let shortLabel = cellContent;
+            cellContent = <a
+              onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(shortLabel) }}
+            >
+              {shortLabel}
+            </a>
+          }
         }
         return <td style={{ 'height': '37px' }} key={column.colId}>{cellContent}</td>;
       });
@@ -553,8 +567,21 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     SamplesFetcher.findByShortLabel(shortLabel).then((result) => {
       console.debug('got Result', result);
       if (result.sample_id && result.collection_id) {
-        Aviator.navigate(`api/v1/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
+        Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
         ElementActions.fetchSampleById(result.sample_id);
+      } else {
+        console.debug('No valid data returned for short label', shortLabel, result);
+      }
+    });
+  }
+
+  openReactionByShortLabel(shortLabel) {
+    console.debug('opening reaction by short label', shortLabel);
+    ReactionsFetcher.findByShortLabel(shortLabel).then((result) => {
+      console.debug('got Result', result);
+      if (result.reaction_id && result.collection_id) {
+        Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
+        ElementActions.fetchReactionById(result.reaction_id);
       } else {
         console.debug('No valid data returned for short label', shortLabel, result);
       }

@@ -1,7 +1,7 @@
 FROM ubuntu:focal
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG VRUBY=2.6.6
+ARG VRUBY=2.7.6
 ARG VNODE=14.20.0
 ARG VNODENEXT=16.16.0
 
@@ -71,7 +71,7 @@ RUN /bin/bash -l -c "npm install -g yarn"
 RUN /bin/bash -l -c "yarn install"
 
 
-RUN /bin/bash -l -c "gem install bundler -v 1.17.3 && bundle install "
+RUN /bin/bash -l -c "gem install bundler -v 2.1.4 && bundle install "
 #RUN /bin/bash -l -c "chromedriver-update"
 RUN sudo apt -yy remove lib*-dev
 RUN sudo apt-get -y --autoremove --fix-missing install \

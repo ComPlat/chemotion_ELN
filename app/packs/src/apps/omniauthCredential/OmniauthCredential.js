@@ -28,10 +28,10 @@ const OmniauthCredential = () => {
     <Panel>
       <Panel.Heading><Panel.Title>3rd-Party Credential</Panel.Title></Panel.Heading>
       <Panel.Body>
-        <Row>
-          <Col sm={2}><b style={{ float: 'right' }}>Current provider is</b></Col>
+        <Row className="profile-row">
+          <Col sm={2}><b>Current provider is</b></Col>
           <Col sm={2}>{providers && providers.currentProvider}</Col>
-          <Col sm={2}><b style={{ float: 'right' }}>Connect to</b></Col>
+          <Col sm={2}><b>Connect to</b></Col>
           <Col sm={2}>
             <Select
               onChange={e => setProvider(e.value)}

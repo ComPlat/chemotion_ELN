@@ -35,6 +35,7 @@
 /config/profile_default.yml
 /config/compute_props.yml
 /config/converter.yml
+/config/ketcher_service.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml
@@ -149,7 +150,6 @@ backup/weekly_backup
 # vim tags
 tags
 tags.temp
-.vscode/*
 
 coverage
 spec/examples.txt
@@ -175,7 +175,6 @@ yarn-debug.log*
 vendor/bundle/*
 vendor/cache/*
 .idea/*
-.devcontainer
 shrine/*
 .docker-sync/
 

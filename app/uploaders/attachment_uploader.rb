@@ -23,9 +23,16 @@ class AttachmentUploader < Shrine
 
   def generate_location(io, context = {})
     if context[:record]
-      file_name = generate_file_name(io, context)
+      file_name = if io.path.include? 'thumb.jpg'
+                    "#{context[:record][:key]}.thumb.jpg"
+                  elsif io.path.include? 'annotation.svg'
+                    "#{context[:record][:key]}.annotation.svg"
+                  else
+                    "#{context[:record][:key]}#{File.extname(context[:record][:filename])}"
+                  end
+
       bucket = 1
-      bucket = (context[:record][:id] / MAX_FILES_IN_FOLDER).floor + 1 if context[:record][:id].present?
+      bucket = (context[:record][:id] / 10_000).floor + 1 if context[:record][:id].present?
       "#{storage.directory}/#{bucket}/#{file_name}"
     else
       super

@@ -74,7 +74,7 @@ class ResearchPlanMetadata < ApplicationRecord
   def generate_doi!
     doi_sequence = (self.class.maximum(:doi_sequence) || 0) + 1
     doi = "#{DATA_CITE_PREFIX}/#{DATA_CITE_RESEARCH_PLAN_PREFIX}#{doi_sequence}"
-    update_attributes!(
+    update!(
       doi: doi,
       doi_sequence: doi_sequence,
       data_cite_prefix: DATA_CITE_PREFIX

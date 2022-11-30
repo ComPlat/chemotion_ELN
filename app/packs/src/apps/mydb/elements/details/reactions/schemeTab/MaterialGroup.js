@@ -108,6 +108,7 @@ const GeneralMaterialGroup = ({
     show_label: 'L/S',
     tr: 'T/R',
     mass: 'Mass',
+    reaction_coefficient: 'Coeff',
     amount: 'Amount',
     loading: 'Loading',
     concn: 'Conc',
@@ -180,10 +181,10 @@ const GeneralMaterialGroup = ({
           <col style={{ width: '4%' }} />
           <col style={{ width: '2%' }} />
           <col style={{ width: '2%' }} />
-          <col style={{ width: showLoadingColumn ? '9%' : '10%' }} />
-          <col style={{ width: showLoadingColumn ? '11%' : '12%' }} />
+          <col style={{ width: showLoadingColumn ? '3%' : '4%' }} />
+          <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
           {showLoadingColumn && <col style={{ width: '11%' }} />}
-          <col style={{ width: showLoadingColumn ? '11%' : '12%' }} />
+          <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
           <col style={{ width: showLoadingColumn ? '12%' : '13%' }} />
         </colgroup>
         <thead>
@@ -193,13 +194,14 @@ const GeneralMaterialGroup = ({
             {isReactants && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>}
             {!isReactants && <th>{refTHead}</th>}
             <th>{headers.show_label}</th>
-            {!isReactants && <th>{headers.tr}</th>}
+            {!isReactants && <th style={{ padding: '3px 3px' }}>{headers.tr}</th>}
+            {!isReactants && <th style={{ padding: '3px 3px' }}>{headers.reaction_coefficient}</th>}
             {!isReactants && <th>{headers.amount}</th>}
             {!isReactants && <th />}
             {!isReactants && <th />}
             {showLoadingColumn && !isReactants && <th>{headers.loading}</th>}
             {!isReactants && <th>{headers.concn}</th>}
-            {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th>}
+            {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
           </tr>
         </thead>
         <tbody>

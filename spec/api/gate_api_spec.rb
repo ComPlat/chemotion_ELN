@@ -48,7 +48,7 @@ describe Chemotion::GateAPI do
 
   describe :jwt do
     before do
-      get URI.encode("/api/v1/gate/jwt/new.json?collection_id=#{c1.id}&origin=http://localhost:3000")
+      get "/api/v1/gate/jwt/new.json?collection_id=#{c1.id}&origin=http://localhost:3000"
     end
 
     it 'returns a jwt' do

@@ -55,6 +55,8 @@ module Chemotion
         {
           data: data,
           show_external_name: profile.show_external_name,
+          show_sample_name: profile.show_sample_name,
+          show_sample_short_label: profile.show_sample_short_label,
           curation: profile.curation,
         }
       end
@@ -77,8 +79,11 @@ module Chemotion
             optional :graph_templates, type: Array[Hash]
             optional :cur_template_idx, type: Integer
           end
+          optional :default_structure_editor, type: String
         end
         optional :show_external_name, type: Boolean
+        optional :show_sample_name, type: Boolean
+        optional :show_sample_short_label, type: Boolean
       end
 
       put do
@@ -90,10 +95,13 @@ module Chemotion
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
+        data['default_structure_editor'] = 'ketcher' if data['default_structure_editor'].nil?
 
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
-          show_external_name: declared_params[:show_external_name]
+          show_external_name: declared_params[:show_external_name],
+          show_sample_name: declared_params[:show_sample_name],
+          show_sample_short_label: declared_params[:show_sample_short_label],
         }
 
         current_user.profile.update!(**new_profile) &&

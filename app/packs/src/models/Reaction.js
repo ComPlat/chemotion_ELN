@@ -581,8 +581,9 @@ export default class Reaction extends Element {
 
     this.shortLabelPolicy(material, oldGroup, newGroup);
     this.namePolicy(material, oldGroup, newGroup);
-
-    material.coefficient = 1;
+    if (!material.coefficient || material.coefficient < 0) {
+      material.coefficient = 1.0;
+    }
     material.waste = false;
 
     return material;
@@ -847,7 +848,6 @@ export default class Reaction extends Element {
     return name;
   }
 
-
   set segments(segments) {
     this._segments = (segments && segments.map(s => new Segment(s))) || [];
   }
@@ -856,15 +856,4 @@ export default class Reaction extends Element {
     return this._segments || [];
   }
 
-  analysesContainers() {
-    if (this.container.children.length === 0) {
-      const analyses = Container.buildEmpty();
-      analyses.container_type = 'analyses';
-      this.container.children.push(analyses);
-    }
-
-    return this.container
-      .children
-      .filter(el => ~el.container_type.indexOf('analyses'));
-  }
 }
