@@ -7,11 +7,13 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
+import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
     this.state = { attachments: props.attachments };
+    this.state = {imageEditModalShown: false};
   }
 
   componentDidMount() {
@@ -39,7 +41,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   renderEdit() {
-    const { field } = this.props;
+    const { field } = this.props;    
     let content;
     if (field.value.public_name) {
       const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
@@ -66,7 +68,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               onChange={(event) => this.handleResizeChange(event)}
             />
             <InputGroup.Addon>%</InputGroup.Addon>
+
           </InputGroup>
+          <ImageAnnotationEditButton
+            parent={this}
+            attachment={this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name)}
+          />
         </FormGroup>
         <Dropzone
           accept="image/*"
@@ -76,6 +83,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         >
           {content}
         </Dropzone>
+        {this.renderImageEditModal()}
       </div>
     );
   }
@@ -113,6 +121,24 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       <div className="image-container">
         <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
       </div>
+    );
+  }
+
+  renderImageEditModal() {   
+    return (
+      <ImageAnnotationModalSVG
+        attachment={this.state.choosenAttachment}
+        isShow={this.state.imageEditModalShown}
+        handleSave={
+          () => {
+            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
+            this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+            this.setState({ imageEditModalShown: false });
+            this.props.onEdit(this.state.choosenAttachment);
+          }
+        }
+        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+      />
     );
   }
 

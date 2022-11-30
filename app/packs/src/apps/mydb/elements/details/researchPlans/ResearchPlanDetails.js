@@ -359,7 +359,7 @@ export default class ResearchPlanDetails extends Component {
               { title: "Related Identifier", fieldName: "related_identifier" },
               { title: "Description", fieldName: "description" },
             ]}
-            researchPlan={this.props.researchPlan}
+            researchPlan={researchPlan}
           />
         </ListGroupItem>
       </ListGroup>
@@ -400,7 +400,7 @@ export default class ResearchPlanDetails extends Component {
             ]}
             update={update}
             edit
-            researchPlan={this.props.researchPlan}
+            researchPlan={researchPlan}
           />
         </ListGroupItem>
       </ListGroup>

@@ -8,6 +8,7 @@ export default class ImageAnnotationModalSVG extends Component {
   }
 
   render() {
+    console.log("Im modal "+this.props.isShow)
     return (
       <Modal
         bsSize="large"

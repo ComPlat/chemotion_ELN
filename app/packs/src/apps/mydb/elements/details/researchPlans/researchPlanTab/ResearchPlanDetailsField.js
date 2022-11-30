@@ -56,6 +56,7 @@ export default class ResearchPlanDetailsField extends Component {
             index={index}
             disabled={disabled}
             onChange={onChange.bind(this)}
+            researchPlan={this.props.researchPlan}
             edit={edit}/>);
         break;
       case 'table':
