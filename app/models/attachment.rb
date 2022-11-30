@@ -31,7 +31,7 @@
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #
 
-class Attachment < ApplicationRecord
+class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
@@ -46,14 +46,13 @@ class Attachment < ApplicationRecord
   before_create :generate_key
   before_create :add_content_type
 
+  # reload to get identifier:uuid
+  after_create :reload
+  after_destroy :delete_file_and_thumbnail
   after_save :attach_file
   after_save :update_filesize
   after_save :add_checksum, if: :new_upload
 
-  #reload to get identifier:uuid
-  after_create :reload
-
-  after_destroy :delete_file_and_thumbnail
   after_save :add_checksum, if: :new_upload
 
   belongs_to :attachable, polymorphic: true, optional: true
@@ -116,19 +115,19 @@ class Attachment < ApplicationRecord
 
   def add_checksum
     self.checksum = Digest::MD5.hexdigest(read_file) if attachment_attacher.file.present?
-    update_column('checksum', checksum)
+    update_column('checksum', checksum) # rubocop:disable Rails/SkipsModelValidations
   end
 
   def reset_checksum
     add_checksum
-    update_column('checksum', checksum) if checksum_changed?
+    update_column('checksum', checksum) if checksum_changed? # rubocop:disable Rails/SkipsModelValidations
   end
 
   def regenerate_thumbnail
     return unless filesize <= 50 * 1024 * 1024
 
     store.regenerate_thumbnail
-    update_column('thumb', thumb) if thumb_changed?
+    update_column('thumb', thumb) if thumb_changed? # rubocop:disable Rails/SkipsModelValidations
   end
 
   def for_research_plan?
@@ -170,7 +169,7 @@ class Attachment < ApplicationRecord
   def update_filesize
     self.filesize = file_data.bytesize if file_data.present?
     self.filesize = File.size(file_path) if file_path.present? && File.exist?(file_path)
-    update_column('filesize', filesize)
+    update_column('filesize', filesize) # rubocop:disable Rails/SkipsModelValidations
   end
 
   def add_content_type
@@ -223,15 +222,16 @@ class Attachment < ApplicationRecord
     raise 'File to large' unless valid?
 
     attachment_attacher.create_derivatives
-    update_column('attachment_data', attachment_data)
+    update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
   end
 
-  def check_file_size
+  def check_file_size # rubocop:disable Metrics/AbcSize
     return if file_path.nil?
     return unless File.exist?(file_path)
 
     return unless File.size(file_path) > Rails.configuration.shrine_storage.maximum_size * 1024 * 1024
 
-    raise "File #{File.basename(file_path)} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
+    raise "File #{File.basename(file_path)}
+      cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
 end
