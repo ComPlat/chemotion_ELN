@@ -4,7 +4,7 @@ FactoryBot.define do
   factory :attachment do
     key { nil }
     filename { 'upload.txt' }
-    file_path { File.join("#{Rails.root}/spec/fixtures/upload.txt") }
+    file_path { Rails.root.join('spec/fixtures/upload.txt') }
     created_by { 0 }
     file_data { File.read("#{Rails.root}/spec/fixtures/upload.txt") }
     association :attachable, factory: :container

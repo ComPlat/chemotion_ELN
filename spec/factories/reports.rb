@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :report do
     transient do
@@ -31,9 +33,11 @@ FactoryBot.define do
         analysis: true,
         literature: true }
     end
-    objects { [
-     # ActiveSupport::HashWithIndifferentAccess.new(id: 4, type: 'sample'),
-    ] }
+    objects do
+      [
+        # ActiveSupport::HashWithIndifferentAccess.new(id: 4, type: 'sample'),
+      ]
+    end
 
     after(:create) do |report, elevator|
       elevator.user.reports << report
