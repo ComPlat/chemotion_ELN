@@ -10539,14 +10539,14 @@ react-datepicker@~1.4.1:
     react-onclickoutside "^6.7.1"
     react-popper "^0.9.1"
 
-react-dnd-html5-backend@^14.0.0:
+react-dnd-html5-backend@^14.0.3:
   version "14.1.0"
   resolved "https://registry.yarnpkg.com/react-dnd-html5-backend/-/react-dnd-html5-backend-14.1.0.tgz#b35a3a0c16dd3a2bfb5eb7ec62cf0c2cace8b62f"
   integrity sha512-6ONeqEC3XKVf4eVmMTe0oPds+c5B9Foyj8p/ZKLb7kL2qh9COYxiBHv3szd6gztqi/efkmriywLUVlPotqoJyw==
   dependencies:
     dnd-core "14.0.1"
 
-react-dnd@^14.0.0:
+react-dnd@^14.0.3:
   version "14.0.5"
   resolved "https://registry.yarnpkg.com/react-dnd/-/react-dnd-14.0.5.tgz#ecf264e220ae62e35634d9b941502f3fca0185ed"
   integrity sha512-9i1jSgbyVw0ELlEVt/NkCUkxy1hmhJOkePoCH713u75vzHGyXhPDm28oLfc2NMSBjZRM1Y+wRjHXJT3sPrTy+A==
