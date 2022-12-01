@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AnnotationUpdater
+  require 'mini_magick'
+
   def initialize(thumbnailer = nil)
     @thumbnailer = thumbnailer || ThumbnailerWrapper.new
   end
@@ -10,6 +12,7 @@ class AnnotationUpdater
     sanitized_svg_string = sanitize_svg_string(annotation_svg_string)
     save_svg_string_to_file_system(sanitized_svg_string, att)
     update_thumbnail(att,sanitized_svg_string)
+    create_annotated_flat_image(att,sanitized_svg_string)
   end
 
   def sanitize_svg_string(svg_string)
@@ -35,6 +38,18 @@ class AnnotationUpdater
     thumbnail = @thumbnailer.create_thumbnail(location_of_thumbnail.split('.')[0] + '_thumb.svg')
     FileUtils.move(thumbnail, location_of_thumbnail)
     File.delete(tmp_thumbnail_location) if File.exist?(tmp_thumbnail_location)
+  end
+
+  def create_annotated_flat_image(attachment,sanitized_svg_string)
+    location_of_file = attachment.attachment_data['id']
+    base64 = 'data:image/png;base64,' + Base64.encode64(File.open(location_of_file, 'rb').read)
+    xml = Nokogiri::XML(sanitized_svg_string)
+    group = xml.xpath('//*[@id="original_image"]')
+    group[0].attributes['href'].value = base64
+    tmp_annotated_image_location=location_of_file.split('.')[0] + '_annotated.png'
+    image=MiniMagick::Image.read(xml.to_s)
+    image.format('png')
+    image.write( tmp_annotated_image_location)
   end
 
   class ThumbnailerWrapper
