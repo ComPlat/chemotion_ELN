@@ -5,6 +5,6 @@ class MiniMagickImageAnalyser
   require 'mini_magick'
   def get_image_dimension(path_to_image)
     image = MiniMagick::Image.open(path_to_image)
-    [image[:width], image[:height]]
+    [image[:height], image[:width]]
   end
 end
