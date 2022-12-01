@@ -244,7 +244,7 @@ export default class ResearchPlan extends Element {
   }
 
   getAttachmentByIdentifier(identifier){
-     return attachments
+     return this.attachments
      .filter((attachment)=>attachment.identifier===identifier)[0];
 
      

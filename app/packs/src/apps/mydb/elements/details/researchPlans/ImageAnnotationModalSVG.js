@@ -8,7 +8,6 @@ export default class ImageAnnotationModalSVG extends Component {
   }
 
   render() {
-    console.log("Im modal "+this.props.isShow)
     return (
       <Modal
         bsSize="large"
@@ -29,8 +28,8 @@ export default class ImageAnnotationModalSVG extends Component {
               const { svgEditor } =
                 document.getElementById("svgEditId").contentWindow;
               svgEditor.setBackground("white");
-              const { attachment } = this.props;
-
+              const { attachment } = this.props; 
+console.log("Attachment "+attachment)
               fetch(`/api/v1/attachments/${attachment.id}/annotation`)
                 .then((res) => res.text())
                 .then((text) => {
