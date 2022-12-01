@@ -57,7 +57,9 @@ class TabLayoutCell extends Component {
       </div>
     ) : (
       <div>
-        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')}/>
+        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')} >
+          {isHidden ? "\u00A0" : ''}
+        </i>
       </div>
     );
 
