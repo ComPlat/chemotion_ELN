@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
+
 import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { reOrderArr } from 'src/utilities/DndControl';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import {
   RndNotAvailable, RndNoAnalyses,
   RndOrder, RndEdit
@@ -238,6 +241,12 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
+          <NMRiumDisplayer
+            sample={sample}
+            handleSampleChanged={handleSampleChanged}
+            handleSubmit={handleSubmit}
+          />
+          
         </div>
       );
     }
@@ -258,4 +267,4 @@ SampleDetailsContainers.propTypes = {
 
 SampleDetailsContainers.defaultProps = {
   readOnly: false
-}
+};
