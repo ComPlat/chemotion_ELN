@@ -1,5 +1,6 @@
 import React from 'react';
-import { Popover, Button, FormGroup, Checkbox, OverlayTrigger } from 'react-bootstrap';
+import ReactDOM from 'react-dom';
+import { Popover, Button, FormGroup, Checkbox, Overlay } from 'react-bootstrap';
 import _ from 'lodash';
 
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
@@ -21,16 +22,18 @@ export default class ElementsTableSettings extends React.Component {
       showSampleExternalLabel: false,
       showSampleShortLabel: false,
       showSampleName: false,
-      tableSchemePreviews: true
+      tableSchemePreviews: true,
+      showTabLayoutContainer: false
     }
 
-    this.handleOnExit = this.handleOnExit.bind(this);
+    this.onCloseTabLayoutContainer = this.onCloseTabLayoutContainer.bind(this);
     this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this);
     this.handleToggleSampleShortLabel = this.handleToggleSampleShortLabel.bind(this);
     this.handleToggleSampleName = this.handleToggleSampleName.bind(this);
     this.handleToggleScheme = this.handleToggleScheme.bind(this);
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
+    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
   }
 
   componentDidMount() {
@@ -65,7 +68,8 @@ export default class ElementsTableSettings extends React.Component {
     }
   }
 
-  handleOnExit() {
+  onCloseTabLayoutContainer() {
+    this.toggleTabLayoutContainer();
     this.updateLayout();
 
     if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
@@ -128,7 +132,7 @@ export default class ElementsTableSettings extends React.Component {
   }
 
   updateLayout() {
-    const { visible, hidden } = this.layout.state;
+    const { visible, hidden } = this.tabLayoutContainerElement.state;
     const layout = {};
 
     visible.forEach((value, index) => {
@@ -141,6 +145,10 @@ export default class ElementsTableSettings extends React.Component {
     const userProfile = UserStore.getState().profile;
     _.set(userProfile, 'data.layout', layout);
     UserActions.updateUserProfile(userProfile);
+  }
+
+  toggleTabLayoutContainer() {
+    this.setState({ showTabLayoutContainer: !this.state.showTabLayoutContainer });
   }
 
   render() {
@@ -189,6 +197,14 @@ export default class ElementsTableSettings extends React.Component {
         </div>
       )
     }
+    const tabLayoutContainerElement = (
+      <TabLayoutContainer
+        visible={visible}
+        hidden={hidden}
+        ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
+      />
+    );
+
     const popoverSettings = (
       <Popover
         className="collection-overlay"
@@ -198,11 +214,7 @@ export default class ElementsTableSettings extends React.Component {
         <div>
           <h3 className="popover-title">Table Layout</h3>
           <div className="popover-content">
-            <TabLayoutContainer
-              visible={visible}
-              hidden={hidden}
-              ref={(n) => { this.layout = n; }}
-            />
+            {tabLayoutContainerElement}
           </div>
         </div>
         {sampleSettings}
@@ -210,20 +222,26 @@ export default class ElementsTableSettings extends React.Component {
     )
 
     return (
-      <OverlayTrigger
-        trigger="click"
-        placement="left"
-        overlay={popoverSettings}
-        rootClose
-        onExit={this.handleOnExit}
-      >
+      <div>
         <Button
           bsSize="xsmall"
           style={{ margin: '10px 10px 10px 0', float: 'right' }}
+          ref={button => { this.tabLayoutButton = button; }}
+          onClick={this.toggleTabLayoutContainer}
         >
           <i className="fa fa-sliders" />
         </Button>
-      </OverlayTrigger>
+        <Overlay
+          container={this}
+          onHide={this.onCloseTabLayoutContainer}
+          placement="bottom"
+          rootClose
+          show={this.state.showTabLayoutContainer}
+          target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
+        >
+          {popoverSettings}
+        </Overlay>
+      </div>
     );
   }
 }

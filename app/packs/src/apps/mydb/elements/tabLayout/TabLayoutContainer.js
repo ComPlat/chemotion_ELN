@@ -49,26 +49,46 @@ export default class TabLayoutContainer extends React.Component {
     const { visible, hidden } = this.state;
     const { isElementDetails, tabTitles } = this.props;
     let moveLayout = this.moveLayout;
+    const visibleCells = visible.map((cell, index) => {
+      const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
+      return (
+        <tr key={index + "_visible"}>
+          <td>
+            <TabLayoutCell
+              cell={cell}
+              index={index}
+              isElementDetails={isElementDetails}
+              isHidden={false}
+              moveLayout={moveLayout}
+              title={tabTitles[cell] || defTitle}
+            />
+          </td>
+        </tr>
+      )
+    })
+    const hiddenCells = hidden.map((cell, index) => {
+      const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
+      return (
+        <tr key={index + "_hidden"}>
+          <td className="hidden-layout">
+            <TabLayoutCell
+              cell={cell}
+              index={index}
+              isElementDetails={isElementDetails}
+              isHidden={true}
+              moveLayout={moveLayout}
+              title={tabTitles[cell] || defTitle}
+            />
+          </td>
+        </tr>
+      )
+    });
 
     return (
       <table className="layout-container">
         <tbody>
-          {visible.map(function (e, index) {
-            const defTitle = e.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
-            return (<TabLayoutCell key={index + "_visible"} cell={e}
-              isHidden={false} index={index}
-              title={tabTitles[e] || defTitle}
-              moveLayout={moveLayout}
-              isElementDetails={isElementDetails} />)
-          })}
-          {hidden.map(function (e, index) {
-            const defTitle = e.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
-            return (<TabLayoutCell key={index + "_hidden"} cell={e}
-              isHidden={true} index={index}
-              moveLayout={moveLayout}
-              title={tabTitles[e] || defTitle}
-              isElementDetails={isElementDetails} />)
-          })}
+          {visibleCells}
+          {hiddenCells}
         </tbody>
       </table>
     )

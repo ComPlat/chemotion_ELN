@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -23,7 +23,12 @@ class TabLayoutCell extends Component {
 
   render() {
     const {
-      connectDragSource, sourceType, isHidden, cell, connectDropTarget, isElementDetails, title
+      cell,
+      connectDragSource,
+      connectDropTarget,
+      isElementDetails,
+      isHidden,
+      title,
     } = this.props;
 
     const styleObj = {
@@ -33,37 +38,32 @@ class TabLayoutCell extends Component {
       wordWrap: 'break-word'
     };
 
-    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-    let iconCell = `icon-${cell}`;
-    let ttl = cell && (cell.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
-    let ttd = '';
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    let cellIcon = `icon-${cell}`;
+    let cellTitle = cell && (cell.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
+    let cellDescription = '';
 
-    if (!constEls.includes(cell)) {
-      const genericEls = UserStore.getState().genericEls || [];
-      const genericEl = (genericEls && genericEls.find(el => el.name === cell)) || {};
-      iconCell = `${genericEl.icon_name}`;
-      ttl = genericEl.label;
-      ttd = genericEl.desc;
+    if (!elnElements.includes(cell)) {
+      const genericElements = UserStore.getState().genericElements || [];
+      const genericElement = (genericElements && genericElements.find(el => el.name === cell)) || {};
+      cellIcon = genericElement.icon_name
+      cellTitle = genericElement.label;
+      cellDescription = genericElement.desc;
     }
 
-    const layoutCell = isElementDetails ? (
-      <tr>
-        <td className={isHidden ? 'hidden-layout' : ''}>
-          <div style={{ width: '100%' }}>
-            <i style={styleObj}>{title === 'hidden' ? '-' : title}</i>
-          </div>
-        </td>
-      </tr>
+    const content = isElementDetails ? (
+      <div style={{ width: '100%' }}>
+        <i style={styleObj}>{title === 'hidden' ? '-' : title}</i>
+      </div>
     ) : (
-      <td className={isHidden ? 'hidden-layout' : ''}>
-        <div><OverlayTrigger delayShow={500} placement="top" overlay={<Tooltip id="_tooltip_history" className="left_tooltip">{ttl}<br />{ttd}</Tooltip>}><i className={iconCell} /></OverlayTrigger></div>
-      </td>
+      <div>
+        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')} >
+          {isHidden ? "\u00A0" : ''}
+        </i>
+      </div>
     );
 
-    if (sourceType === '') {
-      return layoutCell;
-    }
-    return connectDragSource(connectDropTarget(layoutCell), { dropEffect: 'copy' });
+    return connectDragSource(connectDropTarget(content), { dropEffect: 'copy' });
   }
 }
 
