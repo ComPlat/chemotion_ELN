@@ -53,8 +53,6 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   after_save :update_filesize
   after_save :add_checksum, if: :new_upload
 
-  after_save :add_checksum, if: :new_upload
-
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
 
