@@ -96,7 +96,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
     } else {
-      AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName })
+      AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName,annotated: true })
         .then((result) => {
           if (result.data != null) {
             this.setState({ imageSrc: result.data });
@@ -132,8 +132,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           () => {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
             this.state.choosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });
-            this.props.onEdit(this.state.choosenAttachment);
+            this.setState({ imageEditModalShown: false });   
+            this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);         
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}

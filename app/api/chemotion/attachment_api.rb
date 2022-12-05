@@ -279,15 +279,22 @@ module Chemotion
       params do
         requires :attachment_id, type: Integer, desc: 'Database id of image attachment'
         optional :identifier, type: String, desc: 'Identifier(UUID) of image attachment as fallback loading criteria'
+        optional :annotated, type: Boolean, desc: 'Return annotated image if possible'
       end
 
       get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
+        if params[:annotated] then
+          annotatedFilePath=File.dirname(@attachment.abs_path)+'/'+@attachment.key+'_annotated.png'
+          annotatedFileExists=File.exists?(annotatedFilePath)
+          sfilename= @attachment.key+'_annotated.png' if annotatedFileExists
+        end
         content_type @attachment.content_type
         header['Content-Disposition'] = 'attachment; filename=' + sfilename
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
         uploaded_file = @attachment.attachment_attacher.file
+        uploaded_file= File.open(annotatedFilePath) if annotatedFileExists
         data = uploaded_file.read
         uploaded_file.close
 
