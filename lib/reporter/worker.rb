@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 module Reporter
-  class Worker
+  class Worker # rubocop:disable  Metrics/ClassLength
     DOCX_TYP = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     XLSX_TYP = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     CSV_TYP = 'text/csv'
     HTML_TYP = 'text/html'
 
-    def initialize(args)
+    def initialize(args) # rubocop:disable  Metrics/MethodLength,Metrics/AbcSize
       @report = args[:report]
       @author = User.find(@report.author_id)
       @ext = args[:ext] || 'docx'
@@ -44,7 +46,7 @@ module Reporter
       tmp_file
     end
 
-    def create_attachment(tmp)
+    def create_attachment(tmp) # rubocop:disable  Metrics/MethodLength
       ActiveRecord::Base.transaction do
         att = @report.attachments.create!(
           filename: @full_filename,
@@ -52,25 +54,18 @@ module Reporter
           file_path: tmp.path,
           created_by: @author.id,
           created_for: @author.id,
-          content_type: @typ
+          content_type: @typ,
         )
 
-        att.attachment_attacher.attach(File.open(tmp.path, binmode: true))
-        if att.valid?
-          att.attachment_attacher.create_derivatives
-          att.save!
-        end
-
+        att.save!
         @report.update(generated_at: Time.zone.now)
       end
 
-
-      message = Message.create_msg_notification(
+      message = Message.create_msg_notification( # rubocop:disable  Lint/UselessAssignment
         channel_subject: Channel::REPORT_GENERATOR_NOTIFICATION,
-        data_args: { report_name: @full_filename}, message_from: @author.id,
+        data_args: { report_name: @full_filename }, message_from: @author.id,
         report_id: @report.id
       )
-
     ensure
       tmp.unlink
     end
@@ -79,7 +74,7 @@ module Reporter
       @author.group_ids + [@author.id]
     end
 
-    def extract(objects)
+    def extract(objects) # rubocop:disable  Metrics/MethodLength
       objects.map do |object|
         instance = object['type'].camelize.constantize.find(object['id'])
         entity_class =
@@ -99,39 +94,41 @@ module Reporter
 
     def contents
       @contents ||= Docx::Document.new(
-                      objs: @objs,
-                      spl_settings: @spl_settings,
-                      rxn_settings: @rxn_settings,
-                      si_rxn_settings: @si_rxn_settings,
-                      configs: @configs,
-                      img_format: @img_format,
-                      std_rxn: @std_rxn,
-                    ).convert
-    end
-
-    def substance
-      @substance ||= {
-        date: Time.now.strftime("%d.%m.%Y"),
-        author: "#{@author.name}",
+        objs: @objs,
         spl_settings: @spl_settings,
         rxn_settings: @rxn_settings,
         si_rxn_settings: @si_rxn_settings,
         configs: @configs,
-        objs: contents
+        img_format: @img_format,
+        std_rxn: @std_rxn,
+      ).convert
+    end
+
+    def substance
+      @substance ||= {
+        date: Time.zone.now.strftime('%d.%m.%Y'),
+        author: @author.name.to_s,
+        spl_settings: @spl_settings,
+        rxn_settings: @rxn_settings,
+        si_rxn_settings: @si_rxn_settings,
+        configs: @configs,
+        objs: contents,
       }
     end
 
     def prism(objs)
-      cont_objs, proc_objs = [], []
+      cont_objs = []
+      proc_objs = []
       objs.each do |obj|
-        next if obj[:type] == "sample"
+        next if obj[:type] == 'sample'
+
         is_general_procedure(obj) ? proc_objs.push(obj) : cont_objs.push(obj)
       end
-      return cont_objs, proc_objs
+      [cont_objs, proc_objs]
     end
 
-    def is_general_procedure(obj)
-      obj[:type] == "reaction" && obj[:role] == "gp"
+    def is_general_procedure(obj)  # rubocop:disable  Naming/PredicateName
+      obj[:type] == 'reaction' && obj[:role] == 'gp'
     end
   end
 end

@@ -47,8 +47,6 @@ module Usecases
 
         sample_task.update!(params)
 
-        # until the Shrine integration is refactored
-        sample_task.attachment.attachment_attacher.attach(File.open(file[:tempfile], binmode: true))
         sample_task.attachment.save!
       end
     end

@@ -139,8 +139,6 @@ module AttachmentJcampProcess
         key: SecureRandom.uuid,
       )
     end
-    att.attachment_attacher.attach(File.open(meta_tmp.path, binmode: true))
-    att.attachment_attacher.create_derivatives
     att.save!
     att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'

@@ -81,18 +81,11 @@ class Mailcollector
           file_data: attachment.decoded,
           created_by: helper.sender.id,
           created_for: helper.recipient.id,
-          content_type: attachment.mime_type
+          content_type: attachment.mime_type,
+          file_path: attachment.path,
           )
-        ActiveRecord::Base.transaction do
-          att.save!
 
-          att.attachment_attacher.attach(File.open(attachment.path, binmode: true))
-          if att.valid?
-            att.save!
-          else
-            raise ActiveRecord::Rollback
-          end
-        end
+        att.save!
         att.update!(attachable: dataset)
       end
     rescue => e

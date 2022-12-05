@@ -22,47 +22,31 @@ class DatacollectorFile < DatacollectorObject
       file_data: IO.binread(@path),
       content_type: MimeMagic.by_path(@name)&.type,
       created_by: device.id,
-      created_for: recipient.id
+      created_for: recipient.id,
+      file_path: @path,
     )
-    ActiveRecord::Base.transaction do
-      att.save!
+    att.save!
 
-      att.attachment_attacher.attach(File.open(@path, binmode: true))
-      if att.valid?
-        att.save!
-      else
-        raise ActiveRecord::Rollback
-      end
-    end
     att
   end
 
   def attach_remote(device)
-    tmpfile = Tempfile.new
-    @sftp.download!(@path, tmpfile.path)
-    att = Attachment.new(
-      filename: @name,
-      file_data: IO.binread(tmpfile.path),
-      content_type: MimeMagic.by_path(@name)&.type,
-      created_by: device.id,
-      created_for: recipient.id
-    )
-
-    ActiveRecord::Base.transaction do
-      begin
-        att.save!
-
-        att.attachment_attacher.attach(File.open(tmpfile.path, binmode: true))
-        if att.valid?
-          att.save!
-        else
-          raise ActiveRecord::Rollback
-        end
-      ensure
-        tmpfile.close
-        tmpfile.unlink
-      end
+    begin
+      tmpfile = Tempfile.new
+      @sftp.download!(@path, tmpfile.path)
+      att = Attachment.new(
+        filename: @name,
+        file_path: tmpfile.path,
+        content_type: MimeMagic.by_path(@name)&.type,
+        created_by: device.id,
+        created_for: recipient.id,
+      )
+      att.save!
+    ensure
+      tmpfile.close
+      tmpfile.unlink
     end
+
     att
   end
 
@@ -74,9 +58,11 @@ class DatacollectorFile < DatacollectorObject
 
     # add notifications
     queue = "inbox_#{device.id}_#{recipient.id}"
-    MessageIncomingDataJob.set(queue: queue, wait: 3.minutes).perform_later(
-      helper.sender_container.name, helper.sender.id, recipient.id
-    ) unless Delayed::Job.find_by(queue: queue)
+    unless Delayed::Job.find_by(queue: queue)
+      MessageIncomingDataJob.set(queue: queue, wait: 3.minutes).perform_later(
+        helper.sender_container.name, helper.sender.id, recipient.id
+      )
+    end
 
     attach
   end

@@ -4,14 +4,12 @@ class DatacollectorFolder < DatacollectorObject
   attr_accessor :files
 
   def collect(device)
-    begin
-      tmpzip = Tempfile.new([@name, '.zip'])
-      zip_files(tmpzip)
-      register_new_data(device, tmpzip)
-    ensure
-      tmpzip.close
-      tmpzip.unlink
-    end
+    tmpzip = Tempfile.new([@name, '.zip'])
+    zip_files(tmpzip)
+    register_new_data(device, tmpzip)
+  ensure
+    tmpzip.close
+    tmpzip.unlink
   end
 
   def delete
@@ -29,23 +27,21 @@ class DatacollectorFolder < DatacollectorObject
 
     if @sftp
       @files.each do |new_file|
-        begin
-          tmpfile = Tempfile.new
-          sftp.download!(File.join(path, new_file), tmpfile.path)
-          Zip::File.open(tmpzip.path, Zip::File::CREATE) { |zipfile|
-            zipfile.add(File.join(@name, new_file), tmpfile.path)
-          }
-        ensure
-          tmpfile.close
-          tmpfile.unlink
+        tmpfile = Tempfile.new
+        sftp.download!(File.join(path, new_file), tmpfile.path)
+        Zip::File.open(tmpzip.path, Zip::File::CREATE) do |zipfile|
+          zipfile.add(File.join(@name, new_file), tmpfile.path)
         end
+      ensure
+        tmpfile.close
+        tmpfile.unlink
       end
     else
-      Zip::File.open(tmpzip.path, Zip::File::CREATE) { |zipfile|
+      Zip::File.open(tmpzip.path, Zip::File::CREATE) do |zipfile|
         @files.each do |new_file|
           zipfile.add(File.join(@name, new_file), File.join(@path, new_file))
         end
-      }
+      end
     end
   end
 
@@ -54,18 +50,10 @@ class DatacollectorFolder < DatacollectorObject
       filename: @name + '.zip',
       created_by: device.id,
       created_for: recipient.id,
-      content_type: 'application/zip'
+      content_type: 'application/zip',
+      file_path: tmpzip.path,
     )
-    ActiveRecord::Base.transaction do
-      att.save!
-
-      att.attachment_attacher.attach(File.open(tmpzip.path, binmode: true))
-      if att.valid?
-        att.save!
-      else
-        raise ActiveRecord::Rollback
-      end
-    end
+    att.save!
     helper = CollectorHelper.new(device, recipient)
     dataset = helper.prepare_new_dataset(@name)
     att.update!(attachable: dataset)

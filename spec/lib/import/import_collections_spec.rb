@@ -2,14 +2,12 @@
 
 require 'rails_helper'
 
-# test for ExportJson ImportJson
 RSpec.describe 'ImportCollection' do
   let(:user) do
     create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU')
   end
 
   before do
-    attachment.attachment_attacher.attach(File.open(attachment.file_path))
     copy_target_to_import_folder(import_id)
     stub_rest_request('OKKJLVBELUTLKV-UHFFFAOYSA-N')
     stub_rest_request('XBDQKXXYIPTUBI-UHFFFAOYSA-N')
@@ -25,11 +23,11 @@ RSpec.describe 'ImportCollection' do
 
     let(:importer) { Import::ImportCollections.new(attachment, user.id) }
 
-    describe 'import a collection with  samples' do
+    describe 'import a collection with samples' do
       let(:import_id) { 'collection_samples' }
       let(:attachment) { create(:attachment, :with_sample_collection_zip) }
 
-      it 'successfully import 2 samples' do
+      it 'successfully import 2 samples' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute
 
         collection = Collection.find_by(label: 'Fab-Col-Sample')
@@ -45,7 +43,7 @@ RSpec.describe 'ImportCollection' do
         expect(sample.description).to eq('MyWater')
         expect(sample.purity).to be_within(EPSILON).of(0.95)
         expect(sample.location).to eq('Room X1')
-        expect(sample.is_top_secret).to eq(false)
+        expect(sample.is_top_secret).to be(false)
         expect(sample.external_label).to eq('Ext-Water')
         expect(sample.short_label).to eq('FM-7')
         expect(sample.real_amount_unit).to eq('g')
@@ -54,12 +52,12 @@ RSpec.describe 'ImportCollection' do
         expect(sample.boiling_point.to_s).to eq('100.0...Infinity')
         expect(sample.molarity_value).to be_within(EPSILON).of(0)
         expect(sample.molarity_unit).to eq('M')
-        expect(sample.decoupled).to eq(false)
+        expect(sample.decoupled).to be(false)
         expect(sample.molecular_mass).to be_within(EPSILON).of(0)
         expect(sample.sum_formula).to eq('')
 
-        expect(sample.real_amount_value).to eq(nil)
-        expect(sample.user_id).to eq(nil)
+        expect(sample.real_amount_value).to be_nil
+        expect(sample.user_id).to be_nil
 
         sample = Sample.find_by(name: 'Benzene A')
         expect(sample).to be_present
@@ -70,7 +68,7 @@ RSpec.describe 'ImportCollection' do
       let(:import_id) { 'collection_reaction' }
       let(:attachment) { create(:attachment, :with_reaction_collection_zip) }
 
-      it 'successfully import 1 reaction' do
+      it 'successfully import 1 reaction' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute
 
         collection = Collection.find_by(label: 'Fab-Col-Reaction')
@@ -80,10 +78,10 @@ RSpec.describe 'ImportCollection' do
         expect(reaction).to be_present
         expect(reaction.name).to eq('Esterification of propionic acid ')
         expect(reaction.created_at.strftime('%FT%T')).to eq('2022-08-22T14:19:45')
-        expect(reaction.description.to_s).to eq('{"ops"=>[{"insert"=>"A "}, {"attributes"=>{"bold"=>true}, "insert"=>"sample "}, {"attributes"=>{"underline"=>true}, "insert"=>"reaction"}, {"insert"=>"\\n"}]}')
+        expect(reaction.description.to_s).to eq('{"ops"=>[{"insert"=>"A "}, {"attributes"=>{"bold"=>true}, "insert"=>"sample "}, {"attributes"=>{"underline"=>true}, "insert"=>"reaction"}, {"insert"=>"\\n"}]}') # rubocop:disable Layout/LineLength
         expect(reaction.timestamp_start).to eq('22/08/2022 16:16:30')
         expect(reaction.timestamp_stop).to eq('23/08/2022 16:16:33')
-        expect(reaction.observation.to_s).to eq('{"ops"=>[{"insert"=>"\\nThe obtained crude product was purified via HPLC using MeCN/H₂O 10:1."}]}')
+        expect(reaction.observation.to_s).to eq('{"ops"=>[{"insert"=>"\\nThe obtained crude product was purified via HPLC using MeCN/H₂O 10:1."}]}') # rubocop:disable Layout/LineLength
         expect(reaction.purification).to match_array(%w[TLC HPLC])
         expect(reaction.dangerous_products).to match_array([])
         expect(reaction.tlc_solvents).to eq('')
@@ -103,7 +101,7 @@ RSpec.describe 'ImportCollection' do
       let(:import_id) { 'collection_wellplate' }
       let(:attachment) { create(:attachment, :with_wellplate_collection_zip) }
 
-      it 'successfully imported 1 wellplate' do
+      it 'successfully imported 1 wellplate' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute
 
         collection = Collection.find_by(label: 'Fab-Col-Wellplate')
@@ -127,7 +125,7 @@ RSpec.describe 'ImportCollection' do
       let(:import_id) { 'collection_screen' }
       let(:attachment) { create(:attachment, :with_screen_collection_zip) }
 
-      it 'successfully imported 1 screen' do
+      it 'successfully imported 1 screen' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute
 
         collection = Collection.find_by(label: 'Fab-Col-Screen')
@@ -153,7 +151,7 @@ RSpec.describe 'ImportCollection' do
       let(:import_id) { 'collection_research_plan' }
       let(:attachment) { create(:attachment, :with_researchplan_collection_zip) }
 
-      it 'successfully imported 1 researchplan' do
+      it 'successfully imported 1 researchplan' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute
 
         collection = Collection.find_by(label: 'collection-with-rp')
@@ -170,21 +168,20 @@ RSpec.describe 'ImportCollection' do
         attachment = research_plan.attachments[0]
         research_plan.body
         expect(attachment.identifier).to eq(expected_identifier)
-
-        # TO DO: create a more realistic example with more assosiatons of the research plan. Here i will stop because i focus on the attachment refactoring
+        expect(attachment.attachment_data).not_to be_nil
       end
     end
   end
 
   def stub_rest_request(identifier)
-    stub_request(:get, 'http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/' + identifier + '/record/JSON')
+    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/#{identifier}/record/JSON")
       .with(
         headers: {
           'Accept' => '*/*',
           'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
           'Content-Type' => 'text/json',
-          'User-Agent' => 'Ruby'
-        }
+          'User-Agent' => 'Ruby',
+        },
       )
       .to_return(status: 200, body: '', headers: {})
   end

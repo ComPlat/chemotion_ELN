@@ -3,45 +3,44 @@
 require 'rails_helper'
 
 RSpec.describe GenericHelpers, type: :helper do
+  let(:tmp_file) { fixture_file_upload(Rails.root.join('spec/fixtures/upload.png')) }
+  let(:id) { nil }
 
   describe '.create_uploads' do
+    subject { create_uploads(type, id, files, param_info, user_id) }
+
     let(:type) { nil }
-    let(:id) { nil }
     let(:files) { nil }
     let(:param_info) { nil }
     let(:user_id) { nil }
     let(:research_plan) { create(:research_plan, :with_image_field) }
 
-    subject { create_uploads(type, id, files, param_info, user_id) }
-
     context 'when any param is nil' do
       it 'return empty' do
-        expect(subject).to be nil
+        expect(subject).to be_nil # rubocop:disable RSpec/NamedSubject
       end
     end
   end
 
   describe '.create_attachments' do
+    let(:ids_of_uploaded_files) { create_attachments(files, del_files, type, id, identifier, user_id) }
     let(:files) { nil }
     let(:del_files) { nil }
     let(:type) { nil }
-    let(:id) { nil }
     let(:identifier) { nil }
     let(:user_id) { nil }
     let(:user) { create(:user) }
     let(:research_plan) { create(:research_plan, :with_image_field) }
 
-    subject { create_attachments(files, del_files, type, id, identifier, user_id) }
-
     context 'when files is nil' do
       it 'return empty array' do
-        expect(subject).to eq []
+        expect(ids_of_uploaded_files).to eq []
       end
     end
 
     context 'when a file is upload' do
-      let(:tmp_file) { Tempfile.new('upload_data.png') }
-      let(:files) {  [{filename: 'test', container_id: '', tempfile: tmp_file, type: '' }] }
+      let(:tmp_file) { fixture_file_upload(Rails.root.join('spec/fixtures/upload.png')) }
+      let(:files) {  [{ filename: 'test', container_id: '', tempfile: tmp_file, type: '' }] }
       let(:del_files) { nil }
       let(:type) { 'ResearchPlan' }
       let(:id) { research_plan.id }
@@ -49,13 +48,13 @@ RSpec.describe GenericHelpers, type: :helper do
       let(:identifier) { [research_plan.body[0]['value']['public_name']] }
 
       it 'return not empty array' do
-        expect(subject).not_to eq []
+        expect(ids_of_uploaded_files).not_to eq []
       end
 
-      it 'return correctly identifier' do
-        attachment = Attachment.find(subject[0])
+      it 'return correct identifier' do
+        attachment = Attachment.find(ids_of_uploaded_files.first)
 
-        expect(attachment['identifier']).to eq identifier[0]
+        expect(attachment['identifier']).to eq identifier.first
       end
     end
   end

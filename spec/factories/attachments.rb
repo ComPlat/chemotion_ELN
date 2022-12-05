@@ -4,6 +4,7 @@ FactoryBot.define do
   factory :attachment do
     key { nil }
     filename { 'upload.txt' }
+    file_path { Rails.root.join('spec/fixtures/upload.txt') }
     created_by { 0 }
     file_data { File.read("#{Rails.root}/spec/fixtures/upload.txt") }
     association :attachable, factory: :container
@@ -59,18 +60,6 @@ FactoryBot.define do
 
     trait :with_researchplan_collection_zip do
       file_path { Rails.root.join('spec', 'fixtures', 'import', 'collection_research_plan.zip') }
-    end
-
-    after(:create) do |attachment|
-      path = if File.exist? "#{Rails.root}/spec/fixtures/#{attachment.filename}"
-               "#{Rails.root}/spec/fixtures/#{attachment.filename}"
-             else
-               attachment.file_path
-             end
-
-      attachment.attachment_attacher.attach(File.open(path, binmode: true))
-      attachment.attachment_attacher.create_derivatives
-      attachment.save!
     end
   end
 end
