@@ -1,7 +1,13 @@
+# frozen_string_literal: true
+
 require 'net/http'
 require 'uri'
 require 'json'
 require 'date'
+
+# rubocop: disable Metrics/AbcSize
+# rubocop: disable Metrics/MethodLength
+# rubocop: disable Metrics/ClassLength
 
 module Analyses
   class Converter
@@ -42,7 +48,7 @@ module Analyses
       @signature = Digest::SHA1.hexdigest mdall
     end
 
-    def self.header(opt={})
+    def self.header(opt = {})
       opt || {}
     end
 
@@ -54,17 +60,18 @@ module Analyses
       oa = Attachment.find(id)
       return if oa.nil?
 
-      folder = Rails.root.join('tmp', 'uploads', 'converter')
-      Dir.mkdir(folder) unless File.exist?(folder)
+      folder = Rails.root.join('tmp/uploads/converter')
+      FileUtils.mkdir_p(folder)
       ofile = Rails.root.join(folder, oa.filename)
-      FileUtils.cp(oa.store.path, ofile)
+      location_of_attachment = oa.attachment_data['id']
+      FileUtils.cp(location_of_attachment, ofile)
       File.open(ofile, 'r') do |f|
         body = { file: f }
         response = HTTParty.post(
           uri('conversions'),
           basic_auth: auth,
           body: body,
-          timeout: timeout
+          timeout: timeout,
         )
       end
       FileUtils.rm_f(ofile)
@@ -73,21 +80,22 @@ module Analyses
         tmp_file = Tempfile.new
         tmp_file.write(response.parsed_response)
         name = "#{oa.filename.split('.').first}#{extname}"
-        ActiveRecord::Base.transaction do
-          begin
-            att.save!
+        begin
+          att = Attachment.new(
+            filename: name,
+            file_path: tmp_file.path,
+            attachable_id: oa.attachable_id,
+            attachable_type: 'Container',
+            created_by: oa.created_by,
+            created_for: oa.created_for,
+          )
 
-            att.attachment_attacher.attach(File.open(tmp_file.path, binmode: true))
-            if att.valid?
-              att.save!
-            else
-              raise ActiveRecord::Rollback
-            end
-          ensure
-            tmp_file.close
-            tmp_file.unlink
-          end
+          att.save!
+        ensure
+          tmp_file.close
+          tmp_file.unlink
         end
+
       end
       response
     end
@@ -100,19 +108,21 @@ module Analyses
 
     def self.delete_profile(id)
       options = { basic_auth: auth, timeout: timeout }
-      response = HTTParty.delete(uri('profiles') + '/' + id, options)
+      response = HTTParty.delete("#{uri('profiles')}/#{id}", options)
       response.parsed_response if response.code == 200
     end
 
     def self.create_profile(data)
-      options = { basic_auth: auth, timeout: timeout, body: data.to_json, headers: { 'Content-Type' => 'application/json' } }
+      options = { basic_auth: auth, timeout: timeout, body: data.to_json,
+                  headers: { 'Content-Type' => 'application/json' } }
       response = HTTParty.post(uri('profiles'), options)
       response.parsed_response if response.code == 200
     end
 
     def self.update_profile(data)
-      options = { basic_auth: auth, timeout: timeout, body: data.to_json, headers: { 'Content-Type' => 'application/json' } }
-      response = HTTParty.put(uri('profiles') + '/' + data[:id], options)
+      options = { basic_auth: auth, timeout: timeout, body: data.to_json,
+                  headers: { 'Content-Type' => 'application/json' } }
+      response = HTTParty.put("#{uri('profiles')}/#{data[:id]}", options)
       response.parsed_response if response.code == 200
     end
 
@@ -124,7 +134,7 @@ module Analyses
           uri('tables'),
           basic_auth: auth,
           body: body,
-          timeout: timeout
+          timeout: timeout,
         )
         res = response.parsed_response
       end
@@ -132,3 +142,7 @@ module Analyses
     end
   end
 end
+
+# rubocop: enable Metrics/AbcSize
+# rubocop: enable Metrics/MethodLength
+# rubocop: enable Metrics/ClassLength

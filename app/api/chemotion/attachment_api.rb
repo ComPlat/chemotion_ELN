@@ -6,7 +6,7 @@ require 'barby/outputter/svg_outputter'
 require 'digest'
 
 module Chemotion
-  class AttachmentAPI < Grape::API
+  class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
     helpers do
       def thumbnail(att)
         att.thumb ? Base64.encode64(att.read_thumbnail) : nil
@@ -44,8 +44,8 @@ module Chemotion
       error!(message, 404)
     end
 
-    resource :attachments do
-      before do
+    resource :attachments do # rubocop:disable Metrics/BlockLength
+      before do # rubocop:disable Metrics/BlockLength
         @attachment = Attachment.find_by(id: params[:attachment_id])
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
@@ -100,7 +100,7 @@ module Chemotion
       post 'upload_dataset_attachments' do
         error_messages = []
         params.each do |_file_id, file|
-          next unless tempfile = file[:tempfile]
+          next unless tempfile = file[:tempfile] # rubocop:disable Lint/AssignmentInCondition
 
           a = Attachment.new(
             bucket: file[:container_id],
@@ -109,16 +109,13 @@ module Chemotion
             created_by: current_user.id,
             created_for: current_user.id,
             content_type: file[:type],
+            file_path: file[:tempfile].path,
           )
 
-          a.attachment_attacher.attach(file[:tempfile])
           begin
-            if a.valid?
-              a.attachment_attacher.create_derivatives
-              a.save!
-            else
-              error_messages.push(a.errors.to_h[:attachment])
-            end
+            a.save!
+          rescue StandardError
+            error_messages.push(a.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
           ensure
             tempfile.close
             tempfile.unlink
@@ -158,7 +155,7 @@ module Chemotion
       post 'upload_to_inbox' do
         attach_ary = []
         params.each do |_file_id, file|
-          next unless tempfile = file[:tempfile]
+          next unless tempfile = file[:tempfile] # rubocop:disable Lint/AssignmentInCondition
 
           attach = Attachment.new(
             bucket: file[:container_id],
@@ -185,7 +182,7 @@ module Chemotion
       desc 'Download the attachment file'
       get ':attachment_id' do
         content_type 'application/octet-stream'
-        header['Content-Disposition'] = 'attachment; filename="' + @attachment.filename + '"'
+        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
         env['api.format'] = :binary
         uploaded_file = @attachment.attachment_attacher.file
 
@@ -196,12 +193,12 @@ module Chemotion
       end
 
       desc 'Download the zip attachment file'
-      get 'zip/:container_id' do
+      get 'zip/:container_id' do # rubocop:disable Metrics/BlockLength
         env['api.format'] = :binary
         content_type('application/zip, application/octet-stream')
         filename = CGI.escape("#{@container.parent&.name&.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
-        zip = Zip::OutputStream.write_buffer do |zip|
+        zip = Zip::OutputStream.write_buffer do |zip| # rubocop:disable Lint/ShadowingOuterLocalVariable
           @container.attachments.each do |att|
             zip.put_next_entry att.filename
             zip.write att.read_file
@@ -234,9 +231,7 @@ module Chemotion
       get 'sample_analyses/:sample_id' do
         tts = @sample.analyses&.map do |a|
                 a.children&.map do |d|
-                  d.attachments&.map do |at|
-                    at.filesize
-                  end
+                  d.attachments&.map(&:filesize)
                 end
               end&.flatten&.reduce(:+) || 0
         if tts > 300_000_000
@@ -264,7 +259,7 @@ module Chemotion
       get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
         content_type @attachment.content_type
-        header['Content-Disposition'] = 'attachment; filename=' + sfilename
+        header['Content-Disposition'] = "attachment; filename=#{sfilename}"
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
         uploaded_file = @attachment.attachment_attacher.file
