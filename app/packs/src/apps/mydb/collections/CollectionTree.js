@@ -11,6 +11,8 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
+import SampleTaskNavigationElement from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskNavigationElement';
+import SampleTaskInbox from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskInbox';
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
@@ -349,6 +351,8 @@ export default class CollectionTree extends React.Component {
         <div className="tree-wrapper" style={{ display: inboxDisplay }}>
           {this.inboxSubtrees()}
         </div>
+        <SampleTaskNavigationElement />
+        <SampleTaskInbox />
       </div>
     );
   }
