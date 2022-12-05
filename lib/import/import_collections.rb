@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/BlockLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity, Layout/LineLength
+
 require 'json'
 
 module Import
-  class ImportCollections
+  class ImportCollections # rubocop:disable Metrics/ClassLength
     def initialize(att, current_user_id)
       @att = att
       @current_user_id = current_user_id
@@ -34,33 +36,24 @@ module Import
           case entry.name
           when 'export.json'
             @data = JSON.parse(data)
-          when %r{attachments/([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})}
+          when %r{attachments/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})}
             file_name = entry.name.sub('attachments/', '')
             attachment = Attachment.new(
               transferred: true,
               created_by: @current_user_id,
               created_for: @current_user_id,
               key: SecureRandom.uuid,
-              filename: file_name
+              filename: file_name,
             )
 
             begin
               tmp = Tempfile.new(file_name)
               tmp.write(data)
               tmp.rewind
-              ActiveRecord::Base.transaction do
-                attachment.save!
 
-                attachment.attachment_attacher.attach(tmp)
-
-                if attachment.valid?
-                  attachment.attachment_attacher.create_derivatives
-                  attachment.save!
-                  attachments << attachment
-                else
-                  raise ActiveRecord::Rollback
-                end
-              end
+              attachment.file_path = tmp.path
+              attachment.save!
+              attachments << attachment
             ensure
               tmp.close
               tmp.unlink # deletes the temp file
@@ -135,10 +128,10 @@ module Import
           'screen_detail_level',
           'researchplan_detail_level',
           'created_at',
-          'updated_at'
+          'updated_at',
         ).merge(
           user_id: @current_user_id,
-          parent: fetch_ancestry('Collection', fields.fetch('ancestry'))
+          parent: fetch_ancestry('Collection', fields.fetch('ancestry')),
         ))
 
         # add collection to @instances map
@@ -168,7 +161,12 @@ module Import
         # look for the molecule for this sample and add the molecule name
         # neither the Molecule or the MoleculeName are created if they already exist
         molfile = fields.fetch('molfile')
-        molecule = fields.fetch('decoupled', nil) && molfile.blank? ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
+        molecule = if fields.fetch('decoupled',
+                                   nil) && molfile.blank?
+                     Molecule.find_or_create_dummy
+                   else
+                     Molecule.find_or_create_by_molfile(molfile)
+                   end
         unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
           molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
         end
@@ -205,7 +203,7 @@ module Import
           'updated_at',
           'decoupled',
           'molecular_mass',
-          'sum_formula'
+          'sum_formula',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
@@ -216,19 +214,20 @@ module Import
           parent: fetch_ancestry('Sample', fields.fetch('ancestry')),
           melting_point: fetch_bound(fields.fetch('melting_point')),
           boiling_point: fetch_bound(fields.fetch('boiling_point')),
-          molecule_id: molecule&.id
+          molecule_id: molecule&.id,
         ))
 
         solvent_value = fields.slice('solvent')['solvent']
         if solvent_value.is_a? String
           solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(solvent_value) }
           if solvent.present?
-            sample['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }]
+            sample['solvent'] =
+              [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }]
           end
         end
 
         # for same sample_svg_file case
-        s_svg_file = @svg_files.select { |s| s[:sample_svg_file] == fields.fetch('sample_svg_file') }.first
+        s_svg_file = @svg_files.find { |s| s[:sample_svg_file] == fields.fetch('sample_svg_file') }
         if s_svg_file.nil?
           @svg_files.push(sample_svg_file: fields.fetch('sample_svg_file'), svg_file: sample.sample_svg_file)
         end
@@ -247,9 +246,9 @@ module Import
           'residue_type',
           'custom_info',
           'created_at',
-          'updated_at'
+          'updated_at',
         ).merge(
-          sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+          sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
         ))
 
         # add reaction to the @instances map
@@ -280,12 +279,12 @@ module Import
           'origin',
           'duration',
           'created_at',
-          'updated_at'
+          'updated_at',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
             'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid
-          )
+          ),
         ))
 
         # add reaction to the @instances map
@@ -309,7 +308,7 @@ module Import
         ReactionsSolventSample,
         ReactionsPurificationSolventSample,
         ReactionsReactantSample,
-        ReactionsProductSample
+        ReactionsProductSample,
       ].each do |model|
         @data.fetch(model.name, {}).each do |uuid, fields|
           # create the reactions_sample
@@ -318,10 +317,10 @@ module Import
             'equivalent',
             'position',
             'waste',
-            'coefficient'
+            'coefficient',
           ).merge(
             reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
-            sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+            sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
           ))
 
           # add reactions_sample to the @instances map
@@ -340,11 +339,11 @@ module Import
           'short_label',
           'readout_titles',
           'created_at',
-          'updated_at'
+          'updated_at',
         ).merge(
           collections: fetch_many(
             'Collection', 'CollectionsWellplate', 'wellplate_id', 'collection_id', uuid
-          )
+          ),
         ))
 
         # create the root container like with samples
@@ -367,10 +366,10 @@ module Import
           'color_code',
           'additive',
           'created_at',
-          'updated_at'
+          'updated_at',
         ).merge(
           wellplate: @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
-          sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'), nil)
+          sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'), nil),
         ))
 
         # add reaction to the @instances map
@@ -390,14 +389,14 @@ module Import
           'conditions',
           'requirements',
           'created_at',
-          'updated_at'
+          'updated_at',
         ).merge(
           collections: fetch_many(
             'Collection', 'CollectionsScreen', 'screen_id', 'collection_id', uuid
           ),
           wellplates: fetch_many(
             'Wellplate', 'ScreensWellplate', 'screen_id', 'wellplate_id', uuid
-          )
+          ),
         ))
 
         # create the root container like with samples
@@ -417,12 +416,12 @@ module Import
           'description',
           'body',
           'created_at',
-          'updated_at'
+          'updated_at',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
             'Collection', 'CollectionsResearchPlan', 'research_plan_id', 'collection_id', uuid
-          )
+          ),
         ))
 
         # add reaction to the @instances map
@@ -455,7 +454,7 @@ module Import
                                                 'description',
                                                 'extended_metadata',
                                                 'created_at',
-                                                'updated_at'
+                                                'updated_at',
                                               ))
         end
 
@@ -475,8 +474,9 @@ module Import
 
         attachment = Attachment.where(
           'id IN (?) AND filename LIKE ? ',
-           @attachments,
-            fields.fetch('identifier') << '%').first
+          @attachments,
+          fields.fetch('identifier') << '%',
+        ).first
 
         attachment.update!(
           attachable: attachable,
@@ -484,7 +484,7 @@ module Import
           aasm_state: fields.fetch('aasm_state'),
           filename: fields.fetch('filename'),
           content_type: fields.fetch('content_type'),
-          storage: primary_store
+          storage: primary_store,
           # checksum: fields.fetch('checksum'),
           # created_at: fields.fetch('created_at'),
           # updated_at: fields.fetch('updated_at')
@@ -511,7 +511,7 @@ module Import
         # create the literature if it was not imported before
         begin
           literature =  @instances.fetch('Literature').fetch(literature_uuid)
-        rescue KeyError => e
+        rescue KeyError => e # rubocop:disable Lint/UselessAssignment
           # create the literature
           literature = Literature.create!(literature_fields.slice(
                                             'title',
@@ -519,7 +519,7 @@ module Import
                                             'refs',
                                             'doi',
                                             'created_at',
-                                            'updated_at'
+                                            'updated_at',
                                           ))
 
           # add literature to the @instances map
@@ -532,12 +532,12 @@ module Import
             'element_type',
             'category',
             'created_at',
-            'updated_at'
+            'updated_at',
           ).merge(
             user_id: @current_user_id,
             element: element,
-            literature: literature
-          )
+            literature: literature,
+          ),
         )
 
         # add literal to the @instances map
@@ -546,18 +546,18 @@ module Import
     end
 
     def fetch_ancestry(type, ancestry)
-      unless ancestry.nil? || ancestry.empty?
-        parents = ancestry.split('/')
-        parent_uuid = parents[-1]
-        @instances.fetch(type, {}).fetch(parent_uuid, nil)
-      end
+      return if ancestry.blank?
+
+      parents = ancestry.split('/')
+      parent_uuid = parents[-1]
+      @instances.fetch(type, {}).fetch(parent_uuid, nil)
     end
 
     def fetch_image(image_path, image_file_name)
       begin
         svg = nil
-        if image_file_name.present? && (tmp_file = @images["#{image_path}/#{image_file_name}"])
-          svg = tmp_file.read if tmp_file && !tmp_file.closed?
+        if image_file_name.present? && (tmp_file = @images["#{image_path}/#{image_file_name}"]) && (tmp_file && !tmp_file.closed?)
+          svg = tmp_file.read
         end
       rescue StandardError => e
         Rails.logger.error e
@@ -604,3 +604,4 @@ module Import
     end
   end
 end
+# rubocop:enable Metrics/AbcSize,Metrics/MethodLength,Metrics/BlockLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity, Layout/LineLength

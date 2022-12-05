@@ -43,7 +43,7 @@ class AttachmentUploader < Shrine
       nil,
       nil,
       result,
-      record
+      record,
     )
 
     result
