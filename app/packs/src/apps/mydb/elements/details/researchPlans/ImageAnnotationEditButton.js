@@ -2,6 +2,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import Attachment from 'src/models/Attachment';
 
 export default class ImageAnnotationEditButton extends Component {
   constructor(props) {
@@ -63,13 +64,16 @@ export default class ImageAnnotationEditButton extends Component {
   }
 
   render() {
+    if(!this.props.attachment){
+      return null;
+    }
     return this.props.attachment.isNew
       ? this.renderInactiveAnnotationButton()
       : this.renderActiveAnnotationButton();
   }
 }
 ImageAnnotationEditButton.propTypes = {
-  attachment: PropTypes.object.isRequired,
+  attachment: PropTypes.instanceOf(Attachment),
   parent: PropTypes.object.isRequired,
   horizontalAlignment: PropTypes.string,
 };

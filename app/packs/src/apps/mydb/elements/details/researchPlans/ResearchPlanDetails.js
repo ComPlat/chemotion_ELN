@@ -400,6 +400,7 @@ export default class ResearchPlanDetails extends Component {
             ]}
             update={update}
             edit
+            attachments={researchPlan.attachments}
             researchPlan={researchPlan}
           />
         </ListGroupItem>

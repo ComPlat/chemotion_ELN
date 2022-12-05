@@ -12,8 +12,7 @@ import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlan
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
-    this.state = { attachments: props.attachments };
-    this.state = {imageEditModalShown: false};
+    this.state = {imageEditModalShown: false,attachments: props.attachments};
   }
 
   componentDidMount() {
@@ -156,5 +155,5 @@ ResearchPlanDetailsFieldImage.propTypes = {
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   edit: PropTypes.bool,
-  attachments: PropTypes.array
+  attachments: PropTypes.array.isRequired
 };
