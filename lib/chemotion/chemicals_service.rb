@@ -12,8 +12,9 @@ module Chemotion
     end
 
     def self.merck_request(name)
-      merck_res = HTTParty.get("https://www.sigmaaldrich.com/DE/en/search/#{name}?focus=products
-                                &page=1&perpage=30&sort=relevance&term=#{name}&type=product=", request_options)
+      string = name.gsub(/\s/, '-')
+      merck_res = HTTParty.get("https://www.sigmaaldrich.com/DE/en/search/#{string}?focus=products
+                                &page=1&perpage=30&sort=relevance&term=#{string}&type=product=", request_options)
       Nokogiri::HTML.parse(merck_res.body).xpath("//*[contains(@class, 'MuiTableBody-root')]").children[0].children[2]
                     .children[0].attributes['href'].value
     end
@@ -24,22 +25,31 @@ module Chemotion
       url_string = product_number_string[15, product_number_string.length]
       merck_link = "https://www.sigmaaldrich.com/DE/#{language}/sds/#{url_string}"
       { 'merck_link' => merck_link, 'merck_product_number' => product_number,
-        'merck_product_link' => "https://www.sigmaaldrich.com/#{product_number_string}" }
+        'merck_product_link' => "https://www.sigmaaldrich.com#{product_number_string}" }
     rescue StandardError
-      'Could not find safety data sheet'
+      'Could not find safety data sheet from Merck'
+    end
+
+    def self.alfa_product(alfa_req)
+      response = Nokogiri::HTML.parse(alfa_req.body)
+      if response.title
+        product_number = response.css('a').map { |node| node.attribute('item_number') }.compact
+        product_number[0].value
+      else
+        str = 'search-result-number'
+        response.xpath("//*[@class=\"#{str}\"]").at_css('span').children.text
+      end
     end
 
     def self.alfa(name, language)
       chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
-      lan = chosen_lang[language]
       alfa_req = HTTParty.get("https://www.alfa.com/en/search/?q=#{name}", request_options)
-      str = 'search-result-number'
-      product_number = Nokogiri::HTML.parse(alfa_req.body).xpath("//*[@class=\"#{str}\"]").at_css('span').children.text
-      alfa_link = "https://www.alfa.com/en/msds/?language=#{lan}&subformat=CLP1&sku=#{product_number}"
+      product_number = alfa_product(alfa_req)
+      alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{product_number}"
       { 'alfa_link' => alfa_link, 'alfa_product_number' => product_number,
         'alfa_product_link' => "https://www.alfa.com/en/catalog/#{product_number}" }
     rescue StandardError
-      'Could not find safety data sheet'
+      'Could not find safety data sheet from Thermofisher'
     end
 
     def self.check_if_ssd_already_saved(file_name, ssd_files_names)

@@ -40,7 +40,7 @@ export default class ChemicalFetcher {
   }
 
   static fetchSafetySheets(queryParams) {
-    return fetch(`/api/v1/chemicals/fetch_safetysheet/${queryParams.id}?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}&data[language]=${queryParams.language}&data[cas]=${queryParams.cas}`, {
+    return fetch(`/api/v1/chemicals/fetch_safetysheet/${queryParams.id}?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}&data[language]=${queryParams.language}&data[searchStr]=${queryParams.string}`, {
       credentials: 'same-origin',
       method: 'GET',
       headers: {

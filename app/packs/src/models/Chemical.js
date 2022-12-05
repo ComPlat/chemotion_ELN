@@ -46,7 +46,6 @@ export default class Chemical extends Element {
       this._chemical_data[0][parameter] = value;
     } else if (parameter === 'cas') {
       this._cas = value;
-      console.log(this._cas);
     }
   }
 }

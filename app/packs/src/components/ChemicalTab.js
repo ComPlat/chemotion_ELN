@@ -24,7 +24,7 @@ export default class ChemicalTab extends React.Component {
       vendorValue: 'All',
       vendorSafetyPhrasesValue: '',
       vendorChemPropertiesValue: '',
-      queryOption: 'Common Name',
+      queryOption: 'CAS',
       safetySheetLanguage: 'en',
       safetyPhrases: '',
       loading: false,
@@ -99,7 +99,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   handleCheckMark(vendor) {
-    if (vendor === 'Thermofischer') {
+    if (vendor === 'Thermofisher') {
       this.setState({ checkSaveIconThermofischer: false });
     } else if (vendor === 'Merck') {
       this.setState({ checkSaveIconMerck: false });
@@ -138,13 +138,22 @@ export default class ChemicalTab extends React.Component {
       chemical.buildChemical('sample_name', sampleName);
       chemical.buildChemical('molecule_id', moleculeId);
     }
+    console.log(sample.molecule_name_hash.label);
+    console.log(queryOption);
+    let searchStr;
+
+    if (queryOption === 'Common Name') {
+      searchStr = sample.molecule_name_hash.label;
+    } else {
+      searchStr = chemical._cas;
+    }
 
     const queryParams = {
       id: moleculeId,
       vendor: vendorValue,
       queryOption,
       language: safetySheetLanguage,
-      cas: chemical._cas
+      string: searchStr
     };
     const { safetySheets } = this.state;
 
@@ -461,7 +470,7 @@ export default class ChemicalTab extends React.Component {
     const { chemical } = this.state;
     const { sample } = this.props;
     let vendorProduct;
-    if (productInfo.vendor === 'Thermofischer') {
+    if (productInfo.vendor === 'Thermofisher') {
       vendorProduct = 'alfaProductInfo';
     } else if (productInfo.vendor === 'Merck') {
       vendorProduct = 'merckProductInfo';
@@ -480,7 +489,7 @@ export default class ChemicalTab extends React.Component {
         const pathArr = [];
         const pathParams = {};
         let vendorParams;
-        if (productInfo.vendor === 'Thermofischer') {
+        if (productInfo.vendor === 'Thermofisher') {
           vendorParams = 'alfa_link';
         } else {
           vendorParams = 'merck_link';
@@ -518,7 +527,7 @@ export default class ChemicalTab extends React.Component {
     let productNumber;
     let productLink;
     if (sdsInfo.alfa_link !== undefined) {
-      vendor = 'Thermofischer';
+      vendor = 'Thermofisher';
       sdsLink = sdsInfo.alfa_link;
       productNumber = sdsInfo.alfa_product_number;
       productLink = sdsInfo.alfa_product_link;
@@ -563,7 +572,7 @@ export default class ChemicalTab extends React.Component {
     const vendorOptions = [
       { label: 'All', value: 'All' },
       { label: 'Merck', value: 'Merck' },
-      { label: 'Thermofischer', value: 'Thermofischer' },
+      { label: 'Thermofisher', value: 'Thermofisher' },
       // { label: 'ChemicalSafety', value: 'ChemicalSafety' }
     ];
 
@@ -591,7 +600,7 @@ export default class ChemicalTab extends React.Component {
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="ssd-query-message">Assign a cas number using the cas field in labels section for better search results using cas number</Tooltip>}>
         <FormGroup style={{ width: '100%' }}>
-          <ControlLabel style={{ paddingRight: '25px' }}>Query SSD using</ControlLabel>
+          <ControlLabel style={{ paddingRight: '25px' }}>Query SDS using</ControlLabel>
           <Select
             name="queryOption"
             clearable={false}
@@ -615,7 +624,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <FormGroup style={{ width: '100%' }}>
-        <ControlLabel style={{ paddingRight: '25px' }}>Choose Language of SSD</ControlLabel>
+        <ControlLabel style={{ paddingRight: '25px' }}>Choose Language of SDS</ControlLabel>
         <Select
           name="languageOption"
           clearable={false}
@@ -628,7 +637,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   renderSafetySheets = () => {
-    const { safetySheets, chemical } = this.state;
+    const { safetySheets, chemical, vendorValue } = this.state;
     let sdsStatus;
     let savedSds;
     if (chemical) {
@@ -637,16 +646,17 @@ export default class ChemicalTab extends React.Component {
         sdsStatus = safetySheets.length !== 0 ? safetySheets : savedSds;
       }
     }
+    console.log(vendorValue);
     return (
       (sdsStatus === undefined || sdsStatus.length === 0) ? null
         : (
           <ListGroup>
             {sdsStatus.map((document, index) => (
-              document !== 'Could not find safety data sheet' ? (
+              document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
                 <ListGroupItem key="safetySheetsFiles">
                   <div>
                     <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
-                      {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofischer' : 'Safety Data Sheet from Merck'}
+                      {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
                       { this.checkMarkButton(document) }
                     </a>
                     <ButtonToolbar className="pull-right">
@@ -660,7 +670,7 @@ export default class ChemicalTab extends React.Component {
                   <ListGroupItem>
                     <div>
                       <p>
-                        {(index === 0) ? 'Could not find safety data sheet from Thermofischer' : 'Could not find safety Data Sheet from Merck'}
+                        {document}
                       </p>
                     </div>
                   </ListGroupItem>

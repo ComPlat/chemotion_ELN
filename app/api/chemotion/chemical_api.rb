@@ -70,18 +70,20 @@ module Chemotion
             language = data[:language]
             case data[:option]
             when 'Common Name'
-              name = molecule.names[0]
+              name = data[:searchStr] || molecule.names[0]
             when 'CAS'
-              name = data[:cas] || molecule.cas[0]
+              name = data[:searchStr] || molecule.cas[0]
             end
             case vendor
             when 'Merck'
               { merck_link: Chemotion::ChemicalsService.merck(name, language) }
-            when 'Thermofischer'
+            when 'Thermofisher'
               { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
             else
-              { alfa_link: Chemotion::ChemicalsService.alfa(name, language),
-                merck_link: Chemotion::ChemicalsService.merck(name, language) }
+              {
+                alfa_link: Chemotion::ChemicalsService.alfa(name, language),
+                merck_link: Chemotion::ChemicalsService.merck(name, language),
+              }
             end
           end
         end

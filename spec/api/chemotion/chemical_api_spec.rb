@@ -82,7 +82,7 @@ describe Chemotion::ChemicalAPI do
       let(:params) do
         {
           chemical_data: [{ 'alfaProductInfo' => {
-            'productNumber' => 'A14672', 'vendor' => 'Thermofischer', 'sdsLink' => 'https://www.alfa.com/en/catalog/A14672'
+            'productNumber' => 'A14672', 'vendor' => 'Thermofisher', 'sdsLink' => 'https://www.alfa.com/en/catalog/A14672'
           } }],
           sample_id: s.id,
           vendor_product: 'alfaProductInfo',
@@ -137,7 +137,7 @@ describe Chemotion::ChemicalAPI do
 
       let(:params) do
         {
-          vendor: 'Thermofischer',
+          vendor: 'Thermofisher',
         }
       end
 
