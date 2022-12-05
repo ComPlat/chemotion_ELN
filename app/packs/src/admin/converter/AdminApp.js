@@ -60,7 +60,7 @@ class AdminApp extends Component {
       });
 
       this.setState({
-        profiles: profiles.profiles, datasets, options: options.options
+        profiles: (profiles && profiles.profiles) || [], datasets, options: (options && options.options) || []
       });
     });
   }
@@ -119,30 +119,36 @@ class AdminApp extends Component {
   }
 
   storeProfile() {
-    const { status } = this.state
+    const { status, profile } = this.state;
+    if (Array.isArray(profile.identifiers)) {
+      profile.identifiers.forEach((identifier) => {
+        delete identifier.show;
+      });
+    }
+
     if (status == 'create') {
-      ConverterApi.createProfile(this.state.profile)
-        .then(profile => {
-          const profiles = [...this.state.profiles]
-          profiles.push(profile)
+      ConverterApi.createProfile(profile)
+        .then((response) => {
+          const profiles = [...this.state.profiles];
+          profiles.push(response);
           this.setState({
             status: 'list',
-            profiles: profiles,
+            profiles,
             profile: null
           }, this.showCreatedModal())
         })
     } else if (status == 'update') {
-      ConverterApi.updateProfile(this.state.profile)
-        .then((profile) => {
-          const profiles = [...this.state.profiles]
-          const index = profiles.findIndex(p => (p.id == profile.id))
-          profiles[index] = profile
+      ConverterApi.updateProfile(profile)
+        .then((response) => {
+          const profiles = [...this.state.profiles];
+          const index = profiles.findIndex(p => (p.id == response.id));
+          profiles[index] = response;
           this.setState({
             status: 'list',
-            profiles: profiles,
+            profiles,
             profile: null
-          })
-        })
+          });
+        });
     }
   }
 
