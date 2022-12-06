@@ -20,7 +20,7 @@ describe Chemotion::ScreenAPI do
   let(:other_user_collection) { create(:collection, user_id: other_user.id) }
   let(:other_shared_collection) { create(:collection, user_id: other_user.id, is_shared: true, permission_level: 3) }
 
-  let(:screen) { create(:screen) }
+  let(:screen) { create(:screen, component_graph_data: { some_dummy: 'data', with_nested: { but_cool: 'Stuff' } }) }
   let(:another_screen) { create(:screen) }
 
   describe 'GET /api/v1/screens' do
@@ -95,6 +95,12 @@ describe Chemotion::ScreenAPI do
 
     it 'returns the right screen' do
       expect(JSON.parse(response.body)['screen']['name']).to eq(screen.name)
+    end
+
+    it 'returns the component_graph_data as json object' do
+      expect(JSON.parse(response.body)['screen']['component_graph_data']).to eq(
+        { some_dummy: 'data', with_nested: { but_cool: 'Stuff' } }.deep_stringify_keys
+      )
     end
 
     context 'when permissions are inappropriate' do
