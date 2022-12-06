@@ -1,58 +1,60 @@
 import React from 'react'
 import { useState } from 'react'
-import ReactFlow, { Controls, ControlButton, Background, applyNodeChanges, applyEdgeChanges } from 'reactflow'
+import ReactFlow, { Controls, ControlButton, Background } from 'reactflow'
 
-import ResearchplanFlowEditor from 'src/apps/mydb/elements/details/screens/ResearchplanFlowEditor';
+import ResearchplanFlowEditorWithProvider from 'src/apps/mydb/elements/details/screens/ResearchplanFlowEditor';
 
-const initialNodes = [
-  {
-    id: '1',
-    data: { label: 'Matt Research Plan' },
-    position: { x: 150, y: 0 },
-  },
-  {
-    id: '2',
-    data: { label: 'Research Plan Nov.' },
-    position: { x: 150, y: 100 },
-  },
-  {
-    id: '3',
-    data: { label: 'New Research Plan 1 for New Screen' },
-    position: { x: 50, y: 200 },
-  },
-  {
-    id: '4',
-    data: { label: 'New Research Plan 2 for New Screen' },
-    position: { x: 250, y: 200 },
-  },
-];
-
-const initialEdges = [
-  { id: '1-2', source: '1', target: '2', label: 'followed by', animated: true },
-  { id: '2-3', source: '2', target: '3', label: 'followed by', animated: true },
-  { id: '2-4', source: '2', target: '4', label: 'followed by', animated: true },
-];
-
-const ResearchplanFlowDisplay = () => {
-  const [nodes] = useState(initialNodes);
-  const [edges] = useState(initialEdges);
+const ResearchplanFlowDisplay = (props) => {
+  const researchplans = props.researchplans || []
+  const defaultNodesWithoutLabel = props.initialData.nodes || []
+  const defaultEdges = props.initialData.edges || []
   const [showEditor, toggleModal] = useState(false);
+
+  const defaultNodes = defaultNodesWithoutLabel.map((node) => {
+    const researchplan = researchplans.find((plan) => {
+      return plan.id === parseInt(node.id)
+    })
+
+    return {
+      ...node,
+      data: { label: researchplan ? researchplan.name : 'Deleted researchplan' },
+      style: {
+        border: researchplan ? '1px solid #000' : '1px solid #f00',
+        color: researchplan ? '#000' : '#f00',
+      },
+    }
+  })
+
+  const initialEditorData = {
+    nodes: defaultNodes,
+    edges: defaultEdges,
+  }
+
+  const onSave = (editorData) => {
+    console.log(editorData)
+  }
 
   return (
     <div style={{ marginBottom: "10px", width: "100%", height: "250px" }}>
       <ReactFlow
         fitView
-        nodes={nodes}
-        edges={edges}
+        defaultNodes={defaultNodes}
+        defaultEdges={defaultEdges}
       >
         <Background />
         <Controls showInteractive={false}>
-          <ControlButton onClick={() => toggleModal(!showEditor)}>
+          <ControlButton onClick={() => toggleModal(true)}>
             <div>Edit</div>
           </ControlButton>
         </Controls>
       </ReactFlow>
-      <ResearchplanFlowEditor visible={showEditor} toggleModal={toggleModal} />
+      <ResearchplanFlowEditorWithProvider
+        visible={showEditor}
+        toggleModal={toggleModal}
+        initialEditorData={initialEditorData}
+        researchplans={researchplans}
+        onSave={onSave}
+      />
     </div>
   )
 }
