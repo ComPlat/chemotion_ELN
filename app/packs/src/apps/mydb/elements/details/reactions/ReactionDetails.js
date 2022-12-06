@@ -33,6 +33,7 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -336,6 +337,11 @@ export default class ReactionDetails extends Component {
           {colLabel}
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
         </div>
+        <OpenCalendarButton
+          isPanelHeader={true}
+          eventable_id={reaction.id}
+          eventable_type={"Reaction"}
+        />
         <PrintCodeButton element={reaction} />
       </div>
     );

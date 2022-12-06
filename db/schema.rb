@@ -85,6 +85,31 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.index ["user_id"], name: "index_authentication_keys_on_user_id"
   end
 
+  create_table "calendar_entries", force: :cascade do |t|
+    t.string "title"
+    t.string "description"
+    t.datetime "start_time"
+    t.datetime "end_time"
+    t.string "kind"
+    t.integer "created_by", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "eventable_type"
+    t.bigint "eventable_id"
+    t.index ["created_by"], name: "index_calendar_entries_on_created_by"
+    t.index ["eventable_type", "eventable_id"], name: "index_calendar_entries_on_eventable_type_and_eventable_id"
+  end
+
+  create_table "calendar_entry_notifications", force: :cascade do |t|
+    t.bigint "user_id"
+    t.bigint "calendar_entry_id"
+    t.integer "status", default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["calendar_entry_id"], name: "index_calendar_entry_notifications_on_calendar_entry_id"
+    t.index ["user_id"], name: "index_calendar_entry_notifications_on_user_id"
+  end
+
   create_table "channels", id: :serial, force: :cascade do |t|
     t.string "subject"
     t.jsonb "msg_template"
@@ -894,8 +919,8 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
   end
 
   create_table "research_plans_screens", force: :cascade do |t|
-    t.integer "screen_id"
-    t.integer "research_plan_id"
+    t.bigint "screen_id", null: false
+    t.bigint "research_plan_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -904,8 +929,8 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
   end
 
   create_table "research_plans_wellplates", force: :cascade do |t|
-    t.integer "research_plan_id"
-    t.integer "wellplate_id"
+    t.bigint "research_plan_id", null: false
+    t.bigint "wellplate_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -1333,6 +1358,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
             )
             and sync_cols.user_id in (select user_ids(in_user_id))
         ) all_cols;
+
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
@@ -1358,6 +1384,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
       begin
       	select channel_type into i_channel_type
       	from channels where id = in_channel_id;
+
         case i_channel_type
       	when 9 then
       	  insert into notifications (message_id, user_id, created_at,updated_at)
@@ -1435,6 +1462,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
       	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
       	end if;
+
       	if (TG_OP='UPDATE') then
       	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);

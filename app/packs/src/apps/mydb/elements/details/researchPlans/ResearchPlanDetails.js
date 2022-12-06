@@ -25,6 +25,7 @@ import ResearchPlanDetailsContainers from 'src/apps/mydb/elements/details/resear
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -470,6 +471,11 @@ export default class ResearchPlanDetails extends Component {
             <i className="fa fa-expand" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
+        <OpenCalendarButton
+          isPanelHeader={true}
+          eventable_id={researchPlan.id}
+          eventable_type={"ResearchPlan"}
+        />
       </Panel.Heading>
     );
   }

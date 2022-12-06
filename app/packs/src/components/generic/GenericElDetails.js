@@ -21,6 +21,7 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import PreviewModal from 'src/components/generic/PreviewModal';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -432,6 +433,11 @@ export default class GenericElDetails extends Component {
             <i className="fa fa-floppy-o " />
           </Button>
         </OverlayTrigger>
+        <OpenCalendarButton 
+          isPanelHeader={true}
+          eventable_id={genericEl.id}
+          eventable_type={"Element"}
+        />
       </div>
     );
   }

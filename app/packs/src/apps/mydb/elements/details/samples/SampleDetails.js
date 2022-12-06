@@ -66,6 +66,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 const MWPrecision = 6;
 
@@ -566,6 +567,11 @@ export default class SampleDetails extends React.Component {
             <i className="fa fa-expand" />
           </Button>
         </OverlayTrigger>
+        <OpenCalendarButton
+          isPanelHeader={true}
+          eventable_id={sample.id}
+          eventable_type={"Sample"}
+        />
         <PrintCodeButton element={sample} />
         {sample.isNew
           ? <FastInput fnHandle={this.handleFastInput} />
