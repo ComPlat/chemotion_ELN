@@ -4,8 +4,11 @@ require 'helpers/annotation/annotation_updater'
 require_relative 'annotation_helper'
 
 describe AnnotationUpdater do
-  describe '.update annotation' do
-    update_process { described_class.new.update_annotation('', attachment_id) }
+  let(:svg_string) { Rails.root.join("spec/fixtures/annotations/#{svg_filename}").read }
+  let(:svg_string2) { Rails.root.join("spec/fixtures/annotations/#{svg_filename2}").read }
+
+  describe '.update_annotation()' do
+    let(:update_process) { described_class.new.update_annotation('', attachment_id) }
 
     context 'when attachment does not exist' do
       let(:attachment_id) { -1 }
@@ -16,33 +19,49 @@ describe AnnotationUpdater do
     end
 
     context 'when attachment does exist' do
-      context 'when annotation is valide' do # rubocop disable: RSpec/NestedGroups
-        it '-> success' do
-          helper = AnnotationHelper.new
-          example_svg_annotation = '<svg>example <image height="100" id="original_image" width="100" xlink:href="something"</svg>'
-          tempfile = Tempfile.new('annotationFile.svg')
-          tempfile.write(example_svg_annotation)
-          tempfile.rewind
-          tempfile.close
-          attachment = helper.createAttachmentWithAnnotation(tempfile.path)
-          attachment.attachment_data['derivatives']['thumbnail'] =
-            attachment.attachment_data['derivatives']['annotation']
-          attachment.attachment_data['derivatives']['thumbnail']['id'] =
-            attachment.attachment_data['derivatives']['thumbnail']['id'] + '_thumbnail'
-          attachment.save
+      context 'when annotation is valide' do # rubocop:disable RSpec/NestedGroups
+        let(:svg_filename) { '20221207_valide_annotation.svg' }
+        let(:svg_filename2) { '20221207_valide_annotation_edited.svg' }
+        let(:attachment) { create(:attachment, :with_png_image) }
+
+        it 'updated annotation' do
           updater = described_class.new(ThumbnailerMock.new)
-          updater.update_annotation(
-            '<svg>edited example <image height="100" id="original_image" width="100" href="something"</svg>', attachment.id
-          )
+          updater.update_annotation(svg_string2, attachment.id)
 
           file = File.open(attachment.attachment_data['derivatives']['annotation']['id'])
           data = file.read
-          assert_equal(
-            "<?xml version=\"1.0\"?>\n<svg>edited example <image height=\"100\" id=\"original_image\" width=\"100\" href=\"data:image/png;base64,\"/></svg>\n", data
-          )
 
-          tempfile.unlink
+          expect(Loofah.xml_fragment(svg_string2).to_s).to eq Loofah.xml_fragment(data).to_s
         end
+      end
+    end
+  end
+
+  describe '.sanitize_svg_string()' do
+    let(:sanitized_svg_string) { described_class.new.sanitize_svg_string(svg_string) }
+
+    context 'when svg is valide' do
+      let(:svg_filename) { '20221207_valide_annotation.svg' }
+
+      it 'svg string was not changed' do
+        expect(Loofah.xml_fragment(sanitized_svg_string).to_s).to eq Loofah.xml_fragment(svg_string).to_s
+      end
+    end
+
+    context 'when svg has script tag' do
+      let(:svg_filename) { '20221207_valide_annotation_script.svg' }
+      let(:svg_filename2) { '20221207_valide_annotation_script_sanitized.svg' }
+
+      it 'svg string was sanitized' do
+        expect(Loofah.xml_fragment(sanitized_svg_string).to_s).to eq Loofah.xml_fragment(svg_string2).to_s
+      end
+    end
+
+    context 'when svg has corrupted REST call' do
+      let(:svg_filename) { '20221207_valide_annotation_rest_api_corrupted.svg' }
+
+      it 'raises an "corrupted REST call error"' do
+        expect { sanitized_svg_string }.to raise_error 'Link to image not valide'
       end
     end
   end
