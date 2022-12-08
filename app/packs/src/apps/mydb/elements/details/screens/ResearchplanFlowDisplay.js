@@ -9,29 +9,46 @@ const ResearchplanFlowDisplay = (props) => {
   const defaultNodesWithoutLabel = props.initialData.nodes || []
   const defaultEdges = props.initialData.edges || []
   const [showEditor, toggleModal] = useState(false);
+  const [previewFlowInstance, setPreviewFlowInstance] = useState(null);
 
-  const defaultNodes = defaultNodesWithoutLabel.map((node) => {
-    const researchplan = researchplans.find((plan) => {
-      return plan.id === parseInt(node.id)
+  const buildNodes = (nodes) => {
+    return nodes.map((node) => {
+      const researchplan = researchplans.find((plan) => {
+        return plan.id === parseInt(node.id)
+      })
+
+      return {
+        ...node,
+        data: { label: researchplan ? researchplan.name : 'Deleted researchplan' },
+        style: {
+          border: researchplan ? '1px solid #000' : '1px solid #f00',
+          color: researchplan ? '#000' : '#f00',
+        },
+      }
     })
+  }
 
-    return {
-      ...node,
-      data: { label: researchplan ? researchplan.name : 'Deleted researchplan' },
-      style: {
-        border: researchplan ? '1px solid #000' : '1px solid #f00',
-        color: researchplan ? '#000' : '#f00',
-      },
-    }
-  })
+  const defaultNodes = buildNodes(defaultNodesWithoutLabel)
 
   const initialEditorData = {
     nodes: defaultNodes,
     edges: defaultEdges,
   }
 
-  const onSave = (editorData) => {
-    console.log(editorData)
+  const onSave = (data) => {
+    previewFlowInstance.setNodes(buildNodes(data.nodes));
+    previewFlowInstance.setEdges(data.edges);
+    previewFlowInstance.fitView();
+    props.onSave(data);
+  }
+  const optionsForPreviewDisplay = {
+    elementsSelectable: false,
+    nodesDraggable: false,
+    nodesConnectable: false,
+    panOnDrag: false,
+    zoomOnScroll: false,
+    zoomOnDoubleClick: false,
+    selectNodesOnDrag: false
   }
 
   return (
@@ -40,6 +57,8 @@ const ResearchplanFlowDisplay = (props) => {
         fitView
         defaultNodes={defaultNodes}
         defaultEdges={defaultEdges}
+        onInit={(instance) => setPreviewFlowInstance(instance)}
+        {...optionsForPreviewDisplay}
       >
         <Background />
         <Controls showInteractive={false}>

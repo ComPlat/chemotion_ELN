@@ -38,6 +38,7 @@ export default class ScreenDetails extends Component {
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.updateComponentGraphData = this.updateComponentGraphData.bind(this);
   }
 
   componentDidMount() {
@@ -319,6 +320,12 @@ export default class ScreenDetails extends Component {
     });
   }
 
+  updateComponentGraphData(data) {
+    const { screen } = this.state
+    screen.componentGraphData = data;
+    this.setState({ screen });
+  }
+
   render() {
     const { screen, visible } = this.state;
     const submitLabel = screen.isNew ? 'Create' : 'Save';
@@ -365,38 +372,6 @@ export default class ScreenDetails extends Component {
     });
 
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
-
-    const component_graph_data = {
-      nodes: [
-        {
-          id: '1',
-          position: { x: 150, y: 0 },
-        },
-        {
-          id: '3',
-          position: { x: 150, y: 100 },
-        },
-        {
-          id: '4',
-          position: { x: 50, y: 200 },
-        },
-        {
-          id: '5',
-          position: { x: 250, y: 200 },
-        },
-        {
-          id: '9',
-          position: { x: 250, y: 300 },
-        },
-      ],
-      edges: [
-        { id: '1-3', source: '1', target: '3', label: 'followed by', animated: true },
-        { id: '3-4', source: '3', target: '4', label: 'followed by', animated: true },
-        { id: '3-5', source: '3', target: '5', label: 'followed by', animated: true },
-        { id: '5-9', source: '5', target: '9', label: 'followed by', animated: true },
-      ]
-    };
-
     return (
       <Panel
         bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
@@ -404,7 +379,11 @@ export default class ScreenDetails extends Component {
       >
         <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
         <Panel.Body>
-          <ResearchplanFlowDisplay initialData={component_graph_data} researchplans={screen.research_plans} />
+          <ResearchplanFlowDisplay
+            initialData={screen.componentGraphData}
+            researchplans={screen.research_plans}
+            onSave={this.updateComponentGraphData}
+          />
           <ElementDetailSortTab
             type="screen"
             availableTabs={Object.keys(tabContentsMap)}
