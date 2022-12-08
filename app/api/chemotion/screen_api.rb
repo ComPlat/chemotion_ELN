@@ -169,10 +169,7 @@ module Chemotion
         requires :research_plan_ids, type: Array
         requires :container, type: Hash
         optional :segments, type: Array, desc: 'Segments'
-        optional :component_graph_data, type: Hash do
-          optional :edges, type: Array
-          optional :nodes, type: Array
-        end
+        optional :component_graph_data, type: JSON
       end
       post do
         attributes = {
@@ -183,7 +180,7 @@ module Chemotion
           result: params[:result],
           description: params[:description],
           research_plan_ids: params[:research_plan_ids],
-          component_graph_data: params[:component_graph_data]
+          component_graph_data: params[:component_graph_data],
         }
 
         screen = Screen.create(attributes)
