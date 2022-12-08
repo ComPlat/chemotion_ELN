@@ -126,7 +126,7 @@ const ResearchplanFlowEditor = (props) => {
           </Button>
         </Modal.Footer>
       </Modal>
-    </div >
+    </div>
   )
 }
 
