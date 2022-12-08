@@ -7,7 +7,7 @@ describe Chemotion::ScreenAPI do
 
   let(:request_headers) do
     {
-      'CONTENT-TYPE' => 'application/json'
+      'CONTENT-TYPE' => 'application/json',
     }
   end
   let(:other_user) { create(:person) }
@@ -163,7 +163,7 @@ describe Chemotion::ScreenAPI do
         research_plan_ids: [research_plan.id],
         component_graph_data: {
           nodes: [{ id: 1337 }],
-          edges: []
+          edges: [],
         },
       }
     end
@@ -188,8 +188,8 @@ describe Chemotion::ScreenAPI do
     it 'updates the component_graph_data correctly' do
       expect(parsed_json_response['screen']['component_graph_data']).to eq(
         {
-          "nodes" => [{ "id" => 1337 }],
-          "edges" => []
+          'nodes' => [{ 'id' => 1337 }],
+          'edges' => [],
         },
       )
     end
@@ -210,7 +210,7 @@ describe Chemotion::ScreenAPI do
         research_plan_ids: [research_plan.id],
         component_graph_data: {
           nodes: [{ id: 1337 }],
-          edges: []
+          edges: [],
         },
       }
     end
@@ -233,8 +233,8 @@ describe Chemotion::ScreenAPI do
       puts parsed_json_response
       expect(parsed_json_response['screen']['component_graph_data']).to eq(
         {
-          "nodes" => [{ "id" => 1337 }],
-          "edges" => []
+          'nodes' => [{ 'id' => 1337 }],
+          'edges' => [],
         },
       )
     end
