@@ -8,11 +8,11 @@ class AnnotationUpdater
   end
 
   def update_annotation(annotation_svg_string, attachment_id)
-    att = Attachment.find(attachment_id)
+    attachment = Attachment.find(attachment_id)
     sanitized_svg_string = sanitize_svg_string(annotation_svg_string)
-    save_svg_string_to_file_system(sanitized_svg_string, att)
-    update_thumbnail(att, sanitized_svg_string)
-    create_annotated_flat_image(att, sanitized_svg_string)
+    save_svg_string_to_file_system(sanitized_svg_string, attachment)
+    update_thumbnail(attachment, sanitized_svg_string)
+    create_annotated_flat_image(attachment, sanitized_svg_string)
   end
 
   def sanitize_svg_string(svg_string) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
@@ -38,30 +38,35 @@ class AnnotationUpdater
     f.close
   end
 
-  def update_thumbnail(attachment, sanitized_svg_string) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+  def update_thumbnail(attachment, svg_string)
     location_of_thumbnail = attachment.attachment_data['derivatives']['thumbnail']['id']
-    location_of_file = attachment.attachment_data['id']
-    base64 = "data:image/png;base64,#{Base64.encode64(File.binread(location_of_file))}"
-    xml = Nokogiri::XML(sanitized_svg_string)
-    group = xml.xpath('//*[@id="original_image"]')
-    group[0].attributes['href'].value = base64
     tmp_thumbnail_location = "#{location_of_thumbnail.split('.')[0]}_thumb.svg"
+
+    xml = replace_link_with_base64(attachment.attachment_data['id'], svg_string)
     File.write(tmp_thumbnail_location, xml.to_xml)
-    thumbnail = @thumbnailer.create_thumbnail("#{location_of_thumbnail.split('.')[0]}_thumb.svg")
+
+    thumbnail = @thumbnailer.create_thumbnail(tmp_thumbnail_location)
+
     FileUtils.move(thumbnail, location_of_thumbnail)
     FileUtils.rm_f(tmp_thumbnail_location)
   end
 
-  def create_annotated_flat_image(attachment, sanitized_svg_string)  # rubocop:disable Metrics/AbcSize
+  def create_annotated_flat_image(attachment, svg_string)
     location_of_file = attachment.attachment_data['id']
-    base64 = "data:image/png;base64,#{Base64.encode64(File.binread(location_of_file))}"
-    xml = Nokogiri::XML(sanitized_svg_string)
-    group = xml.xpath('//*[@id="original_image"]')
-    group[0].attributes['href'].value = base64
-    tmp_annotated_image_location = "#{location_of_file.split('.')[0]}_annotated.png"
+    xml = replace_link_with_base64(location_of_file, svg_string)
+
+    annotated_image_location = "#{location_of_file.split('.')[0]}_annotated.png"
     image = MiniMagick::Image.read(xml.to_s)
     image.format('png')
-    image.write(tmp_annotated_image_location)
+    image.write(annotated_image_location)
+  end
+
+  def replace_link_with_base64(location_of_file, svg_string)
+    base64 = "data:image/png;base64,#{Base64.encode64(File.binread(location_of_file))}"
+    xml = Nokogiri::XML(svg_string)
+    group = xml.xpath('//*[@id="original_image"]')
+    group[0].attributes['href'].value = base64
+    xml
   end
 
   class ThumbnailerWrapper
