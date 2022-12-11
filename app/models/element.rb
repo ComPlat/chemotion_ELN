@@ -39,10 +39,6 @@ class Element < ApplicationRecord
   scope :by_klass_id_short_label, ->(klass_id, short_label) { where('element_klass_id = ? and short_label ILIKE ?', klass_id, "%#{sanitize_sql_like(short_label)}%") }
   scope :by_sample_ids, ->(ids) { joins(:elements_samples).where('sample_id IN (?)', ids) }
   scope :by_klass_id, ->(klass_id) { where('element_klass_id = ? ', klass_id) }
-  scope :elements_created_time_from, ->(time) { where('elements.created_at >= ?', time) }
-  scope :elements_created_time_to, ->(time) { where('elements.created_at <= ?', time) }
-  scope :elements_updated_time_from, ->(time) { where('elements.updated_at >= ?', time) }
-  scope :elements_updated_time_to, ->(time) { where('elements.updated_at <= ?', time) }
 
   belongs_to :element_klass
 

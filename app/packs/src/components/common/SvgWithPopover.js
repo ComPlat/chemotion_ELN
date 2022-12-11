@@ -29,7 +29,7 @@ export default class SvgWithPopover extends Component {
     if (previewObj === '') {
       previewObj = (
         previewObject.isSVG ?
-          <SVG src={previewObject.src} className="molecule" key={previewObject.src} />
+          <SVG src={previewObject.src} className={previewObject.className || "molecule"} key={previewObject.src} />
           :
           <img src={previewObject.src} alt="" />
       );
@@ -71,6 +71,7 @@ SvgWithPopover.propTypes = {
     txtOnly: PropTypes.string.isRequired,
     isSVG: PropTypes.bool,
     src: PropTypes.string,
+    className: PropTypes.string,
   }).isRequired,
   popObject: PropTypes.shape({
     title: PropTypes.string,

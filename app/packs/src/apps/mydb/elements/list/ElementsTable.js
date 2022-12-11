@@ -9,12 +9,17 @@ import deepEqual from 'deep-equal';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
 import Switch from 'src/apps/mydb/elements/list/Switch';
+
+import UserStore from 'src/stores/alt/stores/UserStore';
+import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
+import Select from 'react-select';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -24,21 +29,22 @@ export default class ElementsTable extends React.Component {
       elements: [],
       currentElement: null,
       ui: {},
-      sampleCollapseAll: false,
+      collapseAll: false,
       moleculeSort: false,
       advancedSearch: false,
       productOnly: false,
       page: null,
       pages: null,
       perPage: null,
-      totalElements: null
+      totalElements: null,
+      elementsGroup: 'none',
+      elementsSort: false,
     };
+
 
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
 
-    this.collapseSample = this.collapseSample.bind(this);
-    this.changeSort = this.changeSort.bind(this);
     this.changeDateFilter = this.changeDateFilter.bind(this);
 
     this.toggleProductOnly = this.toggleProductOnly.bind(this);
@@ -118,20 +124,61 @@ export default class ElementsTable extends React.Component {
     if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
   }
 
-  initState() {
+  initState = () => {
     this.onChange(ElementStore.getState());
+
+    const { type, genericEl } = this.props;
+
+    if (type === 'reaction' || genericEl) {
+      const userState = UserStore.getState();
+      const filters = userState.profile.data.filters || {};
+
+      this.state.elementsGroup = filters[type]?.group || 'none';
+      this.state.elementsSort = filters[type]?.sort || false;
+    }
   }
 
-  collapseSample(sampleCollapseAll) {
-    this.setState({ sampleCollapseAll: !sampleCollapseAll })
+  changeCollapse = (collapseAll) => {
+    this.setState({ collapseAll: !collapseAll })
   }
 
-  changeSort() {
-    let { moleculeSort } = this.state
-    moleculeSort = !moleculeSort
+  changeSampleSort = () => {
+    let { moleculeSort } = this.state;
+    moleculeSort = !moleculeSort;
+
     this.setState({
       moleculeSort
     }, () => ElementActions.changeSorting(moleculeSort))
+  }
+
+  changeElementsGroup = (elementsGroup) => {
+    const { type } = this.props;
+    let { elementsSort } = this.state;
+
+    if (elementsGroup === 'none') {
+      elementsSort = false;
+    }
+
+    this.setState({
+      elementsGroup,
+      elementsSort
+    }, () => {
+      ElementActions.changeElementsFilter({ name: type, sort: elementsSort, group: elementsGroup });
+      UserActions.updateUserProfile({ data: { filters: { [type]: { sort: elementsSort, group: elementsGroup } } } });
+    });
+  }
+
+  changeElementsSort = () => {
+    const { type } = this.props;
+    let { elementsSort, elementsGroup } = this.state;
+    elementsSort = !elementsSort;
+
+    this.setState({
+      elementsSort
+    }, () => {
+      ElementActions.changeElementsFilter({ name: type, sort: elementsSort, group: elementsGroup });
+      UserActions.updateUserProfile({ data: { filters: { [type]: { sort: elementsSort, group: elementsGroup } } } });
+    });
   }
 
   handlePaginationSelect(eventKey) {
@@ -146,7 +193,6 @@ export default class ElementsTable extends React.Component {
   }
 
   pagination() {
-
     if (pages <= 1) {
       return;
     }
@@ -190,7 +236,7 @@ export default class ElementsTable extends React.Component {
   handleNumberOfResultsChange(event) {
     const { value } = event.target;
     const { type } = this.props;
-    console.log(type);
+
     if (parseInt(value, 10) > 0) {
       UIActions.changeNumberOfResultsShown(value);
       ElementActions.refreshElements(type);
@@ -231,117 +277,236 @@ export default class ElementsTable extends React.Component {
     if (this.state.toDate !== toDate) UIActions.setToDate(toDate);
   }
 
-  renderHeader() {
+  collapseButton = () => {
+    const { collapseAll } = this.state;
+    const collapseIcon = collapseAll ? 'chevron-right' : 'chevron-down';
+
+    return (
+      <Glyphicon
+        glyph={collapseIcon}
+        title="Collapse/Uncollapse"
+        onClick={() => this.changeCollapse(collapseAll)}
+        style={{
+          fontSize: '20px',
+          cursor: 'pointer',
+          color: '#337ab7',
+          top: 0
+        }}
+      />
+    );
+  }
+
+  renderSamplesHeader = () => {
     const {
-      sampleCollapseAll,
-      moleculeSort, ui,
-      advancedSearch, productOnly
+      moleculeSort,
+      advancedSearch,
+      productOnly,
     } = this.state;
-    const { fromDate, toDate } = ui;
-    const { type, showReport } = this.props;
 
-    const collapseIcon = sampleCollapseAll ? 'chevron-right' : 'chevron-down';
+    const options = [
+      { value: false, label: 'Grouped by Sample' },
+      { value: true, label: 'Grouped by Molecule' }
+    ];
+    const color = productOnly ? '#5cb85c' : 'currentColor';
 
-    let switchBtnTitle = 'Change sorting to sort by ';
-    let checkedLbl = 'Molecule';
-    let uncheckedLbl = 'Sample';
-    if (advancedSearch) {
-      switchBtnTitle += (moleculeSort ? 'order of input' : 'sample last updated');
-      checkedLbl = 'Updated';
-      uncheckedLbl = 'Order';
-    } else {
-      switchBtnTitle += (moleculeSort ? 'Sample' : 'Molecule');
-    }
-
-    let sampleHeader = (<span />);
-    if (type === 'sample') {
-      const color = productOnly ? '#5cb85c' : 'currentColor';
-      sampleHeader = (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
+    return (
+      <>
+        <Select
+          simpleValue
+          options={options}
+          clearable={false}
+          searchable
+          value={moleculeSort}
+          onChange={this.changeSampleSort}
+          className='header-group-select'
+        />
+        <button
+          style={{ border: 'none' }}
+          onClick={this.toggleProductOnly}
         >
-          <Switch
-            checked={moleculeSort}
-            style={{ marginTop: '3px', width: '85px' }}
-            onChange={this.changeSort}
-            title={switchBtnTitle}
-            checkedChildren={checkedLbl}
-            unCheckedChildren={uncheckedLbl}
+          <i
+            style={{ cursor: 'pointer', color }}
+            className="fa fa-lg fa-product-hunt"
           />
-          &nbsp;&nbsp;
-          <button
-            style={{ border: 'none' }}
-            onClick={this.toggleProductOnly}
-          >
-            <i
-              style={{ cursor: 'pointer', color }}
-              className="fa fa-lg fa-product-hunt"
-            />
-          </button>
-          &nbsp;&nbsp;
-          <Glyphicon
-            glyph={collapseIcon}
-            title="Collapse/Uncollapse"
-            onClick={() => this.collapseSample(sampleCollapseAll)}
-            style={{
-              fontSize: '20px',
-              cursor: 'pointer',
-              color: '#337ab7',
-              top: 0
-            }}
-          />
-        </div>
-      );
+        </button>
+        {this.collapseButton()}
+      </>
+    );
+  }
+
+  renderReactionsHeader = () => {
+    const { elementsGroup, elementsSort } = this.state;
+    const optionsHash = {
+      'none': { sortColumn: 'update date', label: 'List' },
+      'rinchi_short_key': { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
+      'rxno': { sortColumn: 'type', label: 'Grouped by type' },
     }
-    const dateTitle = this.state.filterCreatedAt === true ? 'filter by creation date' : 'filter by update date';
-    const btnIcon = this.state.filterCreatedAt === true ? 'fa-calendar-o' : 'fa-calendar';
-
-    const inchiTooltip = <Tooltip id="date_tooltip">{dateTitle}</Tooltip>;
-    const dateIcon = <i className={`fa ${btnIcon}`} />;
-
-    const headerRight = (
-      <div className="header-right" style={{ paddingRight: '25px' }}>
-        <OverlayTrigger placement="top" overlay={inchiTooltip}>
-          <button style={{ border: 'none' }} onClick={this.changeDateFilter} >
-            {dateIcon}
-          </button>
-        </OverlayTrigger>
-        <div className="sample-list-from-date">
-          <DatePicker
-            selected={fromDate}
-            placeholderText="From"
-            onChange={this.setFromDate}
-            popperPlacement="bottom-start"
-            isClearable
-            dateFormat="DD-MM-YY"
-          />
-        </div>
-        <div className="sample-list-to-date">
-          <DatePicker
-            selected={toDate}
-            placeholderText="To"
-            popperPlacement="bottom"
-            onChange={this.setToDate}
-            isClearable
-            dateFormat="DD-MM-YY"
-          />
-        </div>
-        &nbsp;&nbsp;
-        {sampleHeader}
-      </div>
+    const options = Object.entries(optionsHash).map((option) => {
+      return { value: option[0], label: option[1].label }
+    });
+    const sortColumn = optionsHash[elementsGroup].sortColumn;
+    const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
+    const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
+    const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+    const sortContent = (
+      <OverlayTrigger placement="top" overlay={sortTooltip}>
+        <button style={{ border: 'none' }} onClick={this.changeElementsSort} >
+          {sortIcon}
+        </button>
+      </OverlayTrigger>
     );
 
+    return (
+      <>
+        <Select
+          simpleValue
+          options={options}
+          clearable={false}
+          searchable={false}
+          value={elementsGroup}
+          onChange={this.changeElementsGroup}
+          className='header-group-select'
+        />
+        {elementsGroup !== 'none' ? (sortContent) : null}
+        {elementsGroup !== 'none' ? (this.collapseButton()) : null}
+      </>
+    );
+  }
+
+  renderGenericElementsHeader = () => {
+    const { elementsGroup, elementsSort } = this.state;
+    const { genericEl } = this.props;
+
+    let optionsHash = {
+      'none': { sortColumn: 'update date', label: 'List' },
+    }
+    const layers = genericEl.properties_release.layers;
+    const allowed_types = [
+      "select",
+      "text",
+      "integer",
+      "system-defined",
+      "textarea"
+    ];
+
+    Object.entries(layers).forEach(layerEntry => {
+      layerEntry[1].fields.filter(field => (allowed_types.includes(field.type))).forEach(field => {
+        if (Object.keys(optionsHash).length < 11) {
+          optionsHash[`${layerEntry[0]}.${field.field}`] = {
+            sortColumn: field.label,
+            label: field.label
+          }
+        }
+      });
+    });
+    const options = Object.entries(optionsHash).map((option, index) => {
+      const label = index === 0 ? option[1].label : `Grouped by ${option[1].label}`;
+
+      return {
+        value: option[0], label: label }
+    });
+
+    let sortColumn;
+    if (optionsHash[elementsGroup]) {
+      sortColumn = optionsHash[elementsGroup].sortColumn;
+    } else {
+      sortColumn = optionsHash.none.sortColumn;
+      this.state.elementsGroup = 'none';
+    }
+    const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
+    const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
+    const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+    const sortContent = (
+      <OverlayTrigger placement="top" overlay={sortTooltip}>
+        <button style={{ border: 'none' }} onClick={this.changeElementsSort} >
+          {sortIcon}
+        </button>
+      </OverlayTrigger>
+    );
+
+    return (
+      <>
+        <Select
+          simpleValue
+          options={options}
+          clearable={false}
+          searchable
+          value={elementsGroup}
+          onChange={this.changeElementsGroup}
+          className='header-group-select'
+        />
+        {elementsGroup !== 'none' ? (sortContent) : null}
+        {elementsGroup !== 'none' ? (this.collapseButton()) : null}
+      </>
+    );
+  }
+
+  renderHeader = () => {
+    const { filterCreatedAt, ui } = this.state;
+    const { type, showReport, genericEl } = this.props;
+    const { fromDate, toDate } = ui;
+
+    let typeSpecificHeader = <span />;
+    if (type === 'sample') {
+      typeSpecificHeader = this.renderSamplesHeader();
+    } else if (type === 'reaction') {
+      typeSpecificHeader = this.renderReactionsHeader();
+    } else if (genericEl) {
+      typeSpecificHeader = this.renderGenericElementsHeader();
+    }
+
+    const filterTitle = filterCreatedAt === true ? 'filter by creation date' : 'filter by update date';
+    const filterIconClass = filterCreatedAt === true ? 'fa-calendar-o' : 'fa-calendar';
+
+    const filterTooltip = <Tooltip id="date_tooltip">{filterTitle}</Tooltip>;
+    const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
       <div className="table-header" >
         <div className="select-all">
-          <ElementAllCheckbox type={type} ui={ui} showReport={showReport} />
+          <ElementAllCheckbox
+            type={type}
+            ui={ui}
+            showReport={showReport}
+          />
         </div>
-        {headerRight}
+        <div
+          className="header-right"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+        >
+          <OverlayTrigger placement="top" overlay={filterTooltip}>
+            <button style={{ border: 'none' }} onClick={this.changeDateFilter} >
+              {filterIcon}
+            </button>
+          </OverlayTrigger>
+          <div className="sample-list-from-date">
+            <DatePicker
+              selected={fromDate}
+              placeholderText="From"
+              onChange={this.setFromDate}
+              popperPlacement="bottom-start"
+              isClearable
+              dateFormat="DD-MM-YY"
+            />
+          </div>
+          <div className="sample-list-to-date">
+            <DatePicker
+              selected={toDate}
+              placeholderText="To"
+              popperPlacement="bottom"
+              onChange={this.setToDate}
+              isClearable
+              dateFormat="DD-MM-YY"
+            />
+          </div>
+          {typeSpecificHeader}
+        </div>
       </div>
     );
   }
@@ -351,35 +516,56 @@ export default class ElementsTable extends React.Component {
       elements,
       ui,
       currentElement,
-      sampleCollapseAll,
-      moleculeSort
-    } = this.state
+      collapseAll,
+      moleculeSort,
+      elementsGroup,
+    } = this.state;
 
-    const { overview, type } = this.props
-    let elementsTableEntries = null
+    const { overview, type, genericEl } = this.props;
+    let elementsTableEntries;
 
     if (type === 'sample') {
       elementsTableEntries = (
-        <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
-          elements={elements} currentElement={currentElement}
-          showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
-          onChangeCollapse={(checked) => this.collapseSample(!checked)}
+        <ElementsTableSampleEntries
+          collapseAll={collapseAll}
+          elements={elements}
+          currentElement={currentElement}
+          showDragColumn={!overview}
+          ui={ui}
+          moleculeSort={moleculeSort}
+          onChangeCollapse={(checked) => this.changeCollapse(!checked)}
         />
-      )
+      );
+    } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
+      elementsTableEntries = (
+        <ElementsTableGroupedEntries
+          collapseAll={collapseAll}
+          elements={elements}
+          currentElement={currentElement}
+          showDragColumn={!overview}
+          ui={ui}
+          elementsGroup={elementsGroup}
+          onChangeCollapse={(checked) => this.changeCollapse(!checked)}
+          genericEl={genericEl}
+          type={type}
+        />
+      );
     } else {
       elementsTableEntries = (
         <ElementsTableEntries
-          elements={elements} currentElement={currentElement}
-          showDragColumn={!overview} ui={ui}
+          elements={elements}
+          currentElement={currentElement}
+          showDragColumn={!overview}
+          ui={ui}
         />
-      )
+      );
     }
 
     return (
       <div className="list-elements">
         {elementsTableEntries}
       </div>
-    )
+    );
   }
 
   render() {

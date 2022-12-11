@@ -153,6 +153,7 @@ module Chemotion
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :sort_column, type: String, desc: 'sort by updated_at or selected layers property'
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
@@ -183,11 +184,35 @@ module Chemotion
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        scope = scope.order('created_at DESC')
-        scope = scope.elements_created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.elements_created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.elements_updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.elements_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        if params[:sort_column].include?('.')
+          layer, field = params[:sort_column].split('.')
+
+          element_klass = ElementKlass.find_by(name: params[:el_type])
+          allowed_fields = element_klass.properties_release.dig('layers', layer, 'fields')&.pluck('field') || []
+
+          if field.in?(allowed_fields)
+            query = ActiveRecord::Base.sanitize_sql(
+              [
+                "LEFT JOIN LATERAL(
+                  SELECT field->'value' AS value
+                  FROM jsonb_array_elements(properties->'layers'->:layer->'fields') a(field)
+                  WHERE field->>'field' = :field
+                ) a ON true",
+                { layer: layer, field: field },
+              ],
+            )
+            scope = scope.joins(query).order('value ASC NULLS FIRST')
+          else
+            scope = scope.order(updated_at: :desc)
+          end
+        else
+          scope = scope.order(updated_at: :desc)
+        end
+
+        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
         reset_pagination_page(scope)
 

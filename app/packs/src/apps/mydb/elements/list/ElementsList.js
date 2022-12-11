@@ -198,9 +198,10 @@ export default class ElementsList extends React.Component {
 
       let iconClass = `icon-${value}`;
       let ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{value && (value.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()))}</Tooltip>);
+      let genericEl = null;
 
       if (!constEls.includes(value)) {
-        const genericEl = (this.state.genericEls &&
+        genericEl = (this.state.genericEls &&
           this.state.genericEls.find(el => el.name === value)) || {};
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
         ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{genericEl.label}<br />{genericEl.desc}</Tooltip>);
@@ -219,12 +220,14 @@ export default class ElementsList extends React.Component {
           </span>
         </NavItem>
       );
+
       const tabContent = (
         <Tab.Pane eventKey={i} key={`${value}_tabPanel`}>
           <ElementsTable
             overview={overview}
             showReport={showReport}
             type={value}
+            genericEl={genericEl}
           />
         </Tab.Pane>
       );

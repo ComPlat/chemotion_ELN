@@ -19,6 +19,85 @@ import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CommentIcon from 'src/components/comments/CommentIcon';
 
+export function reactionRole(element) {
+  let tooltip = null;
+  if (element.type == 'reaction') {
+    switch (element.role) {
+      case "gp":
+        tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
+        return (
+          <OverlayTrigger placement="top" overlay={tooltip}>
+            <i className="fa fa-home c-bs-primary" />
+          </OverlayTrigger>
+        )
+      case "parts":
+        tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
+        return (
+          <OverlayTrigger placement="top" overlay={tooltip}>
+            <i className="fa fa-bookmark c-bs-success" />
+          </OverlayTrigger>
+        )
+      case "single":
+        tooltip = <Tooltip id="roleTp">Single</Tooltip>;
+        return (
+          <OverlayTrigger placement="top" overlay={tooltip}>
+            <i className="fa fa-asterisk c-bs-danger" />
+          </OverlayTrigger>
+        )
+    }
+  }
+}
+
+export function reactionStatus(element) {
+  if (element.type === 'reaction' && element.status) {
+    const tooltip = (
+      <Tooltip id={`reaction_${element.status}`}>
+        {element.status} Reaction
+      </Tooltip>
+    );
+
+    let icon = null;
+    switch (element.status) {
+      case 'Planned':
+        icon = <i className="fa fa-clock-o c-bs-warning" />;
+        break;
+      case 'Running':
+        icon = (
+          <span
+            style={{ width: '12px', height: '14px', lineHeight: '14px' }}
+            className="fa fa-stack"
+          >
+            <i className="fa fa-stack-1x fa-hourglass-1 running-1 c-bs-warning" />
+            <i className="fa fa-stack-1x fa-hourglass-2 running-2 c-bs-warning" />
+            <i className="fa fa-stack-1x fa-hourglass-3 running-3 c-bs-warning" />
+          </span>
+        );
+        break;
+      case 'Done':
+        icon = <i className="fa fa-hourglass-3 c-bs-primary" />;
+        break;
+      case 'Analyses Pending':
+        icon = <i className="fa fa-ellipsis-h c-bs-primary" />;
+        break;
+      case 'Successful':
+        icon = <i className="fa fa-check-circle-o c-bs-success" />;
+        break;
+      case 'Not Successful':
+        icon = <i className="fa fa-times-circle-o c-bs-danger" />;
+        break;
+      default:
+        break;
+    }
+
+    return (
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        {icon}
+      </OverlayTrigger>
+    );
+  }
+}
+
+
 export default class ElementsTableEntries extends Component {
   constructor(props) {
     super(props);
@@ -365,9 +444,9 @@ export default class ElementsTableEntries extends Component {
                         }}
                       />
                     }
-                    {this.reactionStatus(element)}
+                    {reactionStatus(element)}
                     {' '}
-                    {this.reactionRole(element)}
+                    {reactionRole(element)}
                     <br />
                     {sampleMoleculeName}
                     <CommentIcon commentCount={element.comment_count} />

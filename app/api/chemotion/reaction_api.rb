@@ -17,6 +17,7 @@ module Chemotion
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :sort_column, type: String, desc: 'sort by updated_at, rinchi_short_key, or rxno'
       end
       paginate per_page: 7, offset: 0
 
@@ -42,13 +43,15 @@ module Chemotion
                   end
                 else
                   Reaction.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('created_at DESC')
+                end
 
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
+        sort_column = %w[updated_at rinchi_short_key rxno].include?(params[:sort_column]) ? params[:sort_column] : 'updated_at'
+        sort_direction = sort_column == 'updated_at' ? 'DESC' : 'ASC'
 
-        scope = scope.includes_for_list_display
+        scope = scope.includes_for_list_display.order("#{sort_column} #{sort_direction}")
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at
         scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at

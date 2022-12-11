@@ -78,9 +78,6 @@ th.drag {
 }
 
 .sample-list-from-date, .sample-list-to-date {
-  float: right;
-  margin-right: 2px;
-
   input {
     font-size: 13px;
     border-radius: 4px;
@@ -142,14 +139,6 @@ th.drag {
   height: 40px;
   background-color: #ddd;
   padding: 5px;
-}
-
-.header-right {
-  display: flex;
-  margin-right: 12px;
-}
-
-.select-all {
 }
 
 #tabList .active a {
