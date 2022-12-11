@@ -205,10 +205,10 @@ module Chemotion
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        sample_scope = sample_scope.samples_created_time_from(Time.at(from)) if from && by_created_at
-        sample_scope = sample_scope.samples_created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        sample_scope = sample_scope.samples_updated_time_from(Time.at(from)) if from && !by_created_at
-        sample_scope = sample_scope.samples_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        sample_scope = sample_scope.created_time_from(Time.at(from)) if from && by_created_at
+        sample_scope = sample_scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        sample_scope = sample_scope.updated_time_from(Time.at(from)) if from && !by_created_at
+        sample_scope = sample_scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
         reset_pagination_page(sample_scope)
         samplelist = []
