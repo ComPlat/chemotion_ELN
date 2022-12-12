@@ -1,7 +1,9 @@
-import React from 'react'
-import { useState, useCallback, useEffect } from 'react'
-import ReactFlow, { ReactFlowProvider, Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow, Panel, useUpdateNodeInternals } from 'reactflow'
-import { Modal, Button, ButtonGroup } from 'react-bootstrap'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
+import ReactFlow, {
+  ReactFlowProvider, Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow,
+  Panel as ReactFlowPanel, useUpdateNodeInternals
+} from 'reactflow'
+import { Modal, Button, ButtonGroup, InputGroup, Panel } from 'react-bootstrap'
 
 const buildUnassignedNodes = (nodes, researchplans) => {
   return researchplans.reduce((newNodes, plan) => {
@@ -20,6 +22,7 @@ const buildUnassignedNodes = (nodes, researchplans) => {
 
 const ResearchplanFlowEditor = (props) => {
   const { visible, initialEditorData, researchplans, toggleModal, onSave } = props
+  const labelInput = useRef(null);
   const reactFlowInstance = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -30,6 +33,7 @@ const ResearchplanFlowEditor = (props) => {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
   const [unassignedNodes, setUnassignedNodes] = useState(initialUnassignedNodes);
+  const [currentEdge, setCurrentEdge] = useState(null);
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -43,15 +47,24 @@ const ResearchplanFlowEditor = (props) => {
 
   const onConnect = useCallback(
     (params) => {
-      const newEdge = {
-        ...params,
-        label: 'followed by',
-        animated: true,
-      }
+      const newEdge = { ...params, label: 'followed by', animated: true }
       setEdges((eds) => addEdge(newEdge, eds))
     },
     []
   )
+
+  const changeLabelOfCurrentEdge = (newLabel) => {
+    const newEdge = { ...currentEdge, label: newLabel, animated: true }
+    const changes = [
+      { id: currentEdge.id, type: 'remove' },
+      { item: newEdge, type: 'add' },
+    ]
+    setEdges((eds) => applyEdgeChanges(changes, eds));
+    setCurrentEdge(newEdge);
+  };
+
+  const onEdgeClick = useCallback((_event, edge) => setCurrentEdge(edge));
+  const onPaneClick = useCallback((_event) => setCurrentEdge(null));
 
   useEffect(() => {
     setUnassignedNodes(buildUnassignedNodes(nodes, researchplans))
@@ -85,6 +98,60 @@ const ResearchplanFlowEditor = (props) => {
     updateNodeInternals(newNode.id)
   }
 
+  const edgeLabelEditor = () => {
+    if (!currentEdge) { return (<div></div>); }
+
+    return (
+      <Panel bsStyle="primary">
+        <Panel.Heading>
+          <Panel.Title>Connection name</Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          <InputGroup>
+            <InputGroup.Button>
+              <Button
+                className="btn btn-danger"
+                type="button"
+                onClick={() => labelInput.current.value = currentEdge.label}
+              >
+                Reset
+              </Button>
+            </InputGroup.Button>
+            <input name="edgeLabel" className="form-control" ref={labelInput} defaultValue={currentEdge.label} />
+            <InputGroup.Button>
+              <Button
+                className="btn btn-success"
+                type="button"
+                onClick={() => changeLabelOfCurrentEdge(labelInput.current.value)}
+              >
+                Save
+              </Button>
+            </InputGroup.Button>
+          </InputGroup>
+        </Panel.Body>
+      </Panel>
+    );
+  };
+  const unassignedNodeButtons = () => {
+    if (unassignedNodes.length == 0) { return (<div></div>) };
+
+    return (
+      <Panel bsStyle="primary">
+        <Panel.Heading>
+          <Panel.Title>Unused Research Plans</Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          <ButtonGroup vertical>
+            {
+              unassignedNodes.map(
+                (node, index) => <Button key={index} onClick={() => handleClickToAddNode(index)}>{node.data.label}</Button>)
+            }
+          </ButtonGroup>
+        </Panel.Body>
+      </Panel>
+    );
+  }
+
   return (
     <div>
       <Modal
@@ -104,16 +171,15 @@ const ResearchplanFlowEditor = (props) => {
               edges={edges}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onEdgeClick={onEdgeClick}
+              onPaneClick={onPaneClick}
             >
               <Background />
               <Controls showInteractive={false} />
-              <Panel position="top-right">
-                <ButtonGroup vertical>
-                  {
-                    unassignedNodes.map((node, index) => <Button key={index} onClick={() => handleClickToAddNode(index)}>{node.data.label}</Button>)
-                  }
-                </ButtonGroup>
-              </Panel>
+              <ReactFlowPanel position="top-right">
+                {edgeLabelEditor()}
+                {unassignedNodeButtons()}
+              </ReactFlowPanel>
             </ReactFlow>
           </div>
         </Modal.Body>
