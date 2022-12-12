@@ -68,7 +68,7 @@ const ResearchplanFlowEditor = (props) => {
 
   useEffect(() => {
     setUnassignedNodes(buildUnassignedNodes(nodes, researchplans))
-  }, [nodes])
+  }, [nodes, initialNodes])
 
   const onHide = () => {
     setNodes(initialNodes)
@@ -176,7 +176,7 @@ const ResearchplanFlowEditor = (props) => {
             >
               <Background />
               <Controls showInteractive={false} />
-              <ReactFlowPanel position="top-right">
+              <ReactFlowPanel position="top-right" style={{ width: '20%' }}>
                 {edgeLabelEditor()}
                 {unassignedNodeButtons()}
               </ReactFlowPanel>
