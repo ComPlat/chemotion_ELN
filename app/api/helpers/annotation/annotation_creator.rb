@@ -35,7 +35,7 @@ class AnnotationCreator
       "<image height=\"#{height}\" id=\"original_image\" " \
       "width=\"#{width}\" " \
       "xlink:href=\"/api/v1/attachments/image/#{id}\"/>" \
-      '</g><g class="layer"><title>Annotation</title>' \
-      'id="annotation" </g> </svg>'
+      '</g><g id="annotation" class="layer"><title>Annotation</title>' \
+      '</g> </svg>'
   end
 end
