@@ -1,51 +1,38 @@
 # frozen_string_literal: true
 
 require 'helpers/annotation/annotation_loader'
-require_relative 'annotation_helper.rb'
+require_relative 'annotation_helper'
 
 describe AnnotationLoader do
-  context 'with AnnotationLoader' do
-    describe '-> load annotation' do
-      it '-> of non existing attachment' do
-        expect do
-          loader = described_class.new
-          loader.get_annotation_of_attachment(1)
-        end.to raise_error "Couldn't find Attachment with 'id'=1"
-      end
+  let(:loader) { described_class.new }
+  let(:attachment_without_annotation) { create(:attachment) }
+  let(:attachment_with_annotation) { create(:attachment, :with_png_image) }
 
-      it '-> of attachment without annotation' do
-        expect do
-          helper = AnnotationHelper.new
-          attachment = helper.createAttachmentWithoutAnnotation
-          attachment.save
-          loader = described_class.new
-          loader.get_annotation_of_attachment(attachment.id)
-        end.to raise_error 'could not find annotation of attachment'
-      end
+  describe '.get_annotation_of_attachment()' do
+    let(:annotation) { loader.get_annotation_of_attachment(attachment_id) }
 
-      it '-> of attachment with annotation but without file' do
-        expect do
-          helper = AnnotationHelper.new
-          attachment = helper.createAttachmentWithAnnotation('/nothingHere/xxx.svg')
-          attachment.save
-          loader = described_class.new
-          loader.get_annotation_of_attachment(attachment.id)
-        end.to raise_error 'could not find annotation of attachment (file not found)'
-      end
+    context 'when attachment does not exist' do
+      let(:attachment_id) { -1 }
 
-      it '-> of attachment with annotation and file' do
-        helper = AnnotationHelper.new
-        example_svg_annotation = '<svg>example</svg>'
-        tempfile = Tempfile.new('annotationFile.svg')
-        tempfile.write(example_svg_annotation)
-        tempfile.rewind
-        tempfile.close
-        attachment = helper.createAttachmentWithAnnotation(tempfile.path)
-        attachment.save
-        loader = described_class.new
-        svg_data = loader.get_annotation_of_attachment(attachment.id)
-        assert_equal(example_svg_annotation, svg_data)
-        tempfile.unlink
+      it 'raised an error' do
+        expect { annotation }.to raise_error "Couldn't find Attachment with 'id'=#{attachment_id}"
+      end
+    end
+
+    context 'when attachment has no annotation' do
+      let(:attachment_id) { attachment_without_annotation.id }
+
+      it 'raised an error' do
+        expect { annotation }.to raise_error 'could not find annotation of attachment'
+      end
+    end
+
+    context 'when attachment has annotation' do
+      let(:attachment_id) { attachment_with_annotation.id }
+      let(:annotation) { loader.get_annotation_of_attachment(attachment_id) }
+
+      it 'successfully loaded annotation' do
+        expect(annotation).not_to be_nil
       end
     end
   end
