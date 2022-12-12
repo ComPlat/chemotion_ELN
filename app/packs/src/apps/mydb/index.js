@@ -3,15 +3,12 @@ import ReactDOM from 'react-dom';
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
 import Aviator from 'aviator';
-import HTML5Backend from 'react-dnd-html5-backend';
-import { DragDropContext } from 'react-dnd';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import App from 'src/apps/mydb/App'
 import initRoutes from 'src/apps/mydb/routes';
 import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
-
-const AppWithDnD = DragDropContext(HTML5Backend)(App);
-
 Sentry.init({
   sendClientReports: false,
   dsn: process.env.SENTRY_FRONTENT_DSN,
@@ -28,7 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (domElement) {
     ReactDOM.render(
       <StoreContext.Provider value={RootStore.create({})}>
-        <AppWithDnD />
+        <DndProvider backend={HTML5Backend}>
+          <App />
+        </DndProvider>
       </StoreContext.Provider>,
       domElement
     );

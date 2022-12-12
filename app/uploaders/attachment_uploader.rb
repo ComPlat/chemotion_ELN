@@ -1,24 +1,14 @@
-# frozen_string_literal: true
-
 class AttachmentUploader < Shrine
-  require 'helpers/annotation/annotation_creator'
   require 'helpers/thumbnail/thumbnail_creator'
-  require 'helpers/annotation/mini_magick_image_analyser'
-  require 'helpers/derivative_builder_factory'
 
-  MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024 # 10 MB
-  MAX_FILES_IN_FOLDER = 10_000
+  MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024
 
   plugin :derivatives
-  plugin :keep_files, replaced: true
+  plugin :remove_attachment
   plugin :validation_helpers
   plugin :pretty_location
-  plugin :remove_attachment
   Attacher.validate do
-    validate_max_size MAX_SIZE,
-                      message: "File #{record.filename} cannot be uploaded." \
-                               'File size must be less than ' \
-                               "#{Rails.configuration.shrine_storage.maximum_size} MB"
+    validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
 
   def generate_location(io, context = {})

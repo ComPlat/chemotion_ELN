@@ -2,8 +2,9 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Button, Overlay, Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
 import _ from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -62,12 +63,14 @@ export default class ElementDetailSortTab extends Component {
     this.state = {
       visible: Immutable.List(),
       hidden: Immutable.List(),
+      showTabLayoutContainer: false
     };
 
     this.type = props.type;
 
     this.onChangeUser = this.onChangeUser.bind(this);
-    this.handleOnLayoutChanged = this.handleOnLayoutChanged.bind(this);
+    this.onCloseTabLayoutContainer = this.onCloseTabLayoutContainer.bind(this);
+    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
 
     UserActions.fetchCurrentUser();
   }
@@ -90,12 +93,13 @@ export default class ElementDetailSortTab extends Component {
     );
   }
 
-  handleOnLayoutChanged() {
+  onCloseTabLayoutContainer() {
+    this.toggleTabLayoutContainer();
     this.updateLayout();
   }
 
   updateLayout() {
-    const { visible, hidden } = this.layout.state;
+    const { visible, hidden } = this.tabLayoutContainerElement.state;
     const layout = {};
 
     visible.forEach((value, index) => {
@@ -111,10 +115,20 @@ export default class ElementDetailSortTab extends Component {
     UserActions.updateUserProfile(userProfile);
   }
 
+  toggleTabLayoutContainer() {
+    this.setState({ showTabLayoutContainer: !this.state.showTabLayoutContainer });
+  }
+
   render() {
-    const {
-      visible, hidden
-    } = this.state;
+    const tabLayoutContainerElement = (
+      <TabLayoutContainer
+        visible={this.state.visible}
+        hidden={this.state.hidden}
+        tabTitles={this.props.tabTitles}
+        isElementDetails
+        ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
+      />
+    );
     const popoverSettings = (
       <Popover
         className="collection-overlay"
@@ -124,29 +138,33 @@ export default class ElementDetailSortTab extends Component {
         <div>
           <h3 className="popover-title">Tabs Layout</h3>
           <div className="popover-content">
-            <TabLayoutContainer
-              visible={visible}
-              hidden={hidden}
-              tabTitles={this.props.tabTitles}
-              isElementDetails
-              ref={(n) => { this.layout = n; }}
-            />
+            {tabLayoutContainerElement}
           </div>
         </div>
       </Popover>
     );
     return (
-      <OverlayTrigger
-        trigger="click"
-        placement="left"
-        overlay={popoverSettings}
-        rootClose
-        onExit={this.handleOnLayoutChanged}
-      >
-        <Button bsStyle="info" bsSize="xsmall" className="button-right">
+      <div>
+        <Button
+          bsStyle="info"
+          bsSize="xsmall"
+          className="button-right"
+          ref={button => { this.tabLayoutButton = button; }}
+          onClick={this.toggleTabLayoutContainer}
+        >
           <i className="fa fa-sliders" aria-hidden="true" />
         </Button>
-      </OverlayTrigger>
+        <Overlay
+          container={this}
+          onHide={this.onCloseTabLayoutContainer}
+          placement="bottom"
+          rootClose
+          show={this.state.showTabLayoutContainer}
+          target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
+        >
+          {popoverSettings}
+        </Overlay>
+      </div>
     );
   }
 }
