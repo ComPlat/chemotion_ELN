@@ -68,13 +68,17 @@ const ResearchplanFlowEditor = (props) => {
 
   useEffect(() => {
     setUnassignedNodes(buildUnassignedNodes(nodes, researchplans))
-  }, [nodes, initialNodes])
+  }, [nodes, researchplans])
 
   const onHide = () => {
     setNodes(initialNodes)
     setEdges(initialEdges)
     setUnassignedNodes(initialUnassignedNodes)
     toggleModal(false)
+  }
+
+  const onEnter = () => {
+    setNodes(initialNodes)
   }
 
   const onClickSave = () => {
@@ -159,6 +163,7 @@ const ResearchplanFlowEditor = (props) => {
         animation
         dialogClassName="researchplan-flow-editor-modal"
         onHide={onHide}
+        onEnter={onEnter}
       >
         <Modal.Header closeButton>
           <Modal.Title>ResearchPlan Flow Editor</Modal.Title>

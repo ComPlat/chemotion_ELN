@@ -55,8 +55,8 @@ const ResearchplanFlowDisplay = (props) => {
     <div style={{ marginBottom: "10px", width: "100%", height: "250px" }}>
       <ReactFlow
         fitView
-        defaultNodes={defaultNodes}
-        defaultEdges={defaultEdges}
+        nodes={defaultNodes}
+        edges={defaultEdges}
         onInit={(instance) => setPreviewFlowInstance(instance)}
         {...optionsForPreviewDisplay}
       >
