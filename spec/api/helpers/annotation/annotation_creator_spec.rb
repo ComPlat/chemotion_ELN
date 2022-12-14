@@ -3,28 +3,23 @@
 require 'helpers/annotation/annotation_creator'
 
 describe AnnotationCreator do
-  context 'with annotations' do
-    describe '-> create' do
-      it '-> successfully' do
-        dir = Dir.mktmpdir('tmp')
-        tempfile = Tempfile.new('example.png')
-        creator = described_class.new(ImageAnalyzerMock.new)
-        result = creator.create_derivative(dir, tempfile, 1, {}, nil)
-        assert(File.file?(result[:annotation].path))
-        file = File.open(result[:annotation].path)
-        svg = file.read
-        assert_equal(expected_string, svg)
+  describe '.create_derivative()' do
+    let(:annotation_location) { Rails.root.join('spec/fixtures/annotations/20221212_valide_annotation_empty.svg') }
+    let(:annotation_folder) { File.dirname(annotation_location) }
+    let(:expected_annotation) { File.read(annotation_location) }
+    let(:image_file) { Rails.root.join('spec/fixtures/upload.png').open }
+    let(:creator) { described_class.new }
+
+    context 'when all input is correct' do
+      let(:result) { creator.create_derivative(annotation_folder, image_file, 1, {}, nil) }
+
+      it 'annotation was added to result' do
+        expect(result[:annotation]).not_to be_nil
+      end
+
+      it 'annotation file was created' do
+        expect(File.read(result[:annotation])).to eq(expected_annotation)
       end
     end
   end
-end
-
-class ImageAnalyzerMock
-  def get_image_dimension(_pathToImage)
-    [100, 100]
-  end
-end
-
-def expected_string
-  '<svg   width="100"   height="100"   xmlns="http://www.w3.org/2000/svg"   xmlns:svg="http://www.w3.org/2000/svg"   xmlns:xlink="http://www.w3.org/1999/xlink">     <g class="layer">      <title>Image</title>      <image height="100"        id="original_image"       width="100"       xlink:href="/api/v1/attachments/image/1"/>    </g>    <g class="layer">      <title>Annotation</title>      id="annotation"     </g></svg>'
 end
