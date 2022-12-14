@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import { GenericElCriteriaModal, clsInputGroup } from 'chem-generic-ui';
 
 import AutoCompleteInput from 'src/components/navigation/search/AutoCompleteInput';
+import SearchModal from 'src/components/searchModal/SearchModal';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 import SuggestionsFetcher from 'src/fetchers/SuggestionsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -20,6 +21,7 @@ export default class Search extends React.Component {
     super(props);
     this.state = {
       elementType: 'all',
+      showGlobalSearch: false,
       showStructureEditor: false,
       queryMolfile: null,
       searchType: 'sub',
@@ -29,6 +31,7 @@ export default class Search extends React.Component {
     };
     this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
+    this.handleSearchModalCancel = this.handleSearchModalCancel.bind(this);
     this.hideGenericElCriteria = this.hideGenericElCriteria.bind(this);
     this.genericElSearch = this.genericElSearch.bind(this);
   }
@@ -117,6 +120,11 @@ export default class Search extends React.Component {
       : UIActions.selectCollection(currentCollection);
   }
 
+  showGlobalSearch() {
+    this.setState({ showGlobalSearch: true });
+    console.log('ah', this.state.showGlobalSearch);
+  }
+
   showStructureEditor() {
     this.setState({ showStructureEditor: true });
   }
@@ -127,6 +135,10 @@ export default class Search extends React.Component {
 
   hideStructureEditor() {
     this.setState({ showStructureEditor: false });
+  }
+
+  hideSearchModall() {
+    this.setState({ showGlobalSearch: false });
   }
 
   showGenericElCriteria() {
@@ -160,6 +172,10 @@ export default class Search extends React.Component {
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
+  }
+
+  handleSearchModalCancel() {
+    this.hideSearchModall();
   }
 
   handleTanimotoChange(e) {
@@ -216,6 +232,9 @@ export default class Search extends React.Component {
       <ButtonGroup>
         <Button bsStyle={customClass ? null : 'primary'} className={customClass} onClick={() => this.showStructureEditor()}>
           <Glyphicon glyph="pencil" id="AutoCompletedrawAddon" />
+        </Button>
+        <Button bsStyle={customClass ? null : 'info'} className={customClass} onClick={() => this.showGlobalSearch()}>
+          <i className="fa fa-search" />
         </Button>
         <Button bsStyle={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
           <i className="fa fa-times" />
@@ -307,6 +326,12 @@ export default class Search extends React.Component {
             molfile={this.state.queryMolfile}
             submitBtnText="Search"
             submitAddons={submitAddons}
+          />
+        </div>
+        <div className="search-modal-draw">
+          <SearchModal
+            showModal={this.state.showGlobalSearch}
+            onCancel={this.handleSearchModalCancel}
           />
         </div>
         <div className="search-autocomplete">
