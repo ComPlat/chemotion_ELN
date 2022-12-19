@@ -45,8 +45,8 @@ const ResearchplanFlowDisplay = (props) => {
     elementsSelectable: false,
     nodesDraggable: false,
     nodesConnectable: false,
-    panOnDrag: false,
-    zoomOnScroll: false,
+    panOnDrag: true,
+    zoomOnScroll: true,
     zoomOnDoubleClick: false,
     selectNodesOnDrag: false
   }
