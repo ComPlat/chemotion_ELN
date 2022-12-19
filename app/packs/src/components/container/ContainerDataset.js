@@ -156,7 +156,7 @@ export default class ContainerDataset extends Component {
     ));
     if (attachment.is_deleted) {
       return (
-        <Table className="borderless" style={{ marginBottom: 'unset' }}>
+        <Table className="borderless" style={{ marginBottom: 'unset', tableLayout: 'fixed' }}>
           <tbody>
             {preview}
             <tr>
@@ -172,12 +172,15 @@ export default class ContainerDataset extends Component {
       );
     }
     return (
-      <Table className="borderless" style={{ marginBottom: 'unset' }}>
+      <Table className="borderless" style={{ marginBottom: 'unset', tableLayout: 'fixed' }}>
         <tbody>
           {preview}
           <tr>
-            <td style={{ verticalAlign: 'middle' }}>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
+            <td style={{ width: '60%', wordWrap: 'break-word' }}>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
+            </td>
+            <td style={{ width: '20%', wordWrap: 'break-word' }}><span>{attachment.size}</span></td>
+            <td style={{ width: '20%', wordWrap: 'break-word' }}>
               {this.removeAttachmentButton(attachment)} &nbsp;
               {this.attachmentBackToInboxButton(attachment)} &nbsp;
               {this.renderImageAnnotationButton(attachment)} &nbsp;
