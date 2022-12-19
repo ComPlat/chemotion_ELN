@@ -121,7 +121,6 @@ export default class Search extends React.Component {
 
   showGlobalSearch() {
     this.setState({ showGlobalSearch: true });
-    console.log('ah', this.state.showGlobalSearch);
   }
 
   showStructureEditor() {
