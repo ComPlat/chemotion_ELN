@@ -1,0 +1,57 @@
+[dialogas=full-search].modal {
+  width: fit-content;
+  height: fit-content;
+  top: 20%;
+  left: calc(calc(100% - 90vw) / 2);
+}
+
+[dialogas=full-search] .modal-dialog {
+  width: 90vw !important;
+  position: relative !important;
+  top: 0;
+  left: 0;
+  transform: none !important;
+  margin: 5px 20px 22px 15px;
+}
+
+[dialogas=full-search] .modal-content {
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+[dialogas=full-search] .modal-header {
+  background: #ddd;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  padding: 10px 15px 10px 0;
+}
+
+[dialogas=full-search] .modal-header .close {
+  opacity: 0.4;
+  font-size: 25px;
+  line-height: 1.3;
+}
+
+[dialogas=full-search] .modal-header .form-group {
+  margin-bottom: 0;
+  font-size: 16px;
+}
+
+[dialogas=full-search] .modal-header .move {
+  margin-right: 15px;
+}
+
+[dialogas=full-search] .modal-header .modal-title {
+  padding: 5px 0;
+}
+
+[dialogas=full-search] .modal-header .window-minimize {
+  color: rgba(0, 0, 0, 0.4);
+  float: right;
+  margin-top: -62px;
+  margin-right: 15px;
+}
+
+@media screen and (min-width: 768px) {
+  [dialogas=full-search] .modal-header .window-minimize {
+    margin-top: -22px;
+  }
+}
