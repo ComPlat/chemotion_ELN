@@ -34,6 +34,7 @@ export default class ScreenDetails extends Component {
       screen,
       activeTab: UIStore.getState().screen.activeTab,
       visible: Immutable.List(),
+      expandedResearchPlanId: null,
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
@@ -326,6 +327,21 @@ export default class ScreenDetails extends Component {
     this.setState({ screen });
   }
 
+  switchToResearchPlanTab() {
+    if (this.state.activeTab == 'researchPlans') { return; }
+    // call the pre-existing method to act as if a user had clicked on the research plans tab
+    this.handleSelect('researchPlans');
+  }
+
+  expandResearchPlan(researchPlanId) {
+    this.setState({ expandedResearchPlanId: researchPlanId });
+  }
+
+  scrollToResearchPlan(researchPlanId) {
+
+  }
+
+
   render() {
     const { screen, visible } = this.state;
     const submitLabel = screen.isNew ? 'Create' : 'Save';
@@ -348,6 +364,7 @@ export default class ScreenDetails extends Component {
         <Tab eventKey="researchPlans" title="Research Plans" key={`research_plans_${screen.id}`}>
           <ScreenResearchPlans
             researchPlans={screen.research_plans}
+            expandedResearchPlanId={this.state.expandedResearchPlanId}
             dropResearchPlan={researchPlan => this.dropResearchPlan(researchPlan)}
             deleteResearchPlan={researchPlan => this.deleteResearchPlan(researchPlan)}
             updateResearchPlan={researchPlan => this.updateResearchPlan(researchPlan)}
@@ -372,6 +389,21 @@ export default class ScreenDetails extends Component {
     });
 
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
+
+    const flowConfiguration = {
+      preview: {
+        onNodeDoubleClick: (_mouseEvent, node) => {
+          const researchPlanId = parseInt(node.id)
+          this.switchToResearchPlanTab()
+          this.expandResearchPlan(researchPlanId)
+          this.scrollToResearchPlan(researchPlanId)
+        }
+      },
+      editor: {
+        onSave: this.updateComponentGraphData
+      }
+    };
+
     return (
       <Panel
         bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
@@ -382,7 +414,7 @@ export default class ScreenDetails extends Component {
           <ResearchplanFlowDisplay
             initialData={screen.componentGraphData}
             researchplans={screen.research_plans}
-            onSave={this.updateComponentGraphData}
+            flowConfiguration={flowConfiguration}
           />
           <ElementDetailSortTab
             type="screen"

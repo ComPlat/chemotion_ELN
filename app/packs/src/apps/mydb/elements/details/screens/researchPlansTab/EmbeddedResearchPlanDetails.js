@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
+import { Panel, Label, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
@@ -10,15 +10,36 @@ import ResearchPlan from 'src/models/ResearchPlan';
 import ResearchPlanDetailsBody from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 
+const InfoLabel = ({ iconClass, text, style, tooltip }) => {
+  style ||= 'info'
+  if (!(iconClass && text)) { return null; }
+  const icon = (<i className={`fa ${iconClass}`} />)
+  const label = (
+    <Label bsStyle={style} style={{ "margin-right": "1em" }} tooltip={tooltip}>
+      {icon}
+      {' ' + text}
+    </Label>
+  );
+  if (tooltip) {
+    return (
+      <OverlayTrigger placement="bottom" overlay={<Tooltip>{tooltip}</Tooltip>}>
+        {label}
+      </OverlayTrigger>
+    );
+  } else {
+    return label;
+  }
+}
+
 export default class EmbeddedResearchPlanDetails extends Component {
   constructor(props) {
     super(props);
-    const { researchPlan } = props;
+    const { researchPlan, expanded } = props;
 
     this.state = {
       researchPlan,
       update: false,
-      expanded: false,
+      expanded: expanded || false,
       confirmRemove: false,
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
@@ -29,12 +50,12 @@ export default class EmbeddedResearchPlanDetails extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    let { researchPlan } = nextProps;
+    let { researchPlan, expanded } = nextProps;
     if (!(researchPlan instanceof ResearchPlan)) {
       const rResearchPlan = new ResearchPlan(researchPlan);
       researchPlan = rResearchPlan;
     }
-    this.setState({ researchPlan });
+    this.setState({ researchPlan, expanded });
   }
 
   handleResearchPlanChange(el) {
@@ -82,7 +103,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  handleBodyDelete(id,attachments) {
+  handleBodyDelete(id, attachments) {
     const { researchPlan } = this.state;
     const index = researchPlan.body.findIndex(field => field.id === id);
     researchPlan.body.splice(index, 1);
@@ -206,6 +227,13 @@ export default class EmbeddedResearchPlanDetails extends Component {
     });
   }
 
+  numberOfAnalyses(researchPlan) {
+    const analyses_container = researchPlan.container.children.find(subcontainer => subcontainer.container_type == 'analyses')
+    if (!analyses_container) { return; }
+    if (analyses_container.children.length == 0) { return; }
+    return analyses_container.children.length;
+  }
+
   renderPanelHeading(researchPlan) {
     const { deleteResearchPlan, saveResearchPlan } = this.props;
     const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
@@ -239,7 +267,11 @@ export default class EmbeddedResearchPlanDetails extends Component {
             &nbsp; <span>{researchPlan.name}</span> &nbsp;
           </span>
         </OverlayTrigger>
+
+        <InfoLabel iconClass="fa-bar-chart" text={this.numberOfAnalyses(researchPlan)} tooltip="Analyses" />
+        <InfoLabel iconClass="fa-file-text-o" text={researchPlan.attachmentCount} tooltip="Attachments" />
         <ElementCollectionLabels element={researchPlan} placement="right" />
+
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}>
           <Button ref={(button) => { this.target = button; }} bsStyle="danger" bsSize="xsmall" className="button-right" onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}>
             <i className="fa fa-trash-o" aria-hidden="true" />
@@ -275,7 +307,6 @@ export default class EmbeddedResearchPlanDetails extends Component {
 
   render() {
     const { researchPlan, update } = this.state;
-
     let btnMode = <Button bsSize="xs" bsStyle="success" onClick={() => this.handleSwitchMode('edit')}>click to edit</Button>;
     if (researchPlan.mode !== 'view') {
       btnMode = <Button bsSize="xs" bsStyle="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;

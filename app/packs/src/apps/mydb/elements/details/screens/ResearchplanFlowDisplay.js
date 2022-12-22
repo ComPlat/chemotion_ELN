@@ -13,9 +13,7 @@ const ResearchplanFlowDisplay = (props) => {
 
   const buildNodes = (nodes) => {
     return nodes.map((node) => {
-      const researchplan = researchplans.find((plan) => {
-        return plan.id === parseInt(node.id)
-      })
+      const researchplan = researchplans.find(plan => plan.id === parseInt(node.id))
 
       return {
         ...node,
@@ -39,10 +37,12 @@ const ResearchplanFlowDisplay = (props) => {
     previewFlowInstance.setNodes(buildNodes(data.nodes));
     previewFlowInstance.setEdges(data.edges);
     previewFlowInstance.fitView();
-    props.onSave(data);
+
+    props.flowConfiguration.editor.onSave(data);
   }
+
   const optionsForPreviewDisplay = {
-    elementsSelectable: false,
+    elementsSelectable: true,
     nodesDraggable: false,
     nodesConnectable: false,
     panOnDrag: true,
@@ -58,6 +58,7 @@ const ResearchplanFlowDisplay = (props) => {
         nodes={defaultNodes}
         edges={defaultEdges}
         onInit={(instance) => setPreviewFlowInstance(instance)}
+        onNodeDoubleClick={props.flowConfiguration.preview.onNodeDoubleClick}
         {...optionsForPreviewDisplay}
       >
         <Background />
