@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import {Button, FormControl} from 'react-bootstrap'
-import Select from 'react-select';
 import AdvancedSearchRow from './AdvancedSearchRow';
 
 const AdvancedSearchForm = () => {
@@ -63,6 +61,7 @@ const AdvancedSearchForm = () => {
           <AdvancedSearchRow
             idx={id}
             selection={selection}
+            key={"selection_" + id}
             onChange={handleChangeSelection}
           />
         );
@@ -85,6 +84,7 @@ const AdvancedSearchForm = () => {
           <AdvancedSearchRow
             idx={0}
             selection={selectedOptions[0]}
+            key={"selection_0"}
             onChange={handleChangeSelection}
           />
           {renderDynamicRow()}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import {Button, FormControl} from 'react-bootstrap'
 import Select from 'react-select';
 
@@ -31,7 +31,7 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
 
   return (
     <>
-      <div key={"selection_" + idx} className="adv-search-row">
+      <div className="adv-search-row">
         {combinationSelect()}
         <span className="match-select">
           <Select
