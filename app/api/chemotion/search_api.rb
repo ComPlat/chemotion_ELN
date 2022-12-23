@@ -321,9 +321,9 @@ module Chemotion
         if search_method == 'advanced' && molecule_sort == false
           arg_value_str = adv_params.first['value'].split(/(\r)?\n/).map(&:strip)
                                     .select{ |s| !s.empty? }.join(',')
-          return scope.order(Arel.sql(
-            "position(','||(#{adv_params.first['field']['column']}::text)||',' in ','||(#{ActiveRecord::Base.connection.quote(arg_value_str)}::text)||',')"
-          ))
+          return scope.order(
+           Arel.sql("position(','||(#{adv_params.first['field']['column']}::text)||',' in ','||(#{ActiveRecord::Base.connection.quote(arg_value_str)}::text)||',')")
+          )
         elsif search_method == 'advanced' && molecule_sort == true
           return scope.order('samples.updated_at DESC')
         elsif search_method != 'advanced' && molecule_sort == true
