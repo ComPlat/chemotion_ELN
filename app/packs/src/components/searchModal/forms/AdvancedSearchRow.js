@@ -14,14 +14,14 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
   ];
 
   const combinationSelect = () => {
-    if (selection.combination != "") {
+    if (selection.link != "") {
       return (
         <span className="link-select">
           <Select
             options={andOrOptions}
-            value={selection.combination}
+            value={selection.link}
             clearable={false}
-            onChange={onChange(idx, 'combination')} />
+            onChange={onChange(idx, 'link')} />
         </span>
       );
     } else {
@@ -35,11 +35,12 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
         {combinationSelect()}
         <span className="match-select">
           <Select
+            simpleValue
             options={mapperOptions}
             placeholder="Select search mapper"
-            value={selection.mapper}
+            value={selection.match}
             clearable={false}
-            onChange={onChange(idx, 'mapper')} />
+            onChange={onChange(idx, 'match')} />
         </span>
         <span className="field-select">
           <Select
@@ -51,12 +52,12 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
         </span>
         <FormControl
           type="text"
-          value={selection.textarea}
+          value={selection.value}
           componentClass="textarea"
           rows={2}
           className="value-select"
           placeholder="Search value"
-          onChange={onChange(idx, 'textarea')}
+          onChange={onChange(idx, 'value')}
         />
       </div>
     </>

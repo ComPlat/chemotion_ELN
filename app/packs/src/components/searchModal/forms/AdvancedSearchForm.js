@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { Button, ButtonToolbar, } from 'react-bootstrap';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import AdvancedSearchRow from './AdvancedSearchRow';
 
-const AdvancedSearchForm = () => {
+const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   const defaultSelections = [{
-    combination: '',
-    mapper: {
-      value: "=",
-      label: "EXACT"
-    },
+    link: '',
+    match: '=',
     field: {
       table: 'samples',
       column: 'name',
       label: 'Sample Name',
     },
-    textarea: ''
+    value: ''
   }];
 
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
@@ -23,31 +23,40 @@ const AdvancedSearchForm = () => {
     const selection = selectedOptions[length];
 
     const checkSelectedElements =
-      (selection.field && selection.textarea && selection.combination) ||
-      (length == 0 && selection.field && selection.textarea);
+      (selection.field && selection.value && selection.link) ||
+      (length == 0 && selection.field && selection.value);
 
     if (checkSelectedElements) {
-      selectedOptions.push({ combination: 'OR', mapper: '', field: '', textarea: '' });
+      selectedOptions.push({ link: 'OR', match: '', field: '', value: '' });
       setSelectedOptions((a) => [...a]);
     }
-  }, [selectedOptions, setSelectedOptions, renderDynamicRow]);
+  }, [selectedOptions, setSelectedOptions]);
 
-  //const advancedSearch = (filters) => {
-  //  const uiState = UIStore.getState();
-  //  const selection = {
-  //    elementType: 'all',
-  //    advanced_params: filters,
-  //    search_by_method: 'advanced',
-  //    page_size: uiState.number_of_results
-  //  };
-  //  UIActions.setSearchSelection(selection);
-  //  ElementActions.fetchBasedOnSearchSelectionAndCollection({
-  //    selection,
-  //    collectionId: uiState.currentCollection.id,
-  //    isSync: uiState.isSync
-  //  });
-  //}
+  const handleSave = () => {
+    const uiState = currentState;
+    const { currentCollection } = uiState;
+    const collectionId = currentCollection ? currentCollection.id : null;
 
+    // Remove invalid filter
+    const filters = selectedOptions.filter((f, id) => {
+      return (f.field && f.link && f.value) ||
+        (id == 0 && f.field && f.value)
+    });
+
+    const selection = {
+      elementType: 'all',
+      advanced_params: filters,
+      search_by_method: 'advanced',
+      page_size: uiState.number_of_results
+    };
+
+    UIActions.setSearchSelection(selection);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+      selection,
+      collectionId: collectionId,
+      isSync: uiState.isSync
+    });
+  }
 
   const renderDynamicRow = () => {
     let dynamicRow = ( <span /> );
@@ -72,7 +81,7 @@ const AdvancedSearchForm = () => {
   };
 
   const handleChangeSelection = (idx, formElement) => (e) => {
-    let value = formElement == 'textarea' ? e.target.value : e;
+    let value = formElement == 'value' ? e.target.value : e;
     selectedOptions[idx][formElement] = value;
     setSelectedOptions((a) => [...a]);
   }
@@ -90,6 +99,14 @@ const AdvancedSearchForm = () => {
           {renderDynamicRow()}
         </div>
       </div>
+      <ButtonToolbar>
+        <Button bsStyle="warning" onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button bsStyle="primary" onClick={handleSave} style={{ marginRight: '20px' }} >
+          Search
+        </Button>
+      </ButtonToolbar>
     </>
   );
 }
