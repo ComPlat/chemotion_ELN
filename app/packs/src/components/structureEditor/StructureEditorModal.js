@@ -179,6 +179,8 @@ export default class StructureEditorModal extends React.Component {
       });
     } else {
       const { molfile, info } = structure;
+      console.log('molfile', molfile, 'info', info, 'structure', structure);
+
       structure.fetchSVG().then((svg) => {
         this.setState({
           showModal: false,

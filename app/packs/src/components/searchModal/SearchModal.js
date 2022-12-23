@@ -22,7 +22,7 @@ const Components = {
   empty: NoFormSelected
 }
 
-const SearchModal = ({ showModal, onCancel }) => {
+const SearchModal = ({ showModal, onCancel, molfile, currentState }) => {
   const [selectedOption, setSelectedOption] = useState({ value: '', label: 'Select ...' });
   const [visibleModal, setVisibleModal] = useState(showModal);
   const [view, setView] = useState([React.createElement(Components['empty'], { key: 'empty' })]);
@@ -30,10 +30,12 @@ const SearchModal = ({ showModal, onCancel }) => {
   const selectOptions = FormData.forms.map((option) => ({ id: option.id, value: option.value, label: option.label }));
 
   const FormComponent = (block) => {
-    console.log(block.id, block.component);
     if (typeof Components[block.component] !== "undefined") {
       return React.createElement(Components[block.component], {
-        key: block.value
+        key: block.value,
+        molfile: molfile,
+        handleCancel: onCancel,
+        currentState: currentState
       });
     }
     return React.createElement(
@@ -106,9 +108,6 @@ const SearchModal = ({ showModal, onCancel }) => {
             </div>
           </React.Suspense>
         </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleCancel}>Close</Button>
-        </Modal.Footer>
       </Modal>
     </Draggable>
   );
