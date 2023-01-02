@@ -35,13 +35,8 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     const { molfile, info } = structure;
     structure.fetchSVG().then((svg) => {
       handleStructureEditorSave(molfile);
-    //    this.setState({
-    //      showModal: false,
-    //      showWarning: this.props.hasChildren || this.props.hasParent
     });
   }
-  // if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); }
-  // handleStructureEditorSave(molfile, svg, info, editor.id);
 
   const handleStructureEditorSave = (molfile) => {
     if (molfile) {
