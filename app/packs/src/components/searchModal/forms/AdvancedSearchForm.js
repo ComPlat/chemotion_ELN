@@ -27,7 +27,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
       (length == 0 && selection.field && selection.value);
 
     if (checkSelectedElements) {
-      selectedOptions.push({ link: 'OR', match: '', field: '', value: '' });
+      selectedOptions.push({ link: 'OR', match: 'LIKE', field: '', value: '' });
       setSelectedOptions((a) => [...a]);
     }
   }, [selectedOptions, setSelectedOptions]);
@@ -81,7 +81,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   };
 
   const handleChangeSelection = (idx, formElement) => (e) => {
-    let value = formElement == 'value' ? e.target.value : e;
+    let value = formElement == 'value' ? e.target.value : (formElement == 'field' ? e.value : e);
     selectedOptions[idx][formElement] = value;
     setSelectedOptions((a) => [...a]);
   }
