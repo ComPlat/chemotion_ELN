@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
@@ -61,6 +61,12 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState }) => {
     );
   };
 
+  const Spinner = () => {
+    return (
+      <i className="fa fa-spinner" />
+    );
+  }
+
   const hideModal = () => {
     setVisibleModal(false);
   }
@@ -102,7 +108,7 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState }) => {
           </div>
         </Modal.Header>
         <Modal.Body>
-          <React.Suspense fallback="Loading views...">
+          <React.Suspense fallback={<Spinner />}>
             <div className="form-container">
               {view}
             </div>

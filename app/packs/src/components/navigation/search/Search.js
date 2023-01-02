@@ -332,6 +332,7 @@ export default class Search extends React.Component {
             onCancel={this.handleSearchModalCancel}
             molfile={this.state.queryMolfile}
             currentState={UIStore.getState()}
+            isPublic={this.props.isPublic}
           />
         </div>
         <div className="search-autocomplete">

@@ -5,10 +5,11 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import StructureEditor from 'src/models/StructureEditor';
 import FormData from 'src/components/searchModal/FormData';
 
-const KetcherRailsform = ({ molfile, handleCancel, currentState }) => {
-  const editor = new StructureEditor({ ...FormData[1], id: 1 });
+const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => {
+  const editor = new StructureEditor({ ...FormData.forms[1], id: 'ketcher' });
 
   const defaultValues = [{
+    elementType: 'all',
     queryMolfile: null,
     searchType: 'sub',
     tanimotoThreshold: 0.7 
@@ -33,10 +34,11 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState }) => {
     const structure = editor.structureDef;
     const { molfile, info } = structure;
     structure.fetchSVG().then((svg) => {
+      handleStructureEditorSave(molfile);
     //    this.setState({
     //      showModal: false,
     //      showWarning: this.props.hasChildren || this.props.hasParent
-    }, () => { handleStructureEditorSave(molfile) });
+    });
   }
   // if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); }
   // handleStructureEditorSave(molfile, svg, info, editor.id);
@@ -59,7 +61,7 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState }) => {
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
-    const isPublic = this.props.isPublic;
+    const isPublic = isPublic;
     let tanimoto = changedValues[0].tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
       const selection = {
