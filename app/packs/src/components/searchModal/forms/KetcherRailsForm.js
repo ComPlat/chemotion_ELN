@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col } from 'react-bootstrap';
+import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import StructureEditor from 'src/models/StructureEditor';
@@ -15,6 +15,8 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     tanimotoThreshold: 0.7 
   }];
   const [changedValues, setChangedValues] = useState(defaultValues);
+  const [openSearch, setOpenSearch] = useState(true);
+  const [openResult, setOpenResult] = useState(false);
  
   const handleSearchTypeChange = (e) => {
     changedValues[0]['searchType'] = e.target.value;
@@ -59,76 +61,99 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     const isPublic = isPublic;
     let tanimoto = changedValues[0].tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
-      const selection = {
-        elementType: changedValues[0].elementType,
-        molfile,
-        search_type: changedValues[0].searchType,
-        tanimoto_threshold: tanimoto,
-        page_size: uiState.number_of_results,
-        search_by_method: 'structure',
-        structure_search: true
+    const selection = {
+      elementType: changedValues[0].elementType,
+      molfile,
+      search_type: changedValues[0].searchType,
+      tanimoto_threshold: tanimoto,
+      page_size: uiState.number_of_results,
+      search_by_method: 'structure',
+      structure_search: true
     };
-    UIActions.setSearchSelection(selection);
-    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+    //UIActions.setSearchSelection(selection);
+    ElementActions.fetchSearchSelectionAndCollection({
       selection, collectionId, isSync, isPublic
     });
   }
 
   return (
     <>
-      <iframe
-        id="ketcher"
-        src="/ketcher"
-        title="Ketcher Rails"
-        height="730px"
-        width="100%"
-        style={{border: 'none'}}
-        //ref={(f) => { ifr = f; }}
-      />
-      <Grid style={{ margin: 0, paddingLeft: 0 }}>
-        <Row style={{ marginTop: '20px' }}>
-          <Col sm={4} md={3}>
-            <ButtonToolbar>
-              <Button bsStyle="warning" onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button bsStyle="primary" onClick={handleSave} style={{ marginRight: '20px' }} >
-                Search
-              </Button>
-            </ButtonToolbar>
-          </Col>
-          <Col sm={6} md={4}>
-            <Form inline>
-              <Radio
-                //ref={(input) => { this.searchSimilarRadio = input; }}
-                value="similar"
-                checked={changedValues[0].searchType === 'similar'}
-                onChange={handleSearchTypeChange}
-              >
-                &nbsp; Similarity Search &nbsp;
-              </Radio>
-              &nbsp;&nbsp;
-              <FormControl
-                style={{ width: '40%' }}
-                type="text"
-                value={changedValues[0].tanimotoThreshold}
-                //ref={(input) => { this.searchTanimotoInput = input; }}
-                onChange={handleTanimotoChange}
-              />
-            </Form>
-          </Col>
-          <Col sm={4} md={2}>
-            <Radio
-              //ref={(input) => { searchSubstructureRadio = input; }}
-              value="sub"
-              checked={changedValues[0].searchType === 'sub'}
-              onChange={handleSearchTypeChange}
-            >
-              Substructure Search
-            </Radio>
-          </Col>
-        </Row>
-      </Grid>
+      <Panel id="collapsible-search" className="collapsible-search-result" onToggle={() => setOpenSearch(!openSearch)} expanded={openSearch}>
+        <Panel.Heading>
+          <Panel.Title toggle>
+            Search
+          </Panel.Title>
+        </Panel.Heading>
+        <Panel.Collapse>
+          <Panel.Body>
+            <iframe
+              id="ketcher"
+              src="/ketcher"
+              title="Ketcher Rails"
+              height="730px"
+              width="100%"
+              style={{border: 'none'}}
+              //ref={(f) => { ifr = f; }}
+            />
+            <Grid style={{ margin: 0, paddingLeft: 0 }}>
+              <Row style={{ marginTop: '20px' }}>
+                <Col sm={4} md={3}>
+                  <ButtonToolbar>
+                    <Button bsStyle="warning" onClick={handleCancel}>
+                      Cancel
+                    </Button>
+                    <Button bsStyle="primary" onClick={handleSave} style={{ marginRight: '20px' }} >
+                      Search
+                    </Button>
+                  </ButtonToolbar>
+                </Col>
+                <Col sm={6} md={4}>
+                  <Form inline>
+                    <Radio
+                      //ref={(input) => { this.searchSimilarRadio = input; }}
+                      value="similar"
+                      checked={changedValues[0].searchType === 'similar'}
+                      onChange={handleSearchTypeChange}
+                    >
+                      &nbsp; Similarity Search &nbsp;
+                    </Radio>
+                    &nbsp;&nbsp;
+                    <FormControl
+                      style={{ width: '40%' }}
+                      type="text"
+                      value={changedValues[0].tanimotoThreshold}
+                      //ref={(input) => { this.searchTanimotoInput = input; }}
+                      onChange={handleTanimotoChange}
+                    />
+                  </Form>
+                </Col>
+                <Col sm={4} md={2}>
+                  <Radio
+                    //ref={(input) => { searchSubstructureRadio = input; }}
+                    value="sub"
+                    checked={changedValues[0].searchType === 'sub'}
+                    onChange={handleSearchTypeChange}
+                  >
+                    Substructure Search
+                  </Radio>
+                </Col>
+              </Row>
+            </Grid>
+          </Panel.Body>
+        </Panel.Collapse>
+      </Panel>
+      <Panel id="collapsible-result" className="collapsible-search-result inactive" onToggle={() => setOpenResult(!openResult)} expanded={openResult}>
+        <Panel.Heading>
+          <Panel.Title toggle>
+            Result
+          </Panel.Title>
+        </Panel.Heading>
+        <Panel.Collapse>
+          <Panel.Body>
+            Result
+          </Panel.Body>
+        </Panel.Collapse>
+      </Panel>
     </>
   );
 }
