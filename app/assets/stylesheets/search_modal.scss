@@ -50,8 +50,36 @@
   margin-right: 15px;
 }
 
+[dialogas=full-search] .modal-body {
+  padding: 0;
+}
+
 @media screen and (min-width: 768px) {
   [dialogas=full-search] .modal-header .window-minimize {
     margin-top: -22px;
   }
+}
+
+.collapsible-search-result.panel.panel-default {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.collapsible-search-result.inactive {
+  display: none;
+}
+
+.collapsible-search-result.panel-default > .panel-heading {
+  background: #fff;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.collapsible-search-result .panel-title a:hover, .collapsible-search-result .panel-title a:link {
+  text-decoration: none;
+  display: block;
+}
+
+.no-selected-search {
+  padding: 15px;
 }

@@ -197,8 +197,15 @@ class ElementActions {
           NotificationActions.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
+  }
 
-
+  fetchSearchSelectionAndCollection(params) {
+    return (dispatch) => {
+      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
+        .then((result) => {
+          return result;
+        }).catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 
   // -- Generic --

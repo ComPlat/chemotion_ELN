@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, ButtonToolbar, } from 'react-bootstrap';
+import { Button, ButtonToolbar, Panel } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import AdvancedSearchRow from './AdvancedSearchRow';
@@ -17,6 +17,8 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   }];
 
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
+  const [openSearch, setOpenSearch] = useState(true);
+  const [openResult, setOpenResult] = useState(false);
 
   useEffect(() => {
     const length = selectedOptions.length - 1;
@@ -50,12 +52,13 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
       page_size: uiState.number_of_results
     };
 
-    UIActions.setSearchSelection(selection);
-    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+    // UIActions.setSearchSelection(selection);
+    ElementActions.fetchSearchSelectionAndCollection({
       selection,
       collectionId: collectionId,
       isSync: uiState.isSync
     });
+
   }
 
   const renderDynamicRow = () => {
@@ -88,25 +91,48 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
 
   return (
     <>
-      <div className="advanced-search">
-        <div>
-          <AdvancedSearchRow
-            idx={0}
-            selection={selectedOptions[0]}
-            key={"selection_0"}
-            onChange={handleChangeSelection}
-          />
-          {renderDynamicRow()}
-        </div>
-      </div>
-      <ButtonToolbar>
-        <Button bsStyle="warning" onClick={handleCancel}>
-          Cancel
-        </Button>
-        <Button bsStyle="primary" onClick={handleSave} style={{ marginRight: '20px' }} >
-          Search
-        </Button>
-      </ButtonToolbar>
+      <Panel id="collapsible-search" className="collapsible-search-result" onToggle={() => setOpenSearch(!openSearch)} expanded={openSearch}>
+        <Panel.Heading>
+          <Panel.Title toggle>
+            Search
+          </Panel.Title>
+        </Panel.Heading>
+        <Panel.Collapse>
+          <Panel.Body>
+            <div className="advanced-search">
+              <div>
+                <AdvancedSearchRow
+                  idx={0}
+                  selection={selectedOptions[0]}
+                  key={"selection_0"}
+                  onChange={handleChangeSelection}
+                />
+                {renderDynamicRow()}
+              </div>
+            </div>
+            <ButtonToolbar>
+              <Button bsStyle="warning" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button bsStyle="primary" onClick={handleSave} style={{ marginRight: '20px' }} >
+                Search
+              </Button>
+            </ButtonToolbar>
+          </Panel.Body>
+        </Panel.Collapse>
+      </Panel>
+      <Panel id="collapsible-result" className="collapsible-search-result inactive" onToggle={() => setOpenResult(!openResult)} expanded={openResult}>
+        <Panel.Heading>
+          <Panel.Title toggle>
+            Result
+          </Panel.Title>
+        </Panel.Heading>
+        <Panel.Collapse>
+          <Panel.Body>
+            Result
+          </Panel.Body>
+        </Panel.Collapse>
+      </Panel>
     </>
   );
 }
