@@ -9,7 +9,7 @@
       "database": "chemotion_dev",
       "username": "postgres",
       "password": ""
-    }
+    },
     {
       "previewLimit": 50,
       "server": "postgres",
@@ -19,6 +19,11 @@
       "database": "chemotion_test",
       "username": "postgres",
       "password": ""
+    },
+  ],
+  "[javascript]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
     }
-  ]
+  }
 }
