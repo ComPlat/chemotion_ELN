@@ -63,7 +63,7 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState }) => {
 
   const Spinner = () => {
     return (
-      <i className="fa fa-spinner" />
+      <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
     );
   }
 
