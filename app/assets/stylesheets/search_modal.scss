@@ -63,6 +63,7 @@
 .collapsible-search-result.panel.panel-default {
   border: none !important;
   box-shadow: none !important;
+  margin-bottom: 0 !important;
 }
 
 .collapsible-search-result.inactive {
@@ -82,4 +83,11 @@
 
 .no-selected-search {
   padding: 15px;
+}
+
+.search-spinner {
+  color: #ddd;
+  position: absolute;
+  top: 0;
+  left: 50%;
 }
