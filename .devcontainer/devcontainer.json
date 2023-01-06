@@ -14,10 +14,6 @@
     "eamodio.gitlens",
     "streetsidesoftware.code-spell-checker"
   ],
-  "forwardPorts": [
-    3000,
-    5432
-  ],
   "initializeCommand": [
     "/bin/bash",
     ".devcontainer/pre_create.sh"
@@ -31,5 +27,5 @@
   "overrideCommand": true, // override the commands in the compose file
   "containerEnv": {
     "RAILS_ENV": "development"
-  }
+  },
 }
