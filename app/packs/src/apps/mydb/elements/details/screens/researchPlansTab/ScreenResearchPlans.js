@@ -92,6 +92,7 @@ class ScreenResearchPlans extends Component {
           <EmbeddedResearchPlanDetails
             key={`${researchPlan.name}-${researchPlan.id}`}
             researchPlan={new ResearchPlan(researchPlan)}
+            expanded={this.props.expandedResearchPlanId == researchPlan.id}
             deleteResearchPlan={deleteResearchPlan}
             updateResearchPlan={updateResearchPlan}
             saveResearchPlan={saveResearchPlan}
@@ -114,6 +115,7 @@ export default DropTarget(DragDropItemTypes.RESEARCH_PLAN, target, collect)(Scre
 
 ScreenResearchPlans.propTypes = { /* eslint-disable react/no-unused-prop-types */
   researchPlans: PropTypes.arrayOf(PropTypes.object).isRequired,
+  expandedResearchPlanId: PropTypes.number,
   deleteResearchPlan: PropTypes.func.isRequired,
   updateResearchPlan: PropTypes.func.isRequired,
   saveResearchPlan: PropTypes.func.isRequired,

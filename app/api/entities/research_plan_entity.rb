@@ -14,6 +14,7 @@ module Entities
     end
 
     with_options(anonymize_below: 10) do
+      expose! :attachment_count
       expose! :research_plan_metadata,  anonymize_with: nil, using: 'Entities::ResearchPlanMetadataEntity'
       expose! :tag,                     anonymize_with: nil, using: 'Entities::ElementTagEntity'
       expose! :wellplates,              anonymize_with: [],  using: 'Entities::WellplateEntity'
@@ -24,6 +25,10 @@ module Entities
     expose_timestamps
 
     private
+
+    def attachment_count
+      object.attachments.size
+    end
 
     def container
       displayed_in_list? ? nil : object.container

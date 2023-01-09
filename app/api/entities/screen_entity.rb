@@ -17,11 +17,12 @@ module Entities
     with_options(anonymize_below: 10) do
       expose! :collaborator
       expose! :result
-      expose! :code_log,       anonymize_with: nil, using: 'Entities::CodeLogEntity'
-      expose! :container,      anonymize_with: nil, using: 'Entities::ContainerEntity'
-      expose! :research_plans, anonymize_with: [],  using: 'Entities::ResearchPlanEntity'
-      expose! :segments,       anonymize_with: [],  using: 'Entities::SegmentEntity'
-      expose! :tag,            anonymize_with: nil, using: 'Entities::ElementTagEntity'
+      expose! :code_log,              anonymize_with: nil, using: 'Entities::CodeLogEntity'
+      expose! :container,             anonymize_with: nil, using: 'Entities::ContainerEntity'
+      expose! :research_plans,        anonymize_with: [],  using: 'Entities::ResearchPlanEntity'
+      expose! :component_graph_data,  anonymize_with: {}
+      expose! :segments,              anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :tag,                   anonymize_with: nil, using: 'Entities::ElementTagEntity'
     end
     # rubocop:enable Layout/ExtraSpacing
 

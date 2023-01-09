@@ -146,6 +146,11 @@ export default class ResearchPlan extends Element {
     }
   }
 
+  get attachmentCount() {
+    if (this.attachments) { return this.attachments.length; }
+    return this.attachment_count;
+  }
+
   get wellplateIDs() {
     return this.wellplates.map((wp) => wp.id);
   }
