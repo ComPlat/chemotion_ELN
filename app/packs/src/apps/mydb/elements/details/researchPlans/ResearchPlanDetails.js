@@ -446,7 +446,7 @@ export default class ResearchPlanDetails extends Component {
             {' '}
             <span>{researchPlan.name}</span>
             {' '}
-&nbsp;
+            &nbsp;
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={researchPlan} placement="right" />
