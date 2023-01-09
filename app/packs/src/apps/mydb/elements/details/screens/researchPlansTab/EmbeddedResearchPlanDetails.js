@@ -228,6 +228,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
   }
 
   numberOfAnalyses(researchPlan) {
+    if (!researchPlan.container) { return; }
     const analyses_container = researchPlan.container.children.find(subcontainer => subcontainer.container_type == 'analyses')
     if (!analyses_container) { return; }
     if (analyses_container.children.length == 0) { return; }
