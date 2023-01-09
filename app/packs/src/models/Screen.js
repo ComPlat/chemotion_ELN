@@ -21,7 +21,11 @@ export default class Screen extends Element {
       wellplates: [],
       research_plans: [],
       container: Container.init(),
-      segments: []
+      segments: [],
+      component_graph_data: {
+        nodes: [],
+        edges: []
+      }
     });
   }
 
@@ -42,7 +46,11 @@ export default class Screen extends Element {
       wellplates: clipboardWellplates,
       research_plans: [],
       container: Container.init(),
-      segments: []
+      segments: [],
+      component_graph_data: {
+        nodes: [],
+        edges: []
+      }
     })
   }
 
@@ -57,7 +65,8 @@ export default class Screen extends Element {
       wellplate_ids: this.wellplateIDs,
       research_plan_ids: this.researchPlanIDs,
       container: this.container,
-      segments: this.segments.map(s => s.serialize())
+      segments: this.segments.map(s => s.serialize()),
+      component_graph_data: this.component_graph_data
     })
   }
 
@@ -135,5 +144,22 @@ export default class Screen extends Element {
 
   title() {
     return this.name;
+  }
+
+  get componentGraphData() {
+    if (this.component_graph_data == {}) {
+      return { nodes: {}, edges: {} }
+    } else {
+      return this.component_graph_data
+    }
+  }
+
+  set componentGraphData(data) {
+    if (data == {}) {
+      console.debug('received empty component graph data!');
+      this.component_graph_data = { nodes: {}, edges: {} };
+    } else {
+      this.component_graph_data = data;
+    }
   }
 }
