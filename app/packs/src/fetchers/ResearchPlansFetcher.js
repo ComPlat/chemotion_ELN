@@ -270,7 +270,7 @@ export default class ResearchPlansFetcher {
           })
       })
 
-    let attachments=ResearchPlansFetcher.getAttachments(researchPlan.container,[]);
+    let attachments=GenericElsFetcher.getAttachments(researchPlan.container,[]);
     attachments.forEach(attach => {
         let data = new FormData();
         data.append('updated_svg_string', attach.updatedAnnotation);
@@ -283,13 +283,5 @@ export default class ResearchPlansFetcher {
             console.log(errorMessage);
           })
       })
-  }
-
-  static getAttachments(container,attachments){
-    Array.prototype.push.apply(attachments, container.attachments);
-    for(let i=0;i<container.children.length;i++){
-      ResearchPlansFetcher.getAttachments(container.children[i],attachments);
-    }
-    return attachments;
-  }
+  } 
 }

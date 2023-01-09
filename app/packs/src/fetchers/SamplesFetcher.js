@@ -80,10 +80,11 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify(sample.serialize())
     }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
-        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
+      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')      
+      .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
           console.log(errorMessage);
-        });
+      });
+
     if (files.length > 0) {
       let tasks = [];
       files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
@@ -91,8 +92,25 @@ export default class SamplesFetcher {
         return promise();
       });
     }
+    SamplesFetcher.updateAnnotations(sample);
 
     return promise();
+  }
+
+  static updateAnnotations(sample){
+    const attachments=GenericElsFetcher.getAttachments(sample.container,[]);
+    attachments.forEach(attach => {
+      let data = new FormData();
+      data.append('updated_svg_string', attach.updatedAnnotation);
+      fetch('/api/v1/attachments/' + attach.id + '/annotation', {
+        credentials: 'same-origin',
+        method: 'post',
+        body: data
+      })
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        })
+    })
   }
 
   static create(sample) {
