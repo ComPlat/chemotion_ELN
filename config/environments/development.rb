@@ -73,7 +73,12 @@ Rails.application.configure do
 
   # Use an evented file watcher to asynchronously detect changes in source code,
   # routes, locales, etc. This feature depends on the listen gem.
-  config.file_watcher = ActiveSupport::EventedFileUpdateChecker
+  # config.file_watcher = ActiveSupport::EventedFileUpdateChecker
+
+  # to allow development on M1 based Macs, use a simpler FileWatcher that does not rely on inotify (which does
+  # currently not work with docker on M1 macs as the used qemu backend does not support inotify).
+  # see https://github.com/evilmartians/terraforming-rails/issues/34#issuecomment-1347442704
+  config.file_watcher = ActiveSupport::FileUpdateChecker
 
   # Stop the development & test logs from taking up to much space
   # https://stackoverflow.com/questions/7784057/ruby-on-rails-log-file-size-too-large/37499682#37499682
