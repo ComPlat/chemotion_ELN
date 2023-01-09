@@ -80,7 +80,8 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify(sample.serialize())
     }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')      
+      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')   
+      .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
       .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
           console.log(errorMessage);
       });
@@ -92,26 +93,12 @@ export default class SamplesFetcher {
         return promise();
       });
     }
-    SamplesFetcher.updateAnnotations(sample);
+    
 
     return promise();
   }
 
-  static updateAnnotations(sample){
-    const attachments=GenericElsFetcher.getAttachments(sample.container,[]);
-    attachments.forEach(attach => {
-      let data = new FormData();
-      data.append('updated_svg_string', attach.updatedAnnotation);
-      fetch('/api/v1/attachments/' + attach.id + '/annotation', {
-        credentials: 'same-origin',
-        method: 'post',
-        body: data
-      })
-        .catch((errorMessage) => {
-          console.log(errorMessage);
-        })
-    })
-  }
+  
 
   static create(sample) {
     const files = AttachmentFetcher.getFileListfrom(sample.container);

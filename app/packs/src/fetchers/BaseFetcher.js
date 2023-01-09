@@ -73,4 +73,35 @@ export default class BaseFetcher {
       }))
     )).catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static getAttachments(container,attachments){
+    Array.prototype.push.apply(attachments, container.attachments);
+    for(let i=0;i<container.children.length;i++){
+      BaseFetcher.getAttachments(container.children[i],attachments);
+    }
+    return attachments;
+  }
+
+  static updateAnnotationsInContainer(element){
+    const updateTasks = [];
+
+    const attachments=BaseFetcher.getAttachments(element.container,[]);
+
+    attachments.forEach(attach => {
+      let data = new FormData();
+      data.append('updated_svg_string', attach.updatedAnnotation);
+      let updateTask=fetch('/api/v1/attachments/' + attach.id + '/annotation', {
+        credentials: 'same-origin',
+        method: 'post',
+        body: data
+      })
+      .catch((errorMessage) => {
+          console.log(errorMessage);
+      })
+      updateTasks.push(updateTask);
+    })
+
+    return Promise.all(updateTasks);
+  }
+  
 }
