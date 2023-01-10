@@ -66,13 +66,15 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               defaultValue={field.value.zoom}
               onChange={(event) => this.handleResizeChange(event)}
             />
-            <InputGroup.Addon>%</InputGroup.Addon>
-
+            <InputGroup.Addon>%</InputGroup.Addon>            
+            <div className="image-annotation-button-researchplan">
+              <ImageAnnotationEditButton                          
+                parent={this}
+                attachment={this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name)}
+              />
+            </div>
           </InputGroup>
-          <ImageAnnotationEditButton
-            parent={this}
-            attachment={this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name)}
-          />
+          
         </FormGroup>
         <Dropzone
           accept="image/*"
