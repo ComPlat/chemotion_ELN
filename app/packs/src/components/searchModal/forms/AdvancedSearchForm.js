@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, Panel } from 'react-bootstrap';
+import { Button, ButtonToolbar, Panel, Alert } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import AdvancedSearchRow from './AdvancedSearchRow';
 import SearchResult from './SearchResult';
@@ -20,7 +21,6 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   }];
 
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
-  //const [filters, setFilters] = useState([]);
   const searchResultsStore = useContext(StoreContext).searchResults;
 
   useEffect(() => {
@@ -48,14 +48,15 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   }
 
   const handleSave = () => {
-    const uiState = currentState;
+    const uiState = currentState.currentCollection == null ? UIStore.getState() : currentState;
+    //const uiState = currentState;
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const filters = filterSelectedOptions();
-    console.log('filters', filters);
 
     if (filters.length > 0) {
       searchResultsStore.showSearchResults();
+      searchResultsStore.changeErrorMessage("");
 
       const selection = {
         elementType: 'all',
@@ -70,9 +71,13 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
         isSync: uiState.isSync,
       });
     } else {
-      searchResultsStore.hideSearchResults();
-      // todo show error
-      console.log('keine filter');
+      searchResultsStore.changeErrorMessage("Please fill out all needed fields");
+    }
+  }
+
+  const showErrorMessage = () => {
+    if (searchResultsStore.error_message) {
+      return <Alert bsStyle="danger">{searchResultsStore.error_message}</Alert>;
     }
   }
 
@@ -88,7 +93,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
           <AdvancedSearchRow
             idx={id}
             selection={selection}
-            key={"selection_" + id}
+            key={`selection_${id}`}
             onChange={handleChangeSelection}
           />
         );
@@ -109,7 +114,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
             <h4>Your Search</h4>
             {
               filters.map((val, i) => {
-                return <div key={i}>{[val.field.label, val.value].join(": ")}</div>
+                return <div key={i}>{[val.link, val.field.label, val.match, val.value].join(" ")}</div>
               })
             }
             {
@@ -121,14 +126,13 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
         </>
       );
     } else {
-      searchResultsStore.hideSearchResults();
       return null;
     }
   }
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult searchValues={searchResultsStore.searchFilters[0].filters} />;
+      return <SearchResult />;
     } else {
       return null;
     }
@@ -140,35 +144,36 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
     setSelectedOptions((a) => [...a]);
   }
 
-  const togglePanel = (panel) => () => {
+  const togglePanel = () => () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      if (panel == 'search') {
-        searchResultsStore.toggleSearch();
-      } else {
-        searchResultsStore.toggleSearchResults();
-      }
+      searchResultsStore.toggleSearch();
+      searchResultsStore.toggleSearchResults();
     }
   }
 
   let defaultClassName = 'collapsible-search-result';
-  let invisibleClassName = searchResultsStore.searchResultVisible ? '' : ' inactive';
+  let invisibleClassName = searchResultsStore.search_result_panel_visible ? '' : ' inactive';
+  let searchIcon = `fa fa-chevron-${searchResultsStore.search_icon} icon-right`;
+  let resultIcon = `fa fa-chevron-${searchResultsStore.result_icon} icon-right`;
 
   return (
     <>
       <Panel
         id="collapsible-search"
         className={defaultClassName}
-        onToggle={togglePanel('search')}
+        onToggle={togglePanel()}
         expanded={searchResultsStore.searchVisible}
       >
         <Panel.Heading>
           <Panel.Title toggle>
             Search
+            <i className={searchIcon} />
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body>
             <div className="advanced-search">
+              {showErrorMessage()}
               <div>
                 <AdvancedSearchRow
                   idx={0}
@@ -193,12 +198,13 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
       <Panel
         id="collapsible-result"
         className={defaultClassName + invisibleClassName}
-        onToggle={togglePanel('result')}
+        onToggle={togglePanel()}
         expanded={searchResultsStore.searchResultVisible}
       >
         <Panel.Heading>
           <Panel.Title toggle>
             Result
+            <i className={resultIcon} />
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>

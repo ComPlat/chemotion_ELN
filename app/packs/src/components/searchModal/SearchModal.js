@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
@@ -10,6 +10,8 @@ import Draggable from "react-draggable";
 import Select from 'react-select';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import FormData from './FormData';
 import AdvancedSearchForm from './forms/AdvancedSearchForm';
@@ -22,12 +24,13 @@ const Components = {
   empty: NoFormSelected
 }
 
-const SearchModal = ({ showModal, onCancel, molfile, currentState }) => {
-  const [selectedOption, setSelectedOption] = useState({ value: '', label: 'Select ...' });
+const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) => {
+  const [selectedOption, setSelectedOption] = useState({ value: 'advanced', label: 'Advanced Search' });
   const [visibleModal, setVisibleModal] = useState(showModal);
-  const [view, setView] = useState([React.createElement(Components['empty'], { key: 'empty' })]);
-
+  const defaultForm = React.createElement(Components['advanced'], { key: 'advanced', handleCancel: onCancel, currentState: currentState });
+  const [view, setView] = useState(defaultForm);
   const selectOptions = FormData.forms.map((option) => ({ id: option.id, value: option.value, label: option.label }));
+  const searchResultsStore = useContext(StoreContext).searchResults;
 
   const FormComponent = (block) => {
     if (typeof Components[block.component] !== "undefined") {
@@ -35,7 +38,8 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState }) => {
         key: block.value,
         molfile: molfile,
         handleCancel: onCancel,
-        currentState: currentState
+        currentState: currentState,
+        isPublic: isPublic
       });
     }
     return React.createElement(
@@ -73,12 +77,20 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState }) => {
 
   const handleCancel = () => {
     hideModal();
+    searchResultsStore.clearSearchResults();
+    searchResultsStore.hideSearchResults();
+    searchResultsStore.clearFilter();
     if (onCancel) { onCancel(); }
   }
 
   const handleSearchPulldownSelection = (e) => {
     setSelectedOption({ value: e.value, label: e.label });
     setView(FormComponent(FormData.forms[e.id]));
+    if (searchResultsStore.searchResultsCount > 0) {
+      searchResultsStore.clearSearchResults();
+      searchResultsStore.hideSearchResults();
+      searchResultsStore.clearFilter();
+    }
   }
 
   return (
@@ -119,4 +131,4 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState }) => {
   );
 }
 
-export default SearchModal;
+export default observer(SearchModal);

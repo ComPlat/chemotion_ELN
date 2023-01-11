@@ -199,15 +199,6 @@ class ElementActions {
     };
   }
 
-  fetchSearchSelectionAndCollection(params) {
-    return (dispatch) => {
-      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
-        .then((result) => {
-          return result;
-        }).catch((errorMessage) => { console.log(errorMessage); });
-    };
-  }
-
   // -- Generic --
   fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
     return (dispatch) => {

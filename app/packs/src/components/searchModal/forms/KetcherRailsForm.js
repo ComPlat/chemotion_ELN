@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel } from 'react-bootstrap';
+import React, { useState, useContext } from 'react';
+import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel, Alert } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import StructureEditor from 'src/models/StructureEditor';
 import FormData from 'src/components/searchModal/FormData';
+import SearchResult from './SearchResult';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => {
   const editor = new StructureEditor({ ...FormData.forms[1], id: 'ketcher' });
@@ -15,8 +18,8 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     tanimotoThreshold: 0.7 
   }];
   const [changedValues, setChangedValues] = useState(defaultValues);
-  const [openSearch, setOpenSearch] = useState(true);
-  const [openResult, setOpenResult] = useState(false);
+  const [searchSvg, setSearchSvg] = useState();
+  const searchResultsStore = useContext(StoreContext).searchResults;
  
   const handleSearchTypeChange = (e) => {
     changedValues[0]['searchType'] = e.target.value;
@@ -25,7 +28,6 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
 
   const handleTanimotoChange = (e) => {
     const val = e.target && e.target.value;
-    console.log(val - val, e.target.value);
     if (!isNaN(val - val)) {
       changedValues[0]['tanimotoThreshold'] = e.target.value;
       setChangedValues((a) => [...a]);
@@ -36,6 +38,8 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     const structure = editor.structureDef;
     const { molfile, info } = structure;
     structure.fetchSVG().then((svg) => {
+      const svg_file = svg.replace(/viewBox="([^"]+)"/, 'viewBox="0,0,300,128"').replace(/height="([^"]+)"/, 'height="128"').replace(/width="([^"]+)"/, 'width="300"');
+      setSearchSvg(<img src={ `data:image/svg+xml;utf8,${encodeURIComponent(svg)}` } style={{width: '300px'}} />);
       handleStructureEditorSave(molfile);
     });
   }
@@ -48,8 +52,12 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     //// Check if blank molfile
     const molfileLines = molfile.match(/[^\r\n]+/g);
     //// If the first character ~ num of atoms is 0, we will not search
-    if (molfileLines[1].trim()[0] !== 0) {
+    if (molfileLines[1].trim()[0] != 0) {
+      searchResultsStore.showSearchResults();
+      searchResultsStore.changeErrorMessage("");
       structureSearch(molfile);
+    } else {
+      searchResultsStore.changeErrorMessage("Please fill out all needed fields");
     }
   }
 
@@ -61,6 +69,7 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     const isPublic = isPublic;
     let tanimoto = changedValues[0].tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
+
     const selection = {
       elementType: changedValues[0].elementType,
       molfile,
@@ -70,22 +79,74 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
       search_by_method: 'structure',
       structure_search: true
     };
-    //UIActions.setSearchSelection(selection);
-    ElementActions.fetchSearchSelectionAndCollection({
+    searchResultsStore.loadSearchResults({
       selection, collectionId, isSync, isPublic
     });
   }
 
+  const showErrorMessage = () => {
+    if (searchResultsStore.error_message) {
+      return <Alert bsStyle="danger">{searchResultsStore.error_message}</Alert>;
+    }
+  }
+
+  const SearchValuesList = () => {
+    if (searchResultsStore.searchResultVisible && searchSvg != '') {
+      // <div>{searchSvg}</div>
+      return (
+        <>
+          <div style={{ position: 'relative' }}>
+            <h4>Your Search</h4>
+            {
+              searchResultsStore.searchResultsCount > 0 ? null : (
+                <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
+              )
+            }
+          </div>
+        </>
+      );
+    } else {
+      return (null);
+    }
+  }
+
+  const searchResults = () => {
+    if (searchResultsStore.searchResultsCount > 0) {
+      return <SearchResult />;
+    } else {
+      return null;
+    }
+  }
+
+  const togglePanel = () => () => {
+    if (searchResultsStore.searchResultsCount > 0) {
+      searchResultsStore.toggleSearch();
+      searchResultsStore.toggleSearchResults();
+    }
+  }
+
+  let defaultClassName = 'collapsible-search-result';
+  let invisibleClassName = searchResultsStore.search_result_panel_visible ? '' : ' inactive';
+  let searchIcon = `fa fa-chevron-${searchResultsStore.search_icon} icon-right`;
+  let resultIcon = `fa fa-chevron-${searchResultsStore.result_icon} icon-right`;
+
   return (
     <>
-      <Panel id="collapsible-search" className="collapsible-search-result" onToggle={() => setOpenSearch(!openSearch)} expanded={openSearch}>
+      <Panel
+        id="collapsible-search"
+        className={defaultClassName}
+        onToggle={togglePanel()}
+        expanded={searchResultsStore.searchVisible}
+      >
         <Panel.Heading>
           <Panel.Title toggle>
             Search
+            <i className={searchIcon} />
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body>
+            {showErrorMessage()}
             <iframe
               id="ketcher"
               src="/ketcher"
@@ -142,15 +203,22 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
           </Panel.Body>
         </Panel.Collapse>
       </Panel>
-      <Panel id="collapsible-result" className="collapsible-search-result inactive" onToggle={() => setOpenResult(!openResult)} expanded={openResult}>
+      <Panel
+        id="collapsible-result"
+        className={defaultClassName + invisibleClassName}
+        onToggle={togglePanel()}
+        expanded={searchResultsStore.searchResultVisible}
+      >
         <Panel.Heading>
           <Panel.Title toggle>
             Result
+            <i className={resultIcon} />
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body>
-            Result
+            <SearchValuesList />
+            {searchResults()}
           </Panel.Body>
         </Panel.Collapse>
       </Panel>
@@ -158,4 +226,4 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
   );
 }
 
-export default KetcherRailsform;
+export default observer(KetcherRailsform);
