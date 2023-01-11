@@ -8,6 +8,7 @@ class AnnotationUpdater
   end
 
   def update_annotation(annotation_svg_string, attachment_id)
+    return if annotation_svg_string=="undefined"
     attachment = Attachment.find(attachment_id)
     sanitized_svg_string = sanitize_svg_string(annotation_svg_string)
     save_svg_string_to_file_system(sanitized_svg_string, attachment)

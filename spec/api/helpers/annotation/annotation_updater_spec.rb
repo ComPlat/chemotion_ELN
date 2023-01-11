@@ -35,6 +35,22 @@ describe AnnotationUpdater do
         end
       end
     end
+
+    context 'when annotation is undefined' do
+      let(:svg_filename) { '20230111_invalide_annotation_undefined.svg' }
+      let(:attachment) { create(:attachment, :with_png_image) }
+
+      it 'annotation was not changed' do
+        updater = described_class.new(ThumbnailerMock.new)
+          updater.update_annotation(svg_string, attachment.id)
+
+          file = File.open(attachment.attachment_data['derivatives']['annotation']['id'])
+          data = file.read
+
+          expect(Loofah.xml_fragment(svg_string).to_s).to eq Loofah.xml_fragment(data).to_s
+
+      end
+    end
   end
 
   describe '.sanitize_svg_string()' do
@@ -63,7 +79,7 @@ describe AnnotationUpdater do
       it 'raises an "corrupted REST call error"' do
         expect { sanitized_svg_string }.to raise_error 'Link to image not valide'
       end
-    end
+    end   
   end
 end
 
