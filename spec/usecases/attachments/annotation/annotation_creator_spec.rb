@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helpers/annotation/annotation_creator'
+require_relative '../../../../app/usecases/attachments/annotation/annotation_creator'
 
 describe AnnotationCreator do
   describe '.create_derivative()' do

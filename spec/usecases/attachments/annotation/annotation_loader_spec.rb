@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helpers/annotation/annotation_loader'
+require_relative '../../../../app/usecases/attachments/annotation/annotation_loader'
 require_relative 'annotation_helper'
 
 describe AnnotationLoader do

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require 'helpers/annotation/annotation_updater'
+require_relative '../../../../app/usecases/attachments/annotation/annotation_updater.rb'
+#app/usecases/attachments/annotation/annotation_updater.rb
 require_relative 'annotation_helper'
 
 describe AnnotationUpdater do

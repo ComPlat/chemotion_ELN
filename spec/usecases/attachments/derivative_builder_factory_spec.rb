@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'helpers/derivative_builder_factory';
+require_relative '../../../app/usecases/attachments/derivative_builder_factory'
 
 describe DerivativeBuilderFactory do
     context '-> factory' do

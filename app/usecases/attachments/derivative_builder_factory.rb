@@ -2,8 +2,8 @@
 
 # Class for creating a builder for a specific derivative
 class DerivativeBuilderFactory
-  require 'helpers/annotation/annotation_creator'
-  require 'helpers/thumbnail/thumbnail_creator'
+  require_relative 'annotation/annotation_creator'
+  require_relative 'thumbnail/thumbnail_creator'
 
   def initialize(supported_formats_map = nil)
     @supported_formats_map = supported_formats_map || {

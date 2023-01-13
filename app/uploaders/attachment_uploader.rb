@@ -1,5 +1,6 @@
 class AttachmentUploader < Shrine
-  require 'helpers/thumbnail/thumbnail_creator'
+  require_relative '../usecases/attachments/thumbnail/thumbnail_creator'
+  require_relative '../usecases/attachments/derivative_builder_factory'
 
   MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024
 

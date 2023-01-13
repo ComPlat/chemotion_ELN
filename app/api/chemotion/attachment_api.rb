@@ -4,8 +4,8 @@ require 'barby'
 require 'barby/barcode/qr_code'
 require 'barby/outputter/svg_outputter'
 require 'digest'
-require 'helpers/annotation/annotation_loader'
-require 'helpers/annotation/annotation_updater'
+require_relative '../../usecases/attachments/annotation/annotation_loader'
+require_relative '../../usecases/attachments/annotation/annotation_updater'
 
 module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength

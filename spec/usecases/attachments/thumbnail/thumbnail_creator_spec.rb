@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helpers/thumbnail/thumbnail_creator'
+require_relative '../../../../app/usecases/attachments/thumbnail/thumbnail_creator'
 
 describe ThumbnailCreator do
   let(:temp_file) { Tempfile.new.path }

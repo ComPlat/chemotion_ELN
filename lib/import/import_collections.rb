@@ -3,7 +3,7 @@
 # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/BlockLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity, Layout/LineLength
 
 require 'json'
-require_relative '../../app/api/helpers/annotation/annotation_updater'
+require_relative '../../app/usecases/attachments/annotation/annotation_updater'
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
