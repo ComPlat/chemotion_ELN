@@ -66,7 +66,7 @@ module Export
             description += "#{attachment.checksum} #{attachment_path}\n"
 
             annotation_path=attachment.attachment_data["derivatives"]["annotation"]["id"];
-            zip.put_next_entry 'annotations/'+attachment.identifier;
+            zip.put_next_entry attachment_path+"_annotation";
             zip.write File.open(annotation_path).read           
           end
 

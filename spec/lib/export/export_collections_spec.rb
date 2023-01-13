@@ -46,9 +46,9 @@ RSpec.describe 'ExportCollection' do
     let(:research_plan) { create(:research_plan, collections: [collection]) }
 
     let(:attachment) do
-      create(:attachment,
+      
+      create(:attachment, :with_png_image,
              bucket: 1,
-             filename: 'upload.png',
              created_by: 1,
              attachable_id: research_plan.id)
     end   
@@ -77,8 +77,6 @@ RSpec.describe 'ExportCollection' do
           file_names << file.name
         end
       end
-
-      binding.pry
     end
   end
 

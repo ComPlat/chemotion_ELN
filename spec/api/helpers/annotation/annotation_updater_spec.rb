@@ -39,15 +39,16 @@ describe AnnotationUpdater do
     context 'when annotation is undefined' do
       let(:svg_filename) { '20230111_invalide_annotation_undefined.svg' }
       let(:attachment) { create(:attachment, :with_png_image) }
+      let(:original_svg){ File.open(attachment.attachment_data['derivatives']['annotation']['id']).read }
 
       it 'annotation was not changed' do
         updater = described_class.new(ThumbnailerMock.new)
-          updater.update_annotation(svg_string, attachment.id)
+        updater.update_annotation(svg_string, attachment.id)
 
-          file = File.open(attachment.attachment_data['derivatives']['annotation']['id'])
-          data = file.read
+        file = File.open(attachment.attachment_data['derivatives']['annotation']['id'])
+        data = file.read
 
-          expect(Loofah.xml_fragment(svg_string).to_s).to eq Loofah.xml_fragment(data).to_s
+        expect(Loofah.xml_fragment(original_svg).to_s).to eq Loofah.xml_fragment(data).to_s
 
       end
     end
