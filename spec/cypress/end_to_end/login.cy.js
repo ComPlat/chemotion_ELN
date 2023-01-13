@@ -3,11 +3,13 @@ describe('sign_in page', () => {
     cy.visit('users/sign_in');
   });
 
-  it('allows user to log in', () => {
-    cy.get('#user_login').type('CU1');
-    cy.get('#user_password').type('@complat');
+  it('allows registered user to log in', () => {
+    cy.createDefaultUser();
+
+    cy.get('#user_login').type('UC');
+    cy.get('#user_password').type('user_password');
     cy.get('.btn').contains('Log in').click();
-    cy.contains('User1 Complat');
+    cy.contains('User Complat');
     cy.url().should('include', '/mydb/collection/all');
   });
 
@@ -19,13 +21,15 @@ describe('sign_in page', () => {
   });
 
   it('allows admin to log in', () => {
+    cy.createDefaultAdmin();
+
     cy.get('#user_login').type('ADM');
-    cy.get('#user_password').type('PleaseChangeYourPassword');
+    cy.get('#user_password').type('admin_password');
     cy.get('.btn').contains('Log in').click();
     cy.contains('ELN Admin');
   });
 
-  it('contains links relevant to log in', () => {
+  it('contains links relevant to login', () => {
     cy.contains('Forgot your password?')
       .should('have.attr', 'href', '/users/password/new');
     cy.contains("Didn't receive confirmation instructions?")
@@ -39,10 +43,12 @@ describe('home page', () => {
   });
 
   it('allows registered user to log in', () => {
-    cy.get('#user_login').type('CU1');
-    cy.get('#user_password').type('@complat');
+    cy.createDefaultUser();
+
+    cy.get('#user_login').type('UC');
+    cy.get('#user_password').type('user_password');
     cy.get('#new_user > .btn').click();
-    cy.contains('User1 Complat');
+    cy.contains('User Complat');
     cy.url().should('include', '/mydb/collection/all');
   });
 
@@ -55,8 +61,10 @@ describe('home page', () => {
   });
 
   it('allows admin to log in', () => {
+    cy.createDefaultAdmin();
+
     cy.get('#user_login').type('ADM');
-    cy.get('#user_password').type('PleaseChangeYourPassword');
+    cy.get('#user_password').type('admin_password');
     cy.get('#new_user > .btn').click();
     cy.contains('ELN Admin');
   });
