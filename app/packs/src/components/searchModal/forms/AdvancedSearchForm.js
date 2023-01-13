@@ -132,7 +132,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult />;
+      return <SearchResult handleCancel={handleCancel} />;
     } else {
       return null;
     }

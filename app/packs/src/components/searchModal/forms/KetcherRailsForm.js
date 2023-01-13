@@ -112,7 +112,7 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult />;
+      return <SearchResult handleCancel={handleCancel} />;
     } else {
       return null;
     }
