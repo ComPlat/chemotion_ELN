@@ -16,6 +16,7 @@ const SearchFilter = types.model({
 export const SearchResultsStore = types
   .model({
     search_results: types.map(SearchResult),
+    tab_search_results: types.map(SearchResult),
     search_result_panel_visible: types.optional(types.boolean, false),
     search_results_visible: types.optional(types.boolean, false),
     search_visible: types.optional(types.boolean, true),
@@ -45,6 +46,17 @@ export const SearchResultsStore = types
       });
       console.log(getSnapshot(self.search_results))
     }),
+    addSearchResult(key, result) {
+      let tabSearchResult = SearchResult.create({
+        id: key,
+        results: {
+          elements: result.elements,
+          ids: result.ids,
+          page: result.page
+        }
+      })
+      self.tab_search_results.set(tabSearchResult.id, tabSearchResult)
+    },
     showSearchResults() {
       self.search_results_visible = true;
       self.search_result_panel_visible = true;
