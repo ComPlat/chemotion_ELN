@@ -208,7 +208,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
-          <Panel.Body>
+          <Panel.Body style={{minHeight: '120px'}}>
             <SearchValuesList />
             {searchResults()}
           </Panel.Body>

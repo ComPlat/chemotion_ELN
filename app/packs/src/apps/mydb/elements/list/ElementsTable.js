@@ -311,6 +311,7 @@ export default class ElementsTable extends React.Component {
     const items = [];
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
+    console.log('pages', page, pages, minPage, maxPage);
     items.push(<Pagination.First key="First" onClick={() => this.handlePaginationSelect(1)} />);
     if (page > 1) {
       items.push(<Pagination.Prev key="Prev" onClick={() => this.handlePaginationSelect(page - 1)} />);

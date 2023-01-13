@@ -3,8 +3,7 @@ import { Col, Navbar, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, ButtonToo
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import ArrayUtils from 'src/utilities/ArrayUtils';
-import SampleName from 'src/components/common/SampleName';
+import SearchResultTabContent from './SearchResultTabContent';
 
 const SearchResult = ({ handleCancel }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
@@ -40,14 +39,6 @@ const SearchResult = ({ handleCancel }) => {
     if (currentTabIndex < 0) setCurrentTabIndex(0);
   }, []);
 
-  const resultsCount = () => {
-    const counts = results.map((val) => {
-      return val.results.total_elements;
-    });
-    const sum = counts.reduce((a, b) => a + b, 0);
-    return sum;
-  }
-
   const handleTabSelect = (e) => {
     setCurrentTabIndex(e);
   }
@@ -57,10 +48,7 @@ const SearchResult = ({ handleCancel }) => {
   }
 
   const SearchResultsList = () => {
-    //console.log('result', results, resultsCount());
-    // results[currentTabIndex].results
     var elements = results.find(val => val.id.indexOf(visibleTabs[2].key) !== -1);
-    console.log('results', visibleTabs[2].key, elements.results, visibleTabs, hiddenTabs, currentTabIndex, profile.data);
     return (
       <>
         {
@@ -75,6 +63,14 @@ const SearchResult = ({ handleCancel }) => {
         }
       </>
     );
+  }
+
+  const resultsCount = () => {
+    const counts = results.map((val) => {
+      return val.results.total_elements;
+    });
+    const sum = counts.reduce((a, b) => a + b, 0);
+    return sum;
   }
 
   const searchResultNavItem = (list, tabResult) => {
@@ -108,28 +104,9 @@ const SearchResult = ({ handleCancel }) => {
       const tab = results.find(val => val.id.indexOf(list.key) !== -1);
       if (tab === undefined) { return; }
       const tabResult = tab.results;
-      let tabContentList = <div key={list.index} className="search-result-tab-content-list">No results</div>;
 
       const navItem = searchResultNavItem(list, tabResult);
-
-      if (tabResult.elements.length > 0) {
-        tabContentList = tabResult.elements.map((obj, i) => {
-          const moleculeName = list.key == "sample" ? <SampleName sample={obj} /> : '';
-          return (
-            <div key={i} className="search-result-tab-content-list">
-              {moleculeName}
-              {[obj.short_label, obj.name].join(" - ")}
-            </div>
-          )
-        });
-      }
-      const tabContent = (
-        <Tab.Pane eventKey={list.index} key={`${list.key}_tabPanel`}>
-          <div style={{ overflowX: 'auto', maxHeight: '500px' }}>
-            {tabContentList}
-          </div>
-        </Tab.Pane>
-      );
+      const tabContent = <SearchResultTabContent key={list.key} list={list} tabResult={tabResult} />
 
       navItems.push(navItem);
       tabContents.push(tabContent);

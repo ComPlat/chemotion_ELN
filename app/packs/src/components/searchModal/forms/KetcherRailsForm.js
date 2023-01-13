@@ -38,8 +38,8 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     const structure = editor.structureDef;
     const { molfile, info } = structure;
     structure.fetchSVG().then((svg) => {
-      const svg_file = svg.replace(/viewBox="([^"]+)"/, 'viewBox="0,0,300,128"').replace(/height="([^"]+)"/, 'height="128"').replace(/width="([^"]+)"/, 'width="300"');
-      setSearchSvg(<img src={ `data:image/svg+xml;utf8,${encodeURIComponent(svg)}` } style={{width: '300px'}} />);
+      // const svg_file = svg.replace(/viewBox="([^"]+)"/, 'viewBox="0,0,300,128"').replace(/height="([^"]+)"/, 'height="128"').replace(/width="([^"]+)"/, 'width="300"');
+      // setSearchSvg(<img src={ `data:image/svg+xml;utf8,${encodeURIComponent(svg)}` } style={{width: '300px'}} />);
       handleStructureEditorSave(molfile);
     });
   }
@@ -97,6 +97,9 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
         <>
           <div style={{ position: 'relative' }}>
             <h4>Your Search</h4>
+            {
+              <div>{changedValues[0]['queryMolfile']}</div>
+            }
             {
               searchResultsStore.searchResultsCount > 0 ? null : (
                 <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
@@ -216,7 +219,7 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
-          <Panel.Body>
+          <Panel.Body style={{minHeight: '120px'}}>
             <SearchValuesList />
             {searchResults()}
           </Panel.Body>
