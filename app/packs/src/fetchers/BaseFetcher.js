@@ -88,7 +88,7 @@ export default class BaseFetcher {
     const attachments=BaseFetcher.getAttachments(element.container,[]);
 
     attachments
-      .filter(attach >= attach.updatedAnnotation)
+      .filter(attach => attach.updatedAnnotation)
       .forEach(attach => {
       let data = new FormData();
       data.append('updated_svg_string', attach.updatedAnnotation);
