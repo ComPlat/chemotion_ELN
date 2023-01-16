@@ -8,6 +8,7 @@ import React, { Component } from 'react';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
+import Utils from 'src/utilities/Functions';
 import {
   Button, ButtonGroup,
   Col, ControlLabel,
@@ -29,7 +30,8 @@ const editorTooltip = (exts) => (
     {exts}
   </Tooltip>
 );
-const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
+const downloadTooltip = <Tooltip id="download_tooltip">Download original attachment</Tooltip>;
+const downloadAnnotationTooltip = <Tooltip id="download_tooltip">Download annotated attachment</Tooltip>;
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
@@ -39,6 +41,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const {
       attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
     } = props;
+
     this.state = {
       attachmentEditor: false,
       extension: null,
@@ -174,6 +177,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     if (!this.isImageFile(attachment.filename)) {
       return null;
     }
+
     return (
       <ImageAnnotationEditButton
         parent={this}
@@ -248,6 +252,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
           <Col md={2}>
             {this.renderAnnotateImageButton(attachment)}
             {this.renderRemoveAttachmentButton(attachment)}
+            {this.renderDownloadAnnotatedImageButton(attachment)}
+            
             <OverlayTrigger placement="top" overlay={downloadTooltip}>
               <Button
                 bsSize="xsmall"
@@ -278,6 +284,27 @@ export default class ResearchPlanDetailsAttachments extends Component {
       </div>
     );
   }
+
+  renderDownloadAnnotatedImageButton(attachment){
+    if (!this.isImageFile(attachment.filename)||
+      attachment.isNew) {
+      return null;
+    }
+    return (
+    <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
+              <Button
+                bsSize="xsmall"
+                className="button-right"
+                bsStyle="primary"
+                onClick={() =>{ 
+                  Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
+                }}
+              >
+                <i className="fa fa-download" aria-hidden="true" />
+              </Button>
+    </OverlayTrigger>
+    );
+  } 
 
   renderAttachments() {
     const { attachments } = this.props;

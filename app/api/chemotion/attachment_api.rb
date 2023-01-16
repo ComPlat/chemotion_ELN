@@ -134,7 +134,6 @@ module Chemotion
       end
       post 'upload_chunk' do
         return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
-
         Usecases::Attachments::UploadChunk.execute!(params)
       end
 
@@ -157,6 +156,25 @@ module Chemotion
       get ':attachment_id/annotation' do
         loader = AnnotationLoader .new
         return loader.get_annotation_of_attachment(params[:attachment_id])
+      end
+
+      desc 'get_annotatated_image_of_attachment'
+      get ':attachment_id/annotated_image' do
+
+        file_location=@attachment.attachment_data["derivatives"]["annotation"]["annotated_file_location"]               
+        return unless File.exist?(file_location)
+
+        content_type 'application/octet-stream'
+        
+        # generate filename for annotated image
+        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""        
+        env['api.format'] = :binary
+        
+        uploaded_file = File.open(file_location)           
+        data = uploaded_file.read
+        uploaded_file.close        
+
+        data
       end
 
       desc 'update_annotation_of_attachment'
