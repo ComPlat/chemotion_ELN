@@ -8,7 +8,8 @@ class AnnotationUpdater
   end
 
   def update_annotation(annotation_svg_string, attachment_id)
-    return if annotation_svg_string=="undefined"
+    return if annotation_svg_string == 'undefined'
+
     attachment = Attachment.find(attachment_id)
     sanitized_svg_string = sanitize_svg_string(annotation_svg_string)
     save_svg_string_to_file_system(sanitized_svg_string, attachment)
@@ -52,14 +53,16 @@ class AnnotationUpdater
     FileUtils.rm_f(tmp_thumbnail_location)
   end
 
-  def create_annotated_flat_image(attachment, svg_string)
+  def create_annotated_flat_image(attachment, svg_string) # rubocop:disable Metrics/AbcSize
     location_of_file = attachment.attachment_data['id']
     xml = replace_link_with_base64(location_of_file, svg_string)
 
-    annotated_image_location = "#{location_of_file.split('.')[0]}_annotated.png"
+    annotated_image_location = "#{location_of_file.split('.')[0]}_annotated" + File.extname(location_of_file)
     image = MiniMagick::Image.read(xml.to_s)
-    image.format('png')
+    image.format(File.extname(location_of_file).delete('.'))
     image.write(annotated_image_location)
+    attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] = annotated_image_location
+    attachment.update_column(:attachment_data, attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
   end
 
   def replace_link_with_base64(location_of_file, svg_string)
