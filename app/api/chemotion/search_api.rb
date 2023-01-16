@@ -324,7 +324,7 @@ module Chemotion
           return scope.order(
             Arel.sql(
               "position(','||(#{adv_params.first['field']['column']}::text)||',' in ','||
-              (#{ActiveRecord::Base.connection.quote(arg_value_str)}::text)||',')"
+              (#{ActiveRecord::Base.connection.quote(arg_value_str)}::text)||',')",
             )
           )
         elsif search_method == 'advanced' && molecule_sort == true
