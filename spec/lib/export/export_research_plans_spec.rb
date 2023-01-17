@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative '../../../app/usecases/attachments/thumbnail/thumbnail_creator'
-
 
 describe Export::ExportResearchPlan do
   describe '#to_relative_html' do

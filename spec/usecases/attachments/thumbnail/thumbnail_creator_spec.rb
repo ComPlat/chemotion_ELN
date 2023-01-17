@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../../app/usecases/attachments/thumbnail/thumbnail_creator'
-
-describe ThumbnailCreator do
+describe Usecases::Attachments::Thumbnail::ThumbnailCreator do
   let(:temp_file) { Tempfile.new.path }
   let(:attachment) { build(:attachment, identifier: SecureRandom.uuid) }
   let(:creator) { described_class.new }

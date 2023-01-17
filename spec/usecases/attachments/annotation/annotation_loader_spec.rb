@@ -1,9 +1,7 @@
 # frozen_string_literal: true
-
-require_relative '../../../../app/usecases/attachments/annotation/annotation_loader'
 require_relative 'annotation_helper'
 
-describe AnnotationLoader do
+describe Usecases::Attachments::Annotation::AnnotationLoader do
   let(:loader) { described_class.new }
   let(:attachment_without_annotation) { create(:attachment) }
   let(:attachment_with_annotation) { create(:attachment, :with_png_image) }

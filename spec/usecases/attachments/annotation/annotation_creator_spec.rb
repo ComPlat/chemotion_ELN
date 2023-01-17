@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../../app/usecases/attachments/annotation/annotation_creator'
-
-describe AnnotationCreator do
+describe Usecases::Attachments::Annotation::AnnotationCreator do
   describe '.create_derivative()' do
     let(:annotation_location) { Rails.root.join('spec/fixtures/annotations/20221212_valide_annotation_empty.svg') }
     let(:annotation_folder) { File.dirname(annotation_location) }
