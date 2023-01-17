@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
 # Class for creating a builder for a specific derivative
+
+module Usecases
+  module Attachments
 class DerivativeBuilderFactory
-  require_relative 'annotation/annotation_creator'
-  require_relative 'thumbnail/thumbnail_creator'
 
   def initialize(supported_formats_map = nil)
     @supported_formats_map = supported_formats_map || {
-      'ThumbnailCreator' => ThumbnailCreator.supported_formats,
-      'AnnotationCreator' =>
+      'Usecases::Attachments::Thumbnail::ThumbnailCreator' => Usecases::Attachments::Thumbnail::ThumbnailCreator.supported_formats,
+      'Usecases::Attachments::Annotation::AnnotationCreator' =>
         %w[jpg png svg]
     }
   end
@@ -23,6 +24,9 @@ class DerivativeBuilderFactory
   end
 
   def possible_creators
-    %w[ThumbnailCreator AnnotationCreator]
+    %w[Usecases::Attachments::Thumbnail::ThumbnailCreator
+       Usecases::Attachments::Annotation::AnnotationCreator]
   end
+end
+end
 end

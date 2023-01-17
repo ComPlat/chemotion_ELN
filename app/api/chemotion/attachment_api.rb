@@ -4,8 +4,6 @@ require 'barby'
 require 'barby/barcode/qr_code'
 require 'barby/outputter/svg_outputter'
 require 'digest'
-require_relative '../../usecases/attachments/annotation/annotation_loader'
-require_relative '../../usecases/attachments/annotation/annotation_updater'
 
 module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
@@ -154,7 +152,7 @@ module Chemotion
 
       desc 'get_annotation_of_attachment'
       get ':attachment_id/annotation' do
-        loader = AnnotationLoader .new
+        loader = Usecases::Attachments::Annotation::AnnotationLoader .new
         return loader.get_annotation_of_attachment(params[:attachment_id])
       end
 
@@ -182,7 +180,7 @@ module Chemotion
       params do
         require :updated_svg_string, type: String
       end
-        updater = AnnotationUpdater.new
+        updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
         updater.update_annotation(
           params['updated_svg_string'],
           params['attachment_id'].to_i

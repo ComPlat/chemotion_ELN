@@ -3,7 +3,6 @@
 # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/BlockLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity, Layout/LineLength
 
 require 'json'
-require_relative '../../app/usecases/attachments/annotation/annotation_updater'
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
@@ -126,7 +125,7 @@ module Import
       return unless annotation_entry
 
       annotation_data = annotation_entry.get_input_stream.read.force_encoding('UTF-8')
-      updater = AnnotationUpdater.new
+      updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
 
       annotation_data = annotation_data.gsub(
         %r{/api/v1/attachments/image/([0-9])*},
