@@ -299,6 +299,13 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  handleInventorySample(e) {
+    const { sample } = this.state;
+    sample.inventory_sample = e.target.checked;
+    console.log(sample);
+    this.handleSampleChanged(sample);
+  }
+
   handleStructureEditorSave(molfile, svg_file = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
@@ -345,6 +352,7 @@ export default class SampleDetails extends React.Component {
   handleSubmit(closeView = false) {
     LoadingActions.start();
     const { sample } = this.state;
+    console.log(sample);
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
@@ -491,6 +499,12 @@ export default class SampleDetails extends React.Component {
       <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
 
+    const inventorySample = (
+      <Checkbox className="sample-inventory-header" checked={sample.inventory_sample} onChange={(e) => this.handleInventorySample(e)}>
+        Inventory Sample
+      </Checkbox>
+    );
+
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
         Decoupled
@@ -551,6 +565,7 @@ export default class SampleDetails extends React.Component {
         <PrintCodeButton element={sample} />
         {sample.isNew ? <FastInput fnHandle={this.handleFastInput} /> : null}
         {decoupleCb}
+        {inventorySample}
         <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           {colLabel}

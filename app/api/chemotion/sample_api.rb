@@ -318,6 +318,7 @@ module Chemotion
         requires :container, type: Hash
         optional :user_labels, type: Array
         optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
+        optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         #use :root_container_params
@@ -430,6 +431,7 @@ module Chemotion
         optional :molecule_id, type: Integer
         requires :container, type: Hash
         optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
+        optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
       end
@@ -461,6 +463,7 @@ module Chemotion
           stereo: params[:stereo],
           molecule_name_id: params[:molecule_name_id],
           decoupled: params[:decoupled],
+          inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula]
         }

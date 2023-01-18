@@ -10,6 +10,7 @@ module Entities
       expose! :can_update,      unless: :displayed_in_list
       expose! :code_log,        unless: :displayed_in_list, using: 'Entities::CodeLogEntity'
       expose! :decoupled
+      expose! :inventory_sample
       expose! :external_label
       expose! :id
       expose! :is_restricted

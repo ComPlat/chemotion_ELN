@@ -2,15 +2,15 @@
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
 #
-# Note that this schema.rb definition is the authoritative source for your
-# database schema. If you need to create the application database on another
-# system, you should be using db:schema:load, not running all the migrations
-# from scratch. The latter is a flawed and unsustainable approach (the more migrations
-# you'll amass, the slower it'll run and the greater likelihood for issues).
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_10_24_150829) do
+ActiveRecord::Schema.define(version: 2023_01_05_122756) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -97,7 +97,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
     t.integer "sample_id"
     t.text "cas"
     t.jsonb "chemical_data"
-    t.index ["sample_id"], name: "index_chemicals_on_sample_id"
   end
 
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
@@ -462,13 +461,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.time "deleted_at"
-  end
-
-  create_table "inventories", force: :cascade do |t|
-    t.jsonb "inventory_parameters"
-    t.integer "inventoriable_id"
-    t.string "inventoriable_type"
-    t.index ["inventoriable_type", "inventoriable_id"], name: "index_inventories_on_inventoriable_type_and_inventoriable_id"
   end
 
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
@@ -900,8 +892,8 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
   end
 
   create_table "research_plans_screens", force: :cascade do |t|
-    t.integer "screen_id"
-    t.integer "research_plan_id"
+    t.bigint "screen_id", null: false
+    t.bigint "research_plan_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -910,8 +902,8 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
   end
 
   create_table "research_plans_wellplates", force: :cascade do |t|
-    t.integer "research_plan_id"
-    t.integer "wellplate_id"
+    t.bigint "research_plan_id", null: false
+    t.bigint "wellplate_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -982,8 +974,10 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
+    t.boolean "inventory_sample", default: false
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
+    t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
@@ -1230,7 +1224,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
 
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
-<<<<<<< HEAD
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
   create_function :user_instrument, sql_definition: <<-'SQL'
@@ -1247,8 +1240,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
          order by extended_metadata -> 'instrument' limit 10
        $function$
   SQL
-=======
->>>>>>> chemical entry feature refactored
   create_function :collection_shared_names, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
@@ -1264,7 +1255,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
        ) as result
        $function$
   SQL
-<<<<<<< HEAD
   create_function :user_ids, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
        RETURNS TABLE(user_ids integer)
@@ -1304,8 +1294,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
           end;
        $function$
   SQL
-=======
->>>>>>> chemical entry feature refactored
   create_function :detail_level_for_sample, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)
        RETURNS TABLE(detail_level_sample integer, detail_level_wellplate integer)
@@ -1339,7 +1327,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
-<<<<<<< HEAD
   create_function :group_user_ids, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
        RETURNS TABLE(user_ids integer)
@@ -1350,8 +1337,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
              select user_id from users_groups where group_id = $1
       $function$
   SQL
-=======
->>>>>>> chemical entry feature refactored
   create_function :generate_notifications, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_notifications(in_channel_id integer, in_message_id integer, in_user_id integer, in_user_ids integer[])
        RETURNS integer
@@ -1383,7 +1368,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
       	return in_message_id;
       end;$function$
   SQL
-<<<<<<< HEAD
   create_function :labels_by_user_sample, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
        RETURNS TABLE(labels text)
@@ -1399,8 +1383,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
          ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
        $function$
   SQL
-=======
->>>>>>> chemical entry feature refactored
   create_function :generate_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
        RETURNS boolean
@@ -1436,51 +1418,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
       end
       $function$
   SQL
-<<<<<<< HEAD
-=======
-  create_function :group_user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
-  SQL
-  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
-       $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-         begin
-          if (in_user_id = in_current_user_id) then
-            return null;
-          else
-            return (select row_to_json(result) from (
-            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-            from users where id = $1
-            ) as result);
-          end if;
-          end;
-       $function$
-  SQL
->>>>>>> chemical entry feature refactored
   create_function :update_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
@@ -1504,45 +1441,6 @@ ActiveRecord::Schema.define(version: 2022_10_24_150829) do
       end
       $function$
   SQL
-<<<<<<< HEAD
-=======
-  create_function :user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-         select row_to_json(result) from (
-           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           from users where id = $1
-         ) as result
-       $function$
-  SQL
-  create_function :user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-          select $1 as id
-          union
-          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-         and users.type in ('Group') and users_groups.user_id = $1)
-        $function$
-  SQL
-  create_function :user_instrument, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
-       RETURNS TABLE(instrument text)
-       LANGUAGE sql
-      AS $function$
-         select distinct extended_metadata -> 'instrument' as instrument from containers c
-         where c.container_type='dataset' and c.id in
-         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-         order by extended_metadata -> 'instrument' limit 10
-       $function$
-  SQL
->>>>>>> chemical entry feature refactored
   create_function :literatures_by_element, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
        RETURNS TABLE(literatures text)
