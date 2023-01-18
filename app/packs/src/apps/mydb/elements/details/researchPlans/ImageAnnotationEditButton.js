@@ -21,8 +21,7 @@ export default class ImageAnnotationEditButton extends Component {
           className={
             this.props.horizontalAlignment ? this.props.horizontalAlignment : ""
           }
-          onClick={() => {      
-            console.log("Ich hab geklickt")    
+          onClick={() => {                
             this.props.parent.setState({
               imageEditModalShown: true,
               choosenAttachment: this.props.attachment,

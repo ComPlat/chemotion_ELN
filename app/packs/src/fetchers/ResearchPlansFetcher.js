@@ -60,11 +60,12 @@ export default class ResearchPlansFetcher {
       },
       body: JSON.stringify(researchPlan.serialize())
     }).then((response) => response.json())
-      .then((json) => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-      .then(() => { ResearchPlansFetcher.updateAnnotations(researchPlan) })
-      .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      .then((json) =>{ GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)})
+      .then(() => {
+         return ResearchPlansFetcher.updateAnnotations(researchPlan) })
+      .then(() =>{
+        return this.fetchById(researchPlan.id)} )
+      .catch((errorMessage) => {console.log(errorMessage);});
 
     if (containerFiles.length > 0) {
       const tasks = [];

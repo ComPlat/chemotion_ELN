@@ -8,15 +8,33 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ElementStore from '../../../../../../stores/alt/stores/ElementStore';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
     this.state = {imageEditModalShown: false,attachments: props.attachments};
+
+    this.onElementStoreChange = this.onElementStoreChange.bind(this);
   }
 
   componentDidMount() {
     this.generateSrcOfImage(this.props.field.value.public_name);
+    ElementStore.listen(this.onElementStoreChange);
+    
+  }
+
+  componentWillUnmount(){
+    ElementStore.unlisten(this.onElementStoreChange);
+  } 
+
+  onElementStoreChange(state){
+    console.log("hallo")
+    if(!state.selecteds[0]){return} 
+     const currentEntry=state.selecteds[0].body.filter(entry => entry.id==this.props.field.id)[0] ;
+     
+     this.generateSrcOfImage(currentEntry.value.public_name)
+   
   }
 
   handleDrop(files) {
@@ -98,9 +116,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
     } else {
+      console.log("Ich hole das aktuellste Bild")
       AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName,annotated: true })
         .then((result) => {
+         
           if (result.data != null) {
+            console.log("setting the new state "+result.data)
             this.setState({ imageSrc: result.data });
           }
         });
