@@ -186,15 +186,15 @@ module Chemotion
         serialized = Entities::SampleEntity.represent(
           sample,
           detail_levels: detail_levels,
-          displayed_in_list: true
+          displayed_in_list: true,
         ).serializable_hash
         serialized_scope.push(serialized)
       end
 
       def serialized_result_by_id(element, serialized_scope)
+        entities = "Entities::#{id_params['model_name'].capitalize}Entity".constantize
         serialized =
-          "Entities::#{id_params['model_name'].capitalize}Entity".constantize
-            .represent(s, displayed_in_list: true).serializable_hash
+          entities.represent(element, displayed_in_list: true).serializable_hash
         serialized_scope.push(serialized)
       end
 
@@ -515,7 +515,7 @@ module Chemotion
       end
 
       namespace :by_ids do
-        desc "Return elements by ids"
+        desc 'Return elements by ids'
         params do
           use :search_params
         end
@@ -527,9 +527,10 @@ module Chemotion
         post do
           scope = search_by_ids(@c_id)
           return unless scope
+
           serialize_result_by_ids(
             scope,
-            params[:page]
+            params[:page],
           )
         end
       end
