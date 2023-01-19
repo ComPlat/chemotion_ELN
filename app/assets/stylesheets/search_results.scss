@@ -73,3 +73,17 @@
   margin-top: 20px;
   padding-top: 15px;
 }
+
+.search-result-tab-content-container {
+  overflow-x: auto;
+  min-height: 80px;
+  max-height: 500px;
+  position: relative;
+}
+
+.tab-spinner {
+  color: #ddd;
+  position: absolute;
+  top: 20%;
+  left: 2%;
+}

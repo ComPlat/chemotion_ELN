@@ -22,6 +22,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
 
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
   const searchResultsStore = useContext(StoreContext).searchResults;
+  const uiState = currentState.currentCollection == null ? UIStore.getState() : currentState;
 
   useEffect(() => {
     const length = selectedOptions.length - 1;
@@ -48,8 +49,6 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   }
 
   const handleSave = () => {
-    const uiState = currentState.currentCollection == null ? UIStore.getState() : currentState;
-    //const uiState = currentState;
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const filters = filterSelectedOptions();
@@ -132,7 +131,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult handleCancel={handleCancel} />;
+      return <SearchResult handleCancel={handleCancel} currentState={uiState} />;
     } else {
       return null;
     }

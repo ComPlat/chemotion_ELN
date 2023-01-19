@@ -5,7 +5,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SearchResultTabContent from './SearchResultTabContent';
 
-const SearchResult = ({ handleCancel }) => {
+const SearchResult = ({ handleCancel, currentState }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
   const results = searchResultsStore.searchResultValues;
   const profile = UserStore.getState().profile || {};
@@ -45,24 +45,6 @@ const SearchResult = ({ handleCancel }) => {
 
   const handleAdoptResult = () => {
     // push results to alt store
-  }
-
-  const SearchResultsList = () => {
-    var elements = results.find(val => val.id.indexOf(visibleTabs[2].key) !== -1);
-    return (
-      <>
-        {
-          results.map((val, i) => {
-            return <div key={i}>{val.id}: {val.results.total_elements}</div>
-          })
-        }
-        {
-          visibleTabs.map((val, i) => {
-            return <div key={i}>{val.key}</div>
-          })
-        }
-      </>
-    );
   }
 
   const resultsCount = () => {
@@ -106,7 +88,11 @@ const SearchResult = ({ handleCancel }) => {
       const tabResult = tab.results;
 
       const navItem = searchResultNavItem(list, tabResult);
-      const tabContent = <SearchResultTabContent key={list.key} list={list} tabResult={tabResult} />
+      const tabContent =
+        <SearchResultTabContent key={`${list.key}-result-tab`}
+                                list={list} tabResult={tabResult}
+                                currentState={currentState}
+        />
 
       navItems.push(navItem);
       tabContents.push(tabContent);

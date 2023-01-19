@@ -20,7 +20,7 @@ module Chemotion
             # polymer_type
           #]
           optional :elementType, type: String, values: %w[
-            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements by_ids
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -33,6 +33,10 @@ module Chemotion
             optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE'], default: 'LIKE'
             requires :field, type: Hash
             requires :value, type: String
+          end
+          optional :id_params, type: Hash do
+            requires :model_name, type: String
+            requires :ids, type: Array
           end
         end
         requires :collection_id, type: String
@@ -56,6 +60,10 @@ module Chemotion
 
       def adv_params
         params[:selection][:advanced_params]
+      end
+
+      def id_params
+        params[:selection][:id_params]
       end
 
       def sample_structure_search(c_id = @c_id, not_permitted = @dl_s && @dl_s < 1 )
@@ -126,6 +134,46 @@ module Chemotion
 
       def elements_search(c_id = @c_id, dl = @dl)
         Labimotion::Search.elements_search(params, current_user, c_id, dl)
+      end
+
+      def search_by_ids(c_id = @c_id)
+        # todo generic elements
+        if id_params['model_name'] == "sample"
+          id_params['model_name'].capitalize.constantize
+            .includes_for_list_display
+            .by_collection_id(c_id.to_i)
+            .where(id: id_params['ids'])
+        else
+          id_params['model_name'].capitalize.constantize
+            .by_collection_id(c_id.to_i)
+            .where(id: id_params['ids'])
+        end
+      end
+
+      def serialize_result_by_ids(scope, page)
+        serialized_scope = []
+        result = {}
+        # todo generic elements
+        scope.map do |s|
+          if id_params['model_name'] == "sample"
+            detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: s).detail_levels
+            serialized = Entities::SampleEntity.represent(
+              s,
+              detail_levels: detail_levels,
+              displayed_in_list: true
+            ).serializable_hash
+            serialized_scope.push(serialized)
+          else
+            serialized = "Entities::#{id_params['model_name'].capitalize}Entity".constantize.represent(s, displayed_in_list: true).serializable_hash
+            serialized_scope.push(serialized)
+          end
+        end
+        result[id_params['model_name'].pluralize] = {
+          elements: serialized_scope,
+          page: page,
+          ids: id_params['ids']
+        }
+        return result
       end
 
       def serialize_samples sample_ids, page, search_method, molecule_sort
@@ -440,6 +488,26 @@ module Chemotion
             elements_ids,
             params[:page],
             params[:molecule_sort]
+          )
+        end
+      end
+
+      namespace :by_ids do
+        desc "Return elements by ids"
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          scope = search_by_ids(@c_id)
+          return unless scope
+          serialize_result_by_ids(
+            scope,
+            params[:page]
           )
         end
       end
