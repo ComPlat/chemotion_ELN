@@ -137,43 +137,65 @@ module Chemotion
       end
 
       def search_by_ids(c_id = @c_id)
-        # todo generic elements
-        if id_params['model_name'] == "sample"
-          id_params['model_name'].capitalize.constantize
-            .includes_for_list_display
-            .by_collection_id(c_id.to_i)
-            .where(id: id_params['ids'])
+        # TODO: generic elements
+        model = id_params['model_name'].capitalize.constantize
+        if id_params['model_name'] == 'sample'
+          search_by_ids_for_sample(c_id, model)
         else
-          id_params['model_name'].capitalize.constantize
+          model
             .by_collection_id(c_id.to_i)
             .where(id: id_params['ids'])
         end
       end
 
+      def search_by_ids_for_sample(c_id, model)
+        model
+          .includes_for_list_display
+          .by_collection_id(c_id.to_i)
+          .where(id: id_params['ids'])
+      end
+
       def serialize_result_by_ids(scope, page)
-        serialized_scope = []
         result = {}
-        # todo generic elements
-        scope.map do |s|
-          if id_params['model_name'] == "sample"
-            detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: s).detail_levels
-            serialized = Entities::SampleEntity.represent(
-              s,
-              detail_levels: detail_levels,
-              displayed_in_list: true
-            ).serializable_hash
-            serialized_scope.push(serialized)
-          else
-            serialized = "Entities::#{id_params['model_name'].capitalize}Entity".constantize.represent(s, displayed_in_list: true).serializable_hash
-            serialized_scope.push(serialized)
-          end
-        end
+        serialized_scope = serialized_scope_for_result_by_id(scope)
+
         result[id_params['model_name'].pluralize] = {
           elements: serialized_scope,
           page: page,
-          ids: id_params['ids']
+          ids: id_params['ids'],
         }
-        return result
+        result
+      end
+
+      def serialized_scope_for_result_by_id(scope)
+        # TODO: generic elements
+        serialized_scope = []
+        scope.map do |s|
+          serialized_scope =
+            if id_params['model_name'] == 'sample'
+              serialized_result_by_id_for_sample(s, serialized_scope)
+            else
+              serialized_result_by_id(s, serialized_scope)
+            end
+        end
+        serialized_scope
+      end
+
+      def serialized_result_by_id_for_sample(sample, serialized_scope)
+        detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+        serialized = Entities::SampleEntity.represent(
+          sample,
+          detail_levels: detail_levels,
+          displayed_in_list: true
+        ).serializable_hash
+        serialized_scope.push(serialized)
+      end
+
+      def serialized_result_by_id(element, serialized_scope)
+        serialized =
+          "Entities::#{id_params['model_name'].capitalize}Entity".constantize
+            .represent(s, displayed_in_list: true).serializable_hash
+        serialized_scope.push(serialized)
       end
 
       def serialize_samples sample_ids, page, search_method, molecule_sort
