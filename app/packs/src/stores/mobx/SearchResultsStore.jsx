@@ -23,7 +23,8 @@ export const SearchResultsStore = types
     search_filters: types.map(SearchFilter),
     search_icon: types.optional(types.enumeration("search_icon", ["right", "down"]), "down"),
     result_icon: types.optional(types.enumeration("result_icon", ["right", "down"]), "right"),
-    error_message: types.optional(types.string, "")
+    error_message: types.optional(types.string, ""),
+    tab_current_page: types.optional(types.array(types.frozen({})), [])
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
@@ -31,27 +32,36 @@ export const SearchResultsStore = types
     loadSearchResults: flow(function* loadSearchResults(params) {
       let result = yield SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params);
       self.search_results.clear();
+      self.tab_search_results.clear();
       Object.entries(result).forEach(([key, value]) => {
         let searchResult = SearchResult.create({
           id: key,
           results: {
-            elements: value['elements'],
-            ids: value['ids'],
-            page: value['page'],
-            per_page: value['perPage'],
-            total_elements: value['totalElements']
+            ids: value.ids,
+            page: value.page,
+            pages: value.pages,
+            per_page: value.perPage,
+            total_elements: value.totalElements
           }
         })
         self.search_results.set(searchResult.id, searchResult)
+        self.addSearchResult(key, value, value.ids.slice(0, 15))
       });
       console.log(getSnapshot(self.search_results))
     }),
-    addSearchResult(key, result) {
+    loadSearchResultTab: flow(function* loadSearchResultTab(params) {
+      let result = yield SearchFetcher.fetchBasedOnSearchResultIds(params);
+      Object.entries(result).forEach(([key, value]) => {
+        self.addSearchResult(key, value, [])
+      });
+      console.log('tabs', getSnapshot(self.tab_search_results))
+    }),
+    addSearchResult(key, result, ids) {
       let tabSearchResult = SearchResult.create({
-        id: key,
+        id: `${key}-${result.page || 1}`,
         results: {
           elements: result.elements,
-          ids: result.ids,
+          ids: ids.length > 0 ? ids : result.ids,
           page: result.page
         }
       })
@@ -95,11 +105,15 @@ export const SearchResultsStore = types
     },
     changeErrorMessage(message) {
       self.error_message = message
+    },
+    changeTabCurrentPage(key, index, id) {
+      self.tab_current_page[id] = { [key]: index };
     }
   }))
   .views(self => ({
     get searchResultsCount() { return keys(self.search_results).length },
     get searchResultValues() { return values(self.search_results) },
+    get tabSearchResultValues() { return values(self.tab_search_results) },
     get searchResultVisible() { return self.search_results_visible },
     get searchVisible() { return self.search_visible },
     get searchFilters() { return values(self.search_filters) }
