@@ -7,7 +7,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SearchResultTabContent from './SearchResultTabContent';
 
-const SearchResult = ({ handleCancel, currentState, searchParams }) => {
+const SearchResult = ({ handleCancel, currentState, searchParams, handleRefind }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
   const results = searchResultsStore.searchResultValues;
   const profile = UserStore.getState().profile || {};
@@ -154,6 +154,9 @@ const SearchResult = ({ handleCancel, currentState, searchParams }) => {
       <ButtonToolbar className="result-button-toolbar">
         <Button bsStyle="warning" onClick={handleCancel}>
           Cancel
+        </Button>
+        <Button bsStyle="success" onClick={handleRefind}>
+          Refind
         </Button>
         <Button bsStyle="primary" onClick={handleAdoptResult} style={{ marginRight: '20px' }} >
           Adopt Result

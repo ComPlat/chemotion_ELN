@@ -86,6 +86,17 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     });
   }
 
+  const handleRefind = () => {
+    searchResultsStore.clearSearchResults();
+    setChangedValues(defaultValues);
+    //document.getElementById('ketcher').contentWindow.location.reload();
+    const iframe = document.querySelector('#ketcher').contentWindow;
+    iframe.document.querySelector('#new').click();
+    //console.log(document.querySelector('#ketcher').contentWindow.document.querySelector('#new').innerHTML);
+    //document.getElementById('ketcher').contentWindow.document.getElementsByClassName('main_document-new').click();
+    //main_document-new
+  }
+
   const showErrorMessage = () => {
     if (searchResultsStore.error_message) {
       return <Alert bsStyle="danger">{searchResultsStore.error_message}</Alert>;
@@ -117,7 +128,12 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult handleCancel={handleCancel} currentState={currentState} searchParams={searchParams} />;
+      return <SearchResult
+                handleCancel={handleCancel}
+                currentState={currentState}
+                searchParams={searchParams}
+                handleRefind={handleRefind}
+              />;
     } else {
       return null;
     }

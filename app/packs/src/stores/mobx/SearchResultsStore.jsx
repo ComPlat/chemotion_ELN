@@ -91,6 +91,7 @@ export const SearchResultsStore = types
       self.tab_search_results.clear();
       self.hideSearchResults();
       self.clearFilter();
+      self.changeErrorMessage('');
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;
