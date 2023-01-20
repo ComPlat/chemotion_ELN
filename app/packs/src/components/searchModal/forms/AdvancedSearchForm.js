@@ -115,21 +115,19 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
     
     if (searchResultsStore.searchResultVisible && filters.length > 0) {
       return (
-        <>
-          <div style={{ position: 'relative' }}>
-            <h4>Your Search</h4>
-            {
-              filters.map((val, i) => {
-                return <div key={i}>{[val.link, val.field.label, val.match, val.value].join(" ")}</div>
-              })
-            }
-            {
-              searchResultsStore.searchResultsCount > 0 ? null : (
-                <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
-              )
-            }
-          </div>
-        </>
+        <div style={{ position: 'relative' }}>
+          <h4>Your Search</h4>
+          {
+            filters.map((val, i) => {
+              return <div key={i}>{[val.link, val.field.label, val.match, val.value].join(" ")}</div>
+            })
+          }
+          {
+            searchResultsStore.searchResultsCount > 0 ? null : (
+              <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
+            )
+          }
+        </div>
       );
     } else {
       return null;
