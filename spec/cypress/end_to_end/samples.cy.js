@@ -1,0 +1,32 @@
+/*
+State description: create a default user and Login then create a collection
+
+Testcase 1: update sample information
+Testcase 1: add attachment to a sample under analysis section
+
+Test for drag N drop error
+*/
+
+describe('samples scenario', () => {
+  beforeEach(() => {
+    cy.visit('users/sign_in');
+  });
+
+  it('create samples', () => {
+    // setting up state
+    cy.createDefaultUser();
+    cy.createCollection();
+    cy.login('UC', 'user_password');
+
+    // Testcase starts here
+    cy.get('#tree-id-Col1').click();
+    cy.get('#create-split-button').click();
+    cy.get('#create-sample-button').click();
+    cy.get('i.glyphicon-chevron-right').click();
+    cy.get('#smilesInput').type('c1cc(cc(c1)c1ccccc1)c1ccccc1');
+    cy.get('#smile-create-molecule').click();
+    cy.get('#txinput_name').type('Sample A');
+    cy.get('#submit-sample-btn').click();
+    cy.get('#txinput_name').should('have.value', 'Sample A');
+  });
+});

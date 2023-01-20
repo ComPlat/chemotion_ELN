@@ -33,7 +33,8 @@ Cypress.Commands.add('createDefaultUser', () => {
       last_name: 'Complat',
       email: 'complat.user@eln.edu',
       name_abbreviation: 'UC',
-      account_active: 'true'
+      account_active: 'true',
+      id: 1,
     }],
   ]);
 });
@@ -45,6 +46,25 @@ Cypress.Commands.add('createDefaultAdmin', () => {
       password_confirmation: 'admin_password',
       name_abbreviation: 'ADM',
       account_active: 'true'
+    }],
+  ]);
+});
+
+Cypress.Commands.add('login', (username, password) => {
+  cy.visit('users/sign_in');
+  cy.get('#user_login').type(username);
+  cy.get('#user_password').type(`${password}{enter}`, { log: false });
+  // cy.get('.btn').contains('Log in').click();
+  cy.contains('User Complat');
+  cy.url().should('include', '/mydb/collection/all');
+});
+
+Cypress.Commands.add('createCollection', () => {
+  cy.appFactories([
+    ['create', 'collection', {
+      user_id: 1,
+      label: 'Col1',
+      sample_detail_level: 10,
     }],
   ]);
 });
