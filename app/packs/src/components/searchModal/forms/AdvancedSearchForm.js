@@ -76,6 +76,11 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
     }
   }
 
+  const handleRefind = () => {
+    searchResultsStore.clearSearchResults();
+    setSelectedOptions(defaultSelections);
+  }
+
   const showErrorMessage = () => {
     if (searchResultsStore.error_message) {
       return <Alert bsStyle="danger">{searchResultsStore.error_message}</Alert>;
@@ -133,7 +138,12 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult handleCancel={handleCancel} currentState={uiState} searchParams={searchParams} />;
+      return <SearchResult
+                handleCancel={handleCancel}
+                currentState={uiState}
+                searchParams={searchParams}
+                handleRefind={handleRefind}
+              />;
     } else {
       return null;
     }
