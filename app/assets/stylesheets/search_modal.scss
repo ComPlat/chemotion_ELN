@@ -50,6 +50,10 @@
   margin-right: 15px;
 }
 
+[dialogas=full-search] .modal-header .window-minimize:hover {
+  cursor: pointer;
+}
+
 [dialogas=full-search] .modal-body {
   padding: 0;
 }
@@ -58,6 +62,14 @@
   [dialogas=full-search] .modal-header .window-minimize {
     margin-top: -22px;
   }
+}
+
+.form-container {
+  display: block;
+}
+
+.form-container.minimized {
+  display: none;
 }
 
 .collapsible-search-result.panel.panel-default {

@@ -27,6 +27,7 @@ const Components = {
 const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) => {
   const [selectedOption, setSelectedOption] = useState({ value: 'advanced', label: 'Advanced Search' });
   const [visibleModal, setVisibleModal] = useState(showModal);
+  const [minimizeModal, setMinimizeModal] = useState(true);
   const [view, setView] = useState();
   const selectOptions = FormData.forms.map((option) => ({ id: option.id, value: option.value, label: option.label }));
   const searchResultsStore = useContext(StoreContext).searchResults;
@@ -85,13 +86,18 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) =
     if (onCancel) { onCancel(); }
   }
 
+  const handleMinimize = () => {
+    setMinimizeModal(current => !current)
+  }
+
   const handleSearchPulldownSelection = (e) => {
     setSelectedOption({ value: e.value, label: e.label });
     setView(FormComponent(FormData.forms[e.id]));
-    if (searchResultsStore.searchResultsCount > 0) {
-      searchResultsStore.clearSearchResults();
-    }
+    searchResultsStore.clearSearchResults();
+    setMinimizeModal(true);
   }
+
+  let minimizedClass = minimizeModal ? '' : ' minimized';
 
   return (
     <Draggable handle=".handle">
@@ -116,12 +122,12 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) =
             />
           </div>
           <div className="col-md-1 col-sm-1">
-            <i className="fa fa-window-minimize window-minimize" />
+            <i className="fa fa-window-minimize window-minimize" onClick={handleMinimize} />
           </div>
         </Modal.Header>
         <Modal.Body>
           <React.Suspense fallback={<Spinner />}>
-            <div className="form-container">
+            <div className={`form-container${minimizedClass}`}>
               {view}
             </div>
           </React.Suspense>
