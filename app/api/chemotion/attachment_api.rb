@@ -132,6 +132,7 @@ module Chemotion
       end
       post 'upload_chunk' do
         return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
+
         Usecases::Attachments::UploadChunk.execute!(params)
       end
 
@@ -152,38 +153,37 @@ module Chemotion
 
       desc 'get_annotation_of_attachment'
       get ':attachment_id/annotation' do
-        loader = Usecases::Attachments::Annotation::AnnotationLoader .new
+        loader = Usecases::Attachments::Annotation::AnnotationLoader.new
         return loader.get_annotation_of_attachment(params[:attachment_id])
       end
 
       desc 'get_annotatated_image_of_attachment'
       get ':attachment_id/annotated_image' do
-
-        file_location=@attachment.attachment_data["derivatives"]["annotation"]["annotated_file_location"]               
-        return unless File.exist?(file_location)
-
         content_type 'application/octet-stream'
-        
-        # generate filename for annotated image
-        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""        
+        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
         env['api.format'] = :binary
-        
-        uploaded_file = File.open(file_location)           
+
+        file_location = @attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
+        uploaded_file = if !file_location.nil? && File.exist?(file_location)
+                          File.open(file_location)
+                        else
+                          @attachment.attachment_attacher.file
+                        end
         data = uploaded_file.read
-        uploaded_file.close        
+        uploaded_file.close
 
         data
       end
 
       desc 'update_annotation_of_attachment'
       post ':attachment_id/annotation' do
-      params do
-        require :updated_svg_string, type: String
-      end
+        params do
+          require :updated_svg_string, type: String
+        end
         updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
         updater.update_annotation(
           params['updated_svg_string'],
-          params['attachment_id'].to_i
+          params['attachment_id'].to_i,
         )
       end
 
@@ -295,17 +295,17 @@ module Chemotion
 
       get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
-        if params[:annotated] then
-          annotatedFilePath=@attachment.attachment_data["derivatives"]["annotation"]["annotated_file_location"]
-          annotatedFileExists=File.exists?(annotatedFilePath)
-          sfilename= @attachment.key+'_annotated.png' if annotatedFileExists
+        if params[:annotated]
+          annotated_file_path = @attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
+          annotated_file_exists = File.exist?(annotated_file_path)
+          sfilename = "#{@attachment.key}_annotated.png" if annotated_file_exists
         end
         content_type @attachment.content_type
         header['Content-Disposition'] = "attachment; filename=#{sfilename}"
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
         uploaded_file = @attachment.attachment_attacher.file
-        uploaded_file= File.open(annotatedFilePath) if annotatedFileExists
+        uploaded_file = File.open(annotated_file_path) if annotated_file_exists
         data = uploaded_file.read
         uploaded_file.close
 
