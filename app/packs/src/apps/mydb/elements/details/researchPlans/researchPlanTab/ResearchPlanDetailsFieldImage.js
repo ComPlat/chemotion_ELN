@@ -29,7 +29,6 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   } 
 
   onElementStoreChange(state){
-    console.log("hallo")
     if(!state.selecteds[0]){return} 
      const currentEntry=state.selecteds[0].body.filter(entry => entry.id==this.props.field.id)[0] ;
      
@@ -116,12 +115,9 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
     } else {
-      console.log("Ich hole das aktuellste Bild")
       AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName,annotated: true })
-        .then((result) => {
-         
+        .then((result) => {         
           if (result.data != null) {
-            console.log("setting the new state "+result.data)
             this.setState({ imageSrc: result.data });
           }
         });
