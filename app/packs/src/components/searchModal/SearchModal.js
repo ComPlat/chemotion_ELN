@@ -24,7 +24,7 @@ const Components = {
   empty: NoFormSelected
 }
 
-const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) => {
+const SearchModal = ({ showModal, onCancel, currentState, isPublic }) => {
   const [selectedOption, setSelectedOption] = useState({ value: 'advanced', label: 'Advanced Search' });
   const [visibleModal, setVisibleModal] = useState(showModal);
   const [minimizeModal, setMinimizeModal] = useState(true);
@@ -41,7 +41,6 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) =
     if (typeof Components[block.component] !== "undefined") {
       return React.createElement(Components[block.component], {
         key: block.value,
-        molfile: molfile,
         handleCancel: handleCancel,
         currentState: currentState,
         isPublic: isPublic

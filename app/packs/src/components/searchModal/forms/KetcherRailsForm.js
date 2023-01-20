@@ -8,7 +8,7 @@ import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => {
+const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
   const editor = new StructureEditor({ ...FormData.forms[1], id: 'ketcher' });
 
   const defaultValues = [{
@@ -89,12 +89,8 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
   const handleRefind = () => {
     searchResultsStore.clearSearchResults();
     setChangedValues(defaultValues);
-    //document.getElementById('ketcher').contentWindow.location.reload();
     const iframe = document.querySelector('#ketcher').contentWindow;
     iframe.document.querySelector('#new').click();
-    //console.log(document.querySelector('#ketcher').contentWindow.document.querySelector('#new').innerHTML);
-    //document.getElementById('ketcher').contentWindow.document.getElementsByClassName('main_document-new').click();
-    //main_document-new
   }
 
   const showErrorMessage = () => {
@@ -107,19 +103,17 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
     if (searchResultsStore.searchResultVisible && searchSvg != '') {
       // <div>{searchSvg}</div>
       return (
-        <>
-          <div style={{ position: 'relative' }}>
-            <h4>Your Search</h4>
-            {
-              <div>{changedValues[0]['queryMolfile']}</div>
-            }
-            {
-              searchResultsStore.searchResultsCount > 0 ? null : (
-                <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
-              )
-            }
-          </div>
-        </>
+        <div style={{ position: 'relative' }}>
+          <h4>Your Search</h4>
+          {
+            <div>{changedValues[0]['queryMolfile']}</div>
+          }
+          {
+            searchResultsStore.searchResultsCount > 0 ? null : (
+              <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
+            )
+          }
+        </div>
       );
     } else {
       return (null);
