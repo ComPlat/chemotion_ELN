@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/CamAnNguyen/rdkit_chem
-  revision: 4b6c1835d605ec281c5d1d8cf89973a923a86757
+  revision: cf8a3890c5aa7f4db74e40d1cbd3a50b62bd8d94
   specs:
     rdkit_chem (2020.04.30.1)
 
