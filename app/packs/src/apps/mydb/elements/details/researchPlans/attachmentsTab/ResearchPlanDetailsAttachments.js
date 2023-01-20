@@ -248,13 +248,48 @@ export default class ResearchPlanDetailsAttachments extends Component {
               </div>
             </div>
           </Col>
-          <Col md={9}>{attachment.filename}</Col>
-          <Col md={2}>
-            {this.renderAnnotateImageButton(attachment)}
-            {this.renderRemoveAttachmentButton(attachment)}
-            {this.renderDownloadAnnotatedImageButton(attachment)}
+          <Col md={8}>{attachment.filename}</Col>
+          <Col md={3}>          
+            {this.renderRemoveAttachmentButton(attachment)}           
+            {this.renderDownloadOriginalButton(attachment,downloadTooltip)} 
+            {this.renderEditAttachmentButton(attachment,extension,attachmentEditor,isEditing,styleEditorBtn,styleEditorBtn,editDisable)} 
+
+           
+             
+              {this.renderDownloadAnnotatedImageButton(attachment)}
+              {this.renderAnnotateImageButton(attachment)}
             
-            <OverlayTrigger placement="top" overlay={downloadTooltip}>
+
+           
+            {this.renderImportAttachmentButton(attachment)}
+          </Col>
+        </Row>
+      </div>
+    );
+  }
+
+  renderEditAttachmentButton(attachment,extension,attachmentEditor,isEditing,styleEditorBtn,editDisable){
+    return (
+      <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
+        <Button
+          style={{ display: styleEditorBtn }}
+          bsSize="xsmall"
+          className="button-right"
+          bsStyle="success"
+          disabled={editDisable}
+          onClick={() => this.handleEdit(attachment)}>
+
+          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing}/>
+        </Button>
+      </OverlayTrigger>
+
+    );
+
+  } 
+
+  renderDownloadOriginalButton(attachment,downloadTooltip){
+    return (
+    <OverlayTrigger placement="top" overlay={downloadTooltip}>
               <Button
                 bsSize="xsmall"
                 className="button-right"
@@ -264,44 +299,28 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
-              <Button
-                style={{ display: styleEditorBtn }}
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="success"
-                disabled={editDisable}
-                onClick={() => this.handleEdit(attachment)}
-              >
-                <SpinnerPencilIcon
-                  spinningLock={!attachmentEditor || isEditing}
-                />
-              </Button>
-            </OverlayTrigger>
-            {this.renderImportAttachmentButton(attachment)}
-          </Col>
-        </Row>
-      </div>
     );
-  }
+  } 
 
   renderDownloadAnnotatedImageButton(attachment){
-    if (!this.isImageFile(attachment.filename)||
-      attachment.isNew) {
+    if (!this.isImageFile(attachment.filename)) {
       return null;
     }
     return (
     <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
+      <div className="research-plan-attachments-annotation-download">
               <Button
                 bsSize="xsmall"
                 className="button-right"
                 bsStyle="primary"
+                disabled={attachment.isNew}
                 onClick={() =>{ 
                   Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
                 }}
               >
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
+              </div>
     </OverlayTrigger>
     );
   } 
