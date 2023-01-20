@@ -134,6 +134,7 @@ class ElementStore {
       handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
+      handleDispatchSearchResult: ElementActions.dispatchSearchResult,
 
       handleFetchGenericElsByCollectionId: ElementActions.fetchGenericElsByCollectionId,
       handleFetchGenericElById: ElementActions.fetchGenericElById,
@@ -491,6 +492,12 @@ class ElementStore {
   // SEARCH
 
   handleFetchBasedOnSearchSelection(result) {
+    Object.keys(result).forEach((key) => {
+      this.state.elements[key] = result[key];
+    });
+  }
+
+  handleDispatchSearchResult(result) {
     Object.keys(result).forEach((key) => {
       this.state.elements[key] = result[key];
     });

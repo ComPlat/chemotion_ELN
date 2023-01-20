@@ -199,6 +199,12 @@ class ElementActions {
     };
   }
 
+  dispatchSearchResult(result) {
+    return (dispatch) => {
+      dispatch(result);
+    }
+  }
+
   // -- Generic --
   fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
     return (dispatch) => {
