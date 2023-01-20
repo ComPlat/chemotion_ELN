@@ -21,6 +21,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   }];
 
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
+  const [searchParams, setSearchParams] = useState({});
   const searchResultsStore = useContext(StoreContext).searchResults;
   const uiState = currentState.currentCollection == null ? UIStore.getState() : currentState;
 
@@ -63,11 +64,12 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
         search_by_method: 'advanced',
         page_size: uiState.number_of_results
       };
+      setSearchParams({ selection, collectionId: collectionId, isSync: uiState.isSync });
 
       searchResultsStore.loadSearchResults({
         selection,
-        collectionId: collectionId,
-        isSync: uiState.isSync,
+         collectionId: collectionId,
+         isSync: uiState.isSync,
       });
     } else {
       searchResultsStore.changeErrorMessage("Please fill out all needed fields");
@@ -131,7 +133,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult handleCancel={handleCancel} currentState={uiState} />;
+      return <SearchResult handleCancel={handleCancel} currentState={uiState} searchParams={searchParams} />;
     } else {
       return null;
     }

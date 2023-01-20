@@ -1,11 +1,13 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Col, Navbar, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Button } from 'react-bootstrap';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SearchResultTabContent from './SearchResultTabContent';
 
-const SearchResult = ({ handleCancel, currentState }) => {
+const SearchResult = ({ handleCancel, currentState, searchParams }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
   const results = searchResultsStore.searchResultValues;
   const profile = UserStore.getState().profile || {};
@@ -44,7 +46,25 @@ const SearchResult = ({ handleCancel, currentState }) => {
   }
 
   const handleAdoptResult = () => {
-    // push results to alt store
+    UIActions.setSearchSelection(searchParams.selection);
+    ElementActions.dispatchSearchResult(prepareResultForDispatch());
+    handleCancel();
+  }
+
+  const prepareResultForDispatch = () => {
+    let resultObject = {};
+    results.map((val, i) => {
+      let firstElements = searchResultsStore.tabSearchResultValues.find(tab => tab.id == `${val.id}-1`);
+      resultObject[val.id] = {
+        elements: firstElements.results.elements,
+        ids: val.results.ids,
+        page: val.results.page,
+        pages: val.results.pages,
+        perPage: val.results.per_page,
+        totalElements: val.results.total_elements
+      }
+    });
+    return resultObject;
   }
 
   const resultsCount = () => {

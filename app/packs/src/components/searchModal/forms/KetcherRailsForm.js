@@ -19,6 +19,7 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
   }];
   const [changedValues, setChangedValues] = useState(defaultValues);
   const [searchSvg, setSearchSvg] = useState();
+  const [searchParams, setSearchParams] = useState({});
   const searchResultsStore = useContext(StoreContext).searchResults;
  
   const handleSearchTypeChange = (e) => {
@@ -79,6 +80,7 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
       search_by_method: 'structure',
       structure_search: true
     };
+    setSearchParams({ selection, collectionId, isSync, isPublic });
     searchResultsStore.loadSearchResults({
       selection, collectionId, isSync, isPublic
     });
@@ -115,7 +117,7 @@ const KetcherRailsform = ({ molfile, handleCancel, currentState, isPublic }) => 
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult handleCancel={handleCancel} currentState={currentState} />;
+      return <SearchResult handleCancel={handleCancel} currentState={currentState} searchParams={searchParams} />;
     } else {
       return null;
     }

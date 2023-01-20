@@ -88,6 +88,9 @@ export const SearchResultsStore = types
     },
     clearSearchResults() {
       self.search_results.clear();
+      self.tab_search_results.clear();
+      self.hideSearchResults();
+      self.clearFilter();
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;

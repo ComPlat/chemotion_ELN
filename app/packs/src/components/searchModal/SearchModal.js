@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useContext } from 'react';
+import React, { useState, Suspense, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
@@ -27,17 +27,21 @@ const Components = {
 const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) => {
   const [selectedOption, setSelectedOption] = useState({ value: 'advanced', label: 'Advanced Search' });
   const [visibleModal, setVisibleModal] = useState(showModal);
-  const defaultForm = React.createElement(Components['advanced'], { key: 'advanced', handleCancel: onCancel, currentState: currentState });
-  const [view, setView] = useState(defaultForm);
+  const [view, setView] = useState();
   const selectOptions = FormData.forms.map((option) => ({ id: option.id, value: option.value, label: option.label }));
   const searchResultsStore = useContext(StoreContext).searchResults;
+
+  useEffect(() => {
+    const defaultForm = React.createElement(Components['advanced'], { key: 'advanced', handleCancel: handleCancel, currentState: currentState });
+    setView(defaultForm);
+  }, []);
 
   const FormComponent = (block) => {
     if (typeof Components[block.component] !== "undefined") {
       return React.createElement(Components[block.component], {
         key: block.value,
         molfile: molfile,
-        handleCancel: onCancel,
+        handleCancel: handleCancel,
         currentState: currentState,
         isPublic: isPublic
       });
@@ -78,8 +82,6 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) =
   const handleCancel = () => {
     hideModal();
     searchResultsStore.clearSearchResults();
-    searchResultsStore.hideSearchResults();
-    searchResultsStore.clearFilter();
     if (onCancel) { onCancel(); }
   }
 
@@ -88,8 +90,6 @@ const SearchModal = ({ showModal, onCancel, molfile, currentState, isPublic }) =
     setView(FormComponent(FormData.forms[e.id]));
     if (searchResultsStore.searchResultsCount > 0) {
       searchResultsStore.clearSearchResults();
-      searchResultsStore.hideSearchResults();
-      searchResultsStore.clearFilter();
     }
   }
 
