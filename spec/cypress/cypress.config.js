@@ -4,6 +4,9 @@ const port = 3000;
 
 module.exports = defineConfig({
 
+  viewportWidth: 1536,
+  viewportHeight: 960,
+
   e2e: {
     defaultBrowser: 'chrome',
     defaultCommandTimeout: 5000,
