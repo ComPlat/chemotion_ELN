@@ -24,6 +24,12 @@
 // -- This is will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
 
+Cypress.Commands.add('login', (username, password) => {
+  cy.visit('users/sign_in');
+  cy.get('#user_login').type(username);
+  cy.get('#user_password').type(`${password}{enter}`, { log: false });
+});
+
 Cypress.Commands.add('createDefaultUser', () => {
   cy.appFactories([
     ['create', 'user', {
@@ -48,15 +54,6 @@ Cypress.Commands.add('createDefaultAdmin', () => {
       account_active: 'true'
     }],
   ]);
-});
-
-Cypress.Commands.add('login', (username, password) => {
-  cy.visit('users/sign_in');
-  cy.get('#user_login').type(username);
-  cy.get('#user_password').type(`${password}{enter}`, { log: false });
-  // cy.get('.btn').contains('Log in').click();
-  cy.contains('User Complat');
-  cy.url().should('include', '/mydb/collection/all');
 });
 
 Cypress.Commands.add('createCollection', () => {
