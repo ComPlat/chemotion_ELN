@@ -295,9 +295,10 @@ module Chemotion
 
       get 'image/:attachment_id' do
         sfilename = @attachment.key + @attachment.extname
+       
         if params[:annotated]
           annotated_file_path = @attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
-          annotated_file_exists = File.exist?(annotated_file_path)
+          annotated_file_exists = annotated_file_path && File.exist?(annotated_file_path)
           sfilename = "#{@attachment.key}_annotated.png" if annotated_file_exists
         end
         content_type @attachment.content_type
