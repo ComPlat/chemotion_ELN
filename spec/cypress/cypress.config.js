@@ -8,7 +8,6 @@ module.exports = defineConfig({
   viewportHeight: 960,
 
   e2e: {
-    defaultBrowser: 'chrome',
     defaultCommandTimeout: 5000,
 
     specPattern: 'spec/cypress/end_to_end/*.cy.js',
