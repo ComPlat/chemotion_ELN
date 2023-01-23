@@ -11,10 +11,11 @@ describe('samples scenario', () => {
   it('create samples', () => {
     // setting up state
     cy.createDefaultUser();
-    cy.createCollection();
+    cy.createCollection('Col1');
     cy.login('UC', 'user_password');
 
     // Testcase starts here
+    cy.visit('mydb/collection/3/');
     cy.get('#tree-id-Col1').click();
     cy.get('#create-split-button').click();
     cy.get('#create-sample-button').click();

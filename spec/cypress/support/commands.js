@@ -56,11 +56,11 @@ Cypress.Commands.add('createDefaultAdmin', () => {
   ]);
 });
 
-Cypress.Commands.add('createCollection', () => {
+Cypress.Commands.add('createCollection', (label) => {
   cy.appFactories([
     ['create', 'collection', {
       user_id: 1,
-      label: 'Col1',
+      label,
       sample_detail_level: 10,
     }],
   ]);
