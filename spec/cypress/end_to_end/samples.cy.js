@@ -22,5 +22,6 @@ describe('samples scenario', () => {
     cy.get('#smilesInput').type('c1cc(cc(c1)c1ccccc1)c1ccccc1');
     cy.get('#smile-create-molecule').click();
     cy.get('#submit-sample-btn').click();
+    cy.url().should('include', '/sample/1');
   });
 });
