@@ -17,11 +17,24 @@ describe Usecases::Attachments::Annotation::AnnotationLoader do
       end
     end
 
-    context 'when attachment has no annotation' do
+    context 'when attachment can not have annotation' do
       let(:attachment_id) { attachment_without_annotation.id }
 
       it 'raised an error' do
         expect { annotation }.to raise_error 'could not find annotation of attachment'
+      end
+    end
+
+    context 'when attachment has not yet an annotation (migration issue)' do
+      let(:attachment_no_annotation_yet) { create(:attachment, :with_png_image) }
+      let(:attachment_id) { attachment_no_annotation_yet.id }
+
+      before do 
+        attachment_no_annotation_yet.attachment_data["derivatives"].delete("annotation")
+        attachment_no_annotation_yet.update_column("attachment_data",attachment_no_annotation_yet.attachment_data)
+      end 
+      it 'empty annotation was created and returned' do
+        expect(annotation).not_to be_nil
       end
     end
 

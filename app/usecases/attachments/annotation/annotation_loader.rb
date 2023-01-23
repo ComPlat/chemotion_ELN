@@ -5,22 +5,39 @@ module Usecases
   module Attachments
     module Annotation
       class AnnotationLoader
-        def get_annotation_of_attachment(attachment_id)
+        def get_annotation_of_attachment(attachment_id) # rubocop:disable Metrics/AbcSize
           att = Attachment.find(attachment_id)
-          raise 'could not find annotation of attachment' if annotation_json_absent(att.attachment_data)
+          raise 'could not find annotation' unless att
+          raise 'could not find annotation of attachment' unless annotatable?(att.attachment_data)
+
+          create_empty_annotation(att) unless annotation_json_present(att.attachment_data)
 
           location_of_annotation = att.attachment_data['derivatives']['annotation']['id']
-          back = File.open(location_of_annotation, 'rb') if File.exist?(location_of_annotation)
-          raise 'could not find annotation of attachment (file not found)' unless back
+          annotation = File.open(location_of_annotation, 'rb') if File.exist?(location_of_annotation)
+          raise 'could not find annotation of attachment (file not found)' unless annotation
 
-          back.read
+          annotation.read
         end
 
-        def annotation_json_absent(attachment_data)
-          !attachment_data ||
-            !attachment_data['derivatives'] ||
-            !attachment_data['derivatives']['annotation'] ||
-            !attachment_data['derivatives']['annotation']['id']
+        def annotation_json_present(data)
+          data['derivatives']['annotation'] &&
+            data['derivatives']['annotation']['id']
+        end
+
+        def annotatable?(data)
+          data && data['derivatives']
+        end
+
+        def create_empty_annotation(att) # rubocop:disable Metrics/AbcSize
+          Usecases::Attachments::Annotation::AnnotationCreator.new.create_derivative(
+            '.', File.open(att.attachment_data['id']), att.id, {}, nil
+          )
+
+          file_location = att.attachment_data['id']
+          att.attachment_data['derivatives']['annotation'] = {}
+          att.attachment_data['derivatives']['annotation']['id'] =
+            "#{file_location.gsub(File.extname(file_location), '')}.annotation.svg"
+          att.update_column('attachment_data', att.attachment_data) # rubocop:disable Rails/SkipsModelValidations
         end
       end
     end

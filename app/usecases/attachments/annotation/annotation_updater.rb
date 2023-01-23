@@ -27,10 +27,11 @@ module Usecases
                                    stroke-linejoin stroke-width x y font-family font-size font-weight text-anchor
                                    space d x1 x2 y1 y2 cx cy rx ry]
           sanitized_svg_string = Loofah.xml_fragment(svg_string).scrub!(scrubber).to_s
+
           sanitize_rest_call = Loofah::Scrubber.new do |node|
             if node.name == 'image'
               rest_url = node.attributes['href'].value
-              raise 'Link to image not valide' unless rest_url.match?(%r{^/api/v\d+/attachments/image/\d+})
+              raise 'Link to image not valid' unless rest_url.match?(%r{^/api/v\d+/attachments/image/\d+})
             end
           end
           Loofah.xml_fragment(sanitized_svg_string).scrub!(sanitize_rest_call).to_s

@@ -26,10 +26,10 @@ describe Usecases::Attachments::Annotation::AnnotationUpdater do
           updater = described_class.new(ThumbnailerMock.new)
           updater.update_annotation(svg_string2, attachment.id)
 
-          file = File.open(attachment.attachment_data['derivatives']['annotation']['id'])
-          data = file.read
+          
+          annotation = File.open(attachment.attachment_data['derivatives']['annotation']['id']).read
 
-          expect(Loofah.xml_fragment(svg_string2).to_s).to eq Loofah.xml_fragment(data).to_s
+          expect(Loofah.xml_fragment(svg_string2).to_s).to eq Loofah.xml_fragment(annotation).to_s
         end
       end
     end
@@ -37,16 +37,16 @@ describe Usecases::Attachments::Annotation::AnnotationUpdater do
     context 'when annotation is undefined' do
       let(:svg_filename) { '20230111_invalide_annotation_undefined.svg' }
       let(:attachment) { create(:attachment, :with_png_image) }
-      let(:original_svg){ File.open(attachment.attachment_data['derivatives']['annotation']['id']).read }
+      let(:original_annotation){ File.open(attachment.attachment_data['derivatives']['annotation']['id']).read }
 
       it 'annotation was not changed' do
         updater = described_class.new(ThumbnailerMock.new)
         updater.update_annotation(svg_string, attachment.id)
 
-        file = File.open(attachment.attachment_data['derivatives']['annotation']['id'])
-        data = file.read
+        
+        annotation = File.open(attachment.attachment_data['derivatives']['annotation']['id']).read
 
-        expect(Loofah.xml_fragment(original_svg).to_s).to eq Loofah.xml_fragment(data).to_s
+        expect(Loofah.xml_fragment(original_annotation).to_s).to eq Loofah.xml_fragment(annotation).to_s
 
       end
     end
@@ -76,7 +76,7 @@ describe Usecases::Attachments::Annotation::AnnotationUpdater do
       let(:svg_filename) { '20221207_valide_annotation_rest_api_corrupted.svg' }
 
       it 'raises an "corrupted REST call error"' do
-        expect { sanitized_svg_string }.to raise_error 'Link to image not valide'
+        expect { sanitized_svg_string }.to raise_exception 'Link to image not valid'
       end
     end   
   end
