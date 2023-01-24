@@ -1,15 +1,9 @@
 import React, { useState, Suspense, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button,
-  ButtonToolbar,
-  Modal,
-  FormGroup
-} from 'react-bootstrap';
+import { Button, ButtonToolbar, Modal, FormGroup } from 'react-bootstrap';
 import Draggable from "react-draggable";
 import Select from 'react-select';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -24,36 +18,28 @@ const Components = {
   empty: NoFormSelected
 }
 
-const SearchModal = ({ showModal, onCancel, currentState, isPublic }) => {
-  const [selectedOption, setSelectedOption] = useState({ value: 'advanced', label: 'Advanced Search' });
+const SearchModal = ({ showModal, onCancel, isPublic }) => {
+  const [selectedOption, setSelectedOption] = useState(FormData.forms[0]);
   const [visibleModal, setVisibleModal] = useState(showModal);
   const [minimizeModal, setMinimizeModal] = useState(true);
-  const [view, setView] = useState();
-  const selectOptions = FormData.forms.map((option) => ({ id: option.id, value: option.value, label: option.label }));
   const searchResultsStore = useContext(StoreContext).searchResults;
-
-  useEffect(() => {
-    const defaultForm = React.createElement(Components['advanced'], { key: 'advanced', handleCancel: handleCancel, currentState: currentState });
-    setView(defaultForm);
-  }, []);
 
   const FormComponent = (block) => {
     if (typeof Components[block.component] !== "undefined") {
       return React.createElement(Components[block.component], {
         key: block.value,
         handleCancel: handleCancel,
-        currentState: currentState,
         isPublic: isPublic
       });
     }
-    return React.createElement(
-      () => <div>The component {block.component} has not been created yet.</div>,
-      { key: block.value }
-    );
+    return React.createElement(Components['empty'], {
+      key: 'empty'
+    });
   };
 
   const SearchPulldown = (props) => {
     const { onChange, selected } = props;
+    const formOptions = FormData.forms.map((option) => option);
 
     return (
       <FormGroup>
@@ -62,7 +48,7 @@ const SearchModal = ({ showModal, onCancel, currentState, isPublic }) => {
           name="search selection"
           clearable={false}
           value={selected}
-          options={selectOptions}
+          options={formOptions}
           onChange={onChange}
         />
       </FormGroup>
@@ -90,8 +76,7 @@ const SearchModal = ({ showModal, onCancel, currentState, isPublic }) => {
   }
 
   const handleSearchPulldownSelection = (e) => {
-    setSelectedOption({ value: e.value, label: e.label });
-    setView(FormComponent(FormData.forms[e.id]));
+    setSelectedOption(FormData.forms[e.id]);
     searchResultsStore.clearSearchResults();
     setMinimizeModal(true);
   }
@@ -127,7 +112,7 @@ const SearchModal = ({ showModal, onCancel, currentState, isPublic }) => {
         <Modal.Body>
           <React.Suspense fallback={<Spinner />}>
             <div className={`form-container${minimizedClass}`}>
-              {view}
+              {FormComponent(selectedOption)}
             </div>
           </React.Suspense>
         </Modal.Body>

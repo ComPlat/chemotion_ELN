@@ -7,7 +7,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SearchResultTabContent from './SearchResultTabContent';
 
-const SearchResult = ({ handleCancel, currentState, searchParams, handleRefind }) => {
+const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
   const results = searchResultsStore.searchResultValues;
   const profile = UserStore.getState().profile || {};
@@ -29,8 +29,8 @@ const SearchResult = ({ handleCancel, currentState, searchParams, handleRefind }
           hidden.push({ key: value[0], index: value[1] });
         }
       });
-      setVisibleTabs(visible);
-      setHiddenTabs(hidden);
+      setVisibleTabs(visible.sort((a,b) => a.index - b.index));
+      setHiddenTabs(hidden.sort((a,b) => a.index - b.index));
 
       let newIndex = visibleTabs.findIndex((e) => {
         return currentTabIndex === e.index;
@@ -111,7 +111,6 @@ const SearchResult = ({ handleCancel, currentState, searchParams, handleRefind }
       const tabContent =
         <SearchResultTabContent key={`${list.key}-result-tab`}
                                 list={list} tabResult={tabResult}
-                                currentState={currentState}
         />
 
       navItems.push(navItem);

@@ -2,13 +2,14 @@ import React, { useState, useContext } from 'react';
 import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel, Alert } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import StructureEditor from 'src/models/StructureEditor';
 import FormData from 'src/components/searchModal/FormData';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
+const KetcherRailsform = ({ handleCancel, isPublic }) => {
   const editor = new StructureEditor({ ...FormData.forms[1], id: 'ketcher' });
 
   const defaultValues = [{
@@ -18,7 +19,6 @@ const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
     tanimotoThreshold: 0.7 
   }];
   const [changedValues, setChangedValues] = useState(defaultValues);
-  const [searchSvg, setSearchSvg] = useState();
   const [searchParams, setSearchParams] = useState({});
   const searchResultsStore = useContext(StoreContext).searchResults;
  
@@ -38,11 +38,7 @@ const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
   const handleSave = () => {
     const structure = editor.structureDef;
     const { molfile, info } = structure;
-    structure.fetchSVG().then((svg) => {
-      // const svg_file = svg.replace(/viewBox="([^"]+)"/, 'viewBox="0,0,300,128"').replace(/height="([^"]+)"/, 'height="128"').replace(/width="([^"]+)"/, 'width="300"');
-      // setSearchSvg(<img src={ `data:image/svg+xml;utf8,${encodeURIComponent(svg)}` } style={{width: '300px'}} />);
-      handleStructureEditorSave(molfile);
-    });
+    handleStructureEditorSave(molfile);
   }
 
   const handleStructureEditorSave = (molfile) => {
@@ -63,7 +59,7 @@ const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
   }
 
   const structureSearch = (molfile) => {
-    const uiState = currentState;
+    const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
@@ -100,31 +96,24 @@ const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
   }
 
   const SearchValuesList = () => {
-    if (searchResultsStore.searchResultVisible && searchSvg != '') {
-      // <div>{searchSvg}</div>
-      return (
-        <div style={{ position: 'relative' }}>
-          <h4>Your Search</h4>
-          {
-            <div>{changedValues[0]['queryMolfile']}</div>
-          }
-          {
-            searchResultsStore.searchResultsCount > 0 ? null : (
-              <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
-            )
-          }
-        </div>
-      );
-    } else {
-      return (null);
-    }
+    if (!searchResultsStore.searchResultVisible) { return null; }
+    return (
+      <div style={{ position: 'relative' }}>
+        <h4>Your Search</h4>
+        <div>{changedValues[0]['queryMolfile']}</div>
+        {
+          searchResultsStore.searchResultsCount > 0 ? null : (
+            <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
+          )
+        }
+      </div>
+    );
   }
 
   const searchResults = () => {
     if (searchResultsStore.searchResultsCount > 0) {
       return <SearchResult
                 handleCancel={handleCancel}
-                currentState={currentState}
                 searchParams={searchParams}
                 handleRefind={handleRefind}
               />;
@@ -169,7 +158,6 @@ const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
               height="730px"
               width="100%"
               style={{border: 'none'}}
-              //ref={(f) => { ifr = f; }}
             />
             <Grid style={{ margin: 0, paddingLeft: 0 }}>
               <Row style={{ marginTop: '20px' }}>
@@ -186,7 +174,6 @@ const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
                 <Col sm={6} md={4}>
                   <Form inline>
                     <Radio
-                      //ref={(input) => { this.searchSimilarRadio = input; }}
                       value="similar"
                       checked={changedValues[0].searchType === 'similar'}
                       onChange={handleSearchTypeChange}
@@ -198,14 +185,12 @@ const KetcherRailsform = ({ handleCancel, currentState, isPublic }) => {
                       style={{ width: '40%' }}
                       type="text"
                       value={changedValues[0].tanimotoThreshold}
-                      //ref={(input) => { this.searchTanimotoInput = input; }}
                       onChange={handleTanimotoChange}
                     />
                   </Form>
                 </Col>
                 <Col sm={4} md={2}>
                   <Radio
-                    //ref={(input) => { searchSubstructureRadio = input; }}
                     value="sub"
                     checked={changedValues[0].searchType === 'sub'}
                     onChange={handleSearchTypeChange}

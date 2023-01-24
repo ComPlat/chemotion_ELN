@@ -331,7 +331,6 @@ export default class Search extends React.Component {
           <SearchModal
             showModal={this.state.showGlobalSearch}
             onCancel={this.handleSearchModalCancel}
-            currentState={UIStore.getState()}
             isPublic={this.props.isPublic}
           />
         </div>
