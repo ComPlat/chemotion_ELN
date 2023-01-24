@@ -8,31 +8,25 @@ import SelectMapperData from './SelectMapperData';
 const AdvancedSearchRow = ({ idx, selection, onChange }) => {
   const mapperOptions = SelectMapperData.fields;
   const fieldOptions = SelectFieldData.fields;
-  const andOrOptions = [
+  const logicalOperators = [
     { value: "AND", label: "AND" },
     { value: "OR", label: "OR" }
   ];
 
-  const combinationSelect = () => {
-    if (selection.link != "") {
-      return (
-        <span className="link-select">
-          <Select
-            options={andOrOptions}
-            value={selection.link}
-            clearable={false}
-            onChange={onChange(idx, 'link')} />
-        </span>
-      );
-    } else {
-      return(<span style={{flex: "0 0 127px"}} />);
-    }
-  }
+  let display = selection.link == '' ? 'none' : 'block';
 
   return (
     <>
       <div className="adv-search-row">
-        {combinationSelect()}
+        <span className="link-select" style={{flex: "0 0 127px"}}>
+          <Select
+            options={logicalOperators}
+            value={selection.link}
+            clearable={false}
+            onChange={onChange(idx, 'link')}
+            style={{display: display}}
+           />
+        </span>
         <span className="match-select">
           <Select
             simpleValue
