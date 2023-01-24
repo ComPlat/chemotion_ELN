@@ -1,10 +1,11 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Tab, Pagination } from 'react-bootstrap';
 import { observer } from 'mobx-react';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 
-const SearchResultTabContent = ({ list, tabResult, currentState }) => {
+const SearchResultTabContent = ({ list, tabResult }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
   let currentPage = searchResultsStore.tab_current_page[list.index];
   let currentPageNumber = currentPage === undefined ? 1 : currentPage[list.key];
@@ -25,7 +26,7 @@ const SearchResultTabContent = ({ list, tabResult, currentState }) => {
   }
 
   const searchByIds = (index, ids, key) => {
-    const uiState = currentState;
+    const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;

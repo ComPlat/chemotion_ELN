@@ -8,7 +8,7 @@ import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const AdvancedSearchForm = ({ handleCancel, currentState }) => {
+const AdvancedSearchForm = ({ handleCancel }) => {
   const defaultSelections = [{
     link: '',
     match: '=',
@@ -23,15 +23,14 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
   const [searchParams, setSearchParams] = useState({});
   const searchResultsStore = useContext(StoreContext).searchResults;
-  const uiState = currentState.currentCollection == null ? UIStore.getState() : currentState;
 
   useEffect(() => {
     const length = selectedOptions.length - 1;
-    const selection = selectedOptions[length];
+    const lastInputRow = selectedOptions[length];
 
     const checkSelectedElements =
-      (selection.field && selection.value && selection.link) ||
-      (length == 0 && selection.field && selection.value);
+      (lastInputRow.field && lastInputRow.value && lastInputRow.link) ||
+      (length == 0 && lastInputRow.field && lastInputRow.value);
 
     if (checkSelectedElements) {
       selectedOptions.push({ link: 'OR', match: 'LIKE', field: '', value: '' });
@@ -50,6 +49,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
   }
 
   const handleSave = () => {
+    const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const filters = filterSelectedOptions();
@@ -138,7 +138,6 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
     if (searchResultsStore.searchResultsCount > 0) {
       return <SearchResult
                 handleCancel={handleCancel}
-                currentState={uiState}
                 searchParams={searchParams}
                 handleRefind={handleRefind}
               />;
@@ -147,8 +146,21 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
     }
   }
 
+  const formElementValue = (formElement, e) => {
+    switch(formElement) {
+      case 'value':
+        return e.target.value;
+        break;
+      case 'field':
+        return e.value;
+        break;
+      default:
+        return e;
+    }
+  }
+
   const handleChangeSelection = (idx, formElement) => (e) => {
-    let value = formElement == 'value' ? e.target.value : (formElement == 'field' ? e.value : e);
+    let value = formElementValue(formElement, e);
     selectedOptions[idx][formElement] = value;
     setSelectedOptions((a) => [...a]);
   }
@@ -157,6 +169,7 @@ const AdvancedSearchForm = ({ handleCancel, currentState }) => {
     if (searchResultsStore.searchResultsCount > 0) {
       searchResultsStore.toggleSearch();
       searchResultsStore.toggleSearchResults();
+      searchResultsStore.clearTabCurrentPage();
     }
   }
 

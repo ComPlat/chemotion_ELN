@@ -92,6 +92,7 @@ export const SearchResultsStore = types
       self.hideSearchResults();
       self.clearFilter();
       self.changeErrorMessage('');
+      self.clearTabCurrentPage();
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;
@@ -112,6 +113,9 @@ export const SearchResultsStore = types
     },
     changeTabCurrentPage(key, index, id) {
       self.tab_current_page[id] = { [key]: index };
+    },
+    clearTabCurrentPage() {
+      self.tab_current_page.splice(0, self.tab_current_page.length);
     }
   }))
   .views(self => ({
