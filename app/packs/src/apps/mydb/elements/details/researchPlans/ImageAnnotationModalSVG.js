@@ -19,17 +19,17 @@ export default class ImageAnnotationModalSVG extends Component {
         </Modal.Header>
         <Modal.Body>
           <iframe
-            title="Image annotation"
+            title = ""
             src="/svgedit/editor/index.html"
             id="svgEditId"
             width="100%"
             height="800"
-            onLoad={() => {
+            onLoad={() => {            
               const { svgEditor } =
                 document.getElementById("svgEditId").contentWindow;
               svgEditor.setBackground("white");
-              const { attachment } = this.props; 
-console.log("Attachment "+attachment)
+              const { attachment } = this.props;             
+
               fetch(`/api/v1/attachments/${attachment.id}/annotation`)
                 .then((res) => res.text())
                 .then((text) => {

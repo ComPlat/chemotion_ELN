@@ -9,6 +9,8 @@ import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/r
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import ElementStore from '../../../../../../stores/alt/stores/ElementStore';
+import {Alert} from 'react-bootstrap';
+
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
@@ -57,9 +59,10 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   renderEdit() {
-    const { field } = this.props;    
+    const { field } = this.props;  
+   
     let content;
-    if (field.value.public_name) {
+    if (field.value.public_name) {     
       const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
         || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
       content = (
@@ -92,7 +95,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             </div>
           </InputGroup>
           
-        </FormGroup>
+        </FormGroup>      
+         {this.renderImageEditedWarning(this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name))} 
         <Dropzone
           accept="image/*"
           multiple={false}
@@ -100,7 +104,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           className="dropzone"
         >
           {content}
-        </Dropzone>
+        </Dropzone>        
         {this.renderImageEditModal()}
       </div>
     );
@@ -141,6 +145,17 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       </div>
     );
   }
+
+  renderImageEditedWarning(attachment){
+    if(!attachment.updatedAnnotation){return null;} 
+    
+    return (
+      <div className='imageEditedWarning'>
+        <Alert>Image was edited. Please save Researchplan to apply changes</Alert>
+      </div>
+    );
+
+  } 
 
   renderImageEditModal() {   
     return (
