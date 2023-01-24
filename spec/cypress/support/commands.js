@@ -65,3 +65,33 @@ Cypress.Commands.add('createCollection', (label) => {
     }],
   ]);
 });
+
+Cypress.Commands.add('waitForAPIs', () => {
+  cy.intercept('GET', '/api/v1/collections/roots.json').as('colletions1');
+  cy.intercept('GET', '/api/v1/collections/shared_roots.json').as('colletions2');
+  cy.intercept('GET', '/api/v1/collections/remote_roots.json').as('colletions3');
+  cy.intercept('GET', '/api/v1/syncCollections/sync_remote_roots.json').as('colletions4');
+  cy.intercept('PATCH', '/api/v1/collections').as('collections.patch');
+  cy.intercept(
+    {
+      url: '/api/v1/*ollections/*roots.json',
+      middleware: true
+    },
+    (req) => {
+      req.on('response', (res) => {
+      // Throttle the response to 1 Mbps to simulate a
+      // mobile 3G connection
+        res.setThrottle(Math.floor(Math.random() * 10) + 10);
+        res.setDelay(Math.floor(Math.random() * 500) + 1500);
+      });
+    }
+  );
+  const ro = { requestTimeout: 60000, responseTimeout: 90000 };
+  cy.get('#collection-management-button').click();
+  cy.wait([
+    '@colletions1',
+    '@colletions2',
+    '@colletions3',
+    '@colletions4',
+  ], ro);
+});
