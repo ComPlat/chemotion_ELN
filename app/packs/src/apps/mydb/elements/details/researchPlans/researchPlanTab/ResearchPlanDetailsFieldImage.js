@@ -147,6 +147,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   renderImageEditedWarning(attachment){
+    if(!attachment) {return null;}
     if(!attachment.updatedAnnotation){return null;} 
     
     return (
