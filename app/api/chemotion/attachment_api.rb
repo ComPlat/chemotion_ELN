@@ -160,13 +160,17 @@ module Chemotion
       desc 'get_annotatated_image_of_attachment'
       get ':attachment_id/annotated_image' do
         content_type 'application/octet-stream'
-        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
+       
         env['api.format'] = :binary
 
         file_location = @attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
         uploaded_file = if !file_location.nil? && File.exist?(file_location)
+          extension_of_annotation=File.extname(file_location)
+          filename_of_annotated_image=@attachment.filename.gsub(File.extname(@attachment.filename),"_annotated"+extension_of_annotation)
+                          header['Content-Disposition'] = "attachment; filename=\"#{filename_of_annotated_image}\""
                           File.open(file_location)
                         else
+                          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
                           @attachment.attachment_attacher.file
                         end
         data = uploaded_file.read
