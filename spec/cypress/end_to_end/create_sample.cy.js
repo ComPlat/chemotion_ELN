@@ -1,18 +1,14 @@
-/*
-State description: create a default user and Login then create a collection
-
-Testcase 1: update sample information
-Testcase 1: add attachment to a sample under analysis section
-
-Test for drag N drop error
-*/
-
 describe('samples scenario', () => {
+  beforeEach(() => {
+    cy.createDefaultUser(1, 'cu1@complat.edu', 'cu1');
+    cy.visit('users/sign_in');
+  });
+
   it('create samples', () => {
-    // setting up state
-    cy.createDefaultUser();
-    cy.createCollection('Col1');
-    cy.login('UC', 'user_password');
+    cy.login('cu1', 'user_password');
+    cy.waitForAPIs();
+
+    cy.createCollection(1, 'Col1');
 
     // Testcase starts here
     cy.visit('mydb/collection/3/');

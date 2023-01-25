@@ -30,17 +30,17 @@ Cypress.Commands.add('login', (username, password) => {
   cy.get('#user_password').type(`${password}{enter}`, { log: false });
 });
 
-Cypress.Commands.add('createDefaultUser', () => {
+Cypress.Commands.add('createDefaultUser', (userID, emailAddress, abbr) => {
   cy.appFactories([
     ['create', 'user', {
-      password: 'user_password',
-      password_confirmation: 'user_password',
+      id: userID,
       first_name: 'User',
       last_name: 'Complat',
-      email: 'complat.user@eln.edu',
-      name_abbreviation: 'UC',
+      password: 'user_password',
+      password_confirmation: 'user_password',
+      email: emailAddress,
+      name_abbreviation: abbr,
       account_active: 'true',
-      id: 1,
     }],
   ]);
 });
@@ -56,10 +56,10 @@ Cypress.Commands.add('createDefaultAdmin', () => {
   ]);
 });
 
-Cypress.Commands.add('createCollection', (label) => {
+Cypress.Commands.add('createCollection', (userID, label) => {
   cy.appFactories([
     ['create', 'collection', {
-      user_id: 1,
+      user_id: userID,
       label,
       sample_detail_level: 10,
     }],
