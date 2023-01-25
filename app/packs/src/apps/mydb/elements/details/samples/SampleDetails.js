@@ -65,6 +65,7 @@ import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
+import { validateCas } from 'src/utilities/CasValidation';
 
 const MWPrecision = 6;
 
@@ -108,6 +109,7 @@ export default class SampleDetails extends React.Component {
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: '',
       isCasLoading: false,
+      validCas: true,
       showMolfileModal: false,
       smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined') || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
       quickCreator: false,
@@ -125,7 +127,7 @@ export default class SampleDetails extends React.Component {
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
-    this.addManualCas = this.addManualCas.bind(this);
+    this.isCASNumberValid = this.isCASNumberValid.bind(this);
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
@@ -228,22 +230,21 @@ export default class SampleDetails extends React.Component {
     this.setState({ showInchikey: !showInchikey });
   }
 
-  handleFastInput(smi) {
+  handleFastInput(smi, cas) {
     this.setState({ showChemicalIdentifiers: true }, () => {
       this.smilesInput.value = smi;
-      this.handleMoleculeBySmile();
+      this.handleMoleculeBySmile(cas);
     });
   }
 
-  handleMoleculeBySmile() {
+  handleMoleculeBySmile(cas) {
     const smi = this.smilesInput.value;
     const { sample } = this.state;
-
     MoleculesFetcher.fetchBySmi(smi)
       .then((result) => {
         if (!result || result == null) {
           NotificationActions.add({
-            title: 'Error on Sample creation', message: `Cannot create molecule with this smiles! [${smi}]`, level: 'error', position: 'tc'
+            title: 'Error on Sample creation', message: `Cannot create molecule with entered Smiles/CAS! [${smi}]`, level: 'error', position: 'tc'
           });
         } else {
           sample.molfile = result.molfile;
@@ -251,6 +252,9 @@ export default class SampleDetails extends React.Component {
           sample.molecule = result;
           this.molfileInput.value = result.molfile;
           this.inchistringInput.value = result.inchistring;
+          console.log(result);
+          sample.xref = { ...sample.xref, cas: result.cas[0] || cas };
+          console.log(sample.xref);
           this.setState({
             quickCreator: true,
             sample,
@@ -342,7 +346,10 @@ export default class SampleDetails extends React.Component {
 
   handleSubmit(closeView = false) {
     LoadingActions.start();
-    const { sample } = this.state;
+    const { sample, validCas } = this.state;
+    if (!validCas) {
+      sample.xref = { ...sample.xref, cas: '' };
+    }
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
@@ -369,6 +376,7 @@ export default class SampleDetails extends React.Component {
       DetailActions.close(sample, true);
     }
     sample.updateChecksum();
+    this.setState({ validCas: true });
   }
 
   structureEditorButton(isDisabled) {
@@ -547,7 +555,9 @@ export default class SampleDetails extends React.Component {
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={sample} />
-        {sample.isNew ? <FastInput fnHandle={this.handleFastInput} /> : null}
+        {sample.isNew
+          ? <FastInput fnHandle={this.handleFastInput} />
+          : null}
         {decoupleCb}
         <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
@@ -739,55 +749,80 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  addManualCas(e) {
-    DetailActions.updateMoleculeCas(this.props.sample, e.value);
+  isCASNumberValid(cas, boolean) {
+    const { sample } = this.state;
+    const result = validateCas(cas, boolean);
+    this.setState({ validCas: result });
+    console.log(result);
+    if (result !== false) {
+      console.log('what is going on');
+      sample.xref = { ...sample.xref, cas: result };
+      this.setState({ sample });
+    }
   }
 
   moleculeCas() {
-    const { sample, isCasLoading } = this.state;
+    const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
     const cas = xref ? xref.cas : '';
     const casLabel = cas && cas.label ? cas.label : '';
     let casArr = [];
     if (molecule && molecule.cas) {
-      casArr = molecule.cas.map(c => Object.assign({ label: c }, { value: c }));
+      casArr = molecule.cas.map((element) => ({
+        label: element, value: element
+      })).filter((element) => element.value !== null);
     }
-    const onChange = e => this.updateCas(e);
-    const onOpen = e => this.onCasSelectOpen(e, casArr);
+    if (cas && casArr) {
+      const casObject = [
+        { label: cas, value: cas }
+      ];
+      const valuesArr = casArr.map(({ value }) => value) || [];
+      casArr = cas !== '' && !valuesArr.includes(cas) ? casArr.concat(casObject) : casArr;
+    }
+    const onChange = (e) => this.updateCas(e);
+    const onOpen = (e) => this.onCasSelectOpen(e, casArr);
+    const validate = () => this.isCASNumberValid(cas || '', true);
+    const errorMessage = <span className="text-danger">Cas number is invalid</span>;
 
     return (
-      <InputGroup className="sample-molecule-identifier">
-        <InputGroup.Addon>CAS</InputGroup.Addon>
-        <Select.Creatable
-          name="cas"
-          multi={false}
-          options={casArr}
-          onChange={onChange}
-          onOpen={onOpen}
-          onNewOptionClick={this.addManualCas}
-          isLoading={isCasLoading}
-          value={cas}
-          disabled={!sample.can_update}
-        />
-        <InputGroup.Button>
-          <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-            <Button active className="clipboardBtn" data-clipboard-text={casLabel}><i className="fa fa-clipboard" /></Button>
-          </OverlayTrigger>
-        </InputGroup.Button>
-      </InputGroup>
+      <div className="form-row">
+        <InputGroup className="sample-molecule-identifier">
+          <InputGroup.Addon>CAS</InputGroup.Addon>
+          <Select.Creatable
+            name="cas"
+            multi={false}
+            options={casArr}
+            onChange={onChange}
+            onOpen={onOpen}
+            isLoading={isCasLoading}
+            value={cas}
+            onBlur={validate}
+            disabled={!sample.can_update}
+          />
+          <InputGroup.Button>
+            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+              <Button active className="clipboardBtn" data-clipboard-text={casLabel}><i className="fa fa-clipboard" /></Button>
+            </OverlayTrigger>
+          </InputGroup.Button>
+        </InputGroup>
+        <div style={{ marginTop: '-11px' }}>
+          {!validCas ? errorMessage : null }
+        </div>
+      </div>
     );
   }
 
   updateCas(e) {
     let sample = this.state.sample;
-    sample.xref = { ...sample.xref, cas: e };
+    const value = e ? e.value : '';
+    sample.xref = { ...sample.xref, cas: value };
     this.setState({ sample });
   }
 
   onCasSelectOpen(e, casArr) {
     if (casArr.length === 0) {
       this.setState({ isCasLoading: true })
-      DetailActions.getMoleculeCas(this.state.sample)
+      DetailActions.getMoleculeCas(this.state.sample);
     }
   }
 
