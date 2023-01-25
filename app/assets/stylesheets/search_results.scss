@@ -28,20 +28,32 @@
 .search-result-tab-navbar.navbar-default .navbar-nav li.active a {
   border: none;
   border-right: 1px solid #ddd;
-  color: #555;
+  color: #337ab7;
 }
 
 .search-result-tab-navbar.navbar-default .navbar-nav a i {
-  font-size: 1.8em;
+  font-size: 2.2em;
 }
 
 .search-result-tab-navbar.navbar-default .navbar-nav a span {
-  font-size: 1.2em;
+  font-size: 1.4em;
   padding-top: 2px;
+}
+
+.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a {
+  color: rgba(0, 0, 0, 0.2);
 }
 
 .search-result-tab-content.tab-content {
   border: 1px solid #ddd;
+}
+
+.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a i {
+  font-size: 1.8em;
+}
+
+.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a span {
+  font-size: 1.2em;
 }
 
 .search-result-tab-content-list {

@@ -51,6 +51,8 @@ const SearchResultTabContent = ({ list, tabResult }) => {
 
   const pagination = (tabResult, key) => {
     if (tabResult.pages === 1) { return; }
+    if (tabResult.total_elements == 0) { return; }
+
     let splittedIds = [];
     let items = [];
     for (let i = 0; i < tabResult.ids.length; i += tabResult.per_page) {
@@ -109,7 +111,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
           </div>
         )
       });
-    } else {
+    } else if (tabResult.total_elements != 0) {
       contentList = <div className="tab-spinner"><i className="fa fa-spinner fa-pulse fa-3x fa-fw" /></div>;
     }
     return contentList;
