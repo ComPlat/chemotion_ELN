@@ -123,7 +123,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   def regenerate_thumbnail
-    return unless self.filesize <= 50 * 1024 * 1024
+    return unless filesize <= 50 * 1024 * 1024
 
     store.regenerate_thumbnail
     update_column('thumb', thumb) if thumb_changed? # rubocop:disable Rails/SkipsModelValidations
@@ -211,28 +211,29 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attachment_attacher.destroy
   end
 
-  def attach_file
+  def attach_file # rubocop:disable Metrics/AbcSize
     return if file_path.nil?
     return unless File.exist?(file_path)
 
     attachment_attacher.attach(File.open(file_path, binmode: true))
     raise 'File to large' unless valid?
 
-    attachment_attacher.create_derivatives       
+    attachment_attacher.create_derivatives
 
     update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
 
-    if(File.extname(file_path)=='.tiff' ||  File.extname(file_path)=='.tif' ) then     
-      annotation_location=attachment_data["derivatives"]["annotation"]["id"]
-      annotation_file=File.open( annotation_location)
-      annotation=annotation_file.read
+    create_annotated_flat_image(file_path, attachment_data)
+  end
 
-     updater=Usecases::Attachments::Annotation::AnnotationUpdater.new
-     updater.update_annotation(annotation,self.id)
-    
-    end
-    
+  def create_annotated_flat_image(file_path, attachment_data)
+    return unless File.extname(file_path) == '.tiff' || File.extname(file_path) == '.tif'
 
+    annotation_location = attachment_data['derivatives']['annotation']['id']
+    annotation_file = File.open(annotation_location)
+    annotation = annotation_file.read
+
+    updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
+    updater.update_annotation(annotation, id)
   end
 
   def check_file_size # rubocop:disable Metrics/AbcSize

@@ -11,7 +11,8 @@ module Usecases
         end
 
         def update_annotation(annotation_svg_string, attachment_id)
-          return if annotation_svg_string == 'undefined'        
+          return if annotation_svg_string == 'undefined'
+
           attachment = Attachment.find(attachment_id)
           sanitized_svg_string = sanitize_svg_string(annotation_svg_string)
           save_svg_string_to_file_system(sanitized_svg_string, attachment)
@@ -59,8 +60,8 @@ module Usecases
         def create_annotated_flat_image(attachment, svg_string) # rubocop:disable Metrics/AbcSize
           location_of_file = attachment.attachment_data['id']
           xml = replace_link_with_base64(location_of_file, svg_string)
-          extention=File.extname(location_of_file)
-          extention = '.png' if extention=='.tif' || extention=='.tiff'
+          extention = File.extname(location_of_file)
+          extention = '.png' if ['.tif', '.tiff'].include?(extention)
           annotated_image_location = "#{location_of_file.split('.')[0]}_annotated" + extention
           image = MiniMagick::Image.read(xml.to_s)
           image.format(extention.delete('.'))
