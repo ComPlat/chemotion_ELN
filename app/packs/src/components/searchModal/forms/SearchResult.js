@@ -19,26 +19,16 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
     if (typeof (profile) !== 'undefined' && profile &&
       typeof (profile.data) !== 'undefined' && profile.data)  {
       const visible = [];
-      const hidden = [];
 
       Object.entries(profile.data.layout).map((value) => {
         let index = value[1] - 1;
         if (value[1] > 0) {
           visible.push({ key: value[0], index: index });
-        } else {
-          hidden.push({ key: value[0], index: value[1] });
         }
       });
       setVisibleTabs(visible.sort((a,b) => a.index - b.index));
-      setHiddenTabs(hidden.sort((a,b) => a.index - b.index));
-
-      let newIndex = visibleTabs.findIndex((e) => {
-        return currentTabIndex === e.index;
-      });
-      setCurrentTabIndex(visibleTabs.findIndex(e => currentTabIndex === e.index));
+      setCurrentTabIndex(0);
     }
-
-    if (currentTabIndex < 0) setCurrentTabIndex(0);
   }, []);
 
   const handleTabSelect = (e) => {
@@ -77,15 +67,17 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
 
   const searchResultNavItem = (list, tabResult) => {
     let iconClass = `icon-${list.key}`;
-    // todo change iconClass for generic elements
+    // TODO change iconClass for generic elements
     let ttl = (
       <Tooltip id="_tooltip_history" className="left_tooltip">
         {list.key && (list.key.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()))}
       </Tooltip>
     );
 
+    let itemClass = tabResult.total_elements == 0 ? ' no-result' : '';
+
     return (
-      <NavItem eventKey={list.index} key={`${list.key}_navItem`} className={`elements-list-tab-${list.key}s`}>
+      <NavItem eventKey={list.index} key={`${list.key}_navItem`} className={`elements-list-tab${itemClass}`}>
         <OverlayTrigger delayShow={500} placement="top" overlay={ttl}>
           <div style={{ display: 'flex' }}>
             <i className={iconClass} />
@@ -154,8 +146,8 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
         <Button bsStyle="warning" onClick={handleCancel}>
           Cancel
         </Button>
-        <Button bsStyle="success" onClick={handleRefind}>
-          Refind
+        <Button bsStyle="info" onClick={handleRefind}>
+          Reset
         </Button>
         <Button bsStyle="primary" onClick={handleAdoptResult} style={{ marginRight: '20px' }} >
           Adopt Result

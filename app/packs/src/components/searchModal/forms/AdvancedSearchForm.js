@@ -175,8 +175,12 @@ const AdvancedSearchForm = ({ handleCancel }) => {
 
   let defaultClassName = 'collapsible-search-result';
   let invisibleClassName = searchResultsStore.search_result_panel_visible ? '' : ' inactive';
+  let inactiveSearchClass = !searchResultsStore.searchVisible ? 'inactive' : '';
+  let inactiveResultClass = !searchResultsStore.searchResultVisible? 'inactive' : '';
   let searchIcon = `fa fa-chevron-${searchResultsStore.search_icon} icon-right`;
   let resultIcon = `fa fa-chevron-${searchResultsStore.result_icon} icon-right`;
+  let searchTitle = searchResultsStore.searchVisible ? 'Search' : 'Refine search';
+  let resultTitle = searchResultsStore.searchResultVisible ? 'Result' : 'Back to result';
 
   return (
     <>
@@ -186,9 +190,9 @@ const AdvancedSearchForm = ({ handleCancel }) => {
         onToggle={togglePanel()}
         expanded={searchResultsStore.searchVisible}
       >
-        <Panel.Heading>
+        <Panel.Heading className={inactiveSearchClass}>
           <Panel.Title toggle>
-            Search
+            {searchTitle}
             <i className={searchIcon} />
           </Panel.Title>
         </Panel.Heading>
@@ -223,9 +227,9 @@ const AdvancedSearchForm = ({ handleCancel }) => {
         onToggle={togglePanel()}
         expanded={searchResultsStore.searchResultVisible}
       >
-        <Panel.Heading>
+        <Panel.Heading className={inactiveResultClass}>
           <Panel.Title toggle>
-            Result
+            {resultTitle}
             <i className={resultIcon} />
           </Panel.Title>
         </Panel.Heading>

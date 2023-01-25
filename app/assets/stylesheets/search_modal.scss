@@ -83,7 +83,13 @@
 }
 
 .collapsible-search-result.panel-default > .panel-heading {
-  background: #fff;
+  background: #5bc0de75;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.collapsible-search-result.panel-default > .panel-heading.inactive {
+  background: #a2bdc6;
   border: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.4);
 }
