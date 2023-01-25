@@ -4,7 +4,7 @@ describe('sign_in page', () => {
   });
 
   it('allows registered user to log in', () => {
-    cy.createDefaultUser();
+    cy.createDefaultUser(1, 'cu1@complat.edu', 'UC');
 
     cy.get('#user_login').type('UC');
     cy.get('#user_password').type('user_password');
@@ -43,7 +43,7 @@ describe('home page', () => {
   });
 
   it('allows registered user to log in', () => {
-    cy.createDefaultUser();
+    cy.createDefaultUser(1, 'cu1@complat.edu', 'UC');
 
     cy.get('#user_login').type('UC');
     cy.get('#user_password').type('user_password');

@@ -1,13 +1,11 @@
-const { hasUncaughtExceptionCaptureCallback } = require('process');
-
 describe('manage_collections', () => {
   beforeEach(() => {
-    cy.createDefaultUser();
+    cy.createDefaultUser(1, 'cu1@complat.edu', 'cu1');
     cy.visit('users/sign_in');
   });
 
   it('create an unshared collection', () => {
-    cy.login('UC', 'user_password');
+    cy.login('cu1', 'user_password');
     cy.waitForAPIs();
     cy.get('#add-new-collection-button').click();
     cy.get('input[value="New Collection"]').last().as('input');
@@ -17,8 +15,8 @@ describe('manage_collections', () => {
   });
 
   it('Rename an unshared collection', () => {
-    cy.createCollection('Hello Collection');
-    cy.login('UC', 'user_password');
+    cy.createCollection(1, 'Hello Collection');
+    cy.login('cu1', 'user_password');
     cy.waitForAPIs();
     cy.get('input[value="Hello Collection"]').last().as('input');
     cy.get('@input').clear().type('Foo-Bar');
@@ -27,8 +25,8 @@ describe('manage_collections', () => {
   });
 
   it('delete an unshared collection', () => {
-    cy.createCollection('Hello Collection');
-    cy.login('UC', 'user_password');
+    cy.createCollection(1, 'Hello Collection');
+    cy.login('cu1', 'user_password');
     cy.waitForAPIs();
     cy.get('#delete-collection-button_3').click();
     cy.get('#save-collections-button').click();
