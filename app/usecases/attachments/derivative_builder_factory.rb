@@ -9,8 +9,7 @@ class DerivativeBuilderFactory
   def initialize(supported_formats_map = nil)
     @supported_formats_map = supported_formats_map || {
       'Usecases::Attachments::Thumbnail::ThumbnailCreator' => Usecases::Attachments::Thumbnail::ThumbnailCreator.supported_formats,
-      'Usecases::Attachments::Annotation::AnnotationCreator' =>
-        %w[jpg png svg]
+      'Usecases::Attachments::Annotation::AnnotationCreator' =>%w[jpg png svg tif tiff]
     }
   end
 
