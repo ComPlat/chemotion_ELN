@@ -1055,7 +1055,6 @@ class ElementStore {
         id_params: {
           model_name: `${type}`,
           ids: ids,
-          pages: currentSearchByID[`${type}s`].pages,
           total_elements: currentSearchByID[`${type}s`].totalElements
         },
         search_by_method: 'search_by_ids'
