@@ -12,6 +12,23 @@ module Reporter
         @img_format = args[:img_format]
       end
 
+      MET_PREF_SYMBOLS = {
+        u: 'μ', # micro
+        m: 'm', # milli
+        c: 'c', # centi
+        d: 'd', # deci
+        n: '', # none
+        k: 'k', # kilo
+      }.with_indifferent_access.freeze
+      MET_PREF = {
+        u: 0.000001,
+        m: 0.001,
+        c: 0.01,
+        d: 0.1,
+        n: 1.0,
+        k: 1000.0,
+      }.with_indifferent_access.freeze
+
       private
 
       def id
@@ -111,6 +128,14 @@ module Reporter
         alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         counter = counter >= 1 && counter <=26 ? counter - 1 : 25
         alphabets[counter]
+      end
+
+      def met_pre_conv(value, from_mp, to_mp)
+        (MET_PREF[from_mp] / MET_PREF[to_mp]) * value.to_f
+      end
+
+      def met_pref(metric_prefix, unit)
+        "#{MET_PREF_SYMBOLS[metric_prefix]}#{unit}"
       end
     end
   end
