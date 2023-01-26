@@ -35,7 +35,9 @@ const SearchResultTabContent = ({ list, tabResult }) => {
       elementType: 'by_ids',
       id_params: {
         model_name: key,
-        ids: ids
+        ids: ids,
+        pages: tabResult.pages,
+        total_elements: tabResult.total_elements,
       },
       search_by_method: 'search_by_ids'
     };
