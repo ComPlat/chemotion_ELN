@@ -1,6 +1,6 @@
 describe('manage_collections', () => {
   beforeEach(() => {
-    cy.createDefaultUser(1, 'cu1@complat.edu', 'cu1');
+    cy.createDefaultUser('cu1@complat.edu', 'cu1');
     cy.visit('users/sign_in');
   });
 

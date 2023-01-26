@@ -1,6 +1,6 @@
 describe('Self describing test group name', () => {
   beforeEach(() => {
-    cy.createDefaultUser(1, 'complat.user@complat.edu', 'CU');
+    cy.createDefaultUser('complat.user@complat.edu', 'CU');
     cy.visit('users/sign_in');
   });
 
