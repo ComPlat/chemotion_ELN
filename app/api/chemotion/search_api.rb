@@ -39,6 +39,7 @@ module Chemotion
               sample reaction wellplate screen element
             ]
             requires :ids, type: Array
+            optional :total_elements, type: Integer
           end
         end
         requires :collection_id, type: String
@@ -160,13 +161,14 @@ module Chemotion
       def serialize_result_by_ids(scope, page)
         result = {}
         serialized_scope = serialized_scope_for_result_by_id(scope)
+        pages = id_params['total_elements'].fdiv(id_params['ids'].size).ceil
 
         result[id_params['model_name'].pluralize] = {
           elements: serialized_scope,
           ids: id_params['ids'],
           page: page,
           perPage: id_params['ids'].size,
-          pages: id_params['pages'],
+          pages: pages,
           totalElements: id_params['total_elements'],
         }
         result
