@@ -134,6 +134,7 @@ class ElementStore {
       handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
+      handleFetchBasedOnSearchResultIds: ElementActions.fetchBasedOnSearchResultIds,
       handleDispatchSearchResult: ElementActions.dispatchSearchResult,
 
       handleFetchGenericElsByCollectionId: ElementActions.fetchGenericElsByCollectionId,
@@ -492,6 +493,12 @@ class ElementStore {
   // SEARCH
 
   handleFetchBasedOnSearchSelection(result) {
+    Object.keys(result).forEach((key) => {
+      this.state.elements[key] = result[key];
+    });
+  }
+
+  handleFetchBasedOnSearchResultIds(result) {
     Object.keys(result).forEach((key) => {
       this.state.elements[key] = result[key];
     });
@@ -1028,7 +1035,7 @@ class ElementStore {
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
-    const { currentSearchSelection } = uiState;
+    const { currentSearchSelection, currentSearchByID } = uiState;
 
     if (currentSearchSelection != null) {
       currentSearchSelection.page_size = uiState.number_of_results;
@@ -1038,6 +1045,27 @@ class ElementStore {
         page,
         isSync: uiState.isSync,
         moleculeSort
+      });
+    } else if (currentSearchByID != null) {
+      currentSearchByID.page_size = uiState.number_of_results;
+      const startNumber = currentSearchByID.page_size * (page - 1);
+      const ids = currentSearchByID[`${type}s`].ids.slice(startNumber, startNumber + currentSearchByID.page_size);
+      const selection = {
+        elementType: 'by_ids',
+        id_params: {
+          model_name: `${type}`,
+          ids: ids,
+          pages: currentSearchByID[`${type}s`].pages,
+          total_elements: currentSearchByID[`${type}s`].totalElements
+        },
+        search_by_method: 'search_by_ids'
+      };
+
+      ElementActions.fetchBasedOnSearchResultIds.defer({
+        selection: selection,
+        collectionId: uiState.currentCollection.id,
+        page: page,
+        isSync: uiState.isSync
       });
     } else {
       const per_page = uiState.number_of_results;

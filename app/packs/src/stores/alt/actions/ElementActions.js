@@ -199,6 +199,23 @@ class ElementActions {
     };
   }
 
+  fetchBasedOnSearchResultIds(params) {
+    let uid;
+    NotificationActions.add({
+      title: "Searching ...",
+      level: "info",
+      position: "tc",
+      onAdd: function (notificationObject) { uid = notificationObject.uid; }
+    });
+    return (dispatch) => {
+      SearchFetcher.fetchBasedOnSearchResultIds(params)
+        .then((result) => {
+          dispatch(result);
+          NotificationActions.removeByUid(uid);
+        }).catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
   dispatchSearchResult(result) {
     return (dispatch) => {
       dispatch(result);

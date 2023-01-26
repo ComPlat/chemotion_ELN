@@ -60,6 +60,7 @@ class UIStore {
       number_of_results: 15,
       currentCollection: null,
       currentSearchSelection: null,
+      currentSearchByID: null,
       showCollectionManagement: false,
       showDeviceManagement: false,
       isSync: false,
@@ -88,6 +89,7 @@ class UIStore {
       handleSetPagination: UIActions.setPagination,
       handleDeselectAllElements: UIActions.deselectAllElements,
       handleSetSearchSelection: UIActions.setSearchSelection,
+      handleSetSearchById: UIActions.setSearchById,
       handleSelectCollectionWithoutUpdating:
         UIActions.selectCollectionWithoutUpdating,
       handleClearSearchSelection: UIActions.clearSearchSelection,
@@ -363,6 +365,10 @@ class UIStore {
 
   handleSetSearchSelection(selection) {
     this.state.currentSearchSelection = selection;
+  }
+
+  handleSetSearchById(selection) {
+    this.state.currentSearchByID = selection;
   }
 
   handleSelectCollectionWithoutUpdating(collection) {

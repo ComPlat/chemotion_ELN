@@ -35,7 +35,9 @@ module Chemotion
             requires :value, type: String
           end
           optional :id_params, type: Hash do
-            requires :model_name, type: String
+            requires :model_name, type: String, values: %w[
+              sample reaction wellplate screen element
+            ]
             requires :ids, type: Array
           end
         end
@@ -161,8 +163,11 @@ module Chemotion
 
         result[id_params['model_name'].pluralize] = {
           elements: serialized_scope,
-          page: page,
           ids: id_params['ids'],
+          page: page,
+          perPage: id_params['ids'].size,
+          pages: id_params['pages'],
+          totalElements: id_params['total_elements'],
         }
         result
       end
@@ -178,7 +183,7 @@ module Chemotion
               serialized_result_by_id(s, serialized_scope)
             end
         end
-        serialized_scope
+        serialized_scope.sort_by! { |object| id_params['ids'].index object[:id] }
       end
 
       def serialized_result_by_id_for_sample(sample, serialized_scope)

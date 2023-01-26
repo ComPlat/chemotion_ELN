@@ -36,8 +36,9 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
   }
 
   const handleAdoptResult = () => {
-    UIActions.setSearchSelection(searchParams.selection);
-    ElementActions.dispatchSearchResult(prepareResultForDispatch());
+    const preparedResult = prepareResultForDispatch();
+    UIActions.setSearchById(preparedResult);
+    ElementActions.dispatchSearchResult(preparedResult);
     handleCancel();
   }
 
