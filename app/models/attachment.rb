@@ -221,20 +221,8 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attachment_attacher.create_derivatives
 
     update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
-
-    create_annotated_flat_image(file_path, attachment_data)
-  end
-
-  def create_annotated_flat_image(file_path, attachment_data)
-    return unless File.extname(file_path) == '.tiff' || File.extname(file_path) == '.tif'
-
-    annotation_location = attachment_data['derivatives']['annotation']['id']
-    annotation_file = File.open(annotation_location)
-    annotation = annotation_file.read
-
-    updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
-    updater.update_annotation(annotation, id)
-  end
+  
+  end  
 
   def check_file_size # rubocop:disable Metrics/AbcSize
     return if file_path.nil?
