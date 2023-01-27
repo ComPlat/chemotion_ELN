@@ -16,6 +16,8 @@ class AttachmentUploader < Shrine
                     "#{context[:record][:key]}.thumb.jpg"
                   elsif io.path.include? 'annotation.svg'
                     "#{context[:record][:key]}.annotation.svg"
+                  elsif io.path.include? 'conversion.png'
+                    "#{context[:record][:key]}.conversion.png"
                   else
                     "#{context[:record][:key]}#{File.extname(context[:record][:filename])}"
                   end
@@ -72,6 +74,7 @@ class AttachmentUploader < Shrine
     file_ending = File.extname(context[:record][:filename])
     file_ending = '.thumb.jpg' if file_stream.path.include? 'thumb.jpg'
     file_ending = '.annotation.svg' if file_stream.path.include? 'annotation.svg'
+    file_ending = '.conversion.png' if file_stream.path.include? 'conversion.png'
     "#{context[:record][:key]}#{file_ending}"
   end
 end

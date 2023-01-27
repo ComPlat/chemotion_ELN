@@ -9,8 +9,8 @@ module Usecases
         @supported_formats_map = supported_formats_map || {
           'Usecases::Attachments::Thumbnail::ThumbnailCreator' =>
           Usecases::Attachments::Thumbnail::ThumbnailCreator.supported_formats,
-          'Usecases::Attachments::Annotation::AnnotationCreator' =>
-          %w[jpg png svg tif tiff],
+          'Usecases::Attachments::Annotation::AnnotationCreator' => %w[jpg png svg tif],
+          'Usecases::Attachments::Converter::FileConverter' => %w[tif tiff],
         }
       end
 
@@ -18,14 +18,18 @@ module Usecases
         builders = []
         data_type = data_type_in.sub('.', '').downcase
         possible_creators.each do |creator|
+          Usecases::Attachments::Converter::FileConverter
           builders.append(creator.constantize.new) if @supported_formats_map[creator].include? data_type
         end
+        
         builders
+       
       end
 
       def possible_creators
         %w[Usecases::Attachments::Thumbnail::ThumbnailCreator
-           Usecases::Attachments::Annotation::AnnotationCreator]
+           Usecases::Attachments::Annotation::AnnotationCreator
+           Usecases::Attachments::Converter::FileConverter]
       end
     end
   end
