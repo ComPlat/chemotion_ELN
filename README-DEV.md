@@ -12,3 +12,10 @@
 ## Installation
 
 docker-compose -f docker-compose.dev.yml up
+
+OR
+
+docker-compose -f docker-compose.dev.ymp up postgres app webpacker
+
+## Working inside app container
+docker exec -it chemotion_eln-app-1 /bin/bash
