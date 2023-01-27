@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'export_table'
 
 module Export
@@ -119,9 +117,14 @@ module Export
       # return all data if sample in own collection
       if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
         headers = @headers
+        reference_values = ['melting pt', 'boiling pt']
         data = headers.map do |column|
           if column == 'literatures'
             literatures_info(sample[column])
+          elsif reference_values.include?(column)
+            regex = /[\[\]()]/
+            string = sample[column].gsub(regex, '')
+            string.split(',').join(' - ')
           else
             sample[column]
           end
@@ -164,7 +167,7 @@ module Export
     end
 
     def get_image_from_svg(svg_path)
-      image = Magick::Image.read(svg_path) { self.format = 'SVG'; }.first
+      image = Magick::Image.read(svg_path) { self.format('SVG'); }.first
       image.format = 'png'
       file = create_file(image.to_blob)
       { path: file.path, width: image.columns, height: image.rows }
