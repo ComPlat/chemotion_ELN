@@ -1,4 +1,4 @@
 #syntax=v1
 CONVERTER=ComPlat/chemotion-converter-app@v0.6.0
 KETCHER=ptrxyz/chemotion-ketchersvc@main
-SPECTRA=ComPlat/chem-spectra-app@0.10.17
+SPECTRA=ComPlat/chem-spectra-app@0.10.17-patch.2
