@@ -59,8 +59,8 @@ export default class ResearchPlansFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(researchPlan.serialize())
-    }).then((response) => response.json())
-      .then((json) =>{ GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)})
+    }).then( response => response.json())
+      .then((json) =>{ return GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)})
       .then(() => {
          return ResearchPlansFetcher.updateAnnotations(researchPlan) })
       .then(() =>{
