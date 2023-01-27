@@ -160,13 +160,16 @@ module Chemotion
       desc 'get_annotatated_image_of_attachment'
       get ':attachment_id/annotated_image' do
         content_type 'application/octet-stream'
-       
+
         env['api.format'] = :binary
 
         file_location = @attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
         uploaded_file = if !file_location.nil? && File.exist?(file_location)
-          extension_of_annotation=File.extname(file_location)
-          filename_of_annotated_image=@attachment.filename.gsub(File.extname(@attachment.filename),"_annotated"+extension_of_annotation)
+                          extension_of_annotation = File.extname(file_location)
+                          filename_of_annotated_image = @attachment.filename.gsub(
+                            File.extname(@attachment.filename),
+                            "_annotated#{extension_of_annotation}",
+                          )
                           header['Content-Disposition'] = "attachment; filename=\"#{filename_of_annotated_image}\""
                           File.open(file_location)
                         else
@@ -298,21 +301,29 @@ module Chemotion
       end
 
       get 'image/:attachment_id' do
-        sfilename = @attachment.key + @attachment.extname
-       
+        attachment_file_name = @attachment.key + @attachment.extname
+        attachment_file = @attachment.attachment_attacher.file
+
+        if (@attachment.extname == '.tif' ||
+          @attachment.extname == '.tiff') &&
+           (@attachment.attachment_data['derivatives']['conversion'])
+
+          attachment_file = File.open(@attachment.attachment_data['derivatives']['conversion']['id'])
+        end
+
         if params[:annotated]
           annotated_file_path = @attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
           annotated_file_exists = annotated_file_path && File.exist?(annotated_file_path)
-          sfilename = "#{@attachment.key}_annotated.png" if annotated_file_exists
+          attachment_file = File.open(annotated_file_path) if annotated_file_exists
         end
+
         content_type @attachment.content_type
-        header['Content-Disposition'] = "attachment; filename=#{sfilename}"
+        header['Content-Disposition'] = "attachment; filename=#{attachment_file_name}"
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
-        uploaded_file = @attachment.attachment_attacher.file
-        uploaded_file = File.open(annotated_file_path) if annotated_file_exists
-        data = uploaded_file.read
-        uploaded_file.close
+
+        data = attachment_file.read
+        attachment_file.close
 
         data
       end
