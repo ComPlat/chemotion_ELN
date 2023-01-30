@@ -29,6 +29,14 @@ RSpec.describe Usecases::Attachments::LoadImage do
       end
     end
 
+    context 'with image attachment (jpg) and annotated but not yet annotated' do
+      let(:attachment) { create(:attachment, :with_image) }     
+      let(:annotated){true}
+      it 'size of returned image equals original image' do
+        expect(tmp_file.size).to eq attachment.filesize
+      end
+    end
+
     context 'with image attachment(tif, already converted)' do
       let(:attachment) { create(:attachment, :with_tif_file) }     
 

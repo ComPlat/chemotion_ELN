@@ -12,7 +12,7 @@ module Usecases
 
         attachment_file = get_file_of_converted_image(attachment) if @@types_convert.include?(attachment.extname)
 
-        attachment_file = load_annotated_image(attachment) if annotated
+        attachment_file = load_annotated_image(attachment, attachment_file) if annotated
 
         data = attachment_file.read
         attachment_file.close
@@ -35,10 +35,14 @@ module Usecases
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
-      def self.load_annotated_image(attachment)
+      def self.load_annotated_image(attachment, attachment_file)
         annotated_file_path = attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
         annotated_file_exists = annotated_file_path && File.exist?(annotated_file_path)
-        File.open(annotated_file_path) if annotated_file_exists
+        if annotated_file_exists
+          File.open(annotated_file_path)
+        else
+          attachment_file
+        end
       end
 
       def self.get_file_of_converted_image(attachment)
