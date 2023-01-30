@@ -315,7 +315,7 @@ module Reporter
                                vol: valid_digit(vol, digit),
                                mol: valid_digit(mmol, digit),
                                equiv: equiv,
-                               molecule_name_hash: s[:molecule_name_hash]
+                               molecule_name_hash: s[:molecule_name_hash],
                              })
         end
 
@@ -361,7 +361,7 @@ module Reporter
       def description
         delta_desc = obj.description.deep_stringify_keys["ops"]
         clean_desc = { "ops" => delta_desc }
-        [Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML()), clean_desc]
+        [Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML), clean_desc]
       end
 
       def solvents
@@ -414,7 +414,7 @@ module Reporter
       end
 
       def tlc_control
-        rf_value.to_f != 0 || tlc_solvents.present? || tlc_description.present?
+        rf_value.to_d != 0 || tlc_solvents.present? || tlc_description.present?
       end
 
       def synthesis_html

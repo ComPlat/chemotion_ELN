@@ -13,7 +13,7 @@ module Reporter
 
     private
     def deltaToHTML(delta)
-      return "<div></div>" if delta['ops'].nil? || delta['ops'].count.zero?
+      return "<div></div>" if delta['ops'].nil? || delta['ops']&.count&.zero?
 
       html = []
       i = 0
