@@ -22,6 +22,7 @@ import {
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
+import {Alert} from 'react-bootstrap';
 
 const editorTooltip = (exts) => (
   <Tooltip id="editor_tooltip">
@@ -204,7 +205,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
 
     if (attachment.is_deleted) {
-      return (
+      return (        
         <div>
           <Row>
             <Col md={1} />
@@ -228,6 +229,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
     return (
       <div>
+        {this.renderImageEditedWarning(attachment)}
         <Row>
           <Col md={1}>
             <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
@@ -264,6 +266,17 @@ export default class ResearchPlanDetailsAttachments extends Component {
             {this.renderImportAttachmentButton(attachment)}
           </Col>
         </Row>
+      </div>
+    );
+  }
+
+  renderImageEditedWarning(attachment){
+    if(!attachment) {return null;}
+    if(!attachment.updatedAnnotation){return null;} 
+
+    return (
+    <div className='imageEditedWarning'>
+        <Alert>Image was edited. Please save Researchplan to apply changes</Alert>
       </div>
     );
   }
@@ -334,7 +347,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
         this.props.researchPlan.attachments
       );
 
-      return (
+      return (       
         <ListGroup>
           {filteredAttachments.map((attachment) => (
             <ListGroupItem key={attachment.id}>
