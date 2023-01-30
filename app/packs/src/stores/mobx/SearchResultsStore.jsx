@@ -86,9 +86,12 @@ export const SearchResultsStore = types
       self.result_icon = self.search_results_visible ? "down" : "right";
       self.search_icon = self.result_icon == "right" ? "down" : "right";
     },
-    clearSearchResults() {
+    clearSearchAndTabResults () {
       self.search_results.clear();
       self.tab_search_results.clear();
+    },
+    clearSearchResults() {
+      self.clearSearchAndTabResults();
       self.hideSearchResults();
       self.clearFilter();
       self.changeErrorMessage('');

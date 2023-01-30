@@ -12,7 +12,6 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
   const results = searchResultsStore.searchResultValues;
   const profile = UserStore.getState().profile || {};
   const [visibleTabs, setVisibleTabs] = useState([]);
-  const [hiddenTabs, setHiddenTabs] = useState([]);
   const [currentTabIndex, setCurrentTabIndex] = useState(0);
 
   useEffect(() => {
@@ -22,12 +21,16 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
 
       Object.entries(profile.data.layout).map((value) => {
         let index = value[1] - 1;
+        let tab = results.find(val => val.id.indexOf(value[0]) !== -1);
+        let totalElements = tab === undefined ? 0 : tab.results.total_elements;
         if (value[1] > 0) {
-          visible.push({ key: value[0], index: index });
+          visible.push({ key: value[0], index: index, totalElements: totalElements });
         }
       });
       setVisibleTabs(visible.sort((a,b) => a.index - b.index));
-      setCurrentTabIndex(0);
+      let activeTab = visible.find((v) => { return v.totalElements != 0 });
+      activeTab = activeTab !== undefined ? activeTab.index : 0;
+      setCurrentTabIndex(activeTab);
     }
   }, []);
 
@@ -108,7 +111,7 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
 
       navItems.push(navItem);
       tabContents.push(tabContent);
-    })
+    });
 
     return (
       <>
