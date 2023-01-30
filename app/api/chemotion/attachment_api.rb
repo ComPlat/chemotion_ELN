@@ -300,32 +300,14 @@ module Chemotion
         optional :annotated, type: Boolean, desc: 'Return annotated image if possible'
       end
 
-      get 'image/:attachment_id' do
-        attachment_file_name = @attachment.key + @attachment.extname
-        attachment_file = @attachment.attachment_attacher.file
-
-        if (@attachment.extname == '.tif' ||
-          @attachment.extname == '.tiff') &&
-           (@attachment.attachment_data['derivatives']['conversion'])
-
-          attachment_file = File.open(@attachment.attachment_data['derivatives']['conversion']['id'])
-        end
-
-        if params[:annotated]
-          annotated_file_path = @attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
-          annotated_file_exists = annotated_file_path && File.exist?(annotated_file_path)
-          attachment_file = File.open(annotated_file_path) if annotated_file_exists
-        end
-
+      get 'image/:attachment_id' do  
+        data=Usecases::Attachments::LoadImage.execute!(@attachment,params[:annotated]) 
         content_type @attachment.content_type
-        header['Content-Disposition'] = "attachment; filename=#{attachment_file_name}"
+        header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
-
-        data = attachment_file.read
-        attachment_file.close
-
         data
+
       end
 
       desc 'Return Base64 encoded thumbnail'
