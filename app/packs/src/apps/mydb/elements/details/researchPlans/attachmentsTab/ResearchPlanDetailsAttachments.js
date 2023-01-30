@@ -13,7 +13,6 @@ import {
   Button, ButtonGroup,
   Col, ControlLabel,
   FormGroup,
-  Glyphicon,
   ListGroup, ListGroupItem,
   Overlay, OverlayTrigger,
   Row,
@@ -22,7 +21,7 @@ import {
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
-import {Alert} from 'react-bootstrap';
+import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
 
 const editorTooltip = (exts) => (
   <Tooltip id="editor_tooltip">
@@ -203,7 +202,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const docType = this.documentType(attachment.filename);
     const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
-
+    const is_annotationUpdated=attachment.updatedAnnotation
     if (attachment.is_deleted) {
       return (        
         <div>
@@ -228,8 +227,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
 
     return (
-      <div>
-        {this.renderImageEditedWarning(attachment)}
+      <div>       
+        <SaveResearchPlanWarning visible={is_annotationUpdated}/>
         <Row>
           <Col md={1}>
             <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
@@ -268,18 +267,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
         </Row>
       </div>
     );
-  }
-
-  renderImageEditedWarning(attachment){
-    if(!attachment) {return null;}
-    if(!attachment.updatedAnnotation){return null;} 
-
-    return (
-    <div className='imageEditedWarning'>
-        <Alert>Image was edited. Please save Researchplan to apply changes</Alert>
-      </div>
-    );
-  }
+  } 
 
   renderEditAttachmentButton(attachment,extension,attachmentEditor,isEditing,styleEditorBtn,editDisable){
     return (

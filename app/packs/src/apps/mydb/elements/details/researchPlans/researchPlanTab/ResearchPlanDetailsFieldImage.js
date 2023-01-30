@@ -10,6 +10,7 @@ import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPl
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import ElementStore from '../../../../../../stores/alt/stores/ElementStore';
 import {Alert} from 'react-bootstrap';
+import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
 
 
 export default class ResearchPlanDetailsFieldImage extends Component {
@@ -60,7 +61,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
   renderEdit() {
     const { field } = this.props;  
-   
+    const currentAttachment=this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name)
+    const is_annotationUpdated=currentAttachment!=null && currentAttachment.updatedAnnotation 
     let content;
     if (field.value.public_name) {     
       const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
@@ -90,13 +92,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             <div className="image-annotation-button-researchplan">
               <ImageAnnotationEditButton                          
                 parent={this}
-                attachment={this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name)}
+                attachment={currentAttachment}
               />
             </div>
           </InputGroup>
           
-        </FormGroup>      
-         {this.renderImageEditedWarning(this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name))} 
+        </FormGroup>     
+        <SaveResearchPlanWarning visible={is_annotationUpdated}/>
         <Dropzone
           accept="image/*"
           multiple={false}

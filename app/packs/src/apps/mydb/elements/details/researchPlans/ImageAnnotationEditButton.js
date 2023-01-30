@@ -74,5 +74,5 @@ export default class ImageAnnotationEditButton extends Component {
 ImageAnnotationEditButton.propTypes = {
   attachment: PropTypes.instanceOf(Attachment),
   parent: PropTypes.object.isRequired,
-  horizontalAlignment: PropTypes.string,
+  horizontalAlignment: PropTypes.string
 };
