@@ -80,6 +80,7 @@ const KetcherRailsform = ({ handleCancel, isPublic }) => {
     searchResultsStore.loadSearchResults({
       selection, collectionId, isSync, isPublic
     });
+    searchResultsStore.clearSearchAndTabResults();
   }
 
   const handleRefind = () => {

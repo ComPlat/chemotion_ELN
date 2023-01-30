@@ -71,6 +71,7 @@ const AdvancedSearchForm = ({ handleCancel }) => {
          collectionId: collectionId,
          isSync: uiState.isSync,
       });
+      searchResultsStore.clearSearchAndTabResults();
     } else {
       searchResultsStore.changeErrorMessage("Please fill out all needed fields");
     }
