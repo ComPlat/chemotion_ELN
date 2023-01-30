@@ -15,6 +15,10 @@ module Usecases
           result[:conversion] = File.open(conversion_path, 'rb')
           result
         end
+
+        def create_converted_file(original_file_path)
+          result = self.create_derivative(original_file_path,original_file_path,nil, {}, nil)
+        end
       end
     end
   end
