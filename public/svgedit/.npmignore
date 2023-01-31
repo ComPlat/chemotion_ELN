@@ -1,5 +1,0 @@
-lgtm.yml
-coverage/**
-.nyc_output
-instrumented/**
-node_modules/**
