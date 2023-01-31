@@ -7,3 +7,6 @@ yarn install
 
 # set up database
 bundle exec rake db:setup
+
+# move svg editor to public folder
+mv ~/node_modules/svgedit/dist/editor ~/app/public/svgedit
