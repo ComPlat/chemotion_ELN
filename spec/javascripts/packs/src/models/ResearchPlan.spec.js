@@ -15,6 +15,12 @@ describe('ResearchPlan', () => {
       expect(researchPlan.attachments.length).toEqual(1);
     });
 
+    it('without argument', () => {
+      researchPlan.attachments = [attachmentInResearchPlan];
+      researchPlan.upsertAttachments();
+      expect(researchPlan.attachments.length).toEqual(1);
+    });
+
     it('with two attachments, one already present in researchplan', () => {
       attachmentInResearchPlan.is_deleted = false;
       researchPlan.attachments = [attachmentInResearchPlan];

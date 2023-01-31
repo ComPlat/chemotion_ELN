@@ -193,7 +193,7 @@ export default class ResearchPlan extends Element {
     return this._wellplates || [];
   }
 
-  upsertAttachments(attachmentsToAdd) {
+  upsertAttachments(attachmentsToAdd=[]) {
     const idsOfAttachmentsInResearchPlan = this.attachments.map(
       (attachmentInResearchPlan) => attachmentInResearchPlan.identifier
     );
