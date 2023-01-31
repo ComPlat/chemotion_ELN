@@ -20,7 +20,7 @@ export default class ImageAnnotationModalSVG extends Component {
         <Modal.Body>
           <iframe
             title = ""
-            src="/svgedit/editor/index.html"
+            src="/svgedit/index.html"
             id="svgEditId"
             width="100%"
             height="800"
