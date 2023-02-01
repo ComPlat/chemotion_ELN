@@ -28,3 +28,6 @@ sed -i "s~export { diacritics, commands } from './unicode.json';~import unicode 
 yellow "$src4"
 sed -i "s~import { props, ignoredProps } from './props';~import wikiprops from './props';const { props, ignoredProps } = wikiprops  ;~" $src4
 yellow "Done fixing import."
+
+# move svgedit to public folder
+mv ./node_modules/svgedit/dist/editor ./public/svgedit
