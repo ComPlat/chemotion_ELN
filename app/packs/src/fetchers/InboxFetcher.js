@@ -13,14 +13,16 @@ export default class InboxFetcher {
   }
 
   static fetchInboxByContainer(container) {
-    return fetch(`/api/v1/inbox/containers/id?id=${container.id}`, {
+    const promise = fetch(`/api/v1/inbox/containers/id?id=${container.id}`, {
       credentials: 'same-origin'
     })
-      .then((response) => response.json())
-      .then((json) => json)
+      .then(response => response.json())
+      .then(json => json)
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
+
+    return promise;
   }
 
   static fetchMatchingSamples(searchString) {

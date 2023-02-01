@@ -16,13 +16,13 @@ module Chemotion
         end
       end
 
-      desc 'Return datasets by container ID'
+      desc 'Return files by subcontainer ID'
       params do
-        requires :id, type: Integer, desc: 'container ID'
+        requires :id, type: Integer, desc: 'subcontainer ID'
       end
 
       get "containers/id" do
-        container = Container.find params[:id]
+        container = Container.includes(:attachments).find params[:id]
         present container, with: Entities::InboxEntity, root: :inbox
       end
 

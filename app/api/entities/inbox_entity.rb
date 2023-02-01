@@ -17,6 +17,7 @@ module Entities
 
     def children
       serialize_children(object.hash_tree(limit_depth: 2)[object])
+      # serialize_children(object.hash_tree[object])
     end
 
     def children_count
@@ -47,7 +48,7 @@ module Entities
     end
 
     def total_attachment_count
-      object.descendants.sum { |dataset| dataset&.attachments&.size }
+      object.descendants.includes(:attachments).sum { |dataset| dataset&.attachments.size }
     end
 
     def unlinked_attachments

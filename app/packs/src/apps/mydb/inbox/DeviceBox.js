@@ -17,9 +17,11 @@ export default class DeviceBox extends React.Component {
 
   handleDeviceBoxClick(deviceBox) {
     const { visible } = this.state;
-    if (!visible && (Array.isArray(deviceBox.children) && !deviceBox.children.length)) {
-      LoadingActions.start();
-      InboxActions.fetchInboxContainer(deviceBox);
+    if (!visible) {
+      if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
+        LoadingActions.start();
+        InboxActions.fetchInboxContainer(deviceBox);
+      }
     }
     this.setState({ visible: !visible });
   }

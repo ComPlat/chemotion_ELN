@@ -72,7 +72,6 @@ class InboxStore {
     const index = inbox.children.findIndex((obj) => obj.id === result.id);
     inbox.children[index].children = result.children;
     this.setState(inbox);
-
     this.sync();
     this.countAttachments();
   }
