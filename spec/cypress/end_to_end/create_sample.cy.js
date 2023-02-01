@@ -1,18 +1,15 @@
 describe('samples scenario', () => {
   beforeEach(() => {
-    cy.createDefaultUser('cu1@complat.edu', 'cu1');
+    cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
+      cy.appFactories([['create', 'collection', { user_id: user[0].id }]]);
+    });
     cy.visit('users/sign_in');
   });
 
   it('create samples', () => {
     cy.login('cu1', 'user_password');
-    cy.waitForAPIs();
-
-    cy.createCollection(1, 'Col1');
-
-    // Testcase starts here
-    cy.visit('mydb/collection/3/');
-    cy.get('#tree-id-Col1').click();
+    cy.stubCollections();
+    cy.get('div').find('[id="tree-id-Collection 1"]').click();
     cy.get('#create-split-button').click();
     cy.get('#create-sample-button').click();
     cy.get('.chem-identifiers-section > .list-group-item').click();
