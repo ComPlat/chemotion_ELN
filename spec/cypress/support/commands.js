@@ -47,6 +47,7 @@ Cypress.Commands.add('createDefaultUser', (emailAddress, abbr) => {
 Cypress.Commands.add('createDefaultAdmin', () => {
   cy.appFactories([
     ['create', 'admin', {
+      email: 'admin@eln.edu',
       password: 'admin_password',
       password_confirmation: 'admin_password',
       name_abbreviation: 'ADM',
@@ -96,6 +97,31 @@ Cypress.Commands.add('waitForAPIs', () => {
     '@colletions3',
     '@colletions4',
   ], ro);
+});
+
+const staticResponse = { /* some StaticResponse properties here... */ };
+Cypress.Commands.add('stubCollections', () => {
+  cy.intercept('GET', '/api/v1/collections/roots.json', staticResponse).as('colletions1');
+  cy.intercept('GET', '/api/v1/collections/shared_roots.json', staticResponse).as('colletions2');
+  cy.intercept('GET', '/api/v1/collections/remote_roots.json', staticResponse).as('colletions3');
+  cy.intercept('GET', '/api/v1/syncCollections/sync_remote_roots.json', staticResponse).as('colletions4');
+  cy.intercept('PATCH', '/api/v1/collections', staticResponse).as('collections.patch');
+  const ro = { requestTimeout: 60000, responseTimeout: 90000 };
+  cy.get('#collection-management-button').click();
+  cy.wait([
+    '@colletions1',
+    '@colletions2',
+    '@colletions3',
+    '@colletions4',
+  ], ro);
+});
+
+Cypress.Commands.add('stubExperimentData', () => {
+  cy.intercept('GET', '/api/v1/samples.json', staticResponse);
+  cy.intercept('GET', '/api/v1/research.json', staticResponse);
+  cy.intercept('GET', '/api/v1/wellplates.json', staticResponse);
+  cy.intercept('GET', '/api/v1/screens.json', staticResponse);
+  cy.intercept('GET', '/api/v1/research_plans.json', staticResponse);
 });
 
 Cypress.Commands.add('createMolecule', (iupacName, molWeight) => {
