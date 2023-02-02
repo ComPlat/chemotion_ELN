@@ -3,7 +3,7 @@
 # WARNING: Building this container initially takes a lot of time, due to gem compiling, so grab a coffee
 # and write some documentation meanwhile ;)
 
-FROM ubuntu:focal
+FROM --platform=linux/amd64 ubuntu:focal
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VRUBY=2.7.6
