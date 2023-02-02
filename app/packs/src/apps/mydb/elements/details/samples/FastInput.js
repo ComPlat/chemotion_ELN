@@ -1,16 +1,19 @@
 /* eslint-disable react/forbid-prop-types */
-import React, { useRef } from 'react';
-import { InputGroup, OverlayTrigger, FormGroup, SplitButton, Tooltip, MenuItem } from 'react-bootstrap';
+import React, { useRef, useState } from 'react';
+import {
+  InputGroup, OverlayTrigger, FormGroup, Tooltip, FormControl, Button, Glyphicon
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import { validateCas } from 'src/utilities/CasValidation';
 
 const apiCall = (cas, src = 'cas') => (src === 'cas' ? `https://commonchemistry.cas.org/api/detail?cas_rn=${cas}` : `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${cas}/property/CanonicalSMILES/JSON`);
-
-const FastInput = (props) => {
-  const inputCas = useRef('');
+function FastInput(props) {
+  const refInput = useRef(null);
+  const [value, setValue] = useState(null);
   const notify = (_params) => {
     NotificationActions.add({
       title: _params.title,
@@ -25,12 +28,12 @@ const FastInput = (props) => {
 
   const searchSmile = () => {
     LoadingActions.start();
-    props.fnHandle(inputCas.current.value);
+    props.fnHandle(refInput.current.props.value);
   };
 
-  const search = () => {
+  const searchCas = (cas) => {
     let params = {
-      apiEndpoint: apiCall(inputCas.current.value),
+      apiEndpoint: apiCall(cas),
       requestMethod: 'get',
       jsonTranformation: json => json
     };
@@ -38,7 +41,7 @@ const FastInput = (props) => {
     BaseFetcher.withoutBodyData(params).then((cjson) => {
       if (cjson.message) {
         params = {
-          apiEndpoint: apiCall(inputCas.current.value, 'pubchem'),
+          apiEndpoint: apiCall(cas, 'pubchem'),
           requestMethod: 'get',
           jsonTranformation: json => json
         };
@@ -46,28 +49,44 @@ const FastInput = (props) => {
           if (pjson.Fault) {
             notify({ title: 'CAS Error', lvl: 'error', msg: pjson.Fault.Code });
           } else {
-            props.fnHandle(pjson.PropertyTable.Properties[0].CanonicalSMILES);
+            props.fnHandle(pjson.PropertyTable.Properties[0].CanonicalSMILES, cas);
           }
         }).catch((err) => {
           notify({ title: 'CAS Error', lvl: 'error', msg: err });
         });
       } else {
-        props.fnHandle(cjson.smile);
+        props.fnHandle(cjson.smile, cas);
       }
     }).catch((err) => {
       notify({ title: 'CAS Error', lvl: 'error', msg: err });
     }).finally(() => {
       LoadingActions.stop();
-      inputCas.current.value = '';
     });
   };
 
-  const sbTitle = (
-    <span>
-      <span className="fi-tit">Fast create by</span>
-      <input className="fi-txt" type="text" ref={inputCas} />
-    </span>
-  );
+  const searchString = (e) => {
+    const input = refInput.current.props.value;
+    if (e.key === 'Enter' || e.type === 'click') {
+      const getCas = validateCas(input, false);
+      if (getCas !== 'smile') {
+        searchCas(getCas);
+      } else {
+        searchSmile();
+      }
+    } else {
+      e.stopPropagation();
+    }
+  };
+
+  const updateValue = (e) => {
+    setValue(e.target.value);
+  };
+  const buttonStyle = {
+    height: '23px', borderRadius: '5px', position: 'absolute', right: '8px', borderColor: 'rgba(16, 10, 13, 0.14)', backgroundColor: 'white', outline: 'none'
+  };
+  const formStyle = {
+    height: '23px', borderRadius: '5px', position: 'relative', right: '30px'
+  };
 
   return (
     <OverlayTrigger
@@ -76,30 +95,33 @@ const FastInput = (props) => {
       overlay={<Tooltip id="_fast_create_btn">Fast create by CAS RN (with dashes) or SMILES</Tooltip>}
     >
       <FormGroup bsSize="xsmall" className="fast-input">
-        <InputGroup bsSize="xsmall">
-          <SplitButton
+        <InputGroup className="mb-3">
+          <FormControl
             id="_fast_create_btn_split"
+            type="text"
             pullRight
-            bsStyle="default"
+            ref={refInput}
+            onChange={updateValue}
+            value={value}
+            onKeyPress={(e) => searchString(e)}
+            style={formStyle}
+            placeholder="fast create by CAS/Smiles ..."
+          />
+          <Button
             bsSize="xsmall"
-            onToggle={(isOpen, e) => { if (e) { e.stopPropagation(); } }}
-            title={sbTitle}
-            onClick={(e) => { e.stopPropagation(); }}
-            className="fi-btn"
+            style={buttonStyle}
+            onClick={(e) => searchString(e)}
           >
-            <MenuItem onSelect={(eventKey, e) => { e.stopPropagation(); search(); }}>
-              by CAS
-            </MenuItem>
-            <MenuItem onSelect={(eventKey, e) => { e.stopPropagation(); searchSmile(); }}>
-              by SMILES
-            </MenuItem>
-          </SplitButton>
+            <Glyphicon glyph="glyphicon glyphicon-search" />
+          </Button>
         </InputGroup>
       </FormGroup>
     </OverlayTrigger>
   );
-};
+}
 
-FastInput.propTypes = { fnHandle: PropTypes.func.isRequired };
+FastInput.propTypes = {
+  fnHandle: PropTypes.func.isRequired
+};
 
 export default FastInput;
