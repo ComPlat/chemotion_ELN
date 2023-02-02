@@ -49,8 +49,8 @@ export default class BaseFetcher {
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
     const product_only = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
-              + `collection_id=${id}&page=${page}&per_page=${perPage}&`
-              + `${fromDate}${toDate}${filterCreatedAt}${product_only}`;
+      + `collection_id=${id}&page=${page}&per_page=${perPage}&`
+      + `${fromDate}${toDate}${filterCreatedAt}${product_only}`;
     let addQuery = type === 'samples'
       ? `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`
       : '';
@@ -58,8 +58,8 @@ export default class BaseFetcher {
     return fetch(api.concat(addQuery), {
       credentials: 'same-origin'
     }).then((response) => (
-      response.json().then((json) => ({
-        elements: json[type].map((r) => (new ElKlass(r))),
+      response.json().then(json => ({
+        elements: (type === 'generic_elements' ? json.map(r => (new ElKlass(r))) : json[type].map(r => (new ElKlass(r)))),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
         page: parseInt(response.headers.get('X-Page'), 10),
         pages: parseInt(response.headers.get('X-Total-Pages'), 10),
