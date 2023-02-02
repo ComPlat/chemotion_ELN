@@ -117,7 +117,7 @@ export default class SearchFetcher {
               } else { result.research_plans = { elements: [], totalElements: 0, ids: [] }; }
               break;
             default:
-              if (json[`${key}`] && json[`${key}`].elements.length > 0) {
+              if (json[`${key}`] && json[`${key}`].elements !== undefined && json[`${key}`].elements.length > 0) {
                 result[`${key}`].elements = json[`${key}`].elements.map(s => (new GenericEl(s)));
               } else { result[`${key}`] = { elements: [], totalElements: 0, ids: [] }; }
               break;

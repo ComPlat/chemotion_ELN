@@ -10,7 +10,9 @@ import SearchResultTabContent from './SearchResultTabContent';
 const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
   const results = searchResultsStore.searchResultValues;
-  const profile = UserStore.getState().profile || {};
+  const userState = UserStore.getState();
+  const profile = userState.profile || {};
+  const genericElements = userState.genericEls || [];
   const [visibleTabs, setVisibleTabs] = useState([]);
   const [currentTabIndex, setCurrentTabIndex] = useState(0);
 
@@ -19,12 +21,13 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
       typeof (profile.data) !== 'undefined' && profile.data)  {
       const visible = [];
 
-      Object.entries(profile.data.layout).map((value) => {
-        let index = value[1] - 1;
+      Object.entries(profile.data.layout).filter((value) => {
+        return value[0] != 'research_plan';
+      }).map((value, i) => {
         let tab = results.find(val => val.id.indexOf(value[0]) !== -1);
         let totalElements = tab === undefined ? 0 : tab.results.total_elements;
         if (value[1] > 0) {
-          visible.push({ key: value[0], index: index, totalElements: totalElements });
+          visible.push({ key: value[0], index: i, totalElements: totalElements });
         }
       });
       setVisibleTabs(visible.sort((a,b) => a.index - b.index));
@@ -70,19 +73,25 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
   }
 
   const searchResultNavItem = (list, tabResult) => {
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate'];
     let iconClass = `icon-${list.key}`;
-    // TODO change iconClass for generic elements
-    let ttl = (
+    let tooltipText = list.key && (list.key.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
+    
+    if (!elnElements.includes(list.key)) {
+      const genericElement = (genericElements && genericElements.find(el => el.name === list.key)) || {};
+      iconClass = `${genericElement.icon_name} icon_generic_nav`;
+      tooltipText = `${genericElement.label}<br />${genericElement.desc}`;
+    }
+    let tooltip = (
       <Tooltip id="_tooltip_history" className="left_tooltip">
-        {list.key && (list.key.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()))}
+        {tooltipText}
       </Tooltip>
     );
-
     let itemClass = tabResult.total_elements == 0 ? ' no-result' : '';
 
     return (
       <NavItem eventKey={list.index} key={`${list.key}_navItem`} className={`elements-list-tab${itemClass}`}>
-        <OverlayTrigger delayShow={500} placement="top" overlay={ttl}>
+        <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
           <div style={{ display: 'flex' }}>
             <i className={iconClass} />
             <span style={{ paddingLeft: 5 }}>

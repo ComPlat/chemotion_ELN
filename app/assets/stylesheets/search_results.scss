@@ -35,6 +35,11 @@
   font-size: 2.2em;
 }
 
+.search-result-tab-navbar.navbar-default .navbar-nav a i.icon_generic_nav {
+  font-size: 1.8em;
+  padding-top: 2px;
+}
+
 .search-result-tab-navbar.navbar-default .navbar-nav a span {
   font-size: 1.4em;
   padding-top: 2px;
@@ -50,6 +55,11 @@
 
 .search-result-tab-navbar.navbar-default .elements-list-tab.no-result a i {
   font-size: 1.8em;
+}
+
+.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a i.icon_generic_nav {
+  font-size: 1.5em;
+  padding-top: 4px;
 }
 
 .search-result-tab-navbar.navbar-default .elements-list-tab.no-result a span {

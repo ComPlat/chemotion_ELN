@@ -486,8 +486,8 @@ module Chemotion
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id)
         when Element
           elements[:element_ids] = scope&.ids
-          # sample_ids = ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
-          elements[:sample_ids] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
+          sample_ids = ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
+          elements[:sample_ids] = Sample.by_collection_id(collection_id).where(id: sample_ids).uniq.pluck(:id)
         when AllElementSearch::Results
           # TODO: check this samples_ids + molecules_ids ????
           elements[:sample_ids] = (scope&.samples_ids + scope&.molecules_ids)
