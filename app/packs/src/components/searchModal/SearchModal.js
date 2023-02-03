@@ -18,9 +18,8 @@ const Components = {
   empty: NoFormSelected
 }
 
-const SearchModal = ({ showModal, onCancel, isPublic }) => {
+const SearchModal = ({ isPublic }) => {
   const [selectedOption, setSelectedOption] = useState(FormData.forms[0]);
-  const [visibleModal, setVisibleModal] = useState(showModal);
   const [minimizeModal, setMinimizeModal] = useState(true);
   const searchResultsStore = useContext(StoreContext).searchResults;
 
@@ -61,14 +60,9 @@ const SearchModal = ({ showModal, onCancel, isPublic }) => {
     );
   }
 
-  const hideModal = () => {
-    setVisibleModal(false);
-  }
-
   const handleCancel = () => {
-    hideModal();
+    searchResultsStore.hideSearchResults();
     searchResultsStore.clearSearchResults();
-    if (onCancel) { onCancel(); }
   }
 
   const handleMinimize = () => {
@@ -86,7 +80,7 @@ const SearchModal = ({ showModal, onCancel, isPublic }) => {
   return (
     <Draggable handle=".handle">
       <Modal
-        show={showModal}
+        show={searchResultsStore.searchModalVisible}
         onHide={handleCancel}
         backdrop={false}
         dialogas="full-search"

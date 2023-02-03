@@ -15,13 +15,16 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericElCriteria from 'src/components/generic/GenericElCriteria';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class Search extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
       elementType: 'all',
-      showGlobalSearch: false,
       showStructureEditor: false,
       queryMolfile: null,
       searchType: 'sub',
@@ -31,7 +34,6 @@ export default class Search extends React.Component {
     };
     this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
-    this.handleSearchModalCancel = this.handleSearchModalCancel.bind(this);
     this.hideGenericElCriteria = this.hideGenericElCriteria.bind(this);
     this.genericElSearch = this.genericElSearch.bind(this);
   }
@@ -120,10 +122,6 @@ export default class Search extends React.Component {
       : UIActions.selectCollection(currentCollection);
   }
 
-  showGlobalSearch() {
-    this.setState({ showGlobalSearch: true });
-  }
-
   showStructureEditor() {
     this.setState({ showStructureEditor: true });
   }
@@ -134,10 +132,6 @@ export default class Search extends React.Component {
 
   hideStructureEditor() {
     this.setState({ showStructureEditor: false });
-  }
-
-  hideSearchModall() {
-    this.setState({ showGlobalSearch: false });
   }
 
   showGenericElCriteria() {
@@ -171,10 +165,6 @@ export default class Search extends React.Component {
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
-  }
-
-  handleSearchModalCancel() {
-    this.hideSearchModall();
   }
 
   handleTanimotoChange(e) {
@@ -232,7 +222,7 @@ export default class Search extends React.Component {
         <Button bsStyle={customClass ? null : 'primary'} className={customClass} onClick={() => this.showStructureEditor()}>
           <Glyphicon glyph="pencil" id="AutoCompletedrawAddon" />
         </Button>
-        <Button bsStyle={customClass ? null : 'info'} className={customClass} onClick={() => this.showGlobalSearch()}>
+        <Button bsStyle={customClass ? null : 'info'} className={customClass} onClick={() => this.context.searchResults.showSearchModal()}>
           <i className="fa fa-search" />
         </Button>
         <Button bsStyle={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
@@ -329,8 +319,6 @@ export default class Search extends React.Component {
         </div>
         <div className="search-modal-draw">
           <SearchModal
-            showModal={this.state.showGlobalSearch}
-            onCancel={this.handleSearchModalCancel}
             isPublic={this.props.isPublic}
           />
         </div>
