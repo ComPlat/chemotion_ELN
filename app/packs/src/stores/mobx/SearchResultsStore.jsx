@@ -15,6 +15,7 @@ const SearchFilter = types.model({
 
 export const SearchResultsStore = types
   .model({
+    search_modal_visible: types.optional(types.boolean, false),
     search_results: types.map(SearchResult),
     tab_search_results: types.map(SearchResult),
     search_result_panel_visible: types.optional(types.boolean, false),
@@ -57,6 +58,12 @@ export const SearchResultsStore = types
       });
       console.log('tabs', getSnapshot(self.tab_search_results))
     }),
+    showSearchModal() {
+      self.search_modal_visible = true;
+    },
+    hideSearchModal() {
+      self.search_modal_visible = false;
+    },
     addSearchResult(key, result, ids) {
       let tabSearchResult = SearchResult.create({
         id: `${key}-${result.page || 1}`,
@@ -125,6 +132,7 @@ export const SearchResultsStore = types
     }
   }))
   .views(self => ({
+    get searchModalVisible() { return self.search_modal_visible },
     get searchResultsCount() { return keys(self.search_results).length },
     get searchResultValues() { return values(self.search_results) },
     get tabSearchResultValues() { return values(self.tab_search_results) },
