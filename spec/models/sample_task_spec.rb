@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe SampleTask do
+describe SampleTask, type: :model do
   let(:user) { create(:person) }
   let(:other_user) { create(:person) }
   let(:open_without_scan_results) { create(:sample_task_without_scan_results, creator: user) }
@@ -27,8 +27,7 @@ describe SampleTask do
 
   describe '.open' do
     it 'returns all SampleTasks without result data' do
-      binding.pry
-      expect(described_class.open.ids).to eq contain_exactly(
+      expect(described_class.open.ids).to contain_exactly(
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
         open_with_only_missing_sample.id
@@ -50,7 +49,7 @@ describe SampleTask do
 
   describe '.without_sample' do
     it 'returns all sample_tasks that have no sample assigned' do
-      expect(described_class.without_sample.ids).to eq match_array [
+      expect(described_class.without_sample.ids).to match_array [
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
         open_with_only_missing_sample.id
@@ -66,7 +65,7 @@ describe SampleTask do
 
   describe '.without_result_data' do
     it 'returns all sample_tasks where result_value is nil' do
-      expect(described_class.without_result_data.ids).to eq match_array [
+      expect(described_class.without_result_data.ids).to match_array [
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
         open_with_only_missing_sample.id
