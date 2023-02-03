@@ -81,9 +81,10 @@ const KetcherRailsform = ({ handleCancel, isPublic }) => {
       selection, collectionId, isSync, isPublic
     });
     searchResultsStore.clearSearchAndTabResults();
+    searchValuesByMolfile();
   }
 
-  const handleRefind = () => {
+  const handleClear = () => {
     searchResultsStore.clearSearchResults();
     setChangedValues(defaultValues);
     const iframe = document.querySelector('#ketcher').contentWindow;
@@ -96,31 +97,8 @@ const KetcherRailsform = ({ handleCancel, isPublic }) => {
     }
   }
 
-  const SearchValuesList = () => {
-    if (!searchResultsStore.searchResultVisible) { return null; }
-    return (
-      <div style={{ position: 'relative' }}>
-        <h4>Your Search</h4>
-        <div>{changedValues[0]['queryMolfile']}</div>
-        {
-          searchResultsStore.searchResultsCount > 0 ? null : (
-            <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
-          )
-        }
-      </div>
-    );
-  }
-
-  const searchResults = () => {
-    if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult
-                handleCancel={handleCancel}
-                searchParams={searchParams}
-                handleRefind={handleRefind}
-              />;
-    } else {
-      return null;
-    }
+  const searchValuesByMolfile = () => {
+    searchResultsStore.changeSearchValues([changedValues[0]['queryMolfile']]);
   }
 
   const togglePanel = () => () => {
@@ -222,8 +200,11 @@ const KetcherRailsform = ({ handleCancel, isPublic }) => {
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body style={{minHeight: '120px'}}>
-            <SearchValuesList />
-            {searchResults()}
+            <SearchResult
+              handleCancel={handleCancel}
+              searchParams={searchParams}
+              handleClear={handleClear}
+            />
           </Panel.Body>
         </Panel.Collapse>
       </Panel>

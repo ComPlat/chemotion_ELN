@@ -72,12 +72,13 @@ const AdvancedSearchForm = ({ handleCancel }) => {
          isSync: uiState.isSync,
       });
       searchResultsStore.clearSearchAndTabResults();
+      searchValuesByFilters();
     } else {
       searchResultsStore.changeErrorMessage("Please fill out all needed fields");
     }
   }
 
-  const handleRefind = () => {
+  const handleClear = () => {
     searchResultsStore.clearSearchResults();
     setSelectedOptions(defaultSelections);
   }
@@ -86,6 +87,19 @@ const AdvancedSearchForm = ({ handleCancel }) => {
     if (searchResultsStore.error_message) {
       return <Alert bsStyle="danger">{searchResultsStore.error_message}</Alert>;
     }
+  }
+
+  const searchValuesByFilters = () => {
+    const storedFilter = searchResultsStore.searchFilters;
+    const filters = storedFilter.length == 0 ? [] : storedFilter[0].filters;
+    let searchValues = [];
+
+    if (searchResultsStore.searchResultVisible && filters.length > 0) {
+      filters.map((val, i) => {
+        searchValues.push([val.link, val.field.label, val.match, val.value].join(" "));
+      });
+    }
+    searchResultsStore.changeSearchValues(searchValues);
   }
 
   const renderDynamicRow = () => {
@@ -109,43 +123,6 @@ const AdvancedSearchForm = ({ handleCancel }) => {
 
     return dynamicRow;
   };
-
-  const SearchValuesList = () => {
-    const storedFilter = searchResultsStore.searchFilters;
-    const filters = storedFilter.length == 0 ? filterSelectedOptions() : storedFilter[0].filters;
-    
-    if (searchResultsStore.searchResultVisible && filters.length > 0) {
-      return (
-        <div style={{ position: 'relative' }}>
-          <h4>Your Search</h4>
-          {
-            filters.map((val, i) => {
-              return <div key={i}>{[val.link, val.field.label, val.match, val.value].join(" ")}</div>
-            })
-          }
-          {
-            searchResultsStore.searchResultsCount > 0 ? null : (
-              <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
-            )
-          }
-        </div>
-      );
-    } else {
-      return null;
-    }
-  }
-
-  const searchResults = () => {
-    if (searchResultsStore.searchResultsCount > 0) {
-      return <SearchResult
-                handleCancel={handleCancel}
-                searchParams={searchParams}
-                handleRefind={handleRefind}
-              />;
-    } else {
-      return null;
-    }
-  }
 
   const formElementValue = (formElement, e) => {
     switch(formElement) {
@@ -236,8 +213,11 @@ const AdvancedSearchForm = ({ handleCancel }) => {
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body style={{minHeight: '120px'}}>
-            <SearchValuesList />
-            {searchResults()}
+            <SearchResult
+              handleCancel={handleCancel}
+              searchParams={searchParams}
+              handleClear={handleClear}
+            />
           </Panel.Body>
         </Panel.Collapse>
       </Panel>

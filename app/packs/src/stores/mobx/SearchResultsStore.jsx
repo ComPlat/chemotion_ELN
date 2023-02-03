@@ -21,6 +21,7 @@ export const SearchResultsStore = types
     search_results_visible: types.optional(types.boolean, false),
     search_visible: types.optional(types.boolean, true),
     search_filters: types.map(SearchFilter),
+    search_values: types.optional(types.array(types.string), []),
     search_icon: types.optional(types.enumeration("search_icon", ["right", "down"]), "down"),
     result_icon: types.optional(types.enumeration("result_icon", ["right", "down"]), "right"),
     error_message: types.optional(types.string, ""),
@@ -93,7 +94,8 @@ export const SearchResultsStore = types
     clearSearchResults() {
       self.clearSearchAndTabResults();
       self.hideSearchResults();
-      self.clearFilter();
+      self.search_filters.clear();
+      self.search_values.clear();
       self.changeErrorMessage('');
       self.clearTabCurrentPage();
     },
@@ -108,8 +110,9 @@ export const SearchResultsStore = types
       self.search_filters.set(filter.id, filter);
       console.log(getSnapshot(self.search_filters));
     },
-    clearFilter() {
-      self.search_filters.clear();
+    changeSearchValues(values) {
+      self.search_values.clear();
+      self.search_values = values;
     },
     changeErrorMessage(message) {
       self.error_message = message
@@ -127,5 +130,6 @@ export const SearchResultsStore = types
     get tabSearchResultValues() { return values(self.tab_search_results) },
     get searchResultVisible() { return self.search_results_visible },
     get searchVisible() { return self.search_visible },
-    get searchFilters() { return values(self.search_filters) }
+    get searchFilters() { return values(self.search_filters) },
+    get searchValues() { return values(self.search_values) }
   }));
