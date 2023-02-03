@@ -19,7 +19,6 @@ const KetcherRailsform = ({ handleCancel, isPublic }) => {
     tanimotoThreshold: 0.7 
   }];
   const [changedValues, setChangedValues] = useState(defaultValues);
-  const [searchParams, setSearchParams] = useState({});
   const searchResultsStore = useContext(StoreContext).searchResults;
  
   const handleSearchTypeChange = (e) => {
@@ -76,7 +75,6 @@ const KetcherRailsform = ({ handleCancel, isPublic }) => {
       search_by_method: 'structure',
       structure_search: true
     };
-    setSearchParams({ selection, collectionId, isSync, isPublic });
     searchResultsStore.loadSearchResults({
       selection, collectionId, isSync, isPublic
     });
@@ -202,7 +200,6 @@ const KetcherRailsform = ({ handleCancel, isPublic }) => {
           <Panel.Body style={{minHeight: '120px'}}>
             <SearchResult
               handleCancel={handleCancel}
-              searchParams={searchParams}
               handleClear={handleClear}
             />
           </Panel.Body>

@@ -61,6 +61,7 @@ const SearchModal = ({ isPublic }) => {
   }
 
   const handleCancel = () => {
+    searchResultsStore.hideSearchModal();
     searchResultsStore.hideSearchResults();
     searchResultsStore.clearSearchResults();
   }

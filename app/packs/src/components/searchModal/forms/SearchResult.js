@@ -7,7 +7,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SearchResultTabContent from './SearchResultTabContent';
 
-const SearchResult = ({ handleCancel, searchParams, handleClear }) => {
+const SearchResult = ({ handleCancel, handleClear }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
   const results = searchResultsStore.searchResultValues;
   const userState = UserStore.getState();
