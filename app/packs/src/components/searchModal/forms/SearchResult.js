@@ -7,7 +7,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SearchResultTabContent from './SearchResultTabContent';
 
-const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
+const SearchResult = ({ handleCancel, searchParams, handleClear }) => {
   const searchResultsStore = useContext(StoreContext).searchResults;
   const results = searchResultsStore.searchResultValues;
   const userState = UserStore.getState();
@@ -64,15 +64,44 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
     return resultObject;
   }
 
-  const resultsCount = () => {
+  const SearchValuesList = () => {
+    if (searchResultsStore.searchResultVisible && searchResultsStore.searchValues.length > 0) {
+       return (
+         <div style={{ position: 'relative' }}>
+           <h4>Your Search</h4>
+           {
+             searchResultsStore.searchValues.map((val, i) => {
+               return <div key={i}>{val}</div>
+             })
+           }
+           {
+             searchResultsStore.searchResultsCount > 0 ? null : (
+               <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
+             )
+           }
+         </div>
+       );
+     } else {
+       return null;
+     }
+  }
+
+  const ResultsCount = () => {
+    if (searchResultsStore.searchResultsCount === 0) { return null }
+
     const counts = results.map((val) => {
       return val.results.total_elements;
     });
     const sum = counts.reduce((a, b) => a + b, 0);
-    return sum;
+
+    return (
+      <div><h4>{sum} results</h4></div>
+    );
   }
 
   const searchResultNavItem = (list, tabResult) => {
+    if (searchResultsStore.searchResultsCount === 0) { return null }
+
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate'];
     let iconClass = `icon-${list.key}`;
     let tooltipText = list.key && (list.key.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
@@ -103,7 +132,9 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
     );
   }
 
-  const SearchResultColumns = () => {
+  const SearchResultTabContainer = () => {
+    if (searchResultsStore.searchResultsCount === 0) { return null }
+
     const navItems = [];
     const tabContents = [];
 
@@ -123,28 +154,6 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
     });
 
     return (
-      <>
-        <Col sm={12}>
-          <Navbar className="search-result-tab-navbar">
-            <Nav bsStyle="tabs">
-              {navItems}
-            </Nav>
-          </Navbar>
-        </Col>
-        <Col sm={12}>
-          <Tab.Content className="search-result-tab-content" animation>
-            {tabContents}
-          </Tab.Content>
-        </Col>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div>
-        <h4>{resultsCount()} results</h4>
-      </div>
       <Tab.Container
         id="tabList"
         defaultActiveKey={0}
@@ -152,20 +161,47 @@ const SearchResult = ({ handleCancel, searchParams, handleRefind }) => {
         onSelect={handleTabSelect}
       >
         <Row className="clearfix">
-          <SearchResultColumns />
+        <Col sm={12}>
+            <Navbar className="search-result-tab-navbar">
+              <Nav bsStyle="tabs">
+                {navItems}
+              </Nav>
+            </Navbar>
+          </Col>
+          <Col sm={12}>
+            <Tab.Content className="search-result-tab-content" animation>
+              {tabContents}
+            </Tab.Content>
+          </Col>
         </Row>
       </Tab.Container>
+    );
+  }
+
+  const ResultButtons = () => {
+    if (searchResultsStore.searchResultsCount === 0) { return null }
+
+    return (
       <ButtonToolbar className="result-button-toolbar">
         <Button bsStyle="warning" onClick={handleCancel}>
           Cancel
         </Button>
-        <Button bsStyle="info" onClick={handleRefind}>
+        <Button bsStyle="info" onClick={handleClear}>
           Reset
         </Button>
         <Button bsStyle="primary" onClick={handleAdoptResult} style={{ marginRight: '20px' }} >
           Adopt Result
         </Button>
       </ButtonToolbar>
+    );
+  }
+
+  return (
+    <>
+      <SearchValuesList />
+      <ResultsCount />
+      <SearchResultTabContainer />
+      <ResultButtons />
     </>
   );
 }
