@@ -266,7 +266,7 @@ module Reporter
         vol = s.real_amount_ml == 0.0 && !is_product ? s.amount_ml : s.real_amount_ml
         mmol = s.real_amount_mmol == 0.0 && !is_product ? s.amount_mmol : s.real_amount_mmol
 
-        mass = met_pre_conv(mass * 1000, 'm', assigned_metric_pref(s, 0)) # g is converted to mg to maintain consistency with other two values
+        mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0))
         vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1))
         mmol = met_pre_conv(mmol, 'm', assigned_metric_pref(s, 2, %w[m n]))
 
