@@ -49,7 +49,6 @@ export const SearchResultsStore = types
         self.search_results.set(searchResult.id, searchResult)
         self.addSearchResult(key, value, value.ids.slice(0, 15))
       });
-      console.log(getSnapshot(self.search_results))
     }),
     loadSearchResultTab: flow(function* loadSearchResultTab(params) {
       let result = yield SearchFetcher.fetchBasedOnSearchResultIds(params);
@@ -115,7 +114,7 @@ export const SearchResultsStore = types
       let filter = SearchFilter.create({ id: 'filter', filters: filtered_options });
       self.search_filters.clear();
       self.search_filters.set(filter.id, filter);
-      console.log(getSnapshot(self.search_filters));
+      console.log('filter', filtered_options, getSnapshot(self.search_filters));
     },
     changeSearchValues(values) {
       self.search_values.clear();

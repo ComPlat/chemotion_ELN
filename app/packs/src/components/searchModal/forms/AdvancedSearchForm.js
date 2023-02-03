@@ -21,7 +21,6 @@ const AdvancedSearchForm = ({ handleCancel }) => {
   }];
 
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
-  const [searchParams, setSearchParams] = useState({});
   const searchResultsStore = useContext(StoreContext).searchResults;
 
   useEffect(() => {
@@ -64,7 +63,6 @@ const AdvancedSearchForm = ({ handleCancel }) => {
         search_by_method: 'advanced',
         page_size: uiState.number_of_results
       };
-      setSearchParams({ selection, collectionId: collectionId, isSync: uiState.isSync });
 
       searchResultsStore.loadSearchResults({
         selection,
@@ -215,7 +213,6 @@ const AdvancedSearchForm = ({ handleCancel }) => {
           <Panel.Body style={{minHeight: '120px'}}>
             <SearchResult
               handleCancel={handleCancel}
-              searchParams={searchParams}
               handleClear={handleClear}
             />
           </Panel.Body>
