@@ -107,6 +107,10 @@ class UIActions {
     return null;
   }
 
+  clearSearchById() {
+    return null;
+  }
+
   changeNumberOfResultsShown(value) {
     return value;
   }

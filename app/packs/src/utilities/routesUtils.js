@@ -16,6 +16,7 @@ const collectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
+  const currentSearchByID = uiState.currentSearchByID;
   const collectionId = e.params['collectionID'];
   let collectionPromise = null;
   if (collectionId === 'all') {
@@ -35,6 +36,9 @@ const collectionShow = (e) => {
         isSync: !!collection.is_sync_to_me });
     } else {
       UIActions.selectCollection(collection);
+      if (currentSearchByID) {
+        UIActions.clearSearchById();
+      }
     }
 
     // if (!e.params['sampleID'] && !e.params['reactionID'] &&
@@ -60,6 +64,7 @@ const scollectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
+  const currentSearchByID = uiState.currentSearchByID;
   const collectionId = e.params['collectionID'];
   let collectionPromise = null;
   collectionPromise = CollectionStore.findBySId(collectionId);
@@ -75,6 +80,9 @@ const scollectionShow = (e) => {
         isSync: !!collection.is_sync_to_me });
     } else {
       UIActions.selectSyncCollection(collection);
+      if (currentSearchByID) {
+        UIActions.clearSearchById();
+      }
     }
 
     // if (!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
