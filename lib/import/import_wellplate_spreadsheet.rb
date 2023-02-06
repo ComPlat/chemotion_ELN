@@ -20,42 +20,26 @@ module Import
     end
 
     def process!
-      begin
-        read_file
-      rescue Zip::Error
-        error_messages << "Can not process this type of file, must be '.xlsx'."
-        raise StandardError, error_messages.join("\n")
-      end
-
-      begin
-        check_headers
-      rescue StandardError
-        raise StandardError, error_messages.join("\n")
-      end
-
-      begin
-        check_prefixes
-      rescue StandardError
-        raise StandardError, error_messages.join("\n")
-      end
-
-      begin
-        check_wells
-      rescue StandardError
-        raise StandardError, error_messages.join("\n")
-      end
-
-      begin
-        import_data
-      rescue StandardError
-        raise StandardError, error_messages.join("\n")
-      end
+      read_file
+      check_headers
+      check_prefixes
+      check_wells
+      import_data
     end
 
     private
 
+    def fail!
+      raise StandardError, error_messages.join("\n")
+    end
+
     def read_file
-      @xlsx = Roo::Spreadsheet.open(@file_path, extension: :xlsx)
+      begin
+        @xlsx = Roo::Spreadsheet.open(@file_path, extension: :xlsx)
+      rescue Zip::Error
+        error_messages << "Can not process this type of file, must be '.xlsx'."
+        fail!
+      end
       @sheet = xlsx.sheet(0)
       @header = sheet.row(1).map(&:to_s).map(&:strip)
       @rows = sheet.parse
@@ -66,7 +50,7 @@ module Import
         error_messages << "'#{check}' must be in cell #{@letters[index]}1." if (@header[index] =~ /^#{check}/i).nil?
       end
 
-      raise StandardError if error_messages.present?
+      fail! if error_messages.any?
     end
 
     def check_prefixes
@@ -85,20 +69,22 @@ module Import
         error_messages << "#{vh} should be in column #{@letters[column]}" if vh != value_to_compare
       end
 
-      raise StandardError if error_messages.present?
+      fail! if error_messages.any?
 
       @prefixes = value_prefixes
     end
 
     def check_wells
-      positions_check = ('A'..'H').map { |lttr| (1..12).map { |nmbr| ["#{lttr}#{nmbr}"] } }.flatten
+      expected_positions = WellPosition.all
       wells = xlsx.column(1).drop(1)
 
-      positions_check.each_with_index do |position, index|
-        error_messages << "Well #{position} is missing or at wrong position." if position != wells[index]
+      expected_positions.each_with_index do |expected_position, index|
+        actual_position_for_index = WellPosition.from_string(wells[index])
+        error = "Well #{expected_position} is missing or at wrong position."
+        error_messages << error if actual_position_for_index != expected_position
       end
 
-      raise StandardError if error_messages.present?
+      fail! if error_messages.any?
     end
 
     def import_data
@@ -106,10 +92,6 @@ module Import
         @rows.map.with_index do |row, index|
           position_x = index % 12 + 1
           position_y = index / 12 + 1
-          expected_position = "#{@letters[position_y - 1]}#{position_x}"
-
-          @error_messages << "Error. Position #{row[@position_index]} is faulty." if row[@position_index] != expected_position
-          raise StandardError if error_messages.present?
 
           tuples = row[@readout_index..@readout_index + @prefixes.count * 2 - 1].each_slice(2).to_a
           readouts = tuples.map { |tuple| Hash[[%w[value unit], tuple].transpose].symbolize_keys }
