@@ -93,6 +93,7 @@ class UIStore {
       handleSelectCollectionWithoutUpdating:
         UIActions.selectCollectionWithoutUpdating,
       handleClearSearchSelection: UIActions.clearSearchSelection,
+      handleClearSearchById: UIActions.clearSearchById,
       handleShowCollectionManagement: UIActions.showCollectionManagement,
       handleShowElements: UIActions.showElements,
       handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
@@ -379,6 +380,10 @@ class UIStore {
   handleClearSearchSelection() {
     this.state.currentSearchSelection = null;
     this.state.showAdvancedSearch = false;
+  }
+
+  handleClearSearchById() {
+    this.state.currentSearchByID = null;
   }
 
   handleChangeNumberOfResultsShown(value) {
