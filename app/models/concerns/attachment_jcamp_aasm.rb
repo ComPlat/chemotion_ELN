@@ -143,12 +143,11 @@ module AttachmentJcampProcess
     att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'
     att.set_json if ext == 'json'
+    att.set_csv if ext == 'csv'
     att.update!(
       storage: Rails.configuration.storage.primary_store,
       attachable_id: attachable_id, attachable_type: 'Container'
     )
-
-    att.set_csv if ext == 'csv'
     att
   end
 
@@ -247,11 +246,11 @@ module AttachmentJcampProcess
       delete_related_csv(csv_att)
     end
 
-    set_done
+    set_backup
 
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att)
-    delete_edit_peak_after_done
+    delete_related_edit_peak(jcamp_att)
     jcamp_att
   end
 
@@ -348,6 +347,21 @@ module AttachmentJcampProcess
   def delete_edit_peak_after_done
     typname = extension_parts[0]
     destroy if %w[edit peak].include?(typname)
+  end
+
+  def delete_related_edit_peak(jcamp_att)
+    return unless jcamp_att
+
+    atts = Attachment.where(attachable_id: attachable_id)
+    valid_name = fname_wo_ext(self)
+    atts.each do |att|
+      is_delete = (
+        (att.edited? || att.peaked?) &&
+          att.id != jcamp_att.id &&
+          valid_name == fname_wo_ext(att)
+      )
+      att.delete if is_delete
+    end
   end
 
   def fname_wo_ext(target)
