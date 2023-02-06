@@ -51,7 +51,8 @@ describe 'Reporter::Docx::DetailReaction instance' do
       :sample,
       name: 'Sample 1',
       real_amount_value: 5.0,
-      real_amount_unit: 'g'
+      real_amount_unit: 'g',
+      metrics: 'nmm',
     )
   end
   let!(:s2) { create(:sample, name: 'Sample 2') }

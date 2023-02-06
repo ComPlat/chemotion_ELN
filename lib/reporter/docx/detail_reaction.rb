@@ -12,6 +12,8 @@ module Reporter
       end
 
       def content
+        desc_content, clean_desc = description
+        obs_content, clean_obs = observation
         {
           title: title,
           short_label: short_label,
@@ -22,19 +24,22 @@ module Reporter
           starting_materials: starting_materials,
           reactants: reactants,
           products: products,
-          solvents: displayed_solvents,
-          description: description,
-          purification: purification,
-          dangerous_products: dangerous_products,
+          solvents: displayed_solvents.presence,
+          description: desc_content,
+          description_check: content_check(clean_desc),
+          purification: purification.presence,
+          dangerous_products: dangerous_products.presence,
           tlc_rf: rf_value,
           tlc_solvent: tlc_solvents,
           tlc_description: tlc_description,
-          observation: observation,
-          analyses: analyses,
-          literatures: literatures,
+          observation: obs_content,
+          observation_check: content_check(clean_obs),
+          analyses: analyses.presence,
+          literatures: literatures.presence,
           not_last: id != last_id,
           show_tlc_rf: rf_value.to_f != 0,
           show_tlc_solvent: tlc_solvents.present?,
+          tlc_control: tlc_control,
           is_reaction: true,
           gp_title_html: gp_title_html,
           synthesis_title_html: synthesis_title_html,
@@ -45,7 +50,7 @@ module Reporter
       private
 
       def title
-        obj.name.present? ? obj.name : obj.short_label
+        (obj.name.presence || obj.short_label)
       end
 
       def short_label
@@ -256,17 +261,36 @@ module Reporter
         output
       end
 
-      def assigned_amount(s)
-        mass = s.real_amount_g == 0.0 ? s.amount_g : s.real_amount_g
-        vol = s.real_amount_ml == 0.0 ? s.amount_ml : s.real_amount_ml
-        mmol = s.real_amount_mmol == 0.0 ? s.amount_mmol : s.real_amount_mmol
-        return mass, vol, mmol
+      def assigned_amount(s, is_product = false)
+        mass = s.real_amount_g == 0.0 && !is_product ? s.amount_g : s.real_amount_g
+        vol = s.real_amount_ml == 0.0 && !is_product ? s.amount_ml : s.real_amount_ml
+        mmol = s.real_amount_mmol == 0.0 && !is_product ? s.amount_mmol : s.real_amount_mmol
+
+        mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0))
+        vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1))
+        mmol = met_pre_conv(mmol, 'm', assigned_metric_pref(s, 2, %w[m n]))
+
+        [mass, vol, mmol]
+      end
+
+      def unit_conversion(material)
+        mass_unit = met_pref(assigned_metric_pref(material, 0), 'g')
+        vol_unit = met_pref(assigned_metric_pref(material, 1), 'l')
+        mmol_unit = met_pref(assigned_metric_pref(material, 2, %w[m n]), 'mol')
+
+        [mass_unit, vol_unit, mmol_unit]
+      end
+
+      def assigned_metric_pref(material, index, metric_prefixes = %w[m n u])
+        metrics = material.metrics
+        (metrics.length > index) && (metric_prefixes.include? metrics[index]) ? metrics[index] : 'm'
       end
 
       def material_hash(material, is_product=false)
         s = OpenStruct.new(material)
         m = s.molecule
-        mass, vol, mmol = assigned_amount(s)
+        mass, vol, mmol = assigned_amount(s, is_product)
+        mass_unit, vol_unit, mmol_unit = unit_conversion(s)
         sample_hash = {
           name: s.name,
           iupac_name: s.molecule_name_hash[:label].presence || m[:iupac_name],
@@ -274,9 +298,12 @@ module Reporter
           formular: s.decoupled ? s.sum_formula : m[:sum_formular],
           mol_w: valid_digit(m[:molecular_weight], digit),
           mass: valid_digit(mass, digit),
+          mass_unit: mass_unit,
           vol: valid_digit(vol, digit),
+          vol_unit: vol_unit,
           density: valid_digit(s.density, digit),
           mol: valid_digit(mmol, digit),
+          mmol_unit: mmol_unit,
           equiv: valid_digit(s.equivalent, digit),
           molecule_name_hash: s[:molecule_name_hash]
         }
@@ -284,12 +311,12 @@ module Reporter
         if is_product
           equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{valid_digit(s.equivalent * 100, 0)}%"
           sample_hash.update({
-            mass: valid_digit(s.real_amount_g, digit),
-            vol: valid_digit(s.real_amount_ml, digit),
-            mol: valid_digit(s.real_amount_mmol, digit),
-            equiv: equiv,
-            molecule_name_hash: s[:molecule_name_hash]
-          })
+                               mass: valid_digit(mass, digit),
+                               vol: valid_digit(vol, digit),
+                               mol: valid_digit(mmol, digit),
+                               equiv: equiv,
+                               molecule_name_hash: s[:molecule_name_hash],
+                             })
         end
 
         sample_hash
@@ -334,7 +361,7 @@ module Reporter
       def description
         delta_desc = obj.description.deep_stringify_keys["ops"]
         clean_desc = { "ops" => delta_desc }
-        Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML())
+        [Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML), clean_desc]
       end
 
       def solvents
@@ -378,6 +405,16 @@ module Reporter
         one_line_obs = remove_redundant_space_break(delta_obs)
         clean_obs = { 'ops' => rm_head_tail_space(one_line_obs) }
         Sablon.content(:html, Delta.new(clean_obs, @font_family).getHTML)
+      end
+
+      def content_check(delta)
+        return false if delta.nil?
+
+        delta['ops'].present? && !delta['ops'].count.zero?
+      end
+
+      def tlc_control
+        rf_value.to_d != 0 || tlc_solvents.present? || tlc_description.present?
       end
 
       def synthesis_html

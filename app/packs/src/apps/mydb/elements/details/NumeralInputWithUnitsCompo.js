@@ -130,7 +130,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       metricPrefix: metricPrefixes[ind]
     });
 
-    this.props.onMetricsChange({ ...this.state, metricUnit: this.props.unit, metricPrefix: metricPrefixes[ind] });
+    this.props.onMetricsChange && this.props.onMetricsChange({ ...this.state, metricUnit: this.props.unit, metricPrefix: metricPrefixes[ind] });
   }
 
   render() {
