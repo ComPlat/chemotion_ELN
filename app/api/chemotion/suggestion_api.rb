@@ -25,6 +25,8 @@ module Chemotion
         suggestions
       end
 
+      # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/AmbiguousOperatorPrecedence, Style/TrailingCommaInHashLiteral, Layout/LineLength
+
       def search_possibilities_by_type_user_and_collection(type)
         collection_id = @c_id
         dl = @dl
@@ -172,6 +174,7 @@ module Chemotion
         end
       end
     end
+    # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/AmbiguousOperatorPrecedence, Style/TrailingCommaInHashLiteral, Layout/LineLength
 
     resource :suggestions do
       after_validation do
