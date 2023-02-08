@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/BlockLength, Metrics/ClassLength
+
 module Chemotion
   # Input suggestion for free text search
   class SuggestionAPI < Grape::API
@@ -25,7 +27,9 @@ module Chemotion
         suggestions
       end
 
-      # rubocop:disable Metrics/MethodLength, Metrics/BlockLength, Metrics/AbcSize, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/AmbiguousOperatorPrecedence, Style/TrailingCommaInHashLiteral, Layout/LineLength
+      # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+      # rubocop:disable Lint/AmbiguousOperatorPrecedence, Style/TrailingCommaInHashLiteral, Layout/LineLength
 
       def search_possibilities_by_type_user_and_collection(type)
         collection_id = @c_id
@@ -174,7 +178,8 @@ module Chemotion
         end
       end
     end
-    # rubocop:enable Metrics/MethodLength, Metrics/BlockLength, Metrics/AbcSize, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/AmbiguousOperatorPrecedence, Style/TrailingCommaInHashLiteral, Layout/LineLength
+    # rubocop:enable Lint/AmbiguousOperatorPrecedence, Style/TrailingCommaInHashLiteral, Layout/LineLength
+    # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     resource :suggestions do
       after_validation do
@@ -195,3 +200,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/BlockLength, Metrics/ClassLength
