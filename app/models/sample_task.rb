@@ -48,4 +48,11 @@ class SampleTask < ApplicationRecord
   )
 
   validates :required_scan_results, inclusion: { in: [1,2] }, allow_nil: false
+
+  def done?
+    sample_id.present? &&
+      result_value.present? &&
+      result_unit.present? &&
+      scan_results.count == required_scan_results
+  end
 end

@@ -1,6 +1,5 @@
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import Draggable from 'react-draggable';
-import FreeScanCard from 'src/apps/mydb/collections/sampleTaskInbox/FreeScanCard';
 import React, { useContext } from 'react';
 import SampleTaskCard from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskCard';
 import { Button, Panel } from 'react-bootstrap';
@@ -13,10 +12,6 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 const SampleTaskInbox = ({}) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
 
-  const createSampleTask = (sample) => {
-    sampleTasksStore.createSampleTask(sample.id);
-  };
-
   const getSampleFromItem = (item, itemType) => {
     if (itemType === 'sample') {
       return item.element;
@@ -25,22 +20,26 @@ const SampleTaskInbox = ({}) => {
       return item.material;
     }
   }
-  const [collectedProps, dropRef] = useDrop({
-    accept: [
-      DragDropItemTypes.SAMPLE,
-      DragDropItemTypes.MATERIAL
-    ],
-    drop: (item, monitor) => {
-      let sample = getSampleFromItem(item, monitor.getItemType())
-      let sampleTaskForSampleAlreadyExists = sampleTasksStore.sampleTaskForSample(sample.id);
-      if (sampleTaskForSampleAlreadyExists) {
-        // create notification
-        sendErrorNotification(`SampleTask for sample id ${sample.id} already exists`);
-      } else {
-        createSampleTask(sample);
-      }
-    },
-  });
+  const dropConfig = (required_scan_results = 1) => {
+    return {
+      accept: [
+        DragDropItemTypes.SAMPLE,
+        DragDropItemTypes.MATERIAL
+      ],
+      drop: (item, monitor) => {
+        let sample = getSampleFromItem(item, monitor.getItemType())
+        let sampleTaskForSampleAlreadyExists = sampleTasksStore.sampleTaskForSample(sample.id);
+        if (sampleTaskForSampleAlreadyExists) {
+          // create notification
+          sendErrorNotification(`SampleTask for sample id ${sample.id} already exists`);
+        } else {
+          sampleTasksStore.createSampleTask(sample.id, required_scan_results);
+        }
+      },
+    }
+  };
+  const [_colProps1, singleScanDropRef] = useDrop(dropConfig(1));
+  const [_colProps2, doubleScanDropRef] = useDrop(dropConfig(2));
   const sendErrorNotification = (message) => {
     const notification = {
       title: message,
@@ -60,29 +59,15 @@ const SampleTaskInbox = ({}) => {
     return count;
   }
 
-  const openFreeScanCount = () => {
-    let count = sampleTasksStore.openFreeScanCount;
-    if (count == 0) { return 'no'; }
-    return count;
-  }
-
   const openSampleTasks = () => {
-    let sampleTasks = values(sampleTasksStore.open_sample_tasks);
+    let sampleTasks = values(sampleTasksStore.sample_tasks);
 
     return sampleTasks.map(sampleTask => (
       <SampleTaskCard sampleTask={sampleTask} key={`sampleTask_${sampleTask.id}`} />
     ));
   }
 
-  const openFreeScans = () => {
-    let sampleTasks = values(sampleTasksStore.open_free_scans);
-
-    return sampleTasks.map(sampleTask => (
-      <FreeScanCard sampleTask={sampleTask} key={`openFreeScan_${sampleTask.id}`} />
-    ));
-  }
-
-  const sampleDropzone = () => {
+  const sampleDropzone = (dropRef, text) => {
     const style = {
       padding: 10,
       borderStyle: 'dashed',
@@ -96,14 +81,14 @@ const SampleTaskInbox = ({}) => {
       <Panel>
         <Panel.Footer>
           <div style={style} ref={dropRef}>
-            Drop Sample here to create a new SampleTask.
+            {text}
           </div>
         </Panel.Footer>
       </Panel>
     );
   };
 
-  let display_value = sampleTasksStore.sampleTaskInboxVisible ? 'block' : 'none';
+  let display_value = sampleTasksStore.inboxVisible ? 'block' : 'none';
 
   return (
     <Draggable
@@ -120,8 +105,7 @@ const SampleTaskInbox = ({}) => {
       >
         <Panel.Heading className="handle">
           <div className="row">
-            <div className="col-md-5">{openSampleTaskCount()} open SampleTasks</div>
-            <div className="col-md-5 col-md-offset-1">{openFreeScanCount()} open FreeScans</div>
+            <div className="col-md-11">{openSampleTaskCount()} open SampleTasks</div>
             <div className="col-md-1">
               <Button
                 bsStyle="danger"
@@ -135,16 +119,15 @@ const SampleTaskInbox = ({}) => {
           </div>
         </Panel.Heading>
         <Panel.Body>
-          <div className="row">
-            <div className="small-col col-md-5">
-              {sampleDropzone()}
-
-              {openSampleTasks()}
+          <div className="row sampleTaskCreationDropzones">
+            <div class="col-sm-6">
+              {sampleDropzone(singleScanDropRef, 'Single Scan (weighing only compound)')}
             </div>
-            <div className="small-col col-md-5 col-md-offset-1">
-              {openFreeScans()}
+            <div class="col-sm-6">
+              {sampleDropzone(doubleScanDropRef, 'Double Scan (weighing vessel and vessel+compound to calculate difference')}
             </div>
           </div>
+          {openSampleTasks()}
         </Panel.Body>
       </Panel>
     </Draggable>

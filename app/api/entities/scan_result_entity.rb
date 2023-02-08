@@ -4,12 +4,12 @@ module Entities
   class ScanResultEntity < ApplicationEntity
     root :scan_results
 
-    expose :id
-    expose :measurement_value
-    expose :measurement_unit
     expose :attachment_id
-    expose :note
+    expose :id
+    expose :measurement_unit
+    expose :measurement_value
     expose :position
+    expose :title
 
     expose_timestamps
 

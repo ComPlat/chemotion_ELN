@@ -32,10 +32,11 @@ FactoryBot.define do
       after(:build) do |sample_task, evaluator|
         evaluator.scan_result_count.times do |counter|
           sample_task.scan_results.build(
-            measurement_value: 10 + counter,
+            attachment_attributes: attributes_for(:attachment, :with_png_image),
             measurement_unit: 'g',
+            measurement_value: 10 + counter,
             position: counter,
-            attachment_attributes: attributes_for(:attachment, :with_png_image)
+            title: "Scan Number #{counter + 1}",
           )
         end
       end
