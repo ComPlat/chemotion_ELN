@@ -747,6 +747,21 @@ module Chemotion
           end
         end
 
+        namespace do
+          params do
+            requires :abbr, type: String
+          end
+          get do
+            users = User.find_by(name_abbreviation: params[:abbr])
+            if !users
+              message = 'Could not find User'
+              error!(message, 404)
+            else
+              users
+            end
+          end
+        end
+
         namespace :create do
           desc 'create a group of persons'
           params do
