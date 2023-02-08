@@ -16,7 +16,7 @@ module Entities
     private
 
     def attachment_id
-      attachment&.id
+      object.attachment&.id
     end
   end
 end

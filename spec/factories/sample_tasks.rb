@@ -29,7 +29,7 @@ FactoryBot.define do
         scan_result_count { required_scan_results }
       end
 
-      after(:create) do |sample_task, evaluator|
+      after(:build) do |sample_task, evaluator|
         evaluator.scan_result_count.times do |counter|
           sample_task.scan_results.build(
             measurement_value: 10 + counter,

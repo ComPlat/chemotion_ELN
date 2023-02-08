@@ -13,6 +13,7 @@ module Entities
     expose :sample_id
     expose :sample_svg_file
     expose :short_label
+    expose :scan_results, using: 'Entities::ScanResultEntity'
 
     expose_timestamps
 
@@ -22,6 +23,10 @@ module Entities
 
     def display_name
       object.sample&.showed_name
+    end
+
+    def scan_results
+      object.scan_results.order(position: :asc)
     end
   end
 end
