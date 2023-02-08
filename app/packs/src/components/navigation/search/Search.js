@@ -222,7 +222,7 @@ export default class Search extends React.Component {
         <Button bsStyle={customClass ? null : 'primary'} className={customClass} onClick={() => this.showStructureEditor()}>
           <Glyphicon glyph="pencil" id="AutoCompletedrawAddon" />
         </Button>
-        <Button bsStyle={customClass ? null : 'info'} className={customClass} onClick={() => this.context.searchResults.showSearchModal()}>
+        <Button bsStyle={customClass ? null : 'info'} className={customClass} onClick={() => this.context.search.showSearchModal()}>
           <i className="fa fa-search" />
         </Button>
         <Button bsStyle={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
@@ -318,9 +318,7 @@ export default class Search extends React.Component {
           />
         </div>
         <div className="search-modal-draw">
-          <SearchModal
-            isPublic={this.props.isPublic}
-          />
+          <SearchModal />
         </div>
         <div className="search-autocomplete">
           <AutoCompleteInput
