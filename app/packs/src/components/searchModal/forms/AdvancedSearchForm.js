@@ -8,7 +8,7 @@ import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const AdvancedSearchForm = ({ handleCancel }) => {
+const AdvancedSearchForm = () => {
   const defaultSelections = [{
     link: '',
     match: '=',
@@ -21,7 +21,7 @@ const AdvancedSearchForm = ({ handleCancel }) => {
   }];
 
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
-  const searchResultsStore = useContext(StoreContext).searchResults;
+  const searchStore = useContext(StoreContext).search;
 
   useEffect(() => {
     const length = selectedOptions.length - 1;
@@ -42,8 +42,8 @@ const AdvancedSearchForm = ({ handleCancel }) => {
       return (f.field && f.link && f.value) ||
         (id == 0 && f.field && f.value)
     });
-    searchResultsStore.changeSearchFilter(filteredOptions);
-    const storedFilter = searchResultsStore.searchFilters;
+    searchStore.changeSearchFilter(filteredOptions);
+    const storedFilter = searchStore.searchFilters;
     return storedFilter.length == 0 ? [] : storedFilter[0].filters;
   }
 
@@ -52,10 +52,11 @@ const AdvancedSearchForm = ({ handleCancel }) => {
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const filters = filterSelectedOptions();
+    searchStore.changeErrorMessage("Please fill out all needed fields");
 
     if (filters.length > 0) {
-      searchResultsStore.showSearchResults();
-      searchResultsStore.changeErrorMessage("");
+      searchStore.showSearchResults();
+      searchStore.changeErrorMessage("");
 
       const selection = {
         elementType: 'all',
@@ -64,40 +65,38 @@ const AdvancedSearchForm = ({ handleCancel }) => {
         page_size: uiState.number_of_results
       };
 
-      searchResultsStore.loadSearchResults({
+      searchStore.loadSearchResults({
         selection,
          collectionId: collectionId,
          isSync: uiState.isSync,
       });
-      searchResultsStore.clearSearchAndTabResults();
+      searchStore.clearSearchAndTabResults();
       searchValuesByFilters();
-    } else {
-      searchResultsStore.changeErrorMessage("Please fill out all needed fields");
     }
   }
 
   const handleClear = () => {
-    searchResultsStore.clearSearchResults();
+    searchStore.clearSearchResults();
     setSelectedOptions(defaultSelections);
   }
 
   const showErrorMessage = () => {
-    if (searchResultsStore.error_message) {
-      return <Alert bsStyle="danger">{searchResultsStore.error_message}</Alert>;
+    if (searchStore.error_message) {
+      return <Alert bsStyle="danger">{searchStore.error_message}</Alert>;
     }
   }
 
   const searchValuesByFilters = () => {
-    const storedFilter = searchResultsStore.searchFilters;
+    const storedFilter = searchStore.searchFilters;
     const filters = storedFilter.length == 0 ? [] : storedFilter[0].filters;
     let searchValues = [];
 
-    if (searchResultsStore.searchResultVisible && filters.length > 0) {
+    if (searchStore.searchResultVisible && filters.length > 0) {
       filters.map((val, i) => {
         searchValues.push([val.link, val.field.label, val.match, val.value].join(" "));
       });
     }
-    searchResultsStore.changeSearchValues(searchValues);
+    searchStore.changeSearchValues(searchValues);
   }
 
   const renderDynamicRow = () => {
@@ -142,21 +141,21 @@ const AdvancedSearchForm = ({ handleCancel }) => {
   }
 
   const togglePanel = () => () => {
-    if (searchResultsStore.searchResultsCount > 0) {
-      searchResultsStore.toggleSearch();
-      searchResultsStore.toggleSearchResults();
-      searchResultsStore.clearTabCurrentPage();
+    if (searchStore.searchResultsCount > 0) {
+      searchStore.toggleSearch();
+      searchStore.toggleSearchResults();
+      searchStore.clearTabCurrentPage();
     }
   }
 
   let defaultClassName = 'collapsible-search-result';
-  let invisibleClassName = searchResultsStore.search_result_panel_visible ? '' : ' inactive';
-  let inactiveSearchClass = !searchResultsStore.searchVisible ? 'inactive' : '';
-  let inactiveResultClass = !searchResultsStore.searchResultVisible? 'inactive' : '';
-  let searchIcon = `fa fa-chevron-${searchResultsStore.search_icon} icon-right`;
-  let resultIcon = `fa fa-chevron-${searchResultsStore.result_icon} icon-right`;
-  let searchTitle = searchResultsStore.searchVisible ? 'Search' : 'Refine search';
-  let resultTitle = searchResultsStore.searchResultVisible ? 'Result' : 'Back to result';
+  let invisibleClassName = searchStore.search_result_panel_visible ? '' : ' inactive';
+  let inactiveSearchClass = !searchStore.searchVisible ? 'inactive' : '';
+  let inactiveResultClass = !searchStore.searchResultVisible? 'inactive' : '';
+  let searchIcon = `fa fa-chevron-${searchStore.search_icon} icon-right`;
+  let resultIcon = `fa fa-chevron-${searchStore.result_icon} icon-right`;
+  let searchTitle = searchStore.searchVisible ? 'Search' : 'Refine search';
+  let resultTitle = searchStore.searchResultVisible ? 'Result' : 'Back to result';
 
   return (
     <>
@@ -164,7 +163,7 @@ const AdvancedSearchForm = ({ handleCancel }) => {
         id="collapsible-search"
         className={defaultClassName}
         onToggle={togglePanel()}
-        expanded={searchResultsStore.searchVisible}
+        expanded={searchStore.searchVisible}
       >
         <Panel.Heading className={inactiveSearchClass}>
           <Panel.Title toggle>
@@ -187,7 +186,7 @@ const AdvancedSearchForm = ({ handleCancel }) => {
               </div>
             </div>
             <ButtonToolbar>
-              <Button bsStyle="warning" onClick={handleCancel}>
+              <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
                 Cancel
               </Button>
               <Button bsStyle="primary" onClick={handleSave} style={{ marginRight: '20px' }} >
@@ -201,7 +200,7 @@ const AdvancedSearchForm = ({ handleCancel }) => {
         id="collapsible-result"
         className={defaultClassName + invisibleClassName}
         onToggle={togglePanel()}
-        expanded={searchResultsStore.searchResultVisible}
+        expanded={searchStore.searchResultVisible}
       >
         <Panel.Heading className={inactiveResultClass}>
           <Panel.Title toggle>
@@ -212,7 +211,6 @@ const AdvancedSearchForm = ({ handleCancel }) => {
         <Panel.Collapse>
           <Panel.Body style={{minHeight: '120px'}}>
             <SearchResult
-              handleCancel={handleCancel}
               handleClear={handleClear}
             />
           </Panel.Body>

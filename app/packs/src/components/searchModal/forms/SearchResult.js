@@ -7,9 +7,9 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SearchResultTabContent from './SearchResultTabContent';
 
-const SearchResult = ({ handleCancel, handleClear }) => {
-  const searchResultsStore = useContext(StoreContext).searchResults;
-  const results = searchResultsStore.searchResultValues;
+const SearchResult = ({ handleClear }) => {
+  const searchStore = useContext(StoreContext).search;
+  const results = searchStore.searchResultValues;
   const userState = UserStore.getState();
   const profile = userState.profile || {};
   const genericElements = userState.genericEls || [];
@@ -22,20 +22,22 @@ const SearchResult = ({ handleCancel, handleClear }) => {
       const visible = [];
 
       Object.entries(profile.data.layout).filter((value) => {
-        return value[0] != 'research_plan';
-      }).map((value, i) => {
+        return value[0] != 'research_plan' && value[1] > 0;
+      })
+      .sort((a,b) => a[1] - b[1])
+      .map((value, i) => {
         let tab = results.find(val => val.id.indexOf(value[0]) !== -1);
         let totalElements = tab === undefined ? 0 : tab.results.total_elements;
         if (value[1] > 0) {
           visible.push({ key: value[0], index: i, totalElements: totalElements });
         }
       });
-      setVisibleTabs(visible.sort((a,b) => a.index - b.index));
+      setVisibleTabs(visible);
       let activeTab = visible.find((v) => { return v.totalElements != 0 });
       activeTab = activeTab !== undefined ? activeTab.index : 0;
       setCurrentTabIndex(activeTab);
     }
-  }, []);
+  }, [results]);
 
   const handleTabSelect = (e) => {
     setCurrentTabIndex(e);
@@ -45,13 +47,13 @@ const SearchResult = ({ handleCancel, handleClear }) => {
     const preparedResult = prepareResultForDispatch();
     UIActions.setSearchById(preparedResult);
     ElementActions.dispatchSearchResult(preparedResult);
-    handleCancel();
+    searchStore.handleCancel();
   }
 
   const prepareResultForDispatch = () => {
     let resultObject = {};
     results.map((val, i) => {
-      let firstElements = searchResultsStore.tabSearchResultValues.find(tab => tab.id == `${val.id}-1`);
+      let firstElements = searchStore.tabSearchResultValues.find(tab => tab.id == `${val.id}-1`);
       resultObject[val.id] = {
         elements: firstElements.results.elements,
         ids: val.results.ids,
@@ -65,17 +67,17 @@ const SearchResult = ({ handleCancel, handleClear }) => {
   }
 
   const SearchValuesList = () => {
-    if (searchResultsStore.searchResultVisible && searchResultsStore.searchValues.length > 0) {
+    if (searchStore.searchResultVisible && searchStore.searchValues.length > 0) {
        return (
          <div style={{ position: 'relative' }}>
            <h4>Your Search</h4>
            {
-             searchResultsStore.searchValues.map((val, i) => {
+             searchStore.searchValues.map((val, i) => {
                return <div key={i}>{val}</div>
              })
            }
            {
-             searchResultsStore.searchResultsCount > 0 ? null : (
+             searchStore.searchResultsCount > 0 ? null : (
                <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
              )
            }
@@ -87,7 +89,7 @@ const SearchResult = ({ handleCancel, handleClear }) => {
   }
 
   const ResultsCount = () => {
-    if (searchResultsStore.searchResultsCount === 0) { return null }
+    if (searchStore.searchResultsCount === 0) { return null }
 
     const counts = results.map((val) => {
       return val.results.total_elements;
@@ -100,7 +102,7 @@ const SearchResult = ({ handleCancel, handleClear }) => {
   }
 
   const searchResultNavItem = (list, tabResult) => {
-    if (searchResultsStore.searchResultsCount === 0) { return null }
+    if (searchStore.searchResultsCount === 0) { return null }
 
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate'];
     let iconClass = `icon-${list.key}`;
@@ -133,7 +135,7 @@ const SearchResult = ({ handleCancel, handleClear }) => {
   }
 
   const SearchResultTabContainer = () => {
-    if (searchResultsStore.searchResultsCount === 0) { return null }
+    if (searchStore.searchResultsCount === 0) { return null }
 
     const navItems = [];
     const tabContents = [];
@@ -179,11 +181,11 @@ const SearchResult = ({ handleCancel, handleClear }) => {
   }
 
   const ResultButtons = () => {
-    if (searchResultsStore.searchResultsCount === 0) { return null }
+    if (searchStore.searchResultsCount === 0) { return null }
 
     return (
       <ButtonToolbar className="result-button-toolbar">
-        <Button bsStyle="warning" onClick={handleCancel}>
+        <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
           Cancel
         </Button>
         <Button bsStyle="info" onClick={handleClear}>

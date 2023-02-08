@@ -6,20 +6,20 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 
 const SearchResultTabContent = ({ list, tabResult }) => {
-  const searchResultsStore = useContext(StoreContext).searchResults;
-  let currentPage = searchResultsStore.tab_current_page[list.index];
+  const searchStore = useContext(StoreContext).search;
+  let currentPage = searchStore.tab_current_page[list.index];
   let currentPageNumber = currentPage === undefined ? 1 : currentPage[list.key];
 
   useEffect(() => {
     if (currentPage === undefined) {
-      searchResultsStore.changeTabCurrentPage(list.key, 1, list.index);
+      searchStore.changeTabCurrentPage(list.key, 1, list.index);
     }
   }, []);
 
   const handlePaginationSelect = (index, ids, key) => {
-    searchResultsStore.changeTabCurrentPage(key, index, list.index);
+    searchStore.changeTabCurrentPage(key, index, list.index);
 
-    const search_result = searchResultsStore.tabSearchResultValues.find(val => val.id == `${key}s-${index}`);
+    const search_result = searchStore.tabSearchResultValues.find(val => val.id == `${key}s-${index}`);
     if (search_result === undefined) {
       searchByIds(index, ids, key);
     }
@@ -41,7 +41,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
       search_by_method: 'search_by_ids'
     };
 
-    searchResultsStore.loadSearchResultTab({
+    searchStore.loadSearchResultTab({
       selection,
       collectionId: collectionId,
       isSync: isSync,
@@ -99,7 +99,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
 
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list">No results</div>;
-    let resultsByPage = searchResultsStore.tabSearchResultValues.find(val => val.id == `${list.key}s-${currentPageNumber}`);
+    let resultsByPage = searchStore.tabSearchResultValues.find(val => val.id == `${list.key}s-${currentPageNumber}`);
     let tabResultByPage = resultsByPage != undefined ? resultsByPage.results : { elements: [] };
 
     if (tabResultByPage.elements.length > 0) {

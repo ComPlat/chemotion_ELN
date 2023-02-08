@@ -4,15 +4,13 @@ export default FormData = {
       id: 0,
       value: 'advanced',
       label: 'Advanced Search',
-      component: 'advanced',
-      component_path: './forms/AdvancedSearchForm'
+      component: 'advanced'
     },
     {
       id: 1,
       value: 'ketcher',
       label: 'ketcher-rails',
       component: 'ketcher',
-      component_path: './forms/KetcherRailsForm',
       structure: {
         path: 'ketcher',
         setMolfileInFrame: false,

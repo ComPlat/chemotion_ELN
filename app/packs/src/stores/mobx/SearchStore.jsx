@@ -1,5 +1,5 @@
 import { keys, values } from 'mobx';
-import { flow, types, getSnapshot } from 'mobx-state-tree';
+import { flow, types } from 'mobx-state-tree';
 
 import SearchFetcher from 'src/fetchers/SearchFetcher';
 
@@ -13,9 +13,16 @@ const SearchFilter = types.model({
   filters: types.maybeNull(types.frozen([]))
 });
 
-export const SearchResultsStore = types
+const advancedSearch = {
+  value: 'advanced',
+  label: 'Advanced Search'
+}
+
+export const SearchStore = types
   .model({
     search_modal_visible: types.optional(types.boolean, false),
+    search_modal_minimized: types.optional(types.boolean, false),
+    search_modal_selected_form: types.optional(types.frozen({}), advancedSearch),
     search_results: types.map(SearchResult),
     tab_search_results: types.map(SearchResult),
     search_result_panel_visible: types.optional(types.boolean, false),
@@ -55,13 +62,23 @@ export const SearchResultsStore = types
       Object.entries(result).forEach(([key, value]) => {
         self.addSearchResult(key, value, [])
       });
-      console.log('tabs', getSnapshot(self.tab_search_results))
     }),
     showSearchModal() {
       self.search_modal_visible = true;
     },
     hideSearchModal() {
       self.search_modal_visible = false;
+    },
+    showMinimizedSearchModal() {
+      self.search_modal_minimized = false;
+    },
+    toggleSearchModalMinimized() {
+      self.search_modal_minimized = !self.search_modal_minimized;
+    },
+    changeSearchModalSelectedForm(value) {
+      self.search_modal_selected_form = value;
+      self.clearSearchResults();
+      self.showMinimizedSearchModal();
     },
     addSearchResult(key, result, ids) {
       let tabSearchResult = SearchResult.create({
@@ -114,7 +131,6 @@ export const SearchResultsStore = types
       let filter = SearchFilter.create({ id: 'filter', filters: filtered_options });
       self.search_filters.clear();
       self.search_filters.set(filter.id, filter);
-      console.log('filter', filtered_options, getSnapshot(self.search_filters));
     },
     changeSearchValues(values) {
       self.search_values.clear();
@@ -128,10 +144,17 @@ export const SearchResultsStore = types
     },
     clearTabCurrentPage() {
       self.tab_current_page.splice(0, self.tab_current_page.length);
+    },
+    handleCancel() {
+      self.hideSearchModal();
+      self.hideSearchResults();
+      self.clearSearchResults();
     }
   }))
   .views(self => ({
     get searchModalVisible() { return self.search_modal_visible },
+    get searchModalMinimized() { return self.search_modal_minimized },
+    get searchModalSelectedForm() { return self.search_modal_selected_form },
     get searchResultsCount() { return keys(self.search_results).length },
     get searchResultValues() { return values(self.search_results) },
     get tabSearchResultValues() { return values(self.tab_search_results) },

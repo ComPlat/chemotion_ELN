@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useEffect, useContext } from 'react';
+import React, { useState, Suspense, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Modal, FormGroup } from 'react-bootstrap';
 import Draggable from "react-draggable";
@@ -7,7 +7,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-import FormData from './FormData';
 import AdvancedSearchForm from './forms/AdvancedSearchForm';
 import KetcherRailsForm from './forms/KetcherRailsForm';
 import NoFormSelected from './forms/NoFormSelected';
@@ -18,17 +17,24 @@ const Components = {
   empty: NoFormSelected
 }
 
-const SearchModal = ({ isPublic }) => {
-  const [selectedOption, setSelectedOption] = useState(FormData.forms[0]);
-  const [minimizeModal, setMinimizeModal] = useState(true);
-  const searchResultsStore = useContext(StoreContext).searchResults;
+const SearchModal = () => {
+  const searchStore = useContext(StoreContext).search;
+
+  const FormData = [
+    {
+      value: 'advanced',
+      label: 'Advanced Search'
+    },
+    {
+      value: 'ketcher',
+      label: 'ketcher-rails'
+    }
+  ]
 
   const FormComponent = (block) => {
-    if (typeof Components[block.component] !== "undefined") {
-      return React.createElement(Components[block.component], {
-        key: block.value,
-        handleCancel: handleCancel,
-        isPublic: isPublic
+    if (typeof Components[block.value] !== "undefined") {
+      return React.createElement(Components[block.value], {
+        key: block.value
       });
     }
     return React.createElement(Components['empty'], {
@@ -38,7 +44,7 @@ const SearchModal = ({ isPublic }) => {
 
   const SearchPulldown = (props) => {
     const { onChange, selected } = props;
-    const formOptions = FormData.forms.map((option) => option);
+    const formOptions = FormData.map((option) => option);
 
     return (
       <FormGroup>
@@ -60,29 +66,19 @@ const SearchModal = ({ isPublic }) => {
     );
   }
 
-  const handleCancel = () => {
-    searchResultsStore.hideSearchModal();
-    searchResultsStore.hideSearchResults();
-    searchResultsStore.clearSearchResults();
-  }
+  //const handleCancel = () => {
+  //  searchStore.hideSearchModal();
+  //  searchStore.hideSearchResults();
+  //  searchStore.clearSearchResults();
+  //}
 
-  const handleMinimize = () => {
-    setMinimizeModal(current => !current)
-  }
-
-  const handleSearchPulldownSelection = (e) => {
-    setSelectedOption(FormData.forms[e.id]);
-    searchResultsStore.clearSearchResults();
-    setMinimizeModal(true);
-  }
-
-  let minimizedClass = minimizeModal ? '' : ' minimized';
+  let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
 
   return (
     <Draggable handle=".handle">
       <Modal
-        show={searchResultsStore.searchModalVisible}
-        onHide={handleCancel}
+        show={searchStore.searchModalVisible}
+        onHide={() => searchStore.handleCancel()}
         backdrop={false}
         dialogas="full-search"
         dialogClassName="searching"
@@ -96,18 +92,20 @@ const SearchModal = ({ isPublic }) => {
           </div>
           <div className="col-md-3 col-sm-5">
             <SearchPulldown
-              onChange={handleSearchPulldownSelection}
-              selected={selectedOption}
+              onChange={(e) => searchStore.changeSearchModalSelectedForm(e)}
+              selected={searchStore.searchModalSelectedForm}
             />
           </div>
           <div className="col-md-1 col-sm-1">
-            <i className="fa fa-window-minimize window-minimize" onClick={handleMinimize} />
+            <i
+              className="fa fa-window-minimize window-minimize"
+              onClick={() => searchStore.toggleSearchModalMinimized()} />
           </div>
         </Modal.Header>
         <Modal.Body>
           <React.Suspense fallback={<Spinner />}>
             <div className={`form-container${minimizedClass}`}>
-              {FormComponent(selectedOption)}
+              {FormComponent(searchStore.searchModalSelectedForm)}
             </div>
           </React.Suspense>
         </Modal.Body>
