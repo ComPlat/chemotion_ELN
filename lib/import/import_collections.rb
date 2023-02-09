@@ -55,7 +55,6 @@ module Import
               attachment.save!
 
               import_annotation(zip_file, entry, attachment)
-
               attachments << attachment
             ensure
               tmp.close

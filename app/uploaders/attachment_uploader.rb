@@ -1,5 +1,4 @@
 class AttachmentUploader < Shrine
-
   MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024
 
   plugin :derivatives
@@ -37,7 +36,6 @@ class AttachmentUploader < Shrine
     file_basename = File.basename(file.metadata['filename'], '.*')
 
     file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
-
     result = AttachmentUploader.create_derivatives(file_extension, file_path, original, @context[:record].id, record)
 
     result

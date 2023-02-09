@@ -22,6 +22,7 @@ FactoryBot.define do
     trait :with_spectra_file do
       filename { 'spectra_file.jdx' }
       file_path { Rails.root.join('spec', 'fixtures', 'spectra_file.jdx') }
+      aasm_state { :edited }
     end
 
     trait :with_json_file do

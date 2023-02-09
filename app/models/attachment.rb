@@ -187,6 +187,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     set_key
   end
 
+
   def set_key; end
 
   private

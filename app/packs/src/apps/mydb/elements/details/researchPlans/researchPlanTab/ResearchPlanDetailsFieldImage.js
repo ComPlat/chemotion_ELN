@@ -13,6 +13,7 @@ import {Alert} from 'react-bootstrap';
 import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
 
 
+
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
@@ -23,8 +24,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
   componentDidMount() {
     this.generateSrcOfImage(this.props.field.value.public_name);
-    ElementStore.listen(this.onElementStoreChange);
-    
+    ElementStore.listen(this.onElementStoreChange);   
   }
 
   componentWillUnmount(){
@@ -121,7 +121,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
     } else {
-      AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName,annotated: true })
+      AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName, annotated: true })
         .then((result) => {         
           if (result.data != null) {
             this.setState({ imageSrc: result.data });

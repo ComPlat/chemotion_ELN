@@ -307,7 +307,6 @@ module Chemotion
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
         data
-
       end
 
       desc 'Return Base64 encoded thumbnail'

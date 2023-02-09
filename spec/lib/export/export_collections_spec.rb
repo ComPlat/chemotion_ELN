@@ -45,8 +45,7 @@ RSpec.describe 'ExportCollection' do
     let(:collection) { create(:collection, user_id: user.id, label: 'collection-with-rp') }
     let(:research_plan) { create(:research_plan, collections: [collection]) }
 
-    let(:attachment) do
-      
+    let(:attachment) do      
       create(:attachment, :with_png_image,
              bucket: 1,
              created_by: 1,

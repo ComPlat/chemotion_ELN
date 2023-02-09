@@ -32,6 +32,7 @@ const editorTooltip = (exts) => (
 );
 const downloadTooltip = <Tooltip id="download_tooltip">Download original attachment</Tooltip>;
 const downloadAnnotationTooltip = <Tooltip id="download_tooltip">Download annotated attachment</Tooltip>;
+
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
@@ -123,6 +124,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
             }
           }
         );
+
       } else {
         attachment.preview = '/images/wild_card/not_available.svg';
       }
@@ -335,7 +337,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
         this.props.researchPlan.attachments
       );
 
-      return (       
+      return (
         <ListGroup>
           {filteredAttachments.map((attachment) => (
             <ListGroupItem key={attachment.id}>

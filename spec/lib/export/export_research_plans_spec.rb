@@ -2,6 +2,7 @@
 
 require 'rails_helper'
 
+
 describe Export::ExportResearchPlan do
   describe '#to_relative_html' do
     let(:user) { create(:person) }
