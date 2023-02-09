@@ -28,10 +28,11 @@ describe Usecases::Attachments::Annotation::AnnotationLoader do
       let(:attachment_no_annotation_yet) { create(:attachment, :with_png_image) }
       let(:attachment_id) { attachment_no_annotation_yet.id }
 
-      before do 
-        attachment_no_annotation_yet.attachment_data["derivatives"].delete("annotation")
-        attachment_no_annotation_yet.update_column("attachment_data",attachment_no_annotation_yet.attachment_data)
-      end 
+      before do
+        attachment_no_annotation_yet.attachment_data['derivatives'].delete('annotation')
+        attachment_no_annotation_yet.update_column('attachment_data', attachment_no_annotation_yet.attachment_data) # rubocop:disable Rails/SkipsModelValidations
+      end
+
       it 'empty annotation was created and returned' do
         expect(annotation).not_to be_nil
       end
