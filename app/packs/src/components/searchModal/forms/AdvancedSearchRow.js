@@ -13,7 +13,7 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
     { value: "OR", label: "OR" }
   ];
 
-  let display = selection.link == '' ? 'none' : 'block';
+  let display = selection.link == '' ? 'none' : 'table';
 
   return (
     <>
