@@ -13,7 +13,6 @@ import NavNewSession from 'src/components/navigation/NavNewSession'
 import NavHead from 'src/components/navigation/NavHead';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
-import SearchFilter from 'src/components/navigation/search/SearchFilter.js'
 import PropTypes from 'prop-types';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
@@ -25,7 +24,6 @@ export default class Navigation extends React.Component {
     this.state = {
       currentUser: null,
       genericEls: null,
-      showAdvancedSearch: false,
       modalProps: {
         show: false,
         title: "",
@@ -76,8 +74,7 @@ export default class Navigation extends React.Component {
 
   onUIChange(state) {
     this.setState({
-      modalProps: state.modalParams,
-      showAdvancedSearch: state.showAdvancedSearch
+      modalProps: state.modalParams
     });
   }
 
@@ -92,22 +89,6 @@ export default class Navigation extends React.Component {
   updateModalProps(modalProps) {
     this.setState({
       modalProps: modalProps
-    });
-  }
-
-  advancedSearch(filters) {
-    const uiState = UIStore.getState();
-    const selection = {
-      elementType: 'all',
-      advanced_params: filters,
-      search_by_method: 'advanced',
-      page_size: uiState.number_of_results
-    };
-    UIActions.setSearchSelection(selection);
-    ElementActions.fetchBasedOnSearchSelectionAndCollection({
-      selection,
-      collectionId: uiState.currentCollection.id,
-      isSync: uiState.isSync
     });
   }
 
@@ -130,7 +111,7 @@ export default class Navigation extends React.Component {
   }
 
   render() {
-    const { modalProps, showAdvancedSearch, genericEls, omniauthProviders } = this.state;
+    const { modalProps, genericEls, omniauthProviders } = this.state;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (this.state.currentUser
