@@ -4003,10 +4003,10 @@ cheerio@^1.0.0-rc.3:
     parse5-htmlparser2-tree-adapter "^6.0.1"
     tslib "^2.2.0"
 
-chemotion-converter-client@0.1.36:
-  version "0.1.36"
-  resolved "https://registry.yarnpkg.com/chemotion-converter-client/-/chemotion-converter-client-0.1.36.tgz#249fe0a885af7d120f01ecffcf81c6712f98b08c"
-  integrity sha512-o3wqYigWHAGId1KkdSQq09KtPWJZsks7VAdHU2G8fq9YCMbseXDIK0RVNcQX8BeB4pvpV7iaR5KJox8wbTCqKQ==
+chemotion-converter-client@0.1.37:
+  version "0.1.37"
+  resolved "https://registry.yarnpkg.com/chemotion-converter-client/-/chemotion-converter-client-0.1.37.tgz#fe914ccc775e7af3868070aa3245c53ec265d192"
+  integrity sha512-1htWuTc4fW5Nzlqg4zOBzvKcbj6ndh2Cmbjjl1kDlVGeMVn1/4tDFFBwFHhBRFYBmt+TybSdTOre4kNbggJGcQ==
   dependencies:
     bootstrap "^3.3.7"
     jquery "^3.4.0"
