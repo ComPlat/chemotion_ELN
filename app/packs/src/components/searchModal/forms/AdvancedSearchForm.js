@@ -127,6 +127,7 @@ const AdvancedSearchForm = () => {
         return e.target.value;
         break;
       case 'field':
+      case 'link':
         return e.value;
         break;
       default:
