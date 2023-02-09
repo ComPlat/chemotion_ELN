@@ -2,14 +2,14 @@
 
 module Chemotion
   # Reaction API
-  class ReactionAPI < Grape::API
+  class ReactionAPI < Grape::API # rubocop:disable Metrics/ClassLength
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ParamsHelpers
     helpers LiteratureHelpers
     helpers ProfileHelpers
 
-    resource :reactions do
+    resource :reactions do # rubocop:disable Metrics/BlockLength
       desc 'Return serialized reactions'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
@@ -24,7 +24,7 @@ module Chemotion
         params[:per_page].to_i > 100 && (params[:per_page] = 100)
       end
 
-      get do
+      get do # rubocop:disable Metrics/BlockLength
         scope = if params[:collection_id]
                   begin
                     Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
@@ -49,10 +49,10 @@ module Chemotion
         by_created_at = params[:filter_created_at] || false
 
         scope = scope.includes_for_list_display
-        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
 
         reset_pagination_page(scope)
 
@@ -150,7 +150,7 @@ module Chemotion
         optional :rxno, type: String
         optional :segments, type: Array
       end
-      route_param :id do
+      route_param :id do # rubocop:disable Metrics/BlockLength
         after_validation do
           @reaction = Reaction.find_by(id: params[:id])
           @element_policy = ElementPolicy.new(current_user, @reaction)
@@ -169,7 +169,7 @@ module Chemotion
           attributes.delete(:segments)
 
           reaction.update!(attributes)
-          reaction.touch
+          reaction.touch # rubocop:disable Rails/SkipsModelValidations
           reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
@@ -216,7 +216,7 @@ module Chemotion
         optional :rxno, type: String
       end
 
-      post do
+      post do # rubocop:disable Metrics/BlockLength
         attributes = declared(params, include_missing: false)
         materials = attributes.delete(:materials)
         literatures = attributes.delete(:literatures)
@@ -253,7 +253,7 @@ module Chemotion
             }
             unless Literal.find_by(lattributes)
               Literal.create(lattributes)
-              reaction.touch
+              reaction.touch # rubocop:disable Rails/SkipsModelValidations
             end
           end
         end

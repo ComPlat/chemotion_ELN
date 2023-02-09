@@ -1,19 +1,20 @@
+# frozen_string_literal: true
 module Chemotion
   class CollectionAPI < Grape::API
     helpers CollectionHelpers
     helpers ParamsHelpers
     resource :collections do
-
       namespace :all do
         desc "Return the 'All' collection of the current user"
         get do
-          present Collection.get_all_collection_for_user(current_user.id), with: Entities::CollectionEntity, root: :collection
+          present Collection.get_all_collection_for_user(current_user.id), with: Entities::CollectionEntity, 
+root: :collection
         end
       end
 
-      desc "Return collection by id"
+      desc 'Return collection by id'
       params do
-        requires :id, type: Integer, desc: "Collection id"
+        requires :id, type: Integer, desc: 'Collection id'
       end
       route_param :id, requirements: { id: /[0-9]*/ } do
         get do
@@ -22,13 +23,14 @@ module Chemotion
       end
 
       namespace :take_ownership do
-        desc "Take ownership of collection with specified id"
+        desc 'Take ownership of collection with specified id'
         params do
-          requires :id, type: Integer, desc: "Collection id"
+          requires :id, type: Integer, desc: 'Collection id'
         end
         route_param :id do
           before do
-            error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).take_ownership?
+            error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, 
+Collection.find(params[:id])).take_ownership?
           end
 
           post do
@@ -37,87 +39,89 @@ module Chemotion
         end
       end
 
-      desc "Return all locked and unshared serialized collection roots of current user"
+      desc 'Return all locked and unshared serialized collection roots of current user'
       get :locked do
         roots = current_user.collections.includes(:shared_users).locked.unshared.roots.order(label: :asc)
 
         present roots, with: Entities::CollectionEntity, root: :collections
       end
 
-      get_child = Proc.new do |children, collects|
+      get_child = proc do |children, collects|
         children.each do |obj|
-          child = collects.select { |dt| dt['ancestry'] == obj['ancestry_root']}
-          get_child.call(child, collects) if child.count>0
+          child = collects.select { |dt| dt['ancestry'] == obj['ancestry_root'] }
+          get_child.call(child, collects) if child.count > 0
           obj[:children] = child
         end
       end
 
-      build_tree = Proc.new do |collects, delete_empty_root|
+      build_tree = proc do |collects, delete_empty_root|
         col_tree = []
-        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
-        get_child.call(col_tree,collects)
+        collects.collect { |obj| col_tree.push(obj) if obj['ancestry'].nil? }
+        get_child.call(col_tree, collects)
         col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
         Entities::CollectionRootEntity.represent(col_tree, serializable: true, root: :collections)
       end
 
-      desc "Return all unlocked unshared serialized collection roots of current user"
+      desc 'Return all unlocked unshared serialized collection roots of current user'
       get :roots do
         collects = Collection.where(user_id: current_user.id).unlocked.unshared.order('id')
-        .select(
-          <<~SQL
+                             .select(
+          <<~SQL,.squish
             id, label, ancestry, is_synchronized, permission_level, position, collection_shared_names(user_id, id) as shared_names,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked,is_shared,
             case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
           SQL
         )
-        .as_json
-        build_tree.call(collects,false)
+                             .as_json
+        build_tree.call(collects, false)
       end
 
-      desc "Return all shared serialized collections"
+      desc 'Return all shared serialized collections'
       get :shared_roots do
-        collects = Collection.shared(current_user.id).order("id")
-        .select(
-          <<~SQL
+        collects = Collection.shared(current_user.id).order('id')
+                             .select(
+          <<~SQL,.squish
             id, user_id, label,ancestry, permission_level, user_as_json(collections.user_id) as shared_to,
             is_shared, is_locked, is_synchronized, false as is_remoted,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level,
             case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
           SQL
         )
-        .as_json
-        build_tree.call(collects,true)
+                             .as_json
+        build_tree.call(collects, true)
       end
 
-      desc "Return all remote serialized collections"
+      desc 'Return all remote serialized collections'
       get :remote_roots do
-        collects = Collection.remote(current_user.id).where([" user_id in (select user_ids(?))",current_user.id]).order("id")
-        .select(
-          <<~SQL
+        collects = Collection.remote(current_user.id).where([' user_id in (select user_ids(?))', 
+current_user.id]).order('id')
+                             .select(
+          <<~SQL,.squish
             id, user_id, label, ancestry, permission_level, user_as_json(collections.shared_by_id) as shared_by,
             case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked, is_shared,
             shared_user_as_json(collections.user_id, #{current_user.id}) as shared_to,position
           SQL
         )
-        .as_json
-        build_tree.call(collects,true)
+                             .as_json
+        build_tree.call(collects, true)
       end
 
       # TODO: check if this endpoint is really obsolete
-      desc "Bulk update and/or create new collections"
+      desc 'Bulk update and/or create new collections'
       patch '/' do
-        Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids])
+        Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), 
+params[:deleted_ids])
       end
 
-      desc "reject a shared collections"
+      desc 'reject a shared collections'
       patch '/reject_shared' do
         Collection.reject_shared(current_user.id, params[:id])
         {} # result is not used by FE
       end
 
       namespace :shared do
-        desc "Update shared collection"
+        desc 'Update shared collection'
         params do
           requires :id, type: Integer
           requires :collection_attributes, type: Hash do
@@ -136,7 +140,7 @@ module Chemotion
           {} # result is not used by FE
         end
 
-        desc "Create shared collections"
+        desc 'Create shared collections'
         params do
           requires :elements_filter, type: Hash do
             requires :sample, type: Hash do
@@ -173,16 +177,18 @@ module Chemotion
         end
 
         after_validation do
-          @cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
+          @cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], 
+params[:currentCollection][:is_sync_to_me])
           samples = Sample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:sample]).for_user_n_groups(user_ids)
           reactions = Reaction.by_collection_id(@cid).by_ui_state(params[:elements_filter][:reaction]).for_user_n_groups(user_ids)
           wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
           screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
           research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
           elements = {}
-          ElementKlass.find_each { |klass|
-            elements[klass.name] = Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
-          }
+          ElementKlass.find_each do |klass|
+            elements[klass.name] = 
+Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
+          end
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
           top_secret_wellplate = wellplates.flat_map(&:samples).map(&:is_top_secret).any?
@@ -195,28 +201,28 @@ module Chemotion
           share_wellplates = ElementsPolicy.new(current_user, wellplates).share?
           share_screens = ElementsPolicy.new(current_user, screens).share?
           share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
-          share_elements = !(elements&.length > 0)
-          elements.each do |k, v|
+          share_elements = !(elements&.length&. > 0)
+          elements.each do |_k, v|
             share_elements = ElementsPolicy.new(current_user, v).share?
             break unless share_elements
           end
 
           sharing_allowed = share_samples && share_reactions &&
-            share_wellplates && share_screens && share_research_plans && share_elements
-          error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
+                            share_wellplates && share_screens && share_research_plans && share_elements
+          error!('401 Unauthorized', 401) if !sharing_allowed || is_top_secret
 
           @sample_ids = samples.pluck(:id)
           @reaction_ids = reactions.pluck(:id)
           @wellplate_ids = wellplates.pluck(:id)
           @screen_ids = screens.pluck(:id)
           @research_plan_ids = research_plans.pluck(:id)
-          @element_ids = elements&.transform_values { |v| v && v.pluck(:id) }
+          @element_ids = elements&.transform_values { |v| v&.pluck(:id) }
         end
 
         post do
           uids = params[:user_ids].map do |user_id|
             val = user_id[:value].to_s.downcase
-            if val =~ /^[0-9]+$/
+            if /^[0-9]+$/.match?(val)
               val.to_i
             # elsif val =~ Devise::email_regexp
             else
@@ -231,12 +237,12 @@ module Chemotion
             screen_ids: @screen_ids,
             research_plan_ids: @research_plan_ids,
             element_ids: @element_ids,
-            collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
+            collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id),
           ).execute!
           Message.create_msg_notification(
             channel_subject: Channel::SHARED_COLLECTION_WITH_ME,
             message_from: current_user.id, message_to: uids,
-            data_args: { 'shared_by': current_user.name }, level: 'info'
+            data_args: { shared_by: current_user.name }, level: 'info'
           )
 
           {} # result is not used by FE
@@ -246,7 +252,7 @@ module Chemotion
       namespace :elements do
         desc 'Move elements by UI state to another collection'
         params do
-          requires :ui_state, type: Hash, desc: "Selected elements from the UI" do
+          requires :ui_state, type: Hash, desc: 'Selected elements from the UI' do
             use :main_ui_state_params
           end
           optional :collection_id, type: Integer, desc: 'Destination collect id'
@@ -260,26 +266,30 @@ module Chemotion
 
           from_collection = fetch_source_collection_for_removal
           error!('401 Unauthorized removal from collection', 401) unless from_collection
-          if (from_collection.label == 'All' && from_collection.is_locked)
+          if from_collection.label == 'All' && from_collection.is_locked
             error!('401 Cannot remove elements from  \'All\' root collection', 401)
           end
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
-            collections_element_klass = ('collections_' + element).classify.constantize
+
+            collections_element_klass = ("collections_#{element}").classify.constantize
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             collections_element_klass.move_to_collection(ids, from_collection.id, to_collection_id)
-            collections_element_klass.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
+            collections_element_klass.remove_in_collection(ids, 
+Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -287,7 +297,8 @@ module Chemotion
 
             ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
-            CollectionsElement.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
+            CollectionsElement.remove_in_collection(ids, 
+Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
           status 204
@@ -313,12 +324,13 @@ module Chemotion
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            collections_element_klass = ('collections_' + element).classify.constantize
+            collections_element_klass = ("collections_#{element}").classify.constantize
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             collections_element_klass.create_in_collection(ids, to_collection_id)
@@ -327,10 +339,12 @@ module Chemotion
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
             ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             CollectionsElement.create_in_collection(ids, to_collection_id, klass.name)
           end
@@ -338,9 +352,9 @@ module Chemotion
           status 204
         end
 
-        desc "Remove from current collection a set of elements by UI state"
+        desc 'Remove from current collection a set of elements by UI state'
         params do
-          requires :ui_state, type: Hash, desc: "Selected elements from the UI" do
+          requires :ui_state, type: Hash, desc: 'Selected elements from the UI' do
             use :main_ui_state_params
           end
         end
@@ -349,28 +363,30 @@ module Chemotion
           # ui_state = params[:ui_state]
           from_collection = fetch_source_collection_for_removal
           error!('401 Unauthorized removal from collection', 401) unless from_collection
-          if (from_collection.label == 'All' && from_collection.is_locked)
+          if from_collection.label == 'All' && from_collection.is_locked
             error!('401 Cannot remove elements from  \'All\' root collection', 401)
           end
 
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
-            collections_element_klass = ('collections_' + element).classify.constantize
+
+            collections_element_klass = ("collections_#{element}").classify.constantize
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             collections_element_klass.remove_in_collection(ids, from_collection.id)
           end
 
-
           klasses = ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
+
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -386,9 +402,9 @@ module Chemotion
       end
 
       namespace :unshared do
-        desc "Create an unshared collection"
+        desc 'Create an unshared collection'
         params do
-          requires :label, type: String, desc: "Collection label"
+          requires :label, type: String, desc: 'Collection label'
         end
 
         post do
@@ -398,10 +414,10 @@ module Chemotion
       end
 
       namespace :exports do
-        desc "Create export job"
+        desc 'Create export job'
         params do
           requires :collections, type: Array[Integer]
-          requires :format, type: Symbol, values: [:json, :zip, :udm]
+          requires :format, type: Symbol, values: %i[json zip udm]
           requires :nested, type: Boolean
         end
 
@@ -415,7 +431,8 @@ module Chemotion
           else
             # check if the user is allowed to export these collections
             collection_ids.each do |collection_id|
-              collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+              collection = Collection.belongs_to_or_shared_by(current_user.id, 
+current_user.group_ids).find_by(id: collection_id)
               unless collection
                 # case when collection purpose is to build the collection tree (empty and locked)
                 next if Collection.find_by(id: collection_id, is_locked: true, is_shared: true)
@@ -430,35 +447,35 @@ module Chemotion
       end
 
       namespace :imports do
-        desc "Create import job"
+        desc 'Create import job'
         params do
           requires :file, type: File
         end
         post do
           file = params[:file]
-          if tempfile = file[:tempfile]
+          if (tempfile = file[:tempfile])
             att = Attachment.new(
               bucket: file[:container_id],
               filename: file[:filename],
               key: File.basename(file[:tempfile].path),
               created_by: current_user.id,
               created_for: current_user.id,
-              content_type: file[:type]
+              content_type: file[:type],
             )
             ActiveRecord::Base.transaction do
-              begin
+              
                 att.save!
 
                 att.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
-                if att.valid?
+                raise ActiveRecord::Rollback unless att.valid?
                   att.save!
-                else
-                  raise ActiveRecord::Rollback
-                end
+                
+                  
+                
               ensure
                 tempfile.close
                 tempfile.unlink
-              end
+              
             end
             # run the asyncronous import job and return its id to the client
             ImportCollectionsJob.perform_later(att, current_user.id)
@@ -466,7 +483,6 @@ module Chemotion
           end
         end
       end
-
     end
   end
 end

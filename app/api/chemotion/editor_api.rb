@@ -3,11 +3,11 @@
 module Chemotion
   # Editor API
   class EditorAPI < Grape::API
-    namespace :editor do
+    namespace :editor do # rubocop:disable Metrics/BlockLength
       namespace :initial do
         get do
           docserver = Rails.configuration.editors&.docserver
-          { installed: docserver && docserver[:enable] || false, ext: docserver && docserver[:ext] }
+          { installed: (docserver && docserver[:enable]) || false, ext: docserver && docserver[:ext] }
         end
       end
 
@@ -18,14 +18,17 @@ module Chemotion
         end
         before do
           @attachment = Attachment.find_by(id: params[:attachment_id])
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: @attachment[:attachable_id])).update?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
+                                                                   ResearchPlan
+                                                                   .find_by(id: @attachment[:attachable_id]))
+                                                              .update?
           # error!('401 Unauthorized', 401) if @attachment.oo_editing?
         end
         post do
           payload = {
             att_id: @attachment.id,
             user_id: current_user.id,
-            exp: (Time.now + 15.minutes).to_i
+            exp: 15.minutes.from_now.to_i,
           }
 
           @attachment.oo_editing_start!
@@ -48,7 +51,7 @@ module Chemotion
           payload = {
             att_id: @attachment.id,
             user_id: current_user.id,
-            exp: (Time.now + 1.hours).to_i
+            exp: 1.hour.from_now.to_i,
           }
 
           token = JWT.encode payload, Rails.application.secrets.secret_key_base

@@ -300,8 +300,8 @@ module Chemotion
         optional :annotated, type: Boolean, desc: 'Return annotated image if possible'
       end
 
-      get 'image/:attachment_id' do  
-        data=Usecases::Attachments::LoadImage.execute!(@attachment,params[:annotated]) 
+      get 'image/:attachment_id' do
+        data = Usecases::Attachments::LoadImage.execute!(@attachment, params[:annotated])
         content_type @attachment.content_type
         header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
         header['Content-Transfer-Encoding'] = 'binary'
