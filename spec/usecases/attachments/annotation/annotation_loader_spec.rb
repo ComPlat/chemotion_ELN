@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require_relative 'annotation_helper'
 
 describe Usecases::Attachments::Annotation::AnnotationLoader do
   let(:loader) { described_class.new }

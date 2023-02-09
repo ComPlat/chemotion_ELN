@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require_relative 'annotation_helper'
 
 describe Usecases::Attachments::Annotation::AnnotationUpdater do
   let(:svg_string) { Rails.root.join("spec/fixtures/annotations/#{svg_filename}").read }
