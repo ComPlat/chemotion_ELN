@@ -8,7 +8,6 @@ import { GenericElCriteriaModal, clsInputGroup } from 'chem-generic-ui';
 
 import AutoCompleteInput from 'src/components/navigation/search/AutoCompleteInput';
 import SearchModal from 'src/components/searchModal/SearchModal';
-import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 import SuggestionsFetcher from 'src/fetchers/SuggestionsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -25,7 +24,6 @@ export default class Search extends React.Component {
     super(props);
     this.state = {
       elementType: 'all',
-      showStructureEditor: false,
       queryMolfile: null,
       searchType: 'sub',
       tanimotoThreshold: 0.7,
@@ -33,7 +31,6 @@ export default class Search extends React.Component {
       genericEl: null
     };
     this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
-    this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
     this.hideGenericElCriteria = this.hideGenericElCriteria.bind(this);
     this.genericElSearch = this.genericElSearch.bind(this);
   }
@@ -58,30 +55,6 @@ export default class Search extends React.Component {
     return SuggestionsFetcher.fetchSuggestionsForCurrentUser(
       this.state.elementType.toLowerCase(), query, id, isSync
     );
-  }
-
-  structureSearch(molfile) {
-    const uiState = UIStore.getState();
-    const { currentCollection } = uiState;
-    const collectionId = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
-    const isPublic = this.props.isPublic;
-    let tanimoto = this.state.tanimotoThreshold;
-    if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
-    const selection = {
-      elementType: this.state.elementType,
-      molfile,
-      search_type: this.state.searchType,
-      tanimoto_threshold: tanimoto,
-      page_size: uiState.number_of_results,
-      search_by_method: 'structure',
-      structure_search: true
-    };
-    UIActions.setSearchSelection(selection);
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(
-      {
-        selection, collectionId, isSync, isPublic
-      });
   }
 
   genericElSearch() {
@@ -122,18 +95,6 @@ export default class Search extends React.Component {
       : UIActions.selectCollection(currentCollection);
   }
 
-  showStructureEditor() {
-    this.setState({ showStructureEditor: true });
-  }
-
-  showAdvancedSearch() {
-    UIActions.toggleAdvancedSearch(true);
-  }
-
-  hideStructureEditor() {
-    this.setState({ showStructureEditor: false });
-  }
-
   showGenericElCriteria() {
     this.setState({ showGenericElCriteria: true });
   }
@@ -152,32 +113,6 @@ export default class Search extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile) {
-    if (molfile) { this.setState({ queryMolfile: molfile }); }
-    // Check if blank molfile
-    const molfileLines = molfile.match(/[^\r\n]+/g);
-    // If the first character ~ num of atoms is 0, we will not search
-    if (molfileLines[1].trim()[0] !== 0) {
-      this.structureSearch(molfile);
-    }
-    this.hideStructureEditor();
-  }
-
-  handleStructureEditorCancel() {
-    this.hideStructureEditor();
-  }
-
-  handleTanimotoChange(e) {
-    const val = e.target && e.target.value;
-    if (!isNaN(val - val)) {
-      this.setState({ tanimotoThreshold: val });
-    }
-  }
-
-  handleSearchTypeChange(e) {
-    this.setState({ searchType: e.target && e.target.value });
-  }
-
   renderMenuItems() {
     const elements = [
       'All',
@@ -190,13 +125,6 @@ export default class Search extends React.Component {
         {element}
       </MenuItem>
     ));
-
-    menu.push(<MenuItem key="divider" divider />);
-    menu.push(
-      <MenuItem key="advanced" onSelect={this.showAdvancedSearch}>
-        Advanced Search
-      </MenuItem>
-    );
 
     menu.push(<MenuItem key="divider-generic" divider />);
 
@@ -219,9 +147,6 @@ export default class Search extends React.Component {
 
     const buttonAfter = (
       <ButtonGroup>
-        <Button bsStyle={customClass ? null : 'primary'} className={customClass} onClick={() => this.showStructureEditor()}>
-          <Glyphicon glyph="pencil" id="AutoCompletedrawAddon" />
-        </Button>
         <Button bsStyle={customClass ? null : 'info'} className={customClass} onClick={() => this.context.search.showSearchModal()}>
           <i className="fa fa-search" />
         </Button>
@@ -229,41 +154,6 @@ export default class Search extends React.Component {
           <i className="fa fa-times" />
         </Button>
       </ButtonGroup>
-    );
-
-    const submitAddons = (
-      <Grid><Row>
-        <Col sm={6} md={4}>
-          <Form inline>
-            <Radio
-              ref={(input) => { this.searchSimilarRadio = input; }}
-              value="similar"
-              checked={this.state.searchType === 'similar'}
-              onChange={e => this.handleSearchTypeChange(e)}
-            >
-              &nbsp; Similarity Search &nbsp;
-            </Radio>
-            &nbsp;&nbsp;
-            <FormControl
-              style={{ width: '40%' }}
-              type="text"
-              value={this.state.tanimotoThreshold}
-              ref={(input) => { this.searchTanimotoInput = input; }}
-              onChange={e => this.handleTanimotoChange(e)}
-            />
-          </Form>
-        </Col>
-        <Col sm={4} md={2}>
-          <Radio
-            ref={(input) => { this.searchSubstructureRadio = input; }}
-            value="sub"
-            checked={this.state.searchType === 'sub'}
-            onChange={e => this.handleSearchTypeChange(e)}
-          >
-            Substructure Search
-          </Radio>
-        </Col>
-      </Row></Grid>
     );
 
     const inputAttributes = {
@@ -307,16 +197,6 @@ export default class Search extends React.Component {
 
     return (
       <div className="chemotion-search">
-        <div className="search-structure-draw">
-          <StructureEditorModal
-            showModal={this.state.showStructureEditor}
-            onSave={this.props.noSubmit ? null : this.handleStructureEditorSave.bind(this)}
-            onCancel={this.handleStructureEditorCancel}
-            molfile={this.state.queryMolfile}
-            submitBtnText="Search"
-            submitAddons={submitAddons}
-          />
-        </div>
         <div className="search-modal-draw">
           <SearchModal />
         </div>
