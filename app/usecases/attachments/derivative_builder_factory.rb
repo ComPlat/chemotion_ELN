@@ -9,7 +9,7 @@ module Usecases
         @supported_formats_map = supported_formats_map || {
           'Usecases::Attachments::Thumbnail::ThumbnailCreator' =>
           Usecases::Attachments::Thumbnail::ThumbnailCreator.supported_formats,
-          'Usecases::Attachments::Annotation::AnnotationCreator' => %w[jpg png svg tif],
+          'Usecases::Attachments::Annotation::AnnotationCreator' => %w[jpg png svg tif tiff],
           'Usecases::Attachments::Converter::FileConverter' => %w[tif tiff],
         }
       end
