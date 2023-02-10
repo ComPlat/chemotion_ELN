@@ -7,18 +7,18 @@ describe Usecases::Attachments::Thumbnail::ThumbnailCreator do
   let(:expected_path) do
     File.join(
       File.dirname(temp_file),
-      attachment.identifier + '.thumb.jpg'
+      "#{attachment.identifier}.thumb.jpg",
     )
   end
 
   describe '.create_derivative' do
     it 'successfully created thumbnail' do
-      allow_any_instance_of(Thumbnailer)
+      allow_any_instance_of(Thumbnailer) #rubocop:disable RSpec/AnyInstance
         .to receive(:create)
         .and_return(temp_file)
       result = creator.create_derivative(temp_file, nil, nil, {}, attachment)
 
-      expect(attachment.thumb).to eq true
+      expect(attachment.thumb).to be true
       assert_equal(result[:thumbnail].path, expected_path)
     end
 
@@ -30,7 +30,7 @@ describe Usecases::Attachments::Thumbnail::ThumbnailCreator do
       creator = described_class.new
       result = creator.create_derivative(temp_file, nil, nil, {}, attachment)
 
-      expect(attachment.thumb).to eq false
+      expect(attachment.thumb).to be false
       expect(attachment.attachment_data).to eq expected_attachment_data
       expect(result).to eq({})
     end

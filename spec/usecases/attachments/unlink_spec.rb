@@ -4,16 +4,16 @@ require 'rails_helper'
 
 RSpec.describe Usecases::Attachments::Unlink do
   describe '.execute!' do
-    let(:attachment) { create(:attachment) }
-
     subject { described_class.execute!(attachment) }
+
+    let(:attachment) { create(:attachment) }
 
     it 'returns an attachment' do
       expect(subject).to be_instance_of(Attachment)
     end
 
     it 'changes attachable_id' do
-      expect(subject.attachable_id).to eq(nil)
+      expect(subject.attachable_id).to be_nil
     end
 
     it 'changes attachable_id' do

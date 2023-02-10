@@ -4,6 +4,8 @@ require 'rails_helper'
 
 RSpec.describe Usecases::Attachments::UploadChunkComplete do
   describe '.execute!' do
+    subject { described_class.execute!(user, params) }
+
     let(:user) { create(:person) }
     let(:filename) { 'upload_chunks_completed.txt' }
     let(:key) { '453cc77f-e0e6-4757-b47b-656137eb7084' }
@@ -19,8 +21,6 @@ RSpec.describe Usecases::Attachments::UploadChunkComplete do
       FileUtils.cp(source, chunk_file1)
       FileUtils.cp(source, chunk_file2)
     end
-
-    subject { described_class.execute!(user, params) }
 
     before { simulate_upload_chunks }
 

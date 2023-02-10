@@ -9,10 +9,10 @@ RSpec.describe Usecases::Attachments::UploadChunk do
     let(:params) do
       {
         file: {
-          tempfile: Rails.root.join('spec', 'fixtures', 'upload.txt')
+          tempfile: Rails.root.join('spec', 'fixtures', 'upload.txt'),
         },
         key: '453cc77f-e0e6-4757-b47b-656137eb7084',
-        counter: 1
+        counter: 1,
       }
     end
     let(:expected_tmp_path) do
@@ -25,7 +25,7 @@ RSpec.describe Usecases::Attachments::UploadChunk do
     after { FileUtils.rm_rf(expected_tmp_path) }
 
     it 'returns always true' do
-      expect(subject).to eq(true)
+      expect(subject).to be(true)
     end
 
     it 'creates a temp directory' do
