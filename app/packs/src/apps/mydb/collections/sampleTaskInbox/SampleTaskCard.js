@@ -56,7 +56,11 @@ const SampleTaskCard = ({ sampleTask }) => {
     if (sampleTask.scan_results.length > 0) {
       const scan_results = sampleTask.scan_results.map(scan_result => {
         return (
-          <li>{scan_result.note}: {scan_result.measurement_value}{scan_result.measurement_unit}</li>
+          <li>
+            <a href={`/api/chemotion/attachments/${scan_result.attachment_id}`} target="_blank">
+              {scan_result.note}: {scan_result.measurement_value}{scan_result.measurement_unit}
+            </a>
+          </li>
         )
       })
       const sample_task_result = sampleTask.result_value
