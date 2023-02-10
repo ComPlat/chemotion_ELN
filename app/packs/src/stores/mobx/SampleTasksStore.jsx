@@ -37,11 +37,9 @@ export const SampleTasksStore = types
       result.forEach(entry => self.sample_tasks.set(entry.id, SampleTask.create({ ...entry })));
     }),
     showSampleTaskInbox() {
-      console.debug('showSampleTaskInbox');
       self.inbox_visible = true;
     },
     hideSampleTaskInbox() {
-      console.debug('hideSampleTaskInbox');
       self.inbox_visible = false;
     },
     assignSample: flow(function* assignSample(sample, sampleTask) {
