@@ -441,24 +441,16 @@ module Chemotion
               bucket: file[:container_id],
               filename: file[:filename],
               key: File.basename(file[:tempfile].path),
+              file_path: file[:tempfile],
               created_by: current_user.id,
               created_for: current_user.id,
               content_type: file[:type]
             )
-            ActiveRecord::Base.transaction do
-              begin
-                att.save!
-
-                att.attachment_attacher.attach(File.open(file[:tempfile].path, binmode: true))
-                if att.valid?
-                  att.save!
-                else
-                  raise ActiveRecord::Rollback
-                end
-              ensure
-                tempfile.close
-                tempfile.unlink
-              end
+            begin
+              att.save!
+            ensure
+              tempfile.close
+              tempfile.unlink
             end
             # run the asyncronous import job and return its id to the client
             ImportCollectionsJob.perform_later(att, current_user.id)

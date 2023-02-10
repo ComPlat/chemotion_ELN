@@ -506,7 +506,7 @@ module Chemotion
             is_shared_collection = true
             sample.collections << Collection.find(sync_collection['collection_id'])
             sample.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-          end          
+          end
         end
 
         unless is_shared_collection

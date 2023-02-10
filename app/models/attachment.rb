@@ -37,7 +37,6 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
 
-  has_ancestry ancestry_column: :version
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
   has_ancestry ancestry_column: :version
@@ -186,7 +185,6 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
     set_key
   end
-
 
   def set_key; end
 
