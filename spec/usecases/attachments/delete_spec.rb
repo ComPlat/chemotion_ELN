@@ -10,12 +10,12 @@ RSpec.describe Usecases::Attachments::Delete do
     let(:container) { create(:container) }
 
     it 'returns the attachment' do
-      expect(subject).to be_instance_of(Attachment) #rubocop:disable RSpec/NamedSubject
+      expect(subject).to be_instance_of(Attachment) # rubocop:disable RSpec/NamedSubject
     end
 
     it 'deletes the attachment on database' do
       attachment.save
-      expect { subject }.to change(Attachment, :count).by(-1) #rubocop:disable RSpec/NamedSubject
+      expect { subject }.to change(Attachment, :count).by(-1) # rubocop:disable RSpec/NamedSubject
     end
   end
 end
