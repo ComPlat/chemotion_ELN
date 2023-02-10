@@ -30,4 +30,11 @@ sed -i "s~import { props, ignoredProps } from './props';~import wikiprops from '
 yellow "Done fixing import."
 
 # move svgedit to public folder
-mv ./node_modules/svgedit/dist/editor ./public/svgedit
+yellow "Adding symbolic link to svg editor in public folder"
+
+location_of_library = $(node -e 'console.log(require.resolve("react"))')
+location_of_library=`dirname $location_of_library`
+location_of_library=`dirname $location_of_library`
+ln -s $location_of_library/svgedit/dist/editor ./public/svgedit
+
+yellow "Finished adding symbolic link to svg editor in public folder"
