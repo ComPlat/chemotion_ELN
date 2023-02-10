@@ -210,7 +210,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attachment_attacher.destroy
   end
 
-  def attach_file # rubocop:disable Metrics/AbcSize
+  def attach_file
     return if file_path.nil?
     return unless File.exist?(file_path)
 
@@ -220,8 +220,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attachment_attacher.create_derivatives
 
     update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
-  
-  end  
+  end
 
   def check_file_size # rubocop:disable Metrics/AbcSize
     return if file_path.nil?

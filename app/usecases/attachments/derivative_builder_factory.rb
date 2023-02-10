@@ -18,12 +18,10 @@ module Usecases
         builders = []
         data_type = data_type_in.sub('.', '').downcase
         possible_creators.each do |creator|
-          Usecases::Attachments::Converter::FileConverter
           builders.append(creator.constantize.new) if @supported_formats_map[creator].include? data_type
         end
-        
+
         builders
-       
       end
 
       def possible_creators

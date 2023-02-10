@@ -64,7 +64,7 @@ export default class ReactionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(reaction.serialize())
-    }).then(response => response.json())    
+    }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
       .then(()=> ReactionsFetcher.updateAnnotationsInReaction(reaction))
         .then(() => this.fetchById(json.reaction.id))).catch((errorMessage) => {

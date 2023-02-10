@@ -132,5 +132,5 @@ export default class GenericElsFetcher {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: `/api/v1/generic_elements/segment_revisions.json?id=${id}`, requestMethod: 'GET', jsonTranformation: json => json
     });
-  }  
+  }
 }

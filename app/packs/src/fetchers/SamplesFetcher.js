@@ -92,13 +92,10 @@ export default class SamplesFetcher {
       return Promise.all(tasks).then(() => {
         return promise();
       });
-    }
-    
+    }    
 
     return promise();
   }
-
-  
 
   static create(sample) {
     const files = AttachmentFetcher.getFileListfrom(sample.container);

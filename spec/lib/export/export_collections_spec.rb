@@ -45,12 +45,12 @@ RSpec.describe 'ExportCollection' do
     let(:collection) { create(:collection, user_id: user.id, label: 'collection-with-rp') }
     let(:research_plan) { create(:research_plan, collections: [collection]) }
 
-    let(:attachment) do      
+    let(:attachment) do
       create(:attachment, :with_png_image,
              bucket: 1,
              created_by: 1,
              attachable_id: research_plan.id)
-    end   
+    end
 
     before do
       research_plan.attachments = [attachment]
@@ -64,14 +64,13 @@ RSpec.describe 'ExportCollection' do
 
     it 'exported file exists' do
       file_path = File.join('public', 'zip', "#{job_id}.zip")
-      expect(File.exist?(file_path)).to be true    
+      expect(File.exist?(file_path)).to be true
     end
 
     it 'attachment is in zip file' do
       file_names = []
       file_path = File.join('public', 'zip', "#{job_id}.zip")
       Zip::File.open(file_path) do |files|
-       
         files.each do |file|
           file_names << file.name
         end
@@ -79,7 +78,7 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
-  def update_body_of_researchplan(research_plan, identifier_of_attachment)
+  def update_body_of_researchplan(research_plan, identifier_of_attachment) # rubocop:disable Metrics/MethodLength
     research_plan.body = [
       {
         id: 'entry-003',
@@ -92,5 +91,5 @@ RSpec.describe 'ExportCollection' do
     ]
     research_plan.save!
     research_plan
-  end  
+  end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AttachmentUploader < Shrine
   MAX_SIZE = Rails.configuration.shrine_storage.maximum_size * 1024 * 1024
 
@@ -6,10 +8,11 @@ class AttachmentUploader < Shrine
   plugin :validation_helpers
   plugin :pretty_location
   Attacher.validate do
-    validate_max_size MAX_SIZE, message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
+    validate_max_size MAX_SIZE,
+                      message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB" # rubocop:disable Layout/LineLength
   end
 
-  def generate_location(io, context = {})
+  def generate_location(io, context = {}) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     if context[:record]
       file_name = if io.path.include? 'thumb.jpg'
                     "#{context[:record][:key]}.thumb.jpg"
