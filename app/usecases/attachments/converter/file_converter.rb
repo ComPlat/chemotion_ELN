@@ -13,6 +13,7 @@ module Usecases
           conversion_path = "#{Pathname.new(tmp_path).dirname}/#{conversion_file_name}"
           file.write(conversion_path)
           result[:conversion] = File.open(conversion_path, 'rb')
+          result
         end
 
         def create_converted_file(original_file_path)
