@@ -81,7 +81,7 @@ module Chemotion
                 ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif @attachment
-            can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
+            can_dwnld = (current_user.is_a?(Admin) or (@attachment.container_id.nil? &&  @attachment.created_for == current_user.id))
             if !can_dwnld && (element = @attachment.container&.root&.containable)
               can_dwnld = (element.is_a?(User) && (element == current_user)) ||
                 (ElementPolicy.new(current_user, element).read? &&
