@@ -11,7 +11,7 @@ const NavHead = () => {
         <MenuItem eventKey="14" href="https://github.com/ComPlat" target="_blank">Complat on Github</MenuItem>
         <MenuItem divider />
         <MenuItem eventKey='15' href={isHome ? '/' : '/home'} target="_self">{isHome ? 'ELN' : 'Home'}</MenuItem>
-        <MenuItem divider />       
+        <MenuItem divider />
         <MenuItem eventKey='15' href="/about" target="_self">About</MenuItem>
       </NavDropdown>
     </Navbar.Brand>

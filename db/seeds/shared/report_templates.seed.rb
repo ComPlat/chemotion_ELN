@@ -20,7 +20,7 @@ def create_template(file_name, template_name, template_type)
       created_for: USER_ID,
       content_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
-    
+
     attachment.save!
     ReportTemplate.create!(
       name: "#{template_name}", report_type: "#{template_type}", attachment: attachment

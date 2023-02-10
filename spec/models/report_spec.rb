@@ -74,6 +74,7 @@ RSpec.describe Report, type: :report do
       rp1.really_destroy!
       att1.destroy!
       expect(File.exist?(f_path)).to be false
+      expect(File.exist?(t_path)).to be false
     end
   end
 end

@@ -92,7 +92,7 @@ export default class SamplesFetcher {
       return Promise.all(tasks).then(() => {
         return promise();
       });
-    }    
+    }
 
     return promise();
   }
