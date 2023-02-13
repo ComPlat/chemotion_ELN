@@ -42,11 +42,13 @@
 #  molecular_mass      :float
 #  sum_formula         :string
 #  solvent             :jsonb
+#  inventory_sample    :boolean          default(FALSE)
 #
 # Indexes
 #
 #  index_samples_on_deleted_at        (deleted_at)
 #  index_samples_on_identifier        (identifier)
+#  index_samples_on_inventory_sample  (inventory_sample)
 #  index_samples_on_molecule_name_id  (molecule_name_id)
 #  index_samples_on_sample_id         (molecule_id)
 #  index_samples_on_user_id           (user_id)
@@ -201,6 +203,7 @@ class Sample < ApplicationRecord
   belongs_to :molecule_name, optional: true
 
   has_one :container, as: :containable
+  has_one :chemicals
 
   has_many :wells
   has_many :wellplates, through: :wells
@@ -278,7 +281,18 @@ class Sample < ApplicationRecord
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
-  def create_subsample user, collection_ids, copy_ea = false
+  def create_chemical_entry_for_subsample(sample_id, subsample_id)
+    get_sample_as_chemical = Chemical.find_by(sample_id: sample_id) || Chemical.new
+    chemical_data = get_sample_as_chemical.chemical_data
+    attributes = {
+      chemical_data: chemical_data,
+      sample_id: subsample_id,
+    }
+    chemical = Chemical.new(attributes)
+    chemical.save!
+  end
+
+  def create_subsample user, collection_ids, copy_ea = false, as_chemical_entry = true
     subsample = self.dup
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?
@@ -309,7 +323,10 @@ class Sample < ApplicationRecord
 
     subsample.container = Container.create_root_container
     subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
-    subsample.save! && subsample
+    subsample.save!
+
+    create_chemical_entry_for_subsample(self.id, subsample.id) if as_chemical_entry
+    subsample
   end
 
   def reaction_description

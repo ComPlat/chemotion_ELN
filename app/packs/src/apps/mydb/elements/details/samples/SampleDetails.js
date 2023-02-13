@@ -65,7 +65,12 @@ import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
+<<<<<<< HEAD
 import { validateCas } from 'src/utilities/CasValidation';
+=======
+import ChemicalTab from 'src/components/ChemicalTab';
+
+>>>>>>> chemical inventory
 
 const MWPrecision = 6;
 
@@ -301,6 +306,13 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  handleInventorySample(e) {
+    const { sample } = this.state;
+    sample.inventory_sample = e.target.checked;
+    console.log(sample);
+    this.handleSampleChanged(sample);
+  }
+
   handleStructureEditorSave(molfile, svg_file = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
@@ -357,11 +369,16 @@ export default class SampleDetails extends React.Component {
 
   handleSubmit(closeView = false) {
     LoadingActions.start();
+<<<<<<< HEAD
     const { sample, validCas } = this.state;
     this.checkMolfileChange();
     if (!validCas) {
       sample.xref = { ...sample.xref, cas: '' };
     }
+=======
+    const { sample } = this.state;
+    console.log(sample);
+>>>>>>> chemical inventory
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
@@ -509,6 +526,12 @@ export default class SampleDetails extends React.Component {
       <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
 
+    const inventorySample = (
+      <Checkbox className="sample-inventory-header" checked={sample.inventory_sample} onChange={(e) => this.handleInventorySample(e)}>
+        Inventory Sample
+      </Checkbox>
+    );
+
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
         Decoupled
@@ -571,6 +594,7 @@ export default class SampleDetails extends React.Component {
           ? <FastInput fnHandle={this.handleFastInput} />
           : null}
         {decoupleCb}
+        {inventorySample}
         <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           {colLabel}
@@ -1017,6 +1041,22 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  sampleInventoryTab(ind) {
+    const sample = this.state.sample || {};
+
+    return (
+      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+        <ListGroupItem>
+          <ChemicalTab
+            sample={sample}
+            parent={this}
+          />
+        </ListGroupItem>
+        <EditUserLabels element={sample} />
+      </Tab>
+    );
+  }
+
   sampleContainerTab(ind) {
     const { sample } = this.state;
     return (
@@ -1300,7 +1340,8 @@ export default class SampleDetails extends React.Component {
       references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
-      measurements: this.measurementsTab('measurements')
+      measurements: this.measurementsTab('measurements'),
+      inventory: this.sampleInventoryTab('inventory')
     };
 
     if (this.enableComputedProps) {

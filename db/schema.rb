@@ -93,6 +93,12 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "chemicals", force: :cascade do |t|
+    t.integer "sample_id"
+    t.text "cas"
+    t.jsonb "chemical_data"
+  end
+
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
     t.string "source"
     t.integer "source_id"
@@ -975,8 +981,10 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
+    t.boolean "inventory_sample", default: false
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
+    t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
