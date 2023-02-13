@@ -32,9 +32,7 @@ yellow "Done fixing import."
 # move svgedit to public folder
 yellow "Adding symbolic link to svg editor in public folder"
 
-location_of_library = $(node -e 'console.log(require.resolve("react"))')
-location_of_library=`dirname $location_of_library`
-location_of_library=`dirname $location_of_library`
-ln -s $location_of_library/svgedit/dist/editor ./public/svgedit
+node_modules_folder="$(node -e 'const p = require.resolve("@svgedit/svgcanvas"); console.log(p.slice(0, p.indexOf("@svgedit/svgcanvas")))')"
+rm -f ./public/svgedit && ln -s "$node_modules_folder"/svgedit/dist/editor ./public/svgedit
 
 yellow "Finished adding symbolic link to svg editor in public folder"
