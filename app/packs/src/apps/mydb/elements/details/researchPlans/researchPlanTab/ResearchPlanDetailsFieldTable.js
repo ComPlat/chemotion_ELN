@@ -248,6 +248,10 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     field.value.columns = gridApi.getColumnDefs();
     field.value.columnStates = columnApi.getColumnState();
 
+    let sortedRows = []
+    gridApi.forEachNodeAfterFilterAndSort(row => sortedRows.push(row.data))
+    field.value.rows = sortedRows
+
     onChange(field.value, field.id);
   }
 
@@ -510,7 +514,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const tr = rows.map((row, index) => {
       const td = columns.map((column) => {
         let cellContent = row[column.colId];
-        if(column.headerName == 'Sample') {
+        if (column.headerName == 'Sample') {
           let cellContentIsShortLabel = column.headerName == 'Sample' && (cellContent || '').length > 3;
           if (cellContentIsShortLabel) {
             let shortLabel = cellContent;
@@ -521,7 +525,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             </a>
           }
         }
-        else if(column.headerName == 'Reaction') {
+        else if (column.headerName == 'Reaction') {
           let cellContentIsShortLabel = column.headerName == 'Reaction' && (cellContent || '').length > 3;
           if (cellContentIsShortLabel) {
             let shortLabel = cellContent;
