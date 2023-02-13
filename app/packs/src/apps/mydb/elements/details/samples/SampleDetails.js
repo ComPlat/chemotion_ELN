@@ -65,12 +65,9 @@ import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
-<<<<<<< HEAD
 import { validateCas } from 'src/utilities/CasValidation';
-=======
 import ChemicalTab from 'src/components/ChemicalTab';
 
->>>>>>> chemical inventory
 
 const MWPrecision = 6;
 
@@ -369,16 +366,11 @@ export default class SampleDetails extends React.Component {
 
   handleSubmit(closeView = false) {
     LoadingActions.start();
-<<<<<<< HEAD
     const { sample, validCas } = this.state;
     this.checkMolfileChange();
     if (!validCas) {
       sample.xref = { ...sample.xref, cas: '' };
     }
-=======
-    const { sample } = this.state;
-    console.log(sample);
->>>>>>> chemical inventory
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;

@@ -2,8 +2,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Well, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup
+  FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
+  ListGroup, ListGroupItem, InputGroup, Collapse
 } from 'react-bootstrap';
 import Spinner from 'react-svg-spinner';
 import Select from 'react-select';
@@ -12,6 +12,8 @@ import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
+import CollapseButton from 'src/components/common/CollapseButton';
+import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {
@@ -19,6 +21,7 @@ export default class ChemicalTab extends React.Component {
     this.state = {
       chemical: undefined,
       safetySheets: [],
+      displayWell: false,
       checkSaveIconThermofischer: true,
       checkSaveIconMerck: true,
       vendorValue: 'All',
@@ -29,16 +32,28 @@ export default class ChemicalTab extends React.Component {
       safetyPhrases: '',
       loading: false,
       loadChemicalProperties: false,
+      openInventoryInformationTab: false,
+      openSafetyTab: false,
+      openLocationTab: false
     };
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
+    this.handleMetricsChange = this.handleMetricsChange.bind(this);
   }
 
   componentDidMount() {
     const { sample } = this.props;
     this.fetchChemical(sample);
+    this.updateDisplayWell();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.chemical !== this.state.chemical) {
+      this.updateDisplayWell();
+    }
   }
 
   handleFieldChanged(parameter, value) {
+    console.log(`handleFieldChanged: ${JSON.stringify(parameter)} = ${value}`);
     const { chemical } = this.state;
     if (chemical) {
       chemical.buildChemical(parameter, value);
@@ -138,14 +153,13 @@ export default class ChemicalTab extends React.Component {
       chemical.buildChemical('sample_name', sampleName);
       chemical.buildChemical('molecule_id', moleculeId);
     }
-    console.log(sample.molecule_name_hash.label);
-    console.log(queryOption);
     let searchStr;
 
     if (queryOption === 'Common Name') {
       searchStr = sample.molecule_name_hash.label;
     } else {
-      searchStr = chemical._cas;
+      const sampleCas = sample.xref.cas ? sample.xref.cas.value : '';
+      searchStr = sampleCas;
     }
 
     const queryParams = {
@@ -159,10 +173,12 @@ export default class ChemicalTab extends React.Component {
 
     ChemicalFetcher.fetchSafetySheets(queryParams).then((result) => {
       const obj = JSON.parse(result);
+      console.log(`result: ${JSON.stringify(obj)}`);
       safetySheets.splice(0, 1);
       this.setState({ safetySheets });
       this.setState({ safetySheets: Object.values(obj) });
       this.setState({ loading: false });
+      this.setState({ displayWell: true });
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -249,6 +265,7 @@ export default class ChemicalTab extends React.Component {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
+    this.mapToSampleProperties()
   };
 
   fetchChemical(sample) {
@@ -298,11 +315,11 @@ export default class ChemicalTab extends React.Component {
       { label: 'To be ordered', value: 'To be ordered' },
       { label: 'Ordered', value: 'Ordered' }
     ];
-    const noBoldLabel = { fontWeight: 'normal' };
+    // const noBoldLabel = { fontWeight: 'normal' };
     return (
       <FormGroup>
-        <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
-        <InputGroup style={{ width: '100%', paddingRight: '10px' }}>
+        <ControlLabel>{label}</ControlLabel>
+        <InputGroup style={{ width: '100%' }}>
           <Select.Creatable
             name="chemicalStatus"
             multi={false}
@@ -317,28 +334,130 @@ export default class ChemicalTab extends React.Component {
   }
 
   textInput(data, label, parameter) {
-    const bsSize = parameter !== 'important_notes' && parameter !== 'disposal_info' ? 'small' : null;
-    const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage' 
+    const parametersArr = ['important_notes', 'disposal_info', 'vendor', 'order_number', 'price'];
+    // const bsSize = !parametersArr.includes(parameter) ? 'small' : null;
+    const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage'
     && parameter !== 'solubility' ? 'input' : 'textarea';
-    const noBoldLabel = { fontWeight: 'normal' };
+    // const noBoldLabel = { fontWeight: 'normal' };
     let value;
     if (parameter !== 'cas') {
       value = data !== undefined ? data[parameter] : '';
     } else {
       value = data || '';
+      console.log(`data: ${value}`);
+    }
+    let conditionalOverlay;
+    if (parameter === 'date') {
+      conditionalOverlay = 'please enter the name of the person who orders/ordered the substance';
+    } else if (parameter === 'required_by') {
+      conditionalOverlay = 'please enter the name of the person who requires the substance';
+    } else {
+      conditionalOverlay = null;
+    }
+    const checkLabel = label !== 'Date' ? <ControlLabel>{label}</ControlLabel> : null;
+    return (
+      <OverlayTrigger placement="top" overlay={parameter === 'date' || parameter === 'required_by' ? <Tooltip>{conditionalOverlay}</Tooltip> : <div />}>
+        <FormGroup>
+          {checkLabel}
+          <FormControl
+            componentClass={componentClass}
+            id={`textInput_${label}`}
+            type="text"
+            value={value}
+            onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
+            rows={label !== 'Important notes' && label !== 'Disposal information' ? 1 : 2}
+          />
+        </FormGroup>
+      </OverlayTrigger>
+    );
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  clipboardTooltip(value) {
+    const info = `copy product link (${value})`;
+    return (
+      <Tooltip id="productLink_button">{info}</Tooltip>
+    );
+  }
+
+  copyButton(document) {
+    const { chemical } = this.state;
+    let info = '';
+    let value;
+    if (chemical) {
+      if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
+        info = chemical._chemical_data[0];
+      }
+    }
+    if (document.alfa_link !== undefined) {
+      if (info.alfaProductInfo) {
+        value = info.alfaProductInfo.productLink;
+      } else {
+        value = document.alfa_product_link || null;
+      }
+    } else if (info.merckProductInfo) {
+      value = info.merckProductInfo.productLink;
+    } else {
+      value = document.merck_product_link || null;
     }
     return (
-      <FormGroup bsSize={bsSize}>
-        <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
-        <FormControl
-          componentClass={componentClass}
-          id={`txinput_${label}`}
-          type="text"
-          value={value}
-          onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
-          rows={label !== 'Important notes' && label !== 'Disposal information' ? 1 : 2}
-        />
-      </FormGroup>
+      <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip(value)}>
+        <Button active className="clipboardBtn" data-clipboard-text={value} bsSize="xsmall">
+          <i className="fa fa-clipboard" />
+        </Button>
+      </OverlayTrigger>
+      // <InputGroup className="sample-molecule-identifier">
+      //   {/* <FormGroup bsSize="small">
+      //     <ControlLabel>{label}</ControlLabel>
+      //     <FormControl
+      //       id={`textInput_${label}`}
+      //       componentClass="textarea"
+      //       type="text"
+      //       value={value}
+      //       onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
+      //       // rows={label !== 'Important notes' && label !== 'Disposal information' ? 1 : 2}
+      //     />
+      //   </FormGroup> */}
+      //   <InputGroup.Button>
+      //     <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+      //       <Button active className="clipboardBtn" data-clipboard-text={value}>
+      //         <i className="fa fa-clipboard" />
+      //       </Button>
+      //     </OverlayTrigger>
+      //   </InputGroup.Button>
+      // </InputGroup>
+    );
+  }
+
+  locationInput(data, parameter, domain) {
+    const value = data !== undefined ? data[parameter] : '';
+    const subLabel = (parameter.split('_'))[1];
+    const string = domain.replace(/_/g, ' ');
+    const modifyStr = string.charAt(0).toUpperCase() + string.slice(1);
+    const ParentLabelCondition = ['host_building', 'current_building', 'host_group', 'current_group'];
+    const ParentLabel = ParentLabelCondition.includes(parameter)
+      ? <ControlLabel>{modifyStr}</ControlLabel> : <ControlLabel style={{ paddingTop: '15px' }}> </ControlLabel>;
+    const paramsObj = {};
+    paramsObj[domain] = parameter;
+    // const obj = data.parameter ? data.parameter[domain] : paramsObj;
+    // console.log(data.parameter);
+
+    return (
+      <div>
+        {ParentLabel}
+        <InputGroup className="location-chemicalTab">
+          <InputGroup.Addon>{subLabel}</InputGroup.Addon>
+          <FormGroup controlId="subLabel">
+            <FormControl
+              componentClass="input"
+              value={value}
+              onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
+              // disabled
+              // readOnly
+            />
+          </FormGroup>
+        </InputGroup>
+      </div>
     );
   }
 
@@ -372,6 +491,33 @@ export default class ChemicalTab extends React.Component {
           <InputGroup.Addon>{unit}</InputGroup.Addon>
         </InputGroup>
       </FormGroup>
+    );
+  }
+
+  handleMetricsChange(newValue, newUnit, parameter) {
+    console.log(`newUnit ${newUnit}`);
+    console.log(`newValue ${newValue}`);
+    const paramObj = { unit: newUnit, value: newValue };
+    this.handleFieldChanged(parameter, paramObj);
+  }
+
+  numInputWithoutTable(data, label, parameter) {
+    const value = data !== undefined && data[parameter]
+    && data[parameter].value ? data[parameter].value : 0;
+    const unit = data !== undefined && data[parameter] && data[parameter].unit ? data[parameter].unit : 'mg';
+    return (
+      <NumericInputUnit
+        field="amount"
+        // bsStyle="default"
+        inputDisabled={false}
+        onInputChange={
+          (newValue, newUnit) => this.handleMetricsChange(newValue, newUnit, parameter)
+        }
+        unit={unit}
+        val={value}
+        // bsStyleBtnAfter="primary"
+        label={label}
+      />
     );
   }
 
@@ -447,7 +593,7 @@ export default class ChemicalTab extends React.Component {
     } else if (document.merck_link) {
       outcome = (checkSaveIconMerck && document.merck_product_number !== undefined) ? null : (
         <OverlayTrigger placement="top" overlay={<Tooltip id="saveCheckIconMerck">Saved</Tooltip>}>
-          <i className="fa fa-check-circle" style={{ paddingLeft: '10px' }} />
+          <i className="fa fa-check-circle" style={{ paddingLeft: '7px' }} />
         </OverlayTrigger>
       );
     }
@@ -513,6 +659,7 @@ export default class ChemicalTab extends React.Component {
           }
         }
         this.setState({ chemical });
+        this.handleFieldChanged('link', productInfo.productLink);
         this.handleSubmitSave();
         this.handleCheckMark(productInfo.vendor);
       }
@@ -636,8 +783,12 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  extractProductLink(document) {
+
+  }
+
   renderSafetySheets = () => {
-    const { safetySheets, chemical, vendorValue } = this.state;
+    const { safetySheets, chemical, vendorValue, displayWell } = this.state;
     let sdsStatus;
     let savedSds;
     if (chemical) {
@@ -646,7 +797,6 @@ export default class ChemicalTab extends React.Component {
         sdsStatus = safetySheets.length !== 0 ? safetySheets : savedSds;
       }
     }
-    console.log(vendorValue);
     return (
       (sdsStatus === undefined || sdsStatus.length === 0) ? null
         : (
@@ -654,15 +804,26 @@ export default class ChemicalTab extends React.Component {
             {sdsStatus.map((document, index) => (
               document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
                 <ListGroupItem key="safetySheetsFiles">
-                  <div>
-                    <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
-                      {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
-                      { this.checkMarkButton(document) }
-                    </a>
-                    <ButtonToolbar className="pull-right">
-                      {this.saveSafetySheets(document)}
-                      {this.removeButton(index, document)}
-                    </ButtonToolbar>
+                  <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ paddingTop: '5px', width: '34%' }}>
+                      <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
+                        {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
+                        { this.checkMarkButton(document) }
+                      </a>
+                    </div>
+                    <div style={{ width: '12%', paddingTop: '5px' }}>
+                      <ButtonToolbar>
+                        {this.copyButton(document)}
+                        {this.saveSafetySheets(document)}
+                        {this.removeButton(index, document)}
+                      </ButtonToolbar>
+                    </div>
+                    <div style={{ width: '20%' }}>
+                      { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
+                    </div>
+                    <div style={{ width: '20%' }}>
+                      { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
+                    </div>
                   </div>
                 </ListGroupItem>
               )
@@ -702,42 +863,30 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  querySafetyPhrases = (vendor) => {
+    return (
+      <div>
+        <Button
+          id="safetyPhrases-btn"
+          onClick={() => this.fetchSafetyPhrases(vendor)}
+        >
+          fetch Safety Phrases
+        </Button>
+      </div>
+    );
+  };
+
   renderSafetyPhrases = () => {
-    const { chemical, vendorSafetyPhrasesValue, safetyPhrases } = this.state;
+    const { chemical, safetyPhrases } = this.state;
     let fetchedSafetyPhrases;
     if (chemical && chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
       const phrases = chemical._chemical_data[0].safetyPhrases;
       fetchedSafetyPhrases = (phrases !== undefined) ? this.stylePhrases(phrases) : '';
     }
     return (
-      <table>
-        <tbody>
-          <tr>
-            <td>
-              <div style={{ width: '%100', display: 'flex', justifyContent: 'justify' }}>
-                <div style={{ width: '%50', paddingRight: '20px' }}>
-                  {this.chooseVendorForSafetyPhrases()}
-                </div>
-                <div style={{ width: '%50', paddingTop: '25px' }}>
-                  <Button
-                    id="safetyPhrases-btn"
-                    onClick={() => this.fetchSafetyPhrases(vendorSafetyPhrasesValue)}
-                  >
-                    fetch Safety Phrases
-                  </Button>
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div style={{ width: '100%', paddingTop: '10px'}}>
-                {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div style={{ width: '100%', paddingTop: '10px'}}>
+        {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
+      </div>
     );
   };
 
@@ -762,48 +911,227 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  renderChemicalProperties = () => {
-    const { vendorChemPropertiesValue, loading, loadChemicalProperties } = this.state;
+  renderChemicalProperties = (vendor) => {
+    const { loading, loadChemicalProperties } = this.state;
 
     return (
-      <table>
-        <tbody>
-          <tr>
-            <td>
-              <div style={{ width: '%100', display: 'flex', justifyContent: 'justify' }}>
-                <div style={{ width: '%30', paddingRight: '20px' }}>
-                  {this.chooseVendorForChemicalProperties()}
-                </div>
-                <div style={{ width: '%30', paddingTop: '25px', paddingRight: '20px' }}>
-                  <Button
-                    id="safetyPhrases-btn"
-                    onClick={() => this.fetchChemicalProperties(vendorChemPropertiesValue)}
-                    disabled={!!loading || !!loadChemicalProperties}
-                    style={{ width: 200 }}
-                  >
-                    {loadChemicalProperties === false ? 'fetch Chemical Properties'
-                      : (
-                        <Spinner animation="border" role="status">
-                          <span className="visually-hidden">Loading...</span>
-                        </Spinner>
-                      )}
-                  </Button>
-                </div>
-                <div style={{ width: '%30', paddingTop: '25px' }}>
-                  <Button
-                    id="mapSampleProperties-btn"
-                    onClick={() => this.mapToSampleProperties()}
-                  >
-                    copy fetched data to sample properties
-                  </Button>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div>
+        <OverlayTrigger placement="top" overlay={<Tooltip id="renderChemProp">Info, if any found, will be copied to properties fields in sample properties tab</Tooltip>}>
+          <Button
+            id="safetyPhrases-btn"
+            onClick={() => this.fetchChemicalProperties(vendor)}
+            disabled={!!loading || !!loadChemicalProperties}
+            // style={{ width: 200 }}
+          >
+            {loadChemicalProperties === false ? 'fetch Chemical Properties'
+              : (
+                <Spinner animation="border" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </Spinner>
+              )}
+          </Button>
+        </OverlayTrigger>
+      </div>
     );
   };
+
+  inventoryCollapseBtn() {
+    const { openInventoryInformationTab } = this.state;
+    return (
+      <CollapseButton
+        openTab={openInventoryInformationTab}
+        setOpenTab={() => this.setState({ openInventoryInformationTab: !openInventoryInformationTab })}
+        name="Inventory Information"
+      />
+    );
+  }
+
+  safetyCollapseBtn() {
+    const { openSafetyTab } = this.state;
+    return (
+      <CollapseButton
+        openTab={openSafetyTab}
+        setOpenTab={() => this.setState({ openSafetyTab: !openSafetyTab })}
+        name="Safety"
+      />
+    );
+  }
+
+  locationCollapseBtn() {
+    const { openLocationTab } = this.state;
+    return (
+      <CollapseButton
+        openTab={openLocationTab}
+        setOpenTab={() => this.setState({ openLocationTab: !openLocationTab })}
+        name="Location and Information"
+      />
+    );
+  }
+
+  inventoryInformationTab(data) {
+    return (
+      <div>
+        {this.inventoryCollapseBtn()}
+        <Collapse in={this.state.openInventoryInformationTab}>
+          <div style={{ marginTop: '15px' }}>
+            <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '22%' }}>
+                {this.chemicalStatus(data, 'Status', 'status')}
+              </div>
+              <div style={{ width: '19%' }}>
+                {this.textInput(data, 'Vendor', 'vendor')}
+              </div>
+              <div style={{ width: '19%' }}>
+                {this.textInput(data, 'Order number', 'order_number')}
+              </div>
+              <div style={{ width: '19%' }}>
+                {this.numInputWithoutTable(data, 'Amount', 'amount')}
+              </div>
+              <div style={{ width: '19%' }}>
+                {this.textInput(data, 'Price', 'price')}
+              </div>
+            </div>
+            <div className="drop-bottom" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '29%' }}>
+                {this.textInput(data, 'Person', 'person')}
+              </div>
+              <div style={{ marginTop: '-17px', width: '40%' }}>
+                <Tabs id="tab-date">
+                  <Tab eventKey="required" title="Required date">
+                    {this.textInput(data, 'Date', 'required_date')}
+                  </Tab>
+                  <Tab eventKey="ordered" title="Ordered date">
+                    {this.textInput(data, 'Date', 'ordered_date')}
+                  </Tab>
+                </Tabs>
+              </div>
+              <div style={{ width: '29%' }}>
+                {this.textInput(data, 'Required by', 'required_by')}
+              </div>
+            </div>
+          </div>
+        </Collapse>
+      </div>
+    );
+  }
+
+  locationTab(data) {
+    return (
+      <div>
+        {this.locationCollapseBtn()}
+        <Collapse in={this.state.openLocationTab}>
+          <div style={{ marginTop: '15px' }}>
+            <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '17%' }}>
+                {this.locationInput(data, 'host_building', 'host_location')}
+              </div>
+              <div style={{ width: '16%' }}>
+                {this.locationInput(data, 'host_room', 'host_location')}
+              </div>
+              <div style={{ width: '18%' }}>
+                {this.locationInput(data, 'host_cabinet', 'host_location')}
+              </div>
+              <div style={{ width: '23.5%' }}>
+                {this.locationInput(data, 'host_group', 'host_group')}
+              </div>
+              <div style={{ width: '23.5%' }}>
+                {this.locationInput(data, 'host_owner', 'host_group')}
+              </div>
+            </div>
+            <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '17%' }}>
+                {this.locationInput(data, 'current_building', 'current_location')}
+              </div>
+              <div style={{ width: '16%' }}>
+                {this.locationInput(data, 'current_room', 'current_location')}
+              </div>
+              <div style={{ width: '18%' }}>
+                {this.locationInput(data, 'current_cabinet', 'current_location')}
+              </div>
+              <div style={{ width: '23.5%' }}>
+                {this.locationInput(data, 'current_group', 'current_group')}
+              </div>
+              <div style={{ width: '23.5%' }}>
+                {this.locationInput(data, 'borrowed_by', 'current_group')}
+              </div>
+            </div>
+            <div className="drop-bottom" style={{ marginTop: '20px' }}>
+              <div style={{ width: '100%' }}>
+                {this.textInput(data, 'Disposal information', 'disposal_info')}
+              </div>
+            </div>
+            <div className="drop-bottom">
+              <div style={{ width: '100%' }}>
+                {this.textInput(data, 'Important notes', 'important_notes')}
+              </div>
+            </div>
+          </div>
+        </Collapse>
+      </div>
+
+    );
+  }
+
+  updateDisplayWell() {
+    const { chemical } = this.state;
+    let savedSds;
+    if (chemical) {
+      if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
+        savedSds = chemical._chemical_data[0].ssdPath;
+        if (savedSds && savedSds.length !== 0) {
+          this.setState({ displayWell: true });
+        }
+      }
+    }
+  }
+
+  safetyTab() {
+    const { loading, openSafetyTab, displayWell } = this.state;
+    return (
+      <div>
+        {this.safetyCollapseBtn()}
+        <Collapse in={openSafetyTab}>
+          <div style={{ marginTop: '15px' }}>
+            <div style={{ width: '%100', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '%100' }}>
+                {this.chooseVendor()}
+              </div>
+              <div style={{ width: '%100' }}>
+                {this.queryOption()}
+              </div>
+              <div style={{ width: '%100' }}>
+                {this.safetySheetLanguage()}
+              </div>
+              <div style={{ width: '%100', paddingTop: '25px' }}>
+                <Button
+                  id="submit-sds-btn"
+                  onClick={() => this.querySafetySheets()}
+                  style={{ width: 150 }}
+                  disabled={!!loading}
+                >
+                  {loading === false ? 'Search for SDS'
+                    : (
+                      <Spinner animation="border" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </Spinner>
+                    )}
+                </Button>
+              </div>
+            </div>
+            <div>
+              { displayWell ? (
+                <div>
+                  {this.renderSafetySheets()}
+                </div>
+              )
+                : null}
+            </div>
+            { this.renderSafetyPhrases() }
+          </div>
+        </Collapse>
+      </div>
+    );
+  }
 
   render() {
     const {
@@ -819,219 +1147,22 @@ export default class ChemicalTab extends React.Component {
 
     const styleBorderless = { borderStyle: 'none' };
 
-    const styleHeader = { paddingBottom: '10px', fontWeight: 'bold', fontSize: '17px' };
-
     return (
       <table className="table table-borderless">
         <tbody>
           <tr>
-            <th style={styleHeader}> Labels</th>
-          </tr>
-          <tr>
-            <td colSpan="5" style={styleBorderless}>
-              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '20%' }}>
-                  {this.chemicalStatus(data, 'Status', 'status')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.casNumber(cas, 'CAS')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Internal (CCP) label', 'internal_label')}
-                </div>
-                <div style={{ width: '15%' }}>
-                  {this.textInput(data, 'Purity', 'purity')}
-                </div>
-                <div style={{ width: '15%' }}>
-                  {this.textInput(data, 'Details', 'details')}
-                </div>
-              </div>
+            <td style={styleBorderless}>
+              {this.inventoryInformationTab(data)}
             </td>
-          </tr>
-          <tr>
-            <th style={styleHeader}> Chemical Properties</th>
           </tr>
           <tr>
             <td style={styleBorderless}>
-              {this.renderChemicalProperties()}
+              {this.safetyTab()}
             </td>
-          </tr>
-          <tr>
-            <td colSpan="4" style={styleBorderless}>
-              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Form', 'form')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textUnitInput(data, 'Density', 'density')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textUnitInput(data, 'Melting Point', 'melting_point')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textUnitInput(data, 'Boiling Point', 'boiling_point')}
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td colSpan="3" style={styleBorderless}>
-              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Flash Point', 'flash_point')}
-                </div>
-                <div style={{ width: '30%' }}>
-                  {this.textInput(data, 'Refractive Index', 'refractive_index')}
-                </div>
-                <div style={{ width: '40%' }}>
-                  {this.textInput(data, 'Solubility', 'solubility')}
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <div style={{ width: '90%' }}>
-              {this.textInput(data, 'Sensitivity and Storage', 'sensitivity_storage')}
-            </div>
-          </tr>
-          <tr>
-            <th style={styleHeader}> History</th>
-          </tr>
-          <tr>
-            <td colSpan="4" style={styleBorderless}>
-              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Vendor', 'vendor')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Order number', 'order_number')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Person', 'person')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Date', 'date')}
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td colSpan="4" style={styleBorderless}>
-              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Price', 'price')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Amount', 'amount')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Product Link', 'link')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Other information', 'other_information')}
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <th style={styleHeader}> Location and Information</th>
-          </tr>
-          <tr>
-            <td colSpan="4" style={styleBorderless}>
-              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Room - cabinet', 'room')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Building', 'building')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Group', 'group')}
-                </div>
-                <div style={{ width: '20%' }}>
-                  {this.textInput(data, 'Owner', 'owner')}
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <th style={styleHeader}> Safety</th>
-          </tr>
-          <tr>
-            <td colSpan="4" style={styleBorderless}>
-              <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  {this.textInput(data, 'Vendors saftey data sheet link', 'sds_link')}
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td colSpan="4" style={styleBorderless}>
-              <div style={{ width: '%100', display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '%100' }}>
-                  {this.chooseVendor()}
-                </div>
-                <div style={{ width: '%100' }}>
-                  {this.queryOption()}
-                </div>
-                <div style={{ width: '%100' }}>
-                  {this.safetySheetLanguage()}
-                </div>
-                <div style={{ width: '%100', paddingTop: '25px' }}>
-                  <Button
-                    id="submit-sds-btn"
-                    onClick={() => this.querySafetySheets()}
-                    style={{ width: 150 }}
-                    disabled={!!loading}
-                  >
-                    {loading === false ? 'Search for SDS'
-                      : (
-                        <Spinner animation="border" role="status">
-                          <span className="visually-hidden">Loading...</span>
-                        </Spinner>
-                      )}
-                  </Button>
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <div>
-              <Well style={{ minHeight: 70, padding: 5, paddingBottom: 31 }}>
-                <div>
-                  {this.renderSafetySheets()}
-                </div>
-              </Well>
-            </div>
-          </tr>
-          <tr>
-            <th style={styleHeader}> Safety Phrases</th>
           </tr>
           <tr>
             <td style={styleBorderless}>
-              {this.renderSafetyPhrases()}
-            </td>
-          </tr>
-          <tr>
-            <th style={styleHeader}> Disposal / Helpful Notes</th>
-          </tr>
-          <tr>
-            <td colSpan="1" style={styleBorderless}>
-              <div className="drop-bottom">
-                <div style={{ width: '100%' }}>
-                  {this.textInput(data, 'Disposal information', 'disposal_info')}
-                </div>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td colSpan="1" style={styleBorderless}>
-              <div className="drop-bottom">
-                <div style={{ width: '100%' }}>
-                  {this.textInput(data, 'Important notes', 'important_notes')}
-                </div>
-              </div>
+              {this.locationTab(data)}
             </td>
           </tr>
           <tr>
