@@ -11,8 +11,7 @@ export default class ImageAnnotationModalSVG extends Component {
     return (
       <Modal
         bsSize="large"
-        show={this.props.isShow}
-        onHide={this.props.handleOnClose}
+        show={this.props.isShow}        
       >
         <Modal.Header closeButton>
           <Modal.Title>Image annotation</Modal.Title>
