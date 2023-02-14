@@ -178,8 +178,6 @@ vendor/cache/*
 shrine/*
 .docker-sync/
 
-shrine/*
-config/shrine_config.yml
 public/sprite.png
 config/shrine_config.yml
 .nyc_output/
