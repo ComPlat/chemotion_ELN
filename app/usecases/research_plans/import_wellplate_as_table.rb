@@ -90,10 +90,10 @@ module Usecases
       def create_row_from_well(well)
         row = {
           wellplate_position: well.sortable_alphanumeric_position,
-          sample: well&.sample&.short_label || ''
+          sample: well&.sample&.short_label || '',
         }
         add_readouts(row, well)
-        no_readouts_present = row.keys == %i(wellplate_position sample)
+        no_readouts_present = row.keys == %i[wellplate_position sample]
         return if no_readouts_present
 
         row
