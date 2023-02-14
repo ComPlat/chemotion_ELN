@@ -23,7 +23,7 @@ module Usecases
         def sanitize_svg_string(svg_string) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
           scrubber = Rails::Html::PermitScrubber.new
           scrubber.tags = %w[svg image g title rect text path line ellipse]
-          scrubber.attributes = %w[height id width href class fill stroke stroke-dasharray stroke-linecap
+          scrubber.attributes = %w[height id width href class fill stroke stroke-dasharray stroke-linecap transform
                                    stroke-linejoin stroke-width x y font-family font-size font-weight text-anchor
                                    space d x1 x2 y1 y2 cx cy rx ry]
           sanitized_svg_string = Loofah.xml_fragment(svg_string).scrub!(scrubber).to_s
