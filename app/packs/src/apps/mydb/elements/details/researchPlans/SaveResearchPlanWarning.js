@@ -28,6 +28,6 @@ SaveResearchPlanWarning.propTypes = {
 
 SaveResearchPlanWarning.defaultProps={
     warningStyle : 'imageEditedWarning',
-    warningMessage: 'Image was edited. Please save Researchplan to apply changes'
+    warningMessage: 'Image was edited. Please save Researchplan to apply changes.'
 
 }
