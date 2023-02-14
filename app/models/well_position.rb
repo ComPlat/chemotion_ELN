@@ -7,7 +7,7 @@ class WellPosition
     return if string.blank?
 
     y = ('A'..'H').to_a.index(string.first) + 1
-    x = string[1..-1].to_i
+    x = string[1..].to_i
 
     new(x: x, y: y)
   end
@@ -23,7 +23,7 @@ class WellPosition
     positions.sort
   end
 
-  def initialize(x:, y:)
+  def initialize(x:, y:) # rubocop:disable Naming/MethodParameterName
     raise "Invalid position - X = #{x}, Y = #{y}" unless x.in?(1..12) && y.in?(1..8)
 
     @x = x
@@ -43,7 +43,7 @@ class WellPosition
   def alphanumeric_position
     row = ('A'..'Z').to_a[y - 1] # -1 to account for 1 based positions
 
-    "#{row}#{sprintf("%02i", x)}"
+    "#{row}#{format('%02i', x)}"
   end
-  alias_method :to_s, :alphanumeric_position
+  alias_method :to_s, :alphanumeric_position # rubocop:disable Style/Alias
 end

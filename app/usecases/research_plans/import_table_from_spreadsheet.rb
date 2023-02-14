@@ -35,7 +35,7 @@ module Usecases
         xlsx = Roo::Spreadsheet.open(@file_path, extension: :xlsx)
         sheet = xlsx.sheet(0)
         @headers = sheet.row(1).map(&:to_s).map(&:strip).map { |header| column_definition(header) }
-        @rows = sheet.parse.map { |row| row_definition(row) }.compact
+        @rows = sheet.parse.filter_map { |row| row_definition(row) }
       end
 
       def import_data

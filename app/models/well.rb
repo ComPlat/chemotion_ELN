@@ -53,6 +53,6 @@ class Well < ApplicationRecord
 
     row = ('A'..'Z').to_a[position_y - 1]
 
-    "#{row}#{sprintf("%02i", position_x)}"
+    "#{row}#{format('%02i', position_x)}"
   end
 end
