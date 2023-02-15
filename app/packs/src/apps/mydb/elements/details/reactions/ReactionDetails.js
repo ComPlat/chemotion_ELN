@@ -60,6 +60,7 @@ export default class ReactionDetails extends Component {
     if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
+    reaction.updateMaxAmountOfProducts();
   }
 
 

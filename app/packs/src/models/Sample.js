@@ -959,6 +959,10 @@ export default class Sample extends Element {
     return target;
   }
 
+  calculateMaxAmount(referenceSample){
+    this.maxAmount=referenceSample.amount_mol * (this.coefficient || 1.0) / (referenceSample.coefficient || 1.0) * this.molecule_molecular_weight;
+  }
+
   get solvent() {
     try {
       //handle the old solvent data
