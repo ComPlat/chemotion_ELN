@@ -110,7 +110,7 @@ module Chemotion
       namespace :findByShortLabel do
         desc 'Fetch reaction id and collection based on short label'
         params do
-          requires :short_label, type: String, desc: 'Unique short label of sample'
+          requires :short_label, type: String, desc: 'Unique short label of reaction'
         end
         route_param :short_label do
           get do
