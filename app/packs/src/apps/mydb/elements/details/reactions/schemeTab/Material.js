@@ -468,7 +468,7 @@ class Material extends Component {
     };
 
     return (
-      <tr className="general-material">
+      <tr className="general-material display-linebreak">
         {compose(connectDragSource, connectDropTarget)(
           <td className={`drag-source ${permitCls(reaction)}`} style={style}>
             <span className="text-info fa fa-arrows" />
@@ -504,9 +504,15 @@ class Material extends Component {
         </td>
 
         <td>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="molecular-weight-info">{mw} g/mol</Tooltip>}>
+          <OverlayTrigger
+            delay="100"
+            placement="top" 
+            overlay={
+              <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material)}</Tooltip>
+            }>
             <div>
               <NumeralInputWithUnitsCompo
+                data-html="true"
                 key={material.id}
                 value={material.amount_g}
                 unit="g"
@@ -571,6 +577,13 @@ class Material extends Component {
         </td>
       </tr>
     );
+  }
+
+  generateMolecularWeightTooltipText(sample){
+    const molecularWeight = sample.decoupled ?
+      (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
+
+      return `molar mass: ${molecularWeight} g/mol \n Das ist ein Test`;
   }
 
   toggleTarget(isTarget) {
