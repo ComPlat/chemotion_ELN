@@ -6,6 +6,7 @@ describe Chemotion::ReactionAPI do
   include_context 'api request authorization context'
 
   let(:new_root_container) { create(:root_container) }
+  let(:collection) { create(:collection, user_id: user.id) }
 
   describe 'GET /api/v1/reactions' do
     let!(:c1) do
@@ -123,6 +124,27 @@ describe Chemotion::ReactionAPI do
       it 'is not allowed to read reaction' do
         expect(response).to have_http_status(:unauthorized)
       end
+    end
+  end
+
+  describe 'GET /api/v1/reactions/fetchByShortLabel/:shortLabel' do
+    let(:reaction) { create(:reaction, short_label: 'FOOBAR', creator: user, collections: [collection]) }
+    let(:short_label) { 'FOOBAR' }
+    let(:expected_response) do
+      {
+        'reaction_id' => reaction.id,
+        'collection_id' => collection.id,
+      }
+    end
+
+    before do
+      reaction
+    end
+
+    it 'returns reaction_id and collection_id' do
+      get "/api/v1/reactions/findByShortLabel/#{short_label}.json"
+
+      expect(parsed_json_response).to eq(expected_response)
     end
   end
 
