@@ -190,21 +190,20 @@ module Chemotion
         to = list_filter_params[:to_date]
         by_created_at = list_filter_params[:filter_created_at] || false
 
-        scope = scope.where("#{id_params[:model_name].pluralize}.created_at >= ?", Time.at(from.to_time)) if from && by_created_at
-        scope = scope.where("#{id_params[:model_name].pluralize}.created_at <= ?", Time.at(to.to_time) + 1.day) if to && by_created_at
-        scope = scope.where("#{id_params[:model_name].pluralize}.updated_at >= ?", Time.at(from.to_time)) if from && !by_created_at
-        scope = scope.where("#{id_params[:model_name].pluralize}.updated_at <= ?", Time.at(to.to_time) + 1.day) if to && !by_created_at
+        scope = scope.where("#{id_params[:model_name].pluralize}.created_at >= ?", Time.zone.at(from.to_time)) if from && by_created_at
+        scope = scope.where("#{id_params[:model_name].pluralize}.created_at <= ?", Time.zone.at(to.to_time) + 1.day) if to && by_created_at
+        scope = scope.where("#{id_params[:model_name].pluralize}.updated_at >= ?", Time.zone.at(from.to_time)) if from && !by_created_at
+        scope = scope.where("#{id_params[:model_name].pluralize}.updated_at <= ?", Time.zone.at(to.to_time) + 1.day) if to && !by_created_at
         id_params[:total_elements] = scope.size
 
         scope
       end
 
       def search_by_ids_for_sample(c_id, model, ids)
-        scope = 
-          model
-            .includes_for_list_display
-            .by_collection_id(c_id.to_i)
-            .where(id: ids)
+        scope =
+          model.includes_for_list_display
+               .by_collection_id(c_id.to_i)
+               .where(id: ids)
         scope = scope.product_only if list_filter_params.present? && list_filter_params[:product_only]
         scope = search_order_by_molecule(scope) if params[:molecule_sort]
         scope
