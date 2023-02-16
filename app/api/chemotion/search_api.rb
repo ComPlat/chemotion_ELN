@@ -44,6 +44,13 @@ module Chemotion
             ]
             requires :ids, type: Array
             optional :total_elements, type: Integer
+            optional :with_filter, type: Boolean
+          end
+          optional :list_filter_params, type: Hash do
+            optional :filter_created_at, type: Boolean
+            optional :from_date, type: Date
+            optional :to_date, type: Date
+            optional :product_only, type: Boolean
           end
         end
         requires :collection_id, type: String
@@ -71,6 +78,10 @@ module Chemotion
 
       def id_params
         params[:selection][:id_params]
+      end
+
+      def list_filter_params
+        params[:selection][:list_filter_params]
       end
 
       def sample_structure_search(c_id = @c_id, not_permitted = @dl_s && @dl_s < 1)
@@ -151,37 +162,73 @@ module Chemotion
 
       # rubocop:enable Lint/SymbolConversion, Style/CaseLikeIf, Style/NumericPredicate, Style/ZeroLengthPredicate, Style/HashEachMethods
 
+      def ids_by_params
+        return id_params[:ids] if !id_params[:with_filter] || list_filter_params.present? || params[:molecule_sort]
+
+        start_number = params[:page].to_i > pages(id_params[:total_elements]) ? 0 : params[:page_size].to_i * (params[:page].to_i - 1)
+        id_params[:ids][start_number, start_number + params[:page_size].to_i]
+      end
+
       def search_by_ids(c_id = @c_id)
         # TODO: generic elements
-        model = id_params['model_name'].capitalize.constantize
-        if id_params['model_name'] == 'sample'
-          search_by_ids_for_sample(c_id, model)
-        else
+        model = id_params[:model_name].capitalize.constantize
+        scope =
+          if id_params[:model_name] == 'sample'
+            search_by_ids_for_sample(c_id, model, ids_by_params)
+          else
+            model
+              .by_collection_id(c_id.to_i)
+              .where(id: ids_by_params)
+          end
+        search_filter_scope(scope)
+      end
+
+      def search_filter_scope(scope)
+        return scope if list_filter_params.blank?
+
+        from = list_filter_params[:from_date]
+        to = list_filter_params[:to_date]
+        by_created_at = list_filter_params[:filter_created_at] || false
+
+        scope = scope.where("#{id_params[:model_name].pluralize}.created_at >= ?", Time.at(from.to_time)) if from && by_created_at
+        scope = scope.where("#{id_params[:model_name].pluralize}.created_at <= ?", Time.at(to.to_time) + 1.day) if to && by_created_at
+        scope = scope.where("#{id_params[:model_name].pluralize}.updated_at >= ?", Time.at(from.to_time)) if from && !by_created_at
+        scope = scope.where("#{id_params[:model_name].pluralize}.updated_at <= ?", Time.at(to.to_time) + 1.day) if to && !by_created_at
+        id_params[:total_elements] = scope.size
+
+        scope
+      end
+
+      def search_by_ids_for_sample(c_id, model, ids)
+        scope = 
           model
+            .includes_for_list_display
             .by_collection_id(c_id.to_i)
-            .where(id: id_params['ids'])
-        end
+            .where(id: ids)
+        scope = scope.product_only if list_filter_params.present? && list_filter_params[:product_only]
+        scope = search_order_by_molecule(scope) if params[:molecule_sort]
+        scope
       end
 
-      def search_by_ids_for_sample(c_id, model)
-        model
-          .includes_for_list_display
-          .by_collection_id(c_id.to_i)
-          .where(id: id_params['ids'])
+      def search_order_by_molecule(scope)
+        scope.order('samples.updated_at ASC')
+             .page(params[:page]).per(page_size)
       end
 
-      def serialize_result_by_ids(scope, page)
+      def serialize_result_by_ids(scope)
         result = {}
+        pages = pages(id_params[:total_elements])
+        page = params[:page] > pages ? 1 : params[:page]
+        scope = scope.page(page).per(page_size) if page != params[:page] || list_filter_params.present?
         serialized_scope = serialized_scope_for_result_by_id(scope)
-        pages = id_params['total_elements'].fdiv(id_params['ids'].size).ceil
 
-        result[id_params['model_name'].pluralize] = {
+        result[id_params[:model_name].pluralize] = {
           elements: serialized_scope,
-          ids: id_params['ids'],
+          ids: id_params[:ids],
           page: page,
-          perPage: id_params['ids'].size,
+          perPage: page_size,
           pages: pages,
-          totalElements: id_params['total_elements'],
+          totalElements: id_params[:total_elements],
         }
         result
       end
@@ -191,7 +238,7 @@ module Chemotion
         serialized_scope = []
         scope.map do |s|
           serialized_scope =
-            if id_params['model_name'] == 'sample'
+            if id_params[:model_name] == 'sample'
               serialized_result_by_id_for_sample(s, serialized_scope)
             else
               serialized_result_by_id(s, serialized_scope)
@@ -211,7 +258,7 @@ module Chemotion
       end
 
       def serialized_result_by_id(element, serialized_scope)
-        entities = "Entities::#{id_params['model_name'].capitalize}Entity".constantize
+        entities = "Entities::#{id_params[:model_name].capitalize}Entity".constantize
         serialized =
           entities.represent(element, displayed_in_list: true).serializable_hash
         serialized_scope.push(serialized)
@@ -227,7 +274,7 @@ module Chemotion
           # Sorting by molecule for non-advanced search
           molecule_scope =
             Molecule.joins(:samples).where(samples: { id: sample_ids })
-                    .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                    .order(Arel.sql("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))"))
                     .order(:sum_formular)
           molecule_scope = molecule_scope.page(page).per(page_size)
           samples = Sample.includes_for_list_display.find(sample_ids)
@@ -550,10 +597,7 @@ module Chemotion
           scope = search_by_ids(@c_id)
           return unless scope
 
-          serialize_result_by_ids(
-            scope,
-            params[:page],
-          )
+          serialize_result_by_ids(scope)
         end
       end
 

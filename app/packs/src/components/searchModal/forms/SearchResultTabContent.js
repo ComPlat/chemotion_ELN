@@ -37,8 +37,11 @@ const SearchResultTabContent = ({ list, tabResult }) => {
         model_name: key,
         ids: ids,
         total_elements: tabResult.total_elements,
+        with_filter: false,
       },
-      search_by_method: 'search_by_ids'
+      list_filter_params: {},
+      search_by_method: 'search_by_ids',
+      page_size: tabResult.per_page
     };
 
     searchStore.loadSearchResultTab({

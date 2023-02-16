@@ -1047,25 +1047,7 @@ class ElementStore {
         moleculeSort
       });
     } else if (currentSearchByID != null) {
-      currentSearchByID.page_size = uiState.number_of_results;
-      const startNumber = currentSearchByID.page_size * (page - 1);
-      const ids = currentSearchByID[`${type}s`].ids.slice(startNumber, startNumber + currentSearchByID.page_size);
-      const selection = {
-        elementType: 'by_ids',
-        id_params: {
-          model_name: `${type}`,
-          ids: ids,
-          total_elements: currentSearchByID[`${type}s`].totalElements
-        },
-        search_by_method: 'search_by_ids'
-      };
-
-      ElementActions.fetchBasedOnSearchResultIds.defer({
-        selection: selection,
-        collectionId: uiState.currentCollection.id,
-        page: page,
-        isSync: uiState.isSync
-      });
+      this.handleRefreshElementsForSearchById(type, uiState, currentSearchByID);
     } else {
       const per_page = uiState.number_of_results;
       const { fromDate, toDate, productOnly } = uiState;
@@ -1097,6 +1079,43 @@ class ElementStore {
     })
   }
 
+  handleRefreshElementsForSearchById(type, uiState, currentSearchByID) {
+    currentSearchByID.page_size = uiState.number_of_results;
+    const { filterCreatedAt, fromDate, toDate, productOnly } = uiState;
+    const { moleculeSort } = this.state;
+    const { page } = uiState[type];
+    let filterParams = {};
+
+    if (fromDate || toDate || productOnly) {
+      filterParams = {
+        filter_created_at: filterCreatedAt,
+        from_date: fromDate,
+        to_date: toDate,
+        product_only: productOnly,
+      }
+    }
+
+    const selection = {
+      elementType: 'by_ids',
+      id_params: {
+        model_name: `${type}`,
+        ids: currentSearchByID[`${type}s`].ids,
+        total_elements: currentSearchByID[`${type}s`].totalElements,
+        with_filter: true,
+      },
+      list_filter_params: filterParams,
+      search_by_method: 'search_by_ids',
+      page_size: currentSearchByID.page_size,
+    };
+
+    ElementActions.fetchBasedOnSearchResultIds.defer({
+      selection: selection,
+      collectionId: uiState.currentCollection.id,
+      page: page,
+      isSync: uiState.isSync,
+      moleculeSort
+    });
+  }
 
   // CurrentElement
   handleSetCurrentElement(result) {

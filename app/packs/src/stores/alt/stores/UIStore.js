@@ -291,6 +291,7 @@ class UIStore {
       hasChanged = hasChanged || state.currentCollection.id != collection.id;
       hasChanged = hasChanged || isSync != state.isSync;
       hasChanged = hasChanged || state.currentSearchSelection != null;
+      hasChanged = hasChanged || state.currentSearchByID != null;
     }
 
     if (collection['clearSearch']) {
@@ -304,54 +305,106 @@ class UIStore {
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
-
       const { profile } = UserStore.getState();
+
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
-        if (layout.sample && layout.sample > 0) {
-          ElementActions.fetchSamplesByCollectionId(
-            collection.id, Object.assign(params, { page: state.sample.page }),
-            isSync, ElementStore.getState().moleculeSort
-          );
-        }
-        if (layout.reaction && layout.reaction > 0) {
-          ElementActions.fetchReactionsByCollectionId(
-            collection.id, Object.assign(params, { page: state.reaction.page }),
-            isSync
-          );
-        }
-        if (layout.wellplate && layout.wellplate > 0) {
-          ElementActions.fetchWellplatesByCollectionId(
-            collection.id, Object.assign(params, { page: state.wellplate.page }),
-            isSync
-          );
-        }
-        if (layout.screen && layout.screen > 0) {
-          ElementActions.fetchScreensByCollectionId(
-            collection.id, Object.assign(params, { page: state.screen.page }),
-            isSync
-          );
-        }
-        if (!isSync && layout.research_plan && layout.research_plan > 0) {
-          ElementActions.fetchResearchPlansByCollectionId(
-            collection.id,
-            Object.assign(params, { page: state.research_plan.page }),
-          );
-        }
 
-        Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].includes(l)).forEach((key) => {
-          if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
-            const page = state[key] ? state[key].page : 1;
-            ElementActions.fetchGenericElsByCollectionId(
-              collection.id,
-              Object.assign(params, { page, name: key }),
-              isSync,
-              key
+        if (state.currentSearchByID) {
+          this.handleSelectCollectionForSearchById(layout, collection);
+        } else {
+          if (layout.sample && layout.sample > 0) {
+            ElementActions.fetchSamplesByCollectionId(
+              collection.id, Object.assign(params, { page: state.sample.page }),
+              isSync, ElementStore.getState().moleculeSort
             );
           }
-        });
+          if (layout.reaction && layout.reaction > 0) {
+            ElementActions.fetchReactionsByCollectionId(
+              collection.id, Object.assign(params, { page: state.reaction.page }),
+              isSync
+            );
+          }
+          if (layout.wellplate && layout.wellplate > 0) {
+            ElementActions.fetchWellplatesByCollectionId(
+              collection.id, Object.assign(params, { page: state.wellplate.page }),
+              isSync
+            );
+          }
+          if (layout.screen && layout.screen > 0) {
+            ElementActions.fetchScreensByCollectionId(
+              collection.id, Object.assign(params, { page: state.screen.page }),
+              isSync
+            );
+          }
+          if (!isSync && layout.research_plan && layout.research_plan > 0) {
+            ElementActions.fetchResearchPlansByCollectionId(
+              collection.id,
+              Object.assign(params, { page: state.research_plan.page }),
+            );
+          }
+
+          Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].includes(l)).forEach((key) => {
+            if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
+              const page = state[key] ? state[key].page : 1;
+              ElementActions.fetchGenericElsByCollectionId(
+                collection.id,
+                Object.assign(params, { page, name: key }),
+                isSync,
+                key
+              );
+            }
+          });
+        }
       }
     }
+  }
+
+  handleSelectCollectionForSearchById(layout, collection) {
+    const state = this.state;
+    const isSync = state.isSync;
+    const searchResult = { ...state.currentSearchByID };
+    const { filterCreatedAt, fromDate, toDate, productOnly } = state;
+    const { moleculeSort } = ElementStore.getState();
+    const per_page = state.number_of_results;
+
+    Object.keys(state.currentSearchByID).forEach((key) => {
+      if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
+        if (productOnly && key != 'samples') { return }
+        let filterParams = {};
+
+        if (fromDate || toDate || productOnly) {
+          filterParams = {
+            filter_created_at: filterCreatedAt,
+            from_date: fromDate,
+            to_date: toDate,
+            product_only: productOnly,
+          }
+        }
+
+        const selection = {
+          elementType: 'by_ids',
+          id_params: {
+            model_name: key.slice(0, -1),
+            ids: searchResult[key].ids,
+            total_elements: searchResult[key].totalElements,
+            with_filter: true,
+          },
+          list_filter_params: filterParams,
+          search_by_method: 'search_by_ids',
+          page_size: per_page
+        };
+
+        ElementActions.fetchBasedOnSearchResultIds.defer({
+          selection,
+          collectionId: collection.id,
+          isSync: isSync,
+          page_size: per_page,
+          page: searchResult[key].page,
+          moleculeSort
+        });
+      }
+    });
   }
 
   handleSelectSyncCollection(collection) {

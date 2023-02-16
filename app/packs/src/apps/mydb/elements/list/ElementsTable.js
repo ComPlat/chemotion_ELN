@@ -32,7 +32,7 @@ export default class ElementsTable extends React.Component {
       ui: {},
       collapseAll: false,
       moleculeSort: false,
-      advancedSearch: false,
+      searchResult: false,
       productOnly: false,
       page: null,
       pages: null,
@@ -49,6 +49,7 @@ export default class ElementsTable extends React.Component {
     this.toggleProductOnly = this.toggleProductOnly.bind(this);
     this.setFromDate = this.setFromDate.bind(this);
     this.setToDate = this.setToDate.bind(this);
+    this.timer = null;
   }
 
   componentDidMount() {
@@ -77,16 +78,6 @@ export default class ElementsTable extends React.Component {
     }
   }
 
-  handleNumberOfResultsChange(event) {
-    const { value } = event.target;
-    const { type } = this.props;
-
-    if (parseInt(value, 10) > 0) {
-      UIActions.changeNumberOfResultsShown(value);
-      ElementActions.refreshElements(type);
-    }
-  }
-
   onChangeUI(state) {
     const { type } = this.props;
     if (typeof state[type] === 'undefined' || state[type] === null) {
@@ -94,23 +85,20 @@ export default class ElementsTable extends React.Component {
     }
     const { checkedIds, uncheckedIds, checkedAll } = state[type];
     const {
-      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly
+      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchByID, productOnly
     } = state;
 
     // check if element details of any type are open at the moment
     const currentId = state.sample.currentId || state.reaction.currentId
       || state.wellplate.currentId;
 
-    let isAdvS = false;
-    if (currentSearchSelection && currentSearchSelection.search_by_method) {
-      isAdvS = currentSearchSelection.search_by_method === 'advanced';
-    }
+    let isSearchResult = currentSearchByID ? true : false;
 
-    const { currentStateProductOnly, advancedSearch } = this.state;
+    const { currentStateProductOnly, searchResult } = this.state;
     const stateChange = (
       checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt
       || fromDate || toDate || productOnly !== currentStateProductOnly
-      || isAdvS !== advancedSearch
+      || isSearchResult !== searchResult
     );
 
     if (stateChange) {
@@ -126,7 +114,7 @@ export default class ElementsTable extends React.Component {
           toDate
         },
         productOnly,
-        advancedSearch: isAdvS
+        searchResult: isSearchResult
       });
     }
   }
@@ -281,6 +269,24 @@ export default class ElementsTable extends React.Component {
     UIActions.setProductOnly(!productOnly);
   }
 
+  handleNumberOfResultsChange(event) {
+    const { value } = event.target;
+
+    if (parseInt(value, 10) > 0) {
+      UIActions.changeNumberOfResultsShown(value);
+      this.handleDelayForNumberOfResults();
+    }
+  }
+
+  handleDelayForNumberOfResults() {
+    const { type } = this.props;
+
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      ElementActions.refreshElements(type);
+    }, 900);
+  }
+
   numberOfResultsInput() {
     const { ui } = this.state;
     return (
@@ -342,13 +348,14 @@ export default class ElementsTable extends React.Component {
           {items}
         </Pagination>
       </div>
-    );
+    )
   }
 
   renderSamplesHeader = () => {
     const {
       moleculeSort,
       productOnly,
+      searchResult,
     } = this.state;
 
     const options = [
