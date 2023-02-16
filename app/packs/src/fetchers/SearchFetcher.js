@@ -79,6 +79,7 @@ export default class SearchFetcher {
         selection,
         collection_id: collectionId,
         page: page || 1,
+        page_size: selection.page_size,
         per_page: selection.page_size,
         is_sync: isSync || false,
         molecule_sort: moleculeSort || false,
@@ -94,7 +95,7 @@ export default class SearchFetcher {
             case 'samples':
               if (samples && samples.elements.length > 0) {
                 result.samples.elements = samples.elements.map(s => (new Sample(s)));
-              } else { result.samples = { elements: [], ids: [] }; }
+              } else { result.samples = { elements: [], ids: [], totalElements: 0 }; }
               break;
             case 'reactions':
               if (reactions && reactions.elements.length > 0) {

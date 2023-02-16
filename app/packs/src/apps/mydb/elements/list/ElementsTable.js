@@ -26,7 +26,7 @@ export default class ElementsTable extends React.Component {
       ui: {},
       sampleCollapseAll: false,
       moleculeSort: false,
-      advancedSearch: false,
+      searchResult: false,
       productOnly: false,
       page: null,
       pages: null,
@@ -44,6 +44,7 @@ export default class ElementsTable extends React.Component {
     this.toggleProductOnly = this.toggleProductOnly.bind(this);
     this.setFromDate = this.setFromDate.bind(this);
     this.setToDate = this.setToDate.bind(this);
+    this.timer = null;
   }
 
   componentDidMount() {
@@ -64,22 +65,19 @@ export default class ElementsTable extends React.Component {
     }
     const { checkedIds, uncheckedIds, checkedAll } = state[this.props.type];
     const {
-      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly
+      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, currentSearchByID, productOnly
     } = state;
 
     // check if element details of any type are open at the moment
     const currentId = state.sample.currentId || state.reaction.currentId ||
       state.wellplate.currentId;
 
-    let isAdvS = false;
-    if (currentSearchSelection && currentSearchSelection.search_by_method) {
-      isAdvS = currentSearchSelection.search_by_method === 'advanced';
-    }
+    let isSearchResult = currentSearchByID ? true : false;
 
     const stateChange = (
       checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt ||
       fromDate || toDate || productOnly !== this.state.productOnly ||
-      isAdvS !== this.state.advancedSearch
+      isSearchResult !== this.state.searchResult
     );
 
     if (stateChange) {
@@ -95,7 +93,7 @@ export default class ElementsTable extends React.Component {
           toDate
         },
         productOnly,
-        advancedSearch: isAdvS
+        searchResult: isSearchResult
       });
     }
   }
@@ -189,13 +187,22 @@ export default class ElementsTable extends React.Component {
   }
 
   handleNumberOfResultsChange(event) {
+    const { ui } = this.state;
     const { value } = event.target;
-    const { type } = this.props;
-    console.log(type);
+
     if (parseInt(value, 10) > 0) {
       UIActions.changeNumberOfResultsShown(value);
-      ElementActions.refreshElements(type);
+      this.handleDelayForNumberOfResults();
     }
+  }
+
+  handleDelayForNumberOfResults() {
+    const { type } = this.props;
+
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      ElementActions.refreshElements(type);
+    }, 900);
   }
 
   numberOfResultsInput() {
@@ -236,7 +243,7 @@ export default class ElementsTable extends React.Component {
     const {
       sampleCollapseAll,
       moleculeSort, ui,
-      advancedSearch, productOnly
+      searchResult, productOnly
     } = this.state;
     const { fromDate, toDate } = ui;
     const { type, showReport } = this.props;
@@ -246,7 +253,7 @@ export default class ElementsTable extends React.Component {
     let switchBtnTitle = 'Change sorting to sort by ';
     let checkedLbl = 'Molecule';
     let uncheckedLbl = 'Sample';
-    if (advancedSearch) {
+    if (searchResult) {
       switchBtnTitle += (moleculeSort ? 'order of input' : 'sample last updated');
       checkedLbl = 'Updated';
       uncheckedLbl = 'Order';
