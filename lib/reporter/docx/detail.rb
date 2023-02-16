@@ -103,6 +103,15 @@ module Reporter
         end
       end
 
+      def rm_redundant_newline(ops)
+        return unless ops
+
+        ops.map do |op|
+          op['insert'] = op['insert'].chomp if op['insert'] && op['insert']['image'].blank?
+        end
+        ops.reject { |hash| hash.values.any?(&:blank?) }
+      end
+
       def remove_redundant_space_break(ops) # ensure one line
         return [{ 'insert' => '' }] unless ops
 
