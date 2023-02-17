@@ -36,7 +36,7 @@ class Metadata < ApplicationRecord
           "publicationBacklink" => Rails.configuration.radar.backlink,
           "schema" => {
               "key" => "RDDM",
-              "version" => "09"
+              "version" => "9.1"
           }
       },
       'descriptiveMetadata' => {
@@ -49,8 +49,8 @@ class Metadata < ApplicationRecord
         'productionYear' => Time.now.utc.year,
         'publicationYear' => Time.now.utc.year,
         'language' => 'ENG',
-        'publishers' => {
-          'publisher' => [Rails.configuration.radar.publisher]
+        'publisher' => {
+          'value' => Rails.configuration.radar.publisher
         },
         'resource' => {
           'value' => Rails.configuration.radar.resource,
@@ -87,7 +87,8 @@ class Metadata < ApplicationRecord
 
     if self.metadata['keywords']
       radar_metadata['descriptiveMetadata']['keywords'] = {
-        'keyword' => self.metadata['keywords']
+        'keyword' => self.metadata['keywords'].map {|keyword| {'value': keyword}}
+        end
       }
     end
 
@@ -109,7 +110,9 @@ class Metadata < ApplicationRecord
           end
 
           if creator['affiliations']
-            radar_creator['creatorAffiliation'] = creator['affiliations'][0]['affiliation']
+            radar_creator['creatorAffiliation'] = {
+              'value': creator['affiliations'][0]['affiliation']
+            }
           end
 
           radar_creator
@@ -136,7 +139,9 @@ class Metadata < ApplicationRecord
           end
 
           if contributor['affiliations']
-            radar_contributor['contributorAffiliation'] = contributor['affiliations'][0]['affiliation']
+            radar_contributor['contributorAffiliation'] = {
+              'value': contributor['affiliations'][0]['affiliation']
+            }
           end
 
           radar_contributor
@@ -158,7 +163,7 @@ class Metadata < ApplicationRecord
 
     if self.metadata['rightsHolders']
       radar_metadata['descriptiveMetadata']['rightsHolders'] = {
-        'rightsHolder' => self.metadata['rightsHolders']
+        'rightsHolder' => self.metadata['rightsHolders'].map {|rights_holder| {'value': rights_holder}}
       }
     end
 
