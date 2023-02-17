@@ -17,7 +17,7 @@
         .radio
           %label
             %input{name: "workspace", type: "radio", value: workspace['id']}
-            = workspace['descriptiveMetadata']['title']
+            = workspace['label']
 
       - if @error
         %p.text-danger.mt-2
