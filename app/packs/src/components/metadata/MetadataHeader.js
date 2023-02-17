@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip} from 'react-bootstrap';
 import PanelHeader from 'src/components/common/PanelHeader';
 
-const MetadataHeader = ({ title, onSave, onClose }) => {
+const MetadataHeader = ({ title, saveBtnDisplay, onSave, onClose }) => {
   const onSaveAndClose = () => {
     onSave()
     onClose()
@@ -18,23 +18,27 @@ const MetadataHeader = ({ title, onSave, onClose }) => {
         onClick={onClose}>
         <i className="fa fa-times" />
       </Button>
-    </OverlayTrigger>,
-    <OverlayTrigger placement="bottom" key="saveCloseMetadata"
-        overlay={<Tooltip id="saveCloseMetadata">Save and Close Metadata</Tooltip>}>
-      <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-        onClick={onSaveAndClose}>
-        <i className="fa fa-floppy-o" />
-        <i className="fa fa-times"  />
-      </Button>
-    </OverlayTrigger>,
-    <OverlayTrigger placement="bottom" key="saveMetadata"
-        overlay={<Tooltip id="saveMetadata">Save Metadata</Tooltip>}>
-      <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-        onClick={onSave}>
-        <i className="fa fa-floppy-o "></i>
-      </Button>
     </OverlayTrigger>
   ]
+  if (saveBtnDisplay) {
+    btns.push(
+      <OverlayTrigger placement="bottom" key="saveCloseMetadata"
+          overlay={<Tooltip id="saveCloseMetadata">Save and Close Metadata</Tooltip>}>
+        <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+          onClick={onSaveAndClose}>
+          <i className="fa fa-floppy-o" />
+          <i className="fa fa-times"  />
+        </Button>
+      </OverlayTrigger>,
+      <OverlayTrigger placement="bottom" key="saveMetadata"
+          overlay={<Tooltip id="saveMetadata">Save Metadata</Tooltip>}>
+        <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+          onClick={onSave}>
+          <i className="fa fa-floppy-o "></i>
+        </Button>
+      </OverlayTrigger>
+    )
+  }
 
   return <PanelHeader title={title} btns={btns} />
 }
@@ -42,6 +46,7 @@ const MetadataHeader = ({ title, onSave, onClose }) => {
 MetadataHeader.propTypes = {
   title: PropTypes.string,
   onSave: PropTypes.func.isRequired,
+  saveBtnDisplay: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired
 }
 

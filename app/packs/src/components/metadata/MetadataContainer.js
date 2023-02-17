@@ -6,6 +6,7 @@ import Metadata from 'src/models/Metadata';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions'
 import ElementActions from 'src/stores/alt/actions/ElementActions'
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import MetadataHeader from './MetadataHeader'
 import MetadataGeneral from './MetadataGeneral'
@@ -64,7 +65,10 @@ export default class MetadataContainer extends Component {
 
   handleSave() {
     const { metadata } = this.state
+    LoadingActions.start();
     ElementActions.storeMetadata(metadata)
+    metadata.updateChecksum();
+    this.setState({ metadata })
   }
 
   handleClose() {
@@ -76,11 +80,12 @@ export default class MetadataContainer extends Component {
     const { metadata } = this.state;
     const { currentCollection } = UIStore.getState()
     const title = currentCollection && `DataCite/RADAR Metadata for collection "${currentCollection.label}"`
+    const saveBtnDisplay = metadata.isEdited ? true : false;
 
     return (
       <Panel bsStyle="default" className="eln-panel-detail">
         <Panel.Heading>
-          <MetadataHeader title={title} onSave={this.handleSave} onClose={this.handleClose} />
+          <MetadataHeader title={title} saveBtnDisplay={saveBtnDisplay} onSave={this.handleSave} onClose={this.handleClose} />
         </Panel.Heading>
         <Panel.Body>
           <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
