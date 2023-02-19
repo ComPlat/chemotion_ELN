@@ -47,19 +47,19 @@ class Foldercollector < Fcollector
         if @current_collector.recipient
           if params['number_of_files'].present? && params['number_of_files'].to_i != 0 &&
              @current_collector.files.length != params['number_of_files'].to_i
-            log_info 'Wrong number of files!'
+            log_info 'Wrong number of files!', device
             next
           end
           unless error
             @current_collector.collect(device)
-            log_info 'Stored!'
+            log_info 'Stored!', device
             stored = true
           end
           @current_collector.delete
-          log_info 'Status 200'
+          log_info 'Status 200', device
         else # Recipient unknown
           @current_collector.delete
-          log_info 'Recipient unknown. Folder deleted!'
+          log_info 'Recipient unknown. Folder deleted!', device
         end
       rescue => e
         if stored
@@ -67,7 +67,7 @@ class Foldercollector < Fcollector
             CollectorHelper.hash(@current_collector.path, @sftp)
           )
         end
-        log_error e.backtrace.join('\n')
+        log_error "#{e.message}\n#{e.backtrace.join('\n')}", device
       end
     end
   end

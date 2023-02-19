@@ -7,7 +7,7 @@ class Fcollector
 
     unless use_sftp
       @sftp = nil
-      devices(use_sftp).each do |device| inspect_folder(device) end
+      devices(use_sftp).each { |device| inspect_folder(device) }
       return
     end
 
@@ -25,11 +25,11 @@ class Fcollector
           keys_only: true
         }
       when 'password', nil
-        credentials = Rails.configuration.datacollectors.sftpusers.select { |e|
+        credentials = Rails.configuration.datacollectors.sftpusers.find do |e|
           e[:user] == method_params['user']
-        }.first
+        end
         unless credentials
-          log_info("No match user credentials! user: #{method_params['user']}")
+          log_info("No match user credentials! user: #{method_params['user']}", device)
           next
         end
         user = credentials[:user]
@@ -37,7 +37,7 @@ class Fcollector
       else
         user = nil
         args = {}
-        log_info("connection method is unknown! device id: #{device.id}")
+        log_info('connection method is unknown!', device)
         next
       end
       Net::SFTP.start(host, user, **args) do |sftp|
@@ -69,15 +69,19 @@ class Fcollector
     kp
   end
 
-  def log_info(message)
-    DCLogger.log.info(self.class.name) {
-      "#{@current_collector&.path} >>> #{message}"
-    }
+  def log_info(message, device)
+    DCLogger.log.info(self.class.name) do
+      "#{@current_collector&.path} >>> #{message} >>> #{device_info(device)}"
+    end
   end
 
-  def log_error(message)
-    DCLogger.log.error(self.class.name) {
-      "#{@current_collector&.path} >>> #{message}"
-    }
+  def log_error(message, device)
+    DCLogger.log.error(self.class.name) do
+      "#{@current_collector&.path} >>> #{message} >>> #{device_info(device)}"
+    end
+  end
+
+  def device_info(device)
+    "Device ID: #{device.id}, Name: #{device.first_name} #{device.last_name}"
   end
 end
