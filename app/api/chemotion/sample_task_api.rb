@@ -65,7 +65,7 @@ module Chemotion
             requires :file, type: File # automatically provides subfields filename, type and tempfile
             requires :measurement_value, type: Float
             requires :measurement_unit, type: String
-            optional :note, type: String
+            optional :title, type: String
           end
           post do
             sample_task = SampleTask.for(current_user).open.find(params[:id])

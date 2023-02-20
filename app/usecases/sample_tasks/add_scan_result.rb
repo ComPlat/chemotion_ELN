@@ -21,8 +21,21 @@ module Usecases
           },
           measurement_unit: params[:measurement_unit],
           measurement_value: params[:measurement_value],
-          position: sample_task.scan_results.length + 1
+          position: sample_task.scan_results.length + 1,
+          title: params[:title] || default_title
         )
+      end
+
+      private
+
+      def default_title
+        return 'Compound' if sample_task.required_scan_results == 1
+
+        if sample_task.scan_results.length == 0 # sample task has no scan results yet
+          'Vessel'
+        else # sample task already has a scan result for the vessel
+          'Vessel + Compound'
+        end
       end
     end
   end
