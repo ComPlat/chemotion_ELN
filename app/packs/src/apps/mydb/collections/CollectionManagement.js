@@ -6,7 +6,6 @@ import MySharedCollections from 'src/apps/mydb/collections/MySharedCollections';
 import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeCollections';
 import SyncWithMeCollections from 'src/apps/mydb/collections/SyncWithMeCollections';
 import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
-import XTabs from 'src/components/extra/CollectionManagementXTabs';
 
 const CollectionManagement = () => {
   const tabContents = [
