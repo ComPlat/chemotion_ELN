@@ -71,7 +71,8 @@ module Usecases
         end
 
         def replace_link_with_base64(location_of_file, svg_string)
-          extension = File.extname(location_of_file).delete('.')
+          extension = MIME::Types.type_for(location_of_file).first.content_type
+          extension = 'image/png' if extension == 'image/tiff'
           base64 = "data:image/#{extension};base64,#{Base64.strict_encode64(File.binread(location_of_file))}"
           xml = Nokogiri::XML(svg_string)
           group = xml.xpath('//*[@id="original_image"]')
