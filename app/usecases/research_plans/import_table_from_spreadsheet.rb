@@ -35,7 +35,7 @@ module Usecases
         xlsx = Roo::Spreadsheet.open(@file_path, extension: :xlsx)
         sheet = xlsx.sheet(0)
         @headers = sheet.row(1).map(&:to_s).map(&:strip).map { |header| column_definition(header) }
-        @rows = sheet.parse.map { |row| row_definition(row) }
+        @rows = sheet.parse.filter_map { |row| row_definition(row) }
       end
 
       def import_data
@@ -85,10 +85,12 @@ module Usecases
       def row_definition(row_data)
         row = {}
         row_data.each_with_index do |entry, index|
+          next if entry.blank?
+
           field_name = @headers[index][:field]
           row[field_name] = entry
         end
-        row
+        row.presence # returns nil if row is empty
       end
     end
   end
