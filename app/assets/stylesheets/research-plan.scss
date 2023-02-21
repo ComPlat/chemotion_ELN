@@ -164,7 +164,6 @@
     }
 }
 
-
 .research-plan-attachments-annotation-download{   
     button{ 
         margin-right: 10px;
@@ -179,3 +178,10 @@
         margin-top: 3px;
     } 
 } 
+
+.research-plan-table-grid.grid-with-collapsed-rows {
+    .ag-body-viewport {
+        display: none
+    }
+}
+
