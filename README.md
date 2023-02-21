@@ -49,8 +49,8 @@ of the **[Karlsruhe Institute of Technology]**.
 
 <!----------------------------------------------------------------------------->
 
-[Installation]: https://www.chemotion.net/chemotionsaurus/docs/category/installation
-[Documentation]: https://www.chemotion.net/chemotionsaurus/docs/eln/intro
+[Installation]: https://www.chemotion.net/docs/eln/install_configure/
+[Documentation]: https://www.chemotion.net/docs/eln/
 [Changelog]: CHANGELOG.md
 
 [DFG]: https://www.dfg.de/en/
