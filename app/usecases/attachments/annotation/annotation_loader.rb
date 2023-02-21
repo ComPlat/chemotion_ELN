@@ -7,7 +7,7 @@ module Usecases
       class AnnotationLoader
         def get_annotation_of_attachment(attachment_id) # rubocop:disable Metrics/AbcSize
           att = Attachment.find(attachment_id)
-          raise 'could not find annotation' unless att
+          raise 'could not find attachment' unless att
           raise 'could not find annotation of attachment' unless annotatable?(att.attachment_data)
 
           create_empty_annotation(att) unless annotation_json_present(att.attachment_data)

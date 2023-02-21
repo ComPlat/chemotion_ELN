@@ -148,18 +148,6 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     );
   }
 
-  renderImageEditedWarning(attachment){
-    if(!attachment) {return null;}
-    if(!attachment.updatedAnnotation){return null;} 
-    
-    return (
-      <div className='imageEditedWarning'>
-        <Alert>Image was edited. Please save Researchplan to apply changes</Alert>
-      </div>
-    );
-
-  } 
-
   renderImageEditModal() {   
     return (
       <ImageAnnotationModalSVG
