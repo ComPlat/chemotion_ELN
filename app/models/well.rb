@@ -47,4 +47,12 @@ class Well < ApplicationRecord
 
     "#{row}#{position_x}"
   end
+
+  def sortable_alphanumeric_position
+    return 'n/a' if position_x.nil? || position_y.nil?
+
+    row = ('A'..'Z').to_a[position_y - 1]
+
+    "#{row}#{format('%02i', position_x)}"
+  end
 end

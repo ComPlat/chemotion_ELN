@@ -153,3 +153,9 @@
         color: grey;
     }
 }
+
+.research-plan-table-grid.grid-with-collapsed-rows {
+    .ag-body-viewport {
+        display: none
+    }
+}

@@ -81,22 +81,31 @@ module Usecases
       end
 
       def convert_rows(wellplate)
-        rows = []
-        wellplate.wells.sort_by { |well| [well.position_x, well.position_y] }.each do |well|
-          row = {
-            wellplate_position: well.alphanumeric_position,
-            sample: well&.sample&.short_label || ''
-          }
-          well.readouts.each_with_index do |readout, index|
-            next if [readout['value'], readout['unit']].any?(&:blank?)
+        wellplate
+          .wells
+          .sort_by(&:sortable_alphanumeric_position)
+          .filter_map { |well| create_row_from_well(well) }
+      end
 
-            row["readout_#{index + 1}_value"] = readout['value']
-            row["readout_#{index + 1}_unit"] = readout['unit']
-          end
-          rows << row
+      def create_row_from_well(well)
+        row = {
+          wellplate_position: well.sortable_alphanumeric_position,
+          sample: well&.sample&.short_label || '',
+        }
+        add_readouts(row, well)
+        no_readouts_present = row.keys == %i[wellplate_position sample]
+        return if no_readouts_present
+
+        row
+      end
+
+      def add_readouts(row, well)
+        well.readouts.each_with_index do |readout, index|
+          next if [readout['value'], readout['unit']].any?(&:blank?)
+
+          row["readout_#{index + 1}_value"] = readout['value']
+          row["readout_#{index + 1}_unit"] = readout['unit']
         end
-
-        rows
       end
     end
   end

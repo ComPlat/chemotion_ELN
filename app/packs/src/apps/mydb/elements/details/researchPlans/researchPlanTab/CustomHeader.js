@@ -29,7 +29,7 @@ export default class CustomHeader extends Component {
       descSort: this.props.column.isSortDescending() ? 'sort_active' : 'inactive',
       noSort:
         !this.props.column.isSortAscending() &&
-        !this.props.column.isSortDescending()
+          !this.props.column.isSortDescending()
           ? 'sort_active'
           : 'inactive',
     });
@@ -41,9 +41,9 @@ export default class CustomHeader extends Component {
 
   clickToRename() {
     const columnClicked = this.props.column.colId;
-    {this.props.handleColumnNameModalShow('rename', columnClicked)}
+    { this.props.handleColumnNameModalShow('rename', columnClicked) }
   }
-  
+
   render() {
     let sort = null;
     if (this.props.enableSorting) {
@@ -54,21 +54,21 @@ export default class CustomHeader extends Component {
             onTouchEnd={this.onSortRequested.bind(this, 'asc')}
             className={`customSortUpLabel ${this.state.ascSort}`}
           >
-            <i class="fa fa-arrow-up"></i>
+            <i className="fa fa-arrow-up"></i>
           </div>
           <div
             onClick={this.onSortRequested.bind(this, 'desc')}
             onTouchEnd={this.onSortRequested.bind(this, 'desc')}
             className={`customSortDownLabel ${this.state.descSort}`}
           >
-            <i class="fa fa-arrow-down"></i>
+            <i className="fa fa-arrow-down"></i>
           </div>
           <div
             onClick={this.onSortRequested.bind(this, '')}
             onTouchEnd={this.onSortRequested.bind(this, '')}
             className={`customSortRemoveLabel ${this.state.noSort}`}
           >
-            <i class="fa fa-times"></i>
+            <i className="fa fa-times"></i>
           </div>
         </div>
       );

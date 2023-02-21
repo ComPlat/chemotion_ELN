@@ -27,6 +27,8 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     super(props);
     this.state = {
       update: this.props.update,
+      currentlyCollapsedInEditMode: this.props?.field?.value?.startCollapsed ?? false,
+      currentlyCollapsedInViewMode: this.props?.field?.value?.startCollapsed ?? false,
       columnNameModal: {
         show: false,
         colId: null
@@ -217,7 +219,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     return this.props.field.value.rows[idx];
   }
 
-
   cellValueChanged = () => {
     const { field, onChange } = this.props;
     const { gridApi, columnApi } = this.state
@@ -247,6 +248,10 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
     field.value.columns = gridApi.getColumnDefs();
     field.value.columnStates = columnApi.getColumnState();
+
+    let sortedRows = []
+    gridApi.forEachNodeAfterFilterAndSort(row => sortedRows.push(row.data))
+    field.value.rows = sortedRows
 
     onChange(field.value, field.id);
   }
@@ -388,11 +393,61 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     this.setState({ isDisable: true });
   }
 
+  toggleTemporaryCollapse() {
+    if (this.props.edit) {
+      this.setState(
+        { currentlyCollapsedInEditMode: !this.state.currentlyCollapsedInEditMode }
+      )
+    } else {
+      this.setState(
+        { currentlyCollapsedInViewMode: !this.state.currentlyCollapsedInViewMode }
+      )
+    }
+  }
+
+  temporaryCollapseToggleButton() {
+    const collapsed = this.props.edit
+      ? this.state.currentlyCollapsedInEditMode
+      : this.state.currentlyCollapsedInViewMode
+    const collapseToggleIconClass = collapsed ? 'fa-expand' : 'fa-compress';
+    const collapseToggleTitle = collapsed ? 'expand table' : 'collapse table';
+    return (
+      <button
+        className="button-right btn btn-xs btn-info"
+        type="button"
+        title={collapseToggleTitle}
+        onClick={this.toggleTemporaryCollapse.bind(this)}
+      >
+        <i className={`fa ${collapseToggleIconClass}`}></i>
+      </button>
+    );
+  }
+
+  permanentCollapseToggleButton() {
+    const collapsed = this.props?.field?.value?.startCollapsed ?? false
+    const togglePermanentCollapse = () => {
+      const { field, onChange } = this.props;
+      field.value.startCollapsed = !collapsed
+
+      onChange(field.value, field.id);
+      this.setState({ currentlyCollapsedInViewMode: !collapsed })
+    }
+
+    return (
+      <button
+        className="btn btn-sm btn-info"
+        style={{ "margin-bottom": "5px" }}
+        onClick={togglePermanentCollapse.bind(this)}
+      >
+        Table is <strong>{collapsed ? 'collapsed' : 'expanded'}</strong> in view mode
+      </button>
+    )
+  }
+
   renderEdit() {
     const { field, onExport } = this.props;
     const { rows, columns } = field.value;
     const { columnNameModal, schemaModal, measurementExportModal, isDisable } = this.state;
-
     let contextMenuId = this.nextUniqueId();
     const defaultColDef = {
       resizable: true,
@@ -406,32 +461,41 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       }
     };
 
+    const gridWrapperClassName = ['research-plan-table-grid']
+    if (this.state.currentlyCollapsedInEditMode) {
+      gridWrapperClassName.push('grid-with-collapsed-rows')
+    }
+
     return (
       <div>
-        <div className='research-plan-table-grid'>
+        <div>
+          {this.permanentCollapseToggleButton()}
+          {this.temporaryCollapseToggleButton()}
+        </div>
+        <div className={gridWrapperClassName.join(' ')}>
           <div id='myGrid' className='ag-theme-alpine'>
             <ContextMenuTrigger id={contextMenuId} disable={isDisable}>
               <AgGridReact
-                defaultColDef={defaultColDef}
-                columnDefs={columns}
-                rowData={rows}
-                domLayout='autoHeight'
-                onGridReady={this.onGridReady}
-                onCellEditingStopped={this.cellValueChanged}
-                rowDragManaged={true}
                 animateRows={true}
+                columnDefs={columns}
+                defaultColDef={defaultColDef}
+                domLayout='autoHeight'
+                enableMultiRowDragging={true}
+                onCellContextMenu={this.onCellContextMenu.bind(this)}
+                onCellEditingStopped={this.cellValueChanged}
+                onCellMouseOut={this.onCellMouseOut.bind(this)}
+                onCellMouseOver={this.onCellMouseOver.bind(this)}
+                onColumnMoved={this.onSaveGridColumnState.bind(this)}
+                onColumnResized={this.onSaveGridColumnState.bind(this)}
+                onGridReady={this.onGridReady}
+                onRowDragEnd={this.onSaveGridRow.bind(this)}
+                onSortChanged={this.onSaveGridColumnState.bind(this)}
+                rowData={rows}
+                rowDragManaged={true}
+                rowHeight='37'
+                rowSelection='multiple'
                 singleClickEdit={true}
                 stopEditingWhenGridLosesFocus={true}
-                rowHeight='37'
-                onSortChanged={this.onSaveGridColumnState.bind(this)}
-                onColumnResized={this.onSaveGridColumnState.bind(this)}
-                onColumnMoved={this.onSaveGridColumnState.bind(this)}
-                onCellMouseOver={this.onCellMouseOver.bind(this)}
-                onCellMouseOut={this.onCellMouseOut.bind(this)}
-                onRowDragEnd={this.onSaveGridRow.bind(this)}
-                onCellContextMenu={this.onCellContextMenu.bind(this)}
-                enableMultiRowDragging={true}
-                rowSelection='multiple'
                 suppressDragLeaveHidesColumns={true}
               />
             </ContextMenuTrigger>
@@ -503,14 +567,21 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const { field } = this.props;
     const { columns, rows } = field.value;
 
-    const th = columns.map((column) => {
-      return <th key={column.colId}>{column.headerName}</th>;
+    const lastColumn = columns.length - 1;
+    const th = columns.map((column, index) => {
+
+      return (
+        <th key={column.colId}>
+          {column.headerName}
+          {index == lastColumn ? this.temporaryCollapseToggleButton() : ''}
+        </th>
+      );
     });
 
     const tr = rows.map((row, index) => {
       const td = columns.map((column) => {
         let cellContent = row[column.colId];
-        if(column.headerName == 'Sample') {
+        if (column.headerName == 'Sample') {
           let cellContentIsShortLabel = column.headerName == 'Sample' && (cellContent || '').length > 3;
           if (cellContentIsShortLabel) {
             let shortLabel = cellContent;
@@ -521,7 +592,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             </a>
           }
         }
-        else if(column.headerName == 'Reaction') {
+        else if (column.headerName == 'Reaction') {
           let cellContentIsShortLabel = column.headerName == 'Reaction' && (cellContent || '').length > 3;
           if (cellContentIsShortLabel) {
             let shortLabel = cellContent;
@@ -540,6 +611,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         </tr>
       );
     });
+    const collapsed = this.state.currentlyCollapsedInViewMode
 
     return (
       <table className='table table-bordered'>
@@ -548,7 +620,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             {th}
           </tr>
         </thead>
-        <tbody>
+        <tbody className={collapsed ? 'hidden' : ''}>
           {tr}
         </tbody>
       </table>
