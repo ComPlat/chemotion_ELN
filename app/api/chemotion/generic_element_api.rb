@@ -191,13 +191,14 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        paginate(scope).map do |element|
+        generic_elements = paginate(scope).map do |element|
           Entities::ElementEntity.represent(
             element,
             displayed_in_list: true,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: element).detail_levels,
           )
         end
+        { generic_elements: generic_elements }
       end
 
       desc 'Return serialized element by id'
