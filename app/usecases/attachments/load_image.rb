@@ -36,6 +36,7 @@ module Usecases
       end
 
       def self.load_annotated_image(attachment, attachment_file)
+        return attachment_file if attachment.attachment_data['derivatives']['annotation'] == nil
         annotated_file_path = attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
         annotated_file_exists = annotated_file_path && File.exist?(annotated_file_path)
         if annotated_file_exists
