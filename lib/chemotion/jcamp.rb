@@ -118,8 +118,8 @@ module Chemotion
         response = nil
 
         ActiveSupport::Deprecation.warn(
-          'This will be deprecated soon' \
-          'Use url = Rails.configuration.spectra.chemspectra[:url] instead.'
+          "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+          "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
         )
         url = Rails.configuration.spectra.url
         port = Rails.configuration.spectra.port
@@ -185,8 +185,8 @@ module Chemotion
       def self.stub_peak_in_image(path)
         response = nil
         ActiveSupport::Deprecation.warn(
-          'This will be deprecated soon' \
-          'Use url = Rails.configuration.spectra.chemspectra[:url] instead.'
+          "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+          "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
         )
         url = Rails.configuration.spectra.url
         port = Rails.configuration.spectra.port
@@ -242,9 +242,9 @@ module Chemotion
         def self.stub_request(molfile, layout, peaks, shift, spectrum)
           response = nil
           ActiveSupport::Deprecation.warn(
-          'This will be deprecated soon' \
-          'Use url = Rails.configuration.spectra.chemspectra[:url] instead.'
-        )
+            "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+            "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
+          )
           url = Rails.configuration.spectra.url
           port = Rails.configuration.spectra.port
           api_endpoint = "http://#{url}:#{port}/predict/by_peaks_form"
@@ -285,8 +285,8 @@ module Chemotion
         def self.stub_request(molfile, spectrum)
           response = nil
           ActiveSupport::Deprecation.warn(
-            'This will be deprecated soon' \
-            'Use url = Rails.configuration.spectra.chemspectra[:url] instead.'
+            "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+            "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
           )
           url = Rails.configuration.spectra.url
           port = Rails.configuration.spectra.port
@@ -330,8 +330,8 @@ module Chemotion
         def self.stub_request(molfile, spectrum)
           response = nil
           ActiveSupport::Deprecation.warn(
-            'This will be deprecated soon' \
-            'Use url = Rails.configuration.spectra.chemspectra[:url] instead.'
+            "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+            "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
           )
           url = Rails.configuration.spectra.url
           port = Rails.configuration.spectra.port
@@ -387,8 +387,8 @@ module Chemotion
       )
         response = nil
         ActiveSupport::Deprecation.warn(
-          'This will be deprecated soon' \
-          'Use url = Rails.configuration.spectra.chemspectra[:url] instead.'
+          "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+          "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
         )
         url = Rails.configuration.spectra.url
         port = Rails.configuration.spectra.port
@@ -433,8 +433,8 @@ module Chemotion
       def self.convert_nmrium_data(path)
         response = nil
         ActiveSupport::Deprecation.warn(
-          'This will be deprecated soon' \
-          'Use url = Rails.configuration.spectra.chemspectra[:url] instead.'
+          "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+          "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
         )
         url = Rails.configuration.spectra.url
         port = Rails.configuration.spectra.port

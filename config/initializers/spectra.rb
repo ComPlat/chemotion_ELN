@@ -14,7 +14,9 @@ if File.exist? Rails.root.join('config', 'spectra.yml')
       config.spectra.nmriumwrapper = spectra_config[:nmriumwrapper]
     end
 
-    Rails.logger.info('*** This will be deprecated soon. Please update your spectra.yml ***')
+    Rails.logger.info("Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+    "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead.")
+    
     config.spectra.url = spectra_config[:url]
     config.spectra.port = spectra_config[:port]
   end
