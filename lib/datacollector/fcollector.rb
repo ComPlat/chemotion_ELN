@@ -2,6 +2,10 @@
 
 # File and Folder Collector
 class Fcollector
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+
   def execute(use_sftp)
     raise 'No datacollector configuration!' unless Rails.configuration.datacollectors
 
@@ -11,7 +15,7 @@ class Fcollector
       return
     end
 
-    devices(use_sftp).each do |device|
+    devices(use_sftp).each do |device| # rubocop:disable Metrics/BlockLength
       @current_collector = nil
       method_params = device.profile.data['method_params']
       host = method_params['host']
@@ -25,8 +29,8 @@ class Fcollector
           keys_only: true
         }
       when 'password', nil
-        credentials = Rails.configuration.datacollectors.sftpusers.find do |e|
-          e[:user] == method_params['user']
+        credentials = Rails.configuration.datacollectors.sftpusers.find do |user_attr|
+          user_attr[:user] == method_params['user']
         end
         unless credentials
           log_info("No match user credentials! user: #{method_params['user']}", device)
@@ -47,6 +51,10 @@ class Fcollector
       end
     end
   end
+
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 
   private
 
@@ -71,17 +79,13 @@ class Fcollector
 
   def log_info(message, device)
     DCLogger.log.info(self.class.name) do
-      "#{@current_collector&.path} >>> #{message} >>> #{device_info(device)}"
+      "#{@current_collector&.path} >>> #{message} >>> #{device.info}"
     end
   end
 
   def log_error(message, device)
     DCLogger.log.error(self.class.name) do
-      "#{@current_collector&.path} >>> #{message} >>> #{device_info(device)}"
+      "#{@current_collector&.path} >>> #{message} >>> #{device.info}"
     end
-  end
-
-  def device_info(device)
-    "Device ID: #{device.id}, Name: #{device.first_name} #{device.last_name}"
   end
 end

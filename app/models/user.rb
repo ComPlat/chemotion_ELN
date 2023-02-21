@@ -431,6 +431,10 @@ class Device < User
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :novnc, -> { joins(:profile).merge(Profile.novnc) }
+
+  def info
+    "Device ID: #{id}, Name: #{first_name} #{last_name}"
+  end
 end
 
 class Group < User

@@ -27,10 +27,15 @@ class Foldercollector < Fcollector
     time_diff
   end
 
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/PerceivedComplexity
+
   def inspect_folder(device)
     params = device.profile.data['method_params']
     sleep_time = sleep_seconds(device).to_i
-    new_folders(params['dir']).each do |new_folder_p|
+    new_folders(params['dir']).each do |new_folder_p| # rubocop:disable Metrics/BlockLength
       if (params['number_of_files'].blank? || (params['number_of_files']).to_i.zero?) &&
          modification_time_diff(device, new_folder_p) < 30
         sleep sleep_time
@@ -47,19 +52,19 @@ class Foldercollector < Fcollector
         if @current_collector.recipient
           if params['number_of_files'].present? && params['number_of_files'].to_i != 0 &&
              @current_collector.files.length != params['number_of_files'].to_i
-            log_info 'Wrong number of files!', device
+            log_info('Wrong number of files!', device)
             next
           end
           unless error
             @current_collector.collect(device)
-            log_info 'Stored!', device
+            log_info('Stored!', device)
             stored = true
           end
           @current_collector.delete
-          log_info 'Status 200', device
+          log_info('Status 200', device)
         else # Recipient unknown
           @current_collector.delete
-          log_info 'Recipient unknown. Folder deleted!', device
+          log_info('Recipient unknown. Folder deleted!', device)
         end
       rescue => e
         if stored
@@ -67,10 +72,15 @@ class Foldercollector < Fcollector
             CollectorHelper.hash(@current_collector.path, @sftp)
           )
         end
-        log_error "#{e.message}\n#{e.backtrace.join('\n')}", device
+        log_error("#{e.message}\n#{e.backtrace.join('\n')}", device)
       end
     end
   end
+
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/PerceivedComplexity
 
   def list_files
     if @sftp
