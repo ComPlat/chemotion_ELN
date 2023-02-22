@@ -59,8 +59,7 @@ export default class ReactionDetails extends Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
-    }
-    reaction.updateMaxAmountOfProducts();
+    }   
   }
 
 
