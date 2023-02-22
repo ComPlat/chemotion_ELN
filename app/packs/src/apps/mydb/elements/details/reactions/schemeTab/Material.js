@@ -224,11 +224,7 @@ class Material extends Component {
           />
         );
       } else {
-        return (
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip id="product-max-amount-info">max theoretical mass {Math.round(material.maxAmount * 10000) / 10} mg</Tooltip>}
-          >
+        return (         
             <div>
               <FormControl
                 name='yield'
@@ -239,7 +235,6 @@ class Material extends Component {
                 disabled
               />
             </div>
-          </OverlayTrigger>
         );
       }
     }
@@ -508,7 +503,7 @@ class Material extends Component {
             delay="100"
             placement="top" 
             overlay={
-              <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material)}</Tooltip>
+              <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material,reaction)}</Tooltip>
             }>
             <div>
               <NumeralInputWithUnitsCompo
@@ -579,11 +574,15 @@ class Material extends Component {
     );
   }
 
-  generateMolecularWeightTooltipText(sample){
+  generateMolecularWeightTooltipText(sample,reaction){
+    const isProduct=reaction.products.includes(sample)
     const molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
-
-      return `molar mass: ${molecularWeight} g/mol \n Das ist ein Test`;
+      let theoreticalMassPart="";
+      if (isProduct&&sample.maxAmount){
+        theoreticalMassPart=`, theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`
+      }
+      return `molar mass: ${molecularWeight} g/mol`+theoreticalMassPart;
   }
 
   toggleTarget(isTarget) {
