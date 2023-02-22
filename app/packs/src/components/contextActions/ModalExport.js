@@ -40,6 +40,7 @@ export default class ModalExport extends React.Component {
     this.state = {
       columns: {
         sample: [
+          { value: "cas", text: "cas", checked: true },
           { value: ["sample_svg_file", "molecule_svg_file"], text: "image", checked: false },
           { value: "name", text: "name", checked: true },
           { value: "molecule_name", text: "molecule name", checked: false },
