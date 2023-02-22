@@ -460,6 +460,7 @@ module ReportHelpers
       sample: {
         external_label: ['s.external_label', '"sample external label"', 0],
         name: ['s."name"', '"sample name"', 0],
+        cas: ['s.xref', nil, 0],
         target_amount_value: ['s.target_amount_value', '"target amount"', 0],
         target_amount_unit: ['s.target_amount_unit', '"target unit"', 0],
         real_amount_value: ['s.real_amount_value', '"real amount"', 0],
@@ -570,6 +571,8 @@ module ReportHelpers
           selection << "labels_by_user_sample(#{user_id}, s_id) as user_labels"
         elsif col == 'literature'
           selection << "literatures_by_element('Sample', s_id) as literatures"
+        elsif col == 'cas'
+          selection << "s.xref->>'cas' as cas"
         elsif (s = attrs[table][col.to_sym])
           selection << (s[1] && s[0] + ' as ' + s[1] || s[0])
         end
