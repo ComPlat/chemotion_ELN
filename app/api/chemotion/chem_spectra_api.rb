@@ -203,7 +203,7 @@ module Chemotion
             if Rails.configuration.spectra.nmriumwrapper.nil?
               { protocol: '', host: '', port: '' }
             else
-              nmrium_url = Rails.configuration.spectra.nmriumwrapper[:url]
+              nmrium_url = Rails.configuration.spectra.nmriumwrapper.url
               nmrium_uri = URI(nmrium_url)
               protocol = nmrium_uri.scheme
               host = nmrium_uri.host

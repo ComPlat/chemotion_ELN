@@ -6,18 +6,27 @@ if File.exist? Rails.root.join('config', 'spectra.yml')
   Rails.application.configure do
     config.spectra = ActiveSupport::OrderedOptions.new
 
+    config.spectra.chemspectra = ActiveSupport::OrderedOptions.new
+
+    if !spectra_config[:url].nil? && !spectra_config[:port].nil?
+      Rails.logger.info(
+        "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
+        "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra.url instead."
+      )
+      url = spectra_config[:url]
+      port = spectra_config[:port]
+      config.spectra.chemspectra.url = "http://#{url}:#{port}"
+    end
+    
     unless spectra_config[:chemspectra].nil?
-      config.spectra.chemspectra = spectra_config[:chemspectra]
+      chemspectra_object = spectra_config[:chemspectra]
+      config.spectra.chemspectra.url = chemspectra_object[:url]
     end
 
     unless spectra_config[:nmriumwrapper].nil?
-      config.spectra.nmriumwrapper = spectra_config[:nmriumwrapper]
+      config.spectra.nmriumwrapper = ActiveSupport::OrderedOptions.new
+      nmrium_wrapper_object = spectra_config[:nmriumwrapper]
+      config.spectra.nmriumwrapper.url = nmrium_wrapper_object[:url]
     end
-
-    Rails.logger.info("Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
-    "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead.")
-    
-    config.spectra.url = spectra_config[:url]
-    config.spectra.port = spectra_config[:port]
   end
 end

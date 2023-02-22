@@ -116,19 +116,8 @@ module Chemotion
         file_path, mol_path, is_regen = false, params = {}
       )
         response = nil
-
-        ActiveSupport::Deprecation.warn(
-          "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
-          "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
-        )
-        url = Rails.configuration.spectra.url
-        port = Rails.configuration.spectra.port
-        api_endpoint = "http://#{url}:#{port}/zip_jcamp_n_img"
-
-        unless Rails.configuration.spectra.chemspectra.nil?
-          url = Rails.configuration.spectra.chemspectra[:url]
-          api_endpoint = "#{url}/zip_jcamp_n_img"
-        end
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/zip_jcamp_n_img"
 
         File.open(file_path, 'r') do |file|
           File.open(mol_path, 'r') do |molfile|
@@ -184,18 +173,8 @@ module Chemotion
 
       def self.stub_peak_in_image(path)
         response = nil
-        ActiveSupport::Deprecation.warn(
-          "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
-          "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
-        )
-        url = Rails.configuration.spectra.url
-        port = Rails.configuration.spectra.port
-        api_endpoint = "http://#{url}:#{port}/zip_image"
-
-        unless Rails.configuration.spectra.chemspectra.nil?
-          url = Rails.configuration.spectra.chemspectra[:url]
-          api_endpoint = "#{url}/zip_image"
-        end
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/zip_image"
         
         File.open(path, 'r') do |f|
           response = HTTParty.post(
@@ -241,18 +220,8 @@ module Chemotion
 
         def self.stub_request(molfile, layout, peaks, shift, spectrum)
           response = nil
-          ActiveSupport::Deprecation.warn(
-            "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
-            "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
-          )
-          url = Rails.configuration.spectra.url
-          port = Rails.configuration.spectra.port
-          api_endpoint = "http://#{url}:#{port}/predict/by_peaks_form"
-  
-          unless Rails.configuration.spectra.chemspectra.nil?
-            url = Rails.configuration.spectra.chemspectra[:url]
-            api_endpoint = "#{url}/predict/by_peaks_form"
-          end
+          url = Rails.configuration.spectra.chemspectra.url
+          api_endpoint = "#{url}/predict/by_peaks_form"
           
           File.open(molfile.path, 'r') do |file|
             body = build_body(file, layout, peaks, shift, spectrum)
@@ -284,18 +253,8 @@ module Chemotion
 
         def self.stub_request(molfile, spectrum)
           response = nil
-          ActiveSupport::Deprecation.warn(
-            "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
-            "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
-          )
-          url = Rails.configuration.spectra.url
-          port = Rails.configuration.spectra.port
-          api_endpoint = "http://#{url}:#{port}/predict/infrared"
-  
-          unless Rails.configuration.spectra.chemspectra.nil?
-            url = Rails.configuration.spectra.chemspectra[:url]
-            api_endpoint = "#{url}/predict/infrared"
-          end
+          url = Rails.configuration.spectra.chemspectra.url
+          api_endpoint = "#{url}/predict/infrared"
 
           File.open(molfile.path, 'r') do |f_molfile|
             File.open(spectrum.path, 'r') do |f_spectrum|
@@ -329,18 +288,8 @@ module Chemotion
 
         def self.stub_request(molfile, spectrum)
           response = nil
-          ActiveSupport::Deprecation.warn(
-            "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
-            "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
-          )
-          url = Rails.configuration.spectra.url
-          port = Rails.configuration.spectra.port
-          api_endpoint = "http://#{url}:#{port}/predict/ms"
-  
-          unless Rails.configuration.spectra.chemspectra.nil?
-            url = Rails.configuration.spectra.chemspectra[:url]
-            api_endpoint = "#{url}/predict/ms"
-          end
+          url = Rails.configuration.spectra.chemspectra.url
+          api_endpoint = "#{url}/predict/ms"
           
           File.open(molfile.path, 'r') do |f_molfile|
             File.open(spectrum.path, 'r') do |f_spectrum|
@@ -386,18 +335,8 @@ module Chemotion
         file_path, mol_path
       )
         response = nil
-        ActiveSupport::Deprecation.warn(
-          "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
-          "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
-        )
-        url = Rails.configuration.spectra.url
-        port = Rails.configuration.spectra.port
-        api_endpoint = "http://#{url}:#{port}/zip_jcamp_n_img"
-
-        unless Rails.configuration.spectra.chemspectra.nil?
-          url = Rails.configuration.spectra.chemspectra[:url]
-          api_endpoint = "#{url}/zip_jcamp_n_img"
-        end
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/zip_jcamp_n_img"
         
         File.open(file_path, 'r') do |file|
           File.open(mol_path, 'r') do |molfile|
@@ -432,18 +371,8 @@ module Chemotion
 
       def self.convert_nmrium_data(path)
         response = nil
-        ActiveSupport::Deprecation.warn(
-          "Chemspectra configuration that use 'url' and 'port' will deprecated soon" \
-          "Please update 'spectra.yml' file to use Rails.configuration.spectra.chemspectra[:url] instead."
-        )
-        url = Rails.configuration.spectra.url
-        port = Rails.configuration.spectra.port
-        api_endpoint = "http://#{url}:#{port}/nmrium"
-
-        unless Rails.configuration.spectra.chemspectra.nil?
-          url = Rails.configuration.spectra.chemspectra[:url]
-          api_endpoint = "#{url}/nmrium"
-        end
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/nmrium"
         
         File.open(path, 'r') do |f|
           response = HTTParty.post(

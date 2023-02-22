@@ -18,7 +18,7 @@ module Chemotion
         end
         unless Rails.configuration.spectra.nmriumwrapper.nil?
           nmrium_wrapper = Rails.configuration.spectra.nmriumwrapper
-          has_nmrium_wrapper = !nmrium_wrapper[:url].nil?
+          has_nmrium_wrapper = !nmrium_wrapper.url.nil?
         end
         m_config = Rails.root.join('config', 'matrices.json')
         sfn_config = Rails.configuration.try(:sfn_config).try(:provider)
