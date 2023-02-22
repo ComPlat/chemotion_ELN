@@ -360,7 +360,7 @@ module Reporter
 
       def description
         delta_desc = obj.description.deep_stringify_keys["ops"]
-        clean_desc = { "ops" => delta_desc }
+        clean_desc = { 'ops' => rm_redundant_newline(delta_desc) }
         [Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML), clean_desc]
       end
 
@@ -404,7 +404,7 @@ module Reporter
         delta_obs = obj.observation.deep_stringify_keys['ops']
         one_line_obs = remove_redundant_space_break(delta_obs)
         clean_obs = { 'ops' => rm_head_tail_space(one_line_obs) }
-        Sablon.content(:html, Delta.new(clean_obs, @font_family).getHTML)
+        [Sablon.content(:html, Delta.new(clean_obs, @font_family).getHTML), clean_obs]
       end
 
       def content_check(delta)
