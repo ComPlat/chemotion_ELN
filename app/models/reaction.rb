@@ -241,6 +241,12 @@ class Reaction < ApplicationRecord
     reaction_svg_file
   end
 
+  # return the full path of the svg file if it exists in the public folder otherwise nil.
+  def current_svg_full_path
+    file_path = Rails.public_path.join('images', 'reactions', reaction_svg_file)
+    File.file?(file_path) ? file_path : nil
+  end
+
   def yield_amount(sample_id)
     ReactionsProductSample.find_by(reaction_id: id, sample_id: sample_id).try(:equivalent)
   end
