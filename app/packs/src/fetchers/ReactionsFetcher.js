@@ -66,6 +66,7 @@ export default class ReactionsFetcher {
       body: JSON.stringify(reaction.serialize())
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
+      .then(()=> ReactionsFetcher.updateAnnotationsInReaction(reaction))
         .then(() => this.fetchById(json.reaction.id))).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -76,11 +77,18 @@ export default class ReactionsFetcher {
       return Promise.all(tasks).then(() => {
         return promise();
       });
-    }
+    }    
+   
     return promise();
+  } 
+
+  static updateAnnotationsInReaction(reaction){
+     const tasks=[];
+     reaction.products.forEach( e =>  tasks.push(BaseFetcher.updateAnnotationsInContainer(e)));
+     return Promise.all(tasks);
   }
 
-  static update(reaction) {
+  static update(reaction) {    
     return ReactionsFetcher.create(reaction, 'put');
   }
 }

@@ -46,21 +46,10 @@ RSpec.describe 'ExportCollection' do
     let(:research_plan) { create(:research_plan, collections: [collection]) }
 
     let(:attachment) do
-      create(:attachment,
+      create(:attachment, :with_png_image,
              bucket: 1,
-             filename: 'upload.png',
              created_by: 1,
-             attachable_id: research_plan.id,
-             attachment_data: create_annotation_json(tempfile.path))
-    end
-
-    let(:tempfile) do
-      example_svg_annotation = '<svg>example</svg>'
-      tempfile = Tempfile.new('annotationFile.svg')
-      tempfile.write(example_svg_annotation)
-      tempfile.rewind
-      tempfile.close
-      tempfile
+             attachable_id: research_plan.id)
     end
 
     before do
@@ -77,9 +66,19 @@ RSpec.describe 'ExportCollection' do
       file_path = File.join('public', 'zip', "#{job_id}.zip")
       expect(File.exist?(file_path)).to be true
     end
+
+    it 'attachment is in zip file' do
+      file_names = []
+      file_path = File.join('public', 'zip', "#{job_id}.zip")
+      Zip::File.open(file_path) do |files|
+        files.each do |file|
+          file_names << file.name
+        end
+      end
+    end
   end
 
-  def update_body_of_researchplan(research_plan, identifier_of_attachment)
+  def update_body_of_researchplan(research_plan, identifier_of_attachment) # rubocop:disable Metrics/MethodLength
     research_plan.body = [
       {
         id: 'entry-003',
@@ -92,27 +91,5 @@ RSpec.describe 'ExportCollection' do
     ]
     research_plan.save!
     research_plan
-  end
-
-  def create_annotation_json(location)
-    tempfile = Tempfile.new('example.png')
-    str = '{' \
-          '"id": "' + tempfile.path + '",' \
-                                      '"storage": "store",' \
-                                      '"metadata": {' \
-                                      '"size": 29111,' \
-                                      '"filename": "example.png",' \
-                                      '"mime_type": null' \
-                                      '},' \
-                                      '"derivatives": {' \
-                                      '"annotation": {' \
-                                      '"id": "' + location + '",' \
-                                                             '"storage": "store",' \
-                                                             '"metadata": {' \
-                                                             '"size": 480,' \
-                                                             '"filename": "example_annotation.svg",' \
-                                                             '"mime_type": null' \
-                                                             '}}}}'
-    JSON.parse(str)
   end
 end

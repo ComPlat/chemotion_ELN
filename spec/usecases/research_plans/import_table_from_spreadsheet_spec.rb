@@ -22,7 +22,7 @@ RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
   end
 
   context 'with valid data' do
-    let(:header_names) {
+    let(:header_names) do
       [
         'Position',
         'Sample',
@@ -33,7 +33,8 @@ RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
         'Readout2_Value',
         'Readout2_Unit'
       ]
-    }
+    end
+
     before do
       importer.execute!
       research_plan.reload

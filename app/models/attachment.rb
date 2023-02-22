@@ -218,6 +218,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     raise 'File to large' unless valid?
 
     attachment_attacher.create_derivatives
+
     update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
   end
 

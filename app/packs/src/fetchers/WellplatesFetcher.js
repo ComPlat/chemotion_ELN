@@ -71,7 +71,9 @@ export default class WellplatesFetcher {
           newWellplate.attachments = _.concat(result, newFiles);
           return new Wellplate(newWellplate);
         });
-    }).catch((errorMessage) => {
+    })
+    .then(()=>BaseFetcher.updateAnnotationsInContainer(wellplate))    
+    .catch((errorMessage) => {
       console.log(errorMessage);
     });
 
