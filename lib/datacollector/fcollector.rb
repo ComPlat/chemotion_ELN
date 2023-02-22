@@ -33,21 +33,30 @@ class Fcollector
           user_attr[:user] == method_params['user']
         end
         unless credentials
-          log_info("No match user credentials! user: #{method_params['user']}", device)
+          log_info("No match user credentials! user: #{method_params['user']} >>> #{device.info}")
           next
         end
         user = credentials[:user]
-        args = { password: credentials[:password] }
+        args = {
+          password: credentials[:password],
+          timeout: 10,
+          number_of_password_prompts: 0,
+        }
       else
         user = nil
         args = {}
-        log_info('connection method is unknown!', device)
+        log_info("connection method is unknown! >>> #{device.info}")
         next
       end
-      Net::SFTP.start(host, user, **args) do |sftp|
-        @sftp = sftp
-        inspect_folder(device)
-        @sftp = nil
+
+      begin
+        Net::SFTP.start(host, user, **args) do |sftp|
+          @sftp = sftp
+          inspect_folder(device)
+          @sftp = nil
+        end
+      rescue => e
+        log_error("#{e.message} >>> #{device.info}\n#{e.backtrace.join('\n')}")
       end
     end
   end
@@ -77,15 +86,15 @@ class Fcollector
     kp
   end
 
-  def log_info(message, device)
+  def log_info(message)
     DCLogger.log.info(self.class.name) do
-      "#{@current_collector&.path} >>> #{message} >>> #{device.info}"
+      "#{@current_collector&.path} >>> #{message}"
     end
   end
 
-  def log_error(message, device)
+  def log_error(message)
     DCLogger.log.error(self.class.name) do
-      "#{@current_collector&.path} >>> #{message} >>> #{device.info}"
+      "#{@current_collector&.path} >>> #{message}"
     end
   end
 end

@@ -92,7 +92,7 @@ class User < ApplicationRecord
   has_one :research_plan_text_template, dependent: :destroy
   has_many :element_text_templates, dependent: :destroy
 
-  accepts_nested_attributes_for :affiliations
+  accepts_nested_attributes_for :affiliations, :profile
 
   validates_presence_of :first_name, :last_name, allow_blank: false
 

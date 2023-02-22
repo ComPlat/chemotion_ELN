@@ -22,14 +22,14 @@ class Filecollector < Fcollector
         if @current_collector.recipient
           unless error
             @current_collector.collect_from(device)
-            log_info('Stored!', device)
+            log_info("Stored! >>> #{device.info}")
             stored = true
           end
           @current_collector.delete
-          log_info('Status 200', device)
+          log_info("Status 200 >>> #{device.info}")
         else # Recipient unknown
           @current_collector.delete
-          log_info('Recipient unknown. File deleted!', device)
+          log_info("Recipient unknown. File deleted! >>> #{device.info}")
         end
       rescue => e
         if stored
