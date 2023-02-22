@@ -35,6 +35,11 @@ FactoryBot.define do
       file_path { Rails.root.join('spec', 'fixtures', 'upload.csv') }
     end
 
+    trait :with_tif_file do
+      filename { 'upload.tif' }
+      file_path { Rails.root.join('spec/fixtures/upload.tif') }
+    end
+
     trait :attached_to_container do
       association :attachable, factory: :container
     end
@@ -60,7 +65,7 @@ FactoryBot.define do
     end
 
     trait :with_researchplan_collection_zip do
-      file_path { Rails.root.join('spec', 'fixtures', 'import', 'collection_research_plan.zip') }
+      file_path { Rails.root.join('spec', 'fixtures', 'import', '20230113_research_plan_one_attachment.zip') }
     end
   end
 end

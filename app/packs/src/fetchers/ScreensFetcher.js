@@ -40,7 +40,8 @@ export default class ScreensFetcher {
       body: JSON.stringify(screen.serialize())
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
-        .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
+      .then(()=>BaseFetcher.updateAnnotationsInContainer(screen))  
+      .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
           console.log(errorMessage);
         });
 

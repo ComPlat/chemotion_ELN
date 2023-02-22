@@ -151,6 +151,49 @@ module Chemotion
         { ok: false, statusText: ['File upload has error. Please try again!'] }
       end
 
+      desc 'get_annotation_of_attachment'
+      get ':attachment_id/annotation' do
+        loader = Usecases::Attachments::Annotation::AnnotationLoader.new
+        return loader.get_annotation_of_attachment(params[:attachment_id])
+      end
+
+      desc 'get_annotatated_image_of_attachment'
+      get ':attachment_id/annotated_image' do
+        content_type 'application/octet-stream'
+
+        env['api.format'] = :binary
+
+        file_location = @attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
+        uploaded_file = if !file_location.nil? && File.exist?(file_location)
+                          extension_of_annotation = File.extname(file_location)
+                          filename_of_annotated_image = @attachment.filename.gsub(
+                            File.extname(@attachment.filename),
+                            "_annotated#{extension_of_annotation}",
+                          )
+                          header['Content-Disposition'] = "attachment; filename=\"#{filename_of_annotated_image}\""
+                          File.open(file_location)
+                        else
+                          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
+                          @attachment.attachment_attacher.file
+                        end
+        data = uploaded_file.read
+        uploaded_file.close
+
+        data
+      end
+
+      desc 'update_annotation_of_attachment'
+      post ':attachment_id/annotation' do
+        params do
+          require :updated_svg_string, type: String
+        end
+        updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
+        updater.update_annotation(
+          params['updated_svg_string'],
+          params['attachment_id'].to_i,
+        )
+      end
+
       desc 'Upload files to Inbox as unsorted'
       post 'upload_to_inbox' do
         attach_ary = []
@@ -254,18 +297,15 @@ module Chemotion
       params do
         requires :attachment_id, type: Integer, desc: 'Database id of image attachment'
         optional :identifier, type: String, desc: 'Identifier(UUID) of image attachment as fallback loading criteria'
+        optional :annotated, type: Boolean, desc: 'Return annotated image if possible'
       end
 
       get 'image/:attachment_id' do
-        sfilename = @attachment.key + @attachment.extname
+        data = Usecases::Attachments::LoadImage.execute!(@attachment, params[:annotated])
         content_type @attachment.content_type
-        header['Content-Disposition'] = "attachment; filename=#{sfilename}"
+        header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
-        uploaded_file = @attachment.attachment_attacher.file
-        data = uploaded_file.read
-        uploaded_file.close
-
         data
       end
 

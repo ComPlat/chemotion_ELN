@@ -382,6 +382,66 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  describe 'GET /api/v1/attachments/{attachment_id}/annotated_image' do
+    let(:attachment) { create(:attachment, :with_image, created_for: user.id, attachable_type: '') }
+
+    before do
+      get "/api/v1/attachments/#{attachment_id}/annotated_image"
+    end
+
+    context 'when attachment not exists' do
+      let(:attachment_id) { -1 }
+
+      it 'returns with an error' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when image attachment has no annotation yet' do
+      let(:attachment_id) { attachment.id }
+
+      it('returning status 200') do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it('expecting that size of returned data equals original file size') do
+        expect(response.header['Content-Length'].to_i).to be attachment.attachment_attacher.file.size
+      end
+    end
+
+    context 'when image attachment has an annotation' do
+      let(:attachment_id) { attachment.id }
+
+      let(:annotation_updater) { Usecases::Attachments::Annotation::AnnotationUpdater.new }
+      let(:annotation_location) do
+        Rails.root.join('spec/fixtures/annotations/20221207_valide_annotation_edited.svg')
+      end
+      let(:expected_annotated_image_size) do
+        File.open(updated_attachment.attachment_data['derivatives']['annotation'] ['annotated_file_location']).size
+      end
+      let(:updated_attachment) { Attachment.find(attachment.id) }
+
+      before do
+        annotation = File.read(annotation_location)
+        annotation = annotation.gsub('/46', "/#{attachment_id}")
+        annotation_updater.update_annotation(annotation, attachment.id)
+        get "/api/v1/attachments/#{attachment_id}/annotated_image"
+      end
+
+      it('returning status 200') do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it('expecting that size of returned data equals annotated file size') do
+        expect(response.header['Content-Length'].to_i).to be expected_annotated_image_size
+      end
+    end
+
+    context 'when attachment is no image' do
+      pending 'not yet implemented'
+    end
+  end
+
   describe 'POST /api/v1/attachments/infer' do
     pending 'not yet implemented'
   end
