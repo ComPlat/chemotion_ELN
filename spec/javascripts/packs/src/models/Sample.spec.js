@@ -5,7 +5,7 @@ describe('Sample', async () => {
     const referenceSample = await SampleFactory.build("water_100g")
     const product = await SampleFactory.build("water_100g")
 
-    describe('.calculateMaxAmount()', () => {
+    describe('Sample.calculateMaxAmount()', () => {
         context('when input is valid', () => {
             it('returns amount of 100', () => {
                 product.coefficient = 1;
