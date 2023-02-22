@@ -12,6 +12,9 @@
 <line x1="109.3" y1="100.0" x2="74.6" y2="120.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="100.5" y1="96.8" x2="76.2" y2="110.8" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="74.6" y1="120.0" x2="40.0" y2="100.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
+<svg font-family="sans-serif">
+  <text text-anchor="middle" font-size="20.1" y="150.0" x="74">A</text>
+</svg>
 </g> </g></g><g transform='translate(289, 0)'><g transform='scale(0.75)'> <g transform='translate(10, 68)'> 
 <line x1="40.0" y1="100.0" x2="40.0" y2="60.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="47.2" y1="94.0" x2="47.2" y2="66.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
@@ -22,6 +25,9 @@
 <line x1="109.3" y1="100.0" x2="74.6" y2="120.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="100.5" y1="96.8" x2="76.2" y2="110.8" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="74.6" y1="120.0" x2="40.0" y2="100.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
+<svg font-family="sans-serif">
+  <text text-anchor="middle" font-size="20.1" y="150.0" x="74">A</text>
+</svg>
 </g> </g></g><g transform='translate(259, 218)'> <svg stroke="black" stroke-width="1">
   <line x1="0" y1="4" x2="199" y2="4" stroke="black"/>
   <polygon points="191,4 189,7 199,4 189,1"/>
@@ -47,5 +53,8 @@
 <line x1="74.6" y1="120.0" x2="40.0" y2="100.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <svg font-family="sans-serif">
   <text text-anchor="middle" font-size="20.1" y="170.0" x="74">68%</text>
+</svg>
+<svg font-family="sans-serif">
+  <text text-anchor="middle" font-size="20.1" y="150.0" x="74">P1</text>
 </svg>
 </g> </g></g> </svg></svg>

@@ -503,6 +503,29 @@ module SVG
       output
     end
 
+    # replication of front end code to generate reaction labels
+    # not safeguarded against sum of starting materials + reagents > 25, as this is unlikely to occur in practice
+    def Alphabet(input)
+      alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      index = input.to_i
+      alphabets[index]
+    end
+
+    def compose_label_svg(material_group, index, x = 0, y = 0)
+      if material_group == products
+        label = "P#{index+1}"
+      elsif material_group == starting_materials
+        label = Alphabet(index)
+      elsif material_group == reactants
+        label = Alphabet(index + num_starting_materials)
+      end
+      <<~XML
+        <svg font-family="sans-serif">
+          <text text-anchor="middle" font-size="#{word_size+1}" y="#{y.to_f - YIELD_YOFFSET}" x="#{x}">#{label}</text>
+        </svg>
+      XML
+    end
+
     def compose_material_group(material_group, **options)
       gvba = global_view_box_array
       w0 = gvba[2]
@@ -512,6 +535,7 @@ module SVG
       output = ''
       vb_middle = gvba[3] / 2.round
       group_width = 0
+      maximum = find_material_max_height(material_group)
       material_group.map.with_index do |m, ind|
         if ind.positive?
           group_width += 50
@@ -527,12 +551,15 @@ module SVG
           y_shift = (y_center - vb[3] / 2).round
           yield_svg = ''
           yield_svg += compose_yield_svg(yield_amount, (vb[2] / 2).round, ((@max_height_for_products + vb[3]) / 2).round) if yield_amount
+          label_svg = ''
+          label_svg += compose_label_svg(material_group, ind, (vb[2] / 2).round, ((maximum + vb[3]) / 2).round)
           group_width += vb[2] + 10
           svg['width'] = "#{vb[2]}px;"
           svg['height'] = "#{vb[3]}px;"
 
           output += "<g transform='translate(#{x_shift}, #{y_shift})'> #{svg.inner_html}"
           output += yield_svg if @show_yield
+          output += label_svg
           output += '</g>'
         end
       end
