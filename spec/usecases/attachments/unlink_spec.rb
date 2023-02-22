@@ -4,20 +4,20 @@ require 'rails_helper'
 
 RSpec.describe Usecases::Attachments::Unlink do
   describe '.execute!' do
-    let(:attachment) { create(:attachment) }
-
     subject { described_class.execute!(attachment) }
 
+    let(:attachment) { create(:attachment) }
+
     it 'returns an attachment' do
-      expect(subject).to be_instance_of(Attachment)
+      expect(subject).to be_instance_of(Attachment) # rubocop:disable RSpec/NamedSubject
     end
 
     it 'changes attachable_id' do
-      expect(subject.attachable_id).to eq(nil)
+      expect(subject.attachable_id).to be_nil # rubocop:disable RSpec/NamedSubject
     end
 
-    it 'changes attachable_id' do
-      expect(subject.attachable_type).to eq('Container')
+    it 'set attachable_type to "Container"' do
+      expect(subject.attachable_type).to eq('Container') # rubocop:disable RSpec/NamedSubject
     end
 
     context 'when attachment could not saved' do
@@ -26,7 +26,7 @@ RSpec.describe Usecases::Attachments::Unlink do
       end
 
       it 'raises an error' do
-        expect { subject }.to raise_error(ActiveRecord::RecordNotSaved)
+        expect { subject }.to raise_error(ActiveRecord::RecordNotSaved) # rubocop:disable RSpec/NamedSubject
       end
     end
   end

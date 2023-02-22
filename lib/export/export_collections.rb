@@ -64,6 +64,10 @@ module Export
             zip.put_next_entry attachment_path
             zip.write attachment.attachment_attacher.file.read if attachment.attachment_attacher.file.present?
             description += "#{attachment.checksum} #{attachment_path}\n"
+
+            annotation_path=attachment.attachment_data["derivatives"]["annotation"]["id"];
+            zip.put_next_entry attachment_path+"_annotation";
+            zip.write File.open(annotation_path).read           
           end
 
           # write all the images into an images directory

@@ -16,6 +16,8 @@ import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
+import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
+import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -120,6 +122,18 @@ export default class ContainerDataset extends Component {
     }
   }
 
+  renderImageAnnotationButton(attachment) {
+    const { readOnly } = this.props;
+    if (!readOnly && !attachment.is_new) {
+      return (
+      <ImageAnnotationEditButton
+        parent={this}
+        attachment={attachment}
+      />
+      );
+    }
+  }
+
   handleUndo(attachment) {
     const { dataset_container } = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
@@ -165,7 +179,8 @@ export default class ContainerDataset extends Component {
             <td style={{ verticalAlign: 'middle' }}>
               <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a><br />
               {this.removeAttachmentButton(attachment)} &nbsp;
-              {this.attachmentBackToInboxButton(attachment)}
+              {this.attachmentBackToInboxButton(attachment)} &nbsp;
+              {this.renderImageAnnotationButton(attachment)} &nbsp;
             </td>
           </tr>
         </tbody>
@@ -457,7 +472,22 @@ export default class ContainerDataset extends Component {
           <HyperLinksSection data={dataset_container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
             disabled={disabled}></HyperLinksSection>
         </Col>
+        <ImageAnnotationModalSVG
+        attachment={this.state.choosenAttachment}
+        isShow={this.state.imageEditModalShown}
+        handleSave={
+          () => {
+            let newAnnotation = document.getElementById("svgEditId").contentWindow.svgEditor.svgCanvas.getSvgString();
+            this.state.choosenAttachment.updatedAnnotation=newAnnotation;
+            this.setState({ imageEditModalShown: false });
+            this.props.onChange(this.props.dataset_container);
+          }
+        }
+        handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
+      />
       </Row>
+
+      
     );
   }
 }

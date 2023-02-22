@@ -80,10 +80,12 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify(sample.serialize())
     }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
-        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
+      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')   
+      .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
+      .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
           console.log(errorMessage);
-        });
+      });
+
     if (files.length > 0) {
       let tasks = [];
       files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));

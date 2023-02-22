@@ -154,8 +154,34 @@
     }
 }
 
+.image-annotation-button-researchplan{
+    button{
+        height: 100%;
+        width: 15%;
+        top: 0px;
+        margin-left:5px;
+        position:absolute;
+    }
+}
+
+.research-plan-attachments-annotation-download{   
+    button{ 
+        margin-right: 10px;
+    }     
+} 
+
+.imageEditedWarning{
+    div{
+        background-color: rgba(252, 252, 138, 0.952);
+        border-color: #d0d0d0;
+        color: rgba(102, 102, 60, 0.95);
+        margin-top: 3px;
+    } 
+} 
+
 .research-plan-table-grid.grid-with-collapsed-rows {
     .ag-body-viewport {
         display: none
     }
 }
+

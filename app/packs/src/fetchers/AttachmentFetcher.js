@@ -25,8 +25,12 @@ export default class AttachmentFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchImageAttachmentByIdentifier(identifier) {
-    return fetch(`/api/v1/attachments/image/-1?identifier=${identifier.identifier}`, {
+  static fetchImageAttachmentByIdentifier(params) {   
+    const urlParams=new URLSearchParams({
+      identifier: params.identifier,
+      annotated: params.annotated}) 
+      
+    return fetch('/api/v1/attachments/image/-1?'+urlParams, {
       credentials: 'same-origin',
       method: 'GET'
     }).then(response => response.blob())

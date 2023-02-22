@@ -191,6 +191,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
             onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             update={update}
             edit={edit}
+            researchPlan={researchPlan}
           />
         </ListGroupItem>
       </ListGroup>

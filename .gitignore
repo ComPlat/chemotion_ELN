@@ -181,3 +181,6 @@ shrine/*
 public/sprite.png
 config/shrine_config.yml
 .nyc_output/
+
+#svgeditor
+/public/svgedit

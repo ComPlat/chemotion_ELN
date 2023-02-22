@@ -6,11 +6,13 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
+import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
+import Utils from 'src/utilities/Functions';
 import {
   Button, ButtonGroup,
   Col, ControlLabel,
   FormGroup,
-  Glyphicon,
   ListGroup, ListGroupItem,
   Overlay, OverlayTrigger,
   Row,
@@ -19,6 +21,7 @@ import {
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
+import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
 
 const editorTooltip = (exts) => (
   <Tooltip id="editor_tooltip">
@@ -27,7 +30,9 @@ const editorTooltip = (exts) => (
     {exts}
   </Tooltip>
 );
-const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
+const downloadTooltip = <Tooltip id="download_tooltip">Download original attachment</Tooltip>;
+const downloadAnnotationTooltip = <Tooltip id="download_tooltip">Download annotated attachment</Tooltip>;
+
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
@@ -37,10 +42,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const {
       attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
     } = props;
+
     this.state = {
       attachmentEditor: false,
       extension: null,
-      showImportConfirm: []
+      imageEditModalShown: false,
+      showImportConfirm: [],
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -58,13 +65,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   editorInitial() {
-    EditorFetcher.initial()
-      .then((result) => {
-        this.setState({
-          attachmentEditor: result.installed,
-          extension: result.ext
-        });
+    EditorFetcher.initial().then((result) => {
+      this.setState({
+        attachmentEditor: result.installed,
+        extension: result.ext,
       });
+    });
   }
 
   documentType(filename) {
@@ -73,19 +79,25 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const ext = last(filename.split('.'));
     const docType = findKey(extension, (o) => o.includes(ext));
 
-    if (typeof (docType) === 'undefined' || !docType) {
+    if (typeof docType === 'undefined' || !docType) {
       return null;
     }
 
     return docType;
   }
 
+  isImageFile(fileName) {
+    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg'];
+    const dataType = last(fileName.split('.'));
+    return acceptedImageTypes.includes(dataType);
+  }
+
   handleEdit(attachment) {
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
 
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
+    EditorFetcher.startEditing({ attachment_id: attachment.id }).then(
+      (result) => {
         if (result.token) {
           const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
           window.open(url, '_blank');
@@ -97,18 +109,22 @@ export default class ResearchPlanDetailsAttachments extends Component {
         } else {
           alert('Unauthorized to edit this file.');
         }
-      });
+      }
+    );
   }
 
   createAttachmentPreviews() {
     const { attachments } = this.props;
     attachments.map((attachment) => {
       if (attachment.thumb) {
-        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then((result) => {
-          if (result != null) {
-            attachment.preview = `data:image/png;base64,${result}`;
+        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
+          (result) => {
+            if (result != null) {
+              attachment.preview = `data:image/png;base64,${result}`;
+            }
           }
-        });
+        );
+
       } else {
         attachment.preview = '/images/wild_card/not_available.svg';
       }
@@ -129,9 +145,47 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   renderRemoveAttachmentButton(attachment) {
     return (
-      <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => this.props.onDelete(attachment)} disabled={this.props.readOnly}>
+      <Button
+        bsSize="xsmall"
+        bsStyle="danger"
+        className="button-right"
+        onClick={() => this.props.onDelete(attachment)}
+        disabled={this.props.readOnly}
+      >
         <i className="fa fa-trash-o" aria-hidden="true" />
       </Button>
+    );
+  }
+
+  renderImageEditModal() {
+    return (
+      <ImageAnnotationModalSVG
+        attachment={this.state.choosenAttachment}
+        isShow={this.state.imageEditModalShown}
+        handleSave={
+          () => {
+            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
+            this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+            this.setState({ imageEditModalShown: false });
+            this.props.onEdit(this.state.choosenAttachment);
+          }
+        }
+        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+      />
+    );
+  }
+
+  renderAnnotateImageButton(attachment) {
+    if (!this.isImageFile(attachment.filename)) {
+      return null;
+    }
+
+    return (
+      <ImageAnnotationEditButton
+        parent={this}
+        attachment={attachment}
+        horizontalAlignment="button-right"
+      />
     );
   }
 
@@ -139,19 +193,20 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { attachmentEditor, extension } = this.state;
 
     const updateTime = new Date(attachment.updated_at);
-    updateTime.setTime(updateTime.getTime() + (15 * 60 * 1000));
+    updateTime.setTime(updateTime.getTime() + 15 * 60 * 1000);
 
     const hasPop = false;
     const fetchNeeded = false;
     const fetchId = attachment.id;
-    const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
+    const isEditing = attachment.aasm_state === 'oo_editing'
+      && new Date().getTime() < updateTime;
 
     const docType = this.documentType(attachment.filename);
     const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
-
+    const is_annotationUpdated=attachment.updatedAnnotation
     if (attachment.is_deleted) {
-      return (
+      return (        
         <div>
           <Row>
             <Col md={1} />
@@ -174,7 +229,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
 
     return (
-      <div>
+      <div>       
+        <SaveResearchPlanWarning visible={is_annotationUpdated}/>
         <Row>
           <Col md={1}>
             <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
@@ -189,18 +245,54 @@ export default class ResearchPlanDetailsAttachments extends Component {
                     title: attachment.filename,
                     src: attachment.preview,
                     fetchNeeded,
-                    fetchId
+                    fetchId,
                   }}
                 />
               </div>
             </div>
           </Col>
-          <Col md={9}>
-            {attachment.filename}
+          <Col md={8}>{attachment.filename}</Col>
+          <Col md={3}>          
+            {this.renderRemoveAttachmentButton(attachment)}           
+            {this.renderDownloadOriginalButton(attachment,downloadTooltip)} 
+            {this.renderEditAttachmentButton(attachment,extension,attachmentEditor,isEditing,styleEditorBtn,styleEditorBtn,editDisable)} 
+
+           
+             
+              {this.renderDownloadAnnotatedImageButton(attachment)}
+              {this.renderAnnotateImageButton(attachment)}
+            
+
+           
+            {this.renderImportAttachmentButton(attachment)}
           </Col>
-          <Col md={2}>
-            {this.renderRemoveAttachmentButton(attachment)}
-            <OverlayTrigger placement="top" overlay={downloadTooltip}>
+        </Row>
+      </div>
+    );
+  } 
+
+  renderEditAttachmentButton(attachment,extension,attachmentEditor,isEditing,styleEditorBtn,editDisable){
+    return (
+      <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
+        <Button
+          style={{ display: styleEditorBtn }}
+          bsSize="xsmall"
+          className="button-right"
+          bsStyle="success"
+          disabled={editDisable}
+          onClick={() => this.handleEdit(attachment)}>
+
+          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing}/>
+        </Button>
+      </OverlayTrigger>
+
+    );
+
+  } 
+
+  renderDownloadOriginalButton(attachment,downloadTooltip){
+    return (
+    <OverlayTrigger placement="top" overlay={downloadTooltip}>
               <Button
                 bsSize="xsmall"
                 className="button-right"
@@ -210,24 +302,31 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
+    );
+  } 
+
+  renderDownloadAnnotatedImageButton(attachment){
+    if (!this.isImageFile(attachment.filename)) {
+      return null;
+    }
+    return (
+    <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
+      <div className="research-plan-attachments-annotation-download">
               <Button
-                style={{ display: styleEditorBtn }}
                 bsSize="xsmall"
                 className="button-right"
-                bsStyle="success"
-                disabled={editDisable}
-                onClick={() => this.handleEdit(attachment)}
+                bsStyle="primary"
+                disabled={attachment.isNew}
+                onClick={() =>{ 
+                  Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
+                }}
               >
-                <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
+                <i className="fa fa-download" aria-hidden="true" />
               </Button>
-            </OverlayTrigger>
-            {this.renderImportAttachmentButton(attachment)}
-          </Col>
-        </Row>
-      </div>
+              </div>
+    </OverlayTrigger>
     );
-  }
+  } 
 
   renderAttachments() {
     const { attachments } = this.props;
@@ -262,9 +361,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
         onDrop={(files) => this.props.onDrop(files)}
         className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}
       >
-        <div className="zone">
-          Drop Files, or Click to Select.
-        </div>
+        <div className="zone">Drop Files, or Click to Select.</div>
       </Dropzone>
     );
   }
@@ -312,7 +409,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 bsStyle="success"
                 className="button-right"
                 disabled={importDisabled}
-                ref={(ref) => { this.importButtonRefs[attachment.id] = ref; }}
+                ref={(ref) => {
+                  this.importButtonRefs[attachment.id] = ref;
+                }}
                 style={importDisabled ? { pointerEvents: 'none' } : {}}
                 onClick={() => this.showImportConfirm(attachment.id)}
               >
@@ -329,7 +428,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
           >
             {confirmTooltip}
           </Overlay>
-
         </div>
       );
     }
@@ -359,6 +457,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
         <Col md={12}>
           <FormGroup>
             <ControlLabel>Files</ControlLabel>
+            {this.renderImageEditModal()}
             {this.renderAttachments()}
             {this.renderDropzone()}
           </FormGroup>

@@ -59,11 +59,13 @@ export default class ResearchPlansFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(researchPlan.serialize())
-    }).then((response) => response.json())
-      .then((json) => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-        .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    }).then( response => response.json())
+      .then((json) =>{ return GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)})
+      .then(() => {
+         return ResearchPlansFetcher.updateAnnotations(researchPlan) })
+      .then(() =>{
+        return this.fetchById(researchPlan.id)} )
+      .catch((errorMessage) => {console.log(errorMessage);});
 
     if (containerFiles.length > 0) {
       const tasks = [];
@@ -251,5 +253,34 @@ export default class ResearchPlansFetcher {
         updatedResearchPlan.attachments = json.attachments;
         return updatedResearchPlan;
       }).catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static updateAnnotations(researchPlan) {
+    return Promise.all(
+      [
+      ResearchPlansFetcher.updateAnnotationsOfAttachments(researchPlan),
+      BaseFetcher.updateAnnotationsInContainer(researchPlan,[])
+    ]);        
+  } 
+
+  static updateAnnotationsOfAttachments(researchPlan){
+
+    const updateTasks=[];
+    researchPlan.attachments
+      .filter((attach => attach.hasOwnProperty('updatedAnnotation')))
+      .forEach(attach => {
+        let data = new FormData();
+        data.append('updated_svg_string', attach.updatedAnnotation);
+        updateTasks.push(fetch('/api/v1/attachments/' + attach.id + '/annotation', {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        })
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        }));
+    })
+
+    return Promise.all(updateTasks);
   }
 }

@@ -16,15 +16,15 @@ export default class ContextActions extends React.Component {
     const uiState = UIStore.getState();
     this.state = {
       uiState
-    }
+    };
   }
 
   componentDidMount() {
-    UIStore.listen(state => this.onChange(state));
+    UIStore.listen((state) => this.onChange(state));
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(state => this.onChange(state));
+    UIStore.unlisten((state) => this.onChange(state));
   }
 
   onChange(state) {
@@ -36,20 +36,19 @@ export default class ContextActions extends React.Component {
 
   isCreateDisabled() {
     const { currentCollection } = this.state.uiState;
-    return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked) ||
-      (currentCollection.is_shared && currentCollection.is_synchronized == false) || (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write));
+    return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked)
+      || (currentCollection.is_shared && currentCollection.is_synchronized == false) || (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write));
   }
 
   isDisabled() {
-    const { currentCollection } = this.state.uiState
+    const { currentCollection } = this.state.uiState;
 
     if (currentCollection) {
-      if ((currentCollection.label == 'All' && currentCollection.is_locked) ||
-        (currentCollection.is_shared == true && currentCollection.permission_level < PermissionConst.ImportElements))
-        return true
+      if ((currentCollection.label == 'All' && currentCollection.is_locked)
+        || (currentCollection.is_shared == true && currentCollection.permission_level < PermissionConst.ImportElements)) { return true; }
     }
 
-    return false
+    return false;
   }
 
   render() {

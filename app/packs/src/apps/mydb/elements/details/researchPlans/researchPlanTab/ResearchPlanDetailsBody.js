@@ -33,6 +33,7 @@ export default class ResearchPlanDetailsBody extends Component {
           tableIndex={tableIndex}
           isNew={isNew}
           copyableFields={copyableFields}
+          researchPlan={this.props.researchPlan}
         />);
       } else {
         item = (<Field

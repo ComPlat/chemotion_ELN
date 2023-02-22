@@ -1,0 +1,10 @@
+<svg width="2560" height="2048" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <g class="layer">
+  <title>Image</title>
+  <image height="2048" id="original_image" width="2560" xlink:href="/api/v1/attachments/image/46"/>
+ </g>
+
+ <g class="layer">
+  <title>Annotation</title>id=&quot;annotation&quot;
+  <rect fill="none" height="75" id="svg_1" stroke="#f20404" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="8" width="92" x="1090" y="1099"/>  
+</svg>

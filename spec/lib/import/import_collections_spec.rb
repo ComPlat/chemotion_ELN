@@ -162,8 +162,8 @@ RSpec.describe 'ImportCollection' do
         expected_identifier = research_plan.body.first['value']['public_name']
 
         expect(research_plan.name).to eq('Research plan 1')
-        expect(research_plan.created_at.strftime('%FT%T')).to eq('2022-08-24T14:19:19')
-        expect(research_plan.updated_at.strftime('%FT%T')).to eq('2022-08-24T14:19:19')
+        expect(research_plan.created_at.strftime('%FT%T')).to eq('2023-01-13T09:47:24')
+        expect(research_plan.updated_at.strftime('%FT%T')).to eq('2023-01-13T09:47:34')
         expect(research_plan.attachments.length).to eq(1)
         attachment = research_plan.attachments[0]
         research_plan.body
