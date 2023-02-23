@@ -47,7 +47,7 @@ const renderWellContent = (well, removeSampleFromWell) => {
     moleculeName = sample.molecule.iupac_name;
     removeButton = (
       <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => removeSampleFromWell(well)}>
-        <span className="fa fa-trash-o"></span>
+        <i className="fa fa-trash-o"/>
       </Button>
     );
   }
@@ -59,6 +59,8 @@ const renderWellContent = (well, removeSampleFromWell) => {
       <div className="wellplate-overlay">
         {sampleName(sample)}<br />
         {moleculeName}<br />
+      </div>
+      <div>
         {removeButton}
       </div>
     </div>
