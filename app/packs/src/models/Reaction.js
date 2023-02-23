@@ -864,5 +864,4 @@ export default class Reaction extends Element {
     this.products.forEach(product => product.calculateMaxAmount(referenceSample));
 
   }
-
 }
