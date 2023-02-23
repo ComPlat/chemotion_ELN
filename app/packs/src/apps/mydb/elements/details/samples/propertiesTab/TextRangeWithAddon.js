@@ -19,7 +19,7 @@ export default class TextRangeWithAddon extends Component {
     newValue = newValue.replace(/,/g, '.');
     newValue = newValue.replace(/\.+\./g, '.');
     newValue = newValue.replace(/ - /g, ' ');
-    this.input.value = newValue;
+    this.props.onChange(this.props.field, newValue, newValue);
   }
 
   handleInputFocus() {
@@ -27,8 +27,8 @@ export default class TextRangeWithAddon extends Component {
   }
 
   handleInputBlur() {
-    this.input.value = this.input.value.trim();
-    const result = this.input.value.match(/[-.0-9]+|[0-9]/g);
+    const value = this.input.value.trim();
+    const result = value.match(/[-.0-9]+|[0-9]/g);
     if (result) {
       // eslint-disable-next-line no-restricted-globals
       const nums = result.filter(r => !isNaN(r));
@@ -38,11 +38,9 @@ export default class TextRangeWithAddon extends Component {
         if (nums.length === 1) {
           lower = nums.shift();
           upper = lower;
-          this.input.value = Number.parseFloat(lower).toString();
         } else {
           lower = nums.shift();
           upper = nums.pop();
-          this.input.value = (Number.parseFloat(lower).toString().concat(' – ', Number.parseFloat(upper))).trim();
         }
         this.props.onChange(this.props.field, Number.parseFloat(lower), Number.parseFloat(upper));
       } else {
@@ -56,7 +54,7 @@ export default class TextRangeWithAddon extends Component {
 
   render() {
     const {
-      addon, disabled, label, tipOnText
+      addon, disabled, label, tipOnText, value
     } = this.props;
     return (
       <FormGroup bsSize="small">
@@ -66,9 +64,9 @@ export default class TextRangeWithAddon extends Component {
             title={tipOnText}
             type="text"
             disabled={disabled}
-            defaultValue={this.props.value || ''}
+            value={value}
             inputRef={(ref) => { this.input = ref; }}
-            onChange={event => this.handleInputChange(event)}
+            onChange={(event) => this.handleInputChange(event)}
             onFocus={() => this.handleInputFocus()}
             onBlur={() => this.handleInputBlur()}
           />

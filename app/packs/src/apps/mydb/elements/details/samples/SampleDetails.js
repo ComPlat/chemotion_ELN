@@ -113,6 +113,7 @@ export default class SampleDetails extends React.Component {
       isCasLoading: false,
       validCas: true,
       showMolfileModal: false,
+      trackMolfile: props.sample.molfile,
       smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined') || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
       quickCreator: false,
       showInchikey: false,
@@ -348,9 +349,20 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor();
   }
 
+  checkMolfileChange() {
+    const { trackMolfile } = this.state;
+    const { sample } = this.props;
+    if (trackMolfile !== sample.molfile) {
+      sample.updateRange('boiling_point', '', '');
+      sample.updateRange('melting_point', '', '');
+      this.setState({ sample });
+    }
+  }
+
   handleSubmit(closeView = false) {
     LoadingActions.start();
     const { sample, validCas } = this.state;
+    this.checkMolfileChange();
     if (!validCas) {
       sample.xref = { ...sample.xref, cas: '' };
     }
@@ -380,7 +392,7 @@ export default class SampleDetails extends React.Component {
       DetailActions.close(sample, true);
     }
     sample.updateChecksum();
-    this.setState({ validCas: true });
+    this.setState({ validCas: true, trackMolfile: sample.molfile });
   }
 
   structureEditorButton(isDisabled) {
