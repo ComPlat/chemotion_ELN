@@ -79,15 +79,17 @@ FactoryBot.define do
     end
 
     after(:create) do |device|
-      dest = device.profile.data['method_params']['dir']
-      dir = if device.profile.data['method'].include? 'folder'
-              Pathname.new(dest).join("CU1-#{Time.now.to_i}")
-            else
-              dest
-            end
+      dest = device.profile.data&.dig('method_params', 'dir')
+      if dest.present?
+        dir = if device.profile.data['method']&.include? 'folder'
+                Pathname.new(dest).join("CU1-#{Time.now.to_i}")
+              else
+                dest
+              end
 
-      FileUtils.mkdir_p(dir) unless File.directory?(dir)
-      FileUtils.cp(Rails.root.join('spec/fixtures/CU1-folder/CU1-abc.txt'), dir)
+        FileUtils.mkdir_p(dir) unless File.directory?(dir)
+        FileUtils.cp(Rails.root.join('spec/fixtures/CU1-folder/CU1-abc.txt'), dir)
+      end
     end
   end
 end
