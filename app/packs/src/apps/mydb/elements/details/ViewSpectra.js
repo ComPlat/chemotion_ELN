@@ -598,6 +598,7 @@ class ViewSpectra extends React.Component {
               descriptions={descriptions}
               canChangeDescription
               onDescriptionChanged={this.onSpectraDescriptionChanged}
+              userManualLink={{cv: 'https://chemotion.net/docs/chemspectra/cv'}}
             />
         }
       </Modal.Body>
@@ -643,6 +644,7 @@ class ViewSpectra extends React.Component {
             value={isShowMultiSelect ? arrSpcIdx : idx}
             treeCheckable={isShowMultiSelect}
             style={{ width: 500 }}
+            maxTagCount={1}
             onChange={onSelectChange} />
         </div>
         <Button

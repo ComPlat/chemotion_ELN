@@ -60,6 +60,9 @@ class SpectraStore {
     const { files } = fetchedFiles;
     if (!files) return [];
     const returnFiles = files.map(f => this.decodeSpectrum(f)).filter(r => r !== null);
+    if (returnFiles === null || returnFiles === undefined) {
+      return [];
+    }
     return returnFiles.sort(function(a, b) {
       return b.idx - a.idx;
     });
@@ -77,12 +80,16 @@ class SpectraStore {
 
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
     const spcMetas = this.decodeSpectra(fetchedFiles);
+    const newArrSpcIdx = spcMetas.map(spci => (
+      spci.idx
+    )).filter(r => r !== null);
     this.setState({
       spcInfos,
       spcMetas,
       fetched: true,
       spcIdx: (spcMetas[0].idx || 0),
       others: [],
+      arrSpcIdx: newArrSpcIdx,
     });
   }
 
