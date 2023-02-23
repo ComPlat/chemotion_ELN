@@ -463,7 +463,7 @@ class Material extends Component {
     };
 
     return (
-      <tr className="general-material display-linebreak">
+      <tr className="general-material">
         {compose(connectDragSource, connectDropTarget)(
           <td className={`drag-source ${permitCls(reaction)}`} style={style}>
             <span className="text-info fa fa-arrows" />
