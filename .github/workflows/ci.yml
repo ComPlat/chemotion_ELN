@@ -74,7 +74,7 @@ jobs:
           cp database.yml.gitlab database.yml
           cp -f storage.yml.example storage.yml
           cp -f shrine_config.yml.example shrine_config.yml
-          touch datacollectors.yml
+          cp -f datacollectors.yml.example datacollectors.yml
           cp -f profile_default.yml.example profile_default.yml
           touch klasses.json
 
