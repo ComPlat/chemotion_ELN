@@ -80,9 +80,12 @@ class SpectraStore {
 
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
     const spcMetas = this.decodeSpectra(fetchedFiles);
-    const newArrSpcIdx = spcMetas.map(spci => (
+    let newArrSpcIdx = spcMetas.map(spci => (
       spci.idx
     )).filter(r => r !== null);
+    if (newArrSpcIdx.length <= 1) {
+      newArrSpcIdx = [];
+    }
     this.setState({
       spcInfos,
       spcMetas,
