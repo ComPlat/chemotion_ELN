@@ -580,7 +580,7 @@ class Material extends Component {
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
       let theoreticalMassPart="";
       if (isProduct&&sample.maxAmount){
-        theoreticalMassPart=`, theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`
+        theoreticalMassPart=`, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`
       }
       return `molar mass: ${molecularWeight} g/mol`+theoreticalMassPart;
   }
