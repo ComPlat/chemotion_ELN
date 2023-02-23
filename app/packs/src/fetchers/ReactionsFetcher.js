@@ -21,6 +21,7 @@ export default class ReactionsFetcher {
             const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
             reaction.literatures = lits;
           }
+          reaction.updateMaxAmountOfProducts();
           return reaction;
         }
         const rReaction = new Reaction(json.reaction);

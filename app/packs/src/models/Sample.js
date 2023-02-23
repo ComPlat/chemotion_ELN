@@ -959,6 +959,15 @@ export default class Sample extends Element {
     return target;
   }
 
+  calculateMaxAmount(referenceSample) {
+    const refAmount = referenceSample.amount_mol;
+    const sampleCoeff = this.coefficient || 1.0;
+    const refCoeff = (referenceSample.coefficient || 1.0)
+    const coeffQuotient = sampleCoeff / refCoeff;
+
+    this.maxAmount = refAmount * coeffQuotient * this.molecule_molecular_weight;
+  }
+
   get solvent() {
     try {
       //handle the old solvent data

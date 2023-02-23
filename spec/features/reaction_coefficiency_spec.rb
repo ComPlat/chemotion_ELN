@@ -68,7 +68,7 @@ describe 'Coeffiency Reactions' do
       expect(find("input[name='yield']").value).to eq('50%')
     end
 
-    it 'Mass value is more than possible', js: true do
+    it 'Mass value is larger than possible', js: true do
       find('.tree-view', text: 'chemotion-repository.net').click
       first('i.icon-reaction').click
       first('span.isvg.loaded.reaction').click
@@ -76,7 +76,7 @@ describe 'Coeffiency Reactions' do
       coefficients[0].set(2)
       coefficients[1].set(1)
       coefficients[2].set(1)
-      messages = find_all('.notification-message', text: 'Experimental mass value is more than possible')
+      messages = find_all('.notification-message', text: 'Experimental mass value is larger than possible')
       expect(messages.length).to be >= 1
     end
   end
@@ -141,7 +141,7 @@ describe 'Coeffiency Reactions' do
       expect(find("input[name='yield']").value).to eq('49%')
     end
 
-    it 'Mass value is more than possible', js: true do
+    it 'Mass value is larger than possible', js: true do
       find('.tree-view', text: 'chemotion-repository.net').click
       first('i.icon-reaction').click
       first('span.isvg.loaded.reaction').click
@@ -149,7 +149,7 @@ describe 'Coeffiency Reactions' do
       coefficients[0].set(4)
       coefficients[1].set(2)
       coefficients[2].set(2)
-      messages = find_all('.notification-message', text: 'Experimental mass value is more than possible')
+      messages = find_all('.notification-message', text: 'Experimental mass value is larger than possible')
       expect(messages.length).to be >= 1
     end
   end

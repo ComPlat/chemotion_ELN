@@ -464,7 +464,7 @@ export default class ReactionDetailsScheme extends Component {
       mFull = referenceM.amount_mol * mwb;
       const maxTheoAmount = mFull * (updatedS.coefficient || 1.0 / referenceM.coefficient || 1.0);
       if (updatedS.amount_g > maxTheoAmount) {
-        errorMsg = 'Experimental mass value is more than possible\n' +
+        errorMsg = 'Experimental mass value is larger than possible\n' +
           'by 100% conversion! Please check your data.';
       }
     } else {
@@ -476,7 +476,7 @@ export default class ReactionDetailsScheme extends Component {
 
       if (deltaM > 0) { // expect weight gain
         if (massExperimental > mFull) {
-          errorMsg = 'Experimental mass value is more than possible\n' +
+          errorMsg = 'Experimental mass value is larger than possible\n' +
             'by 100% conversion! Please check your data.';
         } else if (massExperimental < massA) {
           errorMsg = 'Material loss! ' +
@@ -601,7 +601,7 @@ export default class ReactionDetailsScheme extends Component {
         } else if (materialGroup === 'products' && sample.amount_g > sample.maxAmount) {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = 1;
-          const errorMsg = 'Experimental mass value is more than possible\n' +
+          const errorMsg = 'Experimental mass value is larger than possible\n' +
           'by 100% conversion! Please check your data.';
           NotificationActions.add({
             message: errorMsg,
@@ -643,7 +643,7 @@ export default class ReactionDetailsScheme extends Component {
           sample.equivalent = sample.maxAmount !== 0 ? (sample.amount_g / sample.maxAmount) : 0;
           if (sample.amount_g > sample.maxAmount) {
             sample.equivalent = 1;
-            const errorMsg = 'Experimental mass value is more than possible\n' +
+            const errorMsg = 'Experimental mass value is larger than possible\n' +
             'by 100% conversion! Please check your data.';
             NotificationActions.add({
               message: errorMsg,
