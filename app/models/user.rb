@@ -49,7 +49,7 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-class User < ApplicationRecord
+class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
   attr_writer :login
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable

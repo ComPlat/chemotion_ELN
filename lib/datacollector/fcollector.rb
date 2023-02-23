@@ -5,6 +5,7 @@ class Fcollector
   # rubocop:disable Metrics/CyclomaticComplexity
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/PerceivedComplexity
 
   def execute(use_sftp)
     raise 'No datacollector configuration!' unless Rails.configuration.datacollectors
@@ -64,6 +65,7 @@ class Fcollector
   # rubocop:enable Metrics/CyclomaticComplexity
   # rubocop:enable Metrics/AbcSize
   # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/PerceivedComplexity
 
   private
 
