@@ -507,7 +507,6 @@ class Material extends Component {
             }>
             <div>
               <NumeralInputWithUnitsCompo
-                data-html="true"
                 key={material.id}
                 value={material.amount_g}
                 unit="g"
