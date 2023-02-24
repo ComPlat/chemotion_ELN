@@ -73,6 +73,7 @@ class Oauth::RadarController < ApplicationController
     else
       # fetch the available workspaces for the user
       response = Oauth2::Radar::fetch_workspaces(access_token)
+
       @workspaces = response['data'].map { |workspace| {
         'id' => workspace['id'],
         'label' => workspace['descriptiveMetadata']['title']

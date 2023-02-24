@@ -21,6 +21,9 @@ module Chemotion
         end
 
         desc "Return collection metadata"
+        rescue_from ActiveRecord::RecordNotFound do
+          error!('401 Unauthorized', 401)
+        end
         before do
           error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).read_metadata?
         end
@@ -34,6 +37,9 @@ module Chemotion
         end
 
         desc "Create/update collection metadata"
+        rescue_from ActiveRecord::RecordNotFound do
+          error!('401 Unauthorized', 401)
+        end
         params do
           requires :metadata, type: JSON
         end
