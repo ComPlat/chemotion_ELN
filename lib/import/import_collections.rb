@@ -53,6 +53,8 @@ module Import
 
               attachment.file_path = tmp.path
               attachment.save!
+
+              import_annotation(zip_file, entry, attachment)
               attachments << attachment
             ensure
               tmp.close
@@ -116,6 +118,21 @@ module Import
     end
 
     private
+
+    def import_annotation(zip_file, entry, attachment)
+      annotation_entry = zip_file.find_entry("#{entry.name}_annotation")
+      return unless annotation_entry
+
+      annotation_data = annotation_entry.get_input_stream.read.force_encoding('UTF-8')
+      updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
+
+      annotation_data = annotation_data.gsub(
+        %r{/api/v1/attachments/image/([0-9])*},
+        "/api/v1/attachments/image/#{attachment.id}",
+      )
+
+      updater.update_annotation(annotation_data, attachment.id)
+    end
 
     def import_collections
       @data.fetch('Collection', {}).each do |uuid, fields|

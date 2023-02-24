@@ -185,7 +185,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentEdit(attachment) {
     const { researchPlan } = this.state;
-
+    researchPlan.changed = true;
     // update only this attachment
     researchPlan.attachments.map((currentAttachment) => {
       if (currentAttachment.id === attachment.id) return attachment;
@@ -334,7 +334,7 @@ export default class ResearchPlanDetails extends Component {
           {this.renderExportButton(changed)}
           <ResearchPlanDetailsName
             value={name}
-            disabled={researchPlan.isMethodDisabled('name')}
+            disabled={researchPlan.isMethodDisabled("name")}
             onChange={this.handleNameChange}
             edit={edit}
           />
@@ -351,11 +351,15 @@ export default class ResearchPlanDetails extends Component {
             update={update}
             edit={edit}
             copyableFields={[
-              { title: 'Subject', fieldName: 'subject' },
-              { title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
-              { title: 'Related Identifier', fieldName: 'related_identifier' },
-              { title: 'Description', fieldName: 'description' }
+              { title: "Subject", fieldName: "subject" },
+              {
+                title: "Alternate Identifier",
+                fieldName: "alternate_identifier",
+              },
+              { title: "Related Identifier", fieldName: "related_identifier" },
+              { title: "Description", fieldName: "description" },
             ]}
+            researchPlan={researchPlan}
           />
         </ListGroupItem>
       </ListGroup>
@@ -370,14 +374,14 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanDetailsName
             value={name}
             isNew={researchPlan.isNew}
-            disabled={researchPlan.isMethodDisabled('name')}
+            disabled={researchPlan.isMethodDisabled("name")}
             onChange={this.handleNameChange}
             onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             edit
           />
           <ResearchPlanDetailsBody
             body={body}
-            disabled={researchPlan.isMethodDisabled('body')}
+            disabled={researchPlan.isMethodDisabled("body")}
             onChange={this.handleBodyChange.bind(this)}
             onDrop={this.handleBodyDrop.bind(this)}
             onAdd={this.handleBodyAdd}
@@ -386,13 +390,18 @@ export default class ResearchPlanDetails extends Component {
             onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             isNew={researchPlan.isNew}
             copyableFields={[
-              { title: 'Subject', fieldName: 'subject' },
-              { title: 'Alternate Identifier', fieldName: 'alternate_identifier' },
-              { title: 'Related Identifier', fieldName: 'related_identifier' },
-              { title: 'Description', fieldName: 'description' }
+              { title: "Subject", fieldName: "subject" },
+              {
+                title: "Alternate Identifier",
+                fieldName: "alternate_identifier",
+              },
+              { title: "Related Identifier", fieldName: "related_identifier" },
+              { title: "Description", fieldName: "description" },
             ]}
             update={update}
             edit
+            attachments={researchPlan.attachments}
+            researchPlan={researchPlan}
           />
         </ListGroupItem>
       </ListGroup>

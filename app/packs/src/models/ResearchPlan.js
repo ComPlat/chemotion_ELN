@@ -247,4 +247,8 @@ export default class ResearchPlan extends Element {
         delete value.old_value;
       });
   }
+  getAttachmentByIdentifier(identifier){
+     return this.attachments
+     .filter((attachment)=>attachment.identifier===identifier)[0];  
+  }
 }

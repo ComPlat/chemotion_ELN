@@ -127,6 +127,7 @@ export default class ReactionDetails extends Component {
   }
 
   handleReactionChange(reaction, options = {}) {
+    reaction.updateMaxAmountOfProducts();
     reaction.changed = true;
     if (options.schemaChanged) {
       this.setState({ reaction }, () => this.updateReactionSvg());

@@ -28,3 +28,11 @@ sed -i "s~export { diacritics, commands } from './unicode.json';~import unicode 
 yellow "$src4"
 sed -i "s~import { props, ignoredProps } from './props';~import wikiprops from './props';const { props, ignoredProps } = wikiprops  ;~" $src4
 yellow "Done fixing import."
+
+# move svgedit to public folder
+yellow "Adding symbolic link to svg editor in public folder"
+
+node_modules_folder="$(node -e 'const p = require.resolve("@svgedit/svgcanvas"); console.log(p.slice(0, p.indexOf("@svgedit/svgcanvas")))')"
+rm -f ./public/svgedit && ln -s "$node_modules_folder"/svgedit/dist/editor ./public/svgedit
+
+yellow "Finished adding symbolic link to svg editor in public folder"

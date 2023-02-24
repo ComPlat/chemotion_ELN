@@ -856,4 +856,12 @@ export default class Reaction extends Element {
     return this._segments || [];
   }
 
+  updateMaxAmountOfProducts() {
+    const startingMaterialsList = this.starting_materials.filter(sample => sample.reference);
+    if (startingMaterialsList.length == 0) { return; }
+    const referenceSample = startingMaterialsList[0];
+
+    this.products.forEach(product => product.calculateMaxAmount(referenceSample));
+
+  }
 }
