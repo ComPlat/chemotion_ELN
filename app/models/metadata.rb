@@ -88,7 +88,6 @@ class Metadata < ApplicationRecord
     if self.metadata['keywords']
       radar_metadata['descriptiveMetadata']['keywords'] = {
         'keyword' => self.metadata['keywords'].map {|keyword| {'value': keyword}}
-        end
       }
     end
 
