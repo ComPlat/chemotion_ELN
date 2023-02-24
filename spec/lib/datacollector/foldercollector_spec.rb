@@ -22,7 +22,17 @@ RSpec.describe Foldercollector, type: :model do
     context 'when files are collected without error over sftp connection' do
       it 'executes and writes the correct number of files in database' do
         device_sftp1
-        device_sftp2
+        device_sftp3
+
+        expect { described_class.new.execute(true) }.to change(Attachment, :count).by(Device.count)
+      end
+    end
+
+    context 'when devices connect with keyfile' do
+      it 'connects and writes the correct number of files in database' do
+        device_sftp1
+        device_sftp3
+
         expect { described_class.new.execute(true) }.to change(Attachment, :count).by(Device.count)
       end
     end

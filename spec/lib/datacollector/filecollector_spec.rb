@@ -15,6 +15,7 @@ RSpec.describe Filecollector, type: :model do
       it 'executes and writes the correct number of files in database' do
         device1
         device2
+
         expect { described_class.new.execute(false) }.to change(Attachment, :count).by(Device.count)
       end
     end
@@ -22,11 +23,19 @@ RSpec.describe Filecollector, type: :model do
     context 'when files are collected without error over sftp connection' do
       it 'executes and writes the correct number of files in database' do
         device_sftp1
-        device_sftp2
+        device_sftp3
+
         expect { described_class.new.execute(true) }.to change(Attachment, :count).by(Device.count)
       end
+    end
 
-      it 'connects with a keyfile'
+    context 'when devices connect with keyfile' do
+      it 'connects and writes the correct number of files in database' do
+        device_sftp1
+        device_sftp3
+
+        expect { described_class.new.execute(true) }.to change(Attachment, :count).by(Device.count)
+      end
     end
 
     context 'when there is authentication error' do
@@ -34,6 +43,7 @@ RSpec.describe Filecollector, type: :model do
         device_sftp1
         device_sftp2
         device_sftp3
+
         expect { described_class.new.execute(true) }.to change(Attachment, :count).by(2)
       end
     end

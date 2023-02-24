@@ -24,10 +24,16 @@ class Fcollector
       case method_params['authen']
       when 'keyfile'
         user = method_params['user']
+        kp = key_path(method_params['key_name'])
+        unless kp.file? && kp.exist?
+          log_info "No key file found <<< #{device.info}" unless kp.file? && kp.exist?
+          next
+        end
+
         args = {
           key_data: [],
-          keys: key_path(method_params['key_name']),
-          keys_only: true
+          keys: kp,
+          keys_only: true,
         }
       when 'password', nil
         credentials = Rails.configuration.datacollectors.sftpusers.find do |user_attr|
@@ -40,8 +46,6 @@ class Fcollector
         user = credentials[:user]
         args = {
           password: credentials[:password],
-          timeout: 10,
-          number_of_password_prompts: 0,
         }
       else
         user = nil
@@ -49,6 +53,8 @@ class Fcollector
         log_info("connection method is unknown! >>> #{device.info}")
         next
       end
+      args[:timeout] = 10
+      args[:number_of_password_prompts] = 0
 
       begin
         Net::SFTP.start(host, user, **args) do |sftp|
@@ -78,14 +84,11 @@ class Fcollector
 
   def key_path(key_name)
     key_dir = Rails.configuration.datacollectors.keydir
-    kp = if key_dir.start_with?('/')
-           Pathname.new(key_dir).join(key_name)
-         else
-           Rails.root.join(key_dir, key_name)
-         end
-    raise 'No key file found' unless kp.file? && kp.exist?
-
-    kp
+    if key_dir.start_with?('/')
+      Pathname.new(key_dir).join(key_name)
+    else
+      Rails.root.join(key_dir, key_name)
+    end
   end
 
   def log_info(message)
