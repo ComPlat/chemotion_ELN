@@ -46,6 +46,23 @@ FactoryBot.define do
       end
     end
 
+    trait :file_sftp_faulty do
+      profile_attributes do
+        {
+          data: {
+            'method' => 'filewatchersftp',
+            'method_params' => {
+              'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
+              'user' => 'dummy',
+              'host' => 'localhost',
+              'authen' => 'password',
+              'number_of_files' => 1,
+            },
+          },
+        }
+      end
+    end
+
     trait :folder_local do
       profile_attributes do
         {
@@ -69,6 +86,23 @@ FactoryBot.define do
             'method_params' => {
               'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
               'user' => 'tasnim',
+              'host' => 'localhost',
+              'authen' => 'password',
+              'number_of_files' => 1,
+            },
+          },
+        }
+      end
+    end
+
+    trait :folder_sftp_faulty do
+      profile_attributes do
+        {
+          data: {
+            'method' => 'folderwatchersftp',
+            'method_params' => {
+              'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
+              'user' => 'dummy',
               'host' => 'localhost',
               'authen' => 'password',
               'number_of_files' => 1,

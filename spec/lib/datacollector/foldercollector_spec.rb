@@ -7,7 +7,8 @@ RSpec.describe Foldercollector, type: :model do
   let(:device1) { create(:device, :folder_local, users: [user]) }
   let(:device2) { create(:device, :folder_local, users: [user]) }
   let(:device_sftp1) { create(:device, :folder_sftp, users: [user]) }
-  let(:device_sftp2) { create(:device, :folder_sftp, users: [user]) }
+  let(:device_sftp2) { create(:device, :folder_sftp_faulty, users: [user]) }
+  let(:device_sftp3) { create(:device, :folder_sftp, users: [user]) }
 
   describe '.execute' do
     context 'when files are collected without error over local connection' do
@@ -30,7 +31,8 @@ RSpec.describe Foldercollector, type: :model do
       it 'bypasses faulty device and move to next one' do
         device_sftp1
         device_sftp2
-        expect { described_class.new.execute(true) }.not_to change(Attachment, :count)
+        device_sftp3
+        expect { described_class.new.execute(true) }.to change(Attachment, :count).by(2)
       end
     end
   end
