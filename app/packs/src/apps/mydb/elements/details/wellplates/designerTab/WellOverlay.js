@@ -46,11 +46,9 @@ const renderWellContent = (well, removeSampleFromWell) => {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
     moleculeName = sample.molecule.iupac_name;
     removeButton = (
-      <div className="pull-right">
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => removeSampleFromWell(well)}>
-          <span className="fa fa-trash-o"></span>
-        </Button>
-      </div>
+      <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => removeSampleFromWell(well)}>
+        <i className="fa fa-trash-o"/>
+      </Button>
     );
   }
   return (
@@ -97,7 +95,7 @@ const content = (
   }];
 
   return (
-    <div style={{ width: 220, height: 650 }}>
+    <div style={{ width: 220, height: 550 }}>
       {renderWellContent(well, removeSampleFromWell)}
       <div>
         <Select
@@ -136,7 +134,7 @@ const content = (
           />
         </FormGroup>
         <FormGroup>
-          <Col style={{ marginLeft: '-15px' }} class="row row-no-gutters" componentClass={ControlLabel} sm={3}>
+          <Col style={{ marginTop: '7px', marginLeft: '-15px' }} class="row row-no-gutters" componentClass={ControlLabel} sm={3}>
             Select&nbsp;Color
           </Col>
           <Col sm={9} style={{ marginLeft: '35px', width: '65%' }}>
