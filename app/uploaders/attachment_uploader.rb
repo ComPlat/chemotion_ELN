@@ -8,6 +8,7 @@ class AttachmentUploader < Shrine
   plugin :validation_helpers
   plugin :pretty_location
   plugin :add_metadata
+  plugin :determine_mime_type, analyzer: :marcel
 
 
   Attacher.validate do

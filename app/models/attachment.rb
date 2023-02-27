@@ -44,7 +44,8 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   validate :check_file_size
 
   before_create :generate_key
-  before_create :add_content_type
+  # TODO: rm this during legacy store cleaning
+  #before_create :add_content_type
 
   # reload to get identifier:uuid
   after_create :reload
@@ -124,6 +125,11 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attachment['md5']
   end
 
+  def checksum
+    # read_attribute(:checksum).presence || attachment.attachment['md5']
+    attachment['md5']
+  end
+
   # TODO: to be handled by shrine
   def reset_checksum
     add_checksum
@@ -187,6 +193,12 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     rescue StandardError
       nil
     end
+  end
+
+  # Rewrite read attribute for content_type
+  def content_type
+    # read_attribute(:content_type).presence || attachment.attachment['mime_type']
+    attachment['mime_type']
   end
 
   def reload
