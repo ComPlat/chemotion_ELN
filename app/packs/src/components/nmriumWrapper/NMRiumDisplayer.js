@@ -100,7 +100,13 @@ export default class NMRiumDisplayer extends React.Component {
         const nmrWrapperActionType = eventData.data.actionType;
         if (nmrWrapperActionType !== '') {
           const nmriumData = eventData.data;
-          this.setState({ nmriumData });
+          const { version } = nmriumData;
+          if (version > 3) {
+            this.setState({ nmriumData: nmriumData.data });
+          }
+          else {
+            this.setState({ nmriumData });
+          }
         }
       } else if (eventDataType === 'nmr-wrapper:action-response') {
         const nmrWrapperDataType = eventData.data.type;
