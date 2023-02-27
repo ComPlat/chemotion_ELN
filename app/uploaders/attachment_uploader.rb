@@ -21,12 +21,12 @@ class AttachmentUploader < Shrine
                   elsif io.path.include? 'conversion.png'
                     "#{context[:record][:key]}.conversion.png"
                   else
-                    "#{context[:record][:key]}#{File.extname(context[:record][:filename])}"
+                    "#{context[:record][:key]}"
                   end
 
       bucket = 1
       bucket = (context[:record][:id] / 10_000).floor + 1 if context[:record][:id].present?
-      "#{storage.directory}/#{bucket}/#{file_name}"
+      "#{bucket}/#{file_name}"
     else
       super
     end
