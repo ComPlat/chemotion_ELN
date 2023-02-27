@@ -51,7 +51,8 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   after_create :reload
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
-  after_save :update_filesize
+  # TODO: rm this during legacy store cleaning
+  #after_save :update_filesize
   # TODO: rm this during legacy store cleaning
   #after_save :add_checksum, if: :new_upload
 
@@ -183,6 +184,12 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     self.filesize = file_data.bytesize if file_data.present?
     self.filesize = File.size(file_path) if file_path.present? && File.exist?(file_path)
     update_column('filesize', filesize) # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  # Rewrite read attribute for filesize
+  def filesize
+    # read_attribute(:filesize).presence || attachment.attachment['size']
+    attachment['size']
   end
 
   def add_content_type
