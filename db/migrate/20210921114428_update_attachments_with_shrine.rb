@@ -57,8 +57,8 @@ class UpdateAttachmentsWithShrine < ActiveRecord::Migration[5.2]
             size: att.filesize,
             filename: att.filename,
             md5: att.md5,
-          },
-          derivatives: { thumbnail: thumbnail },
+         },
+          derivatives: { thumbnail: thumbnail }
         }
       end
       ActiveRecord::Base.connection.execute(

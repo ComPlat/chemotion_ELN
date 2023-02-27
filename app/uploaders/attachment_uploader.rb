@@ -7,6 +7,9 @@ class AttachmentUploader < Shrine
   plugin :remove_attachment
   plugin :validation_helpers
   plugin :pretty_location
+  plugin :add_metadata
+
+
   Attacher.validate do
     validate_max_size MAX_SIZE,
                       message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB" # rubocop:disable Layout/LineLength
@@ -33,6 +36,10 @@ class AttachmentUploader < Shrine
   end
 
   # plugins and uploading logic
+  add_metadata :md5 do |io|
+    calculate_signature(io, :md5)
+  end
+
   Attacher.derivatives do |original|
     file_extension = AttachmentUploader.get_file_extension(file.id)
 

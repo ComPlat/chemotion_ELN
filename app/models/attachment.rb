@@ -51,7 +51,8 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
   after_save :update_filesize
-  after_save :add_checksum, if: :new_upload
+  # TODO: rm this during legacy store cleaning
+  #after_save :add_checksum, if: :new_upload
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
@@ -111,11 +112,19 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     Storage.old_store(self, old_store)
   end
 
+  # TODO: rm this during legacy store cleaning
   def add_checksum
     self.checksum = Digest::MD5.hexdigest(read_file) if attachment_attacher.file.present?
     update_column('checksum', checksum) # rubocop:disable Rails/SkipsModelValidations
   end
 
+  # Rewrite read attribute for checksum
+  def checksum
+    # read_attribute(:checksum).presence || attachment.attachment['md5']
+    attachment['md5']
+  end
+
+  # TODO: to be handled by shrine
   def reset_checksum
     add_checksum
     update_column('checksum', checksum) if checksum_changed? # rubocop:disable Rails/SkipsModelValidations
