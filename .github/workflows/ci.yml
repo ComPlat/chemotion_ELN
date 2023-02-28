@@ -67,6 +67,38 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v3
 
+      - name: update package repository
+        run: sudo apt update
+
+      - name: install SSH service
+        run: sudo apt install -y openssh-server
+
+      - name: restart SSH server
+        run: sudo service ssh restart
+
+      - name: check SSH service
+        run: sudo service ssh status
+
+      - name: generate SSH key
+        run: |
+          mkdir -p $HOME/.ssh
+          ssh-keygen -t rsa -b 4096 -C "CI Deploy Key" -f $HOME/.ssh/id_rsa -N ""
+          echo "$(<$HOME/.ssh/id_rsa.pub)" >> $HOME/.ssh/authorized_keys
+
+      - name: create user
+        run: |
+          sudo useradd testuser -m -s /bin/bash
+          sudo mkdir /home/testuser/.ssh
+          sudo chown testuser:testuser /home/testuser/.ssh
+          sudo chmod 700 /home/testuser/.ssh
+
+      - name: add SSH key to authorized_keys
+        run: |
+          echo "$(<$HOME/.ssh/id_rsa.pub)" | sudo tee -a /home/testuser/.ssh/authorized_keys
+          cat /home/testuser/.ssh/authorized_keys
+          sudo chown testuser:testuser /home/testuser/.ssh/authorized_keys
+          sudo chmod 600 /home/testuser/.ssh/authorized_keys
+
       - name: configure repository
         run: |
           mv public/welcome-message-sample.md public/welcome-message.md
@@ -74,7 +106,7 @@ jobs:
           cp database.yml.gitlab database.yml
           cp -f storage.yml.example storage.yml
           cp -f shrine_config.yml.example shrine_config.yml
-          touch datacollectors.yml
+          cp -f datacollectors.yml.example datacollectors.yml
           cp -f profile_default.yml.example profile_default.yml
           touch klasses.json
 
