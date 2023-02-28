@@ -37,7 +37,7 @@ export default class ImageAnnotationEditButton extends Component {
     );
   }
 
-  renderInactiveAnnotationButton(attachment) {
+  renderInactiveAnnotationButton(attachment) {   
     return (
       <OverlayTrigger
         overlay={
@@ -65,7 +65,7 @@ export default class ImageAnnotationEditButton extends Component {
   }
 
   render() {
-    if (!this.props.attachment) {
+    if (!this.props.attachment||!this.props.attachment.filename) {
       return null;
     }
 
