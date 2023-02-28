@@ -289,6 +289,7 @@ export default class AutoCompleteInput extends React.Component {
       inchikey: { icon: 'icon-sample', label: 'InChIKey'},
       cano_smiles : {icon: 'icon-sample', label: 'Canonical Smiles'},
       sum_formula : {icon: 'icon-sample', label: 'Sum Formula'},
+      cas: { icon: 'icon-sample', label: 'cas' },
       requirements : {icon: 'icon-screen', label: 'Requirement'},
       conditions : {icon: 'icon-screen', label: 'Condition'},
       element_short_label: {icon: 'icon-element', label: 'Element Short Label'}
