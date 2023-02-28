@@ -37,7 +37,7 @@ class Filecollector < Fcollector
             CollectorHelper.hash(@current_collector.path, @sftp)
           )
         end
-        log_error("#{e.message}\n#{e.backtrace.join('\n')}", device)
+        log_error("#{e.message} >>> #{device.info}\n#{e.backtrace.join('\n')}")
       end
     end
   end

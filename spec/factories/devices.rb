@@ -37,7 +37,7 @@ FactoryBot.define do
             'method_params' => {
               'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
               'user' => 'testuser',
-              'host' => 'localhost',
+              'host' => '127.0.0.1',
               'authen' => 'keyfile',
               'key_name' => "#{Dir.home}/.ssh/id_rsa",
               'number_of_files' => 1,
@@ -55,7 +55,7 @@ FactoryBot.define do
             'method_params' => {
               'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
               'user' => 'dummy',
-              'host' => 'localhost',
+              'host' => '127.0.0.1',
               'authen' => 'keyfile',
               'key_name' => "#{Dir.home}/.ssh/id_rsa",
               'number_of_files' => 1,
@@ -88,7 +88,7 @@ FactoryBot.define do
             'method_params' => {
               'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
               'user' => 'testuser',
-              'host' => 'localhost',
+              'host' => '127.0.0.1',
               'authen' => 'keyfile',
               'key_name' => "#{Dir.home}/.ssh/id_rsa",
               'number_of_files' => 1,
@@ -106,7 +106,7 @@ FactoryBot.define do
             'method_params' => {
               'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
               'user' => 'dummy',
-              'host' => 'localhost',
+              'host' => '127.0.0.1',
               'authen' => 'keyfile',
               'key_name' => "#{Dir.home}/.ssh/id_rsa",
               'number_of_files' => 1,
