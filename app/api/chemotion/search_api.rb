@@ -117,8 +117,7 @@ module Chemotion
                                         "samples.#{ext_key} = #{table}.id")
                   end
         end
-        scope = scope.where([query] + cond_val)
-
+        # scope = scope.where([query] + cond_val)
         scope
       end
 
@@ -300,7 +299,7 @@ module Chemotion
                     Sample.none
                   end
                 when 'iupac_name', 'inchistring', 'inchikey', 'cano_smiles',
-                     'sample_name', 'sample_short_label'
+                     'sample_name', 'sample_short_label', 'cas'
                   if dl_s > 0
                     Sample.by_collection_id(c_id).order("samples.updated_at DESC")
                           .search_by(search_method, arg)
@@ -333,9 +332,11 @@ module Chemotion
         if search_method == 'advanced' && molecule_sort == false
           arg_value_str = adv_params.first['value'].split(/(\r)?\n|,/).map(&:strip)
                                     .select{ |s| !s.empty? }.join(',')
-          return scope.order(
-            "position(','||(#{adv_params.first['field']['column']}::text)||',' in ','||(#{ActiveRecord::Base.connection.quote(arg_value_str)}::text)||',')"
+          result = scope.where(
+            "collections.id = ? AND CASE WHEN position(? IN #{adv_params.first['field']['column']}::text) > 0 THEN true ELSE false END",
+            c_id, arg_value_str
           )
+          return result
         elsif search_method == 'advanced' && molecule_sort == true
           return scope.order('samples.updated_at DESC')
         elsif search_method != 'advanced' && molecule_sort == true
