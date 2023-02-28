@@ -62,7 +62,7 @@ RSpec.describe Usecases::Attachments::LoadImage do
     end
 
     context 'with image attachment(gif, can not be annotated)' do
-      let(:attachment) { create(:attachment, :with_gif_image) }     
+      let(:attachment) { create(:attachment, :with_gif_image) }
 
       it 'size of returned image equals original image' do
         expect(tmp_file.size).to eq attachment.filesize

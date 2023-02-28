@@ -21,7 +21,7 @@ FactoryBot.define do
 
     trait :with_gif_image do
       filename { 'upload.gif' }
-      file_path { File.join("#{Rails.root}/spec/fixtures/upload.gif") }
+      file_path { Rails.root.join('spec/fixtures/upload.gif') }
     end
 
     trait :with_spectra_file do
