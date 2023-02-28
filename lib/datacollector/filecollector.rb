@@ -6,9 +6,12 @@ class Filecollector < Fcollector
 
   private
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+
   def inspect_folder(device)
     directory = device.profile.data['method_params']['dir']
-    new_files(directory).each do |new_file_p|
+    new_files(directory).each do |new_file_p| # rubocop:disable Metrics/BlockLength
       @current_collector = DatacollectorFile.new(new_file_p, @sftp)
       error = CollectorError.find_by error_code: CollectorHelper.hash(
         @current_collector.path,
@@ -19,14 +22,14 @@ class Filecollector < Fcollector
         if @current_collector.recipient
           unless error
             @current_collector.collect_from(device)
-            log_info 'Stored!'
+            log_info("Stored! >>> #{device.info}")
             stored = true
           end
           @current_collector.delete
-          log_info 'Status 200'
+          log_info("Status 200 >>> #{device.info}")
         else # Recipient unknown
           @current_collector.delete
-          log_info 'Recipient unknown. File deleted!'
+          log_info("Recipient unknown. File deleted! >>> #{device.info}")
         end
       rescue => e
         if stored
@@ -34,10 +37,12 @@ class Filecollector < Fcollector
             CollectorHelper.hash(@current_collector.path, @sftp)
           )
         end
-        log_error e.backtrace.join('\n')
+        log_error("#{e.message} >>> #{device.info}\n#{e.backtrace.join('\n')}")
       end
     end
   end
+
+  # rubocop:enable Metrics/AbcSize
 
   def new_files(monitored_folder_p)
     if @sftp
@@ -57,4 +62,6 @@ class Filecollector < Fcollector
     end
     new_files_p
   end
+
+  # rubocop:enable Metrics/MethodLength
 end
