@@ -13,5 +13,121 @@ FactoryBot.define do
         wellplates: 0
       }
     end
+
+    trait :file_local do
+      profile_attributes do
+        {
+          data: {
+            'method' => 'filewatcherlocal',
+            'method_params' => {
+              'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
+              'authen' => 'password',
+              'number_of_files' => 1,
+            },
+          },
+        }
+      end
+    end
+
+    trait :file_sftp do
+      profile_attributes do
+        {
+          data: {
+            'method' => 'filewatchersftp',
+            'method_params' => {
+              'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
+              'user' => 'testuser',
+              'host' => '127.0.0.1',
+              'authen' => 'keyfile',
+              'key_name' => "#{Dir.home}/.ssh/id_rsa",
+              'number_of_files' => 1,
+            },
+          },
+        }
+      end
+    end
+
+    trait :file_sftp_faulty do
+      profile_attributes do
+        {
+          data: {
+            'method' => 'filewatchersftp',
+            'method_params' => {
+              'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
+              'user' => 'dummy',
+              'host' => '127.0.0.1',
+              'authen' => 'keyfile',
+              'key_name' => "#{Dir.home}/.ssh/id_rsa",
+              'number_of_files' => 1,
+            },
+          },
+        }
+      end
+    end
+
+    trait :folder_local do
+      profile_attributes do
+        {
+          data: {
+            'method' => 'folderwatcherlocal',
+            'method_params' => {
+              'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
+              'authen' => 'password',
+              'number_of_files' => 1,
+            },
+          },
+        }
+      end
+    end
+
+    trait :folder_sftp do
+      profile_attributes do
+        {
+          data: {
+            'method' => 'folderwatchersftp',
+            'method_params' => {
+              'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
+              'user' => 'testuser',
+              'host' => '127.0.0.1',
+              'authen' => 'keyfile',
+              'key_name' => "#{Dir.home}/.ssh/id_rsa",
+              'number_of_files' => 1,
+            },
+          },
+        }
+      end
+    end
+
+    trait :folder_sftp_faulty do
+      profile_attributes do
+        {
+          data: {
+            'method' => 'folderwatchersftp',
+            'method_params' => {
+              'dir' => "#{Rails.root}/tmp/datacollector/#{name_abbreviation}",
+              'user' => 'dummy',
+              'host' => '127.0.0.1',
+              'authen' => 'keyfile',
+              'key_name' => "#{Dir.home}/.ssh/id_rsa",
+              'number_of_files' => 1,
+            },
+          },
+        }
+      end
+    end
+
+    after(:create) do |device|
+      dest = device.profile.data&.dig('method_params', 'dir')
+      if dest.present?
+        dir = if device.profile.data['method']&.include? 'folder'
+                Pathname.new(dest).join("CU1-#{Time.now.to_i}")
+              else
+                dest
+              end
+
+        FileUtils.mkdir_p(dir) unless File.directory?(dir)
+        FileUtils.cp(Rails.root.join('spec/fixtures/CU1-folder/CU1-abc.txt'), dir)
+      end
+    end
   end
 end

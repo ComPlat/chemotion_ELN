@@ -49,7 +49,7 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-class User < ApplicationRecord
+class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
   attr_writer :login
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
@@ -92,7 +92,7 @@ class User < ApplicationRecord
   has_one :research_plan_text_template, dependent: :destroy
   has_many :element_text_templates, dependent: :destroy
 
-  accepts_nested_attributes_for :affiliations
+  accepts_nested_attributes_for :affiliations, :profile
 
   validates_presence_of :first_name, :last_name, allow_blank: false
 
@@ -431,6 +431,10 @@ class Device < User
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :novnc, -> { joins(:profile).merge(Profile.novnc) }
+
+  def info
+    "Device ID: #{id}, Name: #{first_name} #{last_name}"
+  end
 end
 
 class Group < User
