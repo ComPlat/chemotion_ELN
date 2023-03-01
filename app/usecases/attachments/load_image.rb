@@ -9,13 +9,14 @@ module Usecases
         raise "no image attachment: #{attachment.id}" unless attachment.image?
 
         conversion = @@types_convert.include?(attachment.extname)
-        return attachment.attachment.read unless annotated || conversion
-        return attachment.attachment.read if annotated && !attachment.annotated?
+        return File.read(attachment.attachment.url) unless annotated || conversion
+        return File.read(attachment.attachment.url) if annotated && !attachment.annotated?
 
         attachment_file = get_file_of_converted_image(attachment) if attachment.image_tiff?
 
         attachment_file = load_annotated_image(attachment, attachment_file) if annotated
         data = nil
+
         File.open(attachment_file) do |file|
           data = file.read
         end
@@ -39,15 +40,15 @@ module Usecases
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
-      def self.load_annotated_image(attachment, attachment_file)
-        return attachment_file unless attachment.annotated?
+      def self.load_annotated_image(attachment, _attachment_file)
+        return File.open(attachment.attachment.url) unless attachment.annotated?
 
         annotated_file_path = attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
         annotated_file_exists = annotated_file_path && File.file?(annotated_file_path)
         if annotated_file_exists
           File.open(annotated_file_path)
         else
-          attachment_file
+          File.open(attachment.attachment.url)
         end
       end
 
