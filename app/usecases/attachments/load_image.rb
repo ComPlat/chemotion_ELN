@@ -5,13 +5,12 @@ module Usecases
     class LoadImage
       @@types_convert = ['.tif', '.tiff'] # rubocop:disable Style/ClassVars
 
-      def self.execute!(attachment, annotated)
+      def self.execute!(attachment, annotated) # rubocop:disable  Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength
         raise "no image attachment: #{attachment.id}" unless attachment.image?
 
         conversion = @@types_convert.include?(attachment.extname)
         return attachment.attachment.read unless annotated || conversion
         return attachment.attachment.read if annotated && !attachment.annotated?
-
 
         attachment_file = get_file_of_converted_image(attachment) if attachment.image_tiff?
 
@@ -25,16 +24,18 @@ module Usecases
 
       def self.create_converted_image(attachment)
         converter = Usecases::Attachments::Converter::FileConverter.new
-        result = converter.create_converted_file(attachment.attachment_data['id'])
+        result = converter.create_converted_file(attachment.attachment.url)
 
         update_attachment_data_column(attachment, result)
 
-        File.open(attachment.attachment_data['derivatives']['conversion']['id'])
+        File.open(attachment.attachment_attacher.derivatives[:conversion].url)
       end
 
       def self.update_attachment_data_column(attachment, result)
         attachment.attachment_data['derivatives']['conversion'] = {}
-        attachment.attachment_data['derivatives']['conversion']['id'] = File.path(result[:conversion])
+        store = Rails.application.config_for :shrine
+        store = store[:store]
+        attachment.attachment_data['derivatives']['conversion']['id'] = File.path(result[:conversion]).split(store).last
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
@@ -52,7 +53,7 @@ module Usecases
 
       def self.get_file_of_converted_image(attachment)
         create_converted_image(attachment) unless attachment.attachment_data['derivatives']['conversion']
-        File.open(attachment.attachment_data['derivatives']['conversion']['id'])
+        File.open(attachment.attachment_attacher.derivatives[:conversion].url)
       end
     end
   end

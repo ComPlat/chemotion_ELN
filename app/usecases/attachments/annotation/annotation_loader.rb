@@ -10,9 +10,8 @@ module Usecases
           raise 'could not find attachment' unless att
           raise 'could not find annotation of attachment' unless annotatable?(att.attachment_data)
 
-          create_empty_annotation(att) unless annotation_json_present(att.attachment_data)
-
-          location_of_annotation = att.attachment_data['derivatives']['annotation']['id']
+          att = create_empty_annotation(att) unless annotation_json_present(att.attachment_data)
+          location_of_annotation = att.attachment_attacher.derivatives[:annotation].url
           annotation = File.open(location_of_annotation, 'rb') if File.exist?(location_of_annotation)
           raise 'could not find annotation of attachment (file not found)' unless annotation
 
@@ -30,7 +29,7 @@ module Usecases
 
         def create_empty_annotation(att) # rubocop:disable Metrics/AbcSize
           Usecases::Attachments::Annotation::AnnotationCreator.new.create_derivative(
-            '.', File.open(att.attachment_data['id']), att.id, {}, nil
+            '.', File.open(att.attachment.url), att.id, {}, nil
           )
 
           file_location = att.attachment_data['id']
@@ -38,6 +37,7 @@ module Usecases
           att.attachment_data['derivatives']['annotation']['id'] =
             "#{file_location.gsub(File.extname(file_location), '')}.annotation.svg"
           att.update_column('attachment_data', att.attachment_data) # rubocop:disable Rails/SkipsModelValidations
+          att
         end
       end
     end

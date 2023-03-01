@@ -38,17 +38,16 @@ module Usecases
         end
 
         def save_svg_string_to_file_system(sanitized_svg_string, attachment)
-          location = attachment.attachment_data['derivatives']['annotation']['id']
+          location = attachment.attachment_attacher.derivatives[:annotation].url
           f = File.new(location, 'w')
           f.write(sanitized_svg_string)
           f.close
         end
 
         def update_thumbnail(attachment, svg_string)
-          location_of_thumbnail = attachment.attachment_data['derivatives']['thumbnail']['id']
+          location_of_thumbnail = attachment.attachment_attacher.derivatives[:thumbnail].url
           tmp_thumbnail_location = "#{location_of_thumbnail.split('.')[0]}_thumb.svg"
-
-          xml = replace_link_with_base64(attachment.attachment_data['id'], svg_string)
+          xml = replace_link_with_base64(attachment.attachment.url, svg_string, attachment.attachment.mime_type)
           File.write(tmp_thumbnail_location, xml.to_xml)
 
           thumbnail = @thumbnailer.create_thumbnail(tmp_thumbnail_location)
@@ -58,8 +57,9 @@ module Usecases
         end
 
         def create_annotated_flat_image(attachment, svg_string) # rubocop:disable Metrics/AbcSize
-          location_of_file = attachment.attachment_data['id']
-          xml = replace_link_with_base64(location_of_file, svg_string)
+          location_of_file = attachment.attachment.url
+
+          xml = replace_link_with_base64(location_of_file, svg_string, attachment.attachment.mime_type)
           extention = File.extname(location_of_file)
           extention = '.png' if ['.tif', '.tiff'].include?(extention)
           annotated_image_location = "#{location_of_file.split('.')[0]}_annotated" + extention
@@ -70,10 +70,9 @@ module Usecases
           attachment.update_column(:attachment_data, attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
         end
 
-        def replace_link_with_base64(location_of_file, svg_string)
-          extension = MIME::Types.type_for(location_of_file).first.content_type
-          extension = 'image/png' if extension == 'image/tiff'
-          base64 = "data:image/#{extension};base64,#{Base64.strict_encode64(File.binread(location_of_file))}"
+        def replace_link_with_base64(location_of_file, svg_string, mime_type)
+          mime_type = 'image/png' if mime_type == 'image/tiff'
+          base64 = "data:/#{mime_type};base64,#{Base64.strict_encode64(File.binread(location_of_file))}"
           xml = Nokogiri::XML(svg_string)
           group = xml.xpath('//*[@id="original_image"]')
           group[0].attributes['href'].value = base64

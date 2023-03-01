@@ -10,7 +10,6 @@ class AttachmentUploader < Shrine
   plugin :add_metadata
   plugin :determine_mime_type, analyzer: :marcel
 
-
   Attacher.validate do
     validate_max_size MAX_SIZE,
                       message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB" # rubocop:disable Layout/LineLength
@@ -25,7 +24,7 @@ class AttachmentUploader < Shrine
                   elsif io.path.include? 'conversion.png'
                     "#{context[:record][:key]}.conversion.png"
                   else
-                    "#{context[:record][:key]}"
+                    (context[:record][:key]).to_s
                   end
 
       bucket = 1
@@ -42,11 +41,12 @@ class AttachmentUploader < Shrine
   end
 
   Attacher.derivatives do |original|
-    file_extension = AttachmentUploader.get_file_extension(file.id)
+    file_extension = AttachmentUploader.get_file_extension(original)
 
     file_basename = File.basename(file.metadata['filename'], '.*')
 
     file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
+
     result = AttachmentUploader.create_derivatives(file_extension, file_path, original, @context[:record].id, record)
 
     result
