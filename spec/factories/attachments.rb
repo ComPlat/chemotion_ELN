@@ -40,15 +40,17 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/upload.tif') }
     end
 
+    # TODO: fix this trait
     trait :with_annotation do
       filename { 'upload.jpg' }
-      file_path { File.join("#{Rails.root}/spec/fixtures/upload.jpg") }
+     # FileUtils.cp(Rails.root.join("spec/fixtures/upload.jpg"), "/tmp/tmp.jpg")
+      FileUtils.cp(Rails.root.join("spec/fixtures/upload.svg"), "/tmp/tmp.svg")
       attachment_data { { 
-        'id' => File.join("#{Rails.root}/spec/fixtures/upload.jpg"),
+        'id' => "/tmp/tmp.svg",
         'storage' => 'store',
         'derivatives' => { 
           'annotation' => { 
-            'id' => File.join("#{Rails.root}/spec/fixtures/upload.svg"),
+            'id' => File.join("/tmp/tmp.svg"),
             'storage' => 'store'
           }
         }
