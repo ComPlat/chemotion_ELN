@@ -6,17 +6,20 @@ module Usecases
       @@types_convert = ['.tif', '.tiff'] # rubocop:disable Style/ClassVars
 
       def self.execute!(attachment, annotated)
-        raise "no image attachment: #{attachment.id}" unless attachment.content_type.start_with?('image')
+        raise "no image attachment: #{attachment.id}" unless attachment.image?
 
-        attachment_file = File.open(attachment.attachment_data['id'])
+        conversion = @@types_convert.include?(attachment.extname)
+        return attachment.attachment.read unless annotated || conversion
+        return attachment.attachment.read if annotated && !attachment.annotated?
 
-        attachment_file = get_file_of_converted_image(attachment) if @@types_convert.include?(attachment.extname)
+
+        attachment_file = get_file_of_converted_image(attachment) if attachment.image_tiff?
 
         attachment_file = load_annotated_image(attachment, attachment_file) if annotated
-
-        data = attachment_file.read
-        attachment_file.close
-
+        data = nil
+        File.open(attachment_file) do |file|
+          data = file.read
+        end
         data
       end
 
@@ -36,9 +39,10 @@ module Usecases
       end
 
       def self.load_annotated_image(attachment, attachment_file)
-        return attachment_file if attachment.attachment_data['derivatives']['annotation'] == nil
+        return attachment_file unless attachment.annotated?
+
         annotated_file_path = attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
-        annotated_file_exists = annotated_file_path && File.exist?(annotated_file_path)
+        annotated_file_exists = annotated_file_path && File.file?(annotated_file_path)
         if annotated_file_exists
           File.open(annotated_file_path)
         else
