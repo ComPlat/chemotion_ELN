@@ -57,7 +57,7 @@ RSpec.describe Usecases::Attachments::LoadImage do
       end
 
       it 'size of returned image equals size of converted image' do
-        expect(tmp_file.size).to eq File.open(attachment.attachment_attacher.derivatives[:conversion].url).size # rubocop:disable  Layout/LineLength
+        expect(tmp_file.size).to eq File.open(attachment.attachment_attacher.derivatives[:conversion].url).size
       end
     end
 

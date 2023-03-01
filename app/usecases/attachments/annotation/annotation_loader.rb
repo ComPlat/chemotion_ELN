@@ -27,16 +27,10 @@ module Usecases
           data && data['derivatives']
         end
 
-        def create_empty_annotation(att) # rubocop:disable Metrics/AbcSize
-          Usecases::Attachments::Annotation::AnnotationCreator.new.create_derivative(
-            '.', File.open(att.attachment.url), att.id, {}, nil
-          )
-
-          file_location = att.attachment_data['id']
-          att.attachment_data['derivatives']['annotation'] = {}
-          att.attachment_data['derivatives']['annotation']['id'] =
-            "#{file_location.gsub(File.extname(file_location), '')}.annotation.svg"
+        def create_empty_annotation(att)
+          att.attachment_attacher.create_derivatives
           att.update_column('attachment_data', att.attachment_data) # rubocop:disable Rails/SkipsModelValidations
+
           att
         end
       end
