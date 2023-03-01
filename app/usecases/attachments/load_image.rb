@@ -5,16 +5,25 @@ module Usecases
     class LoadImage
       @@types_convert = ['.tif', '.tiff'] # rubocop:disable Style/ClassVars
 
-      def self.execute!(attachment, annotated) # rubocop:disable  Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength
+      def self.execute!(attachment, annotated) # rubocop:disable  Metrics/AbcSize,Metrics/MethodLength
         raise "no image attachment: #{attachment.id}" unless attachment.image?
 
         conversion = @@types_convert.include?(attachment.extname)
-        return File.read(attachment.attachment.url) unless annotated || conversion
-        return File.read(attachment.attachment.url) if annotated && !attachment.annotated?
 
-        attachment_file = get_file_of_converted_image(attachment) if attachment.image_tiff?
+        attachment_file = if annotated
+                            if attachment.annotated?
+                              load_annotated_image(attachment, attachment_file)
+                            elsif conversion
+                              get_file_of_converted_image(attachment)
+                            else
+                              File.open(attachment.attachment.url)
+                            end
+                          elsif conversion
+                            get_file_of_converted_image(attachment)
+                          else
+                            File.open(attachment.attachment.url)
+                          end
 
-        attachment_file = load_annotated_image(attachment, attachment_file) if annotated
         data = nil
 
         File.open(attachment_file) do |file|
@@ -32,18 +41,20 @@ module Usecases
         File.open(attachment.attachment_attacher.derivatives[:conversion].url)
       end
 
-      def self.update_attachment_data_column(attachment, result)
+      def self.update_attachment_data_column(attachment, result) # rubocop:disable Metrics/AbcSize
         attachment.attachment_data['derivatives']['conversion'] = {}
-        store = Rails.application.config_for :shrine
-        store = store[:store]
-        attachment.attachment_data['derivatives']['conversion']['id'] = File.path(result[:conversion]).split(store).last
+        root_path = attachment.attachment.storage.directory.to_s
+        attachment.attachment_data['derivatives']['conversion']['id'] =
+          File.path(result[:conversion]).split(root_path).last
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
-      def self.load_annotated_image(attachment, _attachment_file)
+      def self.load_annotated_image(attachment, _attachment_file) # rubocop:disable Metrics/AbcSize
         return File.open(attachment.attachment.url) unless attachment.annotated?
 
-        annotated_file_path = attachment.attachment_data['derivatives']['annotation']['annotated_file_location']
+        store = Rails.application.config_for :shrine
+        store = store[:store]
+        annotated_file_path = "#{store}/#{attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] || 'not available'}" # rubocop:disable Layout/LineLength
         annotated_file_exists = annotated_file_path && File.file?(annotated_file_path)
         if annotated_file_exists
           File.open(annotated_file_path)

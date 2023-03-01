@@ -60,13 +60,14 @@ module Usecases
           location_of_file = attachment.attachment.url
 
           xml = replace_link_with_base64(location_of_file, svg_string, attachment.attachment.mime_type)
-          extention = File.extname(location_of_file)
+          extention = File.extname(attachment.filename)
           extention = '.png' if ['.tif', '.tiff'].include?(extention)
           annotated_image_location = "#{location_of_file.split('.')[0]}_annotated" + extention
           image = MiniMagick::Image.read(xml.to_s)
           image.format(extention.delete('.'))
           image.write(annotated_image_location)
-          attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] = annotated_image_location
+          
+          attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] = attachment.attachment_data['id']+"_annotated"+extention
           attachment.update_column(:attachment_data, attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
         end
 

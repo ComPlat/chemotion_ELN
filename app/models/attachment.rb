@@ -226,7 +226,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def annotated?
     # attachment['derivatives'].present? && attachment['derivatives']['annotation'].present?
-    attachment_data&.dig('derivatives', 'annotation')&.present? || false
+    attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location')&.present? || false
   end
 
   def annotated_image?
