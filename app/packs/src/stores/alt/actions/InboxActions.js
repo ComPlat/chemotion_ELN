@@ -31,11 +31,11 @@ class InboxActions {
     return params;
   }
 
-  fetchInbox() {
+  fetchInbox(queryParams = {}) {
     return (dispatch) => {
-      InboxFetcher.fetchInbox(false)
+      InboxFetcher.fetchInbox(false, queryParams)
         .then((result) => {
-          dispatch(result.inbox);
+          dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -74,6 +74,10 @@ class InboxActions {
 
   removeDatasetFromList(dataset) {
     return dataset;
+  }
+
+  setInboxPagination(pagination) {
+    return pagination;
   }
 
   deleteAttachment(params) {

@@ -67,17 +67,20 @@ export default class CollectionTree extends React.Component {
   }
 
   onClickInbox() {
-    const { inboxVisible, inbox } = this.state;
+    const {
+      inboxVisible, inbox, currentPage, itemsPerPage
+    } = this.state;
     this.setState({ inboxVisible: !inboxVisible });
     if (!inbox.children) {
       LoadingActions.start();
-      InboxActions.fetchInbox();
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
   }
 
   refreshInbox() {
+    const { currentPage, itemsPerPage } = this.state;
     LoadingActions.start();
-    InboxActions.fetchInbox();
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   lockedSubtrees() {

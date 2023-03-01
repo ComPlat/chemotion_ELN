@@ -2,17 +2,30 @@
 
 module Chemotion
   class InboxAPI < Grape::API
+    helpers ParamsHelpers
+
     resource :inbox do
       params do
         requires :cnt_only, type: Boolean, desc: 'return count number only'
       end
+
+      paginate per_page: 5, offset: 0, max_per_page: 100
+
       get do
         current_user.container = Container.create(name: 'inbox', container_type: 'root') unless current_user.container
+        scope = current_user.container.children
+        reset_pagination_page(scope)
 
+        device_boxes = paginate(scope).map do |device_box|
+          Entities::DeviceBoxEntity.represent(device_box)
+        end
         if params[:cnt_only]
           present current_user.container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
         else
-          present current_user.container, with: Entities::InboxEntity, root: :inbox
+          {
+            inbox: { children: device_boxes },
+            count: scope.size,
+          }
         end
       end
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import Draggable from 'react-draggable';
-import { Badge, Button, Panel, Glyphicon } from 'react-bootstrap';
+import { Badge, Button, Panel, Glyphicon, Pagination } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -19,7 +19,11 @@ export default class InboxModal extends React.Component {
       inbox: inboxState.inbox,
       inboxVisible: false,
       numberOfAttachments: inboxState.numberOfAttachments,
-      visible: inboxState.inboxModalVisible
+      visible: inboxState.inboxModalVisible,
+
+      currentPage: inboxState.currentPage,
+      itemsPerPage: inboxState.itemsPerPage,
+      totalPages: inboxState.totalPages,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -35,23 +39,43 @@ export default class InboxModal extends React.Component {
     InboxStore.unlisten(this.onChange);
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    const { currentPage, itemsPerPage } = this.state;
+    if (prevState.currentPage !== this.state.currentPage ||
+        prevState.itemsPerPage !== this.state.itemsPerPage) {
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
+    }
+  }
+
   onChange(state) {
     this.setState(state);
     this.setState({ visible: state.inboxModalVisible });
   }
 
   onClickInbox() {
-    const { inboxVisible, inbox } = this.state;
+    const {
+      inboxVisible, inbox, currentPage, itemsPerPage
+    } = this.state;
     this.setState({ inboxVisible: !inboxVisible });
     if (!inbox.children) {
       LoadingActions.start();
-      InboxActions.fetchInbox();
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
+    }
+  }
+
+  handlePageChange(pageNumber) {
+    const { totalPages } = this.state;
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      this.setState({
+        currentPage: pageNumber
+      }, () => InboxActions.setInboxPagination({ currentPage: this.state.currentPage }));
     }
   }
 
   refreshInbox() {
+    const { currentPage, itemsPerPage } = this.state;
     LoadingActions.start();
-    InboxActions.fetchInbox();
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   lockedSubtrees() {
@@ -59,6 +83,49 @@ export default class InboxModal extends React.Component {
 
     return this.subtrees(roots, null, false);
   }
+
+  renderPagination = () => {
+    const { currentPage, totalPages } = this.state;
+
+    if (totalPages <= 1) {
+      return;
+    }
+
+    const pageNumbers = [];
+    const minPage = Math.max(currentPage - 2, 1);
+    const maxPage = Math.min(minPage + 4, totalPages);
+
+    for (let i = minPage; i <= maxPage; i += 1) {
+      pageNumbers.push(
+        <Pagination.Item
+          key={i}
+          active={i === currentPage}
+          onClick={() => this.handlePageChange(i)}
+        >
+          {i}
+        </Pagination.Item>
+      );
+    }
+
+    if (totalPages > maxPage) {
+      pageNumbers.push(<Pagination.Ellipsis key="Ell" />);
+    }
+    if (currentPage <= totalPages) {
+      pageNumbers.push();
+    }
+
+    return (
+      <div className="list-pagination">
+        <Pagination>
+          <Pagination.First disabled={currentPage === 1} key="First" onClick={() => this.handlePageChange(1)} />
+          <Pagination.Prev disabled={currentPage === 1} key="Prev" onClick={() => this.handlePageChange(currentPage - 1)} />
+          {pageNumbers}
+          <Pagination.Next disabled={currentPage === totalPages} key="Next" onClick={() => this.handlePageChange(currentPage + 1)} />
+          <Pagination.Last disabled={currentPage === totalPages} key="Last" onClick={() => this.handlePageChange(totalPages)} />
+        </Pagination>
+      </div>
+    );
+  };
 
   inboxSubtrees() {
     const { inbox } = this.state;
@@ -76,6 +143,7 @@ export default class InboxModal extends React.Component {
     return (
       <div className="tree-view">
         {boxes}
+        {this.renderPagination()}
         {inbox.unlinked_attachments
           ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} largerInbox />
           : ''

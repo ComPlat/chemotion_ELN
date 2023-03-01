@@ -15,7 +15,10 @@ class InboxStore {
       numberOfAttachments: 0,
       checkedIds: [],
       checkedAll: false,
-      inboxModalVisible: false
+      inboxModalVisible: false,
+      currentPage: 1,
+      itemsPerPage: 3,
+      totalPages: null,
     };
 
     this.bindListeners({
@@ -47,7 +50,8 @@ class InboxStore {
       ],
       handleClose: DetailActions.close,
       handleConfirmDelete: DetailActions.confirmDelete,
-      handleDeleteElement: ElementActions.deleteElementsByUIState
+      handleDeleteElement: ElementActions.deleteElementsByUIState,
+      handleSetPagination: InboxActions.setInboxPagination,
     });
   }
 
@@ -58,7 +62,11 @@ class InboxStore {
   }
 
   handleFetchInbox(result) {
-    this.state.inbox = result;
+    const { itemsPerPage } = this.state;
+    const { inbox, count } = result;
+    this.state.inbox = inbox;
+    this.state.totalPages = Math.ceil(count / itemsPerPage);
+
     this.sync();
     this.countAttachments();
   }
@@ -123,15 +131,18 @@ class InboxStore {
   }
 
   handleDeleteAttachment(result) {
-    InboxActions.fetchInbox();
+    const { currentPage, itemsPerPage } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   handleDeleteContainerLink(result) {
-    InboxActions.fetchInbox();
+    const { currentPage, itemsPerPage } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   handleDeleteContainer(result) {
-    InboxActions.fetchInbox();
+    const { currentPage, itemsPerPage } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   handleBackToInbox(attachment) {
@@ -144,7 +155,8 @@ class InboxStore {
     if (attachments.length == 1) {
       var index = this.state.cache.indexOf(attachments[0])
       this.state.cache.splice(index, 1)
-      InboxActions.fetchInbox()
+      const { currentPage, itemsPerPage } = this.state;
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
     } else {
       InboxActions.deleteContainerLink(attachment)
     }
@@ -172,7 +184,8 @@ class InboxStore {
     if (element && element.isEdited && element.container) {
       const all_attachments = this.getAttachments(element.container.children, [])
       this.updateCache(all_attachments);
-      InboxActions.fetchInbox();
+      const { currentPage, itemsPerPage } = this.state;
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
   }
 
@@ -194,6 +207,11 @@ class InboxStore {
     selecteds.forEach(element => this.handleUpdateCreateElement(element));
   }
 
+  handleSetPagination(pagination) {
+    const { currentPage } = pagination;
+    this.state.currentPage = currentPage;
+  }
+
   sync() {
     let inbox = this.state.inbox
 
@@ -209,7 +227,8 @@ class InboxStore {
 
   countAttachments() {
     const { inbox } = this.state;
-    this.state.numberOfAttachments = inbox.total_attachment_count + inbox.unlinked_attachments.length;
+    // #TODO: Fix this
+    this.state.numberOfAttachments = 6;
   }
 
   handleCheckedAll(params) {
