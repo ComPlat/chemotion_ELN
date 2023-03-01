@@ -16,7 +16,7 @@ class UpdateAttachmentsWithShrine < ActiveRecord::Migration[5.2]
     # compare shrine.yml with storage.yml
     shrine_storage = Rails.application.config_for :shrine
     legacy_storage = Rails.application.config_for :storage
-    primary_store = legacy_storage[:primary_store]
+    primary_store = legacy_storage[:primary_store]&.to_sym
     if shrine_storage[:store] != legacy_storage[:stores][primary_store][:data_folder]
       raise 'Shrine store location does not match storage.yml primary_store location'
     end
