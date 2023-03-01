@@ -6,9 +6,9 @@ module Usecases
       @@types_convert = ['.tif', '.tiff'] # rubocop:disable Style/ClassVars
 
       def self.execute!(attachment, annotated) # rubocop:disable  Metrics/AbcSize,Metrics/MethodLength
-        raise "no image attachment: #{attachment.id}" unless attachment.image?
+        raise "no image attachment: #{attachment.id}" unless attachment.type_image?
 
-        conversion = @@types_convert.include?(attachment.extname)
+        conversion = attachment.type_image_tiff?
 
         attachment_file = if annotated
                             if attachment.annotated?
