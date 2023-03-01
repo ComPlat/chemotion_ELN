@@ -8,7 +8,7 @@ class AttachmentUploader < Shrine
   plugin :validation_helpers
   plugin :pretty_location
   plugin :add_metadata
-  plugin :determine_mime_type, analyzer: :marcel
+  plugin :determine_mime_type, analyzer: :marcel, analyzer_options: { filename_fallback: true }
 
   Attacher.validate do
     validate_max_size MAX_SIZE,
