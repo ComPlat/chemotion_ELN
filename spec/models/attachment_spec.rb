@@ -278,6 +278,32 @@ RSpec.describe Attachment, type: :model do
     end
   end
 
+  describe 'image?' do
+    let(:image_attachment) { create(:attachment, :with_image) }
+    let(:text_attachment) { create(:attachment) }
+    it 'returns true if the attachment is an image, or false if not' do
+      expect(image_attachment.image?).to be true
+      expect(text_attachment.image?).to be false
+    end
+  end
+
+  describe 'image_tiff?' do
+    let(:image_attachment) { create(:attachment, :with_tif_file) }
+    it 'returns true if the attachment is a tiff image, or false if not' do
+      expect(image_attachment.image_tiff?).to be true
+      expect(attachment.image_tiff?).to be false
+    end
+  end
+
+  describe 'annotated?' do
+    let(:annotated_attachment) { create(:attachment, :with_annotation) }
+    let(:unannotated_attachment) { create(:attachment) }
+    it 'returns true if the attachment is annotated, or false if not' do
+      expect(annotated_attachment.annotated?).to be true
+      expect(unannotated_attachment.annotated?).to be false
+    end
+  end
+
   describe '.create' do
     # Callbacks from attachment model
     it 'generates a key' do

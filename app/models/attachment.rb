@@ -216,6 +216,23 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def set_key; end
 
+  def image?
+    attachment['mime_type'].to_s.start_with?('image')
+  end
+
+  def image_tiff?
+    attachment['mime_type'].to_s == 'image/tiff'
+  end
+
+  def annotated?
+    # attachment['derivatives'].present? && attachment['derivatives']['annotation'].present?
+    attachment_data&.dig('derivatives', 'annotation')&.present? || false
+  end
+
+  def annotated_image?
+    image? && annotated?
+  end
+
   private
 
   def generate_key

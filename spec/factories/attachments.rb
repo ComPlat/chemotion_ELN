@@ -40,6 +40,21 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/upload.tif') }
     end
 
+    trait :with_annotation do
+      filename { 'upload.jpg' }
+      file_path { File.join("#{Rails.root}/spec/fixtures/upload.jpg") }
+      attachment_data { { 
+        'id' => File.join("#{Rails.root}/spec/fixtures/upload.jpg"),
+        'storage' => 'store',
+        'derivatives' => { 
+          'annotation' => { 
+            'id' => File.join("#{Rails.root}/spec/fixtures/upload.svg"),
+            'storage' => 'store'
+          }
+        }
+      } }
+    end
+
     trait :attached_to_container do
       association :attachable, factory: :container
     end
