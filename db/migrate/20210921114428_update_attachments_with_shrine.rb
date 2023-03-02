@@ -39,7 +39,15 @@ class UpdateAttachmentsWithShrine < ActiveRecord::Migration[5.2]
         next
       end
 
-      attachment = { id: file_id, storage: 'store', metadata: { size: att.filesize, filename: att.filename } }
+      attachment = {
+        id: file_id,
+        storage: 'store',
+        metadata: {
+          filename: att.filename,
+          md5: att.read_attribute(:checksum),
+          size: File.size(att.store.path),
+        }
+      }
       thumb_path = att.store.thumb_path
       if File.file? thumb_path
         thumbnail = {
@@ -50,16 +58,7 @@ class UpdateAttachmentsWithShrine < ActiveRecord::Migration[5.2]
             filename: "#{att.identifier}.thumb.jpg",
           },
         }
-        attachment = {
-          id: file_id,
-          storage: 'store',
-          metadata: {
-            size: att.filesize,
-            filename: att.filename,
-            md5: att.md5,
-         },
-          derivatives: { thumbnail: thumbnail }
-        }
+        attachment = attachment.merge(derivatives: { thumbnail: thumbnail })
       end
       ActiveRecord::Base.connection.execute(
         "UPDATE attachments SET attachment_data = '#{attachment.to_json}' where id = #{att.id}",
