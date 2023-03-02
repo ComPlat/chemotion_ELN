@@ -1,6 +1,6 @@
 require "shrine"
 require "shrine/storage/file_system"
-shrine_storage = Rails.application.config_for :shrine_config
+shrine_storage = Rails.application.config_for :shrine
 
 Rails.application.configure do
   config.shrine_storage = ActiveSupport::OrderedOptions.new
