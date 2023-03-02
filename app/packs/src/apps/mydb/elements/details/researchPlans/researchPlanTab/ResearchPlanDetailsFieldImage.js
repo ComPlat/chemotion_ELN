@@ -112,12 +112,19 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     );
   }
 
+  isLegacyImage(publicName){
+    if(!publicName) {
+      return true;
+    }
+    return publicName.includes('.');
+  }
+
   generateSrcOfImage(publicName) {
     if (!publicName) { return; }
     let src;
     if (publicName.startsWith('blob')) {
       this.setState({ imageSrc: publicName });
-    } else if (publicName.includes('.')) {
+    } else if (this.isLegacyImage(publicName)) {
       src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
     } else {
@@ -149,6 +156,10 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   renderImageEditModal() {   
+    if(this.isLegacyImage(this.props.field.value.public_name)){
+      return null;
+    }
+
     return (
       <ImageAnnotationModalSVG
         attachment={this.state.choosenAttachment}

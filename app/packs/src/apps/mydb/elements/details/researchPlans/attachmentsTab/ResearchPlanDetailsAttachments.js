@@ -87,7 +87,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   isImageFile(fileName) {
-    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg'];
+    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
     const dataType = last(fileName.split('.'));
     return acceptedImageTypes.includes(dataType);
   }
@@ -175,11 +175,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  renderAnnotateImageButton(attachment) {
-    if (!this.isImageFile(attachment.filename)) {
-      return null;
-    }
-
+  renderAnnotateImageButton(attachment) {    
     return (
       <ImageAnnotationEditButton
         parent={this}
