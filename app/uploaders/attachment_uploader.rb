@@ -7,6 +7,9 @@ class AttachmentUploader < Shrine
   plugin :remove_attachment
   plugin :validation_helpers
   plugin :pretty_location
+  plugin :add_metadata
+  plugin :determine_mime_type, analyzer: :marcel, analyzer_options: { filename_fallback: true }
+
   Attacher.validate do
     validate_max_size MAX_SIZE,
                       message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB" # rubocop:disable Layout/LineLength
@@ -21,24 +24,30 @@ class AttachmentUploader < Shrine
                   elsif io.path.include? 'conversion.png'
                     "#{context[:record][:key]}.conversion.png"
                   else
-                    "#{context[:record][:key]}#{File.extname(context[:record][:filename])}"
+                    (context[:record][:key]).to_s
                   end
 
       bucket = 1
       bucket = (context[:record][:id] / 10_000).floor + 1 if context[:record][:id].present?
-      "#{storage.directory}/#{bucket}/#{file_name}"
+      "#{bucket}/#{file_name}"
     else
       super
     end
   end
 
   # plugins and uploading logic
+  add_metadata :md5 do |io|
+    calculate_signature(io, :md5)
+  end
+
   Attacher.derivatives do |original|
-    file_extension = AttachmentUploader.get_file_extension(file.id)
+    file_extension = ".#{record.attachment.mime_type.split('/').last}" unless record.attachment.mime_type.nil?
+    file_extension = '.jpg' if file_extension == '.jpeg'
+    file_extension = AttachmentUploader.get_file_extension(original) if file_extension.nil?
 
     file_basename = File.basename(file.metadata['filename'], '.*')
-
     file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
+
     result = AttachmentUploader.create_derivatives(file_extension, file_path, original, @context[:record].id, record)
 
     result

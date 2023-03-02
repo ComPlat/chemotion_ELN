@@ -44,14 +44,17 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   validate :check_file_size
 
   before_create :generate_key
-  before_create :add_content_type
+  # TODO: rm this during legacy store cleaning
+  # before_create :add_content_type
 
   # reload to get identifier:uuid
   after_create :reload
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
-  after_save :update_filesize
-  after_save :add_checksum, if: :new_upload
+  # TODO: rm this during legacy store cleaning
+  # after_save :update_filesize
+  # TODO: rm this during legacy store cleaning
+  # after_save :add_checksum, if: :new_upload
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
@@ -111,11 +114,19 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     Storage.old_store(self, old_store)
   end
 
+  # TODO: rm this during legacy store cleaning
   def add_checksum
     self.checksum = Digest::MD5.hexdigest(read_file) if attachment_attacher.file.present?
     update_column('checksum', checksum) # rubocop:disable Rails/SkipsModelValidations
   end
 
+  # Rewrite read attribute for checksum
+  def checksum
+    # read_attribute(:checksum).presence || attachment['md5']
+    attachment && attachment['md5']
+  end
+
+  # TODO: to be handled by shrine
   def reset_checksum
     add_checksum
     update_column('checksum', checksum) if checksum_changed? # rubocop:disable Rails/SkipsModelValidations
@@ -170,6 +181,12 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     update_column('filesize', filesize) # rubocop:disable Rails/SkipsModelValidations
   end
 
+  # Rewrite read attribute for filesize
+  def filesize
+    # read_attribute(:filesize).presence || attachment['size']
+    attachment && attachment['size']
+  end
+
   def add_content_type
     return if content_type.present?
 
@@ -180,6 +197,12 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     end
   end
 
+  # Rewrite read attribute for content_type
+  def content_type
+    # read_attribute(:content_type).presence || attachment['mime_type']
+    attachment && attachment['mime_type']
+  end
+
   def reload
     super
 
@@ -187,6 +210,23 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   def set_key; end
+
+  def type_image?
+    attachment['mime_type'].to_s.start_with?('image')
+  end
+
+  def type_image_tiff?
+    attachment['mime_type'].to_s == 'image/tiff'
+  end
+
+  def annotated?
+    # attachment['derivatives'].present? && attachment['derivatives']['annotation'].present?
+    attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location')&.present? || false
+  end
+
+  def annotated_image?
+    type_image? && annotated?
+  end
 
   private
 
