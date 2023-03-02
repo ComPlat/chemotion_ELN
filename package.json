@@ -25,6 +25,7 @@
     "antd": "^3.19.3",
     "aviator": "v0.6.1",
     "base-64": "^0.1.0",
+    "chemotion-converter-client": "0.1.40",
     "citation-js": "0.5.7",
     "classnames": "^2.2.5",
     "clipboard": "^1.5.12",

@@ -2,6 +2,9 @@
 
 require 'sys/filesystem'
 
+# rubocop: disable Metrics/ClassLength
+# rubocop:disable Metrics/BlockLength
+
 module Chemotion
   # Publish-Subscription MessageAPI
   class AdminAPI < Grape::API
@@ -84,7 +87,6 @@ module Chemotion
           optional :publisher, type: String, desc: 'device publisher'
           optional :publication_year, type: Integer, desc: 'device publication year'
           optional :data_cite_state, type: String, desc: 'state'
-
           optional :owners, desc: 'device owners'
           optional :manufacturers, desc: 'device manufacturers'
           optional :dates, desc: 'device dates'
@@ -101,7 +103,7 @@ module Chemotion
         end
       end
 
-      namespace :sftpDevice do
+      namespace :sftpDevice do # rubocop:disable Metrics/BlockLength
         desc 'Connect device via SFTP'
         params do
           requires :method, type: String
@@ -148,7 +150,7 @@ module Chemotion
         end
       end
 
-      namespace :updateDeviceMethod do
+      namespace :updateDeviceMethod do # rubocop:disable Metrics/BlockLength
         desc 'Update device profile method'
         params do
           requires :id, type: Integer
@@ -290,7 +292,7 @@ module Chemotion
         end
       end
 
-      namespace :updateAccount do
+      namespace :updateAccount do # rubocop:disable Metrics/BlockLength
         desc 'update account'
         params do
           requires :user_id, type: Integer, desc: 'user id'
@@ -299,10 +301,11 @@ module Chemotion
           optional :confirm_user, type: Boolean, desc: 'confirm account'
           optional :reconfirm_user, type: Boolean, desc: 'reconfirm account'
           optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
+          optional :converter_admin, type: Boolean, desc: 'converter profile'
           optional :account_active, type: Boolean, desc: 'active or inactive this user'
         end
 
-        post do
+        post do # rubocop:disable Metrics/BlockLength
           user = User.find_by(id: params[:user_id])
           unless params[:enable].nil?
             case params[:enable]
@@ -332,6 +335,16 @@ module Chemotion
               profile = user.profile
               pdata = profile.data || {}
               data = pdata.merge('is_templates_moderator' => params[:is_templates_moderator])
+              profile.update!(data: data)
+            end
+          end
+
+          unless params[:converter_admin].nil?  # rubocop:disable Metrics/BlockLength
+            case params[:converter_admin]
+            when true, false
+              profile = user.profile
+              pdata = profile.data || {}
+              data = pdata.merge('converter_admin' => params[:converter_admin])
               profile.update!(data: data)
             end
           end
@@ -1001,3 +1014,6 @@ module Chemotion
     end
   end
 end
+
+# rubocop: enable Metrics/ClassLength
+# rubocop: enable Metrics/BlockLength

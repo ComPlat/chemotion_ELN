@@ -52,6 +52,8 @@ const confirmUserTooltip = <Tooltip id="assign_button">confirm this account</Too
 const confirmEmailChangeTooltip = email => (<Tooltip id="email_change_button">confirm email: <br /> {email}</Tooltip>);
 const disableTooltip = <Tooltip id="assign_button">lock this account</Tooltip>;
 const enableTooltip = <Tooltip id="assign_button">unlock this account</Tooltip>;
+const converterEnableTooltip = <Tooltip id="assign_button">Enable Converter profiles editing for this user (currently disabled)</Tooltip>;
+const converterDisableTooltip = <Tooltip id="assign_button">Disable Converter profiles editing for this user (currently enabled)</Tooltip>;
 const templateModeratorEnableTooltip = <Tooltip id="assign_button">Enable Ketcher template editing for this user (currently disabled)</Tooltip>;
 const templateModeratorDisableTooltip = <Tooltip id="assign_button">Disable Ketcher template editing for this user (currently enabled)</Tooltip>;
 const moleculeModeratorEnableTooltip = <Tooltip id="assign_button">Enable editing the representation of the global molecules for this user (currently disabled)</Tooltip>;
@@ -148,6 +150,15 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         this.handleFetchUsers();
         const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked!'; //
+        alert(message);
+      });
+  }
+
+  handleConverterAdmin(id, isConverterAdmin) {
+    AdminFetcher.updateAccount({ user_id: id, converter_admin: !isConverterAdmin })
+      .then((result) => {
+        this.handleFetchUsers();
+        const message = isConverterAdmin === true ? 'Disable Converter profiles editing for this user' : 'Enable Converter profiles editing for this user';
         alert(message);
       });
   }
@@ -848,6 +859,16 @@ export default class UserManagement extends React.Component {
               onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
             >
               <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
+          <OverlayTrigger placement="bottom" overlay={(g.converter_admin === null || g.converter_admin === false) ? converterEnableTooltip : converterDisableTooltip} >
+            <Button
+              bsSize="xsmall"
+              bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
+              onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
+            >
+              <i className="fa fa-hourglass-half" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           &nbsp;

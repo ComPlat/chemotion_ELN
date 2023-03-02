@@ -575,6 +575,7 @@ export default class UserAuth extends Component {
             {userLabel}
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
+            <MenuItem eventKey="12" href="/converter_admin" >Converter Profile</MenuItem>
             <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
           </NavDropdown>
