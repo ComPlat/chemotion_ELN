@@ -97,7 +97,7 @@ module Chemotion
           else
             Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
           end
-        scope = order_by_molecule(scope)
+        order_by_molecule(scope)
       end
 
       def order_by_molecule(scope)
@@ -149,7 +149,7 @@ module Chemotion
 
         scope = Sample.by_collection_id(c_id.to_i)
                       .where([query] + cond_val)
-        scope = order_by_molecule(scope)
+        order_by_molecule(scope)
       end
 
       def elements_search(c_id = @c_id, dl = @dl)
@@ -201,11 +201,11 @@ module Chemotion
                .by_collection_id(c_id.to_i)
                .where(id: ids)
         scope = scope.product_only if list_filter_params.present? && list_filter_params[:product_only]
-        scope = search_order_by_molecule(scope) if params[:molecule_sort]
+        scope = order_by_updated_at(scope) if params[:molecule_sort]
         scope
       end
 
-      def search_order_by_molecule(scope)
+      def order_by_updated_at(scope)
         scope.order('samples.updated_at ASC')
              .page(params[:page]).per(page_size)
       end
