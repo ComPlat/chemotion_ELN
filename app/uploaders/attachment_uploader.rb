@@ -41,10 +41,9 @@ class AttachmentUploader < Shrine
   end
 
   Attacher.derivatives do |original|
-    file_extension = AttachmentUploader.get_file_extension(original)
+    file_extension = ".#{record.attachment.mime_type.split('/').last}"
 
     file_basename = File.basename(file.metadata['filename'], '.*')
-
     file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
 
     result = AttachmentUploader.create_derivatives(file_extension, file_path, original, @context[:record].id, record)
