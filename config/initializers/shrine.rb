@@ -16,3 +16,5 @@ Shrine.plugin :activerecord           # loads Active Record integration
 Shrine.plugin :derivatives
 Shrine.plugin :cached_attachment_data # enables retaining cached file across form redisplays
 Shrine.plugin :restore_cached_data    # extracts metadata for assigned cached files
+Shrine.plugin :signature              # adds MD5 signature metadata to uploaded files
+Shrine.plugin :determine_mime_type, analyzer: :marcel

@@ -63,7 +63,8 @@ module Analyses
       folder = Rails.root.join('tmp/uploads/converter')
       FileUtils.mkdir_p(folder)
       ofile = Rails.root.join(folder, oa.filename)
-      location_of_attachment = oa.attachment_data['id']
+      location_of_attachment = oa.attachment.url
+
       FileUtils.cp(location_of_attachment, ofile)
       File.open(ofile, 'r') do |f|
         body = { file: f }

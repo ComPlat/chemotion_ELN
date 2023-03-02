@@ -33,11 +33,11 @@ test:
   :secondary_store: ''
   :stores:
     :tmp:
-      :data_folder: 'tmp/test/uploads/tmp/'
-      :thumbnail_folder: 'tmp/test/uploads/tmp/'
+      :data_folder: 'uploads/test/cache'
+      :thumbnail_folder: 'uploads/test/cache'
     :local:
-      :data_folder: 'tmp/test/uploads/local'
-      :thumbnail_folder: 'tmp/test/uploads/local'
+      :data_folder: 'uploads/test'
+      :thumbnail_folder: 'uploads/test'
 
 production:
   :maximum_size: 100

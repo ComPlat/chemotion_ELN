@@ -42,7 +42,7 @@ RSpec.describe Usecases::Attachments::LoadImage do
       let(:attachment) { create(:attachment, :with_tif_file) }
 
       it 'size of returned image equals size of converted image' do
-        expect(tmp_file.size).to eq File.open(attachment.attachment_data['derivatives']['conversion']['id']).size
+        expect(tmp_file.size).to eq File.open(attachment.attachment_attacher.derivatives[:conversion].url).size
       end
     end
 
@@ -51,13 +51,13 @@ RSpec.describe Usecases::Attachments::LoadImage do
       let(:updated_attachment) { Attachment.find(attachment.id) }
 
       before do
-        File.delete(attachment.attachment_data['derivatives']['conversion']['id'])
+        File.delete(attachment.attachment_attacher.derivatives[:conversion].url)
         attachment.attachment_data['derivatives'].delete('conversion')
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
       it 'size of returned image equals size of converted image' do
-        expect(tmp_file.size).to eq File.open(updated_attachment.attachment_data['derivatives']['conversion']['id']).size # rubocop:disable  Layout/LineLength
+        expect(tmp_file.size).to eq File.open(attachment.attachment_attacher.derivatives[:conversion].url).size
       end
     end
 
@@ -83,7 +83,7 @@ RSpec.describe Usecases::Attachments::LoadImage do
       end
 
       it 'size of returned image equals size of converted image' do
-        expect(tmp_file.size).to eq File.open(updated_attachment.attachment_data['derivatives']['annotation']['annotated_file_location']).size # rubocop:disable  Layout/LineLength
+        expect(tmp_file.size).to eq File.open(updated_attachment.attachment.storage.directory + updated_attachment.attachment_data['derivatives']['annotation']['annotated_file_location']).size # rubocop:disable  Layout/LineLength
       end
     end
   end
