@@ -12,6 +12,9 @@ module Chemotion
         ext = target_ext || filename_parts[-1]
         idx = %w[edit peak].include?(filename_parts[-2]) ? -2 : -1
         parts = filename_parts[0...idx] + [addon, ext]
+        if addon == ''
+          parts = filename_parts[0...idx] + [ext]
+        end
         parts.join('.')
       end
     end
@@ -47,6 +50,7 @@ module Chemotion
         arr_jcamp = []
         arr_img = []
         arr_csv = []
+        arr_nmrium = []
         Zip::InputStream.open(rsp_io) do |io|
           while (entry = io.get_next_entry)
             ext = extract_ext(entry)
@@ -60,12 +64,15 @@ module Chemotion
             elsif %w[csv].include?(ext)
               tmp_csv = generate_tmp_file(data, ext)
               arr_csv.push(tmp_csv)
+            elsif %w[nmrium].include?(ext)
+              tmp_nmrium = generate_tmp_file(data, ext)
+              arr_nmrium.push(tmp_nmrium)
             end
           end
         end
         tmp_jcamp = arr_jcamp.first
         tmp_img = arr_img.first
-        [tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv]
+        [tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium]
       end
     end
   end
@@ -109,13 +116,14 @@ module Chemotion
         file_path, mol_path, is_regen = false, params = {}
       )
         response = nil
-        url = Rails.configuration.spectra.url
-        port = Rails.configuration.spectra.port
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/zip_jcamp_n_img"
+
         File.open(file_path, 'r') do |file|
           File.open(mol_path, 'r') do |molfile|
             body = build_body(file, molfile, is_regen, params)
             response = HTTParty.post(
-              "http://#{url}:#{port}/zip_jcamp_n_img",
+              api_endpoint,
               body: body,
               timeout: 120
             )
@@ -134,14 +142,20 @@ module Chemotion
           #cannot parse response from json, return as normal
           rsp_io = StringIO.new(rsp.body.to_s)
           spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-          Util.extract_zip(rsp_io) << spc_type
+          invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
+          extracted_array = Util.extract_zip(rsp_io)
+          extracted_array << spc_type
+          extracted_array << invalid_molfile
         else
           if json_rsp['invalid_molfile'] == true
             [json_rsp, nil, nil]
           else
             rsp_io = StringIO.new(rsp.body.to_s)
             spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-            Util.extract_zip(rsp_io) << spc_type
+            invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
+            extracted_array = Util.extract_zip(rsp_io)
+            extracted_array << spc_type
+            extracted_array << invalid_molfile
           end
         end
       end
@@ -159,11 +173,12 @@ module Chemotion
 
       def self.stub_peak_in_image(path)
         response = nil
-        url = Rails.configuration.spectra.url
-        port = Rails.configuration.spectra.port
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/zip_image"
+        
         File.open(path, 'r') do |f|
           response = HTTParty.post(
-            "http://#{url}:#{port}/zip_image",
+            api_endpoint,
             body: {
               multipart: true,
               file: f
@@ -205,12 +220,13 @@ module Chemotion
 
         def self.stub_request(molfile, layout, peaks, shift, spectrum)
           response = nil
-          url = Rails.configuration.spectra.url
-          port = Rails.configuration.spectra.port
+          url = Rails.configuration.spectra.chemspectra.url
+          api_endpoint = "#{url}/predict/by_peaks_form"
+          
           File.open(molfile.path, 'r') do |file|
             body = build_body(file, layout, peaks, shift, spectrum)
             response = HTTParty.post(
-              "http://#{url}:#{port}/predict/by_peaks_form",
+              api_endpoint,
               body: body
             )
           end
@@ -237,13 +253,14 @@ module Chemotion
 
         def self.stub_request(molfile, spectrum)
           response = nil
-          url = Rails.configuration.spectra.url
-          port = Rails.configuration.spectra.port
+          url = Rails.configuration.spectra.chemspectra.url
+          api_endpoint = "#{url}/predict/infrared"
+
           File.open(molfile.path, 'r') do |f_molfile|
             File.open(spectrum.path, 'r') do |f_spectrum|
               body = build_body(f_molfile, f_spectrum)
               response = HTTParty.post(
-                "http://#{url}:#{port}/predict/infrared",
+                api_endpoint,
                 body: body
               )
             end
@@ -271,13 +288,14 @@ module Chemotion
 
         def self.stub_request(molfile, spectrum)
           response = nil
-          url = Rails.configuration.spectra.url
-          port = Rails.configuration.spectra.port
+          url = Rails.configuration.spectra.chemspectra.url
+          api_endpoint = "#{url}/predict/ms"
+          
           File.open(molfile.path, 'r') do |f_molfile|
             File.open(spectrum.path, 'r') do |f_spectrum|
               body = build_body(f_molfile, f_spectrum)
               response = HTTParty.post(
-                "http://#{url}:#{port}/predict/ms",
+                api_endpoint,
                 body: body
               )
             end
@@ -317,13 +335,14 @@ module Chemotion
         file_path, mol_path
       )
         response = nil
-        url = Rails.configuration.spectra.url
-        port = Rails.configuration.spectra.port
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/zip_jcamp_n_img"
+        
         File.open(file_path, 'r') do |file|
           File.open(mol_path, 'r') do |molfile|
             body = build_body(file, molfile)
             response = HTTParty.post(
-              "http://#{url}:#{port}/zip_jcamp_n_img",
+              api_endpoint,
               body: body,
               timeout: 120,
             )
@@ -337,6 +356,44 @@ module Chemotion
       )
         rsp = stub_http(file_path, mol_path)
         rsp.code == 200 ? rsp.parsed_response : nil
+      end
+    end
+  end
+end
+
+# Chemotion module
+module Chemotion
+  # process NMRium files
+  module Jcamp
+    # CreateFromNMRium module
+    module CreateFromNMRium
+      include HTTParty
+
+      def self.convert_nmrium_data(path)
+        response = nil
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/nmrium"
+        
+        File.open(path, 'r') do |f|
+          response = HTTParty.post(
+            api_endpoint,
+            body: {
+              multipart: true,
+              file: f
+            }
+          )
+        end
+        response
+      end
+
+      def self.jcamp_from_nmrium(path)
+        rsp = convert_nmrium_data(path)
+        unless rsp.nil? || rsp.code != 200
+          tmp_jcamp = Util.generate_tmp_file(rsp.body.to_s)
+          tmp_jcamp
+        else
+          nil
+        end
       end
     end
   end

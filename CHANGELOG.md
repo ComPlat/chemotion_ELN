@@ -9,6 +9,15 @@
 * Features and Improvements:
 * Fixes
 
+## [v1.5.0]
+> 2022-10-13
+
+* Features and Improvements:
+  * Chemspectra: Spectra can be processed even when molfile is valid or not (https://github.com/ComPlat/chemotion_ELN/issues/951) (Warning: update chem-spectra-app service to 0.11.0)
+  * NMRium: NMR data can be viewed in NMRium from ChemotionELN (https://github.com/ComPlat/chemotion_ELN/issues/964) (Warning: update chem-spectra-app service to 0.11.0)
+* Fixes
+  * Chemspectra: The issue of multiplicities on chemspectra frontend are not removed when changing between layouts with the old JCAMP design is fixed
+
 ## [v1.4.1]
 > 2022-11-09
 

@@ -72,6 +72,14 @@ module Chemotion
       rescue
         { status: false }
       end
+
+      def raw_file(att)
+        begin
+          Base64.encode64(att.read_file)
+        rescue StandardError
+          nil
+        end
+      end
     end
 
     resource :chemspectra do # rubocop:disable BlockLength
@@ -185,6 +193,24 @@ module Chemotion
 
           content_type('application/json')
           { smi: m[:smiles], mass: m[:mass], svg: m[:svg], status: true }
+        end
+      end
+
+      resource :nmrium_wrapper do
+        desc 'Return url of nmrium wrapper'
+        route_param :host_name do
+          get do
+            if Rails.configuration.spectra.nmriumwrapper.blank?
+              { protocol: '', host: '', port: '' }
+            else
+              nmrium_url = Rails.configuration.spectra.nmriumwrapper.url
+              nmrium_uri = URI(nmrium_url)
+              protocol = nmrium_uri.scheme
+              host = nmrium_uri.host
+              port = nmrium_uri.port == 443 ? '' : nmrium_uri.port
+              { protocol: protocol, host: host, port: port }
+            end
+          end
         end
       end
     end

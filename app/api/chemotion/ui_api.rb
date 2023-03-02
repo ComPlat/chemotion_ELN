@@ -8,12 +8,16 @@ module Chemotion
       desc 'Initialize UI'
       params do
       end
-      get 'initialize' do
-        sconfig = Rails.configuration.try(:spectra).try(:url)
+      get 'initialize' do        
+        has_chem_spectra = Rails.configuration.spectra.chemspectra.url.present?
+        has_nmrium_wrapper = Rails.configuration.spectra.nmriumwrapper.url.present?
+                
         m_config = Rails.root.join('config', 'matrices.json')
         sfn_config = Rails.configuration.try(:sfn_config).try(:provider)
+        
         {
-          has_chem_spectra: sconfig.present?,
+          has_chem_spectra: has_chem_spectra,
+          has_nmrium_wrapper: has_nmrium_wrapper,
           matrices: File.exist?(m_config) ? JSON.parse(File.read(m_config)) : {},
           klasses: ElementKlass.where(is_active: true, is_generic: true)&.pluck(:name) || [],
           structure_editors: Rails.configuration.structure_editors,

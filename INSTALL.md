@@ -66,6 +66,56 @@ NB:
 
 see online [docs](https://www.chemotion.net/chemotionsaurus/docs/eln/docker_installation)
 
+## Setup for using NMRium in Chemotion ELN
+
+### 1. Setup by your own machine
+Checkout this repository and follow the setup instruction [https://github.com/NFDI4Chem/nmrium-react-wrapper](https://github.com/NFDI4Chem/nmrium-react-wrapper)
+
+Edit file following fields in `config/spectra.yml` in Chemotion ELN as follow, depend on your information:
+```yaml
+development:
+  :chemspectra:
+    :url: '<your_chem_spectra_development_url>'
+  :nmriumwrapper:
+    :url: '<your_nmrium_wrapper_development_url>'
+
+test:
+  :chemspectra:
+    :url: '<your_chem_spectra_development_url>'
+  :nmriumwrapper:
+    :url: '<your_nmrium_wrapper_test_url>'
+
+production:
+  :chemspectra:
+    :url: '<your_chem_spectra_development_url>'
+  :nmriumwrapper:
+    :url: '<your_nmrium_wrapper_production_url>'
+```
+
+If you have the CORS issue, add your urls at `ALLOWED_ORIGINS` in this file [nmrium-react-wrapper/blob/main/src/events/event.ts](https://github.com/NFDI4Chem/nmrium-react-wrapper/blob/main/src/events/event.ts)
+
+### 2. Using service from NMRXiv
+Edit file following fields in `config/spectra.yml` in Chemotion ELN as follow, depend on your information:
+```yaml
+development:
+  :chemspectra:
+    :url: '<your_chem_spectra_development_url>'
+  :nmriumwrapper:
+    :url: 'https://nmriumdev.nmrxiv.org'
+
+test:
+  :chemspectra:
+    :url: '<your_chem_spectra_test_url>'
+  :nmriumwrapper:
+    :url: 'https://nmriumdev.nmrxiv.org'
+
+production:
+  :chemspectra:
+    :url: '<your_chem_spectra_production_url>'
+  :nmriumwrapper:
+    :url: 'https://nmrium.nmrxiv.org'
+
+```
 
 
 # Basic Development Setup

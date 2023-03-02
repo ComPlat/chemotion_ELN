@@ -10,7 +10,7 @@ import { stopBubble } from 'src/utilities/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds } from 'src/utilities/SpectraHelper';
+import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer } from 'src/utilities/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -56,11 +56,20 @@ const qCheckMsg = (sample, container) => {
   return '';
 };
 
+const isNMRKind = (container) => {
+    if (container.extended_metadata.kind) {
+        return container.extended_metadata.kind.includes('NMR');
+    }
+    return false;
+}
+
 const SpectraEditorBtn = ({
   sample, spcInfos, hasJcamp, hasChemSpectra,
-  toggleSpectraModal, confirmRegenerate, confirmRegenerateEdited, hasEditedJcamp
+  toggleSpectraModal, confirmRegenerate, confirmRegenerateEdited, hasEditedJcamp,
+  toggleNMRDisplayerModal, hasNMRium
 }) => (
-  <OverlayTrigger
+  <span>
+    <OverlayTrigger
     placement="bottom"
     delayShow={500}
     overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
@@ -114,6 +123,30 @@ const SpectraEditorBtn = ({
     </Button>
   )}
   </OverlayTrigger>
+
+  {
+        hasNMRium ? (
+            <OverlayTrigger
+            placement="top"
+            delayShow={500}
+            overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
+            >
+                <ButtonGroup className="button-right">
+                    <Button
+                    id="spectra-editor-split-button"
+                    pullRight
+                    bsStyle="info"
+                    bsSize="xsmall"
+                    onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+                    onClick={toggleNMRDisplayerModal}
+                    >
+                    <i className="fa fa-bar-chart"/>
+                    </Button>
+                </ButtonGroup>
+            </OverlayTrigger>
+        ) : null
+    }
+  </span>
 );
 
 SpectraEditorBtn.propTypes = {
@@ -125,6 +158,8 @@ SpectraEditorBtn.propTypes = {
   confirmRegenerate: PropTypes.func.isRequired,
   confirmRegenerateEdited: PropTypes.func.isRequired,
   hasEditedJcamp: PropTypes.bool,
+  toggleNMRDisplayerModal: PropTypes.func.isRequired,
+  hasNMRium: PropTypes.bool,
 };
 
 SpectraEditorBtn.defaultProps = {
@@ -133,6 +168,7 @@ SpectraEditorBtn.defaultProps = {
   sample: {},
   hasChemSpectra: false,
   hasEditedJcamp: false,
+  hasNMRium: false,
 };
 
 const editModeBtn = (toggleMode, isDisabled) => (
@@ -238,6 +274,14 @@ const headerBtnGroup = (
     SpectraActions.LoadSpectra.defer(spcInfos); // going to fetch files base on spcInfos
   };
 
+  //process open NMRium
+  const toggleNMRDisplayerModal = (e) => {
+    const spcInfosForNMRDisplayer = BuildSpcInfosForNMRDisplayer(sample, container);
+    e.stopPropagation();
+    SpectraActions.ToggleModalNMRDisplayer();
+    SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
+  }
+
   const jcampIds = JcampIds(container);
   const hasJcamp = jcampIds.orig.length > 0;
   const confirmRegenerate = (e) => {
@@ -259,7 +303,8 @@ const headerBtnGroup = (
     }
   }
 
-  const { hasChemSpectra } = UIStore.getState();
+  const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
+  const hasNMRium = isNMRKind(container) && hasNmriumWrapper;
 
   return (
     <div className="upper-btn">
@@ -286,6 +331,8 @@ const headerBtnGroup = (
         toggleSpectraModal={toggleSpectraModal}
         confirmRegenerate={confirmRegenerate}
         confirmRegenerateEdited={confirmRegenerateEdited}
+        toggleNMRDisplayerModal={toggleNMRDisplayerModal}
+        hasNMRium={hasNMRium}
       />
       <span
         className="button-right add-to-report"

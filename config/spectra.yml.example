@@ -1,11 +1,17 @@
 development:
-  :url: '123.123.123.123'
-  :port: '2412'
+  :chemspectra:
+    :url: 'http://0.0.0.0:3007'
+  :nmriumwrapper:
+    :url: 'https://nmrium.nmrxiv.org'
 
 test:
-  :url: '123.123.123.123'
-  :port: '2412'
+  :chemspectra:
+    :url: 'http://123.123.123.123:2412'
+  :nmriumwrapper:
+    :url: 'https://nmrium.nmrxiv.org'
 
 production:
-  :url: '123.123.123.123'
-  :port: '2412'
+  :chemspectra:
+    :url: 'http://0.0.0.0:3007'
+  :nmriumwrapper:
+    :url: 'https://nmrium.nmrxiv.org'
