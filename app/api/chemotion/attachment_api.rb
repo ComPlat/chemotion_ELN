@@ -160,14 +160,13 @@ module Chemotion
       desc 'get_annotated_image_of_attachment'
       get ':attachment_id/annotated_image' do
         content_type 'application/octet-stream'
-        
+
         env['api.format'] = :binary
-        store = Rails.application.config_for :shrine
-        store = store[:store]
-        file_location = store+ '/' + (@attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] ||'not available')   
-        @attachment.attachment.storage.directory  
-        uploaded_file = if !file_location.nil? && File.exist?(file_location)
-                          extension_of_annotation = File.extname( @attachment.filename)
+        store = @attachment.attachment.storage.directory
+        file_location = store.join(@attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] ||'not available')
+
+        uploaded_file = if file_location.present? && File.file?(file_location)
+                          extension_of_annotation = File.extname(@attachment.filename)
                           extension_of_annotation = '.png' if @attachment.attachment.mime_type == 'image/tiff'
                           filename_of_annotated_image = @attachment.filename.gsub(
                             File.extname(@attachment.filename),
@@ -175,7 +174,7 @@ module Chemotion
                           )
                           header['Content-Disposition'] = "attachment; filename=\"#{filename_of_annotated_image}\""
                           File.open(file_location)
-                        else                          
+                        else
                           header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
                           @attachment.attachment_attacher.file
                         end

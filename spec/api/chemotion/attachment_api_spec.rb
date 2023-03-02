@@ -417,7 +417,7 @@ describe Chemotion::AttachmentAPI do
         Rails.root.join('spec/fixtures/annotations/20221207_valide_annotation_edited.svg')
       end
       let(:expected_annotated_image_size) do
-        annotation_location = "#{updated_attachment.attachment.storage.directory}/#{updated_attachment.attachment_data['derivatives']['annotation'] ['annotated_file_location']}" # rubocop:disable Layout/LineLength
+        annotation_location = "#{updated_attachment.attachment.storage.directory}/#{updated_attachment.attachment_data['derivatives']['annotation']['annotated_file_location']}" # rubocop:disable Layout/LineLength
         File.open(annotation_location).size
       end
       let(:updated_attachment) { Attachment.find(attachment.id) }

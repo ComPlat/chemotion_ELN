@@ -64,7 +64,7 @@ module Analyses
       FileUtils.mkdir_p(folder)
       ofile = Rails.root.join(folder, oa.filename)
       location_of_attachment = oa.attachment.url
-      
+
       FileUtils.cp(location_of_attachment, ofile)
       File.open(ofile, 'r') do |f|
         body = { file: f }

@@ -66,8 +66,9 @@ module Usecases
           image = MiniMagick::Image.read(xml.to_s)
           image.format(extention.delete('.'))
           image.write(annotated_image_location)
-          
-          attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] = attachment.attachment_data['id']+"_annotated"+extention
+
+          attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] =
+            "#{attachment.attachment_data['id']}_annotated#{extention}"
           attachment.update_column(:attachment_data, attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
         end
 

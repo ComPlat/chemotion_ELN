@@ -44,7 +44,7 @@ class AttachmentUploader < Shrine
     file_extension = ".#{record.attachment.mime_type.split('/').last}" unless record.attachment.mime_type.nil?
     file_extension = '.jpg' if file_extension == '.jpeg'
     file_extension = AttachmentUploader.get_file_extension(original) if file_extension.nil?
-    
+
     file_basename = File.basename(file.metadata['filename'], '.*')
     file_path = AttachmentUploader.create_tmp_file(file_basename, file_extension, file)
 

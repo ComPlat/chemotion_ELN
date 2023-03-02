@@ -183,7 +183,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   # Rewrite read attribute for filesize
   def filesize
-    # read_attribute(:filesize).presence || attachment.attachment['size']
+    # read_attribute(:filesize).presence || attachment['size']
     attachment['size']
   end
 
@@ -199,7 +199,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   # Rewrite read attribute for content_type
   def content_type
-    # read_attribute(:content_type).presence || attachment.attachment['mime_type']
+    # read_attribute(:content_type).presence || attachment['mime_type']
     attachment['mime_type']
   end
 
