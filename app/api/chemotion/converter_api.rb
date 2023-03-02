@@ -3,15 +3,18 @@
 module Chemotion
   class ConverterAPI < Grape::API
     helpers do
+      def available?
+        @conf = Rails.configuration.try(:converter).try(:url)
+        @profile = Rails.configuration.try(:converter).try(:profile)
+        error!(406) unless @conf && @profile
+      end
     end
-    resource :converter do
+
+    resource :converter do # rubocop:disable Metrics/BlockLength
+      before do
+        available?
+      end
       resource :profiles do
-        before do
-          error!(401) unless current_user.is_a?(Admin)
-          @conf = Rails.configuration.try(:converter).try(:url)
-          @profile = Rails.configuration.try(:converter).try(:profile)
-          error!(406) unless @conf && @profile
-        end
         desc 'fetch profiles'
         get do
           profiles = Analyses::Converter.fetch_profiles
@@ -36,12 +39,20 @@ module Chemotion
         end
       end
 
+      resource :options do
+        before do
+          error!(401) unless current_user.profile.data['converter_admin'] == true # rubocop:disable Lint/SafeNavigationChain
+        end
+        desc 'fetch options'
+        get do
+          options = Analyses::Converter.fetch_options
+          { options: options, client: @profile }
+        end
+      end
+
       resource :tables do
         before do
-          error!(401) unless current_user.is_a?(Admin)
-          @conf = Rails.configuration.try(:converter).try(:url)
-          @profile = Rails.configuration.try(:converter).try(:profile)
-          error!(406) unless @conf && @profile
+          error!(401) unless current_user.profile&.data['converter_admin'] == true # rubocop:disable Lint/SafeNavigationChain
         end
         desc 'create tables'
         post do

@@ -49,8 +49,13 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
+# rubocop: disable Metrics/ClassLength
+# rubocop: disable Metrics/MethodLength
+# rubocop: disable Metrics/AbcSize
+
+class User < ApplicationRecord
   attr_writer :login
+
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
   devise :database_authenticatable, :registerable, :confirmable,
@@ -238,6 +243,7 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
         data['chmo'] = result['ols_terms']
         data['is_templates_moderator'] = false
         data['molecule_editor'] = false
+        data['converter_admin'] = false
         data.merge!(layout: {
           'sample' => 1,
           'reaction' => 2,
@@ -284,6 +290,10 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def molecule_editor
     profile&.data&.fetch('molecule_editor', false)
+  end
+
+  def converter_admin
+    profile&.data&.fetch('converter_admin', false)
   end
 
   def matrix_check_by_name(name)
@@ -445,3 +455,7 @@ class Group < User
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins,  through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
 end
+
+# rubocop: enable Metrics/ClassLength
+# rubocop: enable Metrics/MethodLength
+# rubocop: enable Metrics/AbcSize
