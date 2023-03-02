@@ -113,6 +113,7 @@ export const SearchStore = types
     clearSearchAndTabResults () {
       self.search_results.clear();
       self.tab_search_results.clear();
+      self.clearTabCurrentPage();
     },
     clearSearchResults() {
       self.clearSearchAndTabResults();

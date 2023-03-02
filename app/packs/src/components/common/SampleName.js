@@ -5,7 +5,7 @@ import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 const SampleName = ({ sample }) => {
   const { contains_residues, polymer_type, molecule_formula, decoupled } = sample;
   const moleculeName = sample.decoupled ? null :
-    (<p style={{ wordBreak: 'break-all' }}><ClipboardCopyText text={sample.showedName()} /></p>);
+    (<p style={{ wordBreak: 'break-all' }}><ClipboardCopyText text={sample.showed_name} /></p>);
   let stereo = '';
   if (sample.stereo) {
     const stereoInfo = Object.keys(sample.stereo).reduce((acc, k) => {
