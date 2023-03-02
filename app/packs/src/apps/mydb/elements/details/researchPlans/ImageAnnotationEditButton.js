@@ -5,6 +5,8 @@ import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import Attachment from 'src/models/Attachment';
 
 export default class ImageAnnotationEditButton extends Component {
+  allowedFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff']
+
   constructor(props) {
     super(props);
   }
@@ -21,7 +23,7 @@ export default class ImageAnnotationEditButton extends Component {
           className={
             this.props.horizontalAlignment ? this.props.horizontalAlignment : ""
           }
-          onClick={() => {                
+          onClick={() => {
             this.props.parent.setState({
               imageEditModalShown: true,
               choosenAttachment: this.props.attachment,
@@ -35,7 +37,7 @@ export default class ImageAnnotationEditButton extends Component {
     );
   }
 
-  renderInactiveAnnotationButton(attachment) {
+  renderInactiveAnnotationButton(attachment) {   
     return (
       <OverlayTrigger
         overlay={
@@ -63,9 +65,15 @@ export default class ImageAnnotationEditButton extends Component {
   }
 
   render() {
-    if(!this.props.attachment){
+    if (!this.props.attachment||!this.props.attachment.filename) {
       return null;
     }
+
+    const extension = this.props.attachment.filename.split('.').pop();
+    if (!this.allowedFileTypes.includes(extension)) {
+      return null;
+    }
+
     return this.props.attachment.isNew
       ? this.renderInactiveAnnotationButton()
       : this.renderActiveAnnotationButton();
