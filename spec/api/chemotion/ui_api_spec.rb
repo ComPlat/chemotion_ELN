@@ -11,7 +11,7 @@ describe Chemotion::UiAPI do
 
   before do
     allow_any_instance_of(WardenAuthentication).to(
-      receive(:current_user).and_return(user)
+      receive(:current_user).and_return(user),
     )
   end
 
@@ -19,26 +19,26 @@ describe Chemotion::UiAPI do
     describe 'without spectra config' do
       before do
         StubConfig.url = false
-        Rails.configuration.spectra = StubConfig
+        Rails.configuration.spectra.chempspectra = {}
         get '/api/v1/ui/initialize'
       end
 
       it 'return ChemSpectra config' do
         rsp = JSON.parse(response.body)
-        expect(rsp['has_chem_spectra']).to eq(false)
+        expect(rsp['has_chem_spectra']).to be(false)
       end
     end
 
     describe 'with spectra config' do
       before do
         StubConfig.url = true
-        Rails.configuration.spectra = StubConfig
+        Rails.configuration.spectra.chemspectra = StubConfig
         get '/api/v1/ui/initialize'
       end
 
       it 'return ChemSpectra config' do
         rsp = JSON.parse(response.body)
-        expect(rsp['has_chem_spectra']).to eq(true)
+        expect(rsp['has_chem_spectra']).to be(true)
       end
     end
   end
