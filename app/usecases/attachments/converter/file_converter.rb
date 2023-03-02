@@ -9,7 +9,7 @@ module Usecases
         def create_derivative(tmp_path, original_file, _db_id, result, _record)
           file = MiniMagick::Image.open(tmp_path)
           file.format('png')
-          conversion_file_name = File.basename(original_file).gsub(File.extname(original_file), '_conversion.png')
+          conversion_file_name = "#{File.basename(original_file)}.conversion.png"
           conversion_path = "#{Pathname.new(tmp_path).dirname}/#{conversion_file_name}"
           file.write(conversion_path)
           result[:conversion] = File.open(conversion_path, 'rb')

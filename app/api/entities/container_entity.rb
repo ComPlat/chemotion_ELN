@@ -10,7 +10,7 @@ module Entities
       :description,
       :extended_metadata,
     )
-    expose :preview_img, if: ->(object, options) { object.container_type == 'analysis' }
+    expose :preview_img, if: ->(object, _options) { object.container_type == 'analysis' }
 
     expose :attachments, using: 'Entities::AttachmentEntity'
     expose :code_log, using: 'Entities::CodeLogEntity'
@@ -26,8 +26,14 @@ module Entities
         metadata[:report] = report
         metadata[:status] = object.extended_metadata['status']
         metadata[:kind] = object.extended_metadata['kind']
-        metadata[:content] = JSON.parse(object.extended_metadata['content']) if object.extended_metadata['content'].present?
-        metadata[:hyperlinks] = JSON.parse(object.extended_metadata['hyperlinks']) if object.extended_metadata['hyperlinks'].present?
+        if object.extended_metadata['content'].present?
+          metadata[:content] =
+            JSON.parse(object.extended_metadata['content'])
+        end
+        if object.extended_metadata['hyperlinks'].present?
+          metadata[:hyperlinks] =
+            JSON.parse(object.extended_metadata['hyperlinks'])
+        end
       end
     end
 
@@ -43,14 +49,14 @@ module Entities
       attachments_with_thumbnail = Attachment.where(
         thumb: true,
         attachable_type: 'Container',
-        attachable_id: object.children.where(container_type: :dataset)
+        attachable_id: object.children.where(container_type: :dataset),
       )
       return no_preview_image_available unless attachments_with_thumbnail.exists?
 
-      latest_image_attachment = attachments_with_thumbnail
-                                .where(content_type: THUMBNAIL_CONTENT_TYPES)
-                                .order(updated_at: :desc)
-                                .first
+      latest_image_attachment = attachments_with_thumbnail.where(
+        "attachment_data -> 'metadata' ->> 'mime_type' in (:value)",
+        value: THUMBNAIL_CONTENT_TYPES,
+      ).order(updated_at: :desc).first
 
       attachment = latest_image_attachment || attachments_with_thumbnail.first
       preview_image = attachment.read_thumbnail
@@ -59,7 +65,7 @@ module Entities
       {
         preview: Base64.encode64(preview_image),
         id: attachment.id,
-        filename: attachment.filename
+        filename: attachment.filename,
       }
     end
 
