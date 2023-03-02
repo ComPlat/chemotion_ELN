@@ -66,6 +66,7 @@ class UIStore {
       showModal: false,
       modalParams: {},
       hasChemSpectra: false,
+      hasNmriumWrapper: false,
       matrices: {}
     };
 
