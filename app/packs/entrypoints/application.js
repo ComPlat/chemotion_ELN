@@ -12,4 +12,5 @@ var OmniauthCredential = require('src/apps/omniauthCredential');
 var UserCounter = require('src/apps/userCounter');
 var ScifinderCredential = require('src/apps/scifinderCredential');
 var StructureEditorUserSetting = require('src/components/structureEditor/UserSetting');
+var ConverterAdmin = require('../src/apps/converter/ConverterAdmin');
 var mydb = require('src/apps/mydb');

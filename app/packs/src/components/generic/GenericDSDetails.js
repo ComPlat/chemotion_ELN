@@ -118,7 +118,7 @@ class GenericDSDetails extends Component {
   render() {
     const { genericDS, klass, kind } = this.props;
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-    if (MatrixCheck(currentUser.matrix, 'genericDataset') && Object.keys(genericDS).length !== 0) {
+    if (MatrixCheck(currentUser.matrix, 'genericDataset') && Object.keys(genericDS || {}).length !== 0) {
       return (
         <Panel className="panel-detail">
           <Panel.Body style={{ position: 'relative', minHeight: 260, overflowY: 'unset' }}>

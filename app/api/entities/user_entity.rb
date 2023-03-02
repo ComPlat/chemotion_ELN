@@ -17,6 +17,7 @@ module Entities
     expose :locked_at, if: -> (obj, opts) { obj.respond_to? :locked_at}
     expose :is_templates_moderator, documentation: { type: "Boolean", desc: "ketcherails template administrator" }
     expose :molecule_editor, documentation: { type: 'Boolean', desc: 'molecule administrator' }
+    expose :converter_admin, documentation: { type: 'Boolean', desc: 'converter administrator' }
     expose :account_active, documentation: { type: 'Boolean', desc: 'User Account Active or Inactive' }
     expose :matrix, documentation: { type: 'Integer', desc: "User's matrix" }
     expose :counters

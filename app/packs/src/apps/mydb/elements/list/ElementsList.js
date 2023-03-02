@@ -92,7 +92,7 @@ export default class ElementsList extends React.Component {
   onChange(state) {
     const { totalElements } = this.state;
     Object.keys(state.elements).forEach((key) => {
-      totalElements[key] = state.elements[key].totalElements;
+      totalElements[key] = state.elements[key]?.totalElements;
     });
 
     this.setState({
