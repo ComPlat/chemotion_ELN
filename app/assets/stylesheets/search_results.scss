@@ -70,15 +70,24 @@
   background-color: rgb(245, 245, 245);
   padding: 15px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-.search-result-tab-content-list:last-child {
-  border-bottom: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .search-result-tab-content-list p {
   font-weight: bold;
   margin-bottom: 2px;
+}
+
+.search-result-tab-content-list div {
+  display: block;
+  margin-bottom: 30px;
+}
+
+.search-result-tab-content-list-name {
+  display: block;
+  margin: -16px -15px -15px -15px;
+  padding: 9px 15px;
+  background-color: #fff;
 }
 
 .search-result-pagination {

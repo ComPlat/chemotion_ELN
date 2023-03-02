@@ -106,12 +106,17 @@ const SearchResultTabContent = ({ list, tabResult }) => {
     let tabResultByPage = resultsByPage != undefined ? resultsByPage.results : { elements: [] };
 
     if (tabResultByPage.elements.length > 0) {
-      contentList = tabResultByPage.elements.map((obj, i) => {
-        let moleculeName = list.key == "sample" && obj.showed_name != null && obj.showed_name != undefined ? <SampleName sample={obj} /> : '';
+      contentList = tabResultByPage.elements.map((object, i, elements) => {
+        let previous = elements[i - 1];
+        let previousMolecule = previous ? previous.molecule_formula : '';
+        let moleculeName = previous && previousMolecule == object.molecule_formula ? '' : <SampleName sample={object} />;
+
         return (
           <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
             {moleculeName}
-            {[obj.short_label, obj.name].join(" - ")}
+            <span className="search-result-tab-content-list-name">
+              {[object.short_label, object.name].join(" - ")}
+            </span>
           </div>
         )
       });

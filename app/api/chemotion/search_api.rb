@@ -91,11 +91,20 @@ module Chemotion
         threshold = params[:selection][:tanimoto_threshold]
 
         # TODO: implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
-        if params[:selection][:search_type] == 'similar'
-          Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile, threshold)
-        else
-          Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
-        end
+        scope =
+          if params[:selection][:search_type] == 'similar'
+            Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile, threshold)
+          else
+            Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
+          end
+        scope = order_by_molecule(scope)
+      end
+
+      def order_by_molecule(scope)
+        scope.includes(:molecule)
+             .joins(:molecule)
+             .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
+             .order('molecules.sum_formular')
       end
 
       def whitelisted_table(table:, column:, **_)
@@ -116,7 +125,6 @@ module Chemotion
       def filter_values_for_advanced_search(dl = @dl)
         query = ''
         cond_val = []
-        tables = []
 
         adv_params.each do |filter|
           adv_field = filter['field'].to_h.merge(dl).symbolize_keys
@@ -124,7 +132,7 @@ module Chemotion
           next unless filter_with_detail_level(**adv_field)
 
           table = filter['field']['table']
-          tables.push(table: table, ext_key: filter['field']['ext_key'])
+          # tables.push(table: table, ext_key: filter['field']['ext_key'])
           field = filter['field']['column']
           words = filter['value'].split(/(\r)?\n/).map!(&:strip)
           words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } unless filter['match'] == '='
@@ -133,27 +141,15 @@ module Chemotion
           query = "#{query} #{filter['link']} (#{conditions}) "
           cond_val += words
         end
-        [query, cond_val, tables]
+        [query, cond_val]
       end
 
       def advanced_search(c_id = @c_id, dl = @dl)
-        query, cond_val, tables = filter_values_for_advanced_search(dl)
+        query, cond_val = filter_values_for_advanced_search(dl)
 
         scope = Sample.by_collection_id(c_id.to_i)
-        tables.each do |table_info|
-          table = table_info[:table]
-          ext_key = table_info[:ext_key]
-          next if table.casecmp('samples').zero?
-
-          scope = if ext_key.present?
-                    scope.joins("INNER JOIN #{table} ON " \
-                                "samples.#{ext_key} = #{table}.id")
-                  else
-                    scope.joins("INNER JOIN #{table} ON " \
-                                "#{table}.sample_id = samples.id")
-                  end
-        end
-        scope.where([query] + cond_val)
+                      .where([query] + cond_val)
+        scope = order_by_molecule(scope)
       end
 
       def elements_search(c_id = @c_id, dl = @dl)
