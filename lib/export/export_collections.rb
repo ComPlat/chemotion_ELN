@@ -46,7 +46,7 @@ module Export
         # create a zip buffer
         zip = Zip::OutputStream.write_buffer do |zip|
           # write the json file into the zip file
-          export_json = self.to_json()
+          export_json = self.to_json
           export_json_checksum = Digest::SHA256.hexdigest(export_json)
           zip.put_next_entry 'export.json'
           zip.write export_json
@@ -62,17 +62,20 @@ module Export
           @attachments.each do |attachment|
             attachment_path = File.join('attachments', "#{attachment.identifier}#{File.extname(attachment.filename)}")
             zip.put_next_entry attachment_path
-            zip.write attachment.attachment_attacher.file.read if attachment.attachment_attacher.file.present?
-            description += "#{attachment.checksum} #{attachment_path}\n"
+            next if attachment.attachment_attacher.file.blank?
 
-            annotation_path=attachment.attachment_data["derivatives"]["annotation"]["id"];
-            zip.put_next_entry attachment_path+"_annotation";
-            zip.write File.open(annotation_path).read           
+            zip.write attachment.attachment_attacher.file.read
+            description += "#{attachment.checksum} #{attachment_path}\n"
+            next unless attachment.annotated_image?
+
+            annotation_path = attachemnt.attachment_attacher.derivatives[:annotation].url
+            zip.put_next_entry "#{attachment_path}_annotation"
+            zip.write File.read(annotation_path)
           end
 
           # write all the images into an images directory
           @images.each do |file_path|
-            image_data = File.read(Rails.public_path.join( file_path))
+            image_data = Rails.public_path.join(file_path).read
             image_checksum = Digest::SHA256.hexdigest(image_data)
             zip.put_next_entry file_path
             zip.write image_data

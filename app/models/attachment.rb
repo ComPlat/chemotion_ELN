@@ -45,16 +45,16 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   before_create :generate_key
   # TODO: rm this during legacy store cleaning
-  #before_create :add_content_type
+  # before_create :add_content_type
 
   # reload to get identifier:uuid
   after_create :reload
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
   # TODO: rm this during legacy store cleaning
-  #after_save :update_filesize
+  # after_save :update_filesize
   # TODO: rm this during legacy store cleaning
-  #after_save :add_checksum, if: :new_upload
+  # after_save :add_checksum, if: :new_upload
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
@@ -121,11 +121,6 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   # Rewrite read attribute for checksum
-  def checksum
-    # read_attribute(:checksum).presence || attachment.attachment['md5']
-    attachment['md5']
-  end
-
   def checksum
     # read_attribute(:checksum).presence || attachment.attachment['md5']
     attachment['md5']
