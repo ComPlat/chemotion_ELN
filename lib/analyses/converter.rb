@@ -142,7 +142,7 @@ module Analyses
       response = nil
       begin
         ofile = Rails.root.join(data[:f], data[:a].filename)
-        FileUtils.cp(data[:a].attachment_attacher.file_data['id'], ofile)
+        FileUtils.cp(data[:a].attachment_url, ofile)
         File.open(ofile, 'r') do |f|
           body = { file: f }
           response = HTTParty.post(
