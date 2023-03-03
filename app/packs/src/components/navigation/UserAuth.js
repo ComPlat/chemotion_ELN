@@ -7,6 +7,7 @@ import _ from 'lodash';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -562,6 +563,10 @@ export default class UserAuth extends Component {
     if (MatrixCheck(this.state.currentUser.matrix, 'userLabel')) {
       userLabel = (<MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>);
     }
+    let converterBtn = (<span />);
+    if (UIStore.getState().hasConverter === true) {
+      converterBtn = (<MenuItem eventKey="12" href="/converter_admin">Converter Profile</MenuItem>);
+    }
 
     return (
       <div>
@@ -575,7 +580,7 @@ export default class UserAuth extends Component {
             {userLabel}
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-            <MenuItem eventKey="12" href="/converter_admin" >Converter Profile</MenuItem>
+            {converterBtn}
             <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
           </NavDropdown>
