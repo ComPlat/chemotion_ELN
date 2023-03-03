@@ -79,7 +79,7 @@ export default class ModalImportCollection extends React.Component {
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
           <Button bsStyle={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
-            <span><i className={bClass} />{bTitle}</span>
+            <span><i className={bClass} />&nbsp;{bTitle}</span>
           </Button>
         </ButtonToolbar>
       </div>

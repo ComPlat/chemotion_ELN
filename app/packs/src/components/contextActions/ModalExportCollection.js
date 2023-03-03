@@ -202,7 +202,7 @@ export default class ModalExportCollection extends React.Component {
               title="Export as ZIP file (incl. attachments)"
               onClick={this.handleClick}
             >
-              <span><i className={bClass} />{bTitle}</span>
+              <span><i className={bClass} />&nbsp;{bTitle}</span>
             </Button>
           </ButtonToolbar>
         </div>

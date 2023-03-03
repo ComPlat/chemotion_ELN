@@ -6,6 +6,7 @@ import FormatContainer from 'src/apps/mydb/elements/details/formats/FormatContai
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
+import MetadataContainer from 'src/components/metadata/MetadataContainer';
 import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import React, { Component } from 'react';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
@@ -20,7 +21,17 @@ import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 import CommentFetcher from 'src/components/fetchers/CommentFetcher';
 import CommentModal from 'src/components/comments/CommentModal';
 
+
 const tabInfoHash = {
+  metadata: {
+    title: 'Metadata',
+    iconEl: (
+      <span>
+        <i className="fa fa-file-text-o" />&nbsp;&nbsp;
+        <i className="fa fa-book" />
+      </span>
+    )
+  },
   report: {
     title: 'Report',
     iconEl: (
@@ -252,6 +263,8 @@ export default class ElementDetails extends Component {
             toggleFullScreen={this.toggleFullScreen}
           />
         );
+      case 'metadata':
+        return <MetadataContainer metadata={el} />;
       case 'report':
         return <ReportContainer report={el} />;
       case 'prediction':
