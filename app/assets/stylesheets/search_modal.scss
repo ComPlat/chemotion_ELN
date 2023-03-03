@@ -1,7 +1,8 @@
 [dialogas=full-search].modal {
   width: fit-content;
   height: fit-content;
-  top: 20%;
+  max-height: 87vh;
+  top: calc(calc(100% - 92vh));
   left: calc(calc(100% - 90vw) / 2);
 }
 
@@ -16,6 +17,8 @@
 
 [dialogas=full-search] .modal-content {
   border: 1px solid rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  height: fit-content;
 }
 
 [dialogas=full-search] .modal-header {
@@ -112,4 +115,11 @@
 
 i.fa.icon-right {
   float: right;
+}
+
+.advanced-search {
+  margin-bottom: 30px;
+  .Select-menu {
+    max-height: 100px;
+  }
 }
