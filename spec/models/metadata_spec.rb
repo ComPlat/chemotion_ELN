@@ -14,8 +14,7 @@ RSpec.describe Metadata do
   describe 'to_radar_json' do
     let(:metadata) { create(:metadata) }
 
-    # TOFIX: this test is not working because of configuration issues
-    xit 'is possible to convert to a radar json' do
+    it 'is possible to convert to a radar json' do
       radar_metadata = metadata.to_radar_json
       radar_metadata_json = JSON.parse(radar_metadata)
       expect(radar_metadata_json['descriptiveMetadata']['title']).to eq('A test collection')
@@ -33,8 +32,7 @@ RSpec.describe Metadata do
   describe 'set_radar_ids' do
     let(:metadata) { create(:metadata) }
 
-    # TOFIX: this test is not working because of configuration issues
-    xit 'is possible to set the radar ids' do
+    it 'is possible to set the radar ids' do # rubocop: disable RSpec/MultipleExpectations
       metadata.set_radar_ids('test_dataset_id', 'test_file_id')
 
       expect(metadata.metadata['datasetId']).to eq('test_dataset_id')
@@ -47,7 +45,7 @@ RSpec.describe Metadata do
   describe 'reset_radar_ids' do
     let(:metadata) { create(:metadata) }
 
-    it 'is possible to reset the radar ids' do
+    it 'is possible to reset the radar ids' do # rubocop: disable RSpec/MultipleExpectations
       metadata.metadata['datasetId'] = 'test'
       metadata.metadata['datasetUrl'] = 'test'
       metadata.metadata['fileId'] = 'test'
