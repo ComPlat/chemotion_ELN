@@ -35,6 +35,7 @@ class LoadingStore {
           ElementActions.createWellplate,
           ElementActions.updateWellplate,
           ElementActions.importWellplateSpreadsheet,
+          ElementActions.storeMetadata,
           InboxActions.fetchInbox,
           PredictionActions.infer,
         ],

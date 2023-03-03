@@ -46,6 +46,7 @@
 /config/inference.yml
 /config/omniauth.yml
 /config/scifinder_n.yml
+/config/radar.yml
 
 /node_modules
 

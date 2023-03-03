@@ -1,0 +1,76 @@
+{
+  "title": "A test collection",
+  "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.",
+  "subjectAreas": [
+    {
+      "controlledSubjectAreaName": "CHEMISTRY"
+    },
+    {
+      "controlledSubjectAreaName": "COMPUTER_SCIENCE"
+    }
+  ],
+  "keywords": [
+    "Lorem ipsum",
+    "dolor sit amet"
+  ],
+  "creators": [
+    {
+      "orcid": "0000-0000-0000-0000",
+      "givenName": "Tanja",
+      "familyName": "Test",
+      "affiliations": [
+        {
+          "affiliation": "Test Institute"
+        },
+        {
+          "affiliation": "Test University"
+        }
+      ]
+    }
+  ],
+  "contributors": [
+    {
+      "orcid": "0000-0000-0000-0001",
+      "givenName": "Tom",
+      "familyName": "Test",
+      "affiliations": [
+        {
+          "affiliation": "Test Institute"
+        }
+      ],
+      "contributorType": "DATA_COLLECTOR"
+    }
+  ],
+  "relatedIdentifiers": [
+    {
+      "value": "10.0000/12345",
+      "relationType": "REFERENCES",
+      "relatedIdentifierType": "DOI"
+    }
+  ],
+  "alternateIdentifiers": [
+    {
+      "value": "https://example.com",
+      "alternateIdentifierType": "URL"
+    }
+  ],
+  "rightsHolders": [
+    "Tanja Test"
+  ],
+  "rights": [
+    {
+      "additionalRights": "",
+      "controlledRights": "CC_0_1_0_UNIVERSAL_PUBLIC_DOMAIN_DEDICATION"
+    }
+  ],
+  "fundingReferences": [
+    {
+      "awardURI": "https://example.com/a-test-project",
+      "awardTitle": "A test project",
+      "funderName": "DFG",
+      "awardNumber": "789-456",
+      "funderIdentifier": "123-456",
+      "funderIdentifierType": "OTHER"
+    }
+  ]
+}

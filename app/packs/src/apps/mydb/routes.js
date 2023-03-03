@@ -26,6 +26,13 @@ const routes = {
     '/:collectionID': 'show'
   },
 
+  '/metadata': {
+    target: {
+      showMetadata: routesUtils.metadataShowOrNew
+    },
+    '/': 'showMetadata'
+  },
+
   '/report': {
     target: {
       showReport: routesUtils.reportShowReport

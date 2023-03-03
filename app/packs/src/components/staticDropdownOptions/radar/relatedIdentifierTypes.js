@@ -1,0 +1,21 @@
+export const relatedIdentifierTypes = [
+  {label: 'ARK', value: 'ARK'},
+  {label: 'arXiv', value: 'AR_XIV'},
+  {label: 'bibcode', value: 'BIBCODE'},
+  {label: 'DOI', value: 'DOI'},
+  {label: 'EAN13', value: 'EAN_13'},
+  {label: 'EISSN', value: 'EISSN'},
+  {label: 'Handle', value: 'HANDLE'},
+  {label: 'IGSN', value: 'IGSN'},
+  {label: 'ISBN', value: 'ISBN'},
+  {label: 'ISSN', value: 'ISSN'},
+  {label: 'ISTC', value: 'ISTC'},
+  {label: 'LISSN', value: 'LISSN'},
+  {label: 'LSID', value: 'LSID'},
+  {label: 'PMID', value: 'PMID'},
+  {label: 'PURL', value: 'PURL'},
+  {label: 'UPC', value: 'UPC'},
+  {label: 'URL', value: 'URL'},
+  {label: 'URN', value: 'URN'},
+  // {label: 'w3id', value: ''}
+]

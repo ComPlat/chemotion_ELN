@@ -605,6 +605,68 @@ describe Chemotion::CollectionAPI do
         end
       end
     end
+
+    context 'metadata' do
+      describe 'GET /api/v1/collections/<id>/metadata' do
+        it 'with a valid collection id and with existing metadata' do
+          c1.metadata = create(:metadata)
+
+          get '/api/v1/collections/%s/metadata' % c1.id
+          expect(response.status).to eq(200)
+          expect(JSON.parse(response.body)['metadata']['title']).to eq('A test collection')
+        end
+
+        it 'with a valid collection id, but without existing metadata' do
+          get '/api/v1/collections/%s/metadata' % c1.id
+          expect(response.status).to eq(404)
+        end
+
+        it 'without a valid collection id' do
+          get '/api/v1/collections/12345/metadata'
+          expect(response.status).to eq(401)
+        end
+
+        it 'with a collection id of someone else' do
+          get '/api/v1/collections/%s/metadata' % c5.id
+          expect(response.status).to eq(401)
+        end
+      end
+
+      describe 'POST /api/v1/collections/<id>/metadata' do
+        let (:post_params) do
+          {
+            metadata: {
+              title: 'A new collection title'
+            }
+          }
+        end
+
+        it 'with a valid collection id and with existing metadata' do
+          c1.metadata = create(:metadata)
+
+          post '/api/v1/collections/%s/metadata' % c1.id, params: post_params
+          expect(response.status).to eq(201)
+          expect(JSON.parse(response.body)['metadata']['title']).to eq('A new collection title')
+        end
+
+        it 'with a valid collection id, but without existing metadata' do
+          post '/api/v1/collections/%s/metadata' % c1.id, params: post_params
+          expect(response.status).to eq(201)
+          expect(JSON.parse(response.body)['metadata']['title']).to eq('A new collection title')
+        end
+
+        it 'without a valid collection id' do
+          post '/api/v1/collections/12345/metadata', params: post_params
+          expect(response.status).to eq(401)
+        end
+
+        it 'with a collection id of someone else' do
+          post '/api/v1/collections/%s/metadata' % c5.id, params: post_params
+          expect(response.status).to eq(401)
+        end
+      end
+    end
+
   end
 
   context 'no user logged in' do
@@ -674,6 +736,46 @@ describe Chemotion::CollectionAPI do
 
         it 'responds with 401 status code' do
           status = post '/api/v1/collections/imports', params: file_upload
+          expect(response.status).to eq(401)
+        end
+      end
+    end
+
+    context 'metadata' do
+      let!(:c1)   { create(:collection) }
+
+      describe 'GET /api/v1/collections/<id>/metadata' do
+        it 'with a valid collection id and with existing metadata' do
+          c1.metadata = create(:metadata)
+
+          get '/api/v1/collections/%s/metadata' % c1.id
+          expect(response.status).to eq(401)
+        end
+
+        it 'with a valid collection id, but without existing metadata' do
+          get '/api/v1/collections/%s/metadata' % c1.id
+          expect(response.status).to eq(401)
+        end
+      end
+
+      describe 'POST /api/v1/collections/<id>/metadata' do
+        let (:post_params) do
+          {
+            metadata: {
+              title: 'A new collection title'
+            }
+          }
+        end
+
+        it 'with a valid collection id and with existing metadata' do
+          c1.metadata = create(:metadata)
+
+          post '/api/v1/collections/%s/metadata' % c1.id, params: post_params
+          expect(response.status).to eq(401)
+        end
+
+        it 'with a valid collection id, but without existing metadata' do
+          post '/api/v1/collections/%s/metadata' % c1.id, params: post_params
           expect(response.status).to eq(401)
         end
       end

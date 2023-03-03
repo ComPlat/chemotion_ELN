@@ -57,6 +57,15 @@ Rails.application.routes.draw do
   get 'chemspectra', to: 'pages#chemspectra'
   get 'chemspectra-editor', to: 'pages#chemspectra_editor'
 
+  # route for the radar oauth callback
+  namespace :oauth do
+    get 'radar/archive', to: 'radar#archive'
+    get 'radar/callback', to: 'radar#callback'
+    get 'radar/select', to: 'radar#select'
+    post 'radar/select', to: 'radar#select'
+    get 'radar/export', to: 'radar#export'
+  end
+
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'
   get 'command_n_control', to: 'pages#home'

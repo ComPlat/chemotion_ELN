@@ -1,0 +1,38 @@
+development:
+  :url:
+  :client_id:
+  :client_secret:
+  :redirect_uri:
+  :email:
+  :backlink:
+  :publisher:
+  :resource:
+  :resourceType:
+  :softwareName:
+  :softwareVersion:
+
+test:
+  :url: https://radar.example.com
+  :client_id: test_id
+  :client_secret: test_secret
+  :redirect_uri: https://redirect.example.com
+  :email:
+  :backlink:
+  :publisher:
+  :resource:
+  :resourceType:
+  :softwareName:
+  :softwareVersion:
+
+production:
+  :url:
+  :client_id:
+  :client_secret:
+  :redirect_uri:
+  :email:
+  :backlink:
+  :publisher:
+  :resource:
+  :resourceType:
+  :softwareName:
+  :softwareVersion:

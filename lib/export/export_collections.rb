@@ -1,5 +1,6 @@
 module Export
   class ExportCollections
+    attr_accessor :file_path
 
     def initialize(export_id, collection_ids, format, nested)
       @export_id = export_id
@@ -279,36 +280,38 @@ module Export
         'parent_id' => 'Container',
       })
 
-      # fetch analyses container
-      analyses_container = root_container.children.where("container_type = 'analyses'").first()
-      fetch_one(analyses_container, {
-        'containable_id' => containable_type,
-        'parent_id' => 'Container',
-      })
-
-      # fetch analysis_containers
-      analysis_containers = analyses_container.children.where("container_type = 'analysis'")
-      analysis_containers.each do |analysis_container|
-        fetch_one(analysis_container, {
+      unless root_container.nil?
+        # fetch analyses container
+        analyses_container = root_container.children.where("container_type = 'analyses'").first()
+        fetch_one(analyses_container, {
           'containable_id' => containable_type,
           'parent_id' => 'Container',
         })
 
-        # fetch attachment containers and attachments
-        attachment_containers = analysis_container.children.where("container_type = 'dataset'")
-        attachment_containers.each do |attachment_container|
-          fetch_one(attachment_container, {
+        # fetch analysis_containers
+        analysis_containers = analyses_container.children.where("container_type = 'analysis'")
+        analysis_containers.each do |analysis_container|
+          fetch_one(analysis_container, {
             'containable_id' => containable_type,
-            'parent_id' => 'Container'
-          })
-          fetch_many(attachment_container.attachments, {
-            'attachable_id' => 'Container',
-            'created_by' => 'User',
-            'created_for' => 'User'
+            'parent_id' => 'Container',
           })
 
-          # add attachments to the list of attachments
-          @attachments += attachment_container.attachments
+          # fetch attachment containers and attachments
+          attachment_containers = analysis_container.children.where("container_type = 'dataset'")
+          attachment_containers.each do |attachment_container|
+            fetch_one(attachment_container, {
+              'containable_id' => containable_type,
+              'parent_id' => 'Container'
+            })
+            fetch_many(attachment_container.attachments, {
+              'attachable_id' => 'Container',
+              'created_by' => 'User',
+              'created_for' => 'User'
+            })
+
+            # add attachments to the list of attachments
+            @attachments += attachment_container.attachments
+          end
         end
       end
     end

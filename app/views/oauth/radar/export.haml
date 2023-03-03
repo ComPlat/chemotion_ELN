@@ -1,0 +1,15 @@
+.container
+
+  %h2
+    Chemotion ELN
+  %br/
+
+  - if @error
+    %p.text-danger.mt-2
+      = @error
+  - else
+    %p
+      Your export is uploaded to RADAR. You will be redirected once the upload is complete.
+
+    :javascript
+      setTimeout('location.reload(true)', 2000);
