@@ -90,7 +90,7 @@ RSpec.describe 'ImportCollection' do
         expect(reaction.temperature.to_s).to eq('{"data"=>[], "userText"=>"30", "valueUnit"=>"°C"}')
         expect(reaction.status).to eq('Done')
         expect(reaction.solvent).to eq('')
-        expect(reaction.short_label).to eq('UU-R1')
+        expect(reaction.short_label).to eq('FM-R2')
         expect(reaction.role).to eq('gp')
         expect(reaction.duration).to eq('1 Day(s)')
         expect(reaction.conditions).to eq('')
