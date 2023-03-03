@@ -13,47 +13,54 @@ import ModalExportRadarCollection from 'src/components/contextActions/ModalExpor
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 import { elementShowOrNew } from 'src/utilities/routesUtils.js'
 
-const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
-  <Dropdown id='export-dropdown'>
-    <Dropdown.Toggle className={customClass}>
-      <Glyphicon glyph="import" /> <Glyphicon glyph="export" />
-    </Dropdown.Toggle>
-    <Dropdown.Menu>
-      <MenuItem onSelect={() => exportFunction(updateModalProps)}
-        title='Export to spreadsheet'>
-        Export samples from selection
-      </MenuItem>
-      <MenuItem onSelect={() => exportReactionFunction(updateModalProps)}
-        title='Export reaction smiles to csv'>
-        Export reactions from selection
-      </MenuItem>
-      <MenuItem divider />
-      <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
-        title='Import from spreadsheet or sdf'>
-        Import samples to collection
-      </MenuItem>
-      <MenuItem divider />
-      <MenuItem onSelect={() => exportCollectionFunction(updateModalProps)}
-        title='Export as ZIP archive'>
-        Export collections
-      </MenuItem>
-      <MenuItem onSelect={() => importCollectionFunction(updateModalProps)}
-        title='Import collections from ZIP archive'>
-        Import collections
-      </MenuItem>
-      <MenuItem divider />
-      <MenuItem onSelect={() => editMetadataFunction()}
-                disabled={isDisabled}
-                title='Edit metadata'>
-        Edit collection metadata
-      </MenuItem>
-      <MenuItem onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
-        title='Export to RADAR'>
-        Archive current collection to RADAR
-      </MenuItem>
-    </Dropdown.Menu>
-  </Dropdown>
-);
+const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
+
+  const showRadar = UIStore.getState().hasRadar? (
+    <MenuItem onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
+    title='Export to RADAR'>
+    Archive current collection to RADAR
+  </MenuItem>
+  ): <span />;
+
+  return (
+    <Dropdown id='export-dropdown'>
+      <Dropdown.Toggle className={customClass}>
+        <Glyphicon glyph="import" /> <Glyphicon glyph="export" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        <MenuItem onSelect={() => exportFunction(updateModalProps)}
+          title='Export to spreadsheet'>
+          Export samples from selection
+        </MenuItem>
+        <MenuItem onSelect={() => exportReactionFunction(updateModalProps)}
+          title='Export reaction smiles to csv'>
+          Export reactions from selection
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
+          title='Import from spreadsheet or sdf'>
+          Import samples to collection
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem onSelect={() => exportCollectionFunction(updateModalProps)}
+          title='Export as ZIP archive'>
+          Export collections
+        </MenuItem>
+        <MenuItem onSelect={() => importCollectionFunction(updateModalProps)}
+          title='Import collections from ZIP archive'>
+          Import collections
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem onSelect={() => editMetadataFunction()}
+                  disabled={isDisabled}
+                  title='Edit metadata'>
+          Edit collection metadata
+        </MenuItem>
+        {showRadar}
+      </Dropdown.Menu>
+    </Dropdown>
+  )
+};
 
 ExportImportButton.propTypes = {
   isDisabled: PropTypes.bool,
