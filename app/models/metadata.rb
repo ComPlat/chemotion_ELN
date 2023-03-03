@@ -206,9 +206,9 @@ class Metadata < ApplicationRecord
 
   def set_radar_ids(dataset_id, file_id)
     self.metadata['datasetId'] = dataset_id
-    self.metadata['datasetUrl'] = Rails.configuration.radar.url + '/radar/en/dataset/' + dataset_id
+    self.metadata['datasetUrl'] = "#{Rails.configuration.radar&.url}/radar/en/dataset/#{dataset_id}"
     self.metadata['fileId'] = file_id
-    self.metadata['fileUrl'] = Rails.configuration.radar.url + '/radar/en/file/' + file_id
+    self.metadata['fileUrl'] = "#{Rails.configuration.radar&.url}/radar/en/file/#{file_id}"
     self.save!
   end
 
