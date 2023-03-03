@@ -19,6 +19,42 @@ module Chemotion
         get do
           present Collection.find(params[:id]), with: Entities::CollectionEntity, root: :collection
         end
+
+        desc "Return collection metadata"
+        rescue_from ActiveRecord::RecordNotFound do
+          error!('401 Unauthorized', 401)
+        end
+        before do
+          error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).read_metadata?
+        end
+        get :metadata do
+          metadata = Metadata.where(collection_id: params[:id]).first
+          if metadata
+            metadata
+          else
+            error!('404 Not Found', 404)
+          end
+        end
+
+        desc "Create/update collection metadata"
+        rescue_from ActiveRecord::RecordNotFound do
+          error!('401 Unauthorized', 401)
+        end
+        params do
+          requires :metadata, type: JSON
+        end
+        before do
+          error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).update_metadata?
+        end
+        post :metadata do
+          metadata = Metadata.where(collection_id: params[:id]).first
+          unless metadata
+            metadata = Metadata.new(collection_id: params[:id])
+          end
+          metadata.metadata = params[:metadata]
+          metadata.save!
+          metadata
+        end
       end
 
       namespace :take_ownership do
