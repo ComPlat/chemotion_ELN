@@ -24,7 +24,8 @@ describe('Research Plan', () => {
     cy.login('cu1', 'user_password');
     cy.get('#tree-id-Col1').click();
     cy.visit('/mydb/collection/3');
-    cy.stubExperimentData();
+    cy.wait(3000);
+    // cy.stubExperimentData();
     cy.get('#create-split-button').click().then(() => {
       cy.contains('Create Research Plan');
       cy.get('#create-research_plan-button').as('btn');
