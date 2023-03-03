@@ -81,7 +81,7 @@ const notApplicableInput = () => (
   </td>
 );
 
-const iupacNameTooltip = material => (
+export const iupacNameTooltip = material => (
   <Tooltip id="iupac_name_tooltip" className="left_tooltip">
     <table>
       <tbody>

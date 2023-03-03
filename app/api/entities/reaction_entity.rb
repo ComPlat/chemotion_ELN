@@ -18,6 +18,7 @@ module Entities
       expose! :starting_materials,                                                      using: 'Entities::ReactionMaterialEntity'
       expose! :type
       expose :comment_count
+      expose! :variations
     end
 
     with_options(anonymize_below: 10) do
@@ -45,6 +46,7 @@ module Entities
       expose! :timestamp_stop,                              unless: :displayed_in_list
       expose! :tlc_description,                             unless: :displayed_in_list
       expose! :tlc_solvents,                                unless: :displayed_in_list
+      expose! :variations
     end
 
     expose_timestamps

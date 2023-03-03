@@ -1,6 +1,7 @@
 import {
   isEmpty,
   round,
+  cloneDeep
 } from 'lodash';
 import Delta from 'quill-delta';
 import moment from 'moment';
@@ -14,6 +15,12 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
+
+const TemperatureDefault = {
+  valueUnit: '°C',
+  userText: '',
+  data: []
+};
 
 const MomentUnit = {
   'Week(s)': 'weeks',
@@ -74,12 +81,6 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
 
 export default class Reaction extends Element {
   static buildEmpty(collection_id) {
-    const temperatureDefault = {
-      'valueUnit': '°C',
-      'userText': '',
-      'data': []
-    }
-
     const reaction = new Reaction({
       collection_id,
       container: Container.init(),
@@ -101,14 +102,15 @@ export default class Reaction extends Element {
       solvents: [],
       status: '',
       starting_materials: [],
-      temperature: temperatureDefault,
+      temperature: TemperatureDefault,
       timestamp_start: '',
       timestamp_stop: '',
       tlc_description: '',
       tlc_solvents: '',
       type: 'reaction',
       can_update: true,
-      can_copy: false
+      can_copy: false,
+      variations: {}
     })
 
     reaction.short_label = this.buildReactionShortLabel()
@@ -172,8 +174,89 @@ export default class Reaction extends Element {
       temperature: this.temperature,
       timestamp_start: this.timestamp_start,
       timestamp_stop: this.timestamp_stop,
-      segments: this.segments.map(s => s.serialize())
+      segments: this.segments.map(s => s.serialize()),
+      variations: this.homogenizeVariations(this.variations)
     });
+  }
+
+  homogenizeVariations(variations) {
+    // variations data structure:
+    // [
+    //   {
+    //     "id": "<number>",
+    //     "properties": {
+    //         "temperature": {"value": "<number>", "unit": "<string>"},
+    //         "duration": {"value": "<number>", "unit": "<string>"}
+    //     },
+    //     "startingMaterials": {
+    //         "<material_id>": {"value": "<number>", "unit": "<string>"},
+    //         "<material_id>": {"value": "<number>", "unit": "<string>"}
+    //     },
+    //     "reactants": {
+    //         "<material_id>": {"value": "<number>", "unit": "<string>"},
+    //         "<material_id>": {"value": "<number>", "unit": "<string>"}
+    //     },
+    //     "products": {
+    //         "<material_id>": {"value": "<number>", "unit": "<string>"},
+    //         "<material_id>": {"value": "<number>", "unit": "<string>"}
+    //     }
+    //   }
+    // ]
+    const homogenizedVariations = cloneDeep(variations);
+
+    const materialNames = {
+      startingMaterials: this.starting_materials.map((material) => material.id.toString()),
+      reactants: this.reactants.map((material) => material.id.toString()),
+      products: this.products.map((material) => material.id.toString())
+    };
+
+    homogenizedVariations.forEach((row) => {
+      ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
+        // remove obsolete materials
+        Object.keys(row[materialType]).forEach((materialName) => {
+          if (!materialNames[materialType].includes(materialName)) {
+            delete row[materialType][materialName];
+          }
+        });
+        // add missing materials
+        switch (materialType) {
+          case 'startingMaterials':
+            this.starting_materials.forEach((material) => {
+              if (!(material.id in row[materialType])) {
+                row[materialType][material.id] = { value: material.equivalent || '', unit: 'Equiv' };
+              }
+            });
+            break;
+          case 'reactants':
+            this.reactants.forEach((material) => {
+              if (!(material.id in row[materialType])) {
+                row[materialType][material.id] = { value: material.equivalent || '', unit: 'Equiv' };
+              }
+            });
+            break;
+          default:
+            this.products.forEach((material) => {
+              if (!(material.id in row[materialType])) {
+                row[materialType][material.id] = { value: material.equivalent || '', unit: 'Equiv' };
+              }
+            });
+        }
+      });
+    });
+
+    return homogenizedVariations;
+  }
+
+  set variations(variations) {
+    if (!Array.isArray(variations) || !variations.length) {
+      this._variations = [];
+    } else {
+      this._variations = this.homogenizeVariations(variations);
+    }
+  }
+
+  get variations() {
+    return this._variations;
   }
 
   // Reaction Duration
