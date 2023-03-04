@@ -11,7 +11,7 @@ import initRoutes from 'src/apps/mydb/routes';
 import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
 Sentry.init({
   sendClientReports: false,
-  dsn: process.env.SENTRY_FRONTENT_DSN,
+  dsn: process.env.SENTRY_FRONTEND_DSN,
   integrations: [new Integrations.BrowserTracing()],
 
   // Set tracesSampleRate to 1.0 to capture 100%
