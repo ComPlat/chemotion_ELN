@@ -108,7 +108,7 @@ export default class BaseFetcher {
       credentials: 'same-origin'
     }).then((response) => (
       response.json().then(json => ({
-        elements: (type === 'generic_elements' ? json.map(r => (new ElKlass(r))) : json[type].map(r => (new ElKlass(r)))),
+        elements: json[type].map(r => (new ElKlass(r))),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
         page: parseInt(response.headers.get('X-Page'), 10),
         pages: parseInt(response.headers.get('X-Total-Pages'), 10),

@@ -36,10 +36,10 @@ const collectionShow = (e) => {
         collectionId: collection.id,
         isSync: !!collection.is_sync_to_me });
     } else {
-      UIActions.selectCollection(collection);
       if (currentSearchByID) {
         UIActions.clearSearchById();
       }
+      UIActions.selectCollection(collection);
     }
 
     // if (!e.params['sampleID'] && !e.params['reactionID'] &&

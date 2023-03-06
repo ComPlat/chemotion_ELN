@@ -1,8 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
-import {
-  Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip
-} from 'react-bootstrap';
+import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, Alert, Button } from 'react-bootstrap';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -116,10 +114,10 @@ export default class ElementsList extends React.Component {
   onChange(state) {
     const { totalElements } = this.state;
     Object.keys(state.elements).forEach((key) => {
-    totalElements[key] = state.elements[key]?.totalElements;
-    // if (state.elements[key] !== undefined) {
-    //  totalElements[key] = state.elements[key].totalElements;
-    // }
+      totalElements[key] = state.elements[key]?.totalElements;
+      // if (state.elements[key] !== undefined) {
+      //  totalElements[key] = state.elements[key].totalElements;
+      // }
     });
 
     this.setState({
@@ -190,6 +188,29 @@ export default class ElementsList extends React.Component {
     if (forceUpdate) { this.forceUpdate(); }
   }
 
+  handleRemoveSearchResult() {
+    UIActions.clearSearchById();
+    const { currentCollection, isSync } = UIStore.getState();
+    isSync ? UIActions.selectSyncCollection(currentCollection)
+      : UIActions.selectCollection(currentCollection);
+  }
+
+  handleTabSelect(tab) {
+    UserActions.selectTab(tab);
+
+    // TODO sollte in tab action handler
+    const uiState = UIStore.getState();
+    const type = this.state.visible.get(tab);
+
+    if (!uiState[type] || !uiState[type].page) { return; }
+
+    const { page } = uiState[type];
+
+    UIActions.setPagination({ type, page });
+
+    KeyboardActions.contextChange(type);
+  }
+
   initState() {
     this.onChange(ElementStore.getState());
   }
@@ -201,6 +222,15 @@ export default class ElementsList extends React.Component {
     const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     const { overview, showReport } = this.props;
     const elementState = this.state;
+
+    let removeSearchResultAlert = '';
+    if (UIStore.getState().currentSearchByID) {
+      removeSearchResultAlert = (
+        <Alert bsStyle="info" style={{ padding: '4px' }}>
+          <Button bsStyle="link" style={{ fontSize: '15px' }} onClick={this.handleRemoveSearchResult}>Remove search result</Button>
+        </Alert>
+      );
+    }
 
     const navItems = [];
     const tabContents = [];
@@ -269,6 +299,7 @@ export default class ElementsList extends React.Component {
       >
         <Row className="clearfix">
           <Col sm={12}>
+            {removeSearchResultAlert}
             <Nav bsStyle="tabs">
               {navItems}
               <ElementsTableSettings
