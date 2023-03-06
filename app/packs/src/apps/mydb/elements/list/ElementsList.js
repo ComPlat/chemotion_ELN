@@ -1,6 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
-import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, Alert, Button } from 'react-bootstrap';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -11,7 +11,6 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-
 
 function getSortedHash(inputHash) {
   const resultHash = {};
@@ -136,7 +135,6 @@ export default class ElementsList extends React.Component {
     });
   }
 
-
   onChangeUI(state) {
     const { totalCheckedElements } = this.state;
     let forceUpdate = false;
@@ -164,6 +162,13 @@ export default class ElementsList extends React.Component {
     // could not use shouldComponentUpdate because state.totalCheckedElements
     // has already changed independently of setstate
     if (forceUpdate) { this.forceUpdate(); }
+  }
+
+  handleRemoveSearchResult() {
+    UIActions.clearSearchById();
+    const { currentCollection, isSync } = UIStore.getState();
+    isSync ? UIActions.selectSyncCollection(currentCollection)
+      : UIActions.selectCollection(currentCollection);
   }
 
   handleTabSelect(tab) {
@@ -194,6 +199,15 @@ export default class ElementsList extends React.Component {
     const { overview, showReport } = this.props;
     const elementState = this.state;
 
+    let removeSearchResultAlert = '';
+    if (UIStore.getState().currentSearchByID) {
+      removeSearchResultAlert = (
+        <Alert bsStyle="info" style={{padding: '4px'}}>
+          <Button bsStyle="link" style={{fontSize: '15px'}} onClick={this.handleRemoveSearchResult}>Remove search result</Button>
+        </Alert>
+      );
+    }
+
     const navItems = [];
     const tabContents = [];
     for (let i = 0; i < visible.size; i += 1) {
@@ -208,7 +222,6 @@ export default class ElementsList extends React.Component {
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
         ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{genericEl.label}<br />{genericEl.desc}</Tooltip>);
       }
-
 
       const navItem = (
         <NavItem eventKey={i} key={`${value}_navItem`} className={`elements-list-tab-${value}s`}>
@@ -245,6 +258,7 @@ export default class ElementsList extends React.Component {
       >
         <Row className="clearfix">
           <Col sm={12}>
+            {removeSearchResultAlert}
             <Nav bsStyle="tabs">
               {navItems}              
               <ElementsTableSettings
