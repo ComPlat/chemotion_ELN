@@ -25,6 +25,7 @@ import { permitOn } from 'src/components/common/uis';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -692,6 +693,8 @@ export default class ReactionDetailsScheme extends Component {
         } else {
           sample.coefficient = updatedSample.coefficient;
         }
+        const rId = sample.belongTo ? sample.belongTo.id : null;
+        ElementActions.setRefreshCoefficient(sample.id, sample.coefficient, rId);
       }
       return sample;
     });
