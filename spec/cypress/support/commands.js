@@ -183,3 +183,39 @@ Cypress.Commands.add('createMessages', (adminID, channelID, userID) => {
     cy.appFactories([['create', 'notification', { message_id: message[0].id, user_id: userID }]]);
   });
 });
+
+Cypress.Commands.add('CreateUserWithResearchPlan', () => {
+  cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user1) => {
+    cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user1[0].id }]]).then((collection) => {
+      cy.appFactories([['create', 'molecule', { molecular_weight: 171.03448 }]]).then((molecule) => {
+        cy.appFactories([['create', 'sample', {
+          name: 'PH-1234', real_amount_value: 4.671, molecule_id: molecule[0].id, collection_ids: collection[0].id, user_id: user1[0].id
+        }]]);
+      });
+      cy.appFactories([['create', 'research_plan']]).then((researchPlan) => {
+        cy.appFactories([['create', 'collections_research_plan', { research_plan_id: researchPlan[0].id, collection_id: collection[0].id }]]);
+      });
+    });
+  });
+});
+
+Cypress.Commands.add('settingPermission', (permission) => {
+  cy.get('#tree-id-Col1').click();
+  cy.visit('/mydb/collection/management');
+  cy.get('#sync-users-btn').click();
+  // cy.get('.element-checkbox').click();
+  cy.get(':nth-child(2) > #permissionLevelSelect').select(permission);
+  cy.get('#sampleDetailLevelSelect').select('Everything');
+  cy.get('#reactionDetailLevelSelect').select('Everything');
+  cy.get('#wellplateDetailLevelSelect').select('Everything');
+  cy.get(':nth-child(6) > #screenDetailLevelSelect').select('Everything');
+
+  cy.get('#react-select-2--value').type('User').type('{downArrow}').type('{enter}');
+  cy.get('#create-sync-shared-col-btn').click();
+
+  Cypress.on('uncaught:exception', () =>
+  // returning false here prevents Cypress from failing the test
+    false);
+  cy.clearCookie('_chemotion_session');
+  cy.get('a[title="Log out"]').click();
+});
