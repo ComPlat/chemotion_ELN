@@ -74,6 +74,11 @@ class ElementActions {
     return (dispatch) => dispatch(deviceId)
   }
 
+  setRefreshCoefficient(id, coefficient, rId) {
+    const obj = { sId: id, rId, coefficient };
+    return (dispatch) => dispatch({ obj });
+  }
+
   toggleDeviceType(device, type) {
     return (dispatch) => dispatch({ device, type })
   }
@@ -411,10 +416,12 @@ class ElementActions {
   }
 
   showReactionMaterial(params) {
+    const sampleCoefficient = params.sample.coefficient;
     return (dispatch) => {
       SamplesFetcher.fetchById(params.sample.id)
         .then((result) => {
-          params.sample = result
+          params.coefficient = sampleCoefficient;
+          params.sample = result;
           dispatch(params);
         }).catch((errorMessage) => {
           console.log(errorMessage);

@@ -104,6 +104,7 @@ class ElementStore {
       moleculeSort: false,
       // formerly from DetailStore
       selecteds: [],
+      refreshCoefficient: [],
       activeKey: 0,
       deletingElement: null,
       ////
@@ -119,6 +120,7 @@ class ElementStore {
       handleChangeActiveAccordionDevice: ElementActions.changeActiveAccordionDevice,
       handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
       handleSetSelectedDeviceId: ElementActions.setSelectedDeviceId,
+      handleSetRefreshCoefficient: ElementActions.setRefreshCoefficient,
       handleAddSampleToDevice: ElementActions.addSampleToDevice,
       handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
@@ -391,6 +393,10 @@ class ElementStore {
 
   handleSetSelectedDeviceId(deviceId) {
     this.state.elements['devices'].selectedDeviceId = deviceId
+  }
+
+  handleSetRefreshCoefficient(obj) {
+    this.setState({ refreshCoefficient: [obj] });
   }
 
   //TODO move these in Element Action ??
@@ -742,10 +748,28 @@ class ElementStore {
   }
 
   handleShowReactionMaterial(params) {
-    const { reaction, sample } = params;
+    const { reaction, sample, coefficient } = params;
+    const { selecteds } = this.state;
     sample.belongTo = reaction;
+    const obj = {
+      sId: sample.id,
+      rId: reaction.id,
+      coefficient
+    };
+    this.setState((prevState) => {
+      const updatedCoefficient = [...prevState.refreshCoefficient];
+      let found = false;
+      selecteds.forEach((element) => {
+        if (element.type === 'reaction' && element.id === obj.rid) {
+          found = true;
+        }
+      });
+      if (!found) {
+        updatedCoefficient.push(obj);
+      }
+      return { refreshCoefficient: updatedCoefficient };
+    });
     this.changeCurrentElement(sample);
-    //this.state.currentElement = sample;
   }
 
   handleImportSamplesFromFile(data) {
@@ -1227,14 +1251,22 @@ class ElementStore {
   }
 
   synchronizeElements(previous) {
-    const { selecteds } = this.state;
+    const { selecteds, refreshCoefficient } = this.state;
 
     if (previous instanceof Sample) {
       const rId = previous.tag && previous.tag.taggable_data
         && previous.tag.taggable_data.reaction_id;
       const openedReaction = selecteds.find(el => SameEleTypId(el, { type: 'reaction', id: rId }));
       if (openedReaction) {
-        openedReaction.updateMaterial(previous);
+        if (refreshCoefficient && refreshCoefficient.length > 0) {
+          refreshCoefficient.forEach((element) => {
+            if (element.sId === previous.id) {
+              openedReaction.updateMaterial(previous, element);
+            }
+          });
+        } else {
+          openedReaction.updateMaterial(previous);
+        }
         if (previous.isPendingToSave) {
           openedReaction.changed = previous.isPendingToSave;
         }

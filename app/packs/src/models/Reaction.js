@@ -748,7 +748,7 @@ export default class Reaction extends Element {
     });
   }
 
-  updateMaterial(material) {
+  updateMaterial(material, refreshCoefficient) {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
     let group;
@@ -769,18 +769,31 @@ export default class Reaction extends Element {
 
       i += 1;
     }
-    this.refreshEquivalent();
+    this.refreshEquivalent(material, refreshCoefficient);
   }
 
-  refreshEquivalent() {
+  refreshEquivalent(material, refreshCoefficient) {
     let matGroup;
-    const refMat = this.samples.find(sample => sample.reference);
+    const refMat = this.samples.find((sample) => sample.reference);
     if (refMat && refMat.amount_mol) {
       ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
         matGroup = this[g];
         if (matGroup) {
           this[g] = matGroup.map((mat) => {
-            const m = mat; m.equivalent = m.amount_mol / refMat.amount_mol; return m;
+            const m = mat;
+            if (m.id === material.id) {
+              if (refreshCoefficient && m.id === refreshCoefficient.sId) {
+                m.coefficient = refreshCoefficient.coefficient;
+              }
+            }
+
+            if (g === '_products') {
+              const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
+              m.equivalent = m.amount_mol / refMat.amount_mol / stoichiometryCoeff;
+            } else {
+              m.equivalent = m.amount_mol / refMat.amount_mol;
+            }
+            return m;
           });
         }
       });
