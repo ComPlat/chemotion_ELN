@@ -3,9 +3,8 @@
 # set default value
 Rails.application.configure { config.datacollectors = nil }
 
-datacollectors_config = Rails.application.config_for :datacollectors
-
-if datacollectors_config
+if File.file?(Rails.root.join('config/datacollectors.yml'))
+  datacollectors_config = Rails.application.config_for :datacollectors
   Rails.application.configure do
     config.datacollectors = ActiveSupport::OrderedOptions.new
     config.datacollectors.services = datacollectors_config[:services]
