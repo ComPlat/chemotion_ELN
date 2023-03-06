@@ -11,11 +11,7 @@ const SectionReaction = ({reaction, settings, configs}) => {
          tlc_solvents, rf_value, status } = reaction;
   const dangerousProducts = dangerous_products;
 
-  const has_analyses = products.map( sample => {
-    if(sample.analyses.length != 0) {
-      return true;
-    }
-  }).filter(r => r!=null).length != 0;
+  const has_analyses = !!(products.find((sample) => sample.analysesPresent()));
 
   const showPuri = settings.purification
     && purification
