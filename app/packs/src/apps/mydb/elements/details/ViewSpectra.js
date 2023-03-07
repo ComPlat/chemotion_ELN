@@ -35,6 +35,7 @@ class ViewSpectra extends React.Component {
     this.writeCloseMpyOp = this.writeCloseMpyOp.bind(this);
     this.saveOp = this.saveOp.bind(this);
     this.saveCloseOp = this.saveCloseOp.bind(this);
+    this.refreshOp = this.refreshOp.bind(this);
     this.closeOp = this.closeOp.bind(this);
     this.predictOp = this.predictOp.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
@@ -353,7 +354,7 @@ class ViewSpectra extends React.Component {
   }
 
   saveOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr = false
   }) {
     const { handleSubmit } = this.props;
     const { curveIdx } = curveSt;
@@ -379,8 +380,17 @@ class ViewSpectra extends React.Component {
       keepPred,
       waveLengthStr,
       cyclicvolta,
-      curveIdx
+      curveIdx,
+      simulatenmr,
     );
+  }
+
+  refreshOp({
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt
+  }) {
+    this.saveOp({
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true
+    });
   }
 
   closeOp() {
@@ -577,7 +587,7 @@ class ViewSpectra extends React.Component {
     const descriptions = this.getQDescVal();
     const forecast = {
       btnCb: this.predictOp,
-      refreshCb: this.saveOp,
+      refreshCb: this.refreshOp,
       molecule: 'molecule',
       predictions,
     };
