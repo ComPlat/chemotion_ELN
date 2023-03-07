@@ -5,6 +5,7 @@ import debounce from 'es6-promise-debounce';
 import { findIndex, cloneDeep } from 'lodash';
 
 import Utils from 'src/utilities/Functions';
+import { formatBytes } from 'src/utilities/MathUtils';
 import Attachment from 'src/models/Attachment';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -179,7 +180,7 @@ export default class ContainerDataset extends Component {
             <td style={{ width: '60%', wordWrap: 'break-word' }}>
               <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
             </td>
-            <td style={{ width: '20%', wordWrap: 'break-word' }}><span>{attachment.size}</span></td>
+            <td style={{ width: '20%', wordWrap: 'break-word' }}><span>{formatBytes(attachment.filesize)}</span></td>
             <td style={{ width: '20%', wordWrap: 'break-word' }}>
               {this.removeAttachmentButton(attachment)} &nbsp;
               {this.attachmentBackToInboxButton(attachment)} &nbsp;

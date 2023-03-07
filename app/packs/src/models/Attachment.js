@@ -18,7 +18,7 @@ export default class Attachment extends Element {
         is_deleted: false,
         preview: Attachment.filePreview(file),
         is_image_field: false,
-        size: formatBytes(file.size),
+        filesize: file.size,
       }
     );
   }
