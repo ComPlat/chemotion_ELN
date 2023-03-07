@@ -611,6 +611,7 @@ private
   end
 
   def full_svg_path(svg_file_name = sample_svg_file)
+    svg_file_name = svg_file_name.presence || molecule&.molecule_svg_file
     Rails.public_path.join('images', 'samples', svg_file_name)
   end
 end
