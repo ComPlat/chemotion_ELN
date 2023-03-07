@@ -44,7 +44,18 @@ export default class ImageAnnotationModalSVG extends Component {
                     svgEditor.svgCanvas.setSvgString(svgString);
                   }
                   subDocument.querySelector('se-text[text="tools.fit_to_all"]')?.click()   // Zoom fit-to-canvas
-                  subDocument.querySelector('#styleoverrides')?.setHTML('#tools_bottom { zoom: 120%; } .svg_editor { grid-template-rows: auto 15px 1fr 60px !important; }') // Make lower toolbar a bit bigger
+                  subDocument.querySelector('#styleoverrides')?.setHTML('#tools_bottom { zoom: 120%; }' +
+                  ' .svg_editor { grid-template-rows: auto 15px 1fr 60px !important; }') // Make lower toolbar a bit bigger
+
+                  // remove excess colors. we are good with 17 colors.
+                  const paletteShadowDOM = subDocument.querySelector("#palette").shadowRoot || undefined
+                  if (paletteShadowDOM) {
+                    paletteShadowDOM.querySelectorAll("#js-se-palette > div:nth-child(n+19)").forEach(elem => elem.style = "display: none")
+                    paletteShadowDOM.querySelector("#js-se-palette")?.setAttribute("style", "width: auto")
+                    paletteShadowDOM.querySelector("#palette_holder")?.setAttribute("style", "display: flex; width: auto; flex-direction: row; margin-right: 12px;")
+                  }
+
+                  
                   svgEditor.updateCanvas(false, false)
                 });
             }}
