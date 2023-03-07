@@ -37,4 +37,6 @@ rm -f ./public/svgedit && ln -s "$node_modules_folder"/svgedit/dist/editor ./pub
 yellow "Finished adding symbolic link to svg editor in public folder"
 rm -f ./public/swot-node && ln -s "$node_modules_folder"/swot-node/dist ./public/swot-node
 yellow "Finished adding symbolic link to swot dist in public folder"
+rm -f ./public/autocomplete && ln -s "$node_modules_folder"/@tarekraafat/autocomplete.js/dist ./public/autocomplete
+yellow "Finished adding symbolic link to autocomples dist in public folder"
 

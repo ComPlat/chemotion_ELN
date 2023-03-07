@@ -2301,6 +2301,11 @@
   resolved "https://registry.yarnpkg.com/@svgedit/svgcanvas/-/svgcanvas-7.2.0.tgz#71c2ab1c500c66f870752f06be9cebc72ec2e895"
   integrity sha512-ZICcBJIeq3ZKIrej889bEbIzeU2Rh6rosG8HyZI3NVDjkzYHfO5ppiqeNcN8hU6eah0lrhMXhuvu4dRoAYa5Vg==
 
+"@tarekraafat/autocomplete.js@^10.2.7":
+  version "10.2.7"
+  resolved "https://registry.yarnpkg.com/@tarekraafat/autocomplete.js/-/autocomplete.js-10.2.7.tgz#dca809890cec322379a2b430632d46a14f9f2f91"
+  integrity sha512-iE+dnXI8/LrTaSORrnNdSyXg/bFCbCpz/R5GUdB3ioW+9PVEhglxNcSDQNeCXtrbRG0kOBFUd4unEiwcmqyn8A==
+
 "@tootallnate/once@1":
   version "1.1.2"
   resolved "https://registry.npmjs.org/@tootallnate/once/-/once-1.1.2.tgz"
