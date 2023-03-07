@@ -93,7 +93,7 @@ export default class SampleDetailsSolvents extends React.Component {
                   sample={sample}
                   dropSample={this.dropSample}
                   deleteSolvent={this.deleteSolvent}
-                  onChangeSolvent={this.onChangeSolvent}
+                  onChangeSolvent={changeEvent => this.onChangeSolvent(changeEvent)}
                 />
               </div>
             </Collapse>
