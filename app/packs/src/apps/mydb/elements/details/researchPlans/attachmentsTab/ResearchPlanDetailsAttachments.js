@@ -13,6 +13,7 @@ import {
   Button, ButtonGroup,
   Col, ControlLabel,
   FormGroup,
+  Glyphicon,
   ListGroup, ListGroupItem,
   Overlay, OverlayTrigger,
   Row,
@@ -124,7 +125,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
             }
           }
         );
-
       } else {
         attachment.preview = '/images/wild_card/not_available.svg';
       }
@@ -175,7 +175,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  renderAnnotateImageButton(attachment) {    
+  renderAnnotateImageButton(attachment) {
     return (
       <ImageAnnotationEditButton
         parent={this}
@@ -200,9 +200,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const docType = this.documentType(attachment.filename);
     const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
-    const is_annotationUpdated=attachment.updatedAnnotation
+    const isAnnotationUpdated = attachment.updatedAnnotation;
     if (attachment.is_deleted) {
-      return (        
+      return (
         <div>
           <Row>
             <Col md={1} />
@@ -225,8 +225,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
 
     return (
-      <div>       
-        <SaveResearchPlanWarning visible={is_annotationUpdated}/>
+      <div>
+        <SaveResearchPlanWarning visible={isAnnotationUpdated} />
         <Row>
           <Col md={1}>
             <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
@@ -248,26 +248,28 @@ export default class ResearchPlanDetailsAttachments extends Component {
             </div>
           </Col>
           <Col md={8}>{attachment.filename}</Col>
-          <Col md={3}>          
-            {this.renderRemoveAttachmentButton(attachment)}           
-            {this.renderDownloadOriginalButton(attachment,downloadTooltip)} 
-            {this.renderEditAttachmentButton(attachment,extension,attachmentEditor,isEditing,styleEditorBtn,styleEditorBtn,editDisable)} 
-
-           
-             
-              {this.renderDownloadAnnotatedImageButton(attachment)}
-              {this.renderAnnotateImageButton(attachment)}
-            
-
-           
+          <Col md={3}>
+            {this.renderRemoveAttachmentButton(attachment)}
+            {this.renderDownloadOriginalButton(attachment, downloadTooltip)}
+            {this.renderEditAttachmentButton(
+              attachment,
+              extension,
+              attachmentEditor,
+              isEditing,
+              styleEditorBtn,
+              styleEditorBtn,
+              editDisable
+            )}
+            {this.renderDownloadAnnotatedImageButton(attachment)}
+            {this.renderAnnotateImageButton(attachment)}
             {this.renderImportAttachmentButton(attachment)}
           </Col>
         </Row>
       </div>
     );
-  } 
+  }
 
-  renderEditAttachmentButton(attachment,extension,attachmentEditor,isEditing,styleEditorBtn,editDisable){
+  renderEditAttachmentButton(attachment, extension, attachmentEditor, isEditing, styleEditorBtn, editDisable) {
     return (
       <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
         <Button
@@ -283,46 +285,45 @@ export default class ResearchPlanDetailsAttachments extends Component {
       </OverlayTrigger>
 
     );
+  }
 
-  } 
-
-  renderDownloadOriginalButton(attachment,downloadTooltip){
+  renderDownloadOriginalButton(attachment, downloadTooltip) {
     return (
-    <OverlayTrigger placement="top" overlay={downloadTooltip}>
-              <Button
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="primary"
-                onClick={() => this.props.onDownload(attachment)}
-              >
-                <i className="fa fa-download" aria-hidden="true" />
-              </Button>
-            </OverlayTrigger>
+      <OverlayTrigger placement="top" overlay={downloadTooltip}>
+        <Button
+          bsSize="xsmall"
+          className="button-right"
+          bsStyle="primary"
+          onClick={() => this.props.onDownload(attachment)}
+        >
+          <i className="fa fa-download" aria-hidden="true" />
+        </Button>
+      </OverlayTrigger>
     );
-  } 
+  }
 
-  renderDownloadAnnotatedImageButton(attachment){
+  renderDownloadAnnotatedImageButton(attachment) {
     if (!this.isImageFile(attachment.filename)) {
       return null;
     }
     return (
     <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
       <div className="research-plan-attachments-annotation-download">
-              <Button
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="primary"
-                disabled={attachment.isNew}
-                onClick={() =>{ 
-                  Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
-                }}
-              >
-                <i className="fa fa-download" aria-hidden="true" />
-              </Button>
-              </div>
+        <Button
+          bsSize="xsmall"
+          className="button-right"
+          bsStyle="primary"
+          disabled={attachment.isNew}
+          onClick={() =>{
+            Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
+          }}
+        >
+          <i className="fa fa-download" aria-hidden="true" />
+        </Button>
+      </div>
     </OverlayTrigger>
     );
-  } 
+  }
 
   renderAttachments() {
     const { attachments } = this.props;
