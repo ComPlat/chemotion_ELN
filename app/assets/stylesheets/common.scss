@@ -62,7 +62,7 @@
   background-color: rgba(255,255,255,.05);
   border: 1px solid rgba(155,155,155,.57);
   height: 17px;
-  margin: 0 0px 0px 1px;
+  margin: 4px 0px 0px 1px;
   outline: 0;
   width: 17px;
   position: relative;
@@ -91,9 +91,11 @@
     border-radius: 2px;
     padding-left: 5px;
     background-color: #f5f5f5;
+    float: left;
   }
 
   .checkbox-options {
+    transform: translate3d(0px, 28px, 0px);
     z-index: 2;
     width: 166px;
     border: 1px solid #ccc;
