@@ -16,7 +16,7 @@ module Entities
       serialize_children(object.hash_tree(limit_depth: depth)[object])
     end
 
-    def serialize_children(container_tree_hash)
+    def serialize_children(container_tree_hash) # rubocop:disable Metrics/MethodLength
       container_tree_hash.map do |container, subcontainers|
         current_attachments = all_descendants_attachments.select { |att| att.attachable_id == container.id }
 
@@ -26,7 +26,7 @@ module Entities
           container_type: container.container_type,
           attachments: current_attachments,
           created_at: container.created_at,
-          children: serialize_children(subcontainers).compact
+          children: serialize_children(subcontainers).compact,
         }
       end
     end

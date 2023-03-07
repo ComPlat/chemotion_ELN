@@ -4,7 +4,7 @@ module Chemotion
   class InboxAPI < Grape::API
     helpers ParamsHelpers
 
-    resource :inbox do
+    resource :inbox do # rubocop:disable Metrics/BlockLength
       params do
         requires :cnt_only, type: Boolean, desc: 'return count number only'
       end
@@ -33,7 +33,8 @@ module Chemotion
                 attachable_id: nil,
                 created_for: current_user.container&.containable&.id,
               ),
-              children_count: current_user.container.descendants.includes(:attachments).sum { |dataset| dataset&.attachments&.size },
+              children_count:
+                current_user.container.descendants.includes(:attachments).sum { |dataset| dataset&.attachments&.size },
             },
           }
         end
@@ -44,13 +45,13 @@ module Chemotion
         requires :id, type: Integer, desc: 'subcontainer ID'
       end
 
-      get "containers/id" do
+      get 'containers/id' do
         container = Container.includes(:attachments).find params[:id]
 
         Entities::DeviceBoxEntity.represent(container, root_container: false, root: :inbox)
       end
 
-      resource :samples do
+      resource :samples do # rubocop:disable Metrics/BlockLength
         desc 'search samples from user by'
         params do
           requires :search_string, type: String, desc: 'Search String'

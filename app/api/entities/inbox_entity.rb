@@ -48,14 +48,14 @@ module Entities
     end
 
     def total_attachment_count
-      object.descendants.includes(:attachments).sum { |dataset| dataset&.attachments.size }
+      object.descendants.includes(:attachments).sum { |dataset| dataset&.attachments&.size }
     end
 
     def unlinked_attachments
       Attachment.where(
         attachable_type: 'Container',
         attachable_id: nil,
-        created_for: object&.containable&.id
+        created_for: object&.containable&.id,
       )
     end
 

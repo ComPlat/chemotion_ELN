@@ -260,7 +260,6 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.integer "attachments_count"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
 
