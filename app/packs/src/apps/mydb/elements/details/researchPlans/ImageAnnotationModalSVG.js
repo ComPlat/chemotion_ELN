@@ -26,8 +26,9 @@ export default class ImageAnnotationModalSVG extends Component {
             width="100%"
             height="800"
             onLoad={() => {
-              const { svgEditor } =
-                document.getElementById("svgEditId").contentWindow;
+              const subWindow = document.getElementById("svgEditId").contentWindow;
+              const subDocument = subWindow.document;
+              const svgEditor = subWindow.svgEditor;
               svgEditor.setBackground("white");
               const { attachment } = this.props;
 
@@ -42,6 +43,7 @@ export default class ImageAnnotationModalSVG extends Component {
                     const svgString = decodeURIComponent(JSON.parse(text));
                     svgEditor.svgCanvas.setSvgString(svgString);
                   }
+                  subDocument.querySelector(`se-text[text="tools.fit_to_all"]`).click()   // Zoom fit-to-canvas
                   svgEditor.updateCanvas(false, false)
                 });
             }}
