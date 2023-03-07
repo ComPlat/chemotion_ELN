@@ -43,6 +43,7 @@ export default class ImageAnnotationModalSVG extends Component {
                     const svgString = decodeURIComponent(JSON.parse(text));
                     svgEditor.svgCanvas.setSvgString(svgString);
                   }
+                  subDocument.querySelector('se-text[text="tools.fit_to_all"]')?.click()   // Zoom fit-to-canvas
                   subDocument.querySelector('#styleoverrides')?.setHTML('#tools_bottom { zoom: 120%; } .svg_editor { grid-template-rows: auto 15px 1fr 60px !important; }') // Make lower toolbar a bit bigger
                   svgEditor.updateCanvas(false, false)
                 });
