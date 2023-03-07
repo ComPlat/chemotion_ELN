@@ -24,7 +24,7 @@ export default class ImageAnnotationModalSVG extends Component {
             title=""
             src="/svgedit/index.html"
             id="svgEditId"
-            style={{ minHeight: "800px", height: "100%", width: "100%" }}
+            style={{ minHeight: "500px", height: "100%", width: "100%" }}
             onLoad={() => {
               const subWindow = document.getElementById("svgEditId").contentWindow;
               const subDocument = subWindow.document;
@@ -55,7 +55,6 @@ export default class ImageAnnotationModalSVG extends Component {
                     paletteShadowDOM.querySelector("#palette_holder")?.setAttribute("style", "display: flex; width: auto; flex-direction: row; margin-right: 12px;")
                   }
 
-                  
                   svgEditor.updateCanvas(false, false)
                 });
             }}
