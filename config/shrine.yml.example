@@ -10,5 +10,5 @@ test:
 
 production:
   :maximum_size: 100
-  :cache: 'uploads/production/cache'
-  :store: 'uploads/production'
+  :cache: 'uploads/cache'
+  :store: 'uploads'

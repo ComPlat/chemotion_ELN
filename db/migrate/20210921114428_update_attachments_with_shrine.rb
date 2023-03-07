@@ -60,9 +60,7 @@ class UpdateAttachmentsWithShrine < ActiveRecord::Migration[5.2]
         }
         attachment = attachment.merge(derivatives: { thumbnail: thumbnail })
       end
-      ActiveRecord::Base.connection.execute(
-        "UPDATE attachments SET attachment_data = '#{attachment.to_json}' where id = #{att.id}",
-      )
+      att.update_columns(attachment_data: attachment)
     end
   end
 end
