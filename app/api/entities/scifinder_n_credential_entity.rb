@@ -5,9 +5,9 @@ module Entities
     expose(
       :id,
       :access_token,
-      :refresh_token
+      :refresh_token,
+      :expires_at,
+      :updated_at,
     )
-
-    expose_timestamps
   end
 end
