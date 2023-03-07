@@ -16,26 +16,28 @@ module Export
         when 'richtext'
           @fields << {
             type: field['type'],
-            text: Chemotion::QuillToHtml.new.convert(field['value'])
+            text: Chemotion::QuillToHtml.new.convert(field['value']),
           }
         when 'table'
           @fields << {
             type: field['type'],
             columns: field['value']['columns'],
-            rows: field['value']['rows']
+            rows: field['value']['rows'],
           }
         when 'ketcher'
           # TODO: move  image location root path to model constant of method
           img_src = to_png("images/research_plans/#{field['value']['svg_file']}")
           @fields << {
             type: field['type'],
-            src: img_src
+            src: img_src,
           }
         when 'image'
           attachment = Attachment.find_by(identifier: field['value']['public_name'])
+          image_location = attachment&.attachment&.url || "/images/research_plans/#{field['value']['public_name']}"
+
           @fields << {
             type: field['type'],
-            src: attachment.attachment_data['id']
+            src: image_location,
           }
         when 'sample'
           next unless (sample = Sample.find_by(id: field['value']['sample_id']))
@@ -45,7 +47,7 @@ module Export
             @fields << {
               type: field['type'],
               src: img_src,
-              p: sample['name']
+              p: sample['name'],
             }
           end
         when 'reaction'
@@ -56,7 +58,7 @@ module Export
             @fields << {
               type: field['type'],
               src: img_src,
-              p: reaction['name']
+              p: reaction['name'],
             }
           end
         end
