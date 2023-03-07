@@ -42,6 +42,8 @@ class SampleDetailsSolventsDnd extends React.Component {
   render() {
     const {
       sample,
+      headIndex, materialGroup, deleteMaterial, onChange,
+      addDefaultSolvent, dropMaterial, switchEquiv,
       isOver, canDrop, connectDropTarget, dropSample, deleteSolvent, onChangeSolvent
     } = this.props;
     const style = {
@@ -60,6 +62,13 @@ class SampleDetailsSolventsDnd extends React.Component {
           dropSample={dropSample}
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
+          headIndex={headIndex ?? 0}
+          materialGroup={materialGroup ?? ""}
+          deleteMaterial={deleteMaterial ?? (() => true)}
+          onChange={onChange ?? (() => true)}
+          addDefaultSolvent={addDefaultSolvent ?? (() => true)}
+          dropMaterial={dropMaterial ?? (() => true)}
+          switchEquiv={switchEquiv ?? (() => true)}
         />
       </div>
     );
