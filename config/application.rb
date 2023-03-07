@@ -76,6 +76,15 @@ module Chemotion
     # Specifically allow some classes to be serialized by Psych
     # See https://discuss.rubyonrails.org/t/cve-2022-32224-possible-rce-escalation-bug-with-serialized-columns-in-active-record/81017
     # and https://stackoverflow.com/questions/71332602/upgrading-to-ruby-3-1-causes-psychdisallowedclass-exception-when-using-yaml-lo
-    config.active_record.yaml_column_permitted_classes = [Symbol, Hash, Array, ActiveSupport::HashWithIndifferentAccess]
+    config.active_record.yaml_column_permitted_classes = [
+      Symbol,
+      Hash,
+      Array,
+      ActiveSupport::HashWithIndifferentAccess,
+      Hashie::Array,
+      Hashie::Mash,
+      Date,
+
+    ]
   end
 end
