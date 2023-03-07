@@ -17,6 +17,11 @@ export default class DeviceBox extends React.Component {
 
   handleDeviceBoxClick(deviceBox) {
     const { visible } = this.state;
+    const { fromCollectionTree } = this.props;
+    if (fromCollectionTree) {
+      return;
+    }
+
     if (!visible) {
       if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
         LoadingActions.start();
@@ -27,11 +32,16 @@ export default class DeviceBox extends React.Component {
   }
 
   deleteDeviceBox(deviceBox) {
+    const { fromCollectionTree } = this.props;
+    if (fromCollectionTree) {
+      return;
+    }
+
     InboxActions.deleteContainer(deviceBox);
   }
 
   render() {
-    const { device_box, largerInbox } = this.props;
+    const { device_box, largerInbox, fromCollectionTree } = this.props;
     const { visible } = this.state;
     const cache = InboxStore.getState().cache;
 
@@ -62,8 +72,8 @@ export default class DeviceBox extends React.Component {
 
     return (
       <div className="tree-view">
-        <div className="title" style={textStyle}>
-          {device_box.children_count && device_box.children_count === 0
+        <div className="title" style={textStyle} onClick={() => this.handleDeviceBoxClick(device_box)}>
+          {device_box?.children_count === 0
             ? (
               <i
                 className="fa fa-trash-o"
@@ -77,18 +87,17 @@ export default class DeviceBox extends React.Component {
           <button
             type="button"
             className="btn-inbox"
-            onClick={() => this.setState({ visible: !visible })}
+            onClick={!fromCollectionTree ? () => this.setState({ visible: !visible }) : null}
           >
             <i
               className={`fa fa-folder${visible ? '-open' : ''}`}
               aria-hidden="true"
               style={{ marginRight: '5px' }}
-              onClick={() => this.handleDeviceBoxClick(device_box)}
             />
             {device_box.name}
           </button>
         </div>
-        <div>{visible ? datasets : null}</div>
+        <div>{visible && !fromCollectionTree ? datasets : null}</div>
       </div>
     );
   }
@@ -96,9 +105,11 @@ export default class DeviceBox extends React.Component {
 
 DeviceBox.propTypes = {
   device_box: PropTypes.object.isRequired,
-  largerInbox: PropTypes.bool
+  largerInbox: PropTypes.bool,
+  fromCollectionTree: PropTypes.bool
 };
 
 DeviceBox.defaultProps = {
-  largerInbox: false
+  largerInbox: false,
+  fromCollectionTree: false
 };

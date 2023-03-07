@@ -6,20 +6,14 @@ module Entities
       :id,
       :name,
       :children,
+      :children_count,
     )
 
     private
 
-    def id
-      object.id
-    end
-
-    def name
-      object.name
-    end
-
     def children
-      serialize_children(object.hash_tree(limit_depth: 2)[object])
+      depth = options[:root_container] ? 1 : 2
+      serialize_children(object.hash_tree(limit_depth: depth)[object])
     end
 
     def serialize_children(container_tree_hash)
@@ -37,12 +31,12 @@ module Entities
       end
     end
 
-    def descendents
-      @descendents ||= object.hash_tree[object]
+    def children_count
+      object.children.count
     end
 
     def all_descendants_attachments
-      @all_descendants_attachments ||= Attachment.where_container(object.descendant_ids)
+      @all_descendants_attachments ||= Attachment.where_container(object.descendant_ids).limit(100)
     end
   end
 end

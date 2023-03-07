@@ -19,6 +19,10 @@ class InboxActions {
     return null
   }
 
+  showInboxModal() {
+    return null;
+  }
+
   checkedAll(params) {
     return params;
   }
@@ -35,7 +39,7 @@ class InboxActions {
     return (dispatch) => {
       InboxFetcher.fetchInbox(false, queryParams)
         .then((result) => {
-          dispatch(result);
+          dispatch(result.inbox);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

@@ -17,12 +17,13 @@ class InboxStore {
       checkedAll: false,
       inboxModalVisible: false,
       currentPage: 1,
-      itemsPerPage: 3,
+      itemsPerPage: 20,
       totalPages: null,
     };
 
     this.bindListeners({
       handleToggleInboxModal: InboxActions.toggleInboxModal,
+      showInboxModal: InboxActions.showInboxModal,
       handleFetchInbox: InboxActions.fetchInbox,
       handleFetchInboxCount: InboxActions.fetchInboxCount,
       handleFetchInboxContainer: InboxActions.fetchInboxContainer,
@@ -61,11 +62,18 @@ class InboxStore {
     this.emitChange();
   }
 
+  showInboxModal() {
+    const { inboxModalVisible } = this.state;
+    if (!inboxModalVisible) {
+      this.setState({ inboxModalVisible: !inboxModalVisible });
+      this.emitChange();
+    }
+  }
+
   handleFetchInbox(result) {
     const { itemsPerPage } = this.state;
-    const { inbox, count } = result;
-    this.state.inbox = inbox;
-    this.state.totalPages = Math.ceil(count / itemsPerPage);
+    this.state.inbox = result;
+    this.state.totalPages = Math.ceil(this.state.inbox.count / itemsPerPage);
 
     this.sync();
     this.countAttachments();
@@ -227,8 +235,7 @@ class InboxStore {
 
   countAttachments() {
     const { inbox } = this.state;
-    // #TODO: Fix this
-    this.state.numberOfAttachments = 6;
+    this.state.numberOfAttachments = inbox.children_count + inbox.unlinked_attachments.length;
   }
 
   handleCheckedAll(params) {

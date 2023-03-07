@@ -9,22 +9,32 @@ module Chemotion
         requires :cnt_only, type: Boolean, desc: 'return count number only'
       end
 
-      paginate per_page: 5, offset: 0, max_per_page: 100
+      paginate per_page: 20, offset: 0, max_per_page: 50
 
       get do
         current_user.container = Container.create(name: 'inbox', container_type: 'root') unless current_user.container
-        scope = current_user.container.children
+        scope = current_user.container.children.sort_by(&:name)
+
         reset_pagination_page(scope)
 
         device_boxes = paginate(scope).map do |device_box|
-          Entities::DeviceBoxEntity.represent(device_box)
+          Entities::DeviceBoxEntity.represent(device_box, root_container: true)
         end
         if params[:cnt_only]
           present current_user.container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
         else
           {
-            inbox: { children: device_boxes },
-            count: scope.size,
+            inbox: {
+              children: device_boxes,
+              count: scope.size,
+              container_type: current_user.container.container_type,
+              unlinked_attachments: Attachment.where(
+                attachable_type: 'Container',
+                attachable_id: nil,
+                created_for: current_user.container&.containable&.id,
+              ),
+              children_count: current_user.container.descendants.includes(:attachments).sum { |dataset| dataset&.attachments&.size },
+            },
           }
         end
       end
@@ -36,7 +46,8 @@ module Chemotion
 
       get "containers/id" do
         container = Container.includes(:attachments).find params[:id]
-        present container, with: Entities::InboxEntity, root: :inbox
+
+        Entities::DeviceBoxEntity.represent(container, root_container: false, root: :inbox)
       end
 
       resource :samples do

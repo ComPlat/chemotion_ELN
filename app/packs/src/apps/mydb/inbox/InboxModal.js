@@ -92,7 +92,7 @@ export default class InboxModal extends React.Component {
     }
 
     const pageNumbers = [];
-    const minPage = Math.max(currentPage - 2, 1);
+    const minPage = Math.max(currentPage - 4, 1);
     const maxPage = Math.min(minPage + 4, totalPages);
 
     for (let i = minPage; i <= maxPage; i += 1) {
@@ -109,9 +109,6 @@ export default class InboxModal extends React.Component {
 
     if (totalPages > maxPage) {
       pageNumbers.push(<Pagination.Ellipsis key="Ell" />);
-    }
-    if (currentPage <= totalPages) {
-      pageNumbers.push();
     }
 
     return (

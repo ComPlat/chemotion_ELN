@@ -38,6 +38,7 @@ export default class CollectionTree extends React.Component {
       syncCollectionVisible: false,
       inbox: inboxState.inbox,
       numberOfAttachments: inboxState.numberOfAttachments,
+      itemsPerPage: inboxState.itemsPerPage,
       inboxVisible: false
     };
 
@@ -174,14 +175,28 @@ export default class CollectionTree extends React.Component {
       });
       boxes = inbox.children.map((deviceBox) => {
         return (
-          <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} />
+          <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} fromCollectionTree />
         );
       });
     }
 
     return (
       <div className="tree-view">
-        {boxes}
+        <div
+          role="button"
+          onClick={InboxActions.showInboxModal}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              InboxActions.showInboxModal();
+            }
+          }}
+        >
+          {boxes}
+          {inbox.children && inbox.children.length >= this.state.itemsPerPage
+            ? <div className="title" key="more" style={{ textAlign: 'center' }}><i className="fa fa-ellipsis-h" aria-hidden="true" /></div>
+            : ''}
+        </div>
         {inbox.unlinked_attachments
           ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
           : ''
