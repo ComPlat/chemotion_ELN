@@ -13,7 +13,8 @@ export default class ImageAnnotationModalSVG extends Component {
       <Modal
         backdrop="static"
         bsSize="large"
-        show={this.props.isShow}>
+        show={this.props.isShow}
+        dialogClassName="attachment-dataset-modal">
 
         <Modal.Header>
           <Modal.Title>Image annotation</Modal.Title>
@@ -23,8 +24,7 @@ export default class ImageAnnotationModalSVG extends Component {
             title=""
             src="/svgedit/index.html"
             id="svgEditId"
-            width="100%"
-            height="800"
+            style={{ minHeight: "800px", height: "100%", width: "100%" }}
             onLoad={() => {
               const subWindow = document.getElementById("svgEditId").contentWindow;
               const subDocument = subWindow.document;
