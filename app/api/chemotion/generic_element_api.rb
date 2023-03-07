@@ -184,10 +184,10 @@ module Chemotion
         by_created_at = params[:filter_created_at] || false
 
         scope = scope.order('created_at DESC')
-        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        scope = scope.elements_created_time_from(Time.at(from)) if from && by_created_at
+        scope = scope.elements_created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        scope = scope.elements_updated_time_from(Time.at(from)) if from && !by_created_at
+        scope = scope.elements_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
         reset_pagination_page(scope)
 
