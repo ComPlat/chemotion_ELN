@@ -202,7 +202,7 @@ module Chemotion
 
         desc 'Return all current groups'
         get 'groups' do
-          Affiliation.pluck('DISTINCT affiliations.group')
+          Affiliation.pluck('DISTINCT "group"')
         end
 
         desc "Return organization's name from email domain"
