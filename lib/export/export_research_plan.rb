@@ -26,7 +26,7 @@ module Export
           }
         when 'ketcher'
           # TODO: move  image location root path to model constant of method
-          img_src = to_png("images/research_plans/#{field['value']['svg_file']}")
+          img_src = to_png(Rails.public_path.join("images/research_plans/#{field['value']['svg_file']}"))
           @fields << {
             type: field['type'],
             src: img_src,
