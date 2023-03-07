@@ -24,10 +24,8 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 const nmrMsg = (reaction, container) => {
-  if (container.extended_metadata &&
-    (typeof container.extended_metadata.kind === 'undefined' ||
-      (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId)
-    )) {
+  const ols = container.extended_metadata?.kind?.split('|')[0].trim();
+  if (ols !== chmoConversions.nmr_1h?.termId && ols !== chmoConversions?.nmr_13c?.termId) {
     return '';
   }
   const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);

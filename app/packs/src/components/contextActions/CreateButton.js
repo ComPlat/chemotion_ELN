@@ -5,7 +5,7 @@ import {
   FormGroup, ControlLabel, Modal, MenuItem
 } from 'react-bootstrap';
 import Aviator from 'aviator';
-
+import { filter } from 'lodash';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -20,6 +20,7 @@ export default class CreateButton extends React.Component {
     this.state = {
       samples: [],
       collectionId: null,
+      layout: UserStore.getState().profile?.data?.layout || {},
       modalProps: {
         show: false,
         sampleCount: 0,
@@ -28,6 +29,23 @@ export default class CreateButton extends React.Component {
     }
 
     this.createBtn = this.createBtn.bind(this);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    UserStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    UserStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    const layout = state.profile?.data?.layout;
+    // eslint-disable-next-line react/destructuring-assignment
+    if (typeof layout !== 'undefined' && layout !== null && layout !== this.state.layout) {
+      this.setState({ layout });
+    }
   }
 
   getSampleFilter() {
@@ -201,7 +219,6 @@ export default class CreateButton extends React.Component {
   createBtn(type) {
     let iconClass = `icon-${type}`;
     const genericEls = UserStore.getState().genericEls || [];
-
     const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     if (!constEls.includes(type) && typeof genericEls !== 'undefined' && genericEls !== null && genericEls.length > 0) {
       const genericEl = (genericEls && genericEls.find(el => el.name == type)) || {};
@@ -225,6 +242,7 @@ export default class CreateButton extends React.Component {
 
   render() {
     const { isDisabled, customClass } = this.props;
+    const { layout } = this.state;
     const type = UserStore.getState().currentType;
     const elements = [
       { name: 'sample', label: 'Sample' },
@@ -235,14 +253,16 @@ export default class CreateButton extends React.Component {
     ];
     let genericEls = [];
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
       genericEls = UserStore.getState().genericEls || [];
     }
     const itemTables = [];
+    // eslint-disable-next-line max-len
+    const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
 
-    elements.concat(genericEls).forEach((el) => {
-      itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+    sortedLayout?.forEach(([k]) => {
+      const el = elements.concat(genericEls).find((ael) => ael.name === k);
+      if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
     });
 
     return (
