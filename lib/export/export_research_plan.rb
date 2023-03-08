@@ -74,13 +74,21 @@ module Export
     end
 
     def to_html
-      ActionView::Base
-        .with_empty_template_cache
-        .with_view_paths(
-          ActionController::Base.view_paths, # Rails 6 no longer has defaults
+#      lookup_context = ActionView::LookupContext.new(ActionController::Base.view_paths)
+ #     context = ActionView::Base.with_empty_template_cache.new(lookup_context, { name: @name, fields: @fields }, nil)
+ #     renderer = ActionView::Renderer.new(lookup_context)
+  #    r = renderer.render(context, { assign: { name: @name, fields: @fields }, template: 'export/research_plan.haml',formats: [:html], handlers: [:haml]  })
+
+   #   byebug 
+
+       res = ActionView::Base
+               .with_view_paths(
+               ActionController::Base.view_paths, # Rails 6 no longer has defaults
           { name: @name, fields: @fields },
           nil,
-        ).render(template: 'export/research_plan')
+        ).render(template: 'export/research_plan.haml', formats: [:html], handlers: [:haml])
+puts res
+res
     end
 
     def to_relative_html
