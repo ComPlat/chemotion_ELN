@@ -55,6 +55,39 @@ export default class ImageAnnotationModalSVG extends Component {
                     paletteShadowDOM.querySelector("#palette_holder")?.setAttribute("style", "display: flex; width: auto; flex-direction: row; margin-right: 12px;")
                   }
 
+                  // hide some panels
+                  subDocument.querySelector("#sidepanels")?.setAttribute("style", "display: none")
+                  subDocument.querySelector("#title_panel")?.setAttribute("style", "display: none")
+                  subDocument.querySelector("#editor_panel")?.setAttribute("style", "display: none")
+                  subDocument.querySelector("#history_panel")?.setAttribute("style", "display: none")
+
+                  // make sure top is at least 45px to prevent view bobbing
+                  subDocument.querySelector("#tools_top")?.setAttribute("style", "min-height: 40px")
+
+                  // hide some buttons from the main menu
+                  subDocument.querySelector("#main_button > #tool_clear")?.setAttribute("style", "display: none")
+                  subDocument.querySelector("#main_button > #tool_open")?.setAttribute("style", "display: none")
+                  subDocument.querySelector("#main_button > #tool_save")?.setAttribute("style", "display: none")
+                  subDocument.querySelector("#main_button > #tool_save_as")?.setAttribute("style", "display: none")
+                  subDocument.querySelector("#main_button > #tool_import")?.setAttribute("style", "display: none")
+                  subDocument.querySelector("#main_button > #tool_editor_homepage")?.setAttribute("style", "display: none")
+
+                  // no need to show shortcuts in the right-click menu ...
+                  subDocument.querySelector("#se-cmenu_canvas")?.shadowRoot?.querySelectorAll(".shortcut").forEach(elem => elem.style = "display: none")
+
+                  // ... since we disable all of them except the basics.
+                  subDocument.addEventListener("keydown", (e) => {
+                    const allowedKeys = ["Delete", "CTRL+KeyC", "CTRL+KeyV", "CTRL+KeyX"]
+                    const currentKey = e.ctrlKey ? `CTRL+${e.code}` : e.code
+                    if (allowedKeys.indexOf(currentKey) == -1 && e.target.nodeName === 'BODY') {
+                      console.log("Preventing default keydown event", e, currentKey, allowedKeys)
+                      e.preventDefault()
+                      e.stopImmediatePropagation()
+                      e.stopPropagation()
+                    }
+                  }, true )
+                  
+
                   svgEditor.updateCanvas(false, false)
                 });
             }}
