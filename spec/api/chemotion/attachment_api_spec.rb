@@ -19,6 +19,7 @@ describe Chemotion::AttachmentAPI do
         'content_type' => attachment.content_type,
         'filename' => attachment.filename,
         'id' => attachment.id,
+        'filesize' => attachment.filesize,
         'identifier' => attachment.identifier,
         'thumb' => attachment.thumb,
       },

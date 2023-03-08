@@ -1,4 +1,5 @@
 import Element from 'src/models/Element';
+import { formatBytes } from 'src/utilities/MathUtils';
 
 export default class Attachment extends Element {
   static NO_PREVIEW_AVAILABLE_PATH = '/images/wild_card/not_available.svg';
@@ -16,7 +17,8 @@ export default class Attachment extends Element {
         filename: file.name,
         is_deleted: false,
         preview: Attachment.filePreview(file),
-        is_image_field: false
+        is_image_field: false,
+        filesize: file.size,
       }
     );
   }

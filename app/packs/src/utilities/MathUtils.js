@@ -44,4 +44,21 @@ const correctPrefix = (input, precision) => {
   return `${validDigit(input * 1000000, precision)} \u03BC`;
 };
 
-export { fixDigit, validDigit, correctPrefix };
+const formatBytes = (bytes, decimals = 2) => {
+  if (bytes === 0 || bytes == null) return '0 Bytes';
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return `${parseFloat((bytes / (k ** i)).toFixed(dm))} ${sizes[i]}`;
+};
+
+export {
+  fixDigit,
+  validDigit,
+  correctPrefix,
+  formatBytes,
+};
