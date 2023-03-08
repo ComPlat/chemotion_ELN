@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_12_02_150826) do
+ActiveRecord::Schema.define(version: 2023_03_06_114227) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1452,7 +1452,7 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
 
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE PROCEDURE update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
