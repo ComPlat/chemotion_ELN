@@ -280,6 +280,8 @@ private
   end
 
   def full_svg_path(svg_file_name = molecule_svg_file)
+    return '' unless svg_file_name
+
     Rails.public_path.join('images', 'molecules', svg_file_name)
   end
 end
