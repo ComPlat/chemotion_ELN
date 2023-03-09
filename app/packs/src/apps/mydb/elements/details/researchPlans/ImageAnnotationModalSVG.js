@@ -46,10 +46,11 @@ export default class ImageAnnotationModalSVG extends Component {
               localStorage.removeItem('svgedit-default');
 
               // Make lower toolbar a bit bigger
-              subDocument.querySelector('#styleoverrides')?.setHTML(
-                '.svg_editor { grid-template-rows: auto 15px 1fr 60px !important; }'
-                + '.never {display: none !important; }'
-              );
+              const styleOverride = subDocument.querySelector('#styleoverrides');
+              if (styleOverride) {
+                styleOverride.innerHTML = '.svg_editor { grid-template-rows: auto 15px 1fr 60px !important; }'
+                  + '.never {display: none !important; }';
+              }
 
               // remove excess colors. we are good with 17 colors.
               const paletteShadowDOM = subDocument.querySelector('#palette').shadowRoot || undefined;
