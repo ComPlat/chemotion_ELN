@@ -196,4 +196,5 @@ config/shrine_config.yml
 
 !spec/fixtures/import/sample_import_template.xlsx
 
+# generic elements
 data/klasses.json
