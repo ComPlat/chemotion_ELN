@@ -33,7 +33,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
     // multiple items can be selected, we filter to only keep research plans
     const researchPlans = state.selecteds.filter((element) => element
-        && element.constructor.name === 'ResearchPlan');
+        && element?.type === 'research_plan');
 
     // we find the reasearch plan that has our image entry
     const researchPlanWithImageEntry = researchPlans.find((element) => !!element.getBodyElementById(this.props?.field?.id));
