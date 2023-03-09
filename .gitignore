@@ -186,4 +186,6 @@ config/shrine_config.yml
 
 #svgeditor
 /public/svgedit
+
+# generic elements
 data/klasses.json
