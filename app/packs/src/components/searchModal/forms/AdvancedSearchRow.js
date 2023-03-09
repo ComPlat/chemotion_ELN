@@ -7,7 +7,7 @@ import SelectMapperData from './SelectMapperData';
 
 const AdvancedSearchRow = ({ idx, selection, onChange }) => {
   const mapperOptions = SelectMapperData.fields;
-  const fieldOptions = SelectFieldData.fields;
+  const fieldOptions = SelectFieldData.fields[selection.table];
   const logicalOperators = [
     { value: "AND", label: "AND" },
     { value: "OR", label: "OR" }

@@ -122,4 +122,23 @@ i.fa.icon-right {
   .Select-menu {
     max-height: 100px;
   }
+  .btn-group {
+    width: 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+    margin-bottom: 20px;
+  }
+  .btn-group .btn {
+    padding-left: 25px;
+    padding-right: 25px;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-bottom: none;
+    border-radius: 0;
+    font-size: 15px;
+    color: rgba(0, 0, 0, 0.5);
+  }
+  .btn-group .btn.active {
+    color: #333;
+    background-color: #5bc0de75;
+    box-shadow: none;
+  }
 }

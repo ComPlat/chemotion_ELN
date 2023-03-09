@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, Panel, Alert } from 'react-bootstrap';
+import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Alert } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -12,10 +12,11 @@ const AdvancedSearchForm = () => {
   const defaultSelections = [{
     link: '',
     match: '=',
+    table: 'sample',
     field: {
       table: 'samples',
       column: 'name',
-      label: 'Sample Name',
+      label: 'Name',
     },
     value: ''
   }];
@@ -84,6 +85,35 @@ const AdvancedSearchForm = () => {
     if (searchStore.error_message) {
       return <Alert bsStyle="danger">{searchStore.error_message}</Alert>;
     }
+  }
+
+  const handleChangeElement = (element) => {
+    selectedOptions[0].table = element;
+    setSelectedOptions((a) => [...a]);
+  }
+
+  const SelectSearchTable = () => {
+    const elementsForSelect = ['sample', 'reaction', 'wellplate', 'screen', 'research_plan'];
+    const buttons = elementsForSelect.map((element) => {
+      return (
+        <ToggleButton
+          key={element}
+          value={element}>
+          {element.replace('_', ' ').charAt(0).toUpperCase() + element.slice(1)}
+        </ToggleButton>
+      );
+    });
+
+    return (
+      <ToggleButtonGroup
+        type="radio"
+        name="options"
+        value={selectedOptions[0].table}
+        onChange={handleChangeElement}
+        defaultValue={'sample'}>
+        {buttons}
+      </ToggleButtonGroup>
+    );
   }
 
   const searchValuesByFilters = () => {
@@ -177,6 +207,7 @@ const AdvancedSearchForm = () => {
             <div className="advanced-search">
               {showErrorMessage()}
               <div>
+                <SelectSearchTable />
                 <AdvancedSearchRow
                   idx={0}
                   selection={selectedOptions[0]}
