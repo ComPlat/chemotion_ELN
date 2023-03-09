@@ -27,7 +27,7 @@ export default class ImageAnnotationModalSVG extends Component {
             title="SVGEditor"
             src="/svgedit/index.html"
             id="svgEditId"
-            ref={(iframe) => (this.iframe = iframe)}
+            ref={(iframe) => { this.iframe = iframe; }}
             style={{
               minHeight: '500px', height: '100%', width: '100%', visibility: 'hidden'
             }}
@@ -54,7 +54,8 @@ export default class ImageAnnotationModalSVG extends Component {
               // remove excess colors. we are good with 17 colors.
               const paletteShadowDOM = subDocument.querySelector('#palette').shadowRoot || undefined;
               if (paletteShadowDOM) {
-                paletteShadowDOM.querySelectorAll('#js-se-palette > div:nth-child(n+19)').forEach((elem) => elem.style = 'display: none');
+                paletteShadowDOM.querySelectorAll('#js-se-palette > div:nth-child(n+19)')
+                  .forEach((elem) => { elem.setAttribute('style', 'display: none'); });
                 paletteShadowDOM.querySelector('#js-se-palette')?.setAttribute('style', 'width: auto');
                 paletteShadowDOM.querySelector('#palette_holder')?.setAttribute('style', 'display: flex; width: auto; flex-direction: row; margin-right: 12px;');
               }
@@ -65,30 +66,55 @@ export default class ImageAnnotationModalSVG extends Component {
               subDocument.querySelector('#editor_panel')?.setAttribute('style', 'display: none');
               subDocument.querySelector('#history_panel')?.setAttribute('style', 'display: none');
 
-              // make sure top is at least 45px to prevent view bobbing
+              // make sure top is at least 40px to prevent view bobbing
               subDocument.querySelector('#tools_top')?.setAttribute('style', 'min-height: 40px');
 
               // hide some buttons from the main menu
-              // first, the ones that are always present
-              subDocument.querySelector('#main_button #tool_editor_homepage')?.setAttribute('style', 'display: none');
-
-              // then the ones that are added later. we need to observe the DOM for changes.
-              const targetNode = subDocument.querySelector('#main_button');
-              const config = { attributes: true, childList: true, subtree: true };
-              const buttonsToRemoveOnSight = [
+              let buttonsToRemoveOnSight = [
                 'tool_clear',
                 'tool_open',
                 'tool_save',
                 'tool_save_as',
-                'tool_import'
+                'tool_import',
+                'tool_editor_homepage',
               ];
+
+              // first, the ones that are always present
+              buttonsToRemoveOnSight = buttonsToRemoveOnSight.map((id) => {
+                // sometimes they are in the shadow DOM, sometimes not.... do not ask me why.
+                const elem = (subDocument.querySelector(`#main_button #${id}`)
+                            || subDocument.querySelector('#main_button')?.shadowRoot.querySelector(`#${id}`));
+                if (elem) {
+                  elem?.setAttribute('style', 'display: none');
+                  elem?.remove();
+                  return undefined;
+                }
+                return id;
+              }).filter((id) => id !== undefined);
+
+              // the "Document Property" button only seems to update the shortcut label when the
+              // button attribute label when `label` property changes. so we do that:
+              // remove sortcut, change label -> shortcut is gone.
+              const DocumentPropertiesEntry = subDocument.querySelector('#main_button #tool_docprops')
+                || subDocument.querySelector('#main_button')?.shadowRoot.querySelector('#tool_docprops');
+              if (DocumentPropertiesEntry) {
+                DocumentPropertiesEntry?.removeAttribute('shortcut');
+                DocumentPropertiesEntry?.setAttribute('label', 'Document Properties');
+              }
+
+              // then the ones that are added later. we need to observe the DOM for changes.
+              const targetNode = subDocument.querySelector('#main_button');
+              const config = { attributes: false, childList: true, subtree: true };
 
               // Callback function to execute when mutations are observed
               const callback = (mutationList, observer) => {
-                for (const mutation of mutationList) {
+                mutationList.forEach((mutation) => {
                   if (mutation.type === 'childList') {
                     const addedNodes = Array.from(mutation.addedNodes || []);
-                    const toDelete = addedNodes.filter((node) => node.id && buttonsToRemoveOnSight.indexOf(node.id) > -1);
+                    const toDelete = addedNodes.filter((node) => (
+                      node.id
+                      && buttonsToRemoveOnSight.indexOf(node.id) > -1
+                    ));
                     toDelete.forEach((node) => {
                       buttonsToRemoveOnSight.splice(buttonsToRemoveOnSight.indexOf(node.id), 1);
                       node.remove();
@@ -98,7 +124,7 @@ export default class ImageAnnotationModalSVG extends Component {
                       observer.disconnect();
                     }
                   }
-                }
+                });
               };
 
               // Create an observer instance linked to the callback function and start observing
@@ -106,7 +132,8 @@ export default class ImageAnnotationModalSVG extends Component {
               observer.observe(targetNode, config);
 
               // no need to show shortcuts in the right-click menu ...
-              subDocument.querySelector('#se-cmenu_canvas')?.shadowRoot?.querySelectorAll('.shortcut').forEach((elem) => elem.style = 'display: none');
+              subDocument.querySelector('#se-cmenu_canvas')?.shadowRoot?.querySelectorAll('.shortcut')
+                .forEach((elem) => { elem?.setAttribute('style', 'display: none'); });
 
               // ... since we disable all of them except the basics.
               subDocument.addEventListener('keydown', (e) => {
@@ -160,10 +187,11 @@ export default class ImageAnnotationModalSVG extends Component {
             bsStyle="primary"
             onClick={() => {
               this.setState({ canSave: false });
-              return this.props.handleOnClose();
+              const { handleOnClose } = this.props;
+              return handleOnClose();
             }}
           >
-            Close without saving
+            Discard changes and close
           </Button>
           <Button
             bsStyle="warning"
