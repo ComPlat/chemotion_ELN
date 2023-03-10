@@ -47,13 +47,10 @@ class ResearchPlan < ApplicationRecord
   end
 
   def thumb_svg
-    image_atts = attachments.select { |a_img|
-      a_img&.content_type&.match(Regexp.union(%w[jpg jpeg png tiff tif]))
-    }
-
+    image_atts = attachments.select(&:type_image?)
     attachment = image_atts[0] || attachments[0]
-    preview = attachment.read_thumbnail if attachment
-    preview && Base64.encode64(preview) || 'not available'
+    preview = attachment&.read_thumbnail
+    (preview && Base64.encode64(preview)) || 'not available'
   end
 
   def create_root_container
