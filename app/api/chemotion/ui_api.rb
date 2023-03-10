@@ -10,7 +10,7 @@ module Chemotion
         has_chem_spectra = Rails.configuration.spectra.chemspectra.url.present?
         has_nmrium_wrapper = Rails.configuration.spectra.nmriumwrapper.url.present?
 
-        m_config = Rails.root.join('config, matrices.json')
+        m_config = Rails.root.join('config/matrices.json')
         sfn_config = Rails.configuration.try(:sfn_config).try(:provider)
         converter_config = Rails.configuration.try(:converter).try(:url)
         radar_config = Rails.configuration.try(:radar).try(:url)
