@@ -42,6 +42,10 @@ class AttachmentUploader < Shrine
 
   Attacher.derivatives do |original|
     file_extension = ".#{record.attachment.mime_type.split('/').last}" unless record.attachment.mime_type.nil?
+
+    #  
+    file_extension = '.svg' if file_extension == '.svg+xml'
+
     file_extension = '.jpg' if file_extension == '.jpeg'
     file_extension = AttachmentUploader.get_file_extension(original) if file_extension.nil?
 

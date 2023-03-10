@@ -202,7 +202,7 @@ class Reaction < ApplicationRecord
     svg = reaction_svg_file
     if svg.present? && svg.end_with?('</svg>')
       svg_file_name = "#{SecureRandom.hex(64)}.svg"
-      svg_path = File.join(Rails.public_path, 'images', 'reactions', svg_file_name)
+      svg_path = Rails.public_path.join('images', 'reactions', svg_file_name)
       svg_file = File.new(svg_path, 'w+')
       svg_file.write(svg)
       svg_file.close
@@ -217,9 +217,7 @@ class Reaction < ApplicationRecord
         collection = public_send(resource).includes(sample: :molecule)
         paths[prop] = collection.map do |reactions_sample|
           sample = reactions_sample.sample
-          params = [
-            svg_path(sample&.sample_svg_file, sample&.molecule&.molecule_svg_file)
-          ]
+          params = [ sample.get_svg_path ]
           params[0] = sample.svg_text_path if reactions_sample.show_label
           params.append(yield_amount(sample.id)) if prop == :products
           params
@@ -243,8 +241,10 @@ class Reaction < ApplicationRecord
     reaction_svg_file
   end
 
-  def svg_path(sample_svg, molecule_svg)
-    sample_svg.present? ? "/images/samples/#{sample_svg}" : "/images/molecules/#{molecule_svg}"
+  # return the full path of the svg file if it exists in the public folder otherwise nil.
+  def current_svg_full_path
+    file_path = Rails.public_path.join('images', 'reactions', reaction_svg_file)
+    File.file?(file_path) ? file_path : nil
   end
 
   def yield_amount(sample_id)
