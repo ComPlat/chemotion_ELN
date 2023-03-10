@@ -259,6 +259,12 @@ class Molecule < ApplicationRecord
     end
   end
 
+  # return the full path of the svg file if it exsits or nil.
+  def current_svg_full_path
+    file_path = full_svg_path
+    File.file?(file_path) ? file_path : nil
+  end
+
 private
 
   # TODO: check that molecules are OK and remove this method. fix is in editor

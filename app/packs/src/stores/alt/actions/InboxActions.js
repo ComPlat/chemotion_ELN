@@ -19,6 +19,10 @@ class InboxActions {
     return null
   }
 
+  showInboxModal() {
+    return null;
+  }
+
   checkedAll(params) {
     return params;
   }
@@ -31,9 +35,9 @@ class InboxActions {
     return params;
   }
 
-  fetchInbox() {
+  fetchInbox(queryParams = {}) {
     return (dispatch) => {
-      InboxFetcher.fetchInbox(false)
+      InboxFetcher.fetchInbox(false, queryParams)
         .then((result) => {
           dispatch(result.inbox);
         }).catch((errorMessage) => {
@@ -53,6 +57,17 @@ class InboxActions {
     };
   }
 
+  fetchInboxContainer(container) {
+    return (dispatch) => {
+      InboxFetcher.fetchInboxByContainer(container)
+        .then((result) => {
+          dispatch(result.inbox);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   removeAttachmentFromList(attachment) {
     return attachment;
   }
@@ -63,6 +78,10 @@ class InboxActions {
 
   removeDatasetFromList(dataset) {
     return dataset;
+  }
+
+  setInboxPagination(pagination) {
+    return pagination;
   }
 
   deleteAttachment(params) {

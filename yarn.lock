@@ -2301,6 +2301,11 @@
   resolved "https://registry.yarnpkg.com/@svgedit/svgcanvas/-/svgcanvas-7.2.0.tgz#71c2ab1c500c66f870752f06be9cebc72ec2e895"
   integrity sha512-ZICcBJIeq3ZKIrej889bEbIzeU2Rh6rosG8HyZI3NVDjkzYHfO5ppiqeNcN8hU6eah0lrhMXhuvu4dRoAYa5Vg==
 
+"@tarekraafat/autocomplete.js@^10.2.7":
+  version "10.2.7"
+  resolved "https://registry.yarnpkg.com/@tarekraafat/autocomplete.js/-/autocomplete.js-10.2.7.tgz#dca809890cec322379a2b430632d46a14f9f2f91"
+  integrity sha512-iE+dnXI8/LrTaSORrnNdSyXg/bFCbCpz/R5GUdB3ioW+9PVEhglxNcSDQNeCXtrbRG0kOBFUd4unEiwcmqyn8A==
+
 "@tootallnate/once@1":
   version "1.1.2"
   resolved "https://registry.npmjs.org/@tootallnate/once/-/once-1.1.2.tgz"
@@ -3002,6 +3007,11 @@ abbrev@1, abbrev@~1.1.1:
   version "1.1.1"
   resolved "https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz"
   integrity sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==
+
+academic-tld@^1.0.4:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/academic-tld/-/academic-tld-1.0.5.tgz#38bb955a41a7ee64f9d1fbed653fcb6110c4723d"
+  integrity sha512-7SaW1AwZ03bx9tQGmB3HxAP4kOX65J4g8TI3IusW9Nv6Bjby4A6C89y1WCAZH+yGhLuuWa5c6MpHLoSlflrXgQ==
 
 accepts@~1.3.4, accepts@~1.3.5:
   version "1.3.7"
@@ -10612,6 +10622,11 @@ psl@^1.1.28:
   resolved "https://registry.npmjs.org/psl/-/psl-1.8.0.tgz"
   integrity sha512-RIdOzyoavK+hA18OGGWDqUTsCLhtA7IcZ/6NCs4fFJaHBDab+pDDmDIByWFRQJq2Cd7r1OoQxBGKOaztq+hjIQ==
 
+punycode@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/punycode/-/punycode-1.4.1.tgz#c0d5a63b2718800ad8e1eb0fa5269c84dd41845e"
+  integrity sha512-jmYNElW7yvO7TV33CjSmvSiE2yco3bV2czu/OzDKdMNVZQWfxCblURLhf+47syQRBntjfLdd/H0egrzIG+oaFQ==
+
 punycode@^2.1.0, punycode@^2.1.1:
   version "2.1.1"
   resolved "https://registry.npmjs.org/punycode/-/punycode-2.1.1.tgz"
@@ -13050,6 +13065,14 @@ svgpath@^2.3.0:
   resolved "https://registry.yarnpkg.com/svgpath/-/svgpath-2.6.0.tgz#5b160ef3d742b7dfd2d721bf90588d3450d7a90d"
   integrity sha512-OIWR6bKzXvdXYyO4DK/UWa1VA1JeKq8E+0ug2DG98Y/vOmMpfZNj+TIG988HjfYSqtcy/hFOtZq/n/j5GSESNg==
 
+swot-node@^2.0.755:
+  version "2.0.755"
+  resolved "https://registry.yarnpkg.com/swot-node/-/swot-node-2.0.755.tgz#85f72a48a9bbb98fc55f99505702c80546b93ffc"
+  integrity sha512-+iZ2mXXPjAe6JAuI9TlUrbOzcC9Lmh9bBKRzbzdeFJCj7RPWqLsRwstioa2z6hE6Tndd0b4lE3qqs8tvmC97eQ==
+  dependencies:
+    academic-tld "^1.0.4"
+    tldjs "2.3.1"
+
 symbol-observable@1.2.0, symbol-observable@^1.0.4, symbol-observable@^1.1.0:
   version "1.2.0"
   resolved "https://registry.npmjs.org/symbol-observable/-/symbol-observable-1.2.0.tgz"
@@ -13169,6 +13192,13 @@ tinycolor2@^1.4.1:
   version "1.4.2"
   resolved "https://registry.npmjs.org/tinycolor2/-/tinycolor2-1.4.2.tgz"
   integrity sha512-vJhccZPs965sV/L2sU4oRQVAos0pQXwsvTLkWYdqJ+a8Q5kPFzJTuOFwy7UniPli44NKQGAglksjvOcpo95aZA==
+
+tldjs@2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/tldjs/-/tldjs-2.3.1.tgz#cf09c3eb5d7403a9e214b7d65f3cf9651c0ab039"
+  integrity sha512-W/YVH/QczLUxVjnQhFC61Iq232NWu3TqDdO0S/MtXVz4xybejBov4ud+CIwN9aYqjOecEqIy0PscGkwpG9ZyTw==
+  dependencies:
+    punycode "^1.4.1"
 
 to-fast-properties@^1.0.3:
   version "1.0.3"

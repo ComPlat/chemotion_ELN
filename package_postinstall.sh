@@ -34,5 +34,9 @@ yellow "Adding symbolic link to svg editor in public folder"
 
 node_modules_folder="$(node -e 'const p = require.resolve("@svgedit/svgcanvas"); console.log(p.slice(0, p.indexOf("@svgedit/svgcanvas")))')"
 rm -f ./public/svgedit && ln -s "$node_modules_folder"/svgedit/dist/editor ./public/svgedit
-
 yellow "Finished adding symbolic link to svg editor in public folder"
+rm -f ./public/swot-node && ln -s "$node_modules_folder"/swot-node/dist ./public/swot-node
+yellow "Finished adding symbolic link to swot dist in public folder"
+rm -f ./public/autocomplete && ln -s "$node_modules_folder"/@tarekraafat/autocomplete.js/dist ./public/autocomplete
+yellow "Finished adding symbolic link to autocomples dist in public folder"
+
