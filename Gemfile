@@ -31,6 +31,7 @@ gem 'ed25519'
 
 gem 'faraday'
 gem 'faraday-follow_redirects'
+gem 'faraday-multipart'
 gem 'font-awesome-rails'
 gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git', branch: 'allow-port-option'
 gem 'fx'
