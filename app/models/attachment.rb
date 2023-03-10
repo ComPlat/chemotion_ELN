@@ -95,7 +95,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   def read_thumbnail
-    attachment(:thumbnail).read if attachment(:thumbnail).present?
+    attachment(:thumbnail).read if attachment(:thumbnail)&.exists?
   end
 
   def abs_path
