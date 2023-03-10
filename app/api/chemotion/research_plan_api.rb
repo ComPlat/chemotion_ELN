@@ -267,8 +267,7 @@ module Chemotion
               present export.to_file
             end
           else
-            # return plain html
-            present export.to_html
+            send_data export.to_html, filename: "document.docx"
           end
         end
       end
