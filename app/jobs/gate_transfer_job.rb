@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Job to update molecule info for molecules with no CID
 # associated CID (molecule tag) and iupac names (molecule_names) are updated if
 # inchikey found in PC db
@@ -17,9 +19,9 @@ class GateTransferJob < ApplicationJob
     @req_headers = req_headers
     @no_error = true
 
-    connection = Faraday.new(url: @url) do |f|
-      f.use FaradayMiddleware::FollowRedirects::Middleware
-      f.headers = @req_headers
+    connection = Faraday.new(url: @url) do |faraday|
+      faraday.response :follow_redirects
+      faraday.headers = @req_headers
     end
 
     @resp = connection.get { |req| req.url('/api/v1/gate/ping') }
@@ -31,20 +33,26 @@ class GateTransferJob < ApplicationJob
     @collection = Collection.find(id)
     all_reaction_ids = CollectionsReaction.where(collection_id: id).pluck(:reaction_id)
     reaction_sample_ids = Reaction.get_associated_samples(all_reaction_ids)
-    dec_ids = ReactionsSample.where(reaction_id: all_reaction_ids).joins(:sample).where('samples.decoupled = true').pluck(:reaction_id)
+    dec_ids = ReactionsSample.where(reaction_id: all_reaction_ids)
+                             .joins(:sample).where('samples.decoupled = true').pluck(:reaction_id)
     all_reaction_ids -= dec_ids
-    all_sample_ids = CollectionsSample.where(collection_id: id).joins(:sample).where('samples.decoupled = false').pluck(:sample_id) - reaction_sample_ids
+    all_sample_ids = CollectionsSample.where(collection_id: id)
+                                      .joins(:sample)
+                                      .where('samples.decoupled = false')
+                                      .pluck(:sample_id) - reaction_sample_ids
 
     return true if all_reaction_ids.empty? && all_sample_ids.empty?
 
     if all_reaction_ids.present? || all_sample_ids.present?
       all_reaction_ids.each do |reaction_id|
-        transfer_data(type: GateTransferJob::REACTION, id: reaction_id, state: GateTransferJob::STATE_BEFORE_TRANSFER, msg: '')
+        transfer_data(type: GateTransferJob::REACTION, id: reaction_id, state: GateTransferJob::STATE_BEFORE_TRANSFER,
+                      msg: '')
       end
 
       begin
         all_sample_ids.each do |sample_id|
-          transfer_data(type: GateTransferJob::SAMPLE, id: sample_id, state: GateTransferJob::STATE_BEFORE_TRANSFER, msg: '')
+          transfer_data(type: GateTransferJob::SAMPLE, id: sample_id, state: GateTransferJob::STATE_BEFORE_TRANSFER,
+                        msg: '')
         end
       ensure
         if @no_error && (@reactions.present? || @samples.present?)
@@ -59,7 +67,7 @@ class GateTransferJob < ApplicationJob
     sample_ids = [element[:id]] if element[:type] == GateTransferJob::SAMPLE
     reaction_ids = [element[:id]] if element[:type] == GateTransferJob::REACTION
     exp = Export::ExportJson.new(
-      collection_id: @collection.id, sample_ids: sample_ids, reaction_ids: reaction_ids
+      collection_id: @collection.id, sample_ids: sample_ids, reaction_ids: reaction_ids,
     ).export
     attachment_ids = exp.data.delete('attachments')
     attachments = Attachment.where(id: attachment_ids)
@@ -82,6 +90,7 @@ class GateTransferJob < ApplicationJob
       if att.checksum != file_checksum && att.checksum != file_checksum_md5
         raise 'The file checksum does not mach, unable to transfer, please try again later!'
       end
+
       tmp_files[-1].write(file_stream)
       tmp_files[-1].rewind
       req_payload[att.identifier] = Faraday::UploadIO.new(
@@ -89,11 +98,11 @@ class GateTransferJob < ApplicationJob
       )
     end
 
-    payload_connection = Faraday.new(url: @url) { |f|
-      f.use FaradayMiddleware::FollowRedirects::Middleware
-      f.request :multipart
-      f.headers = @req_headers.merge('Accept' => 'application/json')
-    }
+    payload_connection = Faraday.new(url: @url) do |faraday|
+      faraday.response :follow_redirects
+      faraday.request :multipart
+      faraday.headers = @req_headers.merge('Accept' => 'application/json')
+    end
 
     @resp = payload_connection.post do |req|
       req.url('/api/v1/gate/receiving')
@@ -113,7 +122,7 @@ class GateTransferJob < ApplicationJob
       element[:state] = GateTransferJob::STATE_TRANSFER
       element[:msg] = 'resp is not successful'
     end
-  rescue => e
+  rescue StandardError => e
     element[:state] = GateTransferJob::STATE_FAILED_TRANSFER
     element[:msg] = e.message
     @no_error = false
@@ -123,14 +132,13 @@ class GateTransferJob < ApplicationJob
       level: 'error',
       message_from: @collection.user_id,
     )
-
   ensure
     @samples.push(element) if element[:type] == GateTransferJob::SAMPLE
     @reactions.push(element) if element[:type] == GateTransferJob::REACTION
 
     data_file&.close
     data_file&.unlink
-    tmp_files.each do |tf|
+    tmp_files&.each do |tf|
       tf.close
       tf.unlink
     end
