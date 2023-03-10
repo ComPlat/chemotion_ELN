@@ -2,6 +2,8 @@
 
 module Entities
   class DeviceBoxEntity < ApplicationEntity
+    MAX_DATASETS = 60
+    MAX_ATTACHMENTS = 50
     expose(
       :id,
       :name,
@@ -13,7 +15,7 @@ module Entities
 
     def children
       depth = options[:root_container] ? 1 : 2
-      serialize_children(object.hash_tree(limit_depth: depth)[object])
+      serialize_children(object.hash_tree(limit_depth: depth)[object].first(MAX_DATASETS))
     end
 
     def serialize_children(container_tree_hash) # rubocop:disable Metrics/MethodLength
@@ -36,7 +38,7 @@ module Entities
     end
 
     def all_descendants_attachments
-      @all_descendants_attachments ||= Attachment.where_container(object.descendant_ids).limit(100)
+      @all_descendants_attachments ||= Attachment.where_container(object.child_ids.first(MAX_DATASETS)).limit(MAX_ATTACHMENTS)
     end
   end
 end
