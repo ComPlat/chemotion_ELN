@@ -259,6 +259,12 @@ class Molecule < ApplicationRecord
     end
   end
 
+  # return the full path of the svg file if it exsits or nil.
+  def current_svg_full_path
+    file_path = full_svg_path
+    file_path&.file? ? file_path : nil
+  end
+
 private
 
   # TODO: check that molecules are OK and remove this method. fix is in editor
@@ -273,7 +279,10 @@ private
       PubChem.get_cid_from_inchikey(inchikey)
   end
 
+  # build the full path of the molecule svg, return nil if the path can't be built.
   def full_svg_path(svg_file_name = molecule_svg_file)
+    return unless svg_file_name.present?
+
     Rails.public_path.join('images', 'molecules', svg_file_name)
   end
 end
