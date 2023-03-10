@@ -202,16 +202,17 @@ module Chemotion
 
         desc 'Return all current groups'
         get 'groups' do
-          Affiliation.pluck('DISTINCT affiliations.group')
+          Affiliation.pluck('DISTINCT "group"')
         end
 
-        desc "Return organization's name from email domain"
-        get 'swot' do
-          return unless params[:domain].present?
-
-          Swot::school_name(params[:domain]).presence ||
-            Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
-        end
+        # TODO: mv to swot-node
+        # desc "Return organization's name from email domain"
+        # get 'swot' do
+        #  return unless params[:domain].present?
+        # 
+        #  Swot::school_name(params[:domain]).presence ||
+        #    Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
+        #end
       end
     end
 

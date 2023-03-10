@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Be sure to restart your server when you modify this file.
 
 # Version of your assets, change this if you want to expire all your assets.
@@ -14,10 +16,12 @@ Rails.application.config.assets.version = '1.0'
 # should suffice.
 node_modules_path = ENV['NODE_MODULES_PATH'] || 'node_modules'
 Rails.application.config.assets.paths << Rails.root.join(node_modules_path)
+Rails.application.config.assets.paths << Rails.root.join('vendor', 'assets', 'javascript')
 
 # Precompile additional assets.
 # application.js, application.css, and all non-JS/CSS in the app/assets
 # folder are already added.
-Rails.application.config.assets.precompile  = %w( manifest.js )
-Rails.application.config.assets.precompile += %w( grape_swagger_rails/application.css )
-Rails.application.config.assets.precompile += %w( grape_swagger_rails/application.js )
+Rails.application.config.assets.precompile  = %w[manifest.js]
+Rails.application.config.assets.precompile += %w( autocomplete.min.js )
+Rails.application.config.assets.precompile += %w[grape_swagger_rails/application.css]
+Rails.application.config.assets.precompile += %w[grape_swagger_rails/application.js]
