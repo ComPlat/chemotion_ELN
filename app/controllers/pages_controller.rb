@@ -102,7 +102,8 @@ class PagesController < ApplicationController
 
   def build_affiliation
     @new_aff = current_user.affiliations.build
-    @new_aff.organization = Swot::school_name(current_user.email)
+    # TODO: process this in FE
+    # @new_aff.organization = Swot::school_name(current_user.email)
   end
 
   def fetch_affiliations
