@@ -2,27 +2,47 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import {
-  FormControl, FormGroup, InputGroup, Alert
+  FormControl, FormGroup, InputGroup
 } from 'react-bootstrap';
-import Attachment from 'src/models/Attachment';
-import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
     this.state = { imageEditModalShown: false, attachments: props.attachments };
+
+    this.onElementStoreChange = this.onElementStoreChange.bind(this);
   }
 
   componentDidMount() {
     this.generateSrcOfImage(this.props.field.value.public_name);
+    ElementStore.listen(this.onElementStoreChange);
   }
 
   componentWillUnmount() {
+    ElementStore.unlisten(this.onElementStoreChange);
+  }
+
+  onElementStoreChange(state) {
+    if (state.selecteds.length < 1) return;
+
+    // multiple items can be selected, we filter to only keep research plans
+    const researchPlans = state.selecteds.filter((element) => element
+        && element?.type === 'research_plan');
+
+    // we find the reasearch plan that has our image entry
+    const researchPlanWithImageEntry = researchPlans.find((element) => !!element.getBodyElementById(this.props?.field?.id));
+
+    // get the image Entry
+    const imageEntry = researchPlanWithImageEntry?.getBodyElementById(this.props?.field?.id);
+    if (!imageEntry) return;
+
+    this.generateSrcOfImage(imageEntry.value.public_name);
   }
 
   handleDrop(files) {

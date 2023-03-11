@@ -807,7 +807,7 @@ export default class ReactionDetailsScheme extends Component {
       reaction.markSampleAsReference(refM.id);
     }
 
-    const headReactants = reaction.starting_materials.length;
+    const headReactants = reaction.starting_materials.length ?? 0;
 
     return (
       <div>
