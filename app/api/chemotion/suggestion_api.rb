@@ -61,9 +61,9 @@ module Chemotion
           sample_short_label = dl_s.positive? && search_by_field.call(Sample, :short_label, qry) || []
           sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []
           sample_name = dl_s.positive? && search_by_field.call(Sample, :name, qry) || []
-          # polymer_type = dl_s.positive? && d_for.call(Sample)
-          #                                       .by_residues_custom_info('polymer_type', qry)
-          #                                       .pluck("residues.custom_info -> 'polymer_type'").uniq || []
+          polymer_type = dl_s.positive? && d_for.call(Sample)
+                                                .by_residues_custom_info('polymer_type', qry)
+                                                .pluck(Arel.sql("residues.custom_info->'polymer_type'")).uniq || []
           sum_formula = dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry) || []
           iupac_name = dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry) || []
           # cas = dl_s.positive? && search_by_field.call(Molecule, :cas, qry) || []
@@ -75,7 +75,7 @@ module Chemotion
             sample_short_label: sample_short_label,
             sample_external_label: sample_external_label,
             sample_name: sample_name,
-            # polymer_type: polymer_type,
+            polymer_type: polymer_type,
             sum_formula: sum_formula,
             iupac_name: iupac_name,
             cas: cas,
@@ -129,9 +129,9 @@ module Chemotion
           sample_name = dl_s.positive? && search_by_field.call(Sample, :name, qry) || []
           sample_short_label = dl_s.positive? && search_by_field.call(Sample, :short_label, qry) || []
           sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []
-          # polymer_type = dl_s.positive? && d_for.call(Sample)
-          #                                       .by_residues_custom_info('polymer_type', qry)
-          #                                       .pluck("residues.custom_info -> 'polymer_type'").uniq || []
+          polymer_type = dl_s.positive? && d_for.call(Sample)
+                                                .by_residues_custom_info('polymer_type', qry)
+                                                .pluck(Arel.sql("residues.custom_info->'polymer_type'")).uniq || []
           sum_formula = dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry) || []
           iupac_name = dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry) || []
           # cas = dl_s.positive? && search_by_field.call(Molecule, :cas, qry) || []
