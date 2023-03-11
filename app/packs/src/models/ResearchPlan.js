@@ -146,6 +146,11 @@ export default class ResearchPlan extends Element {
     }
   }
 
+  // returns the body element with the given id, or undefined if not found
+  getBodyElementById(id) {    
+    return this.body.find((el) => el.id === id);
+  }
+
   get attachmentCount() {
     if (this.attachments) { return this.attachments.length; }
     return this.attachment_count;

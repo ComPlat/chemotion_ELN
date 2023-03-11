@@ -225,7 +225,7 @@ export default class ContainerComponent extends Component {
           />
         </Col>
         <Col md={12}>
-          <HyperLinksSection data={container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
+          <HyperLinksSection data={container.extended_metadata['hyperlinks'] ?? []} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
             disabled={disabled}></HyperLinksSection>
         </Col>
       </div>

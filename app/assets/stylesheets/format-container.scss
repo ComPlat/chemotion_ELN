@@ -14,11 +14,12 @@
   width: calc(80vw) !important;
   .modal-content {
     height: 95%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
     .modal-header .modal-title .btn-toolbar {
       float: right;
     }
-    .modal-body {
-      height: 90%;
+    .modal-body {      
       overflow: auto;
       .row {
         height: 100%;
