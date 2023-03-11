@@ -243,8 +243,7 @@ export default class ElementsList extends React.Component {
         <Row className="clearfix">
           <Col sm={12}>
             <Nav bsStyle="tabs">
-              {navItems}
-              &nbsp;&nbsp;&nbsp;
+              {navItems}              
               <ElementsTableSettings
                 visible={visible}
                 hidden={hidden}
