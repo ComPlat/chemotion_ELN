@@ -1,13 +1,11 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useState } from 'react';
-import { Button, Panel, Row, Col } from 'react-bootstrap';
-import Select from 'react-select';
+import { Panel, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
-const OmniauthCredential = () => {
-  const [provider, setProvider] = useState('');
+function OmniauthCredential() {
   const notify = (_params) => {
     NotificationActions.add({
       title: _params.title, message: _params.msg, level: _params.lvl, position: 'tc', dismissible: 'button', uid: uuid.v4()
@@ -16,39 +14,34 @@ const OmniauthCredential = () => {
 
   const [providers, setProviders] = useState(() => {
     UsersFetcher.fetchUserOmniauthProviders().then((json) => {
-      const options = json.providers.map(op => ({ value: op, name: op, label: op }));
-      const currentProvider = (json && json.current_user && json.current_user.omniauth_provider) || '';
+      const userProviders = (json?.current_user?.providers) || {};
 
-      setProviders({ options, currentProvider });
-    }).catch(err => notify({ title: 'Fetch User Providers Error', lvl: 'error', msg: err }));
+      setProviders(userProviders);
+    }).catch((err) => notify({ title: 'Fetch User Providers Error', lvl: 'error', msg: err }));
     return (providers);
   });
+
+  let omniauthProviders = (<span />);
+
+  if (typeof omniauthProviders !== 'undefined' && omniauthProviders !== null) {
+    omniauthProviders = providers && Object.keys(providers).map((key) => (
+      <Row key={uuid.v1()}>
+        <Col key={uuid.v1()} md={2} />
+        <Col key={uuid.v1()} md={5}>{key}</Col>
+        <Col key={uuid.v1()} md={5}>{providers[key]}</Col>
+      </Row>
+    ));
+  }
 
   return (
     <Panel>
       <Panel.Heading><Panel.Title>3rd-Party Credential</Panel.Title></Panel.Heading>
       <Panel.Body>
-        <Row className="profile-row">
-          <Col sm={2}><b>Current provider is</b></Col>
-          <Col sm={2}>{providers && providers.currentProvider}</Col>
-          <Col sm={2}><b>Connect to</b></Col>
-          <Col sm={2}>
-            <Select
-              onChange={e => setProvider(e.value)}
-              menuContainerStyle={{ position: 'absolute' }}
-              multi={false}
-              options={providers && providers.options}
-              value={provider}
-            />
-          </Col>
-          <Col sm={4}><Button bsStyle="primary" href={`${window.location.origin}/users/auth/${provider}`}>Connect</Button></Col>
-        </Row>
+        {omniauthProviders}
         <br />
       </Panel.Body>
     </Panel>
   );
-};
+}
 
 export default OmniauthCredential;
-
-
