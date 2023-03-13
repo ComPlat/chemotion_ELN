@@ -88,7 +88,7 @@ export default class AutoCompleteInput extends React.Component {
     newState.value = suggestions[newFocus].name
 
     if (!isString(newState.value)) {
-      newState.value = suggestions[newFocus].name.name;
+      newState.value = suggestions[newFocus].name.name || suggestions[newFocus].name.value;
     }
 
     newState.suggestionFocus = newFocus
@@ -222,10 +222,9 @@ export default class AutoCompleteInput extends React.Component {
       showSuggestions: false,
       valueBeforeFocus: null
     })
-
-    if (!isString(value)) {
-      value = value.name;
-      this.setState({ value });
+    if (!isString(value) && value) {
+      value = value.name || value.value;
+      this.setState({ value })
     }
 
     if (!value || value.trim() === '') {
@@ -252,6 +251,7 @@ export default class AutoCompleteInput extends React.Component {
       if (selectedName && selectedName.trim() != '' && this.state.value == selectedName)
         if (selectedSuggestion.search_by_method == 'element_short_label') {
           selection = {name: selectedSuggestion.name.name, search_by_method: `element_short_label_${selectedSuggestion.name.klass}`}
+
         } else {
           selection = selectedSuggestion
         }
@@ -289,6 +289,7 @@ export default class AutoCompleteInput extends React.Component {
       inchikey: { icon: 'icon-sample', label: 'InChIKey'},
       cano_smiles : {icon: 'icon-sample', label: 'Canonical Smiles'},
       sum_formula : {icon: 'icon-sample', label: 'Sum Formula'},
+      cas: { icon: 'icon-sample', label: 'cas' },
       requirements : {icon: 'icon-screen', label: 'Requirement'},
       conditions : {icon: 'icon-screen', label: 'Condition'},
       element_short_label: {icon: 'icon-element', label: 'Element Short Label'}
@@ -306,14 +307,16 @@ export default class AutoCompleteInput extends React.Component {
             let inchiString = 'InChI=';
             let inchiMatch = '';
 
-            if (suggestion.search_by_method == 'element_short_label') {
+            if (suggestion.search_by_method === 'element_short_label') {
               icon = suggestion.name.icon;
               typeLabel = suggestion.name.label;
               name = suggestion.name.name;
+            } else if (suggestion.search_by_method === 'cas') {
+              name = suggestion.name.value;
             } else {
               name = suggestion.name;
               inchiMatch = suggestion.name.substring(0, inchiString.length)
-              if (inchiMatch==inchiString) {
+              if (inchiMatch === inchiString) {
                 suggestion.name = suggestion.name.replace(inchiString, "")
               }
             }
