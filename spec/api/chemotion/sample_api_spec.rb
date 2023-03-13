@@ -590,7 +590,7 @@ describe Chemotion::SampleAPI do
   end
 
   describe 'POST /api/v1/samples' do
-    let(:cas) { 'test_cas' }
+    let(:cas) { { 'value' => '58-08-2', 'label' => '58-08-2' } }
     let(:params) do
       {
         name: 'test',
