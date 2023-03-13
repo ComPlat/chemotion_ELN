@@ -153,7 +153,7 @@ module Chemotion
             sample_name: sample_name,
             sample_short_label: sample_short_label,
             sample_external_label: sample_external_label,
-            # polymer_type: polymer_type,
+            polymer_type: polymer_type,
             sum_formula: sum_formula,
             iupac_name: iupac_name,
             cas: cas,
