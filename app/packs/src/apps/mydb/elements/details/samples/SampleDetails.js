@@ -241,6 +241,7 @@ export default class SampleDetails extends React.Component {
   handleMoleculeBySmile(cas) {
     const smi = this.smilesInput.value;
     const { sample } = this.state;
+    const casObj = {};
     MoleculesFetcher.fetchBySmi(smi)
       .then((result) => {
         if (!result || result == null) {
@@ -253,9 +254,9 @@ export default class SampleDetails extends React.Component {
           sample.molecule = result;
           this.molfileInput.value = result.molfile;
           this.inchistringInput.value = result.inchistring;
-          console.log(result);
-          sample.xref = { ...sample.xref, cas: result.cas[0] || cas };
-          console.log(sample.xref);
+          casObj.value = result.cas[0] || cas;
+          casObj.label = result.cas[0] || cas;
+          sample.xref = { ...sample.xref, cas: casObj };
           this.setState({
             quickCreator: true,
             sample,
@@ -764,12 +765,11 @@ export default class SampleDetails extends React.Component {
   isCASNumberValid(cas, boolean) {
     const { sample } = this.state;
     const result = validateCas(cas, boolean);
-    this.setState({ validCas: result });
-    console.log(result);
     if (result !== false) {
-      console.log('what is going on');
-      sample.xref = { ...sample.xref, cas: result };
-      this.setState({ sample });
+      sample.xref = { ...sample.xref, cas: { value: result, label: result } };
+      this.setState({ sample, validCas: result });
+    } else {
+      this.setState({ validCas: result });
     }
   }
 

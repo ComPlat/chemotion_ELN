@@ -63,9 +63,11 @@ module Chemotion
           sample_name = dl_s.positive? && search_by_field.call(Sample, :name, qry) || []
           polymer_type = dl_s.positive? && d_for.call(Sample)
                                                 .by_residues_custom_info('polymer_type', qry)
-                                                .pluck("residues.custom_info -> 'polymer_type'").uniq || []
+                                                .pluck(Arel.sql("residues.custom_info->'polymer_type'")).uniq || []
           sum_formula = dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry) || []
           iupac_name = dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry) || []
+          # cas = dl_s.positive? && search_by_field.call(Molecule, :cas, qry) || []
+          cas = dl_s.positive? && search_by_field.call(Sample, :sample_xref_cas, qry) || []
           inchistring = dl_s.positive? && search_by_field.call(Molecule, :inchistring, qry) || []
           inchikey = dl_s.positive? && search_by_field.call(Molecule, :inchikey, qry) || []
           cano_smiles = dl_s.positive? && search_by_field.call(Molecule, :cano_smiles, qry) || []
@@ -76,6 +78,7 @@ module Chemotion
             polymer_type: polymer_type,
             sum_formula: sum_formula,
             iupac_name: iupac_name,
+            cas: cas,
             inchistring: inchistring,
             inchikey: inchikey,
             cano_smiles: cano_smiles
@@ -128,9 +131,11 @@ module Chemotion
           sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []
           polymer_type = dl_s.positive? && d_for.call(Sample)
                                                 .by_residues_custom_info('polymer_type', qry)
-                                                .pluck("residues.custom_info -> 'polymer_type'").uniq || []
+                                                .pluck(Arel.sql("residues.custom_info->'polymer_type'")).uniq || []
           sum_formula = dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry) || []
           iupac_name = dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry) || []
+          # cas = dl_s.positive? && search_by_field.call(Molecule, :cas, qry) || []
+          cas = dl_s.positive? && search_by_field.call(Sample, :sample_xref_cas, qry) || []
           inchistring = dl_s.positive? && search_by_field.call(Molecule, :inchistring, qry) || []
           inchikey = dl_s.positive? && search_by_field.call(Molecule, :inchikey, qry) || []
           cano_smiles = dl_s.positive? && search_by_field.call(Molecule, :cano_smiles, qry) || []
@@ -151,6 +156,7 @@ module Chemotion
             polymer_type: polymer_type,
             sum_formula: sum_formula,
             iupac_name: iupac_name,
+            cas: cas,
             inchistring: inchistring,
             inchikey: inchikey,
             cano_smiles: cano_smiles,

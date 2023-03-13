@@ -495,7 +495,7 @@ describe Chemotion::SampleAPI do
       let(:c3) { create(:collection, user_id: user.id, is_shared: true, permission_level: 1) }
       let(:s1) { create(:sample, name: 'old', target_amount_value: 0.1) }
       let(:s2) { create(:sample, name: 'old2', target_amount_value: 0.2) }
-      let(:cas) { 'test_cas' }
+      let(:cas) { { 'value' => '58-08-2', 'label' => '58-08-2' } }
 
       let(:params) do
         {
@@ -590,7 +590,7 @@ describe Chemotion::SampleAPI do
   end
 
   describe 'POST /api/v1/samples' do
-    let(:cas) { 'test_cas' }
+    let(:cas) { { 'value' => '58-08-2', 'label' => '58-08-2' } }
     let(:params) do
       {
         name: 'test',

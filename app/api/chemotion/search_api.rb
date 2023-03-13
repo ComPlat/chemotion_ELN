@@ -94,9 +94,8 @@ module Chemotion
           table = filter['field']['table']
           tables.push(table: table, ext_key: filter['field']['ext_key'])
           field = filter['field']['column']
-          words = filter['value'].split(/,|(\r)?\n/).map!(&:strip)
+          words = filter['value'].split(/(\r)?\n/).map!(&:strip)
           words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } unless filter['match'] == '='
-
           field = "xref -> 'cas' ->> 'value'" if field == 'xref' && filter['field']['opt'] == 'cas'
           conditions = words.collect { "#{table}.#{field} #{filter['match']} ? " }.join(' OR ')
           query = "#{query} #{filter['link']} (#{conditions}) "
@@ -118,7 +117,6 @@ module Chemotion
                   end
         end
         scope = scope.where([query] + cond_val)
-
         scope
       end
 
@@ -307,6 +305,13 @@ module Chemotion
                   else
                     Sample.none
                   end
+                when 'cas'
+                  if dl_s > 0
+                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                          .by_sample_xref_cas(arg)
+                  else
+                    Sample.none
+                  end
                 when 'reaction_name', 'reaction_short_label', 'reaction_status', 'reaction_rinchi_string'
                   Reaction.by_collection_id(c_id).search_by(search_method, arg)
                 when 'wellplate_name'
@@ -331,11 +336,11 @@ module Chemotion
                 end
 
         if search_method == 'advanced' && molecule_sort == false
-          arg_value_str = adv_params.first['value'].split(/(\r)?\n|,/).map(&:strip)
+          arg_value_str = adv_params.first['value'].split(/(\r)?\n/).map(&:strip)
                                     .select{ |s| !s.empty? }.join(',')
-          return scope.order(
+          return scope.order(Arel.sql(
             "position(','||(#{adv_params.first['field']['column']}::text)||',' in ','||(#{ActiveRecord::Base.connection.quote(arg_value_str)}::text)||',')"
-          )
+          ))
         elsif search_method == 'advanced' && molecule_sort == true
           return scope.order('samples.updated_at DESC')
         elsif search_method != 'advanced' && molecule_sort == true
@@ -470,6 +475,8 @@ module Chemotion
             case search_by_method
             when 'structure'
               sample_structure_search
+            when 'cas'
+              Sample.by_collection_id(@c_id).by_sample_xref_cas( params[:selection][:name])
             else
               Sample.by_collection_id(@c_id).search_by(search_by_method, params[:selection][:name])
             end
