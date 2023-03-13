@@ -1,9 +1,8 @@
 export default {
   fields: {
-    sample: [
+    samples: [
       {
         value: {
-          table: 'samples',
           column: 'name',
           label: 'Name'
         },
@@ -11,7 +10,6 @@ export default {
       },
       {
         value: {
-          table: 'samples',
           column: 'short_label',
           label: 'Short Label'
         },
@@ -19,7 +17,6 @@ export default {
       },
       {
         value: {
-          table: 'samples',
           column: 'external_label',
           label: 'External Label'
         },
@@ -27,7 +24,6 @@ export default {
       },
       {
         value: {
-          table: 'samples',
           column: 'xref',
           opt: 'cas',
           label: 'CAS'
@@ -35,10 +31,9 @@ export default {
         label: 'CAS'
       }
     ],
-    reaction: [
+    reactions: [
       {
         value: {
-          table: 'reactions',
           column: 'name',
           label: 'Name'
         },
@@ -46,17 +41,15 @@ export default {
       },
       {
         value: {
-          table: 'reactions',
           column: 'short_label',
           label: 'Short Label'
         },
         label: 'Short Label'
       }
     ],
-    wellplate: [
+    wellplates: [
       {
         value: {
-          table: 'wellplates',
           column: 'name',
           label: 'Name'
         },
@@ -64,17 +57,15 @@ export default {
       },
       {
         value: {
-          table: 'wellplates',
           column: 'short_label',
           label: 'Short Label'
         },
         label: 'Short Label'
       }
     ],
-    screen: [
+    screens: [
       {
         value: {
-          table: 'screens',
           column: 'name',
           label: 'Name'
         },
@@ -82,17 +73,15 @@ export default {
       },
       {
         value: {
-          table: 'screens',
           column: 'short_label',
           label: 'Short Label'
         },
         label: 'Short Label'
       }
     ],
-    research_plan: [
+    research_plans: [
       {
         value: {
-          table: 'research_plans',
           column: 'name',
           label: 'Name'
         },
@@ -100,7 +89,6 @@ export default {
       },
       {
         value: {
-          table: 'research_plans',
           column: 'short_label',
           label: 'Short Label'
         },

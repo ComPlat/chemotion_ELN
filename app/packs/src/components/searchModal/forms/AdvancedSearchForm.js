@@ -3,6 +3,7 @@ import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Alert } 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import AdvancedSearchRow from './AdvancedSearchRow';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
@@ -12,9 +13,8 @@ const AdvancedSearchForm = () => {
   const defaultSelections = [{
     link: '',
     match: '=',
-    table: 'sample',
+    table: 'samples',
     field: {
-      table: 'samples',
       column: 'name',
       label: 'Name',
     },
@@ -33,7 +33,7 @@ const AdvancedSearchForm = () => {
       (length == 0 && lastInputRow.field && lastInputRow.value);
 
     if (checkSelectedElements) {
-      selectedOptions.push({ link: 'OR', match: 'LIKE', field: '', value: '' });
+      selectedOptions.push({ link: 'OR', match: 'LIKE', table: selectedOptions[0].table, field: '', value: '' });
       setSelectedOptions((a) => [...a]);
     }
   }, [selectedOptions, setSelectedOptions]);
@@ -88,18 +88,25 @@ const AdvancedSearchForm = () => {
   }
 
   const handleChangeElement = (element) => {
-    selectedOptions[0].table = element;
+    defaultSelections[0].table = element;
+    setSelectedOptions(defaultSelections);
     setSelectedOptions((a) => [...a]);
   }
 
   const SelectSearchTable = () => {
     const elementsForSelect = ['sample', 'reaction', 'wellplate', 'screen', 'research_plan'];
-    const buttons = elementsForSelect.map((element) => {
+    const layout = UserStore.getState().profile.data.layout;
+
+    const buttons = Object.entries(layout).filter((value) => {
+      return value[1] > 0 && elementsForSelect.includes(value[0]);
+    })
+    .sort((a,b) => a[1] - b[1])
+    .map((value) => {
       return (
         <ToggleButton
-          key={element}
-          value={element}>
-          {element.replace('_', ' ').charAt(0).toUpperCase() + element.slice(1)}
+          key={value[0]}
+          value={`${value[0]}s`}>
+          {value[0].charAt(0).toUpperCase() + value[0].slice(1).replace('_', ' ') }
         </ToggleButton>
       );
     });
@@ -110,7 +117,7 @@ const AdvancedSearchForm = () => {
         name="options"
         value={selectedOptions[0].table}
         onChange={handleChangeElement}
-        defaultValue={'sample'}>
+        defaultValue={'samples'}>
         {buttons}
       </ToggleButtonGroup>
     );
@@ -123,7 +130,7 @@ const AdvancedSearchForm = () => {
 
     if (searchStore.searchResultVisible && filters.length > 0) {
       filters.map((val, i) => {
-        searchValues.push([val.link, val.field.label, val.match, val.value].join(" "));
+        searchValues.push([val.link, val.field.label, val.table, val.match, val.value].join(" "));
       });
     }
     searchStore.changeSearchValues(searchValues);

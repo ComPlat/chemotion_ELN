@@ -121,11 +121,15 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w(name short_label external_label xref),
-  }
+    'samples' => %w[name short_label external_label xref],
+    'reactions' => %w[name short_label],
+    'wellplates' => %w[name short_label],
+    'screens' => %w[name short_label],
+    'research_plans' => %w[name short_label],
+  }.freeze
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
-  ELEMENTS = %w[research_plan screen wellplate reaction sample]
+  ELEMENTS = %w[research_plan screen wellplate reaction sample].freeze
 
   TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate
                      ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate]

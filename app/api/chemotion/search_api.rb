@@ -35,6 +35,7 @@ module Chemotion
           optional :advanced_params, type: Array do
             optional :link, type: String, values: ['', 'AND', 'OR'], default: ''
             optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE'], default: 'LIKE'
+            optional :table, type: String, values: %w[samples reactions wellplates screens research_plans]
             requires :field, type: Hash
             requires :value, type: String
           end
@@ -125,13 +126,16 @@ module Chemotion
       def filter_values_for_advanced_search(dl = @dl)
         query = ''
         cond_val = []
+        model_name = ''
 
         adv_params.each do |filter|
+          filter['field']['table'] = filter['table']
           adv_field = filter['field'].to_h.merge(dl).symbolize_keys
           next unless whitelisted_table(**adv_field)
           next unless filter_with_detail_level(**adv_field)
 
-          table = filter['field']['table']
+          table = filter['table']
+          model_name = table.singularize.capitalize.constantize
           # tables.push(table: table, ext_key: filter['field']['ext_key'])
           field = filter['field']['column']
           words = filter['value'].split(/(\r)?\n/).map!(&:strip)
@@ -141,15 +145,15 @@ module Chemotion
           query = "#{query} #{filter['link']} (#{conditions}) "
           cond_val += words
         end
-        [query, cond_val]
+        [query, cond_val, model_name]
       end
 
       def advanced_search(c_id = @c_id, dl = @dl)
-        query, cond_val = filter_values_for_advanced_search(dl)
-
-        scope = Sample.by_collection_id(c_id.to_i)
-                      .where([query] + cond_val)
-        order_by_molecule(scope)
+        query, cond_val, model_name = filter_values_for_advanced_search(dl)
+        scope = model_name.by_collection_id(c_id.to_i)
+                          .where([query] + cond_val)
+        scope = order_by_molecule(scope) if model_name == Sample
+        scope
       end
 
       def elements_search(c_id = @c_id, dl = @dl)
