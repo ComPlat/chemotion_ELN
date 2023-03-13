@@ -57,7 +57,7 @@ module Chemotion
 
         search_by_element_short_label = proc do |klass, qry|
           scope = d_for.call klass
-          scope.send("by_short_label", qry).page(1).per(page_size).map { |el| {klass: el.element_klass.name, icon: el.element_klass.icon_name, label: "#{el.element_klass.label} Short Label", name: el.short_label } }
+          scope.send(:by_short_label, qry).page(1).per(page_size).map { |el| { klass: el.element_klass.name, icon: el.element_klass.icon_name, label: "#{el.element_klass.label} Short Label", name: el.short_label } }
         end
 
         qry = params[:query]

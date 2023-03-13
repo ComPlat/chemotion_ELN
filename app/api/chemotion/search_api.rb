@@ -425,8 +425,8 @@ module Chemotion
                     Sample.none
                   end
                 when 'cas'
-                  if dl_s > 0
-                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                  if dl_s.positive?
+                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
                           .by_sample_xref_cas(arg)
                   else
                     Sample.none
@@ -616,7 +616,7 @@ module Chemotion
             when 'structure'
               sample_structure_search
             when 'cas'
-              Sample.by_collection_id(@c_id).by_sample_xref_cas( params[:selection][:name])
+              Sample.by_collection_id(@c_id).by_sample_xref_cas(params[:selection][:name])
             else
               Sample.by_collection_id(@c_id).search_by(search_by_method, params[:selection][:name])
             end
