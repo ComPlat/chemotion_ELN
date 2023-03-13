@@ -189,8 +189,6 @@ export default class TextTemplate extends React.Component {
               <div style={{ height: '100%' }} className="ag-theme-balham">
                 <AgGridReact
                   enableColResize
-                  pagination
-                  paginationAutoPageSize
                   suppressHorizontalScroll
                   columnDefs={this.columnDefs}
                   rowSelection="single"
