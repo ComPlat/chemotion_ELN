@@ -42,6 +42,7 @@ export default class TabLayoutContainer extends React.Component {
       hidden = ArrayUtils.removeFromListByValue(hidden, 'hidden');
     }
 
+     visible = ArrayUtils.removeFromListByValue(visible, 'hidden');
     this.setState({ visible, hidden });
   }
 
