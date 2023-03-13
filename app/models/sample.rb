@@ -69,7 +69,8 @@ class Sample < ApplicationRecord
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
-    :molecule_iupac_name, :molecule_inchistring, :molecule_inchikey, :molecule_cano_smiles
+    :molecule_iupac_name, :molecule_inchistring, :molecule_inchikey, :molecule_cano_smiles,
+    :sample_xref_cas
   ]
 
   # search scopes for exact matching
@@ -102,10 +103,12 @@ class Sample < ApplicationRecord
   pg_search_scope :search_by_sample_name, against: :name
   pg_search_scope :search_by_sample_short_label, against: :short_label
   pg_search_scope :search_by_sample_external_label, against: :external_label
+  pg_search_scope :search_by_cas, against: { xref: 'cas' }
 
   # scopes for suggestions
   scope :by_residues_custom_info, ->(info, val) { joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?", "%#{sanitize_sql_like(val)}%")}
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_sample_xref_cas, ->(query) { where("xref ? 'cas'").where("xref -> 'cas' ->> 'value' ILIKE ?", "%#{sanitize_sql_like(query)}%") }
   scope :by_exact_name, ->(query) { where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)', "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$", "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
@@ -224,6 +227,10 @@ class Sample < ApplicationRecord
 
   attr_writer :skip_reaction_svg_update
 
+  def self.rebuild_pg_search_documents
+    find_each(&:update_pg_search_document)
+  end
+
   def skip_reaction_svg_update?
     @skip_reaction_svg_update.present?
   end
@@ -242,6 +249,10 @@ class Sample < ApplicationRecord
 
   def molecule_inchistring
     self.molecule ? self.molecule.inchistring : ''
+  end
+
+  def sample_xref_cas
+    xref&.dig('cas', 'value') || ''
   end
 
   def molecule_inchikey
