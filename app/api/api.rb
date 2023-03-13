@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
+
 # module API
 require 'grape-entity'
 require 'grape-swagger'
@@ -128,6 +130,7 @@ class API < Grape::API
     'screens' => %w[name short_label],
     'research_plans' => %w[name short_label],
   }.freeze
+
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
   ELEMENTS = %w[research_plan screen wellplate reaction sample].freeze
@@ -191,3 +194,4 @@ class API < Grape::API
     "version": "1.0"
   }) if Rails.env.development?
 end
+# rubocop:enable Metrics/ClassLength
