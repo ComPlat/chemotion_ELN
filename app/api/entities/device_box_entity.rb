@@ -38,7 +38,8 @@ module Entities
     end
 
     def all_descendants_attachments
-      @all_descendants_attachments ||= Attachment.where_container(object.child_ids.first(MAX_DATASETS)).limit(MAX_ATTACHMENTS)
+      @all_descendants_attachments ||= Attachment.where_container(object.child_ids.first(MAX_DATASETS))
+                                                 .limit(MAX_ATTACHMENTS)
     end
   end
 end
