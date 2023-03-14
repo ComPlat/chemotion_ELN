@@ -5,24 +5,11 @@ GIT
     rinchi-gem (1.0.1)
 
 GIT
-  remote: https://github.com/CamAnNguyen/rdkit_chem
-  revision: cf8a3890c5aa7f4db74e40d1cbd3a50b62bd8d94
-  specs:
-    rdkit_chem (2020.04.30.1)
-
-GIT
   remote: https://github.com/ComPlat/inchi-gem.git
   revision: 9a95669b42e18a20d2a0c2d5440670ff94e46c37
   branch: main
   specs:
     inchi-gem (1.06.1)
-
-GIT
-  remote: https://github.com/ComPlat/openbabel-gem.git
-  revision: 3e25548fd95c2ac83c7fb5d9544ed2cf6ae1344b
-  branch: hot-fix-svg
-  specs:
-    openbabel (2.4.90.3)
 
 GIT
   remote: https://github.com/ComPlat/sablon
@@ -91,6 +78,20 @@ GIT
   revision: 4935ef8836d097f22c7b6402978a93956fa5ed64
   specs:
     thumbnailer (0.2.0)
+
+GIT
+  remote: https://github.com/ptrxyz/openbabel-gem.git
+  revision: a1255a58c7fa52a00b5743dce46af714365d6acd
+  branch: ptrxyz-ctime-fix
+  specs:
+    openbabel (2.4.90.3)
+
+GIT
+  remote: https://github.com/ptrxyz/rdkit_chem.git
+  revision: c8ddea813688df7014606a1c5802b25b1fcbe3f6
+  branch: pk01
+  specs:
+    rdkit_chem (2020.04.30.1)
 
 GIT
   remote: https://github.com/rails/webpacker
@@ -168,6 +169,8 @@ GEM
     activerecord (6.1.7)
       activemodel (= 6.1.7)
       activesupport (= 6.1.7)
+    activerecord-nulldb-adapter (0.9.0)
+      activerecord (>= 5.2.0, < 7.1)
     activestorage (6.1.7)
       actionpack (= 6.1.7)
       activejob (= 6.1.7)
@@ -779,6 +782,8 @@ GEM
       sprockets (~> 3.0)
     tzinfo (2.0.5)
       concurrent-ruby (~> 1.0)
+    tzinfo-data (1.2022.7)
+      tzinfo (>= 1.0.0)
     unicode-display_width (2.3.0)
     uniform_notifier (1.16.0)
     validate_email (0.1.6)
@@ -830,6 +835,7 @@ PLATFORMS
 DEPENDENCIES
   aasm
   activejob-status
+  activerecord-nulldb-adapter
   ancestry
   annotate
   api-pagination
@@ -956,6 +962,7 @@ DEPENDENCIES
   thor
   thumbnailer!
   turbo-sprockets-rails4
+  tzinfo-data
   web-console
   webdrivers
   webmock
