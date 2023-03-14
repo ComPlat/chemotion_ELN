@@ -3,20 +3,33 @@
 # Chemotion_ELN Changelog
 
 
-## [vMAJOR.MINOR.PATCH]
-> yyyy-mm-dd
-
-* Features and Improvements:
-* Fixes
-
 ## [v1.5.0]
-> 2022-10-13
+> 2023-03-14
+
+* Important for admin and developers:
+  * Gem Shrine is now used to handle attachment files:
+    - if you use a custom config/storage.yml file, ensure your shrine config/shrine.yml is correct or DB migrations will fail
+  * Upgrade Rails to 6.1
 
 * Features and Improvements:
-  * Chemspectra: Spectra can be processed even when molfile is valid or not (https://github.com/ComPlat/chemotion_ELN/issues/951) (Warning: update chem-spectra-app service to 0.11.0)
-  * NMRium: NMR data can be viewed in NMRium from ChemotionELN (https://github.com/ComPlat/chemotion_ELN/issues/964) (Warning: update chem-spectra-app service to 0.11.0)
+  * Image Annotation tool ([docs](https://chemotion.net/docs/eln/ui/images))
+  * collection archiving to RADAR (RADAR account needed)
+  * NMRium: NMR data can be processed in [NMRium](https://www.nmrium.org/) ([docs](https://chemotion.net/docs/chemspectra/nmr?_highlight=nmrium#analysis-using-nmrium))
+  * Integration of Chem-converter v0.9.0 ([docs]( https://chemotion.net/docs/chemconverter/)
+  * Wellplate/Screen/ResearchPlan Workflow
+  * Chemspectra: better UI for Cyclic Volt. 
+  * add cas to sample export 
+  * 
+
 * Fixes
   * Chemspectra: The issue of multiplicities on chemspectra frontend are not removed when changing between layouts with the old JCAMP design is fixed
+  * Chemspectra: Spectra can be processed even when the molfile is invalid (https://github.com/ComPlat/chemotion_ELN/issues/951) (Warning: update chem-spectra-app service to 0.11.0)
+  * Affiliation autocomplete (sign up page)
+  * CAS not searchable (index search might need to be rebuilt)
+  * molecule image cropped in chemspectra
+  * [others](https://github.com/ComPlat/chemotion_ELN/issues?q=is%3Aissue+is%3Aclosed+closed%3A2022-11-10..2023-02-28+label%3Abug+) 
+
+
 
 ## [v1.4.1]
 > 2022-11-09
