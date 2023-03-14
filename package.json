@@ -108,7 +108,7 @@
     "uuid": "^3.3.2",
     "whatwg-fetch": "2.0.3",
     "xlsx": "^0.17.0",
-    "yarn": "^1.22.10"
+    "yarn": "^1.22.19"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.0",
@@ -152,7 +152,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": "14.20.0"
+    "node": "14.21.3"
   },
   "browserslist": [
     "defaults"
