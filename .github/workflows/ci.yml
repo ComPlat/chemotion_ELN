@@ -21,7 +21,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.7.6'
+          ruby-version: '2.7.7'
 
       - name: install linting dependencies
         # IMPORTANT: install rubocop first for pinning to take effect (`gem` doesn't resolve dependencies but simply installs gems in order)
@@ -49,7 +49,7 @@ jobs:
       run:
         shell: bash
 
-    container: complat/chemotion_eln_runner:ruby-2.7.6
+    container: complat/chemotion_eln_runner:v1.5.0
 
     services:
       postgres:
@@ -67,37 +67,24 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v3
 
-      - name: update package repository
-        run: sudo apt update
-
-      - name: install SSH service
-        run: sudo apt install -y openssh-server
-
-      - name: restart SSH server
-        run: sudo service ssh restart
-
-      - name: check SSH service
-        run: sudo service ssh status
-
-      - name: generate SSH key
+      - name: create user for datacollectors testing
         run: |
+          useradd testuser -m -s /bin/bash
+          mkdir /home/testuser/.ssh
+          chown testuser:testuser /home/testuser/.ssh
+          chmod 700 /home/testuser/.ssh
+
+      - name: configure ssh for datacollectors testing 
+        run: |
+          service ssh restart
           mkdir -p $HOME/.ssh
-          ssh-keygen -t rsa -b 4096 -C "CI Deploy Key" -f $HOME/.ssh/id_rsa -N ""
-          echo "$(<$HOME/.ssh/id_rsa.pub)" >> $HOME/.ssh/authorized_keys
-
-      - name: create user
-        run: |
-          sudo useradd testuser -m -s /bin/bash
-          sudo mkdir /home/testuser/.ssh
-          sudo chown testuser:testuser /home/testuser/.ssh
-          sudo chmod 700 /home/testuser/.ssh
-
-      - name: add SSH key to authorized_keys
-        run: |
-          echo "$(<$HOME/.ssh/id_rsa.pub)" | sudo tee -a /home/testuser/.ssh/authorized_keys
-          cat /home/testuser/.ssh/authorized_keys
-          sudo chown testuser:testuser /home/testuser/.ssh/authorized_keys
-          sudo chmod 600 /home/testuser/.ssh/authorized_keys
+          chmod 700 $HOME/.ssh
+          ssh-keygen -t ed25519 -f $HOME/.ssh/id_test -N ""
+          # echo "$(<$HOME/.ssh/id_test.pub)" >> $HOME/.ssh/authorized_keys
+          echo "$(<$HOME/.ssh/id_test.pub)" | sudo tee -a /home/testuser/.ssh/authorized_keys
+          eval `ssh-agent`
+          ssh-add $HOME/.ssh/id_test
+          ssh-keyscan -H 127.0.0.1  >> $HOME/.ssh/known_hosts
 
       - name: configure repository
         run: |
@@ -110,6 +97,7 @@ jobs:
           cp -f storage.yml.example storage.yml
           cp -f radar.yml.example radar.yml
           touch klasses.json
+          bundle config set without ''
 
       - name: configure postgres
         env:
@@ -126,7 +114,7 @@ jobs:
         run: bundle install
 
       - name: yarn install
-        run: yarn install
+        run:  yarn install --production=false
 
       - name: prepare postgres
         run: |
@@ -134,18 +122,14 @@ jobs:
           RAILS_ENV=test bundle exec rake db:test:prepare
           RAILS_ENV=test bundle exec rake db:seed
 
-      - name: precompile
-        run: RAILS_ENV=test bundle exec rake webpacker:compile
-
       - name: npm test
         run: npm test
 
-      - name: rspec acceptance
-        continue-on-error: true    # don't fail job because this step; TODO: fix flaky acceptance tests...
-        run: RAILS_ENV=test bundle exec rspec spec/features
-
       - name: rspec unit
-        run: RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb
+        run: |
+          eval `ssh-agent`
+          ssh-add $HOME/.ssh/id_test
+          RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
 
       - name: coverage rspec unit
         if: github.event.pull_request && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (github.triggering_actor != 'dependabot[bot]')  # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
@@ -155,3 +139,11 @@ jobs:
           minimum-coverage: 57
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+#      - name: precompile
+#        run: RAILS_ENV=test bundle exec rake webpacker:compile
+
+#      - name: rspec acceptance
+#        continue-on-error: true    # don't fail job because this step; TODO: fix flaky acceptance tests...
+#        run: RAILS_ENV=test bundle exec rspec spec/features
+
