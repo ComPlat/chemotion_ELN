@@ -20,7 +20,6 @@ class Fcollector
       @current_collector = nil
       method_params = device.profile.data['method_params']
       host = method_params['host']
-
       case method_params['authen']
       when 'keyfile'
         user = method_params['user']
@@ -33,6 +32,8 @@ class Fcollector
         args = {
           key_data: [],
           keys: kp,
+          auth_methods: %w[publickey],
+          verbose: :error,
           keys_only: true,
         }
       when 'password', nil

@@ -1,6 +1,6 @@
-FROM ruby:2.7.6
+FROM ruby:2.7.7
 
-ARG NODE_VERSION=14.20.0
+ARG NODE_VERSION=14.21.3
 ARG BUNDLER_VERSION=2.1.4
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \

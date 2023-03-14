@@ -1,8 +1,8 @@
 FROM ubuntu:focal
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG VRUBY=2.7.6
-ARG VNODE=14.20.0
+ARG VRUBY=2.7.7
+ARG VNODE=14.21.3
 ARG VNODENEXT=16.16.0
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
