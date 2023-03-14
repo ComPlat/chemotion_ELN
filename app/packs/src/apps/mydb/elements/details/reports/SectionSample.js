@@ -40,13 +40,14 @@ const SVGContent = ({ show, svgPath }) => {
 
 const AnalysesContent = ({ show, showRecDes, analyses, reactionDescription }) => {
   const isReDesObj = typeof reactionDescription === "object";
-  const init = showRecDes && isReDesObj ? reactionDescription.ops : [];
+  let reactDes = reactionDescription
+  const init = showRecDes && isReDesObj && reactDes ? (reactDes.ops ? reactDes.ops : []) : []
   const analysesParagraph = () => {
     const dataMerged = analyses.reduce((sum, a) => {
       let defaultContent = "{\"ops\":[{\"insert\":\"\"}]}"
 
       let contentJSON = a.extended_metadata.content || JSON.parse(defaultContent)
-      return [...sum, ...contentJSON.ops];
+      return [...sum, ...contentJSON.ops].filter(n => n !== undefined);
     }, init);
     const data = dataMerged.map(d => {
       d.insert = d.insert.replace(/\n/g, ' ');
