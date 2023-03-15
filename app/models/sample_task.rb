@@ -40,7 +40,7 @@ class SampleTask < ApplicationRecord
   scope(
     :with_missing_scan_results,
     lambda do
-      joins(:scan_results)
+      left_joins(:scan_results)
       .select('sample_tasks.*, count(scan_results.id)')
       .group(:id)
       .having('count(scan_results.id) < required_scan_results')

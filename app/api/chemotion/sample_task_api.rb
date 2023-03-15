@@ -17,7 +17,7 @@ module Chemotion
     resource :sample_tasks do # rubocop:disable Metrics/BlockLength
       # Index: List all scan tasks for the given parameters
       params do
-        optional :status, type: String, values: %w[open done], default: 'open'
+        optional :status, type: String, values: %w[open with_missing_scan_results done], default: 'open'
       end
       get do
         tasks = SampleTask.for(current_user).public_send(params[:status])
