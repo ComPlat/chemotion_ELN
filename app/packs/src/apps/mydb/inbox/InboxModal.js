@@ -17,13 +17,14 @@ export default class InboxModal extends React.Component {
 
     this.state = {
       inbox: inboxState.inbox,
-      inboxVisible: false,
+      inboxVisible: inboxState.inboxVisible,
       numberOfAttachments: inboxState.numberOfAttachments,
       visible: inboxState.inboxModalVisible,
 
       currentPage: inboxState.currentPage,
       itemsPerPage: inboxState.itemsPerPage,
       totalPages: inboxState.totalPages,
+      activeDeviceBoxId: inboxState.activeDeviceBoxId,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -56,7 +57,7 @@ export default class InboxModal extends React.Component {
     const {
       inboxVisible, inbox, currentPage, itemsPerPage
     } = this.state;
-    this.setState({ inboxVisible: !inboxVisible });
+    InboxActions.setInboxVisible({ inboxVisible: !inboxVisible });
     if (!inbox.children) {
       LoadingActions.start();
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
@@ -125,7 +126,7 @@ export default class InboxModal extends React.Component {
   };
 
   inboxSubtrees() {
-    const { inbox } = this.state;
+    const { inbox, activeDeviceBoxId } = this.state;
 
     let boxes = '';
     if (inbox.children) {
@@ -133,7 +134,12 @@ export default class InboxModal extends React.Component {
         if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
       });
       boxes = inbox.children.map(deviceBox => (
-        <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} largerInbox />
+        <DeviceBox
+          key={`box_${deviceBox.id}`}
+          device_box={deviceBox}
+          largerInbox
+          deviceBoxVisible={deviceBox.id === activeDeviceBoxId}
+        />
       ));
     }
 
@@ -152,7 +158,6 @@ export default class InboxModal extends React.Component {
   render() {
     const { showCollectionTree } = this.props;
     const { visible, inboxVisible } = this.state;
-
 
     const panelClass = showCollectionTree ? 'small-col col-md-6' : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';

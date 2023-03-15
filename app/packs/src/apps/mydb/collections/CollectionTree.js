@@ -39,7 +39,7 @@ export default class CollectionTree extends React.Component {
       inbox: inboxState.inbox,
       numberOfAttachments: inboxState.numberOfAttachments,
       itemsPerPage: inboxState.itemsPerPage,
-      inboxVisible: false
+      inboxSectionVisible: false,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -69,9 +69,9 @@ export default class CollectionTree extends React.Component {
 
   onClickInbox() {
     const {
-      inboxVisible, inbox, currentPage, itemsPerPage
+      inboxSectionVisible, inbox, currentPage, itemsPerPage
     } = this.state;
-    this.setState({ inboxVisible: !inboxVisible });
+    this.setState({ inboxSectionVisible: !inboxSectionVisible });
     if (!inbox.children) {
       LoadingActions.start();
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
@@ -163,7 +163,6 @@ export default class CollectionTree extends React.Component {
     return this.subtrees(labelledRoots, subTreeLabels,
       false, sharedWithCollectionVisible)
   }
-
 
   inboxSubtrees() {
     const { inbox } = this.state;
@@ -314,10 +313,10 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
-    let { ownCollectionVisible, inboxVisible, inbox } = this.state
+    const { ownCollectionVisible, inboxSectionVisible } = this.state
 
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
-    const inboxDisplay = inboxVisible ? '' : 'none';
+    const inboxDisplay = inboxSectionVisible ? '' : 'none';
 
     return (
       <div>

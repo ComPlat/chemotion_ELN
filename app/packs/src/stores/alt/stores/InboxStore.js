@@ -16,9 +16,11 @@ class InboxStore {
       checkedIds: [],
       checkedAll: false,
       inboxModalVisible: false,
+      inboxVisible: false,
       currentPage: 1,
       itemsPerPage: 20,
       totalPages: null,
+      activeDeviceBoxId: null,
     };
 
     this.bindListeners({
@@ -53,6 +55,8 @@ class InboxStore {
       handleConfirmDelete: DetailActions.confirmDelete,
       handleDeleteElement: ElementActions.deleteElementsByUIState,
       handleSetPagination: InboxActions.setInboxPagination,
+      setInboxVisible: InboxActions.setInboxVisible,
+      setActiveDeviceBoxId: InboxActions.setActiveDeviceBoxId,
     });
   }
 
@@ -65,7 +69,7 @@ class InboxStore {
   showInboxModal() {
     const { inboxModalVisible } = this.state;
     if (!inboxModalVisible) {
-      this.setState({ inboxModalVisible: !inboxModalVisible });
+      this.setState({ inboxModalVisible: true, inboxVisible: true });
       this.emitChange();
     }
   }
@@ -218,6 +222,15 @@ class InboxStore {
   handleSetPagination(pagination) {
     const { currentPage } = pagination;
     this.state.currentPage = currentPage;
+  }
+
+  setInboxVisible(params) {
+    const { inboxVisible } = params;
+    this.state.inboxVisible = inboxVisible;
+  }
+
+  setActiveDeviceBoxId(deviceBoxId) {
+    this.state.activeDeviceBoxId = deviceBoxId;
   }
 
   sync() {

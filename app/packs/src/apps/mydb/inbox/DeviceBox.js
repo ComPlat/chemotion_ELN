@@ -15,9 +15,30 @@ export default class DeviceBox extends React.Component {
     };
   }
 
+  componentDidMount() {
+    const { device_box, deviceBoxVisible } = this.props;
+    if (deviceBoxVisible) {
+      if (Array.isArray(device_box.children) && !device_box.children.length) {
+        LoadingActions.start();
+        InboxActions.fetchInboxContainer(device_box);
+      }
+    }
+    this.setState({ visible: deviceBoxVisible });
+  }
+
+  componentDidUpdate(prevProps) {
+    const { deviceBoxVisible } = this.props;
+    if (deviceBoxVisible !== prevProps.deviceBoxVisible) {
+      this.setState({ visible: deviceBoxVisible });
+    }
+  }
+
   handleDeviceBoxClick(deviceBox) {
     const { visible } = this.state;
     const { fromCollectionTree } = this.props;
+
+    InboxActions.setActiveDeviceBoxId(deviceBox.id);
+
     if (fromCollectionTree) {
       return;
     }
@@ -106,10 +127,12 @@ export default class DeviceBox extends React.Component {
 DeviceBox.propTypes = {
   device_box: PropTypes.object.isRequired,
   largerInbox: PropTypes.bool,
-  fromCollectionTree: PropTypes.bool
+  fromCollectionTree: PropTypes.bool,
+  deviceBoxVisible: PropTypes.bool,
 };
 
 DeviceBox.defaultProps = {
   largerInbox: false,
-  fromCollectionTree: false
+  fromCollectionTree: false,
+  deviceBoxVisible: false,
 };

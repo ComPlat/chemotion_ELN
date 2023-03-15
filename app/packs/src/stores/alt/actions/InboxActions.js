@@ -84,6 +84,14 @@ class InboxActions {
     return pagination;
   }
 
+  setInboxVisible(inboxVisible) {
+    return inboxVisible;
+  }
+
+  setActiveDeviceBoxId(deviceBoxId) {
+    return deviceBoxId;
+  }
+
   deleteAttachment(params) {
     return (dispatch) => {
       AttachmentFetcher.deleteAttachment(params)
