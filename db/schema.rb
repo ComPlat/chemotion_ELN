@@ -986,7 +986,7 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.float "measurement_value", null: false
     t.string "measurement_unit", default: "g", null: false
     t.string "title"
-    t.string "position", default: "0", null: false
+    t.integer "position", default: 0, null: false
     t.bigint "sample_task_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

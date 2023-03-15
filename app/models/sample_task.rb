@@ -27,7 +27,7 @@
 class SampleTask < ApplicationRecord
   belongs_to :creator, class_name: 'Person'
   belongs_to :sample, optional: true
-  has_many :scan_results
+  has_many :scan_results, dependent: :destroy
 
   scope :for, ->(user) { where(creator: user) }
   scope :open, -> { without_result_data }
