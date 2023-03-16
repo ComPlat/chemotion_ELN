@@ -53,7 +53,7 @@ class TabLayoutCell extends Component {
 
     const content = isElementDetails ? (
       <div style={{ width: '100%' }}>
-        <i style={styleObj}>{title === 'hidden' ? '-' : title}</i>
+        <p style={styleObj}>{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       <div>
