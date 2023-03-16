@@ -35,6 +35,10 @@
   font-size: 2.2em;
 }
 
+.search-result-tab-navbar.navbar-default .navbar-nav a i.icon-research_plan {
+  font-size: 1.6em;
+}
+
 .search-result-tab-navbar.navbar-default .navbar-nav a i.icon_generic_nav {
   font-size: 1.8em;
   padding-top: 2px;
@@ -57,6 +61,11 @@
   font-size: 1.8em;
 }
 
+.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a i.icon-research_plan {
+  font-size: 1.4em;
+  padding-top: 2px;
+}
+
 .search-result-tab-navbar.navbar-default .elements-list-tab.no-result a i.icon_generic_nav {
   font-size: 1.5em;
   padding-top: 4px;
@@ -68,19 +77,33 @@
 
 .search-result-tab-content-list {
   background-color: rgb(245, 245, 245);
-  padding: 15px;
+  padding: 0 15px 15px 15px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .search-result-tab-content-list p {
   font-weight: bold;
-  margin-bottom: 2px;
+  margin-bottom: 5px;
 }
 
-.search-result-tab-content-list div {
-  display: block;
-  margin-bottom: 30px;
+.search-result-tab-content-list p:first-child {
+  margin-top: 15px;
+}
+
+.search-result-molecule {
+  display: flex;
+}
+
+.search-result-molecule .preview-table {
+  max-width: 100px;
+  min-height: 100px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.search-result-molecule.reaction .preview-table {
+  max-width: 300px;
 }
 
 .search-result-tab-content-list-name {

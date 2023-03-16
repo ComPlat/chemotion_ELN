@@ -29,7 +29,7 @@ export default {
           label: 'CAS'
         },
         label: 'CAS'
-      }
+      },
     ],
     reactions: [
       {
@@ -45,7 +45,7 @@ export default {
           label: 'Short Label'
         },
         label: 'Short Label'
-      }
+      },
     ],
     wellplates: [
       {
@@ -61,7 +61,7 @@ export default {
           label: 'Short Label'
         },
         label: 'Short Label'
-      }
+      },
     ],
     screens: [
       {
@@ -71,13 +71,6 @@ export default {
         },
         label: 'Name'
       },
-      {
-        value: {
-          column: 'short_label',
-          label: 'Short Label'
-        },
-        label: 'Short Label'
-      }
     ],
     research_plans: [
       {
@@ -87,13 +80,6 @@ export default {
         },
         label: 'Name'
       },
-      {
-        value: {
-          column: 'short_label',
-          label: 'Short Label'
-        },
-        label: 'Short Label'
-      }
     ]
   }
 }
