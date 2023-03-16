@@ -1,9 +1,11 @@
 import React, { useContext, useState, useEffect } from 'react';
+import SVG from 'react-inlinesvg';
 import { Tab, Pagination } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
+import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
 const SearchResultTabContent = ({ list, tabResult }) => {
   const searchStore = useContext(StoreContext).search;
@@ -100,6 +102,28 @@ const SearchResultTabContent = ({ list, tabResult }) => {
     );
   }
 
+  const svgPreview = (object) => {
+    if (!['sample', 'reaction'].includes(object.type)) { return null; }
+
+    const title = object.type == 'sample' ? object.molecule_iupac_name : object.short_label; 
+    return (
+      <SvgWithPopover
+        hasPop
+        previewObject={{
+          txtOnly: '',
+          isSVG: true,
+          src: object.svgPath
+        }}
+        popObject={{
+          title: title,
+          src: object.svgPath,
+          height: '26vh',
+          width: '52vw',
+        }}
+      />
+    );
+  }
+
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list">No results</div>;
     let resultsByPage = searchStore.tabSearchResultValues.find(val => val.id == `${list.key}s-${currentPageNumber}`);
@@ -110,12 +134,16 @@ const SearchResultTabContent = ({ list, tabResult }) => {
         let previous = elements[i - 1];
         let previousMolecule = previous ? previous.molecule_formula : '';
         let moleculeName = previous && previousMolecule == object.molecule_formula ? '' : <SampleName sample={object} />;
+        let shortLabelWithName = object.type == 'screen' ? object.name : [object.short_label, object.name].join(" - ");
 
         return (
           <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
-            {moleculeName}
+            <div key={moleculeName} className={`search-result-molecule ${object.type}`}>
+              {svgPreview(object)}
+              {moleculeName}
+            </div>
             <span className="search-result-tab-content-list-name">
-              {[object.short_label, object.name].join(" - ")}
+              {shortLabelWithName}
             </span>
           </div>
         )

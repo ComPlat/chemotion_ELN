@@ -130,7 +130,8 @@ const AdvancedSearchForm = () => {
 
     if (searchStore.searchResultVisible && filters.length > 0) {
       filters.map((val, i) => {
-        searchValues.push([val.link, val.field.label, val.table, val.match, val.value].join(" "));
+        let table = val.table.charAt(0).toUpperCase() + val.table.slice(1, -1).replace('_', ' ');
+        searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, val.value].join(" "));
       });
     }
     searchStore.changeSearchValues(searchValues);

@@ -22,7 +22,8 @@ const SearchResult = ({ handleClear }) => {
       const visible = [];
 
       Object.entries(profile.data.layout).filter((value) => {
-        return value[0] != 'research_plan' && value[1] > 0;
+        // value[0] != 'research_plan' && 
+        return value[1] > 0;
       })
       .sort((a,b) => a[1] - b[1])
       .map((value, i) => {
@@ -104,7 +105,7 @@ const SearchResult = ({ handleClear }) => {
   const searchResultNavItem = (list, tabResult) => {
     if (searchStore.searchResultsCount === 0) { return null }
 
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate'];
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let iconClass = `icon-${list.key}`;
     let tooltipText = list.key && (list.key.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
     

@@ -61,6 +61,9 @@ export default class SearchFetcher {
               result[`${key}`].elements = json[`${key}`].elements.map(s => (new GenericEl(s)));
           }
         });
+        if (result.research_plans === undefined) {
+          result.research_plans = { elements: [], totalElements: 0, ids: [] };
+        }
 
         return result;
       }).catch((errorMessage) => { console.log(errorMessage); });
@@ -124,6 +127,9 @@ export default class SearchFetcher {
               break;
           }
         });
+        if (result.research_plans === undefined) {
+          result.research_plans = { elements: [], totalElements: 0, ids: [] };
+        }
 
         return result;
       }).catch((errorMessage) => { console.log(errorMessage); });

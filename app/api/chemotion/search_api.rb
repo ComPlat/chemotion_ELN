@@ -135,7 +135,7 @@ module Chemotion
           next unless filter_with_detail_level(**adv_field)
 
           table = filter['table']
-          model_name = table.singularize.capitalize.constantize
+          model_name = table.singularize.camelize.constantize
           # tables.push(table: table, ext_key: filter['field']['ext_key'])
           field = filter['field']['column']
           words = filter['value'].split(/(\r)?\n/).map!(&:strip)
@@ -171,7 +171,7 @@ module Chemotion
 
       def search_by_ids(c_id = @c_id)
         # TODO: generic elements
-        model = id_params[:model_name].capitalize.constantize
+        model = id_params[:model_name].camelize.constantize
         scope =
           if id_params[:model_name] == 'sample'
             search_by_ids_for_sample(c_id, model, ids_by_params)
