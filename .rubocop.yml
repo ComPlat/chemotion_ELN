@@ -54,3 +54,16 @@ RSpec/ExampleLength:
 RSpec/MultipleMemoizedHelpers:
   Enabled: true
   Max: 10
+
+RSpec/ClassLength:
+  Max: 200
+
+Metrics/AbcSize:
+  Max: 25
+
+RSpec/MultipleExpectations:
+  Max: 3 
+
+Metrics/MethodLength:
+  Max: 30
+
