@@ -136,7 +136,7 @@ export default class ElementDetailSortTab extends Component {
         style={{ maxWidth: 'none', width: 'auto' }}
       >
         <div>
-          <h3 className="popover-title">Tabs Layout</h3>
+          <h3 className="popover-title">Tab Layout</h3>
           <div className="popover-content">
             {tabLayoutContainerElement}
           </div>
@@ -155,7 +155,7 @@ export default class ElementDetailSortTab extends Component {
           <i className="fa fa-sliders" aria-hidden="true" />
         </Button>
         <Overlay
-          container={this}
+          container={this.button}
           onHide={this.onCloseTabLayoutContainer}
           placement="bottom"
           rootClose

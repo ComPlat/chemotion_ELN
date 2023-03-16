@@ -212,7 +212,7 @@ export default class ElementsTableSettings extends React.Component {
         style={{ maxWidth: 'none', width: `${wd}px` }}
       >
         <div>
-          <h3 className="popover-title">Table Layout</h3>
+          <h3 className="popover-title">Tab Layout</h3>
           <div className="popover-content">
             {tabLayoutContainerElement}
           </div>
@@ -232,7 +232,7 @@ export default class ElementsTableSettings extends React.Component {
           <i className="fa fa-sliders" />
         </Button>
         <Overlay
-          container={this}
+          container={this.button}
           onHide={this.onCloseTabLayoutContainer}
           placement="bottom"
           rootClose
