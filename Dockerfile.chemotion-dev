@@ -3,7 +3,7 @@
 # WARNING: Building this container initially takes a lot of time, due to gem compiling, so grab a coffee
 # and write some documentation meanwhile ;)
 
-FROM --platform=linux/amd64 ubuntu:focal
+FROM --platform=linux/amd64 ubuntu:jammy
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VRUBY=2.7.7
@@ -20,7 +20,7 @@ RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget a
       gtk2-engines-pixbuf \
       libssl-dev libreadline-dev\
       unzip openssh-client \
-      python-dev libsqlite3-dev libboost-all-dev p7zip-full \
+      libsqlite3-dev libboost-all-dev p7zip-full \
       xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
       fonts-crosextra-caladea fonts-crosextra-carlito \
       fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
@@ -67,7 +67,3 @@ RUN echo 'network-timeout 600000' > /home/chemotion-dev/.yarnrc
 # use node modules from outside the application directory
 RUN echo '--modules-folder /home/chemotion-dev/node_modules/' >> /home/chemotion-dev/.yarnrc
 
-RUN sudo apt-get -y --fix-missing install \
-    libboost-serialization1.71.0 \
-    libboost-iostreams1.71.0 \
-    libboost-system1.71.0
