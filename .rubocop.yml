@@ -6,7 +6,7 @@ require:
 AllCops:
   NewCops: enable
   DisplayCopNames: true
-  TargetRubyVersion: 2.7.6
+  TargetRubyVersion: 2.7.7
   Exclude:
     - 'bin/*'
     - 'db/**/*'
@@ -29,6 +29,19 @@ RSpec:
   Include:
     - 'spec/**/*_spec.rb'
 
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: true
+  Max: 10
+
+RSpec/MultipleExpectations:
+  Max: 3
+
+RSpec/ClassLength:
+  Max: 200
+
 Style/Documentation:
   Enabled: false
 
@@ -48,9 +61,8 @@ Metrics/BlockLength:
   Exclude:
   - 'spec/**/*_spec.rb'
 
-RSpec/ExampleLength:
-  Enabled: false
+Metrics/AbcSize:
+  Max: 25
 
-RSpec/MultipleMemoizedHelpers:
-  Enabled: true
-  Max: 10
+Metrics/MethodLength:
+  Max: 30
