@@ -73,10 +73,12 @@ export default class ChemicalFetcher {
     return fetch(`/api/v1/chemicals/safety_phrases/${queryParams.id}?vendor=${queryParams.vendor}`, {
       credentials: 'same-origin',
       method: 'GET'
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {console.log(errorMessage);
-      });
+    }).then((response) => {
+      if (response.status === 204) {
+        return response.status;
+      }
+      return response.json();
+    }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static chemicalProperties(productLink) {

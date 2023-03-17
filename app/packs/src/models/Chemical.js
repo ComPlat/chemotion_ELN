@@ -1,11 +1,13 @@
 /* eslint-disable no-underscore-dangle,  camelcase, semi,  no-unused-vars */
 import Element from 'src/models/Element';
+import { isEmpty } from 'lodash';
 
 export default class Chemical extends Element {
   static buildEmpty() {
     return new Chemical({
       chemical_data: [{ }],
-      cas: null
+      cas: null,
+      changed: false
     });
   }
 
@@ -29,6 +31,12 @@ export default class Chemical extends Element {
     }
   }
 
+  // // overwrite isPendingToSave method in models/Element.js
+  // get isPendingToSave() {
+  //   console.log('overwrite');
+  //   return !isEmpty(this) && (this.isNew || this.changed);
+  // }
+
   serialize() {
     return super.serialize({
       chemical_data: this.chemical_data,
@@ -47,5 +55,6 @@ export default class Chemical extends Element {
     } else if (parameter === 'cas') {
       this._cas = value;
     }
+    this.changed = true;
   }
 }

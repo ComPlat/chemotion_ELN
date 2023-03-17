@@ -3,13 +3,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup, Collapse
+  ListGroup, ListGroupItem, InputGroup, Collapse, Modal
 } from 'react-bootstrap';
 import Spinner from 'react-svg-spinner';
 import Select from 'react-select';
 import SVG from 'react-inlinesvg';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import CollapseButton from 'src/components/common/CollapseButton';
@@ -20,21 +19,25 @@ export default class ChemicalTab extends React.Component {
     super(props);
     this.state = {
       chemical: undefined,
+      anti: false,
       safetySheets: [],
       displayWell: false,
-      checkSaveIconThermofischer: true,
-      checkSaveIconMerck: true,
+      checkSaveIconThermofischer: false,
+      checkSaveIconMerck: false,
       vendorValue: 'All',
       vendorSafetyPhrasesValue: '',
       vendorChemPropertiesValue: '',
       queryOption: 'CAS',
       safetySheetLanguage: 'en',
       safetyPhrases: '',
+      warningMessage: '',
       loading: false,
       loadChemicalProperties: false,
       openInventoryInformationTab: false,
       openSafetyTab: false,
-      openLocationTab: false
+      openLocationTab: false,
+      viewChemicalPropertiesModal: false,
+      viewModalForVendor: ''
     };
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
@@ -47,23 +50,61 @@ export default class ChemicalTab extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevState.chemical !== this.state.chemical) {
+    const { saveInventory, parent, pendingToSave } = this.props;
+    const { chemical } = this.state;
+
+    if (prevState.chemical !== chemical) {
       this.updateDisplayWell();
+    }
+
+    // if (chemical && prevState.chemical) {
+    //   console.log(prevState.chemical.chemical_data === chemical.chemical_data);
+    //   // console.log(chemical.chemical_data);
+    //   console.log('prove of concept');
+    // }
+
+    // console.log(prevProps);
+    // console.log(this.props);
+
+    // if (prevProps && prevState.chemical) {
+    //   console.log(prevState.chemical.chemical_data === chemical.chemical_data);
+    //   // console.log(chemical.chemical_data);
+    //   console.log('prove of concept');
+    // }
+
+    if (saveInventory === true) {
+      console.log('say hello to mama');
+      this.handleSubmitSave();
+      console.log(saveInventory);
+    }
+
+    if (chemical) {
+      if (chemical.changed === true && pendingToSave === false) {
+        console.log(prevState.chemical);
+        // console.log(chemical._chemical_data[0] === prevState.chemical._chemical_data[0]);
+        // console.log(prevState.chemical._chemical_data[0]);
+        // console.log(chemical._chemical_data[0]);
+        console.log('maybe');
+        console.log(chemical);
+        this.inventoryPendingToSave();
+      }
     }
   }
 
   handleFieldChanged(parameter, value) {
     console.log(`handleFieldChanged: ${JSON.stringify(parameter)} = ${value}`);
     const { chemical } = this.state;
+    console.log(chemical);
     if (chemical) {
       chemical.buildChemical(parameter, value);
     }
-    this.setState({ chemical });
+    this.setState({ chemical});
+    console.log(chemical);
   }
 
   handleSubmitSave() {
     const { chemical } = this.state;
-    const { sample } = this.props;
+    const { sample, parent } = this.props;
     if (!sample || !chemical) {
       return;
     }
@@ -77,6 +118,7 @@ export default class ChemicalTab extends React.Component {
     if (chemical.isNew) {
       ChemicalFetcher.create(params).then((response) => {
         if (response) {
+          chemical.changed = false;
           this.setState({ chemical });
         }
       }).catch((errorMessage) => {
@@ -86,38 +128,55 @@ export default class ChemicalTab extends React.Component {
     } else {
       ChemicalFetcher.update(params).then((response) => {
         if (response) {
+          chemical.changed = false;
           this.setState({ chemical });
         }
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
     }
+    parent.setState({ saveInventoryAction: false });
+    console.log(chemical);
   }
 
   handleRemove(index, document) {
     const { safetySheets, chemical } = this.state;
     const parameters = chemical._chemical_data[0];
+    let sdsIndex;
     if (safetySheets.length !== 0) {
       safetySheets.splice(index, 1);
       this.setState({ safetySheets });
-    } else {
-      if (document.alfa_link) {
-        delete parameters.alfaProductInfo;
-      } else if (document.merck_link) {
-        delete parameters.merckProductInfo;
-      }
-      chemical._chemical_data[0].ssdPath.splice(index, 1);
-      this.setState({ chemical });
-      this.updateCheckMark(index, document);
     }
-    this.handleSubmitSave();
+    if (chemical._chemical_data[0].ssdPath.length > 0) {
+      const { ssdPath } = chemical._chemical_data[0];
+      if (ssdPath[0]?.alfa_link && document.alfa_link) {
+        const alfaIndex = ssdPath.findIndex((element) => element.alfa_link);
+        sdsIndex = ssdPath[alfaIndex].alfa_link;
+        console.log(sdsIndex);
+        delete parameters.alfaProductInfo;
+        chemical._chemical_data[0].ssdPath.splice(sdsIndex, 1);
+      } else if (ssdPath[0]?.merck_link && document.merck_link) {
+        const merckIndex = ssdPath.findIndex((element) => element.merck_link);
+        sdsIndex = ssdPath[merckIndex].merck_link;
+        console.log(sdsIndex);
+        delete parameters.merckProductInfo;
+        chemical._chemical_data[0].ssdPath.splice(sdsIndex, 1);
+      }
+      console.log(sdsIndex);
+      console.log(chemical);
+      this.setState({ chemical });
+      this.handleSubmitSave();
+    }
+    this.setState({ warningMessage: '' });
+    this.updateCheckMark(document);
+    // console.log('here', chemical);
   }
 
   handleCheckMark(vendor) {
     if (vendor === 'Thermofisher') {
-      this.setState({ checkSaveIconThermofischer: false });
+      this.setState({ checkSaveIconThermofischer: true });
     } else if (vendor === 'Merck') {
-      this.setState({ checkSaveIconMerck: false });
+      this.setState({ checkSaveIconMerck: true });
     }
   }
 
@@ -149,6 +208,7 @@ export default class ChemicalTab extends React.Component {
     const {
       chemical, vendorValue, queryOption, safetySheetLanguage
     } = this.state;
+    console.log(chemical);
     if (chemical) {
       chemical.buildChemical('sample_name', sampleName);
       chemical.buildChemical('molecule_id', moleculeId);
@@ -158,7 +218,8 @@ export default class ChemicalTab extends React.Component {
     if (queryOption === 'Common Name') {
       searchStr = sample.molecule_name_hash.label;
     } else {
-      const sampleCas = sample.xref.cas ? sample.xref.cas.value : '';
+      console.log(sample);
+      const sampleCas = sample.xref.cas ? sample.xref.cas : '';
       searchStr = sampleCas;
     }
 
@@ -226,10 +287,14 @@ export default class ChemicalTab extends React.Component {
     const queryParams = {
       vendor, id: sample.id
     };
+    const warningMessage = 'Please fetch and save corresponding safety data sheet first';
+    this.setState({ warningMessage: '' });
     ChemicalFetcher.safetyPhrases(queryParams).then((result) => {
-      if (result === 'Could not find H and P phrases' || result === 'Please fetch and save corresponding safety data sheet first') {
-        const handleError = <p>{result}</p>;
-        this.setState({ safetyPhrases: handleError });
+      console.log(result);
+      if (result === warningMessage || result === 204) {
+        this.setState({ warningMessage });
+      } else if (result === 'Could not find H and P phrases') {
+        this.setState({ warningMessage: result });
       } else {
         this.setState({ safetyPhrases: this.stylePhrases(result) });
         this.handleFieldChanged('safetyPhrases', result);
@@ -243,29 +308,35 @@ export default class ChemicalTab extends React.Component {
     const { chemical } = this.state;
     let productLink;
     this.setState({ loadChemicalProperties: true });
+    this.setState({ warningMessage: '' });
 
     if (chemical && vendor === 'thermofischer') {
       productLink = chemical._chemical_data[0].alfaProductInfo ? chemical._chemical_data[0].alfaProductInfo.productLink : '';
     } else if (chemical && vendor === 'merck') {
       productLink = chemical._chemical_data[0].merckProductInfo ? chemical._chemical_data[0].merckProductInfo.productLink : '';
     }
+    const warningMessage = 'Please fetch and save corresponding safety data sheet first';
+    console.log(vendor);
+    console.log(chemical._chemical_data[0].alfaProductInfo);
 
     ChemicalFetcher.chemicalProperties(productLink).then((result) => {
       this.setState({ loadChemicalProperties: false });
       if (result === 'Could not find additional chemical properties' || result === null) {
-        NotificationActions.add({
-          message: 'Could not find additional chemical properties',
-          level: 'error'
-        });
+        this.setState({ warningMessage });
       } else {
-        Object.entries(result).forEach(([key, value]) => {
-          this.handleFieldChanged(key, value);
-        });
+        // Object.entries(result).forEach(([key, value]) => {
+        //   this.handleFieldChanged(key, value);
+        // });
+        if (chemical && vendor === 'thermofischer') {
+          chemical._chemical_data[0].alfaProductInfo.properties = result;
+        } else if (chemical && vendor === 'merck') {
+          chemical._chemical_data[0].merckProductInfo.properties = result;
+        }
+        this.mapToSampleProperties(vendor);
       }
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-    this.mapToSampleProperties()
   };
 
   fetchChemical(sample) {
@@ -281,28 +352,112 @@ export default class ChemicalTab extends React.Component {
     });
   }
 
-  mapToSampleProperties() {
+  // mapToSampleProperties(vendor) {
+  //   const { sample, parent } = this.props;
+  //   const { chemical } = this.state;
+  //   const chemicalData = chemical?._chemical_data[0] || [];
+  //   let properties = {};
+  //   if (vendor === 'thermofischer') {
+  //     properties = chemicalData.alfaProductInfo.properties;
+  //     console.log(properties);
+  //   } else if (vendor === 'merck') {
+  //     properties = chemicalData.merckProductInfo.properties;
+  //   }
+  //   if (properties.boiling_point) {
+  //     const boilingPoints = properties.boiling_point.replace(/°C?/g, '').trim().split('-');
+  //     const lowerBound = boilingPoints[0];
+  //     const upperBound = boilingPoints.length === 2 ? boilingPoints[1] : Number.POSITIVE_INFINITY;
+  //     sample.updateRange('boiling_point', lowerBound, upperBound);
+  //   }
+
+  //   if (properties.melting_point) {
+  //     const MeltingPoints = properties.melting_point.replace(/°C?/g, '').trim().split('-');
+  //     const lowerBound = MeltingPoints[0];
+  //     const upperBound = MeltingPoints.length === 2 ? MeltingPoints[1] : Number.POSITIVE_INFINITY;
+  //     sample.updateRange('melting_point', lowerBound, upperBound);
+  //   }
+
+  //   if (properties.density) {
+  //     const densityNumber = properties.density.match(/[0-9.]+/g);
+  //     sample.density = densityNumber[0];
+  //   }
+  //   console.log(sample);
+  //   console.log(properties);
+
+  //   if (properties.flash_point) {
+  //     const { flash_point } = properties;
+  //     sample.xref.flash_point = flash_point;
+  //   }
+
+  //   if (properties.form) {
+  //     console.log('I was here');
+  //     const { form } = properties;
+  //     console.log(sample);
+  //     sample.xref.form = form;
+  //     console.log(sample);
+  //   }
+
+  //   if (properties.color) {
+  //     const { color } = properties;
+  //     sample.xref.color = color;
+  //   }
+
+  //   if (properties.refractive_index) {
+  //     const { refractive_index } = properties;
+  //     sample.xref.refractive_index = refractive_index;
+  //   }
+  //   if (properties.solubility) {
+  //     const { solubility } = properties;
+  //     sample.xref.solubility = solubility;
+  //   }
+  //   parent.setState({ sample });
+  //   console.log(parent);
+  //   ElementActions.updateSample(new Sample(sample), false);
+  // }
+
+  /* eslint-disable prefer-destructuring */
+  mapToSampleProperties(vendor) {
     const { sample, parent } = this.props;
     const { chemical } = this.state;
-    const chemicalData = chemical ? chemical._chemical_data[0] : [];
-    if (chemicalData.boiling_point) {
-      const boilingPoints = chemicalData.boiling_point.replace(/°C?/g, '').trim().split('-');
-      const lowerBound = boilingPoints[0];
-      const upperBound = boilingPoints.length === 2 ? boilingPoints[1] : Number.POSITIVE_INFINITY;
-      sample.updateRange('boiling_point', lowerBound, upperBound);
+    const chemicalData = chemical?._chemical_data[0] || [];
+    let properties = {};
+
+    if (vendor === 'thermofischer') {
+      properties = chemicalData.alfaProductInfo.properties;
+    } else if (vendor === 'merck') {
+      properties = chemicalData.merckProductInfo.properties;
     }
 
-    if (chemicalData.melting_point) {
-      const MeltingPoints = chemicalData.melting_point.replace(/°C?/g, '').trim().split('-');
-      const lowerBound = MeltingPoints[0];
-      const upperBound = MeltingPoints.length === 2 ? MeltingPoints[1] : Number.POSITIVE_INFINITY;
-      sample.updateRange('melting_point', lowerBound, upperBound);
-    }
+    const updateSampleProperty = (propertyName, propertyValue) => {
+      if (propertyValue) {
+        const rangeValues = propertyValue.replace(/°C?/g, '').trim().split('-');
+        const lowerBound = rangeValues[0];
+        const upperBound = rangeValues.length === 2 ? rangeValues[1] : Number.POSITIVE_INFINITY;
+        sample.updateRange(propertyName, lowerBound, upperBound);
+      }
+    };
 
-    if (chemicalData.density) {
-      const densityNumber = chemicalData.density.match(/[0-9.]+/g);
+    updateSampleProperty('boiling_point', properties.boiling_point);
+    updateSampleProperty('melting_point', properties.melting_point);
+
+    console.log(sample.xref.flash_point);
+
+    sample.xref.flash_point = {
+      unit: '°C',
+      value: properties.flash_point
+    };
+
+    const densityNumber = properties.density?.match(/[0-9.]+/g);
+    if (densityNumber) {
       sample.density = densityNumber[0];
     }
+
+    // sample.xref.flash_point = properties.flash_point || sample.xref.flash_point;
+    sample.xref.form = properties.form || sample.xref.form;
+    sample.xref.color = properties.color || sample.xref.color;
+    sample.xref.refractive_index = properties.refractive_index || sample.xref.refractive_index;
+    sample.xref.solubility = properties.solubility || sample.xref.solubility;
+
     parent.setState({ sample });
     ElementActions.updateSample(new Sample(sample), false);
   }
@@ -494,10 +649,11 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  handleMetricsChange(newValue, newUnit, parameter) {
+  handleMetricsChange(parameter, newValue, newUnit) {
     console.log(`newUnit ${newUnit}`);
     console.log(`newValue ${newValue}`);
     const paramObj = { unit: newUnit, value: newValue };
+    console.log(paramObj);
     this.handleFieldChanged(parameter, paramObj);
   }
 
@@ -507,14 +663,14 @@ export default class ChemicalTab extends React.Component {
     const unit = data !== undefined && data[parameter] && data[parameter].unit ? data[parameter].unit : 'mg';
     return (
       <NumericInputUnit
-        field="amount"
+        field="inventory_amount"
         // bsStyle="default"
         inputDisabled={false}
         onInputChange={
-          (newValue, newUnit) => this.handleMetricsChange(newValue, newUnit, parameter)
+          (newValue, newUnit) => this.handleMetricsChange(parameter, newValue, newUnit)
         }
         unit={unit}
-        val={value}
+        numericValue={value}
         // bsStyleBtnAfter="primary"
         label={label}
       />
@@ -525,79 +681,79 @@ export default class ChemicalTab extends React.Component {
   //   const { sample } = this.props;
   // }
 
-  onChangeCas = (e) => {
-    // console.log(e);
-    const value = e ? e.value : '';
-    this.handleFieldChanged('cas', value);
-  };
+  // onChangeCas = (e) => {
+  //   // console.log(e);
+  //   const value = e ? e.value : '';
+  //   this.handleFieldChanged('cas', value);
+  // };
 
-  casNumber(data, label) {
-    const { chemical } = this.state;
-    const { sample } = this.props;
-    const { molecule } = sample;
-    const val = data !== undefined ? data : 'hola';
-    const noBoldLabel = { fontWeight: 'normal' };
-    // const onOpen = (e) => this.onCasSelectOpen(e);
-    let statusOptions = [];
+  // casNumber(data, label) {
+  //   const { chemical } = this.state;
+  //   const { sample } = this.props;
+  //   const { molecule } = sample;
+  //   const val = data !== undefined ? data : 'hola';
+  //   const noBoldLabel = { fontWeight: 'normal' };
+  //   // const onOpen = (e) => this.onCasSelectOpen(e);
+  //   let statusOptions = [];
 
-    if (molecule && molecule.cas) {
-      const fetchCas = molecule.cas.map((c) => ({ label: c, value: c }));
-      statusOptions = fetchCas;
-    }
+  //   if (molecule && molecule.cas) {
+  //     const fetchCas = molecule.cas.map((c) => ({ label: c, value: c }));
+  //     statusOptions = fetchCas;
+  //   }
 
-    if (chemical) {
-      const cas = chemical._cas ? chemical._cas : '';
-      const casObject = [
-        { label: cas, value: cas }
-      ];
-      const valuesArr = statusOptions.map(({ value }) => value) || [];
-      statusOptions = cas !== '' && !valuesArr.includes(cas) ? statusOptions.concat(casObject) : statusOptions;
-    }
-    const onChange = (e) => this.onChangeCas(e);
-    return (
-      <FormGroup>
-        <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
-        <InputGroup className="cas-number" style={{ width: '100%', paddingRight: '10px' }}>
-          <Select.Creatable
-            name="cas"
-            multi={false}
-            options={statusOptions}
-            onChange={onChange}
-            // onOpen={onOpen}
-            value={val || ''}
-            clearable
-          />
-        </InputGroup>
-      </FormGroup>
-    );
-  }
+  //   if (chemical) {
+  //     const cas = chemical._cas ? chemical._cas : '';
+  //     const casObject = [
+  //       { label: cas, value: cas }
+  //     ];
+  //     const valuesArr = statusOptions.map(({ value }) => value) || [];
+  //     statusOptions = cas !== '' && !valuesArr.includes(cas) ? statusOptions.concat(casObject) : statusOptions;
+  //   }
+  //   const onChange = (e) => this.onChangeCas(e);
+  //   return (
+  //     <FormGroup>
+  //       <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
+  //       <InputGroup className="cas-number" style={{ width: '100%', paddingRight: '10px' }}>
+  //         <Select.Creatable
+  //           name="cas"
+  //           multi={false}
+  //           options={statusOptions}
+  //           onChange={onChange}
+  //           // onOpen={onOpen}
+  //           value={val || ''}
+  //           clearable
+  //         />
+  //       </InputGroup>
+  //     </FormGroup>
+  //   );
+  // }
 
-  updateCheckMark(index, document) {
+  updateCheckMark(document) {
     if (document.alfa_link) {
-      this.setState({ checkSaveIconThermofischer: true });
+      this.setState({ checkSaveIconThermofischer: false });
     } else if (document.merck_link) {
-      this.setState({ checkSaveIconMerck: true });
+      this.setState({ checkSaveIconMerck: false });
     }
   }
 
   checkMarkButton(document) {
     const { checkSaveIconThermofischer, checkSaveIconMerck } = this.state;
-    let outcome;
+    let checkMark;
     if (document.alfa_link) {
-      outcome = (checkSaveIconThermofischer && document.alfa_product_number !== undefined)
+      checkMark = (!checkSaveIconThermofischer && document.alfa_product_number !== undefined)
         ? null : (
           <OverlayTrigger placement="top" overlay={<Tooltip id="saveCheckIconThermo">Saved</Tooltip>}>
-            <i className="fa fa-check-circle" style={{ paddingLeft: '10px' }} />
+            <i className="fa fa-check-circle" style={{ paddingLeft: '10px', color: 'green' }} />
           </OverlayTrigger>
         );
     } else if (document.merck_link) {
-      outcome = (checkSaveIconMerck && document.merck_product_number !== undefined) ? null : (
+      checkMark = (!checkSaveIconMerck && document.merck_product_number !== undefined) ? null : (
         <OverlayTrigger placement="top" overlay={<Tooltip id="saveCheckIconMerck">Saved</Tooltip>}>
-          <i className="fa fa-check-circle" style={{ paddingLeft: '7px' }} />
+          <i className="fa fa-check-circle" style={{ paddingLeft: '7px', color: 'green' }} />
         </OverlayTrigger>
       );
     }
-    return outcome;
+    return checkMark;
   }
 
   removeButton(index, document) {
@@ -621,6 +777,7 @@ export default class ChemicalTab extends React.Component {
     } else if (productInfo.vendor === 'Merck') {
       vendorProduct = 'merckProductInfo';
     }
+    console.log('before', chemical);
     // update chemical data before saving it in the database
     this.handleFieldChanged(vendorProduct, productInfo);
     const params = {
@@ -658,8 +815,9 @@ export default class ChemicalTab extends React.Component {
             }
           }
         }
+        console.log(chemical);
         this.setState({ chemical });
-        this.handleFieldChanged('link', productInfo.productLink);
+        // this.handleFieldChanged('link', productInfo.productLink);
         this.handleSubmitSave();
         this.handleCheckMark(productInfo.vendor);
       }
@@ -668,21 +826,68 @@ export default class ChemicalTab extends React.Component {
     });
   }
 
-  saveSafetySheets(sdsInfo) {
+  /* eslint-disable camelcase */
+  // saveSafetySheetsButton(sdsInfo, index) {
+  //   const { checkSaveIconMerck, checkSaveIconThermofischer, chemical } = this.state;
+  //   const ssdPath = (chemical?._chemical_data?.[0]?.ssdPath) || [];
+  //   const {
+  //     alfa_link, alfa_product_number, alfa_product_link, merck_link, merck_product_number,
+  //     merck_product_link
+  //   } = sdsInfo;
+
+  //   const sdsLink = alfa_link || merck_link;
+  //   const productNumber = alfa_product_number || merck_product_number;
+  //   const productLink = alfa_product_link || merck_product_link;
+  //   const vendor = sdsLink === alfa_link ? 'Thermofisher' : 'Merck';
+
+  //   const checkMark = sdsLink === sdsInfo.alfa_link
+  //     ? checkSaveIconThermofischer || Boolean(ssdPath?.[index]?.alfa_link)
+  //     : checkSaveIconMerck || Boolean(ssdPath?.[index]?.merck_link);
+
+  //   const productInfo = {
+  //     vendor,
+  //     sdsLink,
+  //     productNumber,
+  //     productLink,
+  //   };
+  //   console.log(productInfo);
+
+  //   return (
+  //     <Button
+  //       bsSize="xsmall"
+  //       bsStyle="warning"
+  //       disabled={checkMark}
+  //       onClick={() => this.saveSdsFile(productInfo)}
+  //     >
+  //       <i className="fa fa-save" />
+  //     </Button>
+  //   );
+  // }
+
+  saveSafetySheetsButton(sdsInfo, index) {
+    const { checkSaveIconMerck, checkSaveIconThermofischer, chemical } = this.state;
     let vendor;
     let sdsLink;
     let productNumber;
     let productLink;
-    if (sdsInfo.alfa_link !== undefined) {
-      vendor = 'Thermofisher';
-      sdsLink = sdsInfo.alfa_link;
-      productNumber = sdsInfo.alfa_product_number;
-      productLink = sdsInfo.alfa_product_link;
-    } else if (sdsInfo.merck_link !== undefined) {
-      vendor = 'Merck';
-      sdsLink = sdsInfo.merck_link;
-      productNumber = sdsInfo.merck_product_number;
-      productLink = sdsInfo.merck_product_link;
+    let checkMark;
+    if (chemical && chemical._chemical_data) {
+      const { ssdPath } = chemical._chemical_data[0] || [];
+      if (sdsInfo.alfa_link !== undefined) {
+        vendor = 'Thermofisher';
+        sdsLink = sdsInfo.alfa_link;
+        productNumber = sdsInfo.alfa_product_number;
+        productLink = sdsInfo.alfa_product_link;
+        const hasAlfaLink = Boolean(ssdPath?.[index]?.alfa_link);
+        checkMark = checkSaveIconThermofischer || hasAlfaLink;
+      } else if (sdsInfo.merck_link !== undefined) {
+        vendor = 'Merck';
+        sdsLink = sdsInfo.merck_link;
+        productNumber = sdsInfo.merck_product_number;
+        productLink = sdsInfo.merck_product_link;
+        const hasMerckLink = Boolean(ssdPath?.[index]?.merck_link);
+        checkMark = checkSaveIconMerck || hasMerckLink;
+      }
     }
     const productInfo = {
       vendor,
@@ -690,11 +895,12 @@ export default class ChemicalTab extends React.Component {
       productNumber,
       productLink,
     };
+
     return (
       <Button
         bsSize="xsmall"
         bsStyle="warning"
-        disabled={!productNumber}
+        disabled={checkMark}
         onClick={() => this.saveSdsFile(productInfo)}
       >
         <i className="fa fa-save" />
@@ -783,62 +989,132 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  extractProductLink(document) {
+  // extractProductLink(document) {
 
+  // }
+
+  renderWarningMessage() {
+    const { warningMessage } = this.state;
+    return (
+      <div className="text-danger" style={{ width: '100%', paddingTop: '10px' }}>
+        { warningMessage !== '' ? warningMessage : null }
+      </div>
+    );
   }
 
+  // renderSafetySheets = () => {
+  //   const { safetySheets, chemical, vendorValue, displayWell, safetyPhrases, warningMessage } = this.state;
+  //   let sdsStatus;
+  //   let savedSds;
+  //   if (chemical) {
+  //     if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
+  //       savedSds = chemical._chemical_data[0].ssdPath;
+  //       sdsStatus = safetySheets.length !== 0 ? safetySheets : savedSds;
+  //     }
+  //   }
+  //   return (
+  //     (sdsStatus === undefined || sdsStatus.length === 0) ? null
+  //       : (
+  //         <ListGroup>
+  //           {sdsStatus.map((document, index) => (
+  //             document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
+  //               <div className="safety-sheets-form" style={{ width: '100%', marginTop: '15px' }}>
+  //                 <ListGroupItem key="safetySheetsFiles">
+  //                   <div style={{ width: '100%', marginTop: '10px', marginBottom: '10px' }}>
+  //                     <div className="drop-bottom" style={{ display: 'flex' }}>
+  //                       <div style={{ paddingTop: '5px', paddingRight: '10px', width: '50%' }}>
+  //                         <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
+  //                           {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
+  //                           { this.checkMarkButton(document) }
+  //                         </a>
+  //                       </div>
+  //                       <div style={{ width: '16%', paddingTop: '5px' }}>
+  //                         <ButtonToolbar>
+  //                           {this.copyButton(document)}
+  //                           {this.saveSafetySheets(document)}
+  //                           {this.removeButton(index, document)}
+  //                         </ButtonToolbar>
+  //                       </div>
+  //                       <div style={{ width: '45%' }}>
+  //                         { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
+  //                       </div>
+  //                       <div style={{ width: '20%' }}>
+  //                         { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
+  //                       </div>
+  //                     </div>
+  //                   </div>
+  //                 </ListGroupItem>
+  //               </div>
+  //             )
+  //               : (
+  //                 <ListGroupItem>
+  //                   <div>
+  //                     <p style={{ paddingTop: '10px' }}>
+  //                       {document}
+  //                     </p>
+  //                   </div>
+  //                 </ListGroupItem>
+  //               )
+  //           ))}
+  //         </ListGroup>
+  //       )
+  //   );
+  // };
+  renderChildElements = (document, index) => (
+    <div style={{ width: '100%', marginTop: '10px', marginBottom: '10px' }}>
+      <div className="drop-bottom" style={{ display: 'flex' }}>
+        <div style={{ paddingTop: '5px', paddingRight: '10px', width: '50%' }}>
+          <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
+            {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
+            { this.checkMarkButton(document) }
+          </a>
+        </div>
+        <div style={{ width: '16%', paddingTop: '5px' }}>
+          <ButtonToolbar>
+            {this.copyButton(document)}
+            {this.saveSafetySheetsButton(document, index)}
+            {this.removeButton(index, document)}
+          </ButtonToolbar>
+        </div>
+        <div style={{ width: '45%' }}>
+          { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
+        </div>
+        <div style={{ width: '20%' }}>
+          { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
+        </div>
+      </div>
+    </div>
+  );
+
   renderSafetySheets = () => {
-    const { safetySheets, chemical, vendorValue, displayWell } = this.state;
-    let sdsStatus;
-    let savedSds;
-    if (chemical) {
-      if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
-        savedSds = chemical._chemical_data[0].ssdPath;
-        sdsStatus = safetySheets.length !== 0 ? safetySheets : savedSds;
-      }
+    const { safetySheets, chemical } = this.state;
+    if (!chemical || !chemical._chemical_data || !chemical._chemical_data.length) {
+      return null;
     }
+    const savedSds = chemical._chemical_data[0].ssdPath;
+    const sdsStatus = safetySheets.length ? safetySheets : savedSds;
+    console.log(safetySheets.length);
+
     return (
-      (sdsStatus === undefined || sdsStatus.length === 0) ? null
-        : (
-          <ListGroup>
-            {sdsStatus.map((document, index) => (
-              document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
-                <ListGroupItem key="safetySheetsFiles">
-                  <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ paddingTop: '5px', width: '34%' }}>
-                      <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
-                        {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
-                        { this.checkMarkButton(document) }
-                      </a>
-                    </div>
-                    <div style={{ width: '12%', paddingTop: '5px' }}>
-                      <ButtonToolbar>
-                        {this.copyButton(document)}
-                        {this.saveSafetySheets(document)}
-                        {this.removeButton(index, document)}
-                      </ButtonToolbar>
-                    </div>
-                    <div style={{ width: '20%' }}>
-                      { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
-                    </div>
-                    <div style={{ width: '20%' }}>
-                      { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
-                    </div>
-                  </div>
-                </ListGroupItem>
-              )
-                : (
-                  <ListGroupItem>
-                    <div>
-                      <p>
-                        {document}
-                      </p>
-                    </div>
-                  </ListGroupItem>
-                )
-            ))}
-          </ListGroup>
-        )
+      <ListGroup>
+        {sdsStatus.map((document, index) => (
+          <div className="safety-sheets-form" style={{ width: '100%', marginTop: '15px' }} key="documentExist">
+            {document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
+              <ListGroupItem key="safetySheetsFiles">
+                {this.renderChildElements(document, index)}
+              </ListGroupItem>
+            ) : (
+              <ListGroupItem key="noDocument">
+                <div>
+                  <p style={{ paddingTop: '10px' }}>
+                    {document}
+                  </p>
+                </div>
+              </ListGroupItem>
+            )}
+          </div>
+        ))}
+      </ListGroup>
     );
   };
 
@@ -876,6 +1152,16 @@ export default class ChemicalTab extends React.Component {
     );
   };
 
+  inventoryPendingToSave() {
+    console.log('pending to save');
+    const { chemical } = this.state;
+    const { parent } = this.props;
+    parent.setState({ inventoryPendingToSave: true });
+    console.log(parent);
+    // this.setState({ anti: !this.state.anti });
+    // console.log(this.state.anti); 
+  };
+
   renderSafetyPhrases = () => {
     const { chemical, safetyPhrases } = this.state;
     let fetchedSafetyPhrases;
@@ -884,7 +1170,7 @@ export default class ChemicalTab extends React.Component {
       fetchedSafetyPhrases = (phrases !== undefined) ? this.stylePhrases(phrases) : '';
     }
     return (
-      <div style={{ width: '100%', paddingTop: '10px'}}>
+      <div style={{ width: '100%', paddingTop: '10px' }}>
         {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
       </div>
     );
@@ -911,26 +1197,105 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  handlePropertiesModal(vendor) {
+    this.setState({
+      viewChemicalPropertiesModal: true,
+      viewModalForVendor: vendor
+    });
+  };
+
+  closePropertiesModal() {
+    this.setState({
+      viewChemicalPropertiesModal: false,
+      viewModalForVendor: ''
+    });
+  }
+
+  renderPropertiesModal() {
+    const { viewChemicalPropertiesModal, chemical, viewModalForVendor } = this.state;
+    const textAreaStyle = {
+      width: '500px',
+      height: '640px',
+      margin: '30px',
+      whiteSpace: 'pre-line',
+    };
+    let fetchedChemicalProperties = 'Please fetch chemical properties first to view results';
+    if (viewModalForVendor === 'thermofischer') {
+      const condition = chemical._chemical_data[0].alfaProductInfo
+      && chemical._chemical_data[0].alfaProductInfo.properties;
+      fetchedChemicalProperties = condition
+        ? JSON.stringify(chemical._chemical_data[0].alfaProductInfo.properties, null, '\n') : fetchedChemicalProperties;
+    } else if (viewModalForVendor === 'merck') {
+      const condition = chemical._chemical_data[0].merckProductInfo
+      && chemical._chemical_data[0].merckProductInfo.properties;
+      fetchedChemicalProperties = condition
+        ? JSON.stringify(chemical._chemical_data[0].merckProductInfo.properties, null, '\n') : fetchedChemicalProperties;
+    }
+    if (viewChemicalPropertiesModal) {
+      // let molfile = this.molfileInput.value;
+      // molfile = molfile.replace(/\r?\n/g, '<br />');
+      console.log('inside cas');
+      return (
+        <Modal
+          show={viewChemicalPropertiesModal}
+          onHide={() => this.closePropertiesModal()}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Fetched Chemical Properties</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div>
+              <FormGroup controlId="propertiesModal">
+                <FormControl
+                  componentClass="textarea"
+                  style={textAreaStyle}
+                  readOnly
+                  disabled
+                  type="text"
+                  value={fetchedChemicalProperties}
+                />
+              </FormGroup>
+            </div>
+            <div>
+              <Button bsStyle="warning" onClick={() => this.closePropertiesModal()}>
+                Close
+              </Button>
+            </div>
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    return (<div />);
+  }
+
   renderChemicalProperties = (vendor) => {
     const { loading, loadChemicalProperties } = this.state;
 
     return (
       <div>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="renderChemProp">Info, if any found, will be copied to properties fields in sample properties tab</Tooltip>}>
-          <Button
-            id="safetyPhrases-btn"
-            onClick={() => this.fetchChemicalProperties(vendor)}
-            disabled={!!loading || !!loadChemicalProperties}
-            // style={{ width: 200 }}
-          >
-            {loadChemicalProperties === false ? 'fetch Chemical Properties'
-              : (
-                <Spinner animation="border" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </Spinner>
-              )}
-          </Button>
-        </OverlayTrigger>
+        <InputGroup.Button>
+          <OverlayTrigger placement="top" overlay={<Tooltip id="renderChemProp">Info, if any found, will be copied to properties fields in sample properties tab</Tooltip>}>
+            <Button
+              id="safetyPhrases-btn"
+              onClick={() => this.fetchChemicalProperties(vendor)}
+              disabled={!!loading || !!loadChemicalProperties}
+              style={{ width: '200px' }}
+            >
+              {loadChemicalProperties === false ? 'fetch Chemical Properties'
+                : (
+                  <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </Spinner>
+                )}
+            </Button>
+          </OverlayTrigger>
+        </InputGroup.Button>
+        <InputGroup.Button>
+          <OverlayTrigger placement="top" overlay={<Tooltip id="viewChemProp">click to view fetched chemical properties</Tooltip>}>
+            <Button active style={{ marginLeft: '-23px' }} onClick={() => this.handlePropertiesModal(vendor)}><i className="fa fa-file-text" /></Button>
+          </OverlayTrigger>
+        </InputGroup.Button>
+
       </div>
     );
   };
@@ -1085,37 +1450,74 @@ export default class ChemicalTab extends React.Component {
     }
   }
 
+  querySafetySheetButton() {
+    const { loading, chemical } = this.state;
+    let checkSavedSds = false;
+    if (chemical && chemical._chemical_data) {
+      checkSavedSds = chemical._chemical_data[0].ssdPath
+        ? chemical._chemical_data[0].ssdPath.length !== 0 : false;
+    }
+
+    const button = (
+      <Button
+        id="submit-sds-btn"
+        onClick={() => this.querySafetySheets()}
+        style={{ width: 150 }}
+        disabled={!!loading || checkSavedSds}
+      >
+        {loading === false ? 'Search for SDS'
+          : (
+            <Spinner animation="border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </Spinner>
+          )}
+      </Button>
+    );
+
+    const overlay = (
+      <Tooltip id="disabledSdsSearchButton">delete saved sheets to enable search button</Tooltip>
+    );
+
+    const buttonElement = (
+      <div style={{ position: 'relative' }}>
+        {button}
+        {checkSavedSds && (
+          <OverlayTrigger placement="top" overlay={overlay}>
+            <div style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              top: 0,
+              left: 0,
+              zIndex: 1
+            }}
+            />
+          </OverlayTrigger>
+        )}
+      </div>
+    );
+    return buttonElement;
+  }
+
   safetyTab() {
-    const { loading, openSafetyTab, displayWell } = this.state;
+    const { openSafetyTab, displayWell } = this.state;
     return (
       <div>
         {this.safetyCollapseBtn()}
         <Collapse in={openSafetyTab}>
           <div style={{ marginTop: '15px' }}>
-            <div style={{ width: '%100', display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ width: '%100' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '26%' }}>
                 {this.chooseVendor()}
               </div>
-              <div style={{ width: '%100' }}>
+              <div style={{ width: '26%' }}>
                 {this.queryOption()}
               </div>
-              <div style={{ width: '%100' }}>
+              <div style={{ width: '26%' }}>
                 {this.safetySheetLanguage()}
               </div>
-              <div style={{ width: '%100', paddingTop: '25px' }}>
-                <Button
-                  id="submit-sds-btn"
-                  onClick={() => this.querySafetySheets()}
-                  style={{ width: 150 }}
-                  disabled={!!loading}
-                >
-                  {loading === false ? 'Search for SDS'
-                    : (
-                      <Spinner animation="border" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </Spinner>
-                    )}
-                </Button>
+              <div style={{ paddingTop: '25px' }}>
+                {this.querySafetySheetButton()}
               </div>
             </div>
             <div>
@@ -1126,6 +1528,7 @@ export default class ChemicalTab extends React.Component {
               )
                 : null}
             </div>
+            { this.renderWarningMessage() }
             { this.renderSafetyPhrases() }
           </div>
         </Collapse>
@@ -1135,14 +1538,14 @@ export default class ChemicalTab extends React.Component {
 
   render() {
     const {
-      chemical, loading
+      chemical
     } = this.state;
-    let cas;
+    // let cas;
     let data;
 
     if (chemical) {
       data = chemical._chemical_data ? chemical._chemical_data[0] : [];
-      cas = chemical ? chemical._cas : null;
+      // cas = chemical ? chemical._cas : null;
     }
 
     const styleBorderless = { borderStyle: 'none' };
@@ -1165,13 +1568,16 @@ export default class ChemicalTab extends React.Component {
               {this.locationTab(data)}
             </td>
           </tr>
-          <tr>
+          <div>
+            {this.renderPropertiesModal()}
+          </div>
+          {/* <tr>
             <td style={styleBorderless}>
               <div>
                 {this.saveParameters()}
               </div>
             </td>
-          </tr>
+          </tr> */}
         </tbody>
       </table>
     );
@@ -1179,5 +1585,7 @@ export default class ChemicalTab extends React.Component {
 }
 
 ChemicalTab.propTypes = {
-  sample: PropTypes.object
+  sample: PropTypes.object,
+  saveInventory: PropTypes.bool.isRequired,
+  pendingToSave: PropTypes.bool.isRequired
 };

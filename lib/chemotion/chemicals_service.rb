@@ -99,7 +99,7 @@ module Chemotion
       h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
       h_statements = {}
       h_array.each do |element|
-        h_phrases_hash.map { |k, v| k == element ? h_statements[k] = v : nil }
+        h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
       end
       h_statements
     end
@@ -110,7 +110,7 @@ module Chemotion
       p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
       p_statements = {}
       p_array.each do |element|
-        p_phrases_hash.map { |k, v| k == element ? p_statements[k] = v : nil }
+        p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
       end
       p_statements
     end
@@ -145,7 +145,7 @@ module Chemotion
       h_array = safety_array[1].split(' - ')
       h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
       h_array.each do |element|
-        h_phrases_hash.map { |k, v| k == element ? h_statements[k] = v : nil }
+        h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
       end
       h_statements
     end
@@ -155,7 +155,7 @@ module Chemotion
       p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
       p_array = safety_array[2].split(' - ')
       p_array.each do |element|
-        p_phrases_hash.map { |k, v| k == element ? p_statements[k] = v : nil }
+        p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
       end
       p_statements
     end
