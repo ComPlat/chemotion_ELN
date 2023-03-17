@@ -11,11 +11,9 @@
 # - Run tests:
 #     bundle exec rspec
 #
-version: '3'
-
 services:
   postgres:
-    image: 'postgres:14.2-alpine3.15'
+    image: 'postgres:14'
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     expose: # expose port to app container
