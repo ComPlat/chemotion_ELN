@@ -238,6 +238,7 @@ export default class ElementsTableSettings extends React.Component {
           rootClose
           show={this.state.showTabLayoutContainer}
           target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
+          shouldUpdatePosition // does not work, for some unknown reason.
         >
           {popoverSettings}
         </Overlay>
