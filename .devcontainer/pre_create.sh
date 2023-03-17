@@ -7,3 +7,4 @@ cp config/datacollectors.yml.example config/datacollectors.yml
 cp config/storage.yml.example config/storage.yml
 cp config/database.yml.example config/database.yml
 cp config/shrine.yml.example config/shrine.yml
+cp config/radar.yml.example config/radar.yml
