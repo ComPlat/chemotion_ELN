@@ -35,7 +35,8 @@ class TabLayoutCell extends Component {
       fontSize: 12,
       color: '#000000',
       textAlign: 'center',
-      wordWrap: 'break-word'
+      wordWrap: 'break-word',
+      width: '85px'
     };
 
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
