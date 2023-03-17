@@ -57,7 +57,7 @@ module Chemotion
       namespace :omniauth_providers do
         desc 'get omniauth providers'
         get do
-          Devise.omniauth_configs.keys
+          { omniauth_providers: Devise.omniauth_configs.keys }
         end
       end
 
@@ -209,7 +209,7 @@ module Chemotion
         # desc "Return organization's name from email domain"
         # get 'swot' do
         #  return unless params[:domain].present?
-        # 
+        #
         #  Swot::school_name(params[:domain]).presence ||
         #    Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
         #end
