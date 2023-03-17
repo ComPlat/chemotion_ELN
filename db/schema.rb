@@ -925,11 +925,11 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
   create_table "sample_tasks", force: :cascade do |t|
     t.float "result_value"
     t.string "result_unit", default: "g", null: false
+    t.string "description"
     t.bigint "creator_id", null: false
     t.bigint "sample_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "description"
     t.integer "required_scan_results", default: 1, null: false
     t.index ["creator_id"], name: "index_sample_tasks_on_creator_id"
     t.index ["sample_id"], name: "index_sample_tasks_on_sample_id"
@@ -1454,8 +1454,8 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
