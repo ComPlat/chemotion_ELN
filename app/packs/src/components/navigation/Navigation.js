@@ -113,10 +113,18 @@ export default class Navigation extends React.Component {
     return (
       <Navbar.Header className="collec-tree">
         <Navbar.Text style={{ cursor: "pointer" }}>
-          <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-            <i className="fa fa-list" style={{ fontStyle: "normal" }}
-              onClick={this.toggleCollectionTree} />
-          </OverlayTrigger>
+          {
+            this.state.currentUser
+            && (
+              <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
+                <i
+                  className="fa fa-list"
+                  style={{ fontStyle: "normal" }}
+                  onClick={this.toggleCollectionTree}
+                />
+              </OverlayTrigger>
+            )
+          }
         </Navbar.Text>
         <Navbar.Text />
         <NavHead />
