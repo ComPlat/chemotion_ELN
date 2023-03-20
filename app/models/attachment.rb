@@ -228,6 +228,11 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     type_image? && annotated?
   end
 
+  # to allow reading of PDF files within research plan analyses tab
+  def type_pdf?
+    attachment['mime_type'].to_s == 'application/pdf'
+  end
+
   private
 
   def generate_key
