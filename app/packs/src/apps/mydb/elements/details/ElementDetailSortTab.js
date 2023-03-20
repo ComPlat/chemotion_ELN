@@ -129,8 +129,8 @@ export default class ElementDetailSortTab extends Component {
         ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
       />
     );
-    const {visible, hidden} = this.state;
-    const wd = 200 + ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
+    const { visible, hidden } = this.state;
+    const wd = 35 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
     const popoverSettings = (
       <Popover
         className="collection-overlay"
@@ -163,7 +163,7 @@ export default class ElementDetailSortTab extends Component {
           rootClose
           show={this.state.showTabLayoutContainer}
           target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
-          shouldUpdatePosition
+          shouldUpdatePosition // TODO: not working when reactions are open
         >
           {popoverSettings}
         </Overlay>

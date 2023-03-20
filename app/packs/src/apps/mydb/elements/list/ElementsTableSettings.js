@@ -157,7 +157,7 @@ export default class ElementsTableSettings extends React.Component {
       tableSchemePreviews, showSampleExternalLabel, showSampleShortLabel, showSampleName,
     } = this.state;
 
-    const wd = 35 + ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
+    const wd = ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
 
     let sampleSettings = (<span />);
     if (currentType == "sample" || currentType == "reaction") {
@@ -238,7 +238,7 @@ export default class ElementsTableSettings extends React.Component {
           rootClose
           show={this.state.showTabLayoutContainer}
           target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
-          shouldUpdatePosition // does not work, for some unknown reason.
+          shouldUpdatePosition //TODO: does not work?
         >
           {popoverSettings}
         </Overlay>
