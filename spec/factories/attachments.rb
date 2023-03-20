@@ -24,6 +24,11 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/upload.gif') }
     end
 
+    trait :with_pdf do
+      filename { 'upload.pdf' }
+      file_path { Rails.root.join('spec/fixtures/upload.pdf') }
+    end
+
     trait :with_spectra_file do
       filename { 'spectra_file.jdx' }
       file_path { Rails.root.join('spec/fixtures/spectra_file.jdx') }

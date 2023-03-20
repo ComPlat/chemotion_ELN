@@ -297,6 +297,15 @@ RSpec.describe Attachment, type: :model do
     end
   end
 
+  describe 'type_pdf?' do
+    let(:pdf_attachment) { create(:attachment, :with_pdf) }
+
+    it 'returns true if the attachment is a pdf image, or false if not' do
+      expect(pdf_attachment.type_pdf?).to be true
+      expect(attachment.type_pdf?).to be false
+    end
+  end
+
   # TODO: fix with_annotation factory: currently this test deletes the attached file
   describe 'annotated?' do
     let(:annotated_attachment) { create(:attachment, :with_annotation) }

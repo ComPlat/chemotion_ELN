@@ -12,12 +12,20 @@ RSpec.describe Usecases::Attachments::LoadImage do
       tmp_file
     end
 
-    context 'with non image attachment' do
+    context 'with no image / PDF attachment' do
       let(:attachment) { create(:attachment) }
-      let(:expected_error_message) { "no image attachment: #{attachment.id}" }
+      let(:expected_error_message) { "no image / PDF attachment: #{attachment.id}" }
 
       it 'returns exception' do
         expect { loaded_image }.to raise_error(RuntimeError, expected_error_message)
+      end
+    end
+
+    context 'with PDF attachment' do
+      let(:attachment) { create(:attachment, :with_pdf) }
+
+      it 'size of returned image equals original image' do
+        expect(tmp_file.size).to eq attachment.filesize
       end
     end
 
