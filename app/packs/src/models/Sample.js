@@ -48,10 +48,12 @@ export default class Sample extends Element {
     newSample.collection_id = collection_id;
     if (sample.name) { newSample.name = sample.name; }
     if (sample.external_label) { newSample.external_label = sample.external_label; }
-
     if (structure_only) {
       newSample.filterSampleData();
       newSample.filterResidueData(true);
+      // reset boiling/melting points for products on reaction copy
+      newSample.updateRange('boiling_point', '', '');
+      newSample.updateRange('melting_point', '', '');
     } else {
       newSample.filterResidueData(keepResidueInfo);
     }
