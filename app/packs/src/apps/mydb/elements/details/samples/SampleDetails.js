@@ -349,7 +349,8 @@ export default class SampleDetails extends React.Component {
   checkMolfileChange() {
     const { trackMolfile } = this.state;
     const { sample } = this.props;
-    if (trackMolfile !== sample.molfile) {
+    // !sample.isNew to allow setting mp & bp for new samples
+    if (trackMolfile !== sample.molfile && !sample.isNew) {
       sample.updateRange('boiling_point', '', '');
       sample.updateRange('melting_point', '', '');
       this.setState({ sample });
