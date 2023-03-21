@@ -57,7 +57,7 @@ const SampleTaskCard = ({ sampleTask }) => {
       const scan_results = sampleTask.scan_results.map(scan_result => {
         return (
           <li>
-            <a href={`/api/v1/attachments/${scan_result.attachment_id}`} target="_blank">
+            <a href={`/api/v1/attachments/image/${scan_result.attachment_id}`} target="_blank">
               {scan_result.title}: {scan_result.measurement_value}{scan_result.measurement_unit}
             </a>
           </li>
