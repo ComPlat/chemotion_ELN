@@ -152,9 +152,6 @@ export default class Navigation extends React.Component {
       </Navbar>
       : <Navbar fluid className='navbar-custom'>
         {this.navHeader()}
-        <Nav navbar className='navbar-form'>
-          <Search noSubmit={true} />
-        </Nav>
         <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} />
         <div style={{ clear: "both" }} />
       </Navbar>
