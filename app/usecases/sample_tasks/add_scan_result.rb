@@ -15,9 +15,10 @@ module Usecases
         scan_result = sample_task.scan_results.create(
           attachment_attributes: {
             filename: params[:file][:filename],
-            content_type: params[:file][:type],
+            content_type: Marcel::MimeType.for(Pathname.new(params[:file][:tempfile].path)),
             file_path: params[:file][:tempfile].path,
-            created_by: user.id
+            created_by: user.id,
+            created_for: user.id
           },
           measurement_unit: params[:measurement_unit],
           measurement_value: params[:measurement_value],
