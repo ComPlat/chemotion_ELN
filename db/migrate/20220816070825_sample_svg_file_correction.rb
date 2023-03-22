@@ -16,7 +16,7 @@ class SampleSvgFileCorrection < ActiveRecord::Migration[5.2]
     molecules.find_each do |molecule|
       svg_file = molecule.send(:full_svg_path)
 
-      next unless File.file?(svg_file)
+      next unless svg_file && File.file?(svg_file)
 
       svg = File.read(svg_file)
       molecule.attach_svg(svg)
@@ -28,7 +28,7 @@ class SampleSvgFileCorrection < ActiveRecord::Migration[5.2]
       next if sample.sample_svg_file.nil?
 
       svg_file = sample.send(:full_svg_path)
-      next unless File.file?(svg_file)
+      next unless svg_file && File.file?(svg_file)
 
       svg = File.read(svg_file)
       sample.sample_svg_file = svg

@@ -601,6 +601,8 @@ private
   end
 
   def full_svg_path(svg_file_name = sample_svg_file)
+    return unless svg_file_name.present?
+
     Rails.public_path.join('images', 'samples', svg_file_name)
   end
 end
