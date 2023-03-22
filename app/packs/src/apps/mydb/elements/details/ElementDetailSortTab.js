@@ -152,7 +152,7 @@ export default class ElementDetailSortTab extends Component {
       </Popover>
     );
     return (
-      <div>
+      <div style={{position: 'relative'}}>
         <Button
           bsStyle="info"
           bsSize="xsmall"
@@ -163,7 +163,7 @@ export default class ElementDetailSortTab extends Component {
           <i className="fa fa-sliders" aria-hidden="true" />
         </Button>
         <Overlay
-          container={this.button}
+          container={this}
           onHide={this.onCloseTabLayoutContainer}
           placement="bottom"
           rootClose

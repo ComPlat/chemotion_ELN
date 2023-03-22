@@ -227,7 +227,7 @@ export default class ElementsTableSettings extends React.Component {
     )
 
     return (
-      <div>
+      <div style={{position: 'relative'}}>
         <Button
           bsSize="xsmall"
           style={{ margin: '10px 10px 10px 0', float: 'right' }}
@@ -237,7 +237,7 @@ export default class ElementsTableSettings extends React.Component {
           <i className="fa fa-sliders" />
         </Button>
         <Overlay
-          container={this.button}
+          container={this}
           onHide={this.onCloseTabLayoutContainer}
           placement="bottom"
           rootClose
