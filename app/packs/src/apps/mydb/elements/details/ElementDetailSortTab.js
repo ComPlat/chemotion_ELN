@@ -136,7 +136,7 @@ export default class ElementDetailSortTab extends Component {
       />
     );
     const { visible, hidden } = this.state;
-    const wd = 35 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
+    const wd = 200 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
     const popoverSettings = (
       <Popover
         className="collection-overlay"

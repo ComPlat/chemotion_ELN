@@ -162,7 +162,7 @@ export default class ElementsTableSettings extends React.Component {
       tableSchemePreviews, showSampleExternalLabel, showSampleShortLabel, showSampleName,
     } = this.state;
 
-    const wd = ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
+    const wd = 35 + ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
 
     let sampleSettings = (<span />);
     if (currentType == "sample" || currentType == "reaction") {
