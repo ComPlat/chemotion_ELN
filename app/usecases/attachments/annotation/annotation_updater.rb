@@ -20,7 +20,7 @@ module Usecases
           create_annotated_flat_image(attachment, sanitized_svg_string)
         end
 
-        def sanitize_svg_string(svg_string) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+        def sanitize_svg_string(svg_string)
           scrubber = Rails::Html::PermitScrubber.new
           scrubber.tags = %w[svg image g title rect text path line ellipse]
           scrubber.attributes = %w[height id width href class fill stroke stroke-dasharray stroke-linecap transform
