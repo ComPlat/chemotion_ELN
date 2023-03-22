@@ -31,7 +31,7 @@ describe('Manage samples', () => {
     });
   });
 
-  it.only('test if melting_pint and boiling_point exists', () => {
+  it('test if melting_pint and boiling_point exists', () => {
     cy.login('cu1', 'user_password');
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
