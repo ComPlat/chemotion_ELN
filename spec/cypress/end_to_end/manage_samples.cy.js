@@ -1,8 +1,4 @@
-const moleculeSVG = '81ba09b10beaa89f190c39faa85ced3ea20728cda625d884410ac0ab96bc62824375cff5da9c3ea19bf335aa6a872591e58cf07eb7ec7878318b011e4fe362a5.svg';
-const inshiString = 'InChI=1S/H2O/h1H2';
-const molFileVersion = 'V2000';
-const smiles = '[2H]OC([2H])([2H])[2H]';
-const inchiKey = 'OKKJLVBELUTLKV-MZCSYVLQSA-N';
+import h20 from '../fixtures/h20.json';
 
 describe('Manage samples', () => {
   beforeEach(() => {
@@ -11,7 +7,7 @@ describe('Manage samples', () => {
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user1) => {
       cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user1[0].id }]]).then((collection) => {
         cy.appFactories([['create', 'molecule', {
-          molecular_weight: 171.03448, inchistring: inshiString, molecule_svg_file: moleculeSVG, molfile_version: molFileVersion
+          molecular_weight: 171.03448, inchistring: h20.inchiKey, molecule_svg_file: h20.moleculeSVG, molfile_version: h20.molFileVersion
         }]]).then((molecule) => {
           cy.appFactories([['create', 'sample', {
             name: 'PH-1234',
@@ -20,10 +16,10 @@ describe('Manage samples', () => {
             collection_ids: collection[0].id,
             user_id: user1[0].id,
             density: 1,
-            boiling_point: '[98, 100]',
-            melting_point: '[0.5, 1]',
+            boiling_point: h20.boiling_point,
+            melting_point: h20.melting_point,
             solvent: [{
-              label: 'trideuterio(deuteriooxy)methane', smiles, inshiekey: inchiKey, ratio: '100'
+              label: 'trideuterio(deuteriooxy)methane', smiles: h20.smiles, inshikey: h20.inchiKey, ratio: h20.ratio
             }]
           }]]);
         });
