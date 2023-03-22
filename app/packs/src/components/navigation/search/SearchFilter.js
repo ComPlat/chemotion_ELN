@@ -12,7 +12,7 @@ export default class SearchFilter extends React.Component {
       filters: [
         {
           link: '',
-          match: 'EXACT',
+          match: '=', // to set default search type for adv search, allows users to search better!
           field: {
             table: 'samples',
             column: 'name',
@@ -188,7 +188,7 @@ export default class SearchFilter extends React.Component {
             <span className="field-select">
               <Select simpleValue searchable={false} options={this.listOptions}
                 placeholder="Select search field" clearable={false}
-                value={filters[0].field} valueRenderer={this.renderField}
+                value={filters[0].field} //valueRenderer={this.renderField}
                 onChange={(val) => this.handleUpdateFilters(0, "field", val)} />
             </span>
             <FormControl type="text" value={filters[0].value}
