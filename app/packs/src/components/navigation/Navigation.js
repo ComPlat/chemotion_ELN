@@ -14,6 +14,7 @@ import NavHead from 'src/components/navigation/NavHead'
 import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
 import SearchFilter from 'src/components/navigation/search/SearchFilter.js'
+import PropTypes from 'prop-types';
 
 const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
 
@@ -114,8 +115,11 @@ export default class Navigation extends React.Component {
       <Navbar.Header className="collec-tree">
         <Navbar.Text style={{ cursor: "pointer" }}>
           <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-            <i className="fa fa-list" style={{ fontStyle: "normal" }}
-              onClick={this.toggleCollectionTree} />
+            <i
+              className="fa fa-list"
+              style={{ fontStyle: "normal", visibility: this.props.isHidden ? 'hidden' : 'visible' }}
+              onClick={this.toggleCollectionTree}
+            />
           </OverlayTrigger>
         </Navbar.Text>
         <Navbar.Text />
@@ -131,7 +135,7 @@ export default class Navigation extends React.Component {
     return (this.state.currentUser
       ? <Navbar fluid className='navbar-custom'>
         {this.navHeader()}
-        <Nav navbar className='navbar-form'>
+        <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
           <Search />
           <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
           <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
@@ -144,7 +148,7 @@ export default class Navigation extends React.Component {
       </Navbar>
       : <Navbar fluid className='navbar-custom'>
         {this.navHeader()}
-        <Nav navbar className='navbar-form'>
+        <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
           <Search noSubmit={true} />
         </Nav>
         <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} />
@@ -153,3 +157,11 @@ export default class Navigation extends React.Component {
     )
   }
 }
+
+Navigation.propTypes = {
+  isHidden: PropTypes.bool,
+};
+
+Navigation.defaultProps = {
+  isHidden: false,
+};
