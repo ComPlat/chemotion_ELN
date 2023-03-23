@@ -923,15 +923,14 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
   end
 
   create_table "sample_tasks", force: :cascade do |t|
-    t.float "measurement_value"
-    t.string "measurement_unit", default: "g", null: false
+    t.float "result_value"
+    t.string "result_unit", default: "g", null: false
     t.string "description"
-    t.string "private_note"
-    t.string "additional_note"
     t.bigint "creator_id", null: false
     t.bigint "sample_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "required_scan_results", default: 1, null: false
     t.index ["creator_id"], name: "index_sample_tasks_on_creator_id"
     t.index ["sample_id"], name: "index_sample_tasks_on_sample_id"
   end
@@ -981,6 +980,17 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
+  end
+
+  create_table "scan_results", force: :cascade do |t|
+    t.float "measurement_value", null: false
+    t.string "measurement_unit", default: "g", null: false
+    t.string "title"
+    t.integer "position", default: 0, null: false
+    t.bigint "sample_task_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["sample_task_id"], name: "index_scan_results_on_sample_task_id"
   end
 
   create_table "scifinder_n_credentials", force: :cascade do |t|
