@@ -133,6 +133,7 @@ export default class ReportContainer extends Component {
           activeKey={activeKey}
           onSelect={this.selectTab}
           id="report-tabs"
+          style={{padding:"15px"}}
         >
           <Tab eventKey={0} title="Config">
             <Config
