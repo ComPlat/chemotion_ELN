@@ -49,11 +49,11 @@ describe SampleTask do
 
   describe '.without_sample' do
     it 'returns all sample_tasks that have no sample assigned' do
-      expect(described_class.without_sample.ids).to match_array [
+      expect(described_class.without_sample.ids).to contain_exactly(
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
         open_with_only_missing_sample.id,
-      ]
+      )
     end
   end
 
@@ -65,20 +65,20 @@ describe SampleTask do
 
   describe '.without_result_data' do
     it 'returns all sample_tasks where result_value is nil' do
-      expect(described_class.without_result_data.ids).to match_array [
+      expect(described_class.without_result_data.ids).to contain_exactly(
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
         open_with_only_missing_sample.id,
-      ]
+      )
     end
   end
 
   describe '.with_missing_scan_results' do
     it 'returns all sample tasks that have less scan results than required' do
-      expect(described_class.with_missing_scan_results.ids).to match_array [
+      expect(described_class.with_missing_scan_results.ids).to contain_exactly(
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
-      ]
+      )
     end
   end
 
