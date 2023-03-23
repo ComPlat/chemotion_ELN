@@ -5,57 +5,40 @@ export default class SampleTaskFetcher {
     return this._fetchSampleTasks('open');
   }
 
-  static openFreeScans() {
-    return this._fetchSampleTasks('open_free_scan');
-  }
-
-  static assignSampleToOpenFreeScan(sample_id, sample_task_id) {
+  static assignSample(sample_id, sample_task_id) {
     return fetch(
       `/api/v1/sample_tasks/${sample_task_id}`,
       {
         ...this._httpOptions('PUT'),
         body: JSON.stringify({
-          update_open_free_scan: {
-            sample_id: sample_id
-          }
+          sample_id: sample_id
         })
       }
-    ).then(
-      response => response.json()
-    ).catch(
-      errorMessage => { console.log(errorMessage); }
-    );
+    ).then(response => response.json())
+      .catch(errorMessage => console.log(errorMessage));
   }
 
-  static createSampleTask(sample_id) {
+  static createSampleTask(sample_id, requiredScanResults) {
     return fetch(
       `/api/v1/sample_tasks`,
       {
         ...this._httpOptions('POST'),
         body: JSON.stringify({
-          create_open_sample_task: {
-            sample_id: sample_id
-          }
+          sample_id: sample_id,
+          required_scan_results: requiredScanResults
         })
       }
-    ).then(
-      response => response.json()
-    ).catch(
-      errorMessage => { console.log(errorMessage); }
-    );
+    ).then(response => response.json())
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static _fetchSampleTasks(status) {
     return fetch(
       `/api/v1/sample_tasks?status=${status}`,
       this._httpOptions()
-    ).then(
-      response => response.json()
-    ).then(
-      json => json.sample_tasks
-    ).catch(
-      errorMessage => { console.log(errorMessage); }
-    );
+    ).then(response => response.json())
+      .then(json => json.sample_tasks)
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static _httpOptions(method = 'GET') {
