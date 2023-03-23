@@ -39,9 +39,6 @@ RSpec/MultipleMemoizedHelpers:
 RSpec/MultipleExpectations:
   Max: 3
 
-RSpec/ClassLength:
-  Max: 200
-
 Style/Documentation:
   Enabled: false
 
@@ -66,3 +63,6 @@ Metrics/AbcSize:
 
 Metrics/MethodLength:
   Max: 30
+  
+Metrics/ClassLength:
+  Max: 200
