@@ -20,11 +20,11 @@ class NotificationStore {
   }
 
   handleAdd(notification) {
-    this.state.notificationSystem?.addNotification(notification)
+    this.state.notificationSystem?.addNotification(notification);
   }
 
   handleRemove(notification) {
-    this.state.notificationSystem?.removeNotification(notification)
+    this.state.notificationSystem?.removeNotification(notification);
   }
 
   handleRemoveByUid(uid) {
