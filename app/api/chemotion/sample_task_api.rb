@@ -34,7 +34,7 @@ module Chemotion
       post do
         task = Usecases::SampleTasks::Create.new(
           params: declared(params, include_missing: false),
-          user: current_user
+          user: current_user,
         ).perform!
 
         present task, with: Entities::SampleTaskEntity
@@ -43,14 +43,14 @@ module Chemotion
       # update a sample task
       params do
         optional :description, type: String
-        optional :sample_id,
+        optional  :sample_id,
                   type: Integer,
                   description: 'ID of the sample to scan'
       end
       put ':id' do
         task = Usecases::SampleTasks::Update.new(
           params: declared(params, include_missing: false),
-          user: current_user
+          user: current_user,
         ).perform!
 
         finisher = Usecases::SampleTasks::Finish.new(sample_task: sample_task, user: current_user)
@@ -72,7 +72,7 @@ module Chemotion
             scan_result = Usecases::SampleTasks::AddScanResult.new(
               params: params,
               user: current_user,
-              sample_task: sample_task
+              sample_task: sample_task,
             ).perform!
 
             finisher = Usecases::SampleTasks::Finish.new(sample_task: sample_task, user: current_user)

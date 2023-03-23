@@ -23,12 +23,11 @@ module Usecases
       private
 
       def default_description
-        description = "Scan Task from #{DateTime.current.to_s}"
+        description = "Scan Task from #{DateTime.current}"
         description += " for #{sample.showed_name}" if sample
 
         description
       end
-
 
       # This encapsulates the logic which samples a given user can access.
       # As in the near future the logic for shared/synched collections will change, it is feasible to extract

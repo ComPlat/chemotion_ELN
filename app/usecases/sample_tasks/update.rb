@@ -17,7 +17,7 @@ module Usecases
         sample_id = user_accessible_samples.find(params[:sample_id]).id if params[:sample_id]
         sample_task.update!(
           description: params[:description],
-          sample_id: sample_id
+          sample_id: sample_id,
         )
       end
     end

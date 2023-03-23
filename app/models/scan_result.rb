@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: scan_results
@@ -26,7 +28,7 @@ class ScanResult < ApplicationRecord
   def -(other)
     new(
       measurement_value: measurement_value_in_mg - other.measurement_value_in_mg,
-      measurement_unit: 'mg'
+      measurement_unit: 'mg',
     )
   end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe SampleTask, type: :model do
+describe SampleTask do
   let(:user) { create(:person) }
   let(:other_user) { create(:person) }
   let(:open_without_scan_results) { create(:sample_task_without_scan_results, creator: user) }
@@ -17,11 +17,11 @@ describe SampleTask, type: :model do
 
   describe '.for' do
     it 'returns SampleTasks created by the given user' do
-      expect(described_class.for(user).ids).to match_array([
+      expect(described_class.for(user).ids).to contain_exactly(
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
-        open_with_only_missing_sample.id
-      ])
+        open_with_only_missing_sample.id,
+      )
     end
   end
 
@@ -30,7 +30,7 @@ describe SampleTask, type: :model do
       expect(described_class.open.ids).to contain_exactly(
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
-        open_with_only_missing_sample.id
+        open_with_only_missing_sample.id,
       )
     end
   end
@@ -52,7 +52,7 @@ describe SampleTask, type: :model do
       expect(described_class.without_sample.ids).to match_array [
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
-        open_with_only_missing_sample.id
+        open_with_only_missing_sample.id,
       ]
     end
   end
@@ -68,7 +68,7 @@ describe SampleTask, type: :model do
       expect(described_class.without_result_data.ids).to match_array [
         open_without_scan_results.id,
         open_with_incomplete_scan_results.id,
-        open_with_only_missing_sample.id
+        open_with_only_missing_sample.id,
       ]
     end
   end
@@ -77,7 +77,7 @@ describe SampleTask, type: :model do
     it 'returns all sample tasks that have less scan results than required' do
       expect(described_class.with_missing_scan_results.ids).to match_array [
         open_without_scan_results.id,
-        open_with_incomplete_scan_results.id
+        open_with_incomplete_scan_results.id,
       ]
     end
   end

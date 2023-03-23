@@ -43,10 +43,10 @@ FactoryBot.define do
     end
 
     factory :sample_task_without_scan_results, traits: [:single_scan]
-    factory :sample_task_with_incomplete_scan_results, traits: [:double_scan, :with_scan_results] do
+    factory :sample_task_with_incomplete_scan_results, traits: %i[double_scan with_scan_results] do
       scan_result_count { 1 }
     end
-    factory :sample_task_with_only_missing_sample, traits: [:single_scan, :with_scan_results]
-    factory :sample_task_finished, traits: [:single_scan, :with_sample, :with_scan_results, :with_result_data]
+    factory :sample_task_with_only_missing_sample, traits: %i[single_scan with_scan_results]
+    factory :sample_task_finished, traits: %i[single_scan with_sample with_scan_results with_result_data]
   end
 end

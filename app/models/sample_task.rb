@@ -44,10 +44,10 @@ class SampleTask < ApplicationRecord
       .select('sample_tasks.*, count(scan_results.id)')
       .group(:id)
       .having('count(scan_results.id) < required_scan_results')
-    end
+    end,
   )
 
-  validates :required_scan_results, inclusion: { in: [1,2] }, allow_nil: false
+  validates :required_scan_results, inclusion: { in: [1, 2] }, allow_nil: false
 
   def done?
     sample_id.present? &&

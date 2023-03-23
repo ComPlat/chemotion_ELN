@@ -15,7 +15,6 @@ module Usecases
         transfer_measurement_to_sample
       end
 
-
       def sample_task_can_be_finished?
         all_scan_results_present = sample_task.scan_results.length == sample_task.required_scan_results
         sample_task_unfinished = sample_task.result_value.nil?
@@ -26,7 +25,7 @@ module Usecases
 
       private
 
-      def transfer_measurement_to_sample # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      def transfer_measurement_to_sample
         return unless sample_task.sample
 
         sample_task.sample.update!(
@@ -48,7 +47,7 @@ module Usecases
 
           sample_task.update!(
             result_value: calculation_result.measurement_value,
-            result_unit: calculation_result.measurement_unit
+            result_unit: calculation_result.measurement_unit,
           )
         end
       end
