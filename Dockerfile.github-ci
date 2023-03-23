@@ -5,6 +5,10 @@ RUN apt-get install -y --no-install-recommends --autoremove --fix-missing \
   openssh-server
 
 WORKDIR "/chemotion/app"
+
+# avoid caching if newer commits are present
+ADD "https://api.github.com/repos/ComPlat/chemotion_ELN/commits/${BRANCH}?per_page=1" latest_commit.json
+
 RUN curl -LJO https://raw.githubusercontent.com/ComPlat/chemotion_ELN/${BRANCH}/Gemfile 
 RUN curl -LJO https://raw.githubusercontent.com/ComPlat/chemotion_ELN/${BRANCH}/Gemfile.lock
 RUN curl -LJO https://raw.githubusercontent.com/ComPlat/chemotion_ELN/${BRANCH}/package.json
