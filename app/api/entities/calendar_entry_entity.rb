@@ -33,13 +33,21 @@ module Entities
     def element_name
       return if element.nil?
 
-      "#{element.short_label} #{element.name}"
+      if element.class.name.in?(%w[Screen ResearchPlan])
+        element.name
+      else
+        "#{element.short_label} #{element.name}"
+      end
     end
 
     def element_short_label
       return if element.nil?
 
-      element.short_label
+      if element.class.name.in?(%w[Screen ResearchPlan])
+        element.name
+      else
+        element.short_label
+      end
     end
 
     def element_klass_icon
