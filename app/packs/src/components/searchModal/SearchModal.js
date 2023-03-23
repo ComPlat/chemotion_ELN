@@ -9,32 +9,46 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import AdvancedSearchForm from './forms/AdvancedSearchForm';
 import KetcherRailsForm from './forms/KetcherRailsForm';
+import GenericSearchForm from './forms/GenericSearchForm';
 import NoFormSelected from './forms/NoFormSelected';
 
 const Components = {
   advanced: AdvancedSearchForm,
   ketcher: KetcherRailsForm,
+  generic: GenericSearchForm,
   empty: NoFormSelected
 }
 
 const SearchModal = () => {
   const searchStore = useContext(StoreContext).search;
+  const genericElements = UserStore.getState().genericEls || [];
+  const profile = UserStore.getState().profile || {};
 
-  const FormData = [
+  let FormData = [
     {
       value: 'advanced',
-      label: 'Advanced Search'
+      label: 'Advanced Search',
+      id: 0,
     },
     {
       value: 'ketcher',
-      label: 'ketcher-rails'
+      label: 'ketcher-rails',
+      id: 1,
     }
   ]
 
+  genericElements.map((element) => {
+    const idx = profile.data && profile.data.layout && profile.data.layout[element.name];
+    if (idx >= 0) {
+      FormData.push({ value: `${element.id}-generic`, label: element.label, id: element.id })
+    }
+  });
+
   const FormComponent = (block) => {
-    if (typeof Components[block.value] !== "undefined") {
-      return React.createElement(Components[block.value], {
-        key: block.value
+    let value = block.value.includes('generic') ? 'generic' : block.value;
+    if (typeof Components[value] !== "undefined") {
+      return React.createElement(Components[value], {
+        key: `${block.id}-${value}`
       });
     }
     return React.createElement(Components['empty'], {
@@ -65,12 +79,6 @@ const SearchModal = () => {
       <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
     );
   }
-
-  //const handleCancel = () => {
-  //  searchStore.hideSearchModal();
-  //  searchStore.hideSearchResults();
-  //  searchStore.clearSearchResults();
-  //}
 
   let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
 

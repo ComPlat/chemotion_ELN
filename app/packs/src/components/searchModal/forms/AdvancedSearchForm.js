@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Alert } from 'react-bootstrap';
+import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel } from 'react-bootstrap';
+import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -23,6 +24,7 @@ const AdvancedSearchForm = () => {
 
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
   const searchStore = useContext(StoreContext).search;
+  const panelVars = panelVariables(searchStore);
 
   useEffect(() => {
     const length = selectedOptions.length - 1;
@@ -79,12 +81,6 @@ const AdvancedSearchForm = () => {
   const handleClear = () => {
     searchStore.clearSearchResults();
     setSelectedOptions(defaultSelections);
-  }
-
-  const showErrorMessage = () => {
-    if (searchStore.error_message) {
-      return <Alert bsStyle="danger">{searchStore.error_message}</Alert>;
-    }
   }
 
   const handleChangeElement = (element) => {
@@ -179,41 +175,24 @@ const AdvancedSearchForm = () => {
     setSelectedOptions((a) => [...a]);
   }
 
-  const togglePanel = () => () => {
-    if (searchStore.searchResultsCount > 0) {
-      searchStore.toggleSearch();
-      searchStore.toggleSearchResults();
-      searchStore.clearTabCurrentPage();
-    }
-  }
-
-  let defaultClassName = 'collapsible-search-result';
-  let invisibleClassName = searchStore.search_result_panel_visible ? '' : ' inactive';
-  let inactiveSearchClass = !searchStore.searchVisible ? 'inactive' : '';
-  let inactiveResultClass = !searchStore.searchResultVisible? 'inactive' : '';
-  let searchIcon = `fa fa-chevron-${searchStore.search_icon} icon-right`;
-  let resultIcon = `fa fa-chevron-${searchStore.result_icon} icon-right`;
-  let searchTitle = searchStore.searchVisible ? 'Search' : 'Refine search';
-  let resultTitle = searchStore.searchResultVisible ? 'Result' : 'Back to result';
-
   return (
     <>
       <Panel
         id="collapsible-search"
-        className={defaultClassName}
-        onToggle={togglePanel()}
+        className={panelVars.defaultClassName}
+        onToggle={togglePanel(searchStore)}
         expanded={searchStore.searchVisible}
       >
-        <Panel.Heading className={inactiveSearchClass}>
+        <Panel.Heading className={panelVars.inactiveSearchClass}>
           <Panel.Title toggle>
-            {searchTitle}
-            <i className={searchIcon} />
+            {panelVars.searchTitle}
+            <i className={panelVars.searchIcon} />
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body>
             <div className="advanced-search">
-              {showErrorMessage()}
+              {showErrorMessage(searchStore)}
               <div>
                 <SelectSearchTable />
                 <AdvancedSearchRow
@@ -238,14 +217,14 @@ const AdvancedSearchForm = () => {
       </Panel>
       <Panel
         id="collapsible-result"
-        className={defaultClassName + invisibleClassName}
-        onToggle={togglePanel()}
+        className={panelVars.defaultClassName + panelVars.invisibleClassName}
+        onToggle={togglePanel(searchStore)}
         expanded={searchStore.searchResultVisible}
       >
-        <Panel.Heading className={inactiveResultClass}>
+        <Panel.Heading className={panelVars.inactiveResultClass}>
           <Panel.Title toggle>
-            {resultTitle}
-            <i className={resultIcon} />
+            {panelVars.resultTitle}
+            <i className={panelVars.resultIcon} />
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
