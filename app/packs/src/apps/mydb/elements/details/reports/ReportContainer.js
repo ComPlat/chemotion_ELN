@@ -124,6 +124,7 @@ export default class ReportContainer extends Component {
     }
 
     const archivesTitle = this.archivesTitle();
+    const tabStyle = {padding: "15px", border: "1px solid #ddd", borderRadius: "4px"}
     return (
       <Panel
         bsStyle="default"
@@ -135,7 +136,7 @@ export default class ReportContainer extends Component {
           id="report-tabs"
           style={{padding:"15px"}}
         >
-          <Tab eventKey={0} title="Config">
+          <Tab eventKey={0} title="Config" style={tabStyle}>
             <Config
               imgFormat={imgFormat}
               fileName={fileName}
@@ -147,7 +148,7 @@ export default class ReportContainer extends Component {
               options={templateOpts}
             />
           </Tab>
-          <Tab eventKey={1} title="Setting">
+          <Tab eventKey={1} title="Setting" style={tabStyle}>
             <Setting
               template={template}
               splSettings={splSettings}
@@ -159,17 +160,17 @@ export default class ReportContainer extends Component {
             />
           </Tab>
 
-          <Tab eventKey={2} title="Order">
+          <Tab eventKey={2} title="Order" style={tabStyle}>
             <div className="panel-fit-screen">
               <Orders selectedObjs={selectedObjs} template={template} />
             </div>
           </Tab>
-          <Tab eventKey={3} title="Label">
+          <Tab eventKey={3} title="Label" style={tabStyle}>
             <div className="panel-fit-screen">
               <Serials selMolSerials={selMolSerials} template={template} />
             </div>
           </Tab>
-          <Tab eventKey={4} title="Preview">
+          <Tab eventKey={4} title="Preview" style={tabStyle}>
             <div className="panel-fit-screen">
               <Previews
                 previewObjs={previewObjs}
@@ -184,7 +185,7 @@ export default class ReportContainer extends Component {
               />
             </div>
           </Tab>
-          <Tab eventKey={5} title={archivesTitle}>
+          <Tab eventKey={5} title={archivesTitle} style={tabStyle}>
             <div className="panel-fit-screen">
               <Archives archives={archives} />
             </div>
